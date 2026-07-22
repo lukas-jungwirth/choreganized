@@ -69,6 +69,14 @@
 		border-radius: var(--r-chip);
 		background: var(--border-dashed);
 		transition: background 160ms ease-out;
+		/*
+			The whole switch is the invisible input on top; the track and knob are
+			paint. Without this the knob eats the tap: a transform promotes it into
+			the positioned-element painting step, so once the switch is *on* the
+			knob covers the input exactly where a thumb lands, and the switch can be
+			turned on but never off. (`.knob` inherits this.)
+		*/
+		pointer-events: none;
 	}
 
 	.knob {

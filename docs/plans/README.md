@@ -14,7 +14,7 @@ plus your session date). Note deviations in the plan file and in DECISIONS.md.
 | 01  | [Onboarding & household](01-onboarding.md)                          | done (2026-07-22) | 00                       |
 | 02  | [App shell & Home v1](02-shell-home.md)                             | done (2026-07-22) | 01                       |
 | 03  | [Shopping](03-shopping.md)                                          | done (2026-07-22) | 02                       |
-| 04  | [Tasks core](04-tasks.md)                                           | todo              | 02                       |
+| 04  | [Tasks core](04-tasks.md)                                           | done (2026-07-22) | 02                       |
 | 05  | [Push infrastructure](05-push-infra.md)                             | done (2026-07-22) | 02                       |
 | 06  | [Task reminders](06-task-reminders.md)                              | todo              | 04, 05                   |
 | 07  | [Cooking: recipes & meal plan](07-cooking.md)                       | todo              | 02 (03 for shopping add) |
@@ -41,10 +41,13 @@ The kit 02 left you: Card · AvatarStack · CheckCircle · Chip · SegmentedCont
 ProgressBar · Banner · EmptyState · FAB · BottomSheet · CenterModal (plus 01's Button ·
 TextField · Avatar · ColorPicker), `shell/TabBar` · `shell/PageHeader`, and
 `lib/utils/dates.ts`. 03 added Select · Stepper · `shell/SubHeader` (the back-chevron header
-[7g]/[6b] uses), and the first real cron job — copy its shape in `lib/server/cron.ts`. 05
-added `components/EnablePush`, an acting/dismissable `Banner`, and the whole notification
-stack: **06 and 08 only call `sendToUser` / `sendToMembers` from `lib/server/push.ts` and add
-one line to `cron.ts`'s job registry** (→ ARCHITECTURE.md "Notifications"). Run `npm run dev`
+[7g]/[6b] uses), and the first real cron job — copy its shape in `lib/server/cron.ts`. 04 added
+DateField, a link mode on SegmentedControl, and the recurrence + due-date-copy half of
+`lib/utils/dates.ts` (`addInterval` · `daysBetween` · `formatDueMeta` · `formatDateLabel`) —
+09's feed builds on `services/tasks.ts`. 05 added `RowGroup`, an acting/dismissable `Banner`,
+`components/EnablePush`, and the whole notification stack: **06 and 08 only call `sendToUser` /
+`sendToMembers` from `lib/server/push.ts` and add one line to `cron.ts`'s job registry**
+(→ ARCHITECTURE.md "Notifications") — so 06 is now unblocked on both sides. Run `npm run dev`
 and open **`/dev/kit`** to see them all on one screen before you build against them — and add
 your new ones to that page.
 

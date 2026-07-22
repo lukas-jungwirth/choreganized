@@ -124,7 +124,7 @@ Two delivery paths, one send module (`lib/server/push.ts`):
 
 Payload contract (`PushPayload` in `push.ts` ⟷ the SW `push` handler):
 `{ title, body?, tag, url, renotify?, vibrate? }`. **`title` carries the message** — the
-platform prints the app name itself (→ [DECISIONS #47](DECISIONS.md)). `url` is the deep link
+platform prints the app name itself (→ [DECISIONS #55](DECISIONS.md)). `url` is the deep link
 `notificationclick` focuses/opens, `tag` dedupes (e.g. `task-due-{taskId}`, `timer-{timerId}`),
 and the SW supplies a default vibration pattern and our icon/badge.
 
@@ -137,13 +137,13 @@ sendToMembers(householdId, payload, { except?, pref?, ttlSeconds? })  // the hou
 
 `pref` is a `members.notify*` column and `except` a member id (the actor). TTL defaults to 12 h
 — a nudge that arrives two days late is worse than one that never arrives
-(→ [#50](DECISIONS.md)). A 404/410 from the push service deletes the subscription row.
+(→ [#58](DECISIONS.md)). A 404/410 from the push service deletes the subscription row.
 
 Service worker: hand-written `src/service-worker.ts` (SvelteKit builds/registers it):
 `push` → `showNotification`; `notificationclick` → focus existing client & navigate, else
 `openWindow(url)`; precache of build assets + `static/` with cache cleanup on activate;
 navigations go to the network with a self-contained offline notice when it fails — pages are
-never cached (→ [#48](DECISIONS.md)).
+never cached (→ [#56](DECISIONS.md)).
 
 Browser side: `lib/push-client.ts` (permission → subscribe → POST `/api/push/subscribe`) and
 `components/EnablePush.svelte` (the state machine: unsupported / unconfigured / denied /

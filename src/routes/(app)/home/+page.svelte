@@ -41,7 +41,7 @@
 	</div>
 	<!-- The household's faces are the way into the household's settings; the back
 		 chevron [6a] opens with has to come from somewhere, and plan 10 can move
-		 it if it finds a better door (→ DECISIONS #49). The link names the
+		 it if it finds a better door (→ DECISIONS #57). The link names the
 		 housemates itself — Home is still the only screen that does. -->
 	<a class="settings" href="/settings" aria-label="Settings · Household: {names}">
 		<AvatarStack members={stack} />

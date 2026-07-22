@@ -13,7 +13,7 @@
  *   uninstalled); the row goes.
  *
  * Payload contract with `src/service-worker.ts`: `PushPayload`, JSON-encoded.
- * `title` carries the message — see docs/DECISIONS.md #47.
+ * `title` carries the message — see docs/DECISIONS.md #55.
  */
 import { and, eq, inArray, ne } from 'drizzle-orm';
 import webpush from 'web-push';
@@ -28,7 +28,7 @@ import { members, pushSubscriptions, type PushSubscription } from './db/schema';
  *
  * `title` is the whole message ("🛒 Elisabeth added 3 items to the list"): it's
  * the bold line, the one that survives truncation on a lock screen, and the
- * platform already prints the app name above it (→ DECISIONS #47).
+ * platform already prints the app name above it (→ DECISIONS #55).
  */
 export type PushPayload = {
 	title: string;

@@ -55,8 +55,8 @@ Built so far — plan 01: **Button · TextField · Avatar · ColorPicker** + `sh
 480px page shell for onboarding/login). Plan 02: **Card · AvatarStack · CheckCircle · Chip ·
 SegmentedControl · Toggle · ProgressBar · Banner · EmptyState · FAB · BottomSheet ·
 CenterModal**, plus `shell/TabBar` · `shell/PageHeader` and the bespoke icons in
-`components/icons/`. Plan 03: **Select · Stepper** + `shell/SubHeader`. Plan 05: **RowGroup**,
-`Banner` gained an acting/dismissable form, plus the feature component
+`components/icons/`. Plan 03: **Select · Stepper** + `shell/SubHeader`. Plan 04: **DateField**.
+Plan 05: **RowGroup**, `Banner` gained an acting/dismissable form, plus the feature component
 **`components/EnablePush`** (the push permission state machine, in a Settings row or as Home's
 one-time prompt card). Extend these rather than forking a variant; look at them side by side at
 **`/dev/kit`** (dev-only gallery, → [DECISIONS #39](DECISIONS.md)) and add to it when you add a
@@ -95,9 +95,15 @@ component.
   assignees, snooze presets. Extra attributes are forwarded, and `class` is merged rather than
   replacing the base class.
 - **SegmentedControl** — `--sunken-2` track r13, active segment white r10 + `--shadow-card`;
-  `bind:value` over `{value,label}` options.
+  `bind:value` over `{value,label}` options. Give the options an `href` and it becomes real
+  navigation instead (`<nav>` + `<a aria-current="page">`) — that's the Tasks tab's To do /
+  History switch (→ [DECISIONS #53](DECISIONS.md)).
 - **Select** — TextField's shape around a real `<select>`: micro-label, `--input-surface`
   field, decorative chevron, optional `hint` line ("pcs · g · kg · ml · L …" [3a]).
+- **DateField** — the same shape around a real `<input type="date">`: calendar icon, the value,
+  and a `caption` reading it back in words ("Tomorrow · Jul 17" [3b]). The browser's picker
+  button is stretched invisibly across the row, so tapping anywhere opens the picker — which is
+  what the chevron in [3b] and [4c] promises.
 - **Stepper** — − n + in a sunken well [3a]. The number is a real `<input type="number">`, so
   it posts with the form and takes a typed value; `clearable` makes the low end "nothing at
   all" (`null`, rendered as "—"), which is what an optional quantity needs.
@@ -105,7 +111,9 @@ component.
   `tinted` is the feed variant [8b]: member-coloured wash + coloured ✓, no ring. Purely
   visual — the row around it owns the button semantics.
 - **Toggle** — 44×26, sage on / `--border-dashed` off, white knob. A visually hidden real
-  checkbox, so it keyboards and submits inside a form action.
+  checkbox, so it keyboards and submits inside a form action. The track is `pointer-events:
+none` — the knob's `transform` otherwise paints it over the input and swallows the tap
+  (→ [DECISIONS #51](DECISIONS.md)).
 - **EmptyState** — 88px icon well (`--sunken`, r26), Fraunces 21px title, `--text-4` copy,
   free-form `action` snippet ([7f] pairs starters with a button).
 - **FAB** — 54px sage circle, `--shadow-fab`, above the tab bar and pinned to the 480px
@@ -122,7 +130,7 @@ component.
   detail, optional action pill. With `href` the whole card is the link; with `onclick` the pill
   is a real button (`disabled` greys it mid-flight) and with `ondismiss` a trailing × appears —
   either of those keeps the card itself inert, since a button inside a button is invalid
-  (→ [DECISIONS #49](DECISIONS.md)).
+  (→ [DECISIONS #57](DECISIONS.md)).
 - **ProgressBar** — 9px track `--track`, fill = member colour (points card).
 - **ProgressRing** — cook timer, 220px, 10px stroke, sage on `rgba(255,255,255,.08)`.
 

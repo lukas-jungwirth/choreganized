@@ -1,5 +1,6 @@
 import { dev } from '$app/environment';
 import { error } from '@sveltejs/kit';
+import { todayIn } from '$lib/utils/dates';
 import type { PageServerLoad } from './$types';
 
 /**
@@ -9,5 +10,10 @@ import type { PageServerLoad } from './$types';
  */
 export const load: PageServerLoad = () => {
 	if (!dev) error(404, 'Not found');
-	return {};
+
+	// DateField's caption needs a "today" to read dates against. Resolved here
+	// and sent down, rather than read from `Intl` in the component — there it
+	// would resolve the server's zone while rendering and the browser's on
+	// hydration, a mismatch on the one page whose whole job is looking right.
+	return { today: todayIn(Intl.DateTimeFormat().resolvedOptions().timeZone) };
 };

@@ -133,7 +133,7 @@ async function networkOrOfflineNotice(request: Request): Promise<Response> {
 /**
  * Self-contained because it is served precisely when nothing else can be
  * fetched — which is also why these are the only raw colour values in the app
- * outside `app.css` (→ DECISIONS #48).
+ * outside `app.css` (→ DECISIONS #56).
  */
 function offlineNotice(): Response {
 	const html = `<!doctype html>
