@@ -219,12 +219,41 @@ const seeded = db.transaction((tx) => {
 
 	/* ── Shopping ────────────────────────────────────────────────────────── */
 
+	/**
+	 * Onboarding already hands a new household these three stores, and their ids
+	 * are UUIDs — so seeding into a household you created in the app would file
+	 * the demo items under a *second* "Grocery" if we went by id alone. Match on
+	 * the name first and only insert what's genuinely missing.
+	 */
+	const DEMO_STORES = [
+		{ key: 'grocery', name: 'Grocery' },
+		{ key: 'drugstore', name: 'Drugstore' },
+		{ key: 'hardware', name: 'Hardware store' }
+	];
+
+	const existingStores = tx
+		.select({ id: stores.id, name: stores.name })
+		.from(stores)
+		.where(eq(stores.householdId, householdId))
+		.all();
+
+	const storeId = (key: string): string => {
+		const demo = DEMO_STORES.find((store) => store.key === key);
+		const existing = existingStores.find(
+			(store) => store.name.toLowerCase() === demo?.name.toLowerCase()
+		);
+		return existing?.id ?? sid('store', key);
+	};
+
 	tx.insert(stores)
-		.values([
-			{ id: sid('store', 'grocery'), householdId, name: 'Grocery', sortOrder: 0 },
-			{ id: sid('store', 'drugstore'), householdId, name: 'Drugstore', sortOrder: 1 },
-			{ id: sid('store', 'hardware'), householdId, name: 'Hardware store', sortOrder: 2 }
-		])
+		.values(
+			DEMO_STORES.map(({ key, name }, sortOrder) => ({
+				id: storeId(key),
+				householdId,
+				name,
+				sortOrder
+			}))
+		)
 		.onConflictDoNothing()
 		.run();
 
@@ -233,7 +262,7 @@ const seeded = db.transaction((tx) => {
 			{
 				id: sid('item', 'tomatoes'),
 				householdId,
-				storeId: sid('store', 'grocery'),
+				storeId: storeId('grocery'),
 				name: 'Tomatoes',
 				quantity: 6,
 				unit: 'pcs',
@@ -242,14 +271,14 @@ const seeded = db.transaction((tx) => {
 			{
 				id: sid('item', 'spinach'),
 				householdId,
-				storeId: sid('store', 'grocery'),
+				storeId: storeId('grocery'),
 				name: 'Baby spinach',
 				addedByMemberId: housemateMemberId
 			},
 			{
 				id: sid('item', 'oat-milk'),
 				householdId,
-				storeId: sid('store', 'grocery'),
+				storeId: storeId('grocery'),
 				name: 'Oat milk',
 				quantity: 2,
 				unit: 'L',
@@ -258,14 +287,14 @@ const seeded = db.transaction((tx) => {
 			{
 				id: sid('item', 'olive-oil'),
 				householdId,
-				storeId: sid('store', 'grocery'),
+				storeId: storeId('grocery'),
 				name: 'Olive oil',
 				addedByMemberId: housemateMemberId
 			},
 			{
 				id: sid('item', 'avocado'),
 				householdId,
-				storeId: sid('store', 'grocery'),
+				storeId: storeId('grocery'),
 				name: 'Avocado',
 				quantity: 2,
 				unit: 'pcs',
@@ -276,7 +305,7 @@ const seeded = db.transaction((tx) => {
 			{
 				id: sid('item', 'yogurt'),
 				householdId,
-				storeId: sid('store', 'grocery'),
+				storeId: storeId('grocery'),
 				name: 'Greek yogurt',
 				addedByMemberId: housemateMemberId,
 				checkedAt: daysAgo(0, 9),
@@ -285,14 +314,14 @@ const seeded = db.transaction((tx) => {
 			{
 				id: sid('item', 'shampoo'),
 				householdId,
-				storeId: sid('store', 'drugstore'),
+				storeId: storeId('drugstore'),
 				name: 'Shampoo',
 				addedByMemberId: housemateMemberId
 			},
 			{
 				id: sid('item', 'cotton-pads'),
 				householdId,
-				storeId: sid('store', 'drugstore'),
+				storeId: storeId('drugstore'),
 				name: 'Cotton pads',
 				quantity: 2,
 				unit: 'pack',
@@ -301,7 +330,7 @@ const seeded = db.transaction((tx) => {
 			{
 				id: sid('item', 'bulbs'),
 				householdId,
-				storeId: sid('store', 'hardware'),
+				storeId: storeId('hardware'),
 				name: 'LED bulbs (E27)',
 				quantity: 2,
 				unit: 'pcs',

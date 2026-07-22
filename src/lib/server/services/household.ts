@@ -170,6 +170,16 @@ export function listMembers(householdId: string): HouseholdMember[] {
 		.all();
 }
 
+/**
+ * Every household and the clock it lives by. The one query in the app that
+ * isn't household-scoped, and deliberately so: the cron sweeps have no request
+ * and no member behind them, they walk all households and act on the ones whose
+ * local time says it's due (→ `lib/server/cron.ts`).
+ */
+export function listHouseholdClocks(): { id: string; timezone: string }[] {
+	return db.select({ id: households.id, timezone: households.timezone }).from(households).all();
+}
+
 export type InvitePreview = {
 	/** Normalized code, safe to put back in a URL. */
 	code: string;

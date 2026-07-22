@@ -24,7 +24,7 @@ uppercase micro-labels. Nothing shouts; even "overdue" is a calm tinted card.
 | Lines      | `--border` `--border-soft` `--divider` `--divider-sheet` `--border-dashed` `--track`                         | input outlines / tab hairline / row dividers / dashed empties / progress track                  |
 | Cook mode  | `--cook-bg` `--cook-text` `--cook-muted` `--cook-faint` `--cook-sheet` `--cook-amber`                        | the one dark surface in the app                                                                 |
 | Type       | `--font-display` (Fraunces) `--font-body` (Figtree)                                                          | see scale below                                                                                 |
-| Radii      | `--r-input 14` `--r-button 16` `--r-card 20` `--r-card-lg 22` `--r-sheet 28` `--r-chip 999`                  |                                                                                                 |
+| Radii      | `--r-input 14` `--r-button 16` `--r-block 16` `--r-card 20` `--r-card-lg 22` `--r-sheet 28` `--r-chip 999`   | `--r-block` = grouped block: quick-add [03], sheet menus [7c], add-a-store [7g]                 |
 | Shadows    | `--shadow-card/-button/-fab/-sheet/-modal/-knob`                                                             | `-knob` is the toggle's white knob                                                              |
 | Overlays   | `--scrim`                                                                                                    | behind sheets & modals                                                                          |
 | Layout     | `--page-pad 22px` `--tabbar-h 84px`                                                                          |                                                                                                 |
@@ -55,9 +55,9 @@ Built so far — plan 01: **Button · TextField · Avatar · ColorPicker** + `sh
 480px page shell for onboarding/login). Plan 02: **Card · AvatarStack · CheckCircle · Chip ·
 SegmentedControl · Toggle · ProgressBar · Banner · EmptyState · FAB · BottomSheet ·
 CenterModal**, plus `shell/TabBar` · `shell/PageHeader` and the bespoke icons in
-`components/icons/`. Extend these rather than forking a variant; look at them side by side at
-**`/dev/kit`** (dev-only gallery, → [DECISIONS #39](DECISIONS.md)) and add to it when you add
-a component.
+`components/icons/`. Plan 03: **Select · Stepper** + `shell/SubHeader`. Extend these rather
+than forking a variant; look at them side by side at **`/dev/kit`** (dev-only gallery,
+→ [DECISIONS #39](DECISIONS.md)) and add to it when you add a component.
 
 - **Button** — primary (sage bg, white 700 16px, `--r-button`, `--shadow-button`), secondary
   (white, 1.5px `--border`), danger (only in confirm dialogs), dark (`--ink` bg — "Start cook
@@ -89,6 +89,11 @@ a component.
   replacing the base class.
 - **SegmentedControl** — `--sunken-2` track r13, active segment white r10 + `--shadow-card`;
   `bind:value` over `{value,label}` options.
+- **Select** — TextField's shape around a real `<select>`: micro-label, `--input-surface`
+  field, decorative chevron, optional `hint` line ("pcs · g · kg · ml · L …" [3a]).
+- **Stepper** — − n + in a sunken well [3a]. The number is a real `<input type="number">`, so
+  it posts with the form and takes a typed value; `clearable` makes the low end "nothing at
+  all" (`null`, rendered as "—"), which is what an optional quantity needs.
 - **CheckCircle** — 22–24px ring 2px `--border-dashed`; `checked` = accent fill + white ✓.
   `tinted` is the feed variant [8b]: member-coloured wash + coloured ✓, no ring. Purely
   visual — the row around it owns the button semantics.
@@ -103,7 +108,9 @@ a component.
   badge: `--danger` pill, white 10px 700, 1.5px white ring. Bottom-centred on the shell, so it
   lines up with the column on a desktop window.
 - **PageHeader** — the title line a tab opens with: Fraunces 30px + a baseline-aligned `meta`
-  caption ("2 of 9 done") and/or an `actions` snippet.
+  caption ("2 of 9 done") and/or an `actions` snippet, grouped together on the right.
+- **SubHeader** — one level down [7g] [6b]: back chevron, Fraunces 20px title, 12px subtitle,
+  optional `actions`.
 - **Banner** — tinted card: `danger` (overdue [4e]) or `info` (holiday [4a]); icon tile, title,
   detail, optional action pill. With `href` the whole card is the link.
 - **ProgressBar** — 9px track `--track`, fill = member colour (points card).

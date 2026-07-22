@@ -13,6 +13,7 @@
 	import HomeIcon from '$lib/components/icons/HomeIcon.svelte';
 	import PotIcon from '$lib/components/icons/PotIcon.svelte';
 	import PageHeader from '$lib/components/shell/PageHeader.svelte';
+	import SubHeader from '$lib/components/shell/SubHeader.svelte';
 	import Avatar from '$lib/components/ui/Avatar.svelte';
 	import AvatarStack from '$lib/components/ui/AvatarStack.svelte';
 	import Banner from '$lib/components/ui/Banner.svelte';
@@ -26,8 +27,11 @@
 	import FAB from '$lib/components/ui/FAB.svelte';
 	import ProgressBar from '$lib/components/ui/ProgressBar.svelte';
 	import SegmentedControl from '$lib/components/ui/SegmentedControl.svelte';
+	import Select from '$lib/components/ui/Select.svelte';
+	import Stepper from '$lib/components/ui/Stepper.svelte';
 	import TextField from '$lib/components/ui/TextField.svelte';
 	import Toggle from '$lib/components/ui/Toggle.svelte';
+	import { UNITS } from '$lib/utils/shopping';
 	import Bell from '@lucide/svelte/icons/bell';
 	import Check from '@lucide/svelte/icons/check';
 	import Plus from '@lucide/svelte/icons/plus';
@@ -44,6 +48,8 @@
 	let view = $state('todo');
 	let effort = $state(10);
 	let assignee = $state('e');
+	let quantity = $state<number | null>(1);
+	let unit = $state('pcs');
 	let sheetOpen = $state(false);
 	let modalOpen = $state(false);
 	let confirmOpen = $state(false);
@@ -53,6 +59,11 @@
 
 <div class="kit">
 	<PageHeader title="UI kit" meta="dev only" />
+
+	<section>
+		<h2>SubHeader</h2>
+		<SubHeader title="Stores" subtitle="Group your shopping list by shop" back="/dev/kit" />
+	</section>
 
 	<section>
 		<h2>Button</h2>
@@ -123,6 +134,27 @@
 			{/each}
 			<Chip selected={assignee === 'any'} onclick={() => (assignee = 'any')}>Anyone</Chip>
 		</div>
+	</section>
+
+	<section>
+		<h2>Stepper · Select</h2>
+		<div class="row top">
+			<div class="qty">
+				<Stepper label="Quantity" bind:value={quantity} clearable />
+			</div>
+			<div class="grow">
+				<Select
+					label="Unit"
+					bind:value={unit}
+					options={UNITS.map((value) => ({ value, label: value }))}
+					hint="pcs · g · kg · ml · L …"
+				/>
+			</div>
+		</div>
+		<p class="note">
+			Sunken on a white surface, white on the page — same `--input-surface` rule as TextField. The
+			stepper's low end is "no quantity at all" when `clearable`.
+		</p>
 	</section>
 
 	<section>
@@ -229,6 +261,19 @@
 
 <BottomSheet bind:open={sheetOpen} title="Add item" eyebrow="Grocery">
 	<TextField label="Item" name="demo-item" value="Sourdough bread" />
+	<div class="row top sheet-cta">
+		<div class="qty">
+			<Stepper label="Quantity" bind:value={quantity} clearable />
+		</div>
+		<div class="grow">
+			<Select
+				label="Unit"
+				bind:value={unit}
+				options={UNITS.map((value) => ({ value, label: value }))}
+				hint="pcs · g · kg · ml · L …"
+			/>
+		</div>
+	</div>
 	<div class="sheet-cta">
 		<Button onclick={() => (sheetOpen = false)}>Add to Grocery list</Button>
 	</div>
@@ -291,6 +336,27 @@
 
 	.wrap {
 		flex-wrap: wrap;
+	}
+
+	.top {
+		align-items: flex-start;
+	}
+
+	.qty {
+		flex: none;
+		width: 148px;
+	}
+
+	.grow {
+		flex: 1;
+		min-width: 0;
+	}
+
+	.note {
+		margin: 0;
+		font-size: 12.5px;
+		line-height: 1.5;
+		color: var(--text-5);
 	}
 
 	.pad {

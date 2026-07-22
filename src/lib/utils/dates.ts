@@ -95,15 +95,28 @@ export function zonedStartOfDay(date: CalendarDate, timezone: string): Date {
 	return new Date(onDate.length ? Math.min(...onDate) : Math.max(...candidates));
 }
 
-/** Hour of day (0–23) in `timezone` — drives the time-of-day greeting. */
-export function hourIn(timezone: string, now: Date = new Date()): number {
-	const hour = formatter(`hour|${timezone}`, 'en-GB', {
+/**
+ * The wall clock in `timezone` right now. Cron jobs gate on this: a household's
+ * "03:30" is data, not a cron expression, so the sweep runs every minute and
+ * asks each household what time it is (→ `lib/server/cron.ts`).
+ */
+export function clockIn(
+	timezone: string,
+	now: Date = new Date()
+): { hour: number; minute: number } {
+	const parts = formatter(`clock|${timezone}`, 'en-GB', {
 		timeZone: timezone,
 		hour: '2-digit',
+		minute: '2-digit',
 		hourCycle: 'h23'
-	}).format(now);
+	}).formatToParts(now);
 
-	return Number(hour);
+	return { hour: numberPart(parts, 'hour'), minute: numberPart(parts, 'minute') };
+}
+
+/** Hour of day (0–23) in `timezone` — drives the time-of-day greeting. */
+export function hourIn(timezone: string, now: Date = new Date()): number {
+	return clockIn(timezone, now).hour;
 }
 
 /** Clock time of an instant in `timezone`, 24h without a leading zero ("8:20"). */
@@ -136,18 +149,20 @@ function zoneOffsetMs(at: Date, timezone: string): number {
 		second: '2-digit'
 	}).formatToParts(at);
 
-	const field = (type: Intl.DateTimeFormatPartTypes) =>
-		Number(parts.find((part) => part.type === type)?.value ?? 0);
-
 	const asIfUtc = Date.UTC(
-		field('year'),
-		field('month') - 1,
-		field('day'),
-		field('hour'),
-		field('minute'),
-		field('second')
+		numberPart(parts, 'year'),
+		numberPart(parts, 'month') - 1,
+		numberPart(parts, 'day'),
+		numberPart(parts, 'hour'),
+		numberPart(parts, 'minute'),
+		numberPart(parts, 'second')
 	);
 
 	// The parts carry second precision, so compare against whole seconds.
 	return asIfUtc - Math.floor(at.getTime() / 1000) * 1000;
+}
+
+/** One numeric field out of `formatToParts` — 0 when the format omitted it. */
+function numberPart(parts: Intl.DateTimeFormatPart[], type: Intl.DateTimeFormatPartTypes): number {
+	return Number(parts.find((part) => part.type === type)?.value ?? 0);
 }

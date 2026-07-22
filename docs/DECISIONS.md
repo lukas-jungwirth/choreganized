@@ -158,6 +158,52 @@ Agents: when you make a judgment call that isn't in SPEC/ARCHITECTURE, **append 
 40. **The four tab icons and the crown are bespoke SVGs** in `lib/components/icons/` — Lucide's
     house has a door and its pot a different lid, and these five are the shapes the app wears
     in its chrome and its stat tiles. Everything else stays `@lucide/svelte`.
+41. **The quick-add field adds; a second affordance opens the sheet.** SPEC §3.1 and plan 03
+    disagreed — the plan reads "+ opens sheet [3a]", SPEC "typing + Enter (or the + button)
+    adds instantly … the field's expand affordance opens the full sheet". SPEC wins (it is
+    named behaviour ground truth, and making the obvious tap target cost an extra screen would
+    tax every single add). The design draws no expand affordance, so the field gained a quiet
+    sliders button between the text and the sage +; it carries whatever has been typed into
+    [3a], which is the prefill the plan asked for. The page clears the field once the sheet has
+    actually added, so the same words can't go on the list twice.
+42. **Quantity semantics: "no quantity" is a real state, and `×1` is not written.** The stepper
+    opens at 1 as drawn, but steps below 1 to empty ("—") rather than stopping — an item that
+    never had a quantity (everything quick-added) must be editable without acquiring one.
+    `formatQuantity` prints nothing for one piece, because "Tomatoes ×1" says no more than
+    "Tomatoes"; every other unit prints ("1 L" is information). A quantity-less item also
+    drops its unit, so the column never carries a measure of nothing.
+43. **Units are a free-text column with six offered.** [3a] picks from pcs · g · kg · ml · L ·
+    pack, but plan 07 pours recipe ingredients onto the list and a recipe says "tbsp". The
+    service accepts any short string; the sheet adds the item's own unit to the dropdown when
+    it isn't one of the six, so opening the sheet on "2 tbsp curry paste" can't silently
+    rewrite it. Anything over 12 characters is a paste accident and gets trimmed away.
+44. **Stores reorder with arrow buttons, not drag.** [7g] says "drag to reorder" and plan 03
+    explicitly left the choice open. Arrows work on touch, with a keyboard, and without
+    JavaScript (each is a submit button in a tiny form) — pointer-drag reordering manages none
+    of those without a lot of code, and the list is three or four rows long. The helper copy
+    changed to match. `reorderStores(householdId, orderedIds)` is exported for whoever adds
+    drag later; `moveStore` is written in terms of it.
+    Renaming is likewise an always-live text field that saves on blur (Enter blurs, Escape puts
+    the old name back) rather than a tap-to-edit mode: one state instead of two, and it renames
+    without JavaScript. Delete asks first — a store's items fall back to "Other", which the
+    confirm says out loud.
+45. **The nightly cleanup gates on "at or after 03:30, once per household-local day"** rather
+    than on the minute matching. The registry ticks every minute and each job asks each
+    household what time it is there (a timezone is data; it can't live in a cron expression).
+    Exact-minute matching would lose a household's cleanup to a missed tick, a restart, or a
+    zone that springs its clock straight past 03:30. The "already ran today" ledger is a Map in
+    memory, not a column, because losing it is harmless: the job only ever deletes items
+    checked more than 12 h ago, so an early or late run removes exactly the rows 03:30 would
+    have. Every job is wrapped so one household's bad data can't stop the sweep, and
+    `noOverlap` keeps a slow job from racing itself.
+46. **Checked rows go quiet, `Other` is always offered, and the sheet mounts per opening.**
+    Three small readings of the design worth writing down: [03] draws a checked row with the
+    quantity folded into the struck name and _no_ adder avatar (bought is bought), so the row
+    does that; the item sheet always offers an "Other" chip even though [3a] draws only real
+    stores, because store-less items are a real state of the list; and the page renders
+    `ShoppingItemSheet` only while it is open, so its `$state` initialisers are the form reset
+    (BottomSheet's own children are already mounted per opening, but the component around them
+    is not).
 
 ## Open questions (non-blocking, defaults chosen)
 

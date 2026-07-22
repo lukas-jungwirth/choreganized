@@ -19,8 +19,14 @@
 
 <header>
 	<h1>{title}</h1>
-	{#if meta}<span class="meta">{meta}</span>{/if}
-	{#if actions}{@render actions()}{/if}
+	{#if meta || actions}
+		<!-- One trailing group, so a screen with both ("2 of 9 done" + the stores
+			 button) doesn't strand the caption in the middle of the line. -->
+		<div class="trailing">
+			{#if meta}<span class="meta">{meta}</span>{/if}
+			{#if actions}{@render actions()}{/if}
+		</div>
+	{/if}
 </header>
 
 <style>
@@ -30,6 +36,13 @@
 		justify-content: space-between;
 		gap: 12px;
 		padding: 8px 0 16px;
+	}
+
+	.trailing {
+		display: flex;
+		align-items: baseline;
+		flex: none;
+		gap: 12px;
 	}
 
 	h1 {

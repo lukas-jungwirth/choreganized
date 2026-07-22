@@ -86,6 +86,7 @@
 	/* ── Radii ────────────────────────────────────────────────── */
 	--r-input: 14px;
 	--r-button: 16px;
+	--r-block: 16px; /* grouped block: quick-add [03], sheet menus [7c], add-a-store [7g] */
 	--r-card: 20px; /* stat tiles 20, cards 18–22 → default 20 */
 	--r-card-lg: 22px;
 	--r-sheet: 28px;
