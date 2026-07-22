@@ -22,10 +22,24 @@
 		subtitle?: string;
 		/** Leading element beside the title, e.g. the member's avatar [6c]. */
 		lead?: Snippet;
+		/**
+		 * `dark` re-skins the panel in the cook-mode palette [7b]. Same sheet,
+		 * same focus trap, same Escape — a screen that is already dark must not
+		 * flash a white panel at someone standing over a hob.
+		 */
+		tone?: 'light' | 'dark';
 		children: Snippet;
 	};
 
-	let { open = $bindable(), title, eyebrow, subtitle, lead, children }: Props = $props();
+	let {
+		open = $bindable(),
+		title,
+		eyebrow,
+		subtitle,
+		lead,
+		tone = 'light',
+		children
+	}: Props = $props();
 
 	let dialog: HTMLDialogElement | undefined = $state();
 
@@ -108,7 +122,7 @@
 	aria-label={title}
 >
 	{#if open}
-		<div class="panel">
+		<div class="panel" class:dark={tone === 'dark'}>
 			<div class="handle"></div>
 			<header class:with-lead={lead}>
 				{#if lead}{@render lead()}{/if}
@@ -221,6 +235,28 @@
 		border-radius: 50%;
 		background: var(--divider);
 		color: var(--text-4);
+	}
+
+	/* Cook mode's palette [7b]. Only the surfaces change — the shape, the
+		 spacing and the behaviour above are the same sheet. */
+	.dark {
+		background: var(--cook-sheet);
+		color: var(--cook-text);
+		--input-surface: var(--cook-surface);
+	}
+
+	.dark .handle {
+		background: var(--cook-track);
+	}
+
+	.dark .eyebrow,
+	.dark .subtitle {
+		color: var(--cook-muted);
+	}
+
+	.dark .close {
+		background: var(--cook-surface);
+		color: var(--cook-text);
 	}
 
 	.sheet[open] .panel {

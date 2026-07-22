@@ -18,7 +18,7 @@ plus your session date). Note deviations in the plan file and in DECISIONS.md.
 | 05  | [Push infrastructure](05-push-infra.md)                             | done (2026-07-22) | 02                       |
 | 06  | [Task reminders](06-task-reminders.md)                              | done (2026-07-22) | 04, 05                   |
 | 07  | [Cooking: recipes & meal plan](07-cooking.md)                       | done (2026-07-22) | 02 (03 for shopping add) |
-| 08  | [Cook mode & timers](08-cook-mode.md)                               | todo              | 07, 05                   |
+| 08  | [Cook mode & timers](08-cook-mode.md)                               | done (2026-07-22) | 07, 05                   |
 | 09  | [History, leaderboard & Home completion](09-history-leaderboard.md) | done (2026-07-22) | 04                       |
 | 10  | [Settings & members](10-settings-members.md)                        | done (2026-07-22) | 01 (05 for prefs)        |
 | 11  | [PWA, polish & deploy](11-pwa-deploy.md)                            | todo              | all                      |
@@ -62,9 +62,15 @@ and Members: it put the membership half into `services/household.ts` with the **
 inside the service transaction** (`requireOwner`, → DECISIONS #77) — copy that shape for
 anything owner-only — extracted the holiday pause into `components/AwayControl.svelte` (one
 control, two surfaces), gave `BottomSheet` a `lead` snippet + `subtitle` and `StepHeader` an
-optional `step`, and moved the two name limits into `lib/utils/household.ts`. Run `npm run dev`
-and open **`/dev/kit`** to see the components on one screen before you build against them — and
-add your new ones to that page.
+optional `step`, and moved the two name limits into `lib/utils/household.ts`. 08 built cook mode
+on that placeholder: a `dark` **tone on `BottomSheet` and `Stepper`** (extend, don't fork — the
+peek and the manual-timer sheets), the state machine in the repo's first `.svelte.ts`
+(`lib/cook-timer.svelte.ts`), `lib/utils/timer-parse.ts` + `step-highlight.ts` with the first
+`node --test` suites (`npm test`), and the timer half of the notification stack — the same
+`sendToUser` + one `cron.ts` registry line plan 05 laid out, plus three JSON endpoints under
+`/api/timers` behind the new **`requireMemberApi`** guard (→ DECISIONS #89), which
+`api/push/subscribe` now shares. Run `npm run dev` and open **`/dev/kit`** to see the components
+on one screen before you build against them — and add your new ones to that page.
 
 ## How to work a plan
 

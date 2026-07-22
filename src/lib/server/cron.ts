@@ -3,12 +3,15 @@
  *
  * **One minute tick, jobs that gate themselves.** A household's timezone is
  * data, so "03:30" can't live in a cron expression — every job runs each minute
- * and asks each household what time it is there. Plan 08 adds its timer sweep
- * the same way (→ docs/ARCHITECTURE.md "Notifications", docs/DATA-MODEL.md
- * "Reminder time-sweep").
+ * and asks each household what time it is there (→ docs/ARCHITECTURE.md
+ * "Notifications", docs/DATA-MODEL.md "Reminder time-sweep").
+ *
+ * The cook-timer sweep is the one job that doesn't ask: `endsAt` is an instant,
+ * not a time of day, so it has no local clock to consult and runs household-blind.
  */
 import { schedule } from 'node-cron';
 import { clockIn, todayIn, type CalendarDate } from '$lib/utils/dates';
+import { sweepCookTimers } from './services/cook-timers';
 import { listHouseholdClocks } from './services/household';
 import { sendTaskReminders } from './services/reminders';
 import { purgeCheckedItems } from './services/shopping';
@@ -51,12 +54,12 @@ export function registerCronJobs(): void {
 	if (scope[REGISTERED]) return;
 	scope[REGISTERED] = true;
 
-	// The registry. Plan 08 (timer catch-up) adds a line; like the reminder sweep
-	// it will be async, because it sends push — which is what `guard` and
-	// `noOverlap` below are shaped for.
+	// The registry. The two sweeps that send push are async, which is what
+	// `guard` and `noOverlap` below are shaped for.
 	const jobs: Job[] = [
 		['shopping-cleanup', cleanUpCheckedShoppingItems],
-		['task-reminders', sweepTaskReminders]
+		['task-reminders', sweepTaskReminders],
+		['cook-timers', catchUpCookTimers]
 	];
 
 	for (const [name, job] of jobs) {
@@ -161,5 +164,20 @@ async function sweepTaskReminders(now: Date = new Date()): Promise<void> {
 				);
 			}
 		});
+	}
+}
+
+/**
+ * Cook timers that a restart dropped (→ SPEC §4.6, DECISIONS #15).
+ *
+ * The precise alarm is the `setTimeout` scheduled when the timer starts; this is
+ * only here for the minute in which the process wasn't running to keep it. On
+ * every other tick it finds nothing — and no household loop, because "8 minutes
+ * from now" is the same instant in every timezone.
+ */
+async function catchUpCookTimers(now: Date = new Date()): Promise<void> {
+	const rung = await sweepCookTimers(now);
+	if (rung.fired > 0) {
+		console.log(`[cron] caught up ${rung.fired} cook timer(s) → ${rung.devices} device(s)`);
 	}
 }

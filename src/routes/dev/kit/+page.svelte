@@ -39,8 +39,10 @@
 	import Stepper from '$lib/components/ui/Stepper.svelte';
 	import TextField from '$lib/components/ui/TextField.svelte';
 	import Toggle from '$lib/components/ui/Toggle.svelte';
+	import CookStepText from '$lib/components/cooking/CookStepText.svelte';
 	import type { FeedEntry, Podium as PodiumData } from '$lib/server/services/history';
 	import { addDays, formatDateLabel } from '$lib/utils/dates';
+	import { highlightStep } from '$lib/utils/step-highlight';
 	import { UNITS } from '$lib/utils/shopping';
 	import Bell from '@lucide/svelte/icons/bell';
 	import Check from '@lucide/svelte/icons/check';
@@ -139,7 +141,21 @@
 	}
 	let sheetOpen = $state(false);
 	let leadSheetOpen = $state(false);
+	let darkSheetOpen = $state(false);
 	let modalOpen = $state(false);
+	let cookMinutes = $state<number | null>(8);
+
+	/** The design's own step [7b], so the underlines can be checked against it. */
+	const COOK_INGREDIENTS = [
+		{ id: 'p', name: 'Pasta', quantity: 400, unit: 'g' },
+		{ id: 'm', name: 'Mushrooms', quantity: 250, unit: 'g' },
+		{ id: 'b', name: 'Butter', quantity: 30, unit: 'g' }
+	];
+
+	const COOK_STEP = highlightStep(
+		'Sauté the mushrooms in butter until golden, season well.',
+		COOK_INGREDIENTS
+	);
 	let confirmOpen = $state(false);
 
 	// The gallery has no household, so `today` comes from the load (one clock for
@@ -448,6 +464,25 @@
 	</section>
 
 	<section>
+		<h2>Cook mode (dark) [7b]</h2>
+		<p class="note">
+			The step text with its ingredient underlines read out of the sentence (→ DECISIONS #14), and
+			the dark <code>tone</code> both BottomSheet and Stepper grew for these screens. The ring [7h]
+			and the ingredients peek want a live timer, so they only make sense on the real screen —
+			<code>/cooking/recipes/…/cook</code>.
+		</p>
+		<div class="cook-panel">
+			<CookStepText segments={COOK_STEP.segments} />
+			<p class="cook-uses">
+				This step uses <b>{COOK_STEP.used.map((i) => i.name).join(' · ')}</b>
+			</p>
+		</div>
+		<div class="sheet-cta">
+			<Button variant="secondary" onclick={() => (darkSheetOpen = true)}>Open dark sheet</Button>
+		</div>
+	</section>
+
+	<section>
 		<h2>Podium [8a]</h2>
 		<p class="note">
 			Three members as the design draws them, then the two-member tie (equal columns, crown to the
@@ -528,6 +563,10 @@
 	{/snippet}
 	<p class="note">`lead` renders before the titles, `subtitle` under them.</p>
 	<Button variant="secondary" onclick={() => (leadSheetOpen = false)}>Close</Button>
+</BottomSheet>
+
+<BottomSheet bind:open={darkSheetOpen} title="Set a timer" subtitle="It rings even with the phone locked." tone="dark">
+	<Stepper label="Minutes" bind:value={cookMinutes} min={1} max={720} tone="dark" />
 </BottomSheet>
 
 <CenterModal bind:open={modalOpen} label="Task completed">
@@ -640,6 +679,25 @@
 
 	.sheet-cta {
 		margin-top: 20px;
+	}
+
+	/* A patch of the one dark screen in the app, so the amber reads against the
+		 background it was drawn for rather than against paper. */
+	.cook-panel {
+		padding: 22px;
+		border-radius: var(--r-card);
+		background: var(--cook-bg);
+	}
+
+	.cook-uses {
+		margin: 14px 0 0;
+		font-size: 12.5px;
+		color: var(--cook-faint);
+	}
+
+	.cook-uses b {
+		font-weight: 600;
+		color: var(--cook-text-2);
 	}
 
 	.pop {

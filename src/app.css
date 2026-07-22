@@ -74,11 +74,16 @@
 	/* ── Cook mode (dark) ─────────────────────────────────────── */
 	--cook-bg: #22201c;
 	--cook-text: #edebe6;
+	--cook-text-2: #b7b2a9; /* the ingredients named under a step [7b] */
 	--cook-muted: #9a968e;
 	--cook-faint: #7c7a73;
 	--cook-sheet: #2a2b30;
 	--cook-amber: #e0a458; /* step highlights, timer accents */
 	--cook-surface: rgba(255, 255, 255, 0.1); /* chips & buttons on the dark screen */
+	--cook-track: rgba(255, 255, 255, 0.15); /* step segments & ring behind the countdown */
+	--cook-divider: rgba(255, 255, 255, 0.07); /* row hairlines in the ingredients peek */
+	--cook-amber-line: rgba(224, 164, 88, 0.4); /* the outlined chip [7b] */
+	--cook-amber-tint: rgba(224, 164, 88, 0.1); /* this step's ingredient row [7b] */
 
 	/* ── Typography ───────────────────────────────────────────── */
 	--font-display: 'Fraunces Variable', serif; /* headings, numbers, wordmark */

@@ -26,6 +26,8 @@
 		clearable?: boolean;
 		/** What an empty field shows in place of a number. */
 		placeholder?: string;
+		/** `dark` for the cook-mode sheets, where white cards would glare. */
+		tone?: 'light' | 'dark';
 	};
 
 	let {
@@ -35,7 +37,8 @@
 		min = 1,
 		max = 999,
 		clearable = false,
-		placeholder = '—'
+		placeholder = '—',
+		tone = 'light'
 	}: Props = $props();
 
 	const id = $props.id();
@@ -74,7 +77,7 @@
 	}
 </script>
 
-<div class="field">
+<div class="field" class:dark={tone === 'dark'}>
 	<label class="label" for={id}>{label}</label>
 	<div class="well">
 		<button
@@ -194,6 +197,34 @@
 
 	.value::placeholder {
 		color: var(--text-disabled);
+	}
+
+	/* Cook mode's palette. The sunken well and the raised buttons of the light
+		 stepper both come from a paper background that isn't there [7b]. */
+	.dark .label {
+		color: var(--cook-muted);
+	}
+
+	.dark .well {
+		background: transparent;
+	}
+
+	.dark .well:focus-within {
+		border-color: var(--cook-amber);
+	}
+
+	.dark .step {
+		background: var(--cook-surface);
+		box-shadow: none;
+		color: var(--cook-text);
+	}
+
+	.dark .plus {
+		color: var(--cook-amber);
+	}
+
+	.dark .value {
+		color: var(--cook-text);
 	}
 
 	.value:focus {

@@ -64,8 +64,13 @@ podium and the completed feed are the feature components **`components/tasks/Pod
 **`components/tasks/HistoryRow`**, composed from Card · Avatar · CrownIcon and RowGroup ·
 CheckCircle — but `RowGroup` also gained `list`. Plan 10: `BottomSheet` gained `lead` +
 `subtitle`, `StepHeader`'s `step` became optional, and **`components/AwayControl`** joined
-`EnablePush` at the top of `components/` (the holiday pause, shared by [4c] and [6a]). Extend
-these rather than forking a variant; look at them side by side at **`/dev/kit`** (dev-only
+`EnablePush` at the top of `components/` (the holiday pause, shared by [4c] and [6a]). Plan 08
+added no `ui/` primitive but gave **`BottomSheet` and `Stepper` a `tone="dark"`** for the
+cook-mode sheets [7b], and the cook screen's own parts are feature components in
+`components/cooking/` — **`CookStepText`** (the amber ingredient underlines), **`CookTimerRing`**
+[7h], **`CookTimerBar`** (the compact chip on other steps), **`IngredientsPeekSheet`** [7b] and
+**`SetTimerSheet`** — driven by the `CookTimer` state machine in `lib/cook-timer.svelte.ts`.
+Extend these rather than forking a variant; look at them side by side at **`/dev/kit`** (dev-only
 gallery, → [DECISIONS #39](DECISIONS.md)) and add to it when you add a component.
 
 - **Button** — primary (sage bg, white 700 16px, `--r-button`, `--shadow-button`), secondary

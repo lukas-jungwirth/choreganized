@@ -16,6 +16,7 @@ import { error, json } from '@sveltejs/kit';
 import { and, eq } from 'drizzle-orm';
 import { db } from '$lib/server/db';
 import { pushSubscriptions } from '$lib/server/db/schema';
+import { requireUserApi } from '$lib/server/guards';
 import type { RequestHandler } from './$types';
 
 /**
@@ -33,15 +34,6 @@ type SubscriptionBody = {
 	endpoint: string;
 	keys: { p256dh: string; auth: string };
 };
-
-/**
- * `requireUser` redirects, which is the right answer for a page and a useless
- * one for `fetch` — a 303 to /login would arrive as an opaque success.
- */
-function userId(locals: App.Locals): string {
-	if (!locals.user) error(401, 'Not signed in');
-	return locals.user.id;
-}
 
 async function readBody(request: Request): Promise<unknown> {
 	const length = Number(request.headers.get('content-length') ?? '0');
@@ -88,8 +80,9 @@ function parseSubscription(body: unknown): SubscriptionBody {
  * with its unique index, and a second person signing in on the same phone takes
  * the endpoint over — it can only ever deliver to whoever is signed in there.
  */
-export const POST: RequestHandler = async ({ request, locals }) => {
-	const user = userId(locals);
+export const POST: RequestHandler = async (event) => {
+	const { request } = event;
+	const user = requireUserApi(event).id;
 	const { endpoint, keys } = parseSubscription(await readBody(request));
 	const userAgent = request.headers.get('user-agent')?.slice(0, 512) ?? null;
 
@@ -109,9 +102,9 @@ export const POST: RequestHandler = async ({ request, locals }) => {
  * unsubscribe another's device by guessing an endpoint; a row left behind by a
  * failed delete prunes itself on the next send (410).
  */
-export const DELETE: RequestHandler = async ({ request, locals }) => {
-	const user = userId(locals);
-	const body = (await readBody(request)) as { endpoint?: unknown } | null;
+export const DELETE: RequestHandler = async (event) => {
+	const user = requireUserApi(event).id;
+	const body = (await readBody(event.request)) as { endpoint?: unknown } | null;
 
 	if (!isNonEmptyString(body?.endpoint)) error(400, 'Expected { endpoint }');
 

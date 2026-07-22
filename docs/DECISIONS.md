@@ -500,6 +500,66 @@ immutable` honest. The name carries nothing about the recipe on purpose — a fi
     already says "Settings · Household: {names}", so the affordance is announced even though it
     looks like decoration.
 
+82. **A cook timer is sent as seconds, and comes back as time remaining** — never as an
+    instant. The plan sketched `POST /api/timers {label, endsAt, …}`, but `endsAt` from the
+    client is the wrong clock: the server's is the one the `setTimeout` and the push are
+    scheduled against, and a phone forty seconds out of sync would book its alarm forty seconds
+    off. So the body carries `seconds`, the server computes `endsAt`, and `CookTimerView`
+    answers with `remainingMs` — which the page turns back into an instant in *its* clock, so
+    the countdown on screen is right even when the two disagree.
+83. **The open page claims the alert two seconds before zero** (→ SPEC §4.6 "the open page also
+    alerts locally"). The page's countdown and the server's alarm fire at the same instant, so
+    "whoever gets there first" is a coin toss between a buzz from the app and a notification
+    from the OS. A visible page therefore claims `notifiedAt` — the same flag the server would
+    have spent — a little early, and rings itself at zero. A **hidden** page never claims: it
+    has probably been throttled to a tick a minute, and the push is the entire point of [7h·2].
+    Losing the claim (`{owned: false}`) means the push already went out, so the page shows the
+    timer as rung but stays quiet rather than alerting twice.
+84. **The timer's *length* lives in the client, its *deadline* on the server.** Pause and
+    "+1:00" are cancel-and-recreate (→ #15), so a resumed row only knows it was created for
+    5:39 — the 8:00 you actually set is gone from the database. `totalSeconds` therefore lives
+    in `CookTimer`, which is what keeps the ring reading "how much of what I set is left" across
+    a "+1:00" instead of snapping back to full. The trade is visible in one place: a page
+    reloaded mid-timer reads the length back as `endsAt - createdAt` and so says "5:39" where it
+    said "9:00" before. Honest about the row it found, and cheaper than a column.
+85. **The timer state machine is a runes class** (`lib/cook-timer.svelte.ts` — the repo's first
+    `.svelte.ts`). Three parts of cook mode read the same timer: the big ring on the step that
+    started it, the compact bar on every other step, and the chip row that offers to start one.
+    Putting it in the page would have made the page own an interval, three fetches and a
+    lifecycle; putting it in the ring would have made the other two ask the ring. This is the
+    documented Svelte 5 shape for exactly that, and it keeps all three components dumb.
+86. **The ring is pinned; the step text is what scrolls.** [7h] positions the ring absolutely at
+    `top: 340px`, which works for the mockup's two-line step and puts Pause below the fold on a
+    five-line one — the seeded "Sauté the mushrooms in butter until golden, 8 minutes, season
+    well." is five lines at 33px on a 390px screen. So cook mode is a column: header and
+    progress, then a scrolling step, then the ring, then the pinned Prev/Next. A countdown you
+    have to scroll to pause is not a kitchen timer. The scrolling half fades at its bottom edge
+    rather than slicing a chip in half, and while the ring is up the "This step uses…" line
+    stands down — [7h] clears that whole area, and the peek sheet says the same thing better.
+87. **"Set a timer" is a button in the header, not an overflow menu.** The plan put the manual
+    minute stepper "in header overflow"; an overflow menu holding one item is two taps and a
+    modal to reach what a second round button reaches in one, on the screen in the app most
+    likely to be operated with a knuckle. The parsed-timer chip becomes **Set timer** on steps
+    where nothing parses, so the common case never opens a menu either.
+88. **Two shared components grew a `tone`, rather than being forked dark** (again — cf. #53,
+    #80). `BottomSheet` and `Stepper` take `tone="dark"`: the focus trap, Escape, the scroll
+    lock and the clamping are the same problems on any background, and only the surfaces differ.
+    Cook mode's chips and buttons stay bespoke, because those really are a different shape.
+    Five tokens joined the `--cook-*` family for the pixels the design uses but `app.css` hadn't
+    named yet: `--cook-text-2` (the ingredients under a step), `--cook-track`, `--cook-divider`,
+    `--cook-amber-line` and `--cook-amber-tint`.
+89. **`requireMemberApi` / `requireUserApi`** — the guards for the JSON endpoints (→ #20).
+    `requireMember` *redirects*, which is right for a page and useless for `fetch`: a 303 to
+    /login arrives as a 200 with a page of HTML in it, so a signed-out timer request would look
+    like a successful one. The API pair answers 401/403 instead. `api/push/subscribe` had
+    hand-rolled the same check; it now shares these.
+90. **A timer rings for ten minutes and then never.** Unlike a task nudge, which is still worth
+    having at 13:45 if the server was down all morning (→ #60), "the pasta is done" is worth
+    nothing an hour late — it is a lie about a pan. The catch-up sweep only rings rows that
+    ended within the last ten minutes, and the push goes out with a 15-minute TTL. The window is
+    also what keeps the sweep cheap forever: rows older than it sit below the index range and
+    are never scanned again.
+
 ## Open questions (non-blocking, defaults chosen)
 
 - **Production domain** — invite links & OAuth redirect need the final origin (design shows
