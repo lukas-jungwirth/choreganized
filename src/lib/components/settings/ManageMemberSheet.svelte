@@ -14,6 +14,7 @@
 	import BottomSheet from '$lib/components/ui/BottomSheet.svelte';
 	import Button from '$lib/components/ui/Button.svelte';
 	import CenterModal from '$lib/components/ui/CenterModal.svelte';
+	import RowGroup from '$lib/components/ui/RowGroup.svelte';
 	import type { MemberProfile } from '$lib/server/services/household';
 	import { formatShortDate, type CalendarDate } from '$lib/utils/dates';
 	import UserRoundX from '@lucide/svelte/icons/user-round-x';
@@ -82,7 +83,7 @@
 		<Avatar name={member.displayName} color={member.color} size={52} />
 	{/snippet}
 
-	<div class="menu">
+	<RowGroup surface="sunken">
 		<button type="button" class="item" onclick={() => ask('owner')}>
 			<span class="glyph" aria-hidden="true"><CrownIcon size={20} /></span>
 			<span class="what">
@@ -98,7 +99,7 @@
 				<span class="detail">Loses access · points stay with the house</span>
 			</span>
 		</button>
-	</div>
+	</RowGroup>
 
 	<button type="button" class="cancel" onclick={() => (open = false)}>Cancel</button>
 
@@ -145,17 +146,7 @@
 </BottomSheet>
 
 <style>
-	/* The grouped action list [6c] [4b]: one sunken block, hairline dividers. */
-	.menu {
-		overflow: hidden;
-		border-radius: var(--r-block);
-		background: var(--field);
-	}
-
-	.menu > * + * {
-		border-top: 1px solid var(--divider-sheet);
-	}
-
+	/* The rows of [6c]'s sunken block; `RowGroup surface="sunken"` is the block. */
 	.item {
 		display: flex;
 		align-items: center;

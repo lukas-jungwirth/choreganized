@@ -330,8 +330,122 @@ Agents: when you make a judgment call that isn't in SPEC/ARCHITECTURE, **append 
     chore nobody has been handed, and SPEC only pins the wording for the assigned case. Both
     live in `services/reminders.ts` rather than `utils/tasks.ts`: it is the one piece of task
     copy the browser never renders, and a keyword table is not worth shipping to a phone.
+62. **`sharp@0.35.3` is the only new dependency plan 07 adds**, and nothing is stored as
+    uploaded: every photo is re-encoded to a ≤1200px WebP (`quality 80`, `.rotate()` first so
+    EXIF-rotated phone photos land upright). A 12 MP JPEG is ~4 MB; the same picture at the
+    size a 390px screen shows is under 100 KB — and re-encoding drops the EXIF, including
+    where the picture was taken, which is not something a shared household app should keep.
+    Verified in the app: a 2000×1400 JPEG became 1200×840 / 8 KB, a 1600² PNG 1200² / 7.5 KB.
+63. **A stored photo's filename is a UUID, and replacing one writes a new file.** Same-path
+    replacement would leave every phone that had loaded the old photo showing it, so the URL
+    would have to be uncacheable; a fresh name per write makes `Cache-Control: private,
+immutable` honest. The name carries nothing about the recipe on purpose — a file that can
+    be written _before_ its row exists is one no failed insert can half-reference, which is
+    why the new/edit actions validate and store the image first and only then touch the
+    database (and delete the file again if the row turns out not to be theirs).
+64. **The uploads endpoint's gate is a database lookup, not a path check.**
+    `/api/uploads/[...path]` answers only if the requested path is some recipe's `imagePath`
+    **in the caller's household** — so the filesystem layout is never part of the security
+    argument, and a guessed name is unreadable even to a signed-in member of another
+    household. Verified: own photo 200, another household's file 404, unknown name 404, no
+    session 303 → /login.
+65. **`hasIngredients` is a second query, not an `exists (…)` column** (→
+    `services/recipes.ts`). Drizzle only qualifies column names when a statement has a join,
+    so a hand-written correlated subquery beside a plain `select` compiles to
+    `where "recipe_id" = "id"` — both resolved against the _inner_ table, silently always
+    false. It shipped that way for an hour and the plan sheet's shopping toggle never
+    appeared; the lesson is that a subquery mixing `sql` with Drizzle column references needs
+    its generated SQL read at least once.
+66. **The week's rows gained a ••• that the design doesn't draw.** [04] shows only the cook's
+    avatar, and SPEC §4.1 asks for "long-press/•••" to change or remove a planned meal — a
+    long-press is not something a browser hears reliably, and the row itself is already the
+    way to the recipe. So a planned row is: tap = the recipe (or the prefilled sheet for a
+    free-text meal), ••• = the plan sheet, where **Remove meal** lives.
+67. **Reordering ingredients and steps uses arrows, like the store list** (→ #36). [3c] draws
+    a drag grip; the grip is gone rather than promising a gesture that isn't there. The rows
+    also take Enter as "next ingredient", which is how a list of them actually gets typed.
+68. **The shopping toggle in [3d] is our pill `Toggle`, not the design's check-square**, and
+    it only appears when the selected recipe _has_ ingredients (SPEC §4.2). Every other
+    on/off preference in the app is that pill; a second on/off vocabulary for one sheet would
+    cost more than the fidelity is worth. It posts inside the form, so no JavaScript is
+    involved in reading it. The cook picker beside it went the other way: [3d] draws bare 28px
+    initial circles, but SPEC §4.2 asks for "member chips" and the app already picks a member
+    with `Chip` + `Avatar` [3b] — a fourth way to choose a housemate wasn't worth the pixels.
+69. **Search is server-side in the library and client-side in the sheet.** `/cooking/recipes`
+    is the one cooking screen whose list can really grow, and `?q=` makes a search something
+    you can reload, share and go back to (a real GET form, submitted on a 220 ms debounce, so
+    it also works without JavaScript). The plan sheet can't navigate, so it filters the
+    summaries the page already loaded — instant, and the household's whole library is a few
+    kilobytes.
+70. **"Share" becomes "Copy recipe" where the Web Share API is missing** (extends #29 rather
+    than hiding the row): on a phone it opens the OS share sheet, on a desktop it puts the
+    recipe on the clipboard and says so. Either way v1 shares plain text — a public link
+    would need a tokenized public route, and nothing in this app is public.
+71. **Cook mode's route ships in plan 07 as an honest placeholder.** [7a]'s "Start cook mode"
+    had to lead somewhere, so `/cooking/recipes/[id]/cook` exists with the guard, the recipe
+    lookup and the dark surface plan 08 will need — and a screen that says what's coming
+    rather than half a cook mode. Its two chip surfaces are the one new token, `--cook-surface`
+    (the 10% white the dark screens fill buttons and chips with, drawn all over [7b]/[7h]).
+    The button's icon is Lucide's `chef-hat`; the mockup's glyph there is a music note, which
+    reads as anything but cooking.
 
-62. **Role checks live in the service, inside the transaction.** Plan 10's plan said "all with
+72. **`BODY_SIZE_LIMIT=20M` is now required env, because adapter-node's default is 512K.**
+    The built server answers **413 before the form action runs** for any body over that, and a
+    recipe photo straight off a phone is several megabytes — so uploads would have been broken
+    in production while working perfectly in development, which applies no limit at all. Found
+    by review, then reproduced against `node build/index.js`: 900 KB multipart → 413 at 512K,
+    and at 20M the same request reaches `processImage` and comes back with our own sentence.
+    Set in the Dockerfile and `.env.example`, and deliberately _above_ the app's own 15 MB gate
+    so an oversized photo gets our wording rather than a framework error page. The general
+    lesson is in ARCHITECTURE.md: the dev server is not a proxy for the deployed one, and
+    anything that only the built server enforces has to be tested against the built server.
+73. **A recipe id travels with the recipe's name, and planning is atomic per table, not across
+    them.** The plan sheet posts `title` alongside `recipeId`, so a recipe a housemate deletes
+    while the sheet is open still lands as the free-text meal it was named after; before that,
+    `readPlanForm` dropped the title whenever an id was present, `planMeal` had nothing to
+    write, and it wrote nothing — reporting success and closing the sheet on a meal that did
+    not exist. `planMeal` now says whether it planned anything and the action 409s when it
+    didn't.
+    The shopping add stays a **second** transaction, which is a deliberate deviation from
+    ARCHITECTURE's "anything touching more than one table … is a service function using a
+    transaction" (which names this very case). `services/shopping.ts` `addIngredients` opens
+    its own transaction and fires its own notification, and one Drizzle transaction cannot
+    start inside another; more to the point, if the shopping insert fails the better outcome is
+    a planned dinner without its ingredients, not a lost dinner. Rolling both back would undo
+    the thing the person actually asked for.
+74. **"Added by Elisabeth", not the design's "Added by E".** [7a] and SPEC §4.5 both write the
+    initial, and it fits the meta row more tidily — but initials collide (Lukas and Lisa are
+    both "L") and the recipe view is the one place the app says who added a thing, so an
+    ambiguous credit is worse than a wrapped line. The row is `flex-wrap`, so a long name wraps
+    rather than pushing the page sideways at 390px.
+
+75. **The podium ranks by competition, arranges outwards from the winner, and hands a tie's
+    crown to the earlier `joinedAt`.** 240 / 240 / 160 ranks 1 · 1 · 3: tied housemates get
+    identical heights, identical numerals and both wear their own colour, because the alternative
+    (breaking the tie for the layout) would draw a leader who isn't one. Exactly one crown
+    survives that, and it goes to whoever has lived here longest — the same tiebreak rotation
+    and the avatar stack already use — rather than none: the crown is the card's focal point and
+    a podium that loses it whenever two people draw looks broken rather than even-handed. Home's
+    strip still says "You're tied this month" [8b], which is the honest sentence and doesn't
+    contradict the ornament. Columns are placed by putting 1st in the middle and alternating
+    outwards (2 · 1 · 3, then 4 · 2 · 1 · 3 · 5), except at two members, where there is no middle
+    and the winner takes the left — a leaderboard rather than a podium. The markup stays in
+    _rank_ order and CSS `order` does the arranging, so a screen reader hears the standings
+    rather than the choreography. A month nobody has scored in yet (the 1st, [8a]'s "empty but
+    valid") drops the crown and the numerals and levels the plinths: a rank of 1 for everyone at
+    zero would be a claim about a month that hasn't happened.
+76. **The history feed pages by month, and the window lives in the URL.** "Load more" hands
+    back a _month_ (`?from=2026-06-01`) rather than the next _n_ rows: a month is a landmark you
+    can picture before you tap, and SPEC §5.8 already offers the choice. In the URL rather than
+    in client state so the view survives a refresh, a share and the back button and works with
+    no JavaScript — the button is a plain `<a>` (`data-sveltekit-noscroll`, so the page doesn't
+    jump back to the podium). The button names the next month that _actually holds something_,
+    found with one `max(completedAt)` query below the window, so a household that went quiet
+    over the summer doesn't need three taps to reach one June evening. The podium is always the
+    current month regardless of how far the feed has been paged back — "This month" is the
+    scoreboard, not a cursor.
+
+77. **Role checks live in the service, inside the transaction.** Plan 10's plan said "all with
     role checks in the service (never trust the client)", and the shape that keeps that true is
     `requireOwner(tx, householdId, actorMemberId)` as the first statement of the same
     transaction that writes — not a check in the form action, which the next action to be
@@ -343,7 +457,7 @@ Agents: when you make a judgment call that isn't in SPEC/ARCHITECTURE, **append 
     403 and an unchanged roster. Regenerating the invite code became owner-only too, which #10
     implied and the service didn't enforce — any member may pass the live code around, only the
     owner decides which code is live.
-63. **The holiday pause is one component in two surfaces.** SPEC §6 says Settings offers "the
+78. **The holiday pause is one component in two surfaces.** SPEC §6 says Settings offers "the
     same control as 5.5", and the cheapest way to make that a fact rather than a resemblance is
     `components/AwayControl.svelte` — the block plan 04 wrote inside `SnoozeSheet`, lifted out
     with a `surface` prop (`sheet` keeps its sunken well [4c]; `row` goes flat inside Settings'
@@ -351,7 +465,7 @@ Agents: when you make a judgment call that isn't in SPEC/ARCHITECTURE, **append 
     pages' actions call the same `setAway`, so there is one answer to "am I away?" and no way
     for the two screens to drift. It sits beside `EnablePush` at the top of `components/` for
     the same reason: shared by a tab and by Settings, owned by neither.
-64. **Leaving asks one of three questions.** [6d] draws the member case only, and the other two
+79. **Leaving asks one of three questions.** [6d] draws the member case only, and the other two
     can't borrow its copy. The **last member** takes the household with them — nothing would be
     left to belong to it — so the confirm says "leaving deletes {household} for good … this
     can't be undone" and the button reads "Delete household & leave"; promising that "your
@@ -369,7 +483,7 @@ Agents: when you make a judgment call that isn't in SPEC/ARCHITECTURE, **append 
     the only one here now — reload and confirm again" rather than silently doing the worse thing.
     The other direction needs no guard: over-warning and then merely leaving costs nobody
     anything.
-65. **Three shared components grew rather than being forked** (again — cf. #53). `BottomSheet`
+80. **Three shared components grew rather than being forked** (again — cf. #53). `BottomSheet`
     took a `lead` snippet and a `subtitle`, which is [6c]'s header: a 52px avatar beside the
     name, with "Member · joined Jul 4 · 210 pts" under it. `StepHeader`'s `step` became
     optional, so the invite screen reached from Settings → Members shows a bare back chevron
@@ -379,7 +493,7 @@ Agents: when you make a judgment call that isn't in SPEC/ARCHITECTURE, **append 
     that changed meaning: [6c]'s flat "210 pts" is rendered as "{n} pts this month", because
     every point total in this app is the current month's (→ #9) and a bare "210 pts" beside a
     join date reads like a lifetime score.
-66. **Settings stays behind the Home avatar stack** (amends #57, which let plan 10 move it).
+81. **Settings stays behind the Home avatar stack** (amends #57, which let plan 10 move it).
     The plan suggested "a small gear/avatar affordance — add it", but [8b] draws exactly one
     thing beside the greeting and it is the household's faces; a gear next to them would be a
     second door to the same room and a shape the design never uses. The stack's `aria-label`

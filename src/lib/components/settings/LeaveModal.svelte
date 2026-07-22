@@ -83,7 +83,7 @@
 			}}
 		>
 			<!-- What this confirm promised. The service only deletes a household
-				 when the screen said it would (→ DECISIONS #64). -->
+				 when the screen said it would (→ DECISIONS #79). -->
 			<input type="hidden" name="mode" value={mode} />
 			<Button type="submit" variant="danger" disabled={submitting}>
 				{mode === 'last' ? 'Delete household & leave' : 'Leave household'}

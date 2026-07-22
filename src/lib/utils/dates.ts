@@ -59,6 +59,20 @@ export function startOfMonth(date: CalendarDate): CalendarDate {
 	return `${date.slice(0, 7)}-01`;
 }
 
+/**
+ * Which day of the week `date` falls on, **Monday = 0** (→ SPEC §8: "weeks start
+ * Monday"). Read off a UTC midnight, so no timezone gets a say in it — the day
+ * of the week is a property of the calendar date itself.
+ */
+export function weekdayIndex(date: CalendarDate): number {
+	return (atUtcMidnight(date).getUTCDay() + 6) % 7;
+}
+
+/** The Monday of `date`'s week — where the Cooking tab's 7-day strip starts. */
+export function startOfWeek(date: CalendarDate): CalendarDate {
+	return addDays(date, -weekdayIndex(date));
+}
+
 /* ── Calendar arithmetic ──────────────────────────────────────────────────── */
 
 /**
@@ -111,13 +125,80 @@ export function formatWeekday(date: CalendarDate): string {
 	);
 }
 
-/** "Mon 14 Jul" — the history feed's day stamp [05]. */
-export function formatDayStamp(date: CalendarDate): string {
-	return formatter('day-stamp', 'en-GB', {
+/** "MON" — the Cooking tab's day strip and meal rows [04]. */
+export function formatWeekdayShort(date: CalendarDate): string {
+	return formatWeekday(date).toUpperCase();
+}
+
+/** "Thursday" — the plan-a-meal sheet's title [3d]. */
+export function formatWeekdayLong(date: CalendarDate): string {
+	return formatter('weekday-long', 'en-US', { timeZone: 'UTC', weekday: 'long' }).format(
+		atUtcMidnight(date)
+	);
+}
+
+/** The day of the month without its leading zero — "14", the strip's number [04]. */
+export function dayOfMonth(date: CalendarDate): string {
+	return String(Number(date.slice(8)));
+}
+
+/**
+ * What month a span of days is in: "July" while it stays in one, "Jun – Jul"
+ * when the week straddles two. The Cooking header shows this beside "This week"
+ * [04], where a week that crosses the turn of the month would otherwise be
+ * labelled with whichever end we happened to pick.
+ */
+export function formatMonthRange(from: CalendarDate, to: CalendarDate): string {
+	const sameMonth = from.slice(0, 7) === to.slice(0, 7);
+	const style = sameMonth ? 'long' : 'short';
+	const month = (date: CalendarDate) =>
+		formatter(`month-${style}`, 'en-US', { timeZone: 'UTC', month: style }).format(
+			atUtcMidnight(date)
+		);
+
+	return sameMonth ? month(from) : `${month(from)} – ${month(to)}`;
+}
+
+/** "Mon 14 Jul" — the history feed's day stamp [05] [8a]. */
+export function formatDayStamp(date: CalendarDate, withYear = false): string {
+	return formatter(withYear ? 'day-stamp-year' : 'day-stamp', 'en-GB', {
 		timeZone: 'UTC',
 		weekday: 'short',
 		day: 'numeric',
-		month: 'short'
+		month: 'short',
+		...(withYear ? { year: 'numeric' } : {})
+	}).format(atUtcMidnight(date));
+}
+
+/**
+ * How the history feed heads a day: "Today", "Yesterday", "Mon 14 Jul" [8a].
+ * The year appears once you've paged back past New Year, where a bare "Mon 14
+ * Jul" would claim to be four months away rather than a year and four months.
+ */
+export function formatDayLabel(date: CalendarDate, today: CalendarDate): string {
+	const days = daysBetween(today, date);
+
+	if (days === 0) return 'Today';
+	if (days === -1) return 'Yesterday';
+
+	return formatDayStamp(date, date.slice(0, 4) !== today.slice(0, 4));
+}
+
+/**
+ * A month by name — "June", or "June 2025" once it isn't this year. Names the
+ * month the history feed's "load more" would reveal, where "Jun 1" would read
+ * as a single day rather than a month's worth (→ `formatShortDate`).
+ *
+ * Distinct from `formatMonthRange`, which labels a *span* and never carries a
+ * year: this one has to survive paging back across New Year.
+ */
+export function formatMonthName(date: CalendarDate, today: CalendarDate): string {
+	const sameYear = date.slice(0, 4) === today.slice(0, 4);
+
+	return formatter(sameYear ? 'month-name' : 'month-name-year', 'en-US', {
+		timeZone: 'UTC',
+		month: 'long',
+		...(sameYear ? {} : { year: 'numeric' })
 	}).format(atUtcMidnight(date));
 }
 

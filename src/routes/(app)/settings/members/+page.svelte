@@ -36,7 +36,7 @@
 	backLabel="Back to settings"
 />
 
-<RowGroup>
+<RowGroup list>
 	{#each data.roster as member (member.id)}
 		<MemberRow
 			{member}

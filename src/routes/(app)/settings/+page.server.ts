@@ -178,7 +178,7 @@ export const actions: Actions = {
 
 		// Which of [6d]'s two sentences the confirm actually showed. The service
 		// refuses to delete a household on the strength of a screen that promised
-		// "your points stay with the household" (→ DECISIONS #64).
+		// "your points stay with the household" (→ DECISIONS #79).
 		const expectDelete = form.get('mode') === 'last';
 
 		try {

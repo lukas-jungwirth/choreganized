@@ -52,16 +52,16 @@ it's reached from here (→ DECISIONS #28).
   `listMemberProfiles`, and an owner check on `revokeInviteCode`/`regenerateInviteCode`, which
   had none. **The role rules live in the service**, next to the write: `requireOwner(tx, …)`
   runs inside the same transaction as the update, so an action that forgot to ask still can't
-  make the write happen (→ DECISIONS #62). Four new `HouseholdError` codes carry the refusals
+  make the write happen (→ DECISIONS #77). Four new `HouseholdError` codes carry the refusals
   out to the actions, which turn them into 403/404/409s.
 - **The holiday pause is one component now** — `components/AwayControl.svelte`, lifted out of
   `SnoozeSheet` and given a `surface` prop: the sunken well under [4c]'s presets, or a plain
   row inside Settings' Away mode group [6a]. It posts to `?/away` wherever it sits, and both
   pages' actions call `setAway`, so "the same state" is structural rather than a promise
-  (→ #63).
+  (→ #78).
 - **Leaving asks three different questions** [6d] — the design's copy for a member, a stronger
   "this deletes {household} for good" for the last one out, and, for an owner with housemates,
-  no way out at all: a "Hand over the house first" card pointing at Members (→ #64).
+  no way out at all: a "Hand over the house first" card pointing at Members (→ #79).
 - **Removal is `departMember`**, shared by "Remove from household" and leaving: their tasks go
   to **Anyone** and lose `rotate` (nothing to alternate with), the membership row goes, and
   every history row keeps its `memberName` snapshot with `memberId` nulled by the FK — the
@@ -69,10 +69,10 @@ it's reached from here (→ DECISIONS #28).
 - **Two shared components grew rather than being forked**: `BottomSheet` took a `lead` snippet
   and a `subtitle` for [6c]'s avatar-and-meta header, and `StepHeader`'s `step` became optional
   so the invite screen reached from Members shows a back chevron instead of "Step 2 of 2"
-  (→ #65). The two name limits moved into `utils/household.ts`, where onboarding's three
+  (→ #80). The two name limits moved into `utils/household.ts`, where onboarding's three
   screens now read them from as well.
 - **The entry point stayed the Home avatar stack**, which plan 05 put there: [8b] draws no gear
-  beside the greeting, and the design's own door into [6a] is the household's faces (→ #66,
+  beside the greeting, and the design's own door into [6a] is the household's faces (→ #81,
   amending #57).
 - Notification preferences write the same `NotificationPref` column names `push.ts` filters
   sends on, so a switch here and a `pref` there cannot drift apart.
@@ -120,7 +120,7 @@ the real UI and then re-read out of SQLite.
   dropped to zero rows while the `user`/`session` rows survived, and the browser landed on
   "Welcome, Lukas — Create or join". A leave posted **without** the confirm's `mode=last` while
   actually being the last member (the stale-page case) answered **409** and deleted nothing
-  (→ DECISIONS #64).
+  (→ DECISIONS #79).
 - **Self-correcting switches** (added in review): with `away_until` cleared out of band — what
   another device would do — the next load flowed through and the Settings toggle turned itself
   off, instead of going on claiming a holiday the database had ended.

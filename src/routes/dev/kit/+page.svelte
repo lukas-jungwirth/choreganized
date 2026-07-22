@@ -17,6 +17,8 @@
 	import PotIcon from '$lib/components/icons/PotIcon.svelte';
 	import PageHeader from '$lib/components/shell/PageHeader.svelte';
 	import SubHeader from '$lib/components/shell/SubHeader.svelte';
+	import HistoryRow from '$lib/components/tasks/HistoryRow.svelte';
+	import Podium from '$lib/components/tasks/Podium.svelte';
 	import Avatar from '$lib/components/ui/Avatar.svelte';
 	import AvatarStack from '$lib/components/ui/AvatarStack.svelte';
 	import Banner from '$lib/components/ui/Banner.svelte';
@@ -31,11 +33,13 @@
 	import FAB from '$lib/components/ui/FAB.svelte';
 	import ProgressBar from '$lib/components/ui/ProgressBar.svelte';
 	import RowGroup from '$lib/components/ui/RowGroup.svelte';
+	import SearchField from '$lib/components/ui/SearchField.svelte';
 	import SegmentedControl from '$lib/components/ui/SegmentedControl.svelte';
 	import Select from '$lib/components/ui/Select.svelte';
 	import Stepper from '$lib/components/ui/Stepper.svelte';
 	import TextField from '$lib/components/ui/TextField.svelte';
 	import Toggle from '$lib/components/ui/Toggle.svelte';
+	import type { FeedEntry, Podium as PodiumData } from '$lib/server/services/history';
 	import { addDays, formatDateLabel } from '$lib/utils/dates';
 	import { UNITS } from '$lib/utils/shopping';
 	import Bell from '@lucide/svelte/icons/bell';
@@ -51,6 +55,72 @@
 		{ id: 'm', displayName: 'Mira', color: 'var(--member-blue)' }
 	];
 
+	/**
+	 * Podiums as the service hands them over — `entries` in rank order,
+	 * `position` doing the arranging (→ services/history.ts).
+	 */
+	const PODIUM_THREE: PodiumData = {
+		entries: [
+			{ ...column('l', 240), rank: 1, position: 1, crowned: true },
+			{ ...column('e', 210), rank: 2, position: 0, crowned: false },
+			{ ...column('m', 160), rank: 3, position: 2, crowned: false }
+		],
+		resetsOn: '2026-08-01',
+		leaderless: false
+	};
+
+	const PODIUM_TIED: PodiumData = {
+		entries: [
+			{ ...column('l', 180), rank: 1, position: 0, crowned: true },
+			{ ...column('e', 180), rank: 1, position: 1, crowned: false }
+		],
+		resetsOn: '2026-08-01',
+		leaderless: false
+	};
+
+	const PODIUM_LEADERLESS: PodiumData = {
+		entries: [
+			{ ...column('l', 0), rank: 1, position: 0, crowned: false },
+			{ ...column('e', 0), rank: 1, position: 1, crowned: false }
+		],
+		resetsOn: '2026-08-01',
+		leaderless: true
+	};
+
+	function column(id: string, points: number) {
+		const member = MEMBERS.find((entry) => entry.id === id) ?? MEMBERS[0];
+		return { memberId: member.id, displayName: member.displayName, color: member.color, points };
+	}
+
+	const FEED: FeedEntry[] = [
+		{
+			id: 'f1',
+			taskName: 'Change the bedsheets',
+			memberName: 'Lukas',
+			memberColor: 'var(--member-sage)',
+			points: 20,
+			time: '8:20'
+		},
+		{
+			id: 'f2',
+			taskName: 'Water the plants',
+			memberName: 'Elisabeth',
+			memberColor: 'var(--member-terracotta)',
+			points: 5,
+			time: '7:45'
+		},
+		{
+			// A housemate who has left: the snapshot keeps their name, the colour
+			// is gone with their row.
+			id: 'f3',
+			taskName: 'Take out recycling',
+			memberName: 'Marco',
+			memberColor: null,
+			points: 10,
+			time: '19:10'
+		}
+	];
+
 	let checked = $state(false);
 	let away = $state(false);
 	let view = $state('todo');
@@ -58,6 +128,7 @@
 	let assignee = $state('e');
 	let quantity = $state<number | null>(1);
 	let unit = $state('pcs');
+	let query = $state('');
 	let bannerBusy = $state(false);
 	let bannerDismissed = $state(false);
 
@@ -318,6 +389,34 @@
 	</section>
 
 	<section>
+		<h2>SearchField</h2>
+		<p class="note">
+			White on the paper background, sunken inside a sheet (`--input-surface`) — the recipe library
+			[7e] and the plan-a-meal sheet [3d].
+		</p>
+		<SearchField label="Search recipes" placeholder="Search recipes" bind:value={query} />
+	</section>
+
+	<section>
+		<h2>RowGroup</h2>
+		<p class="note">
+			`card` is the settings block [6a] [6b]; `sunken` is the same block inside a white sheet — the
+			••• menus [7c] and [6c]; `list` renders a `&lt;ul&gt;` for the groups whose rows are
+			`&lt;li&gt;`s (the history feed [8a], the members list [6b]).
+		</p>
+		<div class="col">
+			<RowGroup>
+				<div class="pad">Notifications</div>
+				<div class="pad">Members</div>
+			</RowGroup>
+			<RowGroup surface="sunken">
+				<div class="pad">Edit recipe</div>
+				<div class="pad">Duplicate</div>
+			</RowGroup>
+		</div>
+	</section>
+
+	<section>
 		<h2>Card</h2>
 		<div class="col">
 			<Card><div class="pad">Radius lg (22) · dashboard cards</div></Card>
@@ -346,6 +445,28 @@
 			</Button>
 			<Button variant="secondary" onclick={() => (modalOpen = true)}>Open centre modal</Button>
 		</div>
+	</section>
+
+	<section>
+		<h2>Podium [8a]</h2>
+		<p class="note">
+			Three members as the design draws them, then the two-member tie (equal columns, crown to the
+			earlier joiner → DECISIONS #75) and the 1st of the month, before anybody has scored.
+		</p>
+		<div class="col">
+			<Podium podium={PODIUM_THREE} />
+			<Podium podium={PODIUM_TIED} />
+			<Podium podium={PODIUM_LEADERLESS} />
+		</div>
+	</section>
+
+	<section>
+		<h2>HistoryRow [8a]</h2>
+		<RowGroup list>
+			{#each FEED as entry (entry.id)}
+				<HistoryRow {entry} />
+			{/each}
+		</RowGroup>
 	</section>
 
 	<section>

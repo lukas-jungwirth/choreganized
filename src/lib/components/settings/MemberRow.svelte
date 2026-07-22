@@ -2,6 +2,9 @@
 	One person in the members list [6b]: avatar, name (+ "(you)"), when they
 	moved in, and either the Owner badge or — for the owner looking at a
 	housemate — the ••• that opens the manage sheet [6c].
+
+	An `<li>`, because the roster really is a list: its `RowGroup` is the `list`
+	variant (→ plan 09).
 -->
 <script lang="ts">
 	import CrownIcon from '$lib/components/icons/CrownIcon.svelte';
@@ -26,7 +29,7 @@
 	);
 </script>
 
-<div class="member">
+<li class="member">
 	<Avatar name={member.displayName} color={member.color} size={40} />
 
 	<div class="who">
@@ -48,7 +51,7 @@
 			<MoreHorizontal size={18} strokeWidth={2.4} />
 		</button>
 	{/if}
-</div>
+</li>
 
 <style>
 	.member {
