@@ -46,18 +46,29 @@
 
 	/**
 	 * Belt and braces alongside `close` — see BottomSheet for why, including the
-	 * innermost-dialog check. A confirm raised from inside a sheet must not let
-	 * Escape dismiss the sheet underneath it, which is the very thing
-	 * `dismissible={false}` exists to prevent.
+	 * innermost-dialog check and why the listener sits on the window. A confirm
+	 * raised from inside a sheet must not let Escape dismiss the sheet
+	 * underneath it, which is the very thing `dismissible={false}` exists to
+	 * prevent.
 	 */
 	function onKeydown(event: KeyboardEvent) {
-		if (event.key !== 'Escape') return;
-		if ((event.target as Element | null)?.closest('dialog') !== dialog) return;
+		if (!open || event.key !== 'Escape') return;
+		if (!ownsEscape(event.target)) return;
 		if (dismissible) open = false;
+	}
+
+	function ownsEscape(target: EventTarget | null): boolean {
+		const from = (target as Element | null)?.closest?.('dialog') ?? null;
+		if (from) return from === dialog;
+
+		const stack = document.querySelectorAll('dialog[open]');
+		return stack[stack.length - 1] === dialog;
 	}
 </script>
 
-<!-- svelte-ignore a11y_click_events_have_key_events (Escape is handled below) -->
+<svelte:window onkeydown={onKeydown} />
+
+<!-- svelte-ignore a11y_click_events_have_key_events (Escape is handled above) -->
 <!-- svelte-ignore a11y_no_noninteractive_element_interactions -->
 <dialog
 	class="modal"
@@ -66,7 +77,6 @@
 	oncancel={(event) => !dismissible && event.preventDefault()}
 	onmousedown={onPointerDown}
 	onclick={onScrimClick}
-	onkeydown={onKeydown}
 	aria-label={label}
 >
 	{#if open}

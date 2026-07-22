@@ -11,14 +11,8 @@
  * `listOverdueForMember` (the tab badge reads the same rows) and
  * `assigneeNotAway` (the SQL half of the holiday pause).
  */
-import { and, asc, count, desc, eq, gte, isNull, lte, sql } from 'drizzle-orm';
-import {
-	formatTimeIn,
-	hourIn,
-	startOfMonth,
-	zonedStartOfDay,
-	type CalendarDate
-} from '$lib/utils/dates';
+import { and, count, desc, eq, isNull, lte } from 'drizzle-orm';
+import { formatTimeIn, hourIn, type CalendarDate } from '$lib/utils/dates';
 import { db } from '../db';
 import {
 	meals,
@@ -30,7 +24,7 @@ import {
 	type Member
 } from '../db/schema';
 import type { HouseholdMember } from './household';
-import { assigneeNotAway, type OverdueTask } from './tasks';
+import { assigneeNotAway, monthPointsByMember, type OverdueTask } from './tasks';
 
 export type TimeOfDay = 'morning' | 'afternoon' | 'evening';
 
@@ -218,25 +212,9 @@ function monthStandings(
 	timezone: string,
 	roster: HouseholdMember[]
 ): Standings | null {
-	const monthStart = zonedStartOfDay(startOfMonth(today), timezone);
-
-	const totals = db
-		.select({
-			memberId: taskCompletions.memberId,
-			points: sql<number>`sum(${taskCompletions.points})`.mapWith(Number)
-		})
-		.from(taskCompletions)
-		.where(
-			and(
-				eq(taskCompletions.householdId, householdId),
-				eq(taskCompletions.action, 'done'),
-				gte(taskCompletions.completedAt, monthStart)
-			)
-		)
-		.groupBy(taskCompletions.memberId)
-		.all();
-
-	const pointsByMember = new Map(totals.map((row) => [row.memberId, row.points]));
+	// The Tasks tab's points tiles read the same helper, so the strip and the
+	// tiles can never disagree about what somebody has scored this month.
+	const pointsByMember = monthPointsByMember(householdId, { today, timezone });
 	// The roster comes from the layout, so the avatar stack and this ranking can
 	// never be computed against two different reads of `members`.
 	const ranked = roster

@@ -7,13 +7,21 @@
  * principles"). Instants (completions, checks, reminders, timers) stay ms
  * timestamps. The two only meet in `zonedStartOfDay`.
  *
- * Everything here is `Intl`-based: no timezone database of our own, no
- * dependency. Plan 02 added the helpers Home needs; later plans extend the file
- * (recurrence math, short date formatting) rather than starting a second one.
+ * Reading the clock is `Intl`-based: no timezone database of our own. The
+ * calendar arithmetic below is date-fns on a *detached* date — see `atNoon` —
+ * so adding a month never consults a timezone at all. Plan 02 added the helpers
+ * Home needs, plan 04 the recurrence math; extend this file rather than
+ * starting a second one.
  */
+import { addDays as shiftDays, addMonths, addWeeks } from 'date-fns';
 
 /** A household-local calendar date, 'YYYY-MM-DD'. Lexicographic order = chronological order. */
 export type CalendarDate = string;
+
+/** What a recurring task repeats on. `'none'` (one-off) lives in `$lib/utils/tasks`. */
+export type IntervalUnit = 'day' | 'week' | 'month';
+
+const DAY_MS = 86_400_000;
 
 /**
  * `Intl.DateTimeFormat` construction resolves a locale and spins up an ICU
@@ -51,6 +59,115 @@ export function startOfMonth(date: CalendarDate): CalendarDate {
 	return `${date.slice(0, 7)}-01`;
 }
 
+/* ── Calendar arithmetic ──────────────────────────────────────────────────── */
+
+/**
+ * `date` moved by `count` × `unit` — the recurrence step (→ docs/DATA-MODEL.md
+ * "Completion algorithm"). Months clamp the way date-fns clamps them: a task
+ * due on the 31st and repeating monthly lands on the 28th in February and on
+ * the 31st again in March, rather than drifting three days earlier each spring.
+ */
+export function addInterval(date: CalendarDate, count: number, unit: IntervalUnit): CalendarDate {
+	const at = atNoon(date);
+	const moved =
+		unit === 'day'
+			? shiftDays(at, count)
+			: unit === 'week'
+				? addWeeks(at, count)
+				: addMonths(at, count);
+
+	return toCalendarString(moved);
+}
+
+export function addDays(date: CalendarDate, days: number): CalendarDate {
+	return addInterval(date, days, 'day');
+}
+
+/**
+ * Whole days from `from` to `to` — negative when `to` is in the past. Both are
+ * read as UTC midnights, which have no DST to lose an hour to, so the division
+ * is exact for any pair of calendar dates.
+ */
+export function daysBetween(from: CalendarDate, to: CalendarDate): number {
+	return (atUtcMidnight(to).getTime() - atUtcMidnight(from).getTime()) / DAY_MS;
+}
+
+/* ── Rendering a calendar date ────────────────────────────────────────────── */
+
+/** "Jul 14" — the design's date shorthand [3b] [4b] [4d]. */
+export function formatShortDate(date: CalendarDate, withYear = false): string {
+	return formatter(withYear ? 'short-year' : 'short', 'en-US', {
+		timeZone: 'UTC',
+		month: 'short',
+		day: 'numeric',
+		...(withYear ? { year: 'numeric' } : {})
+	}).format(atUtcMidnight(date));
+}
+
+/** "Sat" — how a due date inside the coming week reads [4a]. */
+export function formatWeekday(date: CalendarDate): string {
+	return formatter('weekday', 'en-US', { timeZone: 'UTC', weekday: 'short' }).format(
+		atUtcMidnight(date)
+	);
+}
+
+/** "Mon 14 Jul" — the history feed's day stamp [05]. */
+export function formatDayStamp(date: CalendarDate): string {
+	return formatter('day-stamp', 'en-GB', {
+		timeZone: 'UTC',
+		weekday: 'short',
+		day: 'numeric',
+		month: 'short'
+	}).format(atUtcMidnight(date));
+}
+
+/**
+ * The due half of a task's meta line (→ SPEC §5.1): "due today", "due
+ * tomorrow", "in 2 days", "3 days overdue", "Sat", "Jul 14".
+ *
+ * [4a] draws both "in 2 days" (a task due in two) and "Sat" (one due in four),
+ * so the switch from counting days to naming the day sits between them; past a
+ * week a weekday name stops being unambiguous and the date takes over. The year
+ * only appears when it isn't this one — "Jul 14" a year out would be a lie by
+ * omission.
+ */
+export function formatDueMeta(dueDate: CalendarDate, today: CalendarDate): string {
+	const days = daysBetween(today, dueDate);
+
+	if (days < 0) return days === -1 ? '1 day overdue' : `${-days} days overdue`;
+	if (days === 0) return 'due today';
+	if (days === 1) return 'due tomorrow';
+	if (days <= 3) return `in ${days} days`;
+	if (days <= 6) return formatWeekday(dueDate);
+
+	return formatShortDate(dueDate, dueDate.slice(0, 4) !== today.slice(0, 4));
+}
+
+/**
+ * A date the way a picker labels it — "Today · Jul 17", "Tomorrow · Jul 17",
+ * "Sat · Jul 19", "Jul 24" [3b] [4c]. Same near/far split as `formatDueMeta`,
+ * but always carrying the date itself: this labels a value you are choosing,
+ * where "in 2 days" alone would leave you counting.
+ */
+export function formatDateLabel(date: CalendarDate, today: CalendarDate): string {
+	const days = daysBetween(today, date);
+	const short = formatShortDate(date, date.slice(0, 4) !== today.slice(0, 4));
+
+	if (days === 0) return `Today · ${short}`;
+	if (days === 1) return `Tomorrow · ${short}`;
+	if (days === -1) return `Yesterday · ${short}`;
+	if (days > 1 && days <= 6) return `${formatWeekday(date)} · ${short}`;
+
+	return short;
+}
+
+/** Is this a well-formed 'YYYY-MM-DD' that names a real day? */
+export function isCalendarDate(value: unknown): value is CalendarDate {
+	if (typeof value !== 'string' || !/^\d{4}-\d{2}-\d{2}$/.test(value)) return false;
+	// Round-trips only if the day exists: '2026-02-31' comes back as '2026-03-03'.
+	return toCalendarString(atNoon(value)) === value;
+}
+
 /**
  * The first instant of `date` in `timezone` — i.e. the smallest instant that
  * still reads as `date` on the household's clock.
@@ -77,9 +194,8 @@ export function startOfMonth(date: CalendarDate): CalendarDate {
  * Checked exhaustively against Intl for 18 timezones × 2020–2030.
  */
 export function zonedStartOfDay(date: CalendarDate, timezone: string): Date {
-	const [year, month, day] = date.split('-').map(Number);
+	const [year, month, day] = parseParts(date);
 	const wallClock = Date.UTC(year, month - 1, day);
-	const DAY_MS = 86_400_000;
 
 	const naive = wallClock - zoneOffsetMs(new Date(wallClock), timezone);
 	const candidates = [
@@ -165,4 +281,40 @@ function zoneOffsetMs(at: Date, timezone: string): number {
 /** One numeric field out of `formatToParts` — 0 when the format omitted it. */
 function numberPart(parts: Intl.DateTimeFormatPart[], type: Intl.DateTimeFormatPartTypes): number {
 	return Number(parts.find((part) => part.type === type)?.value ?? 0);
+}
+
+/** '2026-07-17' → [2026, 7, 17]. NaNs for anything else; callers validate first. */
+function parseParts(date: CalendarDate): [number, number, number] {
+	const [year, month, day] = date.split('-').map(Number);
+	return [year, month, day];
+}
+
+/**
+ * `date` as a Date at the *runtime's* local noon — the value date-fns adds to.
+ *
+ * date-fns reads and writes its dates through `getMonth`/`setMonth`, i.e. in
+ * whatever zone the process runs in, so the Date handed to it must be built the
+ * same way (`new Date(y, m, d)`, never `Date.UTC`) or a server west of UTC
+ * would read back the previous day. Noon rather than midnight because a handful
+ * of zones skip midnight itself on the day they spring forward, and a date that
+ * doesn't exist locally silently becomes 01:00 — harmless at noon, a day out at
+ * midnight. Neither the household's timezone nor the server's ever reaches the
+ * result: the day of the month goes in and comes back out.
+ */
+function atNoon(date: CalendarDate): Date {
+	const [year, month, day] = parseParts(date);
+	return new Date(year, month - 1, day, 12);
+}
+
+/** The inverse of `atNoon` — local Y/M/D back to 'YYYY-MM-DD'. */
+function toCalendarString(at: Date): CalendarDate {
+	const month = String(at.getMonth() + 1).padStart(2, '0');
+	const day = String(at.getDate()).padStart(2, '0');
+	return `${at.getFullYear()}-${month}-${day}`;
+}
+
+/** `date` pinned to UTC — for day counting and for `Intl` with `timeZone: 'UTC'`. */
+function atUtcMidnight(date: CalendarDate): Date {
+	const [year, month, day] = parseParts(date);
+	return new Date(Date.UTC(year, month - 1, day));
 }

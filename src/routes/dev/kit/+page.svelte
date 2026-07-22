@@ -23,6 +23,7 @@
 	import CenterModal from '$lib/components/ui/CenterModal.svelte';
 	import CheckCircle from '$lib/components/ui/CheckCircle.svelte';
 	import Chip from '$lib/components/ui/Chip.svelte';
+	import DateField from '$lib/components/ui/DateField.svelte';
 	import EmptyState from '$lib/components/ui/EmptyState.svelte';
 	import FAB from '$lib/components/ui/FAB.svelte';
 	import ProgressBar from '$lib/components/ui/ProgressBar.svelte';
@@ -31,11 +32,14 @@
 	import Stepper from '$lib/components/ui/Stepper.svelte';
 	import TextField from '$lib/components/ui/TextField.svelte';
 	import Toggle from '$lib/components/ui/Toggle.svelte';
+	import { addDays, formatDateLabel } from '$lib/utils/dates';
 	import { UNITS } from '$lib/utils/shopping';
 	import Bell from '@lucide/svelte/icons/bell';
 	import Check from '@lucide/svelte/icons/check';
 	import Plus from '@lucide/svelte/icons/plus';
 	import Send from '@lucide/svelte/icons/send';
+	import { untrack } from 'svelte';
+	import type { PageProps } from './$types';
 
 	const MEMBERS = [
 		{ id: 'l', displayName: 'Lukas', color: 'var(--member-sage)' },
@@ -53,6 +57,16 @@
 	let sheetOpen = $state(false);
 	let modalOpen = $state(false);
 	let confirmOpen = $state(false);
+
+	// The gallery has no household, so `today` comes from the load (one clock for
+	// SSR and hydration) — enough to see DateField's caption change as you pick.
+	let { data }: PageProps = $props();
+	let due = $state(
+		addDays(
+			untrack(() => data.today),
+			1
+		)
+	);
 </script>
 
 <svelte:head><title>UI kit · dev</title></svelte:head>
@@ -158,6 +172,15 @@
 	</section>
 
 	<section>
+		<h2>DateField</h2>
+		<DateField label="First due" bind:value={due} caption={formatDateLabel(due, data.today)} />
+		<p class="note">
+			A real `input type="date"` — the platform picker, the form action, and a friendly reading of
+			the value on the right. The whole row opens the picker.
+		</p>
+	</section>
+
+	<section>
 		<h2>SegmentedControl</h2>
 		<SegmentedControl
 			label="Task view"
@@ -165,6 +188,18 @@
 			options={[
 				{ value: 'todo', label: 'To do · 4' },
 				{ value: 'history', label: 'History' }
+			]}
+		/>
+		<p class="note">
+			Give the options an `href` and the same shape becomes navigation — real links, real
+			`aria-current`. That's the Tasks tab's To do / History switch:
+		</p>
+		<SegmentedControl
+			label="Task view (links)"
+			value="todo"
+			options={[
+				{ value: 'todo', label: 'To do · 4', href: '/tasks' },
+				{ value: 'history', label: 'History', href: '/tasks/history' }
 			]}
 		/>
 	</section>
@@ -353,7 +388,7 @@
 	}
 
 	.note {
-		margin: 0;
+		margin: 12px 0;
 		font-size: 12.5px;
 		line-height: 1.5;
 		color: var(--text-5);

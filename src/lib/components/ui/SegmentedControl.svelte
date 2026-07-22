@@ -1,9 +1,18 @@
 <!--
 	Two-or-three-way switch on a sunken track — "To do · 4 / History" [4a].
-	Bind `value`; the options carry their own labels (counts included).
+
+	Two modes, because the design uses the shape for two different things. Give
+	the options an `href` and the control becomes navigation: real links, real
+	`aria-current`, works without JavaScript, and `value` just says which page
+	you're on. Without one it's a local switch you `bind:value` to.
 -->
 <script lang="ts">
-	type Option = { value: string; label: string };
+	type Option = {
+		value: string;
+		label: string;
+		/** Set on every option to make the control navigate rather than switch. */
+		href?: string;
+	};
 
 	type Props = {
 		options: Option[];
@@ -13,22 +22,37 @@
 	};
 
 	let { options, value = $bindable(), label }: Props = $props();
+
+	const navigational = $derived(options.some((option) => option.href));
 </script>
 
-<div class="track" role="tablist" aria-label={label}>
+{#snippet segments()}
 	{#each options as option (option.value)}
-		<button
-			type="button"
-			role="tab"
-			class="segment"
-			class:active={option.value === value}
-			aria-selected={option.value === value}
-			onclick={() => (value = option.value)}
-		>
-			{option.label}
-		</button>
+		{@const active = option.value === value}
+		{#if option.href}
+			<a class="segment" class:active href={option.href} aria-current={active ? 'page' : undefined}>
+				{option.label}
+			</a>
+		{:else}
+			<button
+				type="button"
+				role={navigational ? undefined : 'tab'}
+				class="segment"
+				class:active
+				aria-selected={navigational ? undefined : active}
+				onclick={() => (value = option.value)}
+			>
+				{option.label}
+			</button>
+		{/if}
 	{/each}
-</div>
+{/snippet}
+
+{#if navigational}
+	<nav class="track" aria-label={label}>{@render segments()}</nav>
+{:else}
+	<div class="track" role="tablist" aria-label={label}>{@render segments()}</div>
+{/if}
 
 <style>
 	.track {
@@ -45,6 +69,7 @@
 		border-radius: 10px;
 		font-size: 13.5px;
 		font-weight: 600;
+		text-align: center;
 		color: var(--text-4);
 		transition: background 140ms ease-out;
 	}

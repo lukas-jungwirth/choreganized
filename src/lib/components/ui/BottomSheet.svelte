@@ -60,20 +60,40 @@
 	 * built in) never delivers that event. Handling the keystroke as well costs
 	 * nothing: both paths only set the same flag.
 	 *
+	 * On the window rather than on the dialog, because a form action that
+	 * re-renders its own submit button drops focus back to `<body>` — the sheet
+	 * is still up, but a keystroke aimed at the dialog never reaches it. Plan
+	 * 04's holiday pause is exactly that shape: it posts and stays open.
+	 */
+	function onKeydown(event: KeyboardEvent) {
+		if (!open || event.key !== 'Escape') return;
+		if (!ownsEscape(event.target)) return;
+		open = false;
+	}
+
+	/**
 	 * Only the *innermost* dialog answers. A confirm rendered inside this sheet
 	 * is a DOM descendant, so without this check its Escape would close the
 	 * sheet — and the half-filled form in it — along with the confirm. Asking
 	 * where the keystroke came from is sturdier than `stopPropagation`, which
 	 * Svelte's delegated keydown does not honour between two handlers.
+	 *
+	 * When it came from outside every dialog (focus on `<body>`), "innermost" is
+	 * the last open dialog in document order — which is the same thing for the
+	 * one nesting we build, since the inner one is rendered inside the outer.
 	 */
-	function onKeydown(event: KeyboardEvent) {
-		if (event.key !== 'Escape') return;
-		if ((event.target as Element | null)?.closest('dialog') !== dialog) return;
-		open = false;
+	function ownsEscape(target: EventTarget | null): boolean {
+		const from = (target as Element | null)?.closest?.('dialog') ?? null;
+		if (from) return from === dialog;
+
+		const stack = document.querySelectorAll('dialog[open]');
+		return stack[stack.length - 1] === dialog;
 	}
 </script>
 
-<!-- svelte-ignore a11y_click_events_have_key_events (Escape is handled below) -->
+<svelte:window onkeydown={onKeydown} />
+
+<!-- svelte-ignore a11y_click_events_have_key_events (Escape is handled above) -->
 <!-- svelte-ignore a11y_no_noninteractive_element_interactions -->
 <dialog
 	class="sheet"
@@ -81,7 +101,6 @@
 	onclose={() => (open = false)}
 	onmousedown={onPointerDown}
 	onclick={onScrimClick}
-	onkeydown={onKeydown}
 	aria-label={title}
 >
 	{#if open}

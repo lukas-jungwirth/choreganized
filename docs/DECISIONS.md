@@ -205,6 +205,63 @@ Agents: when you make a judgment call that isn't in SPEC/ARCHITECTURE, **append 
     (BottomSheet's own children are already mounted per opening, but the component around them
     is not).
 
+47. **"Paused" is a section, and it means _away and already due_.** SPEC §5.5 says an away
+    member's tasks "render dimmed/paused instead of overdue" without saying where they go; a
+    paused task left in **Overdue** would make the section header lie, and one dropped into
+    **Today** would be a different lie. So the to-do list has a fifth section, **Paused**, sat
+    after Upcoming because de-emphasis is the entire point of the holiday pause, and the row's
+    meta reads "Monthly · paused until Jul 29" rather than counting days it isn't behind.
+    `TaskListItem.paused` carries the "and already due" half, so the section and the treatment
+    the row wears are one question asked once — an away member's task due next week is simply
+    upcoming, because nothing is being suppressed yet. Undated one-offs are never paused for the
+    same reason. The sixth section, **No date**, is the undated one-offs SPEC §5.1 asks for.
+48. **Undo's snapshot round-trips through the browser.** Reverting a completion needs the due
+    date, assignee and reminder flags the task had a moment ago — none of which are derivable
+    afterwards, and for a one-off the row is gone entirely. `completeTask` returns a full
+    `TaskSnapshot` with the celebration payload; [4d]'s Undo posts it back as one JSON field.
+    The alternative, parking snapshots in a server-side `Map`, loses every pending undo to a
+    redeploy and needs a TTL nobody will ever tune. Nothing in the snapshot is a capability the
+    same member doesn't already have through the edit sheet, and `undoCompletion` still scopes
+    the completion id and every member id in it to their household. A one-off can only ever
+    carry the one completion being undone, so re-inserting the row under its original id costs
+    no history links.
+49. **"Skip this time" is hidden on one-offs.** "This time" presupposes a next time; a one-off
+    you don't intend to do is deleted, which is a row away in the same sheet. The service still
+    handles the case uniformly (skip is completion with `points 0` and `action 'skipped'`), so
+    only the affordance is conditional.
+50. **The due meta counts days, then names the day, then gives the date.** [4a] draws both
+    "in 2 days" and "Sat" without saying where one becomes the other, so: today/tomorrow by
+    name, 2–3 days counted, 4–6 days as a weekday, a week or more as "Jul 14" — and with the
+    year attached once it isn't this one. `formatDateLabel` is the same scale for a value you're
+    _choosing_ ("Tomorrow · Jul 17" [3b]), where the date has to stay visible.
+51. **The Toggle's knob was eating the tap.** `input:checked + .track .knob` has a `transform`,
+    which promotes the knob into the positioned-element painting step — above the invisible
+    `<input>` stretched over the switch. Once a toggle was **on**, a tap in its centre (where a
+    thumb lands) hit the knob and did nothing: it could be switched on but never off. Found by
+    walking [4c]'s holiday pause. `pointer-events: none` on the track makes the input the only
+    hit target in both states. It shipped in plan 02 and would have hit every notification
+    preference in plan 10.
+52. **Escape listens on the window, not on the dialog** (amends #36). A form action that
+    re-renders its own submit button drops focus to `<body>`, so a keystroke aimed at a sheet
+    that is still on screen never reaches its `keydown` handler — [4c]'s holiday pause is
+    exactly that shape, since it posts and stays open. Both dialogs now listen on the window and
+    ask `ownsEscape`: the innermost dialog answers, and when the keystroke came from outside
+    every dialog, "innermost" is the last open `<dialog>` in document order — the same thing for
+    the one nesting we build, since a confirm is rendered inside its sheet.
+53. **Two shared components grew rather than being forked.** `SegmentedControl` takes an `href`
+    per option and becomes real navigation (`<nav>` + `<a aria-current>`), which is what the
+    To do / History switch is — `bind:value` with a `goto` in an effect would have been a
+    router pretending to be a control. New: **`DateField`**, TextField's shape around a real
+    `<input type="date">` — it posts with the form action and opens the platform picker, and
+    the browser's own picker button is stretched invisibly across the row so the whole field
+    opens it, which is what the chevron in [3b] promises. The friendly reading ("Tomorrow ·
+    Jul 17") sits beside the value rather than replacing it.
+54. **A new task defaults to Anyone · every week · due today · Medium.** [3b] draws an example
+    (Elisabeth, every 2 weeks, tomorrow), not a default. Anyone asks nothing of you and matches
+    the starters; "every week" is what this app is for; **today** rather than the mockup's
+    tomorrow because the starters are due today (#22) and one screen shouldn't disagree with
+    the other about what "add a chore" means.
+
 ## Open questions (non-blocking, defaults chosen)
 
 - **Production domain** — invite links & OAuth redirect need the final origin (design shows
