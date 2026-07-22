@@ -18,10 +18,14 @@
 		title: string;
 		/** Uppercase micro-label above the title — what the sheet acts on [4c]. */
 		eyebrow?: string;
+		/** A line under the title — who this person is [6c], not what to do. */
+		subtitle?: string;
+		/** Leading element beside the title, e.g. the member's avatar [6c]. */
+		lead?: Snippet;
 		children: Snippet;
 	};
 
-	let { open = $bindable(), title, eyebrow, children }: Props = $props();
+	let { open = $bindable(), title, eyebrow, subtitle, lead, children }: Props = $props();
 
 	let dialog: HTMLDialogElement | undefined = $state();
 
@@ -106,10 +110,12 @@
 	{#if open}
 		<div class="panel">
 			<div class="handle"></div>
-			<header>
-				<div>
+			<header class:with-lead={lead}>
+				{#if lead}{@render lead()}{/if}
+				<div class="titles">
 					{#if eyebrow}<p class="eyebrow">{eyebrow}</p>{/if}
 					<h2>{title}</h2>
+					{#if subtitle}<p class="subtitle">{subtitle}</p>{/if}
 				</div>
 				<button type="button" class="close" aria-label="Close" onclick={() => (open = false)}>
 					<X size={13} strokeWidth={2.4} />
@@ -174,6 +180,17 @@
 		margin-bottom: 20px;
 	}
 
+	/* An avatar next to a two-line title reads centred, not top-aligned [6c]. */
+	.with-lead {
+		align-items: center;
+		gap: 14px;
+	}
+
+	/* Display names and task names are free text — let them wrap. */
+	.titles {
+		min-width: 0;
+	}
+
 	.eyebrow {
 		margin: 0 0 3px;
 		font-size: 11px;
@@ -185,6 +202,13 @@
 
 	h2 {
 		font-size: 22px;
+		overflow-wrap: anywhere;
+	}
+
+	.subtitle {
+		margin: 3px 0 0;
+		font-size: 13px;
+		color: var(--text-4);
 	}
 
 	.close {

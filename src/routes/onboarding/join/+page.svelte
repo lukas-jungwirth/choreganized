@@ -14,6 +14,7 @@
 	import ColorPicker from '$lib/components/ui/ColorPicker.svelte';
 	import TextField from '$lib/components/ui/TextField.svelte';
 	import { firstFreeColor } from '$lib/member-colors';
+	import { DISPLAY_NAME_MAX } from '$lib/utils/household';
 	import { INVITE_CODE_LENGTH } from '$lib/utils/invite-code';
 	import { untrack } from 'svelte';
 	import type { PageProps, SubmitFunction } from './$types';
@@ -70,7 +71,7 @@
 				label="Your display name"
 				name="displayName"
 				bind:value={displayName}
-				maxlength={40}
+				maxlength={DISPLAY_NAME_MAX}
 				autocomplete="given-name"
 				required
 			/>

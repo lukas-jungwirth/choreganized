@@ -8,10 +8,13 @@ import type { PageServerLoad } from './$types';
 
 /**
  * Step 2 of creating a household — so unlike the other onboarding screens this
- * one *requires* a membership. Plan 10's "Invite housemate" links here too.
+ * one *requires* a membership. Settings → Members links here too [6b], and says
+ * so with `?from=members`: same screen, but you already live here, so it closes
+ * with "Done" back to the members list rather than "Move in" (→ DECISIONS #28).
  */
 export const load: PageServerLoad = (event) => {
 	const { householdId, member } = requireMember(event);
+	const fromMembers = event.url.searchParams.get('from') === 'members';
 
 	const household = db.select().from(households).where(eq(households.id, householdId)).get();
 	if (!household) redirect(303, '/onboarding');
@@ -29,6 +32,7 @@ export const load: PageServerLoad = (event) => {
 		.all();
 
 	return {
+		fromMembers,
 		householdName: household.name,
 		inviteCode: household.inviteCode,
 		formattedCode: household.inviteCode ? formatInviteCode(household.inviteCode) : null,

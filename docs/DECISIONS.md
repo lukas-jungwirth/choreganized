@@ -331,6 +331,61 @@ Agents: when you make a judgment call that isn't in SPEC/ARCHITECTURE, **append 
     live in `services/reminders.ts` rather than `utils/tasks.ts`: it is the one piece of task
     copy the browser never renders, and a keyword table is not worth shipping to a phone.
 
+62. **Role checks live in the service, inside the transaction.** Plan 10's plan said "all with
+    role checks in the service (never trust the client)", and the shape that keeps that true is
+    `requireOwner(tx, householdId, actorMemberId)` as the first statement of the same
+    transaction that writes — not a check in the form action, which the next action to be
+    written can forget. Every owner-only path goes through it (rename, transfer, remove, revoke,
+    regenerate), and `updateProfile`/`setNotificationPref` need no check at all because they
+    only ever take the id `requireMember` just handed the action. The refusals leave as
+    `HouseholdError` codes (`not-owner`, `not-member`, `transfer-first`, `remove-self`) and the
+    actions map them to 403/404/409 with copy; a member posting `?/makeOwner` by hand gets the
+    403 and an unchanged roster. Regenerating the invite code became owner-only too, which #10
+    implied and the service didn't enforce — any member may pass the live code around, only the
+    owner decides which code is live.
+63. **The holiday pause is one component in two surfaces.** SPEC §6 says Settings offers "the
+    same control as 5.5", and the cheapest way to make that a fact rather than a resemblance is
+    `components/AwayControl.svelte` — the block plan 04 wrote inside `SnoozeSheet`, lifted out
+    with a `surface` prop (`sheet` keeps its sunken well [4c]; `row` goes flat inside Settings'
+    white group [6a]). It posts to `?/away` relative to whatever page renders it, and both
+    pages' actions call the same `setAway`, so there is one answer to "am I away?" and no way
+    for the two screens to drift. It sits beside `EnablePush` at the top of `components/` for
+    the same reason: shared by a tab and by Settings, owned by neither.
+64. **Leaving asks one of three questions.** [6d] draws the member case only, and the other two
+    can't borrow its copy. The **last member** takes the household with them — nothing would be
+    left to belong to it — so the confirm says "leaving deletes {household} for good … this
+    can't be undone" and the button reads "Delete household & leave"; promising that "your
+    points stay with the household" there would be a lie about a household that is about to
+    stop existing. An **owner with housemates** is refused outright (→ #11): the modal has no
+    destructive button at all, just "Hand over the house first" and a link to Members, because
+    an error message after the fact is a worse answer than not offering the action. The service
+    enforces the same order — `?/leave` posted by hand as the owner answers 409 — and checks
+    "am I the last one" _before_ "am I the owner", so the last member out is never told to
+    transfer to nobody.
+    **The confirm posts which sentence it showed** (`mode`), and `leaveHousehold` only deletes a
+    household when that sentence was the destructive one. The roster it decided from is loaded
+    data: a page left open while the last housemate leaves would show "your points stay with the
+    household" over a button that now deletes everything. The mismatch is refused with "you're
+    the only one here now — reload and confirm again" rather than silently doing the worse thing.
+    The other direction needs no guard: over-warning and then merely leaving costs nobody
+    anything.
+65. **Three shared components grew rather than being forked** (again — cf. #53). `BottomSheet`
+    took a `lead` snippet and a `subtitle`, which is [6c]'s header: a 52px avatar beside the
+    name, with "Member · joined Jul 4 · 210 pts" under it. `StepHeader`'s `step` became
+    optional, so the invite screen reached from Settings → Members shows a bare back chevron
+    instead of claiming to be "Step 2 of 2" of an onboarding you finished weeks ago (its CTA
+    reads **Done** there, → #28). And `utils/household.ts` now holds the two name limits that
+    onboarding had declared twice and Settings would have declared a third time. The one number
+    that changed meaning: [6c]'s flat "210 pts" is rendered as "{n} pts this month", because
+    every point total in this app is the current month's (→ #9) and a bare "210 pts" beside a
+    join date reads like a lifetime score.
+66. **Settings stays behind the Home avatar stack** (amends #57, which let plan 10 move it).
+    The plan suggested "a small gear/avatar affordance — add it", but [8b] draws exactly one
+    thing beside the greeting and it is the household's faces; a gear next to them would be a
+    second door to the same room and a shape the design never uses. The stack's `aria-label`
+    already says "Settings · Household: {names}", so the affordance is announced even though it
+    looks like decoration.
+
 ## Open questions (non-blocking, defaults chosen)
 
 - **Production domain** — invite links & OAuth redirect need the final origin (design shows

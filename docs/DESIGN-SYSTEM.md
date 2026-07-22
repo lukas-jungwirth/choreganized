@@ -58,9 +58,11 @@ CenterModal**, plus `shell/TabBar` · `shell/PageHeader` and the bespoke icons i
 `components/icons/`. Plan 03: **Select · Stepper** + `shell/SubHeader`. Plan 04: **DateField**.
 Plan 05: **RowGroup**, `Banner` gained an acting/dismissable form, plus the feature component
 **`components/EnablePush`** (the push permission state machine, in a Settings row or as Home's
-one-time prompt card). Extend these rather than forking a variant; look at them side by side at
-**`/dev/kit`** (dev-only gallery, → [DECISIONS #39](DECISIONS.md)) and add to it when you add a
-component.
+one-time prompt card). Plan 10: `BottomSheet` gained `lead` + `subtitle`, `StepHeader`'s `step`
+became optional, and **`components/AwayControl`** joined `EnablePush` at the top of
+`components/` (the holiday pause, shared by [4c] and [6a]). Extend these rather than forking a
+variant; look at them side by side at **`/dev/kit`** (dev-only gallery, →
+[DECISIONS #39](DECISIONS.md)) and add to it when you add a component.
 
 - **Button** — primary (sage bg, white 700 16px, `--r-button`, `--shadow-button`), secondary
   (white, 1.5px `--border`), danger (only in confirm dialogs), dark (`--ink` bg — "Start cook
@@ -77,10 +79,11 @@ component.
   `"md"` (20, list & tile cards); renders an `<a>` with `href`, and sets `--input-surface` so
   fields inside it sink. Padding belongs to the caller, because it varies card by card;
   internal rows split by `--divider` (13–14px vertical, 15–16px horizontal).
-- **BottomSheet** — `bind:open`, `title`, optional `eyebrow`; white, top radius `--r-sheet`,
-  drag handle (38×5 pill `--border`), `--shadow-sheet`, `--scrim`. Native `<dialog>`: focus
-  trap and Escape included, closes on scrim tap. Content is only mounted while open, so each
-  opening starts from a clean form.
+- **BottomSheet** — `bind:open`, `title`, optional `eyebrow` (uppercase, above), `subtitle`
+  (under the title) and a `lead` snippet (an avatar beside it, [6c]); white, top radius
+  `--r-sheet`, drag handle (38×5 pill `--border`), `--shadow-sheet`, `--scrim`. Native
+  `<dialog>`: focus trap and Escape included, closes on scrim tap. Content is only mounted
+  while open, so each opening starts from a clean form.
 - **CenterModal** — completion celebration & confirms; same mechanics, `--r-sheet`,
   `--shadow-modal`, `dismissible={false}` for confirms.
 - **Avatar** — circle, member colour bg, white initial, sizes 20/26/32/36/44/52; `ring` +

@@ -2,10 +2,10 @@ import { fail, redirect } from '@sveltejs/kit';
 import { isMemberColor } from '$lib/member-colors';
 import { requireUser } from '$lib/server/guards';
 import { getInvitePreview, HouseholdError, joinHousehold } from '$lib/server/services/household';
+import { DISPLAY_NAME_MAX } from '$lib/utils/household';
 import { INVITE_CODE_COOKIE, normalizeInviteCode } from '$lib/utils/invite-code';
 import type { Actions, PageServerLoad } from './$types';
 
-const DISPLAY_NAME_MAX = 40;
 const BAD_CODE = "That code doesn't match a household. Check it with whoever invited you.";
 
 /**

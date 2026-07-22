@@ -8,6 +8,7 @@
 	import ColorPicker from '$lib/components/ui/ColorPicker.svelte';
 	import TextField from '$lib/components/ui/TextField.svelte';
 	import { MEMBER_COLORS } from '$lib/member-colors';
+	import { DISPLAY_NAME_MAX, HOUSEHOLD_NAME_MAX } from '$lib/utils/household';
 	import { untrack } from 'svelte';
 	import type { PageProps } from './$types';
 
@@ -53,7 +54,7 @@
 			bind:value={householdName}
 			error={form?.errors.householdName}
 			placeholder="Sonnengasse 12"
-			maxlength={60}
+			maxlength={HOUSEHOLD_NAME_MAX}
 			autocomplete="off"
 			required
 		/>
@@ -63,7 +64,7 @@
 			name="displayName"
 			bind:value={displayName}
 			error={form?.errors.displayName}
-			maxlength={40}
+			maxlength={DISPLAY_NAME_MAX}
 			autocomplete="given-name"
 			required
 		/>

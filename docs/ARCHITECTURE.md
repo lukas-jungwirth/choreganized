@@ -34,6 +34,7 @@ src/
     push-client.ts             # permission/subscribe state for the browser      [plan 05]
     components/
       EnablePush.svelte        # "notifications on this device" (Settings + Home) [plan 05]
+      AwayControl.svelte       # the holiday pause (snooze sheet + Settings)      [plan 10]
       ui/                      # dumb primitives: Button, Card, BottomSheet, Chip,
                                # Avatar, SegmentedControl, Toggle, EmptyState, FAB…
       shell/                   # Screen (onboarding), TabBar, PageHeader

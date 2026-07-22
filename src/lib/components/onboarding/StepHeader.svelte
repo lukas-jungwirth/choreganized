@@ -1,9 +1,10 @@
-<!-- "‹ · STEP 1 OF 2" header from [5c]/[5d]. Back is optional: once the household
-	 exists there's nowhere sensible to go back to. -->
+<!-- "‹ · STEP 1 OF 2" header from [5c]/[5d]. Both halves are optional: once the
+	 household exists there's nowhere sensible to go back to, and the invite
+	 screen reached from Settings [6b] is not a step of anything (→ #28). -->
 <script lang="ts">
 	import ChevronLeft from '@lucide/svelte/icons/chevron-left';
 
-	type Props = { step: number; total?: number; back?: string; backLabel?: string };
+	type Props = { step?: number; total?: number; back?: string; backLabel?: string };
 
 	let { step, total = 2, back, backLabel = 'Back' }: Props = $props();
 </script>
@@ -14,7 +15,7 @@
 			<ChevronLeft size={20} strokeWidth={2.4} />
 		</a>
 	{/if}
-	<span class="step">Step {step} of {total}</span>
+	{#if step}<span class="step">Step {step} of {total}</span>{/if}
 </div>
 
 <style>

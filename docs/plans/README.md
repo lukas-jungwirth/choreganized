@@ -20,7 +20,7 @@ plus your session date). Note deviations in the plan file and in DECISIONS.md.
 | 07  | [Cooking: recipes & meal plan](07-cooking.md)                       | todo              | 02 (03 for shopping add) |
 | 08  | [Cook mode & timers](08-cook-mode.md)                               | todo              | 07, 05                   |
 | 09  | [History, leaderboard & Home completion](09-history-leaderboard.md) | todo              | 04                       |
-| 10  | [Settings & members](10-settings-members.md)                        | todo              | 01 (05 for prefs)        |
+| 10  | [Settings & members](10-settings-members.md)                        | done (2026-07-22) | 01 (05 for prefs)        |
 | 11  | [PWA, polish & deploy](11-pwa-deploy.md)                            | todo              | all                      |
 
 ## Dependency graph & parallelization
@@ -50,7 +50,12 @@ DateField, a link mode on SegmentedControl, and the recurrence + due-date-copy h
 (→ ARCHITECTURE.md "Notifications"). 06 did exactly that and nothing else —
 `services/reminders.ts` (claim the idempotency flag, then send) plus one registry line is the
 whole shape **08 copies for cook timers**, and its "What was verified, and how" section is the
-recipe for driving a cron sweep without waiting for a real morning. Run `npm run dev` and open
+recipe for driving a cron sweep without waiting for a real morning. 10 owns Settings and
+Members: it put the membership half into `services/household.ts` with the **role checks inside
+the service transaction** (`requireOwner`, → DECISIONS #62) — copy that shape for anything
+owner-only — extracted the holiday pause into `components/AwayControl.svelte` (one control,
+two surfaces), gave `BottomSheet` a `lead` snippet + `subtitle` and `StepHeader` an optional
+`step`, and moved the two name limits into `lib/utils/household.ts`. Run `npm run dev` and open
 **`/dev/kit`** to see the components on one screen before you build against them — and add your
 new ones to that page.
 

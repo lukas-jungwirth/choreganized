@@ -7,7 +7,9 @@
 	you add to `lib/components/ui`.
 -->
 <script lang="ts">
+	import AwayControl from '$lib/components/AwayControl.svelte';
 	import EnablePush from '$lib/components/EnablePush.svelte';
+	import PrefRow from '$lib/components/settings/PrefRow.svelte';
 	import BasketIcon from '$lib/components/icons/BasketIcon.svelte';
 	import ChecklistIcon from '$lib/components/icons/ChecklistIcon.svelte';
 	import CrownIcon from '$lib/components/icons/CrownIcon.svelte';
@@ -65,6 +67,7 @@
 		setTimeout(() => (bannerBusy = false), 900);
 	}
 	let sheetOpen = $state(false);
+	let leadSheetOpen = $state(false);
 	let modalOpen = $state(false);
 	let confirmOpen = $state(false);
 
@@ -275,15 +278,42 @@
 	</section>
 
 	<section>
-		<h2>EnablePush</h2>
+		<h2>EnablePush · PrefRow</h2>
 		<p class="note">
 			Live: it really subscribes this browser. `settings` is the row Settings [6a] groups with the
 			preference toggles; `prompt` is the Home card, which renders nothing unless push is available
-			and unanswered here.
+			and unanswered here. `PrefRow` saves on change — here into this page's no-op action.
 		</p>
 		<div class="col">
-			<RowGroup><EnablePush /></RowGroup>
+			<RowGroup>
+				<EnablePush />
+				<PrefRow
+					pref="notifyTaskReminders"
+					label="Task reminders"
+					detail="The morning a task of yours is due"
+					checked
+				/>
+				<PrefRow pref="notifyShoppingUpdates" label="Shopping list updates" checked={false} />
+			</RowGroup>
 			<EnablePush variant="prompt" />
+		</div>
+	</section>
+
+	<section>
+		<h2>AwayControl</h2>
+		<p class="note">
+			The holiday pause, in both surfaces: `sheet` under the snooze presets [4c], `row` in Settings'
+			Away mode group [6a]. One component, so the two can't disagree about whether you're away.
+		</p>
+		<div class="col">
+			<RowGroup><AwayControl today={data.today} awayUntil={null} surface="row" /></RowGroup>
+			<!-- On white, because the sheet variant's sunken well is invisible
+				 against the paper background it would never actually sit on. -->
+			<Card radius="md">
+				<div class="on-white">
+					<AwayControl today={data.today} awayUntil={addDays(data.today, 6)} />
+				</div>
+			</Card>
 		</div>
 	</section>
 
@@ -311,6 +341,9 @@
 		<h2>BottomSheet · CenterModal</h2>
 		<div class="col">
 			<Button variant="secondary" onclick={() => (sheetOpen = true)}>Open bottom sheet</Button>
+			<Button variant="secondary" onclick={() => (leadSheetOpen = true)}>
+				…with a lead & subtitle
+			</Button>
 			<Button variant="secondary" onclick={() => (modalOpen = true)}>Open centre modal</Button>
 		</div>
 	</section>
@@ -365,6 +398,15 @@
 		<p class="pop-sub">It disappears from everyone's list.</p>
 		<Button variant="danger" onclick={() => (confirmOpen = false)}>Delete</Button>
 	</CenterModal>
+</BottomSheet>
+
+<!-- The manage-member header [6c]: an avatar beside a two-line title. -->
+<BottomSheet bind:open={leadSheetOpen} title="Elisabeth" subtitle="Member · joined Jul 4 · 210 pts">
+	{#snippet lead()}
+		<Avatar name="Elisabeth" color="var(--member-terracotta)" size={52} />
+	{/snippet}
+	<p class="note">`lead` renders before the titles, `subtitle` under them.</p>
+	<Button variant="secondary" onclick={() => (leadSheetOpen = false)}>Close</Button>
 </BottomSheet>
 
 <CenterModal bind:open={modalOpen} label="Task completed">
@@ -436,6 +478,11 @@
 	.pad {
 		padding: 16px;
 		font-size: 14px;
+	}
+
+	/* A sheet's own padding, so the demo sits the way it really would. */
+	.on-white {
+		padding: 16px 22px 22px;
 	}
 
 	.pref {

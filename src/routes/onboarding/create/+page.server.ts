@@ -2,11 +2,9 @@ import { fail, redirect } from '@sveltejs/kit';
 import { isMemberColor } from '$lib/member-colors';
 import { requireUser } from '$lib/server/guards';
 import { createHousehold, HouseholdError } from '$lib/server/services/household';
+import { DISPLAY_NAME_MAX, HOUSEHOLD_NAME_MAX } from '$lib/utils/household';
 import { INVITE_CODE_COOKIE } from '$lib/utils/invite-code';
 import type { Actions, PageServerLoad } from './$types';
-
-const HOUSEHOLD_NAME_MAX = 60;
-const DISPLAY_NAME_MAX = 40;
 
 /** The browser's IANA zone, or the default when it's missing/nonsense. */
 function resolveTimezone(input: string): string {

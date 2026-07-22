@@ -59,7 +59,11 @@
 </svelte:head>
 
 <Screen>
-	<StepHeader step={2} />
+	{#if data.fromMembers}
+		<StepHeader back="/settings/members" backLabel="Back to members" />
+	{:else}
+		<StepHeader step={2} />
+	{/if}
 
 	<header>
 		<h1>Invite your<br />housemates</h1>
@@ -89,7 +93,8 @@
 		</div>
 	{:else}
 		<p class="revoked">
-			This household has no active invite code. You can create a new one in Settings → Members.
+			This household has no active invite code. The owner can make a new one under Settings →
+			Members.
 		</p>
 	{/if}
 
@@ -114,10 +119,14 @@
 	</ul>
 
 	<!-- One way out: the invite stays reachable from Settings → Members, so a
-		 second "later" link would just be the same button twice. Plan 10 links
-		 here too — give the CTA a "Done" label in that context. -->
+		 second "later" link would just be the same button twice. Coming from
+		 there you already live here, so it says "Done" (→ DECISIONS #28). -->
 	<div class="cta">
-		<Button href="/home">Move in</Button>
+		{#if data.fromMembers}
+			<Button href="/settings/members">Done</Button>
+		{:else}
+			<Button href="/home">Move in</Button>
+		{/if}
 	</div>
 </Screen>
 
