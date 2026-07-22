@@ -3,7 +3,9 @@
 	import { enhance } from '$app/forms';
 	import Screen from '$lib/components/shell/Screen.svelte';
 	import Button from '$lib/components/ui/Button.svelte';
-	import { Check, House, Plus } from '@lucide/svelte';
+	import Check from '@lucide/svelte/icons/check';
+	import House from '@lucide/svelte/icons/house';
+	import Plus from '@lucide/svelte/icons/plus';
 	import type { PageProps } from './$types';
 
 	let { data }: PageProps = $props();

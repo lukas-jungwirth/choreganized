@@ -1,0 +1,158 @@
+<!--
+	Tinted status card: overdue on Home [4e] (danger) and the holiday pause on
+	Tasks [4a] (info). Calm, not alarming — even "overdue" is a soft tint.
+
+	With `href` the whole card is the link and the pill is just its label, which
+	is a far bigger touch target than the 60px pill the mockup draws.
+-->
+<script lang="ts">
+	import type { Snippet } from 'svelte';
+
+	type Props = {
+		variant?: 'danger' | 'info';
+		title: string;
+		/** Second line — the detail under the headline. */
+		detail?: string;
+		/** Label of the trailing pill; omit for a banner that only informs. */
+		action?: string;
+		href?: string;
+		/** The icon for the leading tile, sized by the variant. */
+		icon: Snippet;
+	};
+
+	let { variant = 'danger', title, detail, action, href, icon }: Props = $props();
+</script>
+
+{#snippet body()}
+	<span class="tile">{@render icon()}</span>
+	<span class="text">
+		<span class="title">{title}</span>
+		{#if detail}<span class="detail">{detail}</span>{/if}
+	</span>
+	{#if action}<span class="action">{action}</span>{/if}
+{/snippet}
+
+{#if href}
+	<a class="banner {variant}" {href}>{@render body()}</a>
+{:else}
+	<div class="banner {variant}">{@render body()}</div>
+{/if}
+
+<style>
+	.banner {
+		display: flex;
+		align-items: center;
+		gap: 13px;
+		border: 1px solid;
+		color: inherit;
+	}
+
+	.tile {
+		display: flex;
+		align-items: center;
+		justify-content: center;
+		flex: none;
+	}
+
+	.text {
+		flex: 1;
+		min-width: 0;
+	}
+
+	.title {
+		display: block;
+		font-weight: 700;
+	}
+
+	.detail {
+		display: block;
+		margin-top: 2px;
+	}
+
+	.action {
+		flex: none;
+		padding: 7px 13px;
+		border-radius: var(--r-chip);
+		background: var(--card);
+		font-size: 13px;
+		font-weight: 700;
+	}
+
+	/* ── Overdue [4e] ─────────────────────────────────────────────────────── */
+	.danger {
+		padding: 15px 16px;
+		border-radius: var(--r-card);
+		border-color: var(--danger-border);
+		background: var(--danger-tint);
+	}
+
+	.danger .tile {
+		width: 40px;
+		height: 40px;
+		border-radius: 12px;
+		background: var(--danger);
+		color: var(--on-sage);
+	}
+
+	.danger .title {
+		font-size: 14px;
+		color: var(--danger-deep);
+	}
+
+	.danger .detail {
+		font-size: 12.5px;
+		color: var(--danger-soft);
+	}
+
+	.danger .action {
+		color: var(--danger);
+	}
+
+	/* ── Holiday pause [4a] ───────────────────────────────────────────────── */
+	.info {
+		gap: 12px;
+		padding: 12px 14px;
+		border-radius: var(--r-button);
+		border-color: var(--info-border);
+		background: var(--info-tint);
+	}
+
+	.info .tile {
+		width: 34px;
+		height: 34px;
+		border-radius: 10px;
+		background: var(--card);
+		color: var(--sage);
+	}
+
+	.info .title {
+		font-size: 13.5px;
+		color: var(--sage-deep);
+	}
+
+	.info .detail {
+		font-size: 12px;
+		color: var(--info-soft);
+	}
+
+	.info .action {
+		color: var(--sage);
+	}
+
+	a.banner {
+		transition: transform 120ms ease-out;
+	}
+
+	a.banner:active {
+		transform: scale(0.99);
+	}
+
+	@media (prefers-reduced-motion: reduce) {
+		a.banner {
+			transition: none;
+		}
+		a.banner:active {
+			transform: none;
+		}
+	}
+</style>

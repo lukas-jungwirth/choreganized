@@ -88,17 +88,85 @@ Agents: when you make a judgment call that isn't in SPEC/ARCHITECTURE, **append 
     cookie and sends you to sign-in, because Google's redirect can't carry our state. After
     auth, `/` reads the cookie and resumes at the join screen; joining (or creating a household
     instead) clears it.
-28. **The member palette exists twice on purpose** — as `--member-*` tokens in `app.css` and as
+28. **One CTA on the invite screen, labelled "Move in"** — [5d] offers "Go to Choreganized" and
+    "I'll invite them later", but both navigate to Home, so the second is a decoy; the invite
+    screen also stays reachable from Settings → Members, so nothing is lost by skipping it.
+    "Move in" continues the "Set up your home" metaphor. When plan 10 links here from Settings
+    the label should read "Done" — you already live there.
+29. **"Share invite" only renders where Web Share exists.** `navigator.share` opens the OS share
+    sheet (WhatsApp, Signal, AirDrop) on phones — genuinely different from copying a link. Most
+    desktop browsers don't implement it, and the old clipboard fallback made the button a second
+    Copy. It's now feature-detected after mount and hidden when unavailable.
+30. **The member palette exists twice on purpose** — as `--member-*` tokens in `app.css` and as
     hex values in `src/lib/member-colors.ts`. Colours are written to `members.color` and read
     back to paint avatars, so they're data as well as styling; the JS module is the one place
     that says so, and the two must be changed together.
+31. **`lib/utils/dates.ts` landed in plan 02, not 04.** Home needs household-local "today" for
+    tonight's dinner and the due count, plus the month boundary for the standings strip — so
+    the file exists now, holding only what Home uses. `Intl` only, no `@date-fns/tz`. Plan 04
+    extends it with recurrence math rather than starting a second date module.
+    `zonedStartOfDay` is the subtle one: it applies **every** offset in play around that
+    midnight and keeps the earliest result that really lands on the date. A naive "guess, then
+    refine once" loses an hour wherever the clock springs forward _at_ midnight (Santiago,
+    Havana, Asunción) — which silently moved the leaderboard's month boundary. Checked
+    exhaustively against `Intl` for all 418 IANA zones × 2023–2027; keep that property if you
+    touch it. Formatters are memoized per (kind, timezone) — constructing one costs far more
+    than using it, and the activity feed formats per row.
+32. **`services/tasks.ts` starts in plan 02 with one function.** "What's overdue for me" is
+    read by the tab badge on every `(app)` page, not just by Home, so it's a task-domain
+    primitive; `home.ts` composes the dashboard and owns the queries only it needs. Plan 04
+    extends `tasks.ts`.
+33. **While you're away, nothing is overdue _for you_** — "Anyone" tasks included. The holiday
+    pause promises not to bug you, so the banner and the badge both go quiet; other members
+    still see those unassigned tasks as overdue. The household-wide "tasks due today" tile
+    likewise skips tasks assigned to a member who is away.
+34. **Seven values moved from the mockups into `app.css`** rather than being hardcoded in
+    components: `--tabbar-bg`, `--scrim`, `--danger-soft` (banner subtitle), `--info-tint`
+    /`-border`/`-soft` (holiday banner [4a]) and `--shadow-knob`. The tokens-only rule means
+    app.css is where a design value lives, even a one-off one.
+35. **Member-coloured surfaces are mixed, not tokenised.** The design tints only sage
+    (`--sage-tint-2`) and terracotta (`--terracotta-tint`), but a member can also be blue,
+    amber or plum. Feed check circles and selected member chips use
+    `color-mix(in srgb, <member colour> …%, var(--card))`, which lands within a shade of both
+    drawn tints and covers the three that were never drawn.
+36. **Sheets and modals are native `<dialog>` + `showModal()`** — focus trap, Escape, inert
+    background and top-layer stacking, none of it hand-rolled. Three things are ours, and all
+    three exist because a confirm gets raised **from inside** a sheet (SPEC §5.3 "Delete
+    task"), which is the composition that breaks the naive version:
+    - **Escape is handled by hand**, because the Chromium shell this was verified in never
+      delivers the `close` event and a sheet that vanished while `open` stayed `true` could
+      never be reopened. Only the _innermost_ dialog answers, decided by
+      `event.target.closest('dialog') === dialog` — `stopPropagation` does **not** work here,
+      Svelte delegates `keydown` and the outer handler runs anyway (verified in the browser).
+    - **The body-scroll lock is ref-counted** in `lib/scroll-lock.ts`. Two dialogs each
+      snapshotting `document.body.style.overflow` left the page permanently unscrollable
+      depending on teardown order.
+    - **Scrim dismissal requires the press to start on the scrim too.** Testing only the click
+      target also fires when a drag begins in the panel and ends outside it — selecting text
+      in a field — which threw away the form.
+37. **Inputs adapt to the surface they sit on** via `--input-surface`: white on the paper
+    background, `--field` on any white surface — sheets [3a], modals and `Card` all set it, so
+    no screen has to remember which variant to ask for. Add it to any new white container you
+    build, or the field inside it will be white on white.
+38. **One global `:focus-visible` ring** (2px sage) — keyboard focus had no styling at all.
+    Components that already show focus their own way (TextField's sage border) override it
+    with a plain `:focus` rule, which outranks it.
+39. **`/dev/kit` is a dev-only component gallery** (404 in production). Plan 02 builds the kit
+    that 03/04/05/07/10 run in parallel on, so most of it has no screen yet; the gallery is
+    where those components get checked against `design/Hearth.dc.html` instead of shipping
+    unseen. Extend it when you extend `lib/components/ui`.
+40. **The four tab icons and the crown are bespoke SVGs** in `lib/components/icons/` — Lucide's
+    house has a door and its pot a different lid, and these five are the shapes the app wears
+    in its chrome and its stat tiles. Everything else stays `@lucide/svelte`.
 
 ## Open questions (non-blocking, defaults chosen)
 
 - **Production domain** — invite links & OAuth redirect need the final origin (design shows
   `choreganized.app`). Default: whatever Coolify serves; set `ORIGIN`/`BETTER_AUTH_URL`.
-- **Google OAuth credentials** — need a GCP OAuth client (redirect URI
-  `{origin}/api/auth/callback/google`) before plan 00 can be verified end-to-end.
+- ~~**Google OAuth credentials**~~ — **resolved 2026-07-22**: the GCP OAuth client exists, the
+  keys are in `.env`, and Lukas walked the sign-in round-trip by hand. Agent sessions still
+  can't drive it (Claude must never enter the owner's Google login), so the temporary
+  email-password switch stays the way plans verify auth — see the memory note and plan 00.
 - **Language** — UI is English like the design; German/i18n not planned for v1.
 - **Recipe share** ([7c] "Share") — v1 ships plain-text share (Web Share API). Public share
   links would need a tokenized public route; deferred.

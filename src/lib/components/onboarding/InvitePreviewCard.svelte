@@ -14,7 +14,13 @@
 <div class="card">
 	{#if inviter}
 		<div class="avatar">
-			<Avatar name={inviter.displayName} color={inviter.color} size={44} ring />
+			<Avatar
+				name={inviter.displayName}
+				color={inviter.color}
+				size={44}
+				ring
+				ringColor="var(--card)"
+			/>
 		</div>
 		<p class="line"><b>{inviter.displayName}</b> invited you to</p>
 	{:else}

@@ -5,14 +5,14 @@
  * they're what turns a bare user into a member (→ docs/ARCHITECTURE.md
  * "Server patterns"). Everything downstream follows the convention.
  */
-import { eq } from 'drizzle-orm';
+import { asc, eq } from 'drizzle-orm';
 import {
 	generateInviteCode,
 	INVITE_CODE_LENGTH,
 	normalizeInviteCode
 } from '$lib/utils/invite-code';
 import { db } from '../db';
-import { households, members, stores, type Member } from '../db/schema';
+import { households, members, stores, type Household, type Member } from '../db/schema';
 
 /** Walking order for a first shopping list; renameable/reorderable later (7g). */
 const DEFAULT_STORES = ['Grocery', 'Drugstore', 'Hardware store'];
@@ -134,6 +134,40 @@ export function joinHousehold(
 			.returning()
 			.get();
 	});
+}
+
+export function getHousehold(householdId: string): Household | undefined {
+	return db.select().from(households).where(eq(households.id, householdId)).get();
+}
+
+/**
+ * The household roster, in join order — the order avatars stack in, and the
+ * rotation order for "alternate each time" tasks (→ docs/DATA-MODEL.md).
+ * Deliberately narrower than a `Member` row: this goes to the browser, and a
+ * housemate's `userId` or notification preferences have no business there.
+ */
+export type HouseholdMember = {
+	id: string;
+	displayName: string;
+	color: string;
+	role: 'owner' | 'member';
+	/** Holiday pause end date, or null. Drives the paused/dimmed rendering. */
+	awayUntil: string | null;
+};
+
+export function listMembers(householdId: string): HouseholdMember[] {
+	return db
+		.select({
+			id: members.id,
+			displayName: members.displayName,
+			color: members.color,
+			role: members.role,
+			awayUntil: members.awayUntil
+		})
+		.from(members)
+		.where(eq(members.householdId, householdId))
+		.orderBy(asc(members.joinedAt))
+		.all();
 }
 
 export type InvitePreview = {

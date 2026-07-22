@@ -40,11 +40,13 @@ Tasks** — plus onboarding and settings. No finances, no message board.
 
 ### 1.4 Create → invite housemates [5d] (step 2 of 2)
 
-- Big sage card with the **invite code** displayed as `7K4-P2` (stored without the dash).
-- Invite **link** `{ORIGIN}/j/{code}` with Copy; **Share invite** uses the Web Share API when
-  available, clipboard fallback.
+- Big sage card with the **invite code** displayed as `7K4-P2X` (stored without the dash).
+- Invite **link** `{ORIGIN}/j/{code}` with Copy; **Share invite** opens the OS share sheet and is
+  shown **only where the Web Share API exists** (phones) — on desktop it would duplicate Copy
+  (→ [DECISIONS.md #29](DECISIONS.md)).
 - Members list: you (Owner badge) + a dashed "Waiting for someone to join…" row.
-- CTAs: **Go to Choreganized** / "I'll invite them later" (both proceed to Home).
+- One CTA: **Move in** → Home. (The design's second "I'll invite them later" link went to the same
+  place; the invite screen stays reachable from Settings → Members.)
 
 ### 1.5 Join [5e]
 

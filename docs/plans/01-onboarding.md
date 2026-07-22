@@ -66,6 +66,10 @@ round-trip itself still needs the owner's credentials.
   `InvitePreviewCard` under `components/onboarding/`.
 - The join screen's second step is titled "Set up your profile" (no design frame exists for it);
   [5e]'s sage tile carries the logo mark rather than a Fraunces "H", which was the old app name.
+- [5d] ships with **one** CTA, "Move in", and shows "Share invite" only on devices with the Web
+  Share API (→ DECISIONS #28/#29, SPEC §1.4 updated). Both changes came from Lukas reviewing the
+  built screen: the design's two CTAs went to the same place, and the share button's clipboard
+  fallback made it a second Copy button on desktop.
 
 **Two bugs found by walking it** (both fixed, worth knowing when extending):
 

@@ -1,7 +1,7 @@
 <!-- "‹ · STEP 1 OF 2" header from [5c]/[5d]. Back is optional: once the household
 	 exists there's nowhere sensible to go back to. -->
 <script lang="ts">
-	import { ChevronLeft } from '@lucide/svelte';
+	import ChevronLeft from '@lucide/svelte/icons/chevron-left';
 
 	type Props = { step: number; total?: number; back?: string; backLabel?: string };
 

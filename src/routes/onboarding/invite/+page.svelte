@@ -4,13 +4,27 @@
 	import Screen from '$lib/components/shell/Screen.svelte';
 	import Avatar from '$lib/components/ui/Avatar.svelte';
 	import Button from '$lib/components/ui/Button.svelte';
-	import { Link, Plus, Share } from '@lucide/svelte';
+	import Link from '@lucide/svelte/icons/link';
+	import Plus from '@lucide/svelte/icons/plus';
+	import Share from '@lucide/svelte/icons/share';
 	import type { PageProps } from './$types';
 
 	let { data }: PageProps = $props();
 
 	let copied = $state(false);
 	let copyTimer: ReturnType<typeof setTimeout>;
+
+	/**
+	 * Web Share opens the OS share sheet (WhatsApp, Signal, AirDrop…) — worth its
+	 * own button on a phone. Desktop browsers mostly lack it, and falling back to
+	 * "copy" there would just duplicate the Copy on the link above, so the button
+	 * only appears where it does something different. Resolved after mount, since
+	 * the server can't know.
+	 */
+	let canShare = $state(false);
+	$effect(() => {
+		canShare = typeof navigator.share === 'function';
+	});
 
 	async function copyLink() {
 		if (!data.inviteUrl) return;
@@ -28,7 +42,6 @@
 
 	async function shareInvite() {
 		if (!data.inviteUrl) return;
-		if (!navigator.share) return copyLink();
 		try {
 			await navigator.share({
 				title: 'Choreganized',
@@ -59,16 +72,21 @@
 			<p class="code">{data.formattedCode}</p>
 		</div>
 
-		<div class="link">
-			<Link size={17} strokeWidth={1.9} />
-			<span class="url">{data.inviteUrl.replace(/^https?:\/\//, '')}</span>
-			<button class="copy" onclick={copyLink}>{copied ? 'Copied' : 'Copy'}</button>
-		</div>
+		<!-- Grouped so the gap below stays the same with or without Share. -->
+		<div class="link-actions">
+			<div class="link">
+				<Link size={17} strokeWidth={1.9} />
+				<span class="url">{data.inviteUrl.replace(/^https?:\/\//, '')}</span>
+				<button class="copy" onclick={copyLink}>{copied ? 'Copied' : 'Copy'}</button>
+			</div>
 
-		<button class="share" onclick={shareInvite}>
-			<Share size={18} strokeWidth={1.9} />
-			Share invite
-		</button>
+			{#if canShare}
+				<button class="share" onclick={shareInvite}>
+					<Share size={18} strokeWidth={1.9} />
+					Share invite
+				</button>
+			{/if}
+		</div>
 	{:else}
 		<p class="revoked">
 			This household has no active invite code. You can create a new one in Settings → Members.
@@ -95,9 +113,11 @@
 		{/if}
 	</ul>
 
+	<!-- One way out: the invite stays reachable from Settings → Members, so a
+		 second "later" link would just be the same button twice. Plan 10 links
+		 here too — give the CTA a "Done" label in that context. -->
 	<div class="cta">
-		<Button href="/home">Go to Choreganized</Button>
-		<a class="later" href="/home">I'll invite them later</a>
+		<Button href="/home">Move in</Button>
 	</div>
 </Screen>
 
@@ -148,11 +168,17 @@
 		color: var(--on-sage);
 	}
 
+	.link-actions {
+		display: flex;
+		flex-direction: column;
+		gap: 12px;
+		margin-bottom: 22px;
+	}
+
 	.link {
 		display: flex;
 		align-items: center;
 		gap: 10px;
-		margin-bottom: 12px;
 		padding: 13px 14px;
 		border: 1.5px solid var(--border);
 		border-radius: var(--r-input);
@@ -181,7 +207,6 @@
 		justify-content: center;
 		gap: 9px;
 		width: 100%;
-		margin-bottom: 22px;
 		padding: 14px;
 		border: 1.5px solid var(--border);
 		border-radius: var(--r-input);
@@ -255,14 +280,5 @@
 	.cta {
 		margin-top: auto;
 		padding-top: 18px;
-		text-align: center;
-	}
-
-	.later {
-		display: inline-block;
-		margin-top: 14px;
-		font-size: 14px;
-		font-weight: 600;
-		color: var(--text-4);
 	}
 </style>

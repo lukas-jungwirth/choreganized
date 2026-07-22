@@ -29,10 +29,13 @@ src/
   service-worker.ts            # push/notificationclick + minimal precache     [plan 05]
   lib/
     assets/                    # logo svgs, placeholder art
+    refetch.ts                 # refetchOnFocus(): visibilitychange → invalidateAll [plan 02]
+    scroll-lock.ts             # ref-counted body lock shared by the dialogs     [plan 02]
     components/
       ui/                      # dumb primitives: Button, Card, BottomSheet, Chip,
                                # Avatar, SegmentedControl, Toggle, EmptyState, FAB…
-      shell/                   # TabBar, PageHeader, StatusBanners
+      shell/                   # Screen (onboarding), TabBar, PageHeader
+      icons/                   # the 4 tab icons + crown, drawn in the design file
       shopping/ tasks/ cooking/ home/ …   # feature components (created per plan)
     server/
       db/                      # index.ts (client+migrate), schema.ts, migrations/
@@ -40,7 +43,7 @@ src/
       guards.ts                # requireUser / requireMember helpers           [plan 00]
       push.ts                  # sendToUser/sendToMembers, prune, payload types [plan 05]
       cron.ts                  # registerCronJobs(): reminders, timers, cleanup [plan 05+]
-      services/                # domain logic: household.ts, shopping.ts, tasks.ts,
+      services/                # domain logic: household.ts, home.ts, shopping.ts, tasks.ts,
                                # recipes.ts, meals.ts, timers.ts
     utils/                     # dates.ts (household-local helpers), ingredients.ts,
                                # invite-code.ts, timer-parse.ts
@@ -74,6 +77,7 @@ docs/                          # this documentation + plans/
   tasks/history                 [8a]
   settings                      [6a]
   settings/members              [6b]   sheet: manage member [6c]
+dev/kit                         component gallery — 404 unless `dev`      [plan 02]
 api/
   auth/[...all]                 Better Auth handler (GET/POST)
   push/subscribe                POST/DELETE subscription            [plan 05]

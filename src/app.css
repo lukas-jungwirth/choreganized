@@ -14,6 +14,7 @@
 	--sunken: #efebe2; /* inset chips, empty-state icon wells, day pills */
 	--sunken-2: #eae6dd; /* segmented control track, sheet dividers */
 	--field: #f5f3ee; /* input background inside white sheets */
+	--tabbar-bg: rgba(255, 255, 255, 0.86); /* frosted tab bar, over blur(16px) */
 
 	/* ── Ink & text ───────────────────────────────────────────── */
 	--ink: #22201c; /* primary text */
@@ -44,6 +45,12 @@
 	--danger-tint: #f7e9e6;
 	--danger-border: #e8cfc9;
 	--danger-deep: #8f3226;
+	--danger-soft: #a65648; /* muted copy on a danger tint (banner subtitle) */
+
+	/* ── Info / holiday banner [4a] ───────────────────────────── */
+	--info-tint: #eef1f0;
+	--info-border: #dee4e2;
+	--info-soft: #7c8a83; /* muted copy; the title uses --sage-deep */
 
 	/* ── Accents ──────────────────────────────────────────────── */
 	--gold: #e4b23c; /* crown / 1st place */
@@ -84,8 +91,12 @@
 	--r-sheet: 28px;
 	--r-chip: 999px;
 
+	/* ── Overlays ─────────────────────────────────────────────── */
+	--scrim: rgba(34, 32, 28, 0.4); /* behind sheets & modals */
+
 	/* ── Shadows ──────────────────────────────────────────────── */
 	--shadow-card: 0 1px 3px rgba(40, 34, 24, 0.05);
+	--shadow-knob: 0 1px 2px rgba(0, 0, 0, 0.15); /* toggle knob [4c] */
 	--shadow-button: 0 8px 20px -6px rgba(95, 141, 114, 0.5);
 	--shadow-fab: 0 8px 20px -4px rgba(95, 141, 114, 0.6);
 	--shadow-sheet: 0 -12px 40px rgba(40, 34, 24, 0.18);
@@ -140,6 +151,16 @@ select,
 textarea {
 	font: inherit;
 	color: inherit;
+}
+
+/*
+	One keyboard focus ring for the whole app. Components that already show focus
+	their own way (TextField's sage border) override it with a `:focus` rule,
+	which outranks this one.
+*/
+:focus-visible {
+	outline: 2px solid var(--sage);
+	outline-offset: 2px;
 }
 
 /* Hide scrollbars on horizontal scrollers (day strip etc.) */

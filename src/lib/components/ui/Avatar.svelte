@@ -11,8 +11,10 @@
 		color?: string;
 		size?: number;
 		empty?: boolean;
-		/** Adds the 2.5px paper ring used when avatars overlap or sit on cards. */
+		/** Adds the paper ring used when avatars overlap or sit on cards. */
 		ring?: boolean;
+		/** What the ring cuts out of: the screen by default, `--card` on a card. */
+		ringColor?: string;
 		/** Icon for the empty variant, e.g. the + on "waiting to join" [5d]. */
 		children?: Snippet;
 	};
@@ -23,11 +25,13 @@
 		size = 36,
 		empty = false,
 		ring = false,
+		ringColor = 'var(--bg)',
 		children
 	}: Props = $props();
 
-	// Intl.Segmenter would be overkill; display names are latin here.
-	const initial = $derived(name.trim().charAt(0).toUpperCase());
+	// Spread, not charAt: display names are free text, and charAt(0) would hand
+	// back half a surrogate pair for a name that starts with an emoji.
+	const initial = $derived(([...name.trim()][0] ?? '').toUpperCase());
 </script>
 
 <span
@@ -36,6 +40,8 @@
 	class:ring
 	style:--avatar-size="{size}px"
 	style:--avatar-color={color}
+	style:--avatar-ring={ringColor}
+	style:--avatar-ring-width={size >= 32 ? '2.5px' : '2px'}
 	aria-hidden="true"
 >
 	{#if empty}{@render children?.()}{:else}{initial}{/if}
@@ -59,7 +65,7 @@
 	}
 
 	.ring {
-		box-shadow: 0 0 0 2.5px var(--bg);
+		box-shadow: 0 0 0 var(--avatar-ring-width) var(--avatar-ring);
 	}
 
 	.empty {

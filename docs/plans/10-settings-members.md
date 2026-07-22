@@ -29,6 +29,10 @@ SPEC: [§6](../SPEC.md#6-settings-6a), [§7](../SPEC.md#7-members-6b-6c), DECISI
 - Removed member UX: their next request hits `requireMember` → onboarding (verify no crash
   loop with a stale session).
 
+Note from plan 01: "Invite housemate" links to the existing `/onboarding/invite` screen. Its CTA
+is labelled **Move in** for the onboarding path — give it a "Done" label (back to Settings) when
+it's reached from here (→ DECISIONS #28).
+
 ## Acceptance
 
 - [ ] Edit name/colour reflects everywhere (avatars, feeds keep old snapshots — expected).

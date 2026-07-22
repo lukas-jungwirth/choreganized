@@ -53,7 +53,8 @@
 		padding: 15px 16px;
 		border: 1.5px solid transparent;
 		border-radius: var(--r-input);
-		background: var(--card);
+		/* White on the paper background; sheets set --input-surface to --field. */
+		background: var(--input-surface, var(--card));
 		font-size: 15px;
 		color: var(--ink);
 	}

@@ -24,3 +24,6 @@ vite.config.ts.timestamp-*
 
 # App data (SQLite, uploads)
 /data
+
+# Local agent tooling (dev-server launch config)
+/.claude

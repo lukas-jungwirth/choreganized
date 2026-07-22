@@ -12,7 +12,7 @@ plus your session date). Note deviations in the plan file and in DECISIONS.md.
 | --- | ------------------------------------------------------------------- | ----------------- | ------------------------ |
 | 00  | [Foundation: auth, guards, hooks, login](00-foundation.md)          | done (2026-07-22) | —                        |
 | 01  | [Onboarding & household](01-onboarding.md)                          | done (2026-07-22) | 00                       |
-| 02  | [App shell & Home v1](02-shell-home.md)                             | todo              | 01                       |
+| 02  | [App shell & Home v1](02-shell-home.md)                             | done (2026-07-22) | 01                       |
 | 03  | [Shopping](03-shopping.md)                                          | todo              | 02                       |
 | 04  | [Tasks core](04-tasks.md)                                           | todo              | 02                       |
 | 05  | [Push infrastructure](05-push-infra.md)                             | todo              | 02                       |
@@ -36,6 +36,12 @@ plus your session date). Note deviations in the plan file and in DECISIONS.md.
 After 02 lands, **03 / 04 / 05 / 07 / 10 can run in parallel** (separate worktrees if
 concurrent — they touch disjoint routes; shared surface is `lib/components/ui` and
 `lib/server/services`, so build primitives in 02 and extend, don't rewrite).
+
+The kit 02 left you: Card · AvatarStack · CheckCircle · Chip · SegmentedControl · Toggle ·
+ProgressBar · Banner · EmptyState · FAB · BottomSheet · CenterModal (plus 01's Button ·
+TextField · Avatar · ColorPicker), `shell/TabBar` · `shell/PageHeader`, and
+`lib/utils/dates.ts`. Run `npm run dev` and open **`/dev/kit`** to see them all on one screen
+before you build against them — and add your new ones to that page.
 
 ## How to work a plan
 
