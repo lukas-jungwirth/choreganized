@@ -44,7 +44,7 @@ Depends on: 04. Design: [8a] podium+feed, [8b] home cards, [02] points card. SPE
 - **`services/history.ts` owns the podium and the feed only.** Home's recent-activity stayed in
   `home.ts` — it is not month-scoped and composes with the rest of the dashboard in one call.
 - **Paging is a month window in the URL** (`?from=YYYY-MM-01`), and the button names the next
-  month that actually holds something (→ DECISIONS #63). No infinite scroll.
+  month that actually holds something (→ DECISIONS #76). No infinite scroll.
 - **New in `lib/utils/dates.ts`**: `formatDayLabel` (the feed's day heads, year included once
   you've paged past New Year) and `formatMonthName` ("Show June"); `formatDayStamp` gained an
   optional year. `tasks.ts`'s `formatCompletedAt` was refactored onto `formatDayLabel` so the

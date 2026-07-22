@@ -22,7 +22,7 @@ uppercase micro-labels. Nothing shouts; even "overdue" is a calm tinted card.
 | Accents    | `--gold` `--gold-tint`                                                                                       | crown / 1st place                                                                               |
 | Members    | `--member-sage/-terracotta/-blue/-amber/-plum`                                                               | avatar palette (onboarding colour picker)                                                       |
 | Lines      | `--border` `--border-soft` `--divider` `--divider-sheet` `--border-dashed` `--track`                         | input outlines / tab hairline / row dividers / dashed empties / progress track                  |
-| Cook mode  | `--cook-bg` `--cook-text` `--cook-muted` `--cook-faint` `--cook-sheet` `--cook-amber`                        | the one dark surface in the app                                                                 |
+| Cook mode  | `--cook-bg` `--cook-text` `--cook-muted` `--cook-faint` `--cook-sheet` `--cook-amber` `--cook-surface`       | the one dark surface in the app; `-surface` = the 10% white its chips and buttons fill with     |
 | Type       | `--font-display` (Fraunces) `--font-body` (Figtree)                                                          | see scale below                                                                                 |
 | Radii      | `--r-input 14` `--r-button 16` `--r-block 16` `--r-card 20` `--r-card-lg 22` `--r-sheet 28` `--r-chip 999`   | `--r-block` = grouped block: quick-add [03], sheet menus [7c], add-a-store [7g]                 |
 | Shadows    | `--shadow-card/-button/-fab/-sheet/-modal/-knob`                                                             | `-knob` is the toggle's white knob                                                              |
@@ -58,12 +58,13 @@ CenterModal**, plus `shell/TabBar` · `shell/PageHeader` and the bespoke icons i
 `components/icons/`. Plan 03: **Select · Stepper** + `shell/SubHeader`. Plan 04: **DateField**.
 Plan 05: **RowGroup**, `Banner` gained an acting/dismissable form, plus the feature component
 **`components/EnablePush`** (the push permission state machine, in a Settings row or as Home's
-one-time prompt card). Plan 09 added no `ui/` primitives — the podium and the completed feed are
-the feature components **`components/tasks/Podium`** and **`components/tasks/HistoryRow`**,
-composed from Card · Avatar · CrownIcon and RowGroup · CheckCircle. Extend these rather than
-forking a variant; look at them side by side at
-**`/dev/kit`** (dev-only gallery, → [DECISIONS #39](DECISIONS.md)) and add to it when you add a
-component.
+one-time prompt card). Plan 07: **SearchField**, and `RowGroup` gained the `surface="sunken"`
+variant the in-sheet menus [7c] are built from. Plan 09 added no primitives of its own — the
+podium and the completed feed are the feature components **`components/tasks/Podium`** and
+**`components/tasks/HistoryRow`**, composed from Card · Avatar · CrownIcon and RowGroup ·
+CheckCircle — but `RowGroup` also gained `list`. Extend these rather than forking a variant;
+look at them side by side at **`/dev/kit`** (dev-only gallery, → [DECISIONS #39](DECISIONS.md))
+and add to it when you add a component.
 
 - **Button** — primary (sage bg, white 700 16px, `--r-button`, `--shadow-button`), secondary
   (white, 1.5px `--border`), danger (only in confirm dialogs), dark (`--ink` bg — "Start cook
@@ -73,12 +74,17 @@ component.
 - **ColorPicker** — the member palette (`$lib/member-colors`) as a radio group; `taken`
   colours render disabled. Pair it with a 52px Avatar preview [5c].
 - **RowGroup** — the white block a settings-style list sits in: `--r-card`, `--shadow-card`, a
-  `--divider` hairline between every direct child, corners clipped. Settings' sections [6a],
-  the members list [6b] and the ••• menus [7c] are all this shape. Padding stays on the row, as
-  with Card; a row that is a component draws its own internal dividers. `list` renders a `<ul>`
-  instead of the `<div>` — for the groups whose rows really are a list (the history feed [8a],
-  plan 10's members [6b]); its rows must then be `<li>`s, since an `<li>` outside a list element
-  is invalid markup and the browser exposes it as a listitem belonging to nothing.
+  `--divider` hairline between every direct child, corners clipped. Settings' sections [6a] and
+  the members list [6b] are that shape; `surface="sunken"` is the same block _inside_ a white
+  sheet — `--field`, `--r-block`, no shadow — which is what the ••• menus [7c] and the day
+  picker are. Padding stays on the row, as with Card; a row that is a component draws its own
+  internal dividers. `list` renders a `<ul>` instead of the `<div>` — for the groups whose rows
+  really are a list (the history feed [8a], plan 10's members [6b]); its rows must then be
+  `<li>`s, since an `<li>` outside a list element is invalid markup and the browser exposes it
+  as a listitem belonging to nothing.
+- **SearchField** — the rounded field the recipe library [7e] and the plan sheet [3d] open
+  with: magnifier, a real `type="search"`, and our own × (WebKit's is invisible on a tint and
+  Firefox has none). Same surface rule as TextField — white on paper, sunken in a sheet.
 - **Card** — white surface only: `--shadow-card` + `radius="lg"` (22, dashboard cards) or
   `"md"` (20, list & tile cards); renders an `<a>` with `href`, and sets `--input-surface` so
   fields inside it sink. Padding belongs to the caller, because it varies card by card;

@@ -6,7 +6,7 @@
 	columns where the design draws them, so the podium reads as a ranking to a
 	screen reader and as a podium to everybody else. Heights, colours and the
 	crown all come off `rank`, which is competition-ranked upstream: two
-	housemates level on points get identical columns (→ DECISIONS #62).
+	housemates level on points get identical columns (→ DECISIONS #75).
 -->
 <script lang="ts">
 	import CrownIcon from '$lib/components/icons/CrownIcon.svelte';

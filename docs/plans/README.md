@@ -17,7 +17,7 @@ plus your session date). Note deviations in the plan file and in DECISIONS.md.
 | 04  | [Tasks core](04-tasks.md)                                           | done (2026-07-22) | 02                       |
 | 05  | [Push infrastructure](05-push-infra.md)                             | done (2026-07-22) | 02                       |
 | 06  | [Task reminders](06-task-reminders.md)                              | done (2026-07-22) | 04, 05                   |
-| 07  | [Cooking: recipes & meal plan](07-cooking.md)                       | todo              | 02 (03 for shopping add) |
+| 07  | [Cooking: recipes & meal plan](07-cooking.md)                       | done (2026-07-22) | 02 (03 for shopping add) |
 | 08  | [Cook mode & timers](08-cook-mode.md)                               | todo              | 07, 05                   |
 | 09  | [History, leaderboard & Home completion](09-history-leaderboard.md) | done (2026-07-22) | 04                       |
 | 10  | [Settings & members](10-settings-members.md)                        | todo              | 01 (05 for prefs)        |
@@ -50,10 +50,15 @@ DateField, a link mode on SegmentedControl, and the recurrence + due-date-copy h
 (→ ARCHITECTURE.md "Notifications"). 06 did exactly that and nothing else —
 `services/reminders.ts` (claim the idempotency flag, then send) plus one registry line is the
 whole shape **08 copies for cook timers**, and its "What was verified, and how" section is the
-recipe for driving a cron sweep without waiting for a real morning. 09 added `Podium` and
-`HistoryRow` (both feature components, not `ui/`), `formatDayLabel` · `formatMonthName` in
-`lib/utils/dates.ts`, and the URL-window paging shape any other "load more" should copy
-(→ DECISIONS #63). Run `npm run dev` and open **`/dev/kit`** to see the components on one
+recipe for driving a cron sweep without waiting for a real morning. 07 added `SearchField` and
+`RowGroup surface="sunken"`, the `--cook-surface` token, `lib/server/uploads.ts` (sharp → WebP
+plus the authed `/api/uploads` endpoint) and `lib/utils/ingredients.ts` — **08 gets
+`/cooking/recipes/[id]/cook` already routed, guarded and dark, with a placeholder screen to
+replace**, plus `formatAmount`/`formatIngredient` for its step highlighting. 09 added `Podium`
+and `HistoryRow` (feature components, not `ui/`), `RowGroup list` (a `<ul>`, for groups whose
+rows are `<li>`s — **10's members list [6b] wants this**), `formatDayLabel` ·
+`formatMonthName`, and the URL-window paging shape any other "load more" should copy
+(→ DECISIONS #71). Run `npm run dev` and open **`/dev/kit`** to see the components on one
 screen before you build against them — and add your new ones to that page.
 
 ## How to work a plan

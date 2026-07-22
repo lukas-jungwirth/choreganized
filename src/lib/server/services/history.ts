@@ -78,7 +78,7 @@ export function getPodium(
 
 	// `sort` is stable, so members level on points stay in join order — which is
 	// what hands the crown to the housemate who has been here longest
-	// (→ DECISIONS #62), the same tiebreak rotation and the avatar stack use.
+	// (→ DECISIONS #75), the same tiebreak rotation and the avatar stack use.
 	const ranked = roster
 		.map((member) => ({
 			memberId: member.id,

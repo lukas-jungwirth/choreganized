@@ -3,11 +3,12 @@
 	turns into the invitation to plan one (→ SPEC §2.2), which is the only
 	prompt Home gives the meal plan.
 
-	The thumbnail is a placeholder well for now: recipe photos arrive with the
-	uploads endpoint in plan 07, which swaps in an <img> here. Both states link
-	to the Cooking tab until the recipe route exists.
+	Plan 07 filled the two blanks 02 left: the thumbnail is the recipe's photo
+	when it has one (still the pot well when it doesn't, and for a meal that was
+	never a recipe), and the card leads to the recipe rather than to the tab.
 -->
 <script lang="ts">
+	import RecipeImage from '$lib/components/cooking/RecipeImage.svelte';
 	import PotIcon from '$lib/components/icons/PotIcon.svelte';
 	import Avatar from '$lib/components/ui/Avatar.svelte';
 	import Card from '$lib/components/ui/Card.svelte';
@@ -18,9 +19,15 @@
 </script>
 
 {#if dinner}
-	<Card href="/cooking">
+	<Card href={dinner.recipeId ? `/cooking/recipes/${dinner.recipeId}` : '/cooking'}>
 		<span class="dinner">
-			<span class="thumb"><PotIcon size={26} strokeWidth={1.6} /></span>
+			<span class="thumb" class:photo={dinner.imagePath}>
+				{#if dinner.imagePath}
+					<RecipeImage imagePath={dinner.imagePath} stripe={5} />
+				{:else}
+					<PotIcon size={26} strokeWidth={1.6} />
+				{/if}
+			</span>
 			<span class="body">
 				<span class="eyebrow">Tonight's dinner</span>
 				<span class="name">{dinner.name}</span>
@@ -68,6 +75,11 @@
 		border-radius: 16px;
 		background: var(--sunken);
 		color: var(--text-disabled);
+	}
+
+	/* The photo fills the well rather than sitting in it. */
+	.photo {
+		overflow: hidden;
 	}
 
 	.dashed {
