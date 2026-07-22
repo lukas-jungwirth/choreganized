@@ -72,15 +72,22 @@ user ─┬─ session / account / verification        (Better Auth)
 - Steps are plain text, ordered by `sortOrder`. Cook-mode timers and ingredient highlighting
   are **derived at render time** (duration regex; case-insensitive ingredient-name matching) —
   no extra columns, no authoring burden. (→ DECISIONS #14)
-- `imagePath` is relative to `UPLOADS_DIR`; files served through an authed endpoint that
-  checks household membership.
+- `imagePath` is relative to `UPLOADS_DIR` and is a UUID filename, not a derivable one:
+  replacing a photo writes a new file and deletes the old, so a stored URL never changes
+  content and can be cached immutably (→ DECISIONS #63). Files are served through
+  `/api/uploads/[...path]`, which only answers when the path is a recipe's `imagePath` **in
+  the caller's household** — the lookup is the authorisation (→ #64).
 
 ### `meals`
 
 - `UNIQUE(householdId, date)` — one dinner slot per day (design shows a single evening meal).
   Planning onto an occupied day replaces (upsert).
 - Either `recipeId` (library meal) or `title` ("cook something not saved"); when both exist,
-  `title` is the display fallback after recipe deletion. App ensures at least one is set.
+  `title` is the display fallback after recipe deletion. App ensures at least one is set:
+  planning a recipe writes its name into `title` as the snapshot, and `deleteRecipe` refreshes
+  that snapshot inside the same transaction as the delete, so a recipe renamed since it was
+  planned still leaves the plan reading right. A row that somehow has neither is skipped by
+  `listMeals` rather than rendered blank.
 
 ### `tasks` — the task row IS the current occurrence
 

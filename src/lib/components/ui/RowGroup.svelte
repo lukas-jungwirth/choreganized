@@ -11,13 +11,20 @@
 	import type { Snippet } from 'svelte';
 
 	type Props = {
+		/**
+		 * `sunken` is the in-sheet variant [7c] [3a]: white on white needs a shadow
+		 * to read as a block, but a block *inside* a white panel gets its edges
+		 * from the tint instead — and `--r-block` is the radius the design draws
+		 * those at.
+		 */
+		surface?: 'card' | 'sunken';
 		children: Snippet;
 	};
 
-	let { children }: Props = $props();
+	let { surface = 'card', children }: Props = $props();
 </script>
 
-<div class="group">{@render children()}</div>
+<div class="group {surface}">{@render children()}</div>
 
 <style>
 	.group {
@@ -30,6 +37,13 @@
 		--input-surface: var(--field);
 	}
 
+	.sunken {
+		border-radius: var(--r-block);
+		background: var(--field);
+		box-shadow: none;
+		--input-surface: var(--card);
+	}
+
 	/*
 		One hairline between rows, wherever they come from. `:global` because a row
 		is often a component (EnablePush, plan 10's toggles), and scoped CSS stops
@@ -38,5 +52,9 @@
 	*/
 	.group > :global(* + *) {
 		border-top: 1px solid var(--divider);
+	}
+
+	.sunken > :global(* + *) {
+		border-top-color: var(--divider-sheet);
 	}
 </style>

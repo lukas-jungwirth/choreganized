@@ -29,6 +29,7 @@
 	import FAB from '$lib/components/ui/FAB.svelte';
 	import ProgressBar from '$lib/components/ui/ProgressBar.svelte';
 	import RowGroup from '$lib/components/ui/RowGroup.svelte';
+	import SearchField from '$lib/components/ui/SearchField.svelte';
 	import SegmentedControl from '$lib/components/ui/SegmentedControl.svelte';
 	import Select from '$lib/components/ui/Select.svelte';
 	import Stepper from '$lib/components/ui/Stepper.svelte';
@@ -56,6 +57,7 @@
 	let assignee = $state('e');
 	let quantity = $state<number | null>(1);
 	let unit = $state('pcs');
+	let query = $state('');
 	let bannerBusy = $state(false);
 	let bannerDismissed = $state(false);
 
@@ -284,6 +286,33 @@
 		<div class="col">
 			<RowGroup><EnablePush /></RowGroup>
 			<EnablePush variant="prompt" />
+		</div>
+	</section>
+
+	<section>
+		<h2>SearchField</h2>
+		<p class="note">
+			White on the paper background, sunken inside a sheet (`--input-surface`) — the recipe library
+			[7e] and the plan-a-meal sheet [3d].
+		</p>
+		<SearchField label="Search recipes" placeholder="Search recipes" bind:value={query} />
+	</section>
+
+	<section>
+		<h2>RowGroup</h2>
+		<p class="note">
+			`card` is the settings block [6a] [6b]; `sunken` is the same block inside a white sheet — the
+			••• menus [7c].
+		</p>
+		<div class="col">
+			<RowGroup>
+				<div class="pad">Notifications</div>
+				<div class="pad">Members</div>
+			</RowGroup>
+			<RowGroup surface="sunken">
+				<div class="pad">Edit recipe</div>
+				<div class="pad">Duplicate</div>
+			</RowGroup>
 		</div>
 	</section>
 

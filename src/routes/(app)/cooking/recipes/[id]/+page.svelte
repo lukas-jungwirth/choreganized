@@ -1,0 +1,372 @@
+<!--
+	A recipe [7a] — hero photo, what it takes, what's in it, what to do.
+
+	The hero is full-bleed, so it steps back out of the shell's padding; the
+	content below rides up over it on a 26px radius, which is the whole trick of
+	this screen. Everything else is the app's usual furniture.
+-->
+<script lang="ts">
+	import { enhance } from '$app/forms';
+	import DayPickerSheet from '$lib/components/cooking/DayPickerSheet.svelte';
+	import MealPlanSheet from '$lib/components/cooking/MealPlanSheet.svelte';
+	import RecipeImage from '$lib/components/cooking/RecipeImage.svelte';
+	import RecipeMenuSheet from '$lib/components/cooking/RecipeMenuSheet.svelte';
+	import ShoppingResultBanner from '$lib/components/cooking/ShoppingResultBanner.svelte';
+	import BasketIcon from '$lib/components/icons/BasketIcon.svelte';
+	import Button from '$lib/components/ui/Button.svelte';
+	import Card from '$lib/components/ui/Card.svelte';
+	import { formatAmount } from '$lib/utils/ingredients';
+	import type { CalendarDate } from '$lib/utils/dates';
+	import { formatCookTime } from '$lib/utils/recipes';
+	import CalendarDays from '@lucide/svelte/icons/calendar-days';
+	import ChefHat from '@lucide/svelte/icons/chef-hat';
+	import ChevronLeft from '@lucide/svelte/icons/chevron-left';
+	import Clock from '@lucide/svelte/icons/clock';
+	import MoreHorizontal from '@lucide/svelte/icons/more-horizontal';
+	import Users from '@lucide/svelte/icons/users';
+	import type { PageProps } from './$types';
+
+	let { data, form }: PageProps = $props();
+
+	const recipe = $derived(data.recipe);
+
+	/** Which sheet is up: the day picker, the plan sheet for a day, or the menu. */
+	let picking = $state(false);
+	let planning = $state<CalendarDate | null>(null);
+	let menu = $state(false);
+
+	const day = $derived(data.week.days.find((entry) => entry.date === planning) ?? null);
+	const shopping = $derived(form && 'shopping' in form ? form.shopping : null);
+
+	/** The icon travels with its line, so a recipe missing one still reads right. */
+	const meta = $derived(
+		[
+			{ icon: Clock, text: formatCookTime(recipe.timeMinutes) },
+			{ icon: Users, text: recipe.servings ? `Serves ${recipe.servings}` : null },
+			{
+				icon: ChefHat,
+				text: recipe.createdBy ? `Added by ${recipe.createdBy.displayName}` : null
+			}
+		].filter((entry) => entry.text !== null)
+	);
+</script>
+
+<svelte:head>
+	<title>{recipe.name} · Choreganized</title>
+</svelte:head>
+
+<div class="hero">
+	<RecipeImage imagePath={recipe.imagePath} stripe={8} eager />
+	<div class="bar">
+		<a class="round" href="/cooking/recipes" aria-label="Back to recipes">
+			<ChevronLeft size={18} strokeWidth={2.4} />
+		</a>
+		<button type="button" class="round" onclick={() => (menu = true)} aria-label="Recipe options">
+			<MoreHorizontal size={18} strokeWidth={2.4} />
+		</button>
+	</div>
+</div>
+
+<article class="panel">
+	<h1>{recipe.name}</h1>
+
+	{#if meta.length > 0}
+		<p class="meta">
+			{#each meta as entry (entry.text)}
+				{@const Icon = entry.icon}
+				<span><Icon size={16} strokeWidth={1.9} aria-hidden="true" />{entry.text}</span>
+			{/each}
+		</p>
+	{/if}
+
+	<div class="actions">
+		<button type="button" class="plan" onclick={() => (picking = true)}>
+			<CalendarDays size={17} strokeWidth={2.2} aria-hidden="true" />Add to plan
+		</button>
+		{#if recipe.ingredients.length > 0}
+			<form method="POST" action="?/addToList" use:enhance>
+				<button type="submit" class="basket" aria-label="Add all ingredients to the shopping list">
+					<BasketIcon size={20} strokeWidth={1.9} />
+				</button>
+			</form>
+		{/if}
+	</div>
+
+	<ShoppingResultBanner result={shopping} />
+
+	{#if recipe.ingredients.length > 0}
+		<div class="section-head">
+			<h2>Ingredients</h2>
+			<form method="POST" action="?/addToList" use:enhance>
+				<button type="submit" class="link">Add all to list</button>
+			</form>
+		</div>
+		<Card radius="md">
+			<ul class="ingredients">
+				{#each recipe.ingredients as ingredient (ingredient.id)}
+					<li>
+						<span class="dot" aria-hidden="true"></span>
+						<span class="ingredient-name">{ingredient.name}</span>
+						{#if formatAmount(ingredient.quantity, ingredient.unit)}
+							<span class="amount">{formatAmount(ingredient.quantity, ingredient.unit)}</span>
+						{/if}
+					</li>
+				{/each}
+			</ul>
+		</Card>
+	{/if}
+
+	{#if recipe.steps.length > 0}
+		<h2 class="steps-head">Steps</h2>
+		<ol class="steps">
+			{#each recipe.steps as step, index (step.id)}
+				<li>
+					<span class="number" aria-hidden="true">{index + 1}</span>
+					<span class="step-text">{step.text}</span>
+				</li>
+			{/each}
+		</ol>
+
+		<Button variant="dark" href="/cooking/recipes/{recipe.id}/cook">
+			<ChefHat size={18} strokeWidth={2} />Start cook mode
+		</Button>
+	{:else}
+		<p class="no-steps">
+			No steps written down yet — <a href="/cooking/recipes/{recipe.id}/edit">add them</a> and cook mode
+			can walk you through it.
+		</p>
+	{/if}
+</article>
+
+{#if picking}
+	<DayPickerSheet
+		week={data.week}
+		onclose={() => (picking = false)}
+		onpick={(date) => {
+			picking = false;
+			planning = date;
+		}}
+	/>
+{/if}
+
+{#if day}
+	<MealPlanSheet
+		date={day.date}
+		meal={day.meal}
+		preselectRecipeId={recipe.id}
+		recipes={data.recipes}
+		members={data.members}
+		onclose={() => (planning = null)}
+	/>
+{/if}
+
+{#if menu}
+	<RecipeMenuSheet {recipe} onclose={() => (menu = false)} />
+{/if}
+
+<style>
+	/* Out of the shell's padding on three sides — the design's photo bleeds. */
+	.hero {
+		position: relative;
+		height: 290px;
+		margin: calc((8px + env(safe-area-inset-top)) * -1) calc(var(--page-pad) * -1) 0;
+		overflow: hidden;
+		background: var(--sunken);
+	}
+
+	.bar {
+		position: absolute;
+		top: calc(14px + env(safe-area-inset-top));
+		left: var(--page-pad);
+		right: var(--page-pad);
+		display: flex;
+		align-items: center;
+		justify-content: space-between;
+	}
+
+	/* Frosted, because it sits on a photograph nobody chose for contrast. */
+	.round {
+		display: flex;
+		align-items: center;
+		justify-content: center;
+		width: 34px;
+		height: 34px;
+		border-radius: 50%;
+		background: var(--tabbar-bg);
+		backdrop-filter: blur(6px);
+		color: var(--ink);
+	}
+
+	.panel {
+		position: relative;
+		margin: -26px calc(var(--page-pad) * -1) 0;
+		padding: 24px var(--page-pad) 0;
+		border-radius: 26px 26px 0 0;
+		background: var(--bg);
+	}
+
+	h1 {
+		margin-bottom: 12px;
+		font-size: 27px;
+		line-height: 1.1;
+		overflow-wrap: anywhere;
+	}
+
+	.meta {
+		display: flex;
+		flex-wrap: wrap;
+		gap: 8px 18px;
+		margin: 0 0 22px;
+		font-size: 13.5px;
+		color: var(--text-2);
+	}
+
+	.meta span {
+		display: flex;
+		align-items: center;
+		gap: 7px;
+		color: var(--text-4);
+	}
+
+	.actions {
+		display: flex;
+		gap: 10px;
+		margin-bottom: 26px;
+	}
+
+	.plan {
+		display: flex;
+		align-items: center;
+		justify-content: center;
+		gap: 8px;
+		flex: 1;
+		padding: 14px;
+		border-radius: var(--r-input);
+		background: var(--sage);
+		box-shadow: var(--shadow-button);
+		font-size: 15px;
+		font-weight: 700;
+		color: var(--on-sage);
+	}
+
+	.basket {
+		display: flex;
+		align-items: center;
+		justify-content: center;
+		width: 52px;
+		height: 100%;
+		border: 1.5px solid var(--border);
+		border-radius: var(--r-input);
+		background: var(--card);
+		color: var(--sage);
+	}
+
+	.section-head {
+		display: flex;
+		align-items: center;
+		justify-content: space-between;
+		gap: 12px;
+		margin-bottom: 12px;
+	}
+
+	h2 {
+		font-size: 18px;
+	}
+
+	.link {
+		font-size: 12.5px;
+		font-weight: 600;
+		color: var(--sage);
+	}
+
+	.ingredients {
+		margin: 0;
+		padding: 0;
+		list-style: none;
+	}
+
+	.ingredients li {
+		display: flex;
+		align-items: center;
+		gap: 11px;
+		padding: 13px 16px;
+	}
+
+	.ingredients li + li {
+		border-top: 1px solid var(--divider);
+	}
+
+	.dot {
+		flex: none;
+		width: 6px;
+		height: 6px;
+		border-radius: 50%;
+		background: var(--border-dashed);
+	}
+
+	.ingredient-name {
+		flex: 1;
+		min-width: 0;
+		font-size: 14.5px;
+		overflow-wrap: anywhere;
+	}
+
+	/* Typed as "400 g pasta", read back as "Pasta · 400 g" [7a]. */
+	.ingredient-name::first-letter {
+		text-transform: uppercase;
+	}
+
+	.amount {
+		flex: none;
+		font-size: 13.5px;
+		color: var(--text-4);
+	}
+
+	.steps-head {
+		margin: 26px 0 14px;
+	}
+
+	.steps {
+		margin: 0 0 24px;
+		padding: 0;
+		list-style: none;
+	}
+
+	.steps li {
+		display: flex;
+		gap: 13px;
+		margin-bottom: 16px;
+	}
+
+	.number {
+		display: flex;
+		align-items: center;
+		justify-content: center;
+		flex: none;
+		width: 26px;
+		height: 26px;
+		border-radius: 50%;
+		background: var(--sage);
+		font-size: 13px;
+		font-weight: 700;
+		color: var(--on-sage);
+	}
+
+	.step-text {
+		flex: 1;
+		min-width: 0;
+		padding-top: 2px;
+		font-size: 14.5px;
+		line-height: 1.5;
+		color: var(--ink);
+		white-space: pre-wrap;
+		overflow-wrap: anywhere;
+	}
+
+	.no-steps {
+		margin: 26px 0 0;
+		font-size: 14px;
+		line-height: 1.5;
+		color: var(--text-4);
+	}
+</style>
