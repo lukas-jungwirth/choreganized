@@ -12,11 +12,11 @@
  * Plan 02 opened this file with `listOverdueForMember`, which the tab badge and
  * the Home banner share; plan 04 built the rest around it.
  */
-import { and, asc, desc, eq, gte, isNull, lt, or, sql, type SQL } from 'drizzle-orm';
+import { and, asc, count, desc, eq, gte, isNull, lt, or, sql, type SQL } from 'drizzle-orm';
 import { alias } from 'drizzle-orm/sqlite-core';
 import {
 	addInterval,
-	formatDayStamp,
+	formatDayLabel,
 	formatTimeIn,
 	isCalendarDate,
 	startOfMonth,
@@ -282,6 +282,17 @@ export function getTaskList(householdId: string, context: TaskContext): TaskList
 /** The household-local day an instant fell on — the reminder footer's unit. */
 function localDateOf(at: Date | null, timezone: string): CalendarDate | null {
 	return at ? toCalendarDate(at, timezone) : null;
+}
+
+/**
+ * "To do · {n}" for the segmented control [8a]. History needs the number
+ * without the list, and `getTaskList().total` would mean reading and bucketing
+ * every task to render a label.
+ */
+export function countTasks(householdId: string): number {
+	const row = db.select({ n: count() }).from(tasks).where(eq(tasks.householdId, householdId)).get();
+
+	return row?.n ?? 0;
 }
 
 /* ── Creating & editing ───────────────────────────────────────────────────── */
@@ -873,11 +884,15 @@ export function recentCompletions(
 	);
 }
 
+/**
+ * "Today 8:20" · "Yesterday 18:40" · "Mon 14 Jul". The last two days carry the
+ * clock because that's the day you might still be reconstructing; older than
+ * that, the hour stops meaning anything and the day is the whole answer.
+ */
 function formatCompletedAt(at: Date, context: TaskContext): string {
 	const date = toCalendarDate(at, context.timezone);
-	if (date === context.today) return `Today ${formatTimeIn(at, context.timezone)}`;
-	if (date === addInterval(context.today, -1, 'day')) {
-		return `Yesterday ${formatTimeIn(at, context.timezone)}`;
-	}
-	return formatDayStamp(date);
+	const label = formatDayLabel(date, context.today);
+	const recent = date >= addInterval(context.today, -1, 'day');
+
+	return recent ? `${label} ${formatTimeIn(at, context.timezone)}` : label;
 }

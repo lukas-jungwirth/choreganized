@@ -15,6 +15,8 @@
 	import PotIcon from '$lib/components/icons/PotIcon.svelte';
 	import PageHeader from '$lib/components/shell/PageHeader.svelte';
 	import SubHeader from '$lib/components/shell/SubHeader.svelte';
+	import HistoryRow from '$lib/components/tasks/HistoryRow.svelte';
+	import Podium from '$lib/components/tasks/Podium.svelte';
 	import Avatar from '$lib/components/ui/Avatar.svelte';
 	import AvatarStack from '$lib/components/ui/AvatarStack.svelte';
 	import Banner from '$lib/components/ui/Banner.svelte';
@@ -34,6 +36,7 @@
 	import Stepper from '$lib/components/ui/Stepper.svelte';
 	import TextField from '$lib/components/ui/TextField.svelte';
 	import Toggle from '$lib/components/ui/Toggle.svelte';
+	import type { FeedEntry, Podium as PodiumData } from '$lib/server/services/history';
 	import { addDays, formatDateLabel } from '$lib/utils/dates';
 	import { UNITS } from '$lib/utils/shopping';
 	import Bell from '@lucide/svelte/icons/bell';
@@ -47,6 +50,72 @@
 		{ id: 'l', displayName: 'Lukas', color: 'var(--member-sage)' },
 		{ id: 'e', displayName: 'Elisabeth', color: 'var(--member-terracotta)' },
 		{ id: 'm', displayName: 'Mira', color: 'var(--member-blue)' }
+	];
+
+	/**
+	 * Podiums as the service hands them over — `entries` in rank order,
+	 * `position` doing the arranging (→ services/history.ts).
+	 */
+	const PODIUM_THREE: PodiumData = {
+		entries: [
+			{ ...column('l', 240), rank: 1, position: 1, crowned: true },
+			{ ...column('e', 210), rank: 2, position: 0, crowned: false },
+			{ ...column('m', 160), rank: 3, position: 2, crowned: false }
+		],
+		resetsOn: '2026-08-01',
+		leaderless: false
+	};
+
+	const PODIUM_TIED: PodiumData = {
+		entries: [
+			{ ...column('l', 180), rank: 1, position: 0, crowned: true },
+			{ ...column('e', 180), rank: 1, position: 1, crowned: false }
+		],
+		resetsOn: '2026-08-01',
+		leaderless: false
+	};
+
+	const PODIUM_LEADERLESS: PodiumData = {
+		entries: [
+			{ ...column('l', 0), rank: 1, position: 0, crowned: false },
+			{ ...column('e', 0), rank: 1, position: 1, crowned: false }
+		],
+		resetsOn: '2026-08-01',
+		leaderless: true
+	};
+
+	function column(id: string, points: number) {
+		const member = MEMBERS.find((entry) => entry.id === id) ?? MEMBERS[0];
+		return { memberId: member.id, displayName: member.displayName, color: member.color, points };
+	}
+
+	const FEED: FeedEntry[] = [
+		{
+			id: 'f1',
+			taskName: 'Change the bedsheets',
+			memberName: 'Lukas',
+			memberColor: 'var(--member-sage)',
+			points: 20,
+			time: '8:20'
+		},
+		{
+			id: 'f2',
+			taskName: 'Water the plants',
+			memberName: 'Elisabeth',
+			memberColor: 'var(--member-terracotta)',
+			points: 5,
+			time: '7:45'
+		},
+		{
+			// A housemate who has left: the snapshot keeps their name, the colour
+			// is gone with their row.
+			id: 'f3',
+			taskName: 'Take out recycling',
+			memberName: 'Marco',
+			memberColor: null,
+			points: 10,
+			time: '19:10'
+		}
 	];
 
 	let checked = $state(false);
@@ -313,6 +382,28 @@
 			<Button variant="secondary" onclick={() => (sheetOpen = true)}>Open bottom sheet</Button>
 			<Button variant="secondary" onclick={() => (modalOpen = true)}>Open centre modal</Button>
 		</div>
+	</section>
+
+	<section>
+		<h2>Podium [8a]</h2>
+		<p class="note">
+			Three members as the design draws them, then the two-member tie (equal columns, crown to the
+			earlier joiner → DECISIONS #62) and the 1st of the month, before anybody has scored.
+		</p>
+		<div class="col">
+			<Podium podium={PODIUM_THREE} />
+			<Podium podium={PODIUM_TIED} />
+			<Podium podium={PODIUM_LEADERLESS} />
+		</div>
+	</section>
+
+	<section>
+		<h2>HistoryRow [8a]</h2>
+		<RowGroup list>
+			{#each FEED as entry (entry.id)}
+				<HistoryRow {entry} />
+			{/each}
+		</RowGroup>
 	</section>
 
 	<section>

@@ -6,23 +6,39 @@
 	Children are the rows — one element each, whether written inline or rendered
 	by a component. Padding belongs to the row, like Card, because it differs
 	between a 52px preference row and a two-line member row.
+
+	`list` swaps the block for a `<ul>`, for the groups whose rows really are a
+	list rather than a set of controls — the history feed [8a], and plan 10's
+	members [6b]. Its rows must then be `<li>`s: an `<li>` outside a list element
+	is invalid markup, and the browser exposes it as a listitem with nothing to
+	belong to.
 -->
 <script lang="ts">
 	import type { Snippet } from 'svelte';
 
 	type Props = {
+		/** Render a `<ul>` (rows are `<li>`s) instead of the default `<div>`. */
+		list?: boolean;
 		children: Snippet;
 	};
 
-	let { children }: Props = $props();
+	let { list = false, children }: Props = $props();
 </script>
 
-<div class="group">{@render children()}</div>
+{#if list}
+	<ul class="group">{@render children()}</ul>
+{:else}
+	<div class="group">{@render children()}</div>
+{/if}
 
 <style>
 	.group {
 		/* Clips the first and last row's corners into the block's. */
 		overflow: hidden;
+		/* Only the `<ul>` carries these; harmless on the `<div>`. */
+		margin: 0;
+		padding: 0;
+		list-style: none;
 		border-radius: var(--r-card);
 		background: var(--card);
 		box-shadow: var(--shadow-card);

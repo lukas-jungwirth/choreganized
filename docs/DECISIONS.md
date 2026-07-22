@@ -330,6 +330,31 @@ Agents: when you make a judgment call that isn't in SPEC/ARCHITECTURE, **append 
     chore nobody has been handed, and SPEC only pins the wording for the assigned case. Both
     live in `services/reminders.ts` rather than `utils/tasks.ts`: it is the one piece of task
     copy the browser never renders, and a keyword table is not worth shipping to a phone.
+62. **The podium ranks by competition, arranges outwards from the winner, and hands a tie's
+    crown to the earlier `joinedAt`.** 240 / 240 / 160 ranks 1 · 1 · 3: tied housemates get
+    identical heights, identical numerals and both wear their own colour, because the alternative
+    (breaking the tie for the layout) would draw a leader who isn't one. Exactly one crown
+    survives that, and it goes to whoever has lived here longest — the same tiebreak rotation
+    and the avatar stack already use — rather than none: the crown is the card's focal point and
+    a podium that loses it whenever two people draw looks broken rather than even-handed. Home's
+    strip still says "You're tied this month" [8b], which is the honest sentence and doesn't
+    contradict the ornament. Columns are placed by putting 1st in the middle and alternating
+    outwards (2 · 1 · 3, then 4 · 2 · 1 · 3 · 5), except at two members, where there is no middle
+    and the winner takes the left — a leaderboard rather than a podium. The markup stays in
+    _rank_ order and CSS `order` does the arranging, so a screen reader hears the standings
+    rather than the choreography. A month nobody has scored in yet (the 1st, [8a]'s "empty but
+    valid") drops the crown and the numerals and levels the plinths: a rank of 1 for everyone at
+    zero would be a claim about a month that hasn't happened.
+63. **The history feed pages by month, and the window lives in the URL.** "Load more" hands
+    back a _month_ (`?from=2026-06-01`) rather than the next _n_ rows: a month is a landmark you
+    can picture before you tap, and SPEC §5.8 already offers the choice. In the URL rather than
+    in client state so the view survives a refresh, a share and the back button and works with
+    no JavaScript — the button is a plain `<a>` (`data-sveltekit-noscroll`, so the page doesn't
+    jump back to the podium). The button names the next month that _actually holds something_,
+    found with one `max(completedAt)` query below the window, so a household that went quiet
+    over the summer doesn't need three taps to reach one June evening. The podium is always the
+    current month regardless of how far the feed has been paged back — "This month" is the
+    scoreboard, not a cursor.
 
 ## Open questions (non-blocking, defaults chosen)
 

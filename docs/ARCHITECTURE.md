@@ -46,7 +46,7 @@ src/
       push.ts                  # sendToUser/sendToMembers, prune, payload types [plan 05]
       cron.ts                  # registerCronJobs(): reminders, timers, cleanup [plan 05+]
       services/                # domain logic: household.ts, home.ts, shopping.ts, tasks.ts,
-                               # reminders.ts, recipes.ts, meals.ts, timers.ts
+                               # history.ts, reminders.ts, recipes.ts, meals.ts, timers.ts
     utils/                     # dates.ts (household-local helpers), ingredients.ts,
                                # invite-code.ts, timer-parse.ts
   routes/                      # see routing map below

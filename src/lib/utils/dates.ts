@@ -111,13 +111,43 @@ export function formatWeekday(date: CalendarDate): string {
 	);
 }
 
-/** "Mon 14 Jul" — the history feed's day stamp [05]. */
-export function formatDayStamp(date: CalendarDate): string {
-	return formatter('day-stamp', 'en-GB', {
+/** "Mon 14 Jul" — the history feed's day stamp [05] [8a]. */
+export function formatDayStamp(date: CalendarDate, withYear = false): string {
+	return formatter(withYear ? 'day-stamp-year' : 'day-stamp', 'en-GB', {
 		timeZone: 'UTC',
 		weekday: 'short',
 		day: 'numeric',
-		month: 'short'
+		month: 'short',
+		...(withYear ? { year: 'numeric' } : {})
+	}).format(atUtcMidnight(date));
+}
+
+/**
+ * How the history feed heads a day: "Today", "Yesterday", "Mon 14 Jul" [8a].
+ * The year appears once you've paged back past New Year, where a bare "Mon 14
+ * Jul" would claim to be four months away rather than a year and four months.
+ */
+export function formatDayLabel(date: CalendarDate, today: CalendarDate): string {
+	const days = daysBetween(today, date);
+
+	if (days === 0) return 'Today';
+	if (days === -1) return 'Yesterday';
+
+	return formatDayStamp(date, date.slice(0, 4) !== today.slice(0, 4));
+}
+
+/**
+ * A month by name — "June", or "June 2025" once it isn't this year. Names the
+ * month the history feed's "load more" would reveal, where "Jun 1" would read
+ * as a single day rather than a month's worth (→ `formatShortDate`).
+ */
+export function formatMonthName(date: CalendarDate, today: CalendarDate): string {
+	const sameYear = date.slice(0, 4) === today.slice(0, 4);
+
+	return formatter(sameYear ? 'month' : 'month-year', 'en-GB', {
+		timeZone: 'UTC',
+		month: 'long',
+		...(sameYear ? {} : { year: 'numeric' })
 	}).format(atUtcMidnight(date));
 }
 

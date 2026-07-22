@@ -58,7 +58,10 @@ CenterModal**, plus `shell/TabBar` · `shell/PageHeader` and the bespoke icons i
 `components/icons/`. Plan 03: **Select · Stepper** + `shell/SubHeader`. Plan 04: **DateField**.
 Plan 05: **RowGroup**, `Banner` gained an acting/dismissable form, plus the feature component
 **`components/EnablePush`** (the push permission state machine, in a Settings row or as Home's
-one-time prompt card). Extend these rather than forking a variant; look at them side by side at
+one-time prompt card). Plan 09 added no `ui/` primitives — the podium and the completed feed are
+the feature components **`components/tasks/Podium`** and **`components/tasks/HistoryRow`**,
+composed from Card · Avatar · CrownIcon and RowGroup · CheckCircle. Extend these rather than
+forking a variant; look at them side by side at
 **`/dev/kit`** (dev-only gallery, → [DECISIONS #39](DECISIONS.md)) and add to it when you add a
 component.
 
@@ -72,7 +75,10 @@ component.
 - **RowGroup** — the white block a settings-style list sits in: `--r-card`, `--shadow-card`, a
   `--divider` hairline between every direct child, corners clipped. Settings' sections [6a],
   the members list [6b] and the ••• menus [7c] are all this shape. Padding stays on the row, as
-  with Card; a row that is a component draws its own internal dividers.
+  with Card; a row that is a component draws its own internal dividers. `list` renders a `<ul>`
+  instead of the `<div>` — for the groups whose rows really are a list (the history feed [8a],
+  plan 10's members [6b]); its rows must then be `<li>`s, since an `<li>` outside a list element
+  is invalid markup and the browser exposes it as a listitem belonging to nothing.
 - **Card** — white surface only: `--shadow-card` + `radius="lg"` (22, dashboard cards) or
   `"md"` (20, list & tile cards); renders an `<a>` with `href`, and sets `--input-surface` so
   fields inside it sink. Padding belongs to the caller, because it varies card by card;

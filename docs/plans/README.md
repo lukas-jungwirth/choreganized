@@ -19,7 +19,7 @@ plus your session date). Note deviations in the plan file and in DECISIONS.md.
 | 06  | [Task reminders](06-task-reminders.md)                              | done (2026-07-22) | 04, 05                   |
 | 07  | [Cooking: recipes & meal plan](07-cooking.md)                       | todo              | 02 (03 for shopping add) |
 | 08  | [Cook mode & timers](08-cook-mode.md)                               | todo              | 07, 05                   |
-| 09  | [History, leaderboard & Home completion](09-history-leaderboard.md) | todo              | 04                       |
+| 09  | [History, leaderboard & Home completion](09-history-leaderboard.md) | done (2026-07-22) | 04                       |
 | 10  | [Settings & members](10-settings-members.md)                        | todo              | 01 (05 for prefs)        |
 | 11  | [PWA, polish & deploy](11-pwa-deploy.md)                            | todo              | all                      |
 
@@ -50,9 +50,11 @@ DateField, a link mode on SegmentedControl, and the recurrence + due-date-copy h
 (→ ARCHITECTURE.md "Notifications"). 06 did exactly that and nothing else —
 `services/reminders.ts` (claim the idempotency flag, then send) plus one registry line is the
 whole shape **08 copies for cook timers**, and its "What was verified, and how" section is the
-recipe for driving a cron sweep without waiting for a real morning. Run `npm run dev` and open
-**`/dev/kit`** to see the components on one screen before you build against them — and add your
-new ones to that page.
+recipe for driving a cron sweep without waiting for a real morning. 09 added `Podium` and
+`HistoryRow` (both feature components, not `ui/`), `formatDayLabel` · `formatMonthName` in
+`lib/utils/dates.ts`, and the URL-window paging shape any other "load more" should copy
+(→ DECISIONS #63). Run `npm run dev` and open **`/dev/kit`** to see the components on one
+screen before you build against them — and add your new ones to that page.
 
 ## How to work a plan
 
