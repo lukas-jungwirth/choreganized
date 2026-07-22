@@ -157,3 +157,8 @@ The "lookback" is implicit in the `IS NULL` flags + the `>= 08:00` condition: wh
 runs at 08:00 or 13:45 (after downtime), the nudge fires exactly once. The overdue nudge query
 naturally fires the morning _after_ the due date (first tick past 08:00 with `dueDate <
 today`).
+
+The flag is claimed (conditionally, `WHERE … IS NULL`) _before_ the send, and only when at
+least one person the nudge is for is home: an away member leaves it NULL, so their nudge is
+still waiting the morning they're back, while a member who switched the toggle off spends it
+(→ [DECISIONS #60](DECISIONS.md), `lib/server/services/reminders.ts`).

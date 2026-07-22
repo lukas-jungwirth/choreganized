@@ -3,13 +3,14 @@
  *
  * **One minute tick, jobs that gate themselves.** A household's timezone is
  * data, so "03:30" can't live in a cron expression — every job runs each minute
- * and asks each household what time it is there. Plans 06 and 08 add their
- * reminder and timer sweeps the same way (→ docs/ARCHITECTURE.md
- * "Notifications", docs/DATA-MODEL.md "Reminder time-sweep").
+ * and asks each household what time it is there. Plan 08 adds its timer sweep
+ * the same way (→ docs/ARCHITECTURE.md "Notifications", docs/DATA-MODEL.md
+ * "Reminder time-sweep").
  */
 import { schedule } from 'node-cron';
 import { clockIn, todayIn, type CalendarDate } from '$lib/utils/dates';
 import { listHouseholdClocks } from './services/household';
+import { sendTaskReminders } from './services/reminders';
 import { purgeCheckedItems } from './services/shopping';
 
 /** Checked items survive the shopping trip and the evening (→ DECISIONS #13). */
@@ -17,6 +18,9 @@ const CHECKED_ITEM_TTL_MS = 12 * 60 * 60 * 1000;
 
 /** 03:30 household-local — late enough that nobody is mid-trip. */
 const CLEANUP_MINUTE_OF_DAY = 3 * 60 + 30;
+
+/** 08:00 household-local — "the morning it's due" (→ SPEC §5.6). */
+const REMINDER_MINUTE_OF_DAY = 8 * 60;
 
 /**
  * The household-local date each household was last cleaned on — the "has this
@@ -47,10 +51,13 @@ export function registerCronJobs(): void {
 	if (scope[REGISTERED]) return;
 	scope[REGISTERED] = true;
 
-	// The registry. Plans 06 (reminders) and 08 (timer catch-up) add a line each;
-	// both are async because they send push, which is what `guard` and
+	// The registry. Plan 08 (timer catch-up) adds a line; like the reminder sweep
+	// it will be async, because it sends push — which is what `guard` and
 	// `noOverlap` below are shaped for.
-	const jobs: Job[] = [['shopping-cleanup', cleanUpCheckedShoppingItems]];
+	const jobs: Job[] = [
+		['shopping-cleanup', cleanUpCheckedShoppingItems],
+		['task-reminders', sweepTaskReminders]
+	];
 
 	for (const [name, job] of jobs) {
 		schedule('* * * * *', () => guard(name, job), {
@@ -99,19 +106,20 @@ function cleanUpCheckedShoppingItems(now: Date = new Date()): void {
 	const households = listHouseholdClocks();
 
 	for (const household of households) {
-		const today = todayIn(household.timezone, now);
-		if (lastCleanup.get(household.id) === today) continue;
-
-		const { hour, minute } = clockIn(household.timezone, now);
-		if (hour * 60 + minute < CLEANUP_MINUTE_OF_DAY) continue;
-
-		// Claimed before the delete, not after: a household whose sweep throws
-		// shouldn't be retried every minute for the rest of the day.
-		lastCleanup.set(household.id, today);
-
-		// Guarded per household, not once around the loop: the next household's
-		// sweep must not be collateral damage of this one's failure.
+		// Guarded per household from the first line, clock read included: the next
+		// household's sweep must not be collateral damage of this one's failure,
+		// and reading the clock is itself a way to fail (an unusable timezone).
 		guard(`shopping-cleanup ${household.id}`, () => {
+			const today = todayIn(household.timezone, now);
+			if (lastCleanup.get(household.id) === today) return;
+
+			const { hour, minute } = clockIn(household.timezone, now);
+			if (hour * 60 + minute < CLEANUP_MINUTE_OF_DAY) return;
+
+			// Claimed before the delete, not after: a household whose sweep throws
+			// shouldn't be retried every minute for the rest of the day.
+			lastCleanup.set(household.id, today);
+
 			const removed = purgeCheckedItems(
 				household.id,
 				new Date(now.getTime() - CHECKED_ITEM_TTL_MS)
@@ -127,4 +135,31 @@ function cleanUpCheckedShoppingItems(now: Date = new Date()): void {
 	// A deleted household would otherwise keep its entry until the next deploy.
 	const live = new Set(households.map((household) => household.id));
 	for (const id of lastCleanup.keys()) if (!live.has(id)) lastCleanup.delete(id);
+}
+
+/**
+ * The two task nudges, from 08:00 on the household's own clock (→ SPEC §5.6,
+ * `services/reminders.ts`).
+ *
+ * No ledger here, unlike the cleanup above: what has already gone out is written
+ * on the task rows themselves, so this can run every minute from 08:00 to
+ * midnight and still send each nudge exactly once — and a server that was down
+ * all morning catches up on its first tick instead of skipping the day.
+ */
+async function sweepTaskReminders(now: Date = new Date()): Promise<void> {
+	for (const household of listHouseholdClocks()) {
+		// Guarded from the first line, clock read included: a household with an
+		// unusable timezone must not cost the next household its morning.
+		await guard(`task-reminders ${household.id}`, async () => {
+			const { hour, minute } = clockIn(household.timezone, now);
+			if (hour * 60 + minute < REMINDER_MINUTE_OF_DAY) return;
+
+			const sent = await sendTaskReminders(household.id, todayIn(household.timezone, now), now);
+			if (sent.nudges > 0) {
+				console.log(
+					`[cron] ${sent.nudges} task reminder(s) in household ${household.id} → ${sent.devices} device(s)`
+				);
+			}
+		});
+	}
 }

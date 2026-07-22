@@ -470,6 +470,12 @@ const seeded = db.transaction((tx) => {
 	 * One per state the Tasks screen renders: overdue, due today, upcoming,
 	 * undated one-off (→ SPEC §5.1). Points are the canonical presets
 	 * 5/10/20/40 (→ DECISIONS #2).
+	 *
+	 * The reminder flags are seeded too, so the [4e] lifecycle is walkable
+	 * without waiting for a morning (→ SPEC §5.6): "Water the plants" is due
+	 * today and unnudged, "Clean the fridge" slipped yesterday with only its due
+	 * nudge spent, and "Change the bedsheets" has had both and must stay silent.
+	 * The first tick past 08:00 household-local sends the first two.
 	 */
 
 	tx.insert(tasks)
@@ -498,7 +504,20 @@ const seeded = db.transaction((tx) => {
 				recurInterval: 1,
 				dueDate: today,
 				assigneeMemberId: ownerMemberId,
+				// No flags: this is the due nudge, waiting for the next tick.
 				createdByMemberId: ownerMemberId
+			},
+			{
+				id: sid('task', 'fridge'),
+				householdId,
+				name: 'Clean the fridge',
+				points: 20,
+				recurUnit: 'month',
+				recurInterval: 1,
+				dueDate: addDays(today, -1),
+				// "Anyone", so the overdue nudge goes to every opted-in member.
+				dueReminderSentAt: daysAgo(1, 8),
+				createdByMemberId: housemateMemberId
 			},
 			{
 				id: sid('task', 'towels'),
@@ -579,7 +598,7 @@ console.log(`Seeded ${databasePath} for ${email}`);
 console.log(`  household  ${seeded.householdName} — ${seeded.members}`);
 console.log('  shopping   3 stores · 10 items (2 already checked off)');
 console.log('  cooking    2 recipes · meals planned for today, tomorrow and the day after');
-console.log('  tasks      6 tasks (overdue · today · upcoming · undated) · 8 history entries');
+console.log('  tasks      7 tasks (overdue · today · upcoming · undated) · 8 history entries');
 console.log(`  → ${rowsWritten() - before} rows written; anything already there was left alone.`);
 
 sqlite.close();

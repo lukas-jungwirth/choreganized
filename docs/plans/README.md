@@ -16,7 +16,7 @@ plus your session date). Note deviations in the plan file and in DECISIONS.md.
 | 03  | [Shopping](03-shopping.md)                                          | done (2026-07-22) | 02                       |
 | 04  | [Tasks core](04-tasks.md)                                           | done (2026-07-22) | 02                       |
 | 05  | [Push infrastructure](05-push-infra.md)                             | done (2026-07-22) | 02                       |
-| 06  | [Task reminders](06-task-reminders.md)                              | todo              | 04, 05                   |
+| 06  | [Task reminders](06-task-reminders.md)                              | done (2026-07-22) | 04, 05                   |
 | 07  | [Cooking: recipes & meal plan](07-cooking.md)                       | todo              | 02 (03 for shopping add) |
 | 08  | [Cook mode & timers](08-cook-mode.md)                               | todo              | 07, 05                   |
 | 09  | [History, leaderboard & Home completion](09-history-leaderboard.md) | todo              | 04                       |
@@ -47,9 +47,12 @@ DateField, a link mode on SegmentedControl, and the recurrence + due-date-copy h
 09's feed builds on `services/tasks.ts`. 05 added `RowGroup`, an acting/dismissable `Banner`,
 `components/EnablePush`, and the whole notification stack: **06 and 08 only call `sendToUser` /
 `sendToMembers` from `lib/server/push.ts` and add one line to `cron.ts`'s job registry**
-(→ ARCHITECTURE.md "Notifications") — so 06 is now unblocked on both sides. Run `npm run dev`
-and open **`/dev/kit`** to see them all on one screen before you build against them — and add
-your new ones to that page.
+(→ ARCHITECTURE.md "Notifications"). 06 did exactly that and nothing else —
+`services/reminders.ts` (claim the idempotency flag, then send) plus one registry line is the
+whole shape **08 copies for cook timers**, and its "What was verified, and how" section is the
+recipe for driving a cron sweep without waiting for a real morning. Run `npm run dev` and open
+**`/dev/kit`** to see the components on one screen before you build against them — and add your
+new ones to that page.
 
 ## How to work a plan
 

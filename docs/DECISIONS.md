@@ -305,6 +305,31 @@ Agents: when you make a judgment call that isn't in SPEC/ARCHITECTURE, **append 
     notification icon and Android masks an app icon, and a house-only monochrome badge because
     sparkles are noise at 24 dp. Plan 11 ships the real set; until then a notification is drawn
     with our mark rather than the browser's default globe.
+60. **A holiday defers a nudge; a switched-off toggle spends it.** The reminder sweep claims a
+    task's flag whenever at least one person the nudge is for is home — whatever their
+    notification preferences — and doesn't claim it at all while everyone it is for is away.
+    The two skips look identical from outside and aren't: the holiday pause exists so that a
+    task isn't somebody's problem yet (SPEC §5.5), so the nudge is still waiting for them the
+    morning they're back, which the overdue sweep then delivers — the gentlest possible
+    "welcome home", and the alternative (marking it sent while they were on a beach) is a
+    reminder nobody ever receives. A member who switched the nudge off has already answered, so
+    the occurrence is closed: re-asking every minute for the rest of the day would be a
+    question that never settles. Reassigning keeps the flags, which is plan 04's call and still
+    the right one — the occurrence hasn't changed, so the new assignee hears about it in the
+    next morning's overdue nudge rather than in a second push the same day.
+    Both flags are claimed with a conditional `UPDATE … WHERE flag IS NULL` _before_ anything
+    is sent, so a crash mid-sweep costs a notification rather than repeating one, and a second
+    sweep (a slow tick overlapping the next, two processes mid-redeploy) sees `changes === 0`
+    and stays quiet.
+61. **The overdue nudge wears the chore's own emoji, and an "Anyone" task doesn't claim it's
+    your turn.** [4e] draws "🛏️ Bedsheets are overdue — it's your turn", so the overdue line
+    picks its emoji from the task name (a dozen keyword patterns, ⏰ when none match) while the
+    due line keeps SPEC's ☑️ — on a lock screen the picture lands before the sentence does. For
+    an unassigned task the copy borrows the words the overdue card already uses [4a]: "☑️ Take
+    out the bins is due today — anyone can pick this up", because "your turn" is a lie about a
+    chore nobody has been handed, and SPEC only pins the wording for the assigned case. Both
+    live in `services/reminders.ts` rather than `utils/tasks.ts`: it is the one piece of task
+    copy the browser never renders, and a keyword table is not worth shipping to a phone.
 
 ## Open questions (non-blocking, defaults chosen)
 
