@@ -64,6 +64,34 @@ Agents: when you make a judgment call that isn't in SPEC/ARCHITECTURE, **append 
     relevant toggle on; assigned tasks nudge only the assignee).
 22. **Popular starters** ([7f]) prefill: bins Weekly Small·5, bedsheets Monthly Medium·10,
     bathroom Every-2-weeks Large·20 — assignee Anyone, first due today, editable after.
+23. **Auth tables follow Better Auth's generated schema exactly** (plan 00): all timestamps are
+    `timestamp_ms` like the rest of the schema — not seconds as originally written — plus
+    NOT NULL `verification.created_at/updated_at` and an index on `identifier` (migration 0001).
+    Drizzle's timestamp _mode_ is invisible to migrations, so a mismatch there would have been
+    silent; the diff procedure is in [DATA-MODEL.md](DATA-MODEL.md).
+24. **The login button keeps Google's own styling** (white, 1.5px border, colour mark) rather
+    than the sage primary — that's what Google's branding requires and it's exactly the social
+    button in [5a], scaled to the primary button's size since it's now the only action. The
+    design's "New here? Create an account" footer becomes "New here? Signing in with Google
+    creates your account", because Google-only sign-in has no separate sign-up (→ #1).
+25. **The dev seed is idempotent, never destructive**: every seeded row carries a deterministic
+    `seed:{householdId}:{kind}:{name}` id and is inserted `ON CONFLICT DO NOTHING`, so
+    `npm run db:seed` can run any number of times, adds demo data to a household you already
+    created, and never overwrites something you changed in the app. Extend it the same way.
+26. **Joining is two steps on one route, not a live lookup.** `/onboarding/join` posts the code
+    to a form action and, on success, redirects to `?code=XXXXXX` — the resolved code lives in
+    the URL, so a refresh keeps its place and the invite preview arrives with the page. The
+    alternative (validating as you type) would need a public JSON endpoint, which the
+    load-and-form-actions rule reserves for push/timers/uploads (→ #20).
+27. **Invite links hand off through a short-lived `invite_code` cookie.** `/j/{code}` is public
+    and only shows the preview; accepting parks the code in an httpOnly, SameSite=Lax, one-hour
+    cookie and sends you to sign-in, because Google's redirect can't carry our state. After
+    auth, `/` reads the cookie and resumes at the join screen; joining (or creating a household
+    instead) clears it.
+28. **The member palette exists twice on purpose** — as `--member-*` tokens in `app.css` and as
+    hex values in `src/lib/member-colors.ts`. Colours are written to `members.color` and read
+    back to paint avatars, so they're data as well as styling; the JS module is the one place
+    that says so, and the two must be changed together.
 
 ## Open questions (non-blocking, defaults chosen)
 

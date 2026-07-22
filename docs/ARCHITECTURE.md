@@ -146,6 +146,44 @@ first for pages with an offline fallback notice.
   `PUBLIC_VAPID_PUBLIC_KEY`, `VAPID_PRIVATE_KEY`, `VAPID_SUBJECT`.
 - HTTPS is mandatory for push + install (Coolify/Traefik handles certs).
 
+### Running the production build (verified 2026-07-22)
+
+```bash
+# A) Local prod-mode, no Docker
+npm run build
+node --env-file=.env build/index.js     # → http://localhost:3000
+
+# B) Docker — mirrors what Coolify does
+docker build -t choreganized .
+docker run --rm -p 3000:3000 -v choreganized-data:/data \
+  -e ORIGIN=http://localhost:3000 -e BETTER_AUTH_URL=http://localhost:3000 \
+  -e BETTER_AUTH_SECRET=… -e GOOGLE_CLIENT_ID=… -e GOOGLE_CLIENT_SECRET=… \
+  choreganized
+```
+
+Two gotchas, both hit in practice:
+
+1. **The built server does not read `.env`.** adapter-node ships no dotenv — only the Vite dev
+   server loads it. Use `node --env-file=.env` (Node ≥20), or supply real env vars. In Coolify
+   set them in the UI; no `.env` file is deployed (`.dockerignore` excludes it).
+2. **Don't pass `--env-file .env` to `docker run` as-is.** `.env` sets `DATABASE_PATH=./data/…`
+   and `UPLOADS_DIR=./data/uploads`, which override the image's `/data` defaults — the DB then
+   lands _inside the container_ and dies with it. Pass env explicitly, or override both paths
+   back to `/data/…`.
+
+`ORIGIN` must equal the URL you actually browse or form actions fail; the built server listens
+on `PORT` (default 3000) while dev runs on 5173, so a local prod test with Google sign-in also
+needs `http://localhost:3000/api/auth/callback/google` added to the OAuth client.
+
+### Secrets per environment
+
+- `BETTER_AUTH_SECRET`: generate a **separate** one for production, straight into Coolify's env
+  UI at deploy time (`openssl rand -base64 32`). Freely rotatable — rotating only signs
+  everyone out.
+- **VAPID keypair: generate once for production and never change it.** Push subscriptions are
+  bound to the public key; replacing it invalidates every stored subscription and each device
+  must re-subscribe. Dev may use its own throwaway pair.
+
 ## Conventions that keep the codebase coherent
 
 - **Svelte 5 runes only**: `$props()`, `$state()`, `$derived()`, `$effect()`; snippets over

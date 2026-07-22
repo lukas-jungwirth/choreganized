@@ -11,8 +11,14 @@ podium, and gentle reminders. Installable PWA (Android-first), self-hosted.
 
 ```bash
 npm install
-cp .env.example .env    # fill in as needed (see comments; DB needs nothing)
-npm run dev
+cp .env.example .env    # Google OAuth + auth secret are required to sign in
+npm run dev             # → http://localhost:5173, migrations run on boot
+```
+
+Sign in with Google once, then fill the app with demo data (safe to re-run):
+
+```bash
+npm run db:seed -- you@example.com   # the Google address you signed in with
 ```
 
 ## Project state & docs

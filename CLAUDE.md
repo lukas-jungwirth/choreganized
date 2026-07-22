@@ -24,6 +24,7 @@ npm run dev            # dev server (http://localhost:5173)
 npm run check          # svelte-check — must be clean before finishing
 npm run build          # production build — must pass before finishing
 npm run db:generate    # new migration after editing schema.ts
+npm run db:seed -- you@example.com   # demo data for a signed-in user (idempotent)
 npm run db:studio      # inspect the DB
 npm run format         # prettier
 ```

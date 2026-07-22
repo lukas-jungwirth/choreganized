@@ -8,20 +8,20 @@ it says what to build, which design frames and SPEC sections apply, and how to k
 Update this table when you start/finish a plan (statuses: `todo` · `in progress` · `done`,
 plus your session date). Note deviations in the plan file and in DECISIONS.md.
 
-| #   | Plan                                                                | Status | Depends on               |
-| --- | ------------------------------------------------------------------- | ------ | ------------------------ |
-| 00  | [Foundation: auth, guards, hooks, login](00-foundation.md)          | todo   | —                        |
-| 01  | [Onboarding & household](01-onboarding.md)                          | todo   | 00                       |
-| 02  | [App shell & Home v1](02-shell-home.md)                             | todo   | 01                       |
-| 03  | [Shopping](03-shopping.md)                                          | todo   | 02                       |
-| 04  | [Tasks core](04-tasks.md)                                           | todo   | 02                       |
-| 05  | [Push infrastructure](05-push-infra.md)                             | todo   | 02                       |
-| 06  | [Task reminders](06-task-reminders.md)                              | todo   | 04, 05                   |
-| 07  | [Cooking: recipes & meal plan](07-cooking.md)                       | todo   | 02 (03 for shopping add) |
-| 08  | [Cook mode & timers](08-cook-mode.md)                               | todo   | 07, 05                   |
-| 09  | [History, leaderboard & Home completion](09-history-leaderboard.md) | todo   | 04                       |
-| 10  | [Settings & members](10-settings-members.md)                        | todo   | 01 (05 for prefs)        |
-| 11  | [PWA, polish & deploy](11-pwa-deploy.md)                            | todo   | all                      |
+| #   | Plan                                                                | Status            | Depends on               |
+| --- | ------------------------------------------------------------------- | ----------------- | ------------------------ |
+| 00  | [Foundation: auth, guards, hooks, login](00-foundation.md)          | done (2026-07-22) | —                        |
+| 01  | [Onboarding & household](01-onboarding.md)                          | done (2026-07-22) | 00                       |
+| 02  | [App shell & Home v1](02-shell-home.md)                             | todo              | 01                       |
+| 03  | [Shopping](03-shopping.md)                                          | todo              | 02                       |
+| 04  | [Tasks core](04-tasks.md)                                           | todo              | 02                       |
+| 05  | [Push infrastructure](05-push-infra.md)                             | todo              | 02                       |
+| 06  | [Task reminders](06-task-reminders.md)                              | todo              | 04, 05                   |
+| 07  | [Cooking: recipes & meal plan](07-cooking.md)                       | todo              | 02 (03 for shopping add) |
+| 08  | [Cook mode & timers](08-cook-mode.md)                               | todo              | 07, 05                   |
+| 09  | [History, leaderboard & Home completion](09-history-leaderboard.md) | todo              | 04                       |
+| 10  | [Settings & members](10-settings-members.md)                        | todo              | 01 (05 for prefs)        |
+| 11  | [PWA, polish & deploy](11-pwa-deploy.md)                            | todo              | all                      |
 
 ## Dependency graph & parallelization
 

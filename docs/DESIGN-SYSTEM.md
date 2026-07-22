@@ -43,16 +43,25 @@ uppercase micro-labels. Nothing shouts; even "overdue" is a calm tinted card.
 
 ## Recurring components (build once in `lib/components/ui`, reuse everywhere)
 
+Built so far (plan 01): **Button · TextField · Avatar · ColorPicker**, plus `shell/Screen`
+(the 480px page shell). The rest below are specs waiting for the plan that first needs them —
+extend the existing ones rather than forking a variant.
+
 - **Button** — primary (sage bg, white 700 16px, `--r-button`, `--shadow-button`), secondary
   (white, 1.5px `--border`), danger (only in confirm dialogs), dark (`--ink` bg — "Start cook
-  mode"). Full-width in sheets.
+  mode"). Full-width by default; renders an `<a>` when given `href`.
+- **TextField** — uppercase micro-label + white field, `--r-input`, sage border on focus,
+  `error` prop for the message a failed form action sends back.
+- **ColorPicker** — the member palette (`$lib/member-colors`) as a radio group; `taken`
+  colours render disabled. Pair it with a 52px Avatar preview [5c].
 - **Card** — white, `--r-card(-lg)`, `--shadow-card`; internal rows split by `--divider`
   (13–14px vertical padding, 15–16px horizontal).
 - **BottomSheet** — white, top radius `--r-sheet`, drag handle (38×5 pill `--border`),
   `--shadow-sheet`, scrim `rgba(34,32,28,.4)`; closes on scrim tap/Esc; content = form.
 - **CenterModal** — completion celebration & confirms, `--r-sheet`, `--shadow-modal`.
-- **Avatar** — circle, member colour bg, white initial, sizes 20/26/36/52; stack with -9 to
-  -12px overlap + 2.5px `--bg` ring; "empty" variant dashed `--border-dashed`.
+- **Avatar** — circle, member colour bg, white initial, sizes 20/26/32/36/44/52; stack with -9
+  to -12px overlap + 2.5px `--bg` ring (`ring` prop); "empty" variant dashed `--border-dashed`,
+  optionally wrapping an icon (the + on "waiting to join" [5d]).
 - **Chip** — pill `--r-chip`, 1.5px border; selected = sage bg/white (or tint bg + `--sage`
   border for member chips); used for stores, effort, assignees, snooze presets.
 - **SegmentedControl** — `--sunken-2` track r13, active segment white r10 + tiny shadow.
@@ -74,7 +83,8 @@ uppercase micro-labels. Nothing shouts; even "overdue" is a calm tinted card.
 `@lucide/svelte`, defaults matched to the design: `size 23` in the tab bar (else 16–20),
 `stroke-width 1.9`, round caps/joins. Bespoke SVGs (copy from the design file into
 `lib/assets/`): logo mark (house + sparkles), wordmark, crown, any icon Lucide lacks.
-The logo mark markup already exists in `src/routes/+page.svelte`.
+The logo mark lives in `src/lib/assets/logo-mark.svg` (white on a sage tile — see the login
+screen for how it's composed); `google-g.svg` is Google's own mark for the sign-in button.
 
 ## Motion & feel
 

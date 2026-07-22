@@ -8,6 +8,13 @@
       "when": 1784651273231,
       "tag": "0000_legal_living_mummy",
       "breakpoints": true
+    },
+    {
+      "idx": 1,
+      "version": "6",
+      "when": 1784702457390,
+      "tag": "0001_keen_chimera",
+      "breakpoints": true
     }
   ]
 }

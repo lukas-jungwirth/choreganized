@@ -3,8 +3,8 @@
  *
  * Conventions:
  * - Text UUID primary keys (crypto.randomUUID).
- * - Timestamps: integer ms since epoch (`timestamp_ms` mode → JS Date).
- *   Better Auth tables use `timestamp` (seconds) per Better Auth convention.
+ * - Timestamps: integer ms since epoch (`timestamp_ms` mode → JS Date),
+ *   including the Better Auth tables (its CLI generates `timestamp_ms` too).
  * - Calendar dates (task due dates, meal dates, away-until) are stored as
  *   'YYYY-MM-DD' TEXT in the household's local timezone. They are calendar
  *   concepts ("due Thursday"), not instants — never convert them through UTC.
@@ -30,9 +30,16 @@ const createdAt = () =>
 /* ────────────────────────────────────────────────────────────────────────────
  * Better Auth tables (user / session / account / verification).
  * Field names must match Better Auth's core schema — the drizzle adapter maps
- * on these property names. If a Better Auth upgrade changes the expected
- * schema, reconcile with `npx @better-auth/cli generate`.
+ * on these property names. Verified against better-auth 1.6.23 with
+ * `npx @better-auth/cli generate` (plan 00); re-run that diff after upgrades.
+ * `verification` is not just for email — Better Auth parks the OAuth state
+ * there during the Google round-trip.
  * ──────────────────────────────────────────────────────────────────────────── */
+
+const authTimestamp = (column: string) =>
+	integer(column, { mode: 'timestamp_ms' })
+		.notNull()
+		.$defaultFn(() => new Date());
 
 export const user = sqliteTable('user', {
 	id: text('id').primaryKey(),
@@ -40,23 +47,23 @@ export const user = sqliteTable('user', {
 	email: text('email').notNull().unique(),
 	emailVerified: integer('email_verified', { mode: 'boolean' }).notNull().default(false),
 	image: text('image'),
-	createdAt: integer('created_at', { mode: 'timestamp' }).notNull(),
-	updatedAt: integer('updated_at', { mode: 'timestamp' }).notNull()
+	createdAt: authTimestamp('created_at'),
+	updatedAt: authTimestamp('updated_at')
 });
 
 export const session = sqliteTable(
 	'session',
 	{
 		id: text('id').primaryKey(),
-		expiresAt: integer('expires_at', { mode: 'timestamp' }).notNull(),
+		expiresAt: integer('expires_at', { mode: 'timestamp_ms' }).notNull(),
 		token: text('token').notNull().unique(),
 		ipAddress: text('ip_address'),
 		userAgent: text('user_agent'),
 		userId: text('user_id')
 			.notNull()
 			.references(() => user.id, { onDelete: 'cascade' }),
-		createdAt: integer('created_at', { mode: 'timestamp' }).notNull(),
-		updatedAt: integer('updated_at', { mode: 'timestamp' }).notNull()
+		createdAt: authTimestamp('created_at'),
+		updatedAt: authTimestamp('updated_at')
 	},
 	(t) => [index('session_user_idx').on(t.userId)]
 );
@@ -73,24 +80,28 @@ export const account = sqliteTable(
 		accessToken: text('access_token'),
 		refreshToken: text('refresh_token'),
 		idToken: text('id_token'),
-		accessTokenExpiresAt: integer('access_token_expires_at', { mode: 'timestamp' }),
-		refreshTokenExpiresAt: integer('refresh_token_expires_at', { mode: 'timestamp' }),
+		accessTokenExpiresAt: integer('access_token_expires_at', { mode: 'timestamp_ms' }),
+		refreshTokenExpiresAt: integer('refresh_token_expires_at', { mode: 'timestamp_ms' }),
 		scope: text('scope'),
 		password: text('password'),
-		createdAt: integer('created_at', { mode: 'timestamp' }).notNull(),
-		updatedAt: integer('updated_at', { mode: 'timestamp' }).notNull()
+		createdAt: authTimestamp('created_at'),
+		updatedAt: authTimestamp('updated_at')
 	},
 	(t) => [index('account_user_idx').on(t.userId)]
 );
 
-export const verification = sqliteTable('verification', {
-	id: text('id').primaryKey(),
-	identifier: text('identifier').notNull(),
-	value: text('value').notNull(),
-	expiresAt: integer('expires_at', { mode: 'timestamp' }).notNull(),
-	createdAt: integer('created_at', { mode: 'timestamp' }),
-	updatedAt: integer('updated_at', { mode: 'timestamp' })
-});
+export const verification = sqliteTable(
+	'verification',
+	{
+		id: text('id').primaryKey(),
+		identifier: text('identifier').notNull(),
+		value: text('value').notNull(),
+		expiresAt: integer('expires_at', { mode: 'timestamp_ms' }).notNull(),
+		createdAt: authTimestamp('created_at'),
+		updatedAt: authTimestamp('updated_at')
+	},
+	(t) => [index('verification_identifier_idx').on(t.identifier)]
+);
 
 /* ────────────────────────────────────────────────────────────────────────────
  * Household & membership

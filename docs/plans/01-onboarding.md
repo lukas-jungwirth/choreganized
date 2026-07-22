@@ -36,13 +36,49 @@ Depends on: 00. Design: [5b] [5c] [5d] [5e]. SPEC: [§1](../SPEC.md#1-onboarding
 
 ## Acceptance
 
-- [ ] Create flow: new user → create → invite screen shows code; household, member (owner),
+- [x] Create flow: new user → create → invite screen shows code; household, member (owner),
       3 stores exist; "Go to Choreganized" lands on `/home` (placeholder until 02 is fine).
-- [ ] Join flow via `/j/{code}` in a second browser/profile: preview shows inviter + name;
+- [x] Join flow via `/j/{code}` in a second browser/profile: preview shows inviter + name;
       after Google auth the join screen is prefilled; joining creates member; taken colour is
       disabled.
-- [ ] Join flow via manual code entry works; bad/revoked code shows inline error.
-- [ ] A user with a household hitting any onboarding route is redirected to `/home`.
-- [ ] `npm run check` && `npm run build` clean.
+- [x] Join flow via manual code entry works; bad/revoked code shows inline error.
+- [x] A user with a household hitting any onboarding route is redirected to `/home`.
+- [x] `npm run check` && `npm run build` clean.
 
 Out of scope: members management & revoke UI (10), tab shell (02).
+
+## Session notes (2026-07-22)
+
+Walked in the browser at 390px with three throwaway accounts: create → invite → sign out →
+`/j/{code}` landing → sign in → prefilled join, then a third account joining by typing the code.
+Sign-in used the same temporary email-password switch as plan 00 (see its notes) — the Google
+round-trip itself still needs the owner's credentials.
+
+**Deviations**
+
+- `/onboarding/invite` is the one onboarding route a member _may_ see: it's step 2 of creating a
+  household, and plan 10's "Invite housemate" links to it. The other three bounce members to
+  `/home`.
+- **Chip wasn't built.** Nothing in onboarding is a chip, and building it blind would pre-judge
+  the store/effort/assignee chips in plans 03/04 — it belongs to whichever lands first. Built
+  instead: `Button`, `TextField`, `Avatar`, `ColorPicker` in `ui/`, `Screen` in `shell/` (the
+  480px page shell, now also used by `/login`), and `StepHeader` · `CodeInput` ·
+  `InvitePreviewCard` under `components/onboarding/`.
+- The join screen's second step is titled "Set up your profile" (no design frame exists for it);
+  [5e]'s sage tile carries the logo mark rather than a Fraunces "H", which was the old app name.
+
+**Two bugs found by walking it** (both fixed, worth knowing when extending):
+
+1. `maxlength` on the invite-code input counted the dash in a pasted `7K4-P2X` and swallowed the
+   last character. Length is capped by `normalizeInviteCode` instead.
+2. Both join steps share one route, so the component isn't remounted when the code resolves — the
+   default colour still came from the "no household known yet" state and could land on a colour
+   that's already taken. The default is a `$derived` of the preview now, overridden only once the
+   user picks — and the override is dropped again if that colour turns out to be taken (the other
+   housemate joining while you fill the form).
+
+**Follow-up from the code review:** the seed hardcoded the demo housemate's member id and name
+everywhere, so seeding a household a _real_ housemate had joined died on a foreign-key violation —
+exactly the path the script's own docstring advertises. It now resolves both members from the
+household after the stub insert, and meal rows are keyed by date so a re-run on a later day plans
+that day's dinners instead of silently skipping every insert.
