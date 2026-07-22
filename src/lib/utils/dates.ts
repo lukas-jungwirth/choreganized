@@ -59,6 +59,20 @@ export function startOfMonth(date: CalendarDate): CalendarDate {
 	return `${date.slice(0, 7)}-01`;
 }
 
+/**
+ * Which day of the week `date` falls on, **Monday = 0** (→ SPEC §8: "weeks start
+ * Monday"). Read off a UTC midnight, so no timezone gets a say in it — the day
+ * of the week is a property of the calendar date itself.
+ */
+export function weekdayIndex(date: CalendarDate): number {
+	return (atUtcMidnight(date).getUTCDay() + 6) % 7;
+}
+
+/** The Monday of `date`'s week — where the Cooking tab's 7-day strip starts. */
+export function startOfWeek(date: CalendarDate): CalendarDate {
+	return addDays(date, -weekdayIndex(date));
+}
+
 /* ── Calendar arithmetic ──────────────────────────────────────────────────── */
 
 /**
@@ -109,6 +123,40 @@ export function formatWeekday(date: CalendarDate): string {
 	return formatter('weekday', 'en-US', { timeZone: 'UTC', weekday: 'short' }).format(
 		atUtcMidnight(date)
 	);
+}
+
+/** "MON" — the Cooking tab's day strip and meal rows [04]. */
+export function formatWeekdayShort(date: CalendarDate): string {
+	return formatWeekday(date).toUpperCase();
+}
+
+/** "Thursday" — the plan-a-meal sheet's title [3d]. */
+export function formatWeekdayLong(date: CalendarDate): string {
+	return formatter('weekday-long', 'en-US', { timeZone: 'UTC', weekday: 'long' }).format(
+		atUtcMidnight(date)
+	);
+}
+
+/** The day of the month without its leading zero — "14", the strip's number [04]. */
+export function dayOfMonth(date: CalendarDate): string {
+	return String(Number(date.slice(8)));
+}
+
+/**
+ * What month a span of days is in: "July" while it stays in one, "Jun – Jul"
+ * when the week straddles two. The Cooking header shows this beside "This week"
+ * [04], where a week that crosses the turn of the month would otherwise be
+ * labelled with whichever end we happened to pick.
+ */
+export function formatMonthRange(from: CalendarDate, to: CalendarDate): string {
+	const sameMonth = from.slice(0, 7) === to.slice(0, 7);
+	const style = sameMonth ? 'long' : 'short';
+	const month = (date: CalendarDate) =>
+		formatter(`month-${style}`, 'en-US', { timeZone: 'UTC', month: style }).format(
+			atUtcMidnight(date)
+		);
+
+	return sameMonth ? month(from) : `${month(from)} – ${month(to)}`;
 }
 
 /** "Mon 14 Jul" — the history feed's day stamp [05]. */

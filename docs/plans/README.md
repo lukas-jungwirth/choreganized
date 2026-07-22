@@ -17,7 +17,7 @@ plus your session date). Note deviations in the plan file and in DECISIONS.md.
 | 04  | [Tasks core](04-tasks.md)                                           | done (2026-07-22) | 02                       |
 | 05  | [Push infrastructure](05-push-infra.md)                             | done (2026-07-22) | 02                       |
 | 06  | [Task reminders](06-task-reminders.md)                              | todo              | 04, 05                   |
-| 07  | [Cooking: recipes & meal plan](07-cooking.md)                       | todo              | 02 (03 for shopping add) |
+| 07  | [Cooking: recipes & meal plan](07-cooking.md)                       | done (2026-07-22) | 02 (03 for shopping add) |
 | 08  | [Cook mode & timers](08-cook-mode.md)                               | todo              | 07, 05                   |
 | 09  | [History, leaderboard & Home completion](09-history-leaderboard.md) | todo              | 04                       |
 | 10  | [Settings & members](10-settings-members.md)                        | todo              | 01 (05 for prefs)        |
@@ -47,7 +47,11 @@ DateField, a link mode on SegmentedControl, and the recurrence + due-date-copy h
 09's feed builds on `services/tasks.ts`. 05 added `RowGroup`, an acting/dismissable `Banner`,
 `components/EnablePush`, and the whole notification stack: **06 and 08 only call `sendToUser` /
 `sendToMembers` from `lib/server/push.ts` and add one line to `cron.ts`'s job registry**
-(→ ARCHITECTURE.md "Notifications") — so 06 is now unblocked on both sides. Run `npm run dev`
+(→ ARCHITECTURE.md "Notifications") — so 06 is now unblocked on both sides. 07 added
+`SearchField` and `RowGroup surface="sunken"`, the `--cook-surface` token, `lib/server/uploads.ts`
+(sharp → WebP + the authed `/api/uploads` endpoint) and `lib/utils/ingredients.ts` — **08 gets
+`/cooking/recipes/[id]/cook` already routed, guarded and dark, with a placeholder screen to
+replace**, plus `formatAmount`/`formatIngredient` for its step highlighting. Run `npm run dev`
 and open **`/dev/kit`** to see them all on one screen before you build against them — and add
 your new ones to that page.
 

@@ -5,19 +5,20 @@ server. Everything a feature needs — UI, server logic, DB, cron, push — live
 
 ## Stack (installed & pinned in package.json)
 
-| Concern   | Choice                                    | Notes                                            |
-| --------- | ----------------------------------------- | ------------------------------------------------ |
-| Framework | SvelteKit 2 + Svelte 5 (**runes**)        | Runes mode is forced in `vite.config.ts`         |
-| Adapter   | `@sveltejs/adapter-node`                  | Long-running Node server (cron, push)            |
-| DB        | SQLite via `better-sqlite3`               | WAL, `busy_timeout`, FKs on — see `db/index.ts`  |
-| ORM       | Drizzle (`drizzle-orm` + `drizzle-kit`)   | Schema-as-code, generated SQL migrations         |
-| Auth      | Better Auth (`better-auth`)               | Google OAuth only in v1                          |
-| Push      | `web-push` (VAPID)                        | Hand-written service worker handlers             |
-| Scheduler | `node-cron`                               | In-process, 1-min tick, started in server `init` |
-| Dates     | `date-fns` + `Intl`                       | Calendar math; `Intl` for timezone rendering     |
-| Fonts     | `@fontsource-variable/{fraunces,figtree}` | Self-hosted (PWA/offline friendly)               |
-| Icons     | `@lucide/svelte`                          | Matches design's stroke style; bespoke logo SVGs |
-| Styling   | Vanilla CSS + custom properties           | **No Tailwind** — tokens in `src/app.css`        |
+| Concern   | Choice                                    | Notes                                                |
+| --------- | ----------------------------------------- | ---------------------------------------------------- |
+| Framework | SvelteKit 2 + Svelte 5 (**runes**)        | Runes mode is forced in `vite.config.ts`             |
+| Adapter   | `@sveltejs/adapter-node`                  | Long-running Node server (cron, push)                |
+| DB        | SQLite via `better-sqlite3`               | WAL, `busy_timeout`, FKs on — see `db/index.ts`      |
+| ORM       | Drizzle (`drizzle-orm` + `drizzle-kit`)   | Schema-as-code, generated SQL migrations             |
+| Auth      | Better Auth (`better-auth`)               | Google OAuth only in v1                              |
+| Push      | `web-push` (VAPID)                        | Hand-written service worker handlers                 |
+| Scheduler | `node-cron`                               | In-process, 1-min tick, started in server `init`     |
+| Dates     | `date-fns` + `Intl`                       | Calendar math; `Intl` for timezone rendering         |
+| Images    | `sharp`                                   | Recipe photos → ≤1200px WebP (→ [#60](DECISIONS.md)) |
+| Fonts     | `@fontsource-variable/{fraunces,figtree}` | Self-hosted (PWA/offline friendly)                   |
+| Icons     | `@lucide/svelte`                          | Matches design's stroke style; bespoke logo SVGs     |
+| Styling   | Vanilla CSS + custom properties           | **No Tailwind** — tokens in `src/app.css`            |
 
 ## Directory layout
 
@@ -44,6 +45,7 @@ src/
       auth.ts                  # Better Auth instance                          [plan 00]
       guards.ts                # requireUser / requireMember helpers           [plan 00]
       push.ts                  # sendToUser/sendToMembers, prune, payload types [plan 05]
+      uploads.ts               # recipe photos: sharp → WebP, store/copy/read  [plan 07]
       cron.ts                  # registerCronJobs(): reminders, timers, cleanup [plan 05+]
       services/                # domain logic: household.ts, home.ts, shopping.ts, tasks.ts,
                                # recipes.ts, meals.ts, timers.ts
@@ -166,8 +168,12 @@ prompt / subscribed).
   `sqlite3 .backup` into the volume, or Litestream to S3 — optional, plan 11.
 - Migrations run automatically at boot (`init` hook) — safe with a single instance.
 - Required env (see `.env.example`): `ORIGIN`, `DATABASE_PATH`, `UPLOADS_DIR`,
-  `BETTER_AUTH_SECRET`, `BETTER_AUTH_URL`, `GOOGLE_CLIENT_ID/SECRET`,
+  `BODY_SIZE_LIMIT`, `BETTER_AUTH_SECRET`, `BETTER_AUTH_URL`, `GOOGLE_CLIENT_ID/SECRET`,
   `PUBLIC_VAPID_PUBLIC_KEY`, `VAPID_PRIVATE_KEY`, `VAPID_SUBJECT`.
+- **`BODY_SIZE_LIMIT` is not optional once recipe photos exist.** adapter-node caps a request
+  body at **512K** by default and answers 413 before the form action runs; a phone photo is
+  several MB. The Vite dev server applies no limit at all, so this is invisible until the
+  built server is deployed (→ [DECISIONS #70](DECISIONS.md)).
 - HTTPS is mandatory for push + install (Coolify/Traefik handles certs).
 
 ### Running the production build (verified 2026-07-22)
