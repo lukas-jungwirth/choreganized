@@ -7,6 +7,7 @@
 	you add to `lib/components/ui`.
 -->
 <script lang="ts">
+	import EnablePush from '$lib/components/EnablePush.svelte';
 	import BasketIcon from '$lib/components/icons/BasketIcon.svelte';
 	import ChecklistIcon from '$lib/components/icons/ChecklistIcon.svelte';
 	import CrownIcon from '$lib/components/icons/CrownIcon.svelte';
@@ -26,6 +27,7 @@
 	import EmptyState from '$lib/components/ui/EmptyState.svelte';
 	import FAB from '$lib/components/ui/FAB.svelte';
 	import ProgressBar from '$lib/components/ui/ProgressBar.svelte';
+	import RowGroup from '$lib/components/ui/RowGroup.svelte';
 	import SegmentedControl from '$lib/components/ui/SegmentedControl.svelte';
 	import Select from '$lib/components/ui/Select.svelte';
 	import Stepper from '$lib/components/ui/Stepper.svelte';
@@ -50,6 +52,14 @@
 	let assignee = $state('e');
 	let quantity = $state<number | null>(1);
 	let unit = $state('pcs');
+	let bannerBusy = $state(false);
+	let bannerDismissed = $state(false);
+
+	/** Shows the disabled/in-flight pill without needing a real subscription. */
+	function demoBusy() {
+		bannerBusy = true;
+		setTimeout(() => (bannerBusy = false), 900);
+	}
 	let sheetOpen = $state(false);
 	let modalOpen = $state(false);
 	let confirmOpen = $state(false);
@@ -210,6 +220,35 @@
 			>
 				{#snippet icon()}<Send size={18} strokeWidth={1.8} />{/snippet}
 			</Banner>
+			{#if bannerDismissed}
+				<p class="note">Dismissed — reload the page to bring it back.</p>
+			{:else}
+				<Banner
+					variant="info"
+					title="Turn on notifications"
+					detail="Acts and dismisses — the pill is the button, the × is its own"
+					action={bannerBusy ? 'Enabling…' : 'Enable'}
+					disabled={bannerBusy}
+					onclick={demoBusy}
+					ondismiss={() => (bannerDismissed = true)}
+					dismissLabel="Not now"
+				>
+					{#snippet icon()}<Bell size={18} strokeWidth={1.9} />{/snippet}
+				</Banner>
+			{/if}
+		</div>
+	</section>
+
+	<section>
+		<h2>EnablePush</h2>
+		<p class="note">
+			Live: it really subscribes this browser. `settings` is the row Settings [6a] groups with the
+			preference toggles; `prompt` is the Home card, which renders nothing unless push is available
+			and unanswered here.
+		</p>
+		<div class="col">
+			<RowGroup><EnablePush /></RowGroup>
+			<EnablePush variant="prompt" />
 		</div>
 	</section>
 

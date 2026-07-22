@@ -31,7 +31,9 @@ src/
     assets/                    # logo svgs, placeholder art
     refetch.ts                 # refetchOnFocus(): visibilitychange → invalidateAll [plan 02]
     scroll-lock.ts             # ref-counted body lock shared by the dialogs     [plan 02]
+    push-client.ts             # permission/subscribe state for the browser      [plan 05]
     components/
+      EnablePush.svelte        # "notifications on this device" (Settings + Home) [plan 05]
       ui/                      # dumb primitives: Button, Card, BottomSheet, Chip,
                                # Avatar, SegmentedControl, Toggle, EmptyState, FAB…
       shell/                   # Screen (onboarding), TabBar, PageHeader
@@ -48,7 +50,7 @@ src/
     utils/                     # dates.ts (household-local helpers), ingredients.ts,
                                # invite-code.ts, timer-parse.ts
   routes/                      # see routing map below
-static/                        # manifest.webmanifest, icons/                  [plan 00/11]
+static/                        # icons/ (placeholders [05]), manifest.webmanifest [plan 11]
 design/Hearth.dc.html          # the design mockups (open in a browser)
 docs/                          # this documentation + plans/
 ```
@@ -120,14 +122,32 @@ Two delivery paths, one send module (`lib/server/push.ts`):
    Cook timers additionally get a precise in-process `setTimeout` at creation; the cron sweep
    is the restart-safe fallback.
 
-Payload contract (SW `push` handler): `{ title, body, tag, url, renotify? }` — `url` is the
-deep link `notificationclick` focuses/opens. `tag` dedupes (e.g. `task-due-{taskId}`,
-`timer-{timerId}`). Include `vibrate` pattern for Android haptics.
+Payload contract (`PushPayload` in `push.ts` ⟷ the SW `push` handler):
+`{ title, body?, tag, url, renotify?, vibrate? }`. **`title` carries the message** — the
+platform prints the app name itself (→ [DECISIONS #47](DECISIONS.md)). `url` is the deep link
+`notificationclick` focuses/opens, `tag` dedupes (e.g. `task-due-{taskId}`, `timer-{timerId}`),
+and the SW supplies a default vibration pattern and our icon/badge.
+
+The API 06 and 08 build on (all of it never throws, all of it returns a delivered count):
+
+```ts
+sendToUser(userId, payload, { ttlSeconds? })                       // one person, every device
+sendToMembers(householdId, payload, { except?, pref?, ttlSeconds? })  // the household
+```
+
+`pref` is a `members.notify*` column and `except` a member id (the actor). TTL defaults to 12 h
+— a nudge that arrives two days late is worse than one that never arrives
+(→ [#50](DECISIONS.md)). A 404/410 from the push service deletes the subscription row.
 
 Service worker: hand-written `src/service-worker.ts` (SvelteKit builds/registers it):
 `push` → `showNotification`; `notificationclick` → focus existing client & navigate, else
-`openWindow(url)`; minimal precache of build assets with cache cleanup on activate; network-
-first for pages with an offline fallback notice.
+`openWindow(url)`; precache of build assets + `static/` with cache cleanup on activate;
+navigations go to the network with a self-contained offline notice when it fails — pages are
+never cached (→ [#48](DECISIONS.md)).
+
+Browser side: `lib/push-client.ts` (permission → subscribe → POST `/api/push/subscribe`) and
+`components/EnablePush.svelte` (the state machine: unsupported / unconfigured / denied /
+prompt / subscribed).
 
 ## PWA
 

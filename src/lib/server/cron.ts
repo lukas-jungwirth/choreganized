@@ -47,26 +47,47 @@ export function registerCronJobs(): void {
 	if (scope[REGISTERED]) return;
 	scope[REGISTERED] = true;
 
-	// Keep every job inside this guard, and every job inside `guard()`.
-	schedule('* * * * *', () => guard('shopping-cleanup', cleanUpCheckedShoppingItems), {
-		name: 'shopping-cleanup',
-		// These jobs are synchronous today, but say it anyway: a slow one must
-		// never end up with two copies of itself deleting the same rows.
-		noOverlap: true
-	});
+	// The registry. Plans 06 (reminders) and 08 (timer catch-up) add a line each;
+	// both are async because they send push, which is what `guard` and
+	// `noOverlap` below are shaped for.
+	const jobs: Job[] = [['shopping-cleanup', cleanUpCheckedShoppingItems]];
+
+	for (const [name, job] of jobs) {
+		schedule('* * * * *', () => guard(name, job), {
+			name,
+			// A slow sweep must never end up with two copies of itself working on
+			// the same rows — one setting an idempotency flag while the other is
+			// still reading it is the classic double-send.
+			noOverlap: true
+		});
+	}
+
+	console.log(`[cron] registered ${jobs.length} job(s) on a one-minute tick`);
 }
 
+type Job = [name: string, run: () => void | Promise<void>];
+
 /**
- * A job that throws must not take the scheduler — or the process — with it.
- * Used twice per sweep: once around the whole job, once per household, so one
- * household's bad data can't stop the next household's.
+ * A job that throws must not take the scheduler — or, for an async job in Node,
+ * the whole process — with it. Used twice per sweep: once around the job, once
+ * per household, so one household's bad data can't stop the next household's.
+ *
+ * An async job's promise is handed back so node-cron's `noOverlap` waits for
+ * the real end of the run rather than for its first `await`.
  */
-function guard(name: string, job: () => void): void {
+function guard(name: string, job: () => void | Promise<void>): void | Promise<void> {
 	try {
-		job();
+		const running = job();
+		if (running instanceof Promise) {
+			return running.catch((error: unknown) => report(name, error));
+		}
 	} catch (error) {
-		console.error(`[cron] ${name} failed:`, error);
+		report(name, error);
 	}
+}
+
+function report(name: string, error: unknown): void {
+	console.error(`[cron] ${name} failed:`, error);
 }
 
 /**

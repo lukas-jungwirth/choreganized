@@ -205,6 +205,51 @@ Agents: when you make a judgment call that isn't in SPEC/ARCHITECTURE, **append 
     (BottomSheet's own children are already mounted per opening, but the component around them
     is not).
 
+47. **Notification copy lives in the title, not the body.** [4e] and [7h·2] draw one content
+    line under a "Choreganized"/"Choreganized · Timer" header, which reads as though the app
+    name were our `title`. It isn't: Android and Chrome print the app/origin themselves above
+    whatever we pass, so a title of "Choreganized" would only buy a duplicated line and push
+    the message into the smaller, first-truncated slot. SPEC's strings ("🛒 {member} added {n}
+    items to the list", "☑️ {task} is due today — your turn") are therefore the `title`, and
+    `body` is optional supporting text — the structure the mockups draw, with the sentence that
+    matters in bold.
+48. **The service worker precaches assets and never pages.** ARCHITECTURE's "network-first for
+    navigations with an offline fallback notice" is implemented as: hashed build assets +
+    `static/` cache-first, navigations straight to the network, and a self-contained "You're
+    offline" page when that fails. Caching rendered pages would be the other reading, and it
+    buys a household staring at yesterday's shopping list believing it — plus one member's data
+    sitting on the device after they sign out. There are no offline mutations in v1 (SPEC §8),
+    so there is nothing an offline page could usefully do anyway.
+    Two follow-ons: the worker does **not** `skipWaiting()` (an open tab is still lazy-loading
+    the previous build's chunks; the new worker takes over when the last tab closes, which is
+    also when its `activate` deletes the old cache — verified), and the offline page is the one
+    place outside `app.css` with literal colour values, because it is served precisely when
+    nothing else can be fetched.
+49. **Settings stands up in plan 05 with only its Notifications section, reached from Home's
+    avatar stack.** Enabling push is a permanent per-device decision, so it needs a permanent
+    home; [6a] opens with a back chevron, so something has to lead there, and the household's
+    faces are the obvious door. Plan 10 owns the screen and may move the entry point.
+    The one-time Home prompt is `EnablePush variant="prompt"`, which renders **nothing** unless
+    push is genuinely available and unanswered on this device, and remembers a dismissal in
+    `localStorage`. It's drawn with `Banner`, which gained two props for it: `onclick` (the
+    action pill becomes a real button) and `ondismiss` (a trailing ×). With either set the card
+    itself stops being the target — nesting a dismiss button inside a card-sized one is invalid
+    HTML — so `href` remains the "whole card is the link" case.
+50. **Push sends default to a 12 h TTL, and the shopping ledger counts attempts, not
+    deliveries.** web-push defaults to four weeks; everything this app sends is about _now_, so
+    a phone that was off all weekend must not wake to Friday's nudges (the test notification
+    drops to 60 s). The 15-minute shopping coalescing window is stamped when a notification is
+    _set off_, before the send resolves — keeping it synchronous is what makes "one per member
+    per 15 min" a guarantee rather than a race, and the alternative (stamp only on successful
+    delivery) would let a burst of adds all slip through together. The cost is an edge case
+    nobody will meet: turning the preference on within 15 minutes of a housemate's add delays
+    the first notification.
+51. **Notification and app icons are placeholders drawn from the logo mark** (`icon-192`,
+    `icon-512`, `badge-72` in `static/icons/`) — full-bleed sage, since Chrome circle-crops a
+    notification icon and Android masks an app icon, and a house-only monochrome badge because
+    sparkles are noise at 24 dp. Plan 11 ships the real set; until then a notification is drawn
+    with our mark rather than the browser's default globe.
+
 ## Open questions (non-blocking, defaults chosen)
 
 - **Production domain** — invite links & OAuth redirect need the final origin (design shows

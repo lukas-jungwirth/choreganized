@@ -36,13 +36,47 @@ Depends on: 02 (03 for the shopping event call site). Design: toast in [4e], loc
 
 ## Acceptance
 
-- [ ] Subscribe on desktop Chrome + Android Chrome (via `npm run dev -- --host` or deployed);
-      rows appear per device; unsubscribe removes.
-- [ ] Test notification arrives with app closed (Android: lock screen like [7h·2]); tapping
-      opens the app at the payload URL.
-- [ ] Shopping add by member A notifies member B (pref on), not A; pref off → nothing;
+- [~] Subscribe on desktop Chrome + Android Chrome (via `npm run dev -- --host` or deployed);
+  rows appear per device; unsubscribe removes.
+- [~] Test notification arrives with app closed (Android: lock screen like [7h·2]); tapping
+  opens the app at the payload URL.
+- [x] Shopping add by member A notifies member B (pref on), not A; pref off → nothing;
       second add within 15 min coalesced.
-- [ ] Stale subscription (force a bad endpoint in dev) is pruned on send.
-- [ ] `npm run check` && `npm run build` clean (SW builds without type errors).
+- [x] Stale subscription (force a bad endpoint in dev) is pruned on send.
+- [x] `npm run check` && `npm run build` clean (SW builds without type errors).
 
 Out of scope: task reminder & timer jobs (06/08), final icon art (11).
+
+## What was verified, and how (2026-07-22)
+
+The agent's browser (Electron/Chromium) answers `Notification.permission` with `denied` and
+never prompts, so **no real device subscription could be created**. Everything on this side of
+that line was exercised against a running dev server; the two `[~]` boxes need a human pass on
+desktop Chrome and an Android phone.
+
+Verified:
+
+- **Subscription API** — POST without a session → 401; missing `keys` → 400; a non-https
+  endpoint → 400; valid → row. Re-POSTing the same endpoint with rotated keys updates the one
+  row (upsert on the unique index) rather than colliding. DELETE removes it, a second DELETE
+  answers `removed: false`, and DELETE of another user's endpoint refuses.
+- **Send path, end to end** — with fake devices (real P-256 keypairs) pointed at a stand-in
+  push service, the decrypted request body is exactly `PushPayload`:
+  `{"title":"🛒 Lukas added 1 item to the list","tag":"shopping-add-{memberId}","url":"/shopping"}`,
+  `TTL: 43200`, aes128gcm, VAPID `Authorization` present. The test notification arrives as its
+  own payload with `TTL: 60`.
+- **Shopping semantics** — pref off: nothing sent. Pref on: one request to the housemate,
+  none to the actor. Two further adds seconds later: nothing (coalesced).
+- **Pruning** — a 410 deletes the row and logs it; so does a 404 from **real FCM** for a bogus
+  registration id, which also proves Google accepts the VAPID JWT (a bad signature would be
+  403, and nothing was pruned on that path).
+- **Service worker** — registers and activates in dev, controls the page, precaches
+  `build` + `static/` (the three icons + robots.txt in dev, where `build` is empty), deletes
+  the previous version's cache when a new worker activates, and serves the offline notice for
+  a navigation with the server stopped.
+- **UI** — Settings' Notifications block renders the `denied` state with its explanation and
+  the test action reports "Sent to this device"; Home's prompt card correctly renders nothing
+  when permission is denied; `Banner`'s new acting/dismissable form works in `/dev/kit`.
+
+Not verified (needs a browser that allows notifications): the permission prompt, a real
+`pushManager.subscribe`, notification display, and `notificationclick` focus/navigate.

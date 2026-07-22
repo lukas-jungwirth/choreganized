@@ -55,9 +55,12 @@ Built so far — plan 01: **Button · TextField · Avatar · ColorPicker** + `sh
 480px page shell for onboarding/login). Plan 02: **Card · AvatarStack · CheckCircle · Chip ·
 SegmentedControl · Toggle · ProgressBar · Banner · EmptyState · FAB · BottomSheet ·
 CenterModal**, plus `shell/TabBar` · `shell/PageHeader` and the bespoke icons in
-`components/icons/`. Plan 03: **Select · Stepper** + `shell/SubHeader`. Extend these rather
-than forking a variant; look at them side by side at **`/dev/kit`** (dev-only gallery,
-→ [DECISIONS #39](DECISIONS.md)) and add to it when you add a component.
+`components/icons/`. Plan 03: **Select · Stepper** + `shell/SubHeader`. Plan 05: **RowGroup**,
+`Banner` gained an acting/dismissable form, plus the feature component
+**`components/EnablePush`** (the push permission state machine, in a Settings row or as Home's
+one-time prompt card). Extend these rather than forking a variant; look at them side by side at
+**`/dev/kit`** (dev-only gallery, → [DECISIONS #39](DECISIONS.md)) and add to it when you add a
+component.
 
 - **Button** — primary (sage bg, white 700 16px, `--r-button`, `--shadow-button`), secondary
   (white, 1.5px `--border`), danger (only in confirm dialogs), dark (`--ink` bg — "Start cook
@@ -66,6 +69,10 @@ than forking a variant; look at them side by side at **`/dev/kit`** (dev-only ga
   `error` prop for the message a failed form action sends back.
 - **ColorPicker** — the member palette (`$lib/member-colors`) as a radio group; `taken`
   colours render disabled. Pair it with a 52px Avatar preview [5c].
+- **RowGroup** — the white block a settings-style list sits in: `--r-card`, `--shadow-card`, a
+  `--divider` hairline between every direct child, corners clipped. Settings' sections [6a],
+  the members list [6b] and the ••• menus [7c] are all this shape. Padding stays on the row, as
+  with Card; a row that is a component draws its own internal dividers.
 - **Card** — white surface only: `--shadow-card` + `radius="lg"` (22, dashboard cards) or
   `"md"` (20, list & tile cards); renders an `<a>` with `href`, and sets `--input-surface` so
   fields inside it sink. Padding belongs to the caller, because it varies card by card;
@@ -112,7 +119,10 @@ than forking a variant; look at them side by side at **`/dev/kit`** (dev-only ga
 - **SubHeader** — one level down [7g] [6b]: back chevron, Fraunces 20px title, 12px subtitle,
   optional `actions`.
 - **Banner** — tinted card: `danger` (overdue [4e]) or `info` (holiday [4a]); icon tile, title,
-  detail, optional action pill. With `href` the whole card is the link.
+  detail, optional action pill. With `href` the whole card is the link; with `onclick` the pill
+  is a real button (`disabled` greys it mid-flight) and with `ondismiss` a trailing × appears —
+  either of those keeps the card itself inert, since a button inside a button is invalid
+  (→ [DECISIONS #49](DECISIONS.md)).
 - **ProgressBar** — 9px track `--track`, fill = member colour (points card).
 - **ProgressRing** — cook timer, 220px, 10px stroke, sage on `rgba(255,255,255,.08)`.
 

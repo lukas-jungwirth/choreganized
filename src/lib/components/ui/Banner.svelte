@@ -2,10 +2,18 @@
 	Tinted status card: overdue on Home [4e] (danger) and the holiday pause on
 	Tasks [4a] (info). Calm, not alarming — even "overdue" is a soft tint.
 
-	With `href` the whole card is the link and the pill is just its label, which
-	is a far bigger touch target than the 60px pill the mockup draws.
+	Three shapes, in order of how much of the card is tappable:
+
+	- `href` — the whole card is the link and the pill is just its label, which
+	  is a far bigger touch target than the 60px pill the mockup draws. Nothing
+	  else interactive fits inside it, so `onclick`/`ondismiss` step aside.
+	- `onclick` — the pill itself is the button, and `ondismiss` adds a × beside
+	  it. Two controls rather than one card, because a button inside a
+	  card-sized button isn't valid HTML.
+	- neither — it only informs.
 -->
 <script lang="ts">
+	import X from '@lucide/svelte/icons/x';
 	import type { Snippet } from 'svelte';
 
 	type Props = {
@@ -16,11 +24,30 @@
 		/** Label of the trailing pill; omit for a banner that only informs. */
 		action?: string;
 		href?: string;
+		/** Makes the pill a button instead. Ignored when `href` is set. */
+		onclick?: () => void;
+		/** Greys the pill out mid-flight. */
+		disabled?: boolean;
+		/** Adds a trailing × — for banners the reader is allowed to be done with.
+		 *  Also ignored when `href` is set (see above). */
+		ondismiss?: () => void;
+		dismissLabel?: string;
 		/** The icon for the leading tile, sized by the variant. */
 		icon: Snippet;
 	};
 
-	let { variant = 'danger', title, detail, action, href, icon }: Props = $props();
+	let {
+		variant = 'danger',
+		title,
+		detail,
+		action,
+		href,
+		onclick,
+		disabled = false,
+		ondismiss,
+		dismissLabel = 'Dismiss',
+		icon
+	}: Props = $props();
 </script>
 
 {#snippet body()}
@@ -29,7 +56,18 @@
 		<span class="title">{title}</span>
 		{#if detail}<span class="detail">{detail}</span>{/if}
 	</span>
-	{#if action}<span class="action">{action}</span>{/if}
+	{#if action}
+		{#if href || !onclick}
+			<span class="action">{action}</span>
+		{:else}
+			<button class="action" type="button" {disabled} {onclick}>{action}</button>
+		{/if}
+	{/if}
+	{#if ondismiss && !href}
+		<button class="dismiss" type="button" aria-label={dismissLabel} onclick={ondismiss}>
+			<X size={16} strokeWidth={2.2} />
+		</button>
+	{/if}
 {/snippet}
 
 {#if href}
@@ -76,6 +114,24 @@
 		background: var(--card);
 		font-size: 13px;
 		font-weight: 700;
+	}
+
+	button.action:disabled {
+		opacity: 0.55;
+		cursor: default;
+	}
+
+	.dismiss {
+		display: grid;
+		place-items: center;
+		flex: none;
+		/* Bleeds into the banner's padding so the × sits on the edge the mockups
+		   draw the pill against, while still hitting a 28px target. */
+		width: 28px;
+		height: 28px;
+		margin: -6px -6px -6px -2px;
+		border-radius: var(--r-chip);
+		color: var(--text-5);
 	}
 
 	/* ── Overdue [4e] ─────────────────────────────────────────────────────── */

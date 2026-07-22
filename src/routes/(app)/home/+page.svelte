@@ -5,6 +5,7 @@
 	plans 04/07/09 make their data exist (→ SPEC §2).
 -->
 <script lang="ts">
+	import EnablePush from '$lib/components/EnablePush.svelte';
 	import ActivityCard from '$lib/components/home/ActivityCard.svelte';
 	import DinnerCard from '$lib/components/home/DinnerCard.svelte';
 	import StandingsStrip from '$lib/components/home/StandingsStrip.svelte';
@@ -24,6 +25,8 @@
 		...data.members.filter((member) => member.id !== data.currentMember.id)
 	]);
 
+	const names = $derived(stack.map((member) => member.displayName).join(', '));
+
 	const tasksLabel = $derived(data.tasksDueCount === 1 ? 'task due today' : 'tasks due today');
 </script>
 
@@ -36,7 +39,13 @@
 		<p class="household">{data.household.name}</p>
 		<h1>Good {data.greeting},<br />{data.currentMember.displayName}</h1>
 	</div>
-	<AvatarStack members={stack} label="Household" />
+	<!-- The household's faces are the way into the household's settings; the back
+		 chevron [6a] opens with has to come from somewhere, and plan 10 can move
+		 it if it finds a better door (→ DECISIONS #49). The link names the
+		 housemates itself — Home is still the only screen that does. -->
+	<a class="settings" href="/settings" aria-label="Settings · Household: {names}">
+		<AvatarStack members={stack} />
+	</a>
 </header>
 
 <div class="stack">
@@ -51,6 +60,10 @@
 			{#snippet icon()}<Bell size={20} strokeWidth={2} />{/snippet}
 		</Banner>
 	{/if}
+
+	<!-- Renders nothing unless push is genuinely available and unanswered on this
+		 device; asks once, then never again. -->
+	<EnablePush variant="prompt" />
 
 	{#if data.activity.length > 0}
 		<ActivityCard entries={data.activity} />
@@ -90,6 +103,12 @@
 	   shrink, so without this a long one pushes the whole page sideways. */
 	.who {
 		min-width: 0;
+	}
+
+	/* The avatars are the whole target; the link adds nothing of its own. */
+	.settings {
+		display: inline-flex;
+		flex: none;
 	}
 
 	.household,
