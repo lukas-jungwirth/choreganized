@@ -1,0 +1,7 @@
+node_modules
+build
+.svelte-kit
+data
+design
+package-lock.json
+src/lib/server/db/migrations

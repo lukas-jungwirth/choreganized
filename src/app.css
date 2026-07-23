@@ -1,0 +1,179 @@
+/**
+ * Choreganized design tokens — extracted from design/Hearth.dc.html.
+ * These custom properties are the ONLY source of colors/radii/shadows.
+ * Never hardcode hex values in components; see docs/DESIGN-SYSTEM.md.
+ */
+
+@import '@fontsource-variable/fraunces';
+@import '@fontsource-variable/figtree';
+
+:root {
+	/* ── Surfaces ─────────────────────────────────────────────── */
+	--bg: #f5f3ee; /* app screen background (soft paper) */
+	--card: #ffffff; /* card / list surfaces */
+	--sunken: #efebe2; /* inset chips, empty-state icon wells, day pills */
+	--sunken-2: #eae6dd; /* segmented control track, sheet dividers */
+	--field: #f5f3ee; /* input background inside white sheets */
+	--tabbar-bg: rgba(255, 255, 255, 0.86); /* frosted tab bar, over blur(16px) */
+
+	/* ── Ink & text ───────────────────────────────────────────── */
+	--ink: #22201c; /* primary text */
+	--text-2: #57534c; /* secondary strong */
+	--text-3: #6e6a62; /* body muted */
+	--text-4: #8a867e; /* muted / meta */
+	--text-5: #a7a29a; /* faint / uppercase labels */
+	--text-disabled: #b7b2a9; /* placeholders, struck items */
+
+	/* ── Brand: sage (actions) ────────────────────────────────── */
+	--sage: #5f8d72;
+	--sage-strong: #517b63; /* pressed / gradient end */
+	--sage-hover: #4d7a5e;
+	--sage-tint: #edf3ee; /* icon wells, selected chips bg */
+	--sage-tint-2: #eef3f0; /* activity check circles */
+	--sage-row: #f7faf7; /* selected/highlighted row bg */
+	--sage-deep: #3e5d49; /* dark green text on tint */
+	--on-sage: #ffffff;
+
+	/* ── Brand: terracotta (people & points) ──────────────────── */
+	--terracotta: #c67c51;
+	--terracotta-tint: #f7ede6;
+	--terracotta-tint-2: #fbeee7;
+	--terracotta-deep: #8a4b29;
+
+	/* ── Danger (overdue, destructive) ────────────────────────── */
+	--danger: #c0473a;
+	--danger-tint: #f7e9e6;
+	--danger-border: #e8cfc9;
+	--danger-deep: #8f3226;
+	--danger-soft: #a65648; /* muted copy on a danger tint (banner subtitle) */
+
+	/* ── Info / holiday banner [4a] ───────────────────────────── */
+	--info-tint: #eef1f0;
+	--info-border: #dee4e2;
+	--info-soft: #7c8a83; /* muted copy; the title uses --sage-deep */
+
+	/* ── Accents ──────────────────────────────────────────────── */
+	--gold: #e4b23c; /* crown / 1st place */
+	--gold-tint: #fbf3de;
+
+	/* ── Member palette (avatar colours, picked at onboarding) ── */
+	--member-sage: #5f8d72;
+	--member-terracotta: #c67c51;
+	--member-blue: #5c7fa3;
+	--member-amber: #d69b4a;
+	--member-plum: #9a6b8f;
+
+	/* ── Borders & lines ──────────────────────────────────────── */
+	--border: #e4dfd5; /* input & card outlines */
+	--border-soft: #ece9e2; /* tab bar hairline */
+	--divider: #f1eee7; /* row dividers inside cards */
+	--divider-sheet: #eae6dd; /* row dividers inside sheets */
+	--border-dashed: #d8d3c9; /* empty avatar, checkbox rings, add-store */
+	--track: #ede9e1; /* progress bar track */
+
+	/* ── Cook mode (dark) ─────────────────────────────────────── */
+	--cook-bg: #22201c;
+	--cook-text: #edebe6;
+	--cook-text-2: #b7b2a9; /* the ingredients named under a step [7b] */
+	--cook-muted: #9a968e;
+	--cook-faint: #7c7a73;
+	--cook-sheet: #2a2b30;
+	--cook-amber: #e0a458; /* step highlights, timer accents */
+	--cook-surface: rgba(255, 255, 255, 0.1); /* chips & buttons on the dark screen */
+	--cook-track: rgba(255, 255, 255, 0.15); /* step segments & ring behind the countdown */
+	--cook-divider: rgba(255, 255, 255, 0.07); /* row hairlines in the ingredients peek */
+	--cook-amber-line: rgba(224, 164, 88, 0.4); /* the outlined chip [7b] */
+	--cook-amber-tint: rgba(224, 164, 88, 0.1); /* this step's ingredient row [7b] */
+
+	/* ── Typography ───────────────────────────────────────────── */
+	--font-display: 'Fraunces Variable', serif; /* headings, numbers, wordmark */
+	--font-body: 'Figtree Variable', system-ui, sans-serif;
+
+	/* ── Radii ────────────────────────────────────────────────── */
+	--r-input: 14px;
+	--r-button: 16px;
+	--r-block: 16px; /* grouped block: quick-add [03], sheet menus [7c], add-a-store [7g] */
+	--r-card: 20px; /* stat tiles 20, cards 18–22 → default 20 */
+	--r-card-lg: 22px;
+	--r-sheet: 28px;
+	--r-chip: 999px;
+
+	/* ── Overlays ─────────────────────────────────────────────── */
+	--scrim: rgba(34, 32, 28, 0.4); /* behind sheets & modals */
+
+	/* ── Shadows ──────────────────────────────────────────────── */
+	--shadow-card: 0 1px 3px rgba(40, 34, 24, 0.05);
+	--shadow-knob: 0 1px 2px rgba(0, 0, 0, 0.15); /* toggle knob [4c] */
+	--shadow-button: 0 8px 20px -6px rgba(95, 141, 114, 0.5);
+	--shadow-fab: 0 8px 20px -4px rgba(95, 141, 114, 0.6);
+	--shadow-sheet: 0 -12px 40px rgba(40, 34, 24, 0.18);
+	--shadow-modal: 0 24px 60px -12px rgba(40, 34, 24, 0.4);
+
+	/* ── Layout ───────────────────────────────────────────────── */
+	--page-pad: 22px; /* horizontal screen padding */
+	--tabbar-h: 84px;
+}
+
+* {
+	box-sizing: border-box;
+}
+
+html {
+	background: var(--bg);
+}
+
+body {
+	margin: 0;
+	font-family: var(--font-body);
+	color: var(--ink);
+	-webkit-font-smoothing: antialiased;
+	-webkit-tap-highlight-color: transparent;
+}
+
+h1,
+h2,
+h3,
+h4 {
+	font-family: var(--font-display);
+	font-weight: 600;
+	margin: 0;
+}
+
+a {
+	color: var(--sage);
+	text-decoration: none;
+}
+
+button {
+	font: inherit;
+	border: none;
+	background: none;
+	padding: 0;
+	cursor: pointer;
+	color: inherit;
+}
+
+input,
+select,
+textarea {
+	font: inherit;
+	color: inherit;
+}
+
+/*
+	One keyboard focus ring for the whole app. Components that already show focus
+	their own way (TextField's sage border) override it with a `:focus` rule,
+	which outranks this one.
+*/
+:focus-visible {
+	outline: 2px solid var(--sage);
+	outline-offset: 2px;
+}
+
+/* Hide scrollbars on horizontal scrollers (day strip etc.) */
+.no-scrollbar::-webkit-scrollbar {
+	display: none;
+}
+.no-scrollbar {
+	scrollbar-width: none;
+}

@@ -1,0 +1,39 @@
+<!doctype html>
+<html lang="en">
+	<head>
+		<meta charset="utf-8" />
+		<!-- viewport-fit=cover is what makes every `env(safe-area-inset-*)` in the
+			 app resolve to a real value on notched phones — without it they are 0
+			 and the tab bar / FAB / sheets sit under the home indicator. -->
+		<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+		<meta name="text-scale" content="scale" />
+		<meta
+			name="description"
+			content="Every chore, organized. A shared household app for shopping, meal planning and chores."
+		/>
+
+		<!-- Icons + PWA. theme-color is deliberately NOT here: it is set once in the
+			 root layout so cook mode can swap it dark (a second meta here would win,
+			 being first in the head). -->
+		<link rel="icon" href="%sveltekit.assets%/favicon.svg" type="image/svg+xml" />
+		<link
+			rel="icon"
+			href="%sveltekit.assets%/icons/favicon-96.png"
+			sizes="96x96"
+			type="image/png"
+		/>
+		<link rel="apple-touch-icon" href="%sveltekit.assets%/icons/apple-touch-icon.png" />
+		<link rel="manifest" href="%sveltekit.assets%/manifest.webmanifest" />
+
+		<meta name="application-name" content="Choreganized" />
+		<meta name="apple-mobile-web-app-title" content="Choreganized" />
+		<meta name="apple-mobile-web-app-capable" content="yes" />
+		<meta name="mobile-web-app-capable" content="yes" />
+		<meta name="apple-mobile-web-app-status-bar-style" content="default" />
+
+		%sveltekit.head%
+	</head>
+	<body data-sveltekit-preload-data="hover">
+		<div style="display: contents">%sveltekit.body%</div>
+	</body>
+</html>

@@ -1,0 +1,5 @@
+# Private, invite-only household app — keep it out of search indexes.
+# The app data is behind Google OAuth; this also hides the login/landing
+# surface and the manifest name/description from crawlers.
+User-agent: *
+Disallow: /
