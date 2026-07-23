@@ -11,6 +11,7 @@
  */
 import { schedule } from 'node-cron';
 import { clockIn, todayIn, type CalendarDate } from '$lib/utils/dates';
+import { backUpDatabase, serverDay } from './backup';
 import { sweepCookTimers } from './services/cook-timers';
 import { listHouseholdClocks } from './services/household';
 import { sendTaskReminders } from './services/reminders';
@@ -26,6 +27,15 @@ const CLEANUP_MINUTE_OF_DAY = 3 * 60 + 30;
 const REMINDER_MINUTE_OF_DAY = 8 * 60;
 
 /**
+ * 03:00 server-local — the nightly database backup (→ backup.ts, plan 11).
+ *
+ * Server-local, not household-local: there is one database, not one per
+ * household, so it has no household clock to consult (like the cook-timer sweep,
+ * for the same reason).
+ */
+const BACKUP_MINUTE_OF_DAY = 3 * 60;
+
+/**
  * The household-local date each household was last cleaned on — the "has this
  * already run today?" half of the gate.
  *
@@ -39,6 +49,15 @@ const REMINDER_MINUTE_OF_DAY = 8 * 60;
  * clock straight past 03:30, must not cost a household its cleanup.
  */
 const lastCleanup = new Map<string, CalendarDate>();
+
+/**
+ * The server-local day the database was last backed up on — the "already ran
+ * today?" half of the backup gate. One value, not a Map: unlike the per-household
+ * cleanup, there is a single database. In memory for the same reason as the
+ * cleanup ledger — losing it re-runs a backup that only overwrites the day's file
+ * (→ backup.ts), which costs nothing.
+ */
+let lastBackup: string | null = null;
 
 /**
  * Dev only registers jobs once: Vite reloads `hooks.server.ts` on every change,
@@ -59,7 +78,8 @@ export function registerCronJobs(): void {
 	const jobs: Job[] = [
 		['shopping-cleanup', cleanUpCheckedShoppingItems],
 		['task-reminders', sweepTaskReminders],
-		['cook-timers', catchUpCookTimers]
+		['cook-timers', catchUpCookTimers],
+		['db-backup', runNightlyBackup]
 	];
 
 	for (const [name, job] of jobs) {
@@ -180,4 +200,24 @@ async function catchUpCookTimers(now: Date = new Date()): Promise<void> {
 	if (rung.fired > 0) {
 		console.log(`[cron] caught up ${rung.fired} cook timer(s) → ${rung.devices} device(s)`);
 	}
+}
+
+/**
+ * A once-a-night SQLite snapshot to the `/data` volume (→ backup.ts, plan 11).
+ *
+ * Gated "at or after 03:00 server-local, once per day" — the same resilient shape
+ * as the shopping cleanup (→ DECISIONS #45): a missed minute (a restart, a slow
+ * tick) still gets the day its backup, and the in-memory ledger stops it running
+ * again for the rest of the day. Day claimed before the write, so a failing
+ * backup isn't retried every minute.
+ */
+async function runNightlyBackup(now: Date = new Date()): Promise<void> {
+	const today = serverDay(now);
+	if (lastBackup === today) return;
+	if (now.getHours() * 60 + now.getMinutes() < BACKUP_MINUTE_OF_DAY) return;
+
+	lastBackup = today;
+
+	const { file, pruned } = await backUpDatabase(now);
+	console.log(`[cron] database backup → ${file}${pruned > 0 ? ` (pruned ${pruned} old)` : ''}`);
 }

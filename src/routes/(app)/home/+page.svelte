@@ -6,6 +6,7 @@
 -->
 <script lang="ts">
 	import EnablePush from '$lib/components/EnablePush.svelte';
+	import InstallPrompt from '$lib/components/InstallPrompt.svelte';
 	import ActivityCard from '$lib/components/home/ActivityCard.svelte';
 	import DinnerCard from '$lib/components/home/DinnerCard.svelte';
 	import StandingsStrip from '$lib/components/home/StandingsStrip.svelte';
@@ -64,6 +65,10 @@
 	<!-- Renders nothing unless push is genuinely available and unanswered on this
 		 device; asks once, then never again. -->
 	<EnablePush variant="prompt" />
+
+	<!-- Same shape: shows only when the browser reports the app is installable and
+		 not already installed, and can be dismissed for good. -->
+	<InstallPrompt />
 
 	{#if data.activity.length > 0}
 		<ActivityCard entries={data.activity} />

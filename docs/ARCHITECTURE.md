@@ -47,7 +47,8 @@ src/
       guards.ts                # requireUser / requireMember helpers           [plan 00]
       push.ts                  # sendToUser/sendToMembers, prune, payload types [plan 05]
       uploads.ts               # recipe photos: sharp → WebP, store/copy/read  [plan 07]
-      cron.ts                  # registerCronJobs(): reminders, timers, cleanup [plan 05+]
+      backup.ts                # nightly SQLite online-backup + 14-day rotation [plan 11]
+      cron.ts                  # registerCronJobs(): reminders, timers, cleanup, backup [plan 05+]
       services/                # domain logic: household.ts, home.ts, shopping.ts, tasks.ts,
                                # history.ts, reminders.ts, recipes.ts, meals.ts, timers.ts
     utils/                     # dates.ts (household-local helpers), ingredients.ts,
@@ -154,10 +155,20 @@ prompt / subscribed).
 
 ## PWA
 
-- `static/manifest.webmanifest`: name Choreganized, short_name, `display: standalone`,
-  portrait, `background_color/theme_color #F5F3EE`, maskable icons (sage tile + white house
-  mark from the design logo), start_url `/home`.
-- Icons generated from the logo SVG (`design/Hearth.dc.html` → mark 13b) — plan 11.
+- `static/manifest.webmanifest` (linked from `app.html`): name/short_name Choreganized,
+  `display standalone`, portrait, `theme/background_color #F5F3EE`, start_url `/home`, 192/512
+  `any` + maskable icons.
+- **Icons are scripted from one source.** `npm run icons` (`scripts/icons.ts`) renders every
+  launcher / tab / lock-screen asset from `src/lib/assets/logo-mark.svg` (design mark 13b) onto
+  the sage tile: `any`, maskable (mark pulled inside the 80% safe circle), apple-touch, a favicon
+  PNG + `static/favicon.svg`, and the monochrome notification badge. Re-run after editing the
+  mark; outputs are committed to `static/`.
+- `app.html` carries the static head (manifest, apple-touch, favicons, apple/mobile web-app
+  metas, and `viewport-fit=cover` — which is what makes the app's `env(safe-area-inset-*)`
+  padding resolve at all). `theme-color` is the one dynamic head tag and lives in the root layout
+  so cook mode swaps it dark (→ DECISIONS #92).
+- Install nudge: `components/InstallPrompt.svelte` on Home fires on `beforeinstallprompt`
+  (Android / desktop Chrome), suppresses Chrome's infobar, and remembers a dismissal.
 - Wake lock in cook mode; `navigator.vibrate` on timer completion in-page.
 
 ## Deployment (Coolify)
@@ -165,8 +176,11 @@ prompt / subscribed).
 - **One Dockerfile, one container** (see `Dockerfile`) — SQLite is embedded, so a separate DB
   image would only add failure modes. Answering the open question in the brief: no separate DB
   container.
-- Persistent volume mounted at `/data` (DB + WAL files + uploads). Backups: nightly
-  `sqlite3 .backup` into the volume, or Litestream to S3 — optional, plan 11.
+- Persistent volume mounted at `/data` (DB + WAL files + uploads + `backups/`). Nightly backup
+  is an **in-process** `better-sqlite3.backup()` to `/data/backups/YYYY-MM-DD.db`, 14-day
+  rotation (`lib/server/backup.ts`, registered in `cron.ts`; restore procedure in
+  [plan 11](plans/11-pwa-deploy.md)). No `sqlite3` CLI dependency. Litestream to S3 stays the
+  optional upgrade (→ [DECISIONS #91](DECISIONS.md)).
 - Migrations run automatically at boot (`init` hook) — safe with a single instance.
 - Required env (see `.env.example`): `ORIGIN`, `DATABASE_PATH`, `UPLOADS_DIR`,
   `BODY_SIZE_LIMIT`, `BETTER_AUTH_SECRET`, `BETTER_AUTH_URL`, `GOOGLE_CLIENT_ID/SECRET`,

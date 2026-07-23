@@ -21,7 +21,7 @@ plus your session date). Note deviations in the plan file and in DECISIONS.md.
 | 08  | [Cook mode & timers](08-cook-mode.md)                               | done (2026-07-22) | 07, 05                   |
 | 09  | [History, leaderboard & Home completion](09-history-leaderboard.md) | done (2026-07-22) | 04                       |
 | 10  | [Settings & members](10-settings-members.md)                        | done (2026-07-22) | 01 (05 for prefs)        |
-| 11  | [PWA, polish & deploy](11-pwa-deploy.md)                            | todo              | all                      |
+| 11  | [PWA, polish & deploy](11-pwa-deploy.md)                            | done (2026-07-23) | all                      |
 
 ## Dependency graph & parallelization
 

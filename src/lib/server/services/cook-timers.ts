@@ -403,13 +403,21 @@ function scheduleAlarm(timerId: string, delayMs: number): void {
 		alarms.delete(timerId);
 
 		// Read the row again rather than closing over it: a "+1:00" is a new row,
-		// and this one may have been canceled since.
-		const row = db.select().from(cookTimers).where(eq(cookTimers.id, timerId)).get();
-		if (!row) return;
+		// and this one may have been canceled since. The synchronous read can throw
+		// (a locked or failing database), and an uncaught throw in a timer callback
+		// takes the whole process down — so it is caught here, keeping a lost alarm
+		// the harmless thing this map's contract promises, with the cron sweep as
+		// the catch-up.
+		try {
+			const row = db.select().from(cookTimers).where(eq(cookTimers.id, timerId)).get();
+			if (!row) return;
 
-		void ring(row, new Date()).catch((error: unknown) => {
-			console.error('[timers] alarm failed:', error);
-		});
+			void ring(row, new Date()).catch((error: unknown) => {
+				console.error('[timers] alarm failed:', error);
+			});
+		} catch (error) {
+			console.error('[timers] alarm lookup failed:', error);
+		}
 	}, delayMs);
 
 	// A pending alarm must not be the reason the process refuses to shut down —

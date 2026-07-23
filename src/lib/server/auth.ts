@@ -17,12 +17,16 @@ import { account, session, user, verification } from './db/schema';
 
 /**
  * `vite build` imports server modules just to read their route options, so a
- * missing secret must fail the *server start*, not the build.
+ * missing secret must fail the *server start*, not the build. The build-time
+ * value must be **non-empty**: Better Auth throws "You are using the default
+ * secret" on a falsy secret even when nothing authenticates, which would fail
+ * `docker build` (where `.env` is absent). At runtime `building` is false, so a
+ * genuinely missing variable still throws before the server serves a request.
  */
 function requireEnv(name: string): string {
 	const value = env[name];
 	if (value) return value;
-	if (building) return '';
+	if (building) return `build-time-placeholder-${name}`;
 	throw new Error(`Missing required environment variable ${name} — see .env.example.`);
 }
 

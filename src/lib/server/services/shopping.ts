@@ -460,29 +460,6 @@ export function moveStore(householdId: string, storeId: string, direction: 'up' 
 	});
 }
 
-/**
- * Arbitrary reorder — the entry point a drag-and-drop list would use. Ids that
- * aren't this household's are ignored; ones left out keep their relative order
- * at the end, so a stale list from another tab can't drop a store.
- */
-export function reorderStores(householdId: string, orderedIds: string[]): void {
-	db.transaction((tx) => {
-		const current = tx
-			.select({ id: stores.id })
-			.from(stores)
-			.where(eq(stores.householdId, householdId))
-			.orderBy(asc(stores.sortOrder), asc(stores.createdAt), asc(stores.id))
-			.all()
-			.map((row) => row.id);
-
-		const known = new Set(current);
-		const wanted = orderedIds.filter((id) => known.has(id));
-		const rest = current.filter((id) => !wanted.includes(id));
-
-		writeOrder(tx, householdId, [...wanted, ...rest]);
-	});
-}
-
 /** Writes 0…n−1 in the given order. Only the rows that actually move are touched. */
 function writeOrder(tx: Transaction, householdId: string, orderedIds: string[]): void {
 	orderedIds.forEach((id, sortOrder) => {

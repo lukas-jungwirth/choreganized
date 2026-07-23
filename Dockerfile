@@ -27,6 +27,17 @@ COPY --from=build /app/package.json ./package.json
 # Migrations are read at runtime by the server init hook (runMigrations).
 COPY --from=build /app/src/lib/server/db/migrations ./src/lib/server/db/migrations
 
+# Own the /data mountpoint before declaring the volume, so a fresh named volume is
+# seeded writable by the built-in non-root `node` user (Docker initialises an empty
+# volume with the ownership of the image directory at that path). /app stays
+# root-owned and world-readable — the app only ever writes to /data — so `node` can
+# still read build/, node_modules/ and the migrations.
+RUN mkdir -p /data && chown node:node /data
+
 VOLUME /data
 EXPOSE 3000
+# Drop root: an app/dependency compromise then can't write outside /data or escalate.
+# NOTE: assumes a fresh volume. An existing /data from a prior root-run deploy would
+# be root-owned — chown it to uid 1000 (node) once before switching.
+USER node
 CMD ["node", "build/index.js"]

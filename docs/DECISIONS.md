@@ -181,8 +181,8 @@ Agents: when you make a judgment call that isn't in SPEC/ARCHITECTURE, **append 
     explicitly left the choice open. Arrows work on touch, with a keyboard, and without
     JavaScript (each is a submit button in a tiny form) — pointer-drag reordering manages none
     of those without a lot of code, and the list is three or four rows long. The helper copy
-    changed to match. `reorderStores(householdId, orderedIds)` is exported for whoever adds
-    drag later; `moveStore` is written in terms of it.
+    changed to match. `moveStore` swaps two adjacent rows through the shared `writeOrder`
+    helper; a full drag-to-reorder can build on `writeOrder` the same way when it lands.
     Renaming is likewise an always-live text field that saves on blur (Enter blurs, Escape puts
     the old name back) rather than a tap-to-edit mode: one state instead of two, and it renames
     without JavaScript. Delete asks first — a store's items fall back to "Other", which the
@@ -559,6 +559,32 @@ immutable` honest. The name carries nothing about the recipe on purpose — a fi
     ended within the last ten minutes, and the push goes out with a 15-minute TTL. The window is
     also what keeps the sweep cheap forever: rows older than it sit below the index range and
     are never scanned again.
+
+91. **The nightly backup is `better-sqlite3.backup()`, not the `sqlite3` CLI.** Plan 11 wrote
+    "`sqlite3 .backup`", but the slim runtime image (`node:22-bookworm-slim`) ships no `sqlite3`
+    binary, and a plain `cp` of a WAL-mode `.db` mid-write captures a torn file. better-sqlite3
+    exposes SQLite's Online Backup API in-process — a consistent snapshot of a live database with
+    no writer lock and no extra dependency — so `lib/server/backup.ts` uses it. Verified it
+    produces a complete standalone database (1000/1000 rows, no `-wal` sidecar until reopened).
+    One file per day at `${DATABASE_PATH dir}/backups/YYYY-MM-DD.db` (on the `/data` volume),
+    14-day rotation by filename date, written to a `.tmp` sibling and renamed in so a crash never
+    leaves a half-file wearing today's date. The cron gate is the resilient "at or after 03:00
+    server-local, once per day" shape from #45 — **server**-local, not household-local, because
+    there is one database and it has no household clock (like the cook-timer sweep). The
+    already-ran ledger is one in-memory string, harmless to lose: a re-run only overwrites the
+    day's file. Restore is documented in `docs/plans/11-pwa-deploy.md` (drop in a snapshot, delete
+    the live WAL sidecars, restart). Litestream stays the documented optional upgrade (→ #19).
+92. **`viewport-fit=cover` was missing, so every safe-area inset was silently 0.** The app was
+    written throughout with `env(safe-area-inset-*)` (tab bar, FAB, sheets, page shell, cook mode)
+    — but `env()` only returns real values when the viewport opts into the display cutout with
+    `viewport-fit=cover`, which `app.html` didn't set. So on a notched phone the tab bar and FAB
+    sat under the home indicator and the code that meant to prevent it did nothing. Fixed on the
+    viewport meta; the insets are now live. Related head decision: **`theme-color` stays only in
+    the root layout, never in `app.html`.** Cook mode swaps it dark (#88 territory), and two
+    `theme-color` metas mean the first wins — app.html's would always be first and freeze it
+    light. So the static PWA tags (manifest, apple-touch, favicons, apple/mobile web-app metas)
+    live in `app.html`; the one dynamic tag lives in the layout. The scaffold's Svelte-logo
+    `favicon.svg` was replaced by the generated mark (→ ARCHITECTURE "PWA").
 
 ## Open questions (non-blocking, defaults chosen)
 

@@ -209,7 +209,9 @@ export function listMembers(householdId: string): HouseholdMember[] {
 		})
 		.from(members)
 		.where(eq(members.householdId, householdId))
-		.orderBy(asc(members.joinedAt))
+		// `id` mirrors the rotation's tiebreak (services/tasks.ts) so the crown and
+		// the rotation agree on seniority when two members share a joinedAt (→ #75).
+		.orderBy(asc(members.joinedAt), asc(members.id))
 		.all();
 }
 
@@ -302,7 +304,7 @@ export function listMemberProfiles(householdId: string, timezone: string): Membe
 		})
 		.from(members)
 		.where(eq(members.householdId, householdId))
-		.orderBy(asc(members.joinedAt))
+		.orderBy(asc(members.joinedAt), asc(members.id))
 		.all()
 		.map(({ joinedAt, ...member }) => ({ ...member, joined: toCalendarDate(joinedAt, timezone) }));
 }
@@ -382,8 +384,14 @@ export function transferOwnership(
 		const target = memberIn(tx, householdId, targetMemberId);
 		if (target.id === actorMemberId) return;
 
-		tx.update(members).set({ role: 'member' }).where(eq(members.id, actorMemberId)).run();
-		tx.update(members).set({ role: 'owner' }).where(eq(members.id, target.id)).run();
+		tx.update(members)
+			.set({ role: 'member' })
+			.where(and(eq(members.id, actorMemberId), eq(members.householdId, householdId)))
+			.run();
+		tx.update(members)
+			.set({ role: 'owner' })
+			.where(and(eq(members.id, target.id), eq(members.householdId, householdId)))
+			.run();
 	});
 }
 
