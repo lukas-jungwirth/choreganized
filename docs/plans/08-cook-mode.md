@@ -52,9 +52,9 @@ Out of scope: multiple parallel timers, alarm sound customization.
 ## How it landed (2026-07-22)
 
 - **The row is the timer; the ring is a rendering of it** (→ DECISIONS #15, #82). `POST
-  /api/timers` takes **seconds**, the server computes `endsAt` on its own clock and schedules
+/api/timers` takes **seconds**, the server computes `endsAt` on its own clock and schedules
   both an in-process `setTimeout` and — via the minute cron's new `cook-timers` job — a
-  restart-safe catch-up; the response says how much is *left*, which the page turns back into an
+  restart-safe catch-up; the response says how much is _left_, which the page turns back into an
   instant it can trust. `services/cook-timers.ts` owns the state and the two ways it can ring,
   both funnelling through one `claim()` that stamps `notifiedAt` before it sends, so the two
   mechanisms and the open page can never double-alert. Cancel/pause/"+1:00"/rang are three JSON
@@ -63,7 +63,7 @@ Out of scope: multiple parallel timers, alarm sound customization.
 - **The client half is a runes class** (`lib/cook-timer.svelte.ts`, the repo's first
   `.svelte.ts` — → #85): one machine read by the big ring [7h], the compact bar on other steps,
   and the chip row. Pause and "+1:00" are cancel-and-recreate (→ #15), so it keeps its own
-  `totalSeconds` — the length *you* set, which a resumed server row has forgotten (→ #84). An
+  `totalSeconds` — the length _you_ set, which a resumed server row has forgotten (→ #84). An
   open, visible page claims its alert ~2 s early and rings itself (`alarm.ts`: WebAudio beeps
   primed on the starting tap + `navigator.vibrate`); a hidden page leaves the push to do its job
   (→ #83). `wake-lock.ts` keeps the screen on and re-acquires on `visibilitychange`.
@@ -122,3 +122,21 @@ hard-denied in this browser, so the notification actually **drawn on a lock scre
 and URL that drive them; `navigator.wakeLock` and `navigator.vibrate` are no-ops here, so the
 screen-on and the buzz need desktop Chrome / Android. The WebAudio beep can't be heard in a
 headless check either.
+
+## Superseded (2026-07-24)
+
+Two of this plan's decisions were reversed by later work, tracked in
+[README.md](README.md)'s post-plan table:
+
+- **"One active timer at a time (v1)"** (Build) and **"Out of scope: multiple parallel timers"**
+  no longer hold. Up to three run at once, and the blanket cancel that enforced "one" became a
+  counted refusal — cancelling a timer somebody is still watching is silent, which is the one
+  thing a kitchen timer must not be (→ [DECISIONS #102](../DECISIONS.md)).
+- **The timers no longer belong to this screen.** `lib/cook-timer.svelte.ts` exports a
+  `cookTimers` singleton that outlives cook mode, and a dock above the tab bar renders it on
+  every other screen (→ [DECISIONS #103](../DECISIONS.md), #104). The acceptance box about the
+  compact chip still holds; it is now one bar per other running timer, each with its own cancel.
+
+Everything else in this plan — the row-is-the-timer split, the claim protocol, the two ringing
+mechanisms and the cron catch-up — is unchanged, and the "What was verified, and how" recipe
+below is still how you drive a sweep without waiting for a real one.

@@ -27,7 +27,8 @@
 	.fab {
 		position: fixed;
 		right: max(22px, calc(50% - 240px + 22px));
-		bottom: calc(var(--tabbar-h) + 16px + env(safe-area-inset-bottom));
+		/* Lifted by the app shell while the running-timer dock is up [7h]. */
+		bottom: calc(var(--tabbar-h) + var(--timer-dock-h) + 16px + env(safe-area-inset-bottom));
 		z-index: 20;
 		display: flex;
 		align-items: center;

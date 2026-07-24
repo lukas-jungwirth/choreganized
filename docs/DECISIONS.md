@@ -649,6 +649,160 @@ reload`) so it can't silently regress.
     _device_ was reading when it subscribed, which is what makes "detect the system language"
     true for notifications as well as pages; an explicit `members.locale` outranks it.
 
+99. **The meal plan reaches two weeks — this one and the next — and which is on screen lives in
+    `?week=YYYY-MM-DD`.** Planning happens _before_ the week it plans, so "current week only"
+    (SPEC §4.1) made the tab useless on the evening the plan actually gets made. The window goes
+    in the URL rather than in component state, so it survives a reload, a share and the back
+    button: the shape the history feed's `?from=` established (→ #76). `getPlan` takes the param
+    as `unknown`, normalises any day of a week to its Monday, and clamps anything else to this
+    week rather than erroring — a bookmark from a fortnight ago should open on this week, not on
+    an empty window with no way back. Free paging was rejected: a meal plan has no landmarks to
+    page through, and two named windows let the control _name_ them (`SegmentedControl` in link
+    mode, the shape /tasks ↔ /tasks/history already uses) where two chevrons flanking a date
+    range would have to be decoded — and the inactive segment's count ("Next week · 0") is
+    itself the nudge to go and plan. Three consequences. **(a)** The `<h1>` gives up "This week"
+    and becomes "Cooking" like every other tab root — a deviation from [04], where the heading
+    was the only thing naming the week, but a 30px Fraunces "This week" directly above a control
+    also saying "This week" is the screen we did not want. **(b)** `today` still comes from the
+    `(app)` layout, so `isToday` stays a fact about the date: on next week nothing is sage and
+    `MealRow`'s "Tonight ·" line falls to "{name} cooks" with no change to that file. `WeekStrip`
+    stays non-interactive — the meal rows below are already one tap target per day, and the
+    switch above is a labelled control where chevrons in the strip would be a smaller, invisible
+    one. **(c)** "Add ingredients to shopping list" is unchanged and still defaults **on** for
+    either week: `shopping_items` carries no date, so the toggle has always meant "put these on
+    the list now", and shopping ahead is precisely why the plan gets made on a Sunday. Because
+    both weeks ship in one 14-day query, a recipe's "Add to plan" day picker [7a] lists both
+    under THIS WEEK / NEXT WEEK rather than being stranded on the current one. Note the plan
+    sheets are opened from client state inside a `<dialog>`, so they do not exist at all without
+    JavaScript — the segments are the part of this feature that works without it.
+
+100. **The ingredient row keeps its one typed line; structured controls are a second way to write
+     it.** [3c] draws one line per ingredient and the server has always parsed it (→ #14, whose
+     "plain text" is about what the form _posts_ — still true), but nothing on screen ever said
+     what the parse made of it: "2 x 400 g tins tomatoes" is stored as 2 pcs of an ingredient
+     _named_ "400 g tins tomatoes", and that name is what cook mode underlines and what the
+     shopping list dedupes on. So each row now carries a quiet amount chip in the column [7a]
+     prints the amount in, and tapping it opens `cooking/IngredientSheet` — name, amount, and
+     [3a]'s unit picker plus a "no unit" option, because salt is not measured in pieces. The
+     sheet **posts nothing**: it takes the line apart with `parseIngredient` and hands a line
+     back, so `readRecipeForm` still reads one `ingredient` field per row, `writeChildren` still
+     calls the one parser this app has, and every recipe written before this edits and re-saves
+     byte-identically. Three parallel field arrays were rejected — they stay aligned only while
+     every row posts every field, and one row that skipped one would silently move somebody
+     else's grams onto the wrong ingredient with no error anywhere. Fully structured rows were
+     rejected twice over: a name, an amount, a unit and three controls do not fit one line at
+     390px, and twelve ingredients would become twelve trips through a native picker instead of
+     twelve lines and an Enter. The chip is a `<span>` server-side and a `<button>` after
+     hydration, so a browser with no JavaScript loses the sheet and keeps both the recipe and
+     the reading.
+
+101. **A recipe amount is typed, not stepped — and the sheet says what its line will be read
+     as.** [3a]'s quantity is a `Stepper` because a shopping list counts things; a recipe
+     measures them. `Stepper` rounds on blur and carries `step="1"`, so opening it on "½ tsp
+     salt" would round the half away — and `parseIngredient` accepts "½", "1 1/2" and "1,5"
+     while `formatAmount` writes the glyph back, precisely so that round trip holds (→ #42). The
+     amount is therefore a `TextField` held as _text_ with `inputmode="decimal"`, and the same
+     parser the server runs reads it back. Adding a `step`/`precision` escape hatch to `Stepper`
+     was rejected: it is shared with /shopping and cook mode's minute sheet, and stepping
+     quarters through "400 g" is nonsense. The honest limit of composing three fields back into
+     one line is that a few names cannot be escaped — "1 Packung Nudeln" reads back as one _pack_
+     of "Nudeln", "7up" as 7 of "up", because the first word is a unit alias or a numeral. There
+     is no spelling that avoids it while the line stays the wire format, so
+     `composeIngredientLine` returns the reading alongside the line and the sheet shows it live
+     under the fields ("Saved as **1 Pck. Nudeln**"). Nothing is silent; the alternative —
+     refusing the save — would leave someone with a row they cannot express and no way forward.
+     The unit `Select` is never disabled for the same reason: a disabled `<select>` leaves the
+     tab order and takes its own explanation with it, so the hint says "Only saved with an
+     amount" and the preview shows it happening.
+
+102. **Three cook timers at once, and a refusal instead of a replacement.** One at a time was
+     never a data rule — `cook_timers` has no unique index — it was `startTimer`
+     blanket-cancelling every live row for the person before inserting. Fine while the screen
+     could only show one, actively harmful once it can show three: cancelling a timer somebody
+     is still watching is silent, and silence is the one thing a kitchen timer must not be. So
+     the blanket cancel becomes a counted check in the same transaction against
+     `TIMERS_MAX = 3`, throwing `too-many-timers` → 409, plus an explicit `replaces` on the start
+     input naming the one row the caller is genuinely handing in. Three because a kitchen watches
+     a pan, an oven and a kettle, and because ring + two bars is what fits above the Next button
+     at 390px (→ #86). The cap lives in `lib/utils/timer-parse.ts` beside the duration bounds,
+     for the reason those do. `getActiveTimer` becomes `listActiveTimers`, ordered `endsAt, id` —
+     soonest first, with the tiebreaker the old `desc(createdAt)` lacked, and unlimited, so an
+     overflow row stays visible and cancellable rather than becoming an unstoppable phantom push.
+     Two consequences worth naming: **"+1:00" now has to name the row it replaces**, because it
+     used to lean on the blanket cancel and would otherwise orphan a live row that rings a pan
+     already off _and_ eat a cap slot; and the two-taps race that could leave _zero_ live rows
+     under a running countdown — killing the locked-phone push entirely — cannot happen any more,
+     since no request touches another's row.
+
+103. **The timers belong to the app, not to cook mode.** `CookTimer` was built for cook mode and
+     died with it, which is why a timer you walked away from was invisible.
+     `lib/cook-timer.svelte.ts` grows a `CookTimers` manager exported as a module singleton, and
+     cook mode reads it instead of constructing one. This is #85's argument one ring out — three
+     dumb readers become four, one of them a different screen — and it settles the thing that
+     makes a second countdown dangerous: the claim (→ #83) lives in the store, so there is
+     exactly one claimer whatever is on screen, and no two surfaces can race for one
+     `notifiedAt` and leave the loser silent while no push was sent either. The manager owns one
+     200ms interval for all three, because three countdowns off by a tick is exactly what a
+     kitchen notices. It also makes the dock appear _when you leave_: the `(app)` layout load
+     reads no `event.url`, so it does not re-run on a client-side navigation, and a
+     load-data-only banner would need its own invalidation key to show up at all. **A module
+     singleton on a server is shared between requests**, so it is written only from `$effect`s —
+     which never run during SSR — and every write refuses outside the browser. Two prices are
+     accepted rather than hidden. The ring is no longer server-rendered, so a reload with a timer
+     running paints the step first and the ring on hydration; and `sync` **must** be called
+     inside `untrack`, because it reads the `phase` and `remainingMs` the ticker writes and would
+     otherwise re-run five times a second against stale load data and delete live timers. A
+     paused timer still exists only in the tab that paused it (pause deletes the row, → #15),
+     which the dock cannot show and a reload still loses.
+
+104. **The dock is fixed above the tab bar, and it is not a `Banner`.** Every existing banner is
+     in normal flow, which is right for something you read once and wrong for something you
+     glance at while scrolling a shopping list. So the dock borrows the tab bar's own positioning
+     — pinned to the 480px column rather than to the viewport — sits above it at `z-index: 11`
+     (it never overlaps the tabs, and 11 keeps `--shadow-tabbar`'s upward throw off its edge),
+     and the shell makes room via `--timer-dock-h`, which the FAB also reads so it stops covering
+     the chevron. Not `ui/Banner`: its two variants are token-bound to danger and info, its
+     `href` form deliberately suppresses `onclick`/`ondismiss` — and this row is both a way back
+     and a dismiss — and it is not an alert but the compact rendering of a running timer, i.e.
+     `CookTimerBar` with a different job. It carries `role="status"`, because outside cook mode
+     it is the only in-app surface a rung timer has. Running is sage, rung is terracotta, which
+     in this app already means "now". No new colour tokens.
+
+105. **Bought items leave their store group for one "Recently bought" section, and the split is
+     one function both halves call.** SPEC §3.1 used to send a checked row to the end of its
+     group, which is fine for the two items the mockup strikes through and wrong by the end of a
+     real trip: the store headings stay, the rows you still need get pushed down, and the last
+     screen of a shop is mostly things you already have. So checked items leave the groups
+     entirely and collect in one collapsed section under them, newest first, across all stores —
+     a store with nothing left to buy disappears with them. Collapsed by default because "what's
+     in the trolley" is context and the header's "4 of 9 done" is the part you actually check;
+     open by default when there is nothing left to buy, or the screen would read as an empty
+     list. What made the old shape awkward was that the order lived twice — an `ORDER BY` in
+     `getShoppingList` and a comparator in the browser, "keep them in step" — and an optimistic
+     tick now moves a row _between two lists_, which is far more than a sort. So the service
+     returns the list flat and `utils/shopping.ts` `splitList` groups it: once on the server for
+     the first paint, again in the browser on every tick, one definition. Grouping needs the
+     stores in walking order, which the page already loads for the sheet's chips.
+
+106. **The add field completes from a table of its own, and the whole pool goes to the browser.**
+     "Type Rind, get Rinderhackfleisch" cannot be a query over `shopping_items`: those rows are
+     deleted 12 h after they're checked off (→ #13), so the list is a shopping trip and a
+     household's vocabulary has to outlive it. Hence `shopping_suggestions` — one row per
+     distinct name, upserted on every add, rename and recipe pour-in, keyed on
+     `(household, lower(name))` so capitalisation doesn't fork a word into two.
+     Renaming counts as using a name: the point is that somebody fixing a typo stops being
+     offered the typo. The pool is then sent **whole** with the page (250 most recent names, a
+     few KB) and filtered in the browser, rather than through a per-keystroke endpoint — the
+     field's entire promise is that it keeps up with typing, JSON endpoints in this app are for
+     push, timers and uploads (→ ARCHITECTURE "Server patterns"), and a household's vocabulary is
+     small enough that the request would cost more than the data. Ranking is three tiers — the
+     name starts with what you typed, a word inside it does, it appears anywhere — because
+     German compounds make a plain prefix match useless ("hack" must find
+     "Rinderhackfleisch"); ties break on recency. Names already on the list are filtered out
+     client-side: offering something three rows below is an invitation to buy it twice. No
+     pruning job — the table grows by distinct words, which a household of two exhausts long
+     before it becomes a row count worth a cron.
+
 ## Open questions (non-blocking, defaults chosen)
 
 - **Production domain** — invite links & OAuth redirect need the final origin (design shows

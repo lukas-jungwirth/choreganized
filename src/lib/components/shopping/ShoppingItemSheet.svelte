@@ -8,6 +8,7 @@
 -->
 <script lang="ts">
 	import { enhance } from '$app/forms';
+	import SuggestionList from '$lib/components/shopping/SuggestionList.svelte';
 	import BottomSheet from '$lib/components/ui/BottomSheet.svelte';
 	import Button from '$lib/components/ui/Button.svelte';
 	import Chip from '$lib/components/ui/Chip.svelte';
@@ -15,6 +16,7 @@
 	import Stepper from '$lib/components/ui/Stepper.svelte';
 	import TextField from '$lib/components/ui/TextField.svelte';
 	import { messages } from '$lib/i18n';
+	import { itemSuggest } from '$lib/item-suggest.svelte';
 	import type { ShoppingListItem } from '$lib/server/services/shopping';
 	import {
 		DEFAULT_UNIT,
@@ -32,6 +34,8 @@
 		item: ShoppingListItem | null;
 		/** Prefill when adding — whatever the quick field had. */
 		initialName?: string;
+		/** The same pool the quick field completes from (→ SPEC §3.1). */
+		suggestions?: string[];
 		stores: { id: string; name: string }[];
 		/** Where a new item lands unless the chips say otherwise. */
 		defaultStoreId: string | null;
@@ -44,7 +48,15 @@
 		onclose: () => void;
 	};
 
-	let { item, initialName = '', stores, defaultStoreId, onadded, onclose }: Props = $props();
+	let {
+		item,
+		initialName = '',
+		suggestions = [],
+		stores,
+		defaultStoreId,
+		onadded,
+		onclose
+	}: Props = $props();
 
 	const m = messages();
 
@@ -72,6 +84,20 @@
 		if (!open) onclose();
 	});
 
+	/**
+	 * The same completions the quick field offers, with one difference: here a
+	 * pick fills the field and stops. This sheet exists to say *how much* and
+	 * *which shop*, so it would be rude to submit the moment the name is right.
+	 */
+	const suggest = itemSuggest(
+		() => name,
+		() => suggestions
+	);
+
+	function take(picked: string) {
+		name = suggest.pick(picked);
+	}
+
 	/** Plan 07 can put "tbsp" on an item; opening this sheet mustn't rewrite it. */
 	const unitOptions = $derived(
 		(unit && !isUnit(unit) ? [...UNITS, unit] : UNITS).map((value) => ({
@@ -82,7 +108,11 @@
 		}))
 	);
 
-	const storeLabelId = $props.id();
+	// One id per component instance is all Svelte hands out, so the two things
+	// in here that need one derive theirs from it.
+	const uid = $props.id();
+	const storeLabelId = `${uid}-store`;
+	const listId = `${uid}-suggestions`;
 
 	const storeName = $derived(stores.find((store) => store.id === storeId)?.name);
 	const cta = $derived(
@@ -118,16 +148,40 @@
 	>
 		{#if item}<input type="hidden" name="id" value={item.id} />{/if}
 
-		<TextField
-			label={m.shopping.sheet.name}
-			name="name"
-			bind:value={name}
-			{error}
-			placeholder={m.shopping.sheet.namePlaceholder}
-			maxlength={ITEM_NAME_MAX}
-			autocomplete="off"
-			required
-		/>
+		<!-- Relative, so the list floats under the field rather than shoving the
+			 quantity, the store chips and the CTA down the sheet as you type. -->
+		<div class="named">
+			<TextField
+				label={m.shopping.sheet.name}
+				name="name"
+				bind:value={name}
+				{error}
+				placeholder={m.shopping.sheet.namePlaceholder}
+				maxlength={ITEM_NAME_MAX}
+				autocomplete="off"
+				role="combobox"
+				aria-expanded={suggest.open}
+				aria-controls={suggest.open ? listId : undefined}
+				aria-autocomplete="list"
+				aria-activedescendant={suggest.active >= 0 ? `${listId}-${suggest.active}` : undefined}
+				onfocus={() => (suggest.focused = true)}
+				onblur={() => (suggest.focused = false)}
+				onkeydown={(event) => {
+					const picked = suggest.keydown(event);
+					if (picked) take(picked);
+				}}
+				required
+			/>
+
+			{#if suggest.open}
+				<SuggestionList
+					id={listId}
+					matches={suggest.matches}
+					active={suggest.active}
+					onpick={take}
+				/>
+			{/if}
+		</div>
 
 		<div class="measure">
 			<div class="quantity">
@@ -183,6 +237,10 @@
 </BottomSheet>
 
 <style>
+	.named {
+		position: relative;
+	}
+
 	.measure {
 		display: flex;
 		align-items: flex-start;

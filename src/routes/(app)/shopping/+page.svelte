@@ -1,11 +1,13 @@
 <!--
 	Shopping [03] — the shared list, grouped by store in walking order, with the
-	quick-add field pinned above it and the full sheet [3a] behind both the
-	sliders button and any row.
+	quick-add field pinned above it, everything already bought folded into one
+	section underneath, and the full sheet [3a] behind both the sliders button
+	and any row.
 -->
 <script lang="ts">
 	import BasketIcon from '$lib/components/icons/BasketIcon.svelte';
 	import PageHeader from '$lib/components/shell/PageHeader.svelte';
+	import BoughtSection from '$lib/components/shopping/BoughtSection.svelte';
 	import QuickAdd from '$lib/components/shopping/QuickAdd.svelte';
 	import ShoppingItemSheet from '$lib/components/shopping/ShoppingItemSheet.svelte';
 	import ShoppingRow from '$lib/components/shopping/ShoppingRow.svelte';
@@ -14,7 +16,7 @@
 	import EmptyState from '$lib/components/ui/EmptyState.svelte';
 	import { messages } from '$lib/i18n';
 	import type { ShoppingListItem } from '$lib/server/services/shopping';
-	import { compareItems } from '$lib/utils/shopping';
+	import { splitList, suggestionKey } from '$lib/utils/shopping';
 	import type { SubmitFunction } from '@sveltejs/kit';
 	import MapPin from '@lucide/svelte/icons/map-pin';
 	import Plus from '@lucide/svelte/icons/plus';
@@ -30,32 +32,35 @@
 	 * `checkedAt` we're acting as if the server had already written.
 	 *
 	 * Ticking a box has to feel instant, and it isn't only the circle that
-	 * changes — the row strikes through and travels to the end of its group. So
-	 * the optimistic value goes through the same comparator the SQL uses, and the
-	 * entry is dropped again once the real data lands.
+	 * changes — the row strikes through and leaves its store for "recently
+	 * bought" (and takes the store's heading with it, if it was the last thing
+	 * left to buy there). So the optimistic value goes through the same split
+	 * the server used, and the entry is dropped again once the real data lands.
 	 */
 	const pending = new SvelteMap<string, number | null>();
 
-	const groups = $derived(
-		data.list.groups.map((group) => ({
-			...group,
-			items: group.items
-				.map((item) =>
-					pending.has(item.id) ? { ...item, checkedAt: pending.get(item.id) ?? null } : item
-				)
-				.sort(compareItems)
-		}))
-	);
-
-	const checked = $derived(
-		groups.reduce(
-			(total, group) => total + group.items.filter((item) => item.checkedAt !== null).length,
-			0
+	const items = $derived(
+		data.items.map((item) =>
+			pending.has(item.id) ? { ...item, checkedAt: pending.get(item.id) ?? null } : item
 		)
 	);
 
+	const list = $derived(splitList(items, data.stores));
+
 	/** The topmost store — where quick-add lands, and the sheet's preselection. */
 	const defaultStoreId = $derived(data.stores[0]?.id ?? null);
+
+	/**
+	 * The names both fields complete from, minus whatever is already waiting to
+	 * be bought: offering "Oat milk" while "Oat milk" is three rows below is an
+	 * invitation to buy it twice.
+	 */
+	const suggestions = $derived.by(() => {
+		const onTheList = new Set(
+			list.groups.flatMap((group) => group.items).map((item) => suggestionKey(item.name))
+		);
+		return data.suggestions.filter((name) => !onTheList.has(suggestionKey(name)));
+	});
 
 	/** null = closed. Mounting the sheet per opening is what resets its form. */
 	let sheet = $state<{ item: ShoppingListItem | null; name: string } | null>(null);
@@ -73,6 +78,10 @@
 			};
 		};
 	}
+
+	function edit(item: ShoppingListItem) {
+		sheet = { item, name: item.name };
+	}
 </script>
 
 <svelte:head>
@@ -81,7 +90,7 @@
 
 <PageHeader
 	title={m.shopping.title}
-	meta={data.list.total > 0 ? m.shopping.progress(checked, data.list.total) : undefined}
+	meta={items.length > 0 ? m.shopping.progress(list.bought.length, items.length) : undefined}
 >
 	{#snippet actions()}
 		<a class="stores" href="/shopping/stores" aria-label={m.shopping.manageStores}>
@@ -90,9 +99,13 @@
 	{/snippet}
 </PageHeader>
 
-<QuickAdd bind:value={quickName} onexpand={() => (sheet = { item: null, name: quickName })} />
+<QuickAdd
+	bind:value={quickName}
+	{suggestions}
+	onexpand={() => (sheet = { item: null, name: quickName })}
+/>
 
-{#if data.list.total === 0}
+{#if items.length === 0}
 	<div class="empty">
 		<EmptyState title={m.shopping.empty.title}>
 			{#snippet icon()}<BasketIcon size={40} strokeWidth={1.6} />{/snippet}
@@ -107,7 +120,7 @@
 		</EmptyState>
 	</div>
 {:else}
-	{#each groups as group (group.storeId ?? 'other')}
+	{#each list.groups as group (group.storeId ?? 'other')}
 		<section class="group">
 			<h2 class="group-name">
 				<MapPin size={13} strokeWidth={2} aria-hidden="true" />{group.name ?? m.shopping.other}
@@ -115,23 +128,28 @@
 			<Card radius="md">
 				<ul class="rows">
 					{#each group.items as item (item.id)}
-						<ShoppingRow
-							{item}
-							checked={item.checkedAt !== null}
-							toggle={toggle(item)}
-							onedit={() => (sheet = { item, name: item.name })}
-						/>
+						<ShoppingRow {item} checked={false} toggle={toggle(item)} onedit={() => edit(item)} />
 					{/each}
 				</ul>
 			</Card>
 		</section>
 	{/each}
+
+	{#if list.bought.length > 0}
+		<BoughtSection
+			items={list.bought}
+			startOpen={list.groups.length === 0}
+			{toggle}
+			onedit={edit}
+		/>
+	{/if}
 {/if}
 
 {#if sheet}
 	<ShoppingItemSheet
 		item={sheet.item}
 		initialName={sheet.name}
+		{suggestions}
 		stores={data.stores}
 		{defaultStoreId}
 		onadded={() => (quickName = '')}

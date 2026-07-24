@@ -22,8 +22,11 @@ export type TimerSnapshot = {
 export type StartTimerRequest = {
 	seconds: number;
 	label: string;
-	recipeId: string;
+	/** Nullable: a timer whose recipe was deleted still resumes. */
+	recipeId: string | null;
 	stepIndex: number | null;
+	/** The row this machine hands in, if it holds one (→ DECISIONS #15). */
+	replaces: string | null;
 };
 
 const ENDPOINT = '/api/timers';

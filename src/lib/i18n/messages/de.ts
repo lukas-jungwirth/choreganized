@@ -257,6 +257,14 @@ export const de: Messages = {
 			submit: 'Eintragen'
 		},
 
+		suggestions: {
+			label: 'Vorschläge'
+		},
+
+		bought: {
+			heading: (count: number) => `Zuletzt gekauft · ${count}`
+		},
+
 		row: {
 			check: (item: string) => `${item} abhaken`,
 			uncheck: (item: string) => `${item} zurück auf die Liste`,
@@ -480,9 +488,16 @@ export const de: Messages = {
 	/* ── Cooking [04] [3d] [7a] ────────────────────────────────────────────── */
 	cooking: {
 		title: 'Kochen',
-		thisWeek: 'Diese Woche',
 		cookTime: (minutes: number) => `${minutes} Min.`,
 		serves: (servings: number) => `Für ${servings}`,
+
+		weekSwitch: {
+			label: 'Welche Woche',
+			current: 'Diese Woche',
+			next: 'Nächste Woche',
+			currentCount: (planned: number) => `Diese Woche · ${planned}`,
+			nextCount: (planned: number) => `Nächste Woche · ${planned}`
+		},
 
 		week: {
 			tonight: 'Heute Abend',
@@ -584,8 +599,19 @@ export const de: Messages = {
 			ingredientPlaceholder: '400 g Nudeln',
 			ingredientLabel: (index: number) => `Zutat ${index}`,
 			addIngredient: 'Zutat hinzufügen',
-			unitsNote: (units: string) =>
-				`Schreib sie, wie du magst — „400 g Nudeln“, „2 Eier“, „Salz“. Bekannte Einheiten: ${units}.`,
+			ingredientsNote: (units: string) =>
+				`Schreib sie, wie du magst — „400 g Nudeln“, „2 Eier“, „Salz“. Bekannte Einheiten: ${units}. Tipp auf eine Menge, um Zahl und Einheit selbst zu wählen.`,
+			amountLabel: (amount: string) =>
+				amount ? `${amount} — bearbeiten` : 'Keine Menge — eintragen',
+			ingredientNamePlaceholder: 'Nudeln',
+			quantity: 'Menge',
+			quantityPlaceholder: '400',
+			unit: 'Einheit',
+			unitNone: 'Ohne Einheit',
+			unitHint: 'Wird nur mit einer Menge gespeichert',
+			savedAsLead: 'Wird gespeichert als ',
+			savedAsNothing: 'noch nichts',
+			amountDone: 'Fertig',
 			steps: 'Schritte',
 			stepPlaceholder: 'Die Nudeln bissfest kochen, etwa 9 Min.',
 			stepLabel: (index: number) => `Schritt ${index}`,
@@ -650,8 +676,23 @@ export const de: Messages = {
 			barRunning: (label: string, remaining: string) => `${label}, noch ${remaining}`,
 			barBackTo: (step: number) => ` — zurück zu Schritt ${step}`,
 			defaultTimer: 'Timer',
+			timerForStep: (step: number) => `Timer Schritt ${step}`,
+			timerCancelOne: (label: string) => `${label} abbrechen`,
+			timerCapped: (max: number) =>
+				`${max} Timer gleichzeitig sind das Maximum — stopp zuerst einen.`,
 			offline: 'Offline — der klingelt nur, solange die App offen ist.',
 			timerFailed: 'Der Timer ließ sich nicht starten.'
+		},
+
+		dock: {
+			running: (label: string, remaining: string) => `${label}, noch ${remaining}`,
+			done: (label: string) => `${label} ist fertig`,
+			backTo: ' — zurück zum Kochen',
+			more: (count: number) => `+${count}`,
+			/** „weiterer“/„weitere“: im Deutschen entscheidet die Zahl über die Endung. */
+			andMore: (count: number) =>
+				count === 1 ? ' und 1 weiterer Timer' : ` und ${count} weitere Timer`,
+			dismiss: 'Diesen Timer schließen'
 		}
 	},
 
@@ -918,7 +959,8 @@ export const de: Messages = {
 				'Das Rezept gibt es nicht mehr. Wähl ein anderes oder schreib, was ihr kocht.',
 			mealDay: 'Wähle einen Tag für dieses Essen.',
 			mealChoice: 'Wähl ein Rezept oder schreib, was ihr kocht.',
-			timerLength: 'Das ist keine Zeitangabe.'
+			timerLength: 'Das ist keine Zeitangabe.',
+			timerLimit: (max: number) => `${max} Timer gleichzeitig sind das Maximum.`
 		},
 
 		photo: {

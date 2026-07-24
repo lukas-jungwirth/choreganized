@@ -33,12 +33,19 @@
 	}: Props = $props();
 
 	const id = $props.id();
+	const hintId = `${id}-hint`;
 </script>
 
 <div class="field">
 	<label class="label" for={id}>{label}</label>
 	<div class="shell">
-		<select {id} {...rest} class="select {className}" bind:value>
+		<select
+			{id}
+			aria-describedby={hint ? hintId : undefined}
+			{...rest}
+			class="select {className}"
+			bind:value
+		>
 			{#each options as option (option.value)}
 				<option value={option.value}>{option.label}</option>
 			{/each}
@@ -47,7 +54,7 @@
 			<ChevronDown size={12} strokeWidth={2.4} />
 		</span>
 	</div>
-	{#if hint}<p class="hint">{hint}</p>{/if}
+	{#if hint}<p class="hint" id={hintId}>{hint}</p>{/if}
 </div>
 
 <style>

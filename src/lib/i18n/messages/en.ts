@@ -328,6 +328,21 @@ export const en = {
 			submit: 'Add item'
 		},
 
+		/**
+		 * The names the add field completes from — everything this household has
+		 * put on the list before (→ SPEC §3.1). The options are household
+		 * content, so all this needs is a name for the list they sit in.
+		 */
+		suggestions: {
+			label: 'Suggestions'
+		},
+
+		/** The second list, under the stores: what's already in the basket. */
+		bought: {
+			/** The section heads itself and says how much is in it, like a tab. */
+			heading: (count: number) => `Recently bought · ${count}`
+		},
+
 		row: {
 			check: (item: string) => `Check off ${item}`,
 			uncheck: (item: string) => `Put ${item} back on the list`,
@@ -608,11 +623,27 @@ export const en = {
 	/* ── Cooking [04] [3d] [7a] ────────────────────────────────────────────── */
 	cooking: {
 		title: 'Cooking',
-		thisWeek: 'This week',
 		/** "35 min", or nothing when a recipe never said how long it takes. */
 		cookTime: (minutes: number) => `${minutes} min`,
 		/** "Serves 4" — the recipe header and the share text. */
 		serves: (servings: number) => `Serves ${servings}`,
+
+		/**
+		 * Which week the plan is showing [04], and the day picker's groups [7a].
+		 *
+		 * `weekSwitch` rather than `weeks`: `week` below is the row copy, and one
+		 * character between two neighbouring keys — in a file read side by side
+		 * with its German twin — is a permanent misread waiting to happen.
+		 */
+		weekSwitch: {
+			/** Names the two-way switch for a screen reader. */
+			label: 'Which week',
+			current: 'This week',
+			next: 'Next week',
+			/** On the switch, carrying how many of the seven days have a dinner. */
+			currentCount: (planned: number) => `This week · ${planned}`,
+			nextCount: (planned: number) => `Next week · ${planned}`
+		},
 
 		/** The week's rows [04]. */
 		week: {
@@ -726,9 +757,34 @@ export const en = {
 			ingredientPlaceholder: '400 g pasta',
 			ingredientLabel: (index: number) => `Ingredient ${index}`,
 			addIngredient: 'Add ingredient',
-			/** The parser is lenient; this says so, and lists what it recognises. */
-			unitsNote: (units: string) =>
-				`Write them however you like — “400 g pasta”, “2 eggs”, “salt”. Units we know: ${units}.`,
+			/**
+			 * The parser still reads the line; this says so, lists what it knows,
+			 * and points at the sheet for the times it reads a line wrong.
+			 */
+			ingredientsNote: (units: string) =>
+				`Write them however you like — “400 g pasta”, “2 eggs”, “salt”. Units we know: ${units}. Tap an amount to set the number and unit yourself.`,
+			/**
+			 * The chip beside each row. No row number: the input beside it already
+			 * announces "Ingredient 3", and this is its description.
+			 */
+			amountLabel: (amount: string) => (amount ? `${amount} — edit` : 'No amount — add one'),
+			/** The row taken apart [3c], with [3a]'s unit list. */
+			ingredientNamePlaceholder: 'pasta',
+			quantity: 'Amount',
+			quantityPlaceholder: '400',
+			unit: 'Unit',
+			/**
+			 * Salt is not measured in pieces, so "none" has to be offered — [3a]
+			 * has no such option because `pcs` is its default.
+			 */
+			unitNone: 'No unit',
+			/** A unit measures a quantity (→ DECISIONS #42), so it waits for one. */
+			unitHint: 'Only saved with an amount',
+			/** What the composed line will actually be read as (→ DECISIONS #101). */
+			savedAsLead: 'Saved as ',
+			savedAsNothing: 'nothing yet',
+			/** Writes the three fields back into the row's line; nothing is saved yet. */
+			amountDone: 'Done',
 			steps: 'Steps',
 			stepPlaceholder: 'Boil the pasta until al dente, about 9 min.',
 			stepLabel: (index: number) => `Step ${index}`,
@@ -803,9 +859,33 @@ export const en = {
 			barBackTo: (step: number) => ` — back to step ${step}`,
 			/** The default label a timer with no step text gets. */
 			defaultTimer: 'Timer',
+			/** Three identical "Timer"s is one timer. Fall back to where it was set. */
+			timerForStep: (step: number) => `Step ${step} timer`,
+			/** The × on a bar: a timer you aren't standing on, stopped where it is. */
+			timerCancelOne: (label: string) => `Cancel ${label}`,
+			/** At the cap the Start chip stands down and says why (→ DECISIONS #102). */
+			timerCapped: (max: number) =>
+				`${max} timers at once is the limit — stop one before you start another.`,
 			/** No service worker, so the alarm can only fire while this tab lives. */
 			offline: 'Offline — this one will only ring while the app is open.',
 			timerFailed: "That timer wouldn't start."
+		},
+
+		/**
+		 * The running-timer dock [7h] — the one row a timer shrinks to once you
+		 * leave cook mode. Under `cooking` because that is what it is about, even
+		 * though it shows up on every other tab (→ DECISIONS #104).
+		 */
+		dock: {
+			running: (label: string, remaining: string) => `${label}, ${remaining} left`,
+			done: (label: string) => `${label} is done`,
+			/** Always said, so it is clear the row goes somewhere. */
+			backTo: ' — back to cooking',
+			/** "+2" beside the soonest, when more than one is running. */
+			more: (count: number) => `+${count}`,
+			/** The same count, spelled out for the row's label. */
+			andMore: (count: number) => (count === 1 ? ' and 1 more timer' : ` and ${count} more timers`),
+			dismiss: 'Dismiss this timer'
 		}
 	},
 
@@ -1123,7 +1203,9 @@ export const en = {
 			gonePickAnother: 'That recipe is gone. Pick another, or name what you’re cooking.',
 			mealDay: 'Pick a day for this meal.',
 			mealChoice: 'Pick a recipe, or name what you’re cooking.',
-			timerLength: 'That is not a length of time.'
+			timerLength: 'That is not a length of time.',
+			/** The server's half of the cap — a forged or racing request (→ #102). */
+			timerLimit: (max: number) => `${max} timers at once is the limit.`
 		},
 
 		/** Photo upload (→ `server/uploads.ts`), all shown on the recipe form. */

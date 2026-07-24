@@ -8,6 +8,12 @@
 	lines: one `ingredient` field per row, one `step` per step, in DOM order.
 	That also makes reordering nothing more than reordering an array.
 
+	Each row shows what that parse made of it, in the column [7a] prints the
+	amount in — and after hydration that chip opens `IngredientSheet`, which
+	takes the line apart and hands one back. Structured entry without a
+	structured wire: the line is still the only thing that posts
+	(→ DECISIONS #100).
+
 	The design draws a drag grip on each row. This ships the arrows plan 03 chose
 	for the store list (→ DECISIONS #36): they work on touch, with a keyboard and
 	without JavaScript-level pointer maths.
@@ -18,7 +24,7 @@
 	import TextField from '$lib/components/ui/TextField.svelte';
 	import { messages } from '$lib/i18n';
 	import type { RecipeDetail } from '$lib/server/services/recipes';
-	import { RECIPE_UNITS } from '$lib/utils/ingredients';
+	import { parseIngredient, RECIPE_UNITS } from '$lib/utils/ingredients';
 	import { unitLabel } from '$lib/utils/shopping';
 	import {
 		INGREDIENTS_MAX,
@@ -37,6 +43,7 @@
 	import Plus from '@lucide/svelte/icons/plus';
 	import X from '@lucide/svelte/icons/x';
 	import { untrack } from 'svelte';
+	import IngredientSheet from './IngredientSheet.svelte';
 	import RecipeImage from './RecipeImage.svelte';
 
 	type Props = {
@@ -126,6 +133,13 @@
 
 	const uid = $props.id();
 	const fieldId = (kind: 'ingredient' | 'step', key: string) => `${uid}-${kind}-${key}`;
+	const amountId = (key: string) => `${uid}-amount-${key}`;
+
+	/**
+	 * Which row's sheet is up — `null` for none. Keyed rather than indexed, so
+	 * reordering a row while its sheet is open can't retarget it.
+	 */
+	let editing = $state<string | null>(null);
 
 	/** Insert after `index`, then put the caret in it — Enter walks down the list. */
 	function add(rows: Row[], kind: 'ingredient' | 'step', index = rows.length - 1): Row[] {
@@ -253,6 +267,8 @@
 	<h2 class="label">{m.cooking.form.ingredients}</h2>
 	<ul class="rows">
 		{#each ingredients as item, index (item.key)}
+			{@const parsed = item.text.trim() ? parseIngredient(item.text) : null}
+			{@const amount = parsed ? m.units.amount(parsed.quantity, parsed.unit) : ''}
 			<li class="row">
 				<input
 					id={fieldId('ingredient', item.key)}
@@ -262,6 +278,7 @@
 					bind:value={item.text}
 					placeholder={m.cooking.form.ingredientPlaceholder}
 					aria-label={m.cooking.form.ingredientLabel(index + 1)}
+					aria-describedby={item.text.trim() ? amountId(item.key) : undefined}
 					maxlength={INGREDIENT_LINE_MAX}
 					autocomplete="off"
 					onkeydown={(event) => {
@@ -274,7 +291,29 @@
 						}
 					}}
 				/>
+				{#if item.text.trim()}
+					<!-- The receipt: what the line was understood to measure, rendered
+						 by the same `m.units.amount` the recipe [7a] and the peek sheet
+						 [7b] use — so the form says what the recipe will say.
+
+						 A plain button, not one gated on hydration: the reorder and remove
+						 controls beside it, and "Add ingredient" below, all need a script
+						 too, and none of them pretends otherwise. -->
+					<button
+						type="button"
+						id={amountId(item.key)}
+						class="amount"
+						class:empty={!amount}
+						aria-label={m.cooking.form.amountLabel(amount)}
+						onclick={() => (editing = item.key)}
+					>
+						<!-- The em dash a Stepper shows for "no quantity", same reason. -->
+						{amount || '—'}
+					</button>
+				{/if}
 				{@render controls(index, ingredients.length, 'ingredient', (direction) => {
+					// A row removed under an open sheet would strand `editing`.
+					if (!direction && ingredients[index].key === editing) editing = null;
 					ingredients = direction
 						? move(ingredients, index, direction)
 						: remove(ingredients, index);
@@ -294,7 +333,7 @@
 	{/if}
 
 	<p class="units">
-		{m.cooking.form.unitsNote(
+		{m.cooking.form.ingredientsNote(
 			RECIPE_UNITS.map((unit) => unitLabel(unit, m.units.labels)).join(' · ')
 		)}
 	</p>
@@ -334,6 +373,21 @@
 		</Button>
 	</div>
 </form>
+
+<!-- Outside the <form> on purpose: nothing in the sheet carries a `name`, so no
+	 field of it can reach `form.getAll('ingredient')` and Enter inside it cannot
+	 submit the recipe (→ DECISIONS #100). -->
+{#if editing}
+	{@const at = ingredients.findIndex((item) => item.key === editing)}
+	{#if at >= 0}
+		<IngredientSheet
+			line={ingredients[at].text}
+			index={at + 1}
+			onsave={(line) => (ingredients[at].text = line)}
+			onclose={() => (editing = null)}
+		/>
+	{/if}
+{/if}
 
 <!-- The reorder/remove trio beside every ingredient and every step. Each label
 	 names the row it acts on, because thirty identical chevrons read out as
@@ -566,6 +620,33 @@
 
 	.line::placeholder {
 		color: var(--text-disabled);
+	}
+
+	/* Sits where [7a] prints the amount. Quiet — it confirms, it doesn't ask. */
+	.amount {
+		flex: none;
+		max-width: 76px;
+		overflow: hidden;
+		margin-left: 8px;
+		padding: 5px 9px;
+		border-radius: var(--r-chip);
+		background: var(--sunken);
+		font-size: 12.5px;
+		font-weight: 600;
+		white-space: nowrap;
+		text-overflow: ellipsis;
+		/* The digits must not jitter while the reading updates under a thumb. */
+		font-variant-numeric: tabular-nums;
+		color: var(--text-4);
+	}
+
+	.amount.empty {
+		background: none;
+		color: var(--text-disabled);
+	}
+
+	.amount:active {
+		background: var(--sunken-2);
 	}
 
 	.control {

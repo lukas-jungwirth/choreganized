@@ -3,6 +3,9 @@
 	calls it "a visual anchor for the current week", and the meal rows directly
 	below are already one tap target per day — two ways to open the same sheet,
 	one of them invisible, would be a worse screen.
+
+	On a week that hasn't started there is no today, so no pill: the switch above
+	and the numbers here are what say which week this is (→ DECISIONS #99).
 -->
 <script lang="ts">
 	import { messages } from '$lib/i18n';

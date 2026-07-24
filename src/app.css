@@ -116,6 +116,10 @@
 	/* ── Layout ───────────────────────────────────────────────── */
 	--page-pad: 22px; /* horizontal screen padding */
 	--tabbar-h: 84px;
+	/* Running-timer dock [7h]. The app shell swaps in the open height while one
+	   is up, so every padding calc that has to clear it is written once. */
+	--timer-dock-h: 0px;
+	--timer-dock-open-h: 58px;
 }
 
 * {

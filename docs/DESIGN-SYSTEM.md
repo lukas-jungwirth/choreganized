@@ -27,7 +27,7 @@ uppercase micro-labels. Nothing shouts; even "overdue" is a calm tinted card.
 | Radii      | `--r-input 14` `--r-button 16` `--r-block 16` `--r-card 20` `--r-card-lg 22` `--r-sheet 28` `--r-chip 999`   | `--r-block` = grouped block: quick-add [03], sheet menus [7c], add-a-store [7g]                 |
 | Shadows    | `--shadow-card/-button/-fab/-sheet/-modal/-knob`                                                             | `-knob` is the toggle's white knob                                                              |
 | Overlays   | `--scrim`                                                                                                    | behind sheets & modals                                                                          |
-| Layout     | `--page-pad 22px` `--tabbar-h 84px`                                                                          |                                                                                                 |
+| Layout     | `--page-pad 22px` `--tabbar-h 84px` `--timer-dock-h 0px` `--timer-dock-open-h 58px`                          | the shell swaps the dock height in while a timer is up; `.app-shell` and `FAB` both read it     |
 
 One token is set by components rather than `:root`: **`--input-surface`**. TextField is white on
 the paper background and `--field` inside a white sheet [3a], so BottomSheet and CenterModal set
@@ -72,6 +72,37 @@ cook-mode sheets [7b], and the cook screen's own parts are feature components in
 **`SetTimerSheet`** — driven by the `CookTimer` state machine in `lib/cook-timer.svelte.ts`.
 Extend these rather than forking a variant; look at them side by side at **`/dev/kit`** (dev-only
 gallery, → [DECISIONS #39](DECISIONS.md)) and add to it when you add a component.
+
+Work after the twelve plans added three more feature components in `components/cooking/`, none of
+them `ui/` primitives, so `/dev/kit` is unchanged. **`TimerDock`** — no props; it reads the
+`cookTimers` singleton and renders one row however many are running, fixed above the tab bar at
+`z-index: 11` with the tab bar's own `left: 50%` / `max-width: 480px` framing, `role="status"`,
+sage while running and terracotta with a separate dismiss button once it rings
+(→ [DECISIONS #104](DECISIONS.md)). **`CookTimerBar`** grew a `recipeId` prop and split into a
+wrapper holding a jump control (a `<button>` for this recipe, an `<a>` for another) plus its own
+44px × — a button inside a button is invalid, and which timers get a bar is now the page's call
+rather than the component's. **`IngredientSheet`** — the recipe form's amount chip opens it; it
+carries no `name` on any field and is mounted outside the `<form>`, because the typed line is
+still the only thing that posts (→ [DECISIONS #100](DECISIONS.md)). The store shape it all rests
+on — one singleton, N dumb readers — is what any future state that outlives a single screen
+should copy.
+
+Shopping later gained two more feature components in `components/shopping/`, again no `ui/`
+primitives. **`BoughtSection`** — the collapsed "Recently bought · 3" list under the store groups
+(→ [DECISIONS #105](DECISIONS.md)): it borrows the store headings' micro-label typography, because
+it is one more group and not a new idea, and its rows are the ordinary `ShoppingRow`, which
+already goes quiet when it is checked. **`SuggestionList`** — the names an add field offers under
+itself [03] [3a]: a `role="listbox"` of `role="option"` **buttons** (a real tap target and a real
+click event; out of the tab order, since the field keeps focus and drives them through
+`aria-activedescendant`), absolutely positioned so it floats instead of shoving the page down, on
+`--card` with a `--border-soft` hairline and `--shadow-card`. The behaviour behind both fields —
+what to offer, what the keyboard is on, when the list is up — is `lib/item-suggest.svelte.ts`,
+a closure rather than a class because everything in it derives from the caller's two values.
+
+[3c] draws a single-line ingredient row with a drag grip and no amount fields, so the form's
+**amount chip has no visual ground truth**: it borrows [7a]'s amount column — `--r-chip`,
+`--sunken` on `--card`, `--text-4`, 12.5px/600, `tabular-nums`, and `--text-disabled` with no
+background at all when there is nothing to measure.
 
 - **Button** — primary (sage bg, white 700 16px, `--r-button`, `--shadow-button`), secondary
   (white, 1.5px `--border`), danger (only in confirm dialogs), dark (`--ink` bg — "Start cook
@@ -119,7 +150,9 @@ gallery, → [DECISIONS #39](DECISIONS.md)) and add to it when you add a compone
   navigation instead (`<nav>` + `<a aria-current="page">`) — that's the Tasks tab's To do /
   History switch (→ [DECISIONS #53](DECISIONS.md)).
 - **Select** — TextField's shape around a real `<select>`: micro-label, `--input-surface`
-  field, decorative chevron, optional `hint` line ("pcs · g · kg · ml · L …" [3a]).
+  field, decorative chevron, optional `hint` line ("pcs · g · kg · ml · L …" [3a]). The hint is
+  `aria-describedby`-linked to the `<select>`, so it is announced with the field rather than
+  being a line only sighted users get.
 - **DateField** — the same shape around a real `<input type="date">`: calendar icon, the value,
   and a `caption` reading it back in words ("Tomorrow · Jul 17" [3b]). The browser's picker
   button is stretched invisibly across the row, so tapping anywhere opens the picker — which is
@@ -183,6 +216,8 @@ screen for how it's composed) and `google-g.svg`, Google's own mark for the sign
 ## Layout rules
 
 - One column, `--page-pad` horizontal padding, max-width 480px centered (`.app-shell`).
-- Scroll area leaves `--tabbar-h` bottom padding (+ safe-area-inset-bottom).
+- Scroll area leaves `--tabbar-h` + `--timer-dock-h` bottom padding (+ safe-area-inset-bottom);
+  the shell sets the dock term to `--timer-dock-open-h` while a timer is running, and the FAB
+  reads the same pair so it never sits on the dock.
 - Cook mode hides the tab bar entirely and uses the dark tokens.
 - Touch targets ≥ 44px; the whole list row is tappable, the check circle is its own target.

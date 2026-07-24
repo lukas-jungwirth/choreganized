@@ -20,19 +20,41 @@
  * the open page ringing it first, costs nothing. Whoever loses the conditional
  * update sees `changes === 0` and stops.
  *
- * v1 is **one timer per person at a time** (→ SPEC §4.6): starting a second one
- * cancels the first, in the same transaction, so there is never a moment where
- * two rows are live and the page has to choose. Timers are scoped to the user
- * rather than to the household — the person cooking is the one who wants the
- * buzz — but `householdId` is still the first argument and still in every WHERE
- * clause, because a timer id from another household must find nothing.
+ * Up to `TIMERS_MAX` per person (→ SPEC §4.6, DECISIONS #102). It used to be
+ * one, enforced by a blanket `UPDATE … SET canceled_at` over every live row of
+ * this person's before the insert. That was fine while the screen could only
+ * show one and actively harmful once it can show three: cancelling a timer
+ * somebody is still watching is *silent*, and silence is the one thing a kitchen
+ * timer must not be. So the blanket cancel is now a counted **refusal** inside
+ * the same transaction, and a start that genuinely replaces a row says which one
+ * — `replaces`, which is what "+1:00" and resume are (→ DECISIONS #15). A
+ * replacement therefore never spends a slot and never orphans the row it grew
+ * out of.
+ *
+ * Nothing at the SQL level enforces the count: a cap is not a uniqueness rule.
+ * Counting inside the transaction is enough because better-sqlite3 is
+ * synchronous in a single process (→ DECISIONS #19).
+ *
+ * Timers are scoped to the user rather than to the household — the person
+ * cooking is the one who wants the buzz — but `householdId` is still the first
+ * argument and still in every WHERE clause, because a timer id from another
+ * household must find nothing.
+ *
+ * Untouched by any of that: `cancelTimer`, `markTimerRung`, `claim`, `ring`,
+ * `payloadFor`, `sweepCookTimers`, the `alarms` map and every validator. The
+ * change is only ever about *how many* rows may be live at once.
  */
-import { and, asc, desc, eq, gt, gte, isNull, lte, type SQL } from 'drizzle-orm';
+import { and, asc, eq, gt, gte, isNull, lte, type SQL } from 'drizzle-orm';
 // Explicitly Node's, not the DOM's: this module is server-only and wants the
 // `NodeJS.Timeout` handle, whose `unref()` the DOM's `number` doesn't have.
 import { clearTimeout, setTimeout } from 'node:timers';
 import { STEPS_MAX } from '$lib/utils/recipes';
-import { MAX_TIMER_SECONDS, MIN_TIMER_SECONDS } from '$lib/utils/timer-parse';
+import {
+	MAX_TIMER_SECONDS,
+	MIN_TIMER_SECONDS,
+	TIMERS_MAX,
+	timerHref
+} from '$lib/utils/timer-parse';
 import { db } from '../db';
 import { cookTimers, recipes } from '../db/schema';
 import { sendToUser, type PayloadFor } from '../push';
@@ -41,7 +63,9 @@ export type CookTimerErrorCode =
 	/** Outside `MIN_TIMER_SECONDS`…`MAX_TIMER_SECONDS`, or not a number at all. */
 	| 'invalid-duration'
 	/** The recipe was deleted while cook mode was open (→ DECISIONS #73). */
-	| 'unknown-recipe';
+	| 'unknown-recipe'
+	/** Already at `TIMERS_MAX`; the caller has to stop one first. */
+	| 'too-many-timers';
 
 export class CookTimerError extends Error {
 	constructor(readonly code: CookTimerErrorCode) {
@@ -105,38 +129,54 @@ export type StartTimerInput = {
 	seconds: number;
 	recipeId: string | null;
 	stepIndex: number | null;
+	/**
+	 * A row this start hands in, cancelled in the same transaction as the insert.
+	 * "+1:00" and resume are a cancel and a new row (→ DECISIONS #15); naming it
+	 * here is what stops a replacement spending a second slot against the cap,
+	 * and what keeps a replaced row from outliving the tap that replaced it now
+	 * that nothing blanket-cancels on its behalf.
+	 */
+	replaces: string | null;
 };
 
 /* ── Reading ──────────────────────────────────────────────────────────────── */
 
+/** The predicate behind every "is this still going to buzz me?" question. */
+function live(householdId: string, userId: string, now: Date): SQL | undefined {
+	return and(
+		eq(cookTimers.householdId, householdId),
+		eq(cookTimers.userId, userId),
+		isNull(cookTimers.notifiedAt),
+		isNull(cookTimers.canceledAt),
+		gt(cookTimers.endsAt, now)
+	);
+}
+
 /**
- * The one timer this person has running, if any — what cook mode hydrates from
- * on load, so tapping the notification (or just reloading) finds the ring still
- * turning rather than a fresh screen.
+ * Every timer this person has running — what the app shell's dock and cook mode
+ * both hydrate from, so tapping a notification (or just reloading) finds the
+ * rings still turning rather than a fresh screen.
+ *
+ * Soonest first, which is the order every reader wants *and* the order they ring
+ * in; `id` only breaks ties, because two rows can share a millisecond and the
+ * old `desc(createdAt)` left that order to the query planner.
+ *
+ * Deliberately **not** limited to `TIMERS_MAX`: a limit would hide an overflow
+ * row from every client, and a row whose id nobody holds is a phantom push
+ * nobody can stop. Let the client see it and cancel it.
  */
-export function getActiveTimer(
+export function listActiveTimers(
 	householdId: string,
 	userId: string,
 	now: Date = new Date()
-): CookTimerView | null {
-	const row = db
+): CookTimerView[] {
+	return db
 		.select()
 		.from(cookTimers)
-		.where(
-			and(
-				eq(cookTimers.householdId, householdId),
-				eq(cookTimers.userId, userId),
-				isNull(cookTimers.notifiedAt),
-				isNull(cookTimers.canceledAt),
-				gt(cookTimers.endsAt, now)
-			)
-		)
-		// One at a time is an invariant, not a promise about rows that already
-		// exist: if two ever met, the newest is the one the page just started.
-		.orderBy(desc(cookTimers.createdAt))
-		.get();
-
-	return row ? toView(row, now) : null;
+		.where(live(householdId, userId, now))
+		.orderBy(asc(cookTimers.endsAt), asc(cookTimers.id))
+		.all()
+		.map((row) => toView(row, now));
 }
 
 type TimerRow = typeof cookTimers.$inferSelect;
@@ -158,8 +198,8 @@ function toView(row: TimerRow, now: Date): CookTimerView {
 /* ── Writing ──────────────────────────────────────────────────────────────── */
 
 /**
- * Start one. Any timer this person already had running is canceled in the same
- * transaction, so "one at a time" holds even if two taps race.
+ * Start one, if there is room. The row named by `replaces` is cancelled in the
+ * same transaction, *before* the count, so a "+1:00" at the cap still succeeds.
  *
  * The duration arrives as **seconds, not an end time**: the phone's clock is not
  * the server's, and the server's is the one the push is scheduled against.
@@ -188,19 +228,36 @@ export function startTimer(
 			if (!recipe) throw new CookTimerError('unknown-recipe');
 		}
 
-		const superseded = tx
-			.update(cookTimers)
-			.set({ canceledAt: now })
-			.where(
-				and(
-					eq(cookTimers.householdId, householdId),
-					eq(cookTimers.userId, userId),
-					isNull(cookTimers.notifiedAt),
-					isNull(cookTimers.canceledAt)
-				)
-			)
-			.returning({ id: cookTimers.id })
+		// Exactly one named row, never a blanket sweep: everything else this
+		// person has running belongs to a pan they are still watching.
+		const superseded =
+			input.replaces === null
+				? []
+				: tx
+						.update(cookTimers)
+						.set({ canceledAt: now })
+						.where(
+							and(
+								eq(cookTimers.id, input.replaces),
+								eq(cookTimers.householdId, householdId),
+								eq(cookTimers.userId, userId),
+								isNull(cookTimers.notifiedAt),
+								isNull(cookTimers.canceledAt)
+							)
+						)
+						.returning({ id: cookTimers.id })
+						.all();
+
+		// Counted here, next to the insert, for the same reason the recipe is:
+		// two taps that raced would otherwise both find room. `live` is the
+		// predicate the dock reads, so the screen and the refusal can't disagree.
+		const running = tx
+			.select({ id: cookTimers.id })
+			.from(cookTimers)
+			.where(live(householdId, userId, now))
 			.all();
+
+		if (running.length >= TIMERS_MAX) throw new CookTimerError('too-many-timers');
 
 		const row = tx
 			.insert(cookTimers)
@@ -351,6 +408,10 @@ async function ring(row: TimerRow, now: Date): Promise<number | null> {
  * the step that was cooking, which the service worker focuses or opens.
  *
  * The step is 0-based in the column and 1-based everywhere a person reads it.
+ *
+ * The URL comes from `timerHref`, the same helper the dock and the bars link
+ * through, so a notification and a tap in the app can never disagree about
+ * where a timer lives.
  */
 function payloadFor(row: TimerRow): PayloadFor {
 	const step = row.stepIndex === null ? null : row.stepIndex + 1;
@@ -359,9 +420,7 @@ function payloadFor(row: TimerRow): PayloadFor {
 		title: m.push.timerDone(row.label) + (step === null ? '' : m.cooking.cook.barBackTo(step)),
 		// Per timer, so a second timer never silently replaces the first's alert.
 		tag: `timer-${row.id}`,
-		url: row.recipeId
-			? `/cooking/recipes/${row.recipeId}/cook${step === null ? '' : `?step=${step}`}`
-			: '/cooking',
+		url: timerHref(row.recipeId, row.stepIndex),
 		// A kitchen is loud and hands are busy — this one earns a longer buzz.
 		vibrate: [200, 100, 200]
 	});

@@ -1,0 +1,1 @@
+CREATE INDEX `cook_timers_person_idx` ON `cook_timers` (`household_id`,`user_id`,`ends_at`);

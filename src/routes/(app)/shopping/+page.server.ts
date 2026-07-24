@@ -10,6 +10,7 @@ import {
 	addItem,
 	deleteItem,
 	getShoppingList,
+	listItemNames,
 	listStores,
 	setChecked,
 	updateItem
@@ -20,14 +21,14 @@ import type { Actions, PageServerLoad } from './$types';
 export const load: PageServerLoad = (event) => {
 	const { householdId } = requireMember(event);
 
-	// One read, two uses: the groups are built from it, and it goes to the
-	// browser as the sheet's chips — including the empty stores the list itself
-	// doesn't render (→ [3a]).
-	const stores = listStores(householdId);
-
 	return {
-		list: getShoppingList(householdId, stores),
-		stores: stores.map(({ id, name }) => ({ id, name }))
+		items: getShoppingList(householdId),
+		// Walking order *and* the sheet's chips — including the empty stores the
+		// list itself doesn't render (→ [3a]). The screen groups the items by
+		// them, and regroups on every tick (→ `utils/shopping` `splitList`).
+		stores: listStores(householdId).map(({ id, name }) => ({ id, name })),
+		// The pool the add field completes from, filtered in the browser.
+		suggestions: listItemNames(householdId)
 	};
 };
 

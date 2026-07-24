@@ -60,14 +60,21 @@ user ─┬─ session / account / verification        (Better Auth)
   sweep can address a notification in its recipient's language
   (→ [DECISIONS #94](DECISIONS.md), [SPEC §9](SPEC.md)).
 
-### `stores` / `shopping_items`
+### `stores` / `shopping_items` / `shopping_suggestions`
 
 - Store order (`sortOrder`, contiguous ints) = walking order; list renders stores by it.
   `storeId NULL` → virtual "Other" group, rendered last. Deleting a store sets its items'
   `storeId` to NULL.
-- `checkedAt NULL` = open; set = done (struck through, end of group). Cleanup cron deletes
-  items with `checkedAt < now - 12h` (nightly at 03:30 household-local; exact age not
-  critical).
+- `checkedAt NULL` = open; set = bought (struck through, out of its store group and into
+  "Recently bought" — → [DECISIONS #105](DECISIONS.md)). Cleanup cron deletes items with
+  `checkedAt < now - 12h` (nightly at 03:30 household-local; exact age not critical).
+- `shopping_suggestions` is the household's **vocabulary**, one row per distinct name, and the
+  reason it is a table rather than a `SELECT DISTINCT` over `shopping_items` is that line above:
+  the items are swept up, the words shouldn't be. `nameKey` (trimmed + lowercased,
+  `utils/shopping.ts` `suggestionKey`) is unique per household and the upsert's conflict target;
+  `name` keeps the spelling last used, which is what gets offered back. Written on every add,
+  rename and recipe pour-in; read most-recent-first, capped, and filtered in the browser
+  (→ [DECISIONS #106](DECISIONS.md)).
 - `quantity REAL` + `unit TEXT` both optional — "Tomatoes ×6", "Oat milk 2 L", or bare names.
   The unit is stored **canonically** (`pcs`, `tbsp`) and labelled per language on the way out
   ("Stk.", "EL"), so switching language re-labels the list rather than rewriting it
@@ -147,6 +154,13 @@ occurrence changes (done, skip, snooze, edit of due date).
   idempotency; `canceledAt` set on cancel (pause v1 = cancel + recreate on resume with shifted
   `endsAt`). Precision: in-process `setTimeout` scheduled at creation + the minute cron as
   catch-up after restarts (→ ARCHITECTURE.md).
+- Up to `TIMERS_MAX` (3) live rows per `(household_id, user_id)`, counted inside `startTimer`'s
+  transaction; a start may name **one** row it replaces, cancelled in the same transaction
+  (that is what "+1:00" and resume are). Nothing at the SQL level enforces the cap, because a
+  count is not a key (→ [DECISIONS #102](DECISIONS.md)).
+- `cook_timers_person_idx (household_id, user_id, ends_at)` — `cook_timers_ends_idx` is sized
+  for the sweep's range scan; this is the different access pattern the app-wide dock added,
+  "what is this person watching?", asked once per document load.
 
 ### Better Auth tables (`user`, `session`, `account`, `verification`)
 

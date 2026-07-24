@@ -97,19 +97,32 @@ a danger badge with the current user's overdue count [4e].
 - **Add an item…** inline field pinned above the list; typing + Enter (or the + button) adds
   instantly to the default store (topmost). Opening the field's expand affordance opens the full
   sheet [3a].
+- **Suggestions**: as you type, the field offers names this household has put on the list
+  before, most recently used first ("Rind" → "Rinderhackfleisch"). Case- and accent-blind, and
+  a match inside a word counts — German compounds make "starts with" useless on its own. Up to
+  6 at a time, in a list floating under the field; ↑/↓ + Enter or a tap. In the quick field a
+  pick **adds the item** (one gesture is the field's whole point); in the sheet [3a] it fills
+  the name and stops, because the sheet exists to say how much and which shop. Names already
+  waiting on the list are never suggested. The pool is every name ever added, renamed or poured
+  in from a recipe — it outlives the items themselves (→ [DECISIONS #106](DECISIONS.md)).
 - Items grouped by **store**, in store sort order; items without a store under **Other** (last).
-  Store header: pin icon + uppercase name. Empty stores are hidden.
+  Store header: pin icon + uppercase name. Stores with nothing left to buy are hidden.
 - Row: check circle, name, optional quantity ("×6", "2L" — quantity+unit compact), adder's mini
-  avatar. Checking: sage fill + strikethrough, row moves to the group's end. Unchecking restores.
+  avatar. Checking: sage fill + strikethrough, and the row **leaves its store group** for
+  "Recently bought". Unchecking puts it back where it was.
+- **Recently bought** — one section under the stores, all stores together, most recently ticked
+  off first. Collapsed to its heading ("Recently bought · 3") so a half-done trip doesn't push
+  what you still need off the screen; one tap opens it, to look or to put something back. It
+  starts open when there is nothing left to buy at all.
 - Checked items are cleared automatically ~12 h after checking (nightly cleanup) — the list
   keeps "done" context during a shopping trip but stays clean day-to-day.
 - Tap a row (not the circle) → edit in the same sheet as [3a]; delete lives there.
 
 ### 3.2 Add/edit item sheet [3a]
 
-- Fields: **Item** (text, required), **Quantity** (stepper, optional), **Unit** (pcs · g · kg ·
-  ml · L · pack — free pick, default pcs), **Store** (chips of the household's stores; the
-  add-field's current store preselected).
+- Fields: **Item** (text, required, with the same suggestions as the quick field — see §3.1),
+  **Quantity** (stepper, optional), **Unit** (pcs · g · kg · ml · L · pack — free pick, default
+  pcs), **Store** (chips of the household's stores; the add-field's current store preselected).
 - CTA: "Add to {store} list". Editing: "Save changes" + a delete row.
 
 ### 3.3 Empty state [7d]
@@ -133,8 +146,14 @@ a danger badge with the current user's overdue count [4e].
 
 ### 4.1 This week [04 main]
 
-- Header "This week" + month label. 7-day strip Mon–Sun with dates; today highlighted in sage.
-  The strip is a visual anchor for the current week (v1: current week only, no paging).
+- Header "Cooking" + the month label of the week on screen, and a two-way switch under it:
+  **This week · {n} / Next week · {n}**, where {n} is how many of the seven days have a dinner.
+  The week shown lives in the URL (`?week=YYYY-MM-DD`, a Monday); anything else it names falls
+  back to this week, and `/cooking` with no query is always this week (→ DECISIONS #99).
+  Planning reaches one week ahead; further out is not plannable. 7-day strip Mon–Sun with dates;
+  today highlighted in sage — next week has no today, so no highlight. The strip stays a visual
+  anchor, not a control: the meal rows below are already one tap target per day.
+  (The heading anchor `#41-this-week` is kept as-is — plan files link it.)
 - **Meal card**: one row per day (MON…SUN): planned meal name + "{member} cooks" (today's row
   highlighted, "Tonight · {member}") or dashed "Add a meal" placeholder. Tap → plan sheet [3d]
   for that day; tap a planned meal → recipe view, long-press/••• → change/remove (v1: tapping a
@@ -164,8 +183,12 @@ a danger badge with the current user's overdue count [4e].
 - Top bar: Cancel · "New recipe"/"Edit recipe" · **Save**.
 - Photo picker (optional; stored resized to ≤1200px WebP under `UPLOADS_DIR`).
 - Fields: name (required), time (minutes), servings.
-- **Ingredients**: freeform rows typed as "400 g pasta" and parsed leniently to
-  (quantity, unit, name); unparsed input becomes name-only. Reorder by drag, remove per row.
+- **Ingredients**: one typed row each, written the way you'd write them on paper ("400 g pasta")
+  and parsed leniently to (quantity, unit, name); unparsed input becomes name-only. Each row
+  shows what the parse made of it as a quiet amount chip; tapping the chip opens a sheet with
+  the name, the amount and the units of §3.2 plus tbsp · tsp and "no unit", which writes the row
+  back as a line and shows the reading that line will get (→ DECISIONS #100–101). Reorder with
+  the arrows (→ DECISIONS #67), remove per row.
 - **Steps**: numbered textareas, add/remove/reorder.
 
 ### 4.5 Recipe view [7a]
@@ -191,8 +214,20 @@ a danger badge with the current user's overdue count [4e].
 - **Ingredients chip** → bottom peek sheet listing all ingredients; the current step's are
   highlighted in amber [7b].
 - Running timer [7h]: big circular countdown (remaining, label "{ingredient/step} · {total}"),
-  Pause / **+1:00** / Cancel. Timer keeps running when navigating steps (shrinks to a small
-  chip) — v1 keeps it simple: one timer at a time.
+  Pause / **+1:00** / Cancel. **Up to three at once** (→ DECISIONS #102): the step on screen
+  keeps the ring, every other running timer shrinks to a compact bar above Prev/Next with its
+  own × to stop it where it stands, and a bar belonging to another recipe links out rather than
+  moving this screen's cursor. At three the Start chip and the header ⏲ stand down and say why
+  — the app **refuses** a fourth rather than silently cancelling one you are still watching. A
+  step that names no ingredient labels its timer "Step {i} timer", so three timers are never all
+  called "Timer".
+- **Running-timer dock**: once a timer is going, every screen that is _not_ cook mode carries a
+  slim bar pinned above the tab bar — the soonest timer, "+n" for the rest, tapping straight
+  back to the step it belongs to, turning terracotta with a dismiss when it rings
+  (→ DECISIONS #103–104). One client machine drives both surfaces, so a visible app still beeps
+  exactly once and a locked phone still gets exactly one push. Honest limit: a **paused** timer
+  exists only in the tab that paused it and is lost on reload, because pause deletes the row
+  (→ DECISIONS #15).
 - Prev / **Next step** buttons pinned at the bottom. Last step → "Finish" closes cook mode.
 - **Timer completion must fire even when the phone is locked** [7h·2]: the server schedules a
   push ("⏲️ {label} is done — back to step {i}") at `endsAt`; the open page also alerts

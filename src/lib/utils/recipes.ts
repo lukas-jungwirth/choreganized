@@ -16,6 +16,12 @@ import { isCalendarDate, type CalendarDate } from './dates';
 export const RECIPE_NAME_MAX = 80;
 /** One typed ingredient line, e.g. "400 g pasta" (→ `parseIngredient`). */
 export const INGREDIENT_LINE_MAX = 90;
+/**
+ * The ingredient sheet's name field. Shorter than the line it composes into by
+ * the widest amount prefix the form can produce ("9999.99 tbsp "), so setting an
+ * amount can never silently eat the tail of a name.
+ */
+export const INGREDIENT_NAME_MAX = INGREDIENT_LINE_MAX - 14;
 export const STEP_TEXT_MAX = 600;
 export const RECIPE_TIME_MAX = 999;
 export const RECIPE_SERVINGS_MAX = 99;

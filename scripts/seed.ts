@@ -31,11 +31,15 @@ import {
 	recipeSteps,
 	recipes,
 	shoppingItems,
+	shoppingSuggestions,
 	stores,
 	taskCompletions,
 	tasks,
 	user
 } from '../src/lib/server/db/schema.ts';
+// Relative and extensioned for the same reason the schema import is, and worth
+// importing rather than retyping: it is the key the unique index is built on.
+import { suggestionKey } from '../src/lib/utils/shopping.ts';
 
 /* ── Calendar helpers ────────────────────────────────────────────────────────
  * Household-local 'YYYY-MM-DD' strings. Plan 04 builds the real
@@ -345,6 +349,48 @@ const seeded = db.transaction((tx) => {
 				addedByMemberId: ownerMemberId
 			}
 		])
+		.onConflictDoNothing()
+		.run();
+
+	/*
+	 * What the add field completes from: everything above, plus the things a
+	 * household of two has bought and long since finished — those rows are swept
+	 * up 12 h after they're checked off, and the vocabulary outlives them
+	 * (→ services/shopping.ts). Without this the demo list has nothing to
+	 * suggest until you've typed a few items in by hand.
+	 */
+	const DEMO_NAMES = [
+		'Tomatoes',
+		'Baby spinach',
+		'Oat milk',
+		'Olive oil',
+		'Avocado',
+		'Greek yogurt',
+		'Shampoo',
+		'Cotton pads',
+		'LED bulbs (E27)',
+		'AA batteries',
+		'Rinderhackfleisch',
+		'Rye bread',
+		'Coffee beans',
+		'Parmesan',
+		'Dish soap',
+		'Toothpaste',
+		'Chestnut mushrooms',
+		'Red lentils'
+	];
+
+	tx.insert(shoppingSuggestions)
+		.values(
+			DEMO_NAMES.map((name, index) => ({
+				id: sid('suggestion', suggestionKey(name)),
+				householdId,
+				name,
+				nameKey: suggestionKey(name),
+				// Newest first, one a day back — the order the field offers them in.
+				lastUsedAt: daysAgo(index, 18)
+			}))
+		)
 		.onConflictDoNothing()
 		.run();
 

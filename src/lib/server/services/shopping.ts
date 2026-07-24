@@ -10,10 +10,24 @@
  *   every move and delete renumbers the whole (tiny) list rather than leaving
  *   gaps for the next writer to reason about.
  */
-import { and, asc, count, eq, isNull, lt, sql } from 'drizzle-orm';
-import { ITEM_NAME_MAX, QUANTITY_MAX, STORE_NAME_MAX } from '$lib/utils/shopping';
+import { and, asc, count, desc, eq, isNull, lt, sql } from 'drizzle-orm';
+import {
+	ITEM_NAME_MAX,
+	QUANTITY_MAX,
+	STORE_NAME_MAX,
+	splitList,
+	suggestionKey,
+	type ItemGroup
+} from '$lib/utils/shopping';
 import { db } from '../db';
-import { members, shoppingItems, stores, type ShoppingItem, type Store } from '../db/schema';
+import {
+	members,
+	shoppingItems,
+	shoppingSuggestions,
+	stores,
+	type ShoppingItem,
+	type Store
+} from '../db/schema';
 import { notifyShoppingAdd } from '../push';
 
 /*
@@ -49,95 +63,79 @@ export type ShoppingListItem = {
 	addedBy: { displayName: string; color: string } | null;
 };
 
-export type ShoppingGroup = {
-	/** Null = the virtual "Other" group. */
-	storeId: string | null;
-	/** The store's own name; null for the "Other" group, which the screen names. */
-	name: string | null;
-	items: ShoppingListItem[];
-};
-
-export type ShoppingList = {
-	/** Stores in walking order, empty ones omitted, "Other" last. */
-	groups: ShoppingGroup[];
-	/** The header's "{checked} of {total} done"; `total` 0 ⇒ the empty state. */
-	checked: number;
-	total: number;
-};
+/**
+ * A store's slice of the list, once the screen has grouped it. Exported for
+ * the components that render one — the shape itself is `utils/shopping`'s.
+ */
+export type ShoppingGroup = ItemGroup<ShoppingListItem>;
 
 /* ── Reading ──────────────────────────────────────────────────────────────── */
 
 /**
- * `storeList` is a parameter so a caller that already needs the stores (the
- * page load renders them as the sheet's chips) hands over the same read: two
- * separate queries could otherwise straddle a housemate's store delete and
- * disagree about which stores exist.
+ * The household's list, flat. Grouping it by store and lifting the checked
+ * items out into "recently bought" is `splitList`'s job, and the screen calls
+ * it — with the stores it already loaded for the sheet's chips, and again on
+ * every optimistic tick (→ `utils/shopping`, DECISIONS #105).
  */
-export function getShoppingList(
-	householdId: string,
-	storeList: Store[] = listStores(householdId)
-): ShoppingList {
-	const rows = db
-		.select({
-			id: shoppingItems.id,
-			name: shoppingItems.name,
-			quantity: shoppingItems.quantity,
-			unit: shoppingItems.unit,
-			storeId: shoppingItems.storeId,
-			checkedAt: shoppingItems.checkedAt,
-			createdAt: shoppingItems.createdAt,
-			addedByName: members.displayName,
-			addedByColor: members.color
-		})
-		.from(shoppingItems)
-		.leftJoin(members, eq(shoppingItems.addedByMemberId, members.id))
-		.where(eq(shoppingItems.householdId, householdId))
-		// The SQL half of `compareItems` — open items in the order they were
-		// added, then the checked ones in the order they were ticked off.
-		.orderBy(
-			sql`${shoppingItems.checkedAt} is null desc`,
-			asc(shoppingItems.checkedAt),
-			asc(shoppingItems.createdAt),
-			asc(shoppingItems.id)
-		)
-		.all();
+export function getShoppingList(householdId: string): ShoppingListItem[] {
+	return (
+		db
+			.select({
+				id: shoppingItems.id,
+				name: shoppingItems.name,
+				quantity: shoppingItems.quantity,
+				unit: shoppingItems.unit,
+				storeId: shoppingItems.storeId,
+				checkedAt: shoppingItems.checkedAt,
+				createdAt: shoppingItems.createdAt,
+				addedByName: members.displayName,
+				addedByColor: members.color
+			})
+			.from(shoppingItems)
+			.leftJoin(members, eq(shoppingItems.addedByMemberId, members.id))
+			.where(eq(shoppingItems.householdId, householdId))
+			// Not the rendered order — that is `splitList`'s — but a stable one, so
+			// two reads of an unchanged list produce byte-identical payloads.
+			.orderBy(asc(shoppingItems.createdAt), asc(shoppingItems.id))
+			.all()
+			.map((row) => ({
+				id: row.id,
+				name: row.name,
+				quantity: row.quantity,
+				unit: row.unit,
+				storeId: row.storeId,
+				checkedAt: row.checkedAt?.getTime() ?? null,
+				createdAt: row.createdAt.getTime(),
+				addedBy:
+					row.addedByName && row.addedByColor
+						? { displayName: row.addedByName, color: row.addedByColor }
+						: null
+			}))
+	);
+}
 
-	const byStore = new Map<string | null, ShoppingListItem[]>();
-	let checked = 0;
+/**
+ * What the add field completes from: the names this household has used, most
+ * recently used first (→ SPEC §3.1).
+ *
+ * The whole pool goes to the browser with the page and is filtered there —
+ * a household's vocabulary is a few hundred short strings, and the alternative
+ * is a request per keystroke for a field whose entire point is that it keeps
+ * up with typing. The cap is what keeps that promise true for a household that
+ * has been at this for years; the tail it cuts off is the words nobody has
+ * written in months.
+ */
+const SUGGESTION_POOL_MAX = 250;
 
-	for (const row of rows) {
-		if (row.checkedAt) checked++;
-
-		const item: ShoppingListItem = {
-			id: row.id,
-			name: row.name,
-			quantity: row.quantity,
-			unit: row.unit,
-			storeId: row.storeId,
-			checkedAt: row.checkedAt?.getTime() ?? null,
-			createdAt: row.createdAt.getTime(),
-			addedBy:
-				row.addedByName && row.addedByColor
-					? { displayName: row.addedByName, color: row.addedByColor }
-					: null
-		};
-
-		const bucket = byStore.get(item.storeId);
-		if (bucket) bucket.push(item);
-		else byStore.set(item.storeId, [item]);
-	}
-
-	const groups: ShoppingGroup[] = [];
-
-	for (const store of storeList) {
-		const items = byStore.get(store.id);
-		if (items?.length) groups.push({ storeId: store.id, name: store.name, items });
-	}
-
-	const other = byStore.get(null);
-	if (other?.length) groups.push({ storeId: null, name: null, items: other });
-
-	return { groups, checked, total: rows.length };
+export function listItemNames(householdId: string, limit = SUGGESTION_POOL_MAX): string[] {
+	return db
+		.select({ name: shoppingSuggestions.name })
+		.from(shoppingSuggestions)
+		.where(eq(shoppingSuggestions.householdId, householdId))
+		.orderBy(desc(shoppingSuggestions.lastUsedAt), asc(shoppingSuggestions.name))
+		.limit(limit)
+		.all()
+		.map((row) => row.name);
 }
 
 export function listStores(householdId: string): Store[] {
@@ -262,26 +260,69 @@ export function defaultStoreId(householdId: string): string | null {
 	return first?.id ?? null;
 }
 
+/**
+ * Every name that lands on the list is learned, so the add field can offer it
+ * back for the rest of the household's life together — long after the item
+ * itself has been bought and swept up (→ `listItemNames`, DECISIONS #106).
+ *
+ * An upsert on (household, key): writing "rinderhackfleisch" over
+ * "Rinderhackfleisch" moves the same row up rather than starting a second one,
+ * and the spelling last used is the one offered back.
+ */
+function rememberName(tx: Transaction, householdId: string, name: string): void {
+	const trimmed = name.trim();
+	const nameKey = suggestionKey(trimmed);
+	if (!nameKey) return;
+
+	tx.insert(shoppingSuggestions)
+		.values({ householdId, name: trimmed, nameKey, lastUsedAt: new Date() })
+		.onConflictDoUpdate({
+			target: [shoppingSuggestions.householdId, shoppingSuggestions.nameKey],
+			set: { name: trimmed, lastUsedAt: new Date() }
+		})
+		.run();
+}
+
 export function addItem(householdId: string, memberId: string, input: AddItemInput): ShoppingItem {
-	const item = db
-		.insert(shoppingItems)
-		.values({ householdId, ...normalize(householdId, input), addedByMemberId: memberId })
-		.returning()
-		.get();
+	const item = db.transaction((tx) => {
+		const values = normalize(householdId, input);
+		const row = tx
+			.insert(shoppingItems)
+			.values({ householdId, ...values, addedByMemberId: memberId })
+			.returning()
+			.get();
+
+		rememberName(tx, householdId, values.name);
+
+		return row;
+	});
 
 	notifyShoppingAdd({ householdId, actorMemberId: memberId, itemCount: 1 });
 
 	return item;
 }
 
+/**
+ * Renaming a row teaches the same lesson adding one does — most of all when
+ * the edit is somebody fixing a typo they'd otherwise be offered forever. A
+ * save that didn't touch the name only moves that name back up the pool, which
+ * is exactly where somebody who just edited the item would look for it.
+ */
 export function updateItem(householdId: string, itemId: string, input: UpdateItemInput): boolean {
-	const result = db
-		.update(shoppingItems)
-		.set(normalize(householdId, input))
-		.where(and(eq(shoppingItems.id, itemId), eq(shoppingItems.householdId, householdId)))
-		.run();
+	return db.transaction((tx) => {
+		const values = normalize(householdId, input);
+		const result = tx
+			.update(shoppingItems)
+			.set(values)
+			.where(and(eq(shoppingItems.id, itemId), eq(shoppingItems.householdId, householdId)))
+			.run();
 
-	return result.changes > 0;
+		// Nothing was updated ⇒ the id wasn't ours, and neither is the name.
+		if (result.changes === 0) return false;
+
+		rememberName(tx, householdId, values.name);
+		return true;
+	});
 }
 
 /** Check or uncheck. Unchecking clears who checked it, so nothing lies. */
@@ -368,6 +409,9 @@ export function addIngredients(
 		}
 
 		if (rows.length) tx.insert(shoppingItems).values(rows).run();
+		// Only what actually went on the list: a skipped ingredient is one the
+		// household already knows about, by definition.
+		for (const row of rows) rememberName(tx, householdId, row.name);
 
 		return { added: rows.length, skipped: ingredients.length - rows.length };
 	});
