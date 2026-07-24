@@ -9,7 +9,7 @@
 -->
 <script lang="ts">
 	import RecipeImage from '$lib/components/cooking/RecipeImage.svelte';
-	import PotIcon from '$lib/components/icons/PotIcon.svelte';
+	import ChefHatIcon from '$lib/components/icons/ChefHatIcon.svelte';
 	import Avatar from '$lib/components/ui/Avatar.svelte';
 	import Card from '$lib/components/ui/Card.svelte';
 	import type { TonightsDinner } from '$lib/server/services/home';
@@ -25,7 +25,7 @@
 				{#if dinner.imagePath}
 					<RecipeImage imagePath={dinner.imagePath} stripe={5} />
 				{:else}
-					<PotIcon size={26} strokeWidth={1.6} />
+					<ChefHatIcon size={26} strokeWidth={1.6} />
 				{/if}
 			</span>
 			<span class="body">

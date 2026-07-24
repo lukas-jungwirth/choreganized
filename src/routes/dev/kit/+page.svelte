@@ -14,7 +14,7 @@
 	import ChecklistIcon from '$lib/components/icons/ChecklistIcon.svelte';
 	import CrownIcon from '$lib/components/icons/CrownIcon.svelte';
 	import HomeIcon from '$lib/components/icons/HomeIcon.svelte';
-	import PotIcon from '$lib/components/icons/PotIcon.svelte';
+	import ChefHatIcon from '$lib/components/icons/ChefHatIcon.svelte';
 	import PageHeader from '$lib/components/shell/PageHeader.svelte';
 	import SubHeader from '$lib/components/shell/SubHeader.svelte';
 	import HistoryRow from '$lib/components/tasks/HistoryRow.svelte';
@@ -509,7 +509,7 @@
 		<div class="row">
 			<HomeIcon />
 			<BasketIcon />
-			<PotIcon />
+			<ChefHatIcon />
 			<ChecklistIcon />
 			<span class="gold"><CrownIcon /></span>
 		</div>

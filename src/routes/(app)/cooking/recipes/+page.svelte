@@ -8,7 +8,7 @@
 -->
 <script lang="ts">
 	import RecipeCard from '$lib/components/cooking/RecipeCard.svelte';
-	import PotIcon from '$lib/components/icons/PotIcon.svelte';
+	import ChefHatIcon from '$lib/components/icons/ChefHatIcon.svelte';
 	import SubHeader from '$lib/components/shell/SubHeader.svelte';
 	import Button from '$lib/components/ui/Button.svelte';
 	import EmptyState from '$lib/components/ui/EmptyState.svelte';
@@ -71,7 +71,7 @@
 {#if data.total === 0}
 	<div class="empty">
 		<EmptyState title="Build your cookbook">
-			{#snippet icon()}<PotIcon size={40} strokeWidth={1.6} />{/snippet}
+			{#snippet icon()}<ChefHatIcon size={40} strokeWidth={1.6} />{/snippet}
 			Save the meals you cook often. Then drop them onto any day of the week in a tap.
 			{#snippet action()}
 				<div class="cta">

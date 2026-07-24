@@ -14,7 +14,10 @@
 	--sunken: #efebe2; /* inset chips, empty-state icon wells, day pills */
 	--sunken-2: #eae6dd; /* segmented control track, sheet dividers */
 	--field: #f5f3ee; /* input background inside white sheets */
-	--tabbar-bg: rgba(255, 255, 255, 0.86); /* frosted tab bar, over blur(16px) */
+	--tabbar-bg: rgba(255, 255, 255, 0.9); /* frosted tab bar, over blur(18px) */
+	--tabbar-border: rgba(236, 233, 226, 0.8); /* the bar's frosted hairline */
+	--tabbar-pill: rgba(95, 141, 114, 0.14); /* the sliding active "bubble" behind a tab */
+	--tabbar-active: #3f6b52; /* active tab label ink (its icon fills with --sage) */
 
 	/* ── Ink & text ───────────────────────────────────────────── */
 	--ink: #22201c; /* primary text */
@@ -108,6 +111,7 @@
 	--shadow-fab: 0 8px 20px -4px rgba(95, 141, 114, 0.6);
 	--shadow-sheet: 0 -12px 40px rgba(40, 34, 24, 0.18);
 	--shadow-modal: 0 24px 60px -12px rgba(40, 34, 24, 0.4);
+	--shadow-tabbar: 0 -10px 26px -14px rgba(40, 34, 24, 0.16); /* lift under the tab bar */
 
 	/* ── Layout ───────────────────────────────────────────────── */
 	--page-pad: 22px; /* horizontal screen padding */

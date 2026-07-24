@@ -11,7 +11,7 @@
 	import RecipeCard from '$lib/components/cooking/RecipeCard.svelte';
 	import ShoppingResultBanner from '$lib/components/cooking/ShoppingResultBanner.svelte';
 	import WeekStrip from '$lib/components/cooking/WeekStrip.svelte';
-	import PotIcon from '$lib/components/icons/PotIcon.svelte';
+	import ChefHatIcon from '$lib/components/icons/ChefHatIcon.svelte';
 	import PageHeader from '$lib/components/shell/PageHeader.svelte';
 	import Card from '$lib/components/ui/Card.svelte';
 	import type { CalendarDate } from '$lib/utils/dates';
@@ -68,7 +68,7 @@
 		</div>
 	{:else}
 		<a class="first" href="/cooking/recipes/new">
-			<span class="well" aria-hidden="true"><PotIcon size={22} strokeWidth={1.7} /></span>
+			<span class="well" aria-hidden="true"><ChefHatIcon size={22} strokeWidth={1.7} /></span>
 			<span class="first-text">
 				<span class="first-title">Save your first recipe</span>
 				<span class="first-sub">Then drop it onto any day of the week in a tap.</span>
