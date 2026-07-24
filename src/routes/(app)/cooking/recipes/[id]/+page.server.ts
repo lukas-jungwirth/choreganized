@@ -9,7 +9,7 @@ import { error, redirect } from '@sveltejs/kit';
 import { catalog } from '$lib/i18n';
 import { requireMember } from '$lib/server/guards';
 import { mealPlanActions } from '$lib/server/meal-actions';
-import { addIngredientsToShopping, getWeek } from '$lib/server/services/meals';
+import { addIngredientsToShopping, getPlan } from '$lib/server/services/meals';
 import {
 	deleteRecipe,
 	duplicateRecipe,
@@ -28,8 +28,12 @@ export const load: PageServerLoad = async (event) => {
 
 	return {
 		recipe,
-		/** "Add to plan" picks a day first, so it needs the week [3d]. */
-		week: getWeek(householdId, today, event.locals.locale),
+		/**
+		 * "Add to plan" picks a day first, so it needs both weeks [3d]. No
+		 * `?week=` is read here: this screen offers them in one list rather than
+		 * paging (→ DECISIONS #99).
+		 */
+		plan: getPlan(householdId, today, event.locals.locale),
 		/** The plan sheet's list — it can be reopened on a different recipe. */
 		recipes: listRecipes(householdId)
 	};

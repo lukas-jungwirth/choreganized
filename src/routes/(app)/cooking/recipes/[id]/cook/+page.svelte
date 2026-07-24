@@ -9,9 +9,12 @@
 	- **The step is in the URL.** `?step=` is what a notification deep-links to and
 	  what a reload comes back to, so Prev and Next keep the address bar honest as
 	  they go (see `cursor` below for why the traffic is one-way).
-	- **The timer is a server row.** Everything on screen is a rendering of it
+	- **The timers are server rows.** Everything on screen is a rendering of them
 	  (→ `$lib/cook-timer.svelte.ts`), because the alarm has to survive the phone
-	  going to sleep in your pocket [7h·2].
+	  going to sleep in your pocket [7h·2]. Up to three at once (→ DECISIONS
+	  #102), and they belong to the *app* rather than to this screen (→ #103):
+	  the step you're on keeps the ring, the rest shrink to bars, and walking out
+	  of cook mode leaves them running in the dock above the tab bar.
 -->
 <script lang="ts">
 	import { replaceState } from '$app/navigation';
@@ -22,11 +25,11 @@
 	import IngredientsPeekSheet from '$lib/components/cooking/IngredientsPeekSheet.svelte';
 	import SetTimerSheet from '$lib/components/cooking/SetTimerSheet.svelte';
 	import BasketIcon from '$lib/components/icons/BasketIcon.svelte';
-	import { CookTimer } from '$lib/cook-timer.svelte';
+	import { cookTimers } from '$lib/cook-timer.svelte';
 	import { keepScreenAwake } from '$lib/wake-lock';
 	import { highlightStep } from '$lib/utils/step-highlight';
 	import { messages } from '$lib/i18n';
-	import { formatDuration, parseStepDuration } from '$lib/utils/timer-parse';
+	import { formatDuration, parseStepDuration, TIMERS_MAX } from '$lib/utils/timer-parse';
 	import Check from '@lucide/svelte/icons/check';
 	import ChevronLeft from '@lucide/svelte/icons/chevron-left';
 	import ChevronRight from '@lucide/svelte/icons/chevron-right';
@@ -56,6 +59,22 @@
 	 */
 	let cursor = $state(untrack(() => stepFromUrl()));
 
+	/**
+	 * Which recipe `cursor` was read for. Cook mode is one component for every
+	 * recipe, so following another recipe's timer bar swaps `data.recipe`
+	 * underneath without a remount — and the initializer above would never run
+	 * again, leaving you on step 6 of a recipe you just arrived at.
+	 */
+	let cursorFor = $state(untrack(() => recipe.id));
+
+	$effect(() => {
+		const id = recipe.id;
+		if (untrack(() => cursorFor) === id) return;
+
+		cursorFor = id;
+		cursor = untrack(() => stepFromUrl());
+	});
+
 	/** Clamped on read, so a housemate deleting steps mid-cook can't strand this. */
 	const index = $derived(Math.min(Math.max(cursor, 0), Math.max(steps.length - 1, 0)));
 	const step = $derived(steps[index] ?? null);
@@ -78,28 +97,29 @@
 	/** A duration the step mentions, if it mentions one (→ DECISIONS #14). */
 	const parsed = $derived(step ? parseStepDuration(step.text) : null);
 
-	/** "Mushrooms" — what the ring and the notification call this timer. */
-	const label = $derived(read.used[0]?.name ?? '');
+	/**
+	 * "Mushrooms" — what the ring and the notification call this timer. Three
+	 * timers all called "Timer" are one timer, so a step that names no
+	 * ingredient falls back to saying where it was set.
+	 */
+	const label = $derived(read.used[0]?.name ?? m.cooking.cook.timerForStep(index + 1));
 
-	// Seeded once from the load — the timer already running when this screen
-	// opened, which is the normal case when a notification is what opened it.
-	// After that the machine owns itself; a refetch must not restart it.
-	let timer = $state.raw(untrack(() => new CookTimer(recipe.id, data.timer, m)));
 	let peeking = $state(false);
 	let setting = $state(false);
 
-	// Cook mode is one component for every recipe, so the id under it can in
-	// principle change without a remount. The machine has to go with it.
+	// The timers outlive this screen, so it hydrates the store rather than owning
+	// a machine (→ DECISIONS #103). Same untracking rule as the app layout:
+	// `sync` reads exactly what the ticker writes.
 	$effect(() => {
-		const recipeId = recipe.id;
-		if (untrack(() => timer.recipeId) !== recipeId) timer = new CookTimer(recipeId, null, m);
+		const timers = data.timers;
+		const fetchedAt = data.timersFetchedAt;
+		untrack(() => cookTimers.sync(timers, fetchedAt));
 	});
 
-	// Stops the tick when the screen goes; the row on the server keeps its alarm.
-	$effect(() => {
-		const machine = timer;
-		return () => machine.dispose();
-	});
+	/** The ring's timer: this recipe, this step. */
+	const ring = $derived(cookTimers.forStep(recipe.id, index));
+	/** Everything else, soonest first — at most two, since the cap is three. */
+	const bars = $derived(cookTimers.all.filter((timer) => timer !== ring));
 
 	// Hands covered in flour can't tap a phone awake (→ SPEC §4.6).
 	$effect(keepScreenAwake);
@@ -113,12 +133,16 @@
 		replaceState(`?step=${index + 1}`, {});
 	}
 
+	function startTimer(seconds: number) {
+		cookTimers.start({ seconds, label, recipeId: recipe.id, stepIndex: index });
+	}
+
 	function startParsed() {
 		if (parsed === null) {
 			setting = true;
 			return;
 		}
-		timer.start(parsed, label, index);
+		startTimer(parsed);
 	}
 </script>
 
@@ -130,9 +154,12 @@
 	<header>
 		<span class="recipe">{recipe.name}</span>
 		<div class="tools">
+			<!-- Gated as well as the chip, so two timers can never land on the same
+				 step — the second one's Pause and +1:00 would be unreachable. -->
 			<button
 				type="button"
 				class="round"
+				disabled={cookTimers.atCap || ring !== null}
 				onclick={() => (setting = true)}
 				aria-label={m.cooking.cook.setTimer}
 			>
@@ -157,8 +184,8 @@
 			<CookStepText segments={read.segments} />
 
 			<div class="chips">
-				{#if !timer.isOn(index)}
-					<button type="button" class="chip" onclick={startParsed}>
+				{#if !ring}
+					<button type="button" class="chip" disabled={cookTimers.atCap} onclick={startParsed}>
 						<TimerIcon size={20} strokeWidth={1.9} class="amber" aria-hidden="true" />
 						{parsed === null
 							? m.cooking.cook.startTimer
@@ -174,7 +201,7 @@
 			<!-- [7h] clears the whole area under the step to make room for the ring.
 				 This keeps the Ingredients chip — the peek is the one thing you still
 				 want mid-timer — and drops the line whose contents the peek repeats. -->
-			{#if read.used.length > 0 && !timer.isOn(index)}
+			{#if read.used.length > 0 && !ring}
 				<p class="uses">
 					{m.cooking.cook.usesLead}<b
 						>{read.used.map((row) => m.units.ingredient(row)).join(' · ')}</b
@@ -182,19 +209,27 @@
 				</p>
 			{/if}
 
-			{#if !timer.isOn(index) && timer.error}
-				<p class="error">{timer.error}</p>
+			{#if !ring}
+				{#if cookTimers.atCap}
+					<p class="note">{m.cooking.cook.timerCapped(TIMERS_MAX)}</p>
+				{:else if cookTimers.lastError}
+					<p class="error">{cookTimers.lastError}</p>
+				{/if}
 			{/if}
 		</div>
 
 		<!-- Outside the scrolling half on purpose: a countdown you have to scroll
 			 to pause is not a kitchen timer. The step text gives way instead. -->
-		{#if timer.isOn(index)}
-			<CookTimerRing {timer} />
+		{#if ring}
+			<CookTimerRing timer={ring} />
 		{/if}
 
 		<nav class="nav">
-			<CookTimerBar {timer} step={index} onjump={goToStep} />
+			<!-- Keyed by the machine, not the row: the id changes on every pause and
+				 every +1:00 (→ DECISIONS #15), the object counting down does not. -->
+			{#each bars as timer (timer.key)}
+				<CookTimerBar {timer} recipeId={recipe.id} step={index} onjump={goToStep} />
+			{/each}
 
 			<div class="buttons">
 				<button
@@ -237,11 +272,7 @@
 {/if}
 
 {#if setting}
-	<SetTimerSheet
-		suggestedSeconds={parsed}
-		onstart={(seconds) => timer.start(seconds, label, index)}
-		onclose={() => (setting = false)}
-	/>
+	<SetTimerSheet suggestedSeconds={parsed} onstart={startTimer} onclose={() => (setting = false)} />
 {/if}
 
 <style>
@@ -368,6 +399,14 @@
 		color: var(--cook-amber);
 	}
 
+	/* Only `.prev` had a disabled state; the two timer entry points need one too,
+	   because at the cap they stand down rather than disappearing. */
+	.chip:disabled,
+	.round:disabled {
+		opacity: 0.45;
+		cursor: default;
+	}
+
 	.outlined {
 		border-color: var(--cook-amber-line);
 	}
@@ -385,6 +424,9 @@
 		color: var(--cook-text-2);
 	}
 
+	/* Not an error — the app declining to start a fourth. `.uses`' treatment in
+	   amber, because it is about the timers rather than about the step. */
+	.note,
 	.error {
 		margin: 20px 0 0;
 		font-size: 13px;

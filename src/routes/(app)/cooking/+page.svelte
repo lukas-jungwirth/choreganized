@@ -4,6 +4,10 @@
 	One card, seven rows, one dinner slot per day (→ SPEC §4.1). Tapping a day
 	raises the plan sheet [3d]; tapping a planned recipe opens the recipe. The
 	sheet is mounted per opening, which is what resets its form.
+
+	Two weeks are plannable — this one and the next — and which is on screen is
+	in the URL rather than in state here, so a reload, a share and the back
+	button all land where you'd expect (→ DECISIONS #99).
 -->
 <script lang="ts">
 	import MealPlanSheet from '$lib/components/cooking/MealPlanSheet.svelte';
@@ -14,6 +18,7 @@
 	import ChefHatIcon from '$lib/components/icons/ChefHatIcon.svelte';
 	import PageHeader from '$lib/components/shell/PageHeader.svelte';
 	import Card from '$lib/components/ui/Card.svelte';
+	import SegmentedControl from '$lib/components/ui/SegmentedControl.svelte';
 	import { messages } from '$lib/i18n';
 	import type { CalendarDate } from '$lib/utils/dates';
 	import Plus from '@lucide/svelte/icons/plus';
@@ -30,7 +35,27 @@
 	let planning = $state<CalendarDate | null>(null);
 
 	const recent = $derived(data.recipes.slice(0, RECENT));
-	const day = $derived(data.week.days.find((entry) => entry.date === planning) ?? null);
+	const week = $derived(data.plan.weeks[data.plan.offset]);
+
+	/**
+	 * Real links, not a switch: the week lives in the URL, so this survives a
+	 * reload and a share (→ DECISIONS #99). "This week" drops the param rather
+	 * than naming a date, so the tab keeps one canonical address — which is also
+	 * what the tab bar links to.
+	 */
+	const weeks = $derived(
+		data.plan.weeks.map((candidate) => ({
+			value: String(candidate.offset),
+			label:
+				candidate.offset === 0
+					? m.cooking.weekSwitch.currentCount(candidate.plannedCount)
+					: m.cooking.weekSwitch.nextCount(candidate.plannedCount),
+			href: candidate.offset === 0 ? '/cooking' : `/cooking?week=${candidate.start}`
+		}))
+	);
+
+	// A date belongs to one week, so paging away closes the sheet on its own.
+	const day = $derived(week.days.find((entry) => entry.date === planning) ?? null);
 
 	/** What the last plan did to the shopping list — the only trace it leaves. */
 	const shopping = $derived(form && 'shopping' in form ? form.shopping : null);
@@ -40,15 +65,26 @@
 	<title>{m.common.pageTitle(m.cooking.title)}</title>
 </svelte:head>
 
-<PageHeader title={m.cooking.thisWeek} meta={data.week.monthLabel} />
+<PageHeader title={m.cooking.title} meta={week.monthLabel} />
 
-<WeekStrip days={data.week.days} />
+<!-- `noscroll` keeps the switch under your thumb, the way /tasks/history's
+	 "Show June" does. SegmentedControl has no attribute passthrough, but
+	 `data-sveltekit-*` is inherited from any ancestor. -->
+<div class="weeks" data-sveltekit-noscroll>
+	<SegmentedControl
+		label={m.cooking.weekSwitch.label}
+		value={String(week.offset)}
+		options={weeks}
+	/>
+</div>
+
+<WeekStrip days={week.days} />
 
 <ShoppingResultBanner result={shopping} />
 
 <Card>
 	<ul class="days">
-		{#each data.week.days as entry (entry.date)}
+		{#each week.days as entry (entry.date)}
 			<MealRow day={entry} onplan={() => (planning = entry.date)} />
 		{/each}
 	</ul>
@@ -92,6 +128,10 @@
 {/if}
 
 <style>
+	.weeks {
+		margin-bottom: 20px;
+	}
+
 	.days {
 		overflow: hidden;
 		border-radius: inherit;

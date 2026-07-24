@@ -13,7 +13,10 @@
  * form: the edit screen [3c] shows stored rows as text again, and re-saving must
  * not slowly rewrite the recipe.
  */
-import { unitLabel, type UnitLabels } from './shopping';
+// Written with its extension so `node --test` can load this module: the test
+// runner only strips types, it does not resolve a bare './shopping'. tsconfig's
+// `rewriteRelativeImportExtensions` is what keeps `check` and `build` happy.
+import { unitLabel, type UnitLabels } from './shopping.ts';
 
 /** Units a recipe line may name. `L` is capitalised the way the design writes it. */
 export const RECIPE_UNITS = ['g', 'kg', 'ml', 'L', 'pcs', 'pack', 'tbsp', 'tsp'] as const;
@@ -201,6 +204,35 @@ export function formatAmount(
 	if (quantity === null || quantity <= 0) return '';
 	const amount = formatQuantityValue(quantity);
 	return unit ? `${amount} ${unitLabel(unit, labels)}` : amount;
+}
+
+/**
+ * Three fields back into one typed line — the inverse of the sheet [3c] opening
+ * on one.
+ *
+ * The line is still the only thing the form posts, so this has to compose
+ * something the parser will read back the same way. It usually does; sometimes
+ * it cannot. "1 Packung Nudeln" reads back as one *pack* of "Nudeln", because
+ * `Packung` is a unit alias, and "7up" reads back as 7 of "up". There is no
+ * spelling that escapes it while the line is the wire format, so this doesn't
+ * pretend: it returns the line **and** the reading that line will actually get,
+ * and the sheet shows that reading before you commit (→ DECISIONS #101).
+ *
+ * `unitLabelText` is the unit as it is *shown* ("EL", not "tbsp"): the parser
+ * reads every label in every catalog back to the same canonical unit, so a
+ * German household's line stays a German household's line (→ DECISIONS #97).
+ */
+export function composeIngredientLine(
+	name: string,
+	quantity: string,
+	unitLabelText: string
+): { line: string; reading: ParsedIngredient | null } {
+	const amount = quantity.trim()
+		? [quantity.trim(), unitLabelText.trim()].filter(Boolean).join(' ')
+		: '';
+	const line = [amount, name.trim()].filter(Boolean).join(' ');
+
+	return { line, reading: parseIngredient(line) };
 }
 
 /**

@@ -147,6 +147,13 @@ occurrence changes (done, skip, snooze, edit of due date).
   idempotency; `canceledAt` set on cancel (pause v1 = cancel + recreate on resume with shifted
   `endsAt`). Precision: in-process `setTimeout` scheduled at creation + the minute cron as
   catch-up after restarts (→ ARCHITECTURE.md).
+- Up to `TIMERS_MAX` (3) live rows per `(household_id, user_id)`, counted inside `startTimer`'s
+  transaction; a start may name **one** row it replaces, cancelled in the same transaction
+  (that is what "+1:00" and resume are). Nothing at the SQL level enforces the cap, because a
+  count is not a key (→ [DECISIONS #102](DECISIONS.md)).
+- `cook_timers_person_idx (household_id, user_id, ends_at)` — `cook_timers_ends_idx` is sized
+  for the sweep's range scan; this is the different access pattern the app-wide dock added,
+  "what is this person watching?", asked once per document load.
 
 ### Better Auth tables (`user`, `session`, `account`, `verification`)
 

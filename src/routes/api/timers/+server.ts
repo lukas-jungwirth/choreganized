@@ -14,9 +14,10 @@ import { error, json } from '@sveltejs/kit';
 import { catalog, type Messages } from '$lib/i18n';
 import { requireMemberApi } from '$lib/server/guards';
 import { CookTimerError, startTimer } from '$lib/server/services/cook-timers';
+import { TIMERS_MAX } from '$lib/utils/timer-parse';
 import type { RequestHandler } from './$types';
 
-/** Four short fields; anything bigger is not this request. */
+/** Five short fields; anything bigger is not this request. */
 const MAX_BODY_BYTES = 2048;
 
 type StartBody = {
@@ -24,6 +25,7 @@ type StartBody = {
 	label?: unknown;
 	recipeId?: unknown;
 	stepIndex?: unknown;
+	replaces?: unknown;
 };
 
 export const POST: RequestHandler = async (event) => {
@@ -43,7 +45,8 @@ export const POST: RequestHandler = async (event) => {
 			label:
 				typeof body.label === 'string' && body.label ? body.label : m.cooking.cook.defaultTimer,
 			recipeId: typeof body.recipeId === 'string' ? body.recipeId : null,
-			stepIndex: typeof body.stepIndex === 'number' ? body.stepIndex : null
+			stepIndex: typeof body.stepIndex === 'number' ? body.stepIndex : null,
+			replaces: typeof body.replaces === 'string' ? body.replaces : null
 		});
 
 		return json(timer);
@@ -51,6 +54,8 @@ export const POST: RequestHandler = async (event) => {
 		if (!(failure instanceof CookTimerError)) throw failure;
 
 		if (failure.code === 'unknown-recipe') error(404, m.errors.recipes.gone);
+		// 409, not 400: the request is well-formed and the answer is "not now".
+		if (failure.code === 'too-many-timers') error(409, m.errors.recipes.timerLimit(TIMERS_MAX));
 		error(400, m.errors.recipes.timerLength);
 	}
 };

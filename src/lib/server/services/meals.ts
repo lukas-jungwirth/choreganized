@@ -1,5 +1,5 @@
 /**
- * The week's meal plan (→ SPEC §4.1–4.2).
+ * The meal plan — this week and the next (→ SPEC §4.1–4.2).
  *
  * One dinner slot per day, enforced by `UNIQUE(householdId, date)` in the
  * schema, so "plan a meal on a day that already has one" is an upsert rather
@@ -14,7 +14,7 @@
  */
 import { and, asc, eq, gte, lte } from 'drizzle-orm';
 import { catalog, type Locale } from '$lib/i18n';
-import { addDays, startOfWeek, type CalendarDate } from '$lib/utils/dates';
+import { addDays, isCalendarDate, startOfWeek, type CalendarDate } from '$lib/utils/dates';
 import type { PlanMealInput } from '$lib/utils/recipes';
 import { db } from '../db';
 import { meals, members, recipeIngredients, recipes } from '../db/schema';
@@ -43,36 +43,95 @@ export type WeekDay = {
 	meal: PlannedMeal | null;
 };
 
+/** How far ahead the plan reaches: this week and the next (→ SPEC §4.1). */
+export const PLANNABLE_WEEKS = 2;
+
+/** Which of the two weeks a screen is on. 0 = the one we're living in. */
+export type WeekOffset = 0 | 1;
+
 export type MealWeek = {
-	/** Monday → Sunday (→ SPEC §8). v1 shows the current week only. */
+	/** Monday → Sunday (→ SPEC §8). */
 	days: WeekDay[];
 	/** "July", or "Jun – Jul" when the week straddles the turn of the month. */
 	monthLabel: string;
+	/** The Monday it starts on — the date `?week=` carries. */
+	start: CalendarDate;
+	offset: WeekOffset;
+	/**
+	 * How many of the seven days have a dinner — the switch's count. All seven,
+	 * including days already eaten: counting from today would make the number
+	 * jump at midnight and read as "left", which it isn't.
+	 */
+	plannedCount: number;
+};
+
+export type MealPlan = {
+	/** This week and the next, in that order. */
+	weeks: MealWeek[];
+	/**
+	 * The one on screen — what `?week=` resolved to. The recipe screen [7a]
+	 * ignores this: it offers both weeks rather than paging.
+	 */
+	offset: WeekOffset;
 };
 
 /* ── Reading ──────────────────────────────────────────────────────────────── */
 
-export function getWeek(householdId: string, today: CalendarDate, locale: Locale): MealWeek {
-	const from = startOfWeek(today);
-	const to = addDays(from, 6);
-	const planned = listMeals(householdId, from, to);
+/**
+ * Both plannable weeks, and which of them a screen asked for.
+ *
+ * **One 14-day query, not two of seven.** The Cooking tab shows one week at a
+ * time but the recipe screen's "Which day?" picker [7a] shows both at once, and
+ * a single range read serves each of them with the same rows.
+ *
+ * `week` arrives as `unknown` and is validated, normalised and clamped here
+ * rather than in the load — the shape `getCompletedFeed` established for a
+ * window that lives in the URL (→ `services/history.ts`, DECISIONS #76). Any day
+ * of a week names that week; anything we don't plan (a hand-edited date, a
+ * fortnight-old bookmark, "banana") falls back to this week rather than erroring,
+ * because a stale link should open on something rather than on nothing.
+ */
+export function getPlan(
+	householdId: string,
+	today: CalendarDate,
+	locale: Locale,
+	week: unknown = null
+): MealPlan {
+	const first = startOfWeek(today);
+	const planned = listMeals(householdId, first, addDays(first, PLANNABLE_WEEKS * 7 - 1));
 	const byDate = new Map(planned.map((meal) => [meal.date, meal]));
 	// The strip's labels come back written out, so this load speaks a language
 	// (→ `event.locals.locale`).
 	const m = catalog(locale);
 
-	const days = Array.from({ length: 7 }, (_, offset) => {
-		const date = addDays(from, offset);
+	const weeks = Array.from({ length: PLANNABLE_WEEKS }, (_, index) => {
+		const start = addDays(first, index * 7);
+		const days = Array.from({ length: 7 }, (_, dayOffset) => {
+			const date = addDays(start, dayOffset);
+			return {
+				date,
+				weekday: m.date.weekdayShort(date),
+				dayOfMonth: m.date.dayOfMonth(date),
+				// Always the layout's `today`, never the week's own start: on next
+				// week nothing is today, which is the truth the strip should tell.
+				isToday: date === today,
+				meal: byDate.get(date) ?? null
+			};
+		});
+
 		return {
-			date,
-			weekday: m.date.weekdayShort(date),
-			dayOfMonth: m.date.dayOfMonth(date),
-			isToday: date === today,
-			meal: byDate.get(date) ?? null
+			days,
+			monthLabel: m.date.monthRange(start, addDays(start, 6)),
+			start,
+			offset: index as WeekOffset,
+			plannedCount: days.filter((day) => day.meal).length
 		};
 	});
 
-	return { days, monthLabel: m.date.monthRange(from, to) };
+	const asked = isCalendarDate(week) ? startOfWeek(week) : null;
+	const found = weeks.findIndex((candidate) => candidate.start === asked);
+
+	return { weeks, offset: found > 0 ? (found as WeekOffset) : 0 };
 }
 
 /** Every planned meal in a date range, in calendar order. */

@@ -10,13 +10,14 @@
 import { error } from '@sveltejs/kit';
 import { catalog } from '$lib/i18n';
 import { requireMember } from '$lib/server/guards';
+import { listActiveTimers } from '$lib/server/services/cook-timers';
 import { getHousehold, listMembers } from '$lib/server/services/household';
 import { listOverdueForMember } from '$lib/server/services/tasks';
 import { todayIn } from '$lib/utils/dates';
 import type { LayoutServerLoad } from './$types';
 
 export const load: LayoutServerLoad = (event) => {
-	const { member, householdId } = requireMember(event);
+	const { user, member, householdId } = requireMember(event);
 
 	// The FK cascades, so a membership without its household can't survive a
 	// delete. Sending them to /onboarding would be a redirect loop — that route
@@ -39,6 +40,24 @@ export const load: LayoutServerLoad = (event) => {
 		},
 		today,
 		/** Drives the Tasks tab badge [4e]; Home reads the same rows for its banner. */
-		overdue: listOverdueForMember(householdId, member, today)
+		overdue: listOverdueForMember(householdId, member, today),
+		/**
+		 * The dock above the tab bar and cook mode's ring are both a rendering of
+		 * these [7h]. Read here rather than only in cook mode, because a timer
+		 * outlives the screen that started it and this is the one load that runs
+		 * on every page (→ DECISIONS #103).
+		 *
+		 * This load reads no `event.url`, so it re-runs on a document load, on any
+		 * form action and on `refetchOnFocus`'s `invalidateAll` — but *not* on
+		 * plain client-side navigation. That is exactly why the dock is driven by
+		 * the store rather than straight off this data.
+		 */
+		timers: listActiveTimers(householdId, user.id),
+		/**
+		 * When that list was read. The store needs it to tell "cancelled on the
+		 * other phone" from "this payload is simply older than the row I just
+		 * started" — two loads can be in flight at once (→ `cookTimers.sync`).
+		 */
+		timersFetchedAt: Date.now()
 	};
 };

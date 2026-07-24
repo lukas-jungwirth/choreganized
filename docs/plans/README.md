@@ -25,9 +25,12 @@ plus your session date). Note deviations in the plan file and in DECISIONS.md.
 
 Work done after the twelve plans, tracked here so the queue stays the whole story:
 
-| Change                                                          | Status            |
-| --------------------------------------------------------------- | ----------------- |
-| **English + German** (`lib/i18n`, Settings → Language, SPEC §9) | done (2026-07-24) |
+| Change                                                                                                  | Status            |
+| ------------------------------------------------------------------------------------------------------- | ----------------- |
+| **English + German** (`lib/i18n`, Settings → Language, SPEC §9)                                         | done (2026-07-24) |
+| **Plan next week** (`/cooking?week=`, two-week switch, SPEC §4.1, DECISIONS #99)                        | done (2026-07-24) |
+| **Structured ingredient amounts** (`cooking/IngredientSheet`, SPEC §4.4, DECISIONS #100–101)            | done (2026-07-24) |
+| **Multiple cook timers + the running-timer dock** (`cook-timers.ts`, `cook-timer.svelte.ts`, SPEC §4.6) | done (2026-07-24) |
 
 ## Dependency graph & parallelization
 
@@ -63,8 +66,9 @@ plus the authed `/api/uploads` endpoint) and `lib/utils/ingredients.ts` — **08
 replace**, plus `formatAmount`/`formatIngredient` for its step highlighting. 09 added `Podium`
 and `HistoryRow` (feature components, not `ui/`), `RowGroup list` (a `<ul>`, for groups whose
 rows are `<li>`s — the members list [6b] uses it), `formatDayLabel` · `formatMonthName`, and the
-URL-window paging shape any other "load more" should copy (→ DECISIONS #71). 10 owns Settings
-and Members: it put the membership half into `services/household.ts` with the **role checks
+URL-window paging shape any other "load more" should copy (→ DECISIONS #76 — the Cooking tab's
+`?week=` follows it). 10 owns Settings and Members: it put the membership half into
+`services/household.ts` with the **role checks
 inside the service transaction** (`requireOwner`, → DECISIONS #77) — copy that shape for
 anything owner-only — extracted the holiday pause into `components/AwayControl.svelte` (one
 control, two surfaces), gave `BottomSheet` a `lead` snippet + `subtitle` and `StepHeader` an

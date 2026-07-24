@@ -36,7 +36,9 @@
 	let planning = $state<CalendarDate | null>(null);
 	let menu = $state(false);
 
-	const day = $derived(data.week.days.find((entry) => entry.date === planning) ?? null);
+	const day = $derived(
+		data.plan.weeks.flatMap((week) => week.days).find((entry) => entry.date === planning) ?? null
+	);
 	const shopping = $derived(form && 'shopping' in form ? form.shopping : null);
 
 	/** The icon travels with its line, so a recipe missing one still reads right. */
@@ -149,7 +151,7 @@
 
 {#if picking}
 	<DayPickerSheet
-		week={data.week}
+		weeks={data.plan.weeks}
 		onclose={() => (picking = false)}
 		onpick={(date) => {
 			picking = false;

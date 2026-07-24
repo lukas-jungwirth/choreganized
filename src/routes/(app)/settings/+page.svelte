@@ -12,6 +12,7 @@
 	import { enhance } from '$app/forms';
 	import { goto } from '$app/navigation';
 	import { signOut } from '$lib/auth-client';
+	import { cookTimers } from '$lib/cook-timer.svelte';
 	import AwayControl from '$lib/components/AwayControl.svelte';
 	import EnablePush from '$lib/components/EnablePush.svelte';
 	import HomeIcon from '$lib/components/icons/HomeIcon.svelte';
@@ -89,6 +90,12 @@
 			signingOut = false;
 			return;
 		}
+
+		// The timers are a module singleton, so `invalidateAll` doesn't reach them:
+		// signing out is a client-side navigation, and a machine left running would
+		// keep ticking on the login screen — and beep there, since a claim against
+		// a 401 answers "I own this". Clear them with the rest of the session.
+		cookTimers.reset();
 
 		// `invalidateAll` so nothing of this household is left in the client cache.
 		await goto('/login', { invalidateAll: true });

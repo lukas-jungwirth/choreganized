@@ -7,7 +7,7 @@
  */
 import assert from 'node:assert/strict';
 import { describe, it } from 'node:test';
-import { MAX_TIMER_SECONDS, formatDuration, parseStepDuration } from './timer-parse.ts';
+import { MAX_TIMER_SECONDS, formatDuration, parseStepDuration, timerHref } from './timer-parse.ts';
 
 describe('parseStepDuration', () => {
 	it('reads the spellings a recipe uses', () => {
@@ -108,5 +108,23 @@ describe('formatDuration', () => {
 
 	it('never counts past zero', () => {
 		assert.equal(formatDuration(-3), '0:00');
+	});
+});
+
+describe('timerHref', () => {
+	it('counts the step from one, the way the screen does', () => {
+		assert.equal(timerHref('r1', 2), '/cooking/recipes/r1/cook?step=3');
+		assert.equal(timerHref('r1', 0), '/cooking/recipes/r1/cook?step=1');
+	});
+
+	it('opens cook mode on wherever it left off when no step is named', () => {
+		assert.equal(timerHref('r1', null), '/cooking/recipes/r1/cook');
+	});
+
+	it('falls back to the week once the recipe is gone', () => {
+		// `recipe_id` is ON DELETE set null, and the push's `payloadFor` makes the
+		// same fallback — the two have to agree on where a widowed timer points.
+		assert.equal(timerHref(null, 4), '/cooking');
+		assert.equal(timerHref(null, null), '/cooking');
 	});
 });

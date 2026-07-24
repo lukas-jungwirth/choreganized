@@ -116,6 +116,16 @@ api/
 - **Freshness without SSE (v1):** actions naturally invalidate; plus a small shared
   `refetchOnFocus` helper (visibilitychange → `invalidateAll`) in the app layout. SSE upgrade
   is isolated in one place later.
+- **The one piece of live client state between loads** is `lib/cook-timer.svelte.ts`, which
+  exports the `cookTimers` singleton (→ [DECISIONS #103](DECISIONS.md)). Cook timers outlive the
+  screen that started them, and the `(app)` layout load reads no `event.url` and so does not
+  re-run on a client-side navigation — so the dock is driven by the store rather than by load
+  data. The server list is a **seed and a merge**, not a replacement: `sync()` adopts rows it
+  doesn't know, and only drops one that is confirmed, running, unlisted and more than the claim
+  lead from zero. `refetchOnFocus`'s `invalidateAll` re-seeds it. Being a module singleton it is
+  shared between requests on a server, so every write refuses outside the browser and `sync` is
+  only ever called from an `$effect` — inside `untrack`, because it reads the state its own
+  200ms ticker writes. Still no polling, still no SSE.
 
 ## Language
 
@@ -132,7 +142,7 @@ English and German, from typed catalogs — no i18n library (→ [DECISIONS #93]
    changing language is a _document_ reload, never a data update (→ #95).
 3. **On the server**, where there is no component, `catalog(event.locals.locale)`. Anything that
    returns copy as data takes the language with it: `TaskContext` has a `locale` beside
-   `today`/`timezone`, `getWeek` takes one, and the form readers in `utils/` take the catalog so
+   `today`/`timezone`, `getPlan` takes one, and the form readers in `utils/` take the catalog so
    a refusal comes back in the language the form was filled in.
 
 `utils/dates.ts` stays pure calendar + `Intl` and takes a `Locale`; the formats that mix a date

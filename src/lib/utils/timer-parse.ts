@@ -20,6 +20,32 @@ export const MIN_TIMER_SECONDS = 5;
 /** No dish needs longer, and a mis-read "1200 min" must not book the evening. */
 export const MAX_TIMER_SECONDS = 12 * 60 * 60;
 
+/**
+ * How many timers one person may have running at once (→ DECISIONS #102).
+ *
+ * Here rather than in the service for the same reason the bounds above are: the
+ * chip that stands down and the transaction that refuses have to agree, and a
+ * component cannot import from `$lib/server`.
+ *
+ * Three because that is what a kitchen watches — a pan, an oven and a kettle —
+ * and because it is what the cook-mode column holds: one 220px ring plus two
+ * compact bars above the Next button (→ DECISIONS #86).
+ */
+export const TIMERS_MAX = 3;
+
+/**
+ * Where tapping a timer goes. The timer's own recipe, never the screen's — and
+ * `/cooking` when that recipe has been deleted (`recipe_id` is ON DELETE set
+ * null), which is the same fallback the push's `payloadFor` makes.
+ *
+ * `stepIndex` is 0-based in the column and 1-based in the URL.
+ */
+export function timerHref(recipeId: string | null, stepIndex: number | null): string {
+	if (!recipeId) return '/cooking';
+
+	return `/cooking/recipes/${recipeId}/cook` + (stepIndex === null ? '' : `?step=${stepIndex + 1}`);
+}
+
 /** "400", "1.5", "1,5" — a comma is how half the world writes a decimal point. */
 const NUMBER = String.raw`\d+(?:[.,]\d+)?`;
 

@@ -414,7 +414,15 @@ export const cookTimers = sqliteTable(
 		canceledAt: integer('canceled_at', { mode: 'timestamp_ms' }),
 		createdAt: createdAt()
 	},
-	(t) => [index('cook_timers_ends_idx').on(t.endsAt)]
+	(t) => [
+		index('cook_timers_ends_idx').on(t.endsAt),
+		/**
+		 * The dock's read. `ends_at` alone is sized for the sweep's range scan;
+		 * this is a different access pattern — every page in the app now asks
+		 * "what is this person watching?" once per document load.
+		 */
+		index('cook_timers_person_idx').on(t.householdId, t.userId, t.endsAt)
+	]
 );
 
 /* ── Inferred row types ────────────────────────────────────────────────────── */
