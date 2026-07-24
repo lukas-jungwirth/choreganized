@@ -14,6 +14,7 @@
 <script lang="ts">
 	import Minus from '@lucide/svelte/icons/minus';
 	import Plus from '@lucide/svelte/icons/plus';
+	import { messages } from '$lib/i18n';
 
 	type Props = {
 		label: string;
@@ -41,6 +42,7 @@
 		tone = 'light'
 	}: Props = $props();
 
+	const m = messages();
 	const id = $props.id();
 
 	const canDecrease = $derived(value !== null && (clearable || value > min));
@@ -85,7 +87,7 @@
 			class="step"
 			onclick={decrease}
 			disabled={!canDecrease}
-			aria-label="Decrease {label.toLowerCase()}"
+			aria-label={m.ui.decrease(label)}
 			aria-controls={id}
 		>
 			<Minus size={14} strokeWidth={2.4} />
@@ -108,7 +110,7 @@
 			class="step plus"
 			onclick={increase}
 			disabled={!canIncrease}
-			aria-label="Increase {label.toLowerCase()}"
+			aria-label={m.ui.increase(label)}
 			aria-controls={id}
 		>
 			<Plus size={14} strokeWidth={2.4} />

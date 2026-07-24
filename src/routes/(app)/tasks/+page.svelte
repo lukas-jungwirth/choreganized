@@ -24,9 +24,9 @@
 	import EmptyState from '$lib/components/ui/EmptyState.svelte';
 	import FAB from '$lib/components/ui/FAB.svelte';
 	import SegmentedControl from '$lib/components/ui/SegmentedControl.svelte';
+	import { messages } from '$lib/i18n';
 	import type { CompletionResult, Standing, TaskListItem } from '$lib/server/services/tasks';
-	import { formatShortDate } from '$lib/utils/dates';
-	import { STARTERS, formatRepeat } from '$lib/utils/tasks';
+	import { STARTERS } from '$lib/utils/tasks';
 	import type { SubmitFunction } from '@sveltejs/kit';
 	import Plus from '@lucide/svelte/icons/plus';
 	import Send from '@lucide/svelte/icons/send';
@@ -34,6 +34,8 @@
 	import type { PageProps } from './$types';
 
 	let { data }: PageProps = $props();
+
+	const m = messages();
 
 	/** Which sheet is up, and what it's about. Null = none. */
 	type Sheet =
@@ -56,8 +58,8 @@
 	);
 
 	const view = $derived([
-		{ value: 'todo', label: `To do · ${data.list.total}`, href: '/tasks' },
-		{ value: 'history', label: 'History', href: '/tasks/history' }
+		{ value: 'todo', label: m.tasks.view.todo(data.list.total), href: '/tasks' },
+		{ value: 'history', label: m.tasks.view.history, href: '/tasks/history' }
 	]);
 
 	/**
@@ -92,10 +94,10 @@
 </script>
 
 <svelte:head>
-	<title>Tasks · Choreganized</title>
+	<title>{m.common.pageTitle(m.tasks.title)}</title>
 </svelte:head>
 
-<PageHeader title="Tasks" />
+<PageHeader title={m.tasks.title} />
 
 {#if furnished}
 	<div class="tiles no-scrollbar">
@@ -109,19 +111,20 @@
 	</div>
 
 	<div class="view">
-		<SegmentedControl label="Task view" value="todo" options={view} />
+		<SegmentedControl label={m.tasks.view.label} value="todo" options={view} />
 	</div>
 {/if}
 
 {#each away as member (member.id)}
 	{@const mine = member.id === data.currentMember.id}
+	{@const until = m.date.short(member.awayUntil ?? data.today)}
 	<div class="banner">
 		<Banner
 			variant="info"
-			title="{mine ? "You're" : `${member.displayName} is`} away until {formatShortDate(
-				member.awayUntil ?? data.today
-			)}"
-			detail="{mine ? 'Your' : 'Their'} tasks are paused — nothing counts as overdue"
+			title={mine
+				? m.tasks.awayBanner.mine(until)
+				: m.tasks.awayBanner.other(member.displayName, until)}
+			detail={mine ? m.tasks.awayBanner.detailMine : m.tasks.awayBanner.detailOther}
 		>
 			{#snippet icon()}<Send size={18} strokeWidth={1.8} />{/snippet}
 		</Banner>
@@ -129,23 +132,26 @@
 {/each}
 
 {#if empty}
-	<EmptyState title="No tasks yet">
+	<EmptyState title={m.tasks.empty.title}>
 		{#snippet icon()}<ChecklistIcon size={38} strokeWidth={1.6} />{/snippet}
-		Add the chores you both forget — earn points when you tick them off. Start with a few?
+		{m.tasks.empty.copy}
 		{#snippet action()}
 			<div class="starters">
-				<p class="label">Popular starters</p>
-				{#each STARTERS as starter (starter.name)}
+				<p class="label">{m.tasks.empty.starters}</p>
+				{#each STARTERS as starter (starter.key)}
+					{@const name = m.task.starters[starter.key]}
 					<form method="POST" action="?/create" use:enhance={afterStarter}>
-						<input type="hidden" name="name" value={starter.name} />
+						<!-- The chore is written into the database in the language it
+							 was tapped in; from then on it is the household's text. -->
+						<input type="hidden" name="name" value={name} />
 						<input type="hidden" name="points" value={starter.points} />
 						<input type="hidden" name="recurUnit" value={starter.unit} />
 						<input type="hidden" name="recurInterval" value={starter.interval} />
 						<!-- Assignee "Anyone", first due today (→ DECISIONS #22). -->
 						<input type="hidden" name="dueDate" value={data.today} />
 						<button type="submit" class="starter">
-							<span class="starter-name">{starter.name}</span>
-							<span class="starter-repeat">{formatRepeat(starter.unit, starter.interval)}</span>
+							<span class="starter-name">{name}</span>
+							<span class="starter-repeat">{m.task.repeat(starter.unit, starter.interval)}</span>
 							<span class="starter-add" aria-hidden="true"
 								><Plus size={15} strokeWidth={2.4} /></span
 							>
@@ -153,11 +159,14 @@
 					</form>
 				{/each}
 			</div>
-			<Button onclick={() => (sheet = { kind: 'form', task: null })}>Create a custom task</Button>
+			<Button onclick={() => (sheet = { kind: 'form', task: null })}>
+				{m.tasks.empty.custom}
+			</Button>
 		{/snippet}
 	</EmptyState>
 {:else}
 	{#each data.list.sections as section (section.key)}
+		{@const label = m.tasks.sections[section.key]}
 		<section>
 			<h2 class="section" class:overdue={section.key === 'overdue'}>
 				{#if section.key === 'overdue'}
@@ -165,9 +174,9 @@
 					<!-- One expression rather than markup around a "·": the separator
 						 sits between two values, and Svelte collapses the whitespace
 						 either side of a block boundary. -->
-					<span>{section.label} · {section.tasks.length}</span>
+					<span>{label} · {section.tasks.length}</span>
 				{:else}
-					<span>{section.label}</span>
+					<span>{label}</span>
 				{/if}
 			</h2>
 			<ul class="rows">
@@ -191,7 +200,7 @@
 {/if}
 
 {#if !empty}
-	<FAB label="New task" onclick={() => (sheet = { kind: 'form', task: null })}>
+	<FAB label={m.tasks.newTask} onclick={() => (sheet = { kind: 'form', task: null })}>
 		<Plus size={24} strokeWidth={2.4} />
 	</FAB>
 {/if}

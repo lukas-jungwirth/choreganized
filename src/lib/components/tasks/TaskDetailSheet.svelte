@@ -12,9 +12,9 @@
 	import Button from '$lib/components/ui/Button.svelte';
 	import CenterModal from '$lib/components/ui/CenterModal.svelte';
 	import type { HouseholdMember } from '$lib/server/services/household';
+	import { messages } from '$lib/i18n';
 	import type { TaskListItem } from '$lib/server/services/tasks';
-	import { formatDueMeta, formatShortDate, type CalendarDate } from '$lib/utils/dates';
-	import { formatRepeat, possessive } from '$lib/utils/tasks';
+	import type { CalendarDate } from '$lib/utils/dates';
 	import type { SubmitFunction } from '@sveltejs/kit';
 	import ArrowRight from '@lucide/svelte/icons/arrow-right';
 	import Check from '@lucide/svelte/icons/check';
@@ -41,6 +41,8 @@
 	let { task, members, today, currentMemberId, complete, onsnooze, onedit, onclose }: Props =
 		$props();
 
+	const m = messages();
+
 	let open = $state(true);
 	let confirmOpen = $state(false);
 	let submitting = $state(false);
@@ -51,11 +53,7 @@
 
 	const overdue = $derived(!task.paused && task.dueDate !== null && task.dueDate < today);
 	const turn = $derived(
-		task.assignee
-			? task.assignee.id === currentMemberId
-				? 'Your turn'
-				: `${possessive(task.assignee.displayName)} turn`
-			: 'Anyone'
+		m.task.turnLabel(task.assignee?.displayName ?? null, task.assignee?.id === currentMemberId)
 	);
 
 	/** Everyone it isn't already with — one row each (→ SPEC §5.3). */
@@ -75,14 +73,14 @@
 <BottomSheet bind:open title={task.name}>
 	{#if overdue && task.dueDate}
 		<p class="pill">
-			{formatDueMeta(task.dueDate, today)} · was due {formatShortDate(task.dueDate)}
+			{m.date.dueMeta(task.dueDate, today)} · {m.tasks.detail.wasDue(m.date.short(task.dueDate))}
 		</p>
 	{/if}
 
 	<p class="facts">
 		<span class="fact">
 			<RotateCw size={13} strokeWidth={2} aria-hidden="true" />
-			{formatRepeat(task.recurUnit, task.recurInterval)}
+			{m.task.repeat(task.recurUnit, task.recurInterval)}
 		</span>
 		<span class="fact">
 			{#if task.assignee}
@@ -94,40 +92,39 @@
 		</span>
 		<span class="fact points">
 			<Star size={13} strokeWidth={2} aria-hidden="true" />
-			{task.points} pts
+			{m.tasks.detail.pts(task.points)}
 		</span>
 	</p>
 
 	{#if task.paused && task.assignee?.awayUntil}
 		<p class="paused">
-			{task.assignee.displayName} is away until {formatShortDate(task.assignee.awayUntil)} — this one
-			is paused, not overdue.
+			{m.tasks.detail.pausedNote(task.assignee.displayName, m.date.short(task.assignee.awayUntil))}
 		</p>
 	{/if}
 
 	<form method="POST" action="?/complete" use:enhance={complete}>
 		<input type="hidden" name="id" value={task.id} />
 		<Button type="submit" disabled={submitting}>
-			<Check size={19} strokeWidth={2.6} />Mark as done · +{task.points}
+			<Check size={19} strokeWidth={2.6} />{m.tasks.detail.markAsDone(task.points)}
 		</Button>
 	</form>
 
 	<div class="menu">
 		<button type="button" class="item" onclick={onsnooze}>
 			<Clock size={19} strokeWidth={1.9} aria-hidden="true" />
-			<span class="what">Snooze / reschedule</span>
+			<span class="what">{m.tasks.detail.snooze}</span>
 			<ChevronRight size={14} strokeWidth={2} aria-hidden="true" />
 		</button>
 
 		{#each others as member (member.id)}
+			{@const who = member.id === currentMemberId ? m.tasks.detail.me : member.displayName}
 			<form method="POST" action="?/reassign" use:enhance={closeOnSuccess}>
 				<input type="hidden" name="id" value={task.id} />
 				<input type="hidden" name="assigneeMemberId" value={member.id} />
 				<button type="submit" class="item" disabled={submitting}>
 					<UserRoundCheck size={19} strokeWidth={1.9} aria-hidden="true" />
 					<span class="what">
-						{task.assignee ? 'Reassign to' : 'Assign to'}
-						{member.id === currentMemberId ? 'me' : member.displayName}
+						{task.assignee ? m.tasks.detail.reassignTo(who) : m.tasks.detail.assignTo(who)}
 					</span>
 					<ChevronRight size={14} strokeWidth={2} aria-hidden="true" />
 				</button>
@@ -141,27 +138,28 @@
 				<input type="hidden" name="id" value={task.id} />
 				<button type="submit" class="item" disabled={submitting}>
 					<ArrowRight size={19} strokeWidth={1.9} aria-hidden="true" />
-					<span class="what">Skip this time <span class="quiet">· no points</span></span>
+					<span class="what">
+						{m.tasks.detail.skip} <span class="quiet">{m.tasks.detail.skipNote}</span>
+					</span>
 				</button>
 			</form>
 		{/if}
 
 		<button type="button" class="item" onclick={onedit}>
 			<Pencil size={19} strokeWidth={1.9} aria-hidden="true" />
-			<span class="what">Edit task</span>
+			<span class="what">{m.tasks.detail.edit}</span>
 			<ChevronRight size={14} strokeWidth={2} aria-hidden="true" />
 		</button>
 	</div>
 
-	<button type="button" class="delete" onclick={() => (confirmOpen = true)}>Delete task</button>
+	<button type="button" class="delete" onclick={() => (confirmOpen = true)}>
+		{m.tasks.detail.delete}
+	</button>
 
-	<CenterModal bind:open={confirmOpen} label="Delete task" dismissible={false}>
+	<CenterModal bind:open={confirmOpen} label={m.tasks.detail.delete} dismissible={false}>
 		<div class="well" aria-hidden="true"><Trash2 size={26} strokeWidth={1.9} /></div>
-		<h3>Delete {task.name}?</h3>
-		<p class="copy">
-			It stops coming round. Everything already ticked off stays in history — the points stay with
-			the house.
-		</p>
+		<h3>{m.tasks.detail.deleteConfirm(task.name)}</h3>
+		<p class="copy">{m.tasks.detail.deleteCopy}</p>
 		<form
 			method="POST"
 			action="?/delete"
@@ -176,9 +174,11 @@
 				}}
 		>
 			<input type="hidden" name="id" value={task.id} />
-			<Button type="submit" variant="danger">Delete task</Button>
+			<Button type="submit" variant="danger">{m.tasks.detail.delete}</Button>
 		</form>
-		<button type="button" class="cancel" onclick={() => (confirmOpen = false)}>Cancel</button>
+		<button type="button" class="cancel" onclick={() => (confirmOpen = false)}>
+			{m.common.cancel}
+		</button>
 	</CenterModal>
 </BottomSheet>
 

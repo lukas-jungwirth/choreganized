@@ -13,14 +13,8 @@
  * card, which does the same in `home.ts`.
  */
 import { and, asc, eq, gte, lte } from 'drizzle-orm';
-import {
-	addDays,
-	dayOfMonth,
-	formatMonthRange,
-	formatWeekdayShort,
-	startOfWeek,
-	type CalendarDate
-} from '$lib/utils/dates';
+import { catalog, type Locale } from '$lib/i18n';
+import { addDays, startOfWeek, type CalendarDate } from '$lib/utils/dates';
 import type { PlanMealInput } from '$lib/utils/recipes';
 import { db } from '../db';
 import { meals, members, recipeIngredients, recipes } from '../db/schema';
@@ -58,24 +52,27 @@ export type MealWeek = {
 
 /* ── Reading ──────────────────────────────────────────────────────────────── */
 
-export function getWeek(householdId: string, today: CalendarDate): MealWeek {
+export function getWeek(householdId: string, today: CalendarDate, locale: Locale): MealWeek {
 	const from = startOfWeek(today);
 	const to = addDays(from, 6);
 	const planned = listMeals(householdId, from, to);
 	const byDate = new Map(planned.map((meal) => [meal.date, meal]));
+	// The strip's labels come back written out, so this load speaks a language
+	// (→ `event.locals.locale`).
+	const m = catalog(locale);
 
 	const days = Array.from({ length: 7 }, (_, offset) => {
 		const date = addDays(from, offset);
 		return {
 			date,
-			weekday: formatWeekdayShort(date),
-			dayOfMonth: dayOfMonth(date),
+			weekday: m.date.weekdayShort(date),
+			dayOfMonth: m.date.dayOfMonth(date),
 			isToday: date === today,
 			meal: byDate.get(date) ?? null
 		};
 	});
 
-	return { days, monthLabel: formatMonthRange(from, to) };
+	return { days, monthLabel: m.date.monthRange(from, to) };
 }
 
 /** Every planned meal in a date range, in calendar order. */

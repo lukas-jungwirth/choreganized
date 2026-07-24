@@ -10,6 +10,15 @@
  * to ask still can't rename someone else's house.
  */
 import { error, fail, redirect } from '@sveltejs/kit';
+import {
+	catalog,
+	DEFAULT_LOCALE,
+	isLocale,
+	LOCALE_COOKIE,
+	LOCALE_COOKIE_MAX_AGE,
+	negotiateLocale,
+	type Messages
+} from '$lib/i18n';
 import { isMemberColor } from '$lib/member-colors';
 import { requireMember } from '$lib/server/guards';
 import { pushConfigured, sendTestNotification, type NotificationPref } from '$lib/server/push';
@@ -18,6 +27,7 @@ import {
 	HouseholdError,
 	leaveHousehold,
 	renameHousehold,
+	setLocale,
 	setNotificationPref,
 	updateProfile
 } from '$lib/server/services/household';
@@ -45,23 +55,20 @@ function isPref(value: unknown): value is NotificationPref {
  * imported above, and a catch clause that shadows it is one edit away from
  * calling the caught value.
  */
-function refuse(cause: unknown) {
+function refuse(cause: unknown, m: Messages) {
 	if (cause instanceof HouseholdError) {
 		switch (cause.code) {
 			case 'color-taken':
-				return fail(409, { error: 'A housemate already has that colour.' });
+				return fail(409, { error: m.errors.household['color-taken'] });
 			case 'not-owner':
-				return fail(403, { error: 'Only the owner can do that.' });
+				return fail(403, { error: m.errors.household['not-owner'] });
 			case 'transfer-first':
-				return fail(409, { error: 'Make someone else the owner first — a household needs one.' });
+				return fail(409, { error: m.errors.household['transfer-first'] });
 			case 'stale-roster':
-				return fail(409, {
-					error:
-						'You’re the only one here now, so leaving would delete the household. Reload and confirm again.'
-				});
+				return fail(409, { error: m.errors.household['stale-roster'] });
 			case 'not-member':
 				// Removed from the household between loading this page and posting.
-				return fail(404, { error: 'You’re not a member of this household any more.' });
+				return fail(404, { error: m.errors.household['not-member'] });
 		}
 	}
 	throw cause;
@@ -79,7 +86,16 @@ export const load: PageServerLoad = (event) => {
 			notifyTaskReminders: member.notifyTaskReminders,
 			notifyOverdueNudges: member.notifyOverdueNudges,
 			notifyShoppingUpdates: member.notifyShoppingUpdates
-		}
+		},
+		/** The stored choice, not the resolved language: null is "System" [6a]. */
+		chosenLocale: member.locale,
+		/**
+		 * What "System" would actually resolve to — the header alone, *ignoring*
+		 * the choice and the cookie. `event.locals.locale` is the wrong number to
+		 * show there: with English chosen on a German phone it reads back
+		 * "currently English", which is the one thing that row must not say.
+		 */
+		deviceLocale: negotiateLocale(event.request.headers.get('accept-language')) ?? DEFAULT_LOCALE
 	};
 };
 
@@ -89,19 +105,20 @@ export const actions: Actions = {
 		const { householdId, member } = requireMember(event);
 		const form = await event.request.formData();
 
+		const m = catalog(event.locals.locale);
 		const displayName = String(form.get('displayName') ?? '').trim();
 		const color = String(form.get('color') ?? '');
 
-		if (!displayName) return fail(400, { error: 'Tell us what to call you.' });
+		if (!displayName) return fail(400, { error: m.errors.displayName });
 		if (displayName.length > DISPLAY_NAME_MAX) {
-			return fail(400, { error: `Keep it under ${DISPLAY_NAME_MAX} characters.` });
+			return fail(400, { error: m.errors.keepUnder(DISPLAY_NAME_MAX) });
 		}
-		if (!isMemberColor(color)) return fail(400, { error: 'Pick one of the colours.' });
+		if (!isMemberColor(color)) return fail(400, { error: m.errors.pickColour });
 
 		try {
 			updateProfile(householdId, member.id, { displayName, color });
 		} catch (cause) {
-			return refuse(cause);
+			return refuse(cause, m);
 		}
 
 		return { profileSaved: true };
@@ -116,11 +133,52 @@ export const actions: Actions = {
 		const form = await event.request.formData();
 
 		const pref = form.get('pref');
-		if (!isPref(pref)) return fail(400, { error: "That's not a notification setting." });
+		if (!isPref(pref)) {
+			return fail(400, { error: catalog(event.locals.locale).errors.tasks.notANotification });
+		}
 
 		setNotificationPref(householdId, member.id, pref, form.get('enabled') !== null);
 
 		return { prefSaved: true };
+	},
+
+	/**
+	 * The UI language (→ SPEC §6). An unrecognised value — including the empty
+	 * string the "System" row posts — is the absence of a choice, which is a real
+	 * setting: it leaves the column NULL so every device follows its own
+	 * `Accept-Language` (→ hooks.server.ts).
+	 *
+	 * The cookie is written alongside so a *signed-out* screen speaks the same
+	 * language (login, an invite link), and so the very first paint after a
+	 * switch is already right — before any session lookup has happened. Choosing
+	 * "System" clears it, or the phone's own language would stop mattering.
+	 *
+	 * The sheet reloads the document itself once this returns, rather than
+	 * patching the page it is sitting on — `<html lang>` and every string already
+	 * rendered have to change with it (→ `components/settings/LanguageSheet.svelte`).
+	 */
+	language: async (event) => {
+		const { householdId, member } = requireMember(event);
+		const form = await event.request.formData();
+
+		const value = form.get('locale');
+		const locale = isLocale(value) ? value : null;
+
+		setLocale(householdId, member.id, locale);
+
+		if (locale) {
+			// Server-read only (→ hooks.server.ts), so it keeps SvelteKit's httpOnly
+			// default rather than opting out of it for no reader.
+			event.cookies.set(LOCALE_COOKIE, locale, {
+				path: '/',
+				maxAge: LOCALE_COOKIE_MAX_AGE,
+				sameSite: 'lax'
+			});
+		} else {
+			event.cookies.delete(LOCALE_COOKIE, { path: '/' });
+		}
+
+		return { languageSaved: true };
 	},
 
 	/**
@@ -134,7 +192,7 @@ export const actions: Actions = {
 		// Actions can't reach the layout's copy of the clock, so they ask again —
 		// and "today" stays the household's business, not the phone's.
 		const household = getHousehold(householdId);
-		if (!household) error(500, 'Your household record is missing. Please contact support.');
+		if (!household) error(500, catalog(event.locals.locale).errors.householdMissing);
 
 		const until = form.get('until');
 		setAway(
@@ -152,16 +210,17 @@ export const actions: Actions = {
 		const { householdId, member } = requireMember(event);
 		const form = await event.request.formData();
 
+		const m = catalog(event.locals.locale);
 		const name = String(form.get('name') ?? '').trim();
-		if (!name) return fail(400, { error: 'Give your home a name.' });
+		if (!name) return fail(400, { error: m.errors.householdName });
 		if (name.length > HOUSEHOLD_NAME_MAX) {
-			return fail(400, { error: `Keep it under ${HOUSEHOLD_NAME_MAX} characters.` });
+			return fail(400, { error: m.errors.keepUnder(HOUSEHOLD_NAME_MAX) });
 		}
 
 		try {
 			renameHousehold(householdId, member.id, name);
 		} catch (cause) {
-			return refuse(cause);
+			return refuse(cause, m);
 		}
 
 		return { renamed: true };
@@ -184,7 +243,7 @@ export const actions: Actions = {
 		try {
 			leaveHousehold(householdId, member.id, expectDelete);
 		} catch (cause) {
-			return refuse(cause);
+			return refuse(cause, catalog(event.locals.locale));
 		}
 
 		// No membership any more, so `requireMember` would send them here anyway.

@@ -6,7 +6,8 @@
  * the browser: the due date a completion lands on is the household's business,
  * not the phone's.
  */
-import { error, fail } from '@sveltejs/kit';
+import { error, fail, type RequestEvent } from '@sveltejs/kit';
+import { catalog, type Messages } from '$lib/i18n';
 import { requireMember } from '$lib/server/guards';
 import { getHousehold, listMembers } from '$lib/server/services/household';
 import {
@@ -39,7 +40,7 @@ export const load: PageServerLoad = async (event) => {
 	// The clock, the roster and `today` all come from the layout, so the tiles,
 	// the sections and the tab badge are answering the same question.
 	const { household, today } = await event.parent();
-	const context: TaskContext = { today, timezone: household.timezone };
+	const context: TaskContext = { today, timezone: household.timezone, locale: event.locals.locale };
 
 	return {
 		list: getTaskList(householdId, context),
@@ -50,16 +51,21 @@ export const load: PageServerLoad = async (event) => {
 };
 
 /**
- * The household's clock. Actions can't reach the layout's copy, so they ask
- * again — one query, and it keeps "today" a household concept throughout.
+ * The household's clock, plus the reader's language. Actions can't reach the
+ * layout's copy, so they ask again — one query, and it keeps "today" a
+ * household concept throughout while the words stay the reader's.
  */
-function clockOf(householdId: string): TaskContext {
+function clockOf(event: RequestEvent, householdId: string): TaskContext {
 	const household = getHousehold(householdId);
 	// Same failure the layout guards against: the FK cascades, so this can only
 	// mean the household was deleted mid-request.
-	if (!household) error(500, 'Your household record is missing. Please contact support.');
+	if (!household) error(500, catalog(event.locals.locale).errors.householdMissing);
 
-	return { today: todayIn(household.timezone), timezone: household.timezone };
+	return {
+		today: todayIn(household.timezone),
+		timezone: household.timezone,
+		locale: event.locals.locale
+	};
 }
 
 function readId(form: FormData): string {
@@ -86,10 +92,10 @@ function readDate(value: FormDataEntryValue | null): string | null {
 }
 
 /** Everything the new/edit sheet posts, or the message to send back with a 400. */
-function readTaskInput(form: FormData): { input: TaskInput } | { error: string } {
+function readTaskInput(form: FormData, m: Messages): { input: TaskInput } | { error: string } {
 	const name = String(form.get('name') ?? '').trim();
-	if (!name) return { error: 'Give the task a name.' };
-	if (name.length > TASK_NAME_MAX) return { error: `Keep it under ${TASK_NAME_MAX} characters.` };
+	if (!name) return { error: m.errors.tasks.name };
+	if (name.length > TASK_NAME_MAX) return { error: m.errors.keepUnder(TASK_NAME_MAX) };
 
 	const unit = form.get('recurUnit');
 
@@ -157,10 +163,10 @@ export const actions: Actions = {
 		const { householdId, member } = requireMember(event);
 		const form = await event.request.formData();
 
-		const parsed = readTaskInput(form);
+		const parsed = readTaskInput(form, catalog(event.locals.locale));
 		if ('error' in parsed) return fail(400, { error: parsed.error });
 
-		createTask(householdId, member.id, parsed.input, clockOf(householdId).today);
+		createTask(householdId, member.id, parsed.input, clockOf(event, householdId).today);
 
 		return { created: true };
 	},
@@ -169,10 +175,10 @@ export const actions: Actions = {
 		const { householdId } = requireMember(event);
 		const form = await event.request.formData();
 
-		const parsed = readTaskInput(form);
+		const parsed = readTaskInput(form, catalog(event.locals.locale));
 		if ('error' in parsed) return fail(400, { error: parsed.error });
 
-		updateTask(householdId, readId(form), parsed.input, clockOf(householdId).today);
+		updateTask(householdId, readId(form), parsed.input, clockOf(event, householdId).today);
 
 		return { updated: true };
 	},
@@ -194,11 +200,13 @@ export const actions: Actions = {
 	complete: async (event) => {
 		const { householdId, member } = requireMember(event);
 		const form = await event.request.formData();
-		const context = clockOf(householdId);
+		const context = clockOf(event, householdId);
 
 		const completion = completeTask(householdId, readId(form), member.id, context.today);
 		// Somebody else finished it while this screen was open.
-		if (!completion) return fail(404, { error: 'That task has already been dealt with.' });
+		if (!completion) {
+			return fail(404, { error: catalog(event.locals.locale).errors.tasks.gone });
+		}
 
 		return {
 			completed: {
@@ -217,7 +225,7 @@ export const actions: Actions = {
 		const { householdId, member } = requireMember(event);
 		const form = await event.request.formData();
 
-		skipTask(householdId, readId(form), member.id, clockOf(householdId).today);
+		skipTask(householdId, readId(form), member.id, clockOf(event, householdId).today);
 
 		return { skipped: true };
 	},
@@ -239,7 +247,9 @@ export const actions: Actions = {
 		const form = await event.request.formData();
 
 		const dueDate = readDate(form.get('dueDate'));
-		if (!dueDate) return fail(400, { error: 'Pick a date to snooze to.' });
+		if (!dueDate) {
+			return fail(400, { error: catalog(event.locals.locale).errors.tasks.snoozeDate });
+		}
 
 		snoozeTask(householdId, readId(form), dueDate);
 
@@ -260,7 +270,7 @@ export const actions: Actions = {
 		const { householdId, member } = requireMember(event);
 		const form = await event.request.formData();
 
-		setAway(householdId, member.id, readDate(form.get('until')), clockOf(householdId).today);
+		setAway(householdId, member.id, readDate(form.get('until')), clockOf(event, householdId).today);
 
 		return { away: true };
 	}

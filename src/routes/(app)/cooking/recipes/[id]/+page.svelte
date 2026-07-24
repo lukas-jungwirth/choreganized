@@ -15,9 +15,8 @@
 	import BasketIcon from '$lib/components/icons/BasketIcon.svelte';
 	import Button from '$lib/components/ui/Button.svelte';
 	import Card from '$lib/components/ui/Card.svelte';
-	import { formatAmount } from '$lib/utils/ingredients';
+	import { messages } from '$lib/i18n';
 	import type { CalendarDate } from '$lib/utils/dates';
-	import { formatCookTime } from '$lib/utils/recipes';
 	import CalendarDays from '@lucide/svelte/icons/calendar-days';
 	import ChefHat from '@lucide/svelte/icons/chef-hat';
 	import ChevronLeft from '@lucide/svelte/icons/chevron-left';
@@ -27,6 +26,8 @@
 	import type { PageProps } from './$types';
 
 	let { data, form }: PageProps = $props();
+
+	const m = messages();
 
 	const recipe = $derived(data.recipe);
 
@@ -41,11 +42,14 @@
 	/** The icon travels with its line, so a recipe missing one still reads right. */
 	const meta = $derived(
 		[
-			{ icon: Clock, text: formatCookTime(recipe.timeMinutes) },
-			{ icon: Users, text: recipe.servings ? `Serves ${recipe.servings}` : null },
+			{
+				icon: Clock,
+				text: recipe.timeMinutes ? m.cooking.cookTime(recipe.timeMinutes) : null
+			},
+			{ icon: Users, text: recipe.servings ? m.cooking.serves(recipe.servings) : null },
 			{
 				icon: ChefHat,
-				text: recipe.createdBy ? `Added by ${recipe.createdBy.displayName}` : null
+				text: recipe.createdBy ? m.cooking.recipe.addedBy(recipe.createdBy.displayName) : null
 			}
 		].filter((entry) => entry.text !== null)
 	);
@@ -58,10 +62,15 @@
 <div class="hero">
 	<RecipeImage imagePath={recipe.imagePath} stripe={8} eager />
 	<div class="bar">
-		<a class="round" href="/cooking/recipes" aria-label="Back to recipes">
+		<a class="round" href="/cooking/recipes" aria-label={m.cooking.recipe.back}>
 			<ChevronLeft size={18} strokeWidth={2.4} />
 		</a>
-		<button type="button" class="round" onclick={() => (menu = true)} aria-label="Recipe options">
+		<button
+			type="button"
+			class="round"
+			onclick={() => (menu = true)}
+			aria-label={m.cooking.recipe.options}
+		>
 			<MoreHorizontal size={18} strokeWidth={2.4} />
 		</button>
 	</div>
@@ -81,11 +90,11 @@
 
 	<div class="actions">
 		<button type="button" class="plan" onclick={() => (picking = true)}>
-			<CalendarDays size={17} strokeWidth={2.2} aria-hidden="true" />Add to plan
+			<CalendarDays size={17} strokeWidth={2.2} aria-hidden="true" />{m.cooking.recipe.addToPlan}
 		</button>
 		{#if recipe.ingredients.length > 0}
 			<form method="POST" action="?/addToList" use:enhance>
-				<button type="submit" class="basket" aria-label="Add all ingredients to the shopping list">
+				<button type="submit" class="basket" aria-label={m.cooking.recipe.addAllToList}>
 					<BasketIcon size={20} strokeWidth={1.9} />
 				</button>
 			</form>
@@ -96,20 +105,19 @@
 
 	{#if recipe.ingredients.length > 0}
 		<div class="section-head">
-			<h2>Ingredients</h2>
+			<h2>{m.cooking.recipe.ingredients}</h2>
 			<form method="POST" action="?/addToList" use:enhance>
-				<button type="submit" class="link">Add all to list</button>
+				<button type="submit" class="link">{m.cooking.recipe.addAll}</button>
 			</form>
 		</div>
 		<Card radius="md">
 			<ul class="ingredients">
 				{#each recipe.ingredients as ingredient (ingredient.id)}
+					{@const amount = m.units.amount(ingredient.quantity, ingredient.unit)}
 					<li>
 						<span class="dot" aria-hidden="true"></span>
 						<span class="ingredient-name">{ingredient.name}</span>
-						{#if formatAmount(ingredient.quantity, ingredient.unit)}
-							<span class="amount">{formatAmount(ingredient.quantity, ingredient.unit)}</span>
-						{/if}
+						{#if amount}<span class="amount">{amount}</span>{/if}
 					</li>
 				{/each}
 			</ul>
@@ -117,7 +125,7 @@
 	{/if}
 
 	{#if recipe.steps.length > 0}
-		<h2 class="steps-head">Steps</h2>
+		<h2 class="steps-head">{m.cooking.recipe.steps}</h2>
 		<ol class="steps">
 			{#each recipe.steps as step, index (step.id)}
 				<li>
@@ -128,12 +136,13 @@
 		</ol>
 
 		<Button variant="dark" href="/cooking/recipes/{recipe.id}/cook">
-			<ChefHat size={18} strokeWidth={2} />Start cook mode
+			<ChefHat size={18} strokeWidth={2} />{m.cooking.recipe.startCookMode}
 		</Button>
 	{:else}
 		<p class="no-steps">
-			No steps written down yet — <a href="/cooking/recipes/{recipe.id}/edit">add them</a> and cook mode
-			can walk you through it.
+			{m.cooking.recipe.noStepsLead}<a href="/cooking/recipes/{recipe.id}/edit"
+				>{m.cooking.recipe.noStepsLink}</a
+			>{m.cooking.recipe.noStepsRest}
 		</p>
 	{/if}
 </article>

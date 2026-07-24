@@ -8,6 +8,7 @@
  * banner agreeing across household-local midnight.
  */
 import { error } from '@sveltejs/kit';
+import { catalog } from '$lib/i18n';
 import { requireMember } from '$lib/server/guards';
 import { getHousehold, listMembers } from '$lib/server/services/household';
 import { listOverdueForMember } from '$lib/server/services/tasks';
@@ -21,7 +22,7 @@ export const load: LayoutServerLoad = (event) => {
 	// delete. Sending them to /onboarding would be a redirect loop — that route
 	// bounces members straight back here — so say so plainly instead.
 	const household = getHousehold(householdId);
-	if (!household) error(500, 'Your household record is missing. Please contact support.');
+	if (!household) error(500, catalog(event.locals.locale).errors.householdMissing);
 
 	const today = todayIn(household.timezone);
 

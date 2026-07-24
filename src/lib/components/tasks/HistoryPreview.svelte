@@ -8,16 +8,17 @@
 <script lang="ts">
 	import Card from '$lib/components/ui/Card.svelte';
 	import CheckCircle from '$lib/components/ui/CheckCircle.svelte';
+	import { messages } from '$lib/i18n';
 	import type { CompletionEntry } from '$lib/server/services/tasks';
 
 	let { entries }: { entries: CompletionEntry[] } = $props();
+
+	const m = messages();
 </script>
 
 <section>
-	<h2>Recent history</h2>
-	<p class="explainer">
-		Completed tasks are logged here. Recurring ones reappear in To&nbsp;do on their next date.
-	</p>
+	<h2>{m.tasks.history.recent}</h2>
+	<p class="explainer">{m.tasks.history.explainer}</p>
 
 	<Card href="/tasks/history" radius="md">
 		<ul>
@@ -33,7 +34,7 @@
 							{[entry.repeat, entry.memberName, entry.when].filter(Boolean).join(' · ')}
 						</span>
 					</span>
-					<span class="points">+{entry.points}</span>
+					<span class="points">{m.task.points(entry.points)}</span>
 				</li>
 			{/each}
 		</ul>

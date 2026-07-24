@@ -12,6 +12,7 @@
  * `assigneeNotAway` (the SQL half of the holiday pause).
  */
 import { and, count, desc, eq, isNull, lte } from 'drizzle-orm';
+import { DEFAULT_LOCALE } from '$lib/i18n';
 import { formatTimeIn, hourIn, type CalendarDate } from '$lib/utils/dates';
 import { db } from '../db';
 import {
@@ -214,7 +215,13 @@ function monthStandings(
 ): Standings | null {
 	// The Tasks tab's points tiles read the same helper, so the strip and the
 	// tiles can never disagree about what somebody has scored this month.
-	const pointsByMember = monthPointsByMember(householdId, { today, timezone });
+	// `monthPointsByMember` only counts — the language in the context is for the
+	// helpers that write dates out, which this one doesn't reach.
+	const pointsByMember = monthPointsByMember(householdId, {
+		today,
+		timezone,
+		locale: DEFAULT_LOCALE
+	});
 	// The roster comes from the layout, so the avatar stack and this ranking can
 	// never be computed against two different reads of `members`.
 	const ranked = roster

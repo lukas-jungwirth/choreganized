@@ -16,6 +16,7 @@
 	import EnablePush from '$lib/components/EnablePush.svelte';
 	import HomeIcon from '$lib/components/icons/HomeIcon.svelte';
 	import HouseholdNameSheet from '$lib/components/settings/HouseholdNameSheet.svelte';
+	import LanguageSheet from '$lib/components/settings/LanguageSheet.svelte';
 	import LeaveModal from '$lib/components/settings/LeaveModal.svelte';
 	import PrefRow from '$lib/components/settings/PrefRow.svelte';
 	import ProfileSheet from '$lib/components/settings/ProfileSheet.svelte';
@@ -23,6 +24,7 @@
 	import Avatar from '$lib/components/ui/Avatar.svelte';
 	import Card from '$lib/components/ui/Card.svelte';
 	import RowGroup from '$lib/components/ui/RowGroup.svelte';
+	import { LOCALE_NAMES, isLocale, messages } from '$lib/i18n';
 	import ChevronRight from '@lucide/svelte/icons/chevron-right';
 	import LogOut from '@lucide/svelte/icons/log-out';
 	import Send from '@lucide/svelte/icons/send';
@@ -31,7 +33,10 @@
 
 	let { data, form }: PageProps = $props();
 
+	const m = messages();
+
 	let editingProfile = $state(false);
+	let choosingLanguage = $state(false);
 	let renamingHousehold = $state(false);
 	let leaving = $state(false);
 	let sending = $state(false);
@@ -56,12 +61,15 @@
 
 	const testResult = $derived.by(() => {
 		if (!form || !('sent' in form)) return null;
-		if (!form.configured) return 'Push isn’t configured on the server yet.';
-		if (form.sent === 0) return 'No device is subscribed yet — switch it on above.';
-		return form.sent === 1
-			? 'Sent to this device — it should arrive in a moment.'
-			: `Sent to ${form.sent} devices — they should arrive in a moment.`;
+		if (!form.configured) return m.settings.test.notConfigured;
+		if (form.sent === 0) return m.settings.test.noDevice;
+		return form.sent === 1 ? m.settings.test.sentOne : m.settings.test.sentMany(form.sent);
 	});
+
+	/** The row's value: the chosen language by its own name, else "System". */
+	const languageValue = $derived(
+		isLocale(data.chosenLocale) ? LOCALE_NAMES[data.chosenLocale] : m.settings.language.system
+	);
 
 	/**
 	 * Sign-out is the one action here that isn't a form: Better Auth owns the
@@ -88,10 +96,10 @@
 </script>
 
 <svelte:head>
-	<title>Settings · Choreganized</title>
+	<title>{m.common.pageTitle(m.settings.title)}</title>
 </svelte:head>
 
-<SubHeader title="Settings" back="/home" backLabel="Back to home" />
+<SubHeader title={m.settings.title} back="/home" backLabel={m.common.backToHome} />
 
 <Card radius="md">
 	<div class="profile">
@@ -100,46 +108,55 @@
 			<p class="name">{me.displayName}</p>
 			<p class="email">{data.email}</p>
 		</div>
-		<button type="button" class="edit" onclick={() => (editingProfile = true)}>Edit</button>
+		<button type="button" class="edit" onclick={() => (editingProfile = true)}>
+			{m.common.edit}
+		</button>
 	</div>
 </Card>
 
-<h2 class="section">Account</h2>
+<h2 class="section">{m.settings.account}</h2>
 
 <RowGroup>
 	<button type="button" class="row" onclick={() => (editingProfile = true)}>
-		<span class="label">Display name</span>
+		<span class="label">{m.settings.displayName}</span>
 		<span class="value">{me.displayName}</span>
 		<ChevronRight size={15} strokeWidth={2} class="chevron" />
 	</button>
 	<button type="button" class="row" onclick={() => (editingProfile = true)}>
-		<span class="label">Your colour</span>
+		<span class="label">{m.ui.yourColour}</span>
 		<span class="swatch" style:background={me.color} aria-hidden="true"></span>
+		<ChevronRight size={15} strokeWidth={2} class="chevron" />
+	</button>
+	<!-- Language sits under Account rather than Household: it is about the person
+		 reading, not about the house (→ SPEC §6). -->
+	<button type="button" class="row" onclick={() => (choosingLanguage = true)}>
+		<span class="label">{m.settings.language.row}</span>
+		<span class="value">{languageValue}</span>
 		<ChevronRight size={15} strokeWidth={2} class="chevron" />
 	</button>
 </RowGroup>
 
-<h2 class="section">Notifications</h2>
+<h2 class="section">{m.settings.notifications}</h2>
 
 <RowGroup>
 	<EnablePush />
 
 	<PrefRow
 		pref="notifyTaskReminders"
-		label="Task reminders"
-		detail="The morning a task of yours is due"
+		label={m.settings.prefs.taskReminders}
+		detail={m.settings.prefs.taskRemindersDetail}
 		checked={data.prefs.notifyTaskReminders}
 	/>
 	<PrefRow
 		pref="notifyOverdueNudges"
-		label="Overdue nudges"
-		detail="One nudge the morning after it slipped"
+		label={m.settings.prefs.overdueNudges}
+		detail={m.settings.prefs.overdueNudgesDetail}
 		checked={data.prefs.notifyOverdueNudges}
 	/>
 	<PrefRow
 		pref="notifyShoppingUpdates"
-		label="Shopping list updates"
-		detail="When a housemate adds to the list"
+		label={m.settings.prefs.shoppingUpdates}
+		detail={m.settings.prefs.shoppingUpdatesDetail}
 		checked={data.prefs.notifyShoppingUpdates}
 	/>
 
@@ -156,20 +173,20 @@
 	>
 		<button class="row action" type="submit" disabled={sending}>
 			<Send size={17} strokeWidth={1.9} />
-			{sending ? 'Sending…' : 'Send test notification'}
+			{sending ? m.settings.test.sending : m.settings.test.send}
 		</button>
 	</form>
 </RowGroup>
 
 {#if testResult}<p class="result">{testResult}</p>{/if}
 
-<h2 class="section">Away mode</h2>
+<h2 class="section">{m.settings.awayMode}</h2>
 
 <RowGroup>
 	<AwayControl today={data.today} awayUntil={me.awayUntil} surface="row" />
 </RowGroup>
 
-<h2 class="section">Household</h2>
+<h2 class="section">{m.settings.household}</h2>
 
 <RowGroup>
 	{#if owner}
@@ -189,7 +206,7 @@
 
 	<a class="row" href="/settings/members">
 		<span class="tile" aria-hidden="true"><UsersRound size={18} strokeWidth={1.9} /></span>
-		<span class="label">Members</span>
+		<span class="label">{m.settings.members}</span>
 		<span class="value">{data.members.length}</span>
 		<ChevronRight size={15} strokeWidth={2} class="chevron" />
 	</a>
@@ -200,16 +217,16 @@
 	<RowGroup>
 		<button type="button" class="row action quiet" onclick={endSession} disabled={signingOut}>
 			<LogOut size={17} strokeWidth={1.9} />
-			{signingOut ? 'Signing out…' : 'Sign out'}
+			{signingOut ? m.settings.signingOut : m.settings.signOut}
 		</button>
 		<button type="button" class="row action danger" onclick={() => (leaving = true)}>
 			<LogOut size={17} strokeWidth={1.9} />
-			Leave household
+			{m.settings.leave.label}
 		</button>
 	</RowGroup>
 
 	{#if signOutFailed}
-		<p class="result error">Couldn’t sign out — check your connection and try again.</p>
+		<p class="result error">{m.settings.signOutFailed}</p>
 	{/if}
 </div>
 
@@ -219,6 +236,14 @@
 		color={me.color}
 		{takenColors}
 		onclose={() => (editingProfile = false)}
+	/>
+{/if}
+
+{#if choosingLanguage}
+	<LanguageSheet
+		chosen={data.chosenLocale}
+		deviceLocale={data.deviceLocale}
+		onclose={() => (choosingLanguage = false)}
 	/>
 {/if}
 

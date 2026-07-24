@@ -23,6 +23,12 @@ plus your session date). Note deviations in the plan file and in DECISIONS.md.
 | 10  | [Settings & members](10-settings-members.md)                        | done (2026-07-22) | 01 (05 for prefs)        |
 | 11  | [PWA, polish & deploy](11-pwa-deploy.md)                            | done (2026-07-23) | all                      |
 
+Work done after the twelve plans, tracked here so the queue stays the whole story:
+
+| Change                                                          | Status            |
+| --------------------------------------------------------------- | ----------------- |
+| **English + German** (`lib/i18n`, Settings → Language, SPEC §9) | done (2026-07-24) |
+
 ## Dependency graph & parallelization
 
 ```

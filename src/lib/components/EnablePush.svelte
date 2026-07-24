@@ -14,6 +14,7 @@
 	import { env } from '$env/dynamic/public';
 	import Banner from '$lib/components/ui/Banner.svelte';
 	import Toggle from '$lib/components/ui/Toggle.svelte';
+	import { messages } from '$lib/i18n';
 	import { disablePush, enablePush, readPushState, type PushState } from '$lib/push-client';
 	import Bell from '@lucide/svelte/icons/bell';
 
@@ -22,6 +23,8 @@
 	};
 
 	let { variant = 'settings' }: Props = $props();
+
+	const m = messages();
 
 	/**
 	 * Read here rather than passed in, so the component can be dropped into any
@@ -72,7 +75,7 @@
 			// avoid.
 			if (!next) remember();
 		} catch (failure) {
-			error = failure instanceof Error ? failure.message : 'Something went wrong.';
+			error = failure instanceof Error ? failure.message : m.enablePush.failed;
 		} finally {
 			busy = false;
 			// Whatever the browser and the server actually agreed on wins over the
@@ -112,13 +115,13 @@
 
 		switch (pushState) {
 			case 'unsupported':
-				return 'This browser can’t show notifications. On iPhone, add Choreganized to your home screen first.';
+				return m.enablePush.unsupported;
 			case 'unconfigured':
-				return 'Push isn’t configured on the server yet.';
+				return m.enablePush.unconfigured;
 			case 'denied':
-				return 'Notifications are blocked for Choreganized. Turn them back on in your browser’s site settings.';
+				return m.enablePush.denied;
 			case 'subscribed':
-				return 'Task reminders and shopping updates arrive here, even with the app closed.';
+				return m.enablePush.subscribed;
 			default:
 				return null;
 		}
@@ -132,13 +135,13 @@
 	{#if pushState === 'prompt' && !dismissed}
 		<Banner
 			variant="info"
-			title="Turn on notifications"
-			detail={error ?? 'A nudge the morning a task is due. Nothing else.'}
-			action={busy ? 'Enabling…' : 'Enable'}
+			title={m.enablePush.promptTitle}
+			detail={error ?? m.enablePush.promptDetail}
+			action={busy ? m.enablePush.enabling : m.enablePush.enable}
 			disabled={busy}
 			onclick={() => apply(true)}
 			ondismiss={dismiss}
-			dismissLabel="Not now"
+			dismissLabel={m.enablePush.notNow}
 		>
 			{#snippet icon()}<Bell size={18} strokeWidth={1.9} />{/snippet}
 		</Banner>
@@ -146,16 +149,11 @@
 {:else}
 	<div class="device">
 		<div class="row">
-			<span class="label">Enable on this device</span>
+			<span class="label">{m.enablePush.row}</span>
 			{#if actionable}
-				<Toggle
-					bind:checked
-					disabled={busy}
-					label="Enable notifications on this device"
-					onchange={apply}
-				/>
+				<Toggle bind:checked disabled={busy} label={m.enablePush.toggle} onchange={apply} />
 			{:else}
-				<span class="status">{pushState === 'loading' ? '…' : 'Unavailable'}</span>
+				<span class="status">{pushState === 'loading' ? '…' : m.enablePush.unavailable}</span>
 			{/if}
 		</div>
 		{#if note}<p class="note" class:error>{note}</p>{/if}

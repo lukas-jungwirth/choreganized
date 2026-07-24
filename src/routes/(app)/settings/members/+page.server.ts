@@ -7,6 +7,7 @@
  * what to *render*, the service decides what may *happen*.
  */
 import { error, fail } from '@sveltejs/kit';
+import { catalog, type Messages } from '$lib/i18n';
 import { requireMember } from '$lib/server/guards';
 import {
 	getHousehold,
@@ -27,7 +28,7 @@ export const load: PageServerLoad = async (event) => {
 
 	// The layout hands over name and timezone; the code lives on the row itself.
 	const record = getHousehold(householdId);
-	if (!record) error(500, 'Your household record is missing. Please contact support.');
+	if (!record) error(500, catalog(event.locals.locale).errors.householdMissing);
 
 	return {
 		roster: listMemberProfiles(householdId, household.timezone),
@@ -39,7 +40,11 @@ export const load: PageServerLoad = async (event) => {
 		points:
 			member.role === 'owner'
 				? Object.fromEntries(
-						monthPointsByMember(householdId, { today, timezone: household.timezone })
+						monthPointsByMember(householdId, {
+							today,
+							timezone: household.timezone,
+							locale: event.locals.locale
+						})
 					)
 				: {},
 		inviteCode: record.inviteCode,
@@ -48,15 +53,15 @@ export const load: PageServerLoad = async (event) => {
 };
 
 /** Every action here is the owner's; the service says so, this maps the refusal. */
-function refuse(cause: unknown) {
+function refuse(cause: unknown, m: Messages) {
 	if (cause instanceof HouseholdError) {
 		switch (cause.code) {
 			case 'not-owner':
-				return fail(403, { error: 'Only the owner can manage members.' });
+				return fail(403, { error: m.errors.ownerOnlyMembers });
 			case 'not-member':
-				return fail(404, { error: 'They already left the household.' });
+				return fail(404, { error: m.errors.alreadyLeft });
 			case 'remove-self':
-				return fail(400, { error: 'To leave yourself, use Leave household in Settings.' });
+				return fail(400, { error: m.errors.household['remove-self'] });
 		}
 	}
 	throw cause;
@@ -71,7 +76,7 @@ export const actions: Actions = {
 		try {
 			transferOwnership(householdId, member.id, String(form.get('memberId') ?? ''));
 		} catch (cause) {
-			return refuse(cause);
+			return refuse(cause, catalog(event.locals.locale));
 		}
 
 		return { transferred: true };
@@ -89,7 +94,7 @@ export const actions: Actions = {
 		try {
 			removeMember(householdId, member.id, String(form.get('memberId') ?? ''));
 		} catch (cause) {
-			return refuse(cause);
+			return refuse(cause, catalog(event.locals.locale));
 		}
 
 		return { removed: true };
@@ -101,7 +106,7 @@ export const actions: Actions = {
 		try {
 			revokeInviteCode(householdId, member.id);
 		} catch (cause) {
-			return refuse(cause);
+			return refuse(cause, catalog(event.locals.locale));
 		}
 
 		return { revoked: true };
@@ -114,7 +119,7 @@ export const actions: Actions = {
 		try {
 			regenerateInviteCode(householdId, member.id);
 		} catch (cause) {
-			return refuse(cause);
+			return refuse(cause, catalog(event.locals.locale));
 		}
 
 		return { invited: true };

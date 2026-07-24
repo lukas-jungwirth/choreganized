@@ -15,13 +15,16 @@
 	import EmptyState from '$lib/components/ui/EmptyState.svelte';
 	import RowGroup from '$lib/components/ui/RowGroup.svelte';
 	import SegmentedControl from '$lib/components/ui/SegmentedControl.svelte';
+	import { messages } from '$lib/i18n';
 	import type { PageProps } from './$types';
 
 	let { data }: PageProps = $props();
 
+	const m = messages();
+
 	const view = $derived([
-		{ value: 'todo', label: `To do · ${data.todoCount}`, href: '/tasks' },
-		{ value: 'history', label: 'History', href: '/tasks/history' }
+		{ value: 'todo', label: m.tasks.view.todo(data.todoCount), href: '/tasks' },
+		{ value: 'history', label: m.tasks.view.history, href: '/tasks/history' }
 	]);
 
 	/** Nothing in the window and nothing older to reach for: a first month. */
@@ -29,24 +32,24 @@
 </script>
 
 <svelte:head>
-	<title>History · Choreganized</title>
+	<title>{m.common.pageTitle(m.tasks.view.history)}</title>
 </svelte:head>
 
-<PageHeader title="Tasks" />
+<PageHeader title={m.tasks.title} />
 
 <div class="view">
-	<SegmentedControl label="Task view" value="history" options={view} />
+	<SegmentedControl label={m.tasks.view.label} value="history" options={view} />
 </div>
 
 <Podium podium={data.podium} />
 
 {#if blank}
 	<div class="nothing">
-		<EmptyState title="Nothing done yet">
+		<EmptyState title={m.tasks.historyScreen.emptyTitle}>
 			{#snippet icon()}<ChecklistIcon size={38} strokeWidth={1.6} />{/snippet}
-			Tick a task off and it lands here — what it was, who did it, and what it was worth.
+			{m.tasks.historyScreen.emptyCopy}
 			{#snippet action()}
-				<Button href="/tasks">Back to the list</Button>
+				<Button href="/tasks">{m.tasks.historyScreen.backToList}</Button>
 			{/snippet}
 		</EmptyState>
 	</div>
@@ -69,7 +72,7 @@
 			 completions belonged to a housemate who has since left). The window
 			 has to account for itself before offering another one. -->
 		{#if data.feed.days.length === 0}
-			<p class="quiet">Nothing was completed in this stretch.</p>
+			<p class="quiet">{m.tasks.historyScreen.emptyStretch}</p>
 		{/if}
 
 		{#if data.feed.older}
@@ -78,7 +81,7 @@
 				 with no JavaScript and survives a refresh. `noscroll` keeps the
 				 button under your thumb instead of jumping back to the podium. -->
 			<Button variant="secondary" href="?from={older.from}" data-sveltekit-noscroll>
-				Show {older.label}
+				{m.tasks.historyScreen.showMonth(older.label)}
 			</Button>
 		{/if}
 	</div>

@@ -17,7 +17,7 @@ import { and, asc, eq, isNull, lt, or, sql } from 'drizzle-orm';
 import type { CalendarDate } from '$lib/utils/dates';
 import { db } from '../db';
 import { members, tasks } from '../db/schema';
-import { sendToUser, type NotificationPref, type PushPayload } from '../push';
+import { sendToUser, type NotificationPref, type PayloadFor } from '../push';
 import { isAway } from './tasks';
 
 /** The two nudges of [4e], in the order they go out. */
@@ -95,7 +95,7 @@ export async function sendTaskReminders(
 	// byte leaves the machine — better-sqlite3 is synchronous, so nothing else
 	// gets a turn in between — which is what makes a crash mid-sweep cost a
 	// notification rather than repeat one every minute for the rest of the day.
-	const outbox: { userId: string; payload: PushPayload }[] = [];
+	const outbox: { userId: string; payload: PayloadFor }[] = [];
 	let nudges = 0;
 
 	for (const task of pending) {
@@ -203,57 +203,61 @@ function claim(householdId: string, taskId: string, kind: ReminderKind, at: Date
  * overdue", and on a lock screen the picture lands before the sentence does.
  * First match wins, so the specific patterns sit above the general ones ("Clean
  * the bathroom" is a shower, not a broom); anything unrecognised falls back to
- * the clock, which is why the table can afford to be short. English-only like
- * the rest of the UI (→ DECISIONS #8), and server-only (→ DECISIONS #61).
+ * the clock, which is why the table can afford to be short.
+ *
+ * It matches the *task's own name*, which the household typed — so the patterns
+ * cover both languages the app ships, and a name in neither still gets a clock.
+ * Server-only (→ DECISIONS #61).
  */
 const TASK_EMOJI: { match: RegExp; emoji: string }[] = [
-	{ match: /\b(bed|sheet|linen|duvet|pillow)/i, emoji: '🛏️' },
-	{ match: /\b(bin|trash|rubbish|garbage|recycl)/i, emoji: '🗑️' },
-	{ match: /\b(dish|cutlery|plate)/i, emoji: '🍽️' },
-	{ match: /\b(laundry|towel|wash|iron)/i, emoji: '🧺' },
-	{ match: /\b(bath|shower|toilet|sink)/i, emoji: '🚿' },
-	{ match: /\b(plant|flower|garden|lawn|herb)/i, emoji: '🪴' },
-	{ match: /\b(fridge|freezer)/i, emoji: '🧊' },
-	{ match: /\b(cat|dog|litter|pet|aquarium)/i, emoji: '🐾' },
-	{ match: /\b(bulb|lamp|light)/i, emoji: '💡' },
-	{ match: /\b(post|mail|parcel|package)/i, emoji: '📮' },
-	{ match: /\b(window|mirror)/i, emoji: '🪟' },
-	{ match: /\b(vacuum|hoover|mop|sweep|dust|floor|clean|tidy)/i, emoji: '🧹' }
+	{ match: /\b(bed|sheet|linen|duvet|pillow|bett|wäsche|kissen|decke)/i, emoji: '🛏️' },
+	{ match: /\b(bin|trash|rubbish|garbage|recycl|müll|mull|abfall|papier)/i, emoji: '🗑️' },
+	{ match: /\b(dish|cutlery|plate|geschirr|spül|spul|teller|besteck)/i, emoji: '🍽️' },
+	{ match: /\b(laundry|towel|wash|iron|handtuch|waschen|bügel|bugel)/i, emoji: '🧺' },
+	{ match: /\b(bath|shower|toilet|sink|bad|dusche|klo|waschbecken)/i, emoji: '🚿' },
+	{
+		match: /\b(plant|flower|garden|lawn|herb|pflanz|blume|garten|rasen|gießen|giessen)/i,
+		emoji: '🪴'
+	},
+	{ match: /\b(fridge|freezer|kühlschrank|kuhlschrank|gefrier)/i, emoji: '🧊' },
+	{ match: /\b(cat|dog|litter|pet|aquarium|katze|hund|streu)/i, emoji: '🐾' },
+	{ match: /\b(bulb|lamp|light|birne|lampe|licht)/i, emoji: '💡' },
+	{ match: /\b(post|mail|parcel|package|paket|brief)/i, emoji: '📮' },
+	{ match: /\b(window|mirror|fenster|spiegel)/i, emoji: '🪟' },
+	{
+		match:
+			/\b(vacuum|hoover|mop|sweep|dust|floor|clean|tidy|saug|wisch|kehr|staub|boden|putz|aufräum|aufraum)/i,
+		emoji: '🧹'
+	}
 ];
 
+const DUE_EMOJI = '☑️';
 const OVERDUE_EMOJI = '⏰';
 
 /**
- * How an unassigned chore ends both lines. SPEC §5.6 writes the copy for the
- * assigned case only, and "your turn" is a lie about a task nobody has been
- * handed — so this borrows the words the overdue card already uses [4a]
- * (→ DECISIONS #61).
- */
-const ANYONE_TURN = 'anyone can pick this up';
-
-/**
- * The nudge itself (→ SPEC §5.6, the toast in [4e]). `title` carries the whole
- * message: the platform prints the app name above it (→ DECISIONS #55).
+ * The nudge itself (→ SPEC §5.6, the toast in [4e]). Returns a function rather
+ * than a payload: it goes to whoever is listening, and each of them may read in
+ * a different language (→ `push.ts` `PayloadFor`).
  *
  * The tag is per task *and* per kind, so the overdue nudge arrives as its own
  * notification rather than quietly replacing the due one on the lock screen,
  * while a nudge that re-arms (snoozed back onto the same day) replaces its own
  * predecessor instead of stacking a second copy of itself.
  */
-function payloadFor(task: PendingTask, kind: ReminderKind, assigned: boolean): PushPayload {
+function payloadFor(task: PendingTask, kind: ReminderKind, assigned: boolean): PayloadFor {
 	if (kind === 'due') {
-		return {
-			title: `☑️ ${task.name} is due today — ${assigned ? 'your turn' : ANYONE_TURN}`,
+		return (m) => ({
+			title: m.push.taskDue(DUE_EMOJI, task.name, assigned),
 			tag: `task-due-${task.id}`,
 			url: '/tasks'
-		};
+		});
 	}
 
 	const emoji = TASK_EMOJI.find(({ match }) => match.test(task.name))?.emoji ?? OVERDUE_EMOJI;
 
-	return {
-		title: `${emoji} ${task.name} is overdue — ${assigned ? "it's your turn" : ANYONE_TURN}`,
+	return (m) => ({
+		title: m.push.taskOverdue(emoji, task.name, assigned),
 		tag: `task-overdue-${task.id}`,
 		url: '/tasks'
-	};
+	});
 }

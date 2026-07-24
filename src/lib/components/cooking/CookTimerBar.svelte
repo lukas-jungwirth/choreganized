@@ -12,6 +12,7 @@
 -->
 <script lang="ts">
 	import type { CookTimer } from '$lib/cook-timer.svelte';
+	import { messages } from '$lib/i18n';
 	import { formatDuration } from '$lib/utils/timer-parse';
 	import ChevronRight from '@lucide/svelte/icons/chevron-right';
 	import TimerIcon from '@lucide/svelte/icons/timer';
@@ -25,6 +26,8 @@
 	};
 
 	let { timer, step, onjump }: Props = $props();
+
+	const m = messages();
 
 	const showing = $derived(timer.active && !timer.isOn(step));
 	const rang = $derived(timer.phase === 'rang');
@@ -40,8 +43,10 @@
 	 * ›" says nothing about being a timer or about where tapping it goes.
 	 */
 	const spoken = $derived(
-		`${rang ? `${timer.label} is done` : `${timer.label}, ${formatDuration(timer.remainingSeconds)} left`}` +
-			(timer.step === null ? '' : ` — back to step ${timer.step + 1}`)
+		(rang
+			? m.cooking.cook.barDone(timer.label)
+			: m.cooking.cook.barRunning(timer.label, formatDuration(timer.remainingSeconds))) +
+			(timer.step === null ? '' : m.cooking.cook.barBackTo(timer.step + 1))
 	);
 </script>
 
@@ -50,11 +55,12 @@
 		<TimerIcon size={18} strokeWidth={2} aria-hidden="true" />
 		<span class="text">
 			{#if rang}
-				{timer.label} is done{#if elsewhere && timer.step !== null}
-					— back to step {timer.step + 1}{/if}
+				{m.cooking.cook.barDone(
+					timer.label
+				)}{#if elsewhere && timer.step !== null}{m.cooking.cook.barBackTo(timer.step + 1)}{/if}
 			{:else}
 				<b>{formatDuration(timer.remainingSeconds)}</b> · {timer.label}
-				{#if timer.phase === 'paused'}(paused){/if}
+				{#if timer.phase === 'paused'}{m.cooking.cook.paused}{/if}
 			{/if}
 		</span>
 		<ChevronRight size={17} strokeWidth={2.2} aria-hidden="true" />

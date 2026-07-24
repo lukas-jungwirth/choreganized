@@ -16,10 +16,9 @@
  * JavaScript at all.
  */
 import { and, desc, eq, gte, lt, sql } from 'drizzle-orm';
+import { catalog } from '$lib/i18n';
 import {
 	addInterval,
-	formatDayLabel,
-	formatMonthName,
 	formatTimeIn,
 	isCalendarDate,
 	startOfMonth,
@@ -218,7 +217,11 @@ export function getCompletedFeed(
 		// Rows arrive newest first, so the only group a completion can join is the
 		// one being built — no lookup table, and the days come out in feed order.
 		if (!day || day.date !== date) {
-			day = { date, label: formatDayLabel(date, context.today), entries: [] };
+			day = {
+				date,
+				label: catalog(context.locale).date.dayLabel(date, context.today),
+				entries: []
+			};
 			days.push(day);
 		}
 
@@ -261,5 +264,5 @@ function olderMonth(
 
 	const from = startOfMonth(toCalendarDate(new Date(row.at), context.timezone));
 
-	return { from, label: formatMonthName(from, context.today) };
+	return { from, label: catalog(context.locale).date.monthName(from, context.today) };
 }

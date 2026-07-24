@@ -5,38 +5,42 @@
 	import InvitePreviewCard from '$lib/components/onboarding/InvitePreviewCard.svelte';
 	import Screen from '$lib/components/shell/Screen.svelte';
 	import Button from '$lib/components/ui/Button.svelte';
+	import { messages } from '$lib/i18n';
 	import type { PageProps } from './$types';
 
 	let { data }: PageProps = $props();
+
+	const m = messages();
+
+	const heading = $derived(
+		data.preview ? m.onboarding.landing.invited : m.onboarding.landing.notFound
+	);
 </script>
 
 <svelte:head>
-	<title>{data.preview ? "You're invited" : 'Invite not found'} · Choreganized</title>
+	<title>{m.common.pageTitle(heading)}</title>
 </svelte:head>
 
 <Screen>
 	<header>
 		<span class="mark"><img src={logoMark} alt="" width="34" height="34" /></span>
-		<h1>{data.preview ? "You're invited" : 'Invite not found'}</h1>
+		<h1>{heading}</h1>
 	</header>
 
 	{#if data.preview}
 		<InvitePreviewCard householdName={data.preview.householdName} inviter={data.preview.inviter} />
 
-		<p class="copy">
-			You'll share the shopping list, meal plan and tasks with them. Sign in with Google to join.
-		</p>
+		<p class="copy">{m.onboarding.landing.copy}</p>
 
 		<form method="POST" use:enhance>
-			<Button type="submit">Accept invitation</Button>
+			<Button type="submit">{m.onboarding.landing.accept}</Button>
 		</form>
 	{:else}
-		<p class="copy">
-			This invite link isn't valid any more — the code may have been replaced or revoked. Ask your
-			housemate for a fresh one.
-		</p>
+		<p class="copy">{m.onboarding.landing.gone}</p>
 
-		<div class="cta"><Button href="/login" variant="secondary">Go to sign in</Button></div>
+		<div class="cta">
+			<Button href="/login" variant="secondary">{m.onboarding.landing.goToSignIn}</Button>
+		</div>
 	{/if}
 </Screen>
 

@@ -12,11 +12,14 @@
 	import Avatar from '$lib/components/ui/Avatar.svelte';
 	import Button from '$lib/components/ui/Button.svelte';
 	import RowGroup from '$lib/components/ui/RowGroup.svelte';
+	import { messages } from '$lib/i18n';
 	import type { MemberProfile } from '$lib/server/services/household';
 	import Plus from '@lucide/svelte/icons/plus';
 	import type { PageProps } from './$types';
 
 	let { data, form }: PageProps = $props();
+
+	const m = messages();
 
 	let managing = $state<MemberProfile | null>(null);
 	let working = $state(false);
@@ -26,14 +29,14 @@
 </script>
 
 <svelte:head>
-	<title>Members · Choreganized</title>
+	<title>{m.common.pageTitle(m.settings.roster.title)}</title>
 </svelte:head>
 
 <SubHeader
-	title="Members"
+	title={m.settings.roster.title}
 	subtitle={data.household.name}
 	back="/settings"
-	backLabel="Back to settings"
+	backLabel={m.settings.roster.back}
 />
 
 <RowGroup list>
@@ -55,9 +58,13 @@
 		<div class="pending">
 			<Avatar empty size={40}><Plus size={16} strokeWidth={2} /></Avatar>
 			<div class="what">
-				<p class="title">{data.formattedCode ? 'Pending invite' : 'No invite is live'}</p>
+				<p class="title">
+					{data.formattedCode ? m.settings.roster.pendingInvite : m.settings.roster.noInvite}
+				</p>
 				<p class="detail">
-					{data.formattedCode ? `Code ${data.formattedCode}` : 'Nobody can join with a code'}
+					{data.formattedCode
+						? m.settings.roster.code(data.formattedCode)
+						: m.settings.roster.nobodyCanJoin}
 				</p>
 			</div>
 
@@ -74,7 +81,7 @@
 					}}
 				>
 					<button type="submit" class="link" class:danger={data.inviteCode} disabled={working}>
-						{data.inviteCode ? 'Revoke' : 'New code'}
+						{data.inviteCode ? m.settings.roster.revoke : m.settings.roster.newCode}
 					</button>
 				</form>
 			{/if}
@@ -87,17 +94,11 @@
 <!-- The invite screen is [5d], reached from onboarding and from here; `from`
 	 tells it to close with "Done" rather than "Move in" (→ DECISIONS #28). -->
 <Button href="/onboarding/invite?from=members">
-	<Plus size={18} strokeWidth={2.2} />Invite housemate
+	<Plus size={18} strokeWidth={2.2} />{m.settings.roster.invite}
 </Button>
 
 <p class="help">
-	{#if owner}
-		As the owner you can change roles or remove members. Everyone else can view this list and leave
-		on their own.
-	{:else}
-		The owner changes roles and removes members. You can invite housemates, and leave on your own
-		from Settings.
-	{/if}
+	{owner ? m.settings.roster.helpOwner : m.settings.roster.helpMember}
 </p>
 
 {#if managing}

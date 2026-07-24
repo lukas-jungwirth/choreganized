@@ -11,6 +11,7 @@
  * reason to ask the server anything.
  */
 import { error } from '@sveltejs/kit';
+import { catalog } from '$lib/i18n';
 import { requireMember } from '$lib/server/guards';
 import { getActiveTimer } from '$lib/server/services/cook-timers';
 import { getRecipe } from '$lib/server/services/recipes';
@@ -20,7 +21,7 @@ export const load: PageServerLoad = (event) => {
 	const { householdId, user } = requireMember(event);
 
 	const recipe = getRecipe(householdId, event.params.id);
-	if (!recipe) error(404, 'That recipe is gone.');
+	if (!recipe) error(404, catalog(event.locals.locale).errors.recipes.gone);
 
 	return { recipe, timer: getActiveTimer(householdId, user.id) };
 };

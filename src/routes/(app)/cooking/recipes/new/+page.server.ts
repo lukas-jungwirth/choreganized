@@ -7,6 +7,7 @@
  * complete the first time it exists.
  */
 import { fail, redirect } from '@sveltejs/kit';
+import { catalog } from '$lib/i18n';
 import { requireMember } from '$lib/server/guards';
 import { createRecipe } from '$lib/server/services/recipes';
 import { storePhotoFromForm, uploadErrorMessage } from '$lib/server/uploads';
@@ -18,14 +19,17 @@ export const actions: Actions = {
 		const { householdId, member } = requireMember(event);
 		const form = await event.request.formData();
 
-		const parsed = readRecipeForm(form);
+		const parsed = readRecipeForm(form, catalog(event.locals.locale));
 		if ('error' in parsed) return fail(400, parsed);
 
 		let imagePath: string | null;
 		try {
 			imagePath = await storePhotoFromForm(form);
 		} catch (cause) {
-			return fail(400, { error: uploadErrorMessage(cause), field: 'photo' as const });
+			return fail(400, {
+				error: uploadErrorMessage(cause, catalog(event.locals.locale)),
+				field: 'photo' as const
+			});
 		}
 
 		const id = createRecipe(householdId, member.id, parsed.input, imagePath);

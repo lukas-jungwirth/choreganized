@@ -55,7 +55,10 @@ const DURATION = new RegExp(String.raw`(${NUMBER})${RANGE_TAIL}\s*${UNIT}\b`, 'i
  * a second instruction ("Chill 1 hour, then bake 30 minutes"), and adding those
  * together would be a 90-minute lie.
  */
-const TRAILING_MINUTES = new RegExp(String.raw`^\s*(?:and\s+)?(${NUMBER})\s*(?:minutes?|mins?)\b`, 'i');
+const TRAILING_MINUTES = new RegExp(
+	String.raw`^\s*(?:and\s+)?(${NUMBER})\s*(?:minutes?|mins?)\b`,
+	'i'
+);
 
 /**
  * "8:00", "12:30" — a clock face is how a timer is written down, and the design
@@ -135,9 +138,7 @@ export function formatDuration(seconds: number): string {
 	const minutes = Math.floor((total % 3600) / 60);
 	const rest = total % 60;
 
-	return hours > 0
-		? `${hours}:${pad(minutes)}:${pad(rest)}`
-		: `${minutes}:${pad(rest)}`;
+	return hours > 0 ? `${hours}:${pad(minutes)}:${pad(rest)}` : `${minutes}:${pad(rest)}`;
 }
 
 function pad(value: number): string {

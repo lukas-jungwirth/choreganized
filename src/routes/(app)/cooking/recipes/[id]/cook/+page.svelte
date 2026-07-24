@@ -25,7 +25,7 @@
 	import { CookTimer } from '$lib/cook-timer.svelte';
 	import { keepScreenAwake } from '$lib/wake-lock';
 	import { highlightStep } from '$lib/utils/step-highlight';
-	import { formatIngredient } from '$lib/utils/ingredients';
+	import { messages } from '$lib/i18n';
 	import { formatDuration, parseStepDuration } from '$lib/utils/timer-parse';
 	import Check from '@lucide/svelte/icons/check';
 	import ChevronLeft from '@lucide/svelte/icons/chevron-left';
@@ -36,6 +36,8 @@
 	import type { PageProps } from './$types';
 
 	let { data }: PageProps = $props();
+
+	const m = messages();
 
 	const recipe = $derived(data.recipe);
 	const steps = $derived(recipe.steps);
@@ -82,7 +84,7 @@
 	// Seeded once from the load — the timer already running when this screen
 	// opened, which is the normal case when a notification is what opened it.
 	// After that the machine owns itself; a refetch must not restart it.
-	let timer = $state.raw(untrack(() => new CookTimer(recipe.id, data.timer)));
+	let timer = $state.raw(untrack(() => new CookTimer(recipe.id, data.timer, m)));
 	let peeking = $state(false);
 	let setting = $state(false);
 
@@ -90,7 +92,7 @@
 	// principle change without a remount. The machine has to go with it.
 	$effect(() => {
 		const recipeId = recipe.id;
-		if (untrack(() => timer.recipeId) !== recipeId) timer = new CookTimer(recipeId, null);
+		if (untrack(() => timer.recipeId) !== recipeId) timer = new CookTimer(recipeId, null, m);
 	});
 
 	// Stops the tick when the screen goes; the row on the server keeps its alarm.
@@ -121,17 +123,22 @@
 </script>
 
 <svelte:head>
-	<title>Cook · {recipe.name}</title>
+	<title>{m.cooking.cook.title(recipe.name)}</title>
 </svelte:head>
 
 <main class="cook">
 	<header>
 		<span class="recipe">{recipe.name}</span>
 		<div class="tools">
-			<button type="button" class="round" onclick={() => (setting = true)} aria-label="Set a timer">
+			<button
+				type="button"
+				class="round"
+				onclick={() => (setting = true)}
+				aria-label={m.cooking.cook.setTimer}
+			>
 				<TimerIcon size={16} strokeWidth={2.1} />
 			</button>
-			<a class="round" href="/cooking/recipes/{recipe.id}" aria-label="Close cook mode">
+			<a class="round" href="/cooking/recipes/{recipe.id}" aria-label={m.cooking.cook.close}>
 				<X size={12} strokeWidth={2.4} />
 			</a>
 		</div>
@@ -145,7 +152,7 @@
 		</ol>
 
 		<div class="body">
-			<p class="eyebrow">Step {index + 1} of {steps.length}</p>
+			<p class="eyebrow">{m.cooking.cook.step(index + 1, steps.length)}</p>
 
 			<CookStepText segments={read.segments} />
 
@@ -153,12 +160,14 @@
 				{#if !timer.isOn(index)}
 					<button type="button" class="chip" onclick={startParsed}>
 						<TimerIcon size={20} strokeWidth={1.9} class="amber" aria-hidden="true" />
-						{parsed === null ? 'Set timer' : `Start ${formatDuration(parsed)} timer`}
+						{parsed === null
+							? m.cooking.cook.startTimer
+							: m.cooking.cook.startParsedTimer(formatDuration(parsed))}
 					</button>
 				{/if}
 				<button type="button" class="chip outlined" onclick={() => (peeking = true)}>
 					<BasketIcon size={19} strokeWidth={1.9} />
-					Ingredients
+					{m.cooking.cook.ingredients}
 				</button>
 			</div>
 
@@ -167,7 +176,9 @@
 				 want mid-timer — and drops the line whose contents the peek repeats. -->
 			{#if read.used.length > 0 && !timer.isOn(index)}
 				<p class="uses">
-					This step uses <b>{read.used.map(formatIngredient).join(' · ')}</b>
+					{m.cooking.cook.usesLead}<b
+						>{read.used.map((row) => m.units.ingredient(row)).join(' · ')}</b
+					>
 				</p>
 			{/if}
 
@@ -191,29 +202,27 @@
 					class="prev"
 					onclick={() => goToStep(index - 1)}
 					disabled={index === 0}
-					aria-label="Previous step"
+					aria-label={m.cooking.cook.previous}
 				>
 					<ChevronLeft size={24} strokeWidth={2.2} />
 				</button>
 
 				{#if last}
 					<a class="next" href="/cooking/recipes/{recipe.id}">
-						Finish<Check size={20} strokeWidth={2.4} aria-hidden="true" />
+						{m.cooking.cook.finish}<Check size={20} strokeWidth={2.4} aria-hidden="true" />
 					</a>
 				{:else}
 					<button type="button" class="next" onclick={() => goToStep(index + 1)}>
-						Next step<ChevronRight size={20} strokeWidth={2.2} aria-hidden="true" />
+						{m.cooking.cook.next}<ChevronRight size={20} strokeWidth={2.2} aria-hidden="true" />
 					</button>
 				{/if}
 			</div>
 		</nav>
 	{:else}
 		<div class="body empty">
-			<p class="eyebrow">Cook mode</p>
-			<p class="no-steps">
-				This recipe has no steps written down yet — add them and cook mode can walk you through it.
-			</p>
-			<a class="back" href="/cooking/recipes/{recipe.id}/edit">Add the steps</a>
+			<p class="eyebrow">{m.cooking.cook.eyebrow}</p>
+			<p class="no-steps">{m.cooking.cook.noSteps}</p>
+			<a class="back" href="/cooking/recipes/{recipe.id}/edit">{m.cooking.cook.addSteps}</a>
 		</div>
 	{/if}
 </main>

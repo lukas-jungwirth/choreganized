@@ -20,6 +20,7 @@ import webpush from 'web-push';
 import { building } from '$app/environment';
 import { env } from '$env/dynamic/private';
 import { env as publicEnv } from '$env/dynamic/public';
+import { catalog, DEFAULT_LOCALE, isLocale, type Locale } from '$lib/i18n';
 import { db } from './db';
 import { members, pushSubscriptions, type PushSubscription } from './db/schema';
 
@@ -47,6 +48,17 @@ export type PushPayload = {
 /** The `members` columns that gate a category of notification (→ SPEC §3.5, §5.6). */
 export type NotificationPref =
 	'notifyTaskReminders' | 'notifyOverdueNudges' | 'notifyShoppingUpdates';
+
+/**
+ * A notification, written in the recipient's language.
+ *
+ * Every send takes one of these rather than a finished payload, because this is
+ * the one place the app addresses somebody who isn't making the request: a
+ * shopping nudge goes to the *other* housemate, and the morning sweep goes out
+ * with nobody on the other end of a request at all. `deliver` resolves each
+ * device's language and calls this once per language in play.
+ */
+export type PayloadFor = (m: ReturnType<typeof catalog>) => PushPayload;
 
 export type SendOptions = {
 	/**
@@ -118,7 +130,7 @@ export function pushConfigured(): boolean {
  */
 export async function sendToUser(
 	userId: string,
-	payload: PushPayload,
+	payload: PayloadFor,
 	options: SendOptions = {}
 ): Promise<number> {
 	try {
@@ -138,7 +150,7 @@ export async function sendToUser(
  */
 export async function sendToMembers(
 	householdId: string,
-	payload: PushPayload,
+	payload: PayloadFor,
 	options: MemberSendOptions = {}
 ): Promise<number> {
 	try {
@@ -162,29 +174,53 @@ export async function sendToMembers(
 
 async function deliver(
 	userIds: string[],
-	payload: PushPayload,
+	payload: PayloadFor,
 	options: SendOptions
 ): Promise<number> {
 	if (!vapidConfigured || userIds.length === 0) return 0;
 
-	let subscriptions: PushSubscription[];
+	let devices: { subscription: PushSubscription; locale: Locale }[];
 	try {
-		subscriptions = db
-			.select()
+		// The member's explicit choice if they made one, else the language the
+		// device was reading in when it subscribed (→ `db/schema.ts`). The join is
+		// a LEFT one because a subscription outlives its membership by a moment
+		// when somebody leaves the household.
+		devices = db
+			.select({ subscription: pushSubscriptions, chosen: members.locale })
 			.from(pushSubscriptions)
+			.leftJoin(members, eq(members.userId, pushSubscriptions.userId))
 			.where(inArray(pushSubscriptions.userId, userIds))
-			.all();
+			.all()
+			.map(({ subscription, chosen }) => ({
+				subscription,
+				locale: isLocale(chosen)
+					? chosen
+					: isLocale(subscription.locale)
+						? subscription.locale
+						: DEFAULT_LOCALE
+			}));
 	} catch (error) {
 		console.error('[push] could not read subscriptions:', error);
 		return 0;
 	}
 
-	if (subscriptions.length === 0) return 0;
+	if (devices.length === 0) return 0;
 
-	// One JSON encode for all of them; the payload is identical per device.
-	const body = JSON.stringify(payload);
+	// One JSON encode per *language*, not per device: a two-person household
+	// reading in two languages costs two encodes, and everyone else still costs
+	// one.
+	const bodies = new Map<Locale, string>();
+	const encoded = (locale: Locale) => {
+		let body = bodies.get(locale);
+		if (body === undefined) {
+			body = JSON.stringify(payload(catalog(locale)));
+			bodies.set(locale, body);
+		}
+		return body;
+	};
+
 	const results = await Promise.all(
-		subscriptions.map((subscription) => deliverOne(subscription, body, options))
+		devices.map(({ subscription, locale }) => deliverOne(subscription, encoded(locale), options))
 	);
 
 	return results.filter(Boolean).length;
@@ -295,17 +331,15 @@ export function notifyShoppingAdd(notice: ShoppingAddNotice): void {
 		lastShoppingNotice.set(key, now);
 		forgetStaleNotices(now);
 
-		const items = notice.itemCount === 1 ? '1 item' : `${notice.itemCount} items`;
-
 		void sendToMembers(
 			notice.householdId,
-			{
-				title: `🛒 ${actor.displayName} added ${items} to the list`,
+			(m) => ({
+				title: m.push.shoppingAdd(actor.displayName, notice.itemCount),
 				// One per member: a second add replaces the first on the lock screen
 				// instead of stacking.
 				tag: `shopping-add-${notice.actorMemberId}`,
 				url: '/shopping'
-			},
+			}),
 			{ except: notice.actorMemberId, pref: 'notifyShoppingUpdates' }
 		);
 	} catch (error) {
@@ -328,13 +362,13 @@ function forgetStaleNotices(now: number): void {
 export async function sendTestNotification(userId: string): Promise<number> {
 	return sendToUser(
 		userId,
-		{
-			title: '🔔 Notifications are on',
-			body: 'This is what a nudge from Choreganized looks like.',
+		(m) => ({
+			title: m.push.testTitle,
+			body: m.push.testBody,
 			tag: 'push-test',
 			url: '/settings',
 			renotify: true
-		},
+		}),
 		// A test you asked for a minute ago is worthless an hour later.
 		{ ttlSeconds: 60 }
 	);

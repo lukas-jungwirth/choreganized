@@ -14,6 +14,7 @@
 	import Button from '$lib/components/ui/Button.svelte';
 	import ColorPicker from '$lib/components/ui/ColorPicker.svelte';
 	import TextField from '$lib/components/ui/TextField.svelte';
+	import { messages } from '$lib/i18n';
 	import { DISPLAY_NAME_MAX } from '$lib/utils/household';
 	import { untrack } from 'svelte';
 
@@ -26,6 +27,8 @@
 	};
 
 	let { displayName, color, takenColors, onclose }: Props = $props();
+
+	const m = messages();
 
 	// Seeded once and then owned by the form — a re-render from the page must
 	// not overwrite what's being typed.
@@ -41,7 +44,7 @@
 	});
 </script>
 
-<BottomSheet bind:open title="Your profile" eyebrow="Account">
+<BottomSheet bind:open title={m.settings.profile.title} eyebrow={m.settings.profile.eyebrow}>
 	<form
 		method="POST"
 		action="?/profile"
@@ -61,7 +64,7 @@
 		}}
 	>
 		<TextField
-			label="Display name"
+			label={m.settings.displayName}
 			name="displayName"
 			bind:value={name}
 			{error}
@@ -70,13 +73,13 @@
 			required
 		/>
 
-		<p class="label">Your colour</p>
+		<p class="label">{m.ui.yourColour}</p>
 		<div class="colour">
 			<Avatar {name} color={picked} size={52} />
 			<ColorPicker bind:value={picked} taken={takenColors} />
 		</div>
 
-		<Button type="submit" disabled={submitting || !name.trim()}>Save changes</Button>
+		<Button type="submit" disabled={submitting || !name.trim()}>{m.common.saveChanges}</Button>
 	</form>
 </BottomSheet>
 

@@ -24,6 +24,27 @@ export function isUnit(value: unknown): value is Unit {
 }
 
 /**
+ * How a unit is *shown*, keyed by how it is *stored*. The column keeps the
+ * canonical spelling ('pcs', 'tbsp') in every language, so switching language
+ * re-labels the list rather than rewriting it — and a unit somebody typed that
+ * isn't in the table falls through unchanged (→ `$lib/i18n/messages/en.ts`).
+ */
+export type UnitLabels = Record<string, string>;
+
+/**
+ * How a stored unit is shown, or the unit itself when we have no name for it.
+ *
+ * `Object.hasOwn`, not `labels[unit] ?? unit`: the column is deliberately free
+ * text (→ `services/shopping.ts` `normalizeUnit`), so `unit` can be "constructor"
+ * or "toString", and a plain object answers those with a *function* — which is
+ * not nullish, sails past `??` and renders as "[native code]". Same trap
+ * `parseIngredient` avoids by keeping its alias table in a `Map`.
+ */
+export function unitLabel(unit: string, labels: UnitLabels = {}): string {
+	return Object.hasOwn(labels, unit) ? labels[unit] : unit;
+}
+
+/**
  * The compact quantity a row shows: "×6" for pieces, "2 L" for anything
  * measured, nothing at all when there's no quantity to speak of.
  *
@@ -31,7 +52,11 @@ export function isUnit(value: unknown): value is Unit {
  * through the sheet would otherwise wear a badge that says no more than its own
  * name does. One litre still reads "1 L" — there the unit is the information.
  */
-export function formatQuantity(quantity: number | null, unit: string | null): string {
+export function formatQuantity(
+	quantity: number | null,
+	unit: string | null,
+	labels: UnitLabels = {}
+): string {
 	if (quantity === null || quantity <= 0) return '';
 
 	// REAL column: 2 must not render as "2.0", and 1.5 must keep its half.
@@ -39,7 +64,7 @@ export function formatQuantity(quantity: number | null, unit: string | null): st
 
 	if (!unit || unit === DEFAULT_UNIT) return quantity === 1 ? '' : `×${amount}`;
 
-	return `${amount} ${unit}`;
+	return `${amount} ${unitLabel(unit, labels)}`;
 }
 
 /** The fields the order is decided on — a subset of the row and of the list item. */

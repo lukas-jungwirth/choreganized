@@ -13,6 +13,7 @@
  * whose file went missing — answers the same way on purpose.
  */
 import { error } from '@sveltejs/kit';
+import { catalog } from '$lib/i18n';
 import { requireMember } from '$lib/server/guards';
 import { readRecipeImage } from '$lib/server/services/recipes';
 import type { RequestHandler } from './$types';
@@ -21,7 +22,7 @@ export const GET: RequestHandler = async (event) => {
 	const { householdId } = requireMember(event);
 
 	const image = await readRecipeImage(householdId, event.params.path);
-	if (!image) error(404, 'Not found');
+	if (!image) error(404, catalog(event.locals.locale).errors.notFound);
 
 	return new Response(new Uint8Array(image.bytes), {
 		headers: {

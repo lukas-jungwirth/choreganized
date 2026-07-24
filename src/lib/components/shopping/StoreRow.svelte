@@ -8,6 +8,7 @@
 -->
 <script lang="ts">
 	import { enhance } from '$app/forms';
+	import { messages } from '$lib/i18n';
 	import type { StoreSummary } from '$lib/server/services/shopping';
 	import { STORE_NAME_MAX } from '$lib/utils/shopping';
 	import ChevronDown from '@lucide/svelte/icons/chevron-down';
@@ -24,6 +25,8 @@
 	};
 
 	let { store, first, last, ondelete }: Props = $props();
+
+	const m = messages();
 
 	function save(event: FocusEvent & { currentTarget: HTMLInputElement }) {
 		const field = event.currentTarget;
@@ -63,14 +66,14 @@
 			type="text"
 			name="name"
 			value={store.name}
-			aria-label="Rename {store.name}"
+			aria-label={m.shopping.stores.rename(store.name)}
 			maxlength={STORE_NAME_MAX}
 			autocomplete="off"
 			required
 			onblur={save}
 			{onkeydown}
 		/>
-		<span class="count">{store.itemCount} {store.itemCount === 1 ? 'item' : 'items'}</span>
+		<span class="count">{m.shopping.stores.items(store.itemCount)}</span>
 	</form>
 
 	<form class="move" method="POST" action="?/move" use:enhance>
@@ -80,7 +83,7 @@
 			name="direction"
 			value="up"
 			disabled={first}
-			aria-label="Move {store.name} up"
+			aria-label={m.shopping.stores.moveUp(store.name)}
 		>
 			<ChevronUp size={17} strokeWidth={2.2} />
 		</button>
@@ -89,13 +92,18 @@
 			name="direction"
 			value="down"
 			disabled={last}
-			aria-label="Move {store.name} down"
+			aria-label={m.shopping.stores.moveDown(store.name)}
 		>
 			<ChevronDown size={17} strokeWidth={2.2} />
 		</button>
 	</form>
 
-	<button type="button" class="delete" onclick={ondelete} aria-label="Delete {store.name}">
+	<button
+		type="button"
+		class="delete"
+		onclick={ondelete}
+		aria-label={m.shopping.stores.remove(store.name)}
+	>
 		<Trash2 size={17} strokeWidth={1.9} />
 	</button>
 </li>

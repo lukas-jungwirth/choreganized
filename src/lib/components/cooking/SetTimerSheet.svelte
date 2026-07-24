@@ -10,6 +10,7 @@
 <script lang="ts">
 	import BottomSheet from '$lib/components/ui/BottomSheet.svelte';
 	import Stepper from '$lib/components/ui/Stepper.svelte';
+	import { messages } from '$lib/i18n';
 	import { MAX_TIMER_SECONDS } from '$lib/utils/timer-parse';
 	import TimerIcon from '@lucide/svelte/icons/timer';
 	import { untrack } from 'svelte';
@@ -22,6 +23,8 @@
 	};
 
 	let { suggestedSeconds, onstart, onclose }: Props = $props();
+
+	const m = messages();
 
 	const MAX_MINUTES = Math.floor(MAX_TIMER_SECONDS / 60);
 
@@ -49,13 +52,24 @@
 	}
 </script>
 
-<BottomSheet bind:open title="Set a timer" subtitle="It rings even with the phone locked." tone="dark">
+<BottomSheet
+	bind:open
+	title={m.cooking.cook.timerTitle}
+	subtitle={m.cooking.cook.timerSubtitle}
+	tone="dark"
+>
 	<div class="body">
-		<Stepper label="Minutes" bind:value={minutes} min={1} max={MAX_MINUTES} tone="dark" />
+		<Stepper
+			label={m.cooking.cook.minutes}
+			bind:value={minutes}
+			min={1}
+			max={MAX_MINUTES}
+			tone="dark"
+		/>
 
 		<button type="button" class="start" onclick={start}>
 			<TimerIcon size={18} strokeWidth={2} aria-hidden="true" />
-			Start {minutes ?? FALLBACK_MINUTES}-minute timer
+			{m.cooking.cook.startMinutes(minutes ?? FALLBACK_MINUTES)}
 		</button>
 	</div>
 </BottomSheet>

@@ -8,8 +8,8 @@
 -->
 <script lang="ts">
 	import BottomSheet from '$lib/components/ui/BottomSheet.svelte';
+	import { messages } from '$lib/i18n';
 	import type { RecipeIngredientRow } from '$lib/server/services/recipes';
-	import { formatAmount } from '$lib/utils/ingredients';
 
 	type Props = {
 		ingredients: RecipeIngredientRow[];
@@ -21,6 +21,8 @@
 
 	let { ingredients, servings, used, onclose }: Props = $props();
 
+	const m = messages();
+
 	let open = $state(true);
 
 	$effect(() => {
@@ -28,22 +30,23 @@
 	});
 
 	const highlighted = $derived(new Set(used.map((ingredient) => ingredient.id)));
-	const title = $derived(servings ? `Ingredients · serves ${servings}` : 'Ingredients');
+	const title = $derived(
+		servings ? m.cooking.cook.peekTitleServes(servings) : m.cooking.cook.peekTitle
+	);
 </script>
 
 <BottomSheet bind:open {title} tone="dark">
 	{#if ingredients.length === 0}
-		<p class="empty">This recipe doesn't list any ingredients.</p>
+		<p class="empty">{m.cooking.cook.peekEmpty}</p>
 	{:else}
 		<ul class="list">
 			{#each ingredients as ingredient (ingredient.id)}
 				{@const here = highlighted.has(ingredient.id)}
+				{@const amount = m.units.amount(ingredient.quantity, ingredient.unit)}
 				<li class:here>
 					<span class="dot" aria-hidden="true"></span>
 					<span class="name">{ingredient.name}</span>
-					{#if formatAmount(ingredient.quantity, ingredient.unit)}
-						<span class="amount">{formatAmount(ingredient.quantity, ingredient.unit)}</span>
-					{/if}
+					{#if amount}<span class="amount">{amount}</span>{/if}
 				</li>
 			{/each}
 		</ul>

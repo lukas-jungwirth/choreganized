@@ -5,14 +5,21 @@
  * `src/app.css`; change both together.
  */
 
-export type MemberColor = { name: string; value: string };
+/**
+ * The `key` names the colour in `$lib/i18n` (`ui.colours`); the `value` is what
+ * reaches the column. Only the value is data — "Sage" and "Salbei" are two
+ * names for the same hex.
+ */
+export type MemberColorKey = 'sage' | 'terracotta' | 'blue' | 'amber' | 'plum';
+
+export type MemberColor = { key: MemberColorKey; value: string };
 
 export const MEMBER_COLORS: MemberColor[] = [
-	{ name: 'Sage', value: '#5F8D72' },
-	{ name: 'Terracotta', value: '#C67C51' },
-	{ name: 'Blue', value: '#5C7FA3' },
-	{ name: 'Amber', value: '#D69B4A' },
-	{ name: 'Plum', value: '#9A6B8F' }
+	{ key: 'sage', value: '#5F8D72' },
+	{ key: 'terracotta', value: '#C67C51' },
+	{ key: 'blue', value: '#5C7FA3' },
+	{ key: 'amber', value: '#D69B4A' },
+	{ key: 'plum', value: '#9A6B8F' }
 ];
 
 export function isMemberColor(value: string): boolean {

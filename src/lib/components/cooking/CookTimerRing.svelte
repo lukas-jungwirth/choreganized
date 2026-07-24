@@ -12,12 +12,15 @@
 -->
 <script lang="ts">
 	import type { CookTimer } from '$lib/cook-timer.svelte';
+	import { messages } from '$lib/i18n';
 	import { formatDuration } from '$lib/utils/timer-parse';
 	import Pause from '@lucide/svelte/icons/pause';
 	import Play from '@lucide/svelte/icons/play';
 	import X from '@lucide/svelte/icons/x';
 
 	let { timer }: { timer: CookTimer } = $props();
+
+	const m = messages();
 
 	const RADIUS = 100;
 	const CIRCUMFERENCE = 2 * Math.PI * RADIUS;
@@ -32,7 +35,10 @@
 	<div
 		class="ring"
 		role="timer"
-		aria-label="{timer.label}: {rang ? 'done' : `${remaining} left of ${total}`}"
+		aria-label={m.cooking.cook.timerLabel(
+			timer.label,
+			rang ? m.cooking.cook.timerDone : m.cooking.cook.timerLeft(remaining, total)
+		)}
 	>
 		<svg width="220" height="220" viewBox="0 0 220 220" aria-hidden="true">
 			<circle class="track" cx="110" cy="110" r={RADIUS} />
@@ -47,26 +53,30 @@
 		</svg>
 		<div class="readout">
 			<p class="remaining">{remaining}</p>
-			<p class="label">{timer.label} · {total}{held ? ' · paused' : ''}</p>
+			<p class="label">{m.cooking.cook.timerMeta(timer.label, total, held)}</p>
 		</div>
 	</div>
 
 	<div class="controls">
 		{#if rang}
-			<button type="button" class="control wide" onclick={() => timer.dismiss()}>Dismiss</button>
+			<button type="button" class="control wide" onclick={() => timer.dismiss()}>
+				{m.cooking.cook.dismiss}
+			</button>
 		{:else}
 			{#if held}
 				<button type="button" class="control" onclick={() => timer.resume()}>
-					<Play size={17} strokeWidth={2} aria-hidden="true" />Resume
+					<Play size={17} strokeWidth={2} aria-hidden="true" />{m.cooking.cook.resume}
 				</button>
 			{:else}
 				<button type="button" class="control" onclick={() => timer.pause()}>
-					<Pause size={17} strokeWidth={2} aria-hidden="true" />Pause
+					<Pause size={17} strokeWidth={2} aria-hidden="true" />{m.cooking.cook.pause}
 				</button>
 			{/if}
-			<button type="button" class="control" onclick={() => timer.addMinute()}>+1:00</button>
+			<button type="button" class="control" onclick={() => timer.addMinute()}>
+				{m.cooking.cook.addMinute}
+			</button>
 			<button type="button" class="control" onclick={() => timer.cancel()}>
-				<X size={17} strokeWidth={2} aria-hidden="true" />Cancel
+				<X size={17} strokeWidth={2} aria-hidden="true" />{m.cooking.cook.cancel}
 			</button>
 		{/if}
 	</div>

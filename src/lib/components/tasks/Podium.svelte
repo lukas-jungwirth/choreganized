@@ -12,10 +12,12 @@
 	import CrownIcon from '$lib/components/icons/CrownIcon.svelte';
 	import Avatar from '$lib/components/ui/Avatar.svelte';
 	import Card from '$lib/components/ui/Card.svelte';
+	import { messages } from '$lib/i18n';
 	import type { Podium } from '$lib/server/services/history';
-	import { formatShortDate } from '$lib/utils/dates';
 
 	let { podium }: { podium: Podium } = $props();
+
+	const m = messages();
 
 	/**
 	 * Plinth heights by rank: [8a] draws the first three at 104 / 78 / 60 and
@@ -33,20 +35,20 @@
 		return sizes[rank - 1] ?? sizes[sizes.length - 1];
 	}
 
-	const resets = $derived(formatShortDate(podium.resetsOn));
+	const resets = $derived(m.tasks.podium.resets(m.date.short(podium.resetsOn)));
 </script>
 
 <Card>
 	<div class="podium">
 		<header>
-			<h2>This month</h2>
-			<span class="resets">resets {resets}</span>
+			<h2>{m.tasks.podium.thisMonth}</h2>
+			<span class="resets">{resets}</span>
 		</header>
 
 		<!-- In rank order, so the names and scores read as the standings they are;
 			 the numeral on the plinth is the same fact drawn, and a tie makes it
 			 ambiguous out loud ("1, 1, 3"), so it stays decoration. -->
-		<ol aria-label="Standings, best first">
+		<ol aria-label={m.tasks.podium.standings}>
 			{#each podium.entries as entry (entry.memberId)}
 				{@const winning = entry.rank === 1 && !podium.leaderless}
 				<li style:order={entry.position} style:--column-color={entry.color}>

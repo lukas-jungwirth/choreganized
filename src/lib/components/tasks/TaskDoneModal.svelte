@@ -11,9 +11,8 @@
 	import { enhance } from '$app/forms';
 	import Avatar from '$lib/components/ui/Avatar.svelte';
 	import CenterModal from '$lib/components/ui/CenterModal.svelte';
+	import { messages } from '$lib/i18n';
 	import type { CompletionResult, Standing } from '$lib/server/services/tasks';
-	import { formatShortDate } from '$lib/utils/dates';
-	import { possessive } from '$lib/utils/tasks';
 	import Calendar from '@lucide/svelte/icons/calendar';
 	import Check from '@lucide/svelte/icons/check';
 	import Star from '@lucide/svelte/icons/star';
@@ -28,6 +27,8 @@
 
 	let { completion, standing, color, onclose }: Props = $props();
 
+	const m = messages();
+
 	let open = $state(true);
 	let submitting = $state(false);
 	/** This form's own rejection — a failed undo must not look like a done one. */
@@ -39,35 +40,35 @@
 
 	/** "Rescheduled · Lukas's turn next" — or the truth, when nothing changed hands. */
 	const handover = $derived.by(() => {
-		if (!completion.nextAssigneeName) return 'Rescheduled · anyone can take it';
-		const name = possessive(completion.nextAssigneeName);
-		return completion.rotated ? `Rescheduled · ${name} turn next` : `Rescheduled · still ${name}`;
+		const name = completion.nextAssigneeName;
+		if (!name) return m.tasks.done.handoverAnyone;
+		return completion.rotated ? m.tasks.done.handoverNext(name) : m.tasks.done.handoverSame(name);
 	});
 
 	const standings = $derived.by(() => {
 		const { points, rival, state } = standing;
-		if (!rival) return `${points} points this month`;
-		if (state === 'leading') return `You're now leading ${points} – ${rival.points}`;
-		if (state === 'tied') return `You're level at ${points} – ${rival.points}`;
-		return `${rival.displayName} leads ${rival.points} – ${points}`;
+		if (!rival) return m.tasks.done.standingsSolo(points);
+		if (state === 'leading') return m.tasks.done.standingsLeading(points, rival.points);
+		if (state === 'tied') return m.tasks.done.standingsTied(points, rival.points);
+		return m.tasks.done.standingsBehind(rival.displayName, rival.points, points);
 	});
 </script>
 
-<CenterModal bind:open label="Task completed">
+<CenterModal bind:open label={m.tasks.done.label}>
 	<div class="badge" aria-hidden="true"><Check size={36} strokeWidth={3} /></div>
 
-	<h2>Nice work, {completion.memberName}!</h2>
-	<p class="what">{completion.taskName} · logged to history</p>
+	<h2>{m.tasks.done.niceWork(completion.memberName)}</h2>
+	<p class="what">{m.tasks.done.logged(completion.taskName)}</p>
 
 	<p class="points">
-		<Star size={18} strokeWidth={2} aria-hidden="true" />+{completion.points} points
+		<Star size={18} strokeWidth={2} aria-hidden="true" />{m.tasks.done.points(completion.points)}
 	</p>
 
 	{#if completion.nextDueDate}
 		<div class="next">
 			<Calendar size={20} strokeWidth={1.9} aria-hidden="true" />
 			<span class="when">
-				<span class="due">Next due {formatShortDate(completion.nextDueDate)}</span>
+				<span class="due">{m.tasks.done.nextDue(m.date.short(completion.nextDueDate))}</span>
 				<span class="hand">{handover}</span>
 			</span>
 		</div>
@@ -90,7 +91,7 @@
 				// take back — on screen, rather than closing as if it had worked.
 				if (result.type === 'failure') {
 					error =
-						typeof result.data?.error === 'string' ? result.data.error : "Couldn't undo that one.";
+						typeof result.data?.error === 'string' ? result.data.error : m.tasks.done.undoFailed;
 					return;
 				}
 				open = false;
@@ -102,7 +103,7 @@
 			 that opened this modal (→ services/tasks.ts `TaskSnapshot`). -->
 		<input type="hidden" name="snapshot" value={JSON.stringify(completion.snapshot)} />
 		{#if error}<p class="error">{error}</p>{/if}
-		<button type="submit" class="undo" disabled={submitting}>Undo</button>
+		<button type="submit" class="undo" disabled={submitting}>{m.tasks.done.undo}</button>
 	</form>
 </CenterModal>
 

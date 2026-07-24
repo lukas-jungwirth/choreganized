@@ -6,6 +6,7 @@
  * same pair (→ `lib/server/meal-actions`).
  */
 import { error, redirect } from '@sveltejs/kit';
+import { catalog } from '$lib/i18n';
 import { requireMember } from '$lib/server/guards';
 import { mealPlanActions } from '$lib/server/meal-actions';
 import { addIngredientsToShopping, getWeek } from '$lib/server/services/meals';
@@ -23,12 +24,12 @@ export const load: PageServerLoad = async (event) => {
 
 	const recipe = getRecipe(householdId, event.params.id);
 	// Another household's id and a deleted recipe answer identically.
-	if (!recipe) error(404, 'That recipe is gone.');
+	if (!recipe) error(404, catalog(event.locals.locale).errors.recipes.gone);
 
 	return {
 		recipe,
 		/** "Add to plan" picks a day first, so it needs the week [3d]. */
-		week: getWeek(householdId, today),
+		week: getWeek(householdId, today, event.locals.locale),
 		/** The plan sheet's list — it can be reopened on a different recipe. */
 		recipes: listRecipes(householdId)
 	};
@@ -51,7 +52,7 @@ export const actions: Actions = {
 		const { householdId, member } = requireMember(event);
 
 		const copyId = duplicateRecipe(householdId, member.id, event.params.id);
-		if (!copyId) error(404, 'That recipe is gone.');
+		if (!copyId) error(404, catalog(event.locals.locale).errors.recipes.gone);
 
 		// Land on the copy: it's the one being worked on now, and its "(copy)"
 		// name says plainly what happened.

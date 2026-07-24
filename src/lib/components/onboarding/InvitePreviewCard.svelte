@@ -2,6 +2,7 @@
 	 above the join form once a code resolves. -->
 <script lang="ts">
 	import Avatar from '$lib/components/ui/Avatar.svelte';
+	import { messages } from '$lib/i18n';
 
 	type Props = {
 		householdName: string;
@@ -9,6 +10,8 @@
 	};
 
 	let { householdName, inviter }: Props = $props();
+
+	const m = messages();
 </script>
 
 <div class="card">
@@ -22,9 +25,9 @@
 				ringColor="var(--card)"
 			/>
 		</div>
-		<p class="line"><b>{inviter.displayName}</b> invited you to</p>
+		<p class="line"><b>{inviter.displayName}</b> {m.onboarding.landing.invitedBy}</p>
 	{:else}
-		<p class="line">You've been invited to</p>
+		<p class="line">{m.onboarding.landing.invitedTo}</p>
 	{/if}
 	<p class="household">{householdName}</p>
 </div>

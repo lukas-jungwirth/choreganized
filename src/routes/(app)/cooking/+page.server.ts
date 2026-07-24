@@ -20,7 +20,7 @@ export const load: PageServerLoad = async (event) => {
 	const { today } = await event.parent();
 
 	return {
-		week: getWeek(householdId, today),
+		week: getWeek(householdId, today, event.locals.locale),
 		recipes: listRecipes(householdId)
 	};
 };

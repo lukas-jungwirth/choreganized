@@ -12,6 +12,7 @@
 -->
 <script lang="ts">
 	import { enhance } from '$app/forms';
+	import { messages } from '$lib/i18n';
 	import { ITEM_NAME_MAX } from '$lib/utils/shopping';
 	import Plus from '@lucide/svelte/icons/plus';
 	import SlidersHorizontal from '@lucide/svelte/icons/sliders-horizontal';
@@ -27,6 +28,8 @@
 	};
 
 	let { value = $bindable(''), onexpand }: Props = $props();
+
+	const m = messages();
 
 	let input: HTMLInputElement | undefined = $state();
 	/**
@@ -62,18 +65,18 @@
 		class="input"
 		type="text"
 		name="name"
-		placeholder="Add an item…"
-		aria-label="Add an item"
+		placeholder={m.shopping.quickAdd.placeholder}
+		aria-label={m.shopping.quickAdd.label}
 		maxlength={ITEM_NAME_MAX}
 		autocomplete="off"
 		required
 	/>
 
-	<button type="button" class="expand" onclick={onexpand} aria-label="Add with quantity and store">
+	<button type="button" class="expand" onclick={onexpand} aria-label={m.shopping.quickAdd.expand}>
 		<SlidersHorizontal size={16} strokeWidth={2} />
 	</button>
 
-	<button type="submit" class="submit" aria-label="Add item">
+	<button type="submit" class="submit" aria-label={m.shopping.quickAdd.submit}>
 		<Plus size={16} strokeWidth={2.4} />
 	</button>
 </form>

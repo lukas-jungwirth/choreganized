@@ -8,17 +8,20 @@
 -->
 <script lang="ts">
 	import RecipeCard from '$lib/components/cooking/RecipeCard.svelte';
-	import PotIcon from '$lib/components/icons/PotIcon.svelte';
+	import ChefHatIcon from '$lib/components/icons/ChefHatIcon.svelte';
 	import SubHeader from '$lib/components/shell/SubHeader.svelte';
 	import Button from '$lib/components/ui/Button.svelte';
 	import EmptyState from '$lib/components/ui/EmptyState.svelte';
 	import FAB from '$lib/components/ui/FAB.svelte';
 	import SearchField from '$lib/components/ui/SearchField.svelte';
+	import { messages } from '$lib/i18n';
 	import Plus from '@lucide/svelte/icons/plus';
 	import { untrack } from 'svelte';
 	import type { PageProps } from './$types';
 
 	let { data }: PageProps = $props();
+
+	const m = messages();
 
 	/** Long enough that a word isn't four navigations, short enough to feel live. */
 	const DEBOUNCE_MS = 220;
@@ -37,14 +40,14 @@
 </script>
 
 <svelte:head>
-	<title>Recipes · Choreganized</title>
+	<title>{m.common.pageTitle(m.cooking.recipes.title)}</title>
 </svelte:head>
 
 <SubHeader
-	title="Recipes"
-	subtitle={data.total === 1 ? '1 saved' : `${data.total} saved`}
+	title={m.cooking.recipes.title}
+	subtitle={m.cooking.recipes.saved(data.total)}
 	back="/cooking"
-	backLabel="Back to the week"
+	backLabel={m.cooking.recipes.back}
 />
 
 {#if data.total > 0}
@@ -57,33 +60,33 @@
 		data-sveltekit-noscroll
 	>
 		<SearchField
-			label="Search recipes"
-			placeholder="Search recipes"
+			label={m.cooking.recipes.search}
+			placeholder={m.cooking.recipes.search}
 			name="q"
 			bind:value={query}
 			oninput={schedule}
 		/>
 		<!-- The submit the debounce presses for you; also the no-JS path. -->
-		<button type="submit" class="sr-only">Search</button>
+		<button type="submit" class="sr-only">{m.ui.search}</button>
 	</form>
 {/if}
 
 {#if data.total === 0}
 	<div class="empty">
-		<EmptyState title="Build your cookbook">
-			{#snippet icon()}<PotIcon size={40} strokeWidth={1.6} />{/snippet}
-			Save the meals you cook often. Then drop them onto any day of the week in a tap.
+		<EmptyState title={m.cooking.recipes.emptyTitle}>
+			{#snippet icon()}<ChefHatIcon size={40} strokeWidth={1.6} />{/snippet}
+			{m.cooking.recipes.emptyCopy}
 			{#snippet action()}
 				<div class="cta">
 					<Button href="/cooking/recipes/new">
-						<Plus size={17} strokeWidth={2.4} />Add a recipe
+						<Plus size={17} strokeWidth={2.4} />{m.cooking.recipes.emptyCta}
 					</Button>
 				</div>
 			{/snippet}
 		</EmptyState>
 	</div>
 {:else if data.recipes.length === 0}
-	<p class="none">Nothing matches “{data.search}”.</p>
+	<p class="none">{m.cooking.recipes.noMatch(data.search)}</p>
 {:else}
 	<ul class="grid">
 		{#each data.recipes as recipe (recipe.id)}
@@ -95,7 +98,7 @@
 {/if}
 
 {#if data.total > 0}
-	<FAB label="New recipe" href="/cooking/recipes/new">
+	<FAB label={m.cooking.recipes.newRecipe} href="/cooking/recipes/new">
 		<Plus size={24} strokeWidth={2.4} />
 	</FAB>
 {/if}

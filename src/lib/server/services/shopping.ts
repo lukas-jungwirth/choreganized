@@ -16,8 +16,12 @@ import { db } from '../db';
 import { members, shoppingItems, stores, type ShoppingItem, type Store } from '../db/schema';
 import { notifyShoppingAdd } from '../push';
 
-/** Items with no store fall under this heading, always last (→ SPEC §3.1). */
-export const OTHER_GROUP = 'Other';
+/*
+ * Items with no store fall under one virtual group, always last (→ SPEC §3.1).
+ * It is identified by a null `storeId` and carries no name of its own: "Other"
+ * is copy, and the screen rendering it knows which language it is in
+ * (→ `$lib/i18n`, `shopping.other`).
+ */
 
 /** Anything longer is a paste accident, not a unit ("tbsp" from a recipe is fine). */
 const UNIT_MAX = 12;
@@ -48,7 +52,8 @@ export type ShoppingListItem = {
 export type ShoppingGroup = {
 	/** Null = the virtual "Other" group. */
 	storeId: string | null;
-	name: string;
+	/** The store's own name; null for the "Other" group, which the screen names. */
+	name: string | null;
 	items: ShoppingListItem[];
 };
 
@@ -130,7 +135,7 @@ export function getShoppingList(
 	}
 
 	const other = byStore.get(null);
-	if (other?.length) groups.push({ storeId: null, name: OTHER_GROUP, items: other });
+	if (other?.length) groups.push({ storeId: null, name: null, items: other });
 
 	return { groups, checked, total: rows.length };
 }

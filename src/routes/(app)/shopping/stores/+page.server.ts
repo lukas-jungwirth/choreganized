@@ -3,6 +3,7 @@
  * delete; deleting drops its items into "Other" rather than removing them.
  */
 import { fail } from '@sveltejs/kit';
+import { catalog, type Messages } from '$lib/i18n';
 import { requireMember } from '$lib/server/guards';
 import {
 	createStore,
@@ -20,10 +21,10 @@ export const load: PageServerLoad = (event) => {
 	return { stores: listStoresWithCounts(householdId) };
 };
 
-function readName(form: FormData): { name: string } | { error: string } {
+function readName(form: FormData, m: Messages): { name: string } | { error: string } {
 	const name = String(form.get('name') ?? '').trim();
-	if (!name) return { error: 'Give the store a name.' };
-	if (name.length > STORE_NAME_MAX) return { error: `Keep it under ${STORE_NAME_MAX} characters.` };
+	if (!name) return { error: m.errors.shopping.storeName };
+	if (name.length > STORE_NAME_MAX) return { error: m.errors.keepUnder(STORE_NAME_MAX) };
 	return { name };
 }
 
@@ -32,7 +33,7 @@ export const actions: Actions = {
 		const { householdId } = requireMember(event);
 		const form = await event.request.formData();
 
-		const name = readName(form);
+		const name = readName(form, catalog(event.locals.locale));
 		if ('error' in name) return fail(400, { error: name.error });
 
 		createStore(householdId, name.name);
@@ -44,7 +45,7 @@ export const actions: Actions = {
 		const { householdId } = requireMember(event);
 		const form = await event.request.formData();
 
-		const name = readName(form);
+		const name = readName(form, catalog(event.locals.locale));
 		if ('error' in name) return fail(400, { error: name.error });
 
 		renameStore(householdId, String(form.get('id') ?? ''), name.name);

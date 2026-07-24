@@ -25,14 +25,16 @@ server. Everything a feature needs — UI, server logic, DB, cron, push — live
 ```
 src/
   app.css                      # design tokens (single source of styling truth)
-  app.d.ts                     # App.Locals: { user, member }
-  hooks.server.ts              # auth handler + locals + init (migrate, cron)  [plan 00]
+  app.d.ts                     # App.Locals: { user, member, locale }
+  hooks.server.ts              # auth handler + locals + <html lang> + init (migrate, cron) [plan 00]
   service-worker.ts            # push/notificationclick + minimal precache     [plan 05]
   lib/
     assets/                    # logo svgs, placeholder art
     refetch.ts                 # refetchOnFocus(): visibilitychange → invalidateAll [plan 02]
     scroll-lock.ts             # ref-counted body lock shared by the dialogs     [plan 02]
     push-client.ts             # permission/subscribe state for the browser      [plan 05]
+    i18n/                      # locale.ts (negotiation), context.ts (per-request catalog),
+                               # messages/en.ts (the schema) + messages/de.ts       [i18n]
     components/
       EnablePush.svelte        # "notifications on this device" (Settings + Home) [plan 05]
       AwayControl.svelte       # the holiday pause (snooze sheet + Settings)      [plan 10]
@@ -108,11 +110,33 @@ api/
   service function, return. Anything touching more than one table (complete task, join
   household, plan meal + shopping add) is a service function using a transaction.
 - **hooks.server.ts** wires: Better Auth handler (`svelteKitHandler`), locals population
-  (session → user → member, one query), and the `init` hook: `runMigrations()` +
-  `registerCronJobs()` (guarded against dev-HMR double registration via a `globalThis` flag).
+  (session → user → member, one query; then `locale`, → "Language"), the `<html lang>`
+  substitution, and the `init` hook: `runMigrations()` + `registerCronJobs()` (guarded against
+  dev-HMR double registration via a `globalThis` flag).
 - **Freshness without SSE (v1):** actions naturally invalidate; plus a small shared
   `refetchOnFocus` helper (visibilitychange → `invalidateAll`) in the app layout. SSE upgrade
   is isolated in one place later.
+
+## Language
+
+English and German, from typed catalogs — no i18n library (→ [DECISIONS #93](DECISIONS.md),
+[SPEC §9](SPEC.md)). Three rules hold it together:
+
+1. **Resolved once per request, in `hooks.server.ts`**: `members.locale` → the `locale` cookie
+   → `Accept-Language` → English, into `event.locals.locale`. A NULL column is the "System"
+   option, not an absence, which is what makes the fall-through happen. The root
+   `+layout.server.ts` passes it to the browser and the root layout puts the matching catalog
+   into Svelte context.
+2. **In a component**, `const m = messages()` at init, then `m.tasks.title` — context, not a
+   module global, because the server renders many households at once. The catalog is a snapshot;
+   changing language is a _document_ reload, never a data update (→ #95).
+3. **On the server**, where there is no component, `catalog(event.locals.locale)`. Anything that
+   returns copy as data takes the language with it: `TaskContext` has a `locale` beside
+   `today`/`timezone`, `getWeek` takes one, and the form readers in `utils/` take the catalog so
+   a refusal comes back in the language the form was filled in.
+
+`utils/dates.ts` stays pure calendar + `Intl` and takes a `Locale`; the formats that mix a date
+with words of our own ("due today", "Today · 17 Jul") live in the catalogs, one per language.
 
 ## Notifications
 
@@ -135,9 +159,13 @@ and the SW supplies a default vibration pattern and our icon/badge.
 The API 06 and 08 build on (all of it never throws, all of it returns a delivered count):
 
 ```ts
-sendToUser(userId, payload, { ttlSeconds? })                       // one person, every device
-sendToMembers(householdId, payload, { except?, pref?, ttlSeconds? })  // the household
+sendToUser(userId, payloadFor, { ttlSeconds? })                       // one person, every device
+sendToMembers(householdId, payloadFor, { except?, pref?, ttlSeconds? })  // the household
 ```
+
+`payloadFor` is `(m) => PushPayload`, not a finished payload: this is the one place the app
+addresses somebody who isn't making the request, so each device gets its recipient's language
+(→ "Language", [DECISIONS #98](DECISIONS.md)).
 
 `pref` is a `members.notify*` column and `except` a member id (the actor). TTL defaults to 12 h
 — a nudge that arrives two days late is worse than one that never arrives

@@ -17,7 +17,8 @@
 	import Button from '$lib/components/ui/Button.svelte';
 	import DateField from '$lib/components/ui/DateField.svelte';
 	import Toggle from '$lib/components/ui/Toggle.svelte';
-	import { addDays, formatDateLabel, formatShortDate, type CalendarDate } from '$lib/utils/dates';
+	import { messages } from '$lib/i18n';
+	import { addDays, type CalendarDate } from '$lib/utils/dates';
 	import { DEFAULT_AWAY_DAYS } from '$lib/utils/tasks';
 	import Volume2 from '@lucide/svelte/icons/volume-2';
 	import { tick, untrack } from 'svelte';
@@ -31,6 +32,8 @@
 	};
 
 	let { today, awayUntil, surface = 'sheet' }: Props = $props();
+
+	const m = messages();
 
 	let away = $state(untrack(() => awayUntil !== null && awayUntil >= today));
 	let returnDate = $state(untrack(() => awayUntil ?? addDays(today, DEFAULT_AWAY_DAYS)));
@@ -89,13 +92,15 @@
 	<div class="holiday">
 		<span class="tile" aria-hidden="true"><Volume2 size={19} strokeWidth={1.8} /></span>
 		<div class="copy">
-			<span class="title">Going away?</span>
+			<span class="title">{m.away.title}</span>
 			<span class="detail">
-				Pause <b>all your tasks</b> while you're on holiday — nothing counts as overdue and no reminders
-				are sent.
+				<!-- The emphasis is part of the copy, so each language decides where it
+					 falls (→ `RichText` in `$lib/i18n/messages/en.ts`). -->
+				{#each m.away.detail as part}{#if part.strong}<b>{part.text}</b
+						>{:else}{part.text}{/if}{/each}
 			</span>
 		</div>
-		<Toggle bind:checked={away} label="Going away" onchange={onAwayChange} />
+		<Toggle bind:checked={away} label={m.away.toggle} onchange={onAwayChange} />
 	</div>
 
 	<!-- The value the form posts, whether or not the picker is on screen:
@@ -103,17 +108,16 @@
 	<input type="hidden" name="until" value={away ? returnDate : ''} />
 
 	{#if away}
+		{@const until = returnDate ? m.date.short(returnDate) : '…'}
 		<div class="until">
 			<DateField
-				label="Back on"
+				label={m.away.backOn}
 				bind:value={returnDate}
-				caption={returnDate ? formatDateLabel(returnDate, today) : undefined}
+				caption={returnDate ? m.date.dateLabel(returnDate, today) : undefined}
 				min={today}
 			/>
 			<Button type="submit" variant="secondary" disabled={pausing || !returnDate}>
-				{awayUntil ? 'Update' : 'Pause'} my tasks until {returnDate
-					? formatShortDate(returnDate)
-					: '…'}
+				{awayUntil ? m.away.updateUntil(until) : m.away.pauseUntil(until)}
 			</Button>
 		</div>
 	{/if}

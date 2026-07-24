@@ -12,8 +12,14 @@
  * so adding a month never consults a timezone at all. Plan 02 added the helpers
  * Home needs, plan 04 the recurrence math; extend this file rather than
  * starting a second one.
+ *
+ * Timezone and language are separate axes and stay that way: a household in
+ * Vienna reading the app in English gets Vienna's midnight and English month
+ * names. The zone comes from `households.timezone`, the language from the
+ * member (→ `$lib/i18n`).
  */
 import { addDays as shiftDays, addMonths, addWeeks } from 'date-fns';
+import { INTL_LOCALE, INTL_LOCALE_DAY_FIRST, type Locale } from '$lib/i18n/locale';
 
 /** A household-local calendar date, 'YYYY-MM-DD'. Lexicographic order = chronological order. */
 export type CalendarDate = string;
@@ -108,9 +114,21 @@ export function daysBetween(from: CalendarDate, to: CalendarDate): number {
 
 /* ── Rendering a calendar date ────────────────────────────────────────────── */
 
-/** "Jul 14" — the design's date shorthand [3b] [4b] [4d]. */
-export function formatShortDate(date: CalendarDate, withYear = false): string {
-	return formatter(withYear ? 'short-year' : 'short', 'en-US', {
+/*
+ * Everything below names a day in a *language*, so each takes a `Locale` and
+ * asks `Intl` for that language's order and vocabulary. They are the raw
+ * material only: the strings that mix a date with words of our own — "due
+ * today", "Today · 17 Jul" — are copy, and copy lives in the catalogs
+ * (→ `$lib/i18n/messages/en.ts`, section `date`). Reach for `m.date.*` in a
+ * component; these are what those wrappers call.
+ *
+ * The cache is keyed by locale as well as format, so two languages on one
+ * server keep two formatters rather than fighting over one.
+ */
+
+/** "Jul 14" / "14. Juli" — the design's date shorthand [3b] [4b] [4d]. */
+export function formatShortDate(date: CalendarDate, locale: Locale, withYear = false): string {
+	return formatter(`short|${locale}|${withYear}`, INTL_LOCALE[locale], {
 		timeZone: 'UTC',
 		month: 'short',
 		day: 'numeric',
@@ -118,23 +136,25 @@ export function formatShortDate(date: CalendarDate, withYear = false): string {
 	}).format(atUtcMidnight(date));
 }
 
-/** "Sat" — how a due date inside the coming week reads [4a]. */
-export function formatWeekday(date: CalendarDate): string {
-	return formatter('weekday', 'en-US', { timeZone: 'UTC', weekday: 'short' }).format(
-		atUtcMidnight(date)
-	);
+/** "Sat" / "Sa" — how a due date inside the coming week reads [4a]. */
+export function formatWeekday(date: CalendarDate, locale: Locale): string {
+	return formatter(`weekday|${locale}`, INTL_LOCALE[locale], {
+		timeZone: 'UTC',
+		weekday: 'short'
+	}).format(atUtcMidnight(date));
 }
 
-/** "MON" — the Cooking tab's day strip and meal rows [04]. */
-export function formatWeekdayShort(date: CalendarDate): string {
-	return formatWeekday(date).toUpperCase();
+/** "MON" / "MO" — the Cooking tab's day strip and meal rows [04]. */
+export function formatWeekdayShort(date: CalendarDate, locale: Locale): string {
+	return formatWeekday(date, locale).toLocaleUpperCase(INTL_LOCALE[locale]);
 }
 
-/** "Thursday" — the plan-a-meal sheet's title [3d]. */
-export function formatWeekdayLong(date: CalendarDate): string {
-	return formatter('weekday-long', 'en-US', { timeZone: 'UTC', weekday: 'long' }).format(
-		atUtcMidnight(date)
-	);
+/** "Thursday" / "Donnerstag" — the plan-a-meal sheet's title [3d]. */
+export function formatWeekdayLong(date: CalendarDate, locale: Locale): string {
+	return formatter(`weekday-long|${locale}`, INTL_LOCALE[locale], {
+		timeZone: 'UTC',
+		weekday: 'long'
+	}).format(atUtcMidnight(date));
 }
 
 /** The day of the month without its leading zero — "14", the strip's number [04]. */
@@ -148,40 +168,33 @@ export function dayOfMonth(date: CalendarDate): string {
  * [04], where a week that crosses the turn of the month would otherwise be
  * labelled with whichever end we happened to pick.
  */
-export function formatMonthRange(from: CalendarDate, to: CalendarDate): string {
+export function formatMonthRange(from: CalendarDate, to: CalendarDate, locale: Locale): string {
 	const sameMonth = from.slice(0, 7) === to.slice(0, 7);
 	const style = sameMonth ? 'long' : 'short';
 	const month = (date: CalendarDate) =>
-		formatter(`month-${style}`, 'en-US', { timeZone: 'UTC', month: style }).format(
-			atUtcMidnight(date)
-		);
+		formatter(`month-${style}|${locale}`, INTL_LOCALE[locale], {
+			timeZone: 'UTC',
+			month: style
+		}).format(atUtcMidnight(date));
 
 	return sameMonth ? month(from) : `${month(from)} – ${month(to)}`;
 }
 
-/** "Mon 14 Jul" — the history feed's day stamp [05] [8a]. */
-export function formatDayStamp(date: CalendarDate, withYear = false): string {
-	return formatter(withYear ? 'day-stamp-year' : 'day-stamp', 'en-GB', {
+/**
+ * "Mon 14 Jul" / "Mo., 14. Juli" — the history feed's day stamp [05] [8a].
+ *
+ * Day-first: English reads the shorthand American-style in the design ("Jul
+ * 14") but stamps the feed British-style, so this one format asks for the other
+ * English (→ `INTL_LOCALE_DAY_FIRST`). German has only the one order.
+ */
+export function formatDayStamp(date: CalendarDate, locale: Locale, withYear = false): string {
+	return formatter(`day-stamp|${locale}|${withYear}`, INTL_LOCALE_DAY_FIRST[locale], {
 		timeZone: 'UTC',
 		weekday: 'short',
 		day: 'numeric',
 		month: 'short',
 		...(withYear ? { year: 'numeric' } : {})
 	}).format(atUtcMidnight(date));
-}
-
-/**
- * How the history feed heads a day: "Today", "Yesterday", "Mon 14 Jul" [8a].
- * The year appears once you've paged back past New Year, where a bare "Mon 14
- * Jul" would claim to be four months away rather than a year and four months.
- */
-export function formatDayLabel(date: CalendarDate, today: CalendarDate): string {
-	const days = daysBetween(today, date);
-
-	if (days === 0) return 'Today';
-	if (days === -1) return 'Yesterday';
-
-	return formatDayStamp(date, date.slice(0, 4) !== today.slice(0, 4));
 }
 
 /**
@@ -192,10 +205,10 @@ export function formatDayLabel(date: CalendarDate, today: CalendarDate): string 
  * Distinct from `formatMonthRange`, which labels a *span* and never carries a
  * year: this one has to survive paging back across New Year.
  */
-export function formatMonthName(date: CalendarDate, today: CalendarDate): string {
+export function formatMonthName(date: CalendarDate, today: CalendarDate, locale: Locale): string {
 	const sameYear = date.slice(0, 4) === today.slice(0, 4);
 
-	return formatter(sameYear ? 'month-name' : 'month-name-year', 'en-US', {
+	return formatter(`month-name|${locale}|${sameYear}`, INTL_LOCALE[locale], {
 		timeZone: 'UTC',
 		month: 'long',
 		...(sameYear ? {} : { year: 'numeric' })
@@ -203,43 +216,15 @@ export function formatMonthName(date: CalendarDate, today: CalendarDate): string
 }
 
 /**
- * The due half of a task's meta line (→ SPEC §5.1): "due today", "due
- * tomorrow", "in 2 days", "3 days overdue", "Sat", "Jul 14".
+ * Whether a date carries its year when written out: it doesn't while it's in
+ * the year we're living in, and does the moment it isn't. "Jul 14" a year out
+ * would be a lie by omission; "Jul 14 2026" all summer would be noise.
  *
- * [4a] draws both "in 2 days" (a task due in two) and "Sat" (one due in four),
- * so the switch from counting days to naming the day sits between them; past a
- * week a weekday name stops being unambiguous and the date takes over. The year
- * only appears when it isn't this one — "Jul 14" a year out would be a lie by
- * omission.
+ * Shared by every `m.date.*` wrapper so the rule is one decision rather than
+ * six copies of the same `slice(0, 4)` comparison.
  */
-export function formatDueMeta(dueDate: CalendarDate, today: CalendarDate): string {
-	const days = daysBetween(today, dueDate);
-
-	if (days < 0) return days === -1 ? '1 day overdue' : `${-days} days overdue`;
-	if (days === 0) return 'due today';
-	if (days === 1) return 'due tomorrow';
-	if (days <= 3) return `in ${days} days`;
-	if (days <= 6) return formatWeekday(dueDate);
-
-	return formatShortDate(dueDate, dueDate.slice(0, 4) !== today.slice(0, 4));
-}
-
-/**
- * A date the way a picker labels it — "Today · Jul 17", "Tomorrow · Jul 17",
- * "Sat · Jul 19", "Jul 24" [3b] [4c]. Same near/far split as `formatDueMeta`,
- * but always carrying the date itself: this labels a value you are choosing,
- * where "in 2 days" alone would leave you counting.
- */
-export function formatDateLabel(date: CalendarDate, today: CalendarDate): string {
-	const days = daysBetween(today, date);
-	const short = formatShortDate(date, date.slice(0, 4) !== today.slice(0, 4));
-
-	if (days === 0) return `Today · ${short}`;
-	if (days === 1) return `Tomorrow · ${short}`;
-	if (days === -1) return `Yesterday · ${short}`;
-	if (days > 1 && days <= 6) return `${formatWeekday(date)} · ${short}`;
-
-	return short;
+export function needsYear(date: CalendarDate, today: CalendarDate): boolean {
+	return date.slice(0, 4) !== today.slice(0, 4);
 }
 
 /** Is this a well-formed 'YYYY-MM-DD' that names a real day? */

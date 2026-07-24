@@ -53,6 +53,12 @@ user ─┬─ session / account / verification        (Better Auth)
   nudges fire only if it becomes due again after return; simpler: reminders check away at send
   time), Home banner.
 - Notification prefs live here (not on `user`) because they're household-app concerns.
+- `locale`: `'en' | 'de' | NULL`. **NULL is a setting, not an absence** — it is Settings'
+  "System" option, meaning "follow whatever device I'm on", which is what lets
+  `hooks.server.ts` fall through to the `locale` cookie and then `Accept-Language`. On the
+  membership rather than in the cookie alone so a phone and a laptop agree, and so the cron
+  sweep can address a notification in its recipient's language
+  (→ [DECISIONS #94](DECISIONS.md), [SPEC §9](SPEC.md)).
 
 ### `stores` / `shopping_items`
 
@@ -63,6 +69,10 @@ user ─┬─ session / account / verification        (Better Auth)
   items with `checkedAt < now - 12h` (nightly at 03:30 household-local; exact age not
   critical).
 - `quantity REAL` + `unit TEXT` both optional — "Tomatoes ×6", "Oat milk 2 L", or bare names.
+  The unit is stored **canonically** (`pcs`, `tbsp`) and labelled per language on the way out
+  ("Stk.", "EL"), so switching language re-labels the list rather than rewriting it
+  (→ [DECISIONS #97](DECISIONS.md)). A unit somebody typed that isn't in the table is kept and
+  shown exactly as typed.
 
 ### `recipes` / `recipe_ingredients` / `recipe_steps`
 
@@ -125,6 +135,10 @@ occurrence changes (done, skip, snooze, edit of due date).
 
 - One row per browser/device (`endpoint` unique, upsert on re-subscribe). Send failures with
   status 404/410 delete the row (pruning). A user may have several (phone + laptop).
+- `locale`: the language _this device_ was reading in when it subscribed. A push goes to a
+  device, so this is what makes "follow the system language" true for notifications and not
+  just for pages; an explicit `members.locale` outranks it, and `deliver` encodes one payload
+  per language actually in play (→ [DECISIONS #98](DECISIONS.md)).
 
 ### `cook_timers`
 

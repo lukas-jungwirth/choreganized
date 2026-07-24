@@ -18,9 +18,9 @@
 	import Avatar from '$lib/components/ui/Avatar.svelte';
 	import Card from '$lib/components/ui/Card.svelte';
 	import CheckCircle from '$lib/components/ui/CheckCircle.svelte';
+	import { messages } from '$lib/i18n';
 	import type { TaskListItem } from '$lib/server/services/tasks';
-	import { daysBetween, formatDueMeta, formatShortDate, type CalendarDate } from '$lib/utils/dates';
-	import { formatReminderNote, formatRepeat, formatTurn } from '$lib/utils/tasks';
+	import { daysBetween, type CalendarDate } from '$lib/utils/dates';
 	import type { SubmitFunction } from '@sveltejs/kit';
 	import AlarmClock from '@lucide/svelte/icons/alarm-clock';
 	import Bell from '@lucide/svelte/icons/bell';
@@ -40,11 +40,13 @@
 
 	let { task, today, currentMemberId, pending, complete, onopen }: Props = $props();
 
+	const m = messages();
+
 	const days = $derived(task.dueDate ? daysBetween(today, task.dueDate) : null);
 	const overdue = $derived(!task.paused && days !== null && days < 0);
 	const dueToday = $derived(!task.paused && days === 0);
 
-	const repeat = $derived(formatRepeat(task.recurUnit, task.recurInterval));
+	const repeat = $derived(m.task.repeat(task.recurUnit, task.recurInterval));
 
 	/**
 	 * The half after the cadence. A paused task says so instead of counting the
@@ -53,10 +55,10 @@
 	 */
 	const detail = $derived.by(() => {
 		if (task.paused && task.assignee?.awayUntil) {
-			return `paused until ${formatShortDate(task.assignee.awayUntil)}`;
+			return m.tasks.row.pausedUntil(m.date.short(task.assignee.awayUntil));
 		}
-		if (task.dueDate) return formatDueMeta(task.dueDate, today);
-		return task.createdByName ? `added by ${task.createdByName}` : null;
+		if (task.dueDate) return m.date.dueMeta(task.dueDate, today);
+		return task.createdByName ? m.tasks.row.addedBy(task.createdByName) : null;
 	});
 
 	const meta = $derived(detail ? `${repeat} · ${detail}` : repeat);
@@ -64,18 +66,18 @@
 	/** Whose turn it is, and which mornings they were nudged [4a]. */
 	const footer = $derived.by(() => {
 		if (!overdue) return null;
-		const turn = formatTurn(
+		const turn = m.task.turn(
 			task.assignee?.displayName ?? null,
 			task.assignee?.id === currentMemberId
 		);
-		const reminded = formatReminderNote([task.dueRemindedOn, task.overdueRemindedOn], today);
+		const reminded = m.task.reminderNote([task.dueRemindedOn, task.overdueRemindedOn], today);
 		return reminded ? `${turn} · ${reminded}` : turn;
 	});
 
 	const action = $derived(
 		task.assignee && task.assignee.id !== currentMemberId
-			? `Mark ${task.name} done — it's ${task.assignee.displayName}'s`
-			: `Mark ${task.name} done`
+			? m.tasks.row.markDoneFor(task.name, task.assignee.displayName)
+			: m.tasks.row.markDone(task.name)
 	);
 </script>
 
@@ -90,7 +92,12 @@
 					</button>
 				</form>
 
-				<button type="button" class="body" onclick={onopen} aria-label="Open {task.name}">
+				<button
+					type="button"
+					class="body"
+					onclick={onopen}
+					aria-label={m.tasks.row.open(task.name)}
+				>
 					<span class="name">{task.name}</span>
 					<span class="meta" class:danger={overdue} class:due={dueToday}>
 						{#if overdue}
@@ -109,7 +116,7 @@
 						<!-- "Anyone": a neutral dashed circle, nobody's face (→ SPEC §5.1). -->
 						<Avatar empty size={22} />
 					{/if}
-					<span class="points">+{task.points}</span>
+					<span class="points">{m.task.points(task.points)}</span>
 				</span>
 			</div>
 

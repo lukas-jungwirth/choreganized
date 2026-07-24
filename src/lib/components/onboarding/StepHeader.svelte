@@ -3,19 +3,22 @@
 	 screen reached from Settings [6b] is not a step of anything (→ #28). -->
 <script lang="ts">
 	import ChevronLeft from '@lucide/svelte/icons/chevron-left';
+	import { messages } from '$lib/i18n';
 
 	type Props = { step?: number; total?: number; back?: string; backLabel?: string };
 
-	let { step, total = 2, back, backLabel = 'Back' }: Props = $props();
+	let { step, total = 2, back, backLabel }: Props = $props();
+
+	const m = messages();
 </script>
 
 <div class="step-header">
 	{#if back}
-		<a class="back" href={back} aria-label={backLabel}>
+		<a class="back" href={back} aria-label={backLabel ?? m.nav.back}>
 			<ChevronLeft size={20} strokeWidth={2.4} />
 		</a>
 	{/if}
-	{#if step}<span class="step">Step {step} of {total}</span>{/if}
+	{#if step}<span class="step">{m.onboarding.step(step, total)}</span>{/if}
 </div>
 
 <style>

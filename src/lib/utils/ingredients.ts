@@ -13,6 +13,7 @@
  * form: the edit screen [3c] shows stored rows as text again, and re-saving must
  * not slowly rewrite the recipe.
  */
+import { unitLabel, type UnitLabels } from './shopping';
 
 /** Units a recipe line may name. `L` is capitalised the way the design writes it. */
 export const RECIPE_UNITS = ['g', 'kg', 'ml', 'L', 'pcs', 'pack', 'tbsp', 'tsp'] as const;
@@ -23,6 +24,12 @@ export type RecipeUnit = (typeof RECIPE_UNITS)[number];
  * Everything a unit may be spelled as, lowercased → the canonical form. Written
  * out rather than derived: "l" must become "L" and "x" must become "pcs", and a
  * plural rule that turned "lemons" into a unit would be worse than no rule.
+ *
+ * Both languages read into the same table, because a household types in
+ * whichever one is to hand: "2 EL Öl" and "2 tbsp oil" both store `tbsp`, and
+ * the row then *shows* in whatever language the reader has on (→ `formatAmount`).
+ * German spellings can be added without ambiguity — no English unit is spelled
+ * like a German one meaning something else.
  *
  * A `Map`, not an object literal: a plain object answers `alias['constructor']`
  * with a function and `alias['__proto__']` with `Object.prototype`, neither of
@@ -35,11 +42,13 @@ const UNIT_ALIASES = new Map<string, RecipeUnit>(
 		gr: 'g',
 		gram: 'g',
 		grams: 'g',
+		gramm: 'g',
 		kg: 'kg',
 		kilo: 'kg',
 		kilos: 'kg',
 		kilogram: 'kg',
 		kilograms: 'kg',
+		kilogramm: 'kg',
 		ml: 'ml',
 		milliliter: 'ml',
 		milliliters: 'ml',
@@ -55,18 +64,29 @@ const UNIT_ALIASES = new Map<string, RecipeUnit>(
 		piece: 'pcs',
 		pieces: 'pcs',
 		x: 'pcs',
+		stk: 'pcs',
+		'stk.': 'pcs',
+		stück: 'pcs',
 		pack: 'pack',
 		packs: 'pack',
 		packet: 'pack',
 		packets: 'pack',
+		pck: 'pack',
+		'pck.': 'pack',
+		packung: 'pack',
+		packungen: 'pack',
 		tbsp: 'tbsp',
 		tbsps: 'tbsp',
 		tablespoon: 'tbsp',
 		tablespoons: 'tbsp',
+		el: 'tbsp',
+		esslöffel: 'tbsp',
 		tsp: 'tsp',
 		tsps: 'tsp',
 		teaspoon: 'tsp',
-		teaspoons: 'tsp'
+		teaspoons: 'tsp',
+		tl: 'tsp',
+		teelöffel: 'tsp'
 	} satisfies Record<string, RecipeUnit>)
 );
 
@@ -173,19 +193,33 @@ function amountValue(match: RegExpExecArray): number | null {
  * the "This step uses 250 g mushrooms" line in cook mode. Empty when there is
  * no amount to speak of.
  */
-export function formatAmount(quantity: number | null, unit: string | null): string {
+export function formatAmount(
+	quantity: number | null,
+	unit: string | null,
+	labels: UnitLabels = {}
+): string {
 	if (quantity === null || quantity <= 0) return '';
 	const amount = formatQuantityValue(quantity);
-	return unit ? `${amount} ${unit}` : amount;
+	return unit ? `${amount} ${unitLabel(unit, labels)}` : amount;
 }
 
-/** A stored row as one editable line again — the inverse of `parseIngredient`. */
-export function formatIngredient(ingredient: {
-	quantity: number | null;
-	unit: string | null;
-	name: string;
-}): string {
-	const amount = formatAmount(ingredient.quantity, ingredient.unit);
+/**
+ * A stored row as one editable line again — the inverse of `parseIngredient`.
+ *
+ * The round trip holds in every language because `UNIT_ALIASES` reads each
+ * language's spelling back to the same canonical unit: "2 EL Öl" saved from
+ * German re-parses as `tbsp`, and the English form of the same row still says
+ * "2 tbsp oil".
+ */
+export function formatIngredient(
+	ingredient: {
+		quantity: number | null;
+		unit: string | null;
+		name: string;
+	},
+	labels: UnitLabels = {}
+): string {
+	const amount = formatAmount(ingredient.quantity, ingredient.unit, labels);
 	return amount ? `${amount} ${ingredient.name}` : ingredient.name;
 }
 

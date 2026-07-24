@@ -17,7 +17,7 @@ export const load: PageServerLoad = async (event) => {
 	// and the feed's day labels are answering the same question as the tab it
 	// sits under.
 	const { household, today, members } = await event.parent();
-	const context: TaskContext = { today, timezone: household.timezone };
+	const context: TaskContext = { today, timezone: household.timezone, locale: event.locals.locale };
 
 	return {
 		podium: getPodium(householdId, context, members),

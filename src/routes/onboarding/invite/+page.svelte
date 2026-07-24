@@ -4,12 +4,15 @@
 	import Screen from '$lib/components/shell/Screen.svelte';
 	import Avatar from '$lib/components/ui/Avatar.svelte';
 	import Button from '$lib/components/ui/Button.svelte';
+	import { messages } from '$lib/i18n';
 	import Link from '@lucide/svelte/icons/link';
 	import Plus from '@lucide/svelte/icons/plus';
 	import Share from '@lucide/svelte/icons/share';
 	import type { PageProps } from './$types';
 
 	let { data }: PageProps = $props();
+
+	const m = messages();
 
 	let copied = $state(false);
 	let copyTimer: ReturnType<typeof setTimeout>;
@@ -44,8 +47,8 @@
 		if (!data.inviteUrl) return;
 		try {
 			await navigator.share({
-				title: 'Choreganized',
-				text: `Join ${data.householdName} on Choreganized`,
+				title: m.common.appName,
+				text: m.onboarding.invite.shareText(data.householdName),
 				url: data.inviteUrl
 			});
 		} catch {
@@ -55,24 +58,24 @@
 </script>
 
 <svelte:head>
-	<title>Invite your housemates · Choreganized</title>
+	<title>{m.common.pageTitle(m.onboarding.invite.title)}</title>
 </svelte:head>
 
 <Screen>
 	{#if data.fromMembers}
-		<StepHeader back="/settings/members" backLabel="Back to members" />
+		<StepHeader back="/settings/members" backLabel={m.onboarding.invite.backToMembers} />
 	{:else}
 		<StepHeader step={2} />
 	{/if}
 
 	<header>
-		<h1>Invite your<br />housemates</h1>
-		<p class="sub">They'll share the shopping list, tasks and meal plan with you.</p>
+		<h1>{m.onboarding.invite.titleLead}<br />{m.onboarding.invite.titleRest}</h1>
+		<p class="sub">{m.onboarding.invite.sub}</p>
 	</header>
 
 	{#if data.inviteCode && data.inviteUrl}
 		<div class="code-card">
-			<p class="code-label">Invite code</p>
+			<p class="code-label">{m.onboarding.invite.code}</p>
 			<p class="code">{data.formattedCode}</p>
 		</div>
 
@@ -81,39 +84,39 @@
 			<div class="link">
 				<Link size={17} strokeWidth={1.9} />
 				<span class="url">{data.inviteUrl.replace(/^https?:\/\//, '')}</span>
-				<button class="copy" onclick={copyLink}>{copied ? 'Copied' : 'Copy'}</button>
+				<button class="copy" onclick={copyLink}>
+					{copied ? m.onboarding.invite.copied : m.onboarding.invite.copy}
+				</button>
 			</div>
 
 			{#if canShare}
 				<button class="share" onclick={shareInvite}>
 					<Share size={18} strokeWidth={1.9} />
-					Share invite
+					{m.onboarding.invite.share}
 				</button>
 			{/if}
 		</div>
 	{:else}
-		<p class="revoked">
-			This household has no active invite code. The owner can make a new one under Settings →
-			Members.
-		</p>
+		<p class="revoked">{m.onboarding.invite.revoked}</p>
 	{/if}
 
-	<p class="members-label">Members</p>
+	<p class="members-label">{m.onboarding.invite.members}</p>
 	<ul class="members">
 		{#each data.members as member (member.id)}
 			<li class="member">
 				<Avatar name={member.displayName} color={member.color} size={32} />
 				<span class="name">
 					{member.displayName}
-					{#if member.id === data.currentMemberId}<span class="you">(you)</span>{/if}
+					{#if member.id === data.currentMemberId}<span class="you">{m.settings.roster.you}</span
+						>{/if}
 				</span>
-				{#if member.role === 'owner'}<span class="badge">Owner</span>{/if}
+				{#if member.role === 'owner'}<span class="badge">{m.settings.roster.owner}</span>{/if}
 			</li>
 		{/each}
 		{#if data.members.length < 2}
 			<li class="member waiting">
 				<Avatar empty size={32}><Plus size={14} strokeWidth={2} /></Avatar>
-				<span class="name">Waiting for someone to join…</span>
+				<span class="name">{m.onboarding.invite.waiting}</span>
 			</li>
 		{/if}
 	</ul>
@@ -123,9 +126,9 @@
 		 there you already live here, so it says "Done" (→ DECISIONS #28). -->
 	<div class="cta">
 		{#if data.fromMembers}
-			<Button href="/settings/members">Done</Button>
+			<Button href="/settings/members">{m.onboarding.invite.done}</Button>
 		{:else}
-			<Button href="/home">Move in</Button>
+			<Button href="/home">{m.onboarding.invite.moveIn}</Button>
 		{/if}
 	</div>
 </Screen>

@@ -9,13 +9,16 @@
 -->
 <script lang="ts">
 	import RecipeImage from '$lib/components/cooking/RecipeImage.svelte';
-	import PotIcon from '$lib/components/icons/PotIcon.svelte';
+	import ChefHatIcon from '$lib/components/icons/ChefHatIcon.svelte';
 	import Avatar from '$lib/components/ui/Avatar.svelte';
 	import Card from '$lib/components/ui/Card.svelte';
+	import { messages } from '$lib/i18n';
 	import type { TonightsDinner } from '$lib/server/services/home';
 	import Plus from '@lucide/svelte/icons/plus';
 
 	let { dinner }: { dinner: TonightsDinner | null } = $props();
+
+	const m = messages();
 </script>
 
 {#if dinner}
@@ -25,16 +28,16 @@
 				{#if dinner.imagePath}
 					<RecipeImage imagePath={dinner.imagePath} stripe={5} />
 				{:else}
-					<PotIcon size={26} strokeWidth={1.6} />
+					<ChefHatIcon size={26} strokeWidth={1.6} />
 				{/if}
 			</span>
 			<span class="body">
-				<span class="eyebrow">Tonight's dinner</span>
+				<span class="eyebrow">{m.home.dinner.eyebrow}</span>
 				<span class="name">{dinner.name}</span>
 				{#if dinner.cook}
 					<span class="cook">
 						<Avatar name={dinner.cook.displayName} color={dinner.cook.color} size={18} />
-						{dinner.cook.displayName} is cooking
+						{m.home.dinner.cooking(dinner.cook.displayName)}
 					</span>
 				{/if}
 			</span>
@@ -44,8 +47,8 @@
 	<a class="empty" href="/cooking">
 		<span class="thumb dashed"><Plus size={20} strokeWidth={2} /></span>
 		<span class="body">
-			<span class="eyebrow">Tonight's dinner</span>
-			<span class="name muted">Add tonight's dinner</span>
+			<span class="eyebrow">{m.home.dinner.eyebrow}</span>
+			<span class="name muted">{m.home.dinner.add}</span>
 		</span>
 	</a>
 {/if}

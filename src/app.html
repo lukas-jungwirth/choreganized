@@ -1,5 +1,8 @@
 <!doctype html>
-<html lang="en">
+<!-- `lang` is filled per request in hooks.server.ts: it is the one attribute of
+	 the document a component can't reach, and a screen reader picks its voice
+	 from it. -->
+<html lang="%lang%">
 	<head>
 		<meta charset="utf-8" />
 		<!-- viewport-fit=cover is what makes every `env(safe-area-inset-*)` in the
@@ -7,14 +10,11 @@
 			 and the tab bar / FAB / sheets sit under the home indicator. -->
 		<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
 		<meta name="text-scale" content="scale" />
-		<meta
-			name="description"
-			content="Every chore, organized. A shared household app for shopping, meal planning and chores."
-		/>
 
-		<!-- Icons + PWA. theme-color is deliberately NOT here: it is set once in the
-			 root layout so cook mode can swap it dark (a second meta here would win,
-			 being first in the head). -->
+		<!-- Icons + PWA. theme-color and description are deliberately NOT here: both
+			 are set once in the root layout, theme-color so cook mode can swap it
+			 dark and description because it is copy and has to speak the reader's
+			 language (a second meta here would win, being first in the head). -->
 		<link rel="icon" href="%sveltekit.assets%/favicon.svg" type="image/svg+xml" />
 		<link
 			rel="icon"

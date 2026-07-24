@@ -16,6 +16,11 @@
  * Rationale for individual modelling choices: docs/DATA-MODEL.md
  */
 import { sqliteTable, text, integer, real, index, uniqueIndex } from 'drizzle-orm/sqlite-core';
+// Relative and extensioned, not `$lib`: two things load this file outside Vite
+// — drizzle-kit when generating a migration, and Node when `db:seed` strips its
+// types — and neither resolves the alias or infers the extension
+// (`rewriteRelativeImportExtensions` in tsconfig is what makes this legal TS).
+import { LOCALES } from '../../i18n/locale.ts';
 
 const id = () =>
 	text('id')
@@ -139,6 +144,14 @@ export const members = sqliteTable(
 		 * this member's tasks never count as overdue and get no reminders.
 		 */
 		awayUntil: text('away_until'),
+		/**
+		 * Chosen UI language. NULL — the default — means "whatever this device
+		 * asks for", i.e. fall through to the browser's `Accept-Language`
+		 * (→ `$lib/i18n`, SPEC §6). Stored on the membership rather than in the
+		 * cookie alone so a phone and a laptop agree, and so the nightly cron can
+		 * write a push notification in the language its recipient reads.
+		 */
+		locale: text('locale', { enum: LOCALES }),
 		notifyTaskReminders: integer('notify_task_reminders', { mode: 'boolean' })
 			.notNull()
 			.default(true),
@@ -368,6 +381,14 @@ export const pushSubscriptions = sqliteTable(
 		p256dh: text('p256dh').notNull(),
 		auth: text('auth').notNull(),
 		userAgent: text('user_agent'),
+		/**
+		 * The language this *device* was reading in when it subscribed. A push
+		 * goes to a device, and the person who never opened Settings still has a
+		 * phone set to something — so this is what makes "detect the system
+		 * language" true for notifications as well as for pages. An explicit
+		 * `members.locale` outranks it (→ `server/push.ts`).
+		 */
+		locale: text('locale', { enum: LOCALES }),
 		createdAt: createdAt()
 	},
 	(t) => [index('push_subscriptions_user_idx').on(t.userId)]

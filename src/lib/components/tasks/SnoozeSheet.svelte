@@ -15,8 +15,9 @@
 	import BottomSheet from '$lib/components/ui/BottomSheet.svelte';
 	import Button from '$lib/components/ui/Button.svelte';
 	import DateField from '$lib/components/ui/DateField.svelte';
+	import { messages } from '$lib/i18n';
 	import type { TaskListItem } from '$lib/server/services/tasks';
-	import { addDays, formatDateLabel, formatShortDate, type CalendarDate } from '$lib/utils/dates';
+	import { addDays, type CalendarDate } from '$lib/utils/dates';
 	import { SNOOZE_PRESETS } from '$lib/utils/tasks';
 	import { untrack } from 'svelte';
 
@@ -29,6 +30,8 @@
 	};
 
 	let { task, today, awayUntil, onclose }: Props = $props();
+
+	const m = messages();
 
 	let open = $state(true);
 	// The gentlest of the presets: you came here to push it a little, not to
@@ -43,7 +46,7 @@
 	});
 </script>
 
-<BottomSheet bind:open title="Snooze until…" eyebrow={task.name}>
+<BottomSheet bind:open title={m.tasks.snooze.title} eyebrow={task.name}>
 	<form
 		method="POST"
 		action="?/snooze"
@@ -57,9 +60,7 @@
 				// leaving the same button to be tapped again for the same answer.
 				if (result.type === 'failure') {
 					error =
-						typeof result.data?.error === 'string'
-							? result.data.error
-							: 'Pick a date to snooze to.';
+						typeof result.data?.error === 'string' ? result.data.error : m.tasks.snooze.needsDate;
 					return;
 				}
 				if (result.type === 'success') open = false;
@@ -69,7 +70,7 @@
 		<input type="hidden" name="id" value={task.id} />
 
 		<div class="presets">
-			{#each SNOOZE_PRESETS as preset (preset.days)}
+			{#each SNOOZE_PRESETS as preset (preset.key)}
 				{@const date = addDays(today, preset.days)}
 				<button
 					type="button"
@@ -78,16 +79,16 @@
 					aria-pressed={dueDate === date}
 					onclick={() => (dueDate = date)}
 				>
-					{preset.label}
+					{m.task.snoozes[preset.key]}
 				</button>
 			{/each}
 		</div>
 
 		<DateField
-			label="Or pick a date"
+			label={m.tasks.snooze.orPick}
 			name="dueDate"
 			bind:value={dueDate}
-			caption={dueDate ? formatDateLabel(dueDate, today) : undefined}
+			caption={dueDate ? m.date.dateLabel(dueDate, today) : undefined}
 			min={today}
 			required
 		/>
@@ -95,7 +96,7 @@
 		{#if error}<p class="error">{error}</p>{/if}
 
 		<Button type="submit" disabled={snoozing || !dueDate}>
-			Snooze to {dueDate ? formatShortDate(dueDate) : '…'}
+			{m.tasks.snooze.to(dueDate ? m.date.short(dueDate) : '…')}
 		</Button>
 	</form>
 
