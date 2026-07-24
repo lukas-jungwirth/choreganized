@@ -6,17 +6,20 @@
 <script lang="ts">
 	import Card from '$lib/components/ui/Card.svelte';
 	import CheckCircle from '$lib/components/ui/CheckCircle.svelte';
+	import { messages } from '$lib/i18n';
 	import type { ActivityEntry } from '$lib/server/services/home';
 	import ChevronRight from '@lucide/svelte/icons/chevron-right';
 
 	let { entries }: { entries: ActivityEntry[] } = $props();
+
+	const m = messages();
 </script>
 
 <Card href="/tasks/history">
 	<div class="activity">
 		<header>
-			<span class="eyebrow">Recent activity</span>
-			<span class="all">All<ChevronRight size={13} strokeWidth={2.2} /></span>
+			<span class="eyebrow">{m.home.activity.title}</span>
+			<span class="all">{m.home.activity.all}<ChevronRight size={13} strokeWidth={2.2} /></span>
 		</header>
 
 		<ul>
@@ -28,7 +31,7 @@
 						<span class="task">{entry.taskName}</span>
 						<span class="meta">{entry.memberName} · {entry.time}</span>
 					</span>
-					<span class="points" style:color>+{entry.points}</span>
+					<span class="points" style:color>{m.task.points(entry.points)}</span>
 				</li>
 			{/each}
 		</ul>

@@ -298,8 +298,8 @@ a danger badge with the current user's overdue count [4e].
 ## 6. Settings [6a]
 
 - Profile card: avatar, display name, email + **Edit**.
-- **Account**: Display name, Your colour (palette picker; taken colours disabled). (No password
-  row in v1 — Google only.)
+- **Account**: Display name, Your colour (palette picker; taken colours disabled), **Language**
+  (→ §9). (No password row in v1 — Google only.)
 - **Notifications**: Enable on this device (subscribes push, shows permission state) ·
   Task reminders · Overdue nudges · Shopping list updates (toggles per member) · Send test
   notification.
@@ -325,8 +325,8 @@ a danger badge with the current user's overdue count [4e].
 - **Scoping**: every query filters by the session member's `householdId`. No cross-household
   data access, ever — including recipe images.
 - **Dates**: calendar dates (due, meals, away) are household-local `YYYY-MM-DD`; "today" is
-  computed in `household.timezone`. Weeks start Monday. English UI, `en-GB`-style short dates
-  ("Jul 14").
+  computed in `household.timezone`. Weeks start Monday. Date _formats_ follow the reader's
+  language (→ §9), never the household's timezone: Vienna in English still reads "Jul 14".
 - **Points month**: completions grouped by household-local calendar month; no reset job —
   always derived.
 - **Freshness**: data refetches on tab focus/visibility and after every action (SvelteKit
@@ -335,3 +335,28 @@ a danger badge with the current user's overdue count [4e].
 - **PWA**: installable (manifest + icons + service worker), portrait, `theme-color #F5F3EE`;
   push works with the app closed. Offline: app shell renders with an offline notice; no offline
   mutations in v1.
+
+---
+
+## 9. Language (English · German)
+
+The app ships in **English** (the language the design and this spec are written in) and
+**German**, the latter in its **Austrian** form — `de-AT`, matching the default household
+timezone, so January reads "Jänner" (→ [DECISIONS #93](DECISIONS.md)). Every string a member reads comes from a catalog in `src/lib/i18n/messages/`;
+`en.ts` is the schema and `de.ts` is typed against it, so the two can't drift
+(→ [DECISIONS.md #93](DECISIONS.md)).
+
+- **Which language a request gets**, in order: the member's own choice (`members.locale`) ·
+  the `locale` cookie · the browser's `Accept-Language` · English. A member who has chosen
+  nothing follows whatever device they are on.
+- **Settings → Account → Language** offers **System · English · Deutsch**. "System" is the
+  absence of a choice, not a third language: it clears the column and the cookie so each device
+  follows itself again. The two language names are never translated. Choosing reloads the app —
+  `<html lang>`, every server-rendered string and every date have to change together.
+- **Household content is never translated.** Task names, recipes, store names, meal titles and
+  display names are what the household typed. The three starter stores and the three "popular
+  starters" are written in the language of whoever created them, and are theirs to rename.
+- **Units are stored canonically and shown per language** — `tbsp` reads "tbsp" or "EL", `pcs`
+  reads "pcs" or "Stk.". A recipe typed in either language parses to the same rows.
+- **Notifications** go to a device, so they use the recipient's own language: their explicit
+  choice, else the language the device was reading in when it subscribed.

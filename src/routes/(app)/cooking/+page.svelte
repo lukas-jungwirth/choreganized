@@ -14,11 +14,14 @@
 	import ChefHatIcon from '$lib/components/icons/ChefHatIcon.svelte';
 	import PageHeader from '$lib/components/shell/PageHeader.svelte';
 	import Card from '$lib/components/ui/Card.svelte';
+	import { messages } from '$lib/i18n';
 	import type { CalendarDate } from '$lib/utils/dates';
 	import Plus from '@lucide/svelte/icons/plus';
 	import type { PageProps } from './$types';
 
 	let { data, form }: PageProps = $props();
+
+	const m = messages();
 
 	/** How many library cards the tab shows before "Browse all" takes over [04]. */
 	const RECENT = 2;
@@ -34,10 +37,10 @@
 </script>
 
 <svelte:head>
-	<title>Cooking · Choreganized</title>
+	<title>{m.common.pageTitle(m.cooking.title)}</title>
 </svelte:head>
 
-<PageHeader title="This week" meta={data.week.monthLabel} />
+<PageHeader title={m.cooking.thisWeek} meta={data.week.monthLabel} />
 
 <WeekStrip days={data.week.days} />
 
@@ -53,14 +56,14 @@
 
 <section class="library">
 	<div class="head">
-		<h2>Recipe library</h2>
+		<h2>{m.cooking.library.title}</h2>
 		{#if data.recipes.length > 0}
-			<a href="/cooking/recipes">Browse all · {data.recipes.length}</a>
+			<a href="/cooking/recipes">{m.cooking.library.browseAll(data.recipes.length)}</a>
 		{/if}
 	</div>
 
 	{#if recent.length > 0}
-		<p class="micro">Recently added</p>
+		<p class="micro">{m.cooking.library.recentlyAdded}</p>
 		<div class="cards">
 			{#each recent as recipe (recipe.id)}
 				<RecipeCard {recipe} today={data.today} timezone={data.household.timezone} />
@@ -70,8 +73,8 @@
 		<a class="first" href="/cooking/recipes/new">
 			<span class="well" aria-hidden="true"><ChefHatIcon size={22} strokeWidth={1.7} /></span>
 			<span class="first-text">
-				<span class="first-title">Save your first recipe</span>
-				<span class="first-sub">Then drop it onto any day of the week in a tap.</span>
+				<span class="first-title">{m.cooking.library.firstTitle}</span>
+				<span class="first-sub">{m.cooking.library.firstSub}</span>
 			</span>
 			<span class="first-add" aria-hidden="true"><Plus size={16} strokeWidth={2.4} /></span>
 		</a>

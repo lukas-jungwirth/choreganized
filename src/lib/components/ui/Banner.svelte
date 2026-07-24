@@ -14,6 +14,7 @@
 -->
 <script lang="ts">
 	import X from '@lucide/svelte/icons/x';
+	import { messages } from '$lib/i18n';
 	import type { Snippet } from 'svelte';
 
 	type Props = {
@@ -31,6 +32,7 @@
 		/** Adds a trailing × — for banners the reader is allowed to be done with.
 		 *  Also ignored when `href` is set (see above). */
 		ondismiss?: () => void;
+		/** Overrides the generic "Dismiss" where the banner can say what it drops. */
 		dismissLabel?: string;
 		/** The icon for the leading tile, sized by the variant. */
 		icon: Snippet;
@@ -45,9 +47,11 @@
 		onclick,
 		disabled = false,
 		ondismiss,
-		dismissLabel = 'Dismiss',
+		dismissLabel,
 		icon
 	}: Props = $props();
+
+	const m = messages();
 </script>
 
 {#snippet body()}
@@ -64,7 +68,12 @@
 		{/if}
 	{/if}
 	{#if ondismiss && !href}
-		<button class="dismiss" type="button" aria-label={dismissLabel} onclick={ondismiss}>
+		<button
+			class="dismiss"
+			type="button"
+			aria-label={dismissLabel ?? m.ui.dismiss}
+			onclick={ondismiss}
+		>
 			<X size={16} strokeWidth={2.2} />
 		</button>
 	{/if}

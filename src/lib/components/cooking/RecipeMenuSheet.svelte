@@ -16,6 +16,7 @@
 	import Button from '$lib/components/ui/Button.svelte';
 	import CenterModal from '$lib/components/ui/CenterModal.svelte';
 	import RowGroup from '$lib/components/ui/RowGroup.svelte';
+	import { messages } from '$lib/i18n';
 	import type { RecipeDetail } from '$lib/server/services/recipes';
 	import { recipeShareText } from '$lib/utils/recipes';
 	import Check from '@lucide/svelte/icons/check';
@@ -31,6 +32,8 @@
 	};
 
 	let { recipe, onclose }: Props = $props();
+
+	const m = messages();
 
 	let open = $state(true);
 	let confirming = $state(false);
@@ -49,13 +52,16 @@
 	});
 
 	const text = $derived(
-		recipeShareText({
-			name: recipe.name,
-			timeMinutes: recipe.timeMinutes,
-			servings: recipe.servings,
-			ingredients: recipe.ingredients,
-			steps: recipe.steps.map((step) => step.text)
-		})
+		recipeShareText(
+			{
+				name: recipe.name,
+				timeMinutes: recipe.timeMinutes,
+				servings: recipe.servings,
+				ingredients: recipe.ingredients,
+				steps: recipe.steps.map((step) => step.text)
+			},
+			m
+		)
 	);
 
 	async function share() {
@@ -80,7 +86,7 @@
 <BottomSheet bind:open title={recipe.name}>
 	<RowGroup surface="sunken">
 		<a class="item" href="/cooking/recipes/{recipe.id}/edit">
-			<Pencil size={19} strokeWidth={1.8} aria-hidden="true" />Edit recipe
+			<Pencil size={19} strokeWidth={1.8} aria-hidden="true" />{m.cooking.menu.edit}
 		</a>
 
 		<form
@@ -100,18 +106,18 @@
 			}}
 		>
 			<button type="submit" class="item" disabled={submitting}>
-				<Copy size={19} strokeWidth={1.8} aria-hidden="true" />Duplicate
+				<Copy size={19} strokeWidth={1.8} aria-hidden="true" />{m.cooking.menu.duplicate}
 			</button>
 		</form>
 
 		<button type="button" class="item" onclick={share}>
 			{#if copied}
-				<Check size={19} strokeWidth={2.2} aria-hidden="true" />Copied to clipboard
+				<Check size={19} strokeWidth={2.2} aria-hidden="true" />{m.cooking.menu.copied}
 			{:else if canShare}
-				<Share size={19} strokeWidth={1.8} aria-hidden="true" />Share
+				<Share size={19} strokeWidth={1.8} aria-hidden="true" />{m.cooking.menu.share}
 			{:else}
 				<!-- Not `Copy`: "Duplicate" is right above and means something else. -->
-				<ClipboardCopy size={19} strokeWidth={1.8} aria-hidden="true" />Copy recipe
+				<ClipboardCopy size={19} strokeWidth={1.8} aria-hidden="true" />{m.cooking.menu.copy}
 			{/if}
 		</button>
 	</RowGroup>
@@ -119,23 +125,23 @@
 	<div class="danger">
 		<RowGroup surface="sunken">
 			<button type="button" class="item destructive" onclick={() => (confirming = true)}>
-				<Trash2 size={19} strokeWidth={1.8} aria-hidden="true" />Delete recipe
+				<Trash2 size={19} strokeWidth={1.8} aria-hidden="true" />{m.cooking.menu.delete}
 			</button>
 		</RowGroup>
 	</div>
 
-	<button type="button" class="cancel" onclick={() => (open = false)}>Cancel</button>
+	<button type="button" class="cancel" onclick={() => (open = false)}>{m.common.cancel}</button>
 
-	<CenterModal bind:open={confirming} label="Delete recipe" dismissible={false}>
+	<CenterModal bind:open={confirming} label={m.cooking.menu.delete} dismissible={false}>
 		<div class="well" aria-hidden="true"><Trash2 size={26} strokeWidth={1.9} /></div>
-		<h3>Delete {recipe.name}?</h3>
-		<p class="copy">
-			Its ingredients and steps go with it. Days you already planned it on keep the name.
-		</p>
+		<h3>{m.cooking.menu.deleteConfirm(recipe.name)}</h3>
+		<p class="copy">{m.cooking.menu.deleteCopy}</p>
 		<form method="POST" action="?/delete" use:enhance>
-			<Button type="submit" variant="danger">Delete recipe</Button>
+			<Button type="submit" variant="danger">{m.cooking.menu.delete}</Button>
 		</form>
-		<button type="button" class="cancel" onclick={() => (confirming = false)}>Keep it</button>
+		<button type="button" class="cancel" onclick={() => (confirming = false)}>
+			{m.cooking.menu.keep}
+		</button>
 	</CenterModal>
 </BottomSheet>
 

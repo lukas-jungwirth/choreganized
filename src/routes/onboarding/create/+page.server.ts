@@ -1,4 +1,5 @@
 import { fail, redirect } from '@sveltejs/kit';
+import { catalog } from '$lib/i18n';
 import { isMemberColor } from '$lib/member-colors';
 import { requireUser } from '$lib/server/guards';
 import { createHousehold, HouseholdError } from '$lib/server/services/household';
@@ -30,23 +31,29 @@ export const actions: Actions = {
 		const color = String(form.get('color') ?? '');
 		const values = { householdName, displayName, color };
 
+		const m = catalog(event.locals.locale);
 		const errors: { householdName?: string; displayName?: string; color?: string } = {};
-		if (!householdName) errors.householdName = 'Give your home a name.';
+		if (!householdName) errors.householdName = m.errors.householdName;
 		else if (householdName.length > HOUSEHOLD_NAME_MAX)
-			errors.householdName = `Keep it under ${HOUSEHOLD_NAME_MAX} characters.`;
-		if (!displayName) errors.displayName = 'Tell us what to call you.';
+			errors.householdName = m.errors.keepUnder(HOUSEHOLD_NAME_MAX);
+		if (!displayName) errors.displayName = m.errors.displayName;
 		else if (displayName.length > DISPLAY_NAME_MAX)
-			errors.displayName = `Keep it under ${DISPLAY_NAME_MAX} characters.`;
-		if (!isMemberColor(color)) errors.color = 'Pick one of the colours.';
+			errors.displayName = m.errors.keepUnder(DISPLAY_NAME_MAX);
+		if (!isMemberColor(color)) errors.color = m.errors.pickColour;
 
 		if (Object.keys(errors).length > 0) return fail(400, { errors, values });
 
 		try {
+			const stores = m.shopping.stores.defaults;
+
 			createHousehold(user.id, {
 				householdName,
 				displayName,
 				color,
-				timezone: resolveTimezone(String(form.get('timezone') ?? ''))
+				timezone: resolveTimezone(String(form.get('timezone') ?? '')),
+				// The first three rows of the household's own content, written in the
+				// language the person creating it is reading — theirs to rename [7g].
+				storeNames: [stores.grocery, stores.drugstore, stores.hardware]
 			});
 		} catch (error) {
 			// Double submit: the household from the first one already exists.

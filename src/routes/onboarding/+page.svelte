@@ -3,6 +3,7 @@
 	import { enhance } from '$app/forms';
 	import Screen from '$lib/components/shell/Screen.svelte';
 	import Button from '$lib/components/ui/Button.svelte';
+	import { messages } from '$lib/i18n';
 	import Check from '@lucide/svelte/icons/check';
 	import House from '@lucide/svelte/icons/house';
 	import Plus from '@lucide/svelte/icons/plus';
@@ -10,17 +11,19 @@
 
 	let { data }: PageProps = $props();
 
+	const m = messages();
+
 	let choice = $state<'create' | 'join'>('create');
 </script>
 
 <svelte:head>
-	<title>Get started · Choreganized</title>
+	<title>{m.common.pageTitle(m.onboarding.start.title)}</title>
 </svelte:head>
 
 <Screen>
 	<header>
-		<h1>Welcome, {data.firstName}</h1>
-		<p class="sub">How would you like to start?</p>
+		<h1>{m.onboarding.start.welcome(data.firstName)}</h1>
+		<p class="sub">{m.onboarding.start.question}</p>
 	</header>
 
 	<form method="POST" use:enhance>
@@ -28,19 +31,19 @@
 			<input type="radio" name="choice" value="create" bind:group={choice} />
 			<span class="tick" aria-hidden="true"><Check size={12} strokeWidth={3.5} /></span>
 			<span class="well sage"><House size={24} strokeWidth={1.9} /></span>
-			<span class="title">Create a household</span>
-			<span class="copy">Start fresh and invite the people you live with.</span>
+			<span class="title">{m.onboarding.start.createTitle}</span>
+			<span class="copy">{m.onboarding.start.createCopy}</span>
 		</label>
 
 		<label class="option" class:selected={choice === 'join'}>
 			<input type="radio" name="choice" value="join" bind:group={choice} />
 			<span class="tick" aria-hidden="true"><Check size={12} strokeWidth={3.5} /></span>
 			<span class="well"><Plus size={24} strokeWidth={1.9} /></span>
-			<span class="title">Join a household</span>
-			<span class="copy">Got an invite link or code? Enter it here.</span>
+			<span class="title">{m.onboarding.start.joinTitle}</span>
+			<span class="copy">{m.onboarding.start.joinCopy}</span>
 		</label>
 
-		<div class="cta"><Button type="submit">Continue</Button></div>
+		<div class="cta"><Button type="submit">{m.onboarding.start.continue}</Button></div>
 	</form>
 </Screen>
 

@@ -41,13 +41,21 @@ lands).
 - **Design tokens only** — every color/radius/shadow is a `var(--…)` from `src/app.css`. A
   hardcoded hex outside `app.css` is wrong. Component inventory: DESIGN-SYSTEM.md — extend
   `lib/components/ui`, don't fork one-off variants.
+- **No user-facing string in a component or a service.** Copy lives in
+  `lib/i18n/messages/en.ts` (the schema) and `de.ts` (typed against it, so a missing key is a
+  `check` failure). In a component: `const m = messages()` at init, then `m.tasks.title`. On
+  the server: `catalog(event.locals.locale)`. Anything with a number, a name or a plural in it
+  is a **function**, so each language writes its own agreement. `utils/` keeps values with a
+  `key`; the catalog keeps their names. Household content (task names, recipes, stores) is
+  never translated. → ARCHITECTURE "Language", SPEC §9, DECISIONS #93–#98.
 - **Household scoping** — `(app)` loads/actions start with `requireMember(event)`; every
   service function takes `householdId` first and filters by it. No exceptions, including
   uploads.
 - **Load + form actions** with `use:enhance`; services (`lib/server/services/*`) own logic
   and transactions; actions stay thin. JSON endpoints only for push/timers/uploads.
 - **Dates**: calendar dates are household-local `YYYY-MM-DD` strings (`lib/utils/dates.ts`
-  helpers once plan 04 creates them) — never round-trip them through UTC.
+  helpers once plan 04 creates them) — never round-trip them through UTC. Timezone and language
+  are separate axes: render them through `m.date.*`, never `formatShortDate` directly.
 - Mobile-first at 390px, max-width 480px shell, tab bar–aware padding.
 - New dependency or judgment call → one line in DECISIONS.md.
 

@@ -15,10 +15,13 @@
 	import ChecklistIcon from '$lib/components/icons/ChecklistIcon.svelte';
 	import AvatarStack from '$lib/components/ui/AvatarStack.svelte';
 	import Banner from '$lib/components/ui/Banner.svelte';
+	import { messages } from '$lib/i18n';
 	import Bell from '@lucide/svelte/icons/bell';
 	import type { PageProps } from './$types';
 
 	let { data }: PageProps = $props();
+
+	const m = messages();
 
 	// You lead the stack — the design puts whoever is looking first [8b] [4e].
 	const stack = $derived([
@@ -28,23 +31,23 @@
 
 	const names = $derived(stack.map((member) => member.displayName).join(', '));
 
-	const tasksLabel = $derived(data.tasksDueCount === 1 ? 'task due today' : 'tasks due today');
+	const tasksLabel = $derived(m.home.stats.tasksDue(data.tasksDueCount));
 </script>
 
 <svelte:head>
-	<title>Home · Choreganized</title>
+	<title>{m.common.pageTitle(m.home.title)}</title>
 </svelte:head>
 
 <header>
 	<div class="who">
 		<p class="household">{data.household.name}</p>
-		<h1>Good {data.greeting},<br />{data.currentMember.displayName}</h1>
+		<h1>{m.home.greeting(data.greeting)},<br />{data.currentMember.displayName}</h1>
 	</div>
 	<!-- The household's faces are the way into the household's settings; the back
 		 chevron [6a] opens with has to come from somewhere, and plan 10 can move
 		 it if it finds a better door (→ DECISIONS #57). The link names the
 		 housemates itself — Home is still the only screen that does. -->
-	<a class="settings" href="/settings" aria-label="Settings · Household: {names}">
+	<a class="settings" href="/settings" aria-label={m.home.settingsLink(names)}>
 		<AvatarStack members={stack} />
 	</a>
 </header>
@@ -53,9 +56,9 @@
 	{#if data.overdue}
 		{@const overdue = data.overdue}
 		<Banner
-			title={overdue.count === 1 ? '1 task overdue' : `${overdue.count} tasks overdue`}
-			detail="{overdue.oldestName}{overdue.mine ? ' · your turn' : ''}"
-			action="View"
+			title={m.home.overdue.count(overdue.count)}
+			detail={m.home.overdue.detail(overdue.oldestName, overdue.mine)}
+			action={m.home.overdue.view}
 			href="/tasks"
 		>
 			{#snippet icon()}<Bell size={20} strokeWidth={2} />{/snippet}
@@ -80,7 +83,7 @@
 		<StatTile
 			href="/shopping"
 			value={data.shoppingCount}
-			label="on shopping list"
+			label={m.home.stats.shopping}
 			color="var(--sage)"
 		>
 			{#snippet icon()}<BasketIcon size={22} strokeWidth={1.8} />{/snippet}

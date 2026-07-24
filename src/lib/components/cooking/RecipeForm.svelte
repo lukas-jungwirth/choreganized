@@ -16,8 +16,10 @@
 	import { enhance } from '$app/forms';
 	import Button from '$lib/components/ui/Button.svelte';
 	import TextField from '$lib/components/ui/TextField.svelte';
+	import { messages } from '$lib/i18n';
 	import type { RecipeDetail } from '$lib/server/services/recipes';
-	import { formatIngredient, RECIPE_UNITS } from '$lib/utils/ingredients';
+	import { RECIPE_UNITS } from '$lib/utils/ingredients';
+	import { unitLabel } from '$lib/utils/shopping';
 	import {
 		INGREDIENTS_MAX,
 		INGREDIENT_LINE_MAX,
@@ -49,6 +51,8 @@
 
 	let { recipe, back, error, field }: Props = $props();
 
+	const m = messages();
+
 	// A rejected photo must not redden the name field: they sit a screen apart,
 	// and marking a perfectly good name `aria-invalid` sends a screen reader
 	// after the wrong thing.
@@ -68,7 +72,7 @@
 	let ingredients = $state<Row[]>(
 		untrack(() =>
 			recipe?.ingredients.length
-				? recipe.ingredients.map((ingredient) => row(formatIngredient(ingredient)))
+				? recipe.ingredients.map((ingredient) => row(m.units.ingredient(ingredient)))
 				: [row()]
 		)
 	);
@@ -177,9 +181,11 @@
 	}}
 >
 	<header>
-		<a class="cancel" href={back}>Cancel</a>
-		<h1>{recipe ? 'Edit recipe' : 'New recipe'}</h1>
-		<button type="submit" class="save" disabled={submitting || !name.trim()}>Save</button>
+		<a class="cancel" href={back}>{m.common.cancel}</a>
+		<h1>{recipe ? m.cooking.form.edit : m.cooking.form.new}</h1>
+		<button type="submit" class="save" disabled={submitting || !name.trim()}>
+			{m.cooking.form.save}
+		</button>
 	</header>
 
 	<label class="photo">
@@ -188,34 +194,34 @@
 			type="file"
 			name="photo"
 			accept="image/*"
-			aria-label="Recipe photo"
+			aria-label={m.cooking.form.photo}
 			onchange={pickPhoto}
 		/>
 		<!-- The same striped placeholder every other missing photo gets [3c]. -->
 		<span class="art"><RecipeImage imagePath={null} stripe={7} /></span>
 		{#if photo}
 			<img src={photo} alt="" />
-			<span class="change">Change photo</span>
+			<span class="change">{m.cooking.form.changePhoto}</span>
 		{:else}
 			<span class="lens" aria-hidden="true"><Camera size={20} strokeWidth={1.9} /></span>
-			<span class="hint">Add a photo</span>
+			<span class="hint">{m.cooking.form.addPhoto}</span>
 		{/if}
 	</label>
 
 	<div class="photo-foot">
 		{#if photoError}<p class="photo-error">{photoError}</p>{/if}
 		{#if photo}
-			<button type="button" class="drop" onclick={dropPhoto}>Remove photo</button>
+			<button type="button" class="drop" onclick={dropPhoto}>{m.cooking.form.removePhoto}</button>
 		{/if}
 	</div>
 	<input type="hidden" name="removePhoto" value={removed ? '1' : ''} />
 
 	<TextField
-		label="Recipe name"
+		label={m.cooking.form.name}
 		name="name"
 		bind:value={name}
 		error={nameError}
-		placeholder="Creamy mushroom pasta"
+		placeholder={m.cooking.form.namePlaceholder}
 		maxlength={RECIPE_NAME_MAX}
 		autocomplete="off"
 		required
@@ -223,7 +229,7 @@
 
 	<div class="pair">
 		<TextField
-			label="Time (min)"
+			label={m.cooking.form.time}
 			name="timeMinutes"
 			type="number"
 			bind:value={time}
@@ -233,7 +239,7 @@
 			max={RECIPE_TIME_MAX}
 		/>
 		<TextField
-			label="Servings"
+			label={m.cooking.form.servingsLabel}
 			name="servings"
 			type="number"
 			bind:value={servings}
@@ -244,7 +250,7 @@
 		/>
 	</div>
 
-	<h2 class="label">Ingredients</h2>
+	<h2 class="label">{m.cooking.form.ingredients}</h2>
 	<ul class="rows">
 		{#each ingredients as item, index (item.key)}
 			<li class="row">
@@ -254,8 +260,8 @@
 					type="text"
 					name="ingredient"
 					bind:value={item.text}
-					placeholder="400 g pasta"
-					aria-label="Ingredient {index + 1}"
+					placeholder={m.cooking.form.ingredientPlaceholder}
+					aria-label={m.cooking.form.ingredientLabel(index + 1)}
 					maxlength={INGREDIENT_LINE_MAX}
 					autocomplete="off"
 					onkeydown={(event) => {
@@ -268,7 +274,7 @@
 						}
 					}}
 				/>
-				{@render controls(index, ingredients.length, 'Ingredient', (direction) => {
+				{@render controls(index, ingredients.length, 'ingredient', (direction) => {
 					ingredients = direction
 						? move(ingredients, index, direction)
 						: remove(ingredients, index);
@@ -283,17 +289,17 @@
 			class="add"
 			onclick={() => (ingredients = add(ingredients, 'ingredient'))}
 		>
-			<Plus size={16} strokeWidth={2.2} />Add ingredient
+			<Plus size={16} strokeWidth={2.2} />{m.cooking.form.addIngredient}
 		</button>
 	{/if}
 
 	<p class="units">
-		Write them however you like — “400 g pasta”, “2 eggs”, “salt”. Units we know: {RECIPE_UNITS.join(
-			' · '
-		)}.
+		{m.cooking.form.unitsNote(
+			RECIPE_UNITS.map((unit) => unitLabel(unit, m.units.labels)).join(' · ')
+		)}
 	</p>
 
-	<h2 class="label">Steps</h2>
+	<h2 class="label">{m.cooking.form.steps}</h2>
 	<ol class="steps">
 		{#each steps as step, index (step.key)}
 			<li class="step">
@@ -304,11 +310,11 @@
 					bind:value={step.text}
 					use:autogrow
 					rows="2"
-					placeholder="Boil the pasta until al dente, about 9 min."
-					aria-label="Step {index + 1}"
+					placeholder={m.cooking.form.stepPlaceholder}
+					aria-label={m.cooking.form.stepLabel(index + 1)}
 					maxlength={STEP_TEXT_MAX}></textarea>
 				<span class="step-controls">
-					{@render controls(index, steps.length, 'Step', (direction) => {
+					{@render controls(index, steps.length, 'step', (direction) => {
 						steps = direction ? move(steps, index, direction) : remove(steps, index);
 					})}
 				</span>
@@ -318,28 +324,43 @@
 
 	{#if steps.length < STEPS_MAX}
 		<button type="button" class="add" onclick={() => (steps = add(steps, 'step'))}>
-			<Plus size={16} strokeWidth={2.2} />Add step
+			<Plus size={16} strokeWidth={2.2} />{m.cooking.form.addStep}
 		</button>
 	{/if}
 
 	<div class="submit">
 		<Button type="submit" disabled={submitting || !name.trim()}>
-			{recipe ? 'Save changes' : 'Save recipe'}
+			{recipe ? m.common.saveChanges : m.cooking.form.saveRecipe}
 		</Button>
 	</div>
 </form>
 
+<!-- The reorder/remove trio beside every ingredient and every step. Each label
+	 names the row it acts on, because thirty identical chevrons read out as
+	 thirty identical chevrons. -->
 {#snippet controls(
 	index: number,
 	total: number,
-	kind: string,
+	kind: 'ingredient' | 'step',
 	act: (direction: -1 | 1 | 0) => void
 )}
+	{@const labels =
+		kind === 'ingredient'
+			? {
+					up: m.cooking.form.moveIngredientUp,
+					down: m.cooking.form.moveIngredientDown,
+					remove: m.cooking.form.removeIngredient
+				}
+			: {
+					up: m.cooking.form.moveStepUp,
+					down: m.cooking.form.moveStepDown,
+					remove: m.cooking.form.removeStep
+				}}
 	<button
 		type="button"
 		class="control"
 		disabled={index === 0}
-		aria-label="Move {kind.toLowerCase()} {index + 1} up"
+		aria-label={labels.up(index + 1)}
 		onclick={() => act(-1)}
 	>
 		<ChevronUp size={15} strokeWidth={2.2} />
@@ -348,7 +369,7 @@
 		type="button"
 		class="control"
 		disabled={index === total - 1}
-		aria-label="Move {kind.toLowerCase()} {index + 1} down"
+		aria-label={labels.down(index + 1)}
 		onclick={() => act(1)}
 	>
 		<ChevronDown size={15} strokeWidth={2.2} />
@@ -356,7 +377,7 @@
 	<button
 		type="button"
 		class="control"
-		aria-label="Remove {kind.toLowerCase()} {index + 1}"
+		aria-label={labels.remove(index + 1)}
 		onclick={() => act(0)}
 	>
 		<X size={15} strokeWidth={2.2} />

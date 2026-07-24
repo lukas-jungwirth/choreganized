@@ -20,9 +20,10 @@
 	import Toggle from '$lib/components/ui/Toggle.svelte';
 	import type { HouseholdMember } from '$lib/server/services/household';
 	import type { PlannedMeal } from '$lib/server/services/meals';
+	import { messages } from '$lib/i18n';
 	import type { RecipeSummary } from '$lib/server/services/recipes';
-	import { formatShortDate, formatWeekdayLong, type CalendarDate } from '$lib/utils/dates';
-	import { MEAL_TITLE_MAX, formatCookTime } from '$lib/utils/recipes';
+	import type { CalendarDate } from '$lib/utils/dates';
+	import { MEAL_TITLE_MAX } from '$lib/utils/recipes';
 	import Check from '@lucide/svelte/icons/check';
 	import Plus from '@lucide/svelte/icons/plus';
 	import { untrack } from 'svelte';
@@ -40,6 +41,8 @@
 	};
 
 	let { date, meal, preselectRecipeId = null, recipes, members, onclose }: Props = $props();
+
+	const m = messages();
 
 	/** How many rows the list shows before searching, and while searching. */
 	const RECENTS = 4;
@@ -69,7 +72,7 @@
 		if (!open) onclose();
 	});
 
-	const weekday = $derived(formatWeekdayLong(date));
+	const weekday = $derived(m.date.weekdayLong(date));
 	const selected = $derived(recipes.find((recipe) => recipe.id === selectedId) ?? null);
 
 	const matches = $derived.by(() => {
@@ -106,7 +109,7 @@
 	}
 </script>
 
-<BottomSheet bind:open title="{weekday} · {formatShortDate(date)}" eyebrow="Plan a meal">
+<BottomSheet bind:open title="{weekday} · {m.date.short(date)}" eyebrow={m.cooking.plan.eyebrow}>
 	<form
 		method="POST"
 		action="?/plan"
@@ -129,15 +132,16 @@
 		{#if recipes.length > 0}
 			<div class="search">
 				<SearchField
-					label="Search your recipes"
-					placeholder="Search your recipes"
+					label={m.cooking.plan.searchRecipes}
+					placeholder={m.cooking.plan.searchRecipes}
 					bind:value={search}
 				/>
 			</div>
 
-			<ul class="recipes" role="radiogroup" aria-label="Recipe">
+			<ul class="recipes" role="radiogroup" aria-label={m.cooking.plan.recipeGroup}>
 				{#each shown as recipe (recipe.id)}
 					{@const on = !custom && selectedId === recipe.id}
+					{@const time = recipe.timeMinutes ? m.cooking.cookTime(recipe.timeMinutes) : null}
 					<li>
 						<button
 							type="button"
@@ -151,9 +155,7 @@
 							<span class="thumb"><RecipeImage imagePath={recipe.imagePath} stripe={5} /></span>
 							<span class="text">
 								<span class="name">{recipe.name}</span>
-								{#if formatCookTime(recipe.timeMinutes)}
-									<span class="time">{formatCookTime(recipe.timeMinutes)}</span>
-								{/if}
+								{#if time}<span class="time">{time}</span>{/if}
 							</span>
 							<span class="radio" aria-hidden="true">
 								{#if on}<Check size={12} strokeWidth={3.5} />{/if}
@@ -164,30 +166,28 @@
 			</ul>
 
 			{#if search.trim() && matches.length === 0}
-				<p class="note">No recipe by that name — cook something not saved instead?</p>
+				<p class="note">{m.cooking.plan.noMatch}</p>
 			{:else if hiddenMatches > 0}
-				<p class="note">{hiddenMatches} more match — keep typing to narrow it down.</p>
+				<p class="note">{m.cooking.plan.moreMatches(hiddenMatches)}</p>
 			{:else if !search.trim() && recipes.length > shown.length}
-				<p class="note">
-					Your most recent — search to reach the other {recipes.length - shown.length}.
-				</p>
+				<p class="note">{m.cooking.plan.mostRecent(recipes.length - shown.length)}</p>
 			{/if}
 		{/if}
 
 		{#if custom}
 			<div class="custom">
 				<TextField
-					label="Cook something not saved"
+					label={m.cooking.plan.notSaved}
 					name="title"
 					bind:value={title}
-					placeholder="Pizza night"
+					placeholder={m.cooking.plan.notSavedPlaceholder}
 					maxlength={MEAL_TITLE_MAX}
 					autocomplete="off"
 				/>
 			</div>
 		{:else}
 			<button type="button" class="not-saved" onclick={() => (custom = true)}>
-				<Plus size={16} strokeWidth={2.2} />Cook something not saved
+				<Plus size={16} strokeWidth={2.2} />{m.cooking.plan.notSaved}
 			</button>
 		{/if}
 
@@ -199,7 +199,9 @@
 			<input type="hidden" name="title" value={selected.name} />
 		{/if}
 
-		<p class="label" id={cooksLabelId}>Who's cooking? <span class="optional">optional</span></p>
+		<p class="label" id={cooksLabelId}>
+			{m.cooking.plan.cooking} <span class="optional">{m.cooking.plan.optional}</span>
+		</p>
 		<div class="chips" role="group" aria-labelledby={cooksLabelId}>
 			{#each members as member (member.id)}
 				{@const on = cookId === member.id}
@@ -218,11 +220,11 @@
 
 		{#if offersShopping}
 			<div class="pref">
-				<span class="pref-title">Add ingredients to shopping list</span>
+				<span class="pref-title">{m.cooking.plan.addIngredients}</span>
 				<Toggle
 					name="addIngredients"
 					bind:checked={addToList}
-					label="Add ingredients to shopping list"
+					label={m.cooking.plan.addIngredients}
 				/>
 			</div>
 		{/if}
@@ -230,7 +232,7 @@
 		{#if error}<p class="error">{error}</p>{/if}
 
 		<Button type="submit" disabled={submitting || (custom ? !title.trim() : !selectedId)}>
-			Add to {weekday}
+			{m.cooking.plan.addTo(weekday)}
 		</Button>
 	</form>
 
@@ -248,7 +250,7 @@
 			}}
 		>
 			<input type="hidden" name="date" value={date} />
-			<button type="submit" class="remove" disabled={submitting}>Remove meal</button>
+			<button type="submit" class="remove" disabled={submitting}>{m.cooking.plan.remove}</button>
 		</form>
 	{/if}
 </BottomSheet>

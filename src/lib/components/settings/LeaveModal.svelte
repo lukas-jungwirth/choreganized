@@ -14,6 +14,7 @@
 	import CrownIcon from '$lib/components/icons/CrownIcon.svelte';
 	import Button from '$lib/components/ui/Button.svelte';
 	import CenterModal from '$lib/components/ui/CenterModal.svelte';
+	import { messages } from '$lib/i18n';
 	import LogOut from '@lucide/svelte/icons/log-out';
 
 	type Props = {
@@ -24,6 +25,8 @@
 
 	let { householdName, mode, onclose }: Props = $props();
 
+	const m = messages();
+
 	let open = $state(true);
 	let submitting = $state(false);
 	let error = $state<string | undefined>();
@@ -33,7 +36,7 @@
 	});
 </script>
 
-<CenterModal bind:open label="Leave household" dismissible={false}>
+<CenterModal bind:open label={m.settings.leave.label} dismissible={false}>
 	<div class="well" class:calm={mode === 'blocked'} aria-hidden="true">
 		{#if mode === 'blocked'}
 			<CrownIcon size={30} />
@@ -43,21 +46,16 @@
 	</div>
 
 	{#if mode === 'blocked'}
-		<h2>Hand over the house first</h2>
-		<p class="copy">
-			You're the owner of {householdName}, and someone has to be able to manage members and the
-			invite. Make a housemate the owner, then you can leave.
-		</p>
-		<Button href="/settings/members" variant="secondary">Go to members</Button>
+		<h2>{m.settings.leave.blockedTitle}</h2>
+		<p class="copy">{m.settings.leave.blockedCopy(householdName)}</p>
+		<Button href="/settings/members" variant="secondary">{m.settings.leave.goToMembers}</Button>
 	{:else}
-		<h2>Leave {householdName}?</h2>
+		<h2>{m.settings.leave.title(householdName)}</h2>
 		<p class="copy">
 			{#if mode === 'last'}
-				You're the only one here, so leaving deletes {householdName} for good — the shopping list, the
-				meal plan, every task and all the points logged so far. This can't be undone.
+				{m.settings.leave.lastCopy(householdName)}
 			{:else}
-				You'll lose access to the shared shopping list, tasks and meal plan. Your points stay with
-				the household.
+				{m.settings.leave.copy}
 			{/if}
 		</p>
 
@@ -75,9 +73,7 @@
 					submitting = false;
 					if (result.type === 'failure') {
 						error =
-							typeof result.data?.error === 'string'
-								? result.data.error
-								: "That didn't work. Try again.";
+							typeof result.data?.error === 'string' ? result.data.error : m.settings.leave.failed;
 					}
 				};
 			}}
@@ -86,12 +82,12 @@
 				 when the screen said it would (→ DECISIONS #79). -->
 			<input type="hidden" name="mode" value={mode} />
 			<Button type="submit" variant="danger" disabled={submitting}>
-				{mode === 'last' ? 'Delete household & leave' : 'Leave household'}
+				{mode === 'last' ? m.settings.leave.deleteAndLeave : m.settings.leave.label}
 			</Button>
 		</form>
 	{/if}
 
-	<button type="button" class="cancel" onclick={() => (open = false)}>Cancel</button>
+	<button type="button" class="cancel" onclick={() => (open = false)}>{m.common.cancel}</button>
 </CenterModal>
 
 <style>

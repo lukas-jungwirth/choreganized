@@ -152,6 +152,12 @@ none` — the knob's `transform` otherwise paints it over the input and swallows
   either of those keeps the card itself inert, since a button inside a button is invalid
   (→ [DECISIONS #57](DECISIONS.md)).
 - **ProgressBar** — 9px track `--track`, fill = member colour (points card).
+- **Copy comes from `$lib/i18n`, never from a literal** — including the labels the kit supplies
+  itself (BottomSheet's ×, SearchField's placeholder, Stepper's ± , ColorPicker's palette
+  names). A component that takes a label as a prop keeps taking it; the _default_ is a catalog
+  lookup, so nothing here is bilingual by accident. German is ~15–30% longer than English:
+  rows wrap rather than truncate, and nothing in the kit assumes a label's width
+  (→ [DECISIONS #93](DECISIONS.md), [SPEC §9](SPEC.md)).
 - **ProgressRing** — cook timer, 220px, 10px stroke, sage on `rgba(255,255,255,.08)`.
 
 ## Icons

@@ -14,6 +14,12 @@ declare global {
 			 * created/joined a household yet. Loaded once per request in hooks.
 			 */
 			member: import('$lib/server/db/schema').Member | null;
+			/**
+			 * The language this request is answered in — the member's own choice,
+			 * else the cookie, else the browser's `Accept-Language` (→ hooks.server.ts).
+			 * Always set, including for signed-out requests.
+			 */
+			locale: import('$lib/i18n/locale').Locale;
 		}
 		// interface PageData {}
 		// interface PageState {}

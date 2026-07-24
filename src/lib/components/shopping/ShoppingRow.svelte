@@ -14,8 +14,8 @@
 	import { enhance } from '$app/forms';
 	import Avatar from '$lib/components/ui/Avatar.svelte';
 	import CheckCircle from '$lib/components/ui/CheckCircle.svelte';
+	import { messages } from '$lib/i18n';
 	import type { ShoppingListItem } from '$lib/server/services/shopping';
-	import { formatQuantity } from '$lib/utils/shopping';
 	import type { SubmitFunction } from '@sveltejs/kit';
 
 	type Props = {
@@ -29,7 +29,9 @@
 
 	let { item, checked, toggle, onedit }: Props = $props();
 
-	const quantity = $derived(formatQuantity(item.quantity, item.unit));
+	const m = messages();
+
+	const quantity = $derived(m.units.quantity(item.quantity, item.unit));
 </script>
 
 <li class="row">
@@ -40,13 +42,13 @@
 			type="submit"
 			class="tick"
 			aria-pressed={checked}
-			aria-label={checked ? `Put ${item.name} back on the list` : `Check off ${item.name}`}
+			aria-label={checked ? m.shopping.row.uncheck(item.name) : m.shopping.row.check(item.name)}
 		>
 			<CheckCircle {checked} />
 		</button>
 	</form>
 
-	<button type="button" class="body" onclick={onedit} aria-label="Edit {item.name}">
+	<button type="button" class="body" onclick={onedit} aria-label={m.shopping.row.edit(item.name)}>
 		<span class="name" class:done={checked}>
 			{checked && quantity ? `${item.name} ${quantity}` : item.name}
 		</span>

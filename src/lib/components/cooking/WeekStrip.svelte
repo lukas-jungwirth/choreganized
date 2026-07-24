@@ -5,9 +5,12 @@
 	one of them invisible, would be a worse screen.
 -->
 <script lang="ts">
+	import { messages } from '$lib/i18n';
 	import type { WeekDay } from '$lib/server/services/meals';
 
 	let { days }: { days: WeekDay[] } = $props();
+
+	const m = messages();
 </script>
 
 <ol class="strip">
@@ -15,7 +18,7 @@
 		<li class="day" class:today={day.isToday}>
 			<span class="weekday">{day.weekday}</span>
 			<span class="date">{day.dayOfMonth}</span>
-			{#if day.isToday}<span class="sr-only">(today)</span>{/if}
+			{#if day.isToday}<span class="sr-only">{m.cooking.week.today}</span>{/if}
 		</li>
 	{/each}
 </ol>

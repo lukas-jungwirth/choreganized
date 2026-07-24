@@ -10,6 +10,7 @@
 <script lang="ts">
 	import Search from '@lucide/svelte/icons/search';
 	import X from '@lucide/svelte/icons/x';
+	import { messages } from '$lib/i18n';
 	import type { HTMLInputAttributes } from 'svelte/elements';
 
 	type Props = HTMLInputAttributes & {
@@ -18,7 +19,9 @@
 		value?: string;
 	};
 
-	let { label, value = $bindable(''), placeholder = 'Search', ...rest }: Props = $props();
+	let { label, value = $bindable(''), placeholder, ...rest }: Props = $props();
+
+	const m = messages();
 
 	let input: HTMLInputElement | undefined = $state();
 </script>
@@ -30,7 +33,7 @@
 		bind:value
 		type="search"
 		aria-label={label}
-		{placeholder}
+		placeholder={placeholder ?? m.ui.search}
 		autocomplete="off"
 		{...rest}
 	/>
@@ -38,7 +41,7 @@
 		<button
 			type="button"
 			class="clear"
-			aria-label="Clear search"
+			aria-label={m.ui.clearSearch}
 			onclick={() => {
 				if (!input) return;
 				// Clear the *field* and let its own `input` event do the rest.

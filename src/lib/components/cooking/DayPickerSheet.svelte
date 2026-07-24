@@ -6,8 +6,9 @@
 <script lang="ts">
 	import BottomSheet from '$lib/components/ui/BottomSheet.svelte';
 	import RowGroup from '$lib/components/ui/RowGroup.svelte';
+	import { messages } from '$lib/i18n';
 	import type { MealWeek } from '$lib/server/services/meals';
-	import { formatWeekdayLong, type CalendarDate } from '$lib/utils/dates';
+	import type { CalendarDate } from '$lib/utils/dates';
 	import ChevronRight from '@lucide/svelte/icons/chevron-right';
 
 	type Props = {
@@ -18,6 +19,8 @@
 
 	let { week, onpick, onclose }: Props = $props();
 
+	const m = messages();
+
 	let open = $state(true);
 
 	$effect(() => {
@@ -25,7 +28,7 @@
 	});
 </script>
 
-<BottomSheet bind:open title="Which day?" eyebrow="Add to plan">
+<BottomSheet bind:open title={m.cooking.dayPicker.title} eyebrow={m.cooking.dayPicker.eyebrow}>
 	<RowGroup surface="sunken">
 		{#each week.days as day (day.date)}
 			<!-- The label spells the day out; the row itself abbreviates it to fit. -->
@@ -33,14 +36,19 @@
 				type="button"
 				class="day"
 				class:today={day.isToday}
-				aria-label="{formatWeekdayLong(day.date)} {day.dayOfMonth} — {day.meal?.name ?? 'free'}"
+				aria-label={m.cooking.dayPicker.day(
+					m.date.weekdayLong(day.date),
+					day.dayOfMonth,
+					day.meal?.name ?? m.cooking.dayPicker.freeQuiet
+				)}
 				onclick={() => onpick(day.date)}
 			>
 				<span class="when">
 					<span class="weekday">{day.weekday}</span>
 					<span class="number">{day.dayOfMonth}</span>
 				</span>
-				<span class="meal" class:free={!day.meal}>{day.meal?.name ?? 'Free'}</span>
+				<span class="meal" class:free={!day.meal}>{day.meal?.name ?? m.cooking.dayPicker.free}</span
+				>
 				<ChevronRight size={16} strokeWidth={2} aria-hidden="true" />
 			</button>
 		{/each}

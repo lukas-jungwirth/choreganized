@@ -11,7 +11,10 @@
 -->
 <script lang="ts">
 	import Banner from '$lib/components/ui/Banner.svelte';
+	import { messages } from '$lib/i18n';
 	import HousePlus from '@lucide/svelte/icons/house-plus';
+
+	const m = messages();
 
 	/** Asked once per device and remembered, like the push prompt beside it. */
 	const DISMISSED_KEY = 'choreganized.install-prompt-dismissed';
@@ -115,13 +118,13 @@
 {#if visible}
 	<Banner
 		variant="info"
-		title="Add to your home screen"
-		detail="Install Choreganized for one-tap, full-screen access."
-		action={installing ? 'Opening…' : 'Add'}
+		title={m.install.title}
+		detail={m.install.detail}
+		action={installing ? m.install.opening : m.install.add}
 		disabled={installing}
 		onclick={install}
 		ondismiss={dismiss}
-		dismissLabel="Not now"
+		dismissLabel={m.install.notNow}
 	>
 		{#snippet icon()}<HousePlus size={18} strokeWidth={1.9} />{/snippet}
 	</Banner>

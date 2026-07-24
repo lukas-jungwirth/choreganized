@@ -4,6 +4,7 @@
  * CTA and delete row to `update`/`delete`.
  */
 import { fail } from '@sveltejs/kit';
+import { catalog, type Messages } from '$lib/i18n';
 import { requireMember } from '$lib/server/guards';
 import {
 	addItem,
@@ -31,10 +32,10 @@ export const load: PageServerLoad = (event) => {
 };
 
 /** The trimmed item name, or the message to send back with a 400. */
-function readName(form: FormData): { name: string } | { error: string } {
+function readName(form: FormData, m: Messages): { name: string } | { error: string } {
 	const name = String(form.get('name') ?? '').trim();
-	if (!name) return { error: 'Give the item a name.' };
-	if (name.length > ITEM_NAME_MAX) return { error: `Keep it under ${ITEM_NAME_MAX} characters.` };
+	if (!name) return { error: m.errors.shopping.itemName };
+	if (name.length > ITEM_NAME_MAX) return { error: m.errors.keepUnder(ITEM_NAME_MAX) };
 	return { name };
 }
 
@@ -55,7 +56,7 @@ export const actions: Actions = {
 		const { householdId, member } = requireMember(event);
 		const form = await event.request.formData();
 
-		const name = readName(form);
+		const name = readName(form, catalog(event.locals.locale));
 		if ('error' in name) return fail(400, { error: name.error });
 
 		// The quick field posts no store at all, which is the difference between
@@ -78,7 +79,7 @@ export const actions: Actions = {
 		const form = await event.request.formData();
 
 		const id = String(form.get('id') ?? '');
-		const name = readName(form);
+		const name = readName(form, catalog(event.locals.locale));
 		if ('error' in name) return fail(400, { error: name.error });
 
 		updateItem(householdId, id, {

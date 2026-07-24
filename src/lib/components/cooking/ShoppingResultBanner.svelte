@@ -9,6 +9,7 @@
 <script lang="ts">
 	import BasketIcon from '$lib/components/icons/BasketIcon.svelte';
 	import Banner from '$lib/components/ui/Banner.svelte';
+	import { messages } from '$lib/i18n';
 
 	type Props = {
 		/**
@@ -21,24 +22,32 @@
 
 	let { result }: Props = $props();
 
+	const m = messages();
+
 	const title = $derived(
 		!result
 			? ''
 			: result.added > 0
-				? `${result.added} ${result.added === 1 ? 'ingredient' : 'ingredients'} on the shopping list`
-				: 'Everything is already on the list'
+				? m.cooking.shoppingResult.added(result.added)
+				: m.cooking.shoppingResult.nothing
 	);
 
 	const detail = $derived(
 		result && result.added > 0 && result.skipped > 0
-			? `${result.skipped} ${result.skipped === 1 ? 'was' : 'were'} already on it`
+			? m.cooking.shoppingResult.skipped(result.skipped)
 			: undefined
 	);
 </script>
 
 {#if result}
 	<div class="banner">
-		<Banner variant="info" {title} {detail} action="Open list" href="/shopping">
+		<Banner
+			variant="info"
+			{title}
+			{detail}
+			action={m.cooking.shoppingResult.openList}
+			href="/shopping"
+		>
 			{#snippet icon()}<BasketIcon size={18} strokeWidth={1.9} />{/snippet}
 		</Banner>
 	</div>

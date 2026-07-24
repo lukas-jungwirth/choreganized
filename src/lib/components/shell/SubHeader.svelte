@@ -6,6 +6,7 @@
 -->
 <script lang="ts">
 	import ChevronLeft from '@lucide/svelte/icons/chevron-left';
+	import { messages } from '$lib/i18n';
 	import type { Snippet } from 'svelte';
 
 	type Props = {
@@ -18,11 +19,13 @@
 		actions?: Snippet;
 	};
 
-	let { title, back, backLabel = 'Back', subtitle, actions }: Props = $props();
+	let { title, back, backLabel, subtitle, actions }: Props = $props();
+
+	const m = messages();
 </script>
 
 <header>
-	<a class="back" href={back} aria-label={backLabel}>
+	<a class="back" href={back} aria-label={backLabel ?? m.nav.back}>
 		<ChevronLeft size={20} strokeWidth={2.4} />
 	</a>
 	<div class="titles">

@@ -12,6 +12,7 @@
 	import Button from '$lib/components/ui/Button.svelte';
 	import Card from '$lib/components/ui/Card.svelte';
 	import CenterModal from '$lib/components/ui/CenterModal.svelte';
+	import { messages } from '$lib/i18n';
 	import type { StoreSummary } from '$lib/server/services/shopping';
 	import { STORE_NAME_MAX } from '$lib/utils/shopping';
 	import Plus from '@lucide/svelte/icons/plus';
@@ -19,6 +20,8 @@
 	import type { PageProps } from './$types';
 
 	let { data, form }: PageProps = $props();
+
+	const m = messages();
 
 	let newStore = $state('');
 	let confirming = $state<StoreSummary | null>(null);
@@ -33,14 +36,14 @@
 </script>
 
 <svelte:head>
-	<title>Stores · Choreganized</title>
+	<title>{m.common.pageTitle(m.shopping.stores.title)}</title>
 </svelte:head>
 
 <SubHeader
-	title="Stores"
-	subtitle="Group your shopping list by shop"
+	title={m.shopping.stores.title}
+	subtitle={m.shopping.stores.subtitle}
 	back="/shopping"
-	backLabel="Back to shopping"
+	backLabel={m.shopping.stores.back}
 />
 
 {#if data.stores.length > 0}
@@ -74,14 +77,14 @@
 		type="text"
 		name="name"
 		bind:value={newStore}
-		placeholder="Add a store"
-		aria-label="Add a store"
+		placeholder={m.shopping.stores.add}
+		aria-label={m.shopping.stores.add}
 		maxlength={STORE_NAME_MAX}
 		autocomplete="off"
 		required
 	/>
 	{#if newStore.trim()}
-		<button type="submit" class="save">Add</button>
+		<button type="submit" class="save">{m.shopping.stores.addButton}</button>
 	{/if}
 </form>
 
@@ -89,22 +92,17 @@
 	<p class="error">{error}</p>
 {/if}
 
-<p class="help">
-	Use the arrows to reorder — your list follows this order, so arrange it the way you walk through
-	town. Quick-added items land in the first store; items without a store go under “Other”.
-</p>
+<p class="help">{m.shopping.stores.help}</p>
 
-<CenterModal bind:open={confirmOpen} label="Delete store" dismissible={false}>
+<CenterModal bind:open={confirmOpen} label={m.shopping.stores.deleteLabel} dismissible={false}>
 	{#if confirming}
 		<div class="well" aria-hidden="true"><Trash2 size={26} strokeWidth={1.9} /></div>
-		<h2>Delete {confirming.name}?</h2>
+		<h2>{m.shopping.stores.deleteConfirm(confirming.name)}</h2>
 		<p class="copy">
 			{#if confirming.itemCount > 0}
-				Its {confirming.itemCount}
-				{confirming.itemCount === 1 ? 'item moves' : 'items move'} to “Other” — nothing falls off the
-				list.
+				{m.shopping.stores.deleteMoves(confirming.itemCount)}
 			{:else}
-				Nothing is filed under it, so nothing else changes.
+				{m.shopping.stores.deleteEmpty}
 			{/if}
 		</p>
 		<form
@@ -119,9 +117,11 @@
 				}}
 		>
 			<input type="hidden" name="id" value={confirming.id} />
-			<Button type="submit" variant="danger">Delete store</Button>
+			<Button type="submit" variant="danger">{m.shopping.stores.deleteLabel}</Button>
 		</form>
-		<button type="button" class="cancel" onclick={() => (confirmOpen = false)}>Cancel</button>
+		<button type="button" class="cancel" onclick={() => (confirmOpen = false)}>
+			{m.common.cancel}
+		</button>
 	{/if}
 </CenterModal>
 

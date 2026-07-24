@@ -5,6 +5,7 @@
  * (→ docs/ARCHITECTURE.md "Server patterns").
  */
 import { error, redirect, type RequestEvent } from '@sveltejs/kit';
+import { catalog } from '$lib/i18n';
 import type { Member } from './db/schema';
 
 export type SessionUser = NonNullable<App.Locals['user']>;
@@ -39,13 +40,13 @@ export function requireMember(event: RequestEvent): MemberContext {
  */
 export function requireUserApi(event: RequestEvent): SessionUser {
 	const { user } = event.locals;
-	if (!user) error(401, 'Not signed in');
+	if (!user) error(401, catalog(event.locals.locale).errors.notSignedIn);
 	return user;
 }
 
 export function requireMemberApi(event: RequestEvent): MemberContext {
 	const user = requireUserApi(event);
 	const { member } = event.locals;
-	if (!member) error(403, 'Not in a household');
+	if (!member) error(403, catalog(event.locals.locale).errors.notInHousehold);
 	return { user, member, householdId: member.householdId };
 }

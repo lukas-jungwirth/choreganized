@@ -10,6 +10,7 @@
  * call each).
  */
 import { fail, type Actions, type RequestEvent } from '@sveltejs/kit';
+import { catalog } from '$lib/i18n';
 import { isCalendarDate } from '$lib/utils/dates';
 import { readPlanForm } from '$lib/utils/recipes';
 import { requireMember } from './guards';
@@ -21,16 +22,16 @@ export const mealPlanActions = {
 		const { householdId, member } = requireMember(event);
 		const form = await event.request.formData();
 
-		const input = readPlanForm(form);
+		const m = catalog(event.locals.locale);
+
+		const input = readPlanForm(form, m);
 		if ('error' in input) return fail(400, { error: input.error });
 
 		const { planned, shopping } = planMeal(householdId, member.id, input);
 		// Nothing was written — the sheet must stay up and say so rather than
 		// closing on a meal that doesn't exist.
 		if (!planned) {
-			return fail(409, {
-				error: 'That recipe is gone. Pick another, or name what you’re cooking.'
-			});
+			return fail(409, { error: m.errors.recipes.gonePickAnother });
 		}
 
 		return { planned, shopping };
@@ -41,7 +42,9 @@ export const mealPlanActions = {
 		const form = await event.request.formData();
 
 		const date = form.get('date');
-		if (!isCalendarDate(date)) return fail(400, { error: 'Pick a day for this meal.' });
+		if (!isCalendarDate(date)) {
+			return fail(400, { error: catalog(event.locals.locale).errors.recipes.mealDay });
+		}
 
 		removeMeal(householdId, date);
 

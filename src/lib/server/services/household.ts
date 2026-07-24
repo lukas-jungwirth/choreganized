@@ -14,6 +14,7 @@
  * write happen anyway.
  */
 import { and, asc, eq, ne, sql } from 'drizzle-orm';
+import type { Locale } from '$lib/i18n';
 import { isMemberColor } from '$lib/member-colors';
 import { toCalendarDate, type CalendarDate } from '$lib/utils/dates';
 import {
@@ -24,9 +25,6 @@ import {
 import { db } from '../db';
 import { households, members, stores, tasks, type Household, type Member } from '../db/schema';
 import type { NotificationPref } from '../push';
-
-/** Walking order for a first shopping list; renameable/reorderable later (7g). */
-const DEFAULT_STORES = ['Grocery', 'Drugstore', 'Hardware store'];
 
 export type HouseholdErrorCode =
 	/** No household has this code (never existed, or it was revoked). */
@@ -111,6 +109,13 @@ export type CreateHouseholdInput = {
 	color: string;
 	/** IANA name from the creator's browser; the household's clock from now on. */
 	timezone: string;
+	/**
+	 * Walking order for a first shopping list, renameable and reorderable later
+	 * [7g]. Passed in rather than fixed here because these are the household's
+	 * first three rows of *content*: the action writes them in the language the
+	 * person creating the house is reading (→ `$lib/i18n`, `shopping.stores.defaults`).
+	 */
+	storeNames: string[];
 };
 
 export function createHousehold(userId: string, input: CreateHouseholdInput): Member {
@@ -129,7 +134,7 @@ export function createHousehold(userId: string, input: CreateHouseholdInput): Me
 			.run();
 
 		tx.insert(stores)
-			.values(DEFAULT_STORES.map((name, sortOrder) => ({ householdId, name, sortOrder })))
+			.values(input.storeNames.map((name, sortOrder) => ({ householdId, name, sortOrder })))
 			.run();
 
 		return tx
@@ -199,20 +204,22 @@ export type HouseholdMember = {
 };
 
 export function listMembers(householdId: string): HouseholdMember[] {
-	return db
-		.select({
-			id: members.id,
-			displayName: members.displayName,
-			color: members.color,
-			role: members.role,
-			awayUntil: members.awayUntil
-		})
-		.from(members)
-		.where(eq(members.householdId, householdId))
-		// `id` mirrors the rotation's tiebreak (services/tasks.ts) so the crown and
-		// the rotation agree on seniority when two members share a joinedAt (→ #75).
-		.orderBy(asc(members.joinedAt), asc(members.id))
-		.all();
+	return (
+		db
+			.select({
+				id: members.id,
+				displayName: members.displayName,
+				color: members.color,
+				role: members.role,
+				awayUntil: members.awayUntil
+			})
+			.from(members)
+			.where(eq(members.householdId, householdId))
+			// `id` mirrors the rotation's tiebreak (services/tasks.ts) so the crown and
+			// the rotation agree on seniority when two members share a joinedAt (→ #75).
+			.orderBy(asc(members.joinedAt), asc(members.id))
+			.all()
+	);
 }
 
 /**
@@ -356,6 +363,25 @@ export function setNotificationPref(
 	const result = db
 		.update(members)
 		.set({ [pref]: enabled })
+		.where(and(eq(members.id, memberId), eq(members.householdId, householdId)))
+		.run();
+
+	return result.changes > 0;
+}
+
+/**
+ * The UI language this member reads in (→ SPEC §6, `$lib/i18n`).
+ *
+ * `null` is the "System" option and a real value: it means "follow whatever
+ * device I'm on", which is what lets `hooks.server.ts` fall through to
+ * `Accept-Language`. Stored on the membership rather than only in a cookie so
+ * a phone and a laptop agree — and so the nightly cron can address a push
+ * notification in the language its recipient reads.
+ */
+export function setLocale(householdId: string, memberId: string, locale: Locale | null): boolean {
+	const result = db
+		.update(members)
+		.set({ locale })
 		.where(and(eq(members.id, memberId), eq(members.householdId, householdId)))
 		.run();
 

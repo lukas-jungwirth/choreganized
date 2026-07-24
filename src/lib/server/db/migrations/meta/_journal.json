@@ -15,6 +15,20 @@
       "when": 1784702457390,
       "tag": "0001_keen_chimera",
       "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "6",
+      "when": 1784877479284,
+      "tag": "0002_many_loners",
+      "breakpoints": true
+    },
+    {
+      "idx": 3,
+      "version": "6",
+      "when": 1784879394737,
+      "tag": "0003_furry_old_lace",
+      "breakpoints": true
     }
   ]
 }

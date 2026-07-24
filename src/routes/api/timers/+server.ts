@@ -11,6 +11,7 @@
  * is left so the page can rebuild the instant in its own.
  */
 import { error, json } from '@sveltejs/kit';
+import { catalog, type Messages } from '$lib/i18n';
 import { requireMemberApi } from '$lib/server/guards';
 import { CookTimerError, startTimer } from '$lib/server/services/cook-timers';
 import type { RequestHandler } from './$types';
@@ -27,14 +28,20 @@ type StartBody = {
 
 export const POST: RequestHandler = async (event) => {
 	const { householdId, user } = requireMemberApi(event);
-	const body = await readBody(event.request);
+	// Cook mode shows whatever comes back verbatim (→ `lib/timer-client.ts`), so
+	// even the protocol refusals speak the caller's language.
+	const m = catalog(event.locals.locale);
+	const body = await readBody(event.request, m);
 
 	try {
 		const timer = startTimer(householdId, user.id, {
 			// Every field is re-checked in the service, next to the write — this only
 			// decides what shape to hand it (→ docs/ARCHITECTURE.md).
 			seconds: typeof body.seconds === 'number' ? body.seconds : Number.NaN,
-			label: typeof body.label === 'string' ? body.label : '',
+			// The fallback is copy, so it comes from the caller's catalog rather than
+			// from a constant in the service.
+			label:
+				typeof body.label === 'string' && body.label ? body.label : m.cooking.cook.defaultTimer,
 			recipeId: typeof body.recipeId === 'string' ? body.recipeId : null,
 			stepIndex: typeof body.stepIndex === 'number' ? body.stepIndex : null
 		});
@@ -43,21 +50,21 @@ export const POST: RequestHandler = async (event) => {
 	} catch (failure) {
 		if (!(failure instanceof CookTimerError)) throw failure;
 
-		if (failure.code === 'unknown-recipe') error(404, 'That recipe is gone.');
-		error(400, 'That is not a length of time.');
+		if (failure.code === 'unknown-recipe') error(404, m.errors.recipes.gone);
+		error(400, m.errors.recipes.timerLength);
 	}
 };
 
-async function readBody(request: Request): Promise<StartBody> {
+async function readBody(request: Request, m: Messages): Promise<StartBody> {
 	// A cheap early-out, not the real bound — a chunked body reads as 0 and sails
 	// past. adapter-node's `bodySizeLimit` is what actually caps this.
 	if (Number(request.headers.get('content-length') ?? '0') > MAX_BODY_BYTES) {
-		error(413, 'Body too large');
+		error(413, m.errors.bodyTooLarge);
 	}
 
 	try {
 		return ((await request.json()) as StartBody | null) ?? {};
 	} catch {
-		error(400, 'Expected JSON');
+		error(400, m.errors.expectedJson);
 	}
 }

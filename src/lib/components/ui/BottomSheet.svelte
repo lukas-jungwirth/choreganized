@@ -10,6 +10,7 @@
 -->
 <script lang="ts">
 	import X from '@lucide/svelte/icons/x';
+	import { messages } from '$lib/i18n';
 	import { lockBodyScroll } from '$lib/scroll-lock';
 	import type { Snippet } from 'svelte';
 
@@ -40,6 +41,8 @@
 		tone = 'light',
 		children
 	}: Props = $props();
+
+	const m = messages();
 
 	let dialog: HTMLDialogElement | undefined = $state();
 
@@ -131,7 +134,7 @@
 					<h2>{title}</h2>
 					{#if subtitle}<p class="subtitle">{subtitle}</p>{/if}
 				</div>
-				<button type="button" class="close" aria-label="Close" onclick={() => (open = false)}>
+				<button type="button" class="close" aria-label={m.ui.close} onclick={() => (open = false)}>
 					<X size={13} strokeWidth={2.4} />
 				</button>
 			</header>

@@ -28,7 +28,10 @@ Agents: when you make a judgment call that isn't in SPEC/ARCHITECTURE, **append 
    schema otherwise supports multi-household. Leaving/removal → back to onboarding.
 8. **Timezone lives on the household** (captured from the creator's browser, default
    Europe/Vienna). All calendar dates are household-local TEXT `YYYY-MM-DD`; reminders fire at
-   08:00 household-local. Weeks start Monday. UI English (i18n later).
+   08:00 household-local. Weeks start Monday. ~~UI English (i18n later).~~ **Superseded by
+   #93**: the UI ships in English and German. Timezone and language stayed separate axes —
+   a Vienna household reading in English gets Vienna's midnight and English month names.
+   (`INTL_LOCALE` is a single constant per language; de-AT, → #93.)
 9. **Leaderboard month is derived** from completion timestamps in the household timezone — no
    monthly reset job, history keeps all months.
 10. **Any member can invite** (view/share the active code); only the **owner** can revoke/
@@ -505,7 +508,7 @@ immutable` honest. The name carries nothing about the recipe on purpose — a fi
     client is the wrong clock: the server's is the one the `setTimeout` and the push are
     scheduled against, and a phone forty seconds out of sync would book its alarm forty seconds
     off. So the body carries `seconds`, the server computes `endsAt`, and `CookTimerView`
-    answers with `remainingMs` — which the page turns back into an instant in *its* clock, so
+    answers with `remainingMs` — which the page turns back into an instant in _its_ clock, so
     the countdown on screen is right even when the two disagree.
 83. **The open page claims the alert two seconds before zero** (→ SPEC §4.6 "the open page also
     alerts locally"). The page's countdown and the server's alarm fire at the same instant, so
@@ -515,7 +518,7 @@ immutable` honest. The name carries nothing about the recipe on purpose — a fi
     has probably been throttled to a tick a minute, and the push is the entire point of [7h·2].
     Losing the claim (`{owned: false}`) means the push already went out, so the page shows the
     timer as rung but stays quiet rather than alerting twice.
-84. **The timer's *length* lives in the client, its *deadline* on the server.** Pause and
+84. **The timer's _length_ lives in the client, its _deadline_ on the server.** Pause and
     "+1:00" are cancel-and-recreate (→ #15), so a resumed row only knows it was created for
     5:39 — the 8:00 you actually set is gone from the database. `totalSeconds` therefore lives
     in `CookTimer`, which is what keeps the ring reading "how much of what I set is left" across
@@ -549,7 +552,7 @@ immutable` honest. The name carries nothing about the recipe on purpose — a fi
     named yet: `--cook-text-2` (the ingredients under a step), `--cook-track`, `--cook-divider`,
     `--cook-amber-line` and `--cook-amber-tint`.
 89. **`requireMemberApi` / `requireUserApi`** — the guards for the JSON endpoints (→ #20).
-    `requireMember` *redirects*, which is right for a page and useless for `fetch`: a 303 to
+    `requireMember` _redirects_, which is right for a page and useless for `fetch`: a 303 to
     /login arrives as a 200 with a page of HTML in it, so a signed-out timer request would look
     like a successful one. The API pair answers 401/403 instead. `api/push/subscribe` had
     hand-rolled the same check; it now shares these.
@@ -586,6 +589,66 @@ immutable` honest. The name carries nothing about the recipe on purpose — a fi
     live in `app.html`; the one dynamic tag lives in the layout. The scaffold's Svelte-logo
     `favicon.svg` was replaced by the generated mark (→ ARCHITECTURE "PWA").
 
+93. **i18n is a hand-written, type-checked catalog — no library.** `src/lib/i18n/messages/en.ts`
+    is the schema (`Messages = typeof en`) and `de.ts` is declared `: Messages`, so a missing,
+    misspelt or wrongly-shaped key fails `npm run check` instead of falling back to English at
+    runtime. There is no key lookup by string and no missing-key path. Rejected Paraglide and
+    svelte-i18n: the call-site edit is identical either way, and this keeps the zero-dependency,
+    zero-build-step posture the rest of the app has — at the price of owning ~150 lines of
+    infrastructure. **Anything with a number, a name or a plural in it is a function**, so each
+    language writes its own agreement rules rather than filling in a shape English chose
+    ("3 days overdue" vs "seit 3 Tagen überfällig", "It's Lukas's turn" vs "Lukas ist dran").
+    German is **Austrian** (`de-AT`), matching the Europe/Vienna default: `Intl` then writes
+    "Jänner"/"Jän." instead of "Januar"/"Jan.", which is the only place the tag changes anything
+    this app shows, and the copy uses the Austrian word where one exists ("Mist rausbringen",
+    not "Müll"). It is the written standard as Austria writes it, not dialect, so it still reads
+    plainly to any German speaker. The locale _key_ stays `de` — it names a language, and that
+    is what `members.locale`, the cookie and the switcher speak; only the rendering tags
+    (`INTL_LOCALE`, `HTML_LANG`) are regional, which is why those are separate tables and why
+    moving to `de-DE` or adding `de-CH` needs no migration.
+
+94. **Which language a request gets: member choice → cookie → `Accept-Language` → English.**
+    `members.locale` is nullable and NULL is a _real setting_ — the "System" option — meaning
+    "follow whatever device I'm on", which is what lets the fall-through happen. Nothing writes
+    a cookie from negotiation; only an explicit choice does, or changing the phone's language
+    would stop changing the app's. The cookie exists for the signed-out screens (login, an
+    invite link) and to make the first paint after a switch already correct. `<html lang>` is a
+    placeholder filled in `hooks.server.ts` — it is the one attribute of the document no
+    component can reach.
+
+95. **Switching language reloads the document.** The catalog a component holds is a snapshot
+    taken at mount, which is only safe because `<html lang>`, the `Intl` formatter caches and
+    every server-rendered string have to change together — and only a fresh request does all of
+    that. The switcher therefore calls `location.reload()` itself rather than leaning on the
+    browser's default form navigation, which was observed being swallowed in testing: the
+    preference saved while the page carried on in the old language, the one outcome that screen
+    must never produce. The root layout asserts the invariant (`data.locale !== mounted →
+reload`) so it can't silently regress.
+
+96. **Values in `utils/`, words in the catalog.** `EFFORTS`, `REPEAT_PRESETS`, `SNOOZE_PRESETS`,
+    `STARTERS`, `MEMBER_COLORS` and the task-section order all carry a `key` and no label —
+    "Small" and "Klein" are two names for `points: 5`. Same rule server-side: `TaskSection`
+    ships its key and not a heading, `ShoppingGroup.name` is null for the virtual "Other" group,
+    `UploadError` carries a code rather than a sentence, and `TaskContext` grew a `locale`
+    beside `today`/`timezone` for the handful of rows that come back already written out.
+    **Household content is never translated** — task names, recipes, stores and meal titles are
+    what the household typed. The starter chores and the three default stores are _seeded_ in
+    the creator's language and are theirs to rename from then on.
+
+97. **Units are stored canonically and labelled per language**, so switching language re-labels
+    the list rather than rewriting it: the column keeps `tbsp`, the screen reads "tbsp" or "EL".
+    `UNIT_ALIASES` reads both languages into the same canonical unit, so "2 EL Öl" and
+    "2 tbsp oil" store identically and each round-trips through the edit form in whichever
+    language is on. Anything a member typed that isn't in the table shows exactly as typed.
+
+98. **A push notification is written in the recipient's language, not the sender's.** It is the
+    one place the app addresses somebody who isn't making the request — a shopping nudge goes to
+    the _other_ housemate, and the morning sweep has no request at all. So `sendToUser` /
+    `sendToMembers` take a `PayloadFor` callback instead of a finished payload, and `deliver`
+    encodes once per language actually in play. `push_subscriptions.locale` records what the
+    _device_ was reading when it subscribed, which is what makes "detect the system language"
+    true for notifications as well as pages; an explicit `members.locale` outranks it.
+
 ## Open questions (non-blocking, defaults chosen)
 
 - **Production domain** — invite links & OAuth redirect need the final origin (design shows
@@ -594,7 +657,9 @@ immutable` honest. The name carries nothing about the recipe on purpose — a fi
   keys are in `.env`, and Lukas walked the sign-in round-trip by hand. Agent sessions still
   can't drive it (Claude must never enter the owner's Google login), so the temporary
   email-password switch stays the way plans verify auth — see the memory note and plan 00.
-- **Language** — UI is English like the design; German/i18n not planned for v1.
+- ~~**Language**~~ — **resolved 2026-07-24**: English + German, switchable in Settings, with
+  the browser's own language as the default (→ #93–#97, [SPEC §9](SPEC.md)). A third language
+  is `LOCALES` + one catalog file; nothing else changes.
 - **Recipe share** ([7c] "Share") — v1 ships plain-text share (Web Share API). Public share
   links would need a tokenized public route; deferred.
 

@@ -8,7 +8,7 @@
  * plan a meal: the week [04] and a recipe's "Add to plan" [7a]. One reader, one
  * set of rules, two thin actions (→ docs/ARCHITECTURE.md "Server patterns").
  */
-import { formatIngredient } from './ingredients';
+import type { Messages } from '$lib/i18n';
 import { isCalendarDate, type CalendarDate } from './dates';
 
 /* ── Field limits ─────────────────────────────────────────────────────────── */
@@ -26,11 +26,6 @@ export const STEPS_MAX = 40;
 export const MEAL_TITLE_MAX = 80;
 
 /* ── Rendering ────────────────────────────────────────────────────────────── */
-
-/** "35 min", or nothing when a recipe never said how long it takes. */
-export function formatCookTime(minutes: number | null): string | null {
-	return minutes && minutes > 0 ? `${minutes} min` : null;
-}
 
 /**
  * Where a stored photo is read from. Every segment is encoded separately so the
@@ -68,12 +63,21 @@ export type RecipeFormField = 'name' | 'photo';
 
 export type RecipeFormError = { error: string; field: RecipeFormField };
 
-/** The recipe form's fields, validated. Clamping is the service's business. */
-export function readRecipeForm(form: FormData): { input: RecipeInput } | RecipeFormError {
+/**
+ * The recipe form's fields, validated. Clamping is the service's business.
+ *
+ * Takes the catalog because a refusal is copy: the action passes
+ * `catalog(event.locals.locale)` so the message comes back in the language the
+ * form was filled in (→ `$lib/i18n`).
+ */
+export function readRecipeForm(
+	form: FormData,
+	m: Messages
+): { input: RecipeInput } | RecipeFormError {
 	const name = String(form.get('name') ?? '').trim();
-	if (!name) return { error: 'Give the recipe a name.', field: 'name' };
+	if (!name) return { error: m.errors.recipes.name, field: 'name' };
 	if (name.length > RECIPE_NAME_MAX) {
-		return { error: `Keep the name under ${RECIPE_NAME_MAX} characters.`, field: 'name' };
+		return { error: m.errors.recipes.nameTooLong(RECIPE_NAME_MAX), field: 'name' };
 	}
 
 	return {
@@ -109,8 +113,11 @@ export type ShareableRecipe = {
  * itself rather than a link, because a link would have to be a public route
  * with a token and this app has no public data (→ DECISIONS "Open questions").
  */
-export function recipeShareText(recipe: ShareableRecipe): string {
-	const meta = [formatCookTime(recipe.timeMinutes), recipe.servings && `Serves ${recipe.servings}`]
+export function recipeShareText(recipe: ShareableRecipe, m: Messages): string {
+	const meta = [
+		recipe.timeMinutes ? m.cooking.cookTime(recipe.timeMinutes) : null,
+		recipe.servings ? m.cooking.serves(recipe.servings) : null
+	]
 		.filter(Boolean)
 		.join(' · ');
 
@@ -118,12 +125,17 @@ export function recipeShareText(recipe: ShareableRecipe): string {
 
 	if (recipe.ingredients.length) {
 		blocks.push(
-			['Ingredients', ...recipe.ingredients.map((row) => `• ${formatIngredient(row)}`)].join('\n')
+			[
+				m.cooking.recipe.ingredients,
+				...recipe.ingredients.map((row) => `• ${m.units.ingredient(row)}`)
+			].join('\n')
 		);
 	}
 
 	if (recipe.steps.length) {
-		blocks.push(['Steps', ...recipe.steps.map((text, i) => `${i + 1}. ${text}`)].join('\n'));
+		blocks.push(
+			[m.cooking.recipe.steps, ...recipe.steps.map((text, i) => `${i + 1}. ${text}`)].join('\n')
+		);
 	}
 
 	return blocks.filter(Boolean).join('\n\n');
@@ -155,9 +167,9 @@ export type PlanMealInput = {
  * *not* checked here — that's the service's job, because it's the layer that
  * knows the household (→ `services/meals.ts`).
  */
-export function readPlanForm(form: FormData): PlanMealInput | { error: string } {
+export function readPlanForm(form: FormData, m: Messages): PlanMealInput | { error: string } {
 	const date = String(form.get('date') ?? '');
-	if (!isCalendarDate(date)) return { error: 'Pick a day for this meal.' };
+	if (!isCalendarDate(date)) return { error: m.errors.recipes.mealDay };
 
 	const recipeId = String(form.get('recipeId') ?? '') || null;
 	const title = String(form.get('title') ?? '')
@@ -166,7 +178,7 @@ export function readPlanForm(form: FormData): PlanMealInput | { error: string } 
 
 	// The sheet offers one or the other; posting neither means nothing was
 	// chosen, which is a question rather than a meal.
-	if (!recipeId && !title) return { error: 'Pick a recipe, or name what you’re cooking.' };
+	if (!recipeId && !title) return { error: m.errors.recipes.mealChoice };
 
 	return {
 		date,

@@ -7,12 +7,15 @@
 	import Button from '$lib/components/ui/Button.svelte';
 	import ColorPicker from '$lib/components/ui/ColorPicker.svelte';
 	import TextField from '$lib/components/ui/TextField.svelte';
+	import { messages } from '$lib/i18n';
 	import { MEMBER_COLORS } from '$lib/member-colors';
 	import { DISPLAY_NAME_MAX, HOUSEHOLD_NAME_MAX } from '$lib/utils/household';
 	import { untrack } from 'svelte';
 	import type { PageProps } from './$types';
 
 	let { data, form }: PageProps = $props();
+
+	const m = messages();
 
 	// Seeded once: after a failed submit the fields still hold what was typed, so
 	// re-syncing them from `form` would fight the user (`untrack` says so).
@@ -29,13 +32,13 @@
 </script>
 
 <svelte:head>
-	<title>Set up your home · Choreganized</title>
+	<title>{m.common.pageTitle(m.onboarding.create.title)}</title>
 </svelte:head>
 
 <Screen>
-	<StepHeader step={1} back="/onboarding" backLabel="Back to the start" />
+	<StepHeader step={1} back="/onboarding" backLabel={m.onboarding.backToStart} />
 
-	<h1>Set up your home</h1>
+	<h1>{m.onboarding.create.title}</h1>
 
 	<form
 		method="POST"
@@ -49,18 +52,18 @@
 		}}
 	>
 		<TextField
-			label="Household name"
+			label={m.onboarding.create.householdName}
 			name="householdName"
 			bind:value={householdName}
 			error={form?.errors.householdName}
-			placeholder="Sonnengasse 12"
+			placeholder={m.onboarding.create.householdPlaceholder}
 			maxlength={HOUSEHOLD_NAME_MAX}
 			autocomplete="off"
 			required
 		/>
 
 		<TextField
-			label="Your display name"
+			label={m.onboarding.create.displayName}
 			name="displayName"
 			bind:value={displayName}
 			error={form?.errors.displayName}
@@ -70,7 +73,7 @@
 		/>
 
 		<div class="colour">
-			<p class="label">Your colour</p>
+			<p class="label">{m.ui.yourColour}</p>
 			<div class="row">
 				<Avatar name={displayName} {color} size={52} />
 				<ColorPicker bind:value={color} />
@@ -83,7 +86,7 @@
 		<input type="hidden" name="timezone" value={timezone} />
 
 		<div class="cta">
-			<Button type="submit" disabled={submitting}>Continue</Button>
+			<Button type="submit" disabled={submitting}>{m.onboarding.start.continue}</Button>
 		</div>
 	</form>
 </Screen>

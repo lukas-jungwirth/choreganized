@@ -15,8 +15,9 @@
 	import Button from '$lib/components/ui/Button.svelte';
 	import CenterModal from '$lib/components/ui/CenterModal.svelte';
 	import RowGroup from '$lib/components/ui/RowGroup.svelte';
+	import { messages } from '$lib/i18n';
 	import type { MemberProfile } from '$lib/server/services/household';
-	import { formatShortDate, type CalendarDate } from '$lib/utils/dates';
+	import type { CalendarDate } from '$lib/utils/dates';
 	import UserRoundX from '@lucide/svelte/icons/user-round-x';
 	import type { SubmitFunction } from '@sveltejs/kit';
 
@@ -29,6 +30,8 @@
 	};
 
 	let { member, points, today, onclose }: Props = $props();
+
+	const m = messages();
 
 	let open = $state(true);
 	/** Which question is being asked; `confirmOpen` is whether it's on screen. */
@@ -47,16 +50,14 @@
 		if (!open) onclose();
 	});
 
-	const joined = $derived(
-		formatShortDate(member.joined, member.joined.slice(0, 4) !== today.slice(0, 4))
-	);
+	const joined = $derived(m.date.shortAuto(member.joined, today));
 
 	/**
 	 * [6c] writes "210 pts" flat, but points here are this month's — the same
 	 * number the podium shows (→ DECISIONS #9) — so the line says which month it
 	 * is talking about.
 	 */
-	const meta = $derived(`Member · joined ${joined} · ${points} pts this month`);
+	const meta = $derived(m.settings.manage.meta(joined, points));
 
 	/** Both actions retire this sheet: the row it belongs to is about to change. */
 	const closeOnSuccess: SubmitFunction = () => {
@@ -67,7 +68,8 @@
 			submitting = false;
 			// A refusal keeps the question on screen with the reason under it.
 			if (result.type === 'failure') {
-				error = typeof result.data?.error === 'string' ? result.data.error : "That didn't work.";
+				error =
+					typeof result.data?.error === 'string' ? result.data.error : m.settings.manage.failed;
 				return;
 			}
 			if (result.type === 'success') {
@@ -87,41 +89,35 @@
 		<button type="button" class="item" onclick={() => ask('owner')}>
 			<span class="glyph" aria-hidden="true"><CrownIcon size={20} /></span>
 			<span class="what">
-				<span class="title">Make owner</span>
-				<span class="detail">They'll also be able to manage members</span>
+				<span class="title">{m.settings.manage.makeOwner}</span>
+				<span class="detail">{m.settings.manage.makeOwnerDetail}</span>
 			</span>
 		</button>
 
 		<button type="button" class="item danger" onclick={() => ask('remove')}>
 			<span class="glyph" aria-hidden="true"><UserRoundX size={20} strokeWidth={1.7} /></span>
 			<span class="what">
-				<span class="title">Remove from household</span>
-				<span class="detail">Loses access · points stay with the house</span>
+				<span class="title">{m.settings.manage.remove}</span>
+				<span class="detail">{m.settings.manage.removeDetail}</span>
 			</span>
 		</button>
 	</RowGroup>
 
-	<button type="button" class="cancel" onclick={() => (open = false)}>Cancel</button>
+	<button type="button" class="cancel" onclick={() => (open = false)}>{m.common.cancel}</button>
 
 	<CenterModal
 		bind:open={confirmOpen}
-		label={confirming === 'remove' ? 'Remove member' : 'Make owner'}
+		label={confirming === 'remove' ? m.settings.manage.removeLabel : m.settings.manage.makeOwner}
 		dismissible={false}
 	>
 		{#if confirming === 'remove'}
 			<div class="well" aria-hidden="true"><UserRoundX size={26} strokeWidth={1.9} /></div>
-			<h3>Remove {member.displayName}?</h3>
-			<p class="copy">
-				They lose access to the shopping list, tasks and meal plan straight away. Anything assigned
-				to them becomes Anyone's, and every point they've scored stays with the house.
-			</p>
+			<h3>{m.settings.manage.removeConfirm(member.displayName)}</h3>
+			<p class="copy">{m.settings.manage.removeCopy}</p>
 		{:else}
 			<div class="well calm" aria-hidden="true"><CrownIcon size={28} /></div>
-			<h3>Make {member.displayName} the owner?</h3>
-			<p class="copy">
-				They'll be able to rename the household, manage the invite and remove members — including
-				you. You stay a member of the house.
-			</p>
+			<h3>{m.settings.manage.ownerConfirm(member.displayName)}</h3>
+			<p class="copy">{m.settings.manage.ownerCopy}</p>
 		{/if}
 
 		{#if error}<p class="error">{error}</p>{/if}
@@ -137,11 +133,13 @@
 				variant={confirming === 'remove' ? 'danger' : 'primary'}
 				disabled={submitting}
 			>
-				{confirming === 'remove' ? 'Remove from household' : 'Make owner'}
+				{confirming === 'remove' ? m.settings.manage.remove : m.settings.manage.makeOwner}
 			</Button>
 		</form>
 
-		<button type="button" class="plain-cancel" onclick={() => (confirmOpen = false)}>Cancel</button>
+		<button type="button" class="plain-cancel" onclick={() => (confirmOpen = false)}>
+			{m.common.cancel}
+		</button>
 	</CenterModal>
 </BottomSheet>
 

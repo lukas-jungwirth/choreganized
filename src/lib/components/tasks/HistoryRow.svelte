@@ -8,9 +8,12 @@
 -->
 <script lang="ts">
 	import CheckCircle from '$lib/components/ui/CheckCircle.svelte';
+	import { messages } from '$lib/i18n';
 	import type { FeedEntry } from '$lib/server/services/history';
 
 	let { entry }: { entry: FeedEntry } = $props();
+
+	const m = messages();
 
 	// A departed housemate's tick goes grey; their name and points stay.
 	const color = $derived(entry.memberColor ?? 'var(--text-4)');
@@ -22,7 +25,7 @@
 		<span class="task">{entry.taskName}</span>
 		<span class="meta">{entry.memberName} · {entry.time}</span>
 	</span>
-	<span class="points">+{entry.points}</span>
+	<span class="points">{m.task.points(entry.points)}</span>
 </li>
 
 <style>

@@ -6,9 +6,9 @@
 <script lang="ts">
 	import RecipeImage from '$lib/components/cooking/RecipeImage.svelte';
 	import Card from '$lib/components/ui/Card.svelte';
+	import { messages } from '$lib/i18n';
 	import type { RecipeSummary } from '$lib/server/services/recipes';
-	import { formatShortDate, toCalendarDate, type CalendarDate } from '$lib/utils/dates';
-	import { formatCookTime } from '$lib/utils/recipes';
+	import { toCalendarDate, type CalendarDate } from '$lib/utils/dates';
 
 	type Props = {
 		recipe: RecipeSummary;
@@ -20,8 +20,13 @@
 
 	let { recipe, today, timezone }: Props = $props();
 
+	const m = messages();
+
 	const meta = $derived(
-		[formatCookTime(recipe.timeMinutes), `added ${addedOn(recipe.createdAt)}`]
+		[
+			recipe.timeMinutes ? m.cooking.cookTime(recipe.timeMinutes) : null,
+			m.cooking.library.addedOn(addedOn(recipe.createdAt))
+		]
 			.filter(Boolean)
 			.join(' · ')
 	);
@@ -32,8 +37,7 @@
 	 * say it was.
 	 */
 	function addedOn(createdAt: number): string {
-		const date = toCalendarDate(new Date(createdAt), timezone);
-		return formatShortDate(date, date.slice(0, 4) !== today.slice(0, 4));
+		return m.date.shortAuto(toCalendarDate(new Date(createdAt), timezone), today);
 	}
 </script>
 

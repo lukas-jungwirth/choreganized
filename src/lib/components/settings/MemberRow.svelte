@@ -9,8 +9,9 @@
 <script lang="ts">
 	import CrownIcon from '$lib/components/icons/CrownIcon.svelte';
 	import Avatar from '$lib/components/ui/Avatar.svelte';
+	import { messages } from '$lib/i18n';
 	import type { MemberProfile } from '$lib/server/services/household';
-	import { formatShortDate, type CalendarDate } from '$lib/utils/dates';
+	import type { CalendarDate } from '$lib/utils/dates';
 	import MoreHorizontal from '@lucide/svelte/icons/more-horizontal';
 
 	type Props = {
@@ -24,9 +25,9 @@
 
 	let { member, you, manageable, today, onmanage }: Props = $props();
 
-	const joined = $derived(
-		formatShortDate(member.joined, member.joined.slice(0, 4) !== today.slice(0, 4))
-	);
+	const m = messages();
+
+	const joined = $derived(m.date.shortAuto(member.joined, today));
 </script>
 
 <li class="member">
@@ -34,20 +35,26 @@
 
 	<div class="who">
 		<p class="name">
-			{member.displayName}{#if you}<span class="you">(you)</span>{/if}
+			{member.displayName}{#if you}<span class="you">{m.settings.roster.you}</span>{/if}
 		</p>
 		<p class="meta">
-			{member.role === 'owner' ? 'Joined' : 'Member · joined'}
-			{joined}
+			{member.role === 'owner'
+				? m.settings.roster.joined(joined)
+				: m.settings.roster.memberJoined(joined)}
 		</p>
 	</div>
 
 	{#if member.role === 'owner'}
-		<span class="badge"><CrownIcon size={12} />Owner</span>
+		<span class="badge"><CrownIcon size={12} />{m.settings.roster.owner}</span>
 	{/if}
 
 	{#if manageable}
-		<button type="button" class="more" aria-label="Manage {member.displayName}" onclick={onmanage}>
+		<button
+			type="button"
+			class="more"
+			aria-label={m.settings.roster.manage(member.displayName)}
+			onclick={onmanage}
+		>
 			<MoreHorizontal size={18} strokeWidth={2.4} />
 		</button>
 	{/if}

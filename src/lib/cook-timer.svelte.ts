@@ -18,6 +18,7 @@
  * server only ever sees as a shorter, newer timer.
  */
 import { browser } from '$app/environment';
+import type { Messages } from './i18n';
 import { primeAlarm, ringAlarm } from './alarm';
 import {
 	claimTimerAlert,
@@ -58,6 +59,13 @@ const CLAIM_LEAD_MS = 2000;
 export class CookTimer {
 	/** Every timer this page starts deep-links back into this recipe. */
 	readonly recipeId: string;
+
+	/**
+	 * The words this machine has of its own — the two failures it can report.
+	 * Handed in rather than looked up: this is a plain class, not a component, so
+	 * it can't reach Svelte context itself (→ `$lib/i18n/context.ts`).
+	 */
+	readonly #m: Messages;
 
 	phase = $state<TimerPhase>('idle');
 	/** Usually the ingredient the step is about ("Mushrooms"). */
@@ -101,8 +109,9 @@ export class CookTimer {
 	 */
 	#generation = 0;
 
-	constructor(recipeId: string, active: TimerSnapshot | null) {
+	constructor(recipeId: string, active: TimerSnapshot | null, m: Messages) {
 		this.recipeId = recipeId;
+		this.#m = m;
 		if (active) this.#adopt(active);
 	}
 
@@ -181,7 +190,7 @@ export class CookTimer {
 
 				this.#clear();
 				this.error =
-					failure instanceof TimerRequestError ? failure.message : "That timer wouldn't start.";
+					failure instanceof TimerRequestError ? failure.message : this.#m.cooking.cook.timerFailed;
 			}
 		);
 
@@ -242,7 +251,7 @@ export class CookTimer {
 				if (generation !== this.#generation) return;
 				// The countdown on screen is still right; only the locked-phone half
 				// is missing, so say so rather than throwing the timer away.
-				this.error = 'Offline — this one will only ring while the app is open.';
+				this.error = this.#m.cooking.cook.offline;
 			}
 		);
 	}

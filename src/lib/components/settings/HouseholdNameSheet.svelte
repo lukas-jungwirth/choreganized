@@ -8,6 +8,7 @@
 	import BottomSheet from '$lib/components/ui/BottomSheet.svelte';
 	import Button from '$lib/components/ui/Button.svelte';
 	import TextField from '$lib/components/ui/TextField.svelte';
+	import { messages } from '$lib/i18n';
 	import { HOUSEHOLD_NAME_MAX } from '$lib/utils/household';
 	import { untrack } from 'svelte';
 
@@ -17,6 +18,8 @@
 	};
 
 	let { householdName, onclose }: Props = $props();
+
+	const m = messages();
 
 	let open = $state(true);
 	let name = $state(untrack(() => householdName));
@@ -28,7 +31,11 @@
 	});
 </script>
 
-<BottomSheet bind:open title="Household name" eyebrow="Household">
+<BottomSheet
+	bind:open
+	title={m.settings.householdName.title}
+	eyebrow={m.settings.householdName.eyebrow}
+>
 	<form
 		method="POST"
 		action="?/renameHousehold"
@@ -47,19 +54,19 @@
 		}}
 	>
 		<TextField
-			label="Name"
+			label={m.common.name}
 			name="name"
 			bind:value={name}
 			{error}
-			placeholder="Sonnengasse 12"
+			placeholder={m.settings.householdName.placeholder}
 			maxlength={HOUSEHOLD_NAME_MAX}
 			autocomplete="off"
 			required
 		/>
 
-		<p class="note">Everyone in the house sees this name.</p>
+		<p class="note">{m.settings.householdName.note}</p>
 
-		<Button type="submit" disabled={submitting || !name.trim()}>Save changes</Button>
+		<Button type="submit" disabled={submitting || !name.trim()}>{m.common.saveChanges}</Button>
 	</form>
 </BottomSheet>
 

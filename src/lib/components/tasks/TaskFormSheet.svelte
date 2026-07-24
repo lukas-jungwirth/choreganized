@@ -17,9 +17,10 @@
 	import Stepper from '$lib/components/ui/Stepper.svelte';
 	import TextField from '$lib/components/ui/TextField.svelte';
 	import Toggle from '$lib/components/ui/Toggle.svelte';
+	import { messages } from '$lib/i18n';
 	import type { HouseholdMember } from '$lib/server/services/household';
 	import type { TaskListItem } from '$lib/server/services/tasks';
-	import { addDays, formatDateLabel, type CalendarDate, type IntervalUnit } from '$lib/utils/dates';
+	import { addDays, type CalendarDate, type IntervalUnit } from '$lib/utils/dates';
 	import {
 		CUSTOM_REPEAT,
 		CUSTOM_UNITS,
@@ -28,7 +29,6 @@
 		RECUR_INTERVAL_MAX,
 		REPEAT_PRESETS,
 		TASK_NAME_MAX,
-		formatRepeat,
 		repeatKey,
 		type RecurUnit
 	} from '$lib/utils/tasks';
@@ -44,6 +44,8 @@
 	};
 
 	let { task, members, today, onclose }: Props = $props();
+
+	const m = messages();
 
 	// Seeded once and then owned by the form — `untrack` says so out loud: a
 	// re-render from the parent must not overwrite what's being typed.
@@ -86,8 +88,8 @@
 	const oneOff = $derived(recurrence.unit === 'none');
 
 	const repeatOptions = $derived([
-		...REPEAT_PRESETS.map(({ value, label }) => ({ value, label })),
-		{ value: CUSTOM_REPEAT, label: 'Custom…' }
+		...REPEAT_PRESETS.map(({ value }) => ({ value, label: m.task.repeats[value] })),
+		{ value: CUSTOM_REPEAT, label: m.task.repeatCustom }
 	]);
 
 	/**
@@ -113,10 +115,10 @@
 			(_, step) => members[(start + step) % members.length].displayName
 		);
 
-		return `${names.join(' → ')} …`;
+		return m.tasks.form.rotation(names);
 	});
 
-	const dueCaption = $derived(dueDate ? formatDateLabel(dueDate, today) : undefined);
+	const dueCaption = $derived(dueDate ? m.date.dateLabel(dueDate, today) : undefined);
 
 	// One call per component, then suffixed — three groups need labelling.
 	const uid = $props.id();
@@ -125,7 +127,7 @@
 	const dueLabelId = `${uid}-due`;
 </script>
 
-<BottomSheet bind:open title={task ? 'Edit task' : 'New task'}>
+<BottomSheet bind:open title={task ? m.tasks.form.edit : m.tasks.form.new}>
 	<form
 		method="POST"
 		action={task ? '?/update' : '?/create'}
@@ -147,17 +149,17 @@
 		{#if task}<input type="hidden" name="id" value={task.id} />{/if}
 
 		<TextField
-			label="Task"
+			label={m.tasks.form.name}
 			name="name"
 			bind:value={name}
 			{error}
-			placeholder="Clean the bathroom"
+			placeholder={m.tasks.form.namePlaceholder}
 			maxlength={TASK_NAME_MAX}
 			autocomplete="off"
 			required
 		/>
 
-		<p class="label" id={assigneeLabelId}>Assign to</p>
+		<p class="label" id={assigneeLabelId}>{m.tasks.form.assignTo}</p>
 		<div class="chips" role="group" aria-labelledby={assigneeLabelId}>
 			{#each members as member (member.id)}
 				<Chip
@@ -177,7 +179,7 @@
 					rotate = false;
 				}}
 			>
-				Anyone
+				{m.common.anyone}
 			</Chip>
 		</div>
 		<input type="hidden" name="assigneeMemberId" value={assigneeId ?? ''} />
@@ -185,28 +187,33 @@
 		{#if rotatable}
 			<div class="pref">
 				<div class="pref-text">
-					<span class="pref-title">Alternate each time</span>
+					<span class="pref-title">{m.tasks.form.alternate}</span>
 					{#if rotationCaption}<span class="pref-sub">{rotationCaption}</span>{/if}
 				</div>
-				<Toggle name="rotate" bind:checked={rotate} label="Alternate each time" />
+				<Toggle name="rotate" bind:checked={rotate} label={m.tasks.form.alternate} />
 			</div>
 		{/if}
 
 		<div class="block">
-			<Select label="Repeat" bind:value={repeat} options={repeatOptions} />
+			<Select label={m.tasks.form.repeat} bind:value={repeat} options={repeatOptions} />
 		</div>
 
 		{#if repeat === CUSTOM_REPEAT}
 			<div class="custom">
 				<div class="count">
-					<Stepper label="Every" bind:value={customInterval} min={1} max={RECUR_INTERVAL_MAX} />
+					<Stepper
+						label={m.tasks.form.every}
+						bind:value={customInterval}
+						min={1}
+						max={RECUR_INTERVAL_MAX}
+					/>
 				</div>
 				<div class="unit">
 					<Select
-						label="Unit"
+						label={m.tasks.form.unit}
 						bind:value={customUnit}
-						options={CUSTOM_UNITS.map(({ value, label }) => ({ value, label }))}
-						hint={formatRepeat(recurrence.unit, recurrence.interval)}
+						options={CUSTOM_UNITS.map((value) => ({ value, label: m.task.customUnits[value] }))}
+						hint={m.task.repeat(recurrence.unit, recurrence.interval)}
 					/>
 				</div>
 			</div>
@@ -217,39 +224,44 @@
 
 		<div class="block">
 			<DateField
-				label={task ? 'Next due' : 'First due'}
+				label={task ? m.tasks.form.nextDue : m.tasks.form.firstDue}
 				name="dueDate"
 				bind:value={dueDate}
 				caption={dueCaption}
 				required={!oneOff}
 			/>
 			<div class="shortcuts" role="group" aria-labelledby={dueLabelId}>
-				<span class="sr-only" id={dueLabelId}>Due date shortcuts</span>
-				<button type="button" class="shortcut" onclick={() => (dueDate = today)}>Today</button>
+				<span class="sr-only" id={dueLabelId}>{m.tasks.form.dueShortcuts}</span>
+				<button type="button" class="shortcut" onclick={() => (dueDate = today)}>
+					{m.tasks.form.today}
+				</button>
 				<button type="button" class="shortcut" onclick={() => (dueDate = addDays(today, 1))}>
-					Tomorrow
+					{m.tasks.form.tomorrow}
 				</button>
 				{#if oneOff}
 					<!-- Only a one-off can live without a date; a recurrence has to
 						 recur from somewhere (→ services/tasks.ts). -->
-					<button type="button" class="shortcut" onclick={() => (dueDate = '')}>No date</button>
+					<button type="button" class="shortcut" onclick={() => (dueDate = '')}>
+						{m.tasks.form.noDate}
+					</button>
 				{/if}
 			</div>
 		</div>
 
-		<p class="label" id={effortLabelId}>Effort → points</p>
+		<p class="label" id={effortLabelId}>{m.tasks.form.effort}</p>
 		<div class="chips" role="group" aria-labelledby={effortLabelId}>
 			{#each EFFORTS as effort (effort.points)}
 				{@const selected = points === effort.points}
 				<Chip {selected} onclick={() => (points = effort.points)}>
-					{effort.label} · <span class="pts" class:on={selected}>{effort.points}</span>
+					{m.task.efforts[effort.key]} ·
+					<span class="pts" class:on={selected}>{effort.points}</span>
 				</Chip>
 			{/each}
 		</div>
 		<input type="hidden" name="points" value={points} />
 
 		<Button type="submit" disabled={submitting || !name.trim()}>
-			{task ? 'Save changes' : 'Create task'}
+			{task ? m.common.saveChanges : m.tasks.form.create}
 		</Button>
 	</form>
 </BottomSheet>

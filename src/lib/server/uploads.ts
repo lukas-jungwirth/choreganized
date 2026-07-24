@@ -24,6 +24,7 @@ import { readFile } from 'node:fs/promises';
 import { dirname, extname, isAbsolute, join, normalize, resolve, sep } from 'node:path';
 import { env } from '$env/dynamic/private';
 import sharp from 'sharp';
+import type { Messages } from '$lib/i18n';
 
 /** The longest edge a stored photo keeps — the design's hero is 290px tall. */
 const IMAGE_MAX_PX = 1200;
@@ -39,17 +40,37 @@ const UPLOAD_MAX_BYTES = 15 * 1024 * 1024;
 /** Everything under here is a recipe photo; the subfolder keeps room for more. */
 const RECIPES_DIR = 'recipes';
 
-/** A rejected upload, phrased for the person who picked the file. */
+/** Why an upload was refused. The words live in `$lib/i18n` (`errors.photo`). */
+export type UploadErrorCode =
+	'too-large' | 'not-an-image' | 'unreadable' | 'store-failed' | 'disk-failed';
+
+/**
+ * A rejected upload. It carries a *code*, not a sentence: the person who picked
+ * the file reads it, and this module has no idea which language they read in.
+ */
 export class UploadError extends Error {
-	constructor(message: string) {
-		super(message);
+	constructor(readonly code: UploadErrorCode) {
+		super(code);
 		this.name = 'UploadError';
 	}
 }
 
-/** What an action sends back with its 400 — ours verbatim, anything else generic. */
-export function uploadErrorMessage(cause: unknown): string {
-	return cause instanceof UploadError ? cause.message : 'That photo couldn’t be saved.';
+/** What an action sends back with its 400 — ours by code, anything else generic. */
+export function uploadErrorMessage(cause: unknown, m: Messages): string {
+	if (!(cause instanceof UploadError)) return m.errors.photo.notSaved;
+
+	switch (cause.code) {
+		case 'too-large':
+			return m.errors.photo.tooLarge(Math.round(UPLOAD_MAX_BYTES / 1024 / 1024));
+		case 'not-an-image':
+			return m.errors.photo.notAnImage;
+		case 'unreadable':
+			return m.errors.photo.unreadable;
+		case 'store-failed':
+			return m.errors.photo.storeFailed;
+		case 'disk-failed':
+			return m.errors.photo.diskFailed;
+	}
 }
 
 /** Resolved per call: `$env/dynamic/private` is empty while the app is building. */
@@ -80,10 +101,10 @@ function resolveUpload(relativePath: string): string | null {
  */
 async function processImage(file: File): Promise<Buffer> {
 	if (file.size > UPLOAD_MAX_BYTES) {
-		throw new UploadError('That photo is too large — pick one under 15 MB.');
+		throw new UploadError('too-large');
 	}
 	if (file.type && !file.type.startsWith('image/')) {
-		throw new UploadError('That file isn’t an image.');
+		throw new UploadError('not-an-image');
 	}
 
 	try {
@@ -100,7 +121,7 @@ async function processImage(file: File): Promise<Buffer> {
 			.webp({ quality: 80 })
 			.toBuffer();
 	} catch {
-		throw new UploadError('That image couldn’t be read — try a JPEG or PNG.');
+		throw new UploadError('unreadable');
 	}
 }
 
@@ -191,7 +212,7 @@ function newImagePath(): string {
 
 function writeUpload(relativePath: string, data: Buffer): string {
 	const absolute = resolveUpload(relativePath);
-	if (!absolute) throw new UploadError('Could not store that photo.');
+	if (!absolute) throw new UploadError('store-failed');
 
 	try {
 		mkdirSync(dirname(absolute), { recursive: true });
@@ -200,7 +221,7 @@ function writeUpload(relativePath: string, data: Buffer): string {
 		// A full or read-only volume, which the person picking a photo can do
 		// nothing about — but silently saving a recipe without its photo would be
 		// worse than saying so.
-		throw new UploadError('Could not store that photo — the server’s disk rejected it.');
+		throw new UploadError('disk-failed');
 	}
 
 	return relativePath;

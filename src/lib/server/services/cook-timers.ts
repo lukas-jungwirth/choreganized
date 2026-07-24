@@ -35,7 +35,7 @@ import { STEPS_MAX } from '$lib/utils/recipes';
 import { MAX_TIMER_SECONDS, MIN_TIMER_SECONDS } from '$lib/utils/timer-parse';
 import { db } from '../db';
 import { cookTimers, recipes } from '../db/schema';
-import { sendToUser, type PushPayload } from '../push';
+import { sendToUser, type PayloadFor } from '../push';
 
 export type CookTimerErrorCode =
 	/** Outside `MIN_TIMER_SECONDS`…`MAX_TIMER_SECONDS`, or not a number at all. */
@@ -57,6 +57,11 @@ export const TIMER_LABEL_MAX = 60;
  * What a timer is called when the step names no ingredient to name it after.
  * Reads correctly in both places it appears: the ring's "Timer · 8:00" and the
  * push's "⏲️ Timer is done — back to step 3".
+ */
+/**
+ * Last resort only. The endpoint supplies a localised default for a timer
+ * started without a label (→ `routes/api/timers/+server.ts`), so this is what a
+ * caller that bypasses it would get — never something a member reads.
  */
 const DEFAULT_LABEL = 'Timer';
 
@@ -347,11 +352,11 @@ async function ring(row: TimerRow, now: Date): Promise<number | null> {
  *
  * The step is 0-based in the column and 1-based everywhere a person reads it.
  */
-function payloadFor(row: TimerRow): PushPayload {
+function payloadFor(row: TimerRow): PayloadFor {
 	const step = row.stepIndex === null ? null : row.stepIndex + 1;
 
-	return {
-		title: `⏲️ ${row.label} is done${step === null ? '' : ` — back to step ${step}`}`,
+	return (m) => ({
+		title: m.push.timerDone(row.label) + (step === null ? '' : m.cooking.cook.barBackTo(step)),
 		// Per timer, so a second timer never silently replaces the first's alert.
 		tag: `timer-${row.id}`,
 		url: row.recipeId
@@ -359,7 +364,7 @@ function payloadFor(row: TimerRow): PushPayload {
 			: '/cooking',
 		// A kitchen is loud and hands are busy — this one earns a longer buzz.
 		vibrate: [200, 100, 200]
-	};
+	});
 }
 
 /**

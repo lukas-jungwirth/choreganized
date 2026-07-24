@@ -87,10 +87,25 @@ export const POST: RequestHandler = async (event) => {
 	const userAgent = request.headers.get('user-agent')?.slice(0, 512) ?? null;
 
 	db.insert(pushSubscriptions)
-		.values({ userId: user, endpoint, p256dh: keys.p256dh, auth: keys.auth, userAgent })
+		.values({
+			userId: user,
+			endpoint,
+			p256dh: keys.p256dh,
+			auth: keys.auth,
+			userAgent,
+			// The device's own language, so a nudge to a phone that never visited
+			// Settings still arrives in the language the phone is set to.
+			locale: event.locals.locale
+		})
 		.onConflictDoUpdate({
 			target: pushSubscriptions.endpoint,
-			set: { userId: user, p256dh: keys.p256dh, auth: keys.auth, userAgent }
+			set: {
+				userId: user,
+				p256dh: keys.p256dh,
+				auth: keys.auth,
+				userAgent,
+				locale: event.locals.locale
+			}
 		})
 		.run();
 

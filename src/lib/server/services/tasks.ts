@@ -14,9 +14,9 @@
  */
 import { and, asc, count, desc, eq, gte, isNull, lt, or, sql, type SQL } from 'drizzle-orm';
 import { alias } from 'drizzle-orm/sqlite-core';
+import { catalog, type Locale } from '$lib/i18n';
 import {
 	addInterval,
-	formatDayLabel,
 	formatTimeIn,
 	isCalendarDate,
 	startOfMonth,
@@ -24,13 +24,7 @@ import {
 	zonedStartOfDay,
 	type CalendarDate
 } from '$lib/utils/dates';
-import {
-	POINTS_MAX,
-	RECUR_INTERVAL_MAX,
-	TASK_NAME_MAX,
-	formatRepeat,
-	type RecurUnit
-} from '$lib/utils/tasks';
+import { POINTS_MAX, RECUR_INTERVAL_MAX, TASK_NAME_MAX, type RecurUnit } from '$lib/utils/tasks';
 import { db } from '../db';
 import { members, taskCompletions, tasks, type Member } from '../db/schema';
 
@@ -41,10 +35,16 @@ import { members, taskCompletions, tasks, type Member } from '../db/schema';
  */
 type Transaction = Parameters<Parameters<typeof db.transaction>[0]>[0];
 
-/** The household clock every function here answers to. */
+/**
+ * The household clock every function here answers to — and, for the handful of
+ * rows that come back already written out ("Yesterday 18:40", "Weekly"), the
+ * language to write them in. Loads build it from `requireMember` + the
+ * household; `event.locals.locale` is where the third field comes from.
+ */
 export type TaskContext = {
 	today: CalendarDate;
 	timezone: string;
+	locale: Locale;
 };
 
 /** Holiday pause: away is inclusive of the return date (→ docs/DATA-MODEL.md). */
@@ -158,7 +158,6 @@ export type TaskSectionKey = 'overdue' | 'today' | 'upcoming' | 'paused' | 'unda
 
 export type TaskSection = {
 	key: TaskSectionKey;
-	label: string;
 	tasks: TaskListItem[];
 };
 
@@ -177,17 +176,11 @@ export type TaskList = {
 
 /**
  * Sections in the order [4a] stacks them, plus two the design never had to
- * draw. Paused sits low because that is the whole point of the holiday pause —
+ * draw. Keys only — the headings are copy (→ `$lib/i18n`). Paused sits low because that is the whole point of the holiday pause —
  * a task nobody is expected to do shouldn't be the first thing on the screen —
  * and undated one-offs stay last (→ SPEC §5.1).
  */
-const SECTION_ORDER: { key: TaskSectionKey; label: string }[] = [
-	{ key: 'overdue', label: 'Overdue' },
-	{ key: 'today', label: 'Today' },
-	{ key: 'upcoming', label: 'Upcoming' },
-	{ key: 'paused', label: 'Paused' },
-	{ key: 'undated', label: 'No date' }
-];
+const SECTION_ORDER: TaskSectionKey[] = ['overdue', 'today', 'upcoming', 'paused', 'undated'];
 
 /**
  * Which section a task belongs in. The one rule that isn't a date comparison:
@@ -272,9 +265,12 @@ export function getTaskList(householdId: string, context: TaskContext): TaskList
 		else buckets.set(key, [task]);
 	}
 
-	const sections = SECTION_ORDER.filter((section) => buckets.get(section.key)?.length).map(
-		(section) => ({ ...section, tasks: buckets.get(section.key) ?? [] })
-	);
+	// The key travels, the heading doesn't: "Overdue" is copy, and the screen
+	// reading it knows which language it is in (→ `$lib/i18n`, `tasks.sections`).
+	const sections = SECTION_ORDER.filter((key) => buckets.get(key)?.length).map((key) => ({
+		key,
+		tasks: buckets.get(key) ?? []
+	}));
 
 	return { sections, total: rows.length };
 }
@@ -879,7 +875,10 @@ export function recentCompletions(
 			.map(({ completedAt, recurUnit, recurInterval, ...entry }) => ({
 				...entry,
 				when: formatCompletedAt(completedAt, context),
-				repeat: recurUnit !== null ? formatRepeat(recurUnit, recurInterval ?? 1) : null
+				repeat:
+					recurUnit !== null
+						? catalog(context.locale).task.repeat(recurUnit, recurInterval ?? 1)
+						: null
 			}))
 	);
 }
@@ -891,7 +890,7 @@ export function recentCompletions(
  */
 function formatCompletedAt(at: Date, context: TaskContext): string {
 	const date = toCalendarDate(at, context.timezone);
-	const label = formatDayLabel(date, context.today);
+	const label = catalog(context.locale).date.dayLabel(date, context.today);
 	const recent = date >= addInterval(context.today, -1, 'day');
 
 	return recent ? `${label} ${formatTimeIn(at, context.timezone)}` : label;

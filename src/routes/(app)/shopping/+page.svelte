@@ -12,6 +12,7 @@
 	import Button from '$lib/components/ui/Button.svelte';
 	import Card from '$lib/components/ui/Card.svelte';
 	import EmptyState from '$lib/components/ui/EmptyState.svelte';
+	import { messages } from '$lib/i18n';
 	import type { ShoppingListItem } from '$lib/server/services/shopping';
 	import { compareItems } from '$lib/utils/shopping';
 	import type { SubmitFunction } from '@sveltejs/kit';
@@ -21,6 +22,8 @@
 	import type { PageProps } from './$types';
 
 	let { data }: PageProps = $props();
+
+	const m = messages();
 
 	/**
 	 * Checks that have been tapped but not yet confirmed: item id → the
@@ -73,15 +76,15 @@
 </script>
 
 <svelte:head>
-	<title>Shopping · Choreganized</title>
+	<title>{m.common.pageTitle(m.shopping.title)}</title>
 </svelte:head>
 
 <PageHeader
-	title="Shopping"
-	meta={data.list.total > 0 ? `${checked} of ${data.list.total} done` : undefined}
+	title={m.shopping.title}
+	meta={data.list.total > 0 ? m.shopping.progress(checked, data.list.total) : undefined}
 >
 	{#snippet actions()}
-		<a class="stores" href="/shopping/stores" aria-label="Manage stores">
+		<a class="stores" href="/shopping/stores" aria-label={m.shopping.manageStores}>
 			<MapPin size={18} strokeWidth={1.9} />
 		</a>
 	{/snippet}
@@ -91,13 +94,13 @@
 
 {#if data.list.total === 0}
 	<div class="empty">
-		<EmptyState title="Nothing to buy yet">
+		<EmptyState title={m.shopping.empty.title}>
 			{#snippet icon()}<BasketIcon size={40} strokeWidth={1.6} />{/snippet}
-			Add items as you run out — they'll be grouped by store for whoever does the shopping.
+			{m.shopping.empty.copy}
 			{#snippet action()}
 				<div class="cta">
 					<Button onclick={() => (sheet = { item: null, name: '' })}>
-						<Plus size={17} strokeWidth={2.4} />Add first item
+						<Plus size={17} strokeWidth={2.4} />{m.shopping.empty.cta}
 					</Button>
 				</div>
 			{/snippet}
@@ -107,7 +110,7 @@
 	{#each groups as group (group.storeId ?? 'other')}
 		<section class="group">
 			<h2 class="group-name">
-				<MapPin size={13} strokeWidth={2} aria-hidden="true" />{group.name}
+				<MapPin size={13} strokeWidth={2} aria-hidden="true" />{group.name ?? m.shopping.other}
 			</h2>
 			<Card radius="md">
 				<ul class="rows">

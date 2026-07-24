@@ -10,8 +10,8 @@
 -->
 <script lang="ts">
 	import Avatar from '$lib/components/ui/Avatar.svelte';
+	import { messages } from '$lib/i18n';
 	import type { WeekDay } from '$lib/server/services/meals';
-	import { formatWeekdayLong } from '$lib/utils/dates';
 	import MoreHorizontal from '@lucide/svelte/icons/more-horizontal';
 	import Plus from '@lucide/svelte/icons/plus';
 
@@ -23,17 +23,19 @@
 
 	let { day, onplan }: Props = $props();
 
+	const m = messages();
+
 	const meal = $derived(day.meal);
 	/** "Thursday", not the row's "THU" — a screen reader spells that one out. */
-	const weekday = $derived(formatWeekdayLong(day.date));
+	const weekday = $derived(m.date.weekdayLong(day.date));
 	/** "Tonight · Elisabeth" today, "Elisabeth cooks" any other day. */
 	const cookLine = $derived(
 		day.isToday
 			? meal?.cook
-				? `Tonight · ${meal.cook.displayName}`
-				: 'Tonight'
+				? m.cooking.week.tonightWith(meal.cook.displayName)
+				: m.cooking.week.tonight
 			: meal?.cook
-				? `${meal.cook.displayName} cooks`
+				? m.cooking.week.cooks(meal.cook.displayName)
 				: null
 	);
 </script>
@@ -58,7 +60,12 @@
 			<Avatar name={meal.cook.displayName} color={meal.cook.color} size={20} />
 		{/if}
 
-		<button type="button" class="more" onclick={onplan} aria-label="Change {weekday}’s meal">
+		<button
+			type="button"
+			class="more"
+			onclick={onplan}
+			aria-label={m.cooking.week.changeMeal(weekday)}
+		>
 			<MoreHorizontal size={16} strokeWidth={2.2} />
 		</button>
 	{:else}
@@ -68,9 +75,9 @@
 			type="button"
 			class="body empty"
 			onclick={onplan}
-			aria-label="Add a meal on {weekday} {day.dayOfMonth}"
+			aria-label={m.cooking.week.addMealOn(weekday, day.dayOfMonth)}
 		>
-			<span class="add">Add a meal</span>
+			<span class="add">{m.cooking.week.addMeal}</span>
 			<span class="tile" aria-hidden="true"><Plus size={13} strokeWidth={2} /></span>
 		</button>
 	{/if}

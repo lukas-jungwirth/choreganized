@@ -14,6 +14,7 @@
 	import ChecklistIcon from '$lib/components/icons/ChecklistIcon.svelte';
 	import ChefHatIcon from '$lib/components/icons/ChefHatIcon.svelte';
 	import HomeIcon from '$lib/components/icons/HomeIcon.svelte';
+	import { messages } from '$lib/i18n';
 	import type { Component } from 'svelte';
 
 	type Props = {
@@ -23,6 +24,8 @@
 
 	let { overdueCount = 0 }: Props = $props();
 
+	const m = messages();
+
 	type Tab = {
 		href: string;
 		label: string;
@@ -30,11 +33,14 @@
 		badge?: boolean;
 	};
 
+	// Built once at init, not `$derived`: the language of a mounted page never
+	// changes under it (→ `$lib/i18n/context.ts`), and the bubble measures off
+	// these labels' widths.
 	const TABS: Tab[] = [
-		{ href: '/home', label: 'Home', icon: HomeIcon },
-		{ href: '/shopping', label: 'Shopping', icon: BasketIcon },
-		{ href: '/cooking', label: 'Cooking', icon: ChefHatIcon },
-		{ href: '/tasks', label: 'Tasks', icon: ChecklistIcon, badge: true }
+		{ href: '/home', label: m.nav.home, icon: HomeIcon },
+		{ href: '/shopping', label: m.nav.shopping, icon: BasketIcon },
+		{ href: '/cooking', label: m.nav.cooking, icon: ChefHatIcon },
+		{ href: '/tasks', label: m.nav.tasks, icon: ChecklistIcon, badge: true }
 	];
 
 	/** `/tasks/history` keeps the Tasks tab lit. */
@@ -80,7 +86,7 @@
 	});
 </script>
 
-<nav class="tabbar" bind:this={navEl} aria-label="Sections">
+<nav class="tabbar" bind:this={navEl} aria-label={m.nav.sections}>
 	<span
 		class="bubble"
 		class:ready={ready && activeIndex >= 0}
@@ -94,7 +100,9 @@
 			class:active
 			href={tab.href}
 			aria-current={active ? 'page' : undefined}
-			aria-label={tab.badge && overdueCount > 0 ? `${tab.label}, ${overdueCount} overdue` : tab.label}
+			aria-label={tab.badge && overdueCount > 0
+				? `${tab.label}, ${m.nav.overdueBadge(overdueCount)}`
+				: tab.label}
 		>
 			<span class="icon">
 				<tab.icon size={active ? 21 : 23} filled={active} />

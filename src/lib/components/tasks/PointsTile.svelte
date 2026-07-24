@@ -7,6 +7,7 @@
 -->
 <script lang="ts">
 	import Avatar from '$lib/components/ui/Avatar.svelte';
+	import { messages } from '$lib/i18n';
 
 	type Props = {
 		displayName: string;
@@ -15,13 +16,15 @@
 	};
 
 	let { displayName, color, points }: Props = $props();
+
+	const m = messages();
 </script>
 
 <div class="tile">
 	<Avatar name={displayName} {color} size={26} />
 	<div class="who">
 		<span class="name">{displayName}</span>
-		<span class="points">{points} pts</span>
+		<span class="points">{m.tasks.detail.pts(points)}</span>
 	</div>
 </div>
 

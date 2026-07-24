@@ -6,26 +6,25 @@
 	import CrownIcon from '$lib/components/icons/CrownIcon.svelte';
 	import AvatarStack from '$lib/components/ui/AvatarStack.svelte';
 	import Card from '$lib/components/ui/Card.svelte';
+	import { messages } from '$lib/i18n';
 	import type { HouseholdMember } from '$lib/server/services/household';
 	import type { Standings } from '$lib/server/services/home';
 
 	let { standings, members }: { standings: Standings; members: HouseholdMember[] } = $props();
 
-	/** Households cap out at a handful of members, so a lookup beats an algorithm. */
-	const ORDINALS = ['1st', '2nd', '3rd', '4th', '5th'];
+	const m = messages();
 
 	const title = $derived(
-		standings.tiedForLead
-			? "You're tied this month"
-			: `You're ${ORDINALS[standings.rank - 1] ?? `${standings.rank}th`} this month`
+		standings.tiedForLead ? m.home.standings.tied : m.home.standings.rank(standings.rank)
 	);
 
 	const detail = $derived.by(() => {
-		const points = `${standings.points} pts`;
-		if (standings.tiedForLead) return `${points} each`;
-		if (!standings.rival) return `${points} this month`;
-		const direction = standings.rank === 1 ? 'ahead of' : 'behind';
-		return `${points} · ${standings.rival.gap} ${direction} ${standings.rival.displayName}`;
+		const { points, rival, tiedForLead, rank } = standings;
+		if (tiedForLead) return m.home.standings.each(points);
+		if (!rival) return m.home.standings.solo(points);
+		return rank === 1
+			? m.home.standings.ahead(points, rival.gap, rival.displayName)
+			: m.home.standings.behind(points, rival.gap, rival.displayName);
 	});
 </script>
 

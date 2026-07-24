@@ -14,8 +14,16 @@
 	import Select from '$lib/components/ui/Select.svelte';
 	import Stepper from '$lib/components/ui/Stepper.svelte';
 	import TextField from '$lib/components/ui/TextField.svelte';
+	import { messages } from '$lib/i18n';
 	import type { ShoppingListItem } from '$lib/server/services/shopping';
-	import { DEFAULT_UNIT, ITEM_NAME_MAX, QUANTITY_MAX, UNITS, isUnit } from '$lib/utils/shopping';
+	import {
+		DEFAULT_UNIT,
+		ITEM_NAME_MAX,
+		QUANTITY_MAX,
+		UNITS,
+		isUnit,
+		unitLabel
+	} from '$lib/utils/shopping';
 	import Trash2 from '@lucide/svelte/icons/trash-2';
 	import { untrack } from 'svelte';
 
@@ -37,6 +45,8 @@
 	};
 
 	let { item, initialName = '', stores, defaultStoreId, onadded, onclose }: Props = $props();
+
+	const m = messages();
 
 	// Seeded once and then owned by the form — `untrack` says so out loud: a
 	// re-render from the parent must not overwrite what's being typed.
@@ -64,18 +74,27 @@
 
 	/** Plan 07 can put "tbsp" on an item; opening this sheet mustn't rewrite it. */
 	const unitOptions = $derived(
-		(unit && !isUnit(unit) ? [...UNITS, unit] : UNITS).map((value) => ({ value, label: value }))
+		(unit && !isUnit(unit) ? [...UNITS, unit] : UNITS).map((value) => ({
+			value,
+			// A unit a recipe wrote ("tbsp") is stored canonically and shown in
+			// whatever language is on; anything unrecognised shows as typed.
+			label: unitLabel(value, m.units.labels)
+		}))
 	);
 
 	const storeLabelId = $props.id();
 
 	const storeName = $derived(stores.find((store) => store.id === storeId)?.name);
 	const cta = $derived(
-		item ? 'Save changes' : storeName ? `Add to ${storeName} list` : 'Add to the list'
+		item
+			? m.common.saveChanges
+			: storeName
+				? m.shopping.sheet.addTo(storeName)
+				: m.shopping.sheet.addToList
 	);
 </script>
 
-<BottomSheet bind:open title={item ? 'Edit item' : 'Add item'}>
+<BottomSheet bind:open title={item ? m.shopping.sheet.edit : m.shopping.sheet.add}>
 	<form
 		method="POST"
 		action={item ? '?/update' : '?/add'}
@@ -100,11 +119,11 @@
 		{#if item}<input type="hidden" name="id" value={item.id} />{/if}
 
 		<TextField
-			label="Item"
+			label={m.shopping.sheet.name}
 			name="name"
 			bind:value={name}
 			{error}
-			placeholder="Sourdough bread"
+			placeholder={m.shopping.sheet.namePlaceholder}
 			maxlength={ITEM_NAME_MAX}
 			autocomplete="off"
 			required
@@ -113,7 +132,7 @@
 		<div class="measure">
 			<div class="quantity">
 				<Stepper
-					label="Quantity"
+					label={m.shopping.sheet.quantity}
 					name="quantity"
 					bind:value={quantity}
 					max={QUANTITY_MAX}
@@ -122,16 +141,16 @@
 			</div>
 			<div class="unit">
 				<Select
-					label="Unit"
+					label={m.shopping.sheet.unit}
 					name="unit"
 					bind:value={unit}
 					options={unitOptions}
-					hint="pcs · g · kg · ml · L …"
+					hint={m.shopping.sheet.unitHint}
 				/>
 			</div>
 		</div>
 
-		<p class="label" id={storeLabelId}>Store</p>
+		<p class="label" id={storeLabelId}>{m.shopping.sheet.store}</p>
 		<div class="chips" role="group" aria-labelledby={storeLabelId}>
 			{#each stores as store (store.id)}
 				<Chip selected={storeId === store.id} onclick={() => (storeId = store.id)}>
@@ -140,7 +159,7 @@
 			{/each}
 			<!-- Always offered: items with no store are a real state of the list
 				 (quick-added before any store existed, or a store since deleted). -->
-			<Chip selected={storeId === null} onclick={() => (storeId = null)}>Other</Chip>
+			<Chip selected={storeId === null} onclick={() => (storeId = null)}>{m.shopping.other}</Chip>
 		</div>
 		<input type="hidden" name="storeId" value={storeId ?? ''} />
 
@@ -156,7 +175,7 @@
 					disabled={submitting}
 				>
 					<Trash2 size={19} strokeWidth={1.8} />
-					<span>Delete item</span>
+					<span>{m.shopping.sheet.delete}</span>
 				</button>
 			</div>
 		{/if}

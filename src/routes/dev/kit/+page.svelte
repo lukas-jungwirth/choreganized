@@ -41,7 +41,8 @@
 	import Toggle from '$lib/components/ui/Toggle.svelte';
 	import CookStepText from '$lib/components/cooking/CookStepText.svelte';
 	import type { FeedEntry, Podium as PodiumData } from '$lib/server/services/history';
-	import { addDays, formatDateLabel } from '$lib/utils/dates';
+	import { messages } from '$lib/i18n';
+	import { addDays } from '$lib/utils/dates';
 	import { highlightStep } from '$lib/utils/step-highlight';
 	import { UNITS } from '$lib/utils/shopping';
 	import Bell from '@lucide/svelte/icons/bell';
@@ -161,6 +162,11 @@
 	// The gallery has no household, so `today` comes from the load (one clock for
 	// SSR and hydration) — enough to see DateField's caption change as you pick.
 	let { data }: PageProps = $props();
+
+	// Dev-only showcase (→ `+page.server.ts` 404s in production), so its sample
+	// copy stays English on purpose; only the bits that go through the catalog
+	// change language with the app.
+	const m = messages();
 	let due = $state(
 		addDays(
 			untrack(() => data.today),
@@ -273,7 +279,7 @@
 
 	<section>
 		<h2>DateField</h2>
-		<DateField label="First due" bind:value={due} caption={formatDateLabel(due, data.today)} />
+		<DateField label="First due" bind:value={due} caption={m.date.dateLabel(due, data.today)} />
 		<p class="note">
 			A real `input type="date"` — the platform picker, the form action, and a friendly reading of
 			the value on the right. The whole row opens the picker.
@@ -565,7 +571,12 @@
 	<Button variant="secondary" onclick={() => (leadSheetOpen = false)}>Close</Button>
 </BottomSheet>
 
-<BottomSheet bind:open={darkSheetOpen} title="Set a timer" subtitle="It rings even with the phone locked." tone="dark">
+<BottomSheet
+	bind:open={darkSheetOpen}
+	title="Set a timer"
+	subtitle="It rings even with the phone locked."
+	tone="dark"
+>
 	<Stepper label="Minutes" bind:value={cookMinutes} min={1} max={720} tone="dark" />
 </BottomSheet>
 

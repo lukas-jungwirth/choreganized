@@ -9,16 +9,17 @@
 	import logoMark from '$lib/assets/logo-mark.svg';
 	import { signIn } from '$lib/auth-client';
 	import Screen from '$lib/components/shell/Screen.svelte';
+	import { messages } from '$lib/i18n';
 	import type { PageProps } from './$types';
 
 	let { data }: PageProps = $props();
 
-	const SIGN_IN_FAILED = "Sign-in didn't complete. Please try again.";
+	const m = messages();
 
 	let pending = $state(false);
 	let clientError = $state<string | null>(null);
 
-	const errorMessage = $derived(clientError ?? (data.signInFailed ? SIGN_IN_FAILED : null));
+	const errorMessage = $derived(clientError ?? (data.signInFailed ? m.auth.failed : null));
 
 	async function continueWithGoogle() {
 		pending = true;
@@ -33,21 +34,25 @@
 
 		if (error) {
 			pending = false;
-			clientError = SIGN_IN_FAILED;
+			clientError = m.auth.failed;
 		}
 	}
 </script>
 
 <svelte:head>
-	<title>Sign in · Choreganized</title>
+	<title>{m.common.pageTitle(m.auth.signIn)}</title>
 </svelte:head>
 
 <Screen>
 	<div class="brand">
 		<span class="tile"><img src={logoMark} alt="" width="40" height="40" /></span>
-		<h1 class="wordmark">Chore<span class="accent">ganized</span><span class="dot">.</span></h1>
+		<h1 class="wordmark">
+			{m.auth.wordmarkLead}<span class="accent">{m.auth.wordmarkAccent}</span><span class="dot"
+				>.</span
+			>
+		</h1>
 		<p class="tagline">
-			<span class="label">Every&nbsp;chore, organized</span>
+			<span class="label">{m.auth.tagline}</span>
 			<span class="rule"></span>
 		</p>
 	</div>
@@ -55,7 +60,7 @@
 	<div class="actions">
 		<button class="google" onclick={continueWithGoogle} disabled={pending} aria-busy={pending}>
 			<img src={googleG} alt="" width="20" height="20" />
-			{pending ? 'Opening Google…' : 'Continue with Google'}
+			{pending ? m.auth.openingGoogle : m.auth.continueWithGoogle}
 		</button>
 
 		{#if errorMessage}
@@ -63,7 +68,7 @@
 		{/if}
 	</div>
 
-	<p class="footnote">New here? Signing in with Google creates your account.</p>
+	<p class="footnote">{m.auth.footnote}</p>
 </Screen>
 
 <style>

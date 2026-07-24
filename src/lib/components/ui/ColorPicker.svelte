@@ -3,6 +3,7 @@
 	already uses are disabled (SPEC §1.5) — the server re-checks on submit.
 -->
 <script lang="ts">
+	import { messages } from '$lib/i18n';
 	import { MEMBER_COLORS } from '$lib/member-colors';
 
 	type Props = {
@@ -17,13 +18,16 @@
 		value = $bindable(MEMBER_COLORS[0].value),
 		taken = [],
 		name = 'color',
-		label = 'Your colour'
+		label
 	}: Props = $props();
+
+	const m = messages();
 </script>
 
-<div class="swatches" role="radiogroup" aria-label={label}>
+<div class="swatches" role="radiogroup" aria-label={label ?? m.ui.yourColour}>
 	{#each MEMBER_COLORS as color (color.value)}
 		{@const unavailable = taken.includes(color.value)}
+		{@const colorName = m.ui.colours[color.key]}
 		<label class="swatch" class:unavailable style:--swatch={color.value}>
 			<input
 				type="radio"
@@ -31,7 +35,7 @@
 				value={color.value}
 				bind:group={value}
 				disabled={unavailable}
-				aria-label={unavailable ? `${color.name} — already taken` : color.name}
+				aria-label={unavailable ? m.ui.colourTaken(colorName) : colorName}
 			/>
 			<span class="dot"></span>
 		</label>

@@ -4,11 +4,14 @@
 	boxes are just a rendering of its value.
 -->
 <script lang="ts">
+	import { messages } from '$lib/i18n';
 	import { INVITE_CODE_LENGTH, normalizeInviteCode } from '$lib/utils/invite-code';
 
 	type Props = { value?: string; name?: string; autofocus?: boolean };
 
 	let { value = $bindable(''), name = 'code', autofocus = false }: Props = $props();
+
+	const m = messages();
 
 	const boxes = $derived(
 		Array.from({ length: INVITE_CODE_LENGTH }, (_, index) => value.charAt(index))
@@ -58,7 +61,7 @@
 		autocomplete="one-time-code"
 		autocorrect="off"
 		spellcheck="false"
-		aria-label="Invite code"
+		aria-label={m.onboarding.join.code}
 	/>
 	<div class="boxes" aria-hidden="true">
 		{#each boxes as char, index (index)}

@@ -13,6 +13,7 @@
 	import Button from '$lib/components/ui/Button.svelte';
 	import ColorPicker from '$lib/components/ui/ColorPicker.svelte';
 	import TextField from '$lib/components/ui/TextField.svelte';
+	import { messages } from '$lib/i18n';
 	import { firstFreeColor } from '$lib/member-colors';
 	import { DISPLAY_NAME_MAX } from '$lib/utils/household';
 	import { INVITE_CODE_LENGTH } from '$lib/utils/invite-code';
@@ -20,6 +21,8 @@
 	import type { PageProps, SubmitFunction } from './$types';
 
 	let { data, form }: PageProps = $props();
+
+	const m = messages();
 
 	// Seeded once — see the note on the create screen.
 	let code = $state(untrack(() => form?.code ?? data.code));
@@ -52,15 +55,19 @@
 </script>
 
 <svelte:head>
-	<title>Join a household · Choreganized</title>
+	<title>{m.common.pageTitle(m.onboarding.join.title)}</title>
 </svelte:head>
 
 <Screen>
 	{#if data.preview}
 		<!-- `?code=` beats the cookie, so this really does go back a step. -->
-		<StepHeader step={2} back="/onboarding/join?code=" backLabel="Enter a different code" />
+		<StepHeader
+			step={2}
+			back="/onboarding/join?code="
+			backLabel={m.onboarding.join.differentCode}
+		/>
 
-		<h1 class="title">Set up your profile</h1>
+		<h1 class="title">{m.onboarding.join.profileTitle}</h1>
 
 		<InvitePreviewCard householdName={data.preview.householdName} inviter={data.preview.inviter} />
 
@@ -68,7 +75,7 @@
 			<input type="hidden" name="code" value={data.preview.code} />
 
 			<TextField
-				label="Your display name"
+				label={m.onboarding.create.displayName}
 				name="displayName"
 				bind:value={displayName}
 				maxlength={DISPLAY_NAME_MAX}
@@ -77,7 +84,7 @@
 			/>
 
 			<div class="colour">
-				<p class="label">Your colour</p>
+				<p class="label">{m.ui.yourColour}</p>
 				<div class="row">
 					<Avatar name={displayName} {color} size={52} />
 					<ColorPicker
@@ -90,26 +97,26 @@
 			{#if error}<p class="error" role="alert">{error}</p>{/if}
 
 			<div class="cta">
-				<Button type="submit" disabled={submitting}>Join household</Button>
+				<Button type="submit" disabled={submitting}>{m.onboarding.join.submit}</Button>
 			</div>
 		</form>
 	{:else}
-		<StepHeader step={1} back="/onboarding" backLabel="Back to the start" />
+		<StepHeader step={1} back="/onboarding" backLabel={m.onboarding.backToStart} />
 
 		<header class="centered">
 			<span class="mark"><img src={logoMark} alt="" width="34" height="34" /></span>
-			<h1>Join a household</h1>
+			<h1>{m.onboarding.join.title}</h1>
 		</header>
 
 		<form method="POST" action="?/verify" use:enhance={trackSubmit}>
-			<p class="label centered">Invite code</p>
+			<p class="label centered">{m.onboarding.join.code}</p>
 			<CodeInput bind:value={code} autofocus />
 
 			{#if error}<p class="error centered" role="alert">{error}</p>{/if}
 
 			<div class="cta">
 				<Button type="submit" disabled={submitting || code.length < INVITE_CODE_LENGTH}>
-					Continue
+					{m.onboarding.start.continue}
 				</Button>
 			</div>
 		</form>
