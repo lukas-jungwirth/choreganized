@@ -97,19 +97,32 @@ a danger badge with the current user's overdue count [4e].
 - **Add an item…** inline field pinned above the list; typing + Enter (or the + button) adds
   instantly to the default store (topmost). Opening the field's expand affordance opens the full
   sheet [3a].
+- **Suggestions**: as you type, the field offers names this household has put on the list
+  before, most recently used first ("Rind" → "Rinderhackfleisch"). Case- and accent-blind, and
+  a match inside a word counts — German compounds make "starts with" useless on its own. Up to
+  6 at a time, in a list floating under the field; ↑/↓ + Enter or a tap. In the quick field a
+  pick **adds the item** (one gesture is the field's whole point); in the sheet [3a] it fills
+  the name and stops, because the sheet exists to say how much and which shop. Names already
+  waiting on the list are never suggested. The pool is every name ever added, renamed or poured
+  in from a recipe — it outlives the items themselves (→ [DECISIONS #106](DECISIONS.md)).
 - Items grouped by **store**, in store sort order; items without a store under **Other** (last).
-  Store header: pin icon + uppercase name. Empty stores are hidden.
+  Store header: pin icon + uppercase name. Stores with nothing left to buy are hidden.
 - Row: check circle, name, optional quantity ("×6", "2L" — quantity+unit compact), adder's mini
-  avatar. Checking: sage fill + strikethrough, row moves to the group's end. Unchecking restores.
+  avatar. Checking: sage fill + strikethrough, and the row **leaves its store group** for
+  "Recently bought". Unchecking puts it back where it was.
+- **Recently bought** — one section under the stores, all stores together, most recently ticked
+  off first. Collapsed to its heading ("Recently bought · 3") so a half-done trip doesn't push
+  what you still need off the screen; one tap opens it, to look or to put something back. It
+  starts open when there is nothing left to buy at all.
 - Checked items are cleared automatically ~12 h after checking (nightly cleanup) — the list
   keeps "done" context during a shopping trip but stays clean day-to-day.
 - Tap a row (not the circle) → edit in the same sheet as [3a]; delete lives there.
 
 ### 3.2 Add/edit item sheet [3a]
 
-- Fields: **Item** (text, required), **Quantity** (stepper, optional), **Unit** (pcs · g · kg ·
-  ml · L · pack — free pick, default pcs), **Store** (chips of the household's stores; the
-  add-field's current store preselected).
+- Fields: **Item** (text, required, with the same suggestions as the quick field — see §3.1),
+  **Quantity** (stepper, optional), **Unit** (pcs · g · kg · ml · L · pack — free pick, default
+  pcs), **Store** (chips of the household's stores; the add-field's current store preselected).
 - CTA: "Add to {store} list". Editing: "Save changes" + a delete row.
 
 ### 3.3 Empty state [7d]

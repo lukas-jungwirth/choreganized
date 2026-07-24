@@ -768,6 +768,41 @@ reload`) so it can't silently regress.
      it is the only in-app surface a rung timer has. Running is sage, rung is terracotta, which
      in this app already means "now". No new colour tokens.
 
+105. **Bought items leave their store group for one "Recently bought" section, and the split is
+     one function both halves call.** SPEC §3.1 used to send a checked row to the end of its
+     group, which is fine for the two items the mockup strikes through and wrong by the end of a
+     real trip: the store headings stay, the rows you still need get pushed down, and the last
+     screen of a shop is mostly things you already have. So checked items leave the groups
+     entirely and collect in one collapsed section under them, newest first, across all stores —
+     a store with nothing left to buy disappears with them. Collapsed by default because "what's
+     in the trolley" is context and the header's "4 of 9 done" is the part you actually check;
+     open by default when there is nothing left to buy, or the screen would read as an empty
+     list. What made the old shape awkward was that the order lived twice — an `ORDER BY` in
+     `getShoppingList` and a comparator in the browser, "keep them in step" — and an optimistic
+     tick now moves a row _between two lists_, which is far more than a sort. So the service
+     returns the list flat and `utils/shopping.ts` `splitList` groups it: once on the server for
+     the first paint, again in the browser on every tick, one definition. Grouping needs the
+     stores in walking order, which the page already loads for the sheet's chips.
+
+106. **The add field completes from a table of its own, and the whole pool goes to the browser.**
+     "Type Rind, get Rinderhackfleisch" cannot be a query over `shopping_items`: those rows are
+     deleted 12 h after they're checked off (→ #13), so the list is a shopping trip and a
+     household's vocabulary has to outlive it. Hence `shopping_suggestions` — one row per
+     distinct name, upserted on every add, rename and recipe pour-in, keyed on
+     `(household, lower(name))` so capitalisation doesn't fork a word into two.
+     Renaming counts as using a name: the point is that somebody fixing a typo stops being
+     offered the typo. The pool is then sent **whole** with the page (250 most recent names, a
+     few KB) and filtered in the browser, rather than through a per-keystroke endpoint — the
+     field's entire promise is that it keeps up with typing, JSON endpoints in this app are for
+     push, timers and uploads (→ ARCHITECTURE "Server patterns"), and a household's vocabulary is
+     small enough that the request would cost more than the data. Ranking is three tiers — the
+     name starts with what you typed, a word inside it does, it appears anywhere — because
+     German compounds make a plain prefix match useless ("hack" must find
+     "Rinderhackfleisch"); ties break on recency. Names already on the list are filtered out
+     client-side: offering something three rows below is an invitation to buy it twice. No
+     pruning job — the table grows by distinct words, which a household of two exhausts long
+     before it becomes a row count worth a cron.
+
 ## Open questions (non-blocking, defaults chosen)
 
 - **Production domain** — invite links & OAuth redirect need the final origin (design shows

@@ -88,6 +88,11 @@
 	 */
 	function onKeydown(event: KeyboardEvent) {
 		if (!open || event.key !== 'Escape') return;
+		// Something inside the sheet has already answered this Escape — a
+		// suggestion list closing itself, say. Dismissables nest; the innermost
+		// one wins, and taking the whole half-filled form as well would be a
+		// second, unasked-for dismissal.
+		if (event.defaultPrevented) return;
 		if (!ownsEscape(event.target)) return;
 		open = false;
 	}

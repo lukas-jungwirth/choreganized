@@ -66,18 +66,21 @@ describe('highlightStep', () => {
 	it('does not end a match inside an accented word', () => {
 		// ASCII `\b` sees a boundary between "Cre" and "è" and would underline it.
 		assert.equal(marked('Torch the crème brûlée', ['Cre']), 'Torch the crème brûlée');
-		assert.equal(marked('Spoon over the crème fraîche', ['Crème fraîche']), 'Spoon over the «crème fraîche»');
+		assert.equal(
+			marked('Spoon over the crème fraîche', ['Crème fraîche']),
+			'Spoon over the «crème fraîche»'
+		);
 	});
 
 	it('ignores names too short to mean anything', () => {
-		assert.equal(marked('Add a pinch of salt to 1 pan', ['1', 'ml']), 'Add a pinch of salt to 1 pan');
+		assert.equal(
+			marked('Add a pinch of salt to 1 pan', ['1', 'ml']),
+			'Add a pinch of salt to 1 pan'
+		);
 	});
 
 	it('treats a name with regex characters as text', () => {
-		assert.equal(
-			marked('Use the (good) butter', ['(good) butter']),
-			'Use the «(good) butter»'
-		);
+		assert.equal(marked('Use the (good) butter', ['(good) butter']), 'Use the «(good) butter»');
 	});
 
 	it('matches across any whitespace', () => {

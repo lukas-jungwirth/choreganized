@@ -31,6 +31,7 @@ Work done after the twelve plans, tracked here so the queue stays the whole stor
 | **Plan next week** (`/cooking?week=`, two-week switch, SPEC §4.1, DECISIONS #99)                        | done (2026-07-24) |
 | **Structured ingredient amounts** (`cooking/IngredientSheet`, SPEC §4.4, DECISIONS #100–101)            | done (2026-07-24) |
 | **Multiple cook timers + the running-timer dock** (`cook-timers.ts`, `cook-timer.svelte.ts`, SPEC §4.6) | done (2026-07-24) |
+| **Shopping: "Recently bought" + add-field suggestions** (SPEC §3.1, DECISIONS #105–106)                 | done (2026-07-24) |
 
 ## Dependency graph & parallelization
 

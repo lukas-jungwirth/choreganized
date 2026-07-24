@@ -328,6 +328,21 @@ export const en = {
 			submit: 'Add item'
 		},
 
+		/**
+		 * The names the add field completes from — everything this household has
+		 * put on the list before (→ SPEC §3.1). The options are household
+		 * content, so all this needs is a name for the list they sit in.
+		 */
+		suggestions: {
+			label: 'Suggestions'
+		},
+
+		/** The second list, under the stores: what's already in the basket. */
+		bought: {
+			/** The section heads itself and says how much is in it, like a tab. */
+			heading: (count: number) => `Recently bought · ${count}`
+		},
+
 		row: {
 			check: (item: string) => `Check off ${item}`,
 			uncheck: (item: string) => `Put ${item} back on the list`,

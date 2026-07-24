@@ -87,6 +87,18 @@ still the only thing that posts (→ [DECISIONS #100](DECISIONS.md)). The store 
 on — one singleton, N dumb readers — is what any future state that outlives a single screen
 should copy.
 
+Shopping later gained two more feature components in `components/shopping/`, again no `ui/`
+primitives. **`BoughtSection`** — the collapsed "Recently bought · 3" list under the store groups
+(→ [DECISIONS #105](DECISIONS.md)): it borrows the store headings' micro-label typography, because
+it is one more group and not a new idea, and its rows are the ordinary `ShoppingRow`, which
+already goes quiet when it is checked. **`SuggestionList`** — the names an add field offers under
+itself [03] [3a]: a `role="listbox"` of `role="option"` **buttons** (a real tap target and a real
+click event; out of the tab order, since the field keeps focus and drives them through
+`aria-activedescendant`), absolutely positioned so it floats instead of shoving the page down, on
+`--card` with a `--border-soft` hairline and `--shadow-card`. The behaviour behind both fields —
+what to offer, what the keyboard is on, when the list is up — is `lib/item-suggest.svelte.ts`,
+a closure rather than a class because everything in it derives from the caller's two values.
+
 [3c] draws a single-line ingredient row with a drag grip and no amount fields, so the form's
 **amount chip has no visual ground truth**: it borrows [7a]'s amount column — `--r-chip`,
 `--sunken` on `--card`, `--text-4`, 12.5px/600, `tabular-nums`, and `--text-disabled` with no

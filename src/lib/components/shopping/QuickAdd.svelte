@@ -7,15 +7,23 @@
 	hands what you've typed to the full sheet [3a], where quantity, unit and
 	store live.
 
+	Under the field sit the household's own words: type "Rind" and
+	"Rinderhackfleisch", bought some week last winter, is one tap away
+	(→ `lib/item-suggest.svelte.ts`). Tapping one adds it there and then — the
+	same one gesture, with the typing done for you.
+
 	The field keeps focus after a successful add, because things run out in
 	threes.
 -->
 <script lang="ts">
 	import { enhance } from '$app/forms';
+	import SuggestionList from '$lib/components/shopping/SuggestionList.svelte';
 	import { messages } from '$lib/i18n';
+	import { itemSuggest } from '$lib/item-suggest.svelte';
 	import { ITEM_NAME_MAX } from '$lib/utils/shopping';
 	import Plus from '@lucide/svelte/icons/plus';
 	import SlidersHorizontal from '@lucide/svelte/icons/sliders-horizontal';
+	import { tick } from 'svelte';
 
 	type Props = {
 		/**
@@ -24,73 +32,126 @@
 		 * the same words can't be added twice.
 		 */
 		value?: string;
+		/** Everything this household has put on the list before, most recent first. */
+		suggestions?: string[];
 		onexpand: () => void;
 	};
 
-	let { value = $bindable(''), onexpand }: Props = $props();
+	let { value = $bindable(''), suggestions = [], onexpand }: Props = $props();
 
 	const m = messages();
 
+	let form: HTMLFormElement | undefined = $state();
 	let input: HTMLInputElement | undefined = $state();
 	/**
 	 * This field's own rejection rather than `$page.form`, which belongs to
 	 * whichever form posted last — the sheet's failures are not ours to show.
 	 */
 	let error = $state<string | undefined>();
+
+	const suggest = itemSuggest(
+		() => value,
+		() => suggestions
+	);
+	const listId = $props.id();
+
+	/**
+	 * A suggestion is a finished thought, so taking one adds it — the field's
+	 * promise is one gesture, and making somebody confirm their own tap would
+	 * cost two.
+	 *
+	 * `tick()` first: the input is what the form posts, and it only carries the
+	 * new text once Svelte has written the binding through to the DOM.
+	 */
+	async function add(name: string) {
+		value = name;
+		await tick();
+		form?.requestSubmit();
+	}
 </script>
 
-<form
-	class="quick"
-	method="POST"
-	action="?/add"
-	use:enhance={() => {
-		error = undefined;
-		return async ({ result, update }) => {
-			// `reset: false` and clearing by hand: a form reset doesn't notify the
-			// `bind:value`, and a rejected item should stay in the field.
-			await update({ reset: false });
-			if (result.type === 'success') value = '';
-			else if (result.type === 'failure') {
-				error = typeof result.data?.error === 'string' ? result.data.error : undefined;
-			}
-			input?.focus();
-		};
-	}}
->
-	<span class="lead" aria-hidden="true"><Plus size={18} strokeWidth={2} /></span>
+<!-- The wrapper, not the form, carries the list: `position: absolute` measures
+	 itself against the padding box, and the field's padding would inset the
+	 list from both sides — by different amounts. -->
+<div class="field">
+	<form
+		class="quick"
+		bind:this={form}
+		method="POST"
+		action="?/add"
+		use:enhance={() => {
+			error = undefined;
+			return async ({ result, update }) => {
+				// `reset: false` and clearing by hand: a form reset doesn't notify the
+				// `bind:value`, and a rejected item should stay in the field.
+				await update({ reset: false });
+				if (result.type === 'success') value = '';
+				else if (result.type === 'failure') {
+					error = typeof result.data?.error === 'string' ? result.data.error : undefined;
+				}
+				input?.focus();
+			};
+		}}
+	>
+		<span class="lead" aria-hidden="true"><Plus size={18} strokeWidth={2} /></span>
 
-	<input
-		bind:this={input}
-		bind:value
-		class="input"
-		type="text"
-		name="name"
-		placeholder={m.shopping.quickAdd.placeholder}
-		aria-label={m.shopping.quickAdd.label}
-		maxlength={ITEM_NAME_MAX}
-		autocomplete="off"
-		required
-	/>
+		<input
+			bind:this={input}
+			bind:value
+			class="input"
+			type="text"
+			name="name"
+			placeholder={m.shopping.quickAdd.placeholder}
+			aria-label={m.shopping.quickAdd.label}
+			maxlength={ITEM_NAME_MAX}
+			autocomplete="off"
+			role="combobox"
+			aria-expanded={suggest.open}
+			aria-controls={suggest.open ? listId : undefined}
+			aria-autocomplete="list"
+			aria-activedescendant={suggest.active >= 0 ? `${listId}-${suggest.active}` : undefined}
+			onfocus={() => (suggest.focused = true)}
+			onblur={() => (suggest.focused = false)}
+			onkeydown={(event) => {
+				const picked = suggest.keydown(event);
+				if (picked) add(picked);
+			}}
+			required
+		/>
 
-	<button type="button" class="expand" onclick={onexpand} aria-label={m.shopping.quickAdd.expand}>
-		<SlidersHorizontal size={16} strokeWidth={2} />
-	</button>
+		<button type="button" class="expand" onclick={onexpand} aria-label={m.shopping.quickAdd.expand}>
+			<SlidersHorizontal size={16} strokeWidth={2} />
+		</button>
 
-	<button type="submit" class="submit" aria-label={m.shopping.quickAdd.submit}>
-		<Plus size={16} strokeWidth={2.4} />
-	</button>
-</form>
+		<button type="submit" class="submit" aria-label={m.shopping.quickAdd.submit}>
+			<Plus size={16} strokeWidth={2.4} />
+		</button>
+	</form>
+
+	{#if suggest.open}
+		<SuggestionList
+			id={listId}
+			matches={suggest.matches}
+			active={suggest.active}
+			onpick={(name) => add(suggest.pick(name))}
+		/>
+	{/if}
+</div>
 
 {#if error}
 	<p class="error">{error}</p>
 {/if}
 
 <style>
+	.field {
+		position: relative;
+		margin-bottom: 20px;
+	}
+
 	.quick {
 		display: flex;
 		align-items: center;
 		gap: 10px;
-		margin-bottom: 20px;
 		padding: 11px 12px 11px 16px;
 		border-radius: var(--r-block);
 		background: var(--card);

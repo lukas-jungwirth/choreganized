@@ -217,6 +217,38 @@ export const shoppingItems = sqliteTable(
 	(t) => [index('shopping_items_household_idx').on(t.householdId, t.checkedAt)]
 );
 
+/**
+ * What this household has ever put on the list, one row per distinct name —
+ * the pool the add field completes from ("Rind" → "Rinderhackfleisch").
+ *
+ * Its own table rather than a query over `shopping_items`, because those are
+ * deleted 12 h after they're checked off: the list is a shopping trip, this is
+ * the household's vocabulary, and the vocabulary has to outlive the trip.
+ * `nameKey` is the name trimmed and lowercased — one row per thing, whichever
+ * way it was capitalised — and `name` keeps the spelling it was last written
+ * with, because that is what gets offered back.
+ */
+export const shoppingSuggestions = sqliteTable(
+	'shopping_suggestions',
+	{
+		id: id(),
+		householdId: text('household_id')
+			.notNull()
+			.references(() => households.id, { onDelete: 'cascade' }),
+		name: text('name').notNull(),
+		nameKey: text('name_key').notNull(),
+		lastUsedAt: integer('last_used_at', { mode: 'timestamp_ms' })
+			.notNull()
+			.$defaultFn(() => new Date())
+	},
+	(t) => [
+		// The upsert's conflict target — "this household already knows that word".
+		uniqueIndex('shopping_suggestions_key_unique').on(t.householdId, t.nameKey),
+		// The read: the most recently used names, capped (→ services/shopping.ts).
+		index('shopping_suggestions_recent_idx').on(t.householdId, t.lastUsedAt)
+	]
+);
+
 /* ────────────────────────────────────────────────────────────────────────────
  * Recipes & meal plan
  * ──────────────────────────────────────────────────────────────────────────── */
@@ -432,6 +464,7 @@ export type Household = typeof households.$inferSelect;
 export type Member = typeof members.$inferSelect;
 export type Store = typeof stores.$inferSelect;
 export type ShoppingItem = typeof shoppingItems.$inferSelect;
+export type ShoppingSuggestion = typeof shoppingSuggestions.$inferSelect;
 export type Recipe = typeof recipes.$inferSelect;
 export type RecipeIngredient = typeof recipeIngredients.$inferSelect;
 export type RecipeStep = typeof recipeSteps.$inferSelect;

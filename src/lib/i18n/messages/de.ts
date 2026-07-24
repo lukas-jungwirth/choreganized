@@ -257,6 +257,14 @@ export const de: Messages = {
 			submit: 'Eintragen'
 		},
 
+		suggestions: {
+			label: 'Vorschläge'
+		},
+
+		bought: {
+			heading: (count: number) => `Zuletzt gekauft · ${count}`
+		},
+
 		row: {
 			check: (item: string) => `${item} abhaken`,
 			uncheck: (item: string) => `${item} zurück auf die Liste`,
