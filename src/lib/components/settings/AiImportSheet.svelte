@@ -15,7 +15,7 @@
 	type Props = {
 		/** Whether a key is already stored — drives "Replace"/"Remove" vs "Save". */
 		isSet: boolean;
-		/** Masked hint (`AIza…wxyz`) of the stored key, or null. Never the real key. */
+		/** Masked hint (first four + last four) of the stored key, or null. Never the real key. */
 		hint: string | null;
 		onclose: () => void;
 	};

@@ -417,9 +417,9 @@ export function getGeminiApiKey(householdId: string): string | null {
 export type AiImportStatus = { set: boolean; hint: string | null };
 
 /**
- * Whether a key is set and a masked hint (`AIza…wxyz`) — never the value itself
- * (→ SPEC §6). The mask keeps the prefix and the last four, enough for an owner
- * to recognise which key is stored without it ever leaving the server.
+ * Whether a key is set and a masked hint (first four + last four, e.g. `AQ.A…wxyz`)
+ * — never the value itself (→ SPEC §6). Enough for an owner to recognise which key
+ * is stored without it ever leaving the server.
  */
 export function getAiImportStatus(householdId: string): AiImportStatus {
 	const key = getGeminiApiKey(householdId);
@@ -435,8 +435,9 @@ function maskKey(key: string): string {
 /**
  * Set or clear the household's Gemini key. Owner-only, enforced next to the write
  * (→ DECISIONS #10): `null` clears it and turns AI import back off. The value is
- * trimmed by the action; the shape check (`AIza` prefix) is the action's too, and
- * real validation is the first extraction call.
+ * trimmed by the action; the only shape check is that it's plausibly a key (no
+ * prefix gate — Gemini keys come as `AIza…` or `AQ.…`), and real validation is
+ * the first extraction call.
  */
 export function setGeminiApiKey(
 	householdId: string,

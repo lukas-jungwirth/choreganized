@@ -10,14 +10,14 @@ export const HOUSEHOLD_NAME_MAX = 60;
 export const DISPLAY_NAME_MAX = 40;
 
 /**
- * Google AI Studio (Gemini) API keys are Google API keys: `AIza…`, ~39 chars.
- * This is the one shape check the app does before storing one (the field, and
- * the Settings action, both use it) — real validation is the first extraction
- * call (→ services/ai-import.ts, plan 13).
+ * A Gemini API key is an **opaque secret we don't parse** (→ services/ai-import.ts,
+ * plan 13). Google issues two formats — the legacy `AIza…` "Standard" keys and,
+ * since 2026, `AQ.…` "Auth" keys (with `AIza` being retired) — so gating on a
+ * prefix would reject perfectly valid keys. The only check before storing one is
+ * that it's plausibly a key at all (long enough, no embedded whitespace); real
+ * validation is the first extraction call, which is the sole authority on whether
+ * a key works.
  */
-export const GEMINI_KEY_PREFIX = 'AIza';
-
-/** A cheap "this could be a key" gate — not a validator, just a typo catcher. */
 export function looksLikeGeminiKey(key: string): boolean {
-	return key.startsWith(GEMINI_KEY_PREFIX) && key.length >= 20;
+	return key.length >= 20 && !/\s/.test(key);
 }
