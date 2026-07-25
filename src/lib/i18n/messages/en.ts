@@ -349,6 +349,16 @@ export const en = {
 			edit: (item: string) => `Edit ${item}`
 		},
 
+		/**
+		 * The few seconds after a tick, above the tab bar (→ SPEC §3.1). Parts,
+		 * not a string, so the name is the bold run and each language decides
+		 * where the emphasis falls — English leads with it, another might not.
+		 */
+		undo: {
+			checked: (item: string): RichText => [{ text: item, strong: true }, { text: ' checked off' }],
+			action: 'Undo'
+		},
+
 		/** Add / edit item [3a]. */
 		sheet: {
 			add: 'Add item',
@@ -886,6 +896,39 @@ export const en = {
 			/** The same count, spelled out for the row's label. */
 			andMore: (count: number) => (count === 1 ? ' and 1 more timer' : ` and ${count} more timers`),
 			dismiss: 'Dismiss this timer'
+		},
+
+		/** Import a recipe from a link [3c as the preview] (→ SPEC §4.7, plan 12). */
+		import: {
+			title: 'Import a recipe',
+			subtitle: 'From a link',
+			back: 'Back to recipes',
+			/** The one line under the header that says what to paste. */
+			intro:
+				'Paste a link to a recipe and we’ll fill in the name, photo, ingredients and steps for you to check.',
+			urlLabel: 'Recipe link',
+			urlPlaceholder: 'https://…',
+			fetch: 'Fetch recipe',
+			fetching: 'Fetching…',
+			/** The way out by hand, offered under the field and after any failure.
+			 *  Split so the middle run can be the link to the blank editor. */
+			manualLead: 'No link? ',
+			manualLink: 'Enter it by hand',
+			manualRest: ' instead.',
+			/** The two entry points on the library: the quiet link [04] and the empty state [7e]. */
+			entry: 'Import from a link',
+			entryEmpty: 'or import from a link',
+
+			/** The typed fetch failures — one message each (→ server/recipe-import.ts). */
+			error: {
+				invalidUrl: 'That doesn’t look like a web address — paste the recipe’s link.',
+				blocked: 'That link can’t be opened from here. Try the recipe’s public web address.',
+				unreachable: 'Couldn’t reach that page — check the link and your connection.',
+				notHtml: 'That link isn’t a web page. Paste the recipe’s page, not a file or an image.',
+				tooLarge: 'That page is too big to read — try a direct link to the recipe.',
+				noRecipe:
+					'No recipe found on that page. You can still enter it by hand — photo and text import are coming.'
+			}
 		}
 	},
 

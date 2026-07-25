@@ -16,7 +16,7 @@
  * that reach the children through their recipe — a forged recipe id from
  * another household finds nothing (→ docs/ARCHITECTURE.md "Server patterns").
  */
-import { and, asc, count, desc, eq, inArray, sql } from 'drizzle-orm';
+import { and, asc, count, desc, eq, inArray, isNotNull, sql } from 'drizzle-orm';
 import { parseIngredient } from '$lib/utils/ingredients';
 import {
 	INGREDIENTS_MAX,
@@ -30,7 +30,7 @@ import {
 } from '$lib/utils/recipes';
 import { db } from '../db';
 import { meals, members, recipeIngredients, recipeSteps, recipes } from '../db/schema';
-import { copyImage, deleteUpload, readUpload, uploadContentType } from '../uploads';
+import { copyImage, deleteUpload, readUpload, uploadContentType, uploadExists } from '../uploads';
 
 type Transaction = Parameters<Parameters<typeof db.transaction>[0]>[0];
 
@@ -160,6 +160,48 @@ export async function readRecipeImage(
 
 	const bytes = await readUpload(imagePath);
 	return bytes ? { bytes, contentType: uploadContentType(imagePath) } : null;
+}
+
+/**
+ * Every photo path some recipe still points at, across all households — the
+ * reference set the orphan sweep subtracts (→ `uploads.ts`
+ * `sweepUnreferencedRecipePhotos`, plan 12). Household-blind on purpose: it feeds
+ * a filesystem sweep, not a request, and a file is kept if *any* row uses it.
+ */
+export function allReferencedImagePaths(): Set<string> {
+	const rows = db
+		.select({ imagePath: recipes.imagePath })
+		.from(recipes)
+		.where(isNotNull(recipes.imagePath))
+		.all();
+
+	return new Set(rows.map((row) => row.imagePath).filter((path): path is string => path !== null));
+}
+
+/**
+ * Vet a photo path a recipe-import editor handed back, before attaching it to the
+ * new recipe (→ plan 12). Returns the path when it is a real stored file that
+ * **no recipe already owns**, else null (the recipe is then saved without a photo
+ * — a non-fatal outcome, → SPEC §4.7).
+ *
+ * The "owned by nobody" check is the security gate, and it is deliberately *not*
+ * scoped to a household: were it, a member could post another household's
+ * `imagePath` and attach it to their own recipe, then read that picture through
+ * the scoped image endpoint. A genuine import temp file is owned by no row —
+ * nothing is persisted before Save (→ DECISIONS) — so it passes; a forged or
+ * already-attached path does not. The random-UUID filename is what makes guessing
+ * an in-flight temp file a non-threat for a two-person app.
+ */
+export function claimImportedPhoto(imagePath: string): string | null {
+	if (!imagePath || !uploadExists(imagePath)) return null;
+
+	const owned = db
+		.select({ id: recipes.id })
+		.from(recipes)
+		.where(eq(recipes.imagePath, imagePath))
+		.get();
+
+	return owned ? null : imagePath;
 }
 
 /** The "Browse all · {n}" count [04]. */

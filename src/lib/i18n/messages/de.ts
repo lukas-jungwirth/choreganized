@@ -271,6 +271,11 @@ export const de: Messages = {
 			edit: (item: string) => `${item} bearbeiten`
 		},
 
+		undo: {
+			checked: (item: string): RichText => [{ text: item, strong: true }, { text: ' abgehakt' }],
+			action: 'Rückgängig'
+		},
+
 		sheet: {
 			add: 'Eintragen',
 			edit: 'Eintrag bearbeiten',
@@ -693,6 +698,34 @@ export const de: Messages = {
 			andMore: (count: number) =>
 				count === 1 ? ' und 1 weiterer Timer' : ` und ${count} weitere Timer`,
 			dismiss: 'Diesen Timer schließen'
+		},
+
+		import: {
+			title: 'Rezept importieren',
+			subtitle: 'Aus einem Link',
+			back: 'Zurück zu den Rezepten',
+			intro:
+				'Füg einen Link zu einem Rezept ein — wir tragen Name, Foto, Zutaten und Schritte zum Prüfen ein.',
+			urlLabel: 'Rezept-Link',
+			urlPlaceholder: 'https://…',
+			fetch: 'Rezept holen',
+			fetching: 'Wird geholt…',
+			manualLead: 'Kein Link? ',
+			manualLink: 'Von Hand eintragen',
+			manualRest: '.',
+			entry: 'Aus einem Link importieren',
+			entryEmpty: 'oder aus einem Link importieren',
+
+			error: {
+				invalidUrl: 'Das sieht nicht nach einer Web-Adresse aus — füg den Link zum Rezept ein.',
+				blocked: 'Dieser Link lässt sich von hier nicht öffnen. Nimm die öffentliche Web-Adresse.',
+				unreachable: 'Die Seite war nicht erreichbar — prüf den Link und deine Verbindung.',
+				notHtml:
+					'Dieser Link ist keine Webseite. Füg die Rezeptseite ein, keine Datei und kein Bild.',
+				tooLarge: 'Die Seite ist zu groß zum Einlesen — versuch einen direkten Link zum Rezept.',
+				noRecipe:
+					'Auf der Seite wurde kein Rezept gefunden. Du kannst es von Hand eintragen — Foto- und Text-Import kommen noch.'
+			}
 		}
 	},
 
