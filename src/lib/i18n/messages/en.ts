@@ -734,7 +734,11 @@ export const en = {
 			/** The small tag on the two AI-powered options. */
 			aiTag: 'AI',
 			/** Subtitle on the AI options when no key is set — they lead to Settings. */
-			needsSetup: 'Set up AI import first'
+			needsSetup: 'Set up AI import first',
+			/** The multi-photo picker on the photo import mode. */
+			addPhotos: 'Add photos',
+			morePhotos: 'Add more',
+			removePhoto: 'Remove photo'
 		},
 
 		/** One recipe [7a]. */
