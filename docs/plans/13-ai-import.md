@@ -16,12 +16,14 @@ row + BottomSheet for the key; import screen gains a "From photo" section and a 
   Stored plaintext in the household's own SQLite file inside a single-tenant container —
   encrypting with a key that lives in the same container buys nothing real; log the
   judgment in DECISIONS. The key must never reach the client: server-only modules, and
-  Settings' `load` returns only a masked hint (`AIza…wxyz`, last 4) + set/unset flag.
+  Settings' `load` returns only a masked hint (first four + last four) + set/unset flag.
 - **Settings → Household**: "AI import" row (owner-only mutation via the `requireOwner`-
   in-transaction shape from plan 10; visible read-only to members). Sheet: what the key
   is for, where to get it (Google AI Studio), one-line cost note, TextField (never
-  prefilled with the real key), Save / Remove. Server-side shape check (`AIza` prefix,
-  Google API keys are `AIzaSy…`) only — real validation happens on first use.
+  prefilled with the real key), Save / Remove. The key is an **opaque secret — no prefix
+  gate** (Gemini keys come as legacy `AIza…` or the newer `AQ.…`; gating on a prefix
+  rejects valid keys), so the only shape check is "plausibly a key" (long enough, no
+  whitespace); real validation happens on first use.
 - `lib/server/services/ai-import.ts` — new dependency **`@google/genai`** (the current
   unified Google Gen AI SDK; the older `@google/generative-ai` is deprecated — note the
   version in DECISIONS). Client constructed per call with the household's key:

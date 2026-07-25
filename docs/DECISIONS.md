@@ -898,7 +898,7 @@ reload`) so it can't silently regress.
      clear**: the DB is this household's own file in a single-tenant container, so any key that
      could decrypt it would have to sit in that same container — encryption there buys nothing
      real. It never reaches the browser (server-only modules; Settings returns a masked
-     `AIza…wxyz` hint plus a set/unset flag), and only the owner can set or remove it
+     first-four-plus-last-four hint plus a set/unset flag), and only the owner can set or remove it
      (`requireOwner` in the write, → #10). Extraction is structured output against a hand-written
      `responseSchema` (no zod in the tree) → the same `RecipePrefill` the link importer produces,
      so all paths converge on the [3c] editor and **nothing is ever saved by the model** — each

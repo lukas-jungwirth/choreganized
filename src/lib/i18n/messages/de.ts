@@ -819,10 +819,10 @@ export const de: Messages = {
 			getKey: 'Schlüssel im Google AI Studio holen',
 			current: (hint: string) => `Aktueller Schlüssel: ${hint}`,
 			keyLabel: 'Gemini-API-Schlüssel',
-			keyPlaceholder: 'AIza…',
+			keyPlaceholder: 'AQ.… oder AIza…',
 			replace: 'Schlüssel ersetzen',
 			remove: 'Schlüssel entfernen',
-			invalid: 'Das sieht nicht nach einem Gemini-Schlüssel aus — er sollte mit „AIza“ beginnen.'
+			invalid: 'Das sieht nicht nach einem Gemini-Schlüssel aus — füg den vollständigen Schlüssel aus dem Google AI Studio ein.'
 		},
 
 		leave: {

@@ -1041,10 +1041,10 @@ export const en = {
 			getKey: 'Get a key at Google AI Studio',
 			current: (hint: string) => `Current key: ${hint}`,
 			keyLabel: 'Gemini API key',
-			keyPlaceholder: 'AIza…',
+			keyPlaceholder: 'AQ.… or AIza…',
 			replace: 'Replace key',
 			remove: 'Remove key',
-			invalid: 'That doesn’t look like a Gemini key — it should start with “AIza”.'
+			invalid: 'That doesn’t look like a Gemini key — paste the full key from Google AI Studio.'
 		},
 
 		/** Leave household [6d] — three things to say, one confirm (→ SPEC §7). */
