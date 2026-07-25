@@ -926,8 +926,36 @@ export const en = {
 				unreachable: 'Couldn’t reach that page — check the link and your connection.',
 				notHtml: 'That link isn’t a web page. Paste the recipe’s page, not a file or an image.',
 				tooLarge: 'That page is too big to read — try a direct link to the recipe.',
-				noRecipe:
-					'No recipe found on that page. You can still enter it by hand — photo and text import are coming.'
+				noRecipe: 'No recipe data on that page.'
+			},
+
+			/** The AI fallback [plan 13]: read a page with no recipe data, pasted text,
+			 *  or photos. Only offered when a household Gemini key is set (→ SPEC §4.7). */
+			ai: {
+				note: 'AI-extracted — check it over before saving.',
+				pageLead:
+					'This page has no recipe data we can read directly. Want to try reading it with AI?',
+				tryPage: 'Try AI extraction',
+				extracting: 'Extracting…',
+				pasteToggle: 'Paste the recipe text instead',
+				pasteLabel: 'Recipe text',
+				pastePlaceholder: 'Paste the whole recipe — ingredients and steps.',
+				pasteSubmit: 'Extract recipe',
+				photoToggle: 'Import from a photo',
+				photoLabel: 'Photos of the recipe',
+				photoHint: 'Up to 3 photos of a cookbook or magazine page.',
+				photoSubmit: 'Extract from photos',
+				hintLead: 'No recipe data on that page. ',
+				hintLink: 'Set up AI import',
+				hintRest: ' in Settings to extract it anyway.',
+				error: {
+					noKey: 'Set up AI import in Settings first.',
+					badKey: 'That Gemini key was refused — check it in Settings.',
+					rateLimited: 'The AI service is busy right now — give it a moment and try again.',
+					noRecipe: 'Couldn’t find a recipe in that — try clearer photos or more complete text.',
+					noPhotos: 'Add at least one photo of the recipe.',
+					failed: 'AI extraction didn’t work — give it a moment and try again.'
+				}
 			}
 		}
 	},
@@ -998,6 +1026,25 @@ export const en = {
 			eyebrow: 'Household',
 			placeholder: 'Sonnengasse 12',
 			note: 'Everyone in the house sees this name.'
+		},
+
+		/** AI recipe import [6a] — owner only (→ plan 13, SPEC §4.7). The key is
+		 *  stored server-side; this screen only ever sees a masked hint. */
+		aiImport: {
+			row: 'AI recipe import',
+			on: 'On',
+			notSet: 'Not set',
+			title: 'AI recipe import',
+			eyebrow: 'Household',
+			what: 'Add a Google Gemini key to pull recipes from photos, pasted text, and pages that have no recipe data.',
+			cost: 'Each import costs a fraction of a cent on your own Google account — the free tier usually covers a household.',
+			getKey: 'Get a key at Google AI Studio',
+			current: (hint: string) => `Current key: ${hint}`,
+			keyLabel: 'Gemini API key',
+			keyPlaceholder: 'AIza…',
+			replace: 'Replace key',
+			remove: 'Remove key',
+			invalid: 'That doesn’t look like a Gemini key — it should start with “AIza”.'
 		},
 
 		/** Leave household [6d] — three things to say, one confirm (→ SPEC §7). */

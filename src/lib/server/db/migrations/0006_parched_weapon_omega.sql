@@ -1,0 +1,1 @@
+ALTER TABLE `households` ADD `gemini_api_key` text;

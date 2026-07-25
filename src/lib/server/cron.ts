@@ -40,8 +40,9 @@ const BACKUP_MINUTE_OF_DAY = 3 * 60;
 /**
  * 04:00 server-local — collect the temp photos abandoned recipe imports leave
  * (→ plan 12, `uploads.ts`). Server-local and household-blind for the same reason
- * as the backup: one uploads directory, not one per household. After the backup,
- * so a photo it captured isn't deleted a minute before it's snapshotted.
+ * as the backup: one uploads directory, not one per household. Staggered an hour
+ * after the backup so the two nightly disk passes don't land on the same minute
+ * (the backup snapshots only the database, never the uploads dir).
  */
 const IMPORT_SWEEP_MINUTE_OF_DAY = 4 * 60;
 

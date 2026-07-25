@@ -186,6 +186,25 @@ export async function storePhotoFromBytes(
 }
 
 /**
+ * Validate and re-encode a picked file to WebP **without** storing it — the AI
+ * photo import (→ plan 13, SPEC §4.7) sends up to three photos to the model but
+ * keeps at most one, so re-encoding (the size + type check, EXIF stripped, ≤1200
+ * px) is split from writing. Throws `UploadError` exactly as a stored pick does.
+ */
+export function reencodeUpload(file: File): Promise<Buffer> {
+	return processImage(file);
+}
+
+/**
+ * Write already-processed WebP bytes and hand back the path — the AI photo path's
+ * "keep this one as the recipe photo" step, where the bytes were re-encoded by
+ * `reencodeUpload` a moment earlier and mustn't be run through sharp twice.
+ */
+export function storeRecipePhoto(webp: Buffer): string {
+	return storeImage(webp);
+}
+
+/**
  * Whether a stored path resolves under the uploads root and its file is present
  * — the disk half of vetting a photo path a form handed back before attaching it
  * (→ `services/recipes.ts` `claimImportedPhoto`, plan 12).

@@ -262,8 +262,23 @@ a danger badge with the current user's overdue count [4e].
   loopback / private / link-local hosts refused _before any request_ and re-checked on every
   redirect hop, redirects capped (~5), ~10 s timeout, ~3 MB page cap, `text/html` only. Each
   failure has its own translated message — unreachable · blocked · not a page · too large · no
-  recipe found. A page with no recipe offers manual entry; plan 13 turns that dead end into the
-  AI fallback.
+  recipe found. A page with no recipe offers manual entry, and — when AI import is set up — the
+  AI fallback below.
+- **AI fallback** (→ plan 13) — available only when the household has set a Google **Gemini** API
+  key in Settings (§6); nothing reaches any model without one, and every path lands in the same
+  [3c] editor with a quiet "AI-extracted — check before saving" note (**the AI never saves on its
+  own**). Three ways in:
+  - **A fetched page with no recipe data** — the dead end becomes a **Try AI extraction** button.
+    The tap is deliberate (a paid call is never silent): the URL is re-fetched under the same
+    guards, stripped to readable text server-side, and read by the model. No key → a link to
+    Settings instead.
+  - **Pasted text** — a collapsed "Paste the recipe text instead" box, the answer for sites that
+    block the server (Cloudflare 403): the browser can still load them, so the text is pasted.
+  - **Photos** — 1–3 photos of a cookbook/magazine page, validated and re-encoded to WebP (EXIF
+    stripped) before they reach the model; the first is offered as the recipe photo.
+  Ingredients come back as **raw lines** and parse to amount chips exactly like typed and
+  link-imported ones. Recipe content keeps its **source language** (→ §9). Failures are their own
+  messages — key refused (→ Settings) · service busy · nothing found — never a raw API error.
 - Household content is never translated: imported names, ingredients and steps pass through
   verbatim (→ §9).
 
@@ -372,7 +387,9 @@ a danger badge with the current user's overdue count [4e].
   Task reminders · Overdue nudges · Shopping list updates (toggles per member) · Send test
   notification.
 - **Away mode**: "Going away?" — same control as 5.5.
-- **Household**: name (owner can rename), Members · {n} → members screen.
+- **Household**: name (owner can rename), **AI recipe import** (owner sets/removes a Google
+  Gemini API key for the §4.7 fallback; members see only whether it's on — the key is never shown,
+  only a masked hint), Members · {n} → members screen.
 - **Sign out** · **Leave household** (danger, confirm [6d]: "You'll lose access to the shared
   shopping list, tasks and meal plan. Your points stay with the household.").
 
