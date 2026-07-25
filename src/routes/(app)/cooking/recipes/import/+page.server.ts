@@ -49,10 +49,18 @@ export const load: PageServerLoad = (event) => {
 	// it into `?text=` (with or without a title) instead (→ SPEC §4.7).
 	return {
 		url: sharedUrl(event.url.searchParams),
+		// Which focused method the "Add a recipe" chooser routed to (→ plan 14).
+		mode: readMode(event.url.searchParams),
 		// Only whether AI import is available — never the key itself (→ SPEC §4.7).
 		aiEnabled: getAiImportStatus(householdId).set
 	};
 };
+
+/** The chooser lands here with `?mode=`; anything else (incl. the share target) is a link. */
+function readMode(params: URLSearchParams): 'link' | 'photo' | 'text' {
+	const mode = params.get('mode');
+	return mode === 'photo' || mode === 'text' ? mode : 'link';
+}
 
 function sharedUrl(params: URLSearchParams): string {
 	const direct = params.get('url')?.trim();

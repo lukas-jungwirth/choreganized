@@ -560,6 +560,20 @@ export const de: Messages = {
 			newRecipe: 'Neues Rezept'
 		},
 
+		add: {
+			title: 'Rezept hinzufügen',
+			link: 'Aus einem Link',
+			linkSub: 'Einen Rezept-Link einfügen',
+			photo: 'Aus einem Foto',
+			photoSub: 'Kochbuch- oder Magazinseite abfotografieren',
+			text: 'Text einfügen',
+			textSub: 'Den Rezepttext einfügen',
+			manual: 'Von Hand eintragen',
+			manualSub: 'Selbst eintippen',
+			aiTag: 'KI',
+			needsSetup: 'Zuerst KI-Import einrichten'
+		},
+
 		recipe: {
 			back: 'Zurück zu den Rezepten',
 			options: 'Rezept-Optionen',
@@ -713,8 +727,6 @@ export const de: Messages = {
 			manualLead: 'Kein Link? ',
 			manualLink: 'Von Hand eintragen',
 			manualRest: '.',
-			entry: 'Aus einem Link importieren',
-			entryEmpty: 'oder aus einem Link importieren',
 
 			error: {
 				invalidUrl: 'Das sieht nicht nach einer Web-Adresse aus — füg den Link zum Rezept ein.',
@@ -742,6 +754,9 @@ export const de: Messages = {
 				hintLead: 'Keine Rezeptdaten auf der Seite. ',
 				hintLink: 'KI-Import einrichten',
 				hintRest: ', um es trotzdem auszulesen.',
+				setupCopy:
+					'Der KI-Import ist noch nicht eingerichtet. Füg einen Google-Gemini-Schlüssel hinzu, um Rezepte aus Fotos und eingefügtem Text zu lesen.',
+				setupCta: 'KI-Import einrichten',
 				error: {
 					noKey: 'Richte zuerst den KI-Import in den Einstellungen ein.',
 					badKey: 'Der Gemini-Schlüssel wurde abgelehnt — prüf ihn in den Einstellungen.',

@@ -719,6 +719,24 @@ export const en = {
 			newRecipe: 'New recipe'
 		},
 
+		/** The "Add a recipe" chooser [plan 14] the New button opens — one door to
+		 *  the four ways in: a link, a photo, pasted text, or by hand. */
+		add: {
+			title: 'Add a recipe',
+			link: 'From a link',
+			linkSub: 'Paste a recipe URL',
+			photo: 'From a photo',
+			photoSub: 'Snap a cookbook or magazine page',
+			text: 'Paste text',
+			textSub: 'Paste the recipe text',
+			manual: 'Enter by hand',
+			manualSub: 'Type it in yourself',
+			/** The small tag on the two AI-powered options. */
+			aiTag: 'AI',
+			/** Subtitle on the AI options when no key is set — they lead to Settings. */
+			needsSetup: 'Set up AI import first'
+		},
+
 		/** One recipe [7a]. */
 		recipe: {
 			back: 'Back to recipes',
@@ -915,9 +933,6 @@ export const en = {
 			manualLead: 'No link? ',
 			manualLink: 'Enter it by hand',
 			manualRest: ' instead.',
-			/** The two entry points on the library: the quiet link [04] and the empty state [7e]. */
-			entry: 'Import from a link',
-			entryEmpty: 'or import from a link',
 
 			/** The typed fetch failures — one message each (→ server/recipe-import.ts). */
 			error: {
@@ -948,6 +963,11 @@ export const en = {
 				hintLead: 'No recipe data on that page. ',
 				hintLink: 'Set up AI import',
 				hintRest: ' in Settings to extract it anyway.',
+				/** Photo/text mode with no key set — an edge (the chooser routes such
+				 *  taps to Settings), but a direct visit or a just-removed key lands here. */
+				setupCopy:
+					'AI import isn’t set up yet. Add a Google Gemini key to read recipes from photos and pasted text.',
+				setupCta: 'Set up AI import',
 				error: {
 					noKey: 'Set up AI import in Settings first.',
 					badKey: 'That Gemini key was refused — check it in Settings.',
