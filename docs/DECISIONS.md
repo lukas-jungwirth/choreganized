@@ -832,6 +832,63 @@ reload`) so it can't silently regress.
      itself away again if the tick comes back a failure. And it says nothing when you _un_-tick
      something, because that is already an undo.
 
+108. **Recipe import reads Schema.org JSON-LD, and that needs no dependency and no AI** (→ plan
+     12, SPEC §4.7). Nearly every recipe site embeds a `<script type="application/ld+json">` with
+     a `Recipe` in it, because Google's rich results ask for one — so the import is a fetch, a
+     regex for the script bodies, `JSON.parse`, and a walk to the first `Recipe`. The regex is
+     safe precisely here: a `<script>`'s content can't contain `</script>`, so a non-greedy match
+     to the first close tag can't under-run, and no HTML parser is pulled in for it. The walk
+     handles the shapes real sites use — a top-level object or array, a `@graph` wrapper, `@type`
+     as a string or an array — and a malformed block is skipped, not thrown on, so one blog's
+     stray comma doesn't lose the recipe in the next block. The mapping keeps ingredients as
+     **raw lines**, not parsed columns: the editor already parses a typed line to (amount, unit,
+     name), so a line stays in exactly the shape the user types and an imperfect parse is visible
+     and fixable before Save. Microdata/RDFa are out of scope — JSON-LD covers the overwhelming
+     majority, and the dead-end page is plan 13's AI fallback. The parser is a pure module
+     (`utils/recipe-jsonld.ts`) with its own `node --test` suite, kept free of `$lib`/server
+     imports so the runner can load it and the mapping is pinned against regressions.
+
+109. **The import fetch is SSRF-guarded to "public hosts only", and DNS-rebinding is explicitly
+     out of scope** (→ `server/recipe-import.ts`). The server fetches a URL the user typed, so it
+     resolves the hostname and refuses any address that is loopback, RFC-1918 private, link-local
+     (which includes `169.254.169.254`, the cloud metadata endpoint), CGNAT or reserved — for
+     both IP families — `http(s)` only, and it re-runs that check on **every redirect hop** by
+     following redirects by hand, because a 302 to `http://127.0.0.1/` is the oldest trick there
+     is. The response is bounded too: ~10 s, ~3 MB, `text/html` only, redirects capped at ~5. What
+     it deliberately does **not** do is pin the connection to the vetted IP, so a hostname that
+     passes the check and then re-resolves to a private address between the check and the fetch
+     (DNS rebinding) is not defended against — a real hardening for a public multi-tenant service,
+     but disproportionate for a two-person household app fetching recipe blogs, and it would mean
+     a custom `undici` dispatcher. The address is resolved and checked immediately before the
+     fetch, and the residual TOCTOU window is accepted.
+
+110. **An imported photo is downloaded before Save, previewed as a data URL, and attached only if
+     it's an unclaimed temp file.** The plan wanted the editor to show the _real_ photo it would
+     save (not a hotlink to the source, which leaks the reader's IP and can be hostile), so the
+     image is fetched server-side through the same sharp→WebP pipeline as an upload and written to
+     a temp file straight away. But that file isn't attached to any recipe yet, and the image
+     endpoint (rightly) serves only a file some recipe in _your_ household owns (→ #62, SPEC §8) —
+     so it can't serve the preview. Rather than open a second, less-scoped serving path, the
+     preview is **inlined as a `data:` URL** (the bytes are the user's own download, in the user's
+     own page — no new surface), and the editor carries the temp path in a hidden field. Save
+     attaches it through `claimImportedPhoto`, which refuses any path that is already some recipe's
+     `imagePath` — the one query in the app deliberately _not_ scoped to a household, because
+     without it a member could post another household's photo path and read that picture through
+     their own recipe. A genuine temp file is owned by nobody (nothing is persisted before Save),
+     so it passes; the random-UUID filename makes guessing an in-flight one a non-threat.
+     **Cleanup**: a fresh pick or a removal deletes the temp on Save; a cancelled or closed import
+     leaves it unreferenced, and a nightly cron sweep collects unreferenced recipe photos older
+     than 24 h (the age floor is longer than any editing session, so a still-open editor's photo
+     is never pulled out from under it). That sweep is the one place the uploads dir is listed,
+     and it's maintenance only — serving security is unchanged.
+
+111. **The share target is `GET`, and it also reads a URL out of `?text=`.** The manifest
+     registers `/cooking/recipes/import` as a share target with `url`/`text`/`title` params; the
+     page prefills the field and auto-submits. Android browsers frequently share a page as plain
+     text with the link _inside_ `text` (or `title`) rather than in `url`, so the load pulls the
+     first `http(s)` URL out of those as a fallback. `GET` (not `POST`) because the share carries
+     no file — plan 13's photo-share will add the `POST`/`multipart` variant.
+
 ## Open questions (non-blocking, defaults chosen)
 
 - **Production domain** — invite links & OAuth redirect need the final origin (design shows
@@ -849,4 +906,4 @@ reload`) so it can't silently regress.
 ## Later (explicitly out of v1 scope)
 
 SSE live updates · passkeys · email auth · Apple sign-in · multi-household ·
-meal slots beyond dinner · offline mutations · recipe import from URL · iOS polish pass.
+meal slots beyond dinner · offline mutations · iOS polish pass.

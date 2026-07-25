@@ -14,8 +14,10 @@ import { clockIn, todayIn, type CalendarDate } from '$lib/utils/dates';
 import { backUpDatabase, serverDay } from './backup';
 import { sweepCookTimers } from './services/cook-timers';
 import { listHouseholdClocks } from './services/household';
+import { allReferencedImagePaths } from './services/recipes';
 import { sendTaskReminders } from './services/reminders';
 import { purgeCheckedItems } from './services/shopping';
+import { sweepUnreferencedRecipePhotos } from './uploads';
 
 /** Checked items survive the shopping trip and the evening (→ DECISIONS #13). */
 const CHECKED_ITEM_TTL_MS = 12 * 60 * 60 * 1000;
@@ -34,6 +36,21 @@ const REMINDER_MINUTE_OF_DAY = 8 * 60;
  * for the same reason).
  */
 const BACKUP_MINUTE_OF_DAY = 3 * 60;
+
+/**
+ * 04:00 server-local — collect the temp photos abandoned recipe imports leave
+ * (→ plan 12, `uploads.ts`). Server-local and household-blind for the same reason
+ * as the backup: one uploads directory, not one per household. After the backup,
+ * so a photo it captured isn't deleted a minute before it's snapshotted.
+ */
+const IMPORT_SWEEP_MINUTE_OF_DAY = 4 * 60;
+
+/**
+ * How stale an unreferenced recipe photo must be before the sweep takes it — a
+ * day, comfortably longer than any import-editor session, so a photo a still-open
+ * editor is about to attach is never pulled out from under it (→ plan 12).
+ */
+const IMPORT_PHOTO_TTL_MS = 24 * 60 * 60 * 1000;
 
 /**
  * The household-local date each household was last cleaned on — the "has this
@@ -59,6 +76,9 @@ const lastCleanup = new Map<string, CalendarDate>();
  */
 let lastBackup: string | null = null;
 
+/** The server-local day the orphan-photo sweep last ran — same shape, same reason. */
+let lastImportSweep: string | null = null;
+
 /**
  * Dev only registers jobs once: Vite reloads `hooks.server.ts` on every change,
  * which would otherwise stack a new set of timers on each edit. A `Symbol.for`
@@ -79,7 +99,8 @@ export function registerCronJobs(): void {
 		['shopping-cleanup', cleanUpCheckedShoppingItems],
 		['task-reminders', sweepTaskReminders],
 		['cook-timers', catchUpCookTimers],
-		['db-backup', runNightlyBackup]
+		['db-backup', runNightlyBackup],
+		['import-photo-cleanup', sweepAbandonedImportPhotos]
 	];
 
 	for (const [name, job] of jobs) {
@@ -220,4 +241,30 @@ async function runNightlyBackup(now: Date = new Date()): Promise<void> {
 
 	const { file, pruned } = await backUpDatabase(now);
 	console.log(`[cron] database backup → ${file}${pruned > 0 ? ` (pruned ${pruned} old)` : ''}`);
+}
+
+/**
+ * Collect the temp photos abandoned recipe imports leave on disk (→ plan 12).
+ *
+ * Same resilient once-a-day shape as the backup: gated "at or after 04:00 server-
+ * local", the day claimed before the sweep so a failure isn't retried every
+ * minute. A save that used the photo attaches it (it's now referenced and kept);
+ * a cancelled or closed import leaves it unreferenced, and this takes it once it's
+ * older than the TTL.
+ */
+function sweepAbandonedImportPhotos(now: Date = new Date()): void {
+	const today = serverDay(now);
+	if (lastImportSweep === today) return;
+	if (now.getHours() * 60 + now.getMinutes() < IMPORT_SWEEP_MINUTE_OF_DAY) return;
+
+	lastImportSweep = today;
+
+	const removed = sweepUnreferencedRecipePhotos(
+		allReferencedImagePaths(),
+		IMPORT_PHOTO_TTL_MS,
+		now.getTime()
+	);
+	if (removed > 0) {
+		console.log(`[cron] swept ${removed} abandoned recipe-import photo(s)`);
+	}
 }

@@ -60,6 +60,25 @@ export type RecipeInput = {
 };
 
 /**
+ * An imported recipe [plan 12] the editor opens on, before anything is saved
+ * (→ SPEC §4.7). Raw ingredient and step text is seeded verbatim so the editor
+ * reads it exactly as if it had been typed; the photo is already downloaded, so
+ * the draft carries a `preview` (a data URL — the temp file isn't servable until
+ * it's attached) and the temp `path` the save action attaches.
+ *
+ * Declared here beside `RecipeInput` so the form component and the import route
+ * both name it without importing from `$lib/server`.
+ */
+export type RecipePrefill = {
+	name: string;
+	timeMinutes: number | null;
+	servings: number | null;
+	ingredientLines: string[];
+	steps: string[];
+	photo: { path: string; preview: string } | null;
+};
+
+/**
  * Which field a rejected save is about. The form has two things that can be
  * refused — the name and the photo — and they sit far apart on a full-screen
  * form, so the message has to say which one it means rather than reddening

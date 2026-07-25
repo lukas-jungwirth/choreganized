@@ -19,7 +19,15 @@
  * that services call are too — they move a handful of kilobytes on local disk.
  * Only the sharp pipeline, which is genuinely worth awaiting, is async.
  */
-import { copyFileSync, mkdirSync, rmSync, writeFileSync } from 'node:fs';
+import {
+	copyFileSync,
+	existsSync,
+	mkdirSync,
+	readdirSync,
+	rmSync,
+	statSync,
+	writeFileSync
+} from 'node:fs';
 import { readFile } from 'node:fs/promises';
 import { dirname, extname, isAbsolute, join, normalize, resolve, sep } from 'node:path';
 import { env } from '$env/dynamic/private';
@@ -107,8 +115,19 @@ async function processImage(file: File): Promise<Buffer> {
 		throw new UploadError('not-an-image');
 	}
 
+	return reencode(Buffer.from(await file.arrayBuffer()));
+}
+
+/**
+ * The sharp half of processing, on raw bytes — shared by a picked file and a
+ * photo downloaded during recipe import (→ `server/recipe-import.ts`). sharp is
+ * also the format check: bytes it can't decode throw `unreadable`, which is the
+ * only image validation a downloaded file gets (a remote server's content-type
+ * is not to be trusted).
+ */
+async function reencode(input: Buffer): Promise<Buffer> {
 	try {
-		return await sharp(Buffer.from(await file.arrayBuffer()))
+		return await sharp(input)
 			// Phone cameras store the orientation in EXIF rather than in the
 			// pixels; without this a portrait photo arrives on its side.
 			.rotate()
@@ -145,6 +164,35 @@ export async function storePhotoFromForm(form: FormData, field = 'photo'): Promi
 	if (!(photo instanceof File) || photo.size === 0) return null;
 
 	return storeImage(await processImage(photo));
+}
+
+/**
+ * A photo downloaded from a URL (recipe import, → `server/recipe-import.ts`),
+ * validated and re-encoded exactly like a picked file and stored — handed back
+ * with its processed bytes so the importer can *preview* the real photo without
+ * serving a not-yet-attached file over HTTP (a data URL, → plan 12).
+ *
+ * Throws `UploadError` — `too-large` past the cap, `unreadable` if sharp can't
+ * decode it — which the import flow catches and treats as "no photo", since a
+ * missing picture is a non-fatal import (→ SPEC §4.7).
+ */
+export async function storePhotoFromBytes(
+	input: Buffer
+): Promise<{ imagePath: string; webp: Buffer }> {
+	if (input.byteLength > UPLOAD_MAX_BYTES) throw new UploadError('too-large');
+
+	const webp = await reencode(input);
+	return { imagePath: storeImage(webp), webp };
+}
+
+/**
+ * Whether a stored path resolves under the uploads root and its file is present
+ * — the disk half of vetting a photo path a form handed back before attaching it
+ * (→ `services/recipes.ts` `claimImportedPhoto`, plan 12).
+ */
+export function uploadExists(relativePath: string): boolean {
+	const absolute = resolveUpload(relativePath);
+	return absolute ? existsSync(absolute) : false;
 }
 
 /**
@@ -225,4 +273,54 @@ function writeUpload(relativePath: string, data: Buffer): string {
 	}
 
 	return relativePath;
+}
+
+/**
+ * Delete recipe photos on disk that no recipe row points at and that are older
+ * than `olderThanMs` — the abandoned temp files a recipe import leaves when the
+ * editor it prefilled is cancelled or closed before Save (→ plan 12, run nightly
+ * from `cron.ts`). `referenced` is every still-used `imagePath`
+ * (→ `services/recipes.ts` `allReferencedImagePaths`).
+ *
+ * This is the one place the uploads directory is *listed*, and it is maintenance
+ * only: serving still goes through the per-household database lookup (rule 3 at
+ * the top of this file), so reading a photo still requires owning its row — the
+ * filesystem layout is never part of that security argument. The age floor keeps
+ * a photo a still-open import editor is about to attach from being swept out from
+ * under it.
+ */
+export function sweepUnreferencedRecipePhotos(
+	referenced: Set<string>,
+	olderThanMs: number,
+	now = Date.now()
+): number {
+	const dir = resolve(uploadsRoot(), RECIPES_DIR);
+
+	let entries: string[];
+	try {
+		entries = readdirSync(dir);
+	} catch {
+		// No uploads yet, or the volume isn't mounted — nothing to sweep.
+		return 0;
+	}
+
+	let removed = 0;
+	for (const entry of entries) {
+		const relativePath = join(RECIPES_DIR, entry);
+		if (referenced.has(relativePath)) continue;
+
+		const absolute = join(dir, entry);
+		try {
+			const stat = statSync(absolute);
+			if (!stat.isFile()) continue;
+			if (now - stat.mtimeMs < olderThanMs) continue;
+
+			rmSync(absolute, { force: true });
+			removed++;
+		} catch {
+			// Raced away between the listing and the stat/remove — already gone.
+		}
+	}
+
+	return removed;
 }

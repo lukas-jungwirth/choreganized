@@ -35,7 +35,8 @@
 		STEPS_MAX,
 		STEP_TEXT_MAX,
 		uploadUrl,
-		type RecipeFormField
+		type RecipeFormField,
+		type RecipePrefill
 	} from '$lib/utils/recipes';
 	import Camera from '@lucide/svelte/icons/camera';
 	import ChevronDown from '@lucide/svelte/icons/chevron-down';
@@ -47,8 +48,14 @@
 	import RecipeImage from './RecipeImage.svelte';
 
 	type Props = {
-		/** The recipe being edited; null when creating. */
+		/** The recipe being edited; null when creating or importing. */
 		recipe: RecipeDetail | null;
+		/**
+		 * An imported draft to open on [plan 12] — name, raw ingredient/step text
+		 * and an already-downloaded photo, seeded over a null `recipe`. The preview
+		 * _is_ the editor, so every imperfect parse is a two-second fix (→ SPEC §4.7).
+		 */
+		prefill?: RecipePrefill;
 		/** Where Cancel returns to — the recipe, or wherever "New" was pressed. */
 		back: string;
 		/** Message from a rejected save, and which field it is about. */
@@ -56,7 +63,7 @@
 		field?: RecipeFormField;
 	};
 
-	let { recipe, back, error, field }: Props = $props();
+	let { recipe, prefill, back, error, field }: Props = $props();
 
 	const m = messages();
 
@@ -73,19 +80,34 @@
 	/** A counter rather than randomness: the server and the browser agree on it. */
 	const row = (text = ''): Row => ({ key: `r${nextKey++}`, text });
 
-	let name = $state(untrack(() => recipe?.name ?? ''));
-	let time = $state(untrack(() => recipe?.timeMinutes?.toString() ?? ''));
-	let servings = $state(untrack(() => recipe?.servings?.toString() ?? ''));
+	// Seeded from the import draft when there is one, else from the recipe being
+	// edited, else empty. An imported ingredient stays the *raw line* the site
+	// wrote — the editor parses it for the amount chip exactly as it parses a
+	// typed line, so an imperfect parse is visible and fixable (→ SPEC §4.7).
+	let name = $state(untrack(() => prefill?.name ?? recipe?.name ?? ''));
+	let time = $state(
+		untrack(() => numberField(prefill ? prefill.timeMinutes : recipe?.timeMinutes))
+	);
+	let servings = $state(untrack(() => numberField(prefill ? prefill.servings : recipe?.servings)));
 	let ingredients = $state<Row[]>(
-		untrack(() =>
-			recipe?.ingredients.length
-				? recipe.ingredients.map((ingredient) => row(m.units.ingredient(ingredient)))
-				: [row()]
-		)
+		untrack(() => {
+			const lines = prefill
+				? prefill.ingredientLines
+				: recipe?.ingredients.map((ingredient) => m.units.ingredient(ingredient));
+			return lines?.length ? lines.map((line) => row(line)) : [row()];
+		})
 	);
 	let steps = $state<Row[]>(
-		untrack(() => (recipe?.steps.length ? recipe.steps.map((step) => row(step.text)) : [row()]))
+		untrack(() => {
+			const texts = prefill ? prefill.steps : recipe?.steps.map((step) => step.text);
+			return texts?.length ? texts.map((text) => row(text)) : [row()];
+		})
 	);
+
+	/** A stored count as the text its field shows — empty for "not stated". */
+	function numberField(value: number | null | undefined): string {
+		return value?.toString() ?? '';
+	}
 
 	let fileInput: HTMLInputElement | undefined = $state();
 	let picked = $state<File | null>(null);
@@ -111,8 +133,11 @@
 		return () => URL.revokeObjectURL(url);
 	});
 
+	/** The imported photo's preview [plan 12], shown until a pick or a removal. */
+	const initialPhoto = $derived(prefill?.photo?.preview ?? null);
+
 	const photo = $derived(
-		previewUrl ?? (removed || !recipe?.imagePath ? null : uploadUrl(recipe.imagePath))
+		previewUrl ?? (removed ? null : recipe?.imagePath ? uploadUrl(recipe.imagePath) : initialPhoto)
 	);
 
 	/**
@@ -229,6 +254,11 @@
 		{/if}
 	</div>
 	<input type="hidden" name="removePhoto" value={removed ? '1' : ''} />
+	{#if prefill?.photo}
+		<!-- The already-downloaded photo's temp path — the save action attaches it
+			 unless a fresh pick or a removal supersedes it (→ plan 12). -->
+		<input type="hidden" name="importedPhoto" value={prefill.photo.path} />
+	{/if}
 
 	<TextField
 		label={m.cooking.form.name}

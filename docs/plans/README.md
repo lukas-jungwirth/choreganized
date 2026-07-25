@@ -23,7 +23,7 @@ plus your session date). Note deviations in the plan file and in DECISIONS.md.
 | 09  | [History, leaderboard & Home completion](09-history-leaderboard.md) | done (2026-07-22) | 04                       |
 | 10  | [Settings & members](10-settings-members.md)                        | done (2026-07-22) | 01 (05 for prefs)        |
 | 11  | [PWA, polish & deploy](11-pwa-deploy.md)                            | done (2026-07-23) | all                      |
-| 12  | [Recipe import from a link](12-recipe-import.md)                    | todo              | 07, 11                   |
+| 12  | [Recipe import from a link](12-recipe-import.md)                    | done (2026-07-25) | 07, 11                   |
 | 13  | [AI import: fallback, text & photos](13-ai-import.md)               | todo              | 12, 10                   |
 
 Work done after the twelve plans, tracked here so the queue stays the whole story:

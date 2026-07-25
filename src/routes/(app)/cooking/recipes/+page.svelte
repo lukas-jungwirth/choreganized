@@ -15,6 +15,7 @@
 	import FAB from '$lib/components/ui/FAB.svelte';
 	import SearchField from '$lib/components/ui/SearchField.svelte';
 	import { messages } from '$lib/i18n';
+	import Link from '@lucide/svelte/icons/link';
 	import Plus from '@lucide/svelte/icons/plus';
 	import { untrack } from 'svelte';
 	import type { PageProps } from './$types';
@@ -69,6 +70,11 @@
 		<!-- The submit the debounce presses for you; also the no-JS path. -->
 		<button type="submit" class="sr-only">{m.ui.search}</button>
 	</form>
+
+	<!-- The second way to add a recipe, beside the New FAB (→ plan 12). -->
+	<a class="import" href="/cooking/recipes/import">
+		<Link size={15} strokeWidth={2} />{m.cooking.import.entry}
+	</a>
 {/if}
 
 {#if data.total === 0}
@@ -81,6 +87,7 @@
 					<Button href="/cooking/recipes/new">
 						<Plus size={17} strokeWidth={2.4} />{m.cooking.recipes.emptyCta}
 					</Button>
+					<a class="import-empty" href="/cooking/recipes/import">{m.cooking.import.entryEmpty}</a>
 				</div>
 			{/snippet}
 		</EmptyState>
@@ -105,7 +112,27 @@
 
 <style>
 	.search {
-		margin-bottom: 18px;
+		margin-bottom: 12px;
+	}
+
+	/* The quiet second entry point, under the search and above the grid. */
+	.import {
+		display: inline-flex;
+		align-items: center;
+		gap: 7px;
+		margin: 0 4px 18px;
+		font-size: 13.5px;
+		font-weight: 600;
+		color: var(--sage);
+	}
+
+	/* Its twin under the empty state's primary CTA [7e]. */
+	.import-empty {
+		display: inline-block;
+		margin-top: 14px;
+		font-size: 13.5px;
+		font-weight: 600;
+		color: var(--sage);
 	}
 
 	.grid {

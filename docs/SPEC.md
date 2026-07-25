@@ -240,6 +240,33 @@ a danger badge with the current user's overdue count [4e].
   locally (sound optional, vibration via `navigator.vibrate`). Cancelling/pausing the timer
   cancels the server push. Tapping the notification reopens cook mode at that step.
 
+### 4.7 Recipe import from a link (→ plan 12, reuses the [3c] editor as its preview)
+
+- **Entry points**: "Import from a link" beside New in the recipe library (a quiet link on the
+  populated screen, a link under the empty state [7e] CTA), and the **OS share sheet** — the PWA
+  registers a share target (§8) so sharing a page from a browser opens the importer with the link
+  filled in and auto-fetched.
+- Paste a recipe URL → **Fetch recipe**. The server reads the page's Schema.org `Recipe` JSON-LD
+  (no AI, no dependency — nearly every recipe site embeds one for Google). `@graph` wrappers and
+  `@type` arrays are handled; a malformed block never sinks the next; the first `Recipe` wins.
+  Fields map to the editor: name, `totalTime` (else `prepTime`+`cookTime`) → minutes,
+  `recipeYield` → servings, `recipeIngredient[]` → raw ingredient lines (the editor parses them
+  to amount chips like every typed row), `recipeInstructions` → steps in order, `image` →
+  photo.
+- On success the ordinary **recipe editor [3c] opens prefilled**, the photo already downloaded
+  and re-encoded to WebP like any upload (a missing or unfetchable photo is non-fatal — the draft
+  just has none). The preview _is_ the editor, so every imperfect parse is a two-second fix.
+  **Save** creates the recipe through the normal path and attaches the photo; nothing is stored
+  before Save but the temp photo, and an abandoned import's photo is swept nightly.
+- **Fetching is guarded** (the server fetches a user-supplied URL): `http(s)` only,
+  loopback / private / link-local hosts refused _before any request_ and re-checked on every
+  redirect hop, redirects capped (~5), ~10 s timeout, ~3 MB page cap, `text/html` only. Each
+  failure has its own translated message — unreachable · blocked · not a page · too large · no
+  recipe found. A page with no recipe offers manual entry; plan 13 turns that dead end into the
+  AI fallback.
+- Household content is never translated: imported names, ingredients and steps pass through
+  verbatim (→ §9).
+
 ---
 
 ## 5. Tasks tab

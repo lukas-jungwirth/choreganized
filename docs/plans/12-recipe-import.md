@@ -68,23 +68,50 @@ itself is a simple SubHeader + TextField + Button + Banner composition from the 
 
 ## Acceptance
 
-- [ ] A Chefkoch (or any JSON-LD) recipe URL → editor prefilled with name, minutes,
+- [x] A Chefkoch (or any JSON-LD) recipe URL → editor prefilled with name, minutes,
       servings, ingredient rows showing parsed amount chips ("500 g Mehl" → 500/g/Mehl),
       steps in order, photo present → Save → recipe in the library, fully usable in
       meal plan and cook mode.
-- [ ] `@graph`-wrapped and `@type: ["Recipe", …]` array forms both parse (test with two
+- [x] `@graph`-wrapped and `@type: ["Recipe", …]` array forms both parse (test with two
       different sites).
-- [ ] A page without recipe JSON-LD → "no recipe found" banner + manual-entry link; app
+- [x] A page without recipe JSON-LD → "no recipe found" banner + manual-entry link; app
       never crashes on malformed JSON-LD (bad JSON in one block → try the next).
-- [ ] Unreachable host, non-HTML response, and >3 MB page each show their own clean error.
-- [ ] `http://localhost:5173/…`, `http://127.0.0.1/…`, `http://192.168.1.1/…` are rejected
+- [x] Unreachable host, non-HTML response, and >3 MB page each show their own clean error.
+- [x] `http://localhost:5173/…`, `http://127.0.0.1/…`, `http://192.168.1.1/…` are rejected
       without a request being made.
-- [ ] Unparseable ingredient lines land name-only and are editable before save; >60 lines
+- [x] Unparseable ingredient lines land name-only and are editable before save; >60 lines
       or over-long lines are capped server-side without orphaning the downloaded photo.
-- [ ] Share target is in the manifest and `?url=`/`?text=` prefill + auto-fetch works when
+- [x] Share target is in the manifest and `?url=`/`?text=` prefill + auto-fetch works when
       opened directly in the browser. (True share-sheet verification needs the installed
       PWA on Android — if that's not possible in the session, say so in the handoff.)
-- [ ] `npm run check` && `npm run build` clean.
+- [x] `npm run check` && `npm run build` clean.
 
 Out of scope: AI/LLM fallback, photo OCR, paste-text import (all plan 13); microdata/RDFa
 parsing (JSON-LD covers the overwhelming majority — DECISIONS).
+
+## What was verified, and how (session 2026-07-25)
+
+Built as specified. `npm run check` (0 errors, 0 warnings), `npm test` (87 pass incl. 24 new
+`recipe-jsonld` cases) and `npm run build` all clean. Walked the running app (dev server, seeded
+household, German locale):
+
+- **Happy path, two different sites.** `bbcgoodfood.com/recipes/easy-pancakes` (English) and
+  `gutekueche.at/...-rezept-3809` (German) both prefilled the editor — name, minutes, servings,
+  photo, ingredient rows with amount chips (incl. "1 EL Butter" reading the German label back to
+  `tbsp`, and "Prise Muskat"/"lemon wedges to serve" landing name-only). Save created the recipe
+  and the recipe view served the attached WebP (`/api/uploads/recipes/*.webp → 200`).
+- **Every typed error, driven through the real `?/fetch` action** (German copy): loopback
+  `127.0.0.1`, private `192.168.1.1`, the `localhost` name, the `169.254.169.254` metadata
+  address and a non-`http` scheme all returned **blocked in 3–15 ms** — far too fast for a
+  network round-trip, i.e. refused before any request. `no-recipe` (example.com), `not-html`
+  (a `robots.txt`), `too-large` (the ~12 MB WHATWG HTML spec), `unreachable` (a `.invalid`
+  domain) and `invalid-url` each returned their own message. The no-recipe **Banner** + manual
+  link renders in the UI.
+- **Share target.** In the manifest; `?url=` and a link buried in `?text=` both prefill and
+  auto-fetch straight into the editor. True OS share-sheet dispatch needs the installed PWA on
+  Android — **not exercised in this headless session** (browser `Notification.permission` /
+  install are unavailable here), so hand that one gesture to a device.
+
+One observation left verbatim on purpose: gutekueche embeds step numbers ("1. …") in its
+instruction text, so the editor shows its own number badge beside them. The plan says imported
+steps pass through verbatim, so they're not stripped — a two-second edit if unwanted.
