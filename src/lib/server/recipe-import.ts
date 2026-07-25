@@ -124,7 +124,24 @@ export async function fetchRecipePage(rawUrl: string): Promise<{ html: string; f
 	}
 
 	const bytes = await readCapped(response, MAX_PAGE_BYTES);
-	return { html: bytes.toString('utf8'), finalUrl };
+	return { html: decodeHtml(bytes, contentType), finalUrl };
+}
+
+/**
+ * Decode a page to text honoring the `Content-Type` charset, defaulting to
+ * UTF-8. A German recipe site served as ISO-8859-1 / Windows-1252 (still out
+ * there, and exactly where umlauts live) would turn `ä ö ü ß` into replacement
+ * characters if forced through UTF-8 — so the imported name and ingredients
+ * would carry mojibake. An unknown charset label makes `TextDecoder` throw, and
+ * we fall back to UTF-8 (which is what JSON-LD is supposed to be anyway).
+ */
+function decodeHtml(bytes: Buffer, contentType: string): string {
+	const charset = /charset\s*=\s*["']?([\w-]+)/i.exec(contentType)?.[1];
+	try {
+		return new TextDecoder(charset ?? 'utf-8').decode(bytes);
+	} catch {
+		return new TextDecoder('utf-8').decode(bytes);
+	}
 }
 
 /**

@@ -32,7 +32,9 @@ function sharedUrl(params: URLSearchParams): string {
 
 	for (const key of ['text', 'title']) {
 		const found = /https?:\/\/\S+/i.exec(params.get(key) ?? '');
-		if (found) return found[0];
+		// `\S+` grabs any trailing sentence punctuation ("…recipe." → drop the dot),
+		// which would otherwise make the auto-fetched URL a 404.
+		if (found) return found[0].replace(/[.,;:!?]+$/, '');
 	}
 	return '';
 }
