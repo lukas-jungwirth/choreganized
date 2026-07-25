@@ -26,6 +26,12 @@ existing `BottomSheet`; no new frame.
   across to the photo/text modes. Photo/text modes with no key show a "Set up AI import"
   card → Settings. The five actions (`fetch`/`extractPage`/`extractText`/`extractPhotos`/
   `save`) are unchanged.
+- **Photo picker** (`MultiPhotoField.svelte`): the plain browser file input becomes a grid
+  of thumbnail tiles beside a dashed "add" tile with a camera lens (matching the editor's
+  photo well [3c]), each thumbnail removable. A real `<input multiple>` lives inside the add
+  tile (a `<label>`), so no-JS still posts; with JS each pick is capped, previewed, and
+  written back into that input via a `DataTransfer`, so the native form post sends exactly
+  the tiles shown. The submit gates on the count.
 - i18n: `cooking.add.*` (en+de); drop the now-unused `cooking.import.entry`/`entryEmpty`;
   add `cooking.import.ai.setupCopy`/`setupCta`.
 - Docs: SPEC §4.3/§4.7, DECISIONS #114, README status row.

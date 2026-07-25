@@ -12,6 +12,7 @@
 -->
 <script lang="ts">
 	import { enhance } from '$app/forms';
+	import MultiPhotoField from '$lib/components/cooking/MultiPhotoField.svelte';
 	import RecipeForm from '$lib/components/cooking/RecipeForm.svelte';
 	import SubHeader from '$lib/components/shell/SubHeader.svelte';
 	import Banner from '$lib/components/ui/Banner.svelte';
@@ -74,6 +75,8 @@
 	let fetchForm: HTMLFormElement | undefined = $state();
 	let fetching = $state(false);
 	let extracting = $state(false);
+	/** The photos picked in photo mode — gates the submit and posts as `photos`. */
+	let photos = $state<File[]>([]);
 
 	/** The shared pending flag for the AI forms — only one submits at a time. */
 	function aiEnhance() {
@@ -129,17 +132,10 @@
 			enctype="multipart/form-data"
 			use:enhance={aiEnhance}
 		>
-			<input
-				class="file"
-				type="file"
-				name="photos"
-				accept="image/*"
-				multiple
-				aria-label={m.cooking.import.ai.photoLabel}
-			/>
+			<MultiPhotoField bind:files={photos} max={3} />
 			<p class="hint">{m.cooking.import.ai.photoHint}</p>
 			<div class="submit">
-				<Button type="submit" disabled={extracting}>
+				<Button type="submit" disabled={extracting || photos.length === 0}>
 					<Camera size={16} strokeWidth={2} />
 					{extracting ? m.cooking.import.ai.extracting : m.cooking.import.ai.photoSubmit}
 				</Button>
@@ -299,13 +295,6 @@
 
 	textarea::placeholder {
 		color: var(--text-disabled);
-	}
-
-	.file {
-		width: 100%;
-		padding: 12px 0;
-		font-size: 13.5px;
-		color: var(--text-4);
 	}
 
 	.hint {

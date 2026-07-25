@@ -571,7 +571,10 @@ export const de: Messages = {
 			manual: 'Von Hand eintragen',
 			manualSub: 'Selbst eintippen',
 			aiTag: 'KI',
-			needsSetup: 'Zuerst KI-Import einrichten'
+			needsSetup: 'Zuerst KI-Import einrichten',
+			addPhotos: 'Fotos hinzufügen',
+			morePhotos: 'Mehr hinzufügen',
+			removePhoto: 'Foto entfernen'
 		},
 
 		recipe: {
