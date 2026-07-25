@@ -110,6 +110,12 @@ a danger badge with the current user's overdue count [4e].
 - Row: check circle, name, optional quantity ("×6", "2L" — quantity+unit compact), adder's mini
   avatar. Checking: sage fill + strikethrough, and the row **leaves its store group** for
   "Recently bought". Unchecking puts it back where it was.
+- **Undo bar**: for ~5 s after a tick, a dark toast above the tab bar says "**{item}** checked
+  off" with an **Undo** — the moment you'd notice the wrong line is also the moment the row is
+  hardest to find. Inverted on purpose: in an otherwise cream-and-white list it's the one
+  surface that can't be mistaken for a row (→ [DECISIONS #107](DECISIONS.md)). It replaces
+  itself when the next item is ticked, and holds while a keyboard is on it. Nothing is lost when
+  it goes: un-ticking the row in "Recently bought" does the same thing.
 - **Recently bought** — one section under the stores, all stores together, most recently ticked
   off first. Collapsed to its heading ("Recently bought · 3") so a half-done trip doesn't push
   what you still need off the screen; one tap opens it, to look or to put something back. It

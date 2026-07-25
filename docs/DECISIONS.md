@@ -803,6 +803,35 @@ reload`) so it can't silently regress.
      pruning job — the table grows by distinct words, which a household of two exhausts long
      before it becomes a row count worth a cron.
 
+107. **The undo bar is the tick's receipt, not a second source of truth — and it is the one place
+     the app inverts.** #105 moves a ticked row out of its store group and into a section that is
+     folded up by default, which makes the one thing you might want next — putting it back,
+     because that was the wrong line — the hardest thing on the screen to find. So a bar appears
+     above the tab bar for five seconds: "**{item}** checked off · Undo".
+     It is dark, which took a beat to justify in a warm, soft app that has exactly one dark
+     surface on purpose (cook mode). But a toast's real job here isn't to be pretty, it's to
+     _not read as a row_ in a UI that is otherwise all cream and white — and every lighter option
+     fails that. Sage collides with the checked-state sage; a cream pill dissolves into the
+     sheets. Inverted is the only surface on the palette that says "message, not list" at a
+     glance. The dark is `--ink` (which cook mode already is) warmed a touch to `--toast` so it
+     doesn't go cold beside the paper, and it stays Choreganized's rather than a system
+     snackbar's by keeping the sage check dot and a sage "Undo" — the latter lifted to
+     `--toast-accent` because plain `--sage` on the dark is ~3.9:1, under AA (the lifted one
+     clears it at ~5.8:1). Text borrows cook mode's off-whites. No new dark _surface_ concept —
+     the same ink, one transient spot.
+     Furniture-wise it borrows `TimerDock`'s framing (the 480px column, the `rise`), sits at
+     `z-index: 12` and reads `--timer-dock-h` so it stacks above a running timer rather than on
+     it — one more reason that dock is not a `ui/Banner` (→ #104), and the same reason this is a
+     feature component in `components/shopping/` rather than a `ui/Toast`: one caller, and the
+     undo is a form action, not a callback.
+     Three things it deliberately does not do. It does not queue: a second tick replaces it, so
+     the bar always speaks about the last thing you did, and everything before that is in
+     "Recently bought" — which is also why a five-second timer is not a WCAG 2.2.1 problem here,
+     since the action it offers never actually expires. It does not wait for the server: it is
+     shown the instant the row moves, like every other optimistic edge in this list, and takes
+     itself away again if the tick comes back a failure. And it says nothing when you _un_-tick
+     something, because that is already an undo.
+
 ## Open questions (non-blocking, defaults chosen)
 
 - **Production domain** — invite links & OAuth redirect need the final origin (design shows

@@ -88,6 +88,18 @@
 	--cook-amber-line: rgba(224, 164, 88, 0.4); /* the outlined chip [7b] */
 	--cook-amber-tint: rgba(224, 164, 88, 0.1); /* this step's ingredient row [7b] */
 
+	/* ── Toast (inverted) ─────────────────────────────────────── */
+	/* The one place the app inverts: a transient message that must not read as a
+	   row (→ DECISIONS #107). `--ink` warmed a touch so it doesn't go cold beside
+	   the cream surfaces; text borrows cook mode's off-whites. `--toast-accent`
+	   is a sage lifted for legibility on the dark surface — plain --sage is only
+	   ~3.9:1 there; this clears AA for the "Undo". */
+	--toast: #2a251e;
+	--toast-text: #edebe6;
+	--toast-muted: #b7b2a9; /* the "checked off" that follows the bold name */
+	--toast-accent: #7faa8d; /* the "Undo" — sage that still reads on the dark */
+	--toast-press: rgba(255, 255, 255, 0.08); /* the "Undo" pressed, lit from within */
+
 	/* ── Typography ───────────────────────────────────────────── */
 	--font-display: 'Fraunces Variable', serif; /* headings, numbers, wordmark */
 	--font-body: 'Figtree Variable', system-ui, sans-serif;

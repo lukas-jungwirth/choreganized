@@ -1,7 +1,8 @@
 # Implementation Plans
 
-The build is split into 12 plans. Each is a self-contained work package for one agent session:
-it says what to build, which design frames and SPEC sections apply, and how to know it's done.
+The v1 build was split into 12 plans (00–11); post-v1 features continue the same numbering.
+Each is a self-contained work package for one agent session: it says what to build, which
+design frames and SPEC sections apply, and how to know it's done.
 
 ## Status
 
@@ -22,6 +23,8 @@ plus your session date). Note deviations in the plan file and in DECISIONS.md.
 | 09  | [History, leaderboard & Home completion](09-history-leaderboard.md) | done (2026-07-22) | 04                       |
 | 10  | [Settings & members](10-settings-members.md)                        | done (2026-07-22) | 01 (05 for prefs)        |
 | 11  | [PWA, polish & deploy](11-pwa-deploy.md)                            | done (2026-07-23) | all                      |
+| 12  | [Recipe import from a link](12-recipe-import.md)                    | todo              | 07, 11                   |
+| 13  | [AI import: fallback, text & photos](13-ai-import.md)               | todo              | 12, 10                   |
 
 Work done after the twelve plans, tracked here so the queue stays the whole story:
 
@@ -32,6 +35,7 @@ Work done after the twelve plans, tracked here so the queue stays the whole stor
 | **Structured ingredient amounts** (`cooking/IngredientSheet`, SPEC §4.4, DECISIONS #100–101)            | done (2026-07-24) |
 | **Multiple cook timers + the running-timer dock** (`cook-timers.ts`, `cook-timer.svelte.ts`, SPEC §4.6) | done (2026-07-24) |
 | **Shopping: "Recently bought" + add-field suggestions** (SPEC §3.1, DECISIONS #105–106)                 | done (2026-07-24) |
+| **Shopping: undo bar after a tick** (`shopping/UndoBar`, SPEC §3.1, DECISIONS #107)                     | done (2026-07-24) |
 
 ## Dependency graph & parallelization
 

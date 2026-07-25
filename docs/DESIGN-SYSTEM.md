@@ -87,8 +87,14 @@ still the only thing that posts (→ [DECISIONS #100](DECISIONS.md)). The store 
 on — one singleton, N dumb readers — is what any future state that outlives a single screen
 should copy.
 
-Shopping later gained two more feature components in `components/shopping/`, again no `ui/`
-primitives. **`BoughtSection`** — the collapsed "Recently bought · 3" list under the store groups
+Shopping later gained three more feature components in `components/shopping/`, again no `ui/`
+primitives. **`UndoBar`** — "**Tomatoes** checked off · Undo" for five seconds after a tick
+(→ [DECISIONS #107](DECISIONS.md)): `TimerDock`'s framing (the 480px column, the `rise` keyframe),
+sitting above it at `z-index: 12` and reading `--timer-dock-h` the way the FAB does, with
+`role="status"` and its own `?/toggle` form. It is **the app's one inverted surface** — a toast
+must not read as a row, and in an all-cream UI only inverted ink does that; the `--toast*` tokens
+are `--ink` warmed with cook mode's off-white text and a sage lifted to clear AA on the dark.
+**`BoughtSection`** — the collapsed "Recently bought · 3" list under the store groups
 (→ [DECISIONS #105](DECISIONS.md)): it borrows the store headings' micro-label typography, because
 it is one more group and not a new idea, and its rows are the ordinary `ShoppingRow`, which
 already goes quiet when it is checked. **`SuggestionList`** — the names an add field offers under

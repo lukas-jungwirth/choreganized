@@ -11,6 +11,7 @@
 	import QuickAdd from '$lib/components/shopping/QuickAdd.svelte';
 	import ShoppingItemSheet from '$lib/components/shopping/ShoppingItemSheet.svelte';
 	import ShoppingRow from '$lib/components/shopping/ShoppingRow.svelte';
+	import UndoBar from '$lib/components/shopping/UndoBar.svelte';
 	import Button from '$lib/components/ui/Button.svelte';
 	import Card from '$lib/components/ui/Card.svelte';
 	import EmptyState from '$lib/components/ui/EmptyState.svelte';
@@ -68,14 +69,40 @@
 	/** Lives here rather than in QuickAdd so the sheet can take it over. */
 	let quickName = $state('');
 
+	/**
+	 * The item the undo bar is currently offering to put back, or null.
+	 *
+	 * A fresh object per tick, which is what the `{#key}` below keys on: ticking
+	 * a second item replaces the bar rather than letting the new name inherit
+	 * what was left of the old one's few seconds.
+	 */
+	let ticked = $state<{ item: ShoppingListItem } | null>(null);
+
 	function toggle(item: ShoppingListItem): SubmitFunction {
 		return ({ formData }) => {
-			pending.set(item.id, formData.get('checked') === 'true' ? Date.now() : null);
+			const checked = formData.get('checked') === 'true';
+			pending.set(item.id, checked ? Date.now() : null);
+			// Offered the instant the row moves, for the same reason the row moves
+			// before the server answers — but taken away again if the tick turns
+			// out not to have happened, so the bar never offers to undo nothing.
+			if (checked) ticked = { item };
 
-			return async ({ update }) => {
+			return async ({ update, result }) => {
 				await update({ reset: false });
 				pending.delete(item.id);
+				if (result.type !== 'success' && ticked?.item.id === item.id) ticked = null;
 			};
+		};
+	}
+
+	/** Undoing is a tick in reverse, plus taking the bar away. */
+	function undo(item: ShoppingListItem): SubmitFunction {
+		const submit = toggle(item);
+
+		return (input) => {
+			const done = submit(input);
+			ticked = null;
+			return done;
 		};
 	}
 
@@ -143,6 +170,12 @@
 			onedit={edit}
 		/>
 	{/if}
+{/if}
+
+{#if ticked}
+	{#key ticked}
+		<UndoBar item={ticked.item} undo={undo(ticked.item)} onclose={() => (ticked = null)} />
+	{/key}
 {/if}
 
 {#if sheet}

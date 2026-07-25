@@ -271,6 +271,11 @@ export const de: Messages = {
 			edit: (item: string) => `${item} bearbeiten`
 		},
 
+		undo: {
+			checked: (item: string): RichText => [{ text: item, strong: true }, { text: ' abgehakt' }],
+			action: 'Rückgängig'
+		},
+
 		sheet: {
 			add: 'Eintragen',
 			edit: 'Eintrag bearbeiten',

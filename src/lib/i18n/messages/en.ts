@@ -349,6 +349,16 @@ export const en = {
 			edit: (item: string) => `Edit ${item}`
 		},
 
+		/**
+		 * The few seconds after a tick, above the tab bar (→ SPEC §3.1). Parts,
+		 * not a string, so the name is the bold run and each language decides
+		 * where the emphasis falls — English leads with it, another might not.
+		 */
+		undo: {
+			checked: (item: string): RichText => [{ text: item, strong: true }, { text: ' checked off' }],
+			action: 'Undo'
+		},
+
 		/** Add / edit item [3a]. */
 		sheet: {
 			add: 'Add item',
