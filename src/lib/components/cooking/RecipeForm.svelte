@@ -61,9 +61,14 @@
 		/** Message from a rejected save, and which field it is about. */
 		error?: string;
 		field?: RecipeFormField;
+		/**
+		 * A one-line notice above the form — the AI import's "check before saving"
+		 * reminder (→ plan 13). Absent for the new/edit routes.
+		 */
+		notice?: string;
 	};
 
-	let { recipe, prefill, back, error, field }: Props = $props();
+	let { recipe, prefill, back, error, field, notice }: Props = $props();
 
 	const m = messages();
 
@@ -226,6 +231,12 @@
 			{m.cooking.form.save}
 		</button>
 	</header>
+
+	{#if notice}
+		<!-- The AI import's quiet reminder [plan 13]: extraction is a starting point,
+			 not a saved recipe. Not a Banner — it's a note, not a failure. -->
+		<p class="notice">{notice}</p>
+	{/if}
 
 	<label class="photo">
 		<input
@@ -496,6 +507,16 @@
 	.save:disabled {
 		opacity: 0.45;
 		cursor: default;
+	}
+
+	.notice {
+		margin: 0 0 14px;
+		padding: 10px 13px;
+		border-radius: var(--r-input);
+		background: var(--sunken);
+		font-size: 12.5px;
+		line-height: 1.45;
+		color: var(--text-4);
 	}
 
 	.photo {

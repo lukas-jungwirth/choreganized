@@ -23,17 +23,19 @@ import { isMemberColor } from '$lib/member-colors';
 import { requireMember } from '$lib/server/guards';
 import { pushConfigured, sendTestNotification, type NotificationPref } from '$lib/server/push';
 import {
+	getAiImportStatus,
 	getHousehold,
 	HouseholdError,
 	leaveHousehold,
 	renameHousehold,
+	setGeminiApiKey,
 	setLocale,
 	setNotificationPref,
 	updateProfile
 } from '$lib/server/services/household';
 import { setAway } from '$lib/server/services/tasks';
 import { isCalendarDate, todayIn } from '$lib/utils/dates';
-import { DISPLAY_NAME_MAX, HOUSEHOLD_NAME_MAX } from '$lib/utils/household';
+import { DISPLAY_NAME_MAX, HOUSEHOLD_NAME_MAX, looksLikeGeminiKey } from '$lib/utils/household';
 import type { Actions, PageServerLoad } from './$types';
 
 /** The three switches [6a] draws, and the columns `push.ts` filters sends on. */
@@ -75,13 +77,16 @@ function refuse(cause: unknown, m: Messages) {
 }
 
 export const load: PageServerLoad = (event) => {
-	const { user, member } = requireMember(event);
+	const { user, member, householdId } = requireMember(event);
 
 	// The household, the roster and `today` come from the `(app)` layout — this
 	// load only adds what is nobody else's business: the sign-in identity and
 	// this member's own preferences.
 	return {
 		email: user.email,
+		// Whether AI import is set up, and a masked hint — never the key itself
+		// (→ SPEC §4.7, §6). Members see it read-only; only the owner can change it.
+		aiImport: getAiImportStatus(householdId),
 		prefs: {
 			notifyTaskReminders: member.notifyTaskReminders,
 			notifyOverdueNudges: member.notifyOverdueNudges,
@@ -224,6 +229,42 @@ export const actions: Actions = {
 		}
 
 		return { renamed: true };
+	},
+
+	/**
+	 * Store the household's Gemini key for AI recipe import [6a] (→ plan 13,
+	 * SPEC §4.7). Owner-only — the service enforces it (→ DECISIONS #10) — and the
+	 * shape check is deliberately loose: a real key is proven by the first
+	 * extraction, not here.
+	 */
+	saveAiKey: async (event) => {
+		const { householdId, member } = requireMember(event);
+		const form = await event.request.formData();
+
+		const m = catalog(event.locals.locale);
+		const key = String(form.get('key') ?? '').trim();
+		if (!looksLikeGeminiKey(key)) return fail(400, { error: m.settings.aiImport.invalid });
+
+		try {
+			setGeminiApiKey(householdId, member.id, key);
+		} catch (cause) {
+			return refuse(cause, m);
+		}
+
+		return { aiKeySaved: true };
+	},
+
+	/** Clear the key — AI import goes back off. Owner-only, like setting it. */
+	removeAiKey: async (event) => {
+		const { householdId, member } = requireMember(event);
+
+		try {
+			setGeminiApiKey(householdId, member.id, null);
+		} catch (cause) {
+			return refuse(cause, catalog(event.locals.locale));
+		}
+
+		return { aiKeyRemoved: true };
 	},
 
 	/**

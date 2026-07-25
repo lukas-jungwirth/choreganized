@@ -18,7 +18,7 @@
 import { lookup } from 'node:dns/promises';
 import { isIPv4, isIPv6 } from 'node:net';
 import type { Messages } from '$lib/i18n';
-import { parseRecipeJsonLd } from '$lib/utils/recipe-jsonld';
+import { decodeEntities, parseRecipeJsonLd } from '$lib/utils/recipe-jsonld';
 import {
 	INGREDIENTS_MAX,
 	INGREDIENT_LINE_MAX,
@@ -39,6 +39,8 @@ const IMAGE_TIMEOUT_MS = 10_000;
 const MAX_PAGE_BYTES = 3 * 1024 * 1024;
 /** A hero photo, not a poster — capped well below the upload limit. */
 const MAX_IMAGE_BYTES = 10 * 1024 * 1024;
+/** A page stripped to text for the AI fallback; past this it isn't a recipe (→ plan 13). */
+const MAX_READABLE_CHARS = 40_000;
 
 /**
  * A browser-like User-Agent: a bare `node`/`undici` string gets a 403 from a
@@ -83,31 +85,61 @@ export function importErrorMessage(cause: unknown, m: Messages): string {
 }
 
 /**
- * The whole import, composed: fetch → parse → download the photo. Throws
- * `RecipeImportError` for everything the person pasting the link can react to;
- * a missing or unfetchable photo is *not* one of them — the draft just has none.
+ * The whole import, composed: fetch → parse → download the photo, and — when the
+ * page has **no** Recipe JSON-LD — the page stripped to readable text instead, for
+ * the AI fallback to extract from (→ plan 13). One fetch serves both.
+ *
+ * The `text` branch is the crucial distinction the import screen acts on: "we
+ * fetched the page but found no recipe markup" is retryable with AI, whereas a
+ * blocked or unreachable page (thrown as `RecipeImportError`, never returned) is
+ * not — there's nothing to hand a model. A missing or unfetchable *photo* is not
+ * an error either; the draft just has none.
  */
-export async function importRecipe(url: string): Promise<RecipePrefill> {
+export async function importRecipeOrText(
+	url: string
+): Promise<{ draft: RecipePrefill } | { text: string }> {
 	const { html, finalUrl } = await fetchRecipePage(url);
 
 	const parsed = parseRecipeJsonLd(html);
-	if (!parsed) throw new RecipeImportError('no-recipe');
+	if (!parsed) return { text: htmlToReadableText(html) };
 
 	const photo = parsed.image ? await importPhoto(parsed.image, finalUrl) : null;
 
 	return {
-		name: parsed.name.slice(0, RECIPE_NAME_MAX),
-		timeMinutes: clampCount(parsed.timeMinutes, RECIPE_TIME_MAX),
-		servings: clampCount(parsed.servings, RECIPE_SERVINGS_MAX),
-		// Cap rows and line length here, the way `writeChildren` caps at insert —
-		// so a paste-bomb page never fills the editor with hundreds of rows
-		// (→ plan 07 "learned this the hard way").
-		ingredientLines: parsed.ingredientLines
-			.map((line) => line.slice(0, INGREDIENT_LINE_MAX))
-			.slice(0, INGREDIENTS_MAX),
-		steps: parsed.steps.map((step) => step.slice(0, STEP_TEXT_MAX)).slice(0, STEPS_MAX),
-		photo
+		draft: {
+			name: parsed.name.slice(0, RECIPE_NAME_MAX),
+			timeMinutes: clampCount(parsed.timeMinutes, RECIPE_TIME_MAX),
+			servings: clampCount(parsed.servings, RECIPE_SERVINGS_MAX),
+			// Cap rows and line length here, the way `writeChildren` caps at insert —
+			// so a paste-bomb page never fills the editor with hundreds of rows
+			// (→ plan 07 "learned this the hard way").
+			ingredientLines: parsed.ingredientLines
+				.map((line) => line.slice(0, INGREDIENT_LINE_MAX))
+				.slice(0, INGREDIENTS_MAX),
+			steps: parsed.steps.map((step) => step.slice(0, STEP_TEXT_MAX)).slice(0, STEPS_MAX),
+			photo
+		}
 	};
+}
+
+/**
+ * A page stripped to the readable text the AI fallback extracts from (→ plan 13,
+ * SPEC §4.7). Whole `script`/`style`/`head`/`nav`/`header`/`footer`/… blocks go
+ * first — their contents aren't prose — then remaining tags become spaces,
+ * entities are decoded, and whitespace is collapsed, with a generous cap so a
+ * decoy page can't bloat the request. Good enough to feed a model, not a parser:
+ * the model reads the visible recipe wherever the markup happened to put it.
+ */
+export function htmlToReadableText(html: string): string {
+	const stripped = html
+		.replace(/<!--[\s\S]*?-->/g, ' ')
+		.replace(
+			/<(script|style|head|nav|header|footer|aside|noscript|svg|template|form)\b[^>]*>[\s\S]*?<\/\1>/gi,
+			' '
+		)
+		.replace(/<[^>]+>/g, ' ');
+
+	return decodeEntities(stripped).replace(/\s+/g, ' ').trim().slice(0, MAX_READABLE_CHARS);
 }
 
 /** Fetch a recipe page as HTML, or throw the reason it couldn't. */

@@ -16,6 +16,7 @@
 	import AwayControl from '$lib/components/AwayControl.svelte';
 	import EnablePush from '$lib/components/EnablePush.svelte';
 	import HomeIcon from '$lib/components/icons/HomeIcon.svelte';
+	import AiImportSheet from '$lib/components/settings/AiImportSheet.svelte';
 	import HouseholdNameSheet from '$lib/components/settings/HouseholdNameSheet.svelte';
 	import LanguageSheet from '$lib/components/settings/LanguageSheet.svelte';
 	import LeaveModal from '$lib/components/settings/LeaveModal.svelte';
@@ -29,6 +30,7 @@
 	import ChevronRight from '@lucide/svelte/icons/chevron-right';
 	import LogOut from '@lucide/svelte/icons/log-out';
 	import Send from '@lucide/svelte/icons/send';
+	import Sparkles from '@lucide/svelte/icons/sparkles';
 	import UsersRound from '@lucide/svelte/icons/users-round';
 	import type { PageProps } from './$types';
 
@@ -39,6 +41,7 @@
 	let editingProfile = $state(false);
 	let choosingLanguage = $state(false);
 	let renamingHousehold = $state(false);
+	let editingAiKey = $state(false);
 	let leaving = $state(false);
 	let sending = $state(false);
 	let signingOut = $state(false);
@@ -217,6 +220,28 @@
 		<span class="value">{data.members.length}</span>
 		<ChevronRight size={15} strokeWidth={2} class="chevron" />
 	</a>
+
+	<!-- AI recipe import [plan 13] — owner sets the key, everyone else sees whether
+		 it's on (→ SPEC §4.7). Like the house name, a control for the owner and a
+		 plain fact for the rest. -->
+	{#if owner}
+		<button type="button" class="row" onclick={() => (editingAiKey = true)}>
+			<span class="tile" aria-hidden="true"><Sparkles size={18} strokeWidth={1.9} /></span>
+			<span class="label">{m.settings.aiImport.row}</span>
+			<span class="value">
+				{data.aiImport.set ? m.settings.aiImport.on : m.settings.aiImport.notSet}
+			</span>
+			<ChevronRight size={15} strokeWidth={2} class="chevron" />
+		</button>
+	{:else}
+		<div class="row">
+			<span class="tile" aria-hidden="true"><Sparkles size={18} strokeWidth={1.9} /></span>
+			<span class="label">{m.settings.aiImport.row}</span>
+			<span class="value">
+				{data.aiImport.set ? m.settings.aiImport.on : m.settings.aiImport.notSet}
+			</span>
+		</div>
+	{/if}
 </RowGroup>
 
 <!-- No section label, like [6a]: the two ways out sit on their own. -->
@@ -258,6 +283,14 @@
 	<HouseholdNameSheet
 		householdName={data.household.name}
 		onclose={() => (renamingHousehold = false)}
+	/>
+{/if}
+
+{#if editingAiKey}
+	<AiImportSheet
+		isSet={data.aiImport.set}
+		hint={data.aiImport.hint}
+		onclose={() => (editingAiKey = false)}
 	/>
 {/if}
 

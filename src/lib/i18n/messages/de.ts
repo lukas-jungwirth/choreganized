@@ -723,8 +723,33 @@ export const de: Messages = {
 				notHtml:
 					'Dieser Link ist keine Webseite. Füg die Rezeptseite ein, keine Datei und kein Bild.',
 				tooLarge: 'Die Seite ist zu groß zum Einlesen — versuch einen direkten Link zum Rezept.',
-				noRecipe:
-					'Auf der Seite wurde kein Rezept gefunden. Du kannst es von Hand eintragen — Foto- und Text-Import kommen noch.'
+				noRecipe: 'Auf der Seite wurde kein Rezept gefunden.'
+			},
+
+			ai: {
+				note: 'Per KI erkannt — vor dem Speichern kurz prüfen.',
+				pageLead: 'Diese Seite hat keine direkt lesbaren Rezeptdaten. Mit KI auslesen?',
+				tryPage: 'Mit KI auslesen',
+				extracting: 'Wird ausgelesen…',
+				pasteToggle: 'Stattdessen den Rezepttext einfügen',
+				pasteLabel: 'Rezepttext',
+				pastePlaceholder: 'Füg das ganze Rezept ein — Zutaten und Schritte.',
+				pasteSubmit: 'Rezept auslesen',
+				photoToggle: 'Aus einem Foto importieren',
+				photoLabel: 'Fotos des Rezepts',
+				photoHint: 'Bis zu 3 Fotos einer Kochbuch- oder Magazinseite.',
+				photoSubmit: 'Aus Fotos auslesen',
+				hintLead: 'Keine Rezeptdaten auf der Seite. ',
+				hintLink: 'KI-Import einrichten',
+				hintRest: ', um es trotzdem auszulesen.',
+				error: {
+					noKey: 'Richte zuerst den KI-Import in den Einstellungen ein.',
+					badKey: 'Der Gemini-Schlüssel wurde abgelehnt — prüf ihn in den Einstellungen.',
+					rateLimited: 'Der KI-Dienst ist gerade ausgelastet — kurz warten und nochmal versuchen.',
+					noRecipe: 'Darin war kein Rezept zu finden — versuch klarere Fotos oder vollständigeren Text.',
+					noPhotos: 'Füg mindestens ein Foto des Rezepts hinzu.',
+					failed: 'Das KI-Auslesen hat nicht geklappt — kurz warten und nochmal versuchen.'
+				}
 			}
 		}
 	},
@@ -781,6 +806,23 @@ export const de: Messages = {
 			eyebrow: 'Haushalt',
 			placeholder: 'Sonnengasse 12',
 			note: 'Alle im Haus sehen diesen Namen.'
+		},
+
+		aiImport: {
+			row: 'KI-Rezeptimport',
+			on: 'An',
+			notSet: 'Nicht eingerichtet',
+			title: 'KI-Rezeptimport',
+			eyebrow: 'Haushalt',
+			what: 'Füg einen Google-Gemini-Schlüssel hinzu, um Rezepte aus Fotos, eingefügtem Text und Seiten ohne Rezeptdaten zu holen.',
+			cost: 'Jeder Import kostet Bruchteile eines Cents über dein eigenes Google-Konto — das Gratis-Kontingent reicht meist für einen Haushalt.',
+			getKey: 'Schlüssel im Google AI Studio holen',
+			current: (hint: string) => `Aktueller Schlüssel: ${hint}`,
+			keyLabel: 'Gemini-API-Schlüssel',
+			keyPlaceholder: 'AIza…',
+			replace: 'Schlüssel ersetzen',
+			remove: 'Schlüssel entfernen',
+			invalid: 'Das sieht nicht nach einem Gemini-Schlüssel aus — er sollte mit „AIza“ beginnen.'
 		},
 
 		leave: {

@@ -889,6 +889,35 @@ reload`) so it can't silently regress.
      first `http(s)` URL out of those as a fallback. `GET` (not `POST`) because the share carries
      no file — plan 13's photo-share will add the `POST`/`multipart` variant.
 
+112. **AI recipe import uses the household's own Google Gemini key, stored plaintext, and never
+     acts without an explicit tap** (→ plan 13, SPEC §4.7, §6). The fallback for what JSON-LD
+     import (→ #108) can't read — a page with no `Recipe` markup, text pasted from a bot-blocked
+     site, photos of a cookbook — is one `@google/genai` (v2.13.0) call on `gemini-2.5-flash`
+     (vision-capable, a fraction of a cent an import; `gemini-2.5-pro` is the one-constant
+     upgrade if Flash misreads busy pages). The key lives in `households.geminiApiKey` **in the
+     clear**: the DB is this household's own file in a single-tenant container, so any key that
+     could decrypt it would have to sit in that same container — encryption there buys nothing
+     real. It never reaches the browser (server-only modules; Settings returns a masked
+     `AIza…wxyz` hint plus a set/unset flag), and only the owner can set or remove it
+     (`requireOwner` in the write, → #10). Extraction is structured output against a hand-written
+     `responseSchema` (no zod in the tree) → the same `RecipePrefill` the link importer produces,
+     so all paths converge on the [3c] editor and **nothing is ever saved by the model** — each
+     extraction opens the editor with a "check before saving" note. Ingredients stay raw lines
+     (→ #108); recipe content keeps its source language (→ §9). The page path **re-fetches** the
+     URL on the tap rather than caching the stripped HTML across the request — a second guarded
+     fetch of a page that just succeeded is cheap, keeps the action stateless, and avoids
+     round-tripping tens of KB through a hidden field. Other providers and on-device models are
+     out of scope (a PWA has no bridge to on-device Gemma; browser-local inference is GB-scale
+     downloads).
+
+113. **Gemini errors are mapped by HTTP status, because the SDK has no typed error hierarchy**
+     (→ `services/ai-import.ts`). Unlike Anthropic's SDK, `@google/genai` throws a single
+     `ApiError` carrying a numeric `status` — there is no `AuthenticationError`/`RateLimitError`
+     class to catch. So the mapping reads the status: `429` → "try later", `401`/`403` → bad key,
+     and a rejected key's actual shape — a **`400` whose message says "API key not valid"** — is
+     matched on that message, not on a class. Anything else, and an empty or unparseable model
+     reply, becomes a generic "couldn't extract" — the raw API string is never shown to the user.
+
 ## Open questions (non-blocking, defaults chosen)
 
 - **Production domain** — invite links & OAuth redirect need the final origin (design shows

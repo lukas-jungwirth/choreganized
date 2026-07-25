@@ -304,7 +304,8 @@ const NAMED_ENTITIES: Record<string, string> = {
 	rdquo: '”'
 };
 
-function decodeEntities(text: string): string {
+/** Exported for the AI fallback's page-to-text step (→ server/recipe-import.ts, plan 13). */
+export function decodeEntities(text: string): string {
 	return text.replace(/&(#x?[0-9a-f]+|[a-z][a-z0-9]*);/gi, (whole, body: string) => {
 		if (body[0] === '#') {
 			const code =

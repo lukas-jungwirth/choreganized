@@ -56,9 +56,11 @@ row + BottomSheet for the key; import screen gains a "From photo" section and a 
     All copy via `m.cooking.import.ai.*`; never surface the raw SDK error.
 - **Import screen** (extends plan 12's route):
   - Tier-1 "no recipe found" dead end becomes: key set → **"Try AI extraction"** button
-    (explicit tap = cost transparency, no silent API calls) reusing the already-fetched
-    HTML, stripped to readable text server-side (drop `script/style/nav/header/footer`,
-    tags → text, entities decoded). No key → hint linking to Settings.
+    (explicit tap = cost transparency, no silent API calls) that **re-fetches the URL** under
+    the same SSRF guards and strips it to readable text server-side (drop
+    `script/style/nav/header/footer`, tags → text, entities decoded). Re-fetch rather than
+    caching the stripped HTML across the request keeps the action stateless and avoids a
+    tens-of-KB hidden field (→ DECISIONS #112). No key → hint linking to Settings.
   - **Paste text**: collapsed "Paste the recipe text instead" section → textarea →
     same extraction. This is the answer for Cloudflare-403 sites.
   - **From photo**: 1–3 images through the existing `lib/server/uploads.ts` validation +
@@ -93,3 +95,36 @@ row + BottomSheet for the key; import screen gains a "From photo" section and a 
 Out of scope: other providers / local models (PWA has no bridge to on-device Gemma;
 browser-local inference means GB-scale downloads — DECISIONS), automatic Tier-2 without
 a tap, streaming progress, multi-recipe pages.
+
+## What was verified, and how (session 2026-07-25)
+
+Built as specified, on the Gemini SDK (`@google/genai` v2.13.0, `gemini-2.5-flash`).
+`npm run check` (0 errors, 0 warnings), `npm test` (87 pass) and `npm run build` all clean.
+Walked the running app (fresh dev server on a second port so the new migration applied on
+boot; seeded household `testio`, owner, German locale). The form actions were driven directly
+via `fetch` from the signed-in page (the preview browser's click input was flaky this session),
+which exercises the real server pipeline end to end:
+
+- **No key** — the import screen shows only the URL field + manual link (no AI sections); the
+  Settings row reads **"Nicht eingerichtet"**. Owner-only: `?/saveAiKey` with `AIza…`-shaped
+  test key returned `success`, the row flipped to **"An"**, and the import screen then rendered
+  both the paste and photo sections.
+- **Key never leaves the server** — with a key stored, neither `/settings` HTML nor its
+  `__data.json` load payload contained the key; only the masked `AIza…3456` hint was present.
+- **Real error mapping** — `?/extractText` with a deliberately invalid key made a live Gemini
+  call and got a **`400` "API key not valid"**, which mapped (by `ApiError.status` + message,
+  → DECISIONS #113) to the German bad-key copy — no raw API string surfaced — with the pasted
+  text preserved for retry.
+- **No-JSON-LD → AI** — `?/fetch` on `example.com` returned `noRecipe: true` + "kein Rezept
+  gefunden"; `?/extractPage` re-fetched it under the SSRF guards, stripped it to text, called
+  Gemini, and returned the bad-key message with `noRecipe` kept so the button persists.
+- **Remove** — `?/removeAiKey` cleared the key (`success`) and the import screen's AI sections
+  disappeared again.
+
+**Not exercised** (stated honestly): a *successful* extraction needs a real, valid Gemini key,
+which the environment doesn't have and an agent must not take from the owner — so the happy-path
+draft (text and photos → prefilled editor → Save) was not run; the photo path's
+re-encode-and-attach was checked by types/build and shares the proven upload pipeline, but no
+real photo was pushed through to a draft. Member (non-owner) read-only was verified in code (the
+row renders as plain text, and the mutation goes through the same `requireOwner`-in-transaction
+path plan 10 proved) but not with a second account.

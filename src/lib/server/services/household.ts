@@ -395,6 +395,60 @@ export function renameHousehold(householdId: string, actorMemberId: string, name
 	});
 }
 
+/* ── AI recipe import key [6a] (→ plan 13, SPEC §4.7) ──────────────────────── */
+
+/**
+ * The household's Gemini key, read for a server-side extraction call only
+ * (→ services/ai-import.ts). **Never returned to the browser** — Settings shows
+ * `getAiImportStatus` instead. Any member may trigger an import, so this is not
+ * owner-gated; only *changing* the key is (→ `setGeminiApiKey`).
+ */
+export function getGeminiApiKey(householdId: string): string | null {
+	const row = db
+		.select({ key: households.geminiApiKey })
+		.from(households)
+		.where(eq(households.id, householdId))
+		.get();
+
+	return row?.key ?? null;
+}
+
+/** What Settings may know about the key: that one is set, and a masked hint. */
+export type AiImportStatus = { set: boolean; hint: string | null };
+
+/**
+ * Whether a key is set and a masked hint (`AIza…wxyz`) — never the value itself
+ * (→ SPEC §6). The mask keeps the prefix and the last four, enough for an owner
+ * to recognise which key is stored without it ever leaving the server.
+ */
+export function getAiImportStatus(householdId: string): AiImportStatus {
+	const key = getGeminiApiKey(householdId);
+	if (!key) return { set: false, hint: null };
+	return { set: true, hint: maskKey(key) };
+}
+
+function maskKey(key: string): string {
+	if (key.length <= 8) return '••••';
+	return `${key.slice(0, 4)}…${key.slice(-4)}`;
+}
+
+/**
+ * Set or clear the household's Gemini key. Owner-only, enforced next to the write
+ * (→ DECISIONS #10): `null` clears it and turns AI import back off. The value is
+ * trimmed by the action; the shape check (`AIza` prefix) is the action's too, and
+ * real validation is the first extraction call.
+ */
+export function setGeminiApiKey(
+	householdId: string,
+	actorMemberId: string,
+	key: string | null
+): void {
+	db.transaction((tx) => {
+		requireOwner(tx, householdId, actorMemberId);
+		tx.update(households).set({ geminiApiKey: key }).where(eq(households.id, householdId)).run();
+	});
+}
+
 /**
  * "Make owner" [6c] hands the role over rather than adding a second owner
  * (→ DECISIONS #11): exactly one row in the household is the owner before and

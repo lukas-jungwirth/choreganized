@@ -119,6 +119,15 @@ export const households = sqliteTable('households', {
 	inviteCode: text('invite_code').unique(),
 	/** IANA timezone; all calendar dates & reminder times are local to this. */
 	timezone: text('timezone').notNull().default('Europe/Vienna'),
+	/**
+	 * Household's own Google Gemini API key for AI recipe import (→ plan 13,
+	 * SPEC §4.7). NULL — the default — means AI import is off and only the
+	 * JSON-LD link import (plan 12) is offered. Stored plaintext: the DB is this
+	 * household's own file in a single-tenant container, so a key that could
+	 * decrypt it would have to live in that same container (→ DECISIONS). Never
+	 * leaves the server — the Settings load returns only a masked hint.
+	 */
+	geminiApiKey: text('gemini_api_key'),
 	createdAt: createdAt()
 });
 
