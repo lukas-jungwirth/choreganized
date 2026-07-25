@@ -918,6 +918,20 @@ reload`) so it can't silently regress.
      matched on that message, not on a class. Anything else, and an empty or unparseable model
      reply, becomes a generic "couldn't extract" — the raw API string is never shown to the user.
 
+114. **One "Add a recipe" chooser replaces the New button + separate import link, and the import
+     screen is focused per mode** (→ plan 14, SPEC §4.3/§4.7). Plans 12–13 left three doors to a
+     new recipe — the New FAB, a quiet "Import from a link" link, and a stacked import page whose
+     link field sat above two collapsed AI sections — which read as an afterthought. Now the FAB
+     (and the empty-state button) open a single bottom-sheet chooser with four rows: **From a
+     link**, **From a photo** (AI), **Paste text** (AI), **Enter by hand**. The two AI options
+     are kept **separate** rather than folded into one "AI" entry, because a camera and a paste
+     are different actions and "From a photo" is the flagship worth its own row. The chooser is
+     dumb (static links); the two AI rows route to Settings — not a dead end — when no key is set,
+     which also makes the feature discoverable. The import route reuses its five actions but
+     renders **one focused method per `?mode=`** (`link` default, `photo`, `text`), so each is a
+     clean screen; the link→AI "Try AI extraction" stays as an in-context escalation with quiet
+     links across to the photo/text modes. The share target keeps landing in link mode.
+
 ## Open questions (non-blocking, defaults chosen)
 
 - **Production domain** — invite links & OAuth redirect need the final origin (design shows

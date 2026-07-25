@@ -181,8 +181,13 @@ a danger badge with the current user's overdue count [4e].
 
 ### 4.3 Recipe library (Browse all)
 
-- Grid of recipe cards (photo, name, time). Search by name. FAB/button → New recipe.
-- Empty state [7e]: "Build your cookbook" + **Add a recipe**.
+- Grid of recipe cards (photo, name, time). Search by name.
+- The FAB (and the empty state's **Add a recipe** button) open the **"Add a recipe" chooser**
+  (→ plan 14, a bottom sheet) — one door to the four ways in: **From a link**, **From a photo**
+  (AI), **Paste text** (AI), **Enter by hand**. The two AI rows carry an "AI" tag; when AI import
+  isn't set up they read "Set up AI import first" and lead to Settings, so the feature is
+  discoverable without a dead end.
+- Empty state [7e]: "Build your cookbook" + **Add a recipe** (opens the same chooser).
 
 ### 4.4 New/edit recipe [3c] (full-screen route, not a sheet)
 
@@ -242,10 +247,11 @@ a danger badge with the current user's overdue count [4e].
 
 ### 4.7 Recipe import from a link (→ plan 12, reuses the [3c] editor as its preview)
 
-- **Entry points**: "Import from a link" beside New in the recipe library (a quiet link on the
-  populated screen, a link under the empty state [7e] CTA), and the **OS share sheet** — the PWA
-  registers a share target (§8) so sharing a page from a browser opens the importer with the link
-  filled in and auto-fetched.
+- **Entry points**: the **"Add a recipe" chooser** (§4.3) routes here with a focused `mode` —
+  `link` (default), `photo`, or `text` — so each method is its own clean screen rather than one
+  stacked page (→ plan 14). The **OS share sheet** also lands here: the PWA registers a share
+  target (§8) so sharing a page from a browser opens link mode with the URL filled in and
+  auto-fetched.
 - Paste a recipe URL → **Fetch recipe**. The server reads the page's Schema.org `Recipe` JSON-LD
   (no AI, no dependency — nearly every recipe site embeds one for Google). `@graph` wrappers and
   `@type` arrays are handled; a malformed block never sinks the next; the first `Recipe` wins.
@@ -267,15 +273,16 @@ a danger badge with the current user's overdue count [4e].
 - **AI fallback** (→ plan 13) — available only when the household has set a Google **Gemini** API
   key in Settings (§6); nothing reaches any model without one, and every path lands in the same
   [3c] editor with a quiet "AI-extracted — check before saving" note (**the AI never saves on its
-  own**). Three ways in:
-  - **A fetched page with no recipe data** — the dead end becomes a **Try AI extraction** button.
-    The tap is deliberate (a paid call is never silent): the URL is re-fetched under the same
-    guards, stripped to readable text server-side, and read by the model. No key → a link to
-    Settings instead.
-  - **Pasted text** — a collapsed "Paste the recipe text instead" box, the answer for sites that
-    block the server (Cloudflare 403): the browser can still load them, so the text is pasted.
-  - **Photos** — 1–3 photos of a cookbook/magazine page, validated and re-encoded to WebP (EXIF
-    stripped) before they reach the model; the first is offered as the recipe photo.
+  own**). Three ways in (photo and text are their own focused modes off the chooser §4.3; the
+  first is an in-context escalation off a failed link fetch):
+  - **A fetched page with no recipe data** — in link mode the dead end becomes a **Try AI
+    extraction** button (plus quiet links to the photo/text modes). The tap is deliberate (a paid
+    call is never silent): the URL is re-fetched under the same guards, stripped to readable text
+    server-side, and read by the model. No key → a link to Settings instead.
+  - **Pasted text** — the text mode: paste the recipe into a box, the answer for sites that block
+    the server (Cloudflare 403), since the browser can still load them.
+  - **Photos** — the photo mode: 1–3 photos of a cookbook/magazine page, validated and re-encoded
+    to WebP (EXIF stripped) before they reach the model; the first is offered as the recipe photo.
   Ingredients come back as **raw lines** and parse to amount chips exactly like typed and
   link-imported ones. Recipe content keeps its **source language** (→ §9). Failures are their own
   messages — key refused (→ Settings) · service busy · nothing found — never a raw API error.

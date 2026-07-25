@@ -7,6 +7,7 @@
  * filters the same list client-side instead.)
  */
 import { requireMember } from '$lib/server/guards';
+import { getAiImportStatus } from '$lib/server/services/household';
 import { countRecipes, listRecipes } from '$lib/server/services/recipes';
 import type { PageServerLoad } from './$types';
 
@@ -18,6 +19,8 @@ export const load: PageServerLoad = (event) => {
 		recipes: listRecipes(householdId, { search }),
 		/** The whole library, so "no matches" and "no recipes" can differ [7e]. */
 		total: countRecipes(householdId),
-		search
+		search,
+		/** Whether the "Add a recipe" chooser offers the AI options (→ plan 14). */
+		aiEnabled: getAiImportStatus(householdId).set
 	};
 };

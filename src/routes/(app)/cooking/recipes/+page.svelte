@@ -7,6 +7,7 @@
 	Without JavaScript the same field still works — it just needs Enter.
 -->
 <script lang="ts">
+	import AddRecipeSheet from '$lib/components/cooking/AddRecipeSheet.svelte';
 	import RecipeCard from '$lib/components/cooking/RecipeCard.svelte';
 	import ChefHatIcon from '$lib/components/icons/ChefHatIcon.svelte';
 	import SubHeader from '$lib/components/shell/SubHeader.svelte';
@@ -15,7 +16,6 @@
 	import FAB from '$lib/components/ui/FAB.svelte';
 	import SearchField from '$lib/components/ui/SearchField.svelte';
 	import { messages } from '$lib/i18n';
-	import Link from '@lucide/svelte/icons/link';
 	import Plus from '@lucide/svelte/icons/plus';
 	import { untrack } from 'svelte';
 	import type { PageProps } from './$types';
@@ -23,6 +23,9 @@
 	let { data }: PageProps = $props();
 
 	const m = messages();
+
+	/** The "Add a recipe" chooser — the one door to link / photo / text / by hand. */
+	let adding = $state(false);
 
 	/** Long enough that a word isn't four navigations, short enough to feel live. */
 	const DEBOUNCE_MS = 220;
@@ -70,11 +73,6 @@
 		<!-- The submit the debounce presses for you; also the no-JS path. -->
 		<button type="submit" class="sr-only">{m.ui.search}</button>
 	</form>
-
-	<!-- The second way to add a recipe, beside the New FAB (→ plan 12). -->
-	<a class="import" href="/cooking/recipes/import">
-		<Link size={15} strokeWidth={2} />{m.cooking.import.entry}
-	</a>
 {/if}
 
 {#if data.total === 0}
@@ -84,10 +82,9 @@
 			{m.cooking.recipes.emptyCopy}
 			{#snippet action()}
 				<div class="cta">
-					<Button href="/cooking/recipes/new">
+					<Button onclick={() => (adding = true)}>
 						<Plus size={17} strokeWidth={2.4} />{m.cooking.recipes.emptyCta}
 					</Button>
-					<a class="import-empty" href="/cooking/recipes/import">{m.cooking.import.entryEmpty}</a>
 				</div>
 			{/snippet}
 		</EmptyState>
@@ -105,34 +102,18 @@
 {/if}
 
 {#if data.total > 0}
-	<FAB label={m.cooking.recipes.newRecipe} href="/cooking/recipes/new">
+	<FAB label={m.cooking.add.title} onclick={() => (adding = true)}>
 		<Plus size={24} strokeWidth={2.4} />
 	</FAB>
 {/if}
 
+{#if adding}
+	<AddRecipeSheet aiEnabled={data.aiEnabled} onclose={() => (adding = false)} />
+{/if}
+
 <style>
 	.search {
-		margin-bottom: 12px;
-	}
-
-	/* The quiet second entry point, under the search and above the grid. */
-	.import {
-		display: inline-flex;
-		align-items: center;
-		gap: 7px;
-		margin: 0 4px 18px;
-		font-size: 13.5px;
-		font-weight: 600;
-		color: var(--sage);
-	}
-
-	/* Its twin under the empty state's primary CTA [7e]. */
-	.import-empty {
-		display: inline-block;
-		margin-top: 14px;
-		font-size: 13.5px;
-		font-weight: 600;
-		color: var(--sage);
+		margin-bottom: 18px;
 	}
 
 	.grid {
