@@ -81,6 +81,8 @@ export type OrderedItem = {
 	/** ms epoch; null = still to buy. */
 	checkedAt: number | null;
 	createdAt: number;
+	/** Manual walking order within the group, low first (→ `compareOpen`). */
+	sortOrder: number;
 };
 
 /** A store's slice of the list. `name` is null for "Other", which the screen names. */
@@ -98,12 +100,15 @@ export type SplitList<T> = {
 };
 
 /**
- * Open items in the order they were added. `id` is the final tiebreaker so a
- * group whose items were written in the same millisecond — every bulk insert,
- * including the seed — has one stable order instead of flickering between
- * renders.
+ * Open items in their manual walking order (drag-to-reorder, → SPEC §3.1).
+ * `sortOrder` leads; a list nobody has dragged has it all at 0 (the column's
+ * default), so `createdAt` then decides and the group keeps the order it was
+ * added in. `id` is the final tiebreaker so a group whose items were written in
+ * the same millisecond — every bulk insert, including the seed — has one stable
+ * order instead of flickering between renders.
  */
 function compareOpen(a: OrderedItem, b: OrderedItem): number {
+	if (a.sortOrder !== b.sortOrder) return a.sortOrder - b.sortOrder;
 	if (a.createdAt !== b.createdAt) return a.createdAt - b.createdAt;
 	return a.id < b.id ? -1 : a.id > b.id ? 1 : 0;
 }

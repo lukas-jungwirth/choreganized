@@ -12,6 +12,7 @@ import {
 	getShoppingList,
 	listItemNames,
 	listStores,
+	reorderItems,
 	setChecked,
 	updateItem
 } from '$lib/server/services/shopping';
@@ -118,5 +119,27 @@ export const actions: Actions = {
 		deleteItem(householdId, String(form.get('id') ?? ''));
 
 		return { deleted: true };
+	},
+
+	/**
+	 * A store group's new walking order after a drag: the group's storeId ("" for
+	 * "Other") and its item ids, in order, as one comma-separated field. The
+	 * service is what guards which of those ids may actually move.
+	 */
+	reorder: async (event) => {
+		const { householdId } = requireMember(event);
+		const form = await event.request.formData();
+
+		// "" is the "Other" group, a real target — only a missing field is "no store".
+		const rawStore = form.get('storeId');
+		const storeId = rawStore ? String(rawStore) : null;
+		const ids = String(form.get('ids') ?? '')
+			.split(',')
+			.map((id) => id.trim())
+			.filter(Boolean);
+
+		reorderItems(householdId, storeId, ids);
+
+		return { reordered: true };
 	}
 };

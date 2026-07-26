@@ -107,9 +107,14 @@ a danger badge with the current user's overdue count [4e].
   in from a recipe — it outlives the items themselves (→ [DECISIONS #106](DECISIONS.md)).
 - Items grouped by **store**, in store sort order; items without a store under **Other** (last).
   Store header: pin icon + uppercase name. Stores with nothing left to buy are hidden.
+- Within a store group, items keep a **manual walking order** — drag a row by its grip to
+  reorder ("your list follows this order, so arrange it the way you walk the aisles"). Order is
+  per store: a drag never leaves its group, so it never reassigns a store (that's the sheet's
+  job). A list nobody has dragged reads in the order things were added; a new item, and a
+  recipe's ingredients, land at the group's end (→ [DECISIONS #118](DECISIONS.md)).
 - Row: check circle, name, optional quantity ("×6", "2L" — quantity+unit compact), adder's mini
-  avatar. Checking: sage fill + strikethrough, and the row **leaves its store group** for
-  "Recently bought". Unchecking puts it back where it was.
+  avatar, and a **drag grip** at the right edge. Checking: sage fill + strikethrough, and the
+  row **leaves its store group** for "Recently bought". Unchecking puts it back where it was.
 - **Undo bar**: for ~5 s after a tick, a dark toast above the tab bar says "**{item}** checked
   off" with an **Undo** — the moment you'd notice the wrong line is also the moment the row is
   hardest to find. Inverted on purpose: in an otherwise cream-and-white list it's the one

@@ -347,7 +347,8 @@ export const en = {
 		row: {
 			check: (item: string) => `Check off ${item}`,
 			uncheck: (item: string) => `Put ${item} back on the list`,
-			edit: (item: string) => `Edit ${item}`
+			edit: (item: string) => `Edit ${item}`,
+			reorder: (item: string) => `Drag to reorder ${item}`
 		},
 
 		/**
