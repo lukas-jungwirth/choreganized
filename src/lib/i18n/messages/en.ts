@@ -733,8 +733,6 @@ export const en = {
 			manualSub: 'Type it in yourself',
 			/** The small tag on the two AI-powered options. */
 			aiTag: 'AI',
-			/** Subtitle on the AI options when no key is set — they lead to Settings. */
-			needsSetup: 'Set up AI import first',
 			/** The multi-photo picker on the photo import mode. */
 			addPhotos: 'Add photos',
 			morePhotos: 'Add more',
@@ -956,6 +954,14 @@ export const en = {
 					'This page has no recipe data we can read directly. Want to try reading it with AI?',
 				tryPage: 'Try AI extraction',
 				extracting: 'Extracting…',
+				/** Playful lines that cycle on the cooking loader while the model works. */
+				loading: [
+					'Reading the recipe…',
+					'Measuring the ingredients…',
+					'Chopping the words…',
+					'Letting it simmer…',
+					'Plating it up…'
+				],
 				pasteToggle: 'Paste the recipe text instead',
 				pasteLabel: 'Recipe text',
 				pastePlaceholder: 'Paste the whole recipe — ingredients and steps.',
@@ -976,6 +982,7 @@ export const en = {
 					noKey: 'Set up AI import in Settings first.',
 					badKey: 'That Gemini key was refused — check it in Settings.',
 					rateLimited: 'The AI service is busy right now — give it a moment and try again.',
+					modelUnavailable: 'The AI model isn’t available — the app may need an update.',
 					noRecipe: 'Couldn’t find a recipe in that — try clearer photos or more complete text.',
 					noPhotos: 'Add at least one photo of the recipe.',
 					failed: 'AI extraction didn’t work — give it a moment and try again.'
@@ -1068,7 +1075,18 @@ export const en = {
 			keyPlaceholder: 'AQ.… or AIza…',
 			replace: 'Replace key',
 			remove: 'Remove key',
-			invalid: 'That doesn’t look like a Gemini key — paste the full key from Google AI Studio.'
+			invalid: 'That doesn’t look like a Gemini key — paste the full key from Google AI Studio.',
+			/** "Test connection" [plan 14] — a live check of the stored key. */
+			test: {
+				label: 'Test connection',
+				testing: 'Testing…',
+				ok: 'Connection works.',
+				noKey: 'Save a key first.',
+				badKey: 'That key was refused — check it and save again.',
+				busy: 'The AI service is busy — try again shortly.',
+				model: 'The key works, but the AI model is unavailable — the app may need an update.',
+				failed: 'Couldn’t reach the AI service — try again.'
+			}
 		},
 
 		/** Leave household [6d] — three things to say, one confirm (→ SPEC §7). */

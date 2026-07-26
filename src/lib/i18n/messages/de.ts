@@ -571,7 +571,6 @@ export const de: Messages = {
 			manual: 'Von Hand eintragen',
 			manualSub: 'Selbst eintippen',
 			aiTag: 'KI',
-			needsSetup: 'Zuerst KI-Import einrichten',
 			addPhotos: 'Fotos hinzufügen',
 			morePhotos: 'Mehr hinzufügen',
 			removePhoto: 'Foto entfernen'
@@ -746,6 +745,13 @@ export const de: Messages = {
 				pageLead: 'Diese Seite hat keine direkt lesbaren Rezeptdaten. Mit KI auslesen?',
 				tryPage: 'Mit KI auslesen',
 				extracting: 'Wird ausgelesen…',
+				loading: [
+					'Rezept wird gelesen…',
+					'Zutaten werden abgemessen…',
+					'Wörter werden gehackt…',
+					'Lass es köcheln…',
+					'Wird angerichtet…'
+				],
 				pasteToggle: 'Stattdessen den Rezepttext einfügen',
 				pasteLabel: 'Rezepttext',
 				pastePlaceholder: 'Füg das ganze Rezept ein — Zutaten und Schritte.',
@@ -764,6 +770,7 @@ export const de: Messages = {
 					noKey: 'Richte zuerst den KI-Import in den Einstellungen ein.',
 					badKey: 'Der Gemini-Schlüssel wurde abgelehnt — prüf ihn in den Einstellungen.',
 					rateLimited: 'Der KI-Dienst ist gerade ausgelastet — kurz warten und nochmal versuchen.',
+					modelUnavailable: 'Das KI-Modell ist nicht verfügbar — die App braucht evtl. ein Update.',
 					noRecipe: 'Darin war kein Rezept zu finden — versuch klarere Fotos oder vollständigeren Text.',
 					noPhotos: 'Füg mindestens ein Foto des Rezepts hinzu.',
 					failed: 'Das KI-Auslesen hat nicht geklappt — kurz warten und nochmal versuchen.'
@@ -840,7 +847,17 @@ export const de: Messages = {
 			keyPlaceholder: 'AQ.… oder AIza…',
 			replace: 'Schlüssel ersetzen',
 			remove: 'Schlüssel entfernen',
-			invalid: 'Das sieht nicht nach einem Gemini-Schlüssel aus — füg den vollständigen Schlüssel aus dem Google AI Studio ein.'
+			invalid: 'Das sieht nicht nach einem Gemini-Schlüssel aus — füg den vollständigen Schlüssel aus dem Google AI Studio ein.',
+			test: {
+				label: 'Verbindung testen',
+				testing: 'Wird getestet…',
+				ok: 'Verbindung funktioniert.',
+				noKey: 'Speichere zuerst einen Schlüssel.',
+				badKey: 'Der Schlüssel wurde abgelehnt — prüf ihn und speichere neu.',
+				busy: 'Der KI-Dienst ist ausgelastet — versuch es gleich nochmal.',
+				model: 'Der Schlüssel funktioniert, aber das KI-Modell ist nicht verfügbar — die App braucht evtl. ein Update.',
+				failed: 'Der KI-Dienst war nicht erreichbar — versuch es nochmal.'
+			}
 		},
 
 		leave: {

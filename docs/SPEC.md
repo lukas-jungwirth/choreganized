@@ -183,10 +183,9 @@ a danger badge with the current user's overdue count [4e].
 
 - Grid of recipe cards (photo, name, time). Search by name.
 - The FAB (and the empty state's **Add a recipe** button) open the **"Add a recipe" chooser**
-  (→ plan 14, a bottom sheet) — one door to the four ways in: **From a link**, **From a photo**
-  (AI), **Paste text** (AI), **Enter by hand**. The two AI rows carry an "AI" tag; when AI import
-  isn't set up they read "Set up AI import first" and lead to Settings, so the feature is
-  discoverable without a dead end.
+  (→ plan 14, a bottom sheet): **From a link** and **Enter by hand** always, plus **From a photo**
+  and **Paste text** (each "AI"-tagged) **only when AI import is set up** — with no key there's
+  nothing to offer, and the AI import row in Settings (§6) is where it's turned on.
 - Empty state [7e]: "Build your cookbook" + **Add a recipe** (opens the same chooser).
 
 ### 4.4 New/edit recipe [3c] (full-screen route, not a sheet)
@@ -395,8 +394,9 @@ a danger badge with the current user's overdue count [4e].
   notification.
 - **Away mode**: "Going away?" — same control as 5.5.
 - **Household**: name (owner can rename), **AI recipe import** (owner sets/removes a Google
-  Gemini API key for the §4.7 fallback; members see only whether it's on — the key is never shown,
-  only a masked hint), Members · {n} → members screen.
+  Gemini API key for the §4.7 fallback and can **Test connection** — a live check that reports
+  "Connection works" or why not; members see only whether it's on — the key is never shown, only
+  a masked hint), Members · {n} → members screen.
 - **Sign out** · **Leave household** (danger, confirm [6d]: "You'll lose access to the shared
   shopping list, tasks and meal plan. Your points stay with the household.").
 

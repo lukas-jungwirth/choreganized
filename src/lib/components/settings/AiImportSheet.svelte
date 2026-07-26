@@ -11,6 +11,8 @@
 	import TextField from '$lib/components/ui/TextField.svelte';
 	import { messages } from '$lib/i18n';
 	import { looksLikeGeminiKey } from '$lib/utils/household';
+	import Check from '@lucide/svelte/icons/check';
+	import CircleAlert from '@lucide/svelte/icons/circle-alert';
 
 	type Props = {
 		/** Whether a key is already stored — drives "Replace"/"Remove" vs "Save". */
@@ -31,6 +33,11 @@
 	let submitting = $state(false);
 	let error = $state<string | undefined>();
 
+	// The live key test — handled in the sheet, so it doesn't touch the page form.
+	let testing = $state(false);
+	let testResult = $state<string | undefined>();
+	let testOk = $state(false);
+
 	$effect(() => {
 		if (!open) onclose();
 	});
@@ -45,8 +52,46 @@
 		</a>
 	</p>
 
-	{#if isSet && hint}
-		<p class="current">{m.settings.aiImport.current(hint)}</p>
+	{#if isSet}
+		<div class="stored">
+			{#if hint}<p class="current">{m.settings.aiImport.current(hint)}</p>{/if}
+
+			<form
+				method="POST"
+				action="?/testAiKey"
+				use:enhance={() => {
+					testing = true;
+					testResult = undefined;
+					// Handle the result here (no `update`) so the key field isn't touched.
+					return async ({ result }) => {
+						testing = false;
+						if (result.type === 'success') {
+							testOk = true;
+							testResult = m.settings.aiImport.test.ok;
+						} else {
+							testOk = false;
+							const message = result.type === 'failure' ? result.data?.aiTestError : undefined;
+							testResult =
+								typeof message === 'string' ? message : m.settings.aiImport.test.failed;
+						}
+					};
+				}}
+			>
+				<button type="submit" class="test" disabled={testing}>
+					{testing ? m.settings.aiImport.test.testing : m.settings.aiImport.test.label}
+				</button>
+			</form>
+
+			{#if testResult}
+				<p class="test-result" class:ok={testOk}>
+					{#if testOk}<Check size={14} strokeWidth={2.6} />{:else}<CircleAlert
+							size={14}
+							strokeWidth={2.4}
+						/>{/if}
+					{testResult}
+				</p>
+			{/if}
+		</div>
 	{/if}
 
 	<form
@@ -125,11 +170,45 @@
 		color: var(--sage);
 	}
 
+	.stored {
+		margin-bottom: 18px;
+	}
+
 	.current {
-		margin: 0 2px 12px;
+		margin: 0 2px 10px;
 		font-size: 12.5px;
 		color: var(--text-4);
 		font-variant-numeric: tabular-nums;
+	}
+
+	.test {
+		display: inline-flex;
+		align-items: center;
+		gap: 7px;
+		padding: 8px 14px;
+		border-radius: var(--r-chip);
+		background: var(--sunken);
+		font-size: 13px;
+		font-weight: 600;
+		color: var(--sage);
+	}
+
+	.test:disabled {
+		opacity: 0.6;
+		cursor: default;
+	}
+
+	.test-result {
+		display: flex;
+		align-items: center;
+		gap: 6px;
+		margin: 10px 2px 0;
+		font-size: 12.5px;
+		color: var(--danger-deep);
+	}
+
+	.test-result.ok {
+		color: var(--sage);
 	}
 
 	.save {

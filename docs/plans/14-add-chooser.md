@@ -11,12 +11,15 @@ existing `BottomSheet`; no new frame.
 
 ## Build
 
-- `lib/components/cooking/AddRecipeSheet.svelte` — a `BottomSheet` with four link rows:
-  **From a link** (`/cooking/recipes/import`), **From a photo** and **Paste text**
-  (AI, tagged), **Enter by hand** (`/cooking/recipes/new`). Takes `aiEnabled`; the two
-  AI rows route to `?mode=photo`/`?mode=text` when set, else to `/settings` with a
-  "Set up AI import first" subtitle (discoverable, never a dead end). Real `<a>`s, so it
-  works without JS and closes by navigating.
+- `lib/components/cooking/AddRecipeSheet.svelte` — a `BottomSheet` with link rows:
+  **From a link** (`/cooking/recipes/import`) and **Enter by hand** (`/cooking/recipes/new`)
+  always, plus **From a photo** and **Paste text** (AI, tagged, → `?mode=photo`/`?mode=text`)
+  **only when `aiEnabled`** — with no key there's nothing to offer, so they're hidden rather
+  than shown as dead ends. Real `<a>`s, so it works without JS and closes by navigating.
+- **Settings key sheet** (`AiImportSheet.svelte`) gains a **Test connection** button when a key
+  is stored: `?/testAiKey` → `testGeminiKey` runs a tiny generation on the real model and reports
+  "Connection works" or a typed reason (key refused / service busy / unreachable). The result is
+  handled in the sheet, so it doesn't disturb the key field.
 - **Library** (`/cooking/recipes`): the FAB and the empty-state button open the chooser
   (`onclick`, not `href`); the standalone "Import from a link" links are gone. Load adds
   `aiEnabled: getAiImportStatus(householdId).set`.
@@ -54,3 +57,11 @@ to `?mode=photo`/`?mode=text`. Each focused mode (photo picker, paste textarea, 
 renders on its own clean screen, and a link fetch of a no-recipe page (`example.com`) shows
 the "Mit KI auslesen" escalation with cross-links to the photo and text modes. Dummy key
 removed afterwards. A *successful* extraction still needs a real Gemini key (→ plan 13).
+
+**Follow-up (2026-07-26):** hide the AI options entirely when no key is set (instead of the
+"set up first" rows), and a **Test connection** button in the key sheet. `npm run check` (0/0)
+and `npm run build` clean. The live UI walk wasn't possible this session — the dev login had
+lapsed and re-auth needs the owner's Google sign-in — but both are thin glue over pieces
+already exercised live: the chooser's `aiEnabled` gate, and the Gemini bad-key mapping that
+`testGeminiKey` reuses (`generateContent` → `mapSdkError`, confirmed earlier via a real 400).
+The success path ("Connection works") needs a valid key to see.

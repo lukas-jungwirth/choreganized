@@ -42,27 +42,31 @@
 			<ChevronRight size={16} strokeWidth={2} class="chev" />
 		</a>
 
-		<a class="option" href={aiEnabled ? '/cooking/recipes/import?mode=photo' : '/settings'}>
-			<span class="tile" aria-hidden="true"><Camera size={19} strokeWidth={1.9} /></span>
-			<span class="text">
-				<span class="label">
-					{m.cooking.add.photo}<span class="tag">{m.cooking.add.aiTag}</span>
+		<!-- The AI ways in appear only when a key is set (→ SPEC §4.3); with none there's
+			 nothing to offer, and the AI import row in Settings is where it's turned on. -->
+		{#if aiEnabled}
+			<a class="option" href="/cooking/recipes/import?mode=photo">
+				<span class="tile" aria-hidden="true"><Camera size={19} strokeWidth={1.9} /></span>
+				<span class="text">
+					<span class="label">
+						{m.cooking.add.photo}<span class="tag">{m.cooking.add.aiTag}</span>
+					</span>
+					<span class="sub">{m.cooking.add.photoSub}</span>
 				</span>
-				<span class="sub">{aiEnabled ? m.cooking.add.photoSub : m.cooking.add.needsSetup}</span>
-			</span>
-			<ChevronRight size={16} strokeWidth={2} class="chev" />
-		</a>
+				<ChevronRight size={16} strokeWidth={2} class="chev" />
+			</a>
 
-		<a class="option" href={aiEnabled ? '/cooking/recipes/import?mode=text' : '/settings'}>
-			<span class="tile" aria-hidden="true"><FileText size={19} strokeWidth={1.9} /></span>
-			<span class="text">
-				<span class="label">
-					{m.cooking.add.text}<span class="tag">{m.cooking.add.aiTag}</span>
+			<a class="option" href="/cooking/recipes/import?mode=text">
+				<span class="tile" aria-hidden="true"><FileText size={19} strokeWidth={1.9} /></span>
+				<span class="text">
+					<span class="label">
+						{m.cooking.add.text}<span class="tag">{m.cooking.add.aiTag}</span>
+					</span>
+					<span class="sub">{m.cooking.add.textSub}</span>
 				</span>
-				<span class="sub">{aiEnabled ? m.cooking.add.textSub : m.cooking.add.needsSetup}</span>
-			</span>
-			<ChevronRight size={16} strokeWidth={2} class="chev" />
-		</a>
+				<ChevronRight size={16} strokeWidth={2} class="chev" />
+			</a>
+		{/if}
 
 		<a class="option" href="/cooking/recipes/new">
 			<span class="tile" aria-hidden="true"><Pencil size={19} strokeWidth={1.9} /></span>
