@@ -35,10 +35,12 @@
 		pending: boolean;
 		/** The page hands in the handler so it can do that bookkeeping. */
 		complete: SubmitFunction;
+		/** Someone else's task: raise the "who did it?" choice instead of submitting. */
+		onchoose: () => void;
 		onopen: () => void;
 	};
 
-	let { task, today, currentMemberId, pending, complete, onopen }: Props = $props();
+	let { task, today, currentMemberId, pending, complete, onchoose, onopen }: Props = $props();
 
 	const m = messages();
 
@@ -74,20 +76,49 @@
 		return reminded ? `${turn} · ${reminded}` : turn;
 	});
 
+	/**
+	 * A task that's somebody else's needs the "who did it?" choice before it's
+	 * logged (→ SPEC §5.4), so the tick opens that instead of submitting on the
+	 * spot. Your own tasks and "Anyone" tasks tick straight through as ever.
+	 */
+	const needsChoice = $derived(task.assignee !== null && task.assignee.id !== currentMemberId);
+
 	const action = $derived(
-		task.assignee && task.assignee.id !== currentMemberId
+		needsChoice && task.assignee
 			? m.tasks.row.markDoneFor(task.name, task.assignee.displayName)
 			: m.tasks.row.markDone(task.name)
 	);
+
+	/**
+	 * Someone else's task opens the "who did it?" choice instead of submitting.
+	 * Preventing the default click stops both the native POST and `use:enhance`,
+	 * so the modal takes over — but only with JavaScript. With none, the handler
+	 * never runs and the form submits, completing it as the tapper: a graceful
+	 * fallback rather than a dead button.
+	 */
+	function chooseInstead(event: MouseEvent) {
+		event.preventDefault();
+		onchoose();
+	}
 </script>
 
 <li>
 	<Card radius="md">
 		<div class="task" class:overdue class:paused={task.paused} class:pending>
 			<div class="main">
+				<!-- Someone else's task opens the "who did it?" choice; the click
+					 handler prevents the submit with JS, and without JS the form still
+					 posts and completes as the tapper. Everything else ticks straight off. -->
 				<form method="POST" action="?/complete" use:enhance={complete}>
 					<input type="hidden" name="id" value={task.id} />
-					<button type="submit" class="tick" disabled={pending} aria-label={action}>
+					<button
+						type="submit"
+						class="tick"
+						onclick={needsChoice ? chooseInstead : undefined}
+						aria-haspopup={needsChoice ? 'dialog' : undefined}
+						disabled={pending}
+						aria-label={action}
+					>
 						<CheckCircle checked={pending} size={24} />
 					</button>
 				</form>

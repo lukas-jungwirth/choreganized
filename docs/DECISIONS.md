@@ -936,6 +936,48 @@ reload`) so it can't silently regress.
      renders **one focused method per `?mode=`** (`link` default, `photo`, `text`), so each is a
      clean screen; the link→AI "Try AI extraction" stays as an in-context escalation with quiet
      links across to the photo/text modes. The share target keeps landing in link mode.
+115. **A task can be worth 0 points** — the effort chips gain a **None · 0** preset ahead of
+     Small (→ SPEC §5.2). The service already clamped to `[0, POINTS_MAX]`, so this is a UI
+     affordance only; extends #2's "canonical four" to five. It's for a chore worth *tracking*
+     but not *scoring* (a shared reminder, a "did you lock up?") — a 0-point completion is still
+     logged to history, still rotates and reschedules, and simply adds nothing to the month.
+     The badge reads "+0" like any other; not special-cased, because a zero the member chose is
+     not a zero worth hiding.
+116. **Completing someone else's task asks "who did it?", and rotation follows the doer**
+     (→ SPEC §5.4). Ticking off a task assigned to another member raises a two-answer choice —
+     **I did it** (credit the tapper) or **{name} did it** (credit the assignee) — because the
+     old silent behaviour was ambiguous: the points went to the tapper while the row's label
+     said "it's {name}'s". The credited member gets the points, the celebration and the history
+     line. For an **alternating** task the next turn now advances from whoever did it, not from
+     the standing assignee: so "I did it" on a turn that was your housemate's hands the next one
+     back to *them* (it stays their turn), while "{name} did it" alternates on as if they'd
+     ticked it themselves. Own tasks and "Anyone" tasks are unchanged — no choice, tapper
+     credited. **Skip** is deliberately untouched: nobody claims a skip, so its rotation still
+     advances from the assignee. Own/"Anyone" completions are behaviourally identical to before,
+     since there the doer *is* the assignee.
+117. **Tasks stats stay descriptive, not a completion rate** (→ SPEC §5.1, §5.8). We considered a
+     "% of my tasks done" figure and rejected it: an honest completion rate needs to count the
+     turns that were *ignored*, which the model doesn't record (the task row is the occurrence —
+     #5 — so a missed occurrence leaves no trace), and reconstructing it (auto-skip on rollover,
+     or an occurrences table) reintroduces exactly the complexity #5 avoided, for a number that
+     nags rather than encourages in a two-person house where the overdue list is already visible.
+     What shipped instead:
+     - **To do** loses the per-member points tiles and the "Recent history" preview; a single
+       summary link ("{n} done this week · See history") takes their place, and the To do tab
+       drops its count.
+     - **History** becomes a stats landing: a **"How chores are split"** card and a **Points**
+       board; the full day-grouped feed moves one level down to `/tasks/history/all` behind an
+       "All completed chores" link. The month **podium** is retired from the product — the points
+       board replaced it — and survives only as a design-kit component (its `getPodium` producer
+       was removed; `countTasks` went with the tab count).
+     - **Chore split** is *by design*, computed from the current recurring tasks, not history:
+       each task's load = points × occurrences-per-day, a fixed assignee carries theirs alone, a
+       rotating or "Anyone" task is shared equally across the roster, and one-offs / 0-point
+       chores don't count. It answers "is the plan fair on paper?", which points never could.
+     - **Points board** totals `done` completions over a rolling window — 30 / 90 / 365 days or
+       all-time, default 3 months — chosen via a URL param (`?range=`) so the toggle is a link
+       that survives refresh and needs no JavaScript. `monthPointsByMember` now delegates to a
+       ranged `pointsByMemberSince`.
 
 ## Open questions (non-blocking, defaults chosen)
 

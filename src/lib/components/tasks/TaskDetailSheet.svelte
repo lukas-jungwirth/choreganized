@@ -33,13 +33,24 @@
 		currentMemberId: string;
 		/** The page's handler — it owns the optimistic tick and the done modal. */
 		complete: SubmitFunction;
+		/** Someone else's task: raise the "who did it?" choice instead of submitting. */
+		onchoose: () => void;
 		onsnooze: () => void;
 		onedit: () => void;
 		onclose: () => void;
 	};
 
-	let { task, members, today, currentMemberId, complete, onsnooze, onedit, onclose }: Props =
-		$props();
+	let {
+		task,
+		members,
+		today,
+		currentMemberId,
+		complete,
+		onchoose,
+		onsnooze,
+		onedit,
+		onclose
+	}: Props = $props();
 
 	const m = messages();
 
@@ -58,6 +69,23 @@
 
 	/** Everyone it isn't already with — one row each (→ SPEC §5.3). */
 	const others = $derived(members.filter((member) => member.id !== task.assignee?.id));
+
+	/**
+	 * A task that's somebody else's needs the "who did it?" choice before it's
+	 * logged (→ SPEC §5.4); your own and "Anyone" tasks mark done straight off.
+	 */
+	const needsChoice = $derived(task.assignee !== null && task.assignee.id !== currentMemberId);
+
+	/**
+	 * Someone else's task opens the "who did it?" choice instead of submitting.
+	 * Preventing the default click stops both the native POST and `use:enhance`,
+	 * so the modal takes over — but only with JavaScript. With none, the handler
+	 * never runs and the form submits, completing it as the tapper.
+	 */
+	function chooseInstead(event: MouseEvent) {
+		event.preventDefault();
+		onchoose();
+	}
 
 	/** Every action but "done" just closes the sheet and lets the list redraw. */
 	const closeOnSuccess: SubmitFunction = () => {
@@ -102,9 +130,17 @@
 		</p>
 	{/if}
 
+	<!-- Someone else's task opens the "who did it?" choice; the click handler
+		 prevents the submit with JS, and without JS the form still posts and marks
+		 done as the tapper. Everything else marks done straight off. -->
 	<form method="POST" action="?/complete" use:enhance={complete}>
 		<input type="hidden" name="id" value={task.id} />
-		<Button type="submit" disabled={submitting}>
+		<Button
+			type="submit"
+			onclick={needsChoice ? chooseInstead : undefined}
+			aria-haspopup={needsChoice ? 'dialog' : undefined}
+			disabled={submitting}
+		>
 			<Check size={19} strokeWidth={2.6} />{m.tasks.detail.markAsDone(task.points)}
 		</Button>
 	</form>

@@ -165,6 +165,7 @@ export const de: Messages = {
 	/* ── Task vocabulary ───────────────────────────────────────────────────── */
 	task: {
 		efforts: {
+			none: 'Keine',
 			small: 'Klein',
 			medium: 'Mittel',
 			large: 'Groß',
@@ -375,8 +376,13 @@ export const de: Messages = {
 
 		view: {
 			label: 'Ansicht',
-			todo: (count: number) => `Offen · ${count}`,
+			todo: 'Übersicht',
 			history: 'Historie'
+		},
+
+		summary: {
+			doneThisWeek: (count: number) => `${count} diese Woche erledigt`,
+			seeHistory: 'Zur Historie'
 		},
 
 		awayBanner: {
@@ -440,6 +446,14 @@ export const de: Messages = {
 			undoFailed: 'Das ließ sich nicht rückgängig machen.'
 		},
 
+		choice: {
+			label: 'Wer hat’s gemacht?',
+			title: 'Wer hat’s gemacht?',
+			assigned: (name: string) => `Diese Aufgabe ist ${name} zugewiesen.`,
+			mine: 'Ich war’s',
+			forThem: (name: string) => `${name} war’s`
+		},
+
 		snooze: {
 			title: 'Verschieben auf…',
 			orPick: 'Oder Datum wählen',
@@ -478,16 +492,31 @@ export const de: Messages = {
 			emptyTitle: 'Noch nichts erledigt',
 			emptyCopy:
 				'Hak eine Aufgabe ab und sie landet hier — was es war, wer es gemacht hat und was es wert war.',
-			backToList: 'Zurück zur Liste',
+			backToHistory: 'Zurück zur Historie',
 			emptyStretch: 'In diesem Zeitraum wurde nichts erledigt.',
 			showMonth: (month: string) => `${month} anzeigen`
 		},
 
-		history: {
-			recent: 'Zuletzt erledigt',
-			explainer:
-				'Erledigte Aufgaben landen hier. Wiederkehrende tauchen an ihrem nächsten Termin wieder unter „Offen“ auf.'
-		}
+		split: {
+			title: 'Wie sich die Aufgaben verteilen',
+			subtitle: 'Der Anteil jeder Person an der geplanten Aufgabenlast.',
+			empty: 'Leg eine wiederkehrende Aufgabe an, um die Verteilung zu sehen.'
+		},
+
+		pointsBoard: {
+			title: 'Punkte',
+			together: (total: number) => `${total} zusammen`,
+			rangeLabel: 'Zeitraum',
+			ranges: {
+				'30d': '30 Tage',
+				'3m': '3 Monate',
+				year: 'Jahr',
+				all: 'Gesamt'
+			},
+			you: 'du'
+		},
+
+		allCompleted: 'Alle erledigten Aufgaben'
 	},
 
 	/* ── Cooking [04] [3d] [7a] ────────────────────────────────────────────── */

@@ -12,12 +12,11 @@
  * Plan 02 opened this file with `listOverdueForMember`, which the tab badge and
  * the Home banner share; plan 04 built the rest around it.
  */
-import { and, asc, count, desc, eq, gte, isNull, lt, or, sql, type SQL } from 'drizzle-orm';
+import { and, asc, count, eq, gte, isNull, lt, or, sql, type SQL } from 'drizzle-orm';
 import { alias } from 'drizzle-orm/sqlite-core';
-import { catalog, type Locale } from '$lib/i18n';
+import { type Locale } from '$lib/i18n';
 import {
 	addInterval,
-	formatTimeIn,
 	isCalendarDate,
 	startOfMonth,
 	toCalendarDate,
@@ -280,17 +279,6 @@ function localDateOf(at: Date | null, timezone: string): CalendarDate | null {
 	return at ? toCalendarDate(at, timezone) : null;
 }
 
-/**
- * "To do · {n}" for the segmented control [8a]. History needs the number
- * without the list, and `getTaskList().total` would mean reading and bucketing
- * every task to render a label.
- */
-export function countTasks(householdId: string): number {
-	const row = db.select({ n: count() }).from(tasks).where(eq(tasks.householdId, householdId)).get();
-
-	return row?.n ?? 0;
-}
-
 /* ── Creating & editing ───────────────────────────────────────────────────── */
 
 export type TaskInput = {
@@ -455,7 +443,10 @@ export type CompletionResult = {
 	taskName: string;
 	/** What was actually logged: the task's points, or 0 for a skip. */
 	points: number;
+	/** Who it's credited to — the tapper, or the assignee when done on their behalf. */
 	memberName: string;
+	/** That member's colour, for the avatar on the celebration's standings line. */
+	memberColor: string;
 	/** NULL for a one-off — the row is gone, only the history entry remains. */
 	nextDueDate: CalendarDate | null;
 	/** Who holds it next, rotated or not; NULL = Anyone. */
@@ -466,16 +457,19 @@ export type CompletionResult = {
 };
 
 /**
- * Mark a task done: log it, hand the points to whoever tapped, and move the
- * task on (→ docs/DATA-MODEL.md "Completion algorithm", SPEC §5.4).
+ * Mark a task done: log it, hand the points to whoever is credited with doing it
+ * — the tapper for their own and "Anyone" tasks, or the person named by the "who
+ * did it?" choice when the task was somebody else's — and move the task on, with
+ * rotation following that doer (→ docs/DATA-MODEL.md "Completion algorithm",
+ * SPEC §5.4).
  */
 export function completeTask(
 	householdId: string,
 	taskId: string,
-	memberId: string,
+	creditMemberId: string,
 	today: CalendarDate
 ): CompletionResult | null {
-	return logTaskAction(householdId, taskId, memberId, today, 'done');
+	return logTaskAction(householdId, taskId, creditMemberId, today, 'done');
 }
 
 /**
@@ -495,7 +489,7 @@ export function skipTask(
 function logTaskAction(
 	householdId: string,
 	taskId: string,
-	memberId: string,
+	creditMemberId: string,
 	today: CalendarDate,
 	action: TaskActionKind
 ): CompletionResult | null {
@@ -508,17 +502,20 @@ function logTaskAction(
 
 		if (!task) return null;
 
-		// One read, three uses: it validates the actor, names them for the
-		// snapshot, and is the rotation order (→ docs/DATA-MODEL.md).
+		// One read, three uses: it validates the doer, names and colours them for
+		// the completion snapshot, and is the rotation order (→ docs/DATA-MODEL.md).
 		const roster = tx
-			.select({ id: members.id, displayName: members.displayName })
+			.select({ id: members.id, displayName: members.displayName, color: members.color })
 			.from(members)
 			.where(eq(members.householdId, householdId))
 			.orderBy(asc(members.joinedAt), asc(members.id))
 			.all();
 
-		const actor = roster.find((member) => member.id === memberId);
-		if (!actor) return null;
+		// Who the completion is credited to: the tapper by default, or whoever the
+		// "who did it?" choice named when the task was somebody else's (→ SPEC §5.4).
+		// A skip is always the tapper's — nobody else is claiming it.
+		const doer = roster.find((member) => member.id === creditMemberId);
+		if (!doer) return null;
 
 		const points = action === 'done' ? task.points : 0;
 
@@ -532,8 +529,8 @@ function logTaskAction(
 				taskName: task.name,
 				points,
 				action,
-				memberId: actor.id,
-				memberName: actor.displayName
+				memberId: doer.id,
+				memberName: doer.displayName
 			})
 			.returning({ id: taskCompletions.id })
 			.get();
@@ -558,7 +555,8 @@ function logTaskAction(
 			action,
 			taskName: task.name,
 			points,
-			memberName: actor.displayName,
+			memberName: doer.displayName,
+			memberColor: doer.color,
 			snapshot
 		};
 
@@ -578,7 +576,13 @@ function logTaskAction(
 		// tomorrow (→ DECISIONS #6).
 		const nextDueDate = addInterval(today, task.recurInterval, task.recurUnit);
 
-		const current = roster.findIndex((member) => member.id === task.assigneeMemberId);
+		// Rotation advances from whoever was responsible for this occurrence. A
+		// completion is the doer's, so doing a task that was someone else's hands
+		// the next turn to *them* rather than back to yourself (→ SPEC §5.4,
+		// DECISIONS #116). A skip is nobody's doing, so the assignee's turn is the
+		// one that passes — the long-standing behaviour, unchanged.
+		const rotateFrom = action === 'done' ? doer.id : task.assigneeMemberId;
+		const current = roster.findIndex((member) => member.id === rotateFrom);
 		// Wrapping through join order; a departed assignee is already NULL, and
 		// with one member there is nobody to alternate with.
 		const nextAssigneeId =
@@ -752,19 +756,14 @@ export function setAway(
 /* ── Points ───────────────────────────────────────────────────────────────── */
 
 /**
- * Points scored this household-local calendar month, per member. The month is
- * always derived from the completion timestamps — no reset job, and every past
- * month stays answerable (→ DECISIONS #9).
+ * Points scored per member since `since`, or over all time when it's null — the
+ * History → Points board's totals for its timeframe toggle (→ SPEC §5.8). Skips
+ * are worth nothing and aren't achievements (→ SPEC §5.3), so `done` only.
  *
  * Completions whose member has left keep their points in the table but not in
- * this map: the points stayed with the house, the tile they'd sit on is gone.
+ * this map: the points stayed with the house, the row they'd sit on is gone.
  */
-export function monthPointsByMember(
-	householdId: string,
-	context: TaskContext
-): Map<string, number> {
-	const monthStart = zonedStartOfDay(startOfMonth(context.today), context.timezone);
-
+export function pointsByMemberSince(householdId: string, since: Date | null): Map<string, number> {
 	const totals = db
 		.select({
 			memberId: taskCompletions.memberId,
@@ -774,9 +773,9 @@ export function monthPointsByMember(
 		.where(
 			and(
 				eq(taskCompletions.householdId, householdId),
-				// Skips are worth nothing and are not achievements (→ SPEC §5.3).
 				eq(taskCompletions.action, 'done'),
-				gte(taskCompletions.completedAt, monthStart)
+				// `and` drops an undefined arm, so "all time" is simply no lower bound.
+				since ? gte(taskCompletions.completedAt, since) : undefined
 			)
 		)
 		.groupBy(taskCompletions.memberId)
@@ -786,6 +785,22 @@ export function monthPointsByMember(
 		totals
 			.filter((row): row is { memberId: string; points: number } => row.memberId !== null)
 			.map((row) => [row.memberId, row.points])
+	);
+}
+
+/**
+ * Points scored this household-local calendar month, per member — Home's
+ * standings strip [8b], the members screen and the celebration's live line. The
+ * month is derived from the completion timestamps: no reset job, and every past
+ * month stays answerable (→ DECISIONS #9).
+ */
+export function monthPointsByMember(
+	householdId: string,
+	context: TaskContext
+): Map<string, number> {
+	return pointsByMemberSince(
+		householdId,
+		zonedStartOfDay(startOfMonth(context.today), context.timezone)
 	);
 }
 
@@ -824,74 +839,100 @@ export function memberStanding(
 	};
 }
 
-/* ── History ──────────────────────────────────────────────────────────────── */
+/* ── Stats [8a] ─────────────────────────────────────────────────────────────── */
 
-export type CompletionEntry = {
-	id: string;
-	taskName: string;
-	/** The snapshot, so a departed housemate keeps their name in the feed. */
-	memberName: string;
-	/** From the *current* member row; null once that housemate has left. */
-	memberColor: string | null;
-	points: number;
-	/** "Today 8:20" · "Yesterday 18:40" · "Mon 14 Jul", household-local. */
-	when: string;
-	/** The task's cadence while the task still exists ("Every 2 weeks") [05]. */
-	repeat: string | null;
-};
+/** A completions count — the To do screen's "N done this week" summary line. */
+export function countDoneSince(householdId: string, since: Date): number {
+	const row = db
+		.select({ n: count() })
+		.from(taskCompletions)
+		.where(
+			and(
+				eq(taskCompletions.householdId, householdId),
+				eq(taskCompletions.action, 'done'),
+				gte(taskCompletions.completedAt, since)
+			)
+		)
+		.get();
 
-/**
- * The newest completions — the "Recent history" preview under the to-do list
- * [05], and plan 09's feed with a bigger `limit`. Skips never appear
- * (→ SPEC §5.3): they're bookkeeping, not something to look back on.
- */
-export function recentCompletions(
-	householdId: string,
-	context: TaskContext,
-	limit: number
-): CompletionEntry[] {
-	return (
-		db
-			.select({
-				id: taskCompletions.id,
-				taskName: taskCompletions.taskName,
-				memberName: taskCompletions.memberName,
-				memberColor: members.color,
-				points: taskCompletions.points,
-				completedAt: taskCompletions.completedAt,
-				recurUnit: tasks.recurUnit,
-				recurInterval: tasks.recurInterval
-			})
-			.from(taskCompletions)
-			.leftJoin(members, eq(taskCompletions.memberId, members.id))
-			// Only a surviving task can still say how often it comes round; a
-			// completed one-off has no row left, and no cadence to name.
-			.leftJoin(tasks, eq(taskCompletions.taskId, tasks.id))
-			.where(and(eq(taskCompletions.householdId, householdId), eq(taskCompletions.action, 'done')))
-			// `id` breaks ties for completions logged in the same millisecond.
-			.orderBy(desc(taskCompletions.completedAt), desc(taskCompletions.id))
-			.limit(limit)
-			.all()
-			.map(({ completedAt, recurUnit, recurInterval, ...entry }) => ({
-				...entry,
-				when: formatCompletedAt(completedAt, context),
-				repeat:
-					recurUnit !== null
-						? catalog(context.locale).task.repeat(recurUnit, recurInterval ?? 1)
-						: null
-			}))
-	);
+	return row?.n ?? 0;
 }
 
 /**
- * "Today 8:20" · "Yesterday 18:40" · "Mon 14 Jul". The last two days carry the
- * clock because that's the day you might still be reconstructing; older than
- * that, the hour stops meaning anything and the day is the whole answer.
+ * Whether the household has ever ticked anything off — gates the To do screen's
+ * link across to History, so a house that has cleared its list still has a way in
+ * (`limit(1)`, so it's an existence check, not a count).
  */
-function formatCompletedAt(at: Date, context: TaskContext): string {
-	const date = toCalendarDate(at, context.timezone);
-	const label = catalog(context.locale).date.dayLabel(date, context.today);
-	const recent = date >= addInterval(context.today, -1, 'day');
+export function hasCompletions(householdId: string): boolean {
+	const row = db
+		.select({ id: taskCompletions.id })
+		.from(taskCompletions)
+		.where(and(eq(taskCompletions.householdId, householdId), eq(taskCompletions.action, 'done')))
+		.limit(1)
+		.get();
 
-	return recent ? `${label} ${formatTimeIn(at, context.timezone)}` : label;
+	return row !== undefined;
+}
+
+export type ChoreShare = {
+	memberId: string;
+	displayName: string;
+	color: string;
+	/** 0–1: this member's slice of the scheduled recurring load. */
+	share: number;
+};
+
+/**
+ * How the *recurring* plan divides up, by design (→ SPEC §5.8, DECISIONS #117).
+ * Not history — this reads the current tasks and asks who's on the hook for what,
+ * weighted by effort × how often it comes round, so a daily 5-pointer counts for
+ * more than a monthly 40. A fixed assignee carries their task alone; a rotating
+ * task and an "Anyone" task are shared equally across the household. One-offs
+ * aren't part of the rota and a 0-point chore is no load, so both sit it out.
+ */
+export function choreSplit(
+	householdId: string,
+	roster: { id: string; displayName: string; color: string }[]
+): ChoreShare[] {
+	const rows = db
+		.select({
+			points: tasks.points,
+			recurUnit: tasks.recurUnit,
+			recurInterval: tasks.recurInterval,
+			assigneeMemberId: tasks.assigneeMemberId,
+			rotate: tasks.rotate
+		})
+		.from(tasks)
+		.where(eq(tasks.householdId, householdId))
+		.all();
+
+	const load = new Map<string, number>(roster.map((member) => [member.id, 0]));
+
+	for (const task of rows) {
+		if (task.recurUnit === 'none') continue;
+
+		// Effort per day: points ÷ (interval × days-per-unit). Any consistent unit
+		// works — the shares are normalised at the end.
+		const unitDays = task.recurUnit === 'day' ? 1 : task.recurUnit === 'week' ? 7 : 30;
+		const weight = task.points / (task.recurInterval * unitDays);
+		if (weight === 0) continue;
+
+		const owner = task.assigneeMemberId;
+		if (owner !== null && !task.rotate && load.has(owner)) {
+			load.set(owner, load.get(owner)! + weight);
+		} else {
+			// Rotating, "Anyone", or an assignee who has since left: shared equally.
+			const each = weight / roster.length;
+			for (const member of roster) load.set(member.id, load.get(member.id)! + each);
+		}
+	}
+
+	const total = [...load.values()].reduce((sum, value) => sum + value, 0);
+
+	return roster.map((member) => ({
+		memberId: member.id,
+		displayName: member.displayName,
+		color: member.color,
+		share: total > 0 ? load.get(member.id)! / total : 0
+	}));
 }

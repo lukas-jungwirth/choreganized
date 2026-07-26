@@ -17,7 +17,9 @@
 	import ChefHatIcon from '$lib/components/icons/ChefHatIcon.svelte';
 	import PageHeader from '$lib/components/shell/PageHeader.svelte';
 	import SubHeader from '$lib/components/shell/SubHeader.svelte';
+	import ChoreSplit from '$lib/components/tasks/ChoreSplit.svelte';
 	import HistoryRow from '$lib/components/tasks/HistoryRow.svelte';
+	import PointsBoard from '$lib/components/tasks/PointsBoard.svelte';
 	import Podium from '$lib/components/tasks/Podium.svelte';
 	import Avatar from '$lib/components/ui/Avatar.svelte';
 	import AvatarStack from '$lib/components/ui/AvatarStack.svelte';
@@ -57,6 +59,14 @@
 		{ id: 'e', displayName: 'Elisabeth', color: 'var(--member-terracotta)' },
 		{ id: 'm', displayName: 'Mira', color: 'var(--member-blue)' }
 	];
+
+	const SPLIT_SHARES = [
+		{ memberId: 'l', displayName: 'Lukas', color: 'var(--member-sage)', share: 0.45 },
+		{ memberId: 'e', displayName: 'Elisabeth', color: 'var(--member-terracotta)', share: 0.33 },
+		{ memberId: 'm', displayName: 'Mira', color: 'var(--member-blue)', share: 0.22 }
+	];
+
+	const BOARD_POINTS: Record<string, number> = { l: 520, e: 500, m: 470 };
 
 	/**
 	 * Podiums as the service hands them over — `entries` in rank order,
@@ -498,6 +508,18 @@
 			<Podium podium={PODIUM_THREE} />
 			<Podium podium={PODIUM_TIED} />
 			<Podium podium={PODIUM_LEADERLESS} />
+		</div>
+	</section>
+
+	<section>
+		<h2>ChoreSplit + PointsBoard [8a]</h2>
+		<p class="note">
+			The History screen's two cards (→ SPEC §5.8): the recurring plan's split by design, and
+			the points board with its timeframe toggle (a URL link in the app; inert here).
+		</p>
+		<div class="col">
+			<ChoreSplit shares={SPLIT_SHARES} />
+			<PointsBoard members={MEMBERS} points={BOARD_POINTS} currentMemberId="e" range="3m" />
 		</div>
 	</section>
 
