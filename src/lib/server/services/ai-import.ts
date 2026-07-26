@@ -18,6 +18,7 @@
  * `ApiError.status` (→ DECISIONS).
  */
 import { ApiError, GoogleGenAI, Type, type ContentListUnion } from '@google/genai';
+import { env } from '$env/dynamic/private';
 import type { Messages } from '$lib/i18n';
 import {
 	INGREDIENT_LINE_MAX,
@@ -31,13 +32,17 @@ import {
 } from '$lib/utils/recipes';
 
 /**
- * `gemini-2.5-flash` — vision-capable, and cheap enough that one extraction is a
- * fraction of a cent (Google's AI Studio free tier likely covers a two-person
- * household outright). `gemini-2.5-pro` is the higher-quality alternative if
- * Flash misreads busy pages — one constant to change (→ DECISIONS). Confirm the
- * current recommended model id when revisiting; a newer Gemini line may be GA.
+ * The Gemini model, resolved per call. `gemini-flash-latest` is an **alias Google
+ * keeps pointed at the current Flash model** — vision-capable, cents an extraction
+ * — so it survives Google's aggressive (often early) model retirements: a pinned
+ * `gemini-2.5-flash` started 404-ing "no longer available" mid-2026, weeks before
+ * its own scheduled shutdown (→ DECISIONS). `GEMINI_MODEL` in the env overrides it
+ * without a code change if a rotation ever needs a specific id. Read lazily
+ * because `$env/dynamic/private` is empty during the build (→ uploads.ts).
  */
-const MODEL = 'gemini-2.5-flash';
+function resolveModel(): string {
+	return env.GEMINI_MODEL?.trim() || 'gemini-flash-latest';
+}
 
 /** A generous ceiling on pasted / page-stripped text; past this it isn't a recipe. */
 const MAX_TEXT_CHARS = 40_000;
@@ -52,6 +57,8 @@ export type AiImportErrorCode =
 	| 'bad-key'
 	/** Rate limited (429) — most likely the free tier's per-minute cap. */
 	| 'rate-limited'
+	/** The model 404'd — retired, or a bad `GEMINI_MODEL` override (→ resolveModel). */
+	| 'model-unavailable'
 	/** The model returned nothing usable, or the input held no recipe. */
 	| 'no-recipe'
 	/** Anything else — network, a 5xx, a shape we didn't expect. */
@@ -75,6 +82,8 @@ export function aiImportErrorMessage(cause: unknown, m: Messages): string {
 			return m.cooking.import.ai.error.badKey;
 		case 'rate-limited':
 			return m.cooking.import.ai.error.rateLimited;
+		case 'model-unavailable':
+			return m.cooking.import.ai.error.modelUnavailable;
 		case 'no-recipe':
 			return m.cooking.import.ai.error.noRecipe;
 		case 'failed':
@@ -156,6 +165,25 @@ export function extractRecipeFromImages(apiKey: string, images: Buffer[]): Promi
 	return extract(apiKey, parts);
 }
 
+/**
+ * A "does this key work?" probe for Settings (→ plan 14): a tiny generation on
+ * the same model extraction uses, so a green result really means "extraction
+ * will work", not merely "the key is well-formed". Resolves on success; throws a
+ * typed `AiImportError` (`bad-key` / `rate-limited` / `failed`) otherwise.
+ */
+export async function testGeminiKey(apiKey: string): Promise<void> {
+	const ai = new GoogleGenAI({ apiKey });
+	try {
+		await ai.models.generateContent({
+			model: resolveModel(),
+			contents: 'ping',
+			config: { maxOutputTokens: 16, temperature: 0 }
+		});
+	} catch (cause) {
+		throw mapSdkError(cause);
+	}
+}
+
 /** The single model call both paths share. `contents` is text or an array of parts. */
 async function extract(apiKey: string, contents: ContentListUnion): Promise<RecipePrefill> {
 	const ai = new GoogleGenAI({ apiKey });
@@ -163,7 +191,7 @@ async function extract(apiKey: string, contents: ContentListUnion): Promise<Reci
 	let raw: string | undefined;
 	try {
 		const response = await ai.models.generateContent({
-			model: MODEL,
+			model: resolveModel(),
 			contents,
 			config: {
 				systemInstruction: SYSTEM_INSTRUCTION,
@@ -194,6 +222,9 @@ function mapSdkError(cause: unknown): AiImportError {
 		if (cause.status === 400 && /api[\s_-]?key/i.test(cause.message)) {
 			return new AiImportError('bad-key');
 		}
+		// 404 = the model path wasn't found: retired (Google does this early), or a
+		// bad `GEMINI_MODEL` override. Distinct from a transient failure (→ DECISIONS).
+		if (cause.status === 404) return new AiImportError('model-unavailable');
 	}
 	return new AiImportError('failed');
 }

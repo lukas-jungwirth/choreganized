@@ -892,9 +892,14 @@ reload`) so it can't silently regress.
 112. **AI recipe import uses the household's own Google Gemini key, stored plaintext, and never
      acts without an explicit tap** (→ plan 13, SPEC §4.7, §6). The fallback for what JSON-LD
      import (→ #108) can't read — a page with no `Recipe` markup, text pasted from a bot-blocked
-     site, photos of a cookbook — is one `@google/genai` (v2.13.0) call on `gemini-2.5-flash`
-     (vision-capable, a fraction of a cent an import; `gemini-2.5-pro` is the one-constant
-     upgrade if Flash misreads busy pages). The key lives in `households.geminiApiKey` **in the
+     site, photos of a cookbook — is one `@google/genai` (v2.13.0) call on the current Flash
+     model (vision-capable, cents an import). The model is **`gemini-flash-latest`** — an alias
+     Google keeps pointed at the live Flash model — not a pinned version, because Google retires
+     versions aggressively and often early: the originally-pinned `gemini-2.5-flash` began
+     returning `404 "no longer available"` around 2026-07-09, *weeks* before its own scheduled
+     Oct-16 shutdown, breaking every request. `GEMINI_MODEL` in the env overrides the alias
+     without a code change if a rotation ever needs a specific id, and a `404` now maps to a
+     distinct "model unavailable" message instead of a generic failure (→ services/ai-import.ts). The key lives in `households.geminiApiKey` **in the
      clear**: the DB is this household's own file in a single-tenant container, so any key that
      could decrypt it would have to sit in that same container — encryption there buys nothing
      real. It never reaches the browser (server-only modules; Settings returns a masked

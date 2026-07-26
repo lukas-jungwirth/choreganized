@@ -22,8 +22,10 @@ import {
 import { isMemberColor } from '$lib/member-colors';
 import { requireMember } from '$lib/server/guards';
 import { pushConfigured, sendTestNotification, type NotificationPref } from '$lib/server/push';
+import { AiImportError, testGeminiKey } from '$lib/server/services/ai-import';
 import {
 	getAiImportStatus,
+	getGeminiApiKey,
 	getHousehold,
 	HouseholdError,
 	leaveHousehold,
@@ -74,6 +76,17 @@ function refuse(cause: unknown, m: Messages) {
 		}
 	}
 	throw cause;
+}
+
+/** A failed key test in this screen's words — a rejected key vs a busy/unreachable service. */
+function aiTestMessage(cause: unknown, m: Messages): string {
+	const t = m.settings.aiImport.test;
+	if (cause instanceof AiImportError) {
+		if (cause.code === 'bad-key') return t.badKey;
+		if (cause.code === 'rate-limited') return t.busy;
+		if (cause.code === 'model-unavailable') return t.model;
+	}
+	return t.failed;
 }
 
 export const load: PageServerLoad = (event) => {
@@ -265,6 +278,27 @@ export const actions: Actions = {
 		}
 
 		return { aiKeyRemoved: true };
+	},
+
+	/**
+	 * Test the stored key against the live API [6a] (→ plan 14) — a green "connection
+	 * works" or the reason it doesn't, changing nothing. Not owner-gated: the sheet is
+	 * owner-only UI, but a test mutates no data (it just spends a trivial API call).
+	 */
+	testAiKey: async (event) => {
+		const { householdId } = requireMember(event);
+		const m = catalog(event.locals.locale);
+
+		const key = getGeminiApiKey(householdId);
+		if (!key) return fail(400, { aiTestError: m.settings.aiImport.test.noKey });
+
+		try {
+			await testGeminiKey(key);
+		} catch (cause) {
+			return fail(422, { aiTestError: aiTestMessage(cause, m) });
+		}
+
+		return { aiTestOk: true };
 	},
 
 	/**

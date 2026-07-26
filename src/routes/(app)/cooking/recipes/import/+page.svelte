@@ -12,6 +12,7 @@
 -->
 <script lang="ts">
 	import { enhance } from '$app/forms';
+	import AiCookingLoader from '$lib/components/cooking/AiCookingLoader.svelte';
 	import MultiPhotoField from '$lib/components/cooking/MultiPhotoField.svelte';
 	import RecipeForm from '$lib/components/cooking/RecipeForm.svelte';
 	import SubHeader from '$lib/components/shell/SubHeader.svelte';
@@ -242,6 +243,11 @@
 		{m.cooking.import.manualLead}<a href="/cooking/recipes/new">{m.cooking.import.manualLink}</a>{m
 			.cooking.import.manualRest}
 	</p>
+{/if}
+
+<!-- The cozy wait while the model works — an overlay over whichever mode ran it. -->
+{#if extracting}
+	<AiCookingLoader />
 {/if}
 
 {#snippet banner(message: string)}
