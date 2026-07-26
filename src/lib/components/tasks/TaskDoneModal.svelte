@@ -20,12 +20,10 @@
 	type Props = {
 		completion: CompletionResult;
 		standing: Standing;
-		/** The completer's colour, for the little avatar on the standings line. */
-		color: string;
 		onclose: () => void;
 	};
 
-	let { completion, standing, color, onclose }: Props = $props();
+	let { completion, standing, onclose }: Props = $props();
 
 	const m = messages();
 
@@ -75,7 +73,7 @@
 	{/if}
 
 	<p class="standings">
-		<Avatar name={completion.memberName} {color} size={20} />{standings}
+		<Avatar name={completion.memberName} color={completion.memberColor} size={20} />{standings}
 	</p>
 
 	<form

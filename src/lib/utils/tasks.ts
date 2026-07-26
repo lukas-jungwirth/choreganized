@@ -26,8 +26,12 @@ export const POINTS_MAX = 999;
 /** "Every 99 months" is already absurd; beyond it, it's a typo. */
 export const RECUR_INTERVAL_MAX = 99;
 
-/** Effort → points [3b]. The canonical four (→ DECISIONS #2). */
+/**
+ * Effort → points [3b]. The canonical four (→ DECISIONS #2), plus a **None · 0**
+ * preset for a chore worth tracking that shouldn't score (→ DECISIONS #115).
+ */
 export const EFFORTS = [
+	{ key: 'none', points: 0 },
 	{ key: 'small', points: 5 },
 	{ key: 'medium', points: 10 },
 	{ key: 'large', points: 20 },
@@ -35,9 +39,36 @@ export const EFFORTS = [
 ] as const satisfies readonly { key: EffortKey; points: number }[];
 
 /** Names the catalog's `task.efforts` — adding one there is a compile error here. */
-export type EffortKey = 'small' | 'medium' | 'large' | 'huge';
+export type EffortKey = 'none' | 'small' | 'medium' | 'large' | 'huge';
 
 export const DEFAULT_POINTS = 10;
+
+/* ── Points board timeframe [8a] ──────────────────────────────────────────── */
+
+/**
+ * The windows the History → Points board totals over (→ SPEC §5.8). They live
+ * here so the load (which turns one into a `since` instant) and the toggle (which
+ * links between them) can't disagree about the set or its order.
+ */
+export const POINTS_WINDOWS = ['30d', '3m', 'year', 'all'] as const;
+
+/** Names the catalog's `task.pointsBoard.ranges`. */
+export type PointsWindow = (typeof POINTS_WINDOWS)[number];
+
+/** The board opens on the last three months — a season of the household's rhythm. */
+export const DEFAULT_POINTS_WINDOW: PointsWindow = '3m';
+
+export function isPointsWindow(value: unknown): value is PointsWindow {
+	return typeof value === 'string' && (POINTS_WINDOWS as readonly string[]).includes(value);
+}
+
+/**
+ * How many days back a window reaches, counted inclusive of today — or `null`
+ * for "all time", which has no lower bound at all.
+ */
+export function pointsWindowDays(window: PointsWindow): number | null {
+	return window === '30d' ? 30 : window === '3m' ? 90 : window === 'year' ? 365 : null;
+}
 
 /* ── Repeat ───────────────────────────────────────────────────────────────── */
 

@@ -294,8 +294,8 @@ a danger badge with the current user's overdue count [4e].
 
 ### 5.1 List [05 main, 4a]
 
-- Header "Tasks" + two per-member points tiles (avatar, name, "{pts} pts" this month).
-- Segmented control: **To do · {n}** / **History**.
+- Header "Tasks".
+- Segmented control: **To do** / **History** (no count on the tab — → DECISIONS #117).
 - To-do sections in order: **Overdue · {n}** (red dot header), **Today**, **Upcoming**, then
   undated one-offs. Rows: check circle, name, meta line, assignee avatar, `+{points}`.
   - Meta examples: "Every 2 weeks · due tomorrow", "Weekly · due today" (terracotta),
@@ -307,9 +307,9 @@ a danger badge with the current user's overdue count [4e].
 - **Holiday banner** [4a]: "{member} is away until {date} — their tasks are paused, nothing
   counts as overdue" when any member has `awayUntil` ≥ today. Away members' tasks render
   dimmed/paused instead of overdue.
-- FAB (+) → new task sheet. A short "Recent history" preview with explainer copy sits under the
-  to-do list ("Completed tasks are logged here. Recurring ones reappear in To do on their next
-  date.") linking to History.
+- FAB (+) → new task sheet. Under the list, a single summary link across to History —
+  "{n} done this week · See history" (just "See history" when the week is empty). It replaces
+  the old points tiles and "Recent history" preview (→ DECISIONS #117).
 - Tapping the check circle completes immediately (→ 5.4); tapping the row opens the detail
   sheet [4b].
 
@@ -323,7 +323,8 @@ a danger badge with the current user's overdue count [4e].
   - **Repeat**: One-off · Every day · Every week · Every 2 weeks · Every month · custom
     interval (unit + count picker).
   - **First due** (date picker; "Today"/"Tomorrow" shortcuts). Optional for one-offs.
-  - **Effort → points**: chips Small · 5, Medium · 10, Large · 20, Very large · 40.
+  - **Effort → points**: chips None · 0, Small · 5, Medium · 10, Large · 20, Very large · 40
+    (None · 0 = a chore worth tracking but not scoring — → DECISIONS #115).
 - CTA "Create task" / "Save changes".
 
 ### 5.3 Task detail sheet [4b]
@@ -337,14 +338,19 @@ a danger badge with the current user's overdue count [4e].
 
 ### 5.4 Completing [4d]
 
-- Marks done: logs completion (+points to the completer — for "Anyone" tasks the completer,
-  otherwise whoever tapped; assumed self), then for recurring tasks reschedules
-  (`next due = completion day + interval`, rotation advances), for one-offs removes the task
-  row (history remains).
-- Celebration modal: "Nice work, {name}!", "{task} · logged to history", `+{points}` chip,
-  "Next due {date} · Rescheduled · {next member}'s turn next" (recurring only), live standings
-  line ("You're now leading 235 – 240"), **Undo** (reverts completion, restores due
-  date/assignee/reminder flags).
+- **Who did it?** Ticking off a task assigned to *someone else* first raises a two-answer
+  choice — **I did it** (credit yourself) or **{name} did it** (credit the assignee). Your own
+  tasks and "Anyone" tasks skip the choice; the tapper is credited (→ DECISIONS #116).
+- Marks done: logs a completion crediting the chosen member (+points to them), then for
+  recurring tasks reschedules (`next due = completion day + interval`) and, if it alternates,
+  advances the rotation **from whoever did it** — so doing a turn that was your housemate's
+  hands the next one back to them, while "{name} did it" alternates on as if they'd ticked it.
+  One-offs remove the task row (history remains). A 0-point task logs a 0-point completion just
+  the same.
+- Celebration modal: "Nice work, {name}!" (the doer), "{task} · logged to history", `+{points}`
+  chip, "Next due {date} · Rescheduled · {next member}'s turn next" (recurring only), the doer's
+  live standings line ("You're now leading 235 – 240"), **Undo** (reverts completion, restores
+  due date/assignee/reminder flags).
 
 ### 5.5 Snooze & holiday [4c]
 
@@ -373,14 +379,24 @@ a danger badge with the current user's overdue count [4e].
   5 pts; Change the bedsheets · Monthly · 10 pts; Clean the bathroom · Every 2 weeks · 20 pts;
   prefill assignee = Anyone, first due = today) and **Create a custom task**.
 
-### 5.8 History & leaderboard [8a]
+### 5.8 History & stats [8a]
 
-- **Podium card** "This month" + "resets {1st of next month}": columns per member sorted by
-  month points (1st centered/tallest with gold crown + ring; supports 2–5 members; 2 members =
-  two columns). Values = sum of `done` completion points in the current household-local month.
-- **Completed feed** grouped by day (Today, Yesterday, {date}): check circle in member colour,
-  task name, "{member} · {time}", `+{points}` chip. Infinite scroll / "load more" by month is
-  fine; skips are not shown.
+The **History** tab is a stats landing; the full feed sits one level below it (→ DECISIONS #117).
+
+- **How chores are split** card — each person's share of the *scheduled recurring* load, by
+  design (not history). Weighted by effort × frequency (a daily 5-pointer outweighs a monthly
+  40); a fixed assignee carries their task alone, a rotating or "Anyone" task is shared equally,
+  one-offs and 0-point chores don't count. A stacked bar + a legend of avatar + percentage.
+- **Points** card — every member's score over a chosen window, tallest bar first, with a
+  timeframe toggle (**30 days · 3 months · Year · All time**, default 3 months) that lives in the
+  URL (`?range=`). Header shows "{total} together". Values = sum of `done` completion points in
+  the window; the reader's own row is marked "you".
+- **All completed chores** link → the full feed.
+- **Completed feed** (`/tasks/history/all`) grouped by day (Today, Yesterday, {date}): check
+  circle in member colour, task name, "{member} · {time}", `+{points}` chip. "Load more" by
+  month; skips are not shown. Opens with a **Back to history** link.
+- The month podium [8a] was replaced by the Points card; it lives on only as a design-kit
+  component.
 
 ---
 

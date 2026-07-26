@@ -1,21 +1,16 @@
 <!--
-	Tasks → History [8a] — the month's podium and everything the household has
-	ticked off, newest first.
-
-	The other half of the Tasks screen, so it keeps the Tasks title and the
-	segmented control and swaps the list for the feed. The podium stands in for
-	the points tiles [05]: same numbers, told as a scoreboard.
+	Tasks → History [8a] — the stats landing (→ SPEC §5.8). Keeps the Tasks title
+	and the To do / History switch, then two cards: how the recurring plan splits
+	by design, and the points board with a timeframe toggle. The full completed
+	feed is one level down, behind "All completed chores".
 -->
 <script lang="ts">
-	import ChecklistIcon from '$lib/components/icons/ChecklistIcon.svelte';
 	import PageHeader from '$lib/components/shell/PageHeader.svelte';
-	import HistoryRow from '$lib/components/tasks/HistoryRow.svelte';
-	import Podium from '$lib/components/tasks/Podium.svelte';
-	import Button from '$lib/components/ui/Button.svelte';
-	import EmptyState from '$lib/components/ui/EmptyState.svelte';
-	import RowGroup from '$lib/components/ui/RowGroup.svelte';
+	import ChoreSplit from '$lib/components/tasks/ChoreSplit.svelte';
+	import PointsBoard from '$lib/components/tasks/PointsBoard.svelte';
 	import SegmentedControl from '$lib/components/ui/SegmentedControl.svelte';
 	import { messages } from '$lib/i18n';
+	import ChevronRight from '@lucide/svelte/icons/chevron-right';
 	import type { PageProps } from './$types';
 
 	let { data }: PageProps = $props();
@@ -23,12 +18,9 @@
 	const m = messages();
 
 	const view = $derived([
-		{ value: 'todo', label: m.tasks.view.todo(data.todoCount), href: '/tasks' },
+		{ value: 'todo', label: m.tasks.view.todo, href: '/tasks' },
 		{ value: 'history', label: m.tasks.view.history, href: '/tasks/history' }
 	]);
-
-	/** Nothing in the window and nothing older to reach for: a first month. */
-	const blank = $derived(data.feed.days.length === 0 && !data.feed.older);
 </script>
 
 <svelte:head>
@@ -41,82 +33,47 @@
 	<SegmentedControl label={m.tasks.view.label} value="history" options={view} />
 </div>
 
-<Podium podium={data.podium} />
+<div class="cards">
+	<ChoreSplit shares={data.split} />
 
-{#if blank}
-	<div class="nothing">
-		<EmptyState title={m.tasks.historyScreen.emptyTitle}>
-			{#snippet icon()}<ChecklistIcon size={38} strokeWidth={1.6} />{/snippet}
-			{m.tasks.historyScreen.emptyCopy}
-			{#snippet action()}
-				<Button href="/tasks">{m.tasks.historyScreen.backToList}</Button>
-			{/snippet}
-		</EmptyState>
-	</div>
-{:else}
-	<div class="feed">
-		{#each data.feed.days as day (day.date)}
-			<section>
-				<h2>{day.label}</h2>
-				<!-- `list`, because HistoryRow is an `<li>` and an `<li>` outside a
-					 list element is invalid markup. -->
-				<RowGroup list>
-					{#each day.entries as entry (entry.id)}
-						<HistoryRow {entry} />
-					{/each}
-				</RowGroup>
-			</section>
-		{/each}
+	<PointsBoard
+		members={data.members}
+		points={data.points}
+		currentMemberId={data.currentMember.id}
+		range={data.range}
+	/>
 
-		<!-- A month somebody paged into that turned out to hold nothing (its
-			 completions belonged to a housemate who has since left). The window
-			 has to account for itself before offering another one. -->
-		{#if data.feed.days.length === 0}
-			<p class="quiet">{m.tasks.historyScreen.emptyStretch}</p>
-		{/if}
-
-		{#if data.feed.older}
-			{@const older = data.feed.older}
-			<!-- A link, not a fetch: the window lives in the URL, so this works
-				 with no JavaScript and survives a refresh. `noscroll` keeps the
-				 button under your thumb instead of jumping back to the podium. -->
-			<Button variant="secondary" href="?from={older.from}" data-sveltekit-noscroll>
-				{m.tasks.historyScreen.showMonth(older.label)}
-			</Button>
-		{/if}
-	</div>
-{/if}
+	<a class="all" href="/tasks/history/all">
+		<span>{m.tasks.allCompleted}</span>
+		<ChevronRight size={16} strokeWidth={2} aria-hidden="true" />
+	</a>
+</div>
 
 <style>
 	.view {
 		margin-bottom: 22px;
 	}
 
-	.feed {
-		margin-top: 22px;
+	.cards {
+		display: flex;
+		flex-direction: column;
+		gap: 16px;
 	}
 
-	section {
-		margin-bottom: 18px;
+	.all {
+		display: flex;
+		align-items: center;
+		justify-content: center;
+		gap: 8px;
+		padding: 16px;
+		border-radius: var(--r-block);
+		background: var(--sage-tint);
+		font-size: 15px;
+		font-weight: 600;
+		color: var(--sage-deep);
 	}
 
-	h2 {
-		margin: 0 4px 10px;
-		font-family: var(--font-body);
-		font-size: 11px;
-		font-weight: 700;
-		letter-spacing: 0.12em;
-		text-transform: uppercase;
-		color: var(--text-5);
-	}
-
-	.quiet {
-		margin: 0 4px 18px;
-		font-size: 13.5px;
-		color: var(--text-4);
-	}
-
-	.nothing {
-		margin-top: 30px;
+	.all:active {
+		background: var(--sage-row);
 	}
 </style>

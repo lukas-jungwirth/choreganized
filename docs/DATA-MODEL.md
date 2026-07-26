@@ -119,18 +119,23 @@ occurrence changes (done, skip, snooze, edit of due date).
 
 **Completion algorithm** (single transaction; service `completeTask`):
 
-1. Insert `task_completions` (snapshot name, points, action `'done'`, member = completer).
+1. Insert `task_completions` (snapshot name, points, action `'done'`, member = the credited
+   **doer** — the tapper, or the assignee when the task was someone else's and marked done on
+   their behalf via the "who did it?" choice → SPEC §5.4, DECISIONS #116).
 2. If recurring: `dueDate = addInterval(today, recurInterval, recurUnit)` (date-fns `addWeeks`/
    `addMonths`/`addDays` on the calendar date — _today-based_, not dueDate-based, so an overdue
    weekly task completed today is next due in a week, matching [4d] "Next due Aug 14").
-   If `rotate`: assignee ← next member by `joinedAt` order (wrapping, skipping departed).
-   Reset both reminder flags to NULL.
+   If `rotate`: assignee ← the member after **the doer** in `joinedAt` order (wrapping, skipping
+   departed) — so doing a housemate's turn hands the next one back to them. Reset both reminder
+   flags to NULL.
 3. If one-off: delete the task row (history row remains).
 4. Return prior state `{dueDate, assigneeMemberId, flags}` + `completionId` for **Undo**, which
    reverts exactly that (delete completion; for one-offs re-insert the task row from the
    returned snapshot).
 
-**Skip** = same as done with `action 'skipped'`, `points 0`, not shown in the history feed.
+**Skip** = same as done with `action 'skipped'`, `points 0`, credited to the tapper, not shown
+in the history feed. Its rotation advances from the **assignee** (a skip is nobody's doing), not
+from whoever tapped.
 
 ### `task_completions`
 

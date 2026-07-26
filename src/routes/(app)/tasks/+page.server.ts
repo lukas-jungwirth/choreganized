@@ -12,13 +12,14 @@ import { requireMember } from '$lib/server/guards';
 import { getHousehold, listMembers } from '$lib/server/services/household';
 import {
 	completeTask,
+	countDoneSince,
 	createTask,
 	deleteTask,
 	getTaskList,
+	hasCompletions,
 	memberStanding,
 	monthPointsByMember,
 	reassignTask,
-	recentCompletions,
 	setAway,
 	skipTask,
 	snoozeTask,
@@ -28,25 +29,30 @@ import {
 	type TaskInput,
 	type TaskSnapshot
 } from '$lib/server/services/tasks';
-import { isCalendarDate, todayIn } from '$lib/utils/dates';
+import { isCalendarDate, startOfWeek, todayIn, zonedStartOfDay } from '$lib/utils/dates';
 import { DEFAULT_POINTS, TASK_NAME_MAX, isRecurUnit } from '$lib/utils/tasks';
 import type { Actions, PageServerLoad } from './$types';
 
-/** How many completions the "Recent history" preview shows [05]. */
-const HISTORY_PREVIEW = 3;
-
 export const load: PageServerLoad = async (event) => {
 	const { householdId } = requireMember(event);
-	// The clock, the roster and `today` all come from the layout, so the tiles,
+	// The clock, the roster and `today` all come from the layout, so the list,
 	// the sections and the tab badge are answering the same question.
 	const { household, today } = await event.parent();
 	const context: TaskContext = { today, timezone: household.timezone, locale: event.locals.locale };
 
+	// The summary link that replaced the recent-history preview [05]: how many the
+	// household has ticked off since Monday, and whether there's any history at all
+	// to reach for (→ SPEC §5.8). Anything done this week already proves history,
+	// so only ask the DB again when the week is empty.
+	const doneThisWeek = countDoneSince(
+		householdId,
+		zonedStartOfDay(startOfWeek(today), household.timezone)
+	);
+
 	return {
 		list: getTaskList(householdId, context),
-		/** Month points by member id; the tiles read it against the roster. */
-		points: Object.fromEntries(monthPointsByMember(householdId, context)),
-		history: recentCompletions(householdId, context, HISTORY_PREVIEW)
+		doneThisWeek,
+		hasHistory: doneThisWeek > 0 || hasCompletions(householdId)
 	};
 };
 
@@ -202,7 +208,12 @@ export const actions: Actions = {
 		const form = await event.request.formData();
 		const context = clockOf(event, householdId);
 
-		const completion = completeTask(householdId, readId(form), member.id, context.today);
+		// Who did it: the tapping member, unless the "who did it?" choice credited
+		// someone else — ticking off a task that was assigned to them (→ SPEC §5.4).
+		// An unknown id makes `completeTask` return null, i.e. the 404 below.
+		const creditMemberId = String(form.get('creditMemberId') ?? '') || member.id;
+
+		const completion = completeTask(householdId, readId(form), creditMemberId, context.today);
 		// Somebody else finished it while this screen was open.
 		if (!completion) {
 			return fail(404, { error: catalog(event.locals.locale).errors.tasks.gone });
@@ -211,8 +222,9 @@ export const actions: Actions = {
 		return {
 			completed: {
 				completion,
+				// The celebration is the doer's — their points, their standings line.
 				standing: memberStanding(
-					member.id,
+					creditMemberId,
 					listMembers(householdId),
 					monthPointsByMember(householdId, context)
 				)

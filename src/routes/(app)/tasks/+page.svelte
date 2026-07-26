@@ -3,19 +3,18 @@
 	it's worth.
 
 	The screen is one list in five moods (overdue · today · upcoming · paused ·
-	undated), a points tile per housemate, and four sheets hanging off it: new
-	/ edit [3b], detail [4b], snooze [4c] and the celebration [4d]. All four are
-	state rather than routes (→ DECISIONS #17), and each is mounted only while
-	it's open, which is what resets its form.
+	undated), a summary link across to History [8a], and the sheets hanging off it:
+	new / edit [3b], detail [4b], snooze [4c], the "who did it?" choice and the
+	celebration [4d]. Each is state rather than a route (→ DECISIONS #17), mounted
+	only while it's open, which is what resets its form.
 -->
 <script lang="ts">
 	import { enhance } from '$app/forms';
 	import ChecklistIcon from '$lib/components/icons/ChecklistIcon.svelte';
 	import PageHeader from '$lib/components/shell/PageHeader.svelte';
-	import HistoryPreview from '$lib/components/tasks/HistoryPreview.svelte';
-	import PointsTile from '$lib/components/tasks/PointsTile.svelte';
 	import SnoozeSheet from '$lib/components/tasks/SnoozeSheet.svelte';
 	import TaskDetailSheet from '$lib/components/tasks/TaskDetailSheet.svelte';
+	import TaskDoneChoiceModal from '$lib/components/tasks/TaskDoneChoiceModal.svelte';
 	import TaskDoneModal from '$lib/components/tasks/TaskDoneModal.svelte';
 	import TaskFormSheet from '$lib/components/tasks/TaskFormSheet.svelte';
 	import TaskRow from '$lib/components/tasks/TaskRow.svelte';
@@ -28,6 +27,8 @@
 	import type { CompletionResult, Standing, TaskListItem } from '$lib/server/services/tasks';
 	import { STARTERS } from '$lib/utils/tasks';
 	import type { SubmitFunction } from '@sveltejs/kit';
+	import Check from '@lucide/svelte/icons/check';
+	import ChevronRight from '@lucide/svelte/icons/chevron-right';
 	import Plus from '@lucide/svelte/icons/plus';
 	import Send from '@lucide/svelte/icons/send';
 	import { SvelteSet } from 'svelte/reactivity';
@@ -45,22 +46,31 @@
 
 	let sheet = $state<Sheet | null>(null);
 	let done = $state<{ completion: CompletionResult; standing: Standing } | null>(null);
+	/** The task awaiting a "who did it?" answer — someone else's, ticked off [4d]. */
+	let choice = $state<TaskListItem | null>(null);
 
 	/** Ticked but not yet confirmed — the circle fills before the server agrees. */
 	const pending = new SvelteSet<string>();
 
 	const empty = $derived(data.list.total === 0);
 	/** A brand-new household gets [7f] and nothing else; anything else gets the chrome. */
-	const furnished = $derived(!empty || data.history.length > 0);
+	const furnished = $derived(!empty || data.hasHistory);
 
 	const away = $derived(
 		data.members.filter((member) => member.awayUntil !== null && member.awayUntil >= data.today)
 	);
 
 	const view = $derived([
-		{ value: 'todo', label: m.tasks.view.todo(data.list.total), href: '/tasks' },
+		{ value: 'todo', label: m.tasks.view.todo, href: '/tasks' },
 		{ value: 'history', label: m.tasks.view.history, href: '/tasks/history' }
 	]);
+
+	/** The summary link's line: how much got done this week, and the way through. */
+	const summaryLabel = $derived(
+		data.doneThisWeek > 0
+			? `${m.tasks.summary.doneThisWeek(data.doneThisWeek)} · ${m.tasks.summary.seeHistory}`
+			: m.tasks.summary.seeHistory
+	);
 
 	/**
 	 * The completion handler every check circle and the detail sheet's CTA share
@@ -79,8 +89,10 @@
 				const completed = result.data?.completed as typeof done;
 				if (!completed) return;
 
-				// The task is finished with; the celebration takes the screen.
+				// The task is finished with; the celebration takes the screen — over
+				// whichever surface raised it (a row, the detail sheet, or the choice).
 				sheet = null;
+				choice = null;
 				done = completed;
 			};
 		};
@@ -100,16 +112,6 @@
 <PageHeader title={m.tasks.title} />
 
 {#if furnished}
-	<div class="tiles no-scrollbar">
-		{#each data.members as member (member.id)}
-			<PointsTile
-				displayName={member.displayName}
-				color={member.color}
-				points={data.points[member.id] ?? 0}
-			/>
-		{/each}
-	</div>
-
 	<div class="view">
 		<SegmentedControl label={m.tasks.view.label} value="todo" options={view} />
 	</div>
@@ -187,6 +189,7 @@
 						currentMemberId={data.currentMember.id}
 						pending={pending.has(task.id)}
 						complete={complete(task)}
+						onchoose={() => (choice = task)}
 						onopen={() => (sheet = { kind: 'detail', task })}
 					/>
 				{/each}
@@ -195,8 +198,14 @@
 	{/each}
 {/if}
 
-{#if data.history.length > 0}
-	<HistoryPreview entries={data.history} />
+{#if furnished}
+	<!-- Replaces the recent-history preview [05]: how much got done lately, and the
+		 way through to the full History screen. -->
+	<a class="summary" href="/tasks/history">
+		<Check size={17} strokeWidth={2.4} aria-hidden="true" />
+		<span class="summary-text">{summaryLabel}</span>
+		<ChevronRight size={16} strokeWidth={2} aria-hidden="true" />
+	</a>
 {/if}
 
 {#if !empty}
@@ -220,6 +229,7 @@
 		today={data.today}
 		currentMemberId={data.currentMember.id}
 		complete={complete(task)}
+		onchoose={() => (choice = task)}
 		onsnooze={() => (sheet = { kind: 'snooze', task })}
 		onedit={() => (sheet = { kind: 'form', task })}
 		onclose={() => (sheet = null)}
@@ -233,26 +243,53 @@
 	/>
 {/if}
 
+{#if choice}
+	{@const task = choice}
+	<TaskDoneChoiceModal
+		{task}
+		currentMemberId={data.currentMember.id}
+		complete={complete(task)}
+		onclose={() => (choice = null)}
+	/>
+{/if}
+
 {#if done}
 	<TaskDoneModal
 		completion={done.completion}
 		standing={done.standing}
-		color={data.currentMember.color}
 		onclose={() => (done = null)}
 	/>
 {/if}
 
 <style>
-	.tiles {
-		display: flex;
-		gap: 10px;
-		/* Two tiles fill the row; a third housemate scrolls rather than squeezing. */
-		overflow-x: auto;
-		margin-bottom: 18px;
-	}
-
 	.view {
 		margin-bottom: 20px;
+	}
+
+	/* The link across to History that replaced the recent-history preview [05]. */
+	.summary {
+		display: flex;
+		align-items: center;
+		justify-content: center;
+		gap: 8px;
+		margin-top: 22px;
+		padding: 15px;
+		border-radius: var(--r-block);
+		background: var(--sage-tint);
+		font-size: 14px;
+		font-weight: 600;
+		color: var(--sage-deep);
+	}
+
+	.summary:active {
+		background: var(--sage-row);
+	}
+
+	.summary-text {
+		min-width: 0;
+		overflow: hidden;
+		text-overflow: ellipsis;
+		white-space: nowrap;
 	}
 
 	.banner {

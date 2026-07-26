@@ -216,8 +216,9 @@ export const en = {
 	 * numbers (5/10/20/40 points, every-2-weeks), this keeps their names.
 	 */
 	task: {
-		/** Effort → points [3b], the canonical four (→ DECISIONS #2). */
+		/** Effort → points [3b], the canonical four plus None · 0 (→ DECISIONS #2, #115). */
 		efforts: {
+			none: 'None',
 			small: 'Small',
 			medium: 'Medium',
 			large: 'Large',
@@ -492,8 +493,17 @@ export const en = {
 		/** The segmented control above the list. */
 		view: {
 			label: 'Task view',
-			todo: (count: number) => `To do · ${count}`,
+			todo: 'To do',
 			history: 'History'
+		},
+
+		/**
+		 * The To do → History link that took over from the recent-history preview
+		 * [05]: how much got done lately, and the way through to the rest.
+		 */
+		summary: {
+			doneThisWeek: (count: number) => `${count} done this week`,
+			seeHistory: 'See history'
 		},
 
 		/** One per housemate on holiday [4a] — an info banner, never a warning. */
@@ -568,6 +578,23 @@ export const en = {
 			undoFailed: 'Couldn’t undo that one.'
 		},
 
+		/**
+		 * The "who did it?" choice [4d] — shown only when you tick off a task that
+		 * was assigned to somebody else (→ SPEC §5.4). Whoever did it gets the
+		 * points, and for an alternating task the next turn goes to the other.
+		 */
+		choice: {
+			/** The dialog's a11y name. */
+			label: 'Who did it?',
+			/** The visible heading. */
+			title: 'Who did it?',
+			assigned: (name: string) => `This one’s assigned to ${name}.`,
+			/** Credit the tapping member. */
+			mine: 'I did it',
+			/** Credit the assignee. */
+			forThem: (name: string) => `${name} did it`
+		},
+
 		/** Snooze / reschedule [4c]. */
 		snooze: {
 			title: 'Snooze until…',
@@ -612,22 +639,38 @@ export const en = {
 			emptyTitle: 'Nothing done yet',
 			emptyCopy:
 				'Tick a task off and it lands here — what it was, who did it, and what it was worth.',
-			backToList: 'Back to the list',
+			backToHistory: 'Back to history',
 			/** A month somebody paged into that turned out to hold nothing. */
 			emptyStretch: 'Nothing was completed in this stretch.',
 			showMonth: (month: string) => `Show ${month}`
 		},
 
-		/** The history block under the to-do list [05]. */
-		history: {
-			recent: 'Recent history',
-			/*
-			 * The real job of the block: a recurring task that vanished from To do
-			 * isn't gone, it has a next date. The no-break space keeps "To do" whole.
-			 */
-			explainer:
-				'Completed tasks are logged here. Recurring ones reappear in To\u00A0do on their next date.'
-		}
+		/** History \u2192 "How chores are split" [8a] (\u2192 SPEC \u00A75.8). */
+		split: {
+			title: 'How chores are split',
+			subtitle: "Each person's share of the scheduled chore load.",
+			/** No recurring chores yet \u2014 nothing to divide up. */
+			empty: 'Add a recurring chore to see how the plan splits.'
+		},
+
+		/** History \u2192 the points board and its timeframe toggle [8a]. */
+		pointsBoard: {
+			title: 'Points',
+			together: (total: number) => `${total} together`,
+			/** Names the timeframe toggle for a screen reader. */
+			rangeLabel: 'Timeframe',
+			ranges: {
+				'30d': '30 days',
+				'3m': '3 months',
+				year: 'Year',
+				all: 'All time'
+			},
+			/** The marker next to the reader's own row. */
+			you: 'you'
+		},
+
+		/** History \u2192 the link down to the full completed feed [8a]. */
+		allCompleted: 'All completed chores'
 	},
 
 	/* ── Cooking [04] [3d] [7a] ────────────────────────────────────────────── */
