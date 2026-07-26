@@ -9,11 +9,10 @@
 	import PageHeader from '$lib/components/shell/PageHeader.svelte';
 	import BoughtSection from '$lib/components/shopping/BoughtSection.svelte';
 	import QuickAdd from '$lib/components/shopping/QuickAdd.svelte';
+	import ShoppingGroup from '$lib/components/shopping/ShoppingGroup.svelte';
 	import ShoppingItemSheet from '$lib/components/shopping/ShoppingItemSheet.svelte';
-	import ShoppingRow from '$lib/components/shopping/ShoppingRow.svelte';
 	import UndoBar from '$lib/components/shopping/UndoBar.svelte';
 	import Button from '$lib/components/ui/Button.svelte';
-	import Card from '$lib/components/ui/Card.svelte';
 	import EmptyState from '$lib/components/ui/EmptyState.svelte';
 	import { messages } from '$lib/i18n';
 	import type { ShoppingListItem } from '$lib/server/services/shopping';
@@ -148,18 +147,7 @@
 	</div>
 {:else}
 	{#each list.groups as group (group.storeId ?? 'other')}
-		<section class="group">
-			<h2 class="group-name">
-				<MapPin size={13} strokeWidth={2} aria-hidden="true" />{group.name ?? m.shopping.other}
-			</h2>
-			<Card radius="md">
-				<ul class="rows">
-					{#each group.items as item (item.id)}
-						<ShoppingRow {item} checked={false} toggle={toggle(item)} onedit={() => edit(item)} />
-					{/each}
-				</ul>
-			</Card>
-		</section>
+		<ShoppingGroup {group} {toggle} onedit={edit} />
 	{/each}
 
 	{#if list.bought.length > 0}
@@ -212,31 +200,5 @@
 		padding: 13px 22px;
 		border-radius: var(--r-input);
 		font-size: 15px;
-	}
-
-	.group {
-		margin-bottom: 18px;
-	}
-
-	.group-name {
-		display: flex;
-		align-items: center;
-		gap: 6px;
-		margin: 0 4px 8px;
-		font-family: var(--font-body);
-		font-size: 11px;
-		font-weight: 700;
-		letter-spacing: 0.12em;
-		text-transform: uppercase;
-		color: var(--text-5);
-	}
-
-	.rows {
-		/* Keeps a pressed row's tint inside the card's corners. */
-		overflow: hidden;
-		border-radius: inherit;
-		margin: 0;
-		padding: 0;
-		list-style: none;
 	}
 </style>

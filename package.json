@@ -45,6 +45,7 @@
 		"drizzle-orm": "^0.45.2",
 		"node-cron": "^4.6.0",
 		"sharp": "^0.35.3",
+		"svelte-dnd-action": "^0.9.74",
 		"web-push": "^3.6.7"
 	}
 }

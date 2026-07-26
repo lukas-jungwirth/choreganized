@@ -59,6 +59,12 @@ export type ShoppingListItem = {
 	 */
 	checkedAt: number | null;
 	createdAt: number;
+	/**
+	 * Manual walking order within the store group, low first. Crosses to the
+	 * browser because it re-sorts the group itself while a drag is in flight
+	 * (→ `compareOpen`).
+	 */
+	sortOrder: number;
 	/** Null once the housemate who added it has left. */
 	addedBy: { displayName: string; color: string } | null;
 };
@@ -88,6 +94,7 @@ export function getShoppingList(householdId: string): ShoppingListItem[] {
 				storeId: shoppingItems.storeId,
 				checkedAt: shoppingItems.checkedAt,
 				createdAt: shoppingItems.createdAt,
+				sortOrder: shoppingItems.sortOrder,
 				addedByName: members.displayName,
 				addedByColor: members.color
 			})
@@ -106,6 +113,7 @@ export function getShoppingList(householdId: string): ShoppingListItem[] {
 				storeId: row.storeId,
 				checkedAt: row.checkedAt?.getTime() ?? null,
 				createdAt: row.createdAt.getTime(),
+				sortOrder: row.sortOrder,
 				addedBy:
 					row.addedByName && row.addedByColor
 						? { displayName: row.addedByName, color: row.addedByColor }
@@ -283,12 +291,39 @@ function rememberName(tx: Transaction, householdId: string, name: string): void 
 		.run();
 }
 
+/**
+ * The next free slot at the end of a store group's manual order — the item
+ * version of `createStore`'s `coalesce(max, -1) + 1`. "Other" (null store) is a
+ * group like any other, so it needs `isNull`, not `eq(null)`.
+ */
+function nextItemSortOrder(tx: Transaction, householdId: string, storeId: string | null): number {
+	const row = tx
+		.select({ next: sql<number>`coalesce(max(${shoppingItems.sortOrder}), -1) + 1` })
+		.from(shoppingItems)
+		.where(
+			and(
+				eq(shoppingItems.householdId, householdId),
+				storeId === null ? isNull(shoppingItems.storeId) : eq(shoppingItems.storeId, storeId)
+			)
+		)
+		.get();
+
+	return row?.next ?? 0;
+}
+
 export function addItem(householdId: string, memberId: string, input: AddItemInput): ShoppingItem {
 	const item = db.transaction((tx) => {
 		const values = normalize(householdId, input);
 		const row = tx
 			.insert(shoppingItems)
-			.values({ householdId, ...values, addedByMemberId: memberId })
+			.values({
+				householdId,
+				...values,
+				addedByMemberId: memberId,
+				// A new item lands at the end of the group it joins, where the eye
+				// last left off (→ SPEC §3.1).
+				sortOrder: nextItemSortOrder(tx, householdId, values.storeId)
+			})
 			.returning()
 			.get();
 
@@ -387,11 +422,11 @@ export function addIngredients(
 		);
 
 		const rows: (typeof shoppingItems.$inferInsert)[] = [];
-		// A batch insert would otherwise stamp every row with the same
-		// millisecond, and the list's tiebreaker after `createdAt` is the (random)
-		// id — a recipe's ingredients would land shuffled. One ms apart keeps them
-		// in the order the recipe lists them.
-		const stamp = Date.now();
+		// One store for the whole batch, so the manual order is a single run
+		// appended to that group — the recipe's own order, kept by `sortOrder`
+		// (which the list sorts on before `createdAt`, so a shared insert stamp is
+		// fine now).
+		const start = nextItemSortOrder(tx, householdId, resolveStoreId(householdId, storeId));
 
 		for (const ingredient of ingredients) {
 			const values = normalize(householdId, { ...ingredient, storeId });
@@ -404,7 +439,7 @@ export function addIngredients(
 				householdId,
 				...values,
 				addedByMemberId: memberId,
-				createdAt: new Date(stamp + rows.length)
+				sortOrder: start + rows.length
 			});
 		}
 
@@ -433,6 +468,63 @@ export function purgeCheckedItems(householdId: string, before: Date): number {
 		.delete(shoppingItems)
 		.where(and(eq(shoppingItems.householdId, householdId), lt(shoppingItems.checkedAt, before)))
 		.run().changes;
+}
+
+/**
+ * Persist a store group's manual walking order (drag-to-reorder, → SPEC §3.1).
+ *
+ * The client hands us the ids it thinks the group holds, in the order it just
+ * dropped them. We trust the *order* but not the *set*: only ids that are this
+ * household's, in this store, and still open are renumbered 0…n−1, and any open
+ * item the client didn't mention (added on another device mid-drag) keeps
+ * trailing in a stable spot. So a stale tab can neither drop rows off the list
+ * nor pull another group's item into this one.
+ */
+export function reorderItems(
+	householdId: string,
+	storeId: string | null,
+	orderedIds: string[]
+): boolean {
+	return db.transaction((tx) => {
+		const inGroup = tx
+			.select({ id: shoppingItems.id })
+			.from(shoppingItems)
+			.where(
+				and(
+					eq(shoppingItems.householdId, householdId),
+					storeId === null ? isNull(shoppingItems.storeId) : eq(shoppingItems.storeId, storeId),
+					isNull(shoppingItems.checkedAt)
+				)
+			)
+			.orderBy(asc(shoppingItems.sortOrder), asc(shoppingItems.createdAt), asc(shoppingItems.id))
+			.all()
+			.map((row) => row.id);
+
+		const known = new Set(inGroup);
+		const seen = new Set<string>();
+		const ordered: string[] = [];
+		for (const id of orderedIds) {
+			if (known.has(id) && !seen.has(id)) {
+				seen.add(id);
+				ordered.push(id);
+			}
+		}
+		// Nothing the client dropped covers the rest ⇒ keep it, in its old order, last.
+		for (const id of inGroup) if (!seen.has(id)) ordered.push(id);
+
+		writeItemOrder(tx, householdId, ordered);
+		return true;
+	});
+}
+
+/** Writes 0…n−1 down the given item ids. Mirrors stores' `writeOrder`. */
+function writeItemOrder(tx: Transaction, householdId: string, orderedIds: string[]): void {
+	orderedIds.forEach((id, sortOrder) => {
+		tx.update(shoppingItems)
+			.set({ sortOrder })
+			.where(and(eq(shoppingItems.id, id), eq(shoppingItems.householdId, householdId)))
+			.run();
+	});
 }
 
 /* ── Stores ───────────────────────────────────────────────────────────────── */

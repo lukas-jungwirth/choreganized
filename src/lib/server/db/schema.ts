@@ -210,6 +210,13 @@ export const shoppingItems = sqliteTable(
 		/** NULL storeId groups under virtual "Other". */
 		storeId: text('store_id').references(() => stores.id, { onDelete: 'set null' }),
 		name: text('name').notNull(),
+		/**
+		 * Manual walking order within a store group (drag-to-reorder). Contiguous
+		 * from 0 per (household, store), the way `stores.sortOrder` is per household;
+		 * `createdAt`/`id` stay the tiebreakers so a never-reordered list keeps the
+		 * order it was added in (→ `utils/shopping` `compareOpen`).
+		 */
+		sortOrder: integer('sort_order').notNull().default(0),
 		/** Quantity/unit optional & freeform-parsed ("×6", "2 L"). */
 		quantity: real('quantity'),
 		unit: text('unit'),

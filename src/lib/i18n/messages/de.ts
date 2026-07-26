@@ -269,7 +269,8 @@ export const de: Messages = {
 		row: {
 			check: (item: string) => `${item} abhaken`,
 			uncheck: (item: string) => `${item} zurück auf die Liste`,
-			edit: (item: string) => `${item} bearbeiten`
+			edit: (item: string) => `${item} bearbeiten`,
+			reorder: (item: string) => `${item} verschieben`
 		},
 
 		undo: {

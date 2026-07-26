@@ -19,7 +19,7 @@ const STORES = [
 
 /** A list item with only the fields the split cares about. */
 function item(id: string, fields: Partial<OrderedItem> = {}): OrderedItem {
-	return { id, storeId: 'grocery', checkedAt: null, createdAt: 1000, ...fields };
+	return { id, storeId: 'grocery', checkedAt: null, createdAt: 1000, sortOrder: 0, ...fields };
 }
 
 describe('splitList', () => {
@@ -57,6 +57,24 @@ describe('splitList', () => {
 		assert.deepEqual(
 			groups[0].items.map((i) => i.id),
 			['a', 'b1', 'b2', 'c']
+		);
+	});
+
+	it('follows the manual order before the order things were added', () => {
+		// A dragged list: sortOrder leads, so the newest item can sit first and the
+		// oldest last, against what createdAt alone would say.
+		const { groups } = splitList(
+			[
+				item('old', { createdAt: 1000, sortOrder: 2 }),
+				item('new', { createdAt: 3000, sortOrder: 0 }),
+				item('mid', { createdAt: 2000, sortOrder: 1 })
+			],
+			STORES
+		);
+
+		assert.deepEqual(
+			groups[0].items.map((i) => i.id),
+			['new', 'mid', 'old']
 		);
 	});
 

@@ -978,6 +978,35 @@ reload`) so it can't silently regress.
        all-time, default 3 months — chosen via a URL param (`?range=`) so the toggle is a link
        that survives refresh and needs no JavaScript. `monthPointsByMember` now delegates to a
        ranged `pointsByMemberSince`.
+118. **Shopping items drag-to-reorder within their store group** (→ SPEC §3.1), and it's the
+     app's first real drag — #44 shipped arrow buttons for *stores* and left "a full
+     drag-to-reorder can build on `writeOrder` the same way when it lands"; for items it
+     lands as drag, because a shopping list is walked aisle by aisle and a per-row up/down
+     pair is a poor fit for a long group. New column `shopping_items.sort_order` mirrors
+     `stores.sort_order` (contiguous from 0 per household **and store**); migration `0007`
+     backfills each item's rank from the order it was already shown in (`created_at`, `id`),
+     so an un-dragged list looks unchanged. `compareOpen` now leads on `sort_order` — all-0
+     until a drag, so `created_at` still decides an untouched group. Service `reorderItems`
+     is `moveStore`'s shape (`writeItemOrder` = stores' `writeOrder`), trusting the client's
+     *order* but not its *set*: only this household's open items in that store are renumbered,
+     so a stale tab can't drop rows or pull in another group's item. `addItem`/`addIngredients`
+     append at the group's `max + 1` (the `created_at`-stagger hack in `addIngredients` is
+     gone — `sort_order` governs now).
+     - **New dependency: `svelte-dnd-action`** (`dragHandleZone` + `dragHandle`). Chosen over
+       a hand-rolled pointer implementation for touch long-press, edge auto-scroll and
+       keyboard/`aria` — a mobile list dragged with a finger needs all three, and they are the
+       fragile part to write by hand. A **type per group** (the store id, or a token for
+       "Other") keeps a drag inside its own group: dropping never reassigns a store — that
+       stays in the edit sheet.
+     - **A grip handle, not whole-row drag**: the row already has two tap targets (check off,
+       open sheet), so the drag lives on its own `GripVertical` handle rather than fighting
+       them for the touch. `ShoppingRow` gains a `reorderable` prop; **"recently bought" is not
+       reorderable** — it's ordered by when things were ticked (`compareBought`), not by hand.
+     - **Optimistic, like a tick**: `ShoppingGroup` owns a local copy of its items that
+       `dndzone` reorders live, posts the result through a hidden `?/reorder` `use:enhance`
+       form, and reconciles against the page's list — the page still decides membership (a
+       tick pulls a row into "recently bought", quick-add appends one) — on everything except
+       the drag in hand and the order still saving.
 
 ## Open questions (non-blocking, defaults chosen)
 
