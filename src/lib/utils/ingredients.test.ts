@@ -15,7 +15,9 @@ import {
 	composeIngredientLine,
 	formatIngredient,
 	parseIngredient,
-	RECIPE_UNITS
+	RECIPE_UNITS,
+	scaleIngredients,
+	servingsFactor
 } from './ingredients.ts';
 
 describe('formatIngredient → parseIngredient', () => {
@@ -106,5 +108,83 @@ describe('composeIngredientLine', () => {
 			unit: null,
 			name: 'up'
 		});
+	});
+});
+
+describe('servingsFactor', () => {
+	it('is the ratio of what you are cooking to what it was written for', () => {
+		assert.equal(servingsFactor(4, 6), 1.5);
+		assert.equal(servingsFactor(4, 2), 0.5);
+		assert.equal(servingsFactor(4, 4), 1);
+	});
+
+	it('is 1 when there is nothing to scale from', () => {
+		// Half of an unknown is unknown — the screens hide the control instead.
+		assert.equal(servingsFactor(null, 6), 1);
+		assert.equal(servingsFactor(0, 6), 1);
+	});
+
+	it('is 1 for a number of people nobody can cook for', () => {
+		assert.equal(servingsFactor(4, 0), 1);
+		assert.equal(servingsFactor(4, -2), 1);
+		assert.equal(servingsFactor(4, Number.NaN), 1);
+	});
+});
+
+describe('scaleIngredients', () => {
+	const RECIPE = [
+		{ name: 'Pasta', quantity: 400, unit: 'g' },
+		{ name: 'Cream', quantity: 200, unit: 'ml' },
+		{ name: 'Salt', quantity: null, unit: null }
+	];
+
+	it('writes the amounts out for the new number of people', () => {
+		assert.deepEqual(scaleIngredients(RECIPE, servingsFactor(4, 6)), [
+			{ name: 'Pasta', quantity: 600, unit: 'g' },
+			{ name: 'Cream', quantity: 300, unit: 'ml' },
+			// No number in it to multiply — "Salt" is still "Salt" for six.
+			{ name: 'Salt', quantity: null, unit: null }
+		]);
+	});
+
+	it('leaves names and units alone', () => {
+		const [pasta] = scaleIngredients(RECIPE, 0.5);
+		assert.equal(pasta.name, 'Pasta');
+		assert.equal(pasta.unit, 'g');
+		assert.equal(pasta.quantity, 200);
+	});
+
+	it('hands back the same rows when there is nothing to do', () => {
+		assert.equal(scaleIngredients(RECIPE, 1), RECIPE);
+	});
+
+	it('keeps the fraction where the fraction is the amount', () => {
+		// Two thirds of an egg, half a teaspoon — these are instructions.
+		const [egg] = scaleIngredients([{ quantity: 1, unit: 'pcs' }], servingsFactor(3, 2));
+		assert.equal(egg.quantity, 0.67);
+
+		const [tsp] = scaleIngredients([{ quantity: 1, unit: 'tsp' }], servingsFactor(4, 6));
+		assert.equal(tsp.quantity, 1.5);
+	});
+
+	it('rounds a weight to something a scale can weigh', () => {
+		// "187½ g mushrooms" is precision no kitchen has; 188 g is what you'd do.
+		const [mushrooms] = scaleIngredients([{ quantity: 250, unit: 'g' }], servingsFactor(4, 3));
+		assert.equal(mushrooms.quantity, 188);
+
+		const [butter] = scaleIngredients([{ quantity: 30, unit: 'g' }], servingsFactor(4, 3));
+		assert.equal(butter.quantity, 23);
+	});
+
+	it('never rounds an amount away to nothing', () => {
+		// 0.0025 would store as null, and a row that loses its amount reads as
+		// "some", which is a different instruction than "a very little".
+		const [pinch] = scaleIngredients([{ quantity: 0.01, unit: 'tsp' }], 0.25);
+		assert.equal(pinch.quantity, 0.01);
+	});
+
+	it('does not invent an amount for a line that never had one', () => {
+		const [salt] = scaleIngredients([{ quantity: null, unit: null }], 4);
+		assert.equal(salt.quantity, null);
 	});
 });

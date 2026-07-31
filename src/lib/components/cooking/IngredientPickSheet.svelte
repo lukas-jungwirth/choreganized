@@ -13,24 +13,31 @@
 -->
 <script lang="ts">
 	import { enhance } from '$app/forms';
+	import ServingsField from '$lib/components/cooking/ServingsField.svelte';
 	import BottomSheet from '$lib/components/ui/BottomSheet.svelte';
 	import Button from '$lib/components/ui/Button.svelte';
 	import CheckCircle from '$lib/components/ui/CheckCircle.svelte';
 	import { messages } from '$lib/i18n';
-	import type { IngredientPick } from '$lib/server/services/recipe-shopping';
+	import type { IngredientPick, IngredientPickRow } from '$lib/server/services/recipe-shopping';
+	import { scaleIngredients, servingsFactor } from '$lib/utils/ingredients';
+	import { planAdds, type PlannedAdd } from '$lib/utils/shopping';
 	import { untrack } from 'svelte';
 
 	type Props = {
 		pick: IngredientPick;
+		/** How many to open on — the recipe screen's `?serves=`, else as written. */
+		cookingFor?: number | null;
 		onclose: () => void;
 	};
 
-	let { pick, onclose }: Props = $props();
+	let { pick, cookingFor = null, onclose }: Props = $props();
 
 	const m = messages();
 
 	let open = $state(true);
 	let submitting = $state(false);
+	/** This form's own rejection — see MealPlanSheet for why not `$page.form`. */
+	let error = $state<string | undefined>();
 
 	/**
 	 * Seeded once from this opening's rows — `$state` on an object is a deep
@@ -40,16 +47,54 @@
 		untrack(() => Object.fromEntries(pick.rows.map((row) => [row.id, row.selected])))
 	);
 
+	/**
+	 * How many people tonight is for. Seeded from the screen that raised the
+	 * sheet and owned by the stepper afterwards; only offered at all when the
+	 * recipe recorded what it was written for (→ SPEC §4.5).
+	 */
+	let serves = $state<number | null>(untrack(() => cookingFor ?? pick.writtenFor));
+
 	$effect(() => {
 		if (!open) onclose();
 	});
 
-	const chosen = $derived(pick.rows.filter((row) => ticked[row.id]));
-	const allOn = $derived(chosen.length === pick.rows.length);
+	const factor = $derived(servingsFactor(pick.writtenFor, serves ?? 0));
+
+	/**
+	 * The rows as the list will receive them — the amounts written out for the
+	 * number of people on the stepper, which is what the server scales to as
+	 * well. Ticks are by id, so they survive a change of mind about the count.
+	 */
+	const rows = $derived(scaleIngredients(pick.rows, factor));
+	const chosen = $derived(rows.filter((row) => ticked[row.id]));
+	const allOn = $derived(chosen.length === rows.length);
 
 	function setAll(on: boolean) {
-		for (const row of pick.rows) ticked[row.id] = on;
+		for (const row of rows) ticked[row.id] = on;
 	}
+
+	/**
+	 * What each row would do to the list **as it is currently ticked** — the same
+	 * `planAdds` the server will run on submit, re-run here on every tap.
+	 *
+	 * It has to be the ticked set, not the whole recipe: a recipe that names
+	 * "Prise Pfeffer" twice plans the second occurrence on top of the first, so
+	 * a preview computed over all the rows promises "becomes 4" while the untick
+	 * above it means 3 will arrive. Rows that *aren't* ticked are planned one at
+	 * a time against the untouched list, which is exactly what they'd do if the
+	 * tick came back.
+	 */
+	const planned = $derived.by(() => {
+		const byRow = new Map<string, PlannedAdd>();
+		const plan = planAdds(pick.open, chosen);
+		chosen.forEach((row, index) => byRow.set(row.id, plan.rows[index]));
+
+		for (const row of rows) {
+			if (!byRow.has(row.id)) byRow.set(row.id, planAdds(pick.open, [row]).rows[0]);
+		}
+
+		return byRow;
+	});
 
 	/**
 	 * The quiet line under a name: why the row is unticked, and what ticking it
@@ -60,14 +105,14 @@
 	 * beside the point. A staple that would top up a row says both, because
 	 * otherwise it sits there unticked with an amount and no reason.
 	 */
-	function outcome(row: IngredientPick['rows'][number]): string {
-		const amount = m.units.amount(row.result.quantity, row.result.unit);
+	function outcome(row: IngredientPickRow, effect: PlannedAdd): string {
+		const amount = m.units.amount(effect.result.quantity, effect.result.unit);
 
 		return [
-			row.staple && row.effect !== 'have' ? m.cooking.pick.staple : null,
-			row.effect === 'have'
+			row.staple && effect.effect !== 'have' ? m.cooking.pick.staple : null,
+			effect.effect === 'have'
 				? m.cooking.pick.have(amount)
-				: row.effect === 'merge'
+				: effect.effect === 'merge'
 					? m.cooking.pick.merge(amount)
 					: null
 		]
@@ -87,26 +132,43 @@
 		action="?/addToList"
 		use:enhance={() => {
 			submitting = true;
+			error = undefined;
 			return async ({ result, update }) => {
 				await update({ reset: false });
 				submitting = false;
+				// The recipe can go while the sheet is up — a housemate deleting it
+				// answers 409, and a button that simply becomes clickable again is
+				// indistinguishable from a tap that didn't register.
+				if (result.type === 'failure') {
+					error = typeof result.data?.error === 'string' ? result.data.error : undefined;
+					return;
+				}
 				if (result.type === 'success') open = false;
 			};
 		}}
 	>
 		<input type="hidden" name="recipeId" value={pick.recipeId} />
 
+		{#if pick.writtenFor !== null}
+			<ServingsField
+				bind:value={serves}
+				writtenFor={pick.writtenFor}
+				name="cookingFor"
+				surface="field"
+			/>
+		{/if}
+
 		<div class="head">
-			<p class="count">{m.cooking.pick.chosen(chosen.length, pick.rows.length)}</p>
+			<p class="count">{m.cooking.pick.chosen(chosen.length, rows.length)}</p>
 			<button type="button" class="link" onclick={() => setAll(!allOn)}>
 				{allOn ? m.cooking.pick.none : m.cooking.pick.all}
 			</button>
 		</div>
 
 		<ul class="rows">
-			{#each pick.rows as row (row.id)}
+			{#each rows as row (row.id)}
 				{@const amount = m.units.amount(row.quantity, row.unit)}
-				{@const note = outcome(row)}
+				{@const note = outcome(row, planned.get(row.id)!)}
 				<li>
 					<label class="row" class:on={ticked[row.id]}>
 						<input
@@ -130,6 +192,8 @@
 				</li>
 			{/each}
 		</ul>
+
+		{#if error}<p class="error">{error}</p>{/if}
 
 		<Button type="submit" disabled={submitting || chosen.length === 0}>
 			{chosen.length === 0 ? m.cooking.pick.nothing : m.cooking.pick.submit(chosen.length)}
@@ -244,6 +308,13 @@
 		flex: none;
 		font-size: 13.5px;
 		color: var(--text-disabled);
+	}
+
+	.error {
+		margin: 0 0 12px;
+		padding: 0 4px;
+		font-size: 13px;
+		color: var(--danger-deep);
 	}
 
 	.on .amount {

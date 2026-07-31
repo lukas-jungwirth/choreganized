@@ -14,7 +14,7 @@
 import { fail, type Actions, type RequestEvent } from '@sveltejs/kit';
 import { catalog } from '$lib/i18n';
 import { isCalendarDate } from '$lib/utils/dates';
-import { readPlanForm } from '$lib/utils/recipes';
+import { readPlanForm, readServings } from '$lib/utils/recipes';
 import { requireMember } from './guards';
 import { planMeal, removeMeal } from './services/meals';
 import { addRecipeIngredients } from './services/recipe-shopping';
@@ -53,7 +53,8 @@ export const mealPlanActions = {
 		const shopping = addRecipeIngredients(householdId, member.id, {
 			recipeId: String(form.get('recipeId') ?? ''),
 			chosen: form.getAll('ingredientId').map(String),
-			offered: form.getAll('candidateId').map(String)
+			offered: form.getAll('candidateId').map(String),
+			cookingFor: readServings(form.get('cookingFor'))
 		});
 
 		if (!shopping) {

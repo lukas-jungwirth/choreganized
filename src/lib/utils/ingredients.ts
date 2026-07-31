@@ -255,6 +255,61 @@ export function formatIngredient(
 	return amount ? `${amount} ${ingredient.name}` : ingredient.name;
 }
 
+/* ── Cooking for a different number of people ─────────────────────────────── */
+
+/**
+ * How much of the written recipe tonight's dinner is (→ SPEC §4.5).
+ *
+ * `1` whenever there is nothing to scale *from*: a recipe that never recorded
+ * how many it serves can't be halved, because half of an unknown is unknown.
+ * That's also why the screens hide the control in that case rather than
+ * offering one that quietly does nothing.
+ */
+export function servingsFactor(writtenFor: number | null, cookingFor: number): number {
+	if (!writtenFor || writtenFor <= 0 || !Number.isFinite(cookingFor) || cookingFor <= 0) return 1;
+	return cookingFor / writtenFor;
+}
+
+/**
+ * The same ingredients written out for a different number of people. Names and
+ * units are untouched — six people need more grams of pasta, not different
+ * pasta — and a line with no amount ("Salt", "a splash of oil") stays exactly
+ * as written, because there is no number in it to double.
+ */
+export function scaleIngredients<T extends { quantity: number | null }>(
+	ingredients: T[],
+	factor: number
+): T[] {
+	if (factor === 1) return ingredients;
+	return ingredients.map((row) => ({ ...row, quantity: scaleQuantity(row.quantity, factor) }));
+}
+
+/**
+ * Where a scaled amount stops being a fraction and starts being a weight.
+ * Below ten, the fraction *is* the amount — half a teaspoon, half an onion,
+ * two thirds of an egg. At ten and above it's precision no kitchen scale can
+ * honour, and "187½ g mushrooms" reads worse than the 188 g anybody would
+ * actually weigh out.
+ */
+const WHOLE_FROM = 10;
+
+/**
+ * One amount, scaled and rounded to something a person can act on.
+ *
+ * The floor is the other half of that: a quarter of "0.02 tsp" rounds to
+ * nothing, and an ingredient that silently loses its amount reads as "some",
+ * which is a different instruction. Anything that was a number stays a number.
+ */
+function scaleQuantity(quantity: number | null, factor: number): number | null {
+	if (quantity === null || quantity <= 0) return quantity;
+
+	const scaled = quantity * factor;
+	if (scaled >= WHOLE_FROM) return Math.round(scaled);
+
+	// Two decimals below that — every real amount plus a third of a cup.
+	return Math.max(Math.round(scaled * 100) / 100, 0.01);
+}
+
 /**
  * "400", "1.5", "½", "1½" — fractions come back as the glyph they were typed
  * as, both because it's how recipes are written and because it round-trips:

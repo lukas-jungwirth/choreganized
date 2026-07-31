@@ -284,6 +284,12 @@ export type ShoppingAddNotice = {
 	actorMemberId: string;
 	/** How many items this one action put on the list. */
 	itemCount: number;
+	/**
+	 * How many rows it topped up instead of adding (→ `planAdds`). Only decides
+	 * the copy when nothing was added at all — a mixed batch is announced by what
+	 * is new, which is the part a housemate has to look for.
+	 */
+	toppedUpCount?: number;
 };
 
 /** "Max one per member per ~15 min" (→ SPEC §3.5). */
@@ -304,13 +310,19 @@ const lastShoppingNotice = new Map<string, number>();
  * member with `notifyShoppingUpdates` on.
  *
  * Fire-and-forget: called from `services/shopping.ts` for every path that adds
- * — the quick field, the sheet, and plan 07's "add all ingredients" — and it
- * returns before anything leaves the machine.
+ * — the quick field, the sheet, and the ingredient picker [3e] — and it returns
+ * before anything leaves the machine.
+ *
+ * A pour-in that only *topped up* rows already on the list says so instead
+ * (→ `toppedUp`): nothing new appeared, and a housemate standing in the shop
+ * would look for a line that isn't there.
  */
 export function notifyShoppingAdd(notice: ShoppingAddNotice): void {
-	// Written the positive way round: `itemCount < 1` lets NaN through, and the
-	// copy would go out reading "added NaN items to the list".
-	if (!vapidConfigured || !(notice.itemCount >= 1)) return;
+	// Written the positive way round: `count < 1` lets NaN through, and the copy
+	// would go out reading "added NaN items to the list".
+	const toppedUp = notice.itemCount < 1 && (notice.toppedUpCount ?? 0) >= 1;
+	const count = toppedUp ? (notice.toppedUpCount ?? 0) : notice.itemCount;
+	if (!vapidConfigured || !(count >= 1)) return;
 
 	try {
 		const key = `${notice.householdId}:${notice.actorMemberId}`;
@@ -334,7 +346,9 @@ export function notifyShoppingAdd(notice: ShoppingAddNotice): void {
 		void sendToMembers(
 			notice.householdId,
 			(m) => ({
-				title: m.push.shoppingAdd(actor.displayName, notice.itemCount),
+				title: toppedUp
+					? m.push.shoppingToppedUp(actor.displayName, count)
+					: m.push.shoppingAdd(actor.displayName, count),
 				// One per member: a second add replaces the first on the lock screen
 				// instead of stacking.
 				tag: `shopping-add-${notice.actorMemberId}`,

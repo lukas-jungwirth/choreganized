@@ -625,6 +625,8 @@ export const de: Messages = {
 			pickForList: 'Zutaten für die Einkaufsliste auswählen',
 			addToList: 'Auf die Liste',
 			ingredients: 'Zutaten',
+			cookingFor: 'Für wie viele',
+			writtenFor: (count: number) => `notiert für ${count}`,
 			steps: 'Schritte',
 			startCookMode: 'Kochmodus starten',
 			noStepsLead: 'Noch keine Schritte notiert — ',
@@ -1095,6 +1097,10 @@ export const de: Messages = {
 			count === 1
 				? `🛒 ${member} hat 1 Sache auf die Liste gesetzt`
 				: `🛒 ${member} hat ${count} Sachen auf die Liste gesetzt`,
+		shoppingToppedUp: (member: string, count: number) =>
+			count === 1
+				? `🛒 ${member} braucht mehr von 1 Sache auf der Liste`
+				: `🛒 ${member} braucht mehr von ${count} Sachen auf der Liste`,
 
 		taskDue: (emoji: string, task: string, assigned: boolean) =>
 			`${emoji} ${task} ist heute fällig — ${assigned ? 'du bist dran' : 'kann jemand übernehmen'}`,

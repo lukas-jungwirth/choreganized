@@ -169,6 +169,9 @@ a danger badge with the current user's overdue count [4e].
 
 - Optional "Shopping list updates" push (default **off**): "🛒 {member} added {n} items to the
   list", coalesced (max one per member per ~15 min), never for your own adds.
+- A pour-in that only **topped up** rows already on the list (§4.8) says so instead — "🛒
+  {member} needs more of {n} things on the list". Nothing new appeared, and sending somebody
+  standing in the shop to look for a line that isn't there is worse than saying nothing.
 
 ---
 
@@ -234,6 +237,18 @@ a danger badge with the current user's overdue count [4e].
   **"Add to list"** → both open the **ingredient picker [3e]** (§4.8). Neither appears when the
   recipe has no ingredients.
 - Ingredients list (name + amount right-aligned), numbered steps.
+- **Cooking for {n}** — a stepper above the ingredient list that writes the amounts out for a
+  different number of people. The recipe keeps what it was written for (shown beside the
+  stepper as "written for 4"); the amounts, the meta row's "Serves {n}", the picker [3e] and
+  cook mode all follow the stepper. It lives in the URL (`?serves=`), so a reload comes back to
+  the same amounts and **Start cook mode** carries the count through the link.
+  - **Only names and numbers**: six people need more grams of the same pasta, so units and
+    names never change, and a line with no amount ("Salt") stays as written.
+  - **Rounded to something a kitchen can act on**: below 10 the fraction is the amount and is
+    kept (½ tsp, ⅔ of an egg); at 10 and above it rounds to whole units, because "187½ g" is
+    precision no scale can honour.
+  - **Hidden entirely when the recipe never recorded its servings** — half of an unknown is
+    unknown, so there is nothing honest to offer (→ [DECISIONS #124](DECISIONS.md)).
 - **Start cook mode** (dark button) → cook mode.
 - ••• menu [7c]: Edit recipe, Duplicate, Share (v1: share plain-text recipe via Web Share API),
   Delete (confirm; meal-plan entries keep the name via snapshot).
@@ -249,6 +264,10 @@ a danger badge with the current user's overdue count [4e].
   stepper) is always available in the header/overflow.
 - **Ingredients chip** → bottom peek sheet listing all ingredients; the current step's are
   highlighted in amber [7b].
+- **Inherits "cooking for {n}"** from the recipe screen through `?serves=` (§4.5) — the peek
+  sheet, the "This step uses…" line and the timer labels all show the scaled amounts. Cook mode
+  offers no stepper of its own: the count is decided before the hands are wet, and the
+  underlines still land on the same words because only the numbers move.
 - Running timer [7h]: big circular countdown (remaining, label "{ingredient/step} · {total}"),
   Pause / **+1:00** / Cancel. **Up to three at once** (→ DECISIONS #102): the step on screen
   keeps the ring, every other running timer shrinks to a compact bar above Prev/Next with its
@@ -326,6 +345,10 @@ actually need is the chore this replaces (→ [DECISIONS #123](DECISIONS.md)).
   buy." One row per ingredient in the recipe's own order: check circle, name, and the recipe's
   amount right-aligned like the recipe view. The list scrolls inside the sheet so the count and
   the button stay put.
+- **Cooking for {n}** at the top, the same stepper the recipe screen has (§4.5) and seeded from
+  it when the sheet was raised there. Moving it rewrites every amount in the list _and_ every
+  "becomes {x}" beneath it, and the count is what the server scales to on submit — so what the
+  sheet promises is what the shopping list receives. Absent for a recipe with no servings.
 - Above the list: "**{n} of {m} chosen**" and a **Select all / Clear all** link.
 - **What opens ticked** is everything that would change the list. A row is unticked, with a
   quiet line saying why, when:
@@ -334,7 +357,10 @@ actually need is the chore this replaces (→ [DECISIONS #123](DECISIONS.md)).
     than no count;
   - the household **usually has it at home** ("You usually have this") — see below.
     A row whose amount would be **added to** one already there stays ticked and says so ("On the
-    list already — becomes 4").
+    list already — becomes 4"). Those numbers **track the ticks**: the sheet re-runs the same
+    merge rules over whatever is chosen right now, so unticking one of a recipe's two "pinch of
+    pepper" lines drops the other's promise from 4 to 3 rather than leaving a number the submit
+    won't honour.
 - **Add {n} to the list** writes them, and the result banner reports what happened: what's new,
   what was topped up, what was already there.
 - **The cupboard is learned, never declared.** Leave an ingredient off twice and from then on it

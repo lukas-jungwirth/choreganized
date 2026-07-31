@@ -118,6 +118,19 @@ export function readRecipeForm(
 	};
 }
 
+/**
+ * A "cooking for tonight" count, off a URL (`?serves=`) or a form field. Null
+ * for anything the app didn't put there — a hand-typed 0, a fortnight-old
+ * bookmark, "banana" — and the caller then cooks the recipe as written
+ * (→ SPEC §4.5, the same shape `getPlan` uses for `?week=`).
+ */
+export function readServings(value: unknown): number | null {
+	if (typeof value !== 'string' && typeof value !== 'number') return null;
+
+	const whole = Math.trunc(Number(value));
+	return Number.isFinite(whole) && whole >= 1 && whole <= RECIPE_SERVINGS_MAX ? whole : null;
+}
+
 /** Empty means "not stated", which both fields allow; nonsense means the same. */
 function readOptionalNumber(value: FormDataEntryValue | null): number | null {
 	if (typeof value !== 'string' || !value.trim()) return null;

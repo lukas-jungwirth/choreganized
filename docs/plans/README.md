@@ -38,6 +38,7 @@ Work done after the twelve plans, tracked here so the queue stays the whole stor
 | **Shopping: "Recently bought" + add-field suggestions** (SPEC §3.1, DECISIONS #105–106)                 | done (2026-07-24) |
 | **Shopping: undo bar after a tick** (`shopping/UndoBar`, SPEC §3.1, DECISIONS #107)                     | done (2026-07-24) |
 | **Ingredient picker + merging amounts** (`cooking/IngredientPickSheet`, SPEC §4.8, DECISIONS #123)      | done (2026-07-31) |
+| **Cooking for {n}: use-time ingredient scaling** (SPEC §4.5, §4.6, §4.8, DECISIONS #124)                | done (2026-07-31) |
 
 ## Dependency graph & parallelization
 
