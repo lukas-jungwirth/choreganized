@@ -14,29 +14,44 @@
 	type Props = {
 		/**
 		 * The action's result. Null/undefined whenever the last action wasn't a
-		 * shopping add — including `plan` with the toggle off, which returns the
-		 * key with no value.
+		 * shopping add — including `plan`, which now only ever *offers* the
+		 * ingredients (→ `cooking/IngredientPickSheet`).
 		 */
-		result?: { added: number; skipped: number } | null;
+		result?: { added: number; merged: number; skipped: number } | null;
 	};
 
 	let { result }: Props = $props();
 
 	const m = messages();
 
+	/** New rows plus topped-up ones: what the trip actually changed. */
+	const changed = $derived(result ? result.added + result.merged : 0);
+
 	const title = $derived(
 		!result
 			? ''
-			: result.added > 0
-				? m.cooking.shoppingResult.added(result.added)
-				: m.cooking.shoppingResult.nothing
+			: changed === 0
+				? m.cooking.shoppingResult.nothing
+				: result.added > 0
+					? m.cooking.shoppingResult.added(result.added)
+					: m.cooking.shoppingResult.toppedUp(result.merged)
 	);
 
-	const detail = $derived(
-		result && result.added > 0 && result.skipped > 0
-			? m.cooking.shoppingResult.skipped(result.skipped)
-			: undefined
-	);
+	/**
+	 * What the headline didn't say. Nothing at all when nothing changed — the
+	 * title is then already "everything is on the list", and "3 were already on
+	 * it" underneath is the same sentence with a number in it.
+	 */
+	const detail = $derived.by(() => {
+		if (!result || changed === 0) return undefined;
+
+		const parts = [
+			result.added > 0 && result.merged > 0 ? m.cooking.shoppingResult.merged(result.merged) : null,
+			result.skipped > 0 ? m.cooking.shoppingResult.skipped(result.skipped) : null
+		].filter((part) => part !== null);
+
+		return parts.length ? parts.join(' · ') : undefined;
+	});
 </script>
 
 {#if result}

@@ -15,6 +15,8 @@ import {
 	ITEM_NAME_MAX,
 	QUANTITY_MAX,
 	STORE_NAME_MAX,
+	TOTAL_QUANTITY_MAX,
+	planAdds,
 	splitList,
 	suggestionKey,
 	type ItemGroup
@@ -159,6 +161,31 @@ export function listStores(householdId: string): Store[] {
 	);
 }
 
+/**
+ * What is still to buy, in the list's own order and stripped to the four
+ * columns that decide where a new ingredient lands (→ `planAdds`). Both the
+ * picker's preview and the add it previews read the list through this, so the
+ * two can't be looking at different lists.
+ */
+export function listOpenItems(householdId: string): {
+	id: string;
+	name: string;
+	quantity: number | null;
+	unit: string | null;
+}[] {
+	return db
+		.select({
+			id: shoppingItems.id,
+			name: shoppingItems.name,
+			quantity: shoppingItems.quantity,
+			unit: shoppingItems.unit
+		})
+		.from(shoppingItems)
+		.where(and(eq(shoppingItems.householdId, householdId), isNull(shoppingItems.checkedAt)))
+		.orderBy(asc(shoppingItems.createdAt), asc(shoppingItems.id))
+		.all();
+}
+
 export type StoreSummary = {
 	id: string;
 	name: string;
@@ -218,9 +245,18 @@ function normalize(householdId: string, input: AddItemInput) {
 	};
 }
 
-function normalizeQuantity(quantity: number | null | undefined): number | null {
+/**
+ * `max` is the typed ceiling by default and the far looser total for the one
+ * caller that isn't a field: a recipe may well say "1500 g", and shaving that
+ * down to 999 would put less on the list than the recipe asks for
+ * (→ `utils/shopping` `TOTAL_QUANTITY_MAX`).
+ */
+function normalizeQuantity(
+	quantity: number | null | undefined,
+	max: number = QUANTITY_MAX
+): number | null {
 	if (quantity === null || quantity === undefined || !Number.isFinite(quantity)) return null;
-	const clamped = Math.min(Math.max(quantity, 0), QUANTITY_MAX);
+	const clamped = Math.min(Math.max(quantity, 0), max);
 	// Recipes bring fractions ("0.5 kg"); the stepper only ever sends integers.
 	const rounded = Math.round(clamped * 100) / 100;
 	return rounded > 0 ? rounded : null;
@@ -395,64 +431,87 @@ export type IngredientInput = {
 	unit?: string | null;
 };
 
+export type IngredientAddResult = {
+	/** New rows on the list. */
+	added: number;
+	/** Rows that were already there and now ask for more. */
+	merged: number;
+	/** Rows that were already there and needed no change. */
+	skipped: number;
+};
+
 /**
- * "Add all ingredients to the shopping list" (plan 07), in one transaction and
- * one notification.
+ * Ingredients onto the list, in one transaction and one notification — what the
+ * picker sheet [3e] submits (→ SPEC §4.8).
  *
- * Dedupe is by name against what's still *open*: a recipe that wants butter
- * when butter is already on the list adds nothing, but butter you bought this
- * morning (checked, not yet cleaned up) is a fresh need and goes back on.
- * Quantities are never merged — "400 g pasta" plus "400 g pasta" is a decision
- * for the person holding the trolley, not for us.
+ * The rules are `planAdds`', because the sheet has just shown the household what
+ * this call is about to do and the two must agree. In short: matched by name
+ * against what is still *open* (butter bought this morning is a fresh need and
+ * goes back on), amounts added up where they can be — two recipes wanting two
+ * cucumbers each leave one row asking for four — and the row left as it stands
+ * where they can't.
  */
 export function addIngredients(
 	householdId: string,
 	memberId: string,
 	ingredients: IngredientInput[],
 	storeId?: string | null
-): { added: number; skipped: number } {
+): IngredientAddResult {
 	const result = db.transaction((tx) => {
-		const open = new Set(
-			tx
-				.select({ name: shoppingItems.name })
-				.from(shoppingItems)
-				.where(and(eq(shoppingItems.householdId, householdId), isNull(shoppingItems.checkedAt)))
-				.all()
-				.map((row) => row.name.trim().toLowerCase())
+		const plan = planAdds(
+			listOpenItems(householdId),
+			ingredients.map((ingredient) => ({
+				name: ingredient.name.trim().slice(0, ITEM_NAME_MAX),
+				quantity: normalizeQuantity(ingredient.quantity, TOTAL_QUANTITY_MAX),
+				unit: normalizeUnit(ingredient.unit)
+			}))
 		);
 
-		const rows: (typeof shoppingItems.$inferInsert)[] = [];
 		// One store for the whole batch, so the manual order is a single run
 		// appended to that group — the recipe's own order, kept by `sortOrder`
 		// (which the list sorts on before `createdAt`, so a shared insert stamp is
 		// fine now).
-		const start = nextItemSortOrder(tx, householdId, resolveStoreId(householdId, storeId));
+		const targetStore = resolveStoreId(householdId, storeId);
+		const start = nextItemSortOrder(tx, householdId, targetStore);
 
-		for (const ingredient of ingredients) {
-			const values = normalize(householdId, { ...ingredient, storeId });
-			const key = values.name.toLowerCase();
-			// `open` grows as we go, so a recipe listing the same thing twice
-			// contributes one line rather than two.
-			if (!values.name || open.has(key)) continue;
-			open.add(key);
-			rows.push({
-				householdId,
-				...values,
-				addedByMemberId: memberId,
-				sortOrder: start + rows.length
-			});
-		}
+		const rows = plan.inserts.map((row, index) => ({
+			householdId,
+			name: row.name,
+			// A unit measures a quantity — `normalize`'s rule, applied here because
+			// the amount may have grown since it was normalised (→ `planAdds`).
+			quantity: row.quantity,
+			unit: row.quantity === null ? null : row.unit,
+			storeId: targetStore,
+			addedByMemberId: memberId,
+			sortOrder: start + index
+		}));
 
 		if (rows.length) tx.insert(shoppingItems).values(rows).run();
-		// Only what actually went on the list: a skipped ingredient is one the
-		// household already knows about, by definition.
+
+		for (const update of plan.updates) {
+			tx.update(shoppingItems)
+				.set({ quantity: update.quantity })
+				.where(and(eq(shoppingItems.id, update.id), eq(shoppingItems.householdId, householdId)))
+				.run();
+		}
+
+		// Only what actually went on the list as a new word: a topped-up or
+		// skipped name is one the household already knows, by definition.
 		for (const row of rows) rememberName(tx, householdId, row.name);
 
-		return { added: rows.length, skipped: ingredients.length - rows.length };
+		return {
+			added: rows.length,
+			merged: plan.rows.filter((row) => row.effect === 'merge').length,
+			skipped: plan.rows.filter((row) => row.effect === 'have').length
+		};
 	});
 
-	if (result.added > 0) {
-		notifyShoppingAdd({ householdId, actorMemberId: memberId, itemCount: result.added });
+	// A topped-up row counts: what changed is what somebody has to buy, and
+	// "2 cucumbers" quietly becoming "4" is exactly the change a housemate
+	// standing in the shop wants to hear about.
+	const changed = result.added + result.merged;
+	if (changed > 0) {
+		notifyShoppingAdd({ householdId, actorMemberId: memberId, itemCount: changed });
 	}
 
 	return result;

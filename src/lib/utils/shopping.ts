@@ -1,14 +1,19 @@
 /**
  * The things the shopping list's server and browser halves must agree on:
  * which units exist, how a quantity is written, how the list is split into
- * "still to buy" and "recently bought", and how the add field completes what
- * you type.
+ * "still to buy" and "recently bought", how a recipe's ingredients land on it,
+ * and how the add field completes what you type.
  *
  * The split matters twice: the service does it for the first paint, and the
  * page does it again in the browser when a check is applied optimistically —
  * ticking a box moves the row out of its store group and into "recently
  * bought" *before* the server answers. So it is one function called from both
  * sides (→ DECISIONS #105), not a SQL half and a JavaScript half kept in step.
+ *
+ * `planAdds` is here for the same reason one step removed: the picker sheet
+ * [3e] shows what adding a recipe's ingredients *would* do and the service then
+ * does it, and a preview that disagreed with the outcome would be worse than no
+ * preview at all (→ DECISIONS #123).
  */
 
 /** The units [3a] offers. Free pick, `pcs` preselected (→ SPEC §3.2). */
@@ -21,7 +26,16 @@ export const DEFAULT_UNIT: Unit = 'pcs';
 /** Field limits, shared by the `maxlength` attribute and the action's guard. */
 export const ITEM_NAME_MAX = 80;
 export const STORE_NAME_MAX = 40;
+/** What a quantity may be *typed* as. Anything past it is a paste accident. */
 export const QUANTITY_MAX = 999;
+/**
+ * What a row may *hold* once recipes have been poured onto it and the amounts
+ * added up (→ `planAdds`). 400 g of pasta meeting a kilo is 1400 g, which the
+ * typed ceiling would quietly shave down to less than either recipe asked for;
+ * this one exists only so a merge repeated all afternoon can't write nonsense
+ * into the column.
+ */
+export const TOTAL_QUANTITY_MAX = 99_999;
 
 export function isUnit(value: unknown): value is Unit {
 	return typeof value === 'string' && (UNITS as readonly string[]).includes(value);
@@ -232,4 +246,170 @@ export function matchNames(
 		.sort((a, b) => a.tier - b.tier || a.rank - b.rank)
 		.slice(0, limit)
 		.map((hit) => hit.name);
+}
+
+/* ── Pouring a recipe onto the list ───────────────────────────────────────── */
+
+/** An amount as both a list row and a recipe line hold it. */
+export type Amount = { quantity: number | null; unit: string | null };
+
+/** Something to buy, named — an ingredient, or a row already on the list. */
+export type NamedAmount = Amount & { name: string };
+
+/**
+ * Units that measure the same thing, and how much of the base unit one of them
+ * is. Lowercased keys, because `L` is stored capitalised and "l" is what a
+ * hand-typed row is likely to say.
+ *
+ * Deliberately only the two decimal pairs. Spoons look convertible (1 tbsp is
+ * 3 tsp in both kitchens) but combining them turns "2 tbsp + 1 tsp" into
+ * "2.33 tbsp", which is not an amount anybody can shop for — so tbsp, tsp,
+ * pack and anything hand-typed only ever combine with themselves.
+ *
+ * A `Map`, not an object literal: the unit column is free text, so the lookup
+ * key can be "constructor" (→ `unitLabel` for the same trap).
+ */
+const UNIT_BASE = new Map<string, { base: string; factor: number }>(
+	Object.entries({
+		g: { base: 'g', factor: 1 },
+		kg: { base: 'g', factor: 1000 },
+		ml: { base: 'ml', factor: 1 },
+		l: { base: 'ml', factor: 1000 }
+	})
+);
+
+/**
+ * What a unit measures, and in what. An unknown unit measures itself, so it
+ * combines with its own spelling and nothing else.
+ *
+ * No unit at all reads as `pcs`: "2 cucumbers" typed into a recipe parses to a
+ * bare quantity, the same two cucumbers added through the sheet [3a] carry the
+ * preselected `pcs`, and a list that kept those apart would be counting the
+ * same vegetable twice.
+ */
+function dimensionOf(unit: string | null): { base: string; factor: number } {
+	const key = unit?.trim().toLowerCase() || DEFAULT_UNIT;
+	return UNIT_BASE.get(key) ?? { base: key, factor: 1 };
+}
+
+/**
+ * Two amounts of the same thing as one, in the *first* one's unit — or null
+ * when they can't be spoken of together.
+ *
+ * Keeping `base`'s unit is what stops a row changing under the person reading
+ * it: "400 g pasta" that meets a kilo becomes 1.4 kg only if the row was
+ * already in kilos. Null comes back for "some pasta" meeting "400 g" (there is
+ * no number to add to) and for grams meeting packs — both of which the caller
+ * treats as "leave the row alone", because the need is already on the list and
+ * only the person holding the trolley can reconcile the amounts.
+ */
+export function combineAmounts(base: Amount, extra: Amount): { quantity: number } | null {
+	if (base.quantity === null || extra.quantity === null) return null;
+
+	const into = dimensionOf(base.unit);
+	const from = dimensionOf(extra.unit);
+	if (into.base !== from.base) return null;
+
+	const total = base.quantity + (extra.quantity * from.factor) / into.factor;
+	// Two decimals, because the column is a REAL and 0.1 + 0.2 is a famous number.
+	return { quantity: Math.min(Math.round(total * 100) / 100, TOTAL_QUANTITY_MAX) };
+}
+
+/** What adding one ingredient to the list does. */
+export type AddEffect =
+	/** Nothing by that name is on the list — it becomes a row. */
+	| 'new'
+	/** A row has it already and the two amounts add up — that row grows. */
+	| 'merge'
+	/** A row has it already and nothing needs to change. */
+	| 'have';
+
+export type PlannedAdd = {
+	effect: AddEffect;
+	/** What the list will say about it afterwards — what the picker previews. */
+	result: Amount;
+};
+
+export type AddPlan = {
+	/** One per ingredient, in the order they were handed over. */
+	rows: PlannedAdd[];
+	/** The rows to write, in order. */
+	inserts: NamedAmount[];
+	/** Rows already on the list whose amount grew. */
+	updates: { id: string; quantity: number }[];
+};
+
+/**
+ * What pouring these ingredients onto that list would do (→ SPEC §3.1).
+ *
+ * Matching is by name against what is still **open**: a recipe that wants
+ * butter when butter is on the list tops up the row it finds, but butter you
+ * bought this morning (checked, not yet swept up) is a fresh need and goes back
+ * on. Amounts add up where they can — two recipes wanting two cucumbers each
+ * leave one row asking for four — and where they can't, the row stands as it is
+ * rather than the list growing a second line with the same word on it.
+ *
+ * `open` is expected in the list's own order, so the row a household has been
+ * looking at longest is the one a duplicate name tops up.
+ */
+export function planAdds(
+	open: (NamedAmount & { id: string })[],
+	ingredients: NamedAmount[]
+): AddPlan {
+	/** Name → the row it will end up on, whether that row exists yet or not. */
+	const known = new Map<string, { id: string | null; pending: NamedAmount | null } & Amount>();
+
+	for (const item of open) {
+		const key = suggestionKey(item.name);
+		if (key && !known.has(key)) {
+			known.set(key, { id: item.id, pending: null, quantity: item.quantity, unit: item.unit });
+		}
+	}
+
+	const rows: PlannedAdd[] = [];
+	const inserts: NamedAmount[] = [];
+	const updates = new Map<string, number>();
+
+	for (const ingredient of ingredients) {
+		const name = ingredient.name.trim();
+		const key = suggestionKey(name);
+		// A line with no word in it asks for nothing, and mustn't write a nameless
+		// row. The recipe form drops these, so this is the belt to that's braces.
+		if (!key) {
+			rows.push({ effect: 'have', result: { quantity: null, unit: null } });
+			continue;
+		}
+
+		const target = known.get(key);
+
+		if (!target) {
+			const pending = { name, quantity: ingredient.quantity, unit: ingredient.unit };
+			inserts.push(pending);
+			// Held by reference: a recipe naming the same thing twice ("2 tbsp oil"
+			// … "1 tbsp oil") tops up the row this pass is adding rather than
+			// writing a second one.
+			known.set(key, { id: null, pending, quantity: pending.quantity, unit: pending.unit });
+			rows.push({ effect: 'new', result: { quantity: pending.quantity, unit: pending.unit } });
+			continue;
+		}
+
+		const combined = combineAmounts(target, ingredient);
+
+		if (!combined) {
+			rows.push({ effect: 'have', result: { quantity: target.quantity, unit: target.unit } });
+			continue;
+		}
+
+		target.quantity = combined.quantity;
+		if (target.pending) target.pending.quantity = combined.quantity;
+		else if (target.id) updates.set(target.id, combined.quantity);
+
+		rows.push({ effect: 'merge', result: { quantity: combined.quantity, unit: target.unit } });
+	}
+
+	return {
+		rows,
+		inserts,
+		updates: [...updates].map(([id, quantity]) => ({ id, quantity }))
+	};
 }

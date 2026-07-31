@@ -23,7 +23,13 @@ import {
 	zonedStartOfDay,
 	type CalendarDate
 } from '$lib/utils/dates';
-import { POINTS_MAX, RECUR_INTERVAL_MAX, TASK_NAME_MAX, type RecurUnit } from '$lib/utils/tasks';
+import {
+	isRecurUnit,
+	POINTS_MAX,
+	RECUR_INTERVAL_MAX,
+	TASK_NAME_MAX,
+	type RecurUnit
+} from '$lib/utils/tasks';
 import { db } from '../db';
 import { members, taskCompletions, tasks, type Member } from '../db/schema';
 
@@ -63,6 +69,15 @@ export function assigneeNotAway(today: CalendarDate): SQL | undefined {
 	return or(isNull(members.awayUntil), lt(members.awayUntil, today));
 }
 
+/**
+ * "This member is on the hook for it": assigned to them, or to "Anyone"
+ * (NULL). Shared by the overdue list and Home's next-chore card, so the banner
+ * and the card can't end up with different ideas of whose chore is whose.
+ */
+export function onTheHookFor(memberId: string): SQL | undefined {
+	return or(eq(tasks.assigneeMemberId, memberId), isNull(tasks.assigneeMemberId));
+}
+
 export type OverdueTask = {
 	id: string;
 	name: string;
@@ -74,7 +89,7 @@ export type OverdueTask = {
 
 /**
  * The overdue tasks this member is on the hook for: assigned to them, or
- * "Anyone" (→ SPEC §2.5). Oldest first, so the banner can name the worst one.
+ * "Anyone" (→ SPEC §2.2). Oldest first, so the banner can name the worst one.
  *
  * While the member is away nothing is overdue *for them* — that is the whole
  * point of the holiday pause: no banner, no badge, no nudge (→ SPEC §5.5).
@@ -104,7 +119,7 @@ export function listOverdueForMember(
 					eq(tasks.householdId, householdId),
 					// NULL due dates (undated one-offs) never compare true — as intended.
 					lt(tasks.dueDate, today),
-					or(eq(tasks.assigneeMemberId, member.id), isNull(tasks.assigneeMemberId))
+					onTheHookFor(member.id)
 				)
 			)
 			// `id` breaks ties: the Home banner names `[0]`, so without a total order
@@ -434,6 +449,49 @@ export type TaskSnapshot = {
 	dueReminderSentAt: number | null;
 	overdueReminderSentAt: number | null;
 };
+
+/**
+ * A snapshot back off the form that carried it to the browser. It lives here
+ * rather than in a route because the shape is this file's contract and two
+ * pages now offer Undo (Tasks [4d] and Home's next-chore card): one parser, so
+ * they can't drift. Read field by field rather than trusted — it arrives as
+ * text like any other input, and `undoCompletion` still scopes every id in it
+ * to the household.
+ */
+export function parseSnapshot(raw: unknown): TaskSnapshot | null {
+	if (typeof raw !== 'string') return null;
+
+	let parsed: unknown;
+	try {
+		parsed = JSON.parse(raw);
+	} catch {
+		return null;
+	}
+
+	if (!parsed || typeof parsed !== 'object') return null;
+	const value = parsed as Record<string, unknown>;
+
+	if (typeof value.id !== 'string' || typeof value.name !== 'string') return null;
+	if (!isRecurUnit(value.recurUnit)) return null;
+
+	return {
+		id: value.id,
+		name: value.name,
+		points: typeof value.points === 'number' ? value.points : 0,
+		recurUnit: value.recurUnit,
+		recurInterval: typeof value.recurInterval === 'number' ? value.recurInterval : 1,
+		dueDate: isCalendarDate(value.dueDate) ? value.dueDate : null,
+		assigneeMemberId: typeof value.assigneeMemberId === 'string' ? value.assigneeMemberId : null,
+		rotate: value.rotate === true,
+		createdByMemberId: typeof value.createdByMemberId === 'string' ? value.createdByMemberId : null,
+		// 0 would be 1970, which sorts an undated one-off to the top rather than
+		// back where it was; a missing stamp is better handled downstream.
+		createdAt: typeof value.createdAt === 'number' ? value.createdAt : Date.now(),
+		dueReminderSentAt: typeof value.dueReminderSentAt === 'number' ? value.dueReminderSentAt : null,
+		overdueReminderSentAt:
+			typeof value.overdueReminderSentAt === 'number' ? value.overdueReminderSentAt : null
+	};
+}
 
 export type TaskActionKind = 'done' | 'skipped';
 

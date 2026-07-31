@@ -123,7 +123,7 @@ which exercises the real server pipeline end to end:
 - **Remove** — `?/removeAiKey` cleared the key (`success`) and the import screen's AI sections
   disappeared again.
 
-**Not exercised** (stated honestly): a *successful* extraction needs a real, valid Gemini key,
+**Not exercised** (stated honestly): a _successful_ extraction needs a real, valid Gemini key,
 which the environment doesn't have and an agent must not take from the owner — so the happy-path
 draft (text and photos → prefilled editor → Save) was not run; the photo path's
 re-encode-and-attach was checked by types/build and shares the proven upload pipeline, but no

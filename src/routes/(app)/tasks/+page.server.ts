@@ -19,6 +19,7 @@ import {
 	hasCompletions,
 	memberStanding,
 	monthPointsByMember,
+	parseSnapshot,
 	reassignTask,
 	setAway,
 	skipTask,
@@ -26,8 +27,7 @@ import {
 	undoCompletion,
 	updateTask,
 	type TaskContext,
-	type TaskInput,
-	type TaskSnapshot
+	type TaskInput
 } from '$lib/server/services/tasks';
 import { isCalendarDate, startOfWeek, todayIn, zonedStartOfDay } from '$lib/utils/dates';
 import { DEFAULT_POINTS, TASK_NAME_MAX, isRecurUnit } from '$lib/utils/tasks';
@@ -121,48 +121,6 @@ function readTaskInput(form: FormData, m: Messages): { input: TaskInput } | { er
 	};
 }
 
-/**
- * The undo snapshot, straight back off the form that carried it to the browser
- * (→ services/tasks.ts `TaskSnapshot`). Read field by field rather than trusted:
- * it arrives as text like any other input, and the service still scopes every
- * id it contains to this household.
- */
-function readSnapshot(form: FormData): TaskSnapshot | null {
-	const raw = form.get('snapshot');
-	if (typeof raw !== 'string') return null;
-
-	let parsed: unknown;
-	try {
-		parsed = JSON.parse(raw);
-	} catch {
-		return null;
-	}
-
-	if (!parsed || typeof parsed !== 'object') return null;
-	const value = parsed as Record<string, unknown>;
-
-	if (typeof value.id !== 'string' || typeof value.name !== 'string') return null;
-	if (!isRecurUnit(value.recurUnit)) return null;
-
-	return {
-		id: value.id,
-		name: value.name,
-		points: typeof value.points === 'number' ? value.points : 0,
-		recurUnit: value.recurUnit,
-		recurInterval: typeof value.recurInterval === 'number' ? value.recurInterval : 1,
-		dueDate: isCalendarDate(value.dueDate) ? value.dueDate : null,
-		assigneeMemberId: typeof value.assigneeMemberId === 'string' ? value.assigneeMemberId : null,
-		rotate: value.rotate === true,
-		createdByMemberId: typeof value.createdByMemberId === 'string' ? value.createdByMemberId : null,
-		// 0 would be 1970, which sorts an undated one-off to the top rather than
-		// back where it was; a missing stamp is better handled downstream.
-		createdAt: typeof value.createdAt === 'number' ? value.createdAt : Date.now(),
-		dueReminderSentAt: typeof value.dueReminderSentAt === 'number' ? value.dueReminderSentAt : null,
-		overdueReminderSentAt:
-			typeof value.overdueReminderSentAt === 'number' ? value.overdueReminderSentAt : null
-	};
-}
-
 export const actions: Actions = {
 	/** The sheet's "Create task" and every one-tap starter on the empty state. */
 	create: async (event) => {
@@ -246,7 +204,8 @@ export const actions: Actions = {
 		const { householdId } = requireMember(event);
 		const form = await event.request.formData();
 
-		const snapshot = readSnapshot(form);
+		// Read field by field rather than trusted (→ services/tasks.ts).
+		const snapshot = parseSnapshot(form.get('snapshot'));
 		if (!snapshot) return fail(400, { error: "Couldn't undo that one." });
 
 		undoCompletion(householdId, String(form.get('completionId') ?? ''), snapshot);

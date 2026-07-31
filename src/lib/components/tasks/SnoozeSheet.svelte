@@ -22,7 +22,12 @@
 	import { untrack } from 'svelte';
 
 	type Props = {
-		task: TaskListItem;
+		/**
+		 * The id it moves and the name it heads itself with — nothing else. Home's
+		 * next-chore card [8b] opens the same sheet from a leaner row than the
+		 * to-do list's.
+		 */
+		task: Pick<TaskListItem, 'id' | 'name'>;
 		today: CalendarDate;
 		/** The signed-in member's holiday state — the toggle's starting position. */
 		awayUntil: CalendarDate | null;

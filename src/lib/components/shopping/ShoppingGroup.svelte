@@ -53,8 +53,7 @@
 			if (dragging) return;
 			const byId = new Map(next.map((item) => [item.id, item]));
 			const localIds = items.map((item) => item.id);
-			const sameMembers =
-				localIds.length === next.length && localIds.every((id) => byId.has(id));
+			const sameMembers = localIds.length === next.length && localIds.every((id) => byId.has(id));
 			items = sameMembers ? localIds.map((id) => byId.get(id)!) : next;
 		});
 	});

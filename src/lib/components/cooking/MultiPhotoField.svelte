@@ -53,7 +53,9 @@
 			// Skip a photo already in the list — picking "add more" twice is common.
 			const dupe = merged.some(
 				(kept) =>
-					kept.name === file.name && kept.size === file.size && kept.lastModified === file.lastModified
+					kept.name === file.name &&
+					kept.size === file.size &&
+					kept.lastModified === file.lastModified
 			);
 			if (!dupe) merged.push(file);
 		}
@@ -95,7 +97,9 @@
 			onchange={onPick}
 		/>
 		<span class="lens" aria-hidden="true"><Camera size={20} strokeWidth={1.9} /></span>
-		<span class="add-label">{files.length ? m.cooking.add.morePhotos : m.cooking.add.addPhotos}</span>
+		<span class="add-label"
+			>{files.length ? m.cooking.add.morePhotos : m.cooking.add.addPhotos}</span
+		>
 	</label>
 </div>
 

@@ -1,21 +1,30 @@
 <!--
-	Home [8b] — greeting, then whatever the household currently has to say.
-	Every card below the header is conditional: a fresh household sees the
-	greeting, the invitation to plan dinner, and two zeroes. Cards appear as
-	plans 04/07/09 make their data exist (→ SPEC §2).
+	Home [8b] — greeting, the one chore that's on you, then whatever else the
+	household currently has to say. Every card below the header is conditional: a
+	fresh household sees the greeting, the invitation to plan dinner, and two
+	zeroes (→ SPEC §2).
+
+	Reading order is urgency: what you can do something about right now first,
+	the summaries after it, and what the house has already done last.
 -->
 <script lang="ts">
 	import EnablePush from '$lib/components/EnablePush.svelte';
 	import InstallPrompt from '$lib/components/InstallPrompt.svelte';
 	import ActivityCard from '$lib/components/home/ActivityCard.svelte';
 	import DinnerCard from '$lib/components/home/DinnerCard.svelte';
+	import NextChoreCard from '$lib/components/home/NextChoreCard.svelte';
 	import StandingsStrip from '$lib/components/home/StandingsStrip.svelte';
 	import StatTile from '$lib/components/home/StatTile.svelte';
 	import BasketIcon from '$lib/components/icons/BasketIcon.svelte';
 	import ChecklistIcon from '$lib/components/icons/ChecklistIcon.svelte';
+	import SnoozeSheet from '$lib/components/tasks/SnoozeSheet.svelte';
+	import TaskDoneModal from '$lib/components/tasks/TaskDoneModal.svelte';
 	import AvatarStack from '$lib/components/ui/AvatarStack.svelte';
 	import Banner from '$lib/components/ui/Banner.svelte';
 	import { messages } from '$lib/i18n';
+	import type { NextChore } from '$lib/server/services/home';
+	import type { CompletionResult, Standing } from '$lib/server/services/tasks';
+	import type { SubmitFunction } from '@sveltejs/kit';
 	import Bell from '@lucide/svelte/icons/bell';
 	import type { PageProps } from './$types';
 
@@ -32,6 +41,42 @@
 	const names = $derived(stack.map((member) => member.displayName).join(', '));
 
 	const tasksLabel = $derived(m.home.stats.tasksDue(data.tasksDueCount));
+
+	/** Ticked but not yet confirmed — the card goes quiet before the server agrees. */
+	let pending = $state(false);
+	/**
+	 * The chore the snooze sheet is about, not a flag: a successful snooze moves
+	 * the task out of the card's window, and the sheet has to survive its own
+	 * closing animation after the data underneath it has already changed.
+	 */
+	let snoozing = $state<NextChore | null>(null);
+	let done = $state<{ completion: CompletionResult; standing: Standing } | null>(null);
+
+	/**
+	 * The same handler shape the to-do list gives every check circle [4a], so
+	 * ticking a chore off here raises the same celebration it does there.
+	 */
+	const complete: SubmitFunction = () => {
+		pending = true;
+
+		return async ({ result, update }) => {
+			await update({ reset: false });
+			pending = false;
+
+			if (result.type !== 'success') return;
+			const completed = result.data?.completed as typeof done;
+			if (completed) done = completed;
+		};
+	};
+
+	/**
+	 * The banner counts what's already late; the card names the worst of it. With
+	 * exactly one overdue chore they are the same task twice, so the banner stands
+	 * down and lets the card — which can actually do something about it — speak.
+	 */
+	const showOverdueBanner = $derived(
+		data.overdue !== null && !(data.nextChore !== null && data.overdue.count === 1)
+	);
 </script>
 
 <svelte:head>
@@ -53,7 +98,19 @@
 </header>
 
 <div class="stack">
-	{#if data.overdue}
+	<!-- The one thing on this screen you can finish from this screen. -->
+	{#if data.nextChore}
+		{@const chore = data.nextChore}
+		<NextChoreCard
+			{chore}
+			today={data.today}
+			{pending}
+			{complete}
+			onsnooze={() => (snoozing = chore)}
+		/>
+	{/if}
+
+	{#if data.overdue && showOverdueBanner}
 		{@const overdue = data.overdue}
 		<Banner
 			title={m.home.overdue.count(overdue.count)}
@@ -72,10 +129,6 @@
 	<!-- Same shape: shows only when the browser reports the app is installable and
 		 not already installed, and can be dismissed for good. -->
 	<InstallPrompt />
-
-	{#if data.activity.length > 0}
-		<ActivityCard entries={data.activity} />
-	{/if}
 
 	<DinnerCard dinner={data.dinner} />
 
@@ -96,7 +149,29 @@
 	{#if data.standings}
 		<StandingsStrip standings={data.standings} members={data.members} />
 	{/if}
+
+	<!-- Last: nice to see, never the reason you opened the app. -->
+	{#if data.activity.length > 0}
+		<ActivityCard entries={data.activity} />
+	{/if}
 </div>
+
+{#if snoozing}
+	<SnoozeSheet
+		task={snoozing}
+		today={data.today}
+		awayUntil={data.currentMember.awayUntil}
+		onclose={() => (snoozing = null)}
+	/>
+{/if}
+
+{#if done}
+	<TaskDoneModal
+		completion={done.completion}
+		standing={done.standing}
+		onclose={() => (done = null)}
+	/>
+{/if}
 
 <style>
 	header {

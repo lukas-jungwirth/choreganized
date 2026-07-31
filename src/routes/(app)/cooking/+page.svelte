@@ -10,6 +10,7 @@
 	button all land where you'd expect (→ DECISIONS #99).
 -->
 <script lang="ts">
+	import IngredientPickSheet from '$lib/components/cooking/IngredientPickSheet.svelte';
 	import MealPlanSheet from '$lib/components/cooking/MealPlanSheet.svelte';
 	import MealRow from '$lib/components/cooking/MealRow.svelte';
 	import RecipeCard from '$lib/components/cooking/RecipeCard.svelte';
@@ -20,8 +21,10 @@
 	import Card from '$lib/components/ui/Card.svelte';
 	import SegmentedControl from '$lib/components/ui/SegmentedControl.svelte';
 	import { messages } from '$lib/i18n';
+	import type { IngredientPick } from '$lib/server/services/recipe-shopping';
 	import type { CalendarDate } from '$lib/utils/dates';
 	import Plus from '@lucide/svelte/icons/plus';
+	import { untrack } from 'svelte';
 	import type { PageProps } from './$types';
 
 	let { data, form }: PageProps = $props();
@@ -33,6 +36,18 @@
 
 	/** The day the plan sheet is open on. Null = closed. */
 	let planning = $state<CalendarDate | null>(null);
+
+	/**
+	 * The ingredient picker [3e], raised by the plan sheet's toggle. Copied out
+	 * of `form` rather than read from it: `form` stands until the next action, so
+	 * a sheet closed without submitting would reopen on the next render.
+	 */
+	let picking = $state<IngredientPick | null>(null);
+
+	$effect(() => {
+		const offered = form && 'pick' in form ? form.pick : null;
+		if (offered) untrack(() => (picking = offered));
+	});
 
 	const recent = $derived(data.recipes.slice(0, RECENT));
 	const week = $derived(data.plan.weeks[data.plan.offset]);
@@ -125,6 +140,10 @@
 		members={data.members}
 		onclose={() => (planning = null)}
 	/>
+{/if}
+
+{#if picking}
+	<IngredientPickSheet pick={picking} onclose={() => (picking = null)} />
 {/if}
 
 <style>

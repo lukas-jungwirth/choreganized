@@ -25,7 +25,8 @@ export const load: PageServerLoad = async (event) => {
 	const days = pointsWindowDays(range);
 	// Inclusive of today, so "30 days" is the last 30 calendar days; "all time" has
 	// no lower bound at all.
-	const since = days === null ? null : zonedStartOfDay(addDays(today, -(days - 1)), household.timezone);
+	const since =
+		days === null ? null : zonedStartOfDay(addDays(today, -(days - 1)), household.timezone);
 
 	return {
 		split: choreSplit(householdId, members),

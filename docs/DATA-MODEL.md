@@ -60,7 +60,7 @@ user ─┬─ session / account / verification        (Better Auth)
   sweep can address a notification in its recipient's language
   (→ [DECISIONS #94](DECISIONS.md), [SPEC §9](SPEC.md)).
 
-### `stores` / `shopping_items` / `shopping_suggestions`
+### `stores` / `shopping_items` / `shopping_suggestions` / `pantry_staples`
 
 - Store order (`sortOrder`, contiguous ints) = walking order; list renders stores by it.
   `storeId NULL` → virtual "Other" group, rendered last. Deleting a store sets its items'
@@ -75,6 +75,12 @@ user ─┬─ session / account / verification        (Better Auth)
   `name` keeps the spelling last used, which is what gets offered back. Written on every add,
   rename and recipe pour-in; read most-recent-first, capped, and filtered in the browser
   (→ [DECISIONS #106](DECISIONS.md)).
+- `pantry_staples` is the same shape as `shopping_suggestions` doing the opposite job: the names
+  this household **doesn't** need to buy. Nobody fills in a pantry inventory, so it is learned
+  from the ingredient picker (§4.8) — `skipCount` goes up each time a name is offered and left
+  off, and from the second time on it opens unticked; ticking it deletes the row. Same
+  `nameKey` (trimmed + lowercased), same unique index per household
+  (→ [DECISIONS #123](DECISIONS.md)).
 - `quantity REAL` + `unit TEXT` both optional — "Tomatoes ×6", "Oat milk 2 L", or bare names.
   The unit is stored **canonically** (`pcs`, `tbsp`) and labelled per language on the way out
   ("Stk.", "EL"), so switching language re-labels the list rather than rewriting it
