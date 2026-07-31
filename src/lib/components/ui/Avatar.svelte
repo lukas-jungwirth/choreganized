@@ -57,7 +57,9 @@
 		height: var(--avatar-size);
 		border-radius: 50%;
 		background: var(--avatar-color);
-		color: var(--on-sage);
+		/* The fill is a member's colour, which doesn't lift in dark mode — so the
+		   initial stays white in both themes (→ app.css `--on-member`). */
+		color: var(--on-member);
 		font-size: calc(var(--avatar-size) * 0.38);
 		font-weight: 700;
 		line-height: 1;

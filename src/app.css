@@ -2,102 +2,199 @@
  * Choreganized design tokens — extracted from design/Hearth.dc.html.
  * These custom properties are the ONLY source of colors/radii/shadows.
  * Never hardcode hex values in components; see docs/DESIGN-SYSTEM.md.
+ *
+ * ── Light and dark in one place ──────────────────────────────────────────
+ * Every colour is written `light-dark(<light>, <dark>)`, so a token is one
+ * line with both its answers rather than a name declared twice in two blocks
+ * that drift apart (→ DECISIONS #120). The switch itself is `color-scheme`
+ * below — nothing else in the file knows a theme exists.
+ *
+ * That also means the native furniture (scrollbars, date pickers, the caret,
+ * `<select>` popups) follows along, which no amount of custom properties can
+ * do on its own.
+ *
+ * Dark mode is *not* an inversion: the palette stays warm — every grey has
+ * more red than blue in it — and depth reads as elevation, so a surface that
+ * comes forward gets lighter rather than darker. Cook mode stays the darkest
+ * screen in the app in both themes, so "you've left the app, you're at the
+ * stove" survives the switch (→ SPEC §4.6, §6).
  */
 
 @import '@fontsource-variable/fraunces';
 @import '@fontsource-variable/figtree';
 
 :root {
+	/*
+		The one line that makes dark mode work. `light dark` means "this document
+		is happy either way, ask the device" — which is what resolves every
+		`light-dark()` below, and what `<html data-theme>` overrides when someone
+		has picked a side (→ hooks.server.ts, `$lib/theme`).
+	*/
+	color-scheme: light dark;
+
 	/* ── Surfaces ─────────────────────────────────────────────── */
-	--bg: #f5f3ee; /* app screen background (soft paper) */
-	--card: #ffffff; /* card / list surfaces */
-	--sunken: #efebe2; /* inset chips, empty-state icon wells, day pills */
-	--sunken-2: #eae6dd; /* segmented control track, sheet dividers */
-	--field: #f5f3ee; /* input background inside white sheets */
-	--tabbar-bg: rgba(255, 255, 255, 0.9); /* frosted tab bar, over blur(18px) */
-	--tabbar-border: rgba(236, 233, 226, 0.8); /* the bar's frosted hairline */
-	--tabbar-pill: rgba(95, 141, 114, 0.14); /* the sliding active "bubble" behind a tab */
-	--tabbar-active: #3f6b52; /* active tab label ink (its icon fills with --sage) */
+	/* Dark: a warm near-black canvas with cards lifted off it, never grey-blue.
+	   `--bg` is kept above cook mode's #12100D so that screen stays the deepest.
+
+	   The four run in the same order in both themes — card > bg > sunken >
+	   sunken-2 — so "recessed" means the same thing at night as it does by day.
+	   An earlier pass had `--sunken` *lighter* than `--bg` on dark, which made an
+	   empty-state well or a day pill read as raised on the page and inset inside
+	   a card: the same token contradicting itself two screens apart. */
+	--bg: light-dark(#f5f3ee, #191510); /* app screen background (soft paper) */
+	--card: light-dark(#ffffff, #221e18); /* card / list surfaces */
+	--sunken: light-dark(#efebe2, #15110c); /* inset chips, empty-state icon wells, day pills */
+	--sunken-2: light-dark(#eae6dd, #110e0a); /* segmented control track, sheet dividers */
+	--field: light-dark(#f5f3ee, #1c1813); /* input background inside white sheets */
+	--tabbar-bg: light-dark(
+		rgba(255, 255, 255, 0.9),
+		rgba(25, 21, 16, 0.9)
+	); /* frosted, blur(18px) */
+	--tabbar-border: light-dark(rgba(236, 233, 226, 0.8), rgba(52, 46, 38, 0.8)); /* its hairline */
+	--tabbar-pill: light-dark(
+		rgba(95, 141, 114, 0.14),
+		rgba(116, 165, 133, 0.18)
+	); /* the sliding active "bubble" behind a tab */
+	--tabbar-active: light-dark(#3f6b52, #8fbc9e); /* active tab label ink (icon fills with --sage) */
 
 	/* ── Ink & text ───────────────────────────────────────────── */
-	--ink: #22201c; /* primary text */
-	--text-2: #57534c; /* secondary strong */
-	--text-3: #6e6a62; /* body muted */
-	--text-4: #8a867e; /* muted / meta */
-	--text-5: #a7a29a; /* faint / uppercase labels */
-	--text-disabled: #b7b2a9; /* placeholders, struck items */
+	/* Dark borrows cook mode's ramp exactly — one dark language, not two. */
+	--ink: light-dark(#22201c, #efe9de); /* primary text */
+	--text-2: light-dark(#57534c, #cfc7ba); /* secondary strong */
+	--text-3: light-dark(#6e6a62, #b3aba0); /* body muted */
+	--text-4: light-dark(#8a867e, #a5a096); /* muted / meta */
+	--text-5: light-dark(#a7a29a, #857f74); /* faint / uppercase labels */
+	--text-disabled: light-dark(#b7b2a9, #6e675e); /* placeholders, struck items */
 
 	/* ── Brand: sage (actions) ────────────────────────────────── */
-	--sage: #5f8d72;
-	--sage-strong: #517b63; /* pressed / gradient end */
-	--sage-hover: #4d7a5e;
-	--sage-tint: #edf3ee; /* icon wells, selected chips bg */
-	--sage-tint-2: #eef3f0; /* activity check circles */
-	--sage-row: #f7faf7; /* selected/highlighted row bg */
-	--sage-deep: #3e5d49; /* dark green text on tint */
-	--on-sage: #ffffff;
+	/* Sage lifts on dark (#5f8d72 → #74a585): the light green is only ~2.6:1 on a
+	   near-black, which fails a label. The tints go the other way — a dark green
+	   *surface* rather than a pale one — and `--sage-deep`, which is dark green
+	   text on that tint, has to become light green text on it. */
+	--sage: light-dark(#5f8d72, #74a585);
+	--sage-strong: light-dark(#517b63, #689a79); /* pressed / gradient end */
+	--sage-hover: light-dark(#4d7a5e, #85b495);
+	--sage-tint: light-dark(#edf3ee, #1e2a22); /* icon wells, selected chips bg */
+	--sage-tint-2: light-dark(#eef3f0, #202d25); /* activity check circles */
+	--sage-row: light-dark(#f7faf7, #1c2620); /* selected/highlighted row bg */
+	--sage-deep: light-dark(#3e5d49, #a9cfb6); /* green text on tint */
+	/* White on the lifted sage is ~2.5:1, so what sits *on* a sage fill flips to
+	   the canvas colour — the tick in a checked circle, a primary button's label. */
+	--on-sage: light-dark(#ffffff, #12100d);
 
 	/* ── Brand: terracotta (people & points) ──────────────────── */
-	--terracotta: #c67c51;
-	--terracotta-tint: #f7ede6;
-	--terracotta-tint-2: #fbeee7;
-	--terracotta-deep: #8a4b29;
+	--terracotta: light-dark(#c67c51, #d9946b);
+	--terracotta-tint: light-dark(#f7ede6, #2c211a);
+	--terracotta-tint-2: light-dark(#fbeee7, #30241c);
+	--terracotta-deep: light-dark(#8a4b29, #e8b592);
 
 	/* ── Danger (overdue, destructive) ────────────────────────── */
-	--danger: #c0473a;
-	--danger-tint: #f7e9e6;
-	--danger-border: #e8cfc9;
-	--danger-deep: #8f3226;
-	--danger-soft: #a65648; /* muted copy on a danger tint (banner subtitle) */
+	--danger: light-dark(#c0473a, #dc6152);
+	--danger-tint: light-dark(#f7e9e6, #2e1b17);
+	--danger-border: light-dark(#e8cfc9, #452520);
+	--danger-deep: light-dark(#8f3226, #f0968a);
+	--danger-soft: light-dark(#a65648, #c98277); /* muted copy on a danger tint (banner subtitle) */
 
 	/* ── Info / holiday banner [4a] ───────────────────────────── */
-	--info-tint: #eef1f0;
-	--info-border: #dee4e2;
-	--info-soft: #7c8a83; /* muted copy; the title uses --sage-deep */
+	--info-tint: light-dark(#eef1f0, #1e2321);
+	--info-border: light-dark(#dee4e2, #2b322f);
+	--info-soft: light-dark(#7c8a83, #94a29a); /* muted copy; the title uses --sage-deep */
 
 	/* ── Accents ──────────────────────────────────────────────── */
-	--gold: #e4b23c; /* crown / 1st place */
-	--gold-tint: #fbf3de;
+	--gold: light-dark(#e4b23c, #efc25a); /* crown / 1st place */
+	--gold-tint: light-dark(#fbf3de, #2b2415);
+
+	/* ── The "Start cook mode" button [4d] ────────────────────── */
+	/* `Button variant="dark"` — a swatch of the screen it opens, which is why it
+	   can't be `--ink` on `--card`: those two swap in dark mode and the one
+	   button whose whole point is "it's about to go dark" would turn into a cream
+	   slab on a night screen. Light keeps the mockup's #22201C on #fff exactly;
+	   dark goes *deeper* to cook mode's own canvas and takes a hairline, since a
+	   near-black button on a near-black page has nothing else to sit on. */
+	--btn-dark: light-dark(#22201c, #12100d);
+	--btn-dark-text: light-dark(#ffffff, #efe9de);
+	--btn-dark-border: light-dark(transparent, #322c24);
 
 	/* ── Member palette (avatar colours, picked at onboarding) ── */
+	/* Deliberately theme-independent: a member's colour is household *content*
+	   (it is stored on the row, → `member-colors.ts`), and a person whose avatar
+	   changed hue between themes would stop being recognisable at a glance.
+	   Where one is used as a tint, `color-mix` blends it into whatever `--card`
+	   currently is, so it adapts without being redefined (→ ui/CheckCircle). */
 	--member-sage: #5f8d72;
 	--member-terracotta: #c67c51;
 	--member-blue: #5c7fa3;
 	--member-amber: #d69b4a;
 	--member-plum: #9a6b8f;
+	/* What goes *on* one of those — an avatar's initial, the winner's plinth.
+	   Theme-independent for the same reason they are: these five hues don't lift
+	   in dark mode, so the white that reads on them in light mode is still the
+	   white that reads on them at night. Deliberately not `--on-sage`, which
+	   answers a different question — what goes on the app's sage, and that one
+	   *does* lift, taking its ink dark with it. */
+	--on-member: #ffffff;
+	/* The foot of the winner's plinth [8a]: the member's colour *deepened*.
+	   Theme-independent for the third time in a row — mixing toward `--ink` would
+	   lighten it in dark mode, and a column lit from above shades downward at
+	   night too. Equal to the light `--ink`, so [8a] is unchanged. */
+	--member-shade: #22201c;
 
 	/* ── Borders & lines ──────────────────────────────────────── */
-	--border: #e4dfd5; /* input & card outlines */
-	--border-soft: #ece9e2; /* tab bar hairline */
-	--divider: #f1eee7; /* row dividers inside cards */
-	--divider-sheet: #eae6dd; /* row dividers inside sheets */
-	--border-dashed: #d8d3c9; /* empty avatar, checkbox rings, add-store */
-	--track: #ede9e1; /* progress bar track */
+	/* On dark these lift off the surface they divide rather than sinking below
+	   it — a line darker than a near-black card is simply invisible. */
+	--border: light-dark(#e4dfd5, #322c24); /* input & card outlines */
+	--border-soft: light-dark(#ece9e2, #29241d); /* tab bar hairline */
+	--divider: light-dark(#f1eee7, #262019); /* row dividers inside cards */
+	--divider-sheet: light-dark(#eae6dd, #2e2820); /* row dividers inside sheets */
+	--border-dashed: light-dark(#d8d3c9, #3d362c); /* empty avatar, checkbox rings, add-store */
+	--track: light-dark(#ede9e1, #2a241d); /* progress bar track */
 
-	/* ── Cook mode (dark) ─────────────────────────────────────── */
-	--cook-bg: #22201c;
-	--cook-text: #edebe6;
-	--cook-text-2: #b7b2a9; /* the ingredients named under a step [7b] */
-	--cook-muted: #9a968e;
-	--cook-faint: #7c7a73;
-	--cook-sheet: #2a2b30;
-	--cook-amber: #e0a458; /* step highlights, timer accents */
+	/* ── Cook mode (dark in both themes) [7a] ─────────────────── */
+	/* The one screen that was already dark, so most of it doesn't move: the text
+	   ramp and the white-alpha surfaces are dark-native and stay put. Only the
+	   canvas and the sheet go deeper, and the two accents lift, so cook mode
+	   stays a step below the app in dark mode as well (→ SPEC §4.6).
+
+	   The greys here were cool blue-greys (#2a2b30, #6a6a63, #cfcdc6) — wrong on
+	   cream too, just harder to see. Warm equivalents throughout. */
+	--cook-bg: light-dark(#22201c, #12100d);
+	--cook-text: #efe9de;
+	--cook-text-2: #cfc7ba; /* the ingredients named under a step [7b] */
+	--cook-muted: #a5a096;
+	--cook-faint: #6e675e; /* the dot before an ingredient [7b] */
+	--cook-sheet: light-dark(#302c26, #252220);
+	--cook-amber: light-dark(#e0a458, #e8b36a); /* step highlights, timer accents */
+	--cook-sage: light-dark(#5f8d72, #74a585); /* the timer ring's elapsed arc */
 	--cook-surface: rgba(255, 255, 255, 0.1); /* chips & buttons on the dark screen */
 	--cook-track: rgba(255, 255, 255, 0.15); /* step segments & ring behind the countdown */
 	--cook-divider: rgba(255, 255, 255, 0.07); /* row hairlines in the ingredients peek */
-	--cook-amber-line: rgba(224, 164, 88, 0.4); /* the outlined chip [7b] */
-	--cook-amber-tint: rgba(224, 164, 88, 0.1); /* this step's ingredient row [7b] */
+	/* Mixed rather than spelled out, so both follow --cook-amber into either theme. */
+	--cook-amber-line: color-mix(
+		in srgb,
+		var(--cook-amber) 40%,
+		transparent
+	); /* outlined chip [7b] */
+	--cook-amber-tint: color-mix(
+		in srgb,
+		var(--cook-amber) 10%,
+		transparent
+	); /* this step's row [7b] */
 
-	/* ── Toast (inverted) ─────────────────────────────────────── */
-	/* The one place the app inverts: a transient message that must not read as a
-	   row (→ DECISIONS #107). `--ink` warmed a touch so it doesn't go cold beside
-	   the cream surfaces; text borrows cook mode's off-whites. `--toast-accent`
-	   is a sage lifted for legibility on the dark surface — plain --sage is only
-	   ~3.9:1 there; this clears AA for the "Undo". */
-	--toast: #2a251e;
-	--toast-text: #edebe6;
+	/* ── Toast ────────────────────────────────────────────────── */
+	/* In light mode the one place the app inverts: a transient message that must
+	   not read as a row (→ DECISIONS #107). `--ink` warmed a touch so it doesn't
+	   go cold beside the cream surfaces; text borrows cook mode's off-whites.
+
+	   In dark mode it stops being an inversion and becomes an *elevation*: one
+	   step lighter than `--card`, plus a hairline, because a dark pill on a dark
+	   screen has nothing else to separate it. It never inverts to cream — a
+	   bright bar on a night screen is the one thing this must not do. */
+	--toast: light-dark(#2a251e, #332e27);
+	--toast-text: #efe9de;
 	--toast-muted: #b7b2a9; /* the "checked off" that follows the bold name */
-	--toast-accent: #7faa8d; /* the "Undo" — sage that still reads on the dark */
+	--toast-border: light-dark(transparent, rgba(255, 255, 255, 0.08)); /* dark-only hairline */
+	--toast-dot: light-dark(#5f8d72, #74a585); /* the check circle, lifted with the rest */
+	--toast-accent: #93c2a2; /* the "Undo" — sage lifted to clear AA on the dark */
 	--toast-press: rgba(255, 255, 255, 0.08); /* the "Undo" pressed, lit from within */
 
 	/* ── Typography ───────────────────────────────────────────── */
@@ -114,16 +211,26 @@
 	--r-chip: 999px;
 
 	/* ── Overlays ─────────────────────────────────────────────── */
-	--scrim: rgba(34, 32, 28, 0.4); /* behind sheets & modals */
+	/* Deeper on dark: a 40% scrim over a near-black screen barely reads, and the
+	   sheet above it has to feel like it covered something. */
+	--scrim: light-dark(rgba(34, 32, 28, 0.4), rgba(0, 0, 0, 0.65)); /* behind sheets & modals */
 
 	/* ── Shadows ──────────────────────────────────────────────── */
-	--shadow-card: 0 1px 3px rgba(40, 34, 24, 0.05);
-	--shadow-knob: 0 1px 2px rgba(0, 0, 0, 0.15); /* toggle knob [4c] */
-	--shadow-button: 0 8px 20px -6px rgba(95, 141, 114, 0.5);
-	--shadow-fab: 0 8px 20px -4px rgba(95, 141, 114, 0.6);
-	--shadow-sheet: 0 -12px 40px rgba(40, 34, 24, 0.18);
-	--shadow-modal: 0 24px 60px -12px rgba(40, 34, 24, 0.4);
-	--shadow-tabbar: 0 -10px 26px -14px rgba(40, 34, 24, 0.16); /* lift under the tab bar */
+	/* Same geometry in both themes, black instead of warm-brown and carried much
+	   further: a shadow tinted with the paper colour disappears entirely on a
+	   dark canvas, which would flatten every card into its background. The sage
+	   glow under the button and the FAB goes with it — a coloured halo on a night
+	   screen reads as a bug rather than a lift. */
+	--shadow-card: 0 1px 3px light-dark(rgba(40, 34, 24, 0.05), rgba(0, 0, 0, 0.45));
+	--shadow-knob: 0 1px 2px light-dark(rgba(0, 0, 0, 0.15), rgba(0, 0, 0, 0.5)); /* toggle knob [4c] */
+	--shadow-button: 0 8px 20px -6px light-dark(rgba(95, 141, 114, 0.5), rgba(0, 0, 0, 0.6));
+	--shadow-fab: 0 8px 20px -4px light-dark(rgba(95, 141, 114, 0.6), rgba(0, 0, 0, 0.7));
+	--shadow-sheet: 0 -12px 40px light-dark(rgba(40, 34, 24, 0.18), rgba(0, 0, 0, 0.7));
+	--shadow-modal: 0 24px 60px -12px light-dark(rgba(40, 34, 24, 0.4), rgba(0, 0, 0, 0.8));
+	--shadow-tabbar: 0 -10px 26px -14px light-dark(rgba(40, 34, 24, 0.16), rgba(0, 0, 0, 0.6));
+	/* The toast is the one shadow that also changes shape, so it is finished
+	   below rather than here (→ the block after this one). */
+	--shadow-toast: 0 14px 34px -8px rgba(40, 34, 24, 0.4);
 
 	/* ── Layout ───────────────────────────────────────────────── */
 	--page-pad: 22px; /* horizontal screen padding */
@@ -132,6 +239,40 @@
 	   is up, so every padding calc that has to clear it is written once. */
 	--timer-dock-h: 0px;
 	--timer-dock-open-h: 58px;
+}
+
+/*
+	Pinning a theme. `<html data-theme>` is stamped server-side from the cookie so
+	the document opens in the right palette with no flash and no script
+	(→ hooks.server.ts); with no cookie the attribute is absent entirely, which is
+	what leaves the `light dark` above in charge of following the device.
+
+	Overriding `color-scheme` is the *whole* switch — every `light-dark()` in the
+	file resolves against it, and so does the native furniture.
+*/
+:root[data-theme='light'] {
+	color-scheme: light;
+}
+
+:root[data-theme='dark'] {
+	color-scheme: dark;
+}
+
+/*
+	The one token whose geometry changes with the theme and not just its colour:
+	the toast throws a longer, harder shadow on dark, because elevation is all
+	that separates it from the screen behind it. `light-dark()` only speaks
+	colour, so this needs the long form — the media query for "follow the
+	device", the attribute for a pinned choice.
+*/
+@media (prefers-color-scheme: dark) {
+	:root:not([data-theme='light']) {
+		--shadow-toast: 0 16px 38px -8px rgba(0, 0, 0, 0.85);
+	}
+}
+
+:root[data-theme='dark'] {
+	--shadow-toast: 0 16px 38px -8px rgba(0, 0, 0, 0.85);
 }
 
 * {

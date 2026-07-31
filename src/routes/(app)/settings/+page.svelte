@@ -22,6 +22,7 @@
 	import LeaveModal from '$lib/components/settings/LeaveModal.svelte';
 	import PrefRow from '$lib/components/settings/PrefRow.svelte';
 	import ProfileSheet from '$lib/components/settings/ProfileSheet.svelte';
+	import ThemeSheet from '$lib/components/settings/ThemeSheet.svelte';
 	import SubHeader from '$lib/components/shell/SubHeader.svelte';
 	import Avatar from '$lib/components/ui/Avatar.svelte';
 	import Card from '$lib/components/ui/Card.svelte';
@@ -40,6 +41,7 @@
 
 	let editingProfile = $state(false);
 	let choosingLanguage = $state(false);
+	let choosingTheme = $state(false);
 	let renamingHousehold = $state(false);
 	let editingAiKey = $state(false);
 	let leaving = $state(false);
@@ -73,6 +75,15 @@
 	/** The row's value: the chosen language by its own name, else "System". */
 	const languageValue = $derived(
 		isLocale(data.chosenLocale) ? LOCALE_NAMES[data.chosenLocale] : m.settings.language.system
+	);
+
+	/**
+	 * The same, for appearance. Deliberately *not* "System — Dark": the row states
+	 * the setting, and what the device happens to be resolving it to right now is
+	 * the sheet's job to say (→ `components/settings/ThemeSheet.svelte`).
+	 */
+	const themeValue = $derived(
+		data.chosenTheme ? m.settings.theme[data.chosenTheme] : m.settings.theme.system
 	);
 
 	/**
@@ -142,6 +153,13 @@
 	<button type="button" class="row" onclick={() => (choosingLanguage = true)}>
 		<span class="label">{m.settings.language.row}</span>
 		<span class="value">{languageValue}</span>
+		<ChevronRight size={15} strokeWidth={2} class="chevron" />
+	</button>
+	<!-- Appearance sits beside it for the same reason: it is about the person
+		 reading and the screen they read on, not about the house (→ SPEC §6). -->
+	<button type="button" class="row" onclick={() => (choosingTheme = true)}>
+		<span class="label">{m.settings.theme.row}</span>
+		<span class="value">{themeValue}</span>
 		<ChevronRight size={15} strokeWidth={2} class="chevron" />
 	</button>
 </RowGroup>
@@ -277,6 +295,10 @@
 		deviceLocale={data.deviceLocale}
 		onclose={() => (choosingLanguage = false)}
 	/>
+{/if}
+
+{#if choosingTheme}
+	<ThemeSheet chosen={data.chosenTheme} onclose={() => (choosingTheme = false)} />
 {/if}
 
 {#if renamingHousehold}

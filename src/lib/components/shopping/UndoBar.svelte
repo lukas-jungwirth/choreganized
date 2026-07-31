@@ -66,7 +66,9 @@
 		 whole thing — the name, since "checked off" alone names nothing, and the
 		 way out of it, since the bar is not going to be there for long. -->
 	<div class="row" role="status">
-		<CheckCircle checked size={20} />
+		<!-- Its own sage, not the list's: this circle sits on the dark pill in both
+			 themes, so it lifts with the rest of the toast (→ `--toast-dot`). -->
+		<CheckCircle checked size={20} color="var(--toast-dot)" />
 		<span class="text">
 			{#each m.shopping.undo.checked(item.name) as part}{#if part.strong}<b>{part.text}</b
 					>{:else}{part.text}{/if}{/each}
@@ -105,7 +107,17 @@
 		padding: 10px 10px 10px 14px;
 		border-radius: var(--r-sheet);
 		background: var(--toast);
-		box-shadow: var(--shadow-modal);
+		/* The hairline is dark-mode only: on a night screen the pill and the page
+		   behind it are both dark, so the edge is what says "this is a separate
+		   thing" — in light mode the inversion already does that job, and the token
+		   is transparent there.
+
+		   An inset shadow rather than a border, so light mode keeps the exact
+		   geometry it had: `* { box-sizing: border-box }` means a 1px border would
+		   eat 1px of padding on every side even while invisible. */
+		box-shadow:
+			inset 0 0 0 1px var(--toast-border),
+			var(--shadow-toast);
 		font-size: 15px;
 		color: var(--toast-muted);
 	}

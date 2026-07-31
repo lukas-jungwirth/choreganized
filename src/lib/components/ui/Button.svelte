@@ -64,9 +64,12 @@
 		color: var(--ink);
 	}
 
+	/* Stays dark in both themes rather than inverting with `--ink`/`--card`
+	   (→ app.css `--btn-dark`). */
 	.dark {
-		background: var(--ink);
-		color: var(--card);
+		background: var(--btn-dark);
+		border-color: var(--btn-dark-border);
+		color: var(--btn-dark-text);
 	}
 
 	.danger {

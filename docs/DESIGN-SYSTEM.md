@@ -9,25 +9,49 @@ Feel: soft paper background, white cards with hairline dividers, one sage green 
 terracotta for people & points, generous radii, Fraunces for anything display, quiet
 uppercase micro-labels. Nothing shouts; even "overdue" is a calm tinted card.
 
+## Light & dark
+
+Every colour token is written **`light-dark(<light>, <dark>)`** — one line carrying both
+answers, so a name can't be declared in one theme and forgotten in the other
+(→ [DECISIONS #120](DECISIONS.md)). The switch is `color-scheme` alone: `light dark` on `:root`
+follows the device, and `:root[data-theme='light'|'dark']` pins it, stamped server-side from the
+`theme` cookie so the first paint is already right (→ [SPEC §10](SPEC.md)).
+
+**Adding a token means adding both values.** A bare hex in `:root` is a token that silently
+stays light at night — the same class of bug as a raw hex in a component.
+
+Dark is not an inversion. Three rules decide a value:
+
+- **Stay warm.** Every grey has more red in it than blue. Cool blue-greys read as "someone
+  forgot", even on cream.
+- **Depth is elevation.** A surface that comes forward gets _lighter_. Hence the toast, which
+  inverts in light mode, instead lifts above `--card` and takes a hairline in dark mode.
+- **Brand hues lift, content hues don't.** `--sage` goes `#5f8d72 → #74a585` because the light
+  green is ~2.6:1 on a near-black — and `--on-sage` flips dark to follow. Member colours are
+  household _content_ and never move, which is why `--on-member` and `--member-shade` exist as
+  theme-independent tokens rather than borrowing `--on-sage` and `--ink`.
+
 ## Tokens (names → see `src/app.css` for values)
 
-| Group      | Tokens                                                                                                       | Used for                                                                                        |
-| ---------- | ------------------------------------------------------------------------------------------------------------ | ----------------------------------------------------------------------------------------------- |
-| Surfaces   | `--bg` `--card` `--sunken` `--sunken-2` `--field` `--tabbar-bg`                                              | screen bg / cards / inset chips & wells / segmented track / inputs in sheets / frosted tab bar  |
-| Text       | `--ink` `--text-2…5` `--text-disabled`                                                                       | 6-step ramp; `--text-5` for uppercase labels; `--text-disabled` for placeholders & struck items |
-| Sage       | `--sage` `--sage-strong` `--sage-hover` `--sage-tint` `--sage-tint-2` `--sage-row` `--sage-deep` `--on-sage` | primary buttons, active tab, checked circles, selected chips, highlight rows                    |
-| Terracotta | `--terracotta` `--terracotta-tint(-2)` `--terracotta-deep`                                                   | points (`+10`), second member, "due today" meta                                                 |
-| Danger     | `--danger` `--danger-tint` `--danger-border` `--danger-deep` `--danger-soft`                                 | overdue, destructive actions, badges; `-soft` = subtitle copy on a danger tint                  |
-| Info       | `--info-tint` `--info-border` `--info-soft`                                                                  | the holiday banner [4a]; its title uses `--sage-deep`                                           |
-| Accents    | `--gold` `--gold-tint`                                                                                       | crown / 1st place                                                                               |
-| Members    | `--member-sage/-terracotta/-blue/-amber/-plum`                                                               | avatar palette (onboarding colour picker)                                                       |
-| Lines      | `--border` `--border-soft` `--divider` `--divider-sheet` `--border-dashed` `--track`                         | input outlines / tab hairline / row dividers / dashed empties / progress track                  |
-| Cook mode  | `--cook-bg` `--cook-text` `--cook-muted` `--cook-faint` `--cook-sheet` `--cook-amber` `--cook-surface`       | the one dark surface in the app; `-surface` = the 10% white its chips and buttons fill with     |
-| Type       | `--font-display` (Fraunces) `--font-body` (Figtree)                                                          | see scale below                                                                                 |
-| Radii      | `--r-input 14` `--r-button 16` `--r-block 16` `--r-card 20` `--r-card-lg 22` `--r-sheet 28` `--r-chip 999`   | `--r-block` = grouped block: quick-add [03], sheet menus [7c], add-a-store [7g]                 |
-| Shadows    | `--shadow-card/-button/-fab/-sheet/-modal/-knob`                                                             | `-knob` is the toggle's white knob                                                              |
-| Overlays   | `--scrim`                                                                                                    | behind sheets & modals                                                                          |
-| Layout     | `--page-pad 22px` `--tabbar-h 84px` `--timer-dock-h 0px` `--timer-dock-open-h 58px`                          | the shell swaps the dock height in while a timer is up; `.app-shell` and `FAB` both read it     |
+| Group      | Tokens                                                                                                                   | Used for                                                                                                                                                                         |
+| ---------- | ------------------------------------------------------------------------------------------------------------------------ | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Surfaces   | `--bg` `--card` `--sunken` `--sunken-2` `--field` `--tabbar-bg`                                                          | screen bg / cards / inset chips & wells / segmented track / inputs in sheets / frosted tab bar                                                                                   |
+| Text       | `--ink` `--text-2…5` `--text-disabled`                                                                                   | 6-step ramp; `--text-5` for uppercase labels; `--text-disabled` for placeholders & struck items                                                                                  |
+| Sage       | `--sage` `--sage-strong` `--sage-hover` `--sage-tint` `--sage-tint-2` `--sage-row` `--sage-deep` `--on-sage`             | primary buttons, active tab, checked circles, selected chips, highlight rows                                                                                                     |
+| Terracotta | `--terracotta` `--terracotta-tint(-2)` `--terracotta-deep`                                                               | points (`+10`), second member, "due today" meta                                                                                                                                  |
+| Danger     | `--danger` `--danger-tint` `--danger-border` `--danger-deep` `--danger-soft`                                             | overdue, destructive actions, badges; `-soft` = subtitle copy on a danger tint                                                                                                   |
+| Info       | `--info-tint` `--info-border` `--info-soft`                                                                              | the holiday banner [4a]; its title uses `--sage-deep`                                                                                                                            |
+| Accents    | `--gold` `--gold-tint`                                                                                                   | crown / 1st place                                                                                                                                                                |
+| Members    | `--member-sage/-terracotta/-blue/-amber/-plum` `--on-member` `--member-shade`                                            | avatar palette (onboarding colour picker); the last two are theme-independent — the initial _on_ a member colour, and the deepening at the foot of the winner's plinth [8a]      |
+| Lines      | `--border` `--border-soft` `--divider` `--divider-sheet` `--border-dashed` `--track`                                     | input outlines / tab hairline / row dividers / dashed empties / progress track                                                                                                   |
+| Cook mode  | `--cook-bg` `--cook-text(-2)` `--cook-muted` `--cook-faint` `--cook-sheet` `--cook-amber` `--cook-sage` `--cook-surface` | the app's darkest screen in **both** themes (it goes deeper still in dark); `-surface` = the 10% white its chips and buttons fill with                                           |
+| Toast      | `--toast` `--toast-text` `--toast-muted` `--toast-accent` `--toast-dot` `--toast-border` `--toast-press`                 | the undo bar [03]: inverted in light, _elevated_ above `--card` + hairline in dark — never bright at night                                                                       |
+| Buttons    | `--btn-dark` `--btn-dark-text` `--btn-dark-border`                                                                       | `Button variant="dark"` ("Start cook mode") — a swatch of the screen it opens, so it stays dark in both themes rather than inverting                                             |
+| Type       | `--font-display` (Fraunces) `--font-body` (Figtree)                                                                      | see scale below                                                                                                                                                                  |
+| Radii      | `--r-input 14` `--r-button 16` `--r-block 16` `--r-card 20` `--r-card-lg 22` `--r-sheet 28` `--r-chip 999`               | `--r-block` = grouped block: quick-add [03], sheet menus [7c], add-a-store [7g]                                                                                                  |
+| Shadows    | `--shadow-card/-button/-fab/-sheet/-modal/-knob/-tabbar/-toast`                                                          | `-knob` is the toggle's white knob; on dark all go black and carry further (a paper-tinted shadow vanishes on a dark canvas), and `-toast` is the one whose geometry changes too |
+| Overlays   | `--scrim`                                                                                                                | behind sheets & modals                                                                                                                                                           |
+| Layout     | `--page-pad 22px` `--tabbar-h 84px` `--timer-dock-h 0px` `--timer-dock-open-h 58px`                                      | the shell swaps the dock height in while a timer is up; `.app-shell` and `FAB` both read it                                                                                      |
 
 One token is set by components rather than `:root`: **`--input-surface`**. TextField is white on
 the paper background and `--field` inside a white sheet [3a], so BottomSheet and CenterModal set

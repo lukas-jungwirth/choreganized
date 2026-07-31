@@ -122,7 +122,9 @@
 	}
 
 	.progress {
-		stroke: var(--sage);
+		/* Cook mode's own sage, not the app's: this arc sits on the darkest screen
+		   in the app, and follows it rather than the surrounding theme. */
+		stroke: var(--cook-sage);
 		stroke-linecap: round;
 		/* Matched to the tick in `cook-timer.svelte.ts`, so the arc slides between
 			 samples instead of stepping five times a second. */

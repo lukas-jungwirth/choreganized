@@ -1,8 +1,11 @@
 <!doctype html>
-<!-- `lang` is filled per request in hooks.server.ts: it is the one attribute of
-	 the document a component can't reach, and a screen reader picks its voice
-	 from it. -->
-<html lang="%lang%">
+<!-- `lang` and `data-theme` are filled per request in hooks.server.ts: they are
+	 the attributes of the document no component can reach. A screen reader picks
+	 its voice from `lang`; `data-theme` carries the chosen theme so the very
+	 first paint is already the right one — with no cookie it expands to nothing
+	 at all, which is what lets `color-scheme: light dark` follow the device
+	 (→ app.css, `$lib/theme`). -->
+<html lang="%lang%" %theme%>
 	<head>
 		<meta charset="utf-8" />
 		<!-- viewport-fit=cover is what makes every `env(safe-area-inset-*)` in the
@@ -23,7 +26,12 @@
 			type="image/png"
 		/>
 		<link rel="apple-touch-icon" href="%sveltekit.assets%/icons/apple-touch-icon.png" />
-		<link rel="manifest" href="%sveltekit.assets%/manifest.webmanifest" />
+		<!-- Served per request, not static, so the splash screen opens in the right
+			 theme (→ routes/manifest.webmanifest). `use-credentials` is what makes
+			 the theme cookie travel with it: a manifest is fetched with credentials
+			 omitted by default, even same-origin, so without this the route would
+			 never see a pinned theme. -->
+		<link rel="manifest" href="/manifest.webmanifest" crossorigin="use-credentials" />
 
 		<meta name="application-name" content="Choreganized" />
 		<meta name="apple-mobile-web-app-title" content="Choreganized" />

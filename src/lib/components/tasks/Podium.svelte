@@ -199,8 +199,10 @@
 	.plinth.winning {
 		background: linear-gradient(
 			var(--column-color),
-			color-mix(in srgb, var(--column-color) 86%, var(--ink))
+			color-mix(in srgb, var(--column-color) 86%, var(--member-shade))
 		);
-		color: color-mix(in srgb, var(--on-sage) 90%, transparent);
+		/* The plinth is the winner's own colour, so its ink follows the member
+		   palette rather than the theme (→ app.css `--on-member`). */
+		color: color-mix(in srgb, var(--on-member) 90%, transparent);
 	}
 </style>

@@ -36,6 +36,7 @@ import {
 	updateProfile
 } from '$lib/server/services/household';
 import { setAway } from '$lib/server/services/tasks';
+import { isTheme, THEME_COOKIE, THEME_COOKIE_MAX_AGE } from '$lib/theme';
 import { isCalendarDate, todayIn } from '$lib/utils/dates';
 import { DISPLAY_NAME_MAX, HOUSEHOLD_NAME_MAX, looksLikeGeminiKey } from '$lib/utils/household';
 import type { Actions, PageServerLoad } from './$types';
@@ -107,6 +108,12 @@ export const load: PageServerLoad = (event) => {
 		},
 		/** The stored choice, not the resolved language: null is "System" [6a]. */
 		chosenLocale: member.locale,
+		/**
+		 * Same shape for the theme, and here the stored choice is the *whole*
+		 * story — null is "System", and what that resolves to is a question only
+		 * the browser can answer (→ `components/settings/ThemeSheet.svelte`).
+		 */
+		chosenTheme: event.locals.theme,
 		/**
 		 * What "System" would actually resolve to — the header alone, *ignoring*
 		 * the choice and the cookie. `event.locals.locale` is the wrong number to
@@ -197,6 +204,43 @@ export const actions: Actions = {
 		}
 
 		return { languageSaved: true };
+	},
+
+	/**
+	 * Light, dark, or follow the device (→ SPEC §6). The cookie *is* the setting
+	 * here — there is no column behind it, because a theme is a property of the
+	 * screen you are reading on and not of the person or the house
+	 * (→ DECISIONS #119).
+	 *
+	 * An unrecognised value — including the empty string the "System" row posts —
+	 * deletes it, which is how "follow the device" is stored: only the absence of
+	 * the cookie leaves `color-scheme: light dark` in charge (→ app.css).
+	 *
+	 * Unlike `?/language` this needs no reload. Nothing rendered changes — the
+	 * palette is entirely custom properties, so re-running the loads is enough to
+	 * repaint (→ `components/settings/ThemeSheet.svelte`).
+	 */
+	theme: async (event) => {
+		// Not household data, but the settings screen is behind the guard and a
+		// signed-out POST here has no business being answered.
+		requireMember(event);
+		const form = await event.request.formData();
+
+		const value = form.get('theme');
+
+		if (isTheme(value)) {
+			// Read on the server to stamp `<html data-theme>` (→ hooks.server.ts), so
+			// it keeps SvelteKit's httpOnly default like the locale cookie.
+			event.cookies.set(THEME_COOKIE, value, {
+				path: '/',
+				maxAge: THEME_COOKIE_MAX_AGE,
+				sameSite: 'lax'
+			});
+		} else {
+			event.cookies.delete(THEME_COOKIE, { path: '/' });
+		}
+
+		return { themeSaved: true };
 	},
 
 	/**
