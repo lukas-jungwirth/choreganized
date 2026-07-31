@@ -1127,13 +1127,20 @@ that actually adapts there; this wants checking on a real device.
        A _total_ is a different number: 400 g meeting a kilo is 1400 g, and shaving that to 999
        would put less on the list than the recipe asks for. `TOTAL_QUANTITY_MAX` (99 999) is the
        ceiling on what a row may hold, and exists only so a merge repeated all afternoon can't
-       write nonsense into the column.
-     - **The preview and the write are the same function.** `planAdds` is pure and lives in
-       `utils/shopping.ts` with the split rule (#105): the sheet renders its `rows`, the service
-       applies its `inserts`/`updates`, and both read the list through `listOpenItems`. A
-       preview that could disagree with the outcome would be worse than no preview. The row it
-       tops up is the _oldest_ matching one, because that's the one the household has been
-       looking at; a recipe naming the same thing twice tops up the row the same pass is adding.
+       write nonsense into the column. **Every write clamps at the row's ceiling, not the
+       field's** — `normalize` included, so opening a merged 1200 g row to change its shop
+       doesn't shave it on the way past — and the item sheet [3a] raises the stepper's `max` to
+       what the row already holds, because a field whose `max` sits below its own value either
+       blocks the save or eats the number on blur.
+     - **The preview and the write are the same function, run over the same set.** `planAdds` is
+       pure and lives in `utils/shopping.ts` with the split rule (#105): the sheet renders its
+       `rows`, the service applies its `inserts`/`updates`, and both read the list through
+       `listOpenItems`. The sheet gets the open list itself and **re-runs the plan over what is
+       ticked right now** — computed once over the whole recipe, it promises "becomes 4" for the
+       second of two pepper lines even after the first has been unticked, which is a number the
+       submit will not honour. The row it tops up is the topmost matching one in the walking
+       order, because that's the one the household has been looking at; a recipe naming the same
+       thing twice tops up the row the same pass is adding.
      - **Planning a meal no longer writes to the list at all.** `planMeal` returns the picker's
        contents instead of a result, the page opens the sheet over the day it just planned, and
        a dismissed sheet still leaves the dinner on the day. That is the one real cost of this
@@ -1147,5 +1154,43 @@ that actually adapts there; this wants checking on a real device.
        often. Only rows the sheet offered _ticked_ are counted (`candidateId` travels with the
        form) — a row skipped because it was already on the list says nothing about the cupboard,
        and learning from it would learn the wrong thing.
-     - **A topped-up row counts as a change for the push notification.** "2 cucumbers" quietly
-       becoming "4" is exactly what a housemate standing in the shop wants to hear about.
+     - **A topped-up row counts as a change for the push notification, and says what it is.**
+       "2 cucumbers" quietly becoming "4" is exactly what a housemate standing in the shop wants
+       to hear about — but announcing it as "added 3 items" would send them looking for lines
+       that never appeared, so a pour-in with nothing new gets its own copy (→ SPEC §3.5). A
+       mixed batch is announced by what is new, which is the part that has to be looked for.
+     - **The cupboard is taught before the list is written.** The two are separate transactions
+       (`addIngredients` owns one, `rememberStaples` the other), and of the two orders only this
+       one has a harmless retry: an add that committed before a failing `rememberStaples` would
+       merge a second time on the retry and quietly double every amount. The effects that decide
+       which names count as "bought" therefore come from a `planAdds` pass run before either
+       write — pure, and so unable to fail between them. Ticking something that was already on
+       the list moves nothing and must not be read as "we've run out", so it isn't.
+
+124. **"Cooking for {n}" scales the amounts where the recipe is _used_, not where it is saved**
+     (→ SPEC §4.5, §4.6, §4.8). A recipe records what it was written for; every screen that
+     shows its amounts can ask for a different number of people and gets the arithmetic done
+     for it. The alternative — rescaling the lines on the way into the database — was the other
+     candidate and loses more than it gives: it rewrites what the source actually said, it can
+     only be done once, and it can't answer "there are guests on Thursday".
+
+     - **`?serves=` on the recipe screen, read once and written with `replaceState`.** Exactly
+       cook mode's `?step=` traffic (→ DECISIONS #14's neighbours): a reload comes back to the
+       same amounts, **Start cook mode** carries the count through the link, and no tap costs a
+       round trip. Cook mode reads it and offers no stepper of its own — the count is decided
+       before the hands are wet.
+     - **`scaleIngredients` is pure and lives beside the parser**, so the picker sheet scales in
+       the browser as the stepper moves and the service scales the same way on submit. Same
+       reason `planAdds` sits there (#123): a number the sheet promises and a number the list
+       receives must be the same number computed twice.
+     - **Only the numbers move.** Names and units are untouched — six people need more grams of
+       the same pasta — which is also what keeps cook mode's ingredient underlining working:
+       `highlightStep` matches on names, and it never sees a scaled one.
+     - **Rounding has a threshold, because a fraction means two different things.** Below 10 it
+       is the amount (half a teaspoon, ⅔ of an egg) and is kept to two decimals; at 10 and above
+       it is noise no kitchen scale can honour, so it rounds to whole units — "187½ g mushrooms"
+       became the 188 g anybody would actually weigh. A scaled amount also never rounds away to
+       nothing: a row that loses its number reads as "some", which is a different instruction.
+     - **A recipe with no servings gets no control at all.** Half of an unknown is unknown, and
+       a stepper that quietly did nothing would be worse than the absence. `servingsFactor`
+       answers 1 for that case, so every caller degrades to "as written" on its own.

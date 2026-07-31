@@ -27,6 +27,8 @@
 	import BasketIcon from '$lib/components/icons/BasketIcon.svelte';
 	import { cookTimers } from '$lib/cook-timer.svelte';
 	import { keepScreenAwake } from '$lib/wake-lock';
+	import { scaleIngredients, servingsFactor } from '$lib/utils/ingredients';
+	import { readServings } from '$lib/utils/recipes';
 	import { highlightStep } from '$lib/utils/step-highlight';
 	import { messages } from '$lib/i18n';
 	import { formatDuration, parseStepDuration, TIMERS_MAX } from '$lib/utils/timer-parse';
@@ -91,8 +93,21 @@
 		return Number.isFinite(human) ? Math.trunc(human) - 1 : 0;
 	}
 
+	/**
+	 * The amounts for however many people this is being cooked for — inherited
+	 * from the recipe screen through `?serves=` rather than asked for again with
+	 * wet hands (→ SPEC §4.6). Read like `?step=` is: once, off the URL.
+	 *
+	 * Only the numbers move. Names are what `highlightStep` matches on, so the
+	 * underlines and the "this step uses" line find the same words either way.
+	 */
+	const serves = $derived(readServings(page.url.searchParams.get('serves')));
+	const ingredients = $derived(
+		scaleIngredients(recipe.ingredients, servingsFactor(recipe.servings, serves ?? 0))
+	);
+
 	/** Underlines, and the list under the step — both read out of the text. */
-	const read = $derived(highlightStep(step?.text ?? '', recipe.ingredients));
+	const read = $derived(highlightStep(step?.text ?? '', ingredients));
 
 	/** A duration the step mentions, if it mentions one (→ DECISIONS #14). */
 	const parsed = $derived(step ? parseStepDuration(step.text) : null);
@@ -264,8 +279,8 @@
 
 {#if peeking}
 	<IngredientsPeekSheet
-		ingredients={recipe.ingredients}
-		servings={recipe.servings}
+		{ingredients}
+		servings={recipe.servings === null ? null : (serves ?? recipe.servings)}
 		used={read.used}
 		onclose={() => (peeking = false)}
 	/>

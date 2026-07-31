@@ -16,6 +16,7 @@ import {
 	QUANTITY_MAX,
 	STORE_NAME_MAX,
 	TOTAL_QUANTITY_MAX,
+	itemName,
 	planAdds,
 	splitList,
 	suggestionKey,
@@ -166,6 +167,11 @@ export function listStores(householdId: string): Store[] {
  * columns that decide where a new ingredient lands (→ `planAdds`). Both the
  * picker's preview and the add it previews read the list through this, so the
  * two can't be looking at different lists.
+ *
+ * The order is `compareOpen`'s, `sortOrder` first — the walking order, not the
+ * order things were added. It matters for the one case where a name is on the
+ * list twice: the row a recipe tops up is then the one *higher up the group*,
+ * which is the one somebody dragged there and is looking at.
  */
 export function listOpenItems(householdId: string): {
 	id: string;
@@ -182,7 +188,7 @@ export function listOpenItems(householdId: string): {
 		})
 		.from(shoppingItems)
 		.where(and(eq(shoppingItems.householdId, householdId), isNull(shoppingItems.checkedAt)))
-		.orderBy(asc(shoppingItems.createdAt), asc(shoppingItems.id))
+		.orderBy(asc(shoppingItems.sortOrder), asc(shoppingItems.createdAt), asc(shoppingItems.id))
 		.all();
 }
 
@@ -232,7 +238,12 @@ export type UpdateItemInput = {
 
 /** Trimmed, capped, and never a store belonging to somebody else's household. */
 function normalize(householdId: string, input: AddItemInput) {
-	const quantity = normalizeQuantity(input.quantity);
+	// The *row's* ceiling, not the field's: a row that two recipes merged up to
+	// 1200 g comes back through here whenever anybody edits the item — to move it
+	// to another store, or to fix a typo — and the typed ceiling would silently
+	// shave it to 999 on the way past (→ `utils/shopping` `TOTAL_QUANTITY_MAX`).
+	// 999 is still what the stepper *offers*; this is what the column may hold.
+	const quantity = normalizeQuantity(input.quantity, TOTAL_QUANTITY_MAX);
 
 	return {
 		name: input.name.trim().slice(0, ITEM_NAME_MAX),
@@ -246,10 +257,10 @@ function normalize(householdId: string, input: AddItemInput) {
 }
 
 /**
- * `max` is the typed ceiling by default and the far looser total for the one
- * caller that isn't a field: a recipe may well say "1500 g", and shaving that
- * down to 999 would put less on the list than the recipe asks for
- * (→ `utils/shopping` `TOTAL_QUANTITY_MAX`).
+ * `max` is what the caller may store. Everything that writes a row passes
+ * `TOTAL_QUANTITY_MAX`, because a merged amount legitimately outgrows what a
+ * field may be typed with; `QUANTITY_MAX` remains the stepper's own ceiling,
+ * enforced where the typing happens (→ `utils/shopping`).
  */
 function normalizeQuantity(
 	quantity: number | null | undefined,
@@ -461,7 +472,7 @@ export function addIngredients(
 		const plan = planAdds(
 			listOpenItems(householdId),
 			ingredients.map((ingredient) => ({
-				name: ingredient.name.trim().slice(0, ITEM_NAME_MAX),
+				name: itemName(ingredient.name),
 				quantity: normalizeQuantity(ingredient.quantity, TOTAL_QUANTITY_MAX),
 				unit: normalizeUnit(ingredient.unit)
 			}))
@@ -506,12 +517,16 @@ export function addIngredients(
 		};
 	});
 
-	// A topped-up row counts: what changed is what somebody has to buy, and
-	// "2 cucumbers" quietly becoming "4" is exactly the change a housemate
-	// standing in the shop wants to hear about.
-	const changed = result.added + result.merged;
-	if (changed > 0) {
-		notifyShoppingAdd({ householdId, actorMemberId: memberId, itemCount: changed });
+	// A topped-up row counts as a change worth announcing — "2 cucumbers" quietly
+	// becoming "4" is exactly what a housemate standing in the shop wants to hear
+	// about — but it is announced as what it is, not as an item that isn't there.
+	if (result.added > 0 || result.merged > 0) {
+		notifyShoppingAdd({
+			householdId,
+			actorMemberId: memberId,
+			itemCount: result.added,
+			toppedUpCount: result.merged
+		});
 	}
 
 	return result;

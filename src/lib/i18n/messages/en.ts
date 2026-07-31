@@ -816,6 +816,9 @@ export const en = {
 			pickForList: 'Choose ingredients for the shopping list',
 			addToList: 'Add to list',
 			ingredients: 'Ingredients',
+			/** The stepper over the ingredient list (→ SPEC §4.5). */
+			cookingFor: 'Cooking for',
+			writtenFor: (count: number) => `written for ${count}`,
 			steps: 'Steps',
 			startCookMode: 'Start cook mode',
 			/** Split so the middle run can be the link to the edit screen. */
@@ -1388,6 +1391,15 @@ export const en = {
 			count === 1
 				? `🛒 ${member} added 1 item to the list`
 				: `🛒 ${member} added ${count} items to the list`,
+		/**
+		 * The same pour-in when nothing was new — a recipe's ingredients meeting
+		 * rows already on the list (→ SPEC §4.8). Says "more of", because looking
+		 * for a line that didn't appear is the wrong errand to send someone on.
+		 */
+		shoppingToppedUp: (member: string, count: number) =>
+			count === 1
+				? `🛒 ${member} needs more of 1 thing on the list`
+				: `🛒 ${member} needs more of ${count} things on the list`,
 
 		/** The two task nudges [4e] (→ SPEC §5.6). */
 		taskDue: (emoji: string, task: string, assigned: boolean) =>

@@ -257,6 +257,17 @@ export type Amount = { quantity: number | null; unit: string | null };
 export type NamedAmount = Amount & { name: string };
 
 /**
+ * A name as the list will store it. Anything planning an add has to key on
+ * *this* rather than on the raw text: an ingredient whose name runs past the
+ * column's limit would otherwise be matched under its full spelling in one pass
+ * and its truncated one in the next, and the two would disagree about whether
+ * the row is new.
+ */
+export function itemName(name: string): string {
+	return name.trim().slice(0, ITEM_NAME_MAX);
+}
+
+/**
  * Units that measure the same thing, and how much of the base unit one of them
  * is. Lowercased keys, because `L` is stored capitalised and "l" is what a
  * hand-typed row is likely to say.

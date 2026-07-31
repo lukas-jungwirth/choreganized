@@ -67,6 +67,13 @@
 	// The design's stepper opens at 1 for a new item; an item that never had a
 	// quantity must be editable without acquiring one, hence null.
 	let quantity = $state<number | null>(untrack(() => (item ? item.quantity : 1)));
+	/**
+	 * The stepper offers `QUANTITY_MAX` — but a row two recipes merged up to
+	 * 1200 g already holds more than that, and a field whose `max` sits below its
+	 * own value blocks the save (or shaves the amount on blur) for somebody who
+	 * only came here to change the shop (→ `utils/shopping` `TOTAL_QUANTITY_MAX`).
+	 */
+	const quantityMax = untrack(() => Math.max(QUANTITY_MAX, Math.ceil(item?.quantity ?? 0)));
 	let unit = $state(untrack(() => item?.unit ?? DEFAULT_UNIT));
 	let storeId = $state(untrack(() => (item ? item.storeId : defaultStoreId)));
 	let submitting = $state(false);
@@ -189,7 +196,7 @@
 					label={m.shopping.sheet.quantity}
 					name="quantity"
 					bind:value={quantity}
-					max={QUANTITY_MAX}
+					max={quantityMax}
 					clearable
 				/>
 			</div>

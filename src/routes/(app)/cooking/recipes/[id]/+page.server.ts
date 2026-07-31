@@ -10,7 +10,7 @@ import { catalog } from '$lib/i18n';
 import { requireMember } from '$lib/server/guards';
 import { mealPlanActions } from '$lib/server/meal-actions';
 import { getPlan } from '$lib/server/services/meals';
-import { buildIngredientPick } from '$lib/server/services/recipe-shopping';
+import { pickFor } from '$lib/server/services/recipe-shopping';
 import {
 	deleteRecipe,
 	duplicateRecipe,
@@ -39,12 +39,13 @@ export const load: PageServerLoad = async (event) => {
 		recipes: listRecipes(householdId),
 		/**
 		 * The basket's sheet [3e], filled in here rather than fetched when it
-		 * opens: this page has already read the recipe, and a picker that pauses
-		 * before it can show you what you're about to buy is a picker nobody
-		 * waits for. What it previews is re-read on submit, so a housemate adding
-		 * cucumbers meanwhile changes the outcome, not the truth of the outcome.
+		 * opens: this page has already read the recipe — `pickFor` takes that
+		 * reading rather than repeating it — and a picker that pauses before it
+		 * can show you what you're about to buy is a picker nobody waits for.
+		 * What it previews is re-read on submit, so a housemate adding cucumbers
+		 * meanwhile changes the outcome, not the truth of the outcome.
 		 */
-		pick: buildIngredientPick(householdId, event.params.id)
+		pick: pickFor(householdId, recipe)
 	};
 };
 

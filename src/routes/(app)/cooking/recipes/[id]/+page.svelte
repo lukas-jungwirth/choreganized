@@ -6,9 +6,12 @@
 	this screen. Everything else is the app's usual furniture.
 -->
 <script lang="ts">
+	import { replaceState } from '$app/navigation';
+	import { page } from '$app/state';
 	import DayPickerSheet from '$lib/components/cooking/DayPickerSheet.svelte';
 	import IngredientPickSheet from '$lib/components/cooking/IngredientPickSheet.svelte';
 	import MealPlanSheet from '$lib/components/cooking/MealPlanSheet.svelte';
+	import ServingsField from '$lib/components/cooking/ServingsField.svelte';
 	import RecipeImage from '$lib/components/cooking/RecipeImage.svelte';
 	import RecipeMenuSheet from '$lib/components/cooking/RecipeMenuSheet.svelte';
 	import ShoppingResultBanner from '$lib/components/cooking/ShoppingResultBanner.svelte';
@@ -18,6 +21,8 @@
 	import { messages } from '$lib/i18n';
 	import type { IngredientPick } from '$lib/server/services/recipe-shopping';
 	import type { CalendarDate } from '$lib/utils/dates';
+	import { scaleIngredients, servingsFactor } from '$lib/utils/ingredients';
+	import { readServings } from '$lib/utils/recipes';
 	import CalendarDays from '@lucide/svelte/icons/calendar-days';
 	import ChefHat from '@lucide/svelte/icons/chef-hat';
 	import ChevronLeft from '@lucide/svelte/icons/chevron-left';
@@ -51,6 +56,74 @@
 		if (offered) untrack(() => (picking = offered));
 	});
 
+	/**
+	 * How many people this is being read for (→ SPEC §4.5). Read from `?serves=`
+	 * once at mount and written back on every step, the same one-way traffic
+	 * cook mode's `?step=` runs: `replaceState` keeps the address bar honest
+	 * without a round trip, so a reload comes back to the same amounts and
+	 * "Start cook mode" carries the choice through the link.
+	 *
+	 * Null for a recipe that never recorded what it serves — there is nothing to
+	 * scale from, so the control doesn't appear.
+	 */
+	let serves = $state<number | null>(untrack(() => servesFromUrl()));
+
+	/**
+	 * The address the bar is *currently* showing. Not `page.url`, which shallow
+	 * routing deliberately leaves at whatever the navigation landed on: comparing
+	 * against that, stepping 4 → 6 → 4 computes the original address again, skips
+	 * the write, and leaves a stale `?serves=6` behind for the next reload to
+	 * come back to. Plain `let`, not `$state` — the effect must not depend on it.
+	 */
+	let written = untrack(() => page.url.href);
+
+	/**
+	 * Which recipe the two above were read for. This screen is one component for
+	 * every recipe, so a same-route navigation — ••• → Duplicate lands on the copy
+	 * through `redirect(303)` — swaps `data.recipe` underneath without a remount,
+	 * and the initializers would never run again: the new recipe would inherit the
+	 * old one's count and write it onto the old one's address. Cook mode keeps a
+	 * `cursorFor` for exactly this reason; the count needs the same.
+	 */
+	let servesFor = $state(untrack(() => recipe.id));
+
+	$effect(() => {
+		const id = recipe.id;
+		if (untrack(() => servesFor) === id) return;
+
+		servesFor = id;
+		written = page.url.href;
+		serves = untrack(() => servesFromUrl());
+	});
+
+	/** `?serves=`, else however many the recipe says it was written for. */
+	function servesFromUrl(): number | null {
+		return readServings(page.url.searchParams.get('serves')) ?? data.recipe.servings;
+	}
+
+	const factor = $derived(servingsFactor(recipe.servings, serves ?? 0));
+	/** The amounts as this reader needs them — the whole point of the stepper. */
+	const ingredients = $derived(scaleIngredients(recipe.ingredients, factor));
+
+	/** Cook mode inherits the count rather than asking again with wet hands. */
+	const cookHref = $derived(
+		serves !== null && serves !== recipe.servings
+			? `/cooking/recipes/${recipe.id}/cook?serves=${serves}`
+			: `/cooking/recipes/${recipe.id}/cook`
+	);
+
+	/** One `replaceState` per actual change, and none at all on mount. */
+	$effect(() => {
+		const url = new URL(page.url);
+		if (serves !== null && serves !== recipe.servings)
+			url.searchParams.set('serves', String(serves));
+		else url.searchParams.delete('serves');
+
+		if (url.href === written) return;
+		written = url.href;
+		replaceState(url, page.state);
+	});
+
 	const day = $derived(
 		data.plan.weeks.flatMap((week) => week.days).find((entry) => entry.date === planning) ?? null
 	);
@@ -63,7 +136,10 @@
 				icon: Clock,
 				text: recipe.timeMinutes ? m.cooking.cookTime(recipe.timeMinutes) : null
 			},
-			{ icon: Users, text: recipe.servings ? m.cooking.serves(recipe.servings) : null },
+			// The count this reader chose, not the one it was written for: the
+			// amounts below have already moved, and a meta line still saying
+			// "Serves 4" over six people's worth of pasta is the contradiction.
+			{ icon: Users, text: recipe.servings ? m.cooking.serves(serves ?? recipe.servings) : null },
 			{
 				icon: ChefHat,
 				text: recipe.createdBy ? m.cooking.recipe.addedBy(recipe.createdBy.displayName) : null
@@ -132,9 +208,15 @@
 				</button>
 			{/if}
 		</div>
+		{#if recipe.servings !== null}
+			<!-- Narrowed on the field itself rather than on `scalable`, which
+				 TypeScript can't see through to know the count is a number here. -->
+			<ServingsField bind:value={serves} writtenFor={recipe.servings} />
+		{/if}
+
 		<Card radius="md">
 			<ul class="ingredients">
-				{#each recipe.ingredients as ingredient (ingredient.id)}
+				{#each ingredients as ingredient (ingredient.id)}
 					{@const amount = m.units.amount(ingredient.quantity, ingredient.unit)}
 					<li>
 						<span class="dot" aria-hidden="true"></span>
@@ -157,7 +239,7 @@
 			{/each}
 		</ol>
 
-		<Button variant="dark" href="/cooking/recipes/{recipe.id}/cook">
+		<Button variant="dark" href={cookHref}>
 			<ChefHat size={18} strokeWidth={2} />{m.cooking.recipe.startCookMode}
 		</Button>
 	{:else}
@@ -192,7 +274,14 @@
 {/if}
 
 {#if picking}
-	<IngredientPickSheet pick={picking} onclose={() => (picking = null)} />
+	<!-- Opened on whatever this screen is showing: the amounts you just decided
+		 on are the amounts you're about to buy. A picker raised by the plan sheet
+		 is about another recipe entirely, so it opens on that one's own count. -->
+	<IngredientPickSheet
+		pick={picking}
+		cookingFor={picking.recipeId === recipe.id ? serves : null}
+		onclose={() => (picking = null)}
+	/>
 {/if}
 
 {#if menu}

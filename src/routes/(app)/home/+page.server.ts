@@ -98,7 +98,9 @@ export const actions: Actions = {
 		const form = await event.request.formData();
 
 		const snapshot = parseSnapshot(form.get('snapshot'));
-		if (!snapshot) return fail(400, { error: "Couldn't undo that one." });
+		if (!snapshot) {
+			return fail(400, { error: catalog(event.locals.locale).tasks.done.undoFailed });
+		}
 
 		undoCompletion(householdId, String(form.get('completionId') ?? ''), snapshot);
 
