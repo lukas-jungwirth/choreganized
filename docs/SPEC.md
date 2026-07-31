@@ -287,9 +287,9 @@ a danger badge with the current user's overdue count [4e].
     the server (Cloudflare 403), since the browser can still load them.
   - **Photos** — the photo mode: 1–3 photos of a cookbook/magazine page, validated and re-encoded
     to WebP (EXIF stripped) before they reach the model; the first is offered as the recipe photo.
-  Ingredients come back as **raw lines** and parse to amount chips exactly like typed and
-  link-imported ones. Recipe content keeps its **source language** (→ §9). Failures are their own
-  messages — key refused (→ Settings) · service busy · nothing found — never a raw API error.
+    Ingredients come back as **raw lines** and parse to amount chips exactly like typed and
+    link-imported ones. Recipe content keeps its **source language** (→ §9). Failures are their own
+    messages — key refused (→ Settings) · service busy · nothing found — never a raw API error.
 - Household content is never translated: imported names, ingredients and steps pass through
   verbatim (→ §9).
 
@@ -343,7 +343,7 @@ a danger badge with the current user's overdue count [4e].
 
 ### 5.4 Completing [4d]
 
-- **Who did it?** Ticking off a task assigned to *someone else* first raises a two-answer
+- **Who did it?** Ticking off a task assigned to _someone else_ first raises a two-answer
   choice — **I did it** (credit yourself) or **{name} did it** (credit the assignee). Your own
   tasks and "Anyone" tasks skip the choice; the tapper is credited (→ DECISIONS #116).
 - Marks done: logs a completion crediting the chosen member (+points to them), then for
@@ -388,7 +388,7 @@ a danger badge with the current user's overdue count [4e].
 
 The **History** tab is a stats landing; the full feed sits one level below it (→ DECISIONS #117).
 
-- **How chores are split** card — each person's share of the *scheduled recurring* load, by
+- **How chores are split** card — each person's share of the _scheduled recurring_ load, by
   design (not history). Weighted by effort × frequency (a daily 5-pointer outweighs a monthly
   40); a fixed assignee carries their task alone, a rotating or "Anyone" task is shared equally,
   one-offs and 0-point chores don't count. A stacked bar + a legend of avatar + percentage.
@@ -409,7 +409,7 @@ The **History** tab is a stats landing; the full feed sits one level below it (�
 
 - Profile card: avatar, display name, email + **Edit**.
 - **Account**: Display name, Your colour (palette picker; taken colours disabled), **Language**
-  (→ §9). (No password row in v1 — Google only.)
+  (→ §9), **Appearance** (→ §10). (No password row in v1 — Google only.)
 - **Notifications**: Enable on this device (subscribes push, shows permission state) ·
   Task reminders · Overdue nudges · Shopping list updates (toggles per member) · Send test
   notification.
@@ -473,3 +473,29 @@ timezone, so January reads "Jänner" (→ [DECISIONS #93](DECISIONS.md)). Every 
   reads "pcs" or "Stk.". A recipe typed in either language parses to the same rows.
 - **Notifications** go to a device, so they use the recipient's own language: their explicit
   choice, else the language the device was reading in when it subscribed.
+
+---
+
+## 10. Appearance (light · dark)
+
+The app paints in **light** (the cream-and-white the design is drawn in) or **dark**, and
+follows the device unless told otherwise. Dark mode is **not an inversion**: the palette stays
+warm — every grey has more red in it than blue — and depth reads as _elevation_, so a surface
+that comes forward gets lighter rather than darker (→ [DECISIONS #119, #120](DECISIONS.md)).
+
+- **Which theme a request gets**: the `theme` cookie, else the device's `prefers-color-scheme`.
+  There is no membership column — a theme belongs to the screen you are reading on, not to the
+  person or the house, so a phone can be dark while a laptop stays light.
+- **Settings → Account → Appearance** offers **System · Light · Dark**. "System" is the absence
+  of a choice, not a third theme: it deletes the cookie so the device decides again. The row
+  states the _setting_ ("System"); the sheet says what that currently resolves to. Choosing does
+  **not** reload — nothing rendered changes, only custom properties, so the repaint is one frame.
+- **Cook mode stays the darkest screen in the app in both themes** (§4.6): it goes deeper still
+  in dark mode, so "you've left the app, you're at the stove" survives the switch. The undo
+  toast is dark in both themes too — in light mode it inverts to stand out, in dark mode it
+  _lifts_ above the card and gains a hairline, because a bright bar at night is the one thing it
+  must not be.
+- **Member colours never change** between themes. A member's colour is household content, and
+  someone whose avatar shifted hue at night would stop being recognisable at a glance.
+- The **offline page** follows the device only — it is served by the service worker, which
+  can't read the httpOnly cookie.

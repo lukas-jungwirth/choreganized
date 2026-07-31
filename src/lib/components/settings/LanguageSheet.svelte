@@ -15,10 +15,10 @@
 -->
 <script lang="ts">
 	import { enhance } from '$app/forms';
+	import SheetOption from '$lib/components/settings/SheetOption.svelte';
 	import BottomSheet from '$lib/components/ui/BottomSheet.svelte';
 	import RowGroup from '$lib/components/ui/RowGroup.svelte';
 	import { LOCALE_NAMES, LOCALES, messages, type Locale } from '$lib/i18n';
-	import Check from '@lucide/svelte/icons/check';
 
 	type Props = {
 		/** The member's stored choice; null is "System" (→ `services/household`). */
@@ -65,24 +65,24 @@
 		}}
 	>
 		<RowGroup surface="sunken">
-			<button type="submit" class="option" name="locale" value="" disabled={switching}>
-				<span class="what">
-					<span class="title">{m.settings.language.system}</span>
-					<span class="detail">{m.settings.language.systemDetail(detected)}</span>
-				</span>
-				{#if chosen === null}
-					<Check size={17} strokeWidth={2.6} class="tick" />
-				{/if}
-			</button>
+			<SheetOption
+				name="locale"
+				value=""
+				label={m.settings.language.system}
+				detail={m.settings.language.systemDetail(detected)}
+				selected={chosen === null}
+				disabled={switching}
+			/>
 
 			{#each LOCALES as option (option)}
-				<button type="submit" class="option" name="locale" value={option} disabled={switching}>
-					<!-- Never translated: somebody looking for German looks for "Deutsch". -->
-					<span class="what"><span class="title">{LOCALE_NAMES[option]}</span></span>
-					{#if chosen === option}
-						<Check size={17} strokeWidth={2.6} class="tick" />
-					{/if}
-				</button>
+				<!-- Never translated: somebody looking for German looks for "Deutsch". -->
+				<SheetOption
+					name="locale"
+					value={option}
+					label={LOCALE_NAMES[option]}
+					selected={chosen === option}
+					disabled={switching}
+				/>
 			{/each}
 		</RowGroup>
 	</form>
@@ -91,41 +91,6 @@
 </BottomSheet>
 
 <style>
-	/* The sheet's menu row [7c]: label left, tick right, 52px tall. */
-	.option {
-		display: flex;
-		align-items: center;
-		gap: 13px;
-		width: 100%;
-		min-height: 52px;
-		padding: 12px 16px;
-		font-size: 15px;
-		text-align: left;
-		color: var(--ink);
-	}
-
-	.what {
-		flex: 1;
-		min-width: 0;
-	}
-
-	.title {
-		display: block;
-	}
-
-	.detail {
-		display: block;
-		margin-top: 2px;
-		font-size: 12.5px;
-		line-height: 1.4;
-		color: var(--text-4);
-	}
-
-	.option :global(.tick) {
-		flex: none;
-		color: var(--sage);
-	}
-
 	.note {
 		margin: 14px 2px 22px;
 		font-size: 12.5px;

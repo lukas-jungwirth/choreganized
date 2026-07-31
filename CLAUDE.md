@@ -41,6 +41,13 @@ lands).
 - **Design tokens only** — every color/radius/shadow is a `var(--…)` from `src/app.css`. A
   hardcoded hex outside `app.css` is wrong. Component inventory: DESIGN-SYSTEM.md — extend
   `lib/components/ui`, don't fork one-off variants.
+- **Both themes, one line** — a colour token that differs by theme is
+  `light-dark(<light>, <dark>)`; splitting one across two `:root` blocks is how they drift.
+  A bare value is correct **only** when the colour is deliberately theme-independent — the
+  member palette, `--on-member`, `--member-shade`, cook mode's text ramp — and those say so in
+  a comment. Don't "fix" them. Dark isn't an inversion: stay warm, depth reads as elevation,
+  brand hues lift but member colours never do. → DESIGN-SYSTEM "Light & dark", SPEC §10,
+  DECISIONS #119–#121.
 - **No user-facing string in a component or a service.** Copy lives in
   `lib/i18n/messages/en.ts` (the schema) and `de.ts` (typed against it, so a missing key is a
   `check` failure). In a component: `const m = messages()` at init, then `m.tasks.title`. On

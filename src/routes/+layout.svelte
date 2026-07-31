@@ -2,6 +2,7 @@
 	import '../app.css';
 	import { page } from '$app/state';
 	import { messages, setI18nContext } from '$lib/i18n';
+	import { themeColor } from '$lib/theme';
 	import { untrack } from 'svelte';
 	import type { LayoutProps } from './$types';
 
@@ -30,24 +31,56 @@
 	});
 
 	/**
-	 * Cook mode is the one dark screen in the app, so it gets the one dark
+	 * Cook mode is the app's darkest screen in *either* theme, so it gets its own
 	 * browser chrome (→ SPEC §4.6). Swapped here rather than declared on the
-	 * route, because two `theme-color` metas mean the first wins — and this
-	 * layout's is always first.
+	 * route, because this layout's metas are always first in the head.
 	 *
-	 * The two literals are `--bg` and `--cook-bg`. A `<meta>` can't read a custom
-	 * property, which is why this is the only place outside `app.css` that spells
-	 * a colour out.
+	 * The colours come from `$lib/theme`'s one table — a `<meta>` can't read a
+	 * custom property, and three consumers spelling their own literals out is
+	 * what let the dark status bar drift a shade off `--bg` (→ DECISIONS #121).
 	 *
-	 * This is the app's *only* theme-color, so it is always first in the head and
-	 * always wins — the static icon/PWA tags in app.html deliberately declare none
-	 * (→ app.html). The favicon and manifest links live there too.
+	 * These are the app's *only* theme-colors — the static icon/PWA tags in
+	 * app.html deliberately declare none (→ app.html), where the favicon and
+	 * manifest links live.
 	 */
 	const cookMode = $derived(page.route.id?.endsWith('/cook') ?? false);
+
+	/**
+	 * Keep `<html data-theme>` in step after the first paint.
+	 *
+	 * `hooks.server.ts` stamps the attribute on the server so the document opens
+	 * in the right palette, but that runs on a *document* load — and changing the
+	 * theme deliberately isn't one (→ `components/settings/ThemeSheet.svelte`).
+	 * Re-running the load functions is what updates `data.theme`; this is what
+	 * carries it back onto the element the CSS actually reads.
+	 *
+	 * Removing the attribute is the "System" case: only its absence leaves
+	 * `color-scheme: light dark` in charge (→ app.css).
+	 */
+	$effect(() => {
+		if (data.theme) document.documentElement.dataset.theme = data.theme;
+		else delete document.documentElement.dataset.theme;
+	});
 </script>
 
 <svelte:head>
-	<meta name="theme-color" content={cookMode ? '#22201C' : '#F5F3EE'} />
+	<!-- With a theme chosen, one meta states it. On "System" there is nothing to
+		 state, so both are emitted scoped to the media query the device answers —
+		 which is the same question the CSS is asking (→ `$lib/theme`). -->
+	{#if data.theme}
+		<meta name="theme-color" content={themeColor(data.theme, cookMode)} />
+	{:else}
+		<meta
+			name="theme-color"
+			media="(prefers-color-scheme: light)"
+			content={themeColor('light', cookMode)}
+		/>
+		<meta
+			name="theme-color"
+			media="(prefers-color-scheme: dark)"
+			content={themeColor('dark', cookMode)}
+		/>
+	{/if}
 	<!-- Copy, so it speaks the reader's language (→ app.html). -->
 	<meta name="description" content={m.meta.description} />
 </svelte:head>

@@ -20,6 +20,13 @@ declare global {
 			 * Always set, including for signed-out requests.
 			 */
 			locale: import('$lib/i18n/locale').Locale;
+			/**
+			 * The theme this request is painted in, or null for "follow the device"
+			 * — the cookie alone, since nothing on the server needs a colour
+			 * (→ hooks.server.ts, `$lib/theme`). Null is a real setting, not an
+			 * absence: it hands the decision to `prefers-color-scheme`.
+			 */
+			theme: import('$lib/theme').Theme | null;
 		}
 		// interface PageData {}
 		// interface PageState {}

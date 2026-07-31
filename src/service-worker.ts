@@ -15,6 +15,7 @@
  * the way of the network.
  */
 import { base, build, files, version } from '$service-worker';
+import { CHROME, chromeLightDark } from '$lib/theme';
 
 const sw = self as unknown as ServiceWorkerGlobalScope;
 
@@ -132,8 +133,15 @@ async function networkOrOfflineNotice(request: Request): Promise<Response> {
 
 /**
  * Self-contained because it is served precisely when nothing else can be
- * fetched — which is also why these are the only raw colour values in the app
- * outside `app.css` (→ DECISIONS #56).
+ * fetched (→ DECISIONS #56) — so its colours are spelled out rather than taken
+ * from `app.css`. They come from `$lib/theme`'s one table, which is what stops
+ * them drifting from the metas and the manifest (→ DECISIONS #121).
+ *
+ * This page follows the *device* even when the app itself has a theme pinned:
+ * the choice lives in an httpOnly cookie a worker can't read (→ `$lib/theme`),
+ * and an offline notice is the wrong place to start exposing it. Being briefly
+ * light on a phone set to dark is a far smaller problem than the reverse — a
+ * white flash at night — which `color-scheme` prevents either way.
  */
 function offlineNotice(): Response {
 	const html = `<!doctype html>
@@ -141,23 +149,30 @@ function offlineNotice(): Response {
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="theme-color" media="(prefers-color-scheme: light)" content="${CHROME.bg[0]}">
+<meta name="theme-color" media="(prefers-color-scheme: dark)" content="${CHROME.bg[1]}">
 <title>Offline · Choreganized</title>
 <style>
+	:root { color-scheme: light dark }
 	html { height: 100% }
 	body {
 		margin: 0; min-height: 100%; display: flex; align-items: center; justify-content: center;
-		padding: 32px; background: #F5F3EE; color: #22201C;
+		padding: 32px;
+		background: ${chromeLightDark('bg')}; color: ${chromeLightDark('ink')};
 		font: 500 15px/1.5 ui-sans-serif, system-ui, -apple-system, sans-serif;
 	}
 	main { max-width: 320px; text-align: center }
 	.tile {
-		width: 88px; height: 88px; margin: 0 auto 22px; border-radius: 26px; background: #EFEBE2;
+		width: 88px; height: 88px; margin: 0 auto 22px; border-radius: 26px;
+		background: ${chromeLightDark('sunken')};
 		display: flex; align-items: center; justify-content: center;
 	}
+	.tile svg { stroke: ${chromeLightDark('faint')} }
 	h1 { margin: 0 0 8px; font: 600 21px/1.2 Georgia, serif }
-	p { margin: 0 0 22px; color: #8A867E }
+	p { margin: 0 0 22px; color: ${chromeLightDark('muted')} }
 	button {
-		font: 700 15px/1 inherit; color: #fff; background: #5F8D72;
+		font: 700 15px/1 inherit;
+		color: ${chromeLightDark('onSage')}; background: ${chromeLightDark('sage')};
 		border: 0; border-radius: 14px; padding: 14px 22px;
 	}
 </style>
@@ -165,7 +180,7 @@ function offlineNotice(): Response {
 <body>
 	<main>
 		<div class="tile">
-			<svg width="40" height="40" viewBox="0 0 60 60" fill="none" stroke="#B7B2A9"
+			<svg width="40" height="40" viewBox="0 0 60 60" fill="none"
 					 stroke-width="3.2" stroke-linejoin="round" aria-hidden="true">
 				<path d="M12 33 L27 19 L42 33 V46 a3 3 0 0 1 -3 3 H15 a3 3 0 0 1 -3 -3 Z"/>
 			</svg>

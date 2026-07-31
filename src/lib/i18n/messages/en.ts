@@ -1065,6 +1065,21 @@ export const en = {
 			note: 'Changing the language reloads the app.'
 		},
 
+		/**
+		 * Appearance [6a] (→ SPEC §6). "System" leads, because following the phone
+		 * is what most people want and what the app does until asked otherwise.
+		 */
+		theme: {
+			row: 'Appearance',
+			title: 'Appearance',
+			system: 'System',
+			/** Named, so the row isn't asking you to guess what your phone is set to. */
+			systemDetail: (detected: string) => `Follow this device — currently ${detected}`,
+			light: 'Light',
+			dark: 'Dark',
+			note: 'This is remembered on this device, so your phone and your laptop can differ.'
+		},
+
 		/** The three switches [6a]; the detail says what each one actually sends. */
 		prefs: {
 			taskReminders: 'Task reminders',

@@ -896,7 +896,7 @@ reload`) so it can't silently regress.
      model (vision-capable, cents an import). The model is **`gemini-flash-latest`** — an alias
      Google keeps pointed at the live Flash model — not a pinned version, because Google retires
      versions aggressively and often early: the originally-pinned `gemini-2.5-flash` began
-     returning `404 "no longer available"` around 2026-07-09, *weeks* before its own scheduled
+     returning `404 "no longer available"` around 2026-07-09, _weeks_ before its own scheduled
      Oct-16 shutdown, breaking every request. `GEMINI_MODEL` in the env overrides the alias
      without a code change if a rotation ever needs a specific id, and a `404` now maps to a
      distinct "model unavailable" message instead of a generic failure (→ services/ai-import.ts). The key lives in `households.geminiApiKey` **in the
@@ -938,8 +938,8 @@ reload`) so it can't silently regress.
      links across to the photo/text modes. The share target keeps landing in link mode.
 115. **A task can be worth 0 points** — the effort chips gain a **None · 0** preset ahead of
      Small (→ SPEC §5.2). The service already clamped to `[0, POINTS_MAX]`, so this is a UI
-     affordance only; extends #2's "canonical four" to five. It's for a chore worth *tracking*
-     but not *scoring* (a shared reminder, a "did you lock up?") — a 0-point completion is still
+     affordance only; extends #2's "canonical four" to five. It's for a chore worth _tracking_
+     but not _scoring_ (a shared reminder, a "did you lock up?") — a 0-point completion is still
      logged to history, still rotates and reschedules, and simply adds nothing to the month.
      The badge reads "+0" like any other; not special-cased, because a zero the member chose is
      not a zero worth hiding.
@@ -950,14 +950,14 @@ reload`) so it can't silently regress.
      said "it's {name}'s". The credited member gets the points, the celebration and the history
      line. For an **alternating** task the next turn now advances from whoever did it, not from
      the standing assignee: so "I did it" on a turn that was your housemate's hands the next one
-     back to *them* (it stays their turn), while "{name} did it" alternates on as if they'd
+     back to _them_ (it stays their turn), while "{name} did it" alternates on as if they'd
      ticked it themselves. Own tasks and "Anyone" tasks are unchanged — no choice, tapper
      credited. **Skip** is deliberately untouched: nobody claims a skip, so its rotation still
      advances from the assignee. Own/"Anyone" completions are behaviourally identical to before,
-     since there the doer *is* the assignee.
+     since there the doer _is_ the assignee.
 117. **Tasks stats stay descriptive, not a completion rate** (→ SPEC §5.1, §5.8). We considered a
      "% of my tasks done" figure and rejected it: an honest completion rate needs to count the
-     turns that were *ignored*, which the model doesn't record (the task row is the occurrence —
+     turns that were _ignored_, which the model doesn't record (the task row is the occurrence —
      #5 — so a missed occurrence leaves no trace), and reconstructing it (auto-skip on rollover,
      or an occurrences table) reintroduces exactly the complexity #5 avoided, for a number that
      nags rather than encourages in a two-person house where the overdue list is already visible.
@@ -970,7 +970,7 @@ reload`) so it can't silently regress.
        "All completed chores" link. The month **podium** is retired from the product — the points
        board replaced it — and survives only as a design-kit component (its `getPodium` producer
        was removed; `countTasks` went with the tab count).
-     - **Chore split** is *by design*, computed from the current recurring tasks, not history:
+     - **Chore split** is _by design_, computed from the current recurring tasks, not history:
        each task's load = points × occurrences-per-day, a fixed assignee carries theirs alone, a
        rotating or "Anyone" task is shared equally across the roster, and one-offs / 0-point
        chores don't count. It answers "is the plan fair on paper?", which points never could.
@@ -979,7 +979,7 @@ reload`) so it can't silently regress.
        that survives refresh and needs no JavaScript. `monthPointsByMember` now delegates to a
        ranged `pointsByMemberSince`.
 118. **Shopping items drag-to-reorder within their store group** (→ SPEC §3.1), and it's the
-     app's first real drag — #44 shipped arrow buttons for *stores* and left "a full
+     app's first real drag — #44 shipped arrow buttons for _stores_ and left "a full
      drag-to-reorder can build on `writeOrder` the same way when it lands"; for items it
      lands as drag, because a shopping list is walked aisle by aisle and a per-row up/down
      pair is a poor fit for a long group. New column `shopping_items.sort_order` mirrors
@@ -988,7 +988,7 @@ reload`) so it can't silently regress.
      so an un-dragged list looks unchanged. `compareOpen` now leads on `sort_order` — all-0
      until a drag, so `created_at` still decides an untouched group. Service `reorderItems`
      is `moveStore`'s shape (`writeItemOrder` = stores' `writeOrder`), trusting the client's
-     *order* but not its *set*: only this household's open items in that store are renumbered,
+     _order_ but not its _set_: only this household's open items in that store are renumbered,
      so a stale tab can't drop rows or pull in another group's item. `addItem`/`addIngredients`
      append at the group's `max + 1` (the `created_at`-stagger hack in `addIngredients` is
      gone — `sort_order` governs now).
@@ -1025,4 +1025,57 @@ reload`) so it can't silently regress.
 ## Later (explicitly out of v1 scope)
 
 SSE live updates · passkeys · email auth · Apple sign-in · multi-household ·
-meal slots beyond dinner · offline mutations · iOS polish pass.
+meal slots beyond dinner · offline mutations · iOS polish pass. 119. **The theme is a per-device cookie, not a column on the membership** (→ SPEC §10). Language
+is stored on `members.locale` because the server genuinely needs it — the cron sweep has to
+address a push notification in its recipient's language. Nothing on the server needs a
+_colour_, so the cookie is the whole setting rather than a mirror of one: no migration, no
+service, and it works on signed-out screens (login, an invite link) for free. It is also
+the more correct answer for what a theme _is_ — a property of the screen you are reading
+on, not of the person or the house, so a phone read in bed can be dark while the laptop on
+a bright desk stays light. A missing cookie is the "System" option, exactly as a NULL
+`locale` is: choosing System _deletes_ it rather than writing a third value, because only
+the absence of `<html data-theme>` leaves `color-scheme: light dark` in charge. - **No reload, unlike the language switch (#95).** That one has to re-render the document
+(`<html lang>`, every server-rendered string, every `Intl` formatter). A theme moves no
+string and no markup — only custom properties — so the action writes the cookie,
+SvelteKit re-runs the loads, and a `$effect` in the root layout puts the value back on
+`<html data-theme>`. One frame, no flash, scroll position kept. - **`Sec-CH-Prefers-Color-Scheme` is not used**: Chromium-only, and it needs a `Critical-CH`
+round trip to arrive at all. "Follow the device" is answered in CSS instead, which is
+both universal and free. 120. **One palette, written `light-dark()`, rather than a second `:root` block** (→ SPEC §10).
+The obvious shape — `:root { … }` plus `@media (prefers-color-scheme: dark) { :root { … } }`
+— declares every token name twice in two places that drift the moment someone adds one.
+`light-dark(<light>, <dark>)` keeps a token to a single line carrying both its answers, and
+the entire switch becomes `color-scheme`: `light dark` on `:root` to follow the device, and
+`:root[data-theme='…']` to pin it. That also drags the native furniture along — scrollbars,
+the caret, date pickers, `<select>` popups — which no amount of custom properties can do.
+Baseline since 2024 (Chrome 123 / Safari 17.5 / Firefox 120); this is a household PWA for
+two phones, so the tail is not a concern. - **Two tokens fell out of it as genuinely theme-independent**, and both were bugs waiting
+to happen: `--on-member` (an avatar initial stays white, because member colours are
+_content_ and don't lift) and `--member-shade` (the winner's plinth deepens toward a
+fixed near-black — mixing toward `--ink` would have _lightened_ it at night). Same story
+for `--btn-dark`: "Start cook mode" was `--ink` on `--card`, which inverts into a cream
+slab in dark mode, so it now has its own pair and stays a swatch of the screen it opens. - **Only one token's _geometry_ changes** (the toast's shadow, which throws harder on dark),
+and `light-dark()` speaks colour only — so that one keeps the long form. 121. **The colours that live outside `app.css` come from one table, and the manifest is served
+rather than static** (→ SPEC §10). Three consumers can't read a custom property — the
+`theme-color` metas (a `<meta>` has no CSS), the offline page (served when nothing can be
+fetched, #56) and the web manifest (it is JSON) — and each carried its own literals under a
+comment asking the next editor to keep them aligned. They drifted inside one session: the
+dark `theme-color` was still cook mode's `#12100D` while `--bg` had become `#191510`, so
+the status bar sat a shade below the page under it. `CHROME` in `$lib/theme` now holds each
+as a `[light, dark]` pair and all three read from it, which makes that particular mismatch
+unspellable. The seam with `app.css` itself is still manual — that's why the table is kept
+to the few names that genuinely need it. - **`background_color` is why the manifest had to become a route.** It paints the splash
+screen — the frame between tapping the icon and the first byte of CSS — and it is the one
+colour in the app with _no_ runtime override: `<meta name="theme-color">` supersedes the
+manifest's `theme_color`, but nothing supersedes `background_color`. Left at the cream
+literal, every cold start on a dark phone opened with a full-screen flash of `#F5F3EE`.
+Manifests can't media-query and can't re-render, so the theme has to be decided per
+request: the cookie, else `Sec-CH-Prefers-Color-Scheme`, else light. - **The client hint is worth it here and not for the document.** #119 dismissed it because
+a hint only arrives on the _second_ request to an origin unless you pay for a
+`Critical-CH` round trip — fatal for the page, irrelevant for a subresource fetched after
+a page has already been served. `Accept-CH` is set in `hooks.server.ts`; Chromium-only,
+which is also where an installed PWA's splash comes from. - **`crossorigin="use-credentials"` on the `<link rel="manifest">`** is load-bearing: a
+manifest is fetched with credentials _omitted_ by default, even same-origin, so without
+it the route would never see a pinned theme. - **iOS keeps `apple-mobile-web-app-status-bar-style="default"`.** All three of its values
+are static — none is media-aware — and `black-translucent` would force white status-bar
+text onto the cream light theme. The media-scoped `theme-color` metas are the mechanism
+that actually adapts there; this wants checking on a real device.
