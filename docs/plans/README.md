@@ -25,7 +25,7 @@ plus your session date). Note deviations in the plan file and in DECISIONS.md.
 | 11  | [PWA, polish & deploy](11-pwa-deploy.md)                            | done (2026-07-23) | all                      |
 | 12  | [Recipe import from a link](12-recipe-import.md)                    | done (2026-07-25) | 07, 11                   |
 | 13  | [AI import: fallback, text & photos](13-ai-import.md)               | done (2026-07-25) | 12, 10                   |
-| 14  | ["Add a recipe" chooser & focused import modes](14-add-chooser.md)   | done (2026-07-25) | 12, 13                   |
+| 14  | ["Add a recipe" chooser & focused import modes](14-add-chooser.md)  | done (2026-07-25) | 12, 13                   |
 
 Work done after the twelve plans, tracked here so the queue stays the whole story:
 
@@ -37,6 +37,7 @@ Work done after the twelve plans, tracked here so the queue stays the whole stor
 | **Multiple cook timers + the running-timer dock** (`cook-timers.ts`, `cook-timer.svelte.ts`, SPEC §4.6) | done (2026-07-24) |
 | **Shopping: "Recently bought" + add-field suggestions** (SPEC §3.1, DECISIONS #105–106)                 | done (2026-07-24) |
 | **Shopping: undo bar after a tick** (`shopping/UndoBar`, SPEC §3.1, DECISIONS #107)                     | done (2026-07-24) |
+| **Ingredient picker + merging amounts** (`cooking/IngredientPickSheet`, SPEC §4.8, DECISIONS #123)      | done (2026-07-31) |
 
 ## Dependency graph & parallelization
 

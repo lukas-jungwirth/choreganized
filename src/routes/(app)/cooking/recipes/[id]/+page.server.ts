@@ -9,7 +9,8 @@ import { error, redirect } from '@sveltejs/kit';
 import { catalog } from '$lib/i18n';
 import { requireMember } from '$lib/server/guards';
 import { mealPlanActions } from '$lib/server/meal-actions';
-import { addIngredientsToShopping, getPlan } from '$lib/server/services/meals';
+import { getPlan } from '$lib/server/services/meals';
+import { buildIngredientPick } from '$lib/server/services/recipe-shopping';
 import {
 	deleteRecipe,
 	duplicateRecipe,
@@ -35,22 +36,22 @@ export const load: PageServerLoad = async (event) => {
 		 */
 		plan: getPlan(householdId, today, event.locals.locale),
 		/** The plan sheet's list — it can be reopened on a different recipe. */
-		recipes: listRecipes(householdId)
+		recipes: listRecipes(householdId),
+		/**
+		 * The basket's sheet [3e], filled in here rather than fetched when it
+		 * opens: this page has already read the recipe, and a picker that pauses
+		 * before it can show you what you're about to buy is a picker nobody
+		 * waits for. What it previews is re-read on submit, so a housemate adding
+		 * cucumbers meanwhile changes the outcome, not the truth of the outcome.
+		 */
+		pick: buildIngredientPick(householdId, event.params.id)
 	};
 };
 
 export const actions: Actions = {
-	// The plan sheet's two, shared with the week (→ `lib/server/meal-actions`).
+	// The plan sheet's and the picker's, shared with the week
+	// (→ `lib/server/meal-actions`).
 	...mealPlanActions,
-
-	/** The basket button and "Add all to list" [7a] — one dedupe rule, in shopping. */
-	addToList: async (event) => {
-		const { householdId, member } = requireMember(event);
-
-		const shopping = addIngredientsToShopping(householdId, member.id, event.params.id);
-
-		return { shopping };
-	},
 
 	duplicate: async (event) => {
 		const { householdId, member } = requireMember(event);

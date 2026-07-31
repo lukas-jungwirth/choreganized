@@ -160,8 +160,7 @@
 				bind:value={pasteValue}
 				rows="10"
 				placeholder={m.cooking.import.ai.pastePlaceholder}
-				aria-label={m.cooking.import.ai.pasteLabel}
-			></textarea>
+				aria-label={m.cooking.import.ai.pasteLabel}></textarea>
 			<div class="submit">
 				<Button type="submit" disabled={extracting || !pasteValue.trim()}>
 					{extracting ? m.cooking.import.ai.extracting : m.cooking.import.ai.pasteSubmit}
@@ -233,8 +232,8 @@
 			</div>
 		{:else}
 			<p class="ai-hint-line">
-				{m.cooking.import.ai.hintLead}<a href="/settings">{m.cooking.import.ai.hintLink}</a>{m.cooking
-					.import.ai.hintRest}
+				{m.cooking.import.ai.hintLead}<a href="/settings">{m.cooking.import.ai.hintLink}</a>{m
+					.cooking.import.ai.hintRest}
 			</p>
 		{/if}
 	{/if}

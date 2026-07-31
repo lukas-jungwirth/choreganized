@@ -69,7 +69,12 @@
 	</button>
 
 	{#if reorderable}
-		<button type="button" class="grip" use:dragHandle aria-label={m.shopping.row.reorder(item.name)}>
+		<button
+			type="button"
+			class="grip"
+			use:dragHandle
+			aria-label={m.shopping.row.reorder(item.name)}
+		>
 			<GripVertical size={18} strokeWidth={2} aria-hidden="true" />
 		</button>
 	{/if}

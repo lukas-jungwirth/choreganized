@@ -71,8 +71,7 @@
 						} else {
 							testOk = false;
 							const message = result.type === 'failure' ? result.data?.aiTestError : undefined;
-							testResult =
-								typeof message === 'string' ? message : m.settings.aiImport.test.failed;
+							testResult = typeof message === 'string' ? message : m.settings.aiImport.test.failed;
 						}
 					};
 				}}

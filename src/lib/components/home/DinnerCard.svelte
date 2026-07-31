@@ -1,6 +1,6 @@
 <!--
 	Tonight's dinner [8b]. With nothing planned the card doesn't disappear — it
-	turns into the invitation to plan one (→ SPEC §2.2), which is the only
+	turns into the invitation to plan one (→ SPEC §2.3), which is the only
 	prompt Home gives the meal plan.
 
 	Plan 07 filled the two blanks 02 left: the thumbnail is the recipe's photo

@@ -326,6 +326,16 @@ export const de: Messages = {
 			time === 'morning' ? 'Guten Morgen' : time === 'afternoon' ? 'Guten Tag' : 'Guten Abend',
 		settingsLink: (names: string) => `Einstellungen · Haushalt: ${names}`,
 
+		/** "Heute fällig · wöchentlich · 10 Pkt. wert" — Kadenz klein, wie im Satz. */
+		nextChore: {
+			eyebrow: 'Deine nächste Aufgabe',
+			meta: (due: string, repeat: string, points: number) => {
+				const line = `${due.charAt(0).toUpperCase() + due.slice(1)} · ${repeat.charAt(0).toLowerCase() + repeat.slice(1)}`;
+				return points > 0 ? `${line} · ${points} Pkt. wert` : line;
+			},
+			markDone: 'Als erledigt markieren'
+		},
+
 		overdue: {
 			count: (count: number) =>
 				count === 1 ? '1 Aufgabe überfällig' : `${count} Aufgaben überfällig`,
@@ -573,6 +583,7 @@ export const de: Messages = {
 			cooking: 'Wer kocht?',
 			optional: 'optional',
 			addIngredients: 'Zutaten auf die Einkaufsliste',
+			addIngredientsNote: 'Du wählst gleich aus, welche',
 			addTo: (weekday: string) => `Für ${weekday} eintragen`,
 			remove: 'Essen entfernen'
 		},
@@ -611,8 +622,8 @@ export const de: Messages = {
 			options: 'Rezept-Optionen',
 			addedBy: (name: string) => `Von ${name} angelegt`,
 			addToPlan: 'In den Plan',
-			addAllToList: 'Alle Zutaten auf die Einkaufsliste',
-			addAll: 'Alle auf die Liste',
+			pickForList: 'Zutaten für die Einkaufsliste auswählen',
+			addToList: 'Auf die Liste',
 			ingredients: 'Zutaten',
 			steps: 'Schritte',
 			startCookMode: 'Kochmodus starten',
@@ -677,10 +688,27 @@ export const de: Messages = {
 			removeStep: (index: number) => `Schritt ${index} entfernen`
 		},
 
+		pick: {
+			eyebrow: 'Auf die Einkaufsliste',
+			subtitle: 'Hak ab, was ihr noch braucht.',
+			chosen: (count: number, total: number) => `${count} von ${total} ausgewählt`,
+			all: 'Alle auswählen',
+			none: 'Keine auswählen',
+			have: (amount: string) => (amount ? `Steht schon drauf · ${amount}` : 'Steht schon drauf'),
+			merge: (amount: string) => `Steht schon drauf — wird ${amount}`,
+			staple: 'Habt ihr sonst immer da',
+			submit: (count: number) =>
+				count === 1 ? '1 auf die Liste' : `${count} auf die Liste setzen`,
+			nothing: 'Nichts ausgewählt'
+		},
+
 		shoppingResult: {
 			added: (count: number) =>
 				count === 1 ? '1 Zutat auf der Einkaufsliste' : `${count} Zutaten auf der Einkaufsliste`,
+			toppedUp: (count: number) =>
+				count === 1 ? '1 Menge auf der Liste erhöht' : `${count} Mengen auf der Liste erhöht`,
 			nothing: 'Alles steht schon auf der Liste',
+			merged: (count: number) => (count === 1 ? '1 Menge erhöht' : `bei ${count} die Menge erhöht`),
 			skipped: (count: number) =>
 				count === 1 ? '1 stand schon drauf' : `${count} standen schon drauf`,
 			openList: 'Liste öffnen'

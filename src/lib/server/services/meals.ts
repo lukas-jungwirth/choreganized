@@ -17,8 +17,8 @@ import { catalog, type Locale } from '$lib/i18n';
 import { addDays, isCalendarDate, startOfWeek, type CalendarDate } from '$lib/utils/dates';
 import type { PlanMealInput } from '$lib/utils/recipes';
 import { db } from '../db';
-import { meals, members, recipeIngredients, recipes } from '../db/schema';
-import { addIngredients } from './shopping';
+import { meals, members, recipes } from '../db/schema';
+import { buildIngredientPick, type IngredientPick } from './recipe-shopping';
 
 export type PlannedMeal = {
 	id: string;
@@ -183,8 +183,12 @@ function listMeals(householdId: string, from: CalendarDate, to: CalendarDate): P
 export type PlanResult = {
 	/** False when there was nothing to write — the caller must not report success. */
 	planned: boolean;
-	/** How the ingredients toggle went; null when it wasn't asked for. */
-	shopping: { added: number; skipped: number } | null;
+	/**
+	 * What the ingredients toggle raises: the picker's contents [3e], for the
+	 * page to open once the meal is on the day. Null when it wasn't asked for, or
+	 * when the meal is a free-text one with no ingredients to offer.
+	 */
+	pick: IngredientPick | null;
 };
 
 /**
@@ -201,7 +205,7 @@ export function planMeal(householdId: string, memberId: string, input: PlanMealI
 	// without one it's what was typed, which for a vanished recipe is the name the
 	// sheet posted alongside its id. Only a forged post with neither gets here.
 	const title = recipe ? recipe.name : input.title;
-	if (!title) return { planned: false, shopping: null };
+	if (!title) return { planned: false, pick: null };
 
 	db.insert(meals)
 		.values({
@@ -224,15 +228,13 @@ export function planMeal(householdId: string, memberId: string, input: PlanMealI
 		})
 		.run();
 
-	// Deliberately outside the upsert: adding to the shopping list is its own
-	// transaction and sends its own notification, and a meal that got planned
-	// without its ingredients is far better than neither.
-	const shopping =
-		input.addIngredients && recipe
-			? addIngredientsToShopping(householdId, memberId, recipe.id)
-			: null;
+	// The meal is planned either way. What the toggle buys is the *offer* — the
+	// picker sheet, which is where the household decides what a recipe actually
+	// costs them this week (→ `services/recipe-shopping`). Nothing is written to
+	// the list here, and a dismissed sheet still leaves the dinner on the day.
+	const pick = input.addIngredients && recipe ? buildIngredientPick(householdId, recipe.id) : null;
 
-	return { planned: true, shopping };
+	return { planned: true, pick };
 }
 
 export function removeMeal(householdId: string, date: CalendarDate): boolean {
@@ -242,38 +244,6 @@ export function removeMeal(householdId: string, date: CalendarDate): boolean {
 			.where(and(eq(meals.householdId, householdId), eq(meals.date, date)))
 			.run().changes > 0
 	);
-}
-
-/**
- * "Add ingredients to shopping list" [3d] and "Add all to list" [7a]. The
- * dedupe rule lives in the shopping service, where the list is: matched against
- * *unchecked* items by case-insensitive name, matches skipped
- * (→ `services/shopping.ts`).
- */
-export function addIngredientsToShopping(
-	householdId: string,
-	memberId: string,
-	recipeId: string
-): { added: number; skipped: number } {
-	// Joined through `recipes` so the household filter reaches the ingredients,
-	// which carry no householdId of their own.
-	const ingredients = db
-		.select({
-			name: recipeIngredients.name,
-			quantity: recipeIngredients.quantity,
-			unit: recipeIngredients.unit
-		})
-		.from(recipeIngredients)
-		.innerJoin(recipes, eq(recipeIngredients.recipeId, recipes.id))
-		.where(and(eq(recipes.id, recipeId), eq(recipes.householdId, householdId)))
-		.orderBy(asc(recipeIngredients.sortOrder), asc(recipeIngredients.id))
-		.all();
-
-	if (!ingredients.length) return { added: 0, skipped: 0 };
-
-	// No `storeId`: ingredients land where quick-add sends things, the topmost
-	// store (→ SPEC §4.2 "each to the default store").
-	return addIngredients(householdId, memberId, ingredients);
 }
 
 /* ── Ownership checks ─────────────────────────────────────────────────────── */

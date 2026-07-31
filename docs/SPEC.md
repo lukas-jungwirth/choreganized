@@ -69,20 +69,29 @@ Tasks** — plus onboarding and settings. No finances, no message board.
 Top: household name (small caps), "Good {morning|afternoon|evening}, {name}", stacked member
 avatars. Then, in order:
 
-1. **Recent activity card** — the 2 most recent completed tasks (check circle in the member's
-   colour, task name, "{member} · {time}", `+{points}` in the member's colour). Header links
-   "All →" to Tasks → History. Hidden when there are no completions yet.
-2. **Tonight's dinner card** — today's meal from the plan: photo thumb (or placeholder art),
+1. **Next chore card** — the one chore that's on the current user next: the soonest task
+   assigned to them or to Anyone (never a housemate's) that is already overdue or due within
+   the next 3 days. Eyebrow "Your next chore", the task name large, "Due today · weekly ·
+   worth 10 pts" under it (the due half turns terracotta today, danger when overdue; a
+   0-point chore says nothing about points), then **Mark done** and a snooze button opening
+   the same sheet as [4c]. Ticking it off raises the same celebration [4d] as the Tasks tab,
+   Undo included. Hidden when there is nothing in the window — and while the user is away,
+   like every other nudge (→ §5.5).
+2. **Overdue banner** [4e] — shown when the current user has overdue tasks (assigned to them or
+   Anyone): danger-tinted card "1 task overdue / {task} · your turn" + View → Tasks. Stands
+   down when the next-chore card is already showing that one task (i.e. exactly one overdue).
+3. **Tonight's dinner card** — today's meal from the plan: photo thumb (or placeholder art),
    name, "{member} is cooking" with mini avatar (cook line hidden if no cook set). Tap → recipe
    view (or Cooking tab for custom meals). Hidden if nothing is planned today; show it as an
    "Add tonight's dinner" affordance linking to Cooking instead.
-3. **Stat tiles** (2-up): "{n} on shopping list" (unchecked items) → Shopping;
+4. **Stat tiles** (2-up): "{n} on shopping list" (unchecked items) → Shopping;
    "{n} tasks due today" (due today + overdue) → Tasks.
-4. **Standings strip** — "You're 1st this month" / "240 pts · 30 ahead of Elisabeth" + stacked
+5. **Standings strip** — "You're 1st this month" / "240 pts · 30 ahead of Elisabeth" + stacked
    avatars → Tasks → History. (Ties: "You're tied this month".)
-5. **Overdue banner** [4e] — shown when the current user has overdue tasks (assigned to them or
-   Anyone): danger-tinted card "1 task overdue / {task} · your turn" + View → Tasks.
-   Sits above the activity card when present.
+6. **Recent activity card** — the 2 most recent completed tasks (check circle in the member's
+   colour, task name, "{member} · {time}", `+{points}` in the member's colour). Header links
+   "All →" to Tasks → History. Hidden when there are no completions yet. Last on the screen:
+   pleasant to see, never the reason the app was opened.
 
 Bottom tab bar on all four tabs: Home, Shopping, Cooking, Tasks; active = sage. Tasks tab shows
 a danger badge with the current user's overdue count [4e].
@@ -105,6 +114,16 @@ a danger badge with the current user's overdue count [4e].
   the name and stops, because the sheet exists to say how much and which shop. Names already
   waiting on the list are never suggested. The pool is every name ever added, renamed or poured
   in from a recipe — it outlives the items themselves (→ [DECISIONS #106](DECISIONS.md)).
+- **A recipe's ingredients merge into the list rather than pile onto it** (→ §4.8). A name that
+  is already there (case-blind) tops up the row it finds instead of starting a second one, so
+  two recipes wanting two cucumbers each leave **one row asking for four**. Amounts combine
+  within a dimension and into the unit the row already wears (400 g + 1 kg → 1.4 kg if the row
+  is in kilos, 1400 g if it's in grams; `pcs` and no unit are the same thing). Grams meeting
+  packs, spoons meeting other spoons, and any amount meeting a bare name **leave the row
+  exactly as it stands** — the need is already on the list and only the person holding the
+  trolley can reconcile those. Matching is against what is still **open**: something bought this
+  morning and not yet swept up is a fresh need and goes back on
+  (→ [DECISIONS #123](DECISIONS.md)).
 - Items grouped by **store**, in store sort order; items without a store under **Other** (last).
   Store header: pin icon + uppercase name. Stores with nothing left to buy are hidden.
 - Within a store group, items keep a **manual walking order** — drag a row by its grip to
@@ -178,9 +197,10 @@ a danger badge with the current user's overdue count [4e].
 - Search field over the household's recipes; recent recipes listed with radio selection.
 - **"Cook something not saved"** → free-text title input instead of a recipe (custom meal).
 - **Who's cooking?** — member chips, optional (none = no cook shown).
-- Toggle: **Add ingredients to shopping list** (only when a recipe with ingredients is
-  selected; default on) — on save, ingredients are added to the shopping list (each to the
-  default store, deduplicated by case-insensitive name against unchecked items).
+- Toggle: **Add ingredients to shopping list** ("You'll pick which ones" — only when a recipe
+  with ingredients is selected; default on) — on save, the **ingredient picker [3e]** (§4.8)
+  opens over the day it was just planned. The meal is written either way: the toggle buys the
+  offer, not the pour, and a dismissed picker still leaves the dinner on the day.
 - CTA "Add to {weekday}". Replaces the day's existing meal if one exists (one dinner per day);
   when opened on a planned day it's prefilled and offers **Remove meal**.
 
@@ -211,7 +231,8 @@ a danger badge with the current user's overdue count [4e].
 - Hero photo (placeholder art when none), name, meta row (⏱ {time} min · 👥 Serves {n} ·
   Added by {member initial}).
 - Actions: **Add to plan** (day picker → plan sheet flow), basket button + per-section
-  "Add all to list" → adds ingredients to shopping (same dedupe as 4.2).
+  **"Add to list"** → both open the **ingredient picker [3e]** (§4.8). Neither appears when the
+  recipe has no ingredients.
 - Ingredients list (name + amount right-aligned), numbered steps.
 - **Start cook mode** (dark button) → cook mode.
 - ••• menu [7c]: Edit recipe, Duplicate, Share (v1: share plain-text recipe via Web Share API),
@@ -292,6 +313,36 @@ a danger badge with the current user's overdue count [4e].
     messages — key refused (→ Settings) · service busy · nothing found — never a raw API error.
 - Household content is never translated: imported names, ingredients and steps pass through
   verbatim (→ §9).
+
+### 4.8 Ingredient picker [3e] — which ingredients actually need buying
+
+The one step between a recipe and the shopping list. Both doors end here: the plan sheet's
+toggle (§4.2) and the recipe view's basket / "Add to list" (§4.5). Nothing is ever poured onto
+the list without this sheet having been shown — a recipe is not a shopping list, half of it is
+in the cupboard, and reading the whole list back against the recipe to find the four things you
+actually need is the chore this replaces (→ [DECISIONS #123](DECISIONS.md)).
+
+- Title = the recipe's name, eyebrow "Add to shopping list", subtitle "Tick what you need to
+  buy." One row per ingredient in the recipe's own order: check circle, name, and the recipe's
+  amount right-aligned like the recipe view. The list scrolls inside the sheet so the count and
+  the button stay put.
+- Above the list: "**{n} of {m} chosen**" and a **Select all / Clear all** link.
+- **What opens ticked** is everything that would change the list. A row is unticked, with a
+  quiet line saying why, when:
+  - it's **already on the list** and nothing would change ("Already on the list · 400 g") —
+    ticking it would move nothing, and a button promising four items that moves two is worse
+    than no count;
+  - the household **usually has it at home** ("You usually have this") — see below.
+    A row whose amount would be **added to** one already there stays ticked and says so ("On the
+    list already — becomes 4").
+- **Add {n} to the list** writes them, and the result banner reports what happened: what's new,
+  what was topped up, what was already there.
+- **The cupboard is learned, never declared.** Leave an ingredient off twice and from then on it
+  opens unticked; tick it once and that is forgotten, because a household putting olive oil on
+  the list has run out of olive oil. Only rows the sheet offered _ticked_ count as "left off" —
+  a row skipped because it was already on the list says nothing about the cupboard. Two rather
+  than one because the first skip is as likely to be "we bought that this morning", and
+  pre-unticking something you do need is the one mistake this must not make often.
 
 ---
 

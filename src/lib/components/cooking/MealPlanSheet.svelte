@@ -220,7 +220,10 @@
 
 		{#if offersShopping}
 			<div class="pref">
-				<span class="pref-title">{m.cooking.plan.addIngredients}</span>
+				<span class="pref-text">
+					<span class="pref-title">{m.cooking.plan.addIngredients}</span>
+					<span class="pref-note">{m.cooking.plan.addIngredientsNote}</span>
+				</span>
 				<Toggle
 					name="addIngredients"
 					bind:checked={addToList}
@@ -387,10 +390,24 @@
 		background: var(--field);
 	}
 
+	.pref-text {
+		min-width: 0;
+	}
+
 	.pref-title {
+		display: block;
 		font-size: 14px;
 		font-weight: 600;
 		color: var(--text-2);
+	}
+
+	/* The toggle raises the picker [3e] rather than pouring it all on — worth
+	   one quiet line, because it changes what "add" means here. */
+	.pref-note {
+		display: block;
+		margin-top: 2px;
+		font-size: 12px;
+		color: var(--text-5);
 	}
 
 	.error {

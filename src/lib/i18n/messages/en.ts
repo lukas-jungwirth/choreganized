@@ -432,6 +432,27 @@ export const en = {
 		 *  household is named out loud. */
 		settingsLink: (names: string) => `Settings · Household: ${names}`,
 
+		/**
+		 * The card at the very top of Home: the one chore that's on this member
+		 * next, with the two taps it deserves (→ SPEC §2.1).
+		 *
+		 * `meta` is handed the two phrases the rest of the app already writes —
+		 * "due today" and "Weekly" — and joins them itself, because the casing is a
+		 * language's business: English starts the line with a capital and puts the
+		 * cadence mid-sentence, where the Repeat dropdown had it capitalised.
+		 * Lowercasing the first character rather than the whole word keeps "Every 2
+		 * weeks" (and German's "Alle 2 Wochen") intact. A 0-point chore says
+		 * nothing about points (→ DECISIONS #115).
+		 */
+		nextChore: {
+			eyebrow: 'Your next chore',
+			meta: (due: string, repeat: string, points: number) => {
+				const line = `${due.charAt(0).toUpperCase() + due.slice(1)} · ${repeat.charAt(0).toLowerCase() + repeat.slice(1)}`;
+				return points > 0 ? `${line} · worth ${points} pts` : line;
+			},
+			markDone: 'Mark done'
+		},
+
 		overdue: {
 			count: (count: number) => (count === 1 ? '1 task overdue' : `${count} tasks overdue`),
 			/** The oldest one by name, and whether it is this member's [4e]. */
@@ -746,6 +767,8 @@ export const en = {
 			cooking: 'Who’s cooking?',
 			optional: 'optional',
 			addIngredients: 'Add ingredients to shopping list',
+			/** The toggle raises the picker [3e] rather than pouring it all on. */
+			addIngredientsNote: 'You’ll pick which ones',
 			addTo: (weekday: string) => `Add to ${weekday}`,
 			remove: 'Remove meal'
 		},
@@ -789,8 +812,9 @@ export const en = {
 			options: 'Recipe options',
 			addedBy: (name: string) => `Added by ${name}`,
 			addToPlan: 'Add to plan',
-			addAllToList: 'Add all ingredients to the shopping list',
-			addAll: 'Add all to list',
+			/** The basket [7a] — it opens the picker rather than adding outright. */
+			pickForList: 'Choose ingredients for the shopping list',
+			addToList: 'Add to list',
 			ingredients: 'Ingredients',
 			steps: 'Steps',
 			startCookMode: 'Start cook mode',
@@ -874,13 +898,40 @@ export const en = {
 			removeStep: (index: number) => `Remove step ${index}`
 		},
 
+		/**
+		 * The ingredient picker [3e] — which of a recipe's ingredients actually
+		 * need buying (→ SPEC §4.8).
+		 */
+		pick: {
+			eyebrow: 'Add to shopping list',
+			subtitle: 'Tick what you need to buy.',
+			/** The count above the list, and the control that sets it in one go. */
+			chosen: (count: number, total: number) => `${count} of ${total} chosen`,
+			all: 'Select all',
+			none: 'Clear all',
+			/** Under a row that a row on the list already covers. */
+			have: (amount: string) =>
+				amount ? `Already on the list · ${amount}` : 'Already on the list',
+			/** Under a row whose amount will be added to one already there. */
+			merge: (amount: string) => `On the list already — becomes ${amount}`,
+			/** Why a row opens unticked (→ `services/pantry`). */
+			staple: 'You usually have this',
+			submit: (count: number) => (count === 1 ? 'Add 1 to the list' : `Add ${count} to the list`),
+			nothing: 'Nothing selected'
+		},
+
 		/** What "add the ingredients to the shopping list" did [04] [7a]. */
 		shoppingResult: {
 			added: (count: number) =>
 				count === 1
 					? '1 ingredient on the shopping list'
 					: `${count} ingredients on the shopping list`,
+			/** Nothing new, but amounts grew — the merge is the whole result. */
+			toppedUp: (count: number) =>
+				count === 1 ? '1 amount topped up on the list' : `${count} amounts topped up on the list`,
 			nothing: 'Everything is already on the list',
+			merged: (count: number) =>
+				count === 1 ? '1 amount topped up' : `${count} amounts topped up`,
 			skipped: (count: number) =>
 				count === 1 ? '1 was already on it' : `${count} were already on it`,
 			openList: 'Open list'

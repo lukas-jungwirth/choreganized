@@ -30,5 +30,8 @@ export const load: PageServerLoad = async (event) => {
 	};
 };
 
-/** `plan` and `remove` are the plan sheet's, shared with the recipe page. */
+/**
+ * The plan sheet's `plan`/`remove` and the ingredient picker's `addToList`,
+ * shared with the recipe page (→ `lib/server/meal-actions`).
+ */
 export const actions: Actions = mealPlanActions;

@@ -56,7 +56,7 @@ show "Zuerst KI-Import einrichten" and link to `/settings`; with a dummy key set
 to `?mode=photo`/`?mode=text`. Each focused mode (photo picker, paste textarea, link field)
 renders on its own clean screen, and a link fetch of a no-recipe page (`example.com`) shows
 the "Mit KI auslesen" escalation with cross-links to the photo and text modes. Dummy key
-removed afterwards. A *successful* extraction still needs a real Gemini key (→ plan 13).
+removed afterwards. A _successful_ extraction still needs a real Gemini key (→ plan 13).
 
 **Follow-up (2026-07-26):** hide the AI options entirely when no key is set (instead of the
 "set up first" rows), and a **Test connection** button in the key sheet. `npm run check` (0/0)

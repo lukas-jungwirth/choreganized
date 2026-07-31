@@ -265,6 +265,37 @@ export const shoppingSuggestions = sqliteTable(
 	]
 );
 
+/**
+ * The things this household keeps in the cupboard — learned, never declared.
+ *
+ * Every recipe brings salt, oil and pepper with it, and nobody wants to untick
+ * them on the way to the shopping list a hundred times (→ SPEC §4.8). So the
+ * ingredient picker [3e] remembers what was left off: `skipCount` goes up each
+ * time a name is offered and declined, and from the second time on that name
+ * opens unticked. Ticking it again deletes the row — the cupboard is empty
+ * again, and the household says so by buying the thing.
+ *
+ * Keyed like `shopping_suggestions` (`nameKey` = trimmed + lowercased), which is
+ * what makes "Olive oil" in one recipe and "olive oil" in the next one word.
+ */
+export const pantryStaples = sqliteTable(
+	'pantry_staples',
+	{
+		id: id(),
+		householdId: text('household_id')
+			.notNull()
+			.references(() => households.id, { onDelete: 'cascade' }),
+		name: text('name').notNull(),
+		nameKey: text('name_key').notNull(),
+		/** How many times it has been offered and left off. */
+		skipCount: integer('skip_count').notNull().default(1),
+		lastSkippedAt: integer('last_skipped_at', { mode: 'timestamp_ms' })
+			.notNull()
+			.$defaultFn(() => new Date())
+	},
+	(t) => [uniqueIndex('pantry_staples_key_unique').on(t.householdId, t.nameKey)]
+);
+
 /* ────────────────────────────────────────────────────────────────────────────
  * Recipes & meal plan
  * ──────────────────────────────────────────────────────────────────────────── */
@@ -481,6 +512,7 @@ export type Member = typeof members.$inferSelect;
 export type Store = typeof stores.$inferSelect;
 export type ShoppingItem = typeof shoppingItems.$inferSelect;
 export type ShoppingSuggestion = typeof shoppingSuggestions.$inferSelect;
+export type PantryStaple = typeof pantryStaples.$inferSelect;
 export type Recipe = typeof recipes.$inferSelect;
 export type RecipeIngredient = typeof recipeIngredients.$inferSelect;
 export type RecipeStep = typeof recipeSteps.$inferSelect;

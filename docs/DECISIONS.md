@@ -1079,3 +1079,73 @@ it the route would never see a pinned theme. - **iOS keeps `apple-mobile-web-app
 are static — none is media-aware — and `black-translucent` would force white status-bar
 text onto the cream light theme. The media-scoped `theme-color` metas are the mechanism
 that actually adapts there; this wants checking on a real device.
+
+122. **Home leads with the one chore that's on you, and Recent activity moves to the bottom**
+     (→ SPEC §2). The dashboard opened with what the household had already _done_ — pleasant,
+     but never the reason anyone unlocks their phone. The top card now names the soonest task
+     this member is on the hook for (theirs or "Anyone", never a housemate's) that is overdue
+     or due within **3 days**, and gives it the two taps it deserves: **Mark done** — the same
+     completion, celebration and Undo as the Tasks tab — and snooze, which opens [4c] itself.
+     Three days is the window where a chore is soon enough to be your problem but Home hasn't
+     become a second to-do list; the horizon is one constant (`NEXT_CHORE_DAYS`).
+
+     - **"Anyone" counts as yours.** The same predicate the overdue banner and the tab badge
+       already use (`onTheHookFor`, now shared) — a task nobody has claimed is as much yours
+       as one with your name on it, and the app has said so since plan 02.
+     - **The overdue banner stands down when the card is showing the same task**, i.e. when
+       exactly one thing is overdue. Both order by `(dueDate, id)`, so "the oldest overdue" and
+       "the next chore" are then provably the same row, and saying it twice — once as a count,
+       once as a card that can actually finish it — is noise.
+     - **Home grows four form actions** (complete · undo · snooze · away), thin wrappers over
+       the same services the Tasks page calls. The alternative, posting to `/tasks?/complete`,
+       navigates away from the screen you tapped on. `parseSnapshot` moved into
+       `services/tasks.ts` so the two Undo paths can't drift; everything else was already a
+       one-line service call.
+     - **Away hides it**, like every other nudge (→ SPEC §5.5), and the snooze sheet brings
+       the holiday pause with it — which is why `away` is one of the four.
+
+123. **A recipe's ingredients are picked, and their amounts add up** (→ SPEC §3.1, §4.8). The
+     old path had two faults that only show up once a household actually cooks from the app.
+     "Add all to list" poured salt, pepper and olive oil onto the list every single time, so
+     finding the four things that genuinely needed buying meant reading the whole list back
+     against the recipe. And dedupe was a _skip_: a second recipe wanting cucumbers when
+     cucumbers were already down for two added nothing, and Thursday's dinner quietly went
+     unbought. Both doors — the plan sheet's toggle [3d] and the recipe's basket [7a] — now end
+     at one sheet, `IngredientPickSheet` [3e], and the merge rule lives in `planAdds`.
+
+     - **Merging is by dimension, into the unit the row already wears.** Grams and kilos are one
+       thing, millilitres and litres another, and `pcs` is the same statement as no unit at all
+       (a recipe's "2 cucumbers" parses bare; the sheet's [3a] preselects `pcs`, and a list that
+       kept those apart would count the same vegetable twice). Everything else — packs, spoons,
+       anything hand-typed — only combines with its own spelling. **Spoons deliberately don't
+       convert** even though 1 tbsp is 3 tsp in both kitchens: "2 tbsp + 1 tsp" would become
+       "2.33 tbsp", which is not an amount anybody can shop for. When two amounts can't be
+       spoken of together the row is **left exactly as it stands** rather than the list growing
+       a second line with the same word on it — the need is already there, and the reconciling
+       is the trolley's job. The picker shows which of the three happens before you commit.
+     - **`QUANTITY_MAX` split in two.** 999 is what a _field_ may be typed with — a paste guard.
+       A _total_ is a different number: 400 g meeting a kilo is 1400 g, and shaving that to 999
+       would put less on the list than the recipe asks for. `TOTAL_QUANTITY_MAX` (99 999) is the
+       ceiling on what a row may hold, and exists only so a merge repeated all afternoon can't
+       write nonsense into the column.
+     - **The preview and the write are the same function.** `planAdds` is pure and lives in
+       `utils/shopping.ts` with the split rule (#105): the sheet renders its `rows`, the service
+       applies its `inserts`/`updates`, and both read the list through `listOpenItems`. A
+       preview that could disagree with the outcome would be worse than no preview. The row it
+       tops up is the _oldest_ matching one, because that's the one the household has been
+       looking at; a recipe naming the same thing twice tops up the row the same pass is adding.
+     - **Planning a meal no longer writes to the list at all.** `planMeal` returns the picker's
+       contents instead of a result, the page opens the sheet over the day it just planned, and
+       a dismissed sheet still leaves the dinner on the day. That is the one real cost of this
+       change — a tap that used to be silent now asks a question — and it's the tap where the
+       question is worth asking.
+     - **`pantry_staples` is learned, not declared** (→ DATA-MODEL.md). Nobody fills in a pantry
+       inventory, so the sheet counts what gets left off: twice, and the name opens unticked
+       from then on; ticked once, and the row is deleted. Two rather than one because a single
+       skip is as likely to be "we bought that this morning" as a cupboard staple, and
+       pre-unticking something you do need to buy is the one mistake this feature must not make
+       often. Only rows the sheet offered _ticked_ are counted (`candidateId` travels with the
+       form) — a row skipped because it was already on the list says nothing about the cupboard,
+       and learning from it would learn the wrong thing.
+     - **A topped-up row counts as a change for the push notification.** "2 cucumbers" quietly
+       becoming "4" is exactly what a housemate standing in the shop wants to hear about.

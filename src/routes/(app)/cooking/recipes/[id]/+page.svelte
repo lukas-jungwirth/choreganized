@@ -6,8 +6,8 @@
 	this screen. Everything else is the app's usual furniture.
 -->
 <script lang="ts">
-	import { enhance } from '$app/forms';
 	import DayPickerSheet from '$lib/components/cooking/DayPickerSheet.svelte';
+	import IngredientPickSheet from '$lib/components/cooking/IngredientPickSheet.svelte';
 	import MealPlanSheet from '$lib/components/cooking/MealPlanSheet.svelte';
 	import RecipeImage from '$lib/components/cooking/RecipeImage.svelte';
 	import RecipeMenuSheet from '$lib/components/cooking/RecipeMenuSheet.svelte';
@@ -16,6 +16,7 @@
 	import Button from '$lib/components/ui/Button.svelte';
 	import Card from '$lib/components/ui/Card.svelte';
 	import { messages } from '$lib/i18n';
+	import type { IngredientPick } from '$lib/server/services/recipe-shopping';
 	import type { CalendarDate } from '$lib/utils/dates';
 	import CalendarDays from '@lucide/svelte/icons/calendar-days';
 	import ChefHat from '@lucide/svelte/icons/chef-hat';
@@ -23,6 +24,7 @@
 	import Clock from '@lucide/svelte/icons/clock';
 	import MoreHorizontal from '@lucide/svelte/icons/more-horizontal';
 	import Users from '@lucide/svelte/icons/users';
+	import { untrack } from 'svelte';
 	import type { PageProps } from './$types';
 
 	let { data, form }: PageProps = $props();
@@ -32,9 +34,22 @@
 	const recipe = $derived(data.recipe);
 
 	/** Which sheet is up: the day picker, the plan sheet for a day, or the menu. */
-	let picking = $state(false);
+	let choosingDay = $state(false);
 	let planning = $state<CalendarDate | null>(null);
 	let menu = $state(false);
+
+	/**
+	 * The ingredient picker [3e]. Two ways in: the basket here, which opens on
+	 * the reading the load already did, and the plan sheet's toggle, whose
+	 * `?/plan` answer carries a picker for whichever recipe *it* chose — not
+	 * necessarily this one. Copied out of `form` so closing it sticks.
+	 */
+	let picking = $state<IngredientPick | null>(null);
+
+	$effect(() => {
+		const offered = form && 'pick' in form ? form.pick : null;
+		if (offered) untrack(() => (picking = offered));
+	});
 
 	const day = $derived(
 		data.plan.weeks.flatMap((week) => week.days).find((entry) => entry.date === planning) ?? null
@@ -91,15 +106,18 @@
 	{/if}
 
 	<div class="actions">
-		<button type="button" class="plan" onclick={() => (picking = true)}>
+		<button type="button" class="plan" onclick={() => (choosingDay = true)}>
 			<CalendarDays size={17} strokeWidth={2.2} aria-hidden="true" />{m.cooking.recipe.addToPlan}
 		</button>
-		{#if recipe.ingredients.length > 0}
-			<form method="POST" action="?/addToList" use:enhance>
-				<button type="submit" class="basket" aria-label={m.cooking.recipe.addAllToList}>
-					<BasketIcon size={20} strokeWidth={1.9} />
-				</button>
-			</form>
+		{#if data.pick}
+			<button
+				type="button"
+				class="basket"
+				aria-label={m.cooking.recipe.pickForList}
+				onclick={() => (picking = data.pick)}
+			>
+				<BasketIcon size={20} strokeWidth={1.9} />
+			</button>
 		{/if}
 	</div>
 
@@ -108,9 +126,11 @@
 	{#if recipe.ingredients.length > 0}
 		<div class="section-head">
 			<h2>{m.cooking.recipe.ingredients}</h2>
-			<form method="POST" action="?/addToList" use:enhance>
-				<button type="submit" class="link">{m.cooking.recipe.addAll}</button>
-			</form>
+			{#if data.pick}
+				<button type="button" class="link" onclick={() => (picking = data.pick)}>
+					{m.cooking.recipe.addToList}
+				</button>
+			{/if}
 		</div>
 		<Card radius="md">
 			<ul class="ingredients">
@@ -149,12 +169,12 @@
 	{/if}
 </article>
 
-{#if picking}
+{#if choosingDay}
 	<DayPickerSheet
 		weeks={data.plan.weeks}
-		onclose={() => (picking = false)}
+		onclose={() => (choosingDay = false)}
 		onpick={(date) => {
-			picking = false;
+			choosingDay = false;
 			planning = date;
 		}}
 	/>
@@ -169,6 +189,10 @@
 		members={data.members}
 		onclose={() => (planning = null)}
 	/>
+{/if}
+
+{#if picking}
+	<IngredientPickSheet pick={picking} onclose={() => (picking = null)} />
 {/if}
 
 {#if menu}
@@ -260,12 +284,15 @@
 		color: var(--on-sage);
 	}
 
+	/* `align-self`, not `height: 100%`: the button is the flex item now that it
+	   isn't wrapped in a form, and a percentage height against an auto-height
+	   row resolves to auto — which is a basket half the height of "Add to plan". */
 	.basket {
 		display: flex;
 		align-items: center;
 		justify-content: center;
+		align-self: stretch;
 		width: 52px;
-		height: 100%;
 		border: 1.5px solid var(--border);
 		border-radius: var(--r-input);
 		background: var(--card);

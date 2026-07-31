@@ -8,12 +8,14 @@
  * data exist — **they should not need to touch this file**.
  *
  * What Home shares with the rest of the app lives in `tasks.ts`:
- * `listOverdueForMember` (the tab badge reads the same rows) and
- * `assigneeNotAway` (the SQL half of the holiday pause).
+ * `listOverdueForMember` (the tab badge reads the same rows), `onTheHookFor`
+ * (whose chore is whose — the next-chore card and the banner ask it the same
+ * way), and `isAway` / `assigneeNotAway`, the two halves of the holiday pause.
  */
-import { and, count, desc, eq, isNull, lte } from 'drizzle-orm';
+import { and, asc, count, desc, eq, isNull, lte, sql } from 'drizzle-orm';
 import { DEFAULT_LOCALE } from '$lib/i18n';
-import { formatTimeIn, hourIn, type CalendarDate } from '$lib/utils/dates';
+import { addDays, formatTimeIn, hourIn, type CalendarDate } from '$lib/utils/dates';
+import type { RecurUnit } from '$lib/utils/tasks';
 import { db } from '../db';
 import {
 	meals,
@@ -25,7 +27,13 @@ import {
 	type Member
 } from '../db/schema';
 import type { HouseholdMember } from './household';
-import { assigneeNotAway, monthPointsByMember, type OverdueTask } from './tasks';
+import {
+	assigneeNotAway,
+	isAway,
+	monthPointsByMember,
+	onTheHookFor,
+	type OverdueTask
+} from './tasks';
 
 export type TimeOfDay = 'morning' | 'afternoon' | 'evening';
 
@@ -59,6 +67,20 @@ export type Standings = {
 	rival: { displayName: string; gap: number } | null;
 };
 
+/**
+ * The one chore the top card is about — everything it draws, and the id its two
+ * buttons post.
+ */
+export type NextChore = {
+	id: string;
+	name: string;
+	points: number;
+	recurUnit: RecurUnit;
+	recurInterval: number;
+	/** Never null: an undated one-off is never "coming up" (→ `nextChore`). */
+	dueDate: CalendarDate;
+};
+
 export type OverdueSummary = {
 	count: number;
 	/** The one that has been waiting longest — the banner names it. */
@@ -69,10 +91,12 @@ export type OverdueSummary = {
 
 export type HomeSummary = {
 	greeting: TimeOfDay;
+	/** Null when this member has nothing of their own coming up (or is away). */
+	nextChore: NextChore | null;
 	dinner: TonightsDinner | null;
 	shoppingCount: number;
 	tasksDueCount: number;
-	/** Newest first, max 2 (→ SPEC §2.1). Empty ⇒ the card is hidden. */
+	/** Newest first, max 2 (→ SPEC §2.6). Empty ⇒ the card is hidden. */
 	activity: ActivityEntry[];
 	/** Null until somebody has scored this month. */
 	standings: Standings | null;
@@ -100,6 +124,7 @@ export function getHomeSummary(householdId: string, context: HomeContext): HomeS
 
 	return {
 		greeting: greetingFor(hourIn(timezone)),
+		nextChore: nextChore(householdId, member, today),
 		dinner: tonightsDinner(householdId, today),
 		shoppingCount: countUnchecked(householdId),
 		tasksDueCount: countDueOrOverdue(householdId, today),
@@ -113,6 +138,53 @@ function greetingFor(hour: number): TimeOfDay {
 	if (hour < 12) return 'morning';
 	if (hour < 18) return 'afternoon';
 	return 'evening';
+}
+
+/**
+ * How far ahead the card looks. Three days is "soon enough to be your problem"
+ * — far enough that a chore lands on the card before it's late, near enough
+ * that Home never turns into a second to-do list.
+ */
+const NEXT_CHORE_DAYS = 3;
+
+/**
+ * The chore the top card is about (→ SPEC §2.1): the soonest thing *this*
+ * member is on the hook for — theirs or "Anyone", never a housemate's — that is
+ * already late or due within the window. Nothing there ⇒ no card at all.
+ *
+ * Away means nothing is being asked of them, which is the whole promise of the
+ * holiday pause: no banner, no badge, and no card either (→ SPEC §5.5).
+ */
+function nextChore(householdId: string, member: Member, today: CalendarDate): NextChore | null {
+	if (isAway(member, today)) return null;
+
+	return (
+		db
+			.select({
+				id: tasks.id,
+				name: tasks.name,
+				points: tasks.points,
+				recurUnit: tasks.recurUnit,
+				recurInterval: tasks.recurInterval,
+				// NULL is excluded by the `lte` below; the cast saves cloning the row.
+				dueDate: sql<CalendarDate>`${tasks.dueDate}`
+			})
+			.from(tasks)
+			.where(
+				and(
+					eq(tasks.householdId, householdId),
+					// NULL never compares true, so undated one-offs stay out — they
+					// aren't due in three days, they aren't due at all.
+					lte(tasks.dueDate, addDays(today, NEXT_CHORE_DAYS)),
+					onTheHookFor(member.id)
+				)
+			)
+			// The same total order as `listOverdueForMember`, so while something is
+			// overdue the card and the banner are always naming the same task.
+			.orderBy(asc(tasks.dueDate), asc(tasks.id))
+			.limit(1)
+			.get() ?? null
+	);
 }
 
 /** Today's dinner, whether it came from the library or is a free-text meal. */
@@ -160,7 +232,7 @@ function countUnchecked(householdId: string): number {
 
 /**
  * "{n} tasks due today" counts today's *and* everything that already slipped
- * (→ SPEC §2.3) — household-wide, not just mine. Tasks belonging to a member on
+ * (→ SPEC §2.4) — household-wide, not just mine. Tasks belonging to a member on
  * holiday are paused and don't count, which is what the away banner promises.
  */
 function countDueOrOverdue(householdId: string, today: CalendarDate): number {

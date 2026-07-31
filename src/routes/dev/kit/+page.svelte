@@ -17,6 +17,7 @@
 	import ChefHatIcon from '$lib/components/icons/ChefHatIcon.svelte';
 	import PageHeader from '$lib/components/shell/PageHeader.svelte';
 	import SubHeader from '$lib/components/shell/SubHeader.svelte';
+	import NextChoreCard from '$lib/components/home/NextChoreCard.svelte';
 	import ChoreSplit from '$lib/components/tasks/ChoreSplit.svelte';
 	import HistoryRow from '$lib/components/tasks/HistoryRow.svelte';
 	import PointsBoard from '$lib/components/tasks/PointsBoard.svelte';
@@ -42,11 +43,13 @@
 	import TextField from '$lib/components/ui/TextField.svelte';
 	import Toggle from '$lib/components/ui/Toggle.svelte';
 	import CookStepText from '$lib/components/cooking/CookStepText.svelte';
+	import type { NextChore } from '$lib/server/services/home';
 	import type { FeedEntry, Podium as PodiumData } from '$lib/server/services/history';
 	import { messages } from '$lib/i18n';
 	import { addDays } from '$lib/utils/dates';
 	import { highlightStep } from '$lib/utils/step-highlight';
 	import { UNITS } from '$lib/utils/shopping';
+	import type { SubmitFunction } from '@sveltejs/kit';
 	import Bell from '@lucide/svelte/icons/bell';
 	import Check from '@lucide/svelte/icons/check';
 	import Plus from '@lucide/svelte/icons/plus';
@@ -183,6 +186,29 @@
 			1
 		)
 	);
+
+	/**
+	 * Home's top card [8b], due today and three days late. The gallery has no
+	 * `?/complete` action and nothing to complete, so the submit is cancelled
+	 * before it leaves — the card is here to be looked at, not tapped through.
+	 */
+	const noSubmit: SubmitFunction = ({ cancel }) => cancel();
+
+	const NEXT_CHORE: NextChore = {
+		id: 'n1',
+		name: 'Water the plants',
+		points: 10,
+		recurUnit: 'week',
+		recurInterval: 1,
+		dueDate: untrack(() => data.today)
+	};
+
+	const NEXT_CHORE_LATE: NextChore = {
+		...NEXT_CHORE,
+		id: 'n2',
+		name: 'Take out the bins',
+		dueDate: addDays(NEXT_CHORE.dueDate, -3)
+	};
 </script>
 
 <svelte:head><title>UI kit · dev</title></svelte:head>
@@ -499,6 +525,30 @@
 	</section>
 
 	<section>
+		<h2>NextChoreCard [8b]</h2>
+		<p class="note">
+			Home's top card (→ SPEC §2.1): due today, then the same chore three days late — the meta line
+			is the only thing that changes mood.
+		</p>
+		<div class="col">
+			<NextChoreCard
+				chore={NEXT_CHORE}
+				today={data.today}
+				pending={false}
+				complete={noSubmit}
+				onsnooze={() => (sheetOpen = true)}
+			/>
+			<NextChoreCard
+				chore={NEXT_CHORE_LATE}
+				today={data.today}
+				pending={false}
+				complete={noSubmit}
+				onsnooze={() => (sheetOpen = true)}
+			/>
+		</div>
+	</section>
+
+	<section>
 		<h2>Podium [8a]</h2>
 		<p class="note">
 			Three members as the design draws them, then the two-member tie (equal columns, crown to the
@@ -514,8 +564,8 @@
 	<section>
 		<h2>ChoreSplit + PointsBoard [8a]</h2>
 		<p class="note">
-			The History screen's two cards (→ SPEC §5.8): the recurring plan's split by design, and
-			the points board with its timeframe toggle (a URL link in the app; inert here).
+			The History screen's two cards (→ SPEC §5.8): the recurring plan's split by design, and the
+			points board with its timeframe toggle (a URL link in the app; inert here).
 		</p>
 		<div class="col">
 			<ChoreSplit shares={SPLIT_SHARES} />
