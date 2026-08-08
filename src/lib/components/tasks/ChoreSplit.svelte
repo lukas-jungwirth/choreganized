@@ -56,12 +56,12 @@
 
 	h2 {
 		margin: 0 0 4px;
-		font-size: 18px;
+		font-size: calc(18px * var(--fs));
 	}
 
 	.subtitle {
 		margin: 0 0 18px;
-		font-size: 13.5px;
+		font-size: calc(13.5px * var(--fs));
 		line-height: 1.45;
 		color: var(--text-4);
 	}
@@ -95,14 +95,14 @@
 	}
 
 	.pct {
-		font-size: 14px;
+		font-size: calc(14px * var(--fs));
 		font-weight: 600;
 		color: var(--text-2);
 	}
 
 	.empty {
 		margin: 0;
-		font-size: 13.5px;
+		font-size: calc(13.5px * var(--fs));
 		color: var(--text-4);
 	}
 

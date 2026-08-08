@@ -13,14 +13,13 @@
  */
 import { fail, type Actions, type RequestEvent } from '@sveltejs/kit';
 import { catalog } from '$lib/i18n';
-import { isCalendarDate } from '$lib/utils/dates';
 import { readPlanForm, readServings } from '$lib/utils/recipes';
 import { requireMember } from './guards';
 import { planMeal, removeMeal } from './services/meals';
 import { addRecipeIngredients } from './services/recipe-shopping';
 
 export const mealPlanActions = {
-	/** Plan (or replace) a day's dinner. */
+	/** Plan (or replace) one meal of a day (→ `services/meals.ts`). */
 	plan: async (event: RequestEvent) => {
 		const { householdId, member } = requireMember(event);
 		const form = await event.request.formData();
@@ -68,12 +67,13 @@ export const mealPlanActions = {
 		const { householdId } = requireMember(event);
 		const form = await event.request.formData();
 
-		const date = form.get('date');
-		if (!isCalendarDate(date)) {
-			return fail(400, { error: catalog(event.locals.locale).errors.recipes.mealDay });
+		// The meal, not the day: a day can hold four (→ `services/meals.ts`).
+		const mealId = String(form.get('mealId') ?? '');
+		if (!mealId) {
+			return fail(400, { error: catalog(event.locals.locale).errors.recipes.mealGone });
 		}
 
-		removeMeal(householdId, date);
+		removeMeal(householdId, mealId);
 
 		return { removed: true };
 	}

@@ -314,7 +314,7 @@
 
 	.recipe {
 		min-width: 0;
-		font-size: 14px;
+		font-size: calc(14px * var(--fs));
 		color: var(--cook-muted);
 		overflow-wrap: anywhere;
 	}
@@ -383,7 +383,7 @@
 
 	.eyebrow {
 		margin: 0 0 20px;
-		font-size: 13px;
+		font-size: calc(13px * var(--fs));
 		font-weight: 700;
 		letter-spacing: 0.16em;
 		text-transform: uppercase;
@@ -405,7 +405,7 @@
 		border: 1px solid transparent;
 		border-radius: var(--r-input);
 		background: var(--cook-surface);
-		font-size: 16px;
+		font-size: calc(16px * var(--fs));
 		font-weight: 600;
 		color: var(--cook-text);
 	}
@@ -429,7 +429,7 @@
 	.uses {
 		margin: 14px 0 0;
 		padding-left: 2px;
-		font-size: 12.5px;
+		font-size: calc(12.5px * var(--fs));
 		line-height: 1.5;
 		color: var(--cook-faint);
 	}
@@ -444,7 +444,7 @@
 	.note,
 	.error {
 		margin: 20px 0 0;
-		font-size: 13px;
+		font-size: calc(13px * var(--fs));
 		line-height: 1.45;
 		color: var(--cook-amber);
 	}
@@ -485,7 +485,7 @@
 		height: 64px;
 		border-radius: 18px;
 		background: var(--sage);
-		font-size: 17px;
+		font-size: calc(17px * var(--fs));
 		font-weight: 700;
 		color: var(--on-sage);
 	}
@@ -501,7 +501,7 @@
 	.no-steps {
 		margin: 0 0 28px;
 		font-family: var(--font-display);
-		font-size: 24px;
+		font-size: calc(24px * var(--fs));
 		font-weight: 600;
 		line-height: 1.3;
 	}
@@ -510,7 +510,7 @@
 		padding: 13px 20px;
 		border-radius: var(--r-input);
 		background: var(--cook-surface);
-		font-size: 15px;
+		font-size: calc(15px * var(--fs));
 		font-weight: 600;
 		color: var(--cook-text);
 	}

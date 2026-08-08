@@ -147,21 +147,21 @@
 <style>
 	.lead {
 		margin: 0 2px 10px;
-		font-size: 13.5px;
+		font-size: calc(13.5px * var(--fs));
 		line-height: 1.5;
 		color: var(--text-2);
 	}
 
 	.cost {
 		margin: 0 2px 10px;
-		font-size: 12.5px;
+		font-size: calc(12.5px * var(--fs));
 		line-height: 1.5;
 		color: var(--text-4);
 	}
 
 	.get {
 		margin: 0 2px 16px;
-		font-size: 12.5px;
+		font-size: calc(12.5px * var(--fs));
 	}
 
 	.get a {
@@ -175,7 +175,7 @@
 
 	.current {
 		margin: 0 2px 10px;
-		font-size: 12.5px;
+		font-size: calc(12.5px * var(--fs));
 		color: var(--text-4);
 		font-variant-numeric: tabular-nums;
 	}
@@ -187,7 +187,7 @@
 		padding: 8px 14px;
 		border-radius: var(--r-chip);
 		background: var(--sunken);
-		font-size: 13px;
+		font-size: calc(13px * var(--fs));
 		font-weight: 600;
 		color: var(--sage);
 	}
@@ -202,7 +202,7 @@
 		align-items: center;
 		gap: 6px;
 		margin: 10px 2px 0;
-		font-size: 12.5px;
+		font-size: calc(12.5px * var(--fs));
 		color: var(--danger-deep);
 	}
 
@@ -219,7 +219,7 @@
 		width: 100%;
 		margin-top: 14px;
 		padding: 10px;
-		font-size: 13.5px;
+		font-size: calc(13.5px * var(--fs));
 		font-weight: 600;
 		color: var(--danger);
 		text-align: center;

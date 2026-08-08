@@ -127,7 +127,7 @@
 
 	.label {
 		margin-bottom: 8px;
-		font-size: 11px;
+		font-size: calc(11px * var(--fs));
 		font-weight: 700;
 		letter-spacing: 0.1em;
 		text-transform: uppercase;
@@ -183,7 +183,7 @@
 		border: none;
 		background: none;
 		font-family: inherit;
-		font-size: 16px;
+		font-size: calc(16px * var(--fs));
 		font-weight: 700;
 		text-align: center;
 		color: var(--ink);

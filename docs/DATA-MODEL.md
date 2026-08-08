@@ -10,7 +10,7 @@ user ─┬─ session / account / verification        (Better Auth)
       └─ members ──→ households
                         ├─ stores ──→ shopping_items
                         ├─ recipes ──→ recipe_ingredients / recipe_steps
-                        ├─ meals (→ recipes, one per date)
+                        ├─ meals (→ recipes, one per date × slot)
                         ├─ tasks ──→ task_completions (snapshots)
                         └─ cook_timers
 ```
@@ -103,8 +103,14 @@ user ─┬─ session / account / verification        (Better Auth)
 
 ### `meals`
 
-- `UNIQUE(householdId, date)` — one dinner slot per day (design shows a single evening meal).
-  Planning onto an occupied day replaces (upsert).
+- `UNIQUE(householdId, date, slot)` — a day holds **one meal per slot**, `slot` being
+  `breakfast | lunch | dinner | snack` (`$lib/utils/meals`, → DECISIONS #126). Planning onto an
+  occupied slot replaces (upsert). The column was added in migration 0009 with
+  `DEFAULT 'dinner'`, which is what every row written while the day held one meal was — no
+  backfill script, and no row that means something different afterwards than it did before.
+- Moving a meal to another slot is an upsert on the new `(date, slot)` plus a delete of the row
+  it came from, in one transaction (`planMeal`, which takes the edited `mealId` for exactly
+  this). Removing is by meal id, not by day.
 - Either `recipeId` (library meal) or `title` ("cook something not saved"); when both exist,
   `title` is the display fallback after recipe deletion. App ensures at least one is set:
   planning a recipe writes its name into `title` as the snapshot, and `deleteRecipe` refreshes

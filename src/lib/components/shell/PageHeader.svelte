@@ -46,11 +46,11 @@
 	}
 
 	h1 {
-		font-size: 30px;
+		font-size: calc(30px * var(--fs));
 	}
 
 	.meta {
-		font-size: 13px;
+		font-size: calc(13px * var(--fs));
 		font-weight: 600;
 		color: var(--text-4);
 	}

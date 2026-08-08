@@ -480,31 +480,45 @@ const seeded = db.transaction((tx) => {
 		.onConflictDoNothing()
 		.run();
 
-	// Keyed by date, not by "today": re-running next week plans that week's
-	// dinners instead of skipping every insert and leaving the plan in the past.
-	// (`UNIQUE(householdId, date)` keeps a day you planned yourself untouched.)
+	// Keyed by date and slot, not by "today": re-running next week plans that
+	// week's meals instead of skipping every insert and leaving the plan in the
+	// past. (`UNIQUE(householdId, date, slot)` keeps a meal you planned yourself
+	// untouched.) Tomorrow gets a breakfast as well as a dinner, so the day that
+	// holds two — the shape the week's rows label — is in the demo data too.
 	tx.insert(meals)
 		.values([
 			{
-				id: sid('meal', today),
+				id: sid('meal', `${today}:dinner`),
 				householdId,
 				date: today,
+				slot: 'dinner',
 				recipeId: pastaId,
 				cookMemberId: housemateMemberId,
 				createdByMemberId: housemateMemberId
 			},
 			{
-				id: sid('meal', addDays(today, 1)),
+				id: sid('meal', `${addDays(today, 1)}:breakfast`),
 				householdId,
 				date: addDays(today, 1),
+				slot: 'breakfast',
+				title: 'Pancakes',
+				cookMemberId: housemateMemberId,
+				createdByMemberId: housemateMemberId
+			},
+			{
+				id: sid('meal', `${addDays(today, 1)}:dinner`),
+				householdId,
+				date: addDays(today, 1),
+				slot: 'dinner',
 				recipeId: curryId,
 				cookMemberId: ownerMemberId,
 				createdByMemberId: ownerMemberId
 			},
 			{
-				id: sid('meal', addDays(today, 2)),
+				id: sid('meal', `${addDays(today, 2)}:dinner`),
 				householdId,
 				date: addDays(today, 2),
+				slot: 'dinner',
 				title: 'Leftovers night',
 				createdByMemberId: ownerMemberId
 			}

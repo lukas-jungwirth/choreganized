@@ -15,6 +15,7 @@
 import { and, asc, count, desc, eq, isNull, lte, sql } from 'drizzle-orm';
 import { DEFAULT_LOCALE } from '$lib/i18n';
 import { addDays, formatTimeIn, hourIn, type CalendarDate } from '$lib/utils/dates';
+import { mealSlotOrder, type MealSlot } from '$lib/utils/meals';
 import type { RecurUnit } from '$lib/utils/tasks';
 import { db } from '../db';
 import {
@@ -39,11 +40,15 @@ export type TimeOfDay = 'morning' | 'afternoon' | 'evening';
 
 export type TonightsDinner = {
 	name: string;
+	/** Which meal of today the card is showing — it names itself (→ SPEC §2). */
+	slot: MealSlot;
 	/** Set when the meal came from the recipe library — plan 07 links to it. */
 	recipeId: string | null;
 	/** Path under UPLOADS_DIR; null renders the placeholder tile. */
 	imagePath: string | null;
 	cook: { displayName: string; color: string } | null;
+	/** How many *other* meals today — the card's "+2 more today" (→ #126). */
+	others: number;
 };
 
 export type ActivityEntry = {
@@ -187,10 +192,20 @@ function nextChore(householdId: string, member: Member, today: CalendarDate): Ne
 	);
 }
 
-/** Today's dinner, whether it came from the library or is a free-text meal. */
+/**
+ * Today's dinner, whether it came from the library or is a free-text meal.
+ *
+ * A day can hold four now (→ DECISIONS #126), and Home still shows **one**:
+ * the dinner, because that is the meal this card has always been about and the
+ * one still ahead of you when Home is read. With no dinner planned it shows the
+ * latest meal the day does have — a card that went blank because lunch isn't
+ * dinner would be a worse answer than "today's lunch" — and says how many
+ * others are behind it rather than listing them; the Cooking tab is the list.
+ */
 function tonightsDinner(householdId: string, today: CalendarDate): TonightsDinner | null {
-	const meal = db
+	const rows = db
 		.select({
+			slot: meals.slot,
 			title: meals.title,
 			recipeId: meals.recipeId,
 			recipeName: recipes.name,
@@ -202,21 +217,31 @@ function tonightsDinner(householdId: string, today: CalendarDate): TonightsDinne
 		.leftJoin(recipes, eq(meals.recipeId, recipes.id))
 		.leftJoin(members, eq(meals.cookMemberId, members.id))
 		.where(and(eq(meals.householdId, householdId), eq(meals.date, today)))
-		.get();
+		.all()
+		// `title` doubles as the name snapshot for a deleted recipe, so the recipe
+		// name wins while it exists (→ docs/DATA-MODEL.md → meals). A row with
+		// neither is one the app can't render and shouldn't pretend to — dropped
+		// here so it can't be counted as one of the "others" either.
+		.flatMap((row) => {
+			const name = row.recipeName ?? row.title;
+			return name ? [{ ...row, name }] : [];
+		})
+		.sort((a, b) => mealSlotOrder(a.slot) - mealSlotOrder(b.slot));
 
-	if (!meal) return null;
+	if (rows.length === 0) return null;
 
-	// `title` doubles as the name snapshot for a deleted recipe, so the recipe
-	// name wins while it exists (→ docs/DATA-MODEL.md → meals).
-	const name = meal.recipeName ?? meal.title;
-	if (!name) return null;
+	const meal = rows.find((row) => row.slot === 'dinner') ?? rows[rows.length - 1];
 
 	return {
-		name,
+		name: meal.name,
+		slot: meal.slot,
 		recipeId: meal.recipeName ? meal.recipeId : null,
 		imagePath: meal.imagePath,
 		cook:
-			meal.cookName && meal.cookColor ? { displayName: meal.cookName, color: meal.cookColor } : null
+			meal.cookName && meal.cookColor
+				? { displayName: meal.cookName, color: meal.cookColor }
+				: null,
+		others: rows.length - 1
 	};
 }
 

@@ -27,7 +27,7 @@
 	.step {
 		margin: 0;
 		font-family: var(--font-display);
-		font-size: 33px;
+		font-size: calc(33px * var(--fs));
 		font-weight: 600;
 		line-height: 1.22;
 		color: var(--cook-text);

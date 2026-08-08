@@ -229,7 +229,7 @@
 
 	.name {
 		display: block;
-		font-size: 15px;
+		font-size: calc(15px * var(--fs));
 		font-weight: 600;
 		line-height: 1.2;
 		/* "Grünschnittcontainer rausbringen" has nowhere to break. */
@@ -241,7 +241,7 @@
 		align-items: center;
 		gap: 6px;
 		margin-top: 3px;
-		font-size: 12px;
+		font-size: calc(12px * var(--fs));
 		color: var(--text-4);
 	}
 
@@ -265,7 +265,7 @@
 	}
 
 	.points {
-		font-size: 12px;
+		font-size: calc(12px * var(--fs));
 		font-weight: 700;
 		color: var(--terracotta);
 	}
@@ -277,7 +277,7 @@
 		margin: 11px 0 0;
 		padding-top: 11px;
 		border-top: 1px solid var(--divider);
-		font-size: 11.5px;
+		font-size: calc(11.5px * var(--fs));
 		color: var(--text-5);
 	}
 

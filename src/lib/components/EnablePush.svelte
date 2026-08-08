@@ -173,18 +173,18 @@
 
 	.label {
 		flex: 1;
-		font-size: 15px;
+		font-size: calc(15px * var(--fs));
 	}
 
 	.status {
-		font-size: 14px;
+		font-size: calc(14px * var(--fs));
 		color: var(--text-4);
 	}
 
 	.note {
 		margin: 0;
 		padding: 0 16px 14px;
-		font-size: 12.5px;
+		font-size: calc(12.5px * var(--fs));
 		line-height: 1.45;
 		color: var(--text-4);
 	}

@@ -340,14 +340,14 @@
 	.name {
 		margin: 0;
 		font-family: var(--font-display);
-		font-size: 19px;
+		font-size: calc(19px * var(--fs));
 		font-weight: 600;
 		overflow-wrap: anywhere;
 	}
 
 	.email {
 		margin: 2px 0 0;
-		font-size: 13px;
+		font-size: calc(13px * var(--fs));
 		color: var(--text-4);
 		overflow-wrap: anywhere;
 	}
@@ -356,7 +356,7 @@
 		flex: none;
 		align-self: center;
 		padding: 6px 4px;
-		font-size: 13px;
+		font-size: calc(13px * var(--fs));
 		font-weight: 700;
 		color: var(--sage);
 	}
@@ -364,7 +364,7 @@
 	.section {
 		margin: 22px 4px 8px;
 		font-family: var(--font-body);
-		font-size: 11px;
+		font-size: calc(11px * var(--fs));
 		font-weight: 700;
 		letter-spacing: 0.12em;
 		text-transform: uppercase;
@@ -379,7 +379,7 @@
 		width: 100%;
 		min-height: 52px;
 		padding: 12px 16px;
-		font-size: 15px;
+		font-size: calc(15px * var(--fs));
 		text-align: left;
 		color: var(--ink);
 	}
@@ -392,7 +392,7 @@
 
 	.value {
 		flex: none;
-		font-size: 14px;
+		font-size: calc(14px * var(--fs));
 		color: var(--text-4);
 	}
 
@@ -440,7 +440,7 @@
 
 	.result {
 		margin: 10px 4px 0;
-		font-size: 13px;
+		font-size: calc(13px * var(--fs));
 		line-height: 1.45;
 		color: var(--text-4);
 	}

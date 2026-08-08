@@ -42,7 +42,7 @@
 
 	.step {
 		margin-left: auto;
-		font-size: 12px;
+		font-size: calc(12px * var(--fs));
 		font-weight: 700;
 		letter-spacing: 0.06em;
 		text-transform: uppercase;

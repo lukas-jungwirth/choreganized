@@ -75,7 +75,7 @@
 
 	.name {
 		margin: 0;
-		font-size: 15px;
+		font-size: calc(15px * var(--fs));
 		font-weight: 600;
 		overflow-wrap: anywhere;
 	}
@@ -88,7 +88,7 @@
 
 	.meta {
 		margin: 1px 0 0;
-		font-size: 12.5px;
+		font-size: calc(12.5px * var(--fs));
 		color: var(--text-4);
 	}
 
@@ -100,7 +100,7 @@
 		padding: 5px 11px;
 		border-radius: var(--r-chip);
 		background: var(--sage-tint);
-		font-size: 11px;
+		font-size: calc(11px * var(--fs));
 		font-weight: 700;
 		color: var(--sage);
 	}

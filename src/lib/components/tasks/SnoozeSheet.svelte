@@ -123,7 +123,7 @@
 		border: 1.5px solid transparent;
 		border-radius: var(--r-input);
 		background: var(--field);
-		font-size: 14px;
+		font-size: calc(14px * var(--fs));
 		font-weight: 600;
 		text-align: center;
 		color: var(--text-2);
@@ -138,7 +138,7 @@
 
 	.error {
 		margin: 16px 0 0;
-		font-size: 13px;
+		font-size: calc(13px * var(--fs));
 		color: var(--danger-deep);
 	}
 

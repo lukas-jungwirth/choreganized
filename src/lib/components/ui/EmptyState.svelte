@@ -47,11 +47,11 @@
 
 	h2 {
 		margin-bottom: 8px;
-		font-size: 21px;
+		font-size: calc(21px * var(--fs));
 	}
 
 	.copy {
-		font-size: 14px;
+		font-size: calc(14px * var(--fs));
 		line-height: 1.5;
 		color: var(--text-4);
 	}

@@ -202,7 +202,7 @@
 
 	.household {
 		margin: 0 0 6px;
-		font-size: 11px;
+		font-size: calc(11px * var(--fs));
 		font-weight: 700;
 		letter-spacing: 0.14em;
 		text-transform: uppercase;
@@ -210,7 +210,7 @@
 	}
 
 	h1 {
-		font-size: 27px;
+		font-size: calc(27px * var(--fs));
 		line-height: 1.05;
 	}
 

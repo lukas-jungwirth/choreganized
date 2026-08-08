@@ -66,13 +66,13 @@
 	}
 
 	h1 {
-		font-size: 26px;
+		font-size: calc(26px * var(--fs));
 	}
 
 	.copy {
 		margin: 20px 0 0;
 		text-align: center;
-		font-size: 14px;
+		font-size: calc(14px * var(--fs));
 		line-height: 1.5;
 		color: var(--text-4);
 	}

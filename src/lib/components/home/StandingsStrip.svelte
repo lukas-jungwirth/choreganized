@@ -66,7 +66,7 @@
 
 	.title {
 		display: block;
-		font-size: 14.5px;
+		font-size: calc(14.5px * var(--fs));
 		font-weight: 700;
 		line-height: 1.15;
 	}
@@ -74,7 +74,7 @@
 	.detail {
 		display: block;
 		margin-top: 1px;
-		font-size: 12px;
+		font-size: calc(12px * var(--fs));
 		color: var(--text-4);
 	}
 </style>

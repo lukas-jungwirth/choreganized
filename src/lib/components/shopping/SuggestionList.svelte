@@ -69,7 +69,7 @@
 		width: 100%;
 		padding: 12px 16px;
 		border-top: 1px solid var(--divider);
-		font-size: 15px;
+		font-size: calc(15px * var(--fs));
 		font-weight: 500;
 		color: var(--ink);
 		text-align: left;

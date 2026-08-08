@@ -49,7 +49,7 @@
 
 	.line {
 		margin: 0;
-		font-size: 14px;
+		font-size: calc(14px * var(--fs));
 		color: var(--text-4);
 	}
 
@@ -61,7 +61,7 @@
 	.household {
 		margin: 4px 0 0;
 		font-family: var(--font-display);
-		font-size: 22px;
+		font-size: calc(22px * var(--fs));
 		font-weight: 600;
 	}
 </style>

@@ -81,7 +81,7 @@
 		padding: 0;
 		border: none;
 		background: none;
-		font-size: 14px;
+		font-size: calc(14px * var(--fs));
 		font-weight: 500;
 		color: var(--ink);
 	}

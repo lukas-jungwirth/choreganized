@@ -126,7 +126,7 @@
 		display: flex;
 		align-items: center;
 		gap: 8px;
-		font-size: 15px;
+		font-size: calc(15px * var(--fs));
 		font-weight: 600;
 	}
 
@@ -134,14 +134,14 @@
 		padding: 1px 6px;
 		border-radius: var(--r-chip);
 		background: var(--sunken-2);
-		font-size: 10px;
+		font-size: calc(10px * var(--fs));
 		font-weight: 700;
 		letter-spacing: 0.05em;
 		color: var(--sage);
 	}
 
 	.sub {
-		font-size: 12.5px;
+		font-size: calc(12.5px * var(--fs));
 		color: var(--text-4);
 		overflow-wrap: anywhere;
 	}

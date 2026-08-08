@@ -45,7 +45,7 @@
 		width: 100%;
 		min-height: 52px;
 		padding: 12px 16px;
-		font-size: 15px;
+		font-size: calc(15px * var(--fs));
 		text-align: left;
 		color: var(--ink);
 	}
@@ -62,7 +62,7 @@
 	.detail {
 		display: block;
 		margin-top: 2px;
-		font-size: 12.5px;
+		font-size: calc(12.5px * var(--fs));
 		line-height: 1.4;
 		color: var(--text-4);
 	}

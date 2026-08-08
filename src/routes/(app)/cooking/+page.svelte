@@ -1,7 +1,7 @@
 <!--
 	Cooking [04] — the week's dinners and the door to the recipe library.
 
-	One card, seven rows, one dinner slot per day (→ SPEC §4.1). Tapping a day
+	One card, seven rows, up to four meals on each (→ SPEC §4.1). Tapping a day
 	raises the plan sheet [3d]; tapping a planned recipe opens the recipe. The
 	sheet is mounted per opening, which is what resets its form.
 
@@ -23,6 +23,7 @@
 	import { messages } from '$lib/i18n';
 	import type { IngredientPick } from '$lib/server/services/recipe-shopping';
 	import type { CalendarDate } from '$lib/utils/dates';
+	import { nextFreeSlot, type MealSlot } from '$lib/utils/meals';
 	import Plus from '@lucide/svelte/icons/plus';
 	import { untrack } from 'svelte';
 	import type { PageProps } from './$types';
@@ -34,8 +35,12 @@
 	/** How many library cards the tab shows before "Browse all" takes over [04]. */
 	const RECENT = 2;
 
-	/** The day the plan sheet is open on. Null = closed. */
-	let planning = $state<CalendarDate | null>(null);
+	/**
+	 * What the plan sheet is open on. Null = closed; a `mealId` of null is a new
+	 * meal on `slot`, which is whichever one the day still had free
+	 * (→ `$lib/utils/meals`).
+	 */
+	let planning = $state<{ date: CalendarDate; mealId: string | null; slot: MealSlot } | null>(null);
 
 	/**
 	 * The ingredient picker [3e], raised by the plan sheet's toggle. Copied out
@@ -70,7 +75,13 @@
 	);
 
 	// A date belongs to one week, so paging away closes the sheet on its own.
-	const day = $derived(week.days.find((entry) => entry.date === planning) ?? null);
+	const day = $derived(week.days.find((entry) => entry.date === planning?.date) ?? null);
+	/**
+	 * Re-read off the freshly loaded day rather than kept in `planning`, so the
+	 * sheet's "Remove meal" and its "Replaces …" line follow what the last
+	 * action wrote instead of what was on screen when it opened.
+	 */
+	const editing = $derived(day?.meals.find((meal) => meal.id === planning?.mealId) ?? null);
 
 	/** What the last plan did to the shopping list — the only trace it leaves. */
 	const shopping = $derived(form && 'shopping' in form ? form.shopping : null);
@@ -100,7 +111,15 @@
 <Card>
 	<ul class="days">
 		{#each week.days as entry (entry.date)}
-			<MealRow day={entry} onplan={() => (planning = entry.date)} />
+			<MealRow
+				day={entry}
+				onplan={(meal) =>
+					(planning = {
+						date: entry.date,
+						mealId: meal?.id ?? null,
+						slot: meal?.slot ?? nextFreeSlot(entry.meals.map((planned) => planned.slot))
+					})}
+			/>
 		{/each}
 	</ul>
 </Card>
@@ -132,10 +151,12 @@
 	{/if}
 </section>
 
-{#if day}
+{#if day && planning}
 	<MealPlanSheet
 		date={day.date}
-		meal={day.meal}
+		meal={editing}
+		slot={planning.slot}
+		dayMeals={day.meals}
 		recipes={data.recipes}
 		members={data.members}
 		onclose={() => (planning = null)}
@@ -172,18 +193,18 @@
 	}
 
 	h2 {
-		font-size: 19px;
+		font-size: calc(19px * var(--fs));
 	}
 
 	.head a {
 		flex: none;
-		font-size: 13px;
+		font-size: calc(13px * var(--fs));
 		font-weight: 600;
 	}
 
 	.micro {
 		margin: 0 4px 10px;
-		font-size: 11px;
+		font-size: calc(11px * var(--fs));
 		font-weight: 700;
 		letter-spacing: 0.12em;
 		text-transform: uppercase;
@@ -226,14 +247,14 @@
 	.first-title {
 		display: block;
 		font-family: var(--font-display);
-		font-size: 16px;
+		font-size: calc(16px * var(--fs));
 		font-weight: 600;
 	}
 
 	.first-sub {
 		display: block;
 		margin-top: 2px;
-		font-size: 12.5px;
+		font-size: calc(12.5px * var(--fs));
 		line-height: 1.4;
 		color: var(--text-4);
 	}

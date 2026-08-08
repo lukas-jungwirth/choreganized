@@ -14,12 +14,17 @@
 	import { messages } from '$lib/i18n';
 	import type { MealWeek } from '$lib/server/services/meals';
 	import type { CalendarDate } from '$lib/utils/dates';
+	import { nextFreeSlot, type MealSlot } from '$lib/utils/meals';
 	import ChevronRight from '@lucide/svelte/icons/chevron-right';
 
 	type Props = {
 		/** This week and the next: "add to plan" reaches both (→ DECISIONS #99). */
 		weeks: MealWeek[];
-		onpick: (date: CalendarDate) => void;
+		/**
+		 * The day, and the slot it still has free — worked out here because this
+		 * is the component holding what each day already contains.
+		 */
+		onpick: (date: CalendarDate, slot: MealSlot) => void;
 		onclose: () => void;
 	};
 
@@ -45,7 +50,10 @@
 			</p>
 			<RowGroup surface="sunken">
 				{#each week.days as day (day.date)}
-					<!-- The label spells the day out; the row itself abbreviates it to fit. -->
+					<!-- The label spells the day out; the row itself abbreviates it to fit.
+						 A day can hold four meals, so what it holds is listed rather than
+						 named — the answer to "is Thursday free?" is all of them. -->
+					{@const planned = m.cooking.dayPicker.mealList(day.meals.map((meal) => meal.name))}
 					<button
 						type="button"
 						class="day"
@@ -53,17 +61,15 @@
 						aria-label={m.cooking.dayPicker.day(
 							m.date.weekdayLong(day.date),
 							day.dayOfMonth,
-							day.meal?.name ?? m.cooking.dayPicker.freeQuiet
+							planned || m.cooking.dayPicker.freeQuiet
 						)}
-						onclick={() => onpick(day.date)}
+						onclick={() => onpick(day.date, nextFreeSlot(day.meals.map((meal) => meal.slot)))}
 					>
 						<span class="when">
 							<span class="weekday">{day.weekday}</span>
 							<span class="number">{day.dayOfMonth}</span>
 						</span>
-						<span class="meal" class:free={!day.meal}
-							>{day.meal?.name ?? m.cooking.dayPicker.free}</span
-						>
+						<span class="meal" class:free={!planned}>{planned || m.cooking.dayPicker.free}</span>
 						<ChevronRight size={16} strokeWidth={2} aria-hidden="true" />
 					</button>
 				{/each}
@@ -76,7 +82,7 @@
 	/* The uppercase micro-label the sheets group a list under [3b]. */
 	.week {
 		margin: 18px 0 8px;
-		font-size: 11px;
+		font-size: calc(11px * var(--fs));
 		font-weight: 700;
 		letter-spacing: 0.1em;
 		text-transform: uppercase;
@@ -107,13 +113,13 @@
 
 	.weekday {
 		font-family: var(--font-display);
-		font-size: 11px;
+		font-size: calc(11px * var(--fs));
 		font-weight: 600;
 		color: var(--text-4);
 	}
 
 	.number {
-		font-size: 14px;
+		font-size: calc(14px * var(--fs));
 		font-weight: 700;
 		color: var(--ink);
 	}
@@ -126,7 +132,7 @@
 	.meal {
 		flex: 1;
 		min-width: 0;
-		font-size: 14px;
+		font-size: calc(14px * var(--fs));
 		font-weight: 500;
 		color: var(--ink);
 		overflow-wrap: anywhere;

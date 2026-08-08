@@ -1,10 +1,12 @@
 /**
  * The meal plan — this week and the next (→ SPEC §4.1–4.2).
  *
- * One dinner slot per day, enforced by `UNIQUE(householdId, date)` in the
- * schema, so "plan a meal on a day that already has one" is an upsert rather
- * than a check-then-write that two phones could both pass
- * (→ docs/DATA-MODEL.md → meals).
+ * A day holds **one meal per slot** (breakfast · lunch · dinner · snack),
+ * enforced by `UNIQUE(householdId, date, slot)` in the schema, so "plan a meal
+ * on a slot that already has one" is an upsert rather than a check-then-write
+ * that two phones could both pass (→ docs/DATA-MODEL.md → meals). Most days
+ * hold exactly one, and it's a dinner — which is why nothing here treats an
+ * empty day and a day with a lone dinner differently (→ DECISIONS #126).
  *
  * A planned meal is either a recipe or a free-text title, and `title` doubles
  * as the recipe's name snapshot: deleting a recipe blanks `recipeId` but leaves
@@ -15,6 +17,7 @@
 import { and, asc, eq, gte, lte } from 'drizzle-orm';
 import { catalog, type Locale } from '$lib/i18n';
 import { addDays, isCalendarDate, startOfWeek, type CalendarDate } from '$lib/utils/dates';
+import { mealSlotOrder, type MealSlot } from '$lib/utils/meals';
 import type { PlanMealInput } from '$lib/utils/recipes';
 import { db } from '../db';
 import { meals, members, recipes } from '../db/schema';
@@ -23,6 +26,8 @@ import { buildIngredientPick, type IngredientPick } from './recipe-shopping';
 export type PlannedMeal = {
 	id: string;
 	date: CalendarDate;
+	/** Which meal of that day this is — a day holds one of each. */
+	slot: MealSlot;
 	/** What the row shows: the live recipe name, else the title snapshot. */
 	name: string;
 	/** Set only while the recipe still exists — the row links to it. */
@@ -40,7 +45,8 @@ export type WeekDay = {
 	/** "14" — the strip's number. */
 	dayOfMonth: string;
 	isToday: boolean;
-	meal: PlannedMeal | null;
+	/** In slot order — breakfast first, snack last. Usually one, often none. */
+	meals: PlannedMeal[];
 };
 
 /** How far ahead the plan reaches: this week and the next (→ SPEC §4.1). */
@@ -58,9 +64,11 @@ export type MealWeek = {
 	start: CalendarDate;
 	offset: WeekOffset;
 	/**
-	 * How many of the seven days have a dinner — the switch's count. All seven,
-	 * including days already eaten: counting from today would make the number
-	 * jump at midnight and read as "left", which it isn't.
+	 * How many of the seven days have anything planned — the switch's count.
+	 * Days, not meals: the switch answers "how much of this week is decided",
+	 * and a Saturday with a breakfast and a dinner is still one day decided.
+	 * All seven, including days already eaten: counting from today would make
+	 * the number jump at midnight and read as "left", which it isn't.
 	 */
 	plannedCount: number;
 };
@@ -99,7 +107,12 @@ export function getPlan(
 ): MealPlan {
 	const first = startOfWeek(today);
 	const planned = listMeals(householdId, first, addDays(first, PLANNABLE_WEEKS * 7 - 1));
-	const byDate = new Map(planned.map((meal) => [meal.date, meal]));
+	const byDate = new Map<CalendarDate, PlannedMeal[]>();
+	for (const meal of planned) {
+		const day = byDate.get(meal.date);
+		if (day) day.push(meal);
+		else byDate.set(meal.date, [meal]);
+	}
 	// The strip's labels come back written out, so this load speaks a language
 	// (→ `event.locals.locale`).
 	const m = catalog(locale);
@@ -115,7 +128,7 @@ export function getPlan(
 				// Always the layout's `today`, never the week's own start: on next
 				// week nothing is today, which is the truth the strip should tell.
 				isToday: date === today,
-				meal: byDate.get(date) ?? null
+				meals: byDate.get(date) ?? []
 			};
 		});
 
@@ -124,7 +137,7 @@ export function getPlan(
 			monthLabel: m.date.monthRange(start, addDays(start, 6)),
 			start,
 			offset: index as WeekOffset,
-			plannedCount: days.filter((day) => day.meal).length
+			plannedCount: days.filter((day) => day.meals.length > 0).length
 		};
 	});
 
@@ -134,12 +147,13 @@ export function getPlan(
 	return { weeks, offset: found > 0 ? (found as WeekOffset) : 0 };
 }
 
-/** Every planned meal in a date range, in calendar order. */
+/** Every planned meal in a date range, in calendar order and then day order. */
 function listMeals(householdId: string, from: CalendarDate, to: CalendarDate): PlannedMeal[] {
 	const rows = db
 		.select({
 			id: meals.id,
 			date: meals.date,
+			slot: meals.slot,
 			title: meals.title,
 			recipeId: meals.recipeId,
 			recipeName: recipes.name,
@@ -152,8 +166,13 @@ function listMeals(householdId: string, from: CalendarDate, to: CalendarDate): P
 		.leftJoin(recipes, eq(meals.recipeId, recipes.id))
 		.leftJoin(members, eq(meals.cookMemberId, members.id))
 		.where(and(eq(meals.householdId, householdId), gte(meals.date, from), lte(meals.date, to)))
+		// Slot order is a day's order, not the alphabet's, so it's sorted here
+		// rather than asked of SQLite (→ `$lib/utils/meals`).
 		.orderBy(asc(meals.date))
-		.all();
+		.all()
+		.sort((a, b) =>
+			a.date === b.date ? mealSlotOrder(a.slot) - mealSlotOrder(b.slot) : a.date < b.date ? -1 : 1
+		);
 
 	return rows.flatMap((row) => {
 		const name = row.recipeName ?? row.title;
@@ -165,6 +184,7 @@ function listMeals(householdId: string, from: CalendarDate, to: CalendarDate): P
 			{
 				id: row.id,
 				date: row.date,
+				slot: row.slot,
 				name,
 				recipeId: row.recipeName ? row.recipeId : null,
 				imagePath: row.imagePath,
@@ -192,10 +212,16 @@ export type PlanResult = {
 };
 
 /**
- * Plan (or replace) the meal on a day. Ids that don't belong to this household
+ * Plan (or replace) one meal of a day. Ids that don't belong to this household
  * are dropped rather than rejected: a recipe a housemate deleted while the
  * sheet was open becomes the free-text meal it was named after, which is closer
  * to what was meant than an error over a dinner.
+ *
+ * `mealId` is the meal the sheet was opened *on*, and it only matters when the
+ * slot moved: the upsert lands on `(date, slot)`, so a lunch dragged onto the
+ * dinner slot would otherwise be written twice — once as the new dinner, once
+ * as the lunch it still is. Both happen in one transaction, so a day can never
+ * be seen holding the same meal in two places.
  */
 export function planMeal(householdId: string, memberId: string, input: PlanMealInput): PlanResult {
 	const recipe = input.recipeId ? findRecipe(householdId, input.recipeId) : null;
@@ -207,26 +233,38 @@ export function planMeal(householdId: string, memberId: string, input: PlanMealI
 	const title = recipe ? recipe.name : input.title;
 	if (!title) return { planned: false, pick: null };
 
-	db.insert(meals)
-		.values({
-			householdId,
-			date: input.date,
-			recipeId: recipe?.id ?? null,
-			title,
-			cookMemberId,
-			createdByMemberId: memberId
-		})
-		.onConflictDoUpdate({
-			target: [meals.householdId, meals.date],
-			set: {
+	db.transaction((tx) => {
+		const written = tx
+			.insert(meals)
+			.values({
+				householdId,
+				date: input.date,
+				slot: input.slot,
 				recipeId: recipe?.id ?? null,
 				title,
 				cookMemberId,
-				// Whoever planned it last is who planned it.
 				createdByMemberId: memberId
-			}
-		})
-		.run();
+			})
+			.onConflictDoUpdate({
+				target: [meals.householdId, meals.date, meals.slot],
+				set: {
+					recipeId: recipe?.id ?? null,
+					title,
+					cookMemberId,
+					// Whoever planned it last is who planned it.
+					createdByMemberId: memberId
+				}
+			})
+			.returning({ id: meals.id })
+			.get();
+
+		// The meal moved slot (or day): the row it came from is now a duplicate.
+		if (input.mealId && input.mealId !== written.id) {
+			tx.delete(meals)
+				.where(and(eq(meals.id, input.mealId), eq(meals.householdId, householdId)))
+				.run();
+		}
+	});
 
 	// The meal is planned either way. What the toggle buys is the *offer* — the
 	// picker sheet, which is where the household decides what a recipe actually
@@ -237,11 +275,16 @@ export function planMeal(householdId: string, memberId: string, input: PlanMealI
 	return { planned: true, pick };
 }
 
-export function removeMeal(householdId: string, date: CalendarDate): boolean {
+/**
+ * Take one meal off the plan. By id rather than by day now that a day can hold
+ * four: "Remove meal" in the sheet means the meal it was opened on, and an id
+ * from another household simply matches nothing.
+ */
+export function removeMeal(householdId: string, mealId: string): boolean {
 	return (
 		db
 			.delete(meals)
-			.where(and(eq(meals.householdId, householdId), eq(meals.date, date)))
+			.where(and(eq(meals.id, mealId), eq(meals.householdId, householdId)))
 			.run().changes > 0
 	);
 }

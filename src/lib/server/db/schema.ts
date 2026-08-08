@@ -359,8 +359,16 @@ export const meals = sqliteTable(
 		householdId: text('household_id')
 			.notNull()
 			.references(() => households.id, { onDelete: 'cascade' }),
-		/** 'YYYY-MM-DD', household-local. One dinner slot per day. */
+		/** 'YYYY-MM-DD', household-local. A day holds one meal per slot. */
 		date: text('date').notNull(),
+		/**
+		 * Which meal of the day this is (→ `$lib/utils/meals`). Defaulted to
+		 * dinner, which is what every row written before slots existed was
+		 * (→ DECISIONS #126).
+		 */
+		slot: text('slot', { enum: ['breakfast', 'lunch', 'dinner', 'snack'] })
+			.notNull()
+			.default('dinner'),
 		/** Either a saved recipe… */
 		recipeId: text('recipe_id').references(() => recipes.id, { onDelete: 'set null' }),
 		/** …or a free-text "cook something not saved" title. Also serves as the
@@ -372,7 +380,7 @@ export const meals = sqliteTable(
 		}),
 		createdAt: createdAt()
 	},
-	(t) => [uniqueIndex('meals_household_date_unique').on(t.householdId, t.date)]
+	(t) => [uniqueIndex('meals_household_date_slot_unique').on(t.householdId, t.date, t.slot)]
 );
 
 /* ────────────────────────────────────────────────────────────────────────────

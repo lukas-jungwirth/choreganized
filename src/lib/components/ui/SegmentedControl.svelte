@@ -67,7 +67,7 @@
 		flex: 1;
 		padding: 8px 0;
 		border-radius: 10px;
-		font-size: 13.5px;
+		font-size: calc(13.5px * var(--fs));
 		font-weight: 600;
 		text-align: center;
 		color: var(--text-4);

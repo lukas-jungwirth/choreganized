@@ -44,7 +44,7 @@
 		border: 1.5px solid var(--border);
 		border-radius: var(--r-chip);
 		background: var(--card);
-		font-size: 13.5px;
+		font-size: calc(13.5px * var(--fs));
 		font-weight: 600;
 		color: var(--text-2);
 		white-space: nowrap;

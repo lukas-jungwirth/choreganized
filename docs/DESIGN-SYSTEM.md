@@ -61,6 +61,14 @@ because only sage and terracotta have tint tokens (→ [#35](DECISIONS.md)).
 
 ## Type scale (from the mockups)
 
+Every size below is what `design/Hearth.dc.html` draws, and every `font-size` in the app is
+written **`calc(<that number>px * var(--fs))`** — one token in `app.css` (currently `1.1`)
+scales all of them at once, because the mockups read a shade small on a phone across the
+kitchen (→ [DECISIONS #125](DECISIONS.md)). A bare `font-size: 13px` anywhere in `src/`
+silently opts out of the scale and is a bug; `grep -rn "font-size" src | grep -v "calc("` finds
+them all. Relative units follow for free — unitless line-heights, `em` letter-spacing — while
+paddings and icon sizes deliberately don't, so type grows _inside_ the layout.
+
 | Style             | Font            | Size/weight                                      | Example                   |
 | ----------------- | --------------- | ------------------------------------------------ | ------------------------- |
 | Page title        | Fraunces 600    | 30px                                             | "Shopping", "Tasks"       |

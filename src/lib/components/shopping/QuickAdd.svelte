@@ -160,7 +160,7 @@
 
 	.error {
 		margin: -12px 0 16px;
-		font-size: 13px;
+		font-size: calc(13px * var(--fs));
 		color: var(--danger-deep);
 	}
 
@@ -177,7 +177,7 @@
 		border: none;
 		background: none;
 		font-family: inherit;
-		font-size: 15px;
+		font-size: calc(15px * var(--fs));
 		color: var(--ink);
 	}
 

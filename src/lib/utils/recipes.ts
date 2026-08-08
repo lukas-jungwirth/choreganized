@@ -10,6 +10,7 @@
  */
 import type { Messages } from '$lib/i18n';
 import { isCalendarDate, type CalendarDate } from './dates';
+import { readMealSlot, type MealSlot } from './meals';
 
 /* ── Field limits ─────────────────────────────────────────────────────────── */
 
@@ -183,6 +184,13 @@ export function recipeShareText(recipe: ShareableRecipe, m: Messages): string {
 
 export type PlanMealInput = {
 	date: CalendarDate;
+	/** Which meal of that day — the sheet's chips, dinner unless told otherwise. */
+	slot: MealSlot;
+	/**
+	 * The meal the sheet was opened on, when it was opened on one. Only the
+	 * service uses it, and only when the slot moved (→ `services/meals.ts`).
+	 */
+	mealId: string | null;
 	/** Set when a saved recipe was picked; `title` then carries its name snapshot. */
 	recipeId: string | null;
 	/** The free-text meal, or the snapshot of the chosen recipe's name. */
@@ -220,6 +228,8 @@ export function readPlanForm(form: FormData, m: Messages): PlanMealInput | { err
 
 	return {
 		date,
+		slot: readMealSlot(form.get('slot')),
+		mealId: String(form.get('mealId') ?? '') || null,
 		recipeId,
 		title: title || null,
 		cookMemberId: String(form.get('cookMemberId') ?? '') || null,

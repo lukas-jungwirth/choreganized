@@ -3,6 +3,26 @@
 Household PWA for two (shopping list, meal plan + cook mode, recurring chores with points).
 SvelteKit + SQLite, single process, single container. Tagline: _Every chore, organized._
 
+## This is an agent-built repo, and you own the git history
+
+**Every line here was written by an agent session**, working from the plans and specs in
+`docs/`. Lukas describes what he wants; the session designs it, builds it, verifies it in the
+running app, writes down why, and **ships it**. Nobody comes along behind you to tidy up, so the
+docs are the only memory the next session has — a change that isn't in SPEC/DATA-MODEL/DECISIONS
+did not happen.
+
+You are also in charge of the repository. A piece of work is not finished when the code compiles:
+
+1. **Build it** on `dev` (or a branch off it) — conventions below, docs updated in the same pass.
+2. **Verify it** in the running app, not just `npm run check` + `npm run build` (see "Definition
+   of done"). If the environment truly can't verify something, say so in the handoff.
+3. **Review it** — re-read your own diff as a reviewer would (`/code-review` is there for this),
+   and fix what it turns up before shipping, not after.
+4. **Ship it**: commit with a message that says what changed and why, merge `dev` → `main`, and
+   push both. **A finished step ends as working code on `main`** — the deploy tracks it.
+
+Don't ship a step that fails its own acceptance criteria; leave it on `dev` and say what's left.
+
 ## Start here
 
 1. **[docs/plans/README.md](docs/plans/README.md)** — the work queue. Pick the next `todo`
@@ -41,6 +61,10 @@ lands).
 - **Design tokens only** — every color/radius/shadow is a `var(--…)` from `src/app.css`. A
   hardcoded hex outside `app.css` is wrong. Component inventory: DESIGN-SYSTEM.md — extend
   `lib/components/ui`, don't fork one-off variants.
+- **Type goes through the scale** — every `font-size` is `calc(<the mockup's px> * var(--fs))`,
+  never a bare px. The design's number stays visible, one token in `app.css` moves the whole app
+  (→ DESIGN-SYSTEM "Type scale", DECISIONS #125). Audit:
+  `grep -rn "font-size" src | grep -v "calc("`.
 - **Both themes, one line** — a colour token that differs by theme is
   `light-dark(<light>, <dark>)`; splitting one across two `:root` blocks is how they drift.
   A bare value is correct **only** when the colour is deliberately theme-independent — the

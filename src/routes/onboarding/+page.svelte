@@ -53,13 +53,13 @@
 	}
 
 	h1 {
-		font-size: 30px;
+		font-size: calc(30px * var(--fs));
 		line-height: 1.1;
 	}
 
 	.sub {
 		margin: 8px 0 0;
-		font-size: 15px;
+		font-size: calc(15px * var(--fs));
 		color: var(--text-4);
 	}
 
@@ -135,13 +135,13 @@
 
 	.title {
 		font-family: var(--font-display);
-		font-size: 19px;
+		font-size: calc(19px * var(--fs));
 		font-weight: 600;
 	}
 
 	.copy {
 		margin-top: 5px;
-		font-size: 13.5px;
+		font-size: calc(13.5px * var(--fs));
 		line-height: 1.45;
 		color: var(--text-4);
 	}

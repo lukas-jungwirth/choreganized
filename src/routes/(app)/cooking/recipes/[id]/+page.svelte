@@ -21,6 +21,7 @@
 	import { messages } from '$lib/i18n';
 	import type { IngredientPick } from '$lib/server/services/recipe-shopping';
 	import type { CalendarDate } from '$lib/utils/dates';
+	import type { MealSlot } from '$lib/utils/meals';
 	import { scaleIngredients, servingsFactor } from '$lib/utils/ingredients';
 	import { readServings } from '$lib/utils/recipes';
 	import CalendarDays from '@lucide/svelte/icons/calendar-days';
@@ -40,7 +41,12 @@
 
 	/** Which sheet is up: the day picker, the plan sheet for a day, or the menu. */
 	let choosingDay = $state(false);
-	let planning = $state<CalendarDate | null>(null);
+	/**
+	 * The day picked, and the slot on it this recipe would take — always a new
+	 * meal from here, on whatever that day still has free, so "add to plan"
+	 * never lands on top of a dinner by default (→ `$lib/utils/meals`).
+	 */
+	let planning = $state<{ date: CalendarDate; slot: MealSlot } | null>(null);
 	let menu = $state(false);
 
 	/**
@@ -125,7 +131,8 @@
 	});
 
 	const day = $derived(
-		data.plan.weeks.flatMap((week) => week.days).find((entry) => entry.date === planning) ?? null
+		data.plan.weeks.flatMap((week) => week.days).find((entry) => entry.date === planning?.date) ??
+			null
 	);
 	const shopping = $derived(form && 'shopping' in form ? form.shopping : null);
 
@@ -255,17 +262,19 @@
 	<DayPickerSheet
 		weeks={data.plan.weeks}
 		onclose={() => (choosingDay = false)}
-		onpick={(date) => {
+		onpick={(date, slot) => {
 			choosingDay = false;
-			planning = date;
+			planning = { date, slot };
 		}}
 	/>
 {/if}
 
-{#if day}
+{#if day && planning}
 	<MealPlanSheet
 		date={day.date}
-		meal={day.meal}
+		meal={null}
+		slot={planning.slot}
+		dayMeals={day.meals}
 		preselectRecipeId={recipe.id}
 		recipes={data.recipes}
 		members={data.members}
@@ -331,7 +340,7 @@
 
 	h1 {
 		margin-bottom: 12px;
-		font-size: 27px;
+		font-size: calc(27px * var(--fs));
 		line-height: 1.1;
 		overflow-wrap: anywhere;
 	}
@@ -341,7 +350,7 @@
 		flex-wrap: wrap;
 		gap: 8px 18px;
 		margin: 0 0 22px;
-		font-size: 13.5px;
+		font-size: calc(13.5px * var(--fs));
 		color: var(--text-2);
 	}
 
@@ -368,7 +377,7 @@
 		border-radius: var(--r-input);
 		background: var(--sage);
 		box-shadow: var(--shadow-button);
-		font-size: 15px;
+		font-size: calc(15px * var(--fs));
 		font-weight: 700;
 		color: var(--on-sage);
 	}
@@ -397,11 +406,11 @@
 	}
 
 	h2 {
-		font-size: 18px;
+		font-size: calc(18px * var(--fs));
 	}
 
 	.link {
-		font-size: 12.5px;
+		font-size: calc(12.5px * var(--fs));
 		font-weight: 600;
 		color: var(--sage);
 	}
@@ -434,7 +443,7 @@
 	.ingredient-name {
 		flex: 1;
 		min-width: 0;
-		font-size: 14.5px;
+		font-size: calc(14.5px * var(--fs));
 		overflow-wrap: anywhere;
 	}
 
@@ -445,7 +454,7 @@
 
 	.amount {
 		flex: none;
-		font-size: 13.5px;
+		font-size: calc(13.5px * var(--fs));
 		color: var(--text-4);
 	}
 
@@ -474,7 +483,7 @@
 		height: 26px;
 		border-radius: 50%;
 		background: var(--sage);
-		font-size: 13px;
+		font-size: calc(13px * var(--fs));
 		font-weight: 700;
 		color: var(--on-sage);
 	}
@@ -483,7 +492,7 @@
 		flex: 1;
 		min-width: 0;
 		padding-top: 2px;
-		font-size: 14.5px;
+		font-size: calc(14.5px * var(--fs));
 		line-height: 1.5;
 		color: var(--ink);
 		white-space: pre-wrap;
@@ -492,7 +501,7 @@
 
 	.no-steps {
 		margin: 26px 0 0;
-		font-size: 14px;
+		font-size: calc(14px * var(--fs));
 		line-height: 1.5;
 		color: var(--text-4);
 	}

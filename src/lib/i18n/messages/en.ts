@@ -31,6 +31,7 @@ import {
 	type CalendarDate
 } from '$lib/utils/dates';
 import { formatAmount, formatIngredient } from '$lib/utils/ingredients';
+import type { MealSlot } from '$lib/utils/meals';
 import { formatQuantity, type UnitLabels } from '$lib/utils/shopping';
 import type { RecurUnit } from '$lib/utils/tasks';
 
@@ -467,8 +468,15 @@ export const en = {
 		},
 
 		dinner: {
-			eyebrow: 'Tonight’s dinner',
+			/**
+			 * The card shows today's dinner, and falls back to whatever else the
+			 * day holds when there is none — so the eyebrow has to say which meal
+			 * it ended up showing (→ `services/home.ts`, DECISIONS #126).
+			 */
+			eyebrow: (slot: MealSlot) => (slot === 'dinner' ? 'Tonight’s dinner' : `Today’s ${slot}`),
 			cooking: (cook: string) => `${cook} is cooking`,
+			/** The rest of today, counted rather than listed — the tab is the list. */
+			more: (count: number) => (count === 1 ? '+1 more today' : `+${count} more today`),
 			add: 'Add tonight’s dinner'
 		},
 
@@ -720,15 +728,36 @@ export const en = {
 			nextCount: (planned: number) => `Next week · ${planned}`
 		},
 
+		/** The meals of a day (→ `$lib/utils/meals`); a day holds one of each. */
+		slots: {
+			breakfast: 'Breakfast',
+			lunch: 'Lunch',
+			dinner: 'Dinner',
+			snack: 'Snack'
+		},
+
 		/** The week's rows [04]. */
 		week: {
-			tonight: 'Tonight',
-			tonightWith: (cook: string) => `Tonight · ${cook}`,
-			cooks: (cook: string) => `${cook} cooks`,
+			/**
+			 * The quiet line under a meal's name. `slot` is null for the lone
+			 * dinner most days hold — that one names itself, and labelling it
+			 * would put a word on all seven rows to serve the rare Saturday with
+			 * a breakfast on it too (→ DECISIONS #126). `tonight` is today's
+			 * dinner, which says when rather than which.
+			 */
+			mealMeta: (slot: string | null, cook: string | null, tonight: boolean) => {
+				const when = tonight ? 'Tonight' : slot;
+				const who = cook ? (tonight ? cook : `${cook} cooks`) : null;
+				return [when, who].filter(Boolean).join(' · ') || null;
+			},
 			addMeal: 'Add a meal',
 			/** Seven identical buttons would otherwise be read out alike. */
 			addMealOn: (weekday: string, day: string) => `Add a meal on ${weekday} ${day}`,
-			changeMeal: (weekday: string) => `Change ${weekday}’s meal`,
+			/** The second meal of a day — the row under the ones already there. */
+			addAnother: 'Add another',
+			addAnotherOn: (weekday: string) => `Add another meal on ${weekday}`,
+			/** Names the meal now that a day can hold four of them. */
+			changeMeal: (meal: string, weekday: string) => `Change ${meal} on ${weekday}`,
 			/** Read out beside today's column in the strip. */
 			today: '(today)'
 		},
@@ -750,7 +779,9 @@ export const en = {
 			free: 'Free',
 			/** The row read out: "Thursday 17 — free". */
 			day: (weekday: string, day: string, meal: string) => `${weekday} ${day} — ${meal}`,
-			freeQuiet: 'free'
+			freeQuiet: 'free',
+			/** What a day already holds, on one line: "Pancakes · Pizza". */
+			mealList: (names: string[]) => names.join(' · ')
 		},
 
 		/** Plan a meal [3d]. */
@@ -764,6 +795,10 @@ export const en = {
 			mostRecent: (rest: number) => `Your most recent — search to reach the other ${rest}.`,
 			notSaved: 'Cook something not saved',
 			notSavedPlaceholder: 'Pizza night',
+			/** The chips above: which meal of that day this one is (→ #126). */
+			whichMeal: 'Which meal?',
+			/** Said under them when that slot is taken, before it's taken over. */
+			replaces: (meal: string) => `Replaces ${meal}`,
 			cooking: 'Who’s cooking?',
 			optional: 'optional',
 			addIngredients: 'Add ingredients to shopping list',
@@ -1457,6 +1492,8 @@ export const en = {
 			gonePickAnother: 'That recipe is gone. Pick another, or name what you’re cooking.',
 			mealDay: 'Pick a day for this meal.',
 			mealChoice: 'Pick a recipe, or name what you’re cooking.',
+			/** "Remove meal" on a meal a housemate took off the plan meanwhile. */
+			mealGone: 'That meal is no longer on the plan.',
 			timerLength: 'That is not a length of time.',
 			/** The server's half of the cap — a forged or racing request (→ #102). */
 			timerLimit: (max: number) => `${max} timers at once is the limit.`

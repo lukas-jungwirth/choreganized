@@ -111,27 +111,27 @@
 
 	h2 {
 		margin-bottom: 10px;
-		font-size: 22px;
+		font-size: calc(22px * var(--fs));
 		overflow-wrap: anywhere;
 	}
 
 	.copy {
 		margin: 0 0 24px;
-		font-size: 14px;
+		font-size: calc(14px * var(--fs));
 		line-height: 1.5;
 		color: var(--text-4);
 	}
 
 	.error {
 		margin: -14px 0 20px;
-		font-size: 13px;
+		font-size: calc(13px * var(--fs));
 		color: var(--danger-deep);
 	}
 
 	.cancel {
 		width: 100%;
 		padding: 13px;
-		font-size: 15px;
+		font-size: calc(15px * var(--fs));
 		font-weight: 700;
 		color: var(--text-2);
 	}

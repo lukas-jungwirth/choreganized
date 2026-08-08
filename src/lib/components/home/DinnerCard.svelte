@@ -32,12 +32,17 @@
 				{/if}
 			</span>
 			<span class="body">
-				<span class="eyebrow">{m.home.dinner.eyebrow}</span>
+				<span class="eyebrow">{m.home.dinner.eyebrow(dinner.slot)}</span>
 				<span class="name">{dinner.name}</span>
-				{#if dinner.cook}
+				{#if dinner.cook || dinner.others > 0}
 					<span class="cook">
-						<Avatar name={dinner.cook.displayName} color={dinner.cook.color} size={18} />
-						{m.home.dinner.cooking(dinner.cook.displayName)}
+						{#if dinner.cook}
+							<Avatar name={dinner.cook.displayName} color={dinner.cook.color} size={18} />
+							{m.home.dinner.cooking(dinner.cook.displayName)}
+						{/if}
+						{#if dinner.others > 0}
+							<span class="more">{m.home.dinner.more(dinner.others)}</span>
+						{/if}
 					</span>
 				{/if}
 			</span>
@@ -47,7 +52,7 @@
 	<a class="empty" href="/cooking">
 		<span class="thumb dashed"><Plus size={20} strokeWidth={2} /></span>
 		<span class="body">
-			<span class="eyebrow">{m.home.dinner.eyebrow}</span>
+			<span class="eyebrow">{m.home.dinner.eyebrow('dinner')}</span>
 			<span class="name muted">{m.home.dinner.add}</span>
 		</span>
 	</a>
@@ -98,7 +103,7 @@
 	.eyebrow {
 		display: block;
 		margin-bottom: 4px;
-		font-size: 10px;
+		font-size: calc(10px * var(--fs));
 		font-weight: 700;
 		letter-spacing: 0.12em;
 		text-transform: uppercase;
@@ -108,7 +113,7 @@
 	.name {
 		display: block;
 		font-family: var(--font-display);
-		font-size: 18px;
+		font-size: calc(18px * var(--fs));
 		font-weight: 600;
 		line-height: 1.15;
 	}
@@ -120,9 +125,16 @@
 	.cook {
 		display: flex;
 		align-items: center;
+		flex-wrap: wrap;
 		gap: 6px;
 		margin-top: 5px;
-		font-size: 12px;
+		font-size: calc(12px * var(--fs));
 		color: var(--text-4);
+	}
+
+	/* The rest of today, counted rather than listed — a step quieter than the
+	   cook it sits beside, because it is a pointer at the tab, not news. */
+	.more {
+		color: var(--text-5);
 	}
 </style>

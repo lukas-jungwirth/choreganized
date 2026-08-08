@@ -227,7 +227,7 @@
 		padding: 4px 10px;
 		border-radius: var(--r-chip);
 		background: var(--danger-tint);
-		font-size: 12.5px;
+		font-size: calc(12.5px * var(--fs));
 		font-weight: 600;
 		color: var(--danger);
 	}
@@ -238,7 +238,7 @@
 		align-items: center;
 		gap: 6px 14px;
 		margin: 12px 2px 20px;
-		font-size: 12.5px;
+		font-size: calc(12.5px * var(--fs));
 		color: var(--text-4);
 	}
 
@@ -258,7 +258,7 @@
 		padding: 11px 13px;
 		border-radius: var(--r-input);
 		background: var(--info-tint);
-		font-size: 12.5px;
+		font-size: calc(12.5px * var(--fs));
 		line-height: 1.45;
 		color: var(--info-soft);
 	}
@@ -277,7 +277,7 @@
 		gap: 13px;
 		width: 100%;
 		padding: 15px 16px;
-		font-size: 15px;
+		font-size: calc(15px * var(--fs));
 		font-weight: 500;
 		text-align: left;
 		color: var(--text-2);
@@ -311,7 +311,7 @@
 		width: 100%;
 		margin-top: 16px;
 		padding: 6px;
-		font-size: 14px;
+		font-size: calc(14px * var(--fs));
 		font-weight: 600;
 		text-align: center;
 		color: var(--danger);
@@ -331,13 +331,13 @@
 
 	h3 {
 		margin-bottom: 10px;
-		font-size: 22px;
+		font-size: calc(22px * var(--fs));
 		overflow-wrap: anywhere;
 	}
 
 	.copy {
 		margin: 0 0 24px;
-		font-size: 14px;
+		font-size: calc(14px * var(--fs));
 		line-height: 1.5;
 		color: var(--text-4);
 	}
@@ -345,7 +345,7 @@
 	.cancel {
 		width: 100%;
 		padding: 13px;
-		font-size: 15px;
+		font-size: calc(15px * var(--fs));
 		font-weight: 700;
 		color: var(--text-2);
 	}

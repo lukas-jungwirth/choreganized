@@ -48,7 +48,7 @@
 
 	.label {
 		margin-bottom: 8px;
-		font-size: 11px;
+		font-size: calc(11px * var(--fs));
 		font-weight: 700;
 		letter-spacing: 0.1em;
 		text-transform: uppercase;
@@ -83,7 +83,7 @@
 		border: none;
 		background: none;
 		font-family: inherit;
-		font-size: 14px;
+		font-size: calc(14px * var(--fs));
 		font-weight: 500;
 		color: var(--ink);
 	}
@@ -107,7 +107,7 @@
 
 	.caption {
 		flex: none;
-		font-size: 13px;
+		font-size: calc(13px * var(--fs));
 		color: var(--text-4);
 	}
 </style>

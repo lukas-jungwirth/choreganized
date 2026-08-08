@@ -489,17 +489,17 @@
 	}
 
 	.cancel {
-		font-size: 15px;
+		font-size: calc(15px * var(--fs));
 		font-weight: 600;
 		color: var(--text-4);
 	}
 
 	h1 {
-		font-size: 17px;
+		font-size: calc(17px * var(--fs));
 	}
 
 	.save {
-		font-size: 15px;
+		font-size: calc(15px * var(--fs));
 		font-weight: 700;
 		color: var(--sage);
 	}
@@ -514,7 +514,7 @@
 		padding: 10px 13px;
 		border-radius: var(--r-input);
 		background: var(--sunken);
-		font-size: 12.5px;
+		font-size: calc(12.5px * var(--fs));
 		line-height: 1.45;
 		color: var(--text-4);
 	}
@@ -570,7 +570,7 @@
 	}
 
 	.hint {
-		font-size: 12.5px;
+		font-size: calc(12.5px * var(--fs));
 		font-weight: 600;
 		color: var(--text-4);
 	}
@@ -584,7 +584,7 @@
 		border-radius: var(--r-chip);
 		background: var(--tabbar-bg);
 		backdrop-filter: blur(6px);
-		font-size: 12.5px;
+		font-size: calc(12.5px * var(--fs));
 		font-weight: 700;
 		color: var(--ink);
 	}
@@ -601,14 +601,14 @@
 	.photo-error {
 		margin: 0;
 		padding-left: 4px;
-		font-size: 13px;
+		font-size: calc(13px * var(--fs));
 		color: var(--danger-deep);
 	}
 
 	.drop {
 		margin-left: auto;
 		padding: 4px;
-		font-size: 12.5px;
+		font-size: calc(12.5px * var(--fs));
 		font-weight: 600;
 		color: var(--danger);
 	}
@@ -627,7 +627,7 @@
 	.label {
 		margin: 24px 0 8px;
 		font-family: var(--font-body);
-		font-size: 11px;
+		font-size: calc(11px * var(--fs));
 		font-weight: 700;
 		letter-spacing: 0.1em;
 		text-transform: uppercase;
@@ -660,7 +660,7 @@
 		padding: 12px 0;
 		border: none;
 		background: none;
-		font-size: 14.5px;
+		font-size: calc(14.5px * var(--fs));
 		font-weight: 500;
 		color: var(--ink);
 	}
@@ -682,7 +682,7 @@
 		padding: 5px 9px;
 		border-radius: var(--r-chip);
 		background: var(--sunken);
-		font-size: 12.5px;
+		font-size: calc(12.5px * var(--fs));
 		font-weight: 600;
 		white-space: nowrap;
 		text-overflow: ellipsis;
@@ -726,14 +726,14 @@
 		gap: 8px;
 		margin: 12px 0 0 4px;
 		padding: 4px;
-		font-size: 14px;
+		font-size: calc(14px * var(--fs));
 		font-weight: 600;
 		color: var(--sage);
 	}
 
 	.units {
 		margin: 10px 4px 0;
-		font-size: 12px;
+		font-size: calc(12px * var(--fs));
 		line-height: 1.5;
 		color: var(--text-5);
 	}
@@ -761,7 +761,7 @@
 		margin-top: 10px;
 		border-radius: 50%;
 		background: var(--sunken);
-		font-size: 12px;
+		font-size: calc(12px * var(--fs));
 		font-weight: 700;
 		color: var(--text-4);
 	}
@@ -777,7 +777,7 @@
 		border: none;
 		border-radius: var(--r-input);
 		background: var(--card);
-		font-size: 14px;
+		font-size: calc(14px * var(--fs));
 		line-height: 1.4;
 		color: var(--text-2);
 		resize: none;

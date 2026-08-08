@@ -193,7 +193,7 @@
 		max-width: 0;
 		overflow: hidden;
 		opacity: 0;
-		font-size: 13.5px;
+		font-size: calc(13.5px * var(--fs));
 		font-weight: 600;
 		line-height: 1;
 		transition: opacity 0.18s ease;
@@ -218,7 +218,7 @@
 		border: 1.5px solid var(--card);
 		border-radius: 8px;
 		background: var(--danger);
-		font-size: 10px;
+		font-size: calc(10px * var(--fs));
 		font-weight: 700;
 		line-height: 1;
 		color: var(--on-sage);
