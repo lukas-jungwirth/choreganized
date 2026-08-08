@@ -673,7 +673,7 @@
 	h2 {
 		margin-bottom: 12px;
 		font-family: var(--font-body);
-		font-size: 11px;
+		font-size: calc(11px * var(--fs));
 		font-weight: 700;
 		letter-spacing: 0.12em;
 		text-transform: uppercase;
@@ -713,14 +713,14 @@
 
 	.note {
 		margin: 12px 0;
-		font-size: 12.5px;
+		font-size: calc(12.5px * var(--fs));
 		line-height: 1.5;
 		color: var(--text-5);
 	}
 
 	.pad {
 		padding: 16px;
-		font-size: 14px;
+		font-size: calc(14px * var(--fs));
 	}
 
 	/* A sheet's own padding, so the demo sits the way it really would. */
@@ -740,14 +740,14 @@
 	}
 
 	.pref-title {
-		font-size: 14px;
+		font-size: calc(14px * var(--fs));
 		font-weight: 600;
 		color: var(--text-2);
 	}
 
 	.pref-sub {
 		margin-top: 2px;
-		font-size: 12px;
+		font-size: calc(12px * var(--fs));
 		color: var(--text-4);
 	}
 
@@ -756,7 +756,7 @@
 	}
 
 	.foot {
-		font-size: 12px;
+		font-size: calc(12px * var(--fs));
 		color: var(--text-5);
 	}
 
@@ -774,7 +774,7 @@
 
 	.cook-uses {
 		margin: 14px 0 0;
-		font-size: 12.5px;
+		font-size: calc(12.5px * var(--fs));
 		color: var(--cook-faint);
 	}
 
@@ -798,12 +798,12 @@
 
 	h3 {
 		margin-bottom: 6px;
-		font-size: 24px;
+		font-size: calc(24px * var(--fs));
 	}
 
 	.pop-sub {
 		margin: 0 0 20px;
-		font-size: 14px;
+		font-size: calc(14px * var(--fs));
 		color: var(--text-4);
 	}
 </style>

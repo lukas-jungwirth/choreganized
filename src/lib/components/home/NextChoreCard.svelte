@@ -81,7 +81,7 @@
 
 	.eyebrow {
 		margin: 0 0 10px;
-		font-size: 10px;
+		font-size: calc(10px * var(--fs));
 		font-weight: 700;
 		letter-spacing: 0.12em;
 		text-transform: uppercase;
@@ -91,7 +91,7 @@
 
 	h2 {
 		margin: 0;
-		font-size: 25px;
+		font-size: calc(25px * var(--fs));
 		line-height: 1.1;
 		/* "Grünschnittcontainer rausbringen" has nowhere to break. */
 		overflow-wrap: anywhere;
@@ -99,7 +99,7 @@
 
 	.meta {
 		margin: 6px 0 0;
-		font-size: 14px;
+		font-size: calc(14px * var(--fs));
 		color: var(--text-4);
 	}
 

@@ -153,7 +153,7 @@
 
 	.readback {
 		margin: 0 0 18px;
-		font-size: 13px;
+		font-size: calc(13px * var(--fs));
 		color: var(--text-4);
 	}
 

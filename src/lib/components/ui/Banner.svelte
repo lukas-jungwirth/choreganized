@@ -121,7 +121,7 @@
 		padding: 7px 13px;
 		border-radius: var(--r-chip);
 		background: var(--card);
-		font-size: 13px;
+		font-size: calc(13px * var(--fs));
 		font-weight: 700;
 	}
 
@@ -160,12 +160,12 @@
 	}
 
 	.danger .title {
-		font-size: 14px;
+		font-size: calc(14px * var(--fs));
 		color: var(--danger-deep);
 	}
 
 	.danger .detail {
-		font-size: 12.5px;
+		font-size: calc(12.5px * var(--fs));
 		color: var(--danger-soft);
 	}
 
@@ -191,12 +191,12 @@
 	}
 
 	.info .title {
-		font-size: 13.5px;
+		font-size: calc(13.5px * var(--fs));
 		color: var(--sage-deep);
 	}
 
 	.info .detail {
-		font-size: 12px;
+		font-size: calc(12px * var(--fs));
 		color: var(--info-soft);
 	}
 

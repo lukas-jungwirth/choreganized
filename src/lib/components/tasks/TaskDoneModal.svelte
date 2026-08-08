@@ -121,13 +121,13 @@
 
 	h2 {
 		margin-bottom: 6px;
-		font-size: 24px;
+		font-size: calc(24px * var(--fs));
 		overflow-wrap: anywhere;
 	}
 
 	.what {
 		margin: 0 0 20px;
-		font-size: 14px;
+		font-size: calc(14px * var(--fs));
 		color: var(--text-4);
 		overflow-wrap: anywhere;
 	}
@@ -140,7 +140,7 @@
 		padding: 10px 20px;
 		border-radius: var(--r-chip);
 		background: var(--sage-tint);
-		font-size: 17px;
+		font-size: calc(17px * var(--fs));
 		font-weight: 700;
 		color: var(--sage-deep);
 	}
@@ -168,7 +168,7 @@
 
 	.due {
 		display: block;
-		font-size: 13.5px;
+		font-size: calc(13.5px * var(--fs));
 		font-weight: 600;
 		color: var(--ink);
 	}
@@ -176,7 +176,7 @@
 	.hand {
 		display: block;
 		margin-top: 1px;
-		font-size: 12px;
+		font-size: calc(12px * var(--fs));
 	}
 
 	.standings {
@@ -185,20 +185,20 @@
 		justify-content: center;
 		gap: 8px;
 		margin: 0 0 18px;
-		font-size: 13px;
+		font-size: calc(13px * var(--fs));
 		color: var(--text-4);
 	}
 
 	.error {
 		margin: 0 0 12px;
-		font-size: 13px;
+		font-size: calc(13px * var(--fs));
 		color: var(--danger-deep);
 	}
 
 	.undo {
 		width: 100%;
 		padding: 6px;
-		font-size: 14px;
+		font-size: calc(14px * var(--fs));
 		font-weight: 600;
 		color: var(--text-4);
 	}

@@ -73,7 +73,7 @@
 						class="plinth"
 						class:winning
 						style:height="{podium.leaderless ? LEVEL : step(HEIGHTS, entry.rank)}px"
-						style:font-size="{step(NUMERALS, entry.rank)}px"
+						style:font-size="calc({step(NUMERALS, entry.rank)}px * var(--fs))"
 						aria-hidden="true"
 					>
 						<!-- A rank nobody earned would be a lie about a scoreless month. -->
@@ -100,13 +100,13 @@
 
 	h2 {
 		font-family: var(--font-body);
-		font-size: 15px;
+		font-size: calc(15px * var(--fs));
 		font-weight: 700;
 	}
 
 	.resets {
 		flex: none;
-		font-size: 11px;
+		font-size: calc(11px * var(--fs));
 		font-weight: 600;
 		color: var(--text-5);
 	}
@@ -162,7 +162,7 @@
 		max-width: 100%;
 		overflow: hidden;
 		margin-bottom: 1px;
-		font-size: 12.5px;
+		font-size: calc(12.5px * var(--fs));
 		font-weight: 600;
 		text-overflow: ellipsis;
 		white-space: nowrap;
@@ -174,13 +174,13 @@
 
 	.points {
 		font-family: var(--font-display);
-		font-size: 17px;
+		font-size: calc(17px * var(--fs));
 		font-weight: 600;
 		color: var(--column-color);
 	}
 
 	.points.winning {
-		font-size: 19px;
+		font-size: calc(19px * var(--fs));
 	}
 
 	.plinth {

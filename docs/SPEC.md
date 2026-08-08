@@ -83,7 +83,10 @@ avatars. Then, in order:
 3. **Tonight's dinner card** — today's meal from the plan: photo thumb (or placeholder art),
    name, "{member} is cooking" with mini avatar (cook line hidden if no cook set). Tap → recipe
    view (or Cooking tab for custom meals). Hidden if nothing is planned today; show it as an
-   "Add tonight's dinner" affordance linking to Cooking instead.
+   "Add tonight's dinner" affordance linking to Cooking instead. A day can hold four meals
+   (§4.1) and the card still shows **one**: the dinner, or — with no dinner planned — the last
+   meal the day does have, its eyebrow naming which ("Today's lunch"). Anything else today is
+   counted beside the cook line ("+1 more today"), never listed; the Cooking tab is the list.
 4. **Stat tiles** (2-up): "{n} on shopping list" (unchecked items) → Shopping;
    "{n} tasks due today" (due today + overdue) → Tasks.
 5. **Standings strip** — "You're 1st this month" / "240 pts · 30 ahead of Elisabeth" + stacked
@@ -187,16 +190,28 @@ a danger badge with the current user's overdue count [4e].
   today highlighted in sage — next week has no today, so no highlight. The strip stays a visual
   anchor, not a control: the meal rows below are already one tap target per day.
   (The heading anchor `#41-this-week` is kept as-is — plan files link it.)
-- **Meal card**: one row per day (MON…SUN): planned meal name + "{member} cooks" (today's row
-  highlighted, "Tonight · {member}") or dashed "Add a meal" placeholder. Tap → plan sheet [3d]
-  for that day; tap a planned meal → recipe view, long-press/••• → change/remove (v1: tapping a
-  planned custom meal opens the plan sheet prefilled; a "Remove" action lives there).
+- **Meal card**: one row per day (MON…SUN). A day holds up to four meals — one **breakfast ·
+  lunch · dinner · snack** each (→ DECISIONS #126) — listed in that order: name + "{member}
+  cooks" (today's dinner highlighted, "Tonight · {member}") or a dashed "Add a meal"
+  placeholder. **The slot is named on the row unless the day holds nothing but a dinner**, so
+  the ordinary week looks exactly as it did; a day with two meals labels both ("Breakfast",
+  "Dinner"), and a day whose only meal is a lunch says "Lunch". A day that already holds
+  something gains a quiet **Add another** row under its meals, which opens the sheet on the
+  first slot that day still has free (dinner, else lunch, else breakfast, else snack).
+  Tap → plan sheet [3d] for that meal; tap a planned meal → recipe view, long-press/••• →
+  change/remove (v1: tapping a planned custom meal opens the plan sheet prefilled; a "Remove"
+  action lives there). The switch's {n} counts **days** with anything planned, not meals.
 - **Recipe library** section: "Recently added" 2-up cards (photo, name, "{time} min · added
   {date}"), header link "Browse all · {n}" → library page.
 
 ### 4.2 Plan a meal sheet [3d]
 
 - Title "Plan a meal / {Weekday} · {date}".
+- **Which meal?** — chips for breakfast · lunch · dinner · snack, above everything else.
+  Opened from a meal it is that meal's slot; opened blank it is the day's first free one.
+  Choosing a slot another meal already holds says **"Replaces {name}"** under the chips rather
+  than refusing — replacing is what this sheet does, it just has four places to do it in now.
+  Changing the slot of an existing meal **moves** it (the old row is not left behind).
 - Search field over the household's recipes; recent recipes listed with radio selection.
 - **"Cook something not saved"** → free-text title input instead of a recipe (custom meal).
 - **Who's cooking?** — member chips, optional (none = no cook shown).
@@ -204,8 +219,8 @@ a danger badge with the current user's overdue count [4e].
   with ingredients is selected; default on) — on save, the **ingredient picker [3e]** (§4.8)
   opens over the day it was just planned. The meal is written either way: the toggle buys the
   offer, not the pour, and a dismissed picker still leaves the dinner on the day.
-- CTA "Add to {weekday}". Replaces the day's existing meal if one exists (one dinner per day);
-  when opened on a planned day it's prefilled and offers **Remove meal**.
+- CTA "Add to {weekday}". Replaces whatever holds the chosen slot; when opened on a planned
+  meal it's prefilled and offers **Remove meal**, which removes that meal only.
 
 ### 4.3 Recipe library (Browse all)
 

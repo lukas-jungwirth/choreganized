@@ -118,7 +118,7 @@
 		box-shadow:
 			inset 0 0 0 1px var(--toast-border),
 			var(--shadow-toast);
-		font-size: 15px;
+		font-size: calc(15px * var(--fs));
 		color: var(--toast-muted);
 	}
 
@@ -150,7 +150,7 @@
 		padding: 12px 16px;
 		margin: -4px 0;
 		border-radius: var(--r-chip);
-		font-size: 15px;
+		font-size: calc(15px * var(--fs));
 		font-weight: 700;
 		color: var(--toast-accent);
 	}

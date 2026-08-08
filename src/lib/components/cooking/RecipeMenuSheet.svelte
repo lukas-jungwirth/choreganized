@@ -153,7 +153,7 @@
 		gap: 13px;
 		width: 100%;
 		padding: 15px 16px;
-		font-size: 15px;
+		font-size: calc(15px * var(--fs));
 		font-weight: 500;
 		color: var(--text-2);
 		text-align: left;
@@ -182,7 +182,7 @@
 		margin-top: 14px;
 		border-radius: var(--r-input);
 		background: var(--field);
-		font-size: 15px;
+		font-size: calc(15px * var(--fs));
 		font-weight: 700;
 		color: var(--text-2);
 	}
@@ -201,13 +201,13 @@
 
 	h3 {
 		margin-bottom: 10px;
-		font-size: 22px;
+		font-size: calc(22px * var(--fs));
 		overflow-wrap: anywhere;
 	}
 
 	.copy {
 		margin: 0 0 24px;
-		font-size: 14px;
+		font-size: calc(14px * var(--fs));
 		line-height: 1.5;
 		color: var(--text-4);
 	}

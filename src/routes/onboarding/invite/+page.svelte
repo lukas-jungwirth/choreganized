@@ -139,13 +139,13 @@
 	}
 
 	h1 {
-		font-size: 28px;
+		font-size: calc(28px * var(--fs));
 		line-height: 1.1;
 	}
 
 	.sub {
 		margin: 8px 0 0;
-		font-size: 14px;
+		font-size: calc(14px * var(--fs));
 		line-height: 1.45;
 		color: var(--text-4);
 	}
@@ -161,7 +161,7 @@
 
 	.code-label {
 		margin: 0 0 10px;
-		font-size: 11px;
+		font-size: calc(11px * var(--fs));
 		font-weight: 700;
 		letter-spacing: 0.1em;
 		text-transform: uppercase;
@@ -172,7 +172,7 @@
 	.code {
 		margin: 0;
 		font-family: var(--font-display);
-		font-size: 38px;
+		font-size: calc(38px * var(--fs));
 		font-weight: 600;
 		letter-spacing: 0.18em;
 		/* The letter-spacing pushes the last glyph off-centre otherwise. */
@@ -203,12 +203,12 @@
 		overflow: hidden;
 		text-overflow: ellipsis;
 		white-space: nowrap;
-		font-size: 13.5px;
+		font-size: calc(13.5px * var(--fs));
 		color: var(--text-2);
 	}
 
 	.copy {
-		font-size: 13px;
+		font-size: calc(13px * var(--fs));
 		font-weight: 700;
 		color: var(--sage);
 	}
@@ -223,7 +223,7 @@
 		border: 1.5px solid var(--border);
 		border-radius: var(--r-input);
 		background: var(--card);
-		font-size: 15px;
+		font-size: calc(15px * var(--fs));
 		font-weight: 700;
 		color: var(--ink);
 	}
@@ -233,14 +233,14 @@
 		padding: 14px 16px;
 		border-radius: var(--r-input);
 		background: var(--sunken);
-		font-size: 13.5px;
+		font-size: calc(13.5px * var(--fs));
 		line-height: 1.45;
 		color: var(--text-3);
 	}
 
 	.members-label {
 		margin: 0 0 10px;
-		font-size: 11px;
+		font-size: calc(11px * var(--fs));
 		font-weight: 700;
 		letter-spacing: 0.1em;
 		text-transform: uppercase;
@@ -267,7 +267,7 @@
 
 	.name {
 		flex: 1;
-		font-size: 14.5px;
+		font-size: calc(14.5px * var(--fs));
 		font-weight: 600;
 	}
 
@@ -284,7 +284,7 @@
 		padding: 4px 10px;
 		border-radius: var(--r-chip);
 		background: var(--sage-tint);
-		font-size: 11px;
+		font-size: calc(11px * var(--fs));
 		font-weight: 700;
 		color: var(--sage);
 	}

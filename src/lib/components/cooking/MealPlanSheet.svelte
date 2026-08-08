@@ -6,8 +6,11 @@
 	it posts to `?/plan` and `?/remove` on whichever page mounted it — both pages
 	define those actions over the same service call.
 
-	One dinner per day, so opening it on a planned day prefills it and offers
-	**Remove meal**; saving replaces what was there (→ SPEC §4.2).
+	One meal per *slot*, so the sheet opens on the meal it was raised from (and
+	offers **Remove meal**) or on the slot that day still has free, and saving
+	replaces whatever holds that slot — said out loud under the chips before it
+	happens, because "add" quietly overwriting someone's plan is the one thing
+	this sheet must not do (→ SPEC §4.2, DECISIONS #126).
 -->
 <script lang="ts">
 	import { enhance } from '$app/forms';
@@ -23,6 +26,7 @@
 	import { messages } from '$lib/i18n';
 	import type { RecipeSummary } from '$lib/server/services/recipes';
 	import type { CalendarDate } from '$lib/utils/dates';
+	import { MEAL_SLOTS, type MealSlot } from '$lib/utils/meals';
 	import { MEAL_TITLE_MAX } from '$lib/utils/recipes';
 	import Check from '@lucide/svelte/icons/check';
 	import Plus from '@lucide/svelte/icons/plus';
@@ -31,8 +35,12 @@
 
 	type Props = {
 		date: CalendarDate;
-		/** What's already planned for that day, if anything. */
+		/** The meal this was opened on, if it was opened on one. */
 		meal: PlannedMeal | null;
+		/** Which slot to open on — the meal's, or the day's first free one. */
+		slot: MealSlot;
+		/** Everything that day holds, so the chips can say what a slot costs. */
+		dayMeals: PlannedMeal[];
 		/** Opened from a recipe: that recipe wins over what the day already has. */
 		preselectRecipeId?: string | null;
 		recipes: RecipeSummary[];
@@ -40,7 +48,16 @@
 		onclose: () => void;
 	};
 
-	let { date, meal, preselectRecipeId = null, recipes, members, onclose }: Props = $props();
+	let {
+		date,
+		meal,
+		slot: initialSlot,
+		dayMeals,
+		preselectRecipeId = null,
+		recipes,
+		members,
+		onclose
+	}: Props = $props();
 
 	const m = messages();
 
@@ -61,6 +78,7 @@
 		untrack(() => recipes.length === 0 || (!preselectRecipeId && !!meal && !meal.recipeId))
 	);
 	let title = $state(untrack(() => (meal?.recipeId ? '' : (meal?.title ?? ''))));
+	let slot = $state<MealSlot>(untrack(() => initialSlot));
 	let cookId = $state<string | null>(untrack(() => meal?.cook?.id ?? null));
 	let addToList = $state(true);
 	let search = $state('');
@@ -100,8 +118,19 @@
 	/** Only a recipe that has ingredients can put any on the list (→ SPEC §4.2). */
 	const offersShopping = $derived(!custom && !!selected?.hasIngredients);
 
+	/**
+	 * What saving onto the chosen slot would push off the day — the meal that
+	 * holds it, unless that's the one being edited. Shown rather than blocked:
+	 * replacing is what the sheet has always done, it just has four places to
+	 * do it in now.
+	 */
+	const replacing = $derived(
+		dayMeals.find((other) => other.slot === slot && other.id !== meal?.id) ?? null
+	);
+
 	const uid = $props.id();
 	const cooksLabelId = `${uid}-cooks`;
+	const slotLabelId = `${uid}-slot`;
 
 	function pick(recipe: RecipeSummary) {
 		selectedId = recipe.id;
@@ -128,6 +157,25 @@
 		}}
 	>
 		<input type="hidden" name="date" value={date} />
+		<!-- Which meal was being edited: the service only needs it when the slot
+			 moved, and then it's the difference between moving a meal and cloning
+			 it (→ `services/meals.ts`). -->
+		<input type="hidden" name="mealId" value={meal?.id ?? ''} />
+		<input type="hidden" name="slot" value={slot} />
+
+		<!-- Ahead of the recipe list, because it's the smaller question and the
+			 answer changes what "Add to Thursday" is about to overwrite. -->
+		<p class="label" id={slotLabelId}>{m.cooking.plan.whichMeal}</p>
+		<div class="chips slots" role="group" aria-labelledby={slotLabelId}>
+			{#each MEAL_SLOTS as option (option)}
+				<Chip selected={slot === option} onclick={() => (slot = option)}>
+					{m.cooking.slots[option]}
+				</Chip>
+			{/each}
+		</div>
+		{#if replacing}
+			<p class="replaces">{m.cooking.plan.replaces(replacing.name)}</p>
+		{/if}
 
 		{#if recipes.length > 0}
 			<div class="search">
@@ -252,7 +300,7 @@
 				};
 			}}
 		>
-			<input type="hidden" name="date" value={date} />
+			<input type="hidden" name="mealId" value={meal.id} />
 			<button type="submit" class="remove" disabled={submitting}>{m.cooking.plan.remove}</button>
 		</form>
 	{/if}
@@ -305,7 +353,7 @@
 
 	.name {
 		display: block;
-		font-size: 14.5px;
+		font-size: calc(14.5px * var(--fs));
 		font-weight: 600;
 		overflow-wrap: anywhere;
 	}
@@ -313,7 +361,7 @@
 	.time {
 		display: block;
 		margin-top: 1px;
-		font-size: 12px;
+		font-size: calc(12px * var(--fs));
 		color: var(--text-4);
 	}
 
@@ -337,7 +385,7 @@
 	.note {
 		margin: -6px 0 14px;
 		padding: 0 4px;
-		font-size: 12.5px;
+		font-size: calc(12.5px * var(--fs));
 		color: var(--text-4);
 	}
 
@@ -347,7 +395,7 @@
 		gap: 8px;
 		padding: 4px;
 		margin: 0 0 4px;
-		font-size: 14px;
+		font-size: calc(14px * var(--fs));
 		font-weight: 600;
 		color: var(--sage);
 	}
@@ -356,10 +404,28 @@
 		margin-bottom: 4px;
 	}
 
+	/* The slot chips open the sheet, so their label has nothing to sit under. */
+	.label:first-of-type {
+		margin-top: 0;
+	}
+
+	.slots {
+		margin-bottom: 16px;
+	}
+
+	/* What this slot already holds — quiet, but ahead of the button that would
+	   overwrite it (→ DECISIONS #126). */
+	.replaces {
+		margin: -10px 0 16px;
+		padding: 0 4px;
+		font-size: calc(12.5px * var(--fs));
+		color: var(--text-4);
+	}
+
 	/* The uppercase micro-label the other sheets group a chip row under [3b]. */
 	.label {
 		margin: 18px 0 8px;
-		font-size: 11px;
+		font-size: calc(11px * var(--fs));
 		font-weight: 700;
 		letter-spacing: 0.1em;
 		text-transform: uppercase;
@@ -396,7 +462,7 @@
 
 	.pref-title {
 		display: block;
-		font-size: 14px;
+		font-size: calc(14px * var(--fs));
 		font-weight: 600;
 		color: var(--text-2);
 	}
@@ -406,14 +472,14 @@
 	.pref-note {
 		display: block;
 		margin-top: 2px;
-		font-size: 12px;
+		font-size: calc(12px * var(--fs));
 		color: var(--text-5);
 	}
 
 	.error {
 		margin: 0 0 12px;
 		padding: 0 4px;
-		font-size: 13px;
+		font-size: calc(13px * var(--fs));
 		color: var(--danger-deep);
 	}
 
@@ -421,7 +487,7 @@
 		width: 100%;
 		padding: 14px;
 		margin-top: 12px;
-		font-size: 15px;
+		font-size: calc(15px * var(--fs));
 		font-weight: 700;
 		color: var(--danger);
 	}

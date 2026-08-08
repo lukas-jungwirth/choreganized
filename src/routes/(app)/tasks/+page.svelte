@@ -276,7 +276,7 @@
 		padding: 15px;
 		border-radius: var(--r-block);
 		background: var(--sage-tint);
-		font-size: 14px;
+		font-size: calc(14px * var(--fs));
 		font-weight: 600;
 		color: var(--sage-deep);
 	}
@@ -306,7 +306,7 @@
 		gap: 6px;
 		margin: 0 4px 8px;
 		font-family: var(--font-body);
-		font-size: 11px;
+		font-size: calc(11px * var(--fs));
 		font-weight: 700;
 		letter-spacing: 0.12em;
 		text-transform: uppercase;
@@ -342,7 +342,7 @@
 
 	.label {
 		margin: 0 4px 10px;
-		font-size: 11px;
+		font-size: calc(11px * var(--fs));
 		font-weight: 700;
 		letter-spacing: 0.12em;
 		text-transform: uppercase;
@@ -365,13 +365,13 @@
 	.starter-name {
 		flex: 1;
 		min-width: 0;
-		font-size: 15px;
+		font-size: calc(15px * var(--fs));
 		font-weight: 500;
 	}
 
 	.starter-repeat {
 		flex: none;
-		font-size: 12px;
+		font-size: calc(12px * var(--fs));
 		color: var(--text-4);
 	}
 

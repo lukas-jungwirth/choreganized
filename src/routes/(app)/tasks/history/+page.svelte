@@ -68,7 +68,7 @@
 		padding: 16px;
 		border-radius: var(--r-block);
 		background: var(--sage-tint);
-		font-size: 15px;
+		font-size: calc(15px * var(--fs));
 		font-weight: 600;
 		color: var(--sage-deep);
 	}

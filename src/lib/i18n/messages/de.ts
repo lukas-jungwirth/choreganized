@@ -31,6 +31,7 @@ import {
 	type CalendarDate
 } from '$lib/utils/dates';
 import { formatAmount, formatIngredient } from '$lib/utils/ingredients';
+import type { MealSlot } from '$lib/utils/meals';
 import { formatQuantity, type UnitLabels } from '$lib/utils/shopping';
 import type { RecurUnit } from '$lib/utils/tasks';
 import type { Messages, RichText } from './en';
@@ -350,8 +351,16 @@ export const de: Messages = {
 		},
 
 		dinner: {
-			eyebrow: 'Abendessen heute',
+			eyebrow: (slot: MealSlot) =>
+				slot === 'dinner'
+					? 'Abendessen heute'
+					: slot === 'breakfast'
+						? 'Frühstück heute'
+						: slot === 'lunch'
+							? 'Mittagessen heute'
+							: 'Snack heute',
 			cooking: (cook: string) => `${cook} kocht`,
+			more: (count: number) => `+${count} weitere heute`,
 			add: 'Abendessen eintragen'
 		},
 
@@ -544,13 +553,24 @@ export const de: Messages = {
 			nextCount: (planned: number) => `Nächste Woche · ${planned}`
 		},
 
+		slots: {
+			breakfast: 'Frühstück',
+			lunch: 'Mittagessen',
+			dinner: 'Abendessen',
+			snack: 'Snack'
+		},
+
 		week: {
-			tonight: 'Heute Abend',
-			tonightWith: (cook: string) => `Heute Abend · ${cook}`,
-			cooks: (cook: string) => `${cook} kocht`,
+			mealMeta: (slot: string | null, cook: string | null, tonight: boolean) => {
+				const when = tonight ? 'Heute Abend' : slot;
+				const who = cook ? (tonight ? cook : `${cook} kocht`) : null;
+				return [when, who].filter(Boolean).join(' · ') || null;
+			},
 			addMeal: 'Essen eintragen',
 			addMealOn: (weekday: string, day: string) => `Essen für ${weekday}, ${day}. eintragen`,
-			changeMeal: (weekday: string) => `Essen für ${weekday} ändern`,
+			addAnother: 'Noch eins',
+			addAnotherOn: (weekday: string) => `Noch ein Essen für ${weekday} eintragen`,
+			changeMeal: (meal: string, weekday: string) => `${meal} am ${weekday} ändern`,
 			today: '(heute)'
 		},
 
@@ -568,7 +588,8 @@ export const de: Messages = {
 			eyebrow: 'In den Plan',
 			free: 'Frei',
 			day: (weekday: string, day: string, meal: string) => `${weekday}, ${day}. — ${meal}`,
-			freeQuiet: 'frei'
+			freeQuiet: 'frei',
+			mealList: (names: string[]) => names.join(' · ')
 		},
 
 		plan: {
@@ -580,6 +601,8 @@ export const de: Messages = {
 			mostRecent: (rest: number) => `Deine neuesten — such nach den anderen ${rest}.`,
 			notSaved: 'Etwas kochen, das nicht gespeichert ist',
 			notSavedPlaceholder: 'Pizzaabend',
+			whichMeal: 'Welche Mahlzeit?',
+			replaces: (meal: string) => `Ersetzt ${meal}`,
 			cooking: 'Wer kocht?',
 			optional: 'optional',
 			addIngredients: 'Zutaten auf die Einkaufsliste',
@@ -1146,6 +1169,7 @@ export const de: Messages = {
 				'Das Rezept gibt es nicht mehr. Wähl ein anderes oder schreib, was ihr kocht.',
 			mealDay: 'Wähle einen Tag für dieses Essen.',
 			mealChoice: 'Wähl ein Rezept oder schreib, was ihr kocht.',
+			mealGone: 'Dieses Essen steht nicht mehr im Plan.',
 			timerLength: 'Das ist keine Zeitangabe.',
 			timerLimit: (max: number) => `${max} Timer gleichzeitig sind das Maximum.`
 		},

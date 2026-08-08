@@ -133,7 +133,7 @@
 
 	.none {
 		margin: 30px 4px;
-		font-size: 14px;
+		font-size: calc(14px * var(--fs));
 		color: var(--text-4);
 		text-align: center;
 	}
@@ -149,7 +149,7 @@
 		margin: 0 auto;
 		padding: 13px 22px;
 		border-radius: var(--r-input);
-		font-size: 15px;
+		font-size: calc(15px * var(--fs));
 	}
 
 	.sr-only {

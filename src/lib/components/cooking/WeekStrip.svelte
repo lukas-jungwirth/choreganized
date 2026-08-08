@@ -47,7 +47,7 @@
 
 	.weekday {
 		display: block;
-		font-size: 9px;
+		font-size: calc(9px * var(--fs));
 		font-weight: 700;
 		color: var(--text-5);
 	}
@@ -55,7 +55,7 @@
 	.date {
 		display: block;
 		margin-top: 2px;
-		font-size: 14px;
+		font-size: calc(14px * var(--fs));
 		font-weight: 700;
 	}
 

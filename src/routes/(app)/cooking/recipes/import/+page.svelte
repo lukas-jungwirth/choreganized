@@ -267,7 +267,7 @@
 <style>
 	.intro {
 		margin: 0 4px 20px;
-		font-size: 14px;
+		font-size: calc(14px * var(--fs));
 		line-height: 1.5;
 		color: var(--text-4);
 	}
@@ -288,7 +288,7 @@
 		border-radius: var(--r-input);
 		background: var(--card);
 		font-family: inherit;
-		font-size: 14px;
+		font-size: calc(14px * var(--fs));
 		line-height: 1.5;
 		color: var(--ink);
 		resize: vertical;
@@ -304,7 +304,7 @@
 
 	.hint {
 		margin: 12px 2px 0;
-		font-size: 12.5px;
+		font-size: calc(12.5px * var(--fs));
 		line-height: 1.5;
 		color: var(--text-5);
 	}
@@ -319,7 +319,7 @@
 
 	.ai-lead {
 		margin: 0 0 12px;
-		font-size: 13px;
+		font-size: calc(13px * var(--fs));
 		line-height: 1.5;
 		color: var(--text-4);
 	}
@@ -328,7 +328,7 @@
 		display: flex;
 		gap: 20px;
 		margin: 14px 2px 0;
-		font-size: 13px;
+		font-size: calc(13px * var(--fs));
 	}
 
 	.ai-alt a {
@@ -341,7 +341,7 @@
 
 	.ai-hint-line {
 		margin: 20px 4px 0;
-		font-size: 13.5px;
+		font-size: calc(13.5px * var(--fs));
 		line-height: 1.5;
 		color: var(--text-4);
 	}
@@ -361,14 +361,14 @@
 
 	.ai-setup p {
 		margin: 0 0 16px;
-		font-size: 13.5px;
+		font-size: calc(13.5px * var(--fs));
 		line-height: 1.5;
 		color: var(--text-4);
 	}
 
 	.manual {
 		margin: 22px 4px 0;
-		font-size: 13.5px;
+		font-size: calc(13.5px * var(--fs));
 		line-height: 1.5;
 		color: var(--text-4);
 		text-align: center;

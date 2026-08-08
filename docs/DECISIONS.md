@@ -1194,3 +1194,50 @@ that actually adapts there; this wants checking on a real device.
      - **A recipe with no servings gets no control at all.** Half of an unknown is unknown, and
        a stepper that quietly did nothing would be worse than the absence. `servingsFactor`
        answers 1 for that case, so every caller degrades to "as written" on its own.
+
+125. **One type scale token, `--fs`, rather than a bigger stylesheet** (→ `src/app.css`,
+     DESIGN-SYSTEM "Type scale"). The mockups were drawn a shade tighter than a phone propped
+     against a kitchen shelf wants, so every size in the app is now written
+     `font-size: calc(<the mockup's px> * var(--fs))` with `--fs: 1.1`. The design's numbers
+     stay in the source — a 14px row is still a 14 you can find in `design/Hearth.dc.html` —
+     and one line moves all 310 of them together.
+
+     - **Not rem.** Converting to rem would have hidden those numbers behind `0.78125rem` and
+       still needed all 310 edits; the calc keeps the mockup legible and the knob singular.
+     - **Not `zoom` on the shell.** Scaling the whole screen also scales padding, icons and the
+       fixed tab bar's own geometry, and it changes the effective viewport — a bigger _screen_,
+       not bigger _type_, which is not what was asked for.
+     - **The trade is that boxes sized to fit one word have to be checked.** [04]'s weekday
+       column ("WED" in 38px, up from 34) is the one that had to grow; everything else absorbed
+       it, and finding out was a walk through the app rather than a guess.
+     - Anything added later that writes a bare `font-size: 13px` silently opts out of the
+       scale. `grep -rn "font-size" src | grep -v "calc("` is the whole audit.
+
+126. **A day holds four meals — breakfast · lunch · dinner · snack — not an unbounded list**
+     (→ SPEC §2, §4.1, §4.2, DATA-MODEL "meals"). "One dinner per day" was v1's simplification
+     and it stopped being true the first weekend somebody wanted pancakes on the plan. Slots
+     rather than a list because a list of two meals cannot say _which_ is which: the slot is
+     the label, the ordering and the identity in one.
+
+     - **`UNIQUE(householdId, date, slot)`** keeps the write an upsert, exactly as
+       `UNIQUE(householdId, date)` did — planning onto an occupied slot replaces, and two phones
+       racing on Thursday's dinner still cannot both win. The column defaults to `'dinner'`, so
+       migration 0009 is one `ALTER TABLE` and every existing meal keeps its meaning.
+     - **The common day is unchanged.** A day whose only meal is a dinner draws exactly what it
+       drew before: no slot label, no extra affordance, one line. The label appears only when the
+       day says something a lone dinner doesn't, and **Add another** only on days that already
+       hold something. Most households cook one meal a day; the feature must not tax them for it.
+     - **Replacing is announced, not prevented.** Choosing an occupied slot says "Replaces
+       {name}" under the chips. Greying the slot out would make "move the pizza to lunch"
+       impossible without first deleting something.
+     - **Moving a meal is a move.** `planMeal` takes the `mealId` the sheet was opened on and
+       deletes it when the upsert landed elsewhere — same transaction, so a day is never seen
+       holding one meal twice. Removing is by meal id; "Remove meal" means the one you opened.
+     - **Home still shows one meal**, the dinner, falling back to the day's last meal with an
+       eyebrow that names it ("Today's lunch") and counting the rest ("+1 more today"). A card
+       that grew into a list would make Home a second Cooking tab; a card that went blank
+       because lunch isn't dinner would be a worse answer than the truth.
+     - **Four, and these four.** Snack is last in the day's order rather than mid-afternoon:
+       it's the least-used slot and putting it after dinner keeps dinner the anchor the eye
+       lands on. Second helpings of the same slot, or free-text slot names, are not offered —
+       both trade the labelling that makes this readable for flexibility nobody asked for.

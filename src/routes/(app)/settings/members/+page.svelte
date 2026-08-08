@@ -130,14 +130,14 @@
 
 	.title {
 		margin: 0;
-		font-size: 15px;
+		font-size: calc(15px * var(--fs));
 		font-weight: 600;
 		color: var(--text-4);
 	}
 
 	.detail {
 		margin: 1px 0 0;
-		font-size: 12.5px;
+		font-size: calc(12.5px * var(--fs));
 		color: var(--text-disabled);
 		/* The code is the point of this row — keep it readable at 390px. */
 		letter-spacing: 0.02em;
@@ -146,7 +146,7 @@
 	.link {
 		flex: none;
 		padding: 6px 2px;
-		font-size: 12.5px;
+		font-size: calc(12.5px * var(--fs));
 		font-weight: 700;
 		color: var(--sage);
 	}
@@ -162,14 +162,14 @@
 
 	.error {
 		margin: 0 4px 16px;
-		font-size: 13px;
+		font-size: calc(13px * var(--fs));
 		color: var(--danger-deep);
 	}
 
 	.help {
 		margin: 16px 0 0;
 		padding: 0 6px;
-		font-size: 12.5px;
+		font-size: calc(12.5px * var(--fs));
 		line-height: 1.5;
 		color: var(--text-5);
 	}

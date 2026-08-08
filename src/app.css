@@ -200,6 +200,25 @@
 	/* ── Typography ───────────────────────────────────────────── */
 	--font-display: 'Fraunces Variable', serif; /* headings, numbers, wordmark */
 	--font-body: 'Figtree Variable', system-ui, sans-serif;
+	/*
+		The one knob the whole type scale hangs from. Every `font-size` in the app
+		is written `calc(<the mockup's px> * var(--fs))`, so the design's numbers
+		stay legible in the source — [04]'s 14px row is still a 14 you can find in
+		`design/Hearth.dc.html` — while one value here moves all 310 of them
+		together (→ DECISIONS #125).
+
+		1.1 is the "read it at arm's length, on the counter, while cooking" pass
+		over the mockups, which were drawn a shade tighter than a kitchen wants:
+		14px → 15.4, 12.5 → 13.75, the 11px micro-labels → 12.1. Relative units
+		follow for free (unitless line-heights, `em` letter-spacing); paddings and
+		icon sizes do not, which is deliberate — the type grows inside the layout
+		rather than zooming the whole screen. The flip side is that a box sized to
+		fit one word has to be checked: [04]'s weekday column is the one that had
+		to grow with it.
+
+		Unitless on purpose: a length here couldn't multiply a px value.
+	*/
+	--fs: 1.1;
 
 	/* ── Radii ────────────────────────────────────────────────── */
 	--r-input: 14px;
@@ -286,6 +305,9 @@ html {
 body {
 	margin: 0;
 	font-family: var(--font-body);
+	/* The browser's own 16px, put through the scale, so the handful of elements
+	   that never name a size grow with everything that does. */
+	font-size: calc(16px * var(--fs));
 	color: var(--ink);
 	-webkit-font-smoothing: antialiased;
 	-webkit-tap-highlight-color: transparent;

@@ -164,14 +164,14 @@
 
 	.title {
 		display: block;
-		font-size: 15px;
+		font-size: calc(15px * var(--fs));
 		font-weight: 700;
 	}
 
 	.detail {
 		display: block;
 		margin-top: 3px;
-		font-size: 12.5px;
+		font-size: calc(12.5px * var(--fs));
 		line-height: 1.4;
 		color: var(--text-4);
 	}

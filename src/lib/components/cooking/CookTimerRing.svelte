@@ -142,7 +142,7 @@
 	.remaining {
 		margin: 0;
 		font-family: var(--font-display);
-		font-size: 52px;
+		font-size: calc(52px * var(--fs));
 		font-weight: 600;
 		letter-spacing: 0.01em;
 		line-height: 1;
@@ -158,7 +158,7 @@
 
 	.label {
 		margin: 4px 0 0;
-		font-size: 12.5px;
+		font-size: calc(12.5px * var(--fs));
 		color: var(--cook-muted);
 		overflow-wrap: anywhere;
 	}
@@ -176,7 +176,7 @@
 		padding: 12px 20px;
 		border-radius: var(--r-input);
 		background: var(--cook-surface);
-		font-size: 15px;
+		font-size: calc(15px * var(--fs));
 		font-weight: 600;
 		color: var(--cook-text);
 	}
@@ -187,7 +187,7 @@
 
 	.error {
 		margin: 16px 0 0;
-		font-size: 13px;
+		font-size: calc(13px * var(--fs));
 		line-height: 1.45;
 		text-align: center;
 		color: var(--cook-amber);

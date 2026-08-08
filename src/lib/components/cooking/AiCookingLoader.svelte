@@ -103,7 +103,7 @@
 
 	.msg {
 		margin: 0;
-		font-size: 14px;
+		font-size: calc(14px * var(--fs));
 		font-weight: 600;
 		color: var(--text-4);
 		text-align: center;

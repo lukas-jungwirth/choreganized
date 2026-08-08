@@ -92,7 +92,7 @@
 	}
 
 	.wordmark {
-		font-size: 28px;
+		font-size: calc(28px * var(--fs));
 		letter-spacing: -0.01em;
 	}
 
@@ -112,7 +112,7 @@
 	}
 
 	.tagline .label {
-		font-size: 10px;
+		font-size: calc(10px * var(--fs));
 		font-weight: 700;
 		letter-spacing: 0.22em;
 		text-transform: uppercase;
@@ -141,7 +141,7 @@
 		border-radius: var(--r-button);
 		background: var(--card);
 		box-shadow: var(--shadow-card);
-		font-size: 16px;
+		font-size: calc(16px * var(--fs));
 		font-weight: 700;
 		color: var(--ink);
 		transition: transform 120ms ease-out;
@@ -162,14 +162,14 @@
 		border: 1px solid var(--danger-border);
 		border-radius: var(--r-input);
 		background: var(--danger-tint);
-		font-size: 13.5px;
+		font-size: calc(13.5px * var(--fs));
 		color: var(--danger-deep);
 	}
 
 	.footnote {
 		margin: 20px 0 0;
 		text-align: center;
-		font-size: 13.5px;
+		font-size: calc(13.5px * var(--fs));
 		line-height: 1.5;
 		color: var(--text-4);
 	}
