@@ -36,8 +36,11 @@
 		STEP_TEXT_MAX,
 		uploadUrl,
 		type RecipeFormField,
-		type RecipePrefill
+		type RecipePrefill,
+		type StepChoice,
+		type StepUseDraft
 	} from '$lib/utils/recipes';
+	import { highlightStep } from '$lib/utils/step-highlight';
 	import Camera from '@lucide/svelte/icons/camera';
 	import ChevronDown from '@lucide/svelte/icons/chevron-down';
 	import ChevronUp from '@lucide/svelte/icons/chevron-up';
@@ -46,6 +49,7 @@
 	import { untrack } from 'svelte';
 	import IngredientSheet from './IngredientSheet.svelte';
 	import RecipeImage from './RecipeImage.svelte';
+	import StepIngredientsSheet from './StepIngredientsSheet.svelte';
 
 	type Props = {
 		/** The recipe being edited; null when creating or importing. */
@@ -80,10 +84,27 @@
 
 	/** A row keeps its own key so reordering moves the DOM node, not the text. */
 	type Row = { key: string; text: string };
+	/**
+	 * A step also carries what it uses (→ SPEC §4.4): null while it reads its own
+	 * text, a list — possibly empty — once someone has said. Pins name ingredient
+	 * *rows*, so they survive a reorder and go away with a removal.
+	 */
+	type StepRow = Row & { uses: StepUseDraft[] | null };
 
 	let nextKey = 0;
 	/** A counter rather than randomness: the server and the browser agree on it. */
 	const row = (text = ''): Row => ({ key: `r${nextKey++}`, text });
+	const stepRow = (text = '', uses: StepUseDraft[] | null = null): StepRow => ({
+		...row(text),
+		uses
+	});
+
+	/**
+	 * Which row each *stored* ingredient became, filled while the rows below are
+	 * seeded — the one moment a saved step's pins (which name ids) can be
+	 * translated into the keys this form works in.
+	 */
+	const rowForIngredientId = new Map<string, string>();
 
 	// Seeded from the import draft when there is one, else from the recipe being
 	// edited, else empty. An imported ingredient stays the *raw line* the site
@@ -96,16 +117,42 @@
 	let servings = $state(untrack(() => numberField(prefill ? prefill.servings : recipe?.servings)));
 	let ingredients = $state<Row[]>(
 		untrack(() => {
-			const lines = prefill
-				? prefill.ingredientLines
-				: recipe?.ingredients.map((ingredient) => m.units.ingredient(ingredient));
-			return lines?.length ? lines.map((line) => row(line)) : [row()];
+			if (prefill) {
+				return prefill.ingredientLines.length
+					? prefill.ingredientLines.map((line) => row(line))
+					: [row()];
+			}
+
+			if (!recipe?.ingredients.length) return [row()];
+
+			return recipe.ingredients.map((ingredient) => {
+				const created = row(m.units.ingredient(ingredient));
+				rowForIngredientId.set(ingredient.id, created.key);
+				return created;
+			});
 		})
 	);
-	let steps = $state<Row[]>(
+	let steps = $state<StepRow[]>(
 		untrack(() => {
-			const texts = prefill ? prefill.steps : recipe?.steps.map((step) => step.text);
-			return texts?.length ? texts.map((text) => row(text)) : [row()];
+			// An imported draft has text and nothing else, which is exactly what the
+			// matcher is for: its steps arrive reading themselves.
+			if (prefill) {
+				return prefill.steps.length ? prefill.steps.map((text) => stepRow(text)) : [stepRow()];
+			}
+
+			if (!recipe?.steps.length) return [stepRow()];
+
+			return recipe.steps.map((step) =>
+				stepRow(
+					step.text,
+					// A pin whose ingredient is gone (deleted on the other phone between
+					// the save and this load) is dropped rather than shown as a blank.
+					step.uses?.flatMap((use) => {
+						const key = rowForIngredientId.get(use.ingredientId);
+						return key ? [{ ingredient: key, quantity: use.quantity }] : [];
+					}) ?? null
+				)
+			);
 		})
 	);
 
@@ -167,13 +214,20 @@
 
 	/**
 	 * Which row's sheet is up — `null` for none. Keyed rather than indexed, so
-	 * reordering a row while its sheet is open can't retarget it.
+	 * reordering a row while its sheet is open can't retarget it. One per sheet:
+	 * an ingredient's amount, and a step's ingredients.
 	 */
 	let editing = $state<string | null>(null);
+	let pinning = $state<string | null>(null);
 
 	/** Insert after `index`, then put the caret in it — Enter walks down the list. */
-	function add(rows: Row[], kind: 'ingredient' | 'step', index = rows.length - 1): Row[] {
-		const fresh = row();
+	function add<T extends Row>(
+		rows: T[],
+		kind: 'ingredient' | 'step',
+		make: () => T,
+		index = rows.length - 1
+	): T[] {
+		const fresh = make();
 		const next = [...rows.slice(0, index + 1), fresh, ...rows.slice(index + 1)];
 
 		// After the DOM has the new row: focus is the whole point of adding one.
@@ -183,18 +237,91 @@
 	}
 
 	/** Never leave the list empty — an empty list has nothing to type into. */
-	function remove(rows: Row[], index: number): Row[] {
+	function remove<T extends Row>(rows: T[], index: number, make: () => T): T[] {
 		const next = rows.filter((_, at) => at !== index);
-		return next.length ? next : [row()];
+		return next.length ? next : [make()];
 	}
 
-	function move(rows: Row[], index: number, direction: -1 | 1): Row[] {
+	function move<T extends Row>(rows: T[], index: number, direction: -1 | 1): T[] {
 		const to = index + direction;
 		if (to < 0 || to >= rows.length) return rows;
 
 		const next = [...rows];
 		[next[index], next[to]] = [next[to], next[index]];
 		return next;
+	}
+
+	/**
+	 * A removed ingredient takes its pins with it. Not strictly required — the
+	 * save drops a pin whose row is gone either way — but a chip for a line that
+	 * is no longer on screen is a lie while you're still looking at it.
+	 */
+	function unpin(key: string) {
+		for (const step of steps) {
+			if (step.uses) step.uses = step.uses.filter((use) => use.ingredient !== key);
+		}
+	}
+
+	/**
+	 * The ingredient rows as they'd be stored — what the sheet offers and what the
+	 * matcher reads steps against. Blank lines are left out: they aren't
+	 * ingredients yet, and the save drops them.
+	 */
+	const choices = $derived<StepChoice[]>(
+		ingredients.flatMap((item) => {
+			const parsed = item.text.trim() ? parseIngredient(item.text) : null;
+			return parsed ? [{ key: item.key, ...parsed }] : [];
+		})
+	);
+
+	/** Where each row currently sits — the index the pins post as. */
+	const positions = $derived(new Map(ingredients.map((item, at) => [item.key, at])));
+
+	/**
+	 * What a step's text reads as, for a step nobody has pinned. The same
+	 * `highlightStep` cook mode runs, so the chips under the field are the
+	 * underlines you'll get — and the seed the sheet opens on.
+	 */
+	function suggest(text: string): StepUseDraft[] {
+		return highlightStep(text, choices).used.map((choice) => ({
+			ingredient: choice.key,
+			quantity: null
+		}));
+	}
+
+	/** The chips under one step: its pins, or its reading, as name + amount. */
+	function chips(step: StepRow): { key: string; name: string; amount: string }[] {
+		return (step.uses ?? suggest(step.text)).flatMap((use) => {
+			const choice = choices.find((item) => item.key === use.ingredient);
+			if (!choice) return [];
+
+			return [
+				{
+					key: choice.key,
+					name: choice.name,
+					// Only a share worth saying: a pin that takes the whole row says
+					// nothing, because the ingredient list already does.
+					amount: use.quantity === null ? '' : m.units.amount(use.quantity, choice.unit)
+				}
+			];
+		});
+	}
+
+	/**
+	 * One step's pins on the wire: row keys become the indices the save maps back
+	 * to ingredients, and an empty string means "read the text" (→
+	 * `readRecipeForm`). A pin whose row was deleted just after the sheet closed
+	 * is dropped here rather than posted as a dangling index.
+	 */
+	function postedUses(step: StepRow): string {
+		if (!step.uses) return '';
+
+		return JSON.stringify(
+			step.uses.flatMap((use) => {
+				const at = positions.get(use.ingredient);
+				return at === undefined ? [] : [{ ingredient: at, quantity: use.quantity }];
+			})
+		);
 	}
 
 	/** Textareas grow with their step instead of scrolling inside two lines. */
@@ -328,7 +455,7 @@
 						// walking to the next ingredient is what's meant here.
 						event.preventDefault();
 						if (ingredients.length < INGREDIENTS_MAX) {
-							ingredients = add(ingredients, 'ingredient', index);
+							ingredients = add(ingredients, 'ingredient', () => row(), index);
 						}
 					}}
 				/>
@@ -353,11 +480,16 @@
 					</button>
 				{/if}
 				{@render controls(index, ingredients.length, 'ingredient', (direction) => {
-					// A row removed under an open sheet would strand `editing`.
-					if (!direction && ingredients[index].key === editing) editing = null;
-					ingredients = direction
-						? move(ingredients, index, direction)
-						: remove(ingredients, index);
+					if (direction) {
+						ingredients = move(ingredients, index, direction);
+						return;
+					}
+
+					// A row removed under an open sheet would strand `editing`, and its
+					// chips would outlive it on every step that named it.
+					if (ingredients[index].key === editing) editing = null;
+					unpin(ingredients[index].key);
+					ingredients = remove(ingredients, index, () => row());
 				})}
 			</li>
 		{/each}
@@ -367,7 +499,7 @@
 		<button
 			type="button"
 			class="add"
-			onclick={() => (ingredients = add(ingredients, 'ingredient'))}
+			onclick={() => (ingredients = add(ingredients, 'ingredient', () => row()))}
 		>
 			<Plus size={16} strokeWidth={2.2} />{m.cooking.form.addIngredient}
 		</button>
@@ -382,20 +514,63 @@
 	<h2 class="label">{m.cooking.form.steps}</h2>
 	<ol class="steps">
 		{#each steps as step, index (step.key)}
+			{@const uses = chips(step)}
 			<li class="step">
 				<span class="number" aria-hidden="true">{index + 1}</span>
-				<textarea
-					id={fieldId('step', step.key)}
-					name="step"
-					bind:value={step.text}
-					use:autogrow
-					rows="2"
-					placeholder={m.cooking.form.stepPlaceholder}
-					aria-label={m.cooking.form.stepLabel(index + 1)}
-					maxlength={STEP_TEXT_MAX}></textarea>
+				<div class="field">
+					<textarea
+						id={fieldId('step', step.key)}
+						name="step"
+						bind:value={step.text}
+						use:autogrow
+						rows="2"
+						placeholder={m.cooking.form.stepPlaceholder}
+						aria-label={m.cooking.form.stepLabel(index + 1)}
+						maxlength={STEP_TEXT_MAX}></textarea>
+
+					<!-- What cook mode will show while you're on this step. Read out of
+						 the text until it's pinned (→ SPEC §4.4, DECISIONS #127), which
+						 is what the "auto" marker says — and why the whole row is one
+						 button rather than a chip apiece: the sheet does the editing, and
+						 a wet thumb wants one target, not six. -->
+					<button
+						type="button"
+						class="uses"
+						class:pinned={step.uses !== null}
+						aria-label={m.cooking.form.usesLabel(index + 1)}
+						onclick={() => (pinning = step.key)}
+					>
+						{#if uses.length}
+							{#each uses as use (use.key)}
+								<span class="chip">
+									{use.name}{#if use.amount}<b>{use.amount}</b>{/if}
+								</span>
+							{/each}
+						{:else}
+							<span class="chip empty">
+								{step.uses ? m.cooking.form.usesNothing : m.cooking.form.usesNone}
+							</span>
+						{/if}
+						<!-- Only where there is a reading to explain: on an empty step it
+							 would be labelling the invitation. -->
+						{#if step.uses === null && uses.length}
+							<span class="auto">{m.cooking.form.usesAuto}</span>
+						{/if}
+					</button>
+
+					<!-- One per step, always — `readRecipeForm` lines the two lists up by
+						 position, so a step that reads its own text still has to post. -->
+					<input type="hidden" name="stepUses" value={postedUses(step)} />
+				</div>
 				<span class="step-controls">
 					{@render controls(index, steps.length, 'step', (direction) => {
-						steps = direction ? move(steps, index, direction) : remove(steps, index);
+						if (direction) {
+							steps = move(steps, index, direction);
+							return;
+						}
+
+						if (steps[index].key === pinning) pinning = null;
+						steps = remove(steps, index, () => stepRow());
 					})}
 				</span>
 			</li>
@@ -403,7 +578,7 @@
 	</ol>
 
 	{#if steps.length < STEPS_MAX}
-		<button type="button" class="add" onclick={() => (steps = add(steps, 'step'))}>
+		<button type="button" class="add" onclick={() => (steps = add(steps, 'step', () => stepRow()))}>
 			<Plus size={16} strokeWidth={2.2} />{m.cooking.form.addStep}
 		</button>
 	{/if}
@@ -426,6 +601,21 @@
 			index={at + 1}
 			onsave={(line) => (ingredients[at].text = line)}
 			onclose={() => (editing = null)}
+		/>
+	{/if}
+{/if}
+
+{#if pinning}
+	{@const at = steps.findIndex((step) => step.key === pinning)}
+	{#if at >= 0}
+		<StepIngredientsSheet
+			index={at + 1}
+			ingredients={choices}
+			uses={steps[at].uses}
+			suggested={suggest(steps[at].text)}
+			onsave={(uses) => (steps[at].uses = uses)}
+			onauto={() => (steps[at].uses = null)}
+			onclose={() => (pinning = null)}
 		/>
 	{/if}
 {/if}
@@ -751,6 +941,15 @@
 		margin-bottom: 10px;
 	}
 
+	/* The step's text and what it uses are one field with two parts, so the
+	   controls beside them stay a column against the pair. */
+	.field {
+		display: flex;
+		flex-direction: column;
+		flex: 1;
+		min-width: 0;
+	}
+
 	.number {
 		display: flex;
 		align-items: center;
@@ -767,8 +966,6 @@
 	}
 
 	textarea {
-		flex: 1;
-		min-width: 0;
 		/* Grown by `autogrow`; this is the floor, not the ceiling — and it's the
 		   height of the three controls beside it, so a one-line step doesn't
 		   leave them dangling below the field. */
@@ -789,6 +986,59 @@
 
 	textarea::placeholder {
 		color: var(--text-disabled);
+	}
+
+	/* Under the step, indented to its text: the same left edge, so the chips read
+	   as belonging to the sentence above them rather than to the list. */
+	.uses {
+		display: flex;
+		align-items: center;
+		flex-wrap: wrap;
+		gap: 6px;
+		margin-top: 6px;
+		padding: 4px 6px 2px;
+		text-align: left;
+	}
+
+	.chip {
+		display: inline-flex;
+		align-items: baseline;
+		gap: 5px;
+		padding: 4px 10px;
+		border-radius: var(--r-chip);
+		background: var(--sunken);
+		font-size: calc(12px * var(--fs));
+		font-weight: 600;
+		color: var(--text-4);
+		overflow-wrap: anywhere;
+	}
+
+	/* Pinned by hand — the same sage the app uses everywhere for "chosen". */
+	.pinned .chip {
+		background: var(--sage-tint);
+		color: var(--sage-deep);
+	}
+
+	.chip b {
+		font-weight: 700;
+		font-variant-numeric: tabular-nums;
+	}
+
+	.chip.empty {
+		background: none;
+		padding-left: 0;
+		font-weight: 500;
+		color: var(--text-disabled);
+	}
+
+	/* Says where the chips came from, quietly. It disappears the moment the list
+	   is the cook's own. */
+	.auto {
+		font-size: calc(10px * var(--fs));
+		font-weight: 700;
+		letter-spacing: 0.1em;
+		text-transform: uppercase;
+		color: var(--text-5);
 	}
 
 	.step-controls {

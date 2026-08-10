@@ -18,7 +18,7 @@
  * src/lib/server/db/index.ts. Run with Node's native TypeScript support.
  */
 import Database from 'better-sqlite3';
-import { asc, eq } from 'drizzle-orm';
+import { asc, eq, inArray } from 'drizzle-orm';
 import { drizzle } from 'drizzle-orm/better-sqlite3';
 import { migrate } from 'drizzle-orm/better-sqlite3/migrator';
 import { mkdirSync } from 'node:fs';
@@ -28,6 +28,7 @@ import {
 	meals,
 	members,
 	recipeIngredients,
+	recipeStepIngredients,
 	recipeSteps,
 	recipes,
 	shoppingItems,
@@ -450,12 +451,16 @@ const seeded = db.transaction((tx) => {
 				id: sid('step', 'pasta-2'),
 				recipeId: pastaId,
 				text: 'Sauté the mushrooms in butter until golden, 8 minutes, season well.',
+				// Its ingredients are pinned below rather than read out of the text,
+				// so the demo data holds one of each kind of step (→ SPEC §4.4).
+				ingredientsSet: true,
 				sortOrder: 1
 			},
 			{
 				id: sid('step', 'pasta-3'),
 				recipeId: pastaId,
 				text: 'Add the cream, simmer for 3 min, then toss with the pasta and parmesan.',
+				ingredientsSet: true,
 				sortOrder: 2
 			},
 			{
@@ -478,6 +483,31 @@ const seeded = db.transaction((tx) => {
 			}
 		])
 		.onConflictDoNothing()
+		.run();
+
+	// The butter is the point: 20 g of the 30 goes in with the mushrooms and the
+	// last 10 finishes the sauce, which is a thing no amount of reading the step
+	// text can know (→ SPEC §4.4). Cooking for six writes both out as 30 and 15.
+	tx.insert(recipeStepIngredients)
+		.values([
+			{ id: sid('uses', 'pasta-2:mushrooms'), stepId: sid('step', 'pasta-2'), ingredientId: sid('ing', 'pasta-2'), quantity: null, sortOrder: 0 }, // prettier-ignore
+			{ id: sid('uses', 'pasta-2:butter'), stepId: sid('step', 'pasta-2'), ingredientId: sid('ing', 'pasta-4'), quantity: 20, sortOrder: 1 }, // prettier-ignore
+			{ id: sid('uses', 'pasta-3:cream'), stepId: sid('step', 'pasta-3'), ingredientId: sid('ing', 'pasta-3'), quantity: null, sortOrder: 0 }, // prettier-ignore
+			{ id: sid('uses', 'pasta-3:butter'), stepId: sid('step', 'pasta-3'), ingredientId: sid('ing', 'pasta-4'), quantity: 10, sortOrder: 1 }, // prettier-ignore
+			{ id: sid('uses', 'pasta-3:pasta'), stepId: sid('step', 'pasta-3'), ingredientId: sid('ing', 'pasta-1'), quantity: null, sortOrder: 2 }, // prettier-ignore
+			{ id: sid('uses', 'pasta-3:parmesan'), stepId: sid('step', 'pasta-3'), ingredientId: sid('ing', 'pasta-5'), quantity: null, sortOrder: 3 } // prettier-ignore
+		])
+		.onConflictDoNothing()
+		.run();
+
+	// The flag the pins above are only read through. Written as an update rather
+	// than left to the insert, because a database seeded before they existed
+	// already has those two steps and `onConflictDoNothing` would leave them
+	// reading their own text with a list sitting unused beside them. Only ever
+	// touches rows this script wrote.
+	tx.update(recipeSteps)
+		.set({ ingredientsSet: true })
+		.where(inArray(recipeSteps.id, [sid('step', 'pasta-2'), sid('step', 'pasta-3')]))
 		.run();
 
 	// Keyed by date and slot, not by "today": re-running next week plans that

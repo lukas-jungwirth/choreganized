@@ -48,7 +48,9 @@ Agents: when you make a judgment call that isn't in SPEC/ARCHITECTURE, **append 
 14. **Cook-mode timers & ingredient highlights are parsed, not authored** — durations via regex
     from step text ("8 min", "8:00", "8–10 minutes" → first value), ingredient underlines via
     case-insensitive name matching. Recipe form stays plain text ([3c] has no timer fields).
-    Manual "Set timer" stepper covers unparsed steps.
+    Manual "Set timer" stepper covers unparsed steps. _(Half-superseded by #127: the reading is
+    still what a step does by default, but it can now be overruled per step. Timers are
+    unchanged.)_
 15. **Timer push precision**: in-process `setTimeout` at creation (second-precision) + minute
     cron as restart-safe catch-up; the row in `cook_timers` is the source of truth.
 16. **One meal slot per day** (dinner) — `UNIQUE(householdId, date)` per the design's week
@@ -1241,3 +1243,45 @@ that actually adapts there; this wants checking on a real device.
        it's the least-used slot and putting it after dinner keeps dinner the anchor the eye
        lands on. Second helpings of the same slot, or free-text slot names, are not offered —
        both trade the labelling that makes this readable for flexibility nobody asked for.
+
+127. **A step's ingredients are read out of its text until somebody says otherwise** (→ SPEC
+     §4.4, §4.6, DATA-MODEL "recipe_step_ingredients"). #14 made cook mode's "This step uses…"
+     a rendering of the step text, on the grounds that asking would be one more thing to fill
+     in. That held right up against real recipes: "1 small onion" is referred to as "the onion",
+     an imported line carries "(festkochend)" in its name, a sauce mentions water that is not an
+     ingredient, and olive oil goes in twice in different amounts — none of which a reading of
+     the words can get right. So the reading stays as the **default**, and the form can overrule
+     it per step.
+
+     - **The flag, not the count, decides.** `recipe_steps.ingredients_set` says whether the
+       list in `recipe_step_ingredients` is the answer. Without it an empty list is
+       indistinguishable from a step nobody has looked at, and "this step uses nothing" — the
+       fix for a false positive — could not be said at all.
+     - **The sheet opens on the guess.** Ticking starts from what the matcher found, so the
+       interaction is adjusting a reading rather than filling in a form, and a step that reads
+       correctly costs nothing. **Read the step text instead** hands it back.
+     - **An amount is a share of the row, in the row's unit**, and empty means all of it. Not a
+       free amount: a step that says "2 tsp" of an ingredient the recipe never measured has
+       nothing to be a share of, and two independent numbers would drift the moment either was
+       edited. Because the share is written in recipe-as-written terms it scales with `?serves=`
+       by the same `scaleQuantity` the list uses (#124) — 1 tsp and 2 tsp for two people are
+       2 tsp and 4 tsp for four, which is the whole reason it isn't stored as typed text.
+     - **The wire format is indices, not ids.** Every save replaces the ingredient and step rows
+       wholesale (the recipe has always been edited as a whole), so the ids the form opened on
+       are gone by the time the pins are written. The form posts one hidden `stepUses` field per
+       step — `""` for "read the text", `[]` for "nothing", else `[{ingredient, quantity}]` over
+       the posted line numbers — and `writeChildren` maps those through the same blank-dropping
+       pass that writes the ingredients. In the browser the pins name **row keys**, the only
+       identifier that survives reordering and removal.
+     - **The matcher got better rather than being retired**, because most steps still never get
+       pinned — imported recipes above all. It now also answers to a name with its note trimmed
+       ("Olive oil (extra virgin)"), to its own tail ("small red onion" → "onion", "Prise
+       Muskat" → "Muskat"), and to either number in both languages ("Zwiebeln" ⇄ "Zwiebel",
+       "berries" ⇄ "berry"). **Ambiguity is silence**: a shortened name is only offered while it
+       names one thing, so "olive oil" beside "sunflower oil" produces no "oil" at all, and
+       "red pepper" beside plain "pepper" leaves the word to the ingredient called that. Two
+       rows that _are_ the same thing — imports list "Prise Salz" once per section — don't argue
+       over their own word.
+     - **One tap target per step, not one per chip.** The chips are a button that opens the
+       sheet; editing happens there. A wet thumb wants one target, and per-chip controls would
+       put six of them under every step.

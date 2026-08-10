@@ -15,6 +15,7 @@ import {
 	composeIngredientLine,
 	formatIngredient,
 	parseIngredient,
+	parseQuantity,
 	RECIPE_UNITS,
 	scaleIngredients,
 	servingsFactor
@@ -108,6 +109,32 @@ describe('composeIngredientLine', () => {
 			unit: null,
 			name: 'up'
 		});
+	});
+});
+
+describe('parseQuantity', () => {
+	it('takes every spelling a recipe writes an amount in', () => {
+		assert.equal(parseQuantity('400'), 400);
+		assert.equal(parseQuantity('1.5'), 1.5);
+		assert.equal(parseQuantity('1,5'), 1.5);
+		assert.equal(parseQuantity('½'), 0.5);
+		assert.equal(parseQuantity('1½'), 1.5);
+		assert.equal(parseQuantity('1 1/2'), 1.5);
+		assert.equal(parseQuantity(' 3/4 '), 0.75);
+	});
+
+	it('is nothing at all when the field is empty or not a number', () => {
+		assert.equal(parseQuantity(''), null);
+		assert.equal(parseQuantity('   '), null);
+		assert.equal(parseQuantity('two'), null);
+		assert.equal(parseQuantity('0'), null);
+	});
+
+	it('refuses a number with anything after it', () => {
+		// The unit is the ingredient row's, not this field's — "2 tsp" here would
+		// otherwise be silently kept as a bare 2.
+		assert.equal(parseQuantity('2 tsp'), null);
+		assert.equal(parseQuantity('2x'), null);
 	});
 });
 

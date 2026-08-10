@@ -14,7 +14,11 @@
 	type Props = {
 		ingredients: RecipeIngredientRow[];
 		servings: number | null;
-		/** The ones this step names — highlighted, not filtered. */
+		/**
+		 * The ones this step uses — highlighted, not filtered. A row here carries
+		 * the *step's* amount, which is the whole row's unless the recipe says the
+		 * step takes a share of it (→ SPEC §4.4).
+		 */
 		used: RecipeIngredientRow[];
 		onclose: () => void;
 	};
@@ -29,7 +33,7 @@
 		if (!open) onclose();
 	});
 
-	const highlighted = $derived(new Set(used.map((ingredient) => ingredient.id)));
+	const highlighted = $derived(new Map(used.map((ingredient) => [ingredient.id, ingredient])));
 	const title = $derived(
 		servings ? m.cooking.cook.peekTitleServes(servings) : m.cooking.cook.peekTitle
 	);
@@ -41,12 +45,23 @@
 	{:else}
 		<ul class="list">
 			{#each ingredients as ingredient (ingredient.id)}
-				{@const here = highlighted.has(ingredient.id)}
-				{@const amount = m.units.amount(ingredient.quantity, ingredient.unit)}
-				<li class:here>
+				{@const step = highlighted.get(ingredient.id)}
+				{@const amount = m.units.amount((step ?? ingredient).quantity, ingredient.unit)}
+				<!-- "1 tbsp of 3 tbsp": the step's share in amber, what the row holds
+					 behind it, so the answer to "how much of that was it again?" is the
+					 amount for *now* without losing the total. -->
+				{@const total =
+					step && step.quantity !== ingredient.quantity
+						? m.units.amount(ingredient.quantity, ingredient.unit)
+						: ''}
+				<li class:here={step !== undefined}>
 					<span class="dot" aria-hidden="true"></span>
 					<span class="name">{ingredient.name}</span>
-					{#if amount}<span class="amount">{amount}</span>{/if}
+					{#if amount}
+						<span class="amount">
+							{amount}{#if total}<span class="of">{m.cooking.cook.peekShare(total)}</span>{/if}
+						</span>
+					{/if}
 				</li>
 			{/each}
 		</ul>
@@ -124,6 +139,13 @@
 	.here .amount {
 		font-weight: 600;
 		color: var(--cook-amber);
+	}
+
+	/* The row's total, behind the step's share — quiet, and never bold with it. */
+	.of {
+		margin-left: 5px;
+		font-weight: 400;
+		color: var(--cook-muted);
 	}
 
 	.empty {

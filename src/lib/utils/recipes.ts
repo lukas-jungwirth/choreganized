@@ -46,6 +46,42 @@ export function uploadUrl(imagePath: string): string {
 /* ── The recipe form's payload ────────────────────────────────────────────── */
 
 /**
+ * One step as the form posts it (→ SPEC §4.4).
+ *
+ * `uses` is null for a step that reads its own text — the default, and what
+ * every step written before this existed does (→ `$lib/utils/step-highlight`).
+ * A list, **including an empty one**, is the cook's own answer and is stored as
+ * given.
+ *
+ * An ingredient is named by its index in `ingredientLines` rather than by id,
+ * because a save rewrites every child row: the ids the form was opened on no
+ * longer exist by the time the pins are written (→ `services/recipes.ts`).
+ */
+export type StepInput = {
+	text: string;
+	uses: { ingredient: number; quantity: number | null }[] | null;
+};
+
+/**
+ * The same pin while the form still holds it, before anything is posted
+ * (→ `cooking/StepIngredientsSheet`).
+ *
+ * `ingredient` is the *form row's* key rather than an index or an id: rows get
+ * added, reordered and removed while the form is open, and a key is the only one
+ * of the three that survives all of it. The indices `StepInput` wants are worked
+ * out at submit time, from where the rows ended up.
+ */
+export type StepUseDraft = { ingredient: string; quantity: number | null };
+
+/** One ingredient row as the sheet offers it — the form's reading of the line. */
+export type StepChoice = {
+	key: string;
+	name: string;
+	quantity: number | null;
+	unit: string | null;
+};
+
+/**
  * What [3c] posts: lines and text, not columns. Ingredients stay freeform all
  * the way to the service, which parses them (→ `$lib/utils/ingredients`).
  *
@@ -57,7 +93,7 @@ export type RecipeInput = {
 	timeMinutes: number | null;
 	servings: number | null;
 	ingredientLines: string[];
-	steps: string[];
+	steps: StepInput[];
 };
 
 /**
@@ -106,17 +142,55 @@ export function readRecipeForm(
 		return { error: m.errors.recipes.nameTooLong(RECIPE_NAME_MAX), field: 'name' };
 	}
 
+	// `getAll` preserves DOM order, which is the order the rows were dragged into
+	// — so `sortOrder` is simply the index. Each step renders exactly one text
+	// field and one `stepUses`, so the two lists line up position for position.
+	const uses = form.getAll('stepUses').map(String);
+
 	return {
 		input: {
 			name,
 			timeMinutes: readOptionalNumber(form.get('timeMinutes')),
 			servings: readOptionalNumber(form.get('servings')),
-			// `getAll` preserves DOM order, which is the order the rows were
-			// dragged into — so `sortOrder` is simply the index.
 			ingredientLines: form.getAll('ingredient').map(String),
-			steps: form.getAll('step').map(String)
+			steps: form
+				.getAll('step')
+				.map((text, index) => ({ text: String(text), uses: readStepUses(uses[index]) }))
 		}
 	};
+}
+
+/**
+ * A step's pinned ingredients, off the hidden field the form keeps beside it:
+ * `[{"ingredient":0,"quantity":1.5}]`, an empty string for a step that reads its
+ * own text.
+ *
+ * Hand-rolled rather than trusted, because this is a POST body like any other:
+ * anything unreadable becomes "read the text", and any entry that isn't a row
+ * index with an amount is dropped. Clamping the numbers is the service's job,
+ * the way it is for every other field here.
+ */
+function readStepUses(value: string | undefined): StepInput['uses'] {
+	if (!value) return null;
+
+	let parsed: unknown;
+	try {
+		parsed = JSON.parse(value);
+	} catch {
+		return null;
+	}
+
+	if (!Array.isArray(parsed)) return null;
+
+	// A step can't use more ingredients than a recipe can hold, and the service
+	// caps the write anyway; this keeps a pasted-in megabyte from being walked.
+	return parsed.slice(0, INGREDIENTS_MAX).flatMap((entry) => {
+		if (typeof entry !== 'object' || entry === null) return [];
+		const { ingredient, quantity } = entry as Record<string, unknown>;
+		if (typeof ingredient !== 'number' || !Number.isInteger(ingredient) || ingredient < 0)
+			return [];
+		return [{ ingredient, quantity: typeof quantity === 'number' ? quantity : null }];
+	});
 }
 
 /**

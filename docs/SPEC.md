@@ -242,7 +242,25 @@ a danger badge with the current user's overdue count [4e].
   the name, the amount and the units of §3.2 plus tbsp · tsp and "no unit", which writes the row
   back as a line and shows the reading that line will get (→ DECISIONS #100–101). Reorder with
   the arrows (→ DECISIONS #67), remove per row.
-- **Steps**: numbered textareas, add/remove/reorder.
+- **Steps**: numbered textareas, add/remove/reorder. Under each one, **what that step uses** —
+  a row of chips that opens a sheet (→ [DECISIONS #127](DECISIONS.md)):
+  - Until somebody says otherwise the chips are **read out of the step text**, live as you type,
+    by the same matcher cook mode runs, and are marked `auto`. The matching forgives what an
+    ingredient list and a sentence disagree about: the note in a name ("Olive oil (extra
+    virgin)", "Chicken breast, diced"), the descriptors in front of it ("1 small red onion" is
+    "the onion", "Prise Muskat" is "Muskat"), and number in both languages ("Zwiebeln" ⇄
+    "Zwiebel", "berries" ⇄ "berry"). Where a shortened name would name two different
+    ingredients it names neither — a recipe with "olive oil" **and** "sunflower oil" gets no
+    "oil", and one with "red pepper" beside plain "pepper" gives the word to the ingredient
+    actually called that.
+  - The sheet opens **already ticked the way the text was read** — adjusting a guess, not
+    filling in a form — and what leaves it is the step's own list from then on, including an
+    empty one ("this step uses nothing"). **Read the step text instead** hands it back to the
+    matcher.
+  - A ticked ingredient may carry **how much of it goes in here**, in that row's own unit and
+    with the row's total beside it ("of 3 tbsp"). Empty means the whole row. Shares are written
+    in recipe-as-written terms, so **Cooking for {n}** (§4.5) scales them exactly like the
+    ingredient list: 1 tsp and 2 tsp for two people are 2 tsp and 4 tsp for four.
 
 ### 4.5 Recipe view [7a]
 
@@ -272,17 +290,22 @@ a danger badge with the current user's overdue count [4e].
 
 - Full-screen dark UI (`--cook-*` tokens), screen wake-lock while open.
 - Header: recipe name, close ×. Segmented progress bar (one segment per step, done = sage).
-- "STEP {i} OF {n}" in amber; the step text huge (Fraunces ~33px). Ingredient names that appear
-  in the step text are underlined in amber; "This step uses {…}" line beneath lists them.
+- "STEP {i} OF {n}" in amber; the step text huge (Fraunces ~33px). The ingredients the step uses
+  — **the ones pinned to it in the form, else the ones its text names** (§4.4) — are underlined
+  in amber where the text names them, and the "This step uses {…}" line beneath lists them all,
+  including any the text never mentions. A step pinned to nothing shows neither.
 - **Timer chip** — shown when a duration is parsed from the step text ("8 min", "8:00",
   "8–10 minutes" → first value): "Start 8:00 timer". A manual "Set timer" affordance (minute
   stepper) is always available in the header/overflow.
 - **Ingredients chip** → bottom peek sheet listing all ingredients; the current step's are
-  highlighted in amber [7b].
+  highlighted in amber [7b]. One the step takes only a share of shows that share in amber with
+  the row's total behind it — "20 g of 30 g" — so "how much of that was it again?" is answered
+  for _now_ without losing what the recipe holds.
 - **Inherits "cooking for {n}"** from the recipe screen through `?serves=` (§4.5) — the peek
-  sheet, the "This step uses…" line and the timer labels all show the scaled amounts. Cook mode
-  offers no stepper of its own: the count is decided before the hands are wet, and the
-  underlines still land on the same words because only the numbers move.
+  sheet, the "This step uses…" line, a step's own shares of an ingredient (§4.4) and the timer
+  labels all show the scaled amounts. Cook mode offers no stepper of its own: the count is
+  decided before the hands are wet, and the underlines still land on the same words because only
+  the numbers move.
 - Running timer [7h]: big circular countdown (remaining, label "{ingredient/step} · {total}"),
   Pause / **+1:00** / Cancel. **Up to three at once** (→ DECISIONS #102): the step on screen
   keeps the ring, every other running timer shrinks to a compact bar above Prev/Next with its
