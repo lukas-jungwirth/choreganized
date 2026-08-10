@@ -17,7 +17,7 @@
  * another household finds nothing (→ docs/ARCHITECTURE.md "Server patterns").
  */
 import { and, asc, count, desc, eq, inArray, isNotNull, sql } from 'drizzle-orm';
-import { parseIngredient } from '$lib/utils/ingredients';
+import { parseIngredient, RECIPE_QUANTITY_MAX } from '$lib/utils/ingredients';
 import {
 	INGREDIENTS_MAX,
 	INGREDIENT_LINE_MAX,
@@ -26,10 +26,19 @@ import {
 	RECIPE_TIME_MAX,
 	STEPS_MAX,
 	STEP_TEXT_MAX,
-	type RecipeInput
+	type RecipeInput,
+	type StepInput
 } from '$lib/utils/recipes';
+import type { StepUse } from '$lib/utils/step-highlight';
 import { db } from '../db';
-import { meals, members, recipeIngredients, recipeSteps, recipes } from '../db/schema';
+import {
+	meals,
+	members,
+	recipeIngredients,
+	recipeStepIngredients,
+	recipeSteps,
+	recipes
+} from '../db/schema';
 import { copyImage, deleteUpload, readUpload, uploadContentType, uploadExists } from '../uploads';
 
 type Transaction = Parameters<Parameters<typeof db.transaction>[0]>[0];
@@ -54,7 +63,16 @@ export type RecipeIngredientRow = {
 	unit: string | null;
 };
 
-export type RecipeStepRow = { id: string; text: string };
+export type RecipeStepRow = {
+	id: string;
+	text: string;
+	/**
+	 * The ingredients pinned to this step, or null for one that reads its own
+	 * text (→ `$lib/utils/step-highlight`). An empty array is a real answer:
+	 * "this step uses nothing", said by hand.
+	 */
+	uses: StepUse[] | null;
+};
 
 export type RecipeDetail = RecipeSummary & {
 	ingredients: RecipeIngredientRow[];
@@ -257,12 +275,48 @@ function listIngredients(recipeId: string): RecipeIngredientRow[] {
 }
 
 function listSteps(recipeId: string): RecipeStepRow[] {
-	return db
-		.select({ id: recipeSteps.id, text: recipeSteps.text })
+	const steps = db
+		.select({ id: recipeSteps.id, text: recipeSteps.text, set: recipeSteps.ingredientsSet })
 		.from(recipeSteps)
 		.where(eq(recipeSteps.recipeId, recipeId))
 		.orderBy(asc(recipeSteps.sortOrder), asc(recipeSteps.id))
 		.all();
+
+	const pinned = pinsByStep(steps.filter((step) => step.set).map((step) => step.id));
+
+	return steps.map((step) => ({
+		id: step.id,
+		text: step.text,
+		// The flag decides, not the count: a step whose list is empty on purpose
+		// must not fall back to reading its own text (→ DECISIONS #127).
+		uses: step.set ? (pinned.get(step.id) ?? []) : null
+	}));
+}
+
+/** The pins of the steps that have any, in the order they were ticked. */
+function pinsByStep(stepIds: string[]): Map<string, StepUse[]> {
+	const byStep = new Map<string, StepUse[]>();
+	if (!stepIds.length) return byStep;
+
+	const rows = db
+		.select({
+			stepId: recipeStepIngredients.stepId,
+			ingredientId: recipeStepIngredients.ingredientId,
+			quantity: recipeStepIngredients.quantity
+		})
+		.from(recipeStepIngredients)
+		.where(inArray(recipeStepIngredients.stepId, stepIds))
+		.orderBy(asc(recipeStepIngredients.sortOrder), asc(recipeStepIngredients.id))
+		.all();
+
+	for (const row of rows) {
+		const use = { ingredientId: row.ingredientId, quantity: row.quantity };
+		const list = byStep.get(row.stepId);
+		if (list) list.push(use);
+		else byStep.set(row.stepId, [use]);
+	}
+
+	return byStep;
 }
 
 function toSummary(
@@ -388,26 +442,56 @@ export function duplicateRecipe(
 			.returning({ id: recipes.id })
 			.get();
 
+		// The copy's own ids, minted here so the steps can be pinned to *its*
+		// ingredients rather than to the original's.
+		const ingredientIds = new Map<string, string>();
+
 		if (source.ingredients.length) {
 			tx.insert(recipeIngredients)
 				.values(
-					source.ingredients.map((ingredient, sortOrder) => ({
-						recipeId: copy.id,
-						name: ingredient.name,
-						quantity: ingredient.quantity,
-						unit: ingredient.unit,
-						sortOrder
-					}))
+					source.ingredients.map((ingredient, sortOrder) => {
+						const id = crypto.randomUUID();
+						ingredientIds.set(ingredient.id, id);
+						return {
+							id,
+							recipeId: copy.id,
+							name: ingredient.name,
+							quantity: ingredient.quantity,
+							unit: ingredient.unit,
+							sortOrder
+						};
+					})
 				)
 				.run();
 		}
 
 		if (source.steps.length) {
+			const pins: (typeof recipeStepIngredients.$inferInsert)[] = [];
+
 			tx.insert(recipeSteps)
 				.values(
-					source.steps.map((step, sortOrder) => ({ recipeId: copy.id, text: step.text, sortOrder }))
+					source.steps.map((step, sortOrder) => {
+						const id = crypto.randomUUID();
+						let pinned = 0;
+
+						step.uses?.forEach((use) => {
+							const ingredientId = ingredientIds.get(use.ingredientId);
+							if (!ingredientId) return;
+							pins.push({ stepId: id, ingredientId, quantity: use.quantity, sortOrder: pinned++ });
+						});
+
+						return {
+							id,
+							recipeId: copy.id,
+							text: step.text,
+							ingredientsSet: step.uses !== null,
+							sortOrder
+						};
+					})
 				)
 				.run();
+
+			if (pins.length) tx.insert(recipeStepIngredients).values(pins).run();
 		}
 
 		return copy.id;
@@ -474,7 +558,12 @@ function normalizeCount(value: number | null, max: number): number | null {
 	return rounded > 0 ? rounded : null;
 }
 
-/** The replace half of every write: out with the old rows, in with the posted ones. */
+/**
+ * The replace half of every write: out with the old rows, in with the posted
+ * ones. The pins go with their step (ON DELETE CASCADE) and are rewritten here
+ * too, which is why the ids are minted in this function rather than left to the
+ * column default — a pin has to name the row it was saved beside.
+ */
 function writeChildren(tx: Transaction, recipeId: string, input: RecipeInput): void {
 	tx.delete(recipeIngredients).where(eq(recipeIngredients.recipeId, recipeId)).run();
 	tx.delete(recipeSteps).where(eq(recipeSteps.recipeId, recipeId)).run();
@@ -483,24 +572,91 @@ function writeChildren(tx: Transaction, recipeId: string, input: RecipeInput): v
 	// the raw lines first would let five empty rows eat five real ingredients.
 	// The name is capped here too — the form's `maxlength` is a courtesy, and a
 	// hand-rolled POST is not obliged to honour it.
-	const ingredients = input.ingredientLines
-		.map(parseIngredient)
-		.filter((parsed) => parsed !== null)
-		.slice(0, INGREDIENTS_MAX)
-		.map((parsed, sortOrder) => ({
+	//
+	// `kept` is the posted row number of every line that survived → the id it was
+	// written under, which is how a step's pins find their ingredient again after
+	// blank lines and the cap have moved everything up.
+	const kept = new Map<number, string>();
+	const ingredients: (typeof recipeIngredients.$inferInsert)[] = [];
+
+	input.ingredientLines.forEach((line, posted) => {
+		if (ingredients.length >= INGREDIENTS_MAX) return;
+
+		const parsed = parseIngredient(line);
+		if (!parsed) return;
+
+		const id = crypto.randomUUID();
+		kept.set(posted, id);
+		ingredients.push({
+			id,
 			recipeId,
 			...parsed,
 			name: parsed.name.slice(0, INGREDIENT_LINE_MAX),
-			sortOrder
-		}));
+			sortOrder: ingredients.length
+		});
+	});
 
 	if (ingredients.length) tx.insert(recipeIngredients).values(ingredients).run();
 
-	const steps = input.steps
-		.map((text) => text.trim().slice(0, STEP_TEXT_MAX))
-		.filter(Boolean)
-		.slice(0, STEPS_MAX)
-		.map((text, sortOrder) => ({ recipeId, text, sortOrder }));
+	const steps: (typeof recipeSteps.$inferInsert)[] = [];
+	const pins: (typeof recipeStepIngredients.$inferInsert)[] = [];
+
+	for (const step of input.steps) {
+		if (steps.length >= STEPS_MAX) break;
+
+		const text = step.text.trim().slice(0, STEP_TEXT_MAX);
+		if (!text) continue;
+
+		const id = crypto.randomUUID();
+		steps.push({ id, recipeId, text, ingredientsSet: step.uses !== null, sortOrder: steps.length });
+		if (step.uses) pins.push(...pinRows(id, step.uses, kept));
+	}
 
 	if (steps.length) tx.insert(recipeSteps).values(steps).run();
+	if (pins.length) tx.insert(recipeStepIngredients).values(pins).run();
+}
+
+/**
+ * One step's pins as rows. A pin whose ingredient was blanked out in the same
+ * save points at nothing and is dropped — the step keeps the rest of its list
+ * rather than falling back to reading its text, because the rest is still what
+ * the cook said.
+ */
+function pinRows(
+	stepId: string,
+	uses: NonNullable<StepInput['uses']>,
+	kept: Map<number, string>
+): (typeof recipeStepIngredients.$inferInsert)[] {
+	const rows: (typeof recipeStepIngredients.$inferInsert)[] = [];
+	const seen = new Set<string>();
+
+	for (const use of uses) {
+		if (rows.length >= INGREDIENTS_MAX) break;
+
+		const ingredientId = kept.get(use.ingredient);
+		// The unique index would refuse a repeat anyway; this makes it a no-op
+		// rather than a lost save.
+		if (!ingredientId || seen.has(ingredientId)) continue;
+
+		seen.add(ingredientId);
+		rows.push({
+			stepId,
+			ingredientId,
+			quantity: normalizeShare(use.quantity),
+			sortOrder: rows.length
+		});
+	}
+
+	return rows;
+}
+
+/**
+ * A step's share of an ingredient: a positive amount in that ingredient's unit,
+ * or nothing at all — which reads as "all of it" and is what a plain tick
+ * stores. Rounded to two decimals like every other amount, so a third of a
+ * teaspoon doesn't arrive as 0.3333333333333333.
+ */
+function normalizeShare(quantity: number | null): number | null {
+	if (quantity === null || !Number.isFinite(quantity) || quantity <= 0) return null;
+	return Math.round(Math.min(quantity, RECIPE_QUANTITY_MAX) * 100) / 100;
 }

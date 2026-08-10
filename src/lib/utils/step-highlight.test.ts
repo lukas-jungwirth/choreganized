@@ -3,7 +3,7 @@
  */
 import assert from 'node:assert/strict';
 import { describe, it } from 'node:test';
-import { highlightStep } from './step-highlight.ts';
+import { highlightStep, readStep, scaleStepUses } from './step-highlight.ts';
 
 /** Shorthand: the step text rebuilt with the underlined runs marked with `«»`. */
 function marked(text: string, names: string[]): string {
@@ -100,5 +100,143 @@ describe('highlightStep', () => {
 		const { segments, used } = highlightStep('Boil the water.', []);
 		assert.deepEqual(segments, [{ text: 'Boil the water.', ingredient: null }]);
 		assert.deepEqual(used, []);
+	});
+
+	it('lets a written-out ingredient go by its head word', () => {
+		assert.equal(marked('Dice the onion', ['small red onion']), 'Dice the «onion»');
+		assert.equal(marked('Stir in the paste', ['Curry paste']), 'Stir in the «paste»');
+		// The whole name still wins where the step writes it out.
+		assert.equal(marked('Fry the curry paste', ['Curry paste']), 'Fry the «curry paste»');
+		// The head word is the last one: dropping *trailing* words would make
+		// "chicken stock" answer to "chicken", which is usually another thing.
+		assert.equal(marked('Brown the chicken', ['Chicken stock']), 'Brown the chicken');
+	});
+
+	it('drops the note a name carries', () => {
+		assert.equal(
+			marked('Warm the olive oil', ['Olive oil (extra virgin)']),
+			'Warm the «olive oil»'
+		);
+		assert.equal(
+			marked('Add the chicken breast', ['Chicken breast, diced']),
+			'Add the «chicken breast»'
+		);
+	});
+
+	it('says nothing rather than guessing between two of a kind', () => {
+		// Both shorten to "oil", so neither gets the word — but each still
+		// answers to itself.
+		assert.equal(
+			marked('Warm the oil, then the olive oil', ['Olive oil', 'Sunflower oil']),
+			'Warm the oil, then the «olive oil»'
+		);
+	});
+
+	it('does not let two rows of the same thing cancel each other out', () => {
+		// Imported recipes list "Prise Salz" once per section; that is still salt.
+		assert.equal(
+			marked('Mit Salz abschmecken', ['Prise Salz', 'Prise Salz']),
+			'Mit «Salz» abschmecken'
+		);
+	});
+
+	it('gives a word to the ingredient actually called that', () => {
+		assert.equal(marked('Season with pepper', ['Red pepper', 'Pepper']), 'Season with «pepper»');
+	});
+
+	it('forgives German plurals too', () => {
+		assert.equal(marked('Die Zwiebel anbraten', ['2 Zwiebeln']), 'Die «Zwiebel» anbraten');
+		assert.equal(marked('Tomaten dazugeben', ['Tomate']), '«Tomaten» dazugeben');
+		assert.equal(marked('Mit Berries servieren', ['Berry']), 'Mit «Berries» servieren');
+	});
+});
+
+/* ── Pinned steps ─────────────────────────────────────────────────────────── */
+
+const PASTA = [
+	{ id: 'a', name: 'Olive oil', quantity: 3, unit: 'tbsp' },
+	{ id: 'b', name: 'Mushrooms', quantity: 250, unit: 'g' },
+	{ id: 'c', name: 'Salt', quantity: null, unit: null }
+];
+
+describe('readStep', () => {
+	it('reads the text when nothing is pinned', () => {
+		const { used } = readStep({ text: 'Sauté the mushrooms', uses: null }, PASTA);
+		assert.deepEqual(
+			used.map((row) => row.name),
+			['Mushrooms']
+		);
+	});
+
+	it('says what was pinned, whether or not the step names it', () => {
+		const { used } = readStep(
+			{ text: 'Sauté until golden', uses: [{ ingredientId: 'a', quantity: null }] },
+			PASTA
+		);
+		assert.deepEqual(used, [PASTA[0]]);
+	});
+
+	it('carries the step’s own share of an ingredient', () => {
+		const { used } = readStep(
+			{ text: 'Warm the olive oil', uses: [{ ingredientId: 'a', quantity: 1 }] },
+			PASTA
+		);
+		assert.deepEqual(used, [{ id: 'a', name: 'Olive oil', quantity: 1, unit: 'tbsp' }]);
+	});
+
+	it('underlines only what is pinned', () => {
+		const { segments } = readStep(
+			{ text: 'Salt the mushrooms', uses: [{ ingredientId: 'c', quantity: null }] },
+			PASTA
+		);
+		assert.equal(
+			segments.map((s) => (s.ingredient ? `«${s.text}»` : s.text)).join(''),
+			'«Salt» the mushrooms'
+		);
+	});
+
+	it('takes an empty list at its word', () => {
+		const { used, segments } = readStep({ text: 'Season the mushrooms', uses: [] }, PASTA);
+		assert.deepEqual(used, []);
+		assert.deepEqual(
+			segments.map((s) => s.ingredient),
+			[null]
+		);
+	});
+
+	it('drops a pin whose ingredient is gone, and a repeat of one', () => {
+		const { used } = readStep(
+			{
+				text: '',
+				uses: [
+					{ ingredientId: 'gone', quantity: 1 },
+					{ ingredientId: 'b', quantity: null },
+					{ ingredientId: 'b', quantity: 50 }
+				]
+			},
+			PASTA
+		);
+		assert.deepEqual(
+			used.map((row) => row.id),
+			['b']
+		);
+	});
+});
+
+describe('scaleStepUses', () => {
+	it('moves a share the way the ingredient moves', () => {
+		assert.deepEqual(scaleStepUses([{ ingredientId: 'a', quantity: 1 }], 2), [
+			{ ingredientId: 'a', quantity: 2 }
+		]);
+	});
+
+	it('leaves “all of it” alone', () => {
+		assert.deepEqual(scaleStepUses([{ ingredientId: 'a', quantity: null }], 2), [
+			{ ingredientId: 'a', quantity: null }
+		]);
+	});
+
+	it('keeps a step that reads its text reading its text', () => {
+		assert.equal(scaleStepUses(null, 2), null);
 	});
 });

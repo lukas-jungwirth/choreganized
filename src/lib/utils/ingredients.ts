@@ -169,6 +169,22 @@ export function parseIngredient(input: string): ParsedIngredient | null {
 	return { quantity, unit: quantity === null ? null : unit, name };
 }
 
+/**
+ * A bare amount — "1½", "0,5", "3/4", "400" — and nothing else.
+ *
+ * The same spellings a line may start with (`AMOUNT` does the reading), for the
+ * fields that ask for a number on its own: the step's share of an ingredient
+ * [3c]. A trailing anything ("2 tsp", "two") is not a bare amount and answers
+ * null rather than quietly keeping the 2.
+ */
+export function parseQuantity(input: string): number | null {
+	const text = input.trim().replace(/\s+/g, ' ');
+	if (!text) return null;
+
+	const amount = AMOUNT.exec(text);
+	return amount && amount[0].length === text.length ? amountValue(amount) : null;
+}
+
 /** The number a matched `AMOUNT` stands for, clamped and rounded once. */
 function amountValue(match: RegExpExecArray): number | null {
 	const [, whole, mixedNumerator, mixedDenominator, numerator, denominator, decimal, glyph, bare] =
@@ -299,8 +315,12 @@ const WHOLE_FROM = 10;
  * The floor is the other half of that: a quarter of "0.02 tsp" rounds to
  * nothing, and an ingredient that silently loses its amount reads as "some",
  * which is a different instruction. Anything that was a number stays a number.
+ *
+ * Exported because a step's share of an ingredient is written in the same
+ * recipe-as-written terms and has to move with it (→ `scaleStepUses`): 1 tsp of
+ * the 3 doubles to 2 of 6, by the same arithmetic, or the parts stop adding up.
  */
-function scaleQuantity(quantity: number | null, factor: number): number | null {
+export function scaleQuantity(quantity: number | null, factor: number): number | null {
 	if (quantity === null || quantity <= 0) return quantity;
 
 	const scaled = quantity * factor;

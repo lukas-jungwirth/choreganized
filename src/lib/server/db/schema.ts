@@ -347,9 +347,55 @@ export const recipeSteps = sqliteTable(
 			.references(() => recipes.id, { onDelete: 'cascade' }),
 		/** Plain text. Cook mode parses timer durations ("8 min", "8:00") from it. */
 		text: text('text').notNull(),
+		/**
+		 * Whether this step's ingredients were **chosen by hand** in the form
+		 * (→ `recipeStepIngredients`). False — the default, and every row written
+		 * before this column existed — means cook mode reads them out of the text
+		 * instead (→ `$lib/utils/step-highlight`, DECISIONS #127).
+		 *
+		 * The flag is what makes "this step uses nothing" sayable: an empty list
+		 * on its own is indistinguishable from a step nobody has looked at.
+		 */
+		ingredientsSet: integer('ingredients_set', { mode: 'boolean' }).notNull().default(false),
 		sortOrder: integer('sort_order').notNull()
 	},
 	(t) => [index('recipe_steps_recipe_idx').on(t.recipeId)]
+);
+
+/**
+ * Which ingredients a step uses, and how much of each — the authored answer to
+ * what cook mode otherwise guesses from the step text (→ SPEC §4.4, §4.6).
+ *
+ * `quantity` is a *share of the row above it*, written in that ingredient's own
+ * unit: 1 of the 3 tbsp of olive oil goes in first, 2 at the end. NULL means
+ * "whatever the ingredient row says", which is the common case and what a
+ * freshly ticked ingredient stores. Because it is written in recipe-as-written
+ * terms, `?serves=` scales it with exactly the same arithmetic as the ingredient
+ * itself (→ `scaleQuantity`, DECISIONS #124).
+ *
+ * Rows die with either parent: the recipe form replaces ingredients and steps
+ * wholesale on every save (→ `services/recipes.ts`), so these are rewritten in
+ * the same transaction rather than diffed.
+ */
+export const recipeStepIngredients = sqliteTable(
+	'recipe_step_ingredients',
+	{
+		id: id(),
+		stepId: text('step_id')
+			.notNull()
+			.references(() => recipeSteps.id, { onDelete: 'cascade' }),
+		ingredientId: text('ingredient_id')
+			.notNull()
+			.references(() => recipeIngredients.id, { onDelete: 'cascade' }),
+		/** In the ingredient's unit; NULL = all of it. */
+		quantity: real('quantity'),
+		sortOrder: integer('sort_order').notNull()
+	},
+	(t) => [
+		index('recipe_step_ingredients_step_idx').on(t.stepId),
+		// A step names an ingredient once — twice would render two identical chips.
+		uniqueIndex('recipe_step_ingredients_pair_unique').on(t.stepId, t.ingredientId)
+	]
 );
 
 export const meals = sqliteTable(
@@ -524,6 +570,7 @@ export type PantryStaple = typeof pantryStaples.$inferSelect;
 export type Recipe = typeof recipes.$inferSelect;
 export type RecipeIngredient = typeof recipeIngredients.$inferSelect;
 export type RecipeStep = typeof recipeSteps.$inferSelect;
+export type RecipeStepIngredient = typeof recipeStepIngredients.$inferSelect;
 export type Meal = typeof meals.$inferSelect;
 export type Task = typeof tasks.$inferSelect;
 export type TaskCompletion = typeof taskCompletions.$inferSelect;

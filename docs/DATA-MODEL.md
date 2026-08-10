@@ -10,6 +10,7 @@ user ─┬─ session / account / verification        (Better Auth)
       └─ members ──→ households
                         ├─ stores ──→ shopping_items
                         ├─ recipes ──→ recipe_ingredients / recipe_steps
+                        │                     └─ recipe_step_ingredients ─┘
                         ├─ meals (→ recipes, one per date × slot)
                         ├─ tasks ──→ task_completions (snapshots)
                         └─ cook_timers
@@ -87,14 +88,31 @@ user ─┬─ session / account / verification        (Better Auth)
   (→ [DECISIONS #97](DECISIONS.md)). A unit somebody typed that isn't in the table is kept and
   shown exactly as typed.
 
-### `recipes` / `recipe_ingredients` / `recipe_steps`
+### `recipes` / `recipe_ingredients` / `recipe_steps` / `recipe_step_ingredients`
 
 - Ingredients are structured (name, quantity?, unit?) but _entered_ freeform ("400 g pasta")
   and parsed leniently (`src/lib/utils/ingredients.ts`, plan 07): `/^([\d.,½¼¾\/]+)?\s*([a-zA-Z]+)?\s+(.+)$/`-ish
   with a known-units whitelist; on no match, everything is the name.
-- Steps are plain text, ordered by `sortOrder`. Cook-mode timers and ingredient highlighting
-  are **derived at render time** (duration regex; case-insensitive ingredient-name matching) —
-  no extra columns, no authoring burden. (→ DECISIONS #14)
+- Steps are plain text, ordered by `sortOrder`. Cook-mode timers are still **derived at render
+  time** from a duration regex — no columns, no authoring burden (→ DECISIONS #14).
+- **What a step uses is derived _until somebody says otherwise_** (→ DECISIONS #127).
+  `recipe_steps.ingredients_set` (migration 0010, `DEFAULT false` — every row written before it
+  existed keeps reading its own text) flips a step from the matcher
+  (`src/lib/utils/step-highlight.ts`) to the rows in `recipe_step_ingredients`. The flag is what
+  makes "this step uses nothing" sayable: an empty list on its own is indistinguishable from a
+  step nobody has looked at.
+- `recipe_step_ingredients` is `(stepId, ingredientId, quantity?, sortOrder)` with
+  `UNIQUE(step_id, ingredient_id)` — a step names an ingredient once. `quantity` is a **share of
+  the ingredient row**, in that row's own unit (1 of the 3 tbsp of olive oil here, 2 at the end);
+  NULL means all of it, which is what a plain tick stores. Written in recipe-as-written terms, so
+  `?serves=` scales a share with exactly the same arithmetic as the ingredient above it
+  (→ DECISIONS #124).
+- **The children are replaced, not diffed**, on every save (`writeChildren`), so the pins are
+  rewritten in the same transaction and their ids are minted in that function rather than left
+  to the column default — a pin has to name the row it was saved beside. The form therefore
+  posts a step's pins as **indices into the posted ingredient lines**, not ids: the ids it was
+  opened on no longer exist by the time the save writes. Blank lines drop out and shift those
+  indices, which is why `writeChildren` keeps a posted-index → new-id map.
 - `imagePath` is relative to `UPLOADS_DIR` and is a UUID filename, not a derivable one:
   replacing a photo writes a new file and deletes the old, so a stored URL never changes
   content and can be cached immutably (→ DECISIONS #63). Files are served through

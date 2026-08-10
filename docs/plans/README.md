@@ -41,6 +41,7 @@ Work done after the twelve plans, tracked here so the queue stays the whole stor
 | **Cooking for {n}: use-time ingredient scaling** (SPEC §4.5, §4.6, §4.8, DECISIONS #124)                | done (2026-07-31) |
 | **One type scale token** (`--fs` in `app.css`, DESIGN-SYSTEM "Type scale", DECISIONS #125)              | done (2026-08-08) |
 | **Several meals a day** (`meals.slot`, SPEC §2, §4.1–4.2, DATA-MODEL, DECISIONS #126)                   | done (2026-08-08) |
+| **What a step uses** (`recipe_step_ingredients`, SPEC §4.4, §4.6, DATA-MODEL, DECISIONS #127)           | done (2026-08-10) |
 
 ## Dependency graph & parallelization
 

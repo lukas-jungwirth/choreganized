@@ -925,6 +925,26 @@ export const en = {
 			stepPlaceholder: 'Boil the pasta until al dente, about 9 min.',
 			stepLabel: (index: number) => `Step ${index}`,
 			addStep: 'Add step',
+
+			/**
+			 * What a step uses [3c] (→ SPEC §4.4, DECISIONS #127). The row under
+			 * each step opens the sheet; `usesAuto` is the marker on a step still
+			 * reading its own text, so "these came from the words you typed" is
+			 * visible before cook mode is the one saying it.
+			 */
+			usesAuto: 'auto',
+			usesNone: 'Ingredients for this step',
+			usesNothing: 'nothing',
+			usesLabel: (index: number) => `Ingredients for step ${index}`,
+			usesTitle: 'What this step uses',
+			usesSubtitle: 'Cook mode shows these while you’re on the step.',
+			/** Under a ticked ingredient: the amount the whole recipe asks for. */
+			usesShare: (amount: string) => `of ${amount}`,
+			usesAmount: (name: string) => `Amount of ${name} for this step`,
+			/** The amount field left empty means the row's whole amount. */
+			usesAll: 'all',
+			usesBackToAuto: 'Read the step text instead',
+			usesEmpty: 'Add the ingredients first — then you can say which ones this step needs.',
 			save: 'Save',
 			saveRecipe: 'Save recipe',
 			/** The reorder/remove controls beside each row. */
@@ -998,6 +1018,11 @@ export const en = {
 			peekTitle: 'Ingredients',
 			peekTitleServes: (servings: number) => `Ingredients · serves ${servings}`,
 			peekEmpty: 'This recipe doesn’t list any ingredients.',
+			/**
+			 * On a highlighted row whose step wants only part of it: the amber
+			 * amount is this step's, and this says what the row holds in total.
+			 */
+			peekShare: (amount: string) => `of ${amount}`,
 
 			/** The manual timer sheet (→ DECISIONS #14). */
 			timerTitle: 'Set a timer',
