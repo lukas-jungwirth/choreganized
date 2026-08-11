@@ -1286,6 +1286,31 @@ that actually adapts there; this wants checking on a real device.
        sheet; editing happens there. A wet thumb wants one target, and per-chip controls would
        put six of them under every step.
 
+128. **Snooze counts from the day the task is already on** (→ SPEC §5.5,
+     `components/tasks/SnoozeSheet.svelte`). [4c] was written for the case it is named after —
+     something has come due and you can't face it today — and counted its presets from today
+     for everyone. But the same sheet opens from the to-do list's **Upcoming** rows and from
+     Home's next-chore card, which reaches days ahead: on a chore due next week, "In 3 days"
+     _pulled it four days closer_, and because the sheet opened with tomorrow already selected,
+     the plain path of opening it and confirming moved the chore **six days earlier** — the one
+     thing a snooze must never do by accident. The sheet now takes the task's `dueDate` and
+     counts from `max(today, dueDate)`, so a preset can only ever push a task further away.
+
+     - **Two modes, one sheet**, because they are one intent (later) told apart by whether the
+       task is asking anything of you yet. Overdue, due-today and undated one-offs are
+       **snoozed**: presets from today, "Snooze until…", "Snooze to {date}" — unchanged.
+       Anything further out is **rescheduled**: presets from its own due date, "Reschedule
+       to…", "Move to {date}". Splitting it into two components would have duplicated the
+       holiday pause and the form for a difference of six words.
+     - **The presets are relabelled, not renumbered.** The same four offsets read as
+       `task.snoozes` ("In 3 days") when they count from today and `task.postpones` ("3 days
+       later") when they count from the due date — the shift is what the tap means there, and
+       the offsets stay one list in `utils/tasks.ts` (#96).
+     - **The date picker still allows earlier**, `min={today}` in both modes. Bringing a chore
+       forward is a real thing to want, and the picker is where you say it deliberately;
+       what was wrong was a button labelled "Tomorrow" doing it silently. Editing the task's
+       **First due** [3b] remains the other way in.
+
 129. **The week is a list of meals, not a list of days, and one day at a time carries the
      controls** (→ SPEC §4.1, `cooking/MealRow.svelte`, `cooking/DayMealsSheet.svelte`). [04]
      drew one row per day and hung everything on it — the meals, an **Add another**, a ••• per
@@ -1320,3 +1345,34 @@ that actually adapts there; this wants checking on a real device.
        one, and a chooser with a single row is a tap that answers itself; two or more raise
        `DayMealsSheet`, which is the only way in to changing or removing a planned recipe now
        that the row itself goes to the recipe.
+
+130. **Notifications are two groups, not one list of four switches** (→ SPEC §6,
+     `settings/+page.svelte`, `components/EnablePush.svelte`). "Enable on this device" sat at
+     the top of the Notifications `RowGroup` with the three category toggles under it, and in
+     that position it read as a master switch over its three children — which it never was.
+     The two rows answer different questions and are stored in different places: the categories
+     are `members.notify*`, one answer for the account that follows the person between devices,
+     while the switch is a `push_subscriptions` row keyed by endpoint, one per browser. Nothing
+     about that was visible; only the words "on this device" carried it, and they lost.
+
+     - **Content first, delivery second.** The three categories keep the **Notifications**
+       heading and now stand alone; **This device** is its own heading below, holding the switch
+       and **Send test notification** — the test belongs with the device it tests, and
+       `test.noDevice` ("switch it on above") stays true where it sits. Ordering the dependency
+       backwards is deliberate: what you want to hear about is the question you came to answer,
+       and the one-time card on Home is where push actually gets enabled in practice.
+     - **A caption under the first group says the half the switches can't** — that they apply on
+       every device switched on below. A heading names a group; only prose can say what it
+       governs.
+     - **The `prompt` state stopped saying nothing.** `EnablePush`'s note existed to explain why
+       the switch _isn't_ the answer (unsupported, denied, no VAPID key), so the ordinary "off,
+       and you may switch it on" case rendered bare. It now says each phone or laptop is
+       switched on separately — the sentence the whole rearrangement exists to deliver, shown
+       exactly where the question gets asked.
+     - **Per-device categories were considered and rejected.** Moving the three columns onto
+       `push_subscriptions` would let a phone and a laptop want different things, and would
+       drop this row entirely. It also drops permission's only home — denied, unsupported and
+       unconfigured would each need explaining under three toggles instead of one — makes the
+       first toggle carry a permission prompt and an endpoint the server can't see at load
+       time, and costs the portability `PrefRow`'s refetch-on-focus is built for (a change made
+       on the laptop moves the switch on the phone). Not worth it for a household of two.

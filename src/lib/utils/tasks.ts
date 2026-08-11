@@ -103,7 +103,12 @@ export function repeatKey(unit: RecurUnit, interval: number): string {
 
 /* ── Snooze [4c] ──────────────────────────────────────────────────────────── */
 
-/** Presets are counted from today, not from the due date (→ SPEC §5.5). */
+/**
+ * Offsets, not dates: [4c] counts them from today on a task that has come due
+ * and from its own due date on one that hasn't, so a preset can only ever push
+ * a task further away (→ SPEC §5.5, DECISIONS #128). The two readings are named
+ * by `task.snoozes` and `task.postpones`.
+ */
 export const SNOOZE_PRESETS = [
 	{ key: 'tomorrow', days: 1 },
 	{ key: 'days3', days: 3 },

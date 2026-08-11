@@ -191,6 +191,12 @@ export const de: Messages = {
 			week1: 'In 1 Woche',
 			weeks2: 'In 2 Wochen'
 		},
+		postpones: {
+			tomorrow: 'Einen Tag später',
+			days3: '3 Tage später',
+			week1: 'Eine Woche später',
+			weeks2: '2 Wochen später'
+		},
 		starters: {
 			bins: 'Mist rausbringen',
 			bedsheets: 'Bettwäsche wechseln',
@@ -476,8 +482,10 @@ export const de: Messages = {
 
 		snooze: {
 			title: 'Verschieben auf…',
+			rescheduleTitle: 'Neu planen auf…',
 			orPick: 'Oder Datum wählen',
 			to: (date: string) => `Verschieben auf ${date}`,
+			move: (date: string) => `Verlegen auf ${date}`,
 			needsDate: 'Wähle ein Datum zum Verschieben.'
 		},
 
@@ -879,6 +887,7 @@ export const de: Messages = {
 
 		account: 'Konto',
 		notifications: 'Benachrichtigungen',
+		thisDevice: 'Dieses Gerät',
 		awayMode: 'Abwesenheit',
 		household: 'Haushalt',
 
@@ -909,7 +918,8 @@ export const de: Messages = {
 			overdueNudges: 'Überfällig-Hinweise',
 			overdueNudgesDetail: 'Ein Hinweis am Morgen danach',
 			shoppingUpdates: 'Einkaufsliste',
-			shoppingUpdatesDetail: 'Wenn jemand etwas auf die Liste setzt'
+			shoppingUpdatesDetail: 'Wenn jemand etwas auf die Liste setzt',
+			note: 'Das gilt auf jedem Gerät, das du unten einschaltest.'
 		},
 
 		test: {
@@ -1111,6 +1121,7 @@ export const de: Messages = {
 		unconfigured: 'Push ist auf dem Server noch nicht eingerichtet.',
 		denied:
 			'Benachrichtigungen sind für Choreganized blockiert. Schalte sie in den Website-Einstellungen des Browsers wieder ein.',
+		perDevice: 'Jedes Handy und jeder Laptop muss einzeln eingeschaltet werden.',
 		subscribed:
 			'Aufgaben-Erinnerungen und Einkaufs-Updates kommen hier an, auch wenn die App zu ist.',
 		failed: 'Da ist etwas schiefgegangen.'

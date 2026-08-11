@@ -248,6 +248,18 @@ export const en = {
 			week1: 'In 1 week',
 			weeks2: 'In 2 weeks'
 		},
+		/**
+		 * The same four offsets counted from a *future* due date instead [4c] —
+		 * a task that isn't asking anything of you yet is rescheduled, not
+		 * snoozed, so the presets name the shift rather than the day
+		 * (→ SPEC §5.5, DECISIONS #128).
+		 */
+		postpones: {
+			tomorrow: 'A day later',
+			days3: '3 days later',
+			week1: 'A week later',
+			weeks2: '2 weeks later'
+		},
 		/** Popular starters [7f] — the name a tap writes into the database. */
 		starters: {
 			bins: 'Take out the bins',
@@ -625,11 +637,17 @@ export const en = {
 			forThem: (name: string) => `${name} did it`
 		},
 
-		/** Snooze / reschedule [4c]. */
+		/**
+		 * Snooze / reschedule [4c]. The sheet says which of the two it is doing:
+		 * a task that has come due is *snoozed* (later than today), one still
+		 * ahead of you is *rescheduled* (later than it was) — → SPEC §5.5.
+		 */
 		snooze: {
 			title: 'Snooze until…',
+			rescheduleTitle: 'Reschedule to…',
 			orPick: 'Or pick a date',
 			to: (date: string) => `Snooze to ${date}`,
+			move: (date: string) => `Move to ${date}`,
 			needsDate: 'Pick a date to snooze to.'
 		},
 
@@ -1149,9 +1167,16 @@ export const en = {
 	settings: {
 		title: 'Settings',
 
-		/** The five section headings, in the order they stack [6a]. */
+		/** The section headings, in the order they stack [6a]. */
 		account: 'Account',
 		notifications: 'Notifications',
+		/**
+		 * Push splits across two groups on purpose: *what* you want to hear about
+		 * is one answer for the whole account, *where* it lands is one answer per
+		 * browser, and one list of four switches read as a master and its three
+		 * children (→ DECISIONS #130).
+		 */
+		thisDevice: 'This device',
 		awayMode: 'Away mode',
 		household: 'Household',
 
@@ -1197,7 +1222,9 @@ export const en = {
 			overdueNudges: 'Overdue nudges',
 			overdueNudgesDetail: 'One nudge the morning after it slipped',
 			shoppingUpdates: 'Shopping list updates',
-			shoppingUpdatesDetail: 'When a housemate adds to the list'
+			shoppingUpdatesDetail: 'When a housemate adds to the list',
+			/** Says the half the switches can't: these are the account, not the phone. */
+			note: 'This applies on every device you switch on below.'
 		},
 
 		/** The round trip that proves push works (→ SPEC §6). */
@@ -1419,6 +1446,12 @@ export const en = {
 		unconfigured: 'Push isn’t configured on the server yet.',
 		denied:
 			'Notifications are blocked for Choreganized. Turn them back on in your browser’s site settings.',
+		/**
+		 * The state that used to say nothing: the switch is offered, so there's no
+		 * problem to report — but "on this device" is the whole point of the row
+		 * and it can't be left to the label alone (→ DECISIONS #130).
+		 */
+		perDevice: 'Each phone or laptop has to be switched on separately.',
 		subscribed: 'Task reminders and shopping updates arrive here, even with the app closed.',
 		failed: 'Something went wrong.'
 	},

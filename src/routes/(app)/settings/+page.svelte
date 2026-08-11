@@ -1,7 +1,7 @@
 <!--
-	Settings [6a] (→ SPEC §6). Five stacked sections in one scroll: who you are,
-	what reaches your phone, whether you're away, the house itself, and the two
-	ways out.
+	Settings [6a] (→ SPEC §6). Six stacked sections in one scroll: who you are,
+	what you want to hear about, where it lands, whether you're away, the house
+	itself, and the two ways out.
 
 	Every section is a `RowGroup`; the rows are written here rather than as a
 	component because their shapes differ (a chevron, a value, a switch, a
@@ -164,11 +164,14 @@
 	</button>
 </RowGroup>
 
+<!-- Two groups, not one list of four (→ DECISIONS #130). What you want to hear
+	 about is one answer for the account and follows you between devices; whether
+	 push can reach *this* browser is a separate, per-device fact the browser
+	 owns. Stacked in one `RowGroup` the first row read as a master switch over
+	 the other three, which it never was. Content first, delivery second. -->
 <h2 class="section">{m.settings.notifications}</h2>
 
 <RowGroup>
-	<EnablePush />
-
 	<PrefRow
 		pref="notifyTaskReminders"
 		label={m.settings.prefs.taskReminders}
@@ -187,6 +190,14 @@
 		detail={m.settings.prefs.shoppingUpdatesDetail}
 		checked={data.prefs.notifyShoppingUpdates}
 	/>
+</RowGroup>
+
+<p class="note">{m.settings.prefs.note}</p>
+
+<h2 class="section">{m.settings.thisDevice}</h2>
+
+<RowGroup>
+	<EnablePush />
 
 	<form
 		method="POST"
@@ -441,6 +452,15 @@
 	.result {
 		margin: 10px 4px 0;
 		font-size: calc(13px * var(--fs));
+		line-height: 1.45;
+		color: var(--text-4);
+	}
+
+	/* A caption for the group above it — same voice as a sheet's note, and it
+	   takes the gap the next section heading would otherwise open alone. */
+	.note {
+		margin: 9px 4px 0;
+		font-size: calc(12.5px * var(--fs));
 		line-height: 1.45;
 		color: var(--text-4);
 	}
