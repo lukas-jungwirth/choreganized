@@ -736,28 +736,24 @@ export const en = {
 			snack: 'Snack'
 		},
 
-		/** The week's rows [04]. */
+		/**
+		 * The week's rows [04] — one per meal, so what a row writes is the meal's
+		 * name and (in `cooking.slots`) which meal of the day it is. Who cooks is
+		 * the avatar beside it, and `cookedBy` is that avatar said out loud.
+		 */
 		week: {
-			/**
-			 * The quiet line under a meal's name. `slot` is null for the lone
-			 * dinner most days hold — that one names itself, and labelling it
-			 * would put a word on all seven rows to serve the rare Saturday with
-			 * a breakfast on it too (→ DECISIONS #126). `tonight` is today's
-			 * dinner, which says when rather than which.
-			 */
-			mealMeta: (slot: string | null, cook: string | null, tonight: boolean) => {
-				const when = tonight ? 'Tonight' : slot;
-				const who = cook ? (tonight ? cook : `${cook} cooks`) : null;
-				return [when, who].filter(Boolean).join(' · ') || null;
-			},
+			cookedBy: (cook: string) => `${cook} cooks`,
+			/** A day nobody has decided on yet — it keeps its row either way. */
+			nothingPlanned: 'Nothing planned',
+			/** Tapping a day opens it: the action bar under that day's meals. */
+			openDay: (weekday: string, day: string) => `Open ${weekday} ${day}`,
 			addMeal: 'Add a meal',
 			/** Seven identical buttons would otherwise be read out alike. */
 			addMealOn: (weekday: string, day: string) => `Add a meal on ${weekday} ${day}`,
-			/** The second meal of a day — the row under the ones already there. */
-			addAnother: 'Add another',
-			addAnotherOn: (weekday: string) => `Add another meal on ${weekday}`,
-			/** Names the meal now that a day can hold four of them. */
-			changeMeal: (meal: string, weekday: string) => `Change ${meal} on ${weekday}`,
+			/** The open day's ••• — one meal, or the sheet that asks which. */
+			changeMealsOn: (weekday: string) => `Change what’s on ${weekday}`,
+			/** That sheet's eyebrow; its title is the day. */
+			changeEyebrow: 'Change a meal',
 			/** Read out beside today's column in the strip. */
 			today: '(today)'
 		},

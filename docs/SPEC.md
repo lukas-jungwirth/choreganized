@@ -188,19 +188,26 @@ a danger badge with the current user's overdue count [4e].
   back to this week, and `/cooking` with no query is always this week (→ DECISIONS #99).
   Planning reaches one week ahead; further out is not plannable. 7-day strip Mon–Sun with dates;
   today highlighted in sage — next week has no today, so no highlight. The strip stays a visual
-  anchor, not a control: the meal rows below are already one tap target per day.
+  anchor, not a control: the day rows below are the control (→ DECISIONS #129).
   (The heading anchor `#41-this-week` is kept as-is — plan files link it.)
-- **Meal card**: one row per day (MON…SUN). A day holds up to four meals — one **breakfast ·
-  lunch · dinner · snack** each (→ DECISIONS #126) — listed in that order: name + "{member}
-  cooks" (today's dinner highlighted, "Tonight · {member}") or a dashed "Add a meal"
-  placeholder. **The slot is named on the row unless the day holds nothing but a dinner**, so
-  the ordinary week looks exactly as it did; a day with two meals labels both ("Breakfast",
-  "Dinner"), and a day whose only meal is a lunch says "Lunch". A day that already holds
-  something gains a quiet **Add another** row under its meals, which opens the sheet on the
-  first slot that day still has free (dinner, else lunch, else breakfast, else snack).
-  Tap → plan sheet [3d] for that meal; tap a planned meal → recipe view, long-press/••• →
-  change/remove (v1: tapping a planned custom meal opens the plan sheet prefilled; a "Remove"
-  action lives there). The switch's {n} counts **days** with anything planned, not meals.
+- **Meal card**: one row per **meal**, indented under the day it belongs to — the weekday
+  (MON…SUN) is written once, on that day's first row. A day holds up to four meals — one
+  **breakfast · lunch · dinner · snack** each (→ DECISIONS #126) — and each is a row of its
+  own, in that order: the meal's name, the slot as a quiet tag beside it, and the cook's
+  avatar. Nothing is summarised and nothing is folded away (→ DECISIONS #129). **The slot is
+  tagged unless the day holds nothing but a dinner**, so the ordinary week is a column of bare
+  names; a day with two meals tags both ("Breakfast", "Dinner"), and a day whose only meal is a
+  lunch says "Lunch". A day with nothing planned keeps its row and says **Nothing planned**.
+- **One day is open at a time**, and only the open day carries controls: a bar under its meals
+  with **+ Add a meal** and a **•••**. It starts on today (on next week, which has no today,
+  the week's Monday) and moves when you tap another day — anywhere on that day outside its
+  meal names. Opening a day _adds_ the bar and moves nothing else. The open day is tinted;
+  today keeps its sage weekday and the strip's pill either way.
+  Tap a planned meal → recipe view (a planned custom meal → plan sheet [3d] prefilled).
+  **+ Add a meal** opens the sheet on the first slot that day still has free (dinner, else
+  lunch, else breakfast, else snack). **•••** changes or removes what's already there: straight
+  to the plan sheet when the day holds one meal, and a "which one?" sheet first when it holds
+  more. The switch's {n} counts **days** with anything planned, not meals.
 - **Recipe library** section: "Recently added" 2-up cards (photo, name, "{time} min · added
   {date}"), header link "Browse all · {n}" → library page.
 

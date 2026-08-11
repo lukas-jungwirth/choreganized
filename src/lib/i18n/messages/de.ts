@@ -561,16 +561,13 @@ export const de: Messages = {
 		},
 
 		week: {
-			mealMeta: (slot: string | null, cook: string | null, tonight: boolean) => {
-				const when = tonight ? 'Heute Abend' : slot;
-				const who = cook ? (tonight ? cook : `${cook} kocht`) : null;
-				return [when, who].filter(Boolean).join(' · ') || null;
-			},
+			cookedBy: (cook: string) => `${cook} kocht`,
+			nothingPlanned: 'Nichts geplant',
+			openDay: (weekday: string, day: string) => `${weekday}, ${day}. öffnen`,
 			addMeal: 'Essen eintragen',
 			addMealOn: (weekday: string, day: string) => `Essen für ${weekday}, ${day}. eintragen`,
-			addAnother: 'Noch eins',
-			addAnotherOn: (weekday: string) => `Noch ein Essen für ${weekday} eintragen`,
-			changeMeal: (meal: string, weekday: string) => `${meal} am ${weekday} ändern`,
+			changeMealsOn: (weekday: string) => `Essen am ${weekday} ändern`,
+			changeEyebrow: 'Essen ändern',
 			today: '(heute)'
 		},
 
