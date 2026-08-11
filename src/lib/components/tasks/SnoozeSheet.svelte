@@ -8,6 +8,13 @@
 	a preset is simply the date it would set, so choosing "In 1 week" and then
 	nudging the picker never leaves two controls disagreeing about what the CTA
 	is about to do.
+
+	The presets count from the day the task is *already* on, whenever that is
+	still ahead of you: pushing something due next week back by "In 3 days" would
+	have pulled it four days closer, which is the one thing this sheet must never
+	do by accident (→ DECISIONS #128). So the same four offsets read as a snooze
+	on a task that has come due and as a reschedule on one that hasn't, and the
+	sheet says which it is doing.
 -->
 <script lang="ts">
 	import { enhance } from '$app/forms';
@@ -23,11 +30,11 @@
 
 	type Props = {
 		/**
-		 * The id it moves and the name it heads itself with — nothing else. Home's
-		 * next-chore card [8b] opens the same sheet from a leaner row than the
-		 * to-do list's.
+		 * The id it moves, the name it heads itself with, and the day it is on —
+		 * nothing else. Home's next-chore card [8b] opens the same sheet from a
+		 * leaner row than the to-do list's.
 		 */
-		task: Pick<TaskListItem, 'id' | 'name'>;
+		task: Pick<TaskListItem, 'id' | 'name' | 'dueDate'>;
 		today: CalendarDate;
 		/** The signed-in member's holiday state — the toggle's starting position. */
 		awayUntil: CalendarDate | null;
@@ -38,10 +45,19 @@
 
 	const m = messages();
 
+	/**
+	 * What "later" is counted from. Overdue, due today and undated one-offs are
+	 * all being put off *now*, so they count from today; anything still ahead
+	 * counts from its own due date, and can only ever move further away.
+	 */
+	const from = $derived(task.dueDate && task.dueDate > today ? task.dueDate : today);
+	/** Ahead of us: the sheet is rescheduling a task, not snoozing one. */
+	const rescheduling = $derived(from !== today);
+
 	let open = $state(true);
 	// The gentlest of the presets: you came here to push it a little, not to
 	// lose it for a fortnight.
-	let dueDate = $state(untrack(() => addDays(today, 1)));
+	let moveTo = $state(untrack(() => addDays(from, 1)));
 	let snoozing = $state(false);
 	/** This form's own rejection, not `$page.form` (as in TaskFormSheet). */
 	let error = $state<string | undefined>();
@@ -51,7 +67,11 @@
 	});
 </script>
 
-<BottomSheet bind:open title={m.tasks.snooze.title} eyebrow={task.name}>
+<BottomSheet
+	bind:open
+	title={rescheduling ? m.tasks.snooze.rescheduleTitle : m.tasks.snooze.title}
+	eyebrow={task.name}
+>
 	<form
 		method="POST"
 		action="?/snooze"
@@ -76,32 +96,39 @@
 
 		<div class="presets">
 			{#each SNOOZE_PRESETS as preset (preset.key)}
-				{@const date = addDays(today, preset.days)}
+				{@const date = addDays(from, preset.days)}
 				<button
 					type="button"
 					class="preset"
-					class:on={dueDate === date}
-					aria-pressed={dueDate === date}
-					onclick={() => (dueDate = date)}
+					class:on={moveTo === date}
+					aria-pressed={moveTo === date}
+					onclick={() => (moveTo = date)}
 				>
-					{m.task.snoozes[preset.key]}
+					{rescheduling ? m.task.postpones[preset.key] : m.task.snoozes[preset.key]}
 				</button>
 			{/each}
 		</div>
 
+		<!-- Still `min={today}`, not `min={from}`: bringing a future chore forward
+			 is a real thing to want, and picking the day it lands on is the one
+			 place you can say so on purpose rather than by tapping a preset. -->
 		<DateField
 			label={m.tasks.snooze.orPick}
 			name="dueDate"
-			bind:value={dueDate}
-			caption={dueDate ? m.date.dateLabel(dueDate, today) : undefined}
+			bind:value={moveTo}
+			caption={moveTo ? m.date.dateLabel(moveTo, today) : undefined}
 			min={today}
 			required
 		/>
 
 		{#if error}<p class="error">{error}</p>{/if}
 
-		<Button type="submit" disabled={snoozing || !dueDate}>
-			{m.tasks.snooze.to(dueDate ? m.date.short(dueDate) : '…')}
+		<Button type="submit" disabled={snoozing || !moveTo}>
+			{#if rescheduling}
+				{m.tasks.snooze.move(moveTo ? m.date.short(moveTo) : '…')}
+			{:else}
+				{m.tasks.snooze.to(moveTo ? m.date.short(moveTo) : '…')}
+			{/if}
 		</Button>
 	</form>
 

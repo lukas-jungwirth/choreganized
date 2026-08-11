@@ -481,8 +481,16 @@ actually need is the chore this replaces (→ [DECISIONS #123](DECISIONS.md)).
 
 ### 5.5 Snooze & holiday [4c]
 
-- Snooze presets: Tomorrow · In 3 days · In 1 week · In 2 weeks · Pick a date. CTA "Snooze to
-  {date}" — sets `dueDate`, clears reminder flags (they re-fire for the new date).
+- **Presets always push the task later, never earlier**: they count from the day it is already
+  on — today for an overdue, due-today or undated task, its own due date for anything further
+  out (→ DECISIONS #128). Which of the two decides how the sheet reads:
+  - **Snooze** (overdue · due today · undated): Tomorrow · In 3 days · In 1 week · In 2 weeks ·
+    Pick a date. Title "Snooze until…", CTA "Snooze to {date}".
+  - **Reschedule** (due in the future): A day later · 3 days later · A week later · 2 weeks
+    later · Pick a date. Title "Reschedule to…", CTA "Move to {date}".
+- The date picker's minimum is **today** in both, so a chore can still be deliberately brought
+  forward — only the presets are one-way.
+- Either way: sets `dueDate`, clears reminder flags (they re-fire for the new date).
 - **Going away?** toggle in the same sheet: pauses **all my tasks** until a picked return date
   (`member.awayUntil`) — no overdue, no reminders; banner appears for the household. Turning it
   off clears the date. Also accessible from Settings.
@@ -532,9 +540,12 @@ The **History** tab is a stats landing; the full feed sits one level below it (�
 - Profile card: avatar, display name, email + **Edit**.
 - **Account**: Display name, Your colour (palette picker; taken colours disabled), **Language**
   (→ §9), **Appearance** (→ §10). (No password row in v1 — Google only.)
-- **Notifications**: Enable on this device (subscribes push, shows permission state) ·
-  Task reminders · Overdue nudges · Shopping list updates (toggles per member) · Send test
-  notification.
+- **Notifications**: Task reminders · Overdue nudges · Shopping list updates (toggles per
+  member, so they follow the person between devices), under a caption saying they apply on
+  every device switched on below.
+- **This device**: Enable on this device (subscribes push, shows permission state) · Send test
+  notification. Its own group and heading, because permission is per-browser and the switch is
+  not a master over the three above (→ DECISIONS #130).
 - **Away mode**: "Going away?" — same control as 5.5.
 - **Household**: name (owner can rename), **AI recipe import** (owner sets/removes a Google
   Gemini API key for the §4.7 fallback and can **Test connection** — a live check that reports

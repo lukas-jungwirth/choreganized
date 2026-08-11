@@ -2,8 +2,10 @@
 	"Enable notifications on this device" — the one control that turns web push
 	on, in the two places it's offered (→ plan 05):
 
-	- `settings` (default): the Notifications row in Settings [6a]. The real
-		home; plan 10 adds the per-category toggles beside it.
+	- `settings` (default): the only row in Settings' "This device" group [6a].
+		The real home. The per-category switches sit in their own group above it,
+		because they answer a different question — what you want to hear about,
+		once for the account, rather than where it lands (→ DECISIONS #130).
 	- `prompt`: the gentle one-time card on Home, which shows itself only when
 		there is actually something to ask for and can be waved away for good.
 
@@ -122,6 +124,11 @@
 				return m.enablePush.denied;
 			case 'subscribed':
 				return m.enablePush.subscribed;
+			// Nothing is wrong here — the switch is simply off. What still needs
+			// saying is that it's off *here*, on this browser, and that turning it
+			// on doesn't reach the other one (→ DECISIONS #130).
+			case 'prompt':
+				return m.enablePush.perDevice;
 			default:
 				return null;
 		}
