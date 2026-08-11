@@ -1285,3 +1285,38 @@ that actually adapts there; this wants checking on a real device.
      - **One tap target per step, not one per chip.** The chips are a button that opens the
        sheet; editing happens there. A wet thumb wants one target, and per-chip controls would
        put six of them under every step.
+
+129. **The week is a list of meals, not a list of days, and one day at a time carries the
+     controls** (→ SPEC §4.1, `cooking/MealRow.svelte`, `cooking/DayMealsSheet.svelte`). [04]
+     drew one row per day and hung everything on it — the meals, an **Add another**, a ••• per
+     meal — which reads beautifully for the lone dinner it was drawn for and turns into a
+     paragraph the moment a day holds four (→ #126). Every meal now gets its own row under its
+     weekday, and only the day you have open gets a bar: **+ Add a meal** and a **•••**.
+
+     - **Nothing is summarised.** A "+2" on Thursday would be a notation to learn, and it can't
+       say _which_ two — so the third row is cheaper than the badge, and the card reads straight
+       down: what are we eating, and who's cooking.
+     - **Opening a day adds a bar; it never unfolds one.** Every meal is on screen in both
+       states, so tapping a day doesn't reflow the list under your thumb — the only thing that
+       moves is what sits below the bar. That is also why the day rows keep their spacing when
+       they open: an accordion that resizes what you just tapped is a worse list than a card
+       that gains one control.
+     - **The slot moved from a meta line into a tag beside the name**, on the same "unless it's
+       a lone dinner" rule (→ #126), and the cook line went with it: the avatar already says
+       who, and `week.cookedBy` says it out loud for a screen reader. Today's dinner gives up
+       its "Tonight ·" line — Home's dinner card is where that sentence belongs, and here the
+       sage weekday and the strip's pill already say which day is today.
+     - **The day is its own tap target, sitting behind its rows.** The meal names lead to
+       recipes, so the day's button is underneath them with `pointer-events` handed back to the
+       controls, and a meal's hit box is as wide as the meal rather than as wide as the row —
+       otherwise the empty half of every row would be a link to a recipe instead of the way to
+       open the day.
+     - **`--sage-row` marks the open day, not today.** It is this app's "selected row" tint, and
+       one surface can only mean one thing; today keeps its sage weekday and its pill in the
+       strip, which is all it had on next week's rows anyway. `WeekStrip` stays
+       non-interactive (→ #99b) — the day rows are the control now, which is the same argument
+       that kept the strip decorative in the first place.
+     - **••• on a day holding one meal skips the "which one?" sheet.** Most days hold exactly
+       one, and a chooser with a single row is a tap that answers itself; two or more raise
+       `DayMealsSheet`, which is the only way in to changing or removing a planned recipe now
+       that the row itself goes to the recipe.

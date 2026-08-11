@@ -1,15 +1,18 @@
 <!--
-	Cooking [04] — the week's dinners and the door to the recipe library.
+	Cooking [04] — the week's meals and the door to the recipe library.
 
-	One card, seven rows, up to four meals on each (→ SPEC §4.1). Tapping a day
-	raises the plan sheet [3d]; tapping a planned recipe opens the recipe. The
-	sheet is mounted per opening, which is what resets its form.
+	One card, seven days, every meal of each on a row of its own (→ SPEC §4.1).
+	Tapping a planned recipe opens the recipe; tapping the day itself opens that
+	day, which is what puts the "Add a meal" bar under its meals — one day at a
+	time, so the card gains a control rather than a fold. The sheets are mounted
+	per opening, which is what resets their forms.
 
 	Two weeks are plannable — this one and the next — and which is on screen is
 	in the URL rather than in state here, so a reload, a share and the back
 	button all land where you'd expect (→ DECISIONS #99).
 -->
 <script lang="ts">
+	import DayMealsSheet from '$lib/components/cooking/DayMealsSheet.svelte';
 	import IngredientPickSheet from '$lib/components/cooking/IngredientPickSheet.svelte';
 	import MealPlanSheet from '$lib/components/cooking/MealPlanSheet.svelte';
 	import MealRow from '$lib/components/cooking/MealRow.svelte';
@@ -21,6 +24,7 @@
 	import Card from '$lib/components/ui/Card.svelte';
 	import SegmentedControl from '$lib/components/ui/SegmentedControl.svelte';
 	import { messages } from '$lib/i18n';
+	import type { PlannedMeal, WeekDay } from '$lib/server/services/meals';
 	import type { IngredientPick } from '$lib/server/services/recipe-shopping';
 	import type { CalendarDate } from '$lib/utils/dates';
 	import { nextFreeSlot, type MealSlot } from '$lib/utils/meals';
@@ -41,6 +45,12 @@
 	 * (→ `$lib/utils/meals`).
 	 */
 	let planning = $state<{ date: CalendarDate; mealId: string | null; slot: MealSlot } | null>(null);
+
+	/** The day whose ••• was tapped, when it holds more than one meal. */
+	let menu = $state<CalendarDate | null>(null);
+
+	/** Which day the card has open — the one carrying the action bar. */
+	let opened = $state<CalendarDate | null>(null);
 
 	/**
 	 * The ingredient picker [3e], raised by the plan sheet's toggle. Copied out
@@ -74,8 +84,21 @@
 		}))
 	);
 
+	/**
+	 * Today, until a tap says otherwise — and the week's Monday on next week,
+	 * which has no today. Resolved against the week on screen rather than
+	 * seeded into state, so paging opens *that* week's default instead of
+	 * leaving the card with nothing open.
+	 */
+	const openDay = $derived(
+		week.days.find((entry) => entry.date === opened) ??
+			week.days.find((entry) => entry.isToday) ??
+			week.days[0]
+	);
+
 	// A date belongs to one week, so paging away closes the sheet on its own.
 	const day = $derived(week.days.find((entry) => entry.date === planning?.date) ?? null);
+	const menuDay = $derived(week.days.find((entry) => entry.date === menu) ?? null);
 	/**
 	 * Re-read off the freshly loaded day rather than kept in `planning`, so the
 	 * sheet's "Remove meal" and its "Replaces …" line follow what the last
@@ -85,6 +108,16 @@
 
 	/** What the last plan did to the shopping list — the only trace it leaves. */
 	const shopping = $derived(form && 'shopping' in form ? form.shopping : null);
+
+	/** Raise the plan sheet on one of a day's meals, or blank on its free slot. */
+	function plan(entry: WeekDay, meal: PlannedMeal | null) {
+		planning = {
+			date: entry.date,
+			mealId: meal?.id ?? null,
+			slot: meal?.slot ?? nextFreeSlot(entry.meals.map((planned) => planned.slot))
+		};
+		menu = null;
+	}
 </script>
 
 <svelte:head>
@@ -113,12 +146,11 @@
 		{#each week.days as entry (entry.date)}
 			<MealRow
 				day={entry}
-				onplan={(meal) =>
-					(planning = {
-						date: entry.date,
-						mealId: meal?.id ?? null,
-						slot: meal?.slot ?? nextFreeSlot(entry.meals.map((planned) => planned.slot))
-					})}
+				open={entry.date === openDay.date}
+				onopen={() => (opened = entry.date)}
+				onplan={(meal) => plan(entry, meal)}
+				onmore={() =>
+					entry.meals.length > 1 ? (menu = entry.date) : plan(entry, entry.meals[0] ?? null)}
 			/>
 		{/each}
 	</ul>
@@ -160,6 +192,14 @@
 		recipes={data.recipes}
 		members={data.members}
 		onclose={() => (planning = null)}
+	/>
+{/if}
+
+{#if menuDay}
+	<DayMealsSheet
+		day={menuDay}
+		onpick={(meal) => plan(menuDay, meal)}
+		onclose={() => (menu = null)}
 	/>
 {/if}
 
