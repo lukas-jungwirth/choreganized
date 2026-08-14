@@ -1529,7 +1529,21 @@ export const en = {
 		detail: (holidays: string, lastOpenDay: CalendarDate, today: CalendarDate) =>
 			`${holidays} · last shopping day is ${shoppingDay(lastOpenDay, today)}`,
 
-		/** The two answers the banner offers (→ DECISIONS #131). */
+		/**
+		 * The last open day, where the errand becomes the headline and the closure
+		 * drops to the detail — reading order is urgency, and by this morning the
+		 * urgent half is the shopping rather than the holiday (→ SPEC §3.6).
+		 *
+		 * The shops always shut *tomorrow* here: the last open day is by definition
+		 * the day before the run starts, so the detail can say so outright.
+		 */
+		lastCall: 'Last chance to shop today',
+		lastCallDetail: (holidays: string, closedDays: number) =>
+			closedDays === 1
+				? `${holidays} · closed tomorrow`
+				: `${holidays} · closed for ${closedDays} days from tomorrow`,
+
+		/** The answers the banner offers (→ DECISIONS #131). */
 		remindTomorrow: 'Remind me tomorrow',
 		dismiss: 'Got it'
 	},

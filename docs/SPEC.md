@@ -204,11 +204,18 @@ where it can still be acted on (→ [DECISIONS #131](DECISIONS.md)).
   reads "Shops are closed on {weekday}" — or "for {n} days" when the run is longer — over
   "{holiday} · last shopping day is {day}". The holiday's name sits in the quieter line because
   knowing it's Corpus Christi changes nothing about the shopping; the day to shop on is the
-  part worth acting on, and reads "today" while there is still time today.
+  part worth acting on.
+- **On the last open day the two lines swap round**: "Last chance to shop today" over "{holiday}
+  · closed for {n} days from tomorrow". Reading order is urgency, and by that morning the urgent
+  half is the errand rather than the holiday. The shops always shut _tomorrow_ on that day — the
+  last open day is by definition the one before the run — so the detail says so outright.
 - **Two answers**, both named in full: **Remind me tomorrow** (hidden for the day) and **Got it**
   (hidden for this closure). Per member — one person having done the shop must not silence the
   other — and per closure, so answering never carries over to the next holiday. Answering on
-  either screen answers on both.
+  either screen answers on both. **On the last open day only "Got it" is offered**: tomorrow the
+  shops are shut, so a reminder then would arrive after the errand became impossible — an offer
+  the day cannot keep. (A notice can still run across a shut day without being at its last: a
+  Sunday two days before an Epiphany Tuesday still has the Monday left, and still offers both.)
 - **One push**, on the first morning of the notice (08:00 household-local, the same sweep as the
   task nudges): "🛍️ {holiday} — the shops are closed for {n} days / Last shopping day is
   {day}", deep-linking to the shopping list. Once per member per closure, never again. A member

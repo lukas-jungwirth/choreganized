@@ -43,10 +43,32 @@
 	let tomorrowForm = $state<HTMLFormElement | null>(null);
 	let dismissForm = $state<HTMLFormElement | null>(null);
 
-	const title = $derived(m.holiday.closed(notice.closureDate, notice.closedDays));
-	const detail = $derived(
-		m.holiday.detail(m.holiday.names(notice.holidays), notice.lastOpenDay, today)
+	/**
+	 * The last day the shops open before the run — so the shopping has to happen
+	 * today or not at all.
+	 *
+	 * Two things follow. **"Remind me tomorrow" is not offered**: tomorrow the
+	 * shops are shut, and a reminder that arrives after the errand became
+	 * impossible is worse than none — it would read as a promise the day can't
+	 * keep. And the card swaps its two lines round, because by this morning the
+	 * urgent half is the shopping rather than the holiday (→ SPEC §3.6).
+	 */
+	const lastCall = $derived(today === notice.lastOpenDay);
+
+	const holidays = $derived(m.holiday.names(notice.holidays));
+	const title = $derived(
+		lastCall ? m.holiday.lastCall : m.holiday.closed(notice.closureDate, notice.closedDays)
 	);
+	const detail = $derived(
+		lastCall
+			? m.holiday.lastCallDetail(holidays, notice.closedDays)
+			: m.holiday.detail(holidays, notice.lastOpenDay, today)
+	);
+
+	const choices = $derived([
+		...(lastCall ? [] : [{ label: m.holiday.remindTomorrow, onclick: () => answer(tomorrowForm) }]),
+		{ label: m.holiday.dismiss, onclick: () => answer(dismissForm) }
+	]);
 
 	function answer(form: HTMLFormElement | null) {
 		answered = notice.closureDate;
@@ -55,25 +77,19 @@
 </script>
 
 {#if answered !== notice.closureDate}
-	<Banner
-		variant="info"
-		{title}
-		{detail}
-		choices={[
-			{ label: m.holiday.remindTomorrow, onclick: () => answer(tomorrowForm) },
-			{ label: m.holiday.dismiss, onclick: () => answer(dismissForm) }
-		]}
-	>
+	<Banner variant="info" {title} {detail} {choices}>
 		{#snippet icon()}<Store size={18} strokeWidth={1.9} />{/snippet}
 	</Banner>
 {/if}
 
 <!-- Which closure is being answered travels with the answer: a tab left open
 	 over the weekend would otherwise dismiss whatever notice is current now. -->
-<form method="POST" action="?/holidayNotice" use:enhance bind:this={tomorrowForm} hidden>
-	<input type="hidden" name="closureDate" value={notice.closureDate} />
-	<input type="hidden" name="answer" value="tomorrow" />
-</form>
+{#if !lastCall}
+	<form method="POST" action="?/holidayNotice" use:enhance bind:this={tomorrowForm} hidden>
+		<input type="hidden" name="closureDate" value={notice.closureDate} />
+		<input type="hidden" name="answer" value="tomorrow" />
+	</form>
+{/if}
 <form method="POST" action="?/holidayNotice" use:enhance bind:this={dismissForm} hidden>
 	<input type="hidden" name="closureDate" value={notice.closureDate} />
 	<input type="hidden" name="answer" value="dismiss" />

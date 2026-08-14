@@ -1185,6 +1185,12 @@ export const de: Messages = {
 		detail: (holidays: string, lastOpenDay: CalendarDate, today: CalendarDate) =>
 			`${holidays} · letzter Einkaufstag ist ${shoppingDay(lastOpenDay, today)}`,
 
+		lastCall: 'Letzte Gelegenheit zum Einkaufen',
+		lastCallDetail: (holidays: string, closedDays: number) =>
+			closedDays === 1
+				? `${holidays} · morgen geschlossen`
+				: `${holidays} · ab morgen ${closedDays} Tage geschlossen`,
+
 		remindTomorrow: 'Morgen erinnern',
 		dismiss: 'Alles klar'
 	},
