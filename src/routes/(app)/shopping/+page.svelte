@@ -5,6 +5,7 @@
 	and any row.
 -->
 <script lang="ts">
+	import HolidayNotice from '$lib/components/HolidayNotice.svelte';
 	import BasketIcon from '$lib/components/icons/BasketIcon.svelte';
 	import PageHeader from '$lib/components/shell/PageHeader.svelte';
 	import BoughtSection from '$lib/components/shopping/BoughtSection.svelte';
@@ -125,6 +126,14 @@
 	{/snippet}
 </PageHeader>
 
+<!-- Above the field, not below it: it is context for the whole screen — how much
+	 to buy and by when — rather than another thing to add (→ SPEC §3.6). -->
+{#if data.holidayNotice}
+	<div class="notice">
+		<HolidayNotice notice={data.holidayNotice} today={data.today} />
+	</div>
+{/if}
+
 <QuickAdd
 	bind:value={quickName}
 	{suggestions}
@@ -186,6 +195,12 @@
 		padding: 4px;
 		margin: -4px -4px -4px 0;
 		color: var(--text-4);
+	}
+
+	/* The header sits tight against the field it introduces; the notice needs the
+	   gap a card gets everywhere else in the app. */
+	.notice {
+		margin-bottom: 14px;
 	}
 
 	.empty {

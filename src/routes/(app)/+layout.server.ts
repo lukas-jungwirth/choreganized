@@ -11,6 +11,7 @@ import { error } from '@sveltejs/kit';
 import { catalog } from '$lib/i18n';
 import { requireMember } from '$lib/server/guards';
 import { listActiveTimers } from '$lib/server/services/cook-timers';
+import { holidayNoticeFor } from '$lib/server/services/holidays';
 import { getHousehold, listMembers } from '$lib/server/services/household';
 import { listOverdueForMember } from '$lib/server/services/tasks';
 import { todayIn } from '$lib/utils/dates';
@@ -41,6 +42,13 @@ export const load: LayoutServerLoad = (event) => {
 		today,
 		/** Drives the Tasks tab badge [4e]; Home reads the same rows for its banner. */
 		overdue: listOverdueForMember(householdId, member, today),
+		/**
+		 * The holiday shopping notice, on Home and on Shopping (→ SPEC §3.6). Read
+		 * here for the same reason the timers are: two screens show it, and neither
+		 * of them owns it. Cheap on the ~330 days a year with no closure in view —
+		 * pure calendar arithmetic, and no query at all.
+		 */
+		holidayNotice: holidayNoticeFor(householdId, member.id, household.timezone, today),
 		/**
 		 * The dock above the tab bar and cook mode's ring are both a rendering of
 		 * these [7h]. Read here rather than only in cook mode, because a timer

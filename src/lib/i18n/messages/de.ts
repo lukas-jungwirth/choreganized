@@ -30,6 +30,8 @@ import {
 	needsYear,
 	type CalendarDate
 } from '$lib/utils/dates';
+import { INTL_LOCALE } from '$lib/i18n/locale';
+import type { HolidayKey } from '$lib/utils/holidays';
 import { formatAmount, formatIngredient } from '$lib/utils/ingredients';
 import type { MealSlot } from '$lib/utils/meals';
 import { formatQuantity, type UnitLabels } from '$lib/utils/shopping';
@@ -49,6 +51,39 @@ const UNITS: UnitLabels = {
 	tbsp: 'EL',
 	tsp: 'TL'
 };
+
+/**
+ * Austria's own names, which is the point of keeping them here rather than in
+ * `utils/holidays.ts`: the 25th is **Christtag** and the 26th **Stefanitag**,
+ * not the "1./2. Weihnachtsfeiertag" a German catalog would write (→ SPEC §3.6).
+ */
+const HOLIDAYS: Record<HolidayKey, string> = {
+	newYear: 'Neujahr',
+	epiphany: 'Heilige Drei Könige',
+	easterMonday: 'Ostermontag',
+	labourDay: 'Staatsfeiertag',
+	ascension: 'Christi Himmelfahrt',
+	whitMonday: 'Pfingstmontag',
+	corpusChristi: 'Fronleichnam',
+	assumption: 'Mariä Himmelfahrt',
+	nationalDay: 'Nationalfeiertag',
+	allSaints: 'Allerheiligen',
+	christmas: 'Christtag',
+	stStephen: 'Stefanitag'
+};
+
+/** "Christtag und Stefanitag" — `Intl` supplies the joiner. */
+function list(items: string[]): string {
+	return new Intl.ListFormat(INTL_LOCALE[L], { style: 'long', type: 'conjunction' }).format(items);
+}
+
+/** Der letzte Einkaufstag, so benannt, wie man ihn ausspricht. */
+function shoppingDay(lastOpenDay: CalendarDate, today: CalendarDate): string {
+	const days = daysBetween(today, lastOpenDay);
+	if (days <= 0) return 'heute';
+	if (days === 1) return 'morgen';
+	return formatWeekdayLong(lastOpenDay, L);
+}
 
 export const de: Messages = {
 	/* ── The document itself ───────────────────────────────────────────────── */
@@ -919,6 +954,8 @@ export const de: Messages = {
 			overdueNudgesDetail: 'Ein Hinweis am Morgen danach',
 			shoppingUpdates: 'Einkaufsliste',
 			shoppingUpdatesDetail: 'Wenn jemand etwas auf die Liste setzt',
+			shopClosures: 'Einkaufen vor Feiertagen',
+			shopClosuresDetail: 'Ein paar Tage bevor ein Feiertag die Geschäfte zusperrt',
 			note: 'Das gilt auf jedem Gerät, das du unten einschaltest.'
 		},
 
@@ -1135,6 +1172,23 @@ export const de: Messages = {
 		notNow: 'Jetzt nicht'
 	},
 
+	/* ── Geschäfte zu [Home, Einkaufen] ────────────────────────────────────── */
+	holiday: {
+		names: (keys: HolidayKey[]) => list(keys.map((key) => HOLIDAYS[key])),
+
+		closed: (closureDate: CalendarDate, closedDays: number) =>
+			closedDays === 1
+				? `Am ${formatWeekdayLong(closureDate, L)} sind die Geschäfte zu`
+				: `Die Geschäfte sind ${closedDays} Tage zu`,
+
+		/** "Nationalfeiertag · letzter Einkaufstag ist Samstag". */
+		detail: (holidays: string, lastOpenDay: CalendarDate, today: CalendarDate) =>
+			`${holidays} · letzter Einkaufstag ist ${shoppingDay(lastOpenDay, today)}`,
+
+		remindTomorrow: 'Morgen erinnern',
+		dismiss: 'Alles klar'
+	},
+
 	/* ── Notifications ─────────────────────────────────────────────────────── */
 	push: {
 		shoppingAdd: (member: string, count: number) =>
@@ -1150,6 +1204,13 @@ export const de: Messages = {
 			`${emoji} ${task} ist heute fällig — ${assigned ? 'du bist dran' : 'kann jemand übernehmen'}`,
 		taskOverdue: (emoji: string, task: string, assigned: boolean) =>
 			`${emoji} ${task} ist überfällig — ${assigned ? 'du bist dran' : 'kann jemand übernehmen'}`,
+
+		shopsClosed: (holidays: string, closedDays: number) =>
+			closedDays === 1
+				? `🛍️ ${holidays} — die Geschäfte haben zu`
+				: `🛍️ ${holidays} — die Geschäfte haben ${closedDays} Tage zu`,
+		shopsClosedBody: (lastOpenDay: CalendarDate, today: CalendarDate) =>
+			`Letzter Einkaufstag ist ${shoppingDay(lastOpenDay, today)}.`,
 
 		testTitle: '🔔 Benachrichtigungen sind an',
 		testBody: 'So sieht ein Hinweis von Choreganized aus.',

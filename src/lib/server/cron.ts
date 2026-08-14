@@ -13,6 +13,7 @@ import { schedule } from 'node-cron';
 import { clockIn, todayIn, type CalendarDate } from '$lib/utils/dates';
 import { backUpDatabase, serverDay } from './backup';
 import { sweepCookTimers } from './services/cook-timers';
+import { sendClosureReminders } from './services/holidays';
 import { listHouseholdClocks } from './services/household';
 import { allReferencedImagePaths } from './services/recipes';
 import { sendTaskReminders } from './services/reminders';
@@ -99,6 +100,7 @@ export function registerCronJobs(): void {
 	const jobs: Job[] = [
 		['shopping-cleanup', cleanUpCheckedShoppingItems],
 		['task-reminders', sweepTaskReminders],
+		['shop-closures', sweepShopClosures],
 		['cook-timers', catchUpCookTimers],
 		['db-backup', runNightlyBackup],
 		['import-photo-cleanup', sweepAbandonedImportPhotos]
@@ -203,6 +205,37 @@ async function sweepTaskReminders(now: Date = new Date()): Promise<void> {
 			if (sent.nudges > 0) {
 				console.log(
 					`[cron] ${sent.nudges} task reminder(s) in household ${household.id} → ${sent.devices} device(s)`
+				);
+			}
+		});
+	}
+}
+
+/**
+ * The heads-up before a holiday shuts the shops (→ SPEC §3.6,
+ * `services/holidays.ts`).
+ *
+ * Same 08:00 gate and same flag-on-the-row idempotency as the task nudges above
+ * — the row is in `holiday_notices` rather than on a task, because a closure is
+ * a fact about the calendar and has no row of its own. On the ~330 days a year
+ * with no closure in view the service answers from pure arithmetic without
+ * touching the database.
+ */
+async function sweepShopClosures(now: Date = new Date()): Promise<void> {
+	for (const household of listHouseholdClocks()) {
+		await guard(`shop-closures ${household.id}`, async () => {
+			const { hour, minute } = clockIn(household.timezone, now);
+			if (hour * 60 + minute < REMINDER_MINUTE_OF_DAY) return;
+
+			const sent = await sendClosureReminders(
+				household.id,
+				household.timezone,
+				todayIn(household.timezone, now),
+				now
+			);
+			if (sent.notices > 0) {
+				console.log(
+					`[cron] told ${sent.notices} member(s) in household ${household.id} the shops are closing → ${sent.devices} device(s)`
 				);
 			}
 		});

@@ -38,6 +38,7 @@ src/
     components/
       EnablePush.svelte        # "notifications on this device" (Settings + Home) [plan 05]
       AwayControl.svelte       # the holiday pause (snooze sheet + Settings)      [plan 10]
+      HolidayNotice.svelte     # "the shops are shut on Monday" (Home + Shopping)  [SPEC §3.6]
       ui/                      # dumb primitives: Button, Card, BottomSheet, Chip,
                                # Avatar, SegmentedControl, Toggle, EmptyState, FAB…
       shell/                   # Screen (onboarding), TabBar, PageHeader
@@ -52,9 +53,10 @@ src/
       backup.ts                # nightly SQLite online-backup + 14-day rotation [plan 11]
       cron.ts                  # registerCronJobs(): reminders, timers, cleanup, backup [plan 05+]
       services/                # domain logic: household.ts, home.ts, shopping.ts, tasks.ts,
-                               # history.ts, reminders.ts, recipes.ts, meals.ts, timers.ts
-    utils/                     # dates.ts (household-local helpers), ingredients.ts,
-                               # invite-code.ts, timer-parse.ts
+                               # history.ts, reminders.ts, holidays.ts, recipes.ts, meals.ts,
+                               # timers.ts
+    utils/                     # dates.ts (household-local helpers), holidays.ts (Austrian
+                               # shop closures), ingredients.ts, invite-code.ts, timer-parse.ts
   routes/                      # see routing map below
 static/                        # icons/ (placeholders [05]), manifest.webmanifest [plan 11]
 design/Hearth.dc.html          # the design mockups (open in a browser)
@@ -155,10 +157,12 @@ Two delivery paths, one send module (`lib/server/push.ts`):
 1. **Event-driven** (someone did something): called fire-and-forget from the action/service —
    `void sendToMembers(...)` — never awaited in the request path, errors logged, 404/410 prunes
    the subscription row.
-2. **Time-driven** (reminders, timers, cleanup): `node-cron` minute tick scanning the DB with
-   idempotency flags and an effective lookback (see DATA-MODEL.md → "Reminder time-sweep").
-   Cook timers additionally get a precise in-process `setTimeout` at creation; the cron sweep
-   is the restart-safe fallback.
+2. **Time-driven** (reminders, shop closures, timers, cleanup): `node-cron` minute tick scanning
+   the DB with idempotency flags and an effective lookback (see DATA-MODEL.md → "Reminder
+   time-sweep"). Cook timers additionally get a precise in-process `setTimeout` at creation; the
+   cron sweep is the restart-safe fallback. The shop-closure notice (→ SPEC §3.6) is the one
+   time-driven send whose _occurrence_ has no row at all — it is computed from the calendar, and
+   only the flag lives in `holiday_notices`.
 
 Payload contract (`PushPayload` in `push.ts` ⟷ the SW `push` handler):
 `{ title, body?, tag, url, renotify?, vibrate? }`. **`title` carries the message** — the

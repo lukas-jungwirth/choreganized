@@ -45,9 +45,9 @@ export type PushPayload = {
 	vibrate?: number[];
 };
 
-/** The `members` columns that gate a category of notification (→ SPEC §3.5, §5.6). */
+/** The `members` columns that gate a category of notification (→ SPEC §3.5, §3.6, §5.6). */
 export type NotificationPref =
-	'notifyTaskReminders' | 'notifyOverdueNudges' | 'notifyShoppingUpdates';
+	'notifyTaskReminders' | 'notifyOverdueNudges' | 'notifyShoppingUpdates' | 'notifyShopClosures';
 
 /**
  * A notification, written in the recipient's language.

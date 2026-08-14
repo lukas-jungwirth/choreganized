@@ -9,6 +9,7 @@
 -->
 <script lang="ts">
 	import EnablePush from '$lib/components/EnablePush.svelte';
+	import HolidayNotice from '$lib/components/HolidayNotice.svelte';
 	import InstallPrompt from '$lib/components/InstallPrompt.svelte';
 	import ActivityCard from '$lib/components/home/ActivityCard.svelte';
 	import DinnerCard from '$lib/components/home/DinnerCard.svelte';
@@ -120,6 +121,13 @@
 		>
 			{#snippet icon()}<Bell size={20} strokeWidth={2} />{/snippet}
 		</Banner>
+	{/if}
+
+	<!-- A dozen days a year, and only for the three before one: the shops are
+		 about to shut and there is still time to do something about it
+		 (→ SPEC §3.6). Above the standing prompts below, which have no deadline. -->
+	{#if data.holidayNotice}
+		<HolidayNotice notice={data.holidayNotice} today={data.today} />
 	{/if}
 
 	<!-- Renders nothing unless push is genuinely available and unanswered on this

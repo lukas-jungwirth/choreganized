@@ -170,6 +170,15 @@ export const members = sqliteTable(
 		notifyShoppingUpdates: integer('notify_shopping_updates', { mode: 'boolean' })
 			.notNull()
 			.default(false),
+		/**
+		 * The heads-up before a holiday shuts the shops (→ `holidayNotices`,
+		 * SPEC §3.6). On by default, unlike the shopping-update switch beside it:
+		 * this fires around a dozen times a year rather than a dozen times a week,
+		 * and the cost of missing one is a fridge that stays empty for three days.
+		 */
+		notifyShopClosures: integer('notify_shop_closures', { mode: 'boolean' })
+			.notNull()
+			.default(true),
 		joinedAt: integer('joined_at', { mode: 'timestamp_ms' })
 			.notNull()
 			.$defaultFn(() => new Date())
@@ -498,6 +507,51 @@ export const taskCompletions = sqliteTable(
 	(t) => [index('task_completions_household_idx').on(t.householdId, t.completedAt)]
 );
 
+/**
+ * What each member has already been told — and told us — about one shop
+ * closure (→ SPEC §3.6, `utils/holidays.ts`).
+ *
+ * The closure itself has no row and never will: it is computed from the
+ * calendar, the same answer in every household and in every year. This is only
+ * the two things a calendar can't know — whether the push has gone out, and
+ * whether the reader has waved the banner away — so a row exists only once
+ * somebody has been notified or has answered.
+ *
+ * Per member, not per household: one person tapping "dismiss" must not silence
+ * their housemate, who may still be the one doing the shopping.
+ */
+export const holidayNotices = sqliteTable(
+	'holiday_notices',
+	{
+		id: id(),
+		householdId: text('household_id')
+			.notNull()
+			.references(() => households.id, { onDelete: 'cascade' }),
+		memberId: text('member_id')
+			.notNull()
+			.references(() => members.id, { onDelete: 'cascade' }),
+		/** The closure's first shut day, 'YYYY-MM-DD' — which notice this is about. */
+		closureDate: text('closure_date').notNull(),
+		/** Set when the push went out; the idempotency flag, like a task's. */
+		pushedAt: integer('pushed_at', { mode: 'timestamp_ms' }),
+		/**
+		 * Hidden from this member until this household-local date — which is both
+		 * answers the banner offers, at two different dates. "Remind me tomorrow"
+		 * writes tomorrow; **"Dismiss" writes `closureDate` itself**, i.e. hidden
+		 * until the shops are already shut, which is as long as the notice was ever
+		 * going to live. One column, because "for good" and "for now" differ only
+		 * in how long (→ DECISIONS #131).
+		 */
+		hiddenUntil: text('hidden_until'),
+		createdAt: createdAt()
+	},
+	(t) => [
+		// One row per member per closure — the upsert's conflict target, and the
+		// index the banner's read uses.
+		uniqueIndex('holiday_notices_member_closure_unique').on(t.memberId, t.closureDate)
+	]
+);
+
 /* ────────────────────────────────────────────────────────────────────────────
  * Push notifications & cook timers
  * ──────────────────────────────────────────────────────────────────────────── */
@@ -572,6 +626,7 @@ export type RecipeIngredient = typeof recipeIngredients.$inferSelect;
 export type RecipeStep = typeof recipeSteps.$inferSelect;
 export type RecipeStepIngredient = typeof recipeStepIngredients.$inferSelect;
 export type Meal = typeof meals.$inferSelect;
+export type HolidayNotice = typeof holidayNotices.$inferSelect;
 export type Task = typeof tasks.$inferSelect;
 export type TaskCompletion = typeof taskCompletions.$inferSelect;
 export type PushSubscription = typeof pushSubscriptions.$inferSelect;
