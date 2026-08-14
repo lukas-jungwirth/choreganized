@@ -1376,3 +1376,61 @@ that actually adapts there; this wants checking on a real device.
        first toggle carry a permission prompt and an endpoint the server can't see at load
        time, and costs the portability `PrefRow`'s refetch-on-focus is built for (a change made
        on the laptop moves the switch on the phone). Not worth it for a household of two.
+
+131. **The shop-closure notice is computed, not stored — and it asks a question rather than
+     pointing somewhere** (→ [SPEC §3.6](SPEC.md), `utils/holidays.ts`,
+     `services/holidays.ts`). Austria shuts its shops on Sundays and twelve public holidays, and
+     a household that finds that out on the day has an empty fridge for three days. The feature
+     is one banner and one push, and every interesting decision in it is about what _not_ to
+     say.
+
+     - **A year of holidays is arithmetic, not a table.** Four of the twelve follow Easter, so
+       the module computes Easter (the anonymous Gregorian computus) and derives them; the other
+       eight are fixed dates. A hard-coded list is a bug with a delivery date — it works until
+       the year it silently doesn't. `holidays.test.ts` checks the computus against published
+       dates out to 2285, asserts Ascension and Corpus Christi land on a Thursday for forty
+       years, and walks every day of two years asserting the notice's invariants.
+     - **Two holidays are deliberately missing.** **8 December** (Mariä Empfängnis) is a public
+       holiday on which shops may open, and the chains do — warning about a day the shops are
+       open is worse than saying nothing. **Good Friday** has not been a general public holiday
+       in Austria since 2019. Both are the sort of thing a later reader "fixes" by counting the
+       list, so the module says so where the list is.
+     - **A Sunday is never news, and neither is a holiday that falls on one.** What the notice
+       is about is a _run_ of shut days containing at least one holiday on an **ordinary
+       shopping day**: Easter Monday after Easter Sunday is two days shut and worth knowing;
+       All Saints' on a Sunday shuts a shop that was shut anyway. The count it reports includes
+       the Sunday, because "closed for 3 days" is what decides how much food to buy.
+     - **The window ends on the last open day, and is three days long.** The last open day is by
+       construction the day before the run, so the whole search is three days of lookahead. It
+       never shows once the run has begun — by then the errand is impossible, and being early
+       enough to act on was the entire point.
+     - **`utils/dates.ts` stopped importing `$lib`.** It is now a relative, extensioned import,
+       the way `db/schema.ts` already does it, because `node --test` runs outside Vite and Vite
+       is what resolves the alias. That one line is the difference between the holiday
+       arithmetic being tested and being hoped about.
+     - **No row for the closure, one row per member for the answer.** Which days shops shut is
+       the same answer in every household and in every year, so storing it would only be a copy
+       that can go stale. `holiday_notices` holds the two things the calendar can't know: whether
+       the push went out (`pushedAt`, claimed conditionally in the insert, exactly as
+       `tasks.dueReminderSentAt` is claimed before a send) and whether the reader has waved it
+       away. Per member, because one person having done the shop must not silence the other.
+     - **"Dismiss" and "remind me tomorrow" are one column.** Both hide the banner until a date:
+       tomorrow, or the closure date itself — which no day in the window can reach, the window
+       ending the day before the shops shut. A second boolean would have been a second thing to
+       keep consistent for no new behaviour. It also means the two answers converge on the last
+       open day, which is correct: there is no tomorrow left for that notice.
+     - **The away pause skips the push but not the banner** (cf. [#60](DECISIONS.md)). Away
+       leaves the flag unclaimed, so a housemate home on the Friday still hears about Monday; a
+       member who switched the preference off spends it, since that silences a phone rather than
+       holding the notice open. The banner ignores away entirely — a push interrupts, a banner
+       waits, and the app not mentioning the closure to somebody who just got back would be the
+       worse failure.
+     - **`Banner` gained `choices` rather than the app gaining a bespoke card.** The existing
+       shapes are a link, or a 60px pill plus an ×; "Remind me tomorrow" fits neither, and an ×
+       that silently means "ask me again tomorrow" is a guess the reader has to make. Two named
+       answers on a row of their own under the text — one addition to the primitive, and the
+       tint, tile and type scale stay the banner's (→ DESIGN-SYSTEM).
+     - **Austria only, gated on the household timezone.** The household already records where it
+       lives and this is the first feature to ask; a household keeping time elsewhere is told
+       nothing rather than told something wrong. A country column can wait until there is a
+       second country.

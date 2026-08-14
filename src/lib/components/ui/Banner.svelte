@@ -11,6 +11,12 @@
 	  it. Two controls rather than one card, because a button inside a
 	  card-sized button isn't valid HTML.
 	- neither — it only informs.
+
+	`choices` is the fourth shape and the only one that reads as a question: two
+	answers, both named in full, on a row of their own under the text. A banner
+	whose second answer won't fit in a 60px pill — "Remind me tomorrow" beside
+	"Got it" [holiday notice] — has to say both out loud rather than hide one
+	behind an × nobody can read (→ DECISIONS #131).
 -->
 <script lang="ts">
 	import X from '@lucide/svelte/icons/x';
@@ -34,6 +40,12 @@
 		ondismiss?: () => void;
 		/** Overrides the generic "Dismiss" where the banner can say what it drops. */
 		dismissLabel?: string;
+		/**
+		 * Two (or more) named answers, on their own row under the text. For a
+		 * banner that asks something rather than pointing somewhere; ignored when
+		 * `href` is set, for the same reason `onclick` is.
+		 */
+		choices?: { label: string; onclick: () => void }[];
 		/** The icon for the leading tile, sized by the variant. */
 		icon: Snippet;
 	};
@@ -48,6 +60,7 @@
 		disabled = false,
 		ondismiss,
 		dismissLabel,
+		choices,
 		icon
 	}: Props = $props();
 
@@ -59,6 +72,15 @@
 	<span class="text">
 		<span class="title">{title}</span>
 		{#if detail}<span class="detail">{detail}</span>{/if}
+		{#if choices && !href}
+			<span class="choices">
+				{#each choices as choice (choice.label)}
+					<button class="choice" type="button" {disabled} onclick={choice.onclick}>
+						{choice.label}
+					</button>
+				{/each}
+			</span>
+		{/if}
 	</span>
 	{#if action}
 		{#if href || !onclick}
@@ -116,8 +138,8 @@
 		margin-top: 2px;
 	}
 
-	.action {
-		flex: none;
+	.action,
+	.choice {
 		padding: 7px 13px;
 		border-radius: var(--r-chip);
 		background: var(--card);
@@ -125,7 +147,22 @@
 		font-weight: 700;
 	}
 
-	button.action:disabled {
+	.action {
+		flex: none;
+	}
+
+	/* The answers get the full width of the text column rather than the scraps a
+	   pill leaves beside it — "Remind me tomorrow" has to be readable. Wrapping
+	   is the fallback at the largest type scales. */
+	.choices {
+		display: flex;
+		flex-wrap: wrap;
+		gap: 8px;
+		margin-top: 11px;
+	}
+
+	button.action:disabled,
+	.choice:disabled {
 		opacity: 0.55;
 		cursor: default;
 	}
@@ -169,7 +206,8 @@
 		color: var(--danger-soft);
 	}
 
-	.danger .action {
+	.danger .action,
+	.danger .choice {
 		color: var(--danger);
 	}
 
@@ -200,7 +238,8 @@
 		color: var(--info-soft);
 	}
 
-	.info .action {
+	.info .action,
+	.info .choice {
 		color: var(--sage);
 	}
 

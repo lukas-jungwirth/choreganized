@@ -6,6 +6,7 @@
 import { fail } from '@sveltejs/kit';
 import { catalog, type Messages } from '$lib/i18n';
 import { requireMember } from '$lib/server/guards';
+import { answerHolidayNotice, readHolidayAnswer } from '$lib/server/services/holidays';
 import {
 	addItem,
 	deleteItem,
@@ -141,5 +142,24 @@ export const actions: Actions = {
 		reorderItems(householdId, storeId, ids);
 
 		return { reordered: true };
+	},
+
+	/**
+	 * "Remind me tomorrow" / "Got it" on the shop-closure banner (→ SPEC §3.6).
+	 * The banner shows here and on Home, so the wrapper does too — the state is a
+	 * row rather than a screen's flag, so answering on either puts it away on both.
+	 */
+	holidayNotice: async (event) => {
+		const { householdId, member } = requireMember(event);
+		const answered = readHolidayAnswer(await event.request.formData());
+
+		// A stale tab answering a notice that is no longer up writes nothing — and
+		// needs no error either, since the banner it was answering is already gone.
+		// Reported honestly all the same rather than as a blanket success.
+		return {
+			holidayAnswered: answered
+				? answerHolidayNotice(householdId, member.id, answered.closureDate, answered.answer)
+				: false
+		};
 	}
 };

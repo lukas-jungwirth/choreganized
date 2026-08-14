@@ -19,7 +19,11 @@
  * member (→ `$lib/i18n`).
  */
 import { addDays as shiftDays, addMonths, addWeeks } from 'date-fns';
-import { INTL_LOCALE, INTL_LOCALE_DAY_FIRST, type Locale } from '$lib/i18n/locale';
+// Relative and extensioned, not `$lib`, for the reason `db/schema.ts` gives:
+// something loads this outside Vite, and Vite is what resolves the alias. Here
+// it is `node --test`, which runs `holidays.test.ts` against the calendar
+// arithmetic below (→ `utils/holidays.ts`).
+import { INTL_LOCALE, INTL_LOCALE_DAY_FIRST, type Locale } from '../i18n/locale.ts';
 
 /** A household-local calendar date, 'YYYY-MM-DD'. Lexicographic order = chronological order. */
 export type CalendarDate = string;

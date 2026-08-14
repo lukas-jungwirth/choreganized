@@ -54,6 +54,7 @@
 	import Check from '@lucide/svelte/icons/check';
 	import Plus from '@lucide/svelte/icons/plus';
 	import Send from '@lucide/svelte/icons/send';
+	import Store from '@lucide/svelte/icons/store';
 	import { untrack } from 'svelte';
 	import type { PageProps } from './$types';
 
@@ -147,6 +148,7 @@
 	let query = $state('');
 	let bannerBusy = $state(false);
 	let bannerDismissed = $state(false);
+	let bannerChoice = $state('');
 
 	/** Shows the disabled/in-flight pill without needing a real subscription. */
 	function demoBusy() {
@@ -403,6 +405,22 @@
 					{#snippet icon()}<Bell size={18} strokeWidth={1.9} />{/snippet}
 				</Banner>
 			{/if}
+			<Banner
+				variant="info"
+				title="Shops are closed on Monday"
+				detail="National Day · last shopping day is Saturday"
+				choices={[
+					{ label: 'Remind me tomorrow', onclick: () => (bannerChoice = 'tomorrow') },
+					{ label: 'Got it', onclick: () => (bannerChoice = 'dismissed') }
+				]}
+			>
+				{#snippet icon()}<Store size={18} strokeWidth={1.9} />{/snippet}
+			</Banner>
+			<p class="note">
+				`choices` is the shape for a banner that asks rather than points — two answers named in
+				full, on a row of their own, because "Remind me tomorrow" was never going to fit a 60px pill
+				(the holiday notice, → SPEC §3.6).{bannerChoice ? ` You picked: ${bannerChoice}.` : ''}
+			</p>
 		</div>
 	</section>
 

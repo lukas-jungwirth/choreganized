@@ -176,6 +176,52 @@ a danger badge with the current user's overdue count [4e].
   {member} needs more of {n} things on the list". Nothing new appeared, and sending somebody
   standing in the shop to look for a line that isn't there is worse than saying nothing.
 
+### 3.6 Shop-closure notice — "the shops are shut on Monday"
+
+Austria closes its shops on Sundays and on public holidays, and the household finding that out
+on the day is a fridge that stays empty for three days. So the app says it in advance, once,
+where it can still be acted on (→ [DECISIONS #131](DECISIONS.md)).
+
+- **What counts as a closure** is a _run_ of consecutive shut days containing at least one
+  holiday that falls on an **ordinary shopping day**. A Sunday on its own is never announced —
+  everyone plans around Sundays — and neither is a holiday that lands on one: All Saints' on a
+  Sunday shuts a shop that was shut anyway. Easter Monday after Easter Sunday _is_ two days
+  shut, and is.
+- **The twelve days**: New Year's Day, Epiphany, Easter Monday, Labour Day (1 May), Ascension,
+  Whit Monday, Corpus Christi, Assumption (15 Aug), National Day (26 Oct), All Saints',
+  Christmas Day, St Stephen's Day. Computed per year rather than tabulated — the four movable
+  ones follow Easter, which the app computes (`lib/utils/holidays.ts`), so no year needs a code
+  change. **8 December (Mariä Empfängnis) is deliberately not on the list**: it is a public
+  holiday, but shops may open and the chains do. Neither is Good Friday, which is not a general
+  public holiday in Austria. Regional Landesfeiertage close offices, not shops.
+- **When it shows**: the three days ending on the **last open day** before the run — a Monday
+  holiday is announced from Thursday and stays up through Saturday. It never appears once the
+  run has begun: by then the errand is impossible, and the notice's whole job was to be early
+  enough to act on. `today` itself may be shut and still carry the notice — a Sunday two days
+  before an Epiphany Tuesday names the Monday in between, which is the only day left to shop.
+- **Where**: a banner (`info`) on **Home**, under the overdue banner, and on **Shopping**, above
+  the add field. Home is where you find out, Shopping is where you do something about it. It
+  reads "Shops are closed on {weekday}" — or "for {n} days" when the run is longer — over
+  "{holiday} · last shopping day is {day}". The holiday's name sits in the quieter line because
+  knowing it's Corpus Christi changes nothing about the shopping; the day to shop on is the
+  part worth acting on, and reads "today" while there is still time today.
+- **Two answers**, both named in full: **Remind me tomorrow** (hidden for the day) and **Got it**
+  (hidden for this closure). Per member — one person having done the shop must not silence the
+  other — and per closure, so answering never carries over to the next holiday. Answering on
+  either screen answers on both.
+- **One push**, on the first morning of the notice (08:00 household-local, the same sweep as the
+  task nudges): "🛍️ {holiday} — the shops are closed for {n} days / Last shopping day is
+  {day}", deep-linking to the shopping list. Once per member per closure, never again. A member
+  who has already waved the banner away gets none; one who is **away** (§5.5) gets none either,
+  and their notice is still waiting the morning they're back — a push interrupts, a banner
+  waits, so the banner still shows them the closure whenever they open the app.
+- **Settings → Notifications → Shop closing days** switches the push off (default **on**, unlike
+  shopping updates: this fires around a dozen times a year, and missing one is expensive). It
+  silences the phone only — the in-app banner is not a notification and stays.
+- **Austria only** in v1, gated on the household's timezone. A household keeping time elsewhere
+  is told nothing rather than told something wrong; `lib/utils/holidays.ts` is where another
+  country would be added.
+
 ---
 
 ## 4. Cooking tab
@@ -540,9 +586,9 @@ The **History** tab is a stats landing; the full feed sits one level below it (�
 - Profile card: avatar, display name, email + **Edit**.
 - **Account**: Display name, Your colour (palette picker; taken colours disabled), **Language**
   (→ §9), **Appearance** (→ §10). (No password row in v1 — Google only.)
-- **Notifications**: Task reminders · Overdue nudges · Shopping list updates (toggles per
-  member, so they follow the person between devices), under a caption saying they apply on
-  every device switched on below.
+- **Notifications**: Task reminders · Overdue nudges · Shopping list updates · Shop closing days
+  (→ §3.6) — toggles per member, so they follow the person between devices, under a caption
+  saying they apply on every device switched on below.
 - **This device**: Enable on this device (subscribes push, shows permission state) · Send test
   notification. Its own group and heading, because permission is per-browser and the switch is
   not a master over the three above (→ DECISIONS #130).

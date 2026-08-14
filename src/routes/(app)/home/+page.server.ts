@@ -2,6 +2,7 @@ import { error, fail, type RequestEvent } from '@sveltejs/kit';
 import { catalog } from '$lib/i18n';
 import { requireMember } from '$lib/server/guards';
 import { getHousehold, listMembers } from '$lib/server/services/household';
+import { answerHolidayNotice, readHolidayAnswer } from '$lib/server/services/holidays';
 import { getHomeSummary } from '$lib/server/services/home';
 import {
 	completeTask,
@@ -119,6 +120,25 @@ export const actions: Actions = {
 		snoozeTask(householdId, readId(form), dueDate);
 
 		return { snoozed: true };
+	},
+
+	/**
+	 * "Remind me tomorrow" / "Got it" on the shop-closure banner (→ SPEC §3.6).
+	 * The same wrapper sits on `/shopping`, where the banner also shows — one
+	 * service call either way, so answering on one screen answers on both.
+	 */
+	holidayNotice: async (event) => {
+		const { householdId, member } = requireMember(event);
+		const answered = readHolidayAnswer(await event.request.formData());
+
+		// A stale tab answering a notice that is no longer up writes nothing — and
+		// needs no error either, since the banner it was answering is already gone.
+		// Reported honestly all the same rather than as a blanket success.
+		return {
+			holidayAnswered: answered
+				? answerHolidayNotice(householdId, member.id, answered.closureDate, answered.answer)
+				: false
+		};
 	},
 
 	/** The holiday pause the snooze sheet offers alongside — always your own. */

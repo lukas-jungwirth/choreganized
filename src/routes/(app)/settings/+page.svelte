@@ -190,6 +190,12 @@
 		detail={m.settings.prefs.shoppingUpdatesDetail}
 		checked={data.prefs.notifyShoppingUpdates}
 	/>
+	<PrefRow
+		pref="notifyShopClosures"
+		label={m.settings.prefs.shopClosures}
+		detail={m.settings.prefs.shopClosuresDetail}
+		checked={data.prefs.notifyShopClosures}
+	/>
 </RowGroup>
 
 <p class="note">{m.settings.prefs.note}</p>

@@ -221,7 +221,11 @@ none` — the knob's `transform` otherwise paints it over the input and swallows
   detail, optional action pill. With `href` the whole card is the link; with `onclick` the pill
   is a real button (`disabled` greys it mid-flight) and with `ondismiss` a trailing × appears —
   either of those keeps the card itself inert, since a button inside a button is invalid
-  (→ [DECISIONS #57](DECISIONS.md)).
+  (→ [DECISIONS #57](DECISIONS.md)). **`choices`** is the fourth shape, for a banner that _asks_
+  rather than points: named answers on a row of their own under the text, because a second
+  answer that reads "Remind me tomorrow" was never going to fit a 60px pill (the shop-closure
+  notice, → [DECISIONS #131](DECISIONS.md), [SPEC §3.6](SPEC.md)). One shape per banner — pick
+  the pill or the row, not both.
 - **ProgressBar** — 9px track `--track`, fill = member colour (points card).
 - **Copy comes from `$lib/i18n`, never from a literal** — including the labels the kit supplies
   itself (BottomSheet's ×, SearchField's placeholder, Stepper's ± , ColorPicker's palette

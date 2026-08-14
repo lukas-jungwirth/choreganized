@@ -7,13 +7,14 @@ schema changes). This doc explains the _shape_ and the _lifecycle algorithms_ th
 ```
 user ─┬─ session / account / verification        (Better Auth)
       ├─ push_subscriptions                      (per device)
-      └─ members ──→ households
-                        ├─ stores ──→ shopping_items
-                        ├─ recipes ──→ recipe_ingredients / recipe_steps
-                        │                     └─ recipe_step_ingredients ─┘
-                        ├─ meals (→ recipes, one per date × slot)
-                        ├─ tasks ──→ task_completions (snapshots)
-                        └─ cook_timers
+      └─ members ─┬─→ households
+                  │      ├─ stores ──→ shopping_items
+                  │      ├─ recipes ──→ recipe_ingredients / recipe_steps
+                  │      │                     └─ recipe_step_ingredients ─┘
+                  │      ├─ meals (→ recipes, one per date × slot)
+                  │      ├─ tasks ──→ task_completions (snapshots)
+                  │      └─ cook_timers
+                  └─ holiday_notices             (per member × shop closure)
 ```
 
 ## Core principles
@@ -54,6 +55,9 @@ user ─┬─ session / account / verification        (Better Auth)
   nudges fire only if it becomes due again after return; simpler: reminders check away at send
   time), Home banner.
 - Notification prefs live here (not on `user`) because they're household-app concerns.
+  `notifyShopClosures` (→ `holiday_notices`, SPEC §3.6) defaults **on**, unlike
+  `notifyShoppingUpdates` beside it: it fires around a dozen times a year rather than a dozen
+  times a week.
 - `locale`: `'en' | 'de' | NULL`. **NULL is a setting, not an absence** — it is Settings'
   "System" option, meaning "follow whatever device I'm on", which is what lets
   `hooks.server.ts` fall through to the `locale` cookie and then `Accept-Language`. On the
@@ -173,6 +177,30 @@ from whoever tapped.
   `action = 'done'`; `SUM(points) GROUP BY memberId`. Month boundaries computed from
   `households.timezone` — no reset job, always derived.
 
+### `holiday_notices`
+
+The two things the calendar can't know about a shop closure (→ [SPEC §3.6](SPEC.md)). The
+closure itself has **no row and never will**: which days Austrian shops shut is computed from
+the year (`lib/utils/holidays.ts`), identical in every household, so storing it would be a copy
+that can go stale. What is stored is one row per **member × closure**, created only once
+somebody has been notified or has answered:
+
+- `closureDate` — the run's first shut day, the notice's identity. Answers name it, so a tab
+  left open over a weekend can't dismiss whatever notice is current now.
+- `pushedAt` — the idempotency flag, playing exactly the role `tasks.dueReminderSentAt` plays
+  for a task: claimed before the send, so a restart mid-morning or two overlapping ticks cost a
+  notification rather than repeat one. Claimed **conditionally** (`pushedAt IS NULL AND
+hiddenUntil IS NULL`) in the same statement that inserts it, which is what makes a dismissal
+  at seven in the morning cancel that morning's push.
+- `hiddenUntil` — a household-local date, and **both** of the banner's answers: "remind me
+  tomorrow" writes tomorrow, "Got it" writes `closureDate` itself, which no day in the window
+  can reach because the window ends the day before the shops shut. One column, because "for
+  good" and "for now" differ only in how long (→ [DECISIONS #131](DECISIONS.md)).
+
+Per member, not per household: one person tapping dismiss must not silence the housemate who is
+actually doing the shopping. Rows for closures already under way are unreadable by definition
+and are deleted by the morning sweep, so the table stays at a couple of dozen rows a year.
+
 ### `push_subscriptions`
 
 - One row per browser/device (`endpoint` unique, upsert on re-subscribe). Send failures with
@@ -219,6 +247,9 @@ if localNow >= today 08:00:
   due today:   tasks where dueDate == localToday and dueReminderSentAt IS NULL  → push, set flag
   overdue:     tasks where dueDate <  localToday and overdueReminderSentAt IS NULL → push, set flag
 (skip away assignees; Anyone → all members; respect per-member toggles)
+  shop closure: a run of shut days starting within 3 days (→ utils/holidays.ts) → one push per
+                member, claimed in holiday_notices (skip away members, unclaimed; skip anyone
+                who has hidden it, and anyone with notifyShopClosures off — claimed)
 timers: cook_timers where endsAt <= now and notifiedAt/canceledAt IS NULL → push, set notifiedAt
 cleanup (03:30 local): checked shopping items older than 12h
 ```

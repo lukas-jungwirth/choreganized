@@ -30,6 +30,8 @@ import {
 	needsYear,
 	type CalendarDate
 } from '$lib/utils/dates';
+import { INTL_LOCALE } from '$lib/i18n/locale';
+import type { HolidayKey } from '$lib/utils/holidays';
 import { formatAmount, formatIngredient } from '$lib/utils/ingredients';
 import type { MealSlot } from '$lib/utils/meals';
 import { formatQuantity, type UnitLabels } from '$lib/utils/shopping';
@@ -62,6 +64,47 @@ const UNITS: UnitLabels = {
 	tbsp: 'tbsp',
 	tsp: 'tsp'
 };
+
+/**
+ * The holidays Austrian shops close for (→ `utils/holidays.ts`, SPEC §3.6).
+ * The module keeps the dates and the keys; a name is copy, and copy lives here
+ * — so English reads "Corpus Christi" where German reads "Fronleichnam".
+ */
+const HOLIDAYS: Record<HolidayKey, string> = {
+	newYear: 'New Year’s Day',
+	epiphany: 'Epiphany',
+	easterMonday: 'Easter Monday',
+	labourDay: 'Labour Day',
+	ascension: 'Ascension Day',
+	whitMonday: 'Whit Monday',
+	corpusChristi: 'Corpus Christi',
+	assumption: 'Assumption Day',
+	nationalDay: 'National Day',
+	allSaints: 'All Saints’ Day',
+	christmas: 'Christmas Day',
+	stStephen: 'St Stephen’s Day'
+};
+
+/**
+ * "Christmas Day and St Stephen's Day" — a run of shut days can hold two
+ * holidays. `Intl` knows each language's joiner, which is the whole reason not
+ * to write `.join(' & ')` here and again in German.
+ */
+function list(items: string[]): string {
+	return new Intl.ListFormat(INTL_LOCALE[L], { style: 'long', type: 'conjunction' }).format(items);
+}
+
+/**
+ * The last day to shop, named the way you'd say it out loud: "today" while
+ * there is still time today, "tomorrow", else the weekday. Never a bare date —
+ * the notice never runs more than three days, so a weekday can't be ambiguous.
+ */
+function shoppingDay(lastOpenDay: CalendarDate, today: CalendarDate): string {
+	const days = daysBetween(today, lastOpenDay);
+	if (days <= 0) return 'today';
+	if (days === 1) return 'tomorrow';
+	return formatWeekdayLong(lastOpenDay, L);
+}
 
 export const en = {
 	/* ── The document itself ───────────────────────────────────────────────── */
@@ -1223,6 +1266,8 @@ export const en = {
 			overdueNudgesDetail: 'One nudge the morning after it slipped',
 			shoppingUpdates: 'Shopping list updates',
 			shoppingUpdatesDetail: 'When a housemate adds to the list',
+			shopClosures: 'Shop closing days',
+			shopClosuresDetail: 'A few days before a holiday shuts the shops',
 			/** Says the half the switches can't: these are the account, not the phone. */
 			note: 'This applies on every device you switch on below.'
 		},
@@ -1464,6 +1509,31 @@ export const en = {
 		notNow: 'Not now'
 	},
 
+	/* ── The shop-closure notice [Home, Shopping] ──────────────────────────── */
+	/*
+	 * "The shops shut on Monday, and Saturday is your last chance" (→ SPEC §3.6).
+	 * The headline is the news and the detail is what to do about it, which is
+	 * why the holiday's *name* sits in the quieter line: knowing it's Corpus
+	 * Christi changes nothing about the shopping.
+	 */
+	holiday: {
+		/** The twelve Austrian days shops close for (→ `utils/holidays.ts`). */
+		names: (keys: HolidayKey[]) => list(keys.map((key) => HOLIDAYS[key])),
+
+		closed: (closureDate: CalendarDate, closedDays: number) =>
+			closedDays === 1
+				? `Shops are closed on ${formatWeekdayLong(closureDate, L)}`
+				: `Shops are closed for ${closedDays} days`,
+
+		/** "National Day · last shopping day is Saturday". */
+		detail: (holidays: string, lastOpenDay: CalendarDate, today: CalendarDate) =>
+			`${holidays} · last shopping day is ${shoppingDay(lastOpenDay, today)}`,
+
+		/** The two answers the banner offers (→ DECISIONS #131). */
+		remindTomorrow: 'Remind me tomorrow',
+		dismiss: 'Got it'
+	},
+
 	/* ── Notifications ─────────────────────────────────────────────────────── */
 	/*
 	 * `title` carries the whole message: it's the bold line, the one that survives
@@ -1495,6 +1565,18 @@ export const en = {
 			`${emoji} ${task} is due today — ${assigned ? 'your turn' : 'anyone can pick this up'}`,
 		taskOverdue: (emoji: string, task: string, assigned: boolean) =>
 			`${emoji} ${task} is overdue — ${assigned ? "it's your turn" : 'anyone can pick this up'}`,
+
+		/**
+		 * The holiday heads-up (→ SPEC §3.6), sent once on the first morning of the
+		 * notice. The one push in the app with a body: what is shut and when to
+		 * shop are two facts, and the second is the one worth acting on.
+		 */
+		shopsClosed: (holidays: string, closedDays: number) =>
+			closedDays === 1
+				? `🛍️ ${holidays} — the shops are closed`
+				: `🛍️ ${holidays} — the shops are closed for ${closedDays} days`,
+		shopsClosedBody: (lastOpenDay: CalendarDate, today: CalendarDate) =>
+			`Last shopping day is ${shoppingDay(lastOpenDay, today)}.`,
 
 		/** "Does this actually work?", answered on the device that asks (→ SPEC §6). */
 		testTitle: '🔔 Notifications are on',

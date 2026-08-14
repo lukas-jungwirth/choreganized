@@ -29,20 +29,21 @@ plus your session date). Note deviations in the plan file and in DECISIONS.md.
 
 Work done after the twelve plans, tracked here so the queue stays the whole story:
 
-| Change                                                                                                   | Status            |
-| -------------------------------------------------------------------------------------------------------- | ----------------- |
-| **English + German** (`lib/i18n`, Settings → Language, SPEC §9)                                          | done (2026-07-24) |
-| **Plan next week** (`/cooking?week=`, two-week switch, SPEC §4.1, DECISIONS #99)                         | done (2026-07-24) |
-| **Structured ingredient amounts** (`cooking/IngredientSheet`, SPEC §4.4, DECISIONS #100–101)             | done (2026-07-24) |
-| **Multiple cook timers + the running-timer dock** (`cook-timers.ts`, `cook-timer.svelte.ts`, SPEC §4.6)  | done (2026-07-24) |
-| **Shopping: "Recently bought" + add-field suggestions** (SPEC §3.1, DECISIONS #105–106)                  | done (2026-07-24) |
-| **Shopping: undo bar after a tick** (`shopping/UndoBar`, SPEC §3.1, DECISIONS #107)                      | done (2026-07-24) |
-| **Ingredient picker + merging amounts** (`cooking/IngredientPickSheet`, SPEC §4.8, DECISIONS #123)       | done (2026-07-31) |
-| **Cooking for {n}: use-time ingredient scaling** (SPEC §4.5, §4.6, §4.8, DECISIONS #124)                 | done (2026-07-31) |
-| **One type scale token** (`--fs` in `app.css`, DESIGN-SYSTEM "Type scale", DECISIONS #125)               | done (2026-08-08) |
-| **Several meals a day** (`meals.slot`, SPEC §2, §4.1–4.2, DATA-MODEL, DECISIONS #126)                    | done (2026-08-08) |
-| **What a step uses** (`recipe_step_ingredients`, SPEC §4.4, §4.6, DATA-MODEL, DECISIONS #127)            | done (2026-08-10) |
-| **A row per meal, one day open** (`cooking/MealRow`, `cooking/DayMealsSheet`, SPEC §4.1, DECISIONS #129) | done (2026-08-11) |
+| Change                                                                                                                    | Status            |
+| ------------------------------------------------------------------------------------------------------------------------- | ----------------- |
+| **English + German** (`lib/i18n`, Settings → Language, SPEC §9)                                                           | done (2026-07-24) |
+| **Plan next week** (`/cooking?week=`, two-week switch, SPEC §4.1, DECISIONS #99)                                          | done (2026-07-24) |
+| **Structured ingredient amounts** (`cooking/IngredientSheet`, SPEC §4.4, DECISIONS #100–101)                              | done (2026-07-24) |
+| **Multiple cook timers + the running-timer dock** (`cook-timers.ts`, `cook-timer.svelte.ts`, SPEC §4.6)                   | done (2026-07-24) |
+| **Shopping: "Recently bought" + add-field suggestions** (SPEC §3.1, DECISIONS #105–106)                                   | done (2026-07-24) |
+| **Shopping: undo bar after a tick** (`shopping/UndoBar`, SPEC §3.1, DECISIONS #107)                                       | done (2026-07-24) |
+| **Ingredient picker + merging amounts** (`cooking/IngredientPickSheet`, SPEC §4.8, DECISIONS #123)                        | done (2026-07-31) |
+| **Cooking for {n}: use-time ingredient scaling** (SPEC §4.5, §4.6, §4.8, DECISIONS #124)                                  | done (2026-07-31) |
+| **One type scale token** (`--fs` in `app.css`, DESIGN-SYSTEM "Type scale", DECISIONS #125)                                | done (2026-08-08) |
+| **Several meals a day** (`meals.slot`, SPEC §2, §4.1–4.2, DATA-MODEL, DECISIONS #126)                                     | done (2026-08-08) |
+| **What a step uses** (`recipe_step_ingredients`, SPEC §4.4, §4.6, DATA-MODEL, DECISIONS #127)                             | done (2026-08-10) |
+| **A row per meal, one day open** (`cooking/MealRow`, `cooking/DayMealsSheet`, SPEC §4.1, DECISIONS #129)                  | done (2026-08-11) |
+| **Holiday shop-closure notice** (`utils/holidays.ts`, `services/holidays.ts`, `HolidayNotice`, SPEC §3.6, DECISIONS #131) | done (2026-08-14) |
 
 ## Dependency graph & parallelization
 

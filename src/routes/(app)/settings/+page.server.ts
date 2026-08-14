@@ -41,11 +41,12 @@ import { isCalendarDate, todayIn } from '$lib/utils/dates';
 import { DISPLAY_NAME_MAX, HOUSEHOLD_NAME_MAX, looksLikeGeminiKey } from '$lib/utils/household';
 import type { Actions, PageServerLoad } from './$types';
 
-/** The three switches [6a] draws, and the columns `push.ts` filters sends on. */
+/** The switches [6a] draws, and the columns `push.ts` filters sends on. */
 const PREFS: NotificationPref[] = [
 	'notifyTaskReminders',
 	'notifyOverdueNudges',
-	'notifyShoppingUpdates'
+	'notifyShoppingUpdates',
+	'notifyShopClosures'
 ];
 
 function isPref(value: unknown): value is NotificationPref {
@@ -104,7 +105,8 @@ export const load: PageServerLoad = (event) => {
 		prefs: {
 			notifyTaskReminders: member.notifyTaskReminders,
 			notifyOverdueNudges: member.notifyOverdueNudges,
-			notifyShoppingUpdates: member.notifyShoppingUpdates
+			notifyShoppingUpdates: member.notifyShoppingUpdates,
+			notifyShopClosures: member.notifyShopClosures
 		},
 		/** The stored choice, not the resolved language: null is "System" [6a]. */
 		chosenLocale: member.locale,
