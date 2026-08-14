@@ -1417,8 +1417,17 @@ that actually adapts there; this wants checking on a real device.
      - **"Dismiss" and "remind me tomorrow" are one column.** Both hide the banner until a date:
        tomorrow, or the closure date itself — which no day in the window can reach, the window
        ending the day before the shops shut. A second boolean would have been a second thing to
-       keep consistent for no new behaviour. It also means the two answers converge on the last
-       open day, which is correct: there is no tomorrow left for that notice.
+       keep consistent for no new behaviour.
+     - **On the last open day the reminder is withdrawn, not converged.** The two answers write
+       the same date there, so offering both was harmless in the data and wrong on the screen: a
+       button reading "Remind me tomorrow" on the eve of a closure promises a nudge for a day the
+       shops are shut, which is an offer the day cannot keep. It is dropped, and the card swaps
+       its lines round instead — "Last chance to shop today" over "{holiday} · closed for 2 days
+       from tomorrow" — because reading order is urgency and by that morning the urgent half is
+       the errand. Said once, in the headline: a separate "last chance" hint beside the button
+       would have put _today_ in the card three times. Note this is **not** "the notice's last
+       day": a Sunday two days before an Epiphany Tuesday still has Monday to shop on, so it
+       keeps both answers. The condition is `today === lastOpenDay`, nothing looser.
      - **The away pause skips the push but not the banner** (cf. [#60](DECISIONS.md)). Away
        leaves the flag unclaimed, so a housemate home on the Friday still hears about Monday; a
        member who switched the preference off spends it, since that silences a phone rather than
