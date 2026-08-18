@@ -606,12 +606,17 @@ export const de: Messages = {
 		week: {
 			cookedBy: (cook: string) => `${cook} kocht`,
 			nothingPlanned: 'Nichts geplant',
-			openDay: (weekday: string, day: string) => `${weekday}, ${day}. öffnen`,
-			addMeal: 'Essen eintragen',
-			addMealOn: (weekday: string, day: string) => `Essen für ${weekday}, ${day}. eintragen`,
-			changeMealsOn: (weekday: string) => `Essen am ${weekday} ändern`,
-			changeEyebrow: 'Essen ändern',
+			dayLabel: (weekday: string, day: string) => `${weekday}, ${day}.`,
+			planDay: (weekday: string, day: string) => `Essen für ${weekday}, ${day}. eintragen`,
 			today: '(heute)'
+		},
+
+		mealMenu: {
+			showRecipe: 'Rezept ansehen',
+			startCooking: 'Kochmodus starten',
+			change: 'Essen ändern',
+			addAnother: (weekday: string) => `Noch ein Essen am ${weekday}`,
+			remove: 'Aus dem Plan entfernen'
 		},
 
 		library: {

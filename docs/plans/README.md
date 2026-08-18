@@ -44,6 +44,7 @@ Work done after the twelve plans, tracked here so the queue stays the whole stor
 | **What a step uses** (`recipe_step_ingredients`, SPEC §4.4, §4.6, DATA-MODEL, DECISIONS #127)                             | done (2026-08-10) |
 | **A row per meal, one day open** (`cooking/MealRow`, `cooking/DayMealsSheet`, SPEC §4.1, DECISIONS #129)                  | done (2026-08-11) |
 | **Holiday shop-closure notice** (`utils/holidays.ts`, `services/holidays.ts`, `HolidayNotice`, SPEC §3.6, DECISIONS #131) | done (2026-08-14) |
+| **One row, one action in the week** (`cooking/MealRow`, `cooking/MealActionsSheet`, SPEC §4.1, DECISIONS #132)            | done (2026-08-18) |
 
 ## Dependency graph & parallelization
 

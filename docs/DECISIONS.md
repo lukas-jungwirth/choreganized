@@ -1312,7 +1312,9 @@ that actually adapts there; this wants checking on a real device.
        **First due** [3b] remains the other way in.
 
 129. **The week is a list of meals, not a list of days, and one day at a time carries the
-     controls** (→ SPEC §4.1, `cooking/MealRow.svelte`, `cooking/DayMealsSheet.svelte`). [04]
+     controls** (→ SPEC §4.1, `cooking/MealRow.svelte`). The rows-per-meal half of this still
+     stands; the open day, its bar and its `DayMealsSheet` were replaced by #132, which is
+     where the last two bullets went. [04]
      drew one row per day and hung everything on it — the meals, an **Add another**, a ••• per
      meal — which reads beautifully for the lone dinner it was drawn for and turns into a
      paragraph the moment a day holds four (→ #126). Every meal now gets its own row under its
@@ -1443,3 +1445,37 @@ that actually adapts there; this wants checking on a real device.
        lives and this is the first feature to ask; a household keeping time elsewhere is told
        nothing rather than told something wrong. A country column can wait until there is a
        second country.
+
+132. **One row, one target, one action — the week's rows open a meal sheet** (→ SPEC §4.1,
+     `cooking/MealRow.svelte`, `cooking/MealActionsSheet.svelte`). #129 gave the day its own
+     tap target _behind_ its rows: the meal's name went to the recipe, and the empty space
+     beside it opened the day. Two actions on one row, told apart by nothing but where your
+     thumb landed. Lukas hit both halves of that: a dish whose name fills the line leaves no
+     "beside it" to tap, and being sent to a recipe by a row you tapped to plan on reads as
+     the app misunderstanding you. Neither is a hit-box bug — a row that does two things
+     without saying which is where is the bug. The row is now one button, edge to edge, and
+     what it opens is a sheet that **writes the choice out**: Show recipe · Start cook mode ·
+     Change meal · Add another meal on {weekday} · Remove from the plan.
+
+     - **A menu, not a shortcut.** It costs a tap on the way to the recipe and saves one on
+       the way to changing a meal (which used to be day → ••• → sometimes "which one?" →
+       sheet). The week is the _planning_ surface — Home's dinner card and the library are how
+       you arrive at a recipe — so the tap landed where it is cheapest, and every route out of
+       a planned meal now costs the same two taps instead of one costing nothing and the rest
+       being hidden.
+     - **An empty day still goes straight to the plan sheet**, and wears a quiet **+** to say
+       so. One possible action is not a question — the same argument that let #129's ••• skip
+       the chooser on a day holding one meal, which is also why `DayMealsSheet` is gone: with
+       every meal carrying its own row target, nothing has to ask which one you meant.
+     - **The day's own action moved into the meal's sheet** ("Add another meal on Thursday"),
+       which retires the open day, its bar and its tint. Losing the always-visible **+ Add a
+       meal** is the real cost of this trade; a day that already has a meal is one tap from it,
+       and an empty one is a tap _on_ it. The row offers it only while the day has a free slot,
+       because four meals is full (→ #126).
+     - **`--sage-row` marks today now.** It was #129's "selected day" tint and there is no
+       selection left to mark, so it says the thing the card is otherwise silent about — and
+       since today was the day held open by default, the week looks the way it always did.
+       Next week has no today and no tint.
+     - **Removing is offered in the sheet, two taps from the row**, posting the same
+       `?/remove` the plan sheet does. No confirm, for the same reason it has none there: what
+       it destroys is one row of a plan, one tap from being planned again.
