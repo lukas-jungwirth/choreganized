@@ -251,16 +251,16 @@ where it can still be acted on (→ [DECISIONS #131](DECISIONS.md)).
   tagged unless the day holds nothing but a dinner**, so the ordinary week is a column of bare
   names; a day with two meals tags both ("Breakfast", "Dinner"), and a day whose only meal is a
   lunch says "Lunch". A day with nothing planned keeps its row and says **Nothing planned**.
-- **One day is open at a time**, and only the open day carries controls: a bar under its meals
-  with **+ Add a meal** and a **•••**. It starts on today (on next week, which has no today,
-  the week's Monday) and moves when you tap another day — anywhere on that day outside its
-  meal names. Opening a day _adds_ the bar and moves nothing else. The open day is tinted;
-  today keeps its sage weekday and the strip's pill either way.
-  Tap a planned meal → recipe view (a planned custom meal → plan sheet [3d] prefilled).
-  **+ Add a meal** opens the sheet on the first slot that day still has free (dinner, else
-  lunch, else breakfast, else snack). **•••** changes or removes what's already there: straight
-  to the plan sheet when the day holds one meal, and a "which one?" sheet first when it holds
-  more. The switch's {n} counts **days** with anything planned, not meals.
+- **One row, one target, one action** (→ DECISIONS #132). The whole row — edge to edge,
+  however long the name — opens that meal's **actions sheet**: **Show recipe** and **Start cook
+  mode** (planned recipes only), **Change meal** (plan sheet [3d] prefilled), **Add another meal
+  on {weekday}** (plan sheet blank on the first slot that day still has free — dinner, else
+  lunch, else breakfast, else snack; hidden when the day holds all four), and **Remove from the
+  plan**. Its eyebrow is the day, its title the meal, its subtitle the slot.
+  A day with **nothing planned** skips the sheet — one possible action is not a question — and
+  its row opens the plan sheet itself; it wears a quiet **+** to say so.
+  **Today is tinted** (`--sage-row`) and keeps its sage weekday and the strip's pill; next week
+  has no today and no tint. The switch's {n} counts **days** with anything planned, not meals.
 - **Recipe library** section: "Recently added" 2-up cards (photo, name, "{time} min · added
   {date}"), header link "Browse all · {n}" → library page.
 
