@@ -817,6 +817,7 @@ export const de: Messages = {
 			peekTitleServes: (servings: number) => `Zutaten · für ${servings}`,
 			peekEmpty: 'Für dieses Rezept sind keine Zutaten notiert.',
 			peekShare: (amount: string) => `von ${amount}`,
+			stepAmount: (amount: string) => `, ${amount}, `,
 
 			timerTitle: 'Timer stellen',
 			timerSubtitle: 'Er klingelt auch bei gesperrtem Handy.',

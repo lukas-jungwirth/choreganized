@@ -354,6 +354,13 @@ where it can still be acted on (→ [DECISIONS #131](DECISIONS.md)).
   — **the ones pinned to it in the form, else the ones its text names** (§4.4) — are underlined
   in amber where the text names them, and the "This step uses {…}" line beneath lists them all,
   including any the text never mentions. A step pinned to nothing shows neither.
+- **Tapping an underlined ingredient says how much of it** (→ [DECISIONS #133](DECISIONS.md)) —
+  the amount in amber with the name behind it, and the row's total behind that when the step
+  takes only a share of it ("200 g mushrooms of 500 g"), in a bubble against the word itself. It
+  sits above the word wherever the step has a line to spare, so what it covers is a line already
+  read; any tap, Escape or the next step closes it. An underline with **no** amount to give
+  ("Salt", "a splash of oil") is not a button — there is nothing for a tap to reveal. This is
+  the one amount that survives a running timer, which clears the "This step uses…" line [7h].
 - **Timer chip** — shown when a duration is parsed from the step text ("8 min", "8:00",
   "8–10 minutes" → first value): "Start 8:00 timer". A manual "Set timer" affordance (minute
   stepper) is always available in the header/overflow.
@@ -365,7 +372,12 @@ where it can still be acted on (→ [DECISIONS #131](DECISIONS.md)).
   sheet, the "This step uses…" line, a step's own shares of an ingredient (§4.4) and the timer
   labels all show the scaled amounts. Cook mode offers no stepper of its own: the count is
   decided before the hands are wet, and the underlines still land on the same words because only
-  the numbers move.
+  the numbers move. The count **stays** in the address as Prev/Next rewrite `?step=`, and rides
+  the close × and Finish back to the recipe — a reload mid-cook (a backgrounded PWA waking up is
+  the usual one) comes back cooking for the same number of people, not for what the recipe was
+  written for. Honest limit: a **timer's own link** can't carry it — the dock bar and the
+  completion notification are built from a server row that knows the recipe and the step but not
+  the count, so coming back in that way lands on the recipe as written.
 - Running timer [7h]: big circular countdown (remaining, label "{ingredient/step} · {total}"),
   Pause / **+1:00** / Cancel. **Up to three at once** (→ DECISIONS #102): the step on screen
   keeps the ring, every other running timer shrinks to a compact bar above Prev/Next with its

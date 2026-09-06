@@ -1092,6 +1092,11 @@ export const en = {
 			 * amount is this step's, and this says what the row holds in total.
 			 */
 			peekShare: (amount: string) => `of ${amount}`,
+			/**
+			 * Read out with an underlined ingredient, so a screen reader gets the
+			 * amount the bubble shows on tap: "the mushrooms, 500 g, in butter".
+			 */
+			stepAmount: (amount: string) => `, ${amount}, `,
 
 			/** The manual timer sheet (→ DECISIONS #14). */
 			timerTitle: 'Set a timer',

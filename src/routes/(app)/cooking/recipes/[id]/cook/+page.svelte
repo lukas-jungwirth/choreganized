@@ -108,6 +108,15 @@
 	const ingredients = $derived(scaleIngredients(recipe.ingredients, factor));
 
 	/**
+	 * Back to the recipe, still cooking for the same number of people — the count
+	 * travels in the URL both ways (→ SPEC §4.5), so closing cook mode at 8 and
+	 * reopening it doesn't quietly drop back to the 4 the recipe was written for.
+	 */
+	const recipeHref = $derived(
+		`/cooking/recipes/${recipe.id}${serves === null ? '' : `?serves=${serves}`}`
+	);
+
+	/**
 	 * Underlines, and the list under the step — the ingredients pinned to this
 	 * step in the recipe form, or the ones its text names (→ SPEC §4.4).
 	 */
@@ -154,7 +163,16 @@
 	 */
 	function goToStep(next: number) {
 		cursor = next;
-		replaceState(`?step=${index + 1}`, {});
+
+		// Built off the address rather than written from scratch: a bare
+		// `?step=2` replaces the whole query string, and `?serves=8` went with it
+		// — so the next reload (a phone waking a backgrounded PWA is the common
+		// one) came back to the recipe as written. `page.url` is the address the
+		// navigation landed on, which shallow routing deliberately leaves alone,
+		// so it still carries the count every one of these writes has to keep.
+		const url = new URL(page.url);
+		url.searchParams.set('step', String(index + 1));
+		replaceState(url, page.state);
 	}
 
 	function startTimer(seconds: number) {
@@ -189,7 +207,7 @@
 			>
 				<TimerIcon size={16} strokeWidth={2.1} />
 			</button>
-			<a class="round" href="/cooking/recipes/{recipe.id}" aria-label={m.cooking.cook.close}>
+			<a class="round" href={recipeHref} aria-label={m.cooking.cook.close}>
 				<X size={12} strokeWidth={2.4} />
 			</a>
 		</div>
@@ -205,7 +223,7 @@
 		<div class="body">
 			<p class="eyebrow">{m.cooking.cook.step(index + 1, steps.length)}</p>
 
-			<CookStepText segments={read.segments} />
+			<CookStepText segments={read.segments} {ingredients} />
 
 			<div class="chips">
 				{#if !ring}
@@ -267,7 +285,7 @@
 				</button>
 
 				{#if last}
-					<a class="next" href="/cooking/recipes/{recipe.id}">
+					<a class="next" href={recipeHref}>
 						{m.cooking.cook.finish}<Check size={20} strokeWidth={2.4} aria-hidden="true" />
 					</a>
 				{:else}
