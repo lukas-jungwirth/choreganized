@@ -532,7 +532,7 @@
 			<code>/cooking/recipes/…/cook</code>.
 		</p>
 		<div class="cook-panel">
-			<CookStepText segments={COOK_STEP.segments} />
+			<CookStepText segments={COOK_STEP.segments} ingredients={COOK_INGREDIENTS} />
 			<p class="cook-uses">
 				This step uses <b>{COOK_STEP.used.map((i) => i.name).join(' · ')}</b>
 			</p>

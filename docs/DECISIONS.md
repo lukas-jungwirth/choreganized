@@ -1443,3 +1443,32 @@ that actually adapts there; this wants checking on a real device.
        lives and this is the first feature to ask; a household keeping time elsewhere is told
        nothing rather than told something wrong. A country column can wait until there is a
        second country.
+
+132. **An underline in cook mode is a button, and the amount appears against the word** (→ SPEC
+     §4.6, `components/cooking/CookStepText.svelte`). The amounts are already on the screen —
+     the "This step uses…" line under the chips, the ingredients peek behind them — and the
+     question in a kitchen is still unanswered, because it is never "what does this step use",
+     it is "how much of _that_?". The line is a run of every ingredient at once (a step of the
+     Gemüseauflauf lists seven), and it is the first thing [7h] clears to make room for the
+     ring, which is exactly when a cook is standing over a pan wondering how much butter. So the
+     word the sentence already underlines answers for itself.
+
+     - **A bubble against the word, not another line of text.** A second "this one uses…" line
+       would repeat what is above it and say nothing about which word was asked about. The
+       bubble carries the peek sheet's row — the amount in amber, the name behind it, and the
+       row's total behind that when the step takes a share (#127) — so the same answer looks the
+       same in both places.
+     - **Above the word wherever there is a line to spare.** Something is always covered at 33px
+       Fraunces, and the line you have already read is the one you can afford to lose; below the
+       word it hid the rest of the instruction, including the next underline. Only a word on the
+       first line pushes it down.
+     - **Measured, not computed.** The bubble's width is its text's, so it renders hidden, gets
+       read, and is then centred on the word and pushed back inside the step — with the arrow
+       moving to keep pointing at the word the box no longer sits under. The last word of a line
+       is exactly the one a thumb reaches for, so the clamp is not an edge case.
+     - **An underline with no amount stays plain text.** "Salt", "a splash of oil" — a row with
+       nothing to say has nothing to reveal, and a button that does nothing when tapped is worse
+       than no button. The underline still means "this step uses it".
+     - **Screen readers don't tap.** The amount rides inside the button, so the sentence reads
+       "sauté the mushrooms, 500 g, in butter" and the bubble is `aria-hidden` — nobody hears it
+       twice, and nobody has to open a popup to get the number.
