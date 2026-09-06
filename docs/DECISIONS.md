@@ -1508,3 +1508,43 @@ that actually adapts there; this wants checking on a real device.
      - **Screen readers don't tap.** The amount rides inside the button, so the sentence reads
        "sauté the mushrooms, 500 g, in butter" and the bubble is `aria-hidden` — nobody hears it
        twice, and nobody has to open a popup to get the number.
+
+134. **A timer is named after its step, and it rings until somebody stops it** (→ SPEC §4.6,
+     `lib/alarm.ts`, `components/cooking/SetTimerSheet.svelte`). Two complaints about the same
+     control, and they have the same shape: the app was being clever where it should have been
+     plain, and polite where it should have been loud.
+
+     - **The name was a guess, and a guess is worse than a fact.** A timer took the name of the
+       first ingredient its step mentioned — the full row name, notes and all. Right often
+       enough to look deliberate, wrong often enough to be strange: a 20-minute bake named after
+       the butter the dish was greased with, "Kartoffeln (festkochen)" on a lock screen, and
+       "Wurzelgemüse (Karotten, Petersilwurzel und Sellerie)" in a 220px ring. **The step is
+       simply true** — "Step 2 · 8:00" — and two timers on one step are still told apart by what
+       they were set for, which is the other half of that line.
+     - **Naming is offered, never demanded.** The Set-timer sheet has a **What for?** field
+       whose placeholder is the default, and under it the step's ingredients as one-tap chips
+       with their notes trimmed (`plainName`, the short form the matcher already worked in).
+       That is the answer to "let the user decide" without asking anyone to type with wet hands,
+       and it is where "Oven" and "Rice" — things no recipe lists — come from. The parsed chip
+       stays **one tap** and takes the step's name; a cook who wants to name that one opens the
+       sheet, which is already seeded with the duration the step parsed.
+     - **The push says the timer in the title and the dish in the body.** "⏲️ Step 2 is done"
+       alone is useless to someone with two recipes open, and the old " — back to step 2" suffix
+       said the step twice and the dish never. The recipe name is read at ring time rather than
+       copied onto the row, so it says whatever the recipe is called now.
+     - **Three beeps lost every argument with an extractor fan.** 0.9 seconds of sine at 880 Hz
+       is a notification chime, and this is an alarm: four beeps alternating 880/1319 Hz — a
+       fifth, which is what reads as "alarm" — square through a lowpass so it carries without
+       being shrill, repeating every 1.5 s **until it is stopped**. Which is the point: a sound
+       that stops by itself is a sound you can miss.
+     - **It still gives up after a minute.** An alarm nobody is home for should not still be
+       going when they get back, and the notification is what waits. The screen keeps the rung
+       timer either way.
+     - **One sound, however many timers are making it**, stopped in the collection rather than
+       in `dismiss`: cancelling a _running_ timer while another one rings must not silence the
+       one you can hear. Every surface that clears a rung timer already stops it — the ring's
+       button (now **Stop**, because that is what it does), a bar's ×, the dock's ×.
+     - **The locked phone gets `requireInteraction` and a longer buzz, and that is the ceiling.**
+       A web push cannot ring like a native alarm: no custom sound, no critical alert, and a
+       frozen page cannot make a noise on its own behalf. Saying so is better than pretending
+       the two halves are equivalent.

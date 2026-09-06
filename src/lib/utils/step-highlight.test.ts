@@ -3,7 +3,7 @@
  */
 import assert from 'node:assert/strict';
 import { describe, it } from 'node:test';
-import { highlightStep, readStep, scaleStepUses } from './step-highlight.ts';
+import { highlightStep, plainName, readStep, scaleStepUses } from './step-highlight.ts';
 
 /** Shorthand: the step text rebuilt with the underlined runs marked with `«»`. */
 function marked(text: string, names: string[]): string {
@@ -238,5 +238,25 @@ describe('scaleStepUses', () => {
 
 	it('keeps a step that reads its text reading its text', () => {
 		assert.equal(scaleStepUses(null, 2), null);
+	});
+});
+
+describe('plainName', () => {
+	it('drops the note in brackets', () => {
+		assert.equal(plainName('Kartoffeln (festkochen)'), 'Kartoffeln');
+		assert.equal(plainName('Olive oil (extra virgin)'), 'Olive oil');
+	});
+
+	it('drops everything after the first comma', () => {
+		assert.equal(plainName('Eier (Größe M, hartgekocht)'), 'Eier');
+		assert.equal(plainName('Butter, softened'), 'Butter');
+	});
+
+	it('leaves a name that is only a name', () => {
+		assert.equal(plainName('Mushrooms'), 'Mushrooms');
+	});
+
+	it('never comes back with the whitespace the trimming left behind', () => {
+		assert.equal(plainName('  Wurzelgemüse   (Karotten und Sellerie)  '), 'Wurzelgemüse');
 	});
 });

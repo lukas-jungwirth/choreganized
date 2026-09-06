@@ -29,7 +29,7 @@
 	import { keepScreenAwake } from '$lib/wake-lock';
 	import { scaleIngredients, servingsFactor } from '$lib/utils/ingredients';
 	import { readServings } from '$lib/utils/recipes';
-	import { readStep, scaleStepUses } from '$lib/utils/step-highlight';
+	import { plainName, readStep, scaleStepUses } from '$lib/utils/step-highlight';
 	import { messages } from '$lib/i18n';
 	import { formatDuration, parseStepDuration, TIMERS_MAX } from '$lib/utils/timer-parse';
 	import Check from '@lucide/svelte/icons/check';
@@ -131,11 +131,20 @@
 	const parsed = $derived(step ? parseStepDuration(step.text) : null);
 
 	/**
-	 * "Mushrooms" — what the ring and the notification call this timer. Three
-	 * timers all called "Timer" are one timer, so a step that names no
-	 * ingredient falls back to saying where it was set.
+	 * What a timer here is called unless the cook says otherwise: the step it was
+	 * set on (→ DECISIONS #134). It used to be the step's first ingredient, which
+	 * was a guess — right often enough to keep offering, wrong often enough that
+	 * "Kartoffeln (festkochen)" ended up on a lock screen and a 20-minute bake got
+	 * named after the butter it was greased with. The step is simply true.
 	 */
-	const label = $derived(read.used[0]?.name ?? m.cooking.cook.timerForStep(index + 1));
+	const label = $derived(m.cooking.cook.timerForStep(index + 1));
+
+	/**
+	 * What the sheet offers instead, one tap each: the step's own ingredients by
+	 * their short names — "Kartoffeln", not "Kartoffeln (festkochen)" — deduped,
+	 * because two rows of one thing are one suggestion.
+	 */
+	const suggestions = $derived([...new Set(read.used.map((row) => plainName(row.name)))]);
 
 	let peeking = $state(false);
 	let setting = $state(false);
@@ -175,8 +184,9 @@
 		replaceState(url, page.state);
 	}
 
-	function startTimer(seconds: number) {
-		cookTimers.start({ seconds, label, recipeId: recipe.id, stepIndex: index });
+	/** `name` is what the sheet's field held; the chip path never passes one. */
+	function startTimer(seconds: number, name = '') {
+		cookTimers.start({ seconds, label: name || label, recipeId: recipe.id, stepIndex: index });
 	}
 
 	function startParsed() {
@@ -314,7 +324,13 @@
 {/if}
 
 {#if setting}
-	<SetTimerSheet suggestedSeconds={parsed} onstart={startTimer} onclose={() => (setting = false)} />
+	<SetTimerSheet
+		suggestedSeconds={parsed}
+		defaultName={label}
+		names={suggestions}
+		onstart={startTimer}
+		onclose={() => (setting = false)}
+	/>
 {/if}
 
 <style>

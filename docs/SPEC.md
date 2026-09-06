@@ -364,6 +364,13 @@ where it can still be acted on (→ [DECISIONS #131](DECISIONS.md)).
 - **Timer chip** — shown when a duration is parsed from the step text ("8 min", "8:00",
   "8–10 minutes" → first value): "Start 8:00 timer". A manual "Set timer" affordance (minute
   stepper) is always available in the header/overflow.
+- **A timer is named after its step** — "Step 2" — unless the cook names it in the Set-timer
+  sheet (→ [DECISIONS #134](DECISIONS.md)). That sheet's **What for?** field is optional and
+  never has to be typed: under it sit the step's own ingredients as one-tap chips, short names
+  ("Kartoffeln", not "Kartoffeln (festkochen)"), and tapping the chosen one again clears it. The
+  parsed chip stays one tap and takes the step's name. Naming used to be a guess — the step's
+  first ingredient — which is how a 20-minute bake ended up called after the butter the dish was
+  greased with.
 - **Ingredients chip** → bottom peek sheet listing all ingredients; the current step's are
   highlighted in amber [7b]. One the step takes only a share of shows that share in amber with
   the row's total behind it — "20 g of 30 g" — so "how much of that was it again?" is answered
@@ -394,10 +401,19 @@ where it can still be acted on (→ [DECISIONS #131](DECISIONS.md)).
   exists only in the tab that paused it and is lost on reload, because pause deletes the row
   (→ DECISIONS #15).
 - Prev / **Next step** buttons pinned at the bottom. Last step → "Finish" closes cook mode.
+- **A timer that goes off rings like an alarm, not like a chime** (→
+  [DECISIONS #134](DECISIONS.md)). Four beeps alternating two tones, a second and a half apart,
+  **repeating until somebody stops it** — the ring's Stop, a bar's ×, the dock's ×, all of which
+  already clear the timer. It gives up on its own after a minute, because an alarm nobody is
+  home for should not still be going when they get back. One sound however many timers are
+  making it, and it only stops when the last of them has been dealt with.
 - **Timer completion must fire even when the phone is locked** [7h·2]: the server schedules a
-  push ("⏲️ {label} is done — back to step {i}") at `endsAt`; the open page also alerts
-  locally (sound optional, vibration via `navigator.vibrate`). Cancelling/pausing the timer
-  cancels the server push. Tapping the notification reopens cook mode at that step.
+  push at `endsAt` — title "⏲️ {label} is done", body the **recipe name**, so a lock screen says
+  which dish as well as which timer — and asks the platform to keep it up until it is acted on.
+  The open page alerts locally instead when it claimed the alert (sound and vibration). Honest
+  limit: a web push cannot ring like a native alarm — no custom sound, no critical alert — so
+  the locked-phone half is one insistent notification, not a ringing one. Cancelling/pausing the
+  timer cancels the server push. Tapping the notification reopens cook mode at that step.
 
 ### 4.7 Recipe import from a link (→ plan 12, reuses the [3c] editor as its preview)
 

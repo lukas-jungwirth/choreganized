@@ -33,7 +33,7 @@
  */
 import { browser } from '$app/environment';
 import type { Messages } from './i18n';
-import { primeAlarm, ringAlarm } from './alarm';
+import { primeAlarm, ringAlarm, stopAlarm } from './alarm';
 import { TIMERS_MAX, timerHref } from './utils/timer-parse';
 import {
 	claimTimerAlert,
@@ -115,7 +115,7 @@ export class CookTimer {
 	readonly #wake: () => void;
 
 	phase = $state<TimerPhase>('idle');
-	/** Usually the ingredient the step is about ("Mushrooms"). */
+	/** The step it was set on, or what the cook named it (→ DECISIONS #134). */
 	label = $state('');
 	/** What it was set for — the "· 8:00" in "{label} · 8:00" [7h]. */
 	totalSeconds = $state(0);
@@ -729,6 +729,13 @@ export class CookTimers {
 
 		this.#timers = this.#timers.filter((candidate) => candidate !== timer);
 		if (this.#timers.length === 0) this.#stopTicking();
+
+		// The alarm keeps ringing until it is stopped (→ DECISIONS #134), and it
+		// is one sound for however many timers are making it — so it stops here,
+		// where the last one that was ringing has just been acknowledged, rather
+		// than in `dismiss`. Cancelling a *running* timer while another one rings
+		// must not silence the one you can hear.
+		if (!this.#timers.some((candidate) => candidate.phase === 'rang')) stopAlarm();
 	}
 
 	/**
@@ -739,6 +746,7 @@ export class CookTimers {
 	 */
 	reset(): void {
 		this.#stopTicking();
+		stopAlarm();
 		this.#timers = [];
 		this.lastError = null;
 		this.#m = null;

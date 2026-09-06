@@ -10,14 +10,16 @@
 		value?: string;
 		/** Message from a failed form action; also outlines the field. */
 		error?: string;
+		/** `dark` for the cook-mode sheets, where a white field would glare. */
+		tone?: 'light' | 'dark';
 	};
 
-	let { label, value = $bindable(''), error, ...rest }: Props = $props();
+	let { label, value = $bindable(''), error, tone = 'light', ...rest }: Props = $props();
 
 	const id = $props.id();
 </script>
 
-<div class="field">
+<div class="field" class:dark={tone === 'dark'}>
 	<label class="label" for={id}>{label}</label>
 	<input
 		{id}
@@ -76,5 +78,24 @@
 		margin: 8px 0 0;
 		font-size: calc(13px * var(--fs));
 		color: var(--danger-deep);
+	}
+
+	/* Cook mode's palette [7b], the same override Stepper's dark tone makes —
+		 the sheet already hands `--input-surface` down, but the text on it has to
+		 come with it or the field is dark ink on a dark well. */
+	.dark .label {
+		color: var(--cook-muted);
+	}
+
+	.dark .input {
+		color: var(--cook-text);
+	}
+
+	.dark .input::placeholder {
+		color: var(--cook-faint);
+	}
+
+	.dark .input:focus {
+		border-color: var(--cook-amber);
 	}
 </style>

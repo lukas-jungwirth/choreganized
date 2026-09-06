@@ -47,6 +47,7 @@ type PushPayload = {
 	url: string;
 	renotify?: boolean;
 	vibrate?: number[];
+	requireInteraction?: boolean;
 };
 
 /** A push that arrives unreadable still has to show *something* — see `toPayload`. */
@@ -221,7 +222,8 @@ function toPayload(data: PushMessageData | null): PushPayload {
 			tag: parsed.tag || FALLBACK_PAYLOAD.tag,
 			url: parsed.url || FALLBACK_PAYLOAD.url,
 			renotify: parsed.renotify,
-			vibrate: parsed.vibrate
+			vibrate: parsed.vibrate,
+			requireInteraction: parsed.requireInteraction
 		};
 	} catch {
 		return FALLBACK_PAYLOAD;
@@ -234,6 +236,9 @@ function show(payload: PushPayload): Promise<void> {
 		tag: payload.tag,
 		renotify: payload.renotify ?? false,
 		vibrate: payload.vibrate ?? DEFAULT_VIBRATE,
+		// A timer asks for this: it is the one notification the app sends that
+		// somebody is standing in a kitchen waiting for (→ DECISIONS #134).
+		requireInteraction: payload.requireInteraction ?? false,
 		icon: `${base}/icons/icon-192.png`,
 		// Android's status-bar glyph: a monochrome silhouette it tints itself.
 		badge: `${base}/icons/badge-72.png`,

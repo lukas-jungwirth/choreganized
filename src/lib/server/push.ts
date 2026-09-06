@@ -43,6 +43,13 @@ export type PushPayload = {
 	renotify?: boolean;
 	/** Android haptics; the service worker has a default. */
 	vibrate?: number[];
+	/**
+	 * Keep it on screen until it is acted on, rather than letting the platform
+	 * fade it after a few seconds. For the one notification somebody is actively
+	 * waiting for — a timer going off (→ DECISIONS #134). Honoured on desktop;
+	 * Android keeps notifications until they are swiped either way.
+	 */
+	requireInteraction?: boolean;
 };
 
 /** The `members` columns that gate a category of notification (→ SPEC §3.5, §3.6, §5.6). */
