@@ -1,19 +1,20 @@
 <!--
-	One day of the week's plan [04]: every meal it holds, a row each, and — on
-	the one day the card has open — the bar that adds to it or changes it.
+	One day of the week's plan [04]: every meal it holds, a row each, under its
+	weekday.
 
 	**Nothing is summarised.** A day with three meals draws three rows, indented
 	under its weekday, so there is no notation to learn and no count to decode;
 	the row says the meal's name, which meal of the day it is, and who cooks
-	(the avatar). Opening a day therefore *adds* the action bar rather than
-	unfolding anything, and the rows above it never move — the list you tapped
-	is the list you're looking at.
+	(the avatar).
 
-	The whole day is its own tap target, sitting behind its rows, because the
-	names themselves already lead somewhere: a planned recipe opens the recipe,
-	a free-text meal (which has nothing to open) opens the plan sheet prefilled
-	(→ SPEC §4.1). Changing or removing what's already there is the bar's ••• —
-	the design's "long-press" isn't a gesture a browser can hear reliably.
+	**One row, one target, one action.** The whole row — edge to edge, however
+	long the name grows — opens that meal's sheet (`MealActionsSheet`), which
+	writes out everything you can do with it: show the recipe, start cooking,
+	change it, remove it, add another meal to the day. Until #132 the row
+	carried two actions told apart by where you tapped, and a name long enough
+	to fill the line swallowed the one that wasn't written anywhere.
+	A day with nothing planned has exactly one thing to offer, so its row skips
+	the sheet and opens the plan sheet [3d] itself.
 
 	The slot tag follows the rule DECISIONS #126 set for the old meta line: it
 	appears on every meal of a day that says something a lone dinner doesn't, so
@@ -24,25 +25,17 @@
 	import Avatar from '$lib/components/ui/Avatar.svelte';
 	import { messages } from '$lib/i18n';
 	import type { PlannedMeal, WeekDay } from '$lib/server/services/meals';
-	import MoreHorizontal from '@lucide/svelte/icons/more-horizontal';
 	import Plus from '@lucide/svelte/icons/plus';
 
 	type Props = {
 		day: WeekDay;
-		/** The card holds one day open at a time — this is that day. */
-		open: boolean;
-		/** Open this day, which is what puts the action bar under its meals. */
-		onopen: () => void;
-		/**
-		 * Opens the plan sheet for this day — on one of its meals, or blank
-		 * (null) on whichever slot the day still has free.
-		 */
-		onplan: (meal: PlannedMeal | null) => void;
-		/** The bar's ••• : change what this day already holds. */
-		onmore: () => void;
+		/** Tapped one of the day's meals — the actions sheet opens on it. */
+		onmeal: (meal: PlannedMeal) => void;
+		/** Tapped a day with nothing on it — straight to the plan sheet. */
+		onadd: () => void;
 	};
 
-	let { day, open, onopen, onplan, onmore }: Props = $props();
+	let { day, onmeal, onadd }: Props = $props();
 
 	const m = messages();
 
@@ -57,135 +50,84 @@
 	const tagged = $derived(!(day.meals.length === 1 && day.meals[0].slot === 'dinner'));
 </script>
 
-{#snippet meal(planned: PlannedMeal)}
-	<span class="name">{planned.name}</span>
-	{#if tagged}<span class="slot">{m.cooking.slots[planned.slot]}</span>{/if}
-	<!-- The cook is an avatar, and an avatar is decorative — so the one thing
-		 the row says out loud that it doesn't write out goes here. -->
-	{#if planned.cook}<span class="sr-only">{m.cooking.week.cookedBy(planned.cook.displayName)}</span
-		>{/if}
-{/snippet}
-
-<li class="day" class:open class:today={day.isToday}>
-	{#if !open}
-		<!-- Behind the rows: the empty space beside a meal name is what opens the
-			 day. The weekday beside it is decorative, so seven of these would
-			 otherwise be read out alike. -->
-		<button
-			type="button"
-			class="pick"
-			onclick={onopen}
-			aria-label={m.cooking.week.openDay(weekday, day.dayOfMonth)}
-		></button>
-	{/if}
-
+<li class="day" class:today={day.isToday}>
 	{#each day.meals as planned, index (planned.id)}
-		<div class="row">
+		<button type="button" class="row" onclick={() => onmeal(planned)}>
+			<!-- Written once per day, on its first row — the indent is what says the
+				 rows below belong to it. Which is exactly why every row still names
+				 its day *out loud*: a screen reader reads them one at a time. -->
 			<span class="weekday" aria-hidden="true">{index === 0 ? day.weekday : ''}</span>
+			<span class="sr-only">{m.cooking.week.dayLabel(weekday, day.dayOfMonth)}</span>
 
-			{#if planned.recipeId}
-				<a class="body" href="/cooking/recipes/{planned.recipeId}">{@render meal(planned)}</a>
-			{:else}
-				<button type="button" class="body" onclick={() => onplan(planned)}>
-					{@render meal(planned)}
-				</button>
-			{/if}
+			<span class="body">
+				<span class="name">{planned.name}</span>
+				{#if tagged}<span class="slot">{m.cooking.slots[planned.slot]}</span>{/if}
+			</span>
 
 			{#if planned.cook}
+				<!-- The cook is an avatar, and an avatar is decorative — so the one
+					 thing the row says out loud that it doesn't write out goes here. -->
+				<span class="sr-only">{m.cooking.week.cookedBy(planned.cook.displayName)}</span>
 				<Avatar name={planned.cook.displayName} color={planned.cook.color} size={20} />
 			{/if}
-		</div>
+		</button>
 	{:else}
-		<div class="row">
+		<button
+			type="button"
+			class="row"
+			onclick={onadd}
+			aria-label={m.cooking.week.planDay(weekday, day.dayOfMonth)}
+		>
 			<span class="weekday" aria-hidden="true">{day.weekday}</span>
 			<span class="nothing">{m.cooking.week.nothingPlanned}</span>
-		</div>
+			<span class="plus" aria-hidden="true"><Plus size={16} strokeWidth={2.2} /></span>
+		</button>
 	{/each}
-
-	{#if open}
-		<div class="row bar">
-			<span class="weekday" aria-hidden="true"></span>
-
-			<button
-				type="button"
-				class="add"
-				onclick={() => onplan(null)}
-				aria-label={m.cooking.week.addMealOn(weekday, day.dayOfMonth)}
-			>
-				<Plus size={15} strokeWidth={2.4} aria-hidden="true" />
-				<span>{m.cooking.week.addMeal}</span>
-			</button>
-
-			{#if day.meals.length > 0}
-				<button
-					type="button"
-					class="more"
-					onclick={onmore}
-					aria-label={m.cooking.week.changeMealsOn(weekday)}
-				>
-					<MoreHorizontal size={16} strokeWidth={2.2} />
-				</button>
-			{/if}
-		</div>
-	{/if}
 </li>
 
 <style>
+	/* Holds the rows' `sr-only` spans, which are taken out of the flow. */
 	.day {
 		position: relative;
 	}
 
-	/* The day's own target, under everything the rows put on top of it. */
-	.pick {
-		position: absolute;
-		inset: 0;
-		width: 100%;
-	}
-
-	/* `--sunken-2`, not `--sunken`: the slot tags are `--sunken`, and a press
-	   that swallowed them would read as the row losing its meals. */
-	.pick:active {
-		background: var(--sunken-2);
-	}
-
-	/* The card clips its rows (rounded corners), so app.css's 2px *outside* the
-	   button leaves a keyboard ring with only its top and bottom edges showing.
-	   Drawn inside the day it's a whole rectangle again. */
-	.pick:focus-visible {
-		outline-offset: -2px;
-	}
-
-	/* Sage is this app's "selected" (→ app.css `--sage-row`). Today keeps its
-	   own mark in the weekday and in the strip above, so the two never fight
-	   over one surface. */
-	.open {
+	/* Sage is this app's "selected" row, and with no day held open any more it
+	   is free to mark the day you're on — which is where it sat by default
+	   anyway (→ DECISIONS #132). Next week has no today and no tint. */
+	.today {
 		background: var(--sage-row);
 	}
 
 	/* Every meal is a row and every row is divided the same way, so a day reads
 	   as a group by its indent rather than by a heavier rule. */
 	.row {
-		position: relative;
 		display: flex;
 		align-items: center;
 		gap: 12px;
+		width: 100%;
 		padding: 14px 14px 14px 0;
 		border-top: 1px solid var(--divider);
-		/* Everything that isn't a control lets the day's own target through. */
-		pointer-events: none;
+		color: inherit;
+		text-align: left;
 	}
 
-	.row :is(a, button) {
-		pointer-events: auto;
-	}
-
-	.day:first-child .row:first-of-type {
+	.day:first-child .row:first-child {
 		border-top: none;
 	}
 
+	.row:active {
+		background: var(--sunken-2);
+	}
+
+	/* The card clips its rows (rounded corners), so app.css's 2px *outside* the
+	   button leaves a keyboard ring with only its top and bottom edges showing.
+	   Drawn inside the row it's a whole rectangle again. */
+	.row:focus-visible {
+		outline-offset: -2px;
+	}
+
 	/* Wide enough for "WED" once the type scale is on it (→ app.css `--fs`, and
-	   DECISIONS #125), and empty on a day's second and third meal — the indent
-	   is what says they belong to the weekday above. */
+	   DECISIONS #125), and empty on a day's second and third meal. */
 	.weekday {
 		flex: none;
 		width: 38px;
@@ -201,11 +143,10 @@
 		color: var(--sage);
 	}
 
-	/* The meal's own tap target — as wide as the meal, not as wide as the row,
-	   so the space beside it still belongs to the day underneath. A name too
-	   long for the line wraps and the tag follows it down: this wraps rather
-	   than truncates, because the meal is the one thing here that must never be
-	   half-read. */
+	/* A name too long for the line wraps and the tag follows it down: this wraps
+	   rather than truncates, because the meal is the one thing here that must
+	   never be half-read — and now that the row is one target end to end, a name
+	   that fills it costs nothing. */
 	.body {
 		display: flex;
 		flex-wrap: wrap;
@@ -213,14 +154,6 @@
 		gap: 5px 9px;
 		min-width: 0;
 		margin-right: auto;
-		color: inherit;
-		text-align: left;
-	}
-
-	/* Pressing the name flashes the whole row — the same feedback the day's own
-	   target gives, so the two never look like different surfaces. */
-	.row:has(.body:active) {
-		background: var(--sunken-2);
 	}
 
 	.name {
@@ -248,44 +181,16 @@
 		color: var(--text-disabled);
 	}
 
-	/* The only thing opening a day adds. It sits in the meals' column so the
-	   rows above it keep their alignment. */
-	.bar {
-		padding-top: 8px;
-		padding-bottom: 8px;
-	}
-
-	.add {
-		display: flex;
-		flex: 1;
-		align-items: center;
-		justify-content: center;
-		gap: 8px;
-		height: 34px;
-		border-radius: var(--r-input);
-		background: var(--card);
-		box-shadow: var(--shadow-card);
-		font-size: calc(13.5px * var(--fs));
-		font-weight: 600;
-		color: var(--sage);
-	}
-
-	.more {
+	/* An empty day is the one row whose action isn't written on it, so it wears
+	   the sign of the one thing it does. */
+	.plus {
 		display: flex;
 		flex: none;
 		align-items: center;
 		justify-content: center;
-		width: 44px;
-		height: 34px;
-		border-radius: var(--r-input);
-		background: var(--card);
-		box-shadow: var(--shadow-card);
+		width: 20px;
+		height: 20px;
 		color: var(--text-4);
-	}
-
-	.add:active,
-	.more:active {
-		background: var(--sunken);
 	}
 
 	.sr-only {

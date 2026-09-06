@@ -2,18 +2,19 @@
 	Cooking [04] — the week's meals and the door to the recipe library.
 
 	One card, seven days, every meal of each on a row of its own (→ SPEC §4.1).
-	Tapping a planned recipe opens the recipe; tapping the day itself opens that
-	day, which is what puts the "Add a meal" bar under its meals — one day at a
-	time, so the card gains a control rather than a fold. The sheets are mounted
-	per opening, which is what resets their forms.
+	A row is one target end to end: tapping a planned meal raises its actions
+	sheet (show the recipe, cook it, change it, remove it, add another to the
+	day), and tapping a day with nothing on it goes straight to the plan sheet,
+	because an empty day has only the one thing to offer (→ DECISIONS #132).
+	The sheets are mounted per opening, which is what resets their forms.
 
 	Two weeks are plannable — this one and the next — and which is on screen is
 	in the URL rather than in state here, so a reload, a share and the back
 	button all land where you'd expect (→ DECISIONS #99).
 -->
 <script lang="ts">
-	import DayMealsSheet from '$lib/components/cooking/DayMealsSheet.svelte';
 	import IngredientPickSheet from '$lib/components/cooking/IngredientPickSheet.svelte';
+	import MealActionsSheet from '$lib/components/cooking/MealActionsSheet.svelte';
 	import MealPlanSheet from '$lib/components/cooking/MealPlanSheet.svelte';
 	import MealRow from '$lib/components/cooking/MealRow.svelte';
 	import RecipeCard from '$lib/components/cooking/RecipeCard.svelte';
@@ -46,11 +47,8 @@
 	 */
 	let planning = $state<{ date: CalendarDate; mealId: string | null; slot: MealSlot } | null>(null);
 
-	/** The day whose ••• was tapped, when it holds more than one meal. */
-	let menu = $state<CalendarDate | null>(null);
-
-	/** Which day the card has open — the one carrying the action bar. */
-	let opened = $state<CalendarDate | null>(null);
+	/** Which planned meal was tapped — what the actions sheet is open on. */
+	let acting = $state<{ date: CalendarDate; mealId: string } | null>(null);
 
 	/**
 	 * The ingredient picker [3e], raised by the plan sheet's toggle. Copied out
@@ -84,21 +82,15 @@
 		}))
 	);
 
-	/**
-	 * Today, until a tap says otherwise — and the week's Monday on next week,
-	 * which has no today. Resolved against the week on screen rather than
-	 * seeded into state, so paging opens *that* week's default instead of
-	 * leaving the card with nothing open.
-	 */
-	const openDay = $derived(
-		week.days.find((entry) => entry.date === opened) ??
-			week.days.find((entry) => entry.isToday) ??
-			week.days[0]
-	);
-
 	// A date belongs to one week, so paging away closes the sheet on its own.
 	const day = $derived(week.days.find((entry) => entry.date === planning?.date) ?? null);
-	const menuDay = $derived(week.days.find((entry) => entry.date === menu) ?? null);
+	const actingDay = $derived(week.days.find((entry) => entry.date === acting?.date) ?? null);
+	/**
+	 * Re-read off the freshly loaded day, so removing the meal from inside the
+	 * sheet takes the sheet with it rather than leaving it on a meal that is
+	 * no longer there.
+	 */
+	const actingMeal = $derived(actingDay?.meals.find((meal) => meal.id === acting?.mealId) ?? null);
 	/**
 	 * Re-read off the freshly loaded day rather than kept in `planning`, so the
 	 * sheet's "Remove meal" and its "Replaces …" line follow what the last
@@ -116,7 +108,7 @@
 			mealId: meal?.id ?? null,
 			slot: meal?.slot ?? nextFreeSlot(entry.meals.map((planned) => planned.slot))
 		};
-		menu = null;
+		acting = null;
 	}
 </script>
 
@@ -146,11 +138,8 @@
 		{#each week.days as entry (entry.date)}
 			<MealRow
 				day={entry}
-				open={entry.date === openDay.date}
-				onopen={() => (opened = entry.date)}
-				onplan={(meal) => plan(entry, meal)}
-				onmore={() =>
-					entry.meals.length > 1 ? (menu = entry.date) : plan(entry, entry.meals[0] ?? null)}
+				onmeal={(meal) => (acting = { date: entry.date, mealId: meal.id })}
+				onadd={() => plan(entry, null)}
 			/>
 		{/each}
 	</ul>
@@ -195,11 +184,13 @@
 	/>
 {/if}
 
-{#if menuDay}
-	<DayMealsSheet
-		day={menuDay}
-		onpick={(meal) => plan(menuDay, meal)}
-		onclose={() => (menu = null)}
+{#if actingDay && actingMeal}
+	<MealActionsSheet
+		day={actingDay}
+		meal={actingMeal}
+		onchange={() => plan(actingDay, actingMeal)}
+		onadd={() => plan(actingDay, null)}
+		onclose={() => (acting = null)}
 	/>
 {/if}
 

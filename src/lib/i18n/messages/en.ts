@@ -806,17 +806,29 @@ export const en = {
 			cookedBy: (cook: string) => `${cook} cooks`,
 			/** A day nobody has decided on yet — it keeps its row either way. */
 			nothingPlanned: 'Nothing planned',
-			/** Tapping a day opens it: the action bar under that day's meals. */
-			openDay: (weekday: string, day: string) => `Open ${weekday} ${day}`,
-			addMeal: 'Add a meal',
-			/** Seven identical buttons would otherwise be read out alike. */
-			addMealOn: (weekday: string, day: string) => `Add a meal on ${weekday} ${day}`,
-			/** The open day's ••• — one meal, or the sheet that asks which. */
-			changeMealsOn: (weekday: string) => `Change what’s on ${weekday}`,
-			/** That sheet's eyebrow; its title is the day. */
-			changeEyebrow: 'Change a meal',
+			/**
+			 * Every row names its day out loud: the visible "THU" is written once
+			 * per day, but a screen reader reads the rows one at a time.
+			 */
+			dayLabel: (weekday: string, day: string) => `${weekday} ${day}`,
+			/** An empty day's row — the one row whose action isn't written on it. */
+			planDay: (weekday: string, day: string) => `Plan a meal on ${weekday} ${day}`,
 			/** Read out beside today's column in the strip. */
 			today: '(today)'
+		},
+
+		/**
+		 * What you can do with a planned meal [04] — the sheet a week row opens
+		 * (→ DECISIONS #132). `mealMenu` beside `menu`, the recipe's ••• below:
+		 * two menus over two different things.
+		 */
+		mealMenu: {
+			showRecipe: 'Show recipe',
+			startCooking: 'Start cook mode',
+			change: 'Change meal',
+			/** The day's own action, offered on the meal that raised the sheet. */
+			addAnother: (weekday: string) => `Add another meal on ${weekday}`,
+			remove: 'Remove from the plan'
 		},
 
 		/** The library block under the week [04]. */

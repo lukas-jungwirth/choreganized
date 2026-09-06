@@ -11,7 +11,7 @@
 	while a timer ring is running and the second is a whole list to read, and the
 	question in a kitchen is always about *one* word: how much of that? So the
 	underline is the answer's own button, and the answer appears against the word
-	rather than somewhere else on the screen (→ DECISIONS #132). An underline with
+	rather than somewhere else on the screen (→ DECISIONS #133). An underline with
 	no amount to give ("Salt", "a splash of oil") stays plain text — there is
 	nothing for a tap to reveal, and a button that does nothing is worse than no
 	button. Screen readers don't tap: the amount rides along in the button, so the
