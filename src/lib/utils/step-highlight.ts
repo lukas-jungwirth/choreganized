@@ -105,6 +105,23 @@ export function scaleStepUses(uses: readonly StepUse[] | null, factor: number): 
 	return uses.map((use) => ({ ...use, quantity: scaleQuantity(use.quantity, factor) }));
 }
 
+/**
+ * An ingredient's name without its note: "Olive oil (extra virgin), warmed" is
+ * written down whole and referred to as "the olive oil". The brackets and
+ * everything after the first comma are the note.
+ *
+ * Used both by the matcher below — a step calls an ingredient by this name far
+ * more often than by the one on the shopping line — and by anything that has to
+ * *show* the short form, like the timer sheet's suggestions (→ SPEC §4.6).
+ */
+export function plainName(name: string): string {
+	return name
+		.replace(/\([^)]*\)/g, ' ')
+		.split(/[,;]/)[0]
+		.replace(/\s+/g, ' ')
+		.trim();
+}
+
 export function highlightStep<T extends { name: string }>(
 	text: string,
 	ingredients: readonly T[]
@@ -210,13 +227,7 @@ function aliases<T extends { name: string }>(ingredient: T): Candidate<T>[] {
 
 	offer(written, 0);
 
-	// "Olive oil (extra virgin), warmed" is written down whole and referred to as
-	// "the olive oil"; the brackets and everything after the comma are the note.
-	const plain = written
-		.replace(/\([^)]*\)/g, ' ')
-		.split(/[,;]/)[0]
-		.replace(/\s+/g, ' ')
-		.trim();
+	const plain = plainName(written);
 
 	offer(plain, 1);
 

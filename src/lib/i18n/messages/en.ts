@@ -1100,7 +1100,7 @@ export const en = {
 
 			/** The manual timer sheet (→ DECISIONS #14). */
 			timerTitle: 'Set a timer',
-			timerSubtitle: 'It rings even with the phone locked.',
+			timerSubtitle: 'It rings until you stop it, even with the phone locked.',
 			minutes: 'Minutes',
 			startMinutes: (minutes: number) => `Start ${minutes}-minute timer`,
 
@@ -1110,7 +1110,8 @@ export const en = {
 			timerLeft: (remaining: string, total: string) => `${remaining} left of ${total}`,
 			timerMeta: (label: string, total: string, paused: boolean) =>
 				paused ? `${label} · ${total} · paused` : `${label} · ${total}`,
-			dismiss: 'Dismiss',
+			/** On a timer that is *ringing* — it silences an alarm, not a banner. */
+			dismiss: 'Stop',
 			resume: 'Resume',
 			pause: 'Pause',
 			addMinute: '+1:00',
@@ -1119,10 +1120,16 @@ export const en = {
 			barDone: (label: string) => `${label} is done`,
 			barRunning: (label: string, remaining: string) => `${label}, ${remaining} left`,
 			barBackTo: (step: number) => ` — back to step ${step}`,
-			/** The default label a timer with no step text gets. */
+			/** The default label a timer with no step at all gets. */
 			defaultTimer: 'Timer',
-			/** Three identical "Timer"s is one timer. Fall back to where it was set. */
-			timerForStep: (step: number) => `Step ${step} timer`,
+			/**
+			 * What a timer is called unless the cook names it (→ DECISIONS #134).
+			 * Reads as "Step 2 · 8:00" on the ring and "⏲️ Step 2 is done" on a lock
+			 * screen, so it is the bare step — not "Step 2 timer".
+			 */
+			timerForStep: (step: number) => `Step ${step}`,
+			/** The sheet's optional name field; its placeholder is `timerForStep`. */
+			timerName: 'What for?',
 			/** The × on a bar: a timer you aren't standing on, stopped where it is. */
 			timerCancelOne: (label: string) => `Cancel ${label}`,
 			/** At the cap the Start chip stands down and says why (→ DECISIONS #102). */
@@ -1147,7 +1154,7 @@ export const en = {
 			more: (count: number) => `+${count}`,
 			/** The same count, spelled out for the row's label. */
 			andMore: (count: number) => (count === 1 ? ' and 1 more timer' : ` and ${count} more timers`),
-			dismiss: 'Dismiss this timer'
+			dismiss: 'Stop this timer'
 		},
 
 		/** Import a recipe from a link [3c as the preview] (→ SPEC §4.7, plan 12). */

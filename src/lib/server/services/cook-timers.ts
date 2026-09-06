@@ -52,6 +52,7 @@ import { STEPS_MAX } from '$lib/utils/recipes';
 import {
 	MAX_TIMER_SECONDS,
 	MIN_TIMER_SECONDS,
+	TIMER_LABEL_MAX,
 	TIMERS_MAX,
 	timerHref
 } from '$lib/utils/timer-parse';
@@ -74,18 +75,11 @@ export class CookTimerError extends Error {
 	}
 }
 
-/** Long enough for the longest ingredient name the form accepts. */
-export const TIMER_LABEL_MAX = 60;
-
 /**
- * What a timer is called when the step names no ingredient to name it after.
- * Reads correctly in both places it appears: the ring's "Timer · 8:00" and the
- * push's "⏲️ Timer is done — back to step 3".
- */
-/**
- * Last resort only. The endpoint supplies a localised default for a timer
- * started without a label (→ `routes/api/timers/+server.ts`), so this is what a
- * caller that bypasses it would get — never something a member reads.
+ * Last resort only. Cook mode names a timer after its step (→ DECISIONS #134)
+ * and the endpoint supplies a localised default for one started without a label
+ * at all (→ `routes/api/timers/+server.ts`), so this is what a caller that
+ * bypasses both would get — never something a member reads.
  */
 const DEFAULT_LABEL = 'Timer';
 
@@ -407,23 +401,48 @@ async function ring(row: TimerRow, now: Date): Promise<number | null> {
  * the app name itself (→ DECISIONS #55) — and `url` is the deep link back into
  * the step that was cooking, which the service worker focuses or opens.
  *
- * The step is 0-based in the column and 1-based everywhere a person reads it.
+ * **The label names the timer, the body names the dish.** A timer is called
+ * after its step unless the cook named it (→ DECISIONS #134), so the title alone
+ * would read "⏲️ Step 2 is done" on a lock screen — true, and useless to someone
+ * who has two recipes open. The recipe goes in the body instead of the old
+ * " — back to step 2" suffix, which said the step twice and never said the dish.
  *
  * The URL comes from `timerHref`, the same helper the dock and the bars link
  * through, so a notification and a tap in the app can never disagree about
  * where a timer lives.
  */
 function payloadFor(row: TimerRow): PayloadFor {
-	const step = row.stepIndex === null ? null : row.stepIndex + 1;
+	const dish = recipeNameFor(row.householdId, row.recipeId);
 
 	return (m) => ({
-		title: m.push.timerDone(row.label) + (step === null ? '' : m.cooking.cook.barBackTo(step)),
+		title: m.push.timerDone(row.label),
+		body: dish ?? undefined,
 		// Per timer, so a second timer never silently replaces the first's alert.
 		tag: `timer-${row.id}`,
 		url: timerHref(row.recipeId, row.stepIndex),
-		// A kitchen is loud and hands are busy — this one earns a longer buzz.
-		vibrate: [200, 100, 200]
+		// A kitchen is loud and hands are busy, and this is the one notification
+		// the app sends that somebody is actively waiting for — so it buzzes like
+		// an alarm and stays put until it is dealt with (→ DECISIONS #134).
+		vibrate: [400, 150, 400, 150, 400],
+		requireInteraction: true
 	});
+}
+
+/**
+ * The dish a timer belongs to, read at ring time rather than carried on the row.
+ * One indexed lookup, once, on a timer that is actually going off — and it says
+ * whatever the recipe is called *now*, which a copy on the row would not.
+ */
+function recipeNameFor(householdId: string, recipeId: string | null): string | null {
+	if (!recipeId) return null;
+
+	const row = db
+		.select({ name: recipes.name })
+		.from(recipes)
+		.where(and(eq(recipes.id, recipeId), eq(recipes.householdId, householdId)))
+		.get();
+
+	return row?.name ?? null;
 }
 
 /**

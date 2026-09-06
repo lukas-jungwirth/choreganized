@@ -34,6 +34,15 @@ export const MAX_TIMER_SECONDS = 12 * 60 * 60;
 export const TIMERS_MAX = 3;
 
 /**
+ * How long a timer's name may be. Here rather than beside the service that
+ * enforces it for the same reason `TIMERS_MAX` is: the sheet that offers the
+ * field caps the input at the same number, and a component cannot import from
+ * `$lib/server`. Long enough for the longest ingredient name the recipe form
+ * accepts.
+ */
+export const TIMER_LABEL_MAX = 60;
+
+/**
  * Where tapping a timer goes. The timer's own recipe, never the screen's — and
  * `/cooking` when that recipe has been deleted (`recipe_id` is ON DELETE set
  * null), which is the same fallback the push's `payloadFor` makes.

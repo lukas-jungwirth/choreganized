@@ -820,7 +820,7 @@ export const de: Messages = {
 			stepAmount: (amount: string) => `, ${amount}, `,
 
 			timerTitle: 'Timer stellen',
-			timerSubtitle: 'Er klingelt auch bei gesperrtem Handy.',
+			timerSubtitle: 'Er klingelt, bis du ihn stoppst — auch bei gesperrtem Handy.',
 			minutes: 'Minuten',
 			startMinutes: (minutes: number) => `${minutes}-Minuten-Timer starten`,
 
@@ -829,7 +829,7 @@ export const de: Messages = {
 			timerLeft: (remaining: string, total: string) => `${remaining} von ${total} übrig`,
 			timerMeta: (label: string, total: string, paused: boolean) =>
 				paused ? `${label} · ${total} · pausiert` : `${label} · ${total}`,
-			dismiss: 'Schließen',
+			dismiss: 'Stopp',
 			resume: 'Weiter',
 			pause: 'Pause',
 			addMinute: '+1:00',
@@ -839,7 +839,8 @@ export const de: Messages = {
 			barRunning: (label: string, remaining: string) => `${label}, noch ${remaining}`,
 			barBackTo: (step: number) => ` — zurück zu Schritt ${step}`,
 			defaultTimer: 'Timer',
-			timerForStep: (step: number) => `Timer Schritt ${step}`,
+			timerForStep: (step: number) => `Schritt ${step}`,
+			timerName: 'Wofür?',
 			timerCancelOne: (label: string) => `${label} abbrechen`,
 			timerCapped: (max: number) =>
 				`${max} Timer gleichzeitig sind das Maximum — stopp zuerst einen.`,
@@ -855,7 +856,7 @@ export const de: Messages = {
 			/** „weiterer“/„weitere“: im Deutschen entscheidet die Zahl über die Endung. */
 			andMore: (count: number) =>
 				count === 1 ? ' und 1 weiterer Timer' : ` und ${count} weitere Timer`,
-			dismiss: 'Diesen Timer schließen'
+			dismiss: 'Diesen Timer stoppen'
 		},
 
 		import: {
