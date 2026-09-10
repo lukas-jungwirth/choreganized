@@ -417,6 +417,34 @@ export const en = {
 			action: 'Undo'
 		},
 
+		/**
+		 * A housemate changed the list while you were looking at it (→ SPEC §3.1,
+		 * DECISIONS #135). The row already ticks itself off where it stands, in
+		 * their colour — this is for the half of the list that is below the fold,
+		 * and for an add, which has no row of yours to animate.
+		 *
+		 * Parts rather than a string, like `undo.checked`: the item is the bold
+		 * run, and each language decides where that falls.
+		 */
+		live: {
+			checked: (member: string, item: string): RichText => [
+				{ text: `${member} got ` },
+				{ text: item, strong: true }
+			],
+			checkedMany: (member: string, count: number): RichText => [
+				{ text: `${member} got ` },
+				{ text: count === 1 ? '1 thing' : `${count} things`, strong: true }
+			],
+			added: (member: string, item: string): RichText => [
+				{ text: `${member} added ` },
+				{ text: item, strong: true }
+			],
+			addedMany: (member: string, count: number): RichText => [
+				{ text: `${member} added ` },
+				{ text: count === 1 ? '1 thing' : `${count} things`, strong: true }
+			]
+		},
+
 		/** Add / edit item [3a]. */
 		sheet: {
 			add: 'Add item',

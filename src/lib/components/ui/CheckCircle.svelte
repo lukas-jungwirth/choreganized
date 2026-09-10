@@ -16,15 +16,29 @@
 		/** Accent — sage for the list, the member's colour in feeds. */
 		color?: string;
 		tinted?: boolean;
+		/**
+		 * Play the tick rather than arriving already ticked: the fill pops in and
+		 * the ✓ draws itself. For the moment a check *happens* under your eyes —
+		 * the shopping list's settle (→ SPEC §3.1) — not for a list that renders
+		 * checked because that is how it loaded.
+		 */
+		animate?: boolean;
 	};
 
-	let { checked = false, size = 22, color = 'var(--sage)', tinted = false }: Props = $props();
+	let {
+		checked = false,
+		size = 22,
+		color = 'var(--sage)',
+		tinted = false,
+		animate = false
+	}: Props = $props();
 </script>
 
 <span
 	class="circle"
 	class:checked
 	class:tinted
+	class:animate={animate && checked}
 	style:--circle-size="{size}px"
 	style:--circle-color={color}
 	aria-hidden="true"
@@ -85,12 +99,61 @@
 		transform: none;
 	}
 
+	/*
+		The tick, played rather than stated. The circle takes its colour and swells
+		a little — a stamp coming down — while the ✓ draws itself along its own
+		length a beat later, so the two read as one gesture rather than as a fill
+		with a glyph already sitting inside it.
+
+		`stroke-dasharray` is the whole trick: one dash as long as the path, offset
+		out of sight, animated back to zero. 30 comfortably exceeds the path's
+		length in the 24-unit viewBox, and overshooting only means the line starts
+		a touch further away — never that it fails to close.
+	*/
+	.animate {
+		animation: tick-pop 260ms cubic-bezier(0.34, 1.4, 0.64, 1);
+	}
+
+	.animate svg path {
+		stroke-dasharray: 30;
+		stroke-dashoffset: 30;
+		animation: tick-draw 240ms 80ms ease-out forwards;
+	}
+
+	@keyframes tick-pop {
+		0% {
+			transform: scale(1);
+		}
+		45% {
+			transform: scale(1.12);
+		}
+		100% {
+			transform: scale(1);
+		}
+	}
+
+	@keyframes tick-draw {
+		to {
+			stroke-dashoffset: 0;
+		}
+	}
+
 	@media (prefers-reduced-motion: reduce) {
 		.circle {
 			transition: none;
 		}
 		.checked:active {
 			transform: none;
+		}
+		/* The tick still *happens*; it just arrives whole. The settle around it
+		   holds for the same beat either way, so the state is still seen. */
+		.animate {
+			animation: none;
+		}
+		.animate svg path {
+			stroke-dasharray: none;
+			stroke-dashoffset: 0;
+			animation: none;
 		}
 	}
 </style>

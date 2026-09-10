@@ -1026,8 +1026,14 @@ reload`) so it can't silently regress.
 
 ## Later (explicitly out of v1 scope)
 
-SSE live updates · passkeys · email auth · Apple sign-in · multi-household ·
-meal slots beyond dinner · offline mutations · iOS polish pass. 119. **The theme is a per-device cookie, not a column on the membership** (→ SPEC §10). Language
+<!-- Careful: entry 119 runs on from the end of the list below ("…iOS polish pass. 119. **The
+theme is…"). It looks like a typo and it is, but breaking it makes Prettier read everything from
+1 as one ordered list and renumber 119+ — every `DECISIONS #N` citation in `src/` and `docs/`
+would silently point at the wrong entry. Fix it only together with those citations. -->
+
+~~SSE live updates~~ — resolved 2026-09-10 (→ #135) · passkeys · email auth ·
+Apple sign-in · multi-household · meal slots beyond dinner · offline mutations ·
+iOS polish pass. 119. **The theme is a per-device cookie, not a column on the membership** (→ SPEC §10). Language
 is stored on `members.locale` because the server genuinely needs it — the cron sweep has to
 address a push notification in its recipient's language. Nothing on the server needs a
 _colour_, so the cookie is the whole setting rather than a mirror of one: no migration, no
@@ -1548,3 +1554,91 @@ that actually adapts there; this wants checking on a real device.
        A web push cannot ring like a native alarm: no custom sound, no critical alert, and a
        frozen page cannot make a noise on its own behalf. Saying so is better than pretending
        the two halves are equivalent.
+
+135. **The shopping list is live while you are looking at it, and a tick is something you
+     watch** (→ SPEC §3.1, `lib/server/live.ts`, `lib/live.ts`, `routes/api/live/+server.ts`).
+     Two people in one shop each held a stale list: freshness was `refetchOnFocus`, and nobody
+     switches tabs while holding a trolley. Fixing that turned out to be the same job as fixing
+     something else — a tick made the row vanish instantly — because the animation that makes
+     your own tick legible is exactly what makes a housemate's legible too.
+
+     - **SSE, not a WebSocket**, which is what ARCHITECTURE has said since v1. The traffic is
+       one-way: every write already goes server-ward as a form POST, so a socket buys only an
+       upgrade handshake — one that adapter-node cannot give us anyway. Its `build/index.js`
+       registers a `request` listener on the http server and never exposes it, so no route can
+       ever see the socket; we would need a custom `entryPoint` wrapping `handler.js` plus a
+       Traefik upgrade-passthrough assumption nothing in this repo documents. `EventSource`
+       reconnects by itself, and the service worker already passes non-navigate GETs through
+       untouched.
+
+     - **An event is a hint; the load is the truth.** The frame says what changed and who did
+       it — enough to animate and to name them — and the page answers with a debounced
+       `invalidate('app:shopping')`. The browser never re-implements `splitList`'s grouping or
+       walking order, so a live update and a reload cannot disagree. It also means there is no
+       history to keep: no `Last-Event-ID`, no sequence numbers, and a client that misses an
+       event catches up by refetching, which every reconnect does anyway. `depends` rather than
+       `invalidateAll`, so a tick costs the page's load and not the layout's too — the wire
+       shows `x-sveltekit-invalidated=001`.
+
+     - **The fourth JSON endpoint** (→ #20), on the same argument as the other three: a form
+       action cannot hold a connection open, and a list that updates while you watch it is by
+       definition a thing JavaScript does, so there is no progressive enhancement to preserve.
+       `requireMemberApi` (→ #89), an allow-listed `?topics=`, a 25 s heartbeat, and a 30 min
+       cap — the session is resolved once when the stream opens and is frozen for its life, so
+       bounding it is what makes the reconnect a re-authentication.
+
+     - **The row waits; the write does not.** A tick holds its place for ~1.4 s, visibly
+       ticked, and only then leaves for "Recently bought". It is held by giving `pending` a
+       null `checkedAt` — the machinery that already existed for the optimistic tick — so
+       `splitList` is not involved and there is one definition of where a row belongs. The POST
+       goes out on tap, as before. A housemate's tick runs the same settle in **their** colour,
+       in the row's own place in your walking order, which is the one place you were already
+       looking; the wash is a `color-mix` on a `--tick-color` custom property, the way
+       `ui/Avatar` takes a member's colour, so no hex leaves `app.css`.
+
+     - **A settle ends on two conditions, not one**: its beat is up _and_ the server's list
+       agrees. The beat alone would mean that on a connection slower than 1.4 s — a shop
+       basement, which is where this runs — the row snapped back to un-ticked while the undo
+       bar said it had been checked off. Holding longer costs nothing, because the row already
+       looks the way it is going to end up.
+
+     - **The undo bar moved to the end of the settle**, where its own docstring always said it
+       belonged: "the moment you'd notice the wrong line is also the moment the row is hardest
+       to find" is now 1.4 s later than it used to be. A housemate's tick raises no undo bar —
+       it was not yours to take back — and the live notice yields the slot to the undo bar
+       whenever both want it, because only one of them has something to press.
+
+     - **The departure is a cut, not a collapse.** No outro transition on the row:
+       `svelte-dnd-action` owns those children in the open groups, and transitions on
+       dnd-managed nodes are how you get ghost rows. The settle has already shown what
+       happened.
+
+     - **The strike is a `text-decoration-color`, not a line that grows.** A pseudo-element
+       scaling across the box draws one bar through a name that wraps — and "Greyerzer Käse
+       (gerieben)" is two lines at 375 px. `text-decoration` cannot be animated but its colour
+       can, so the line is there from the start and fades in, per line.
+
+     - **Only ticks and adds are announced.** `updateItem`, `deleteItem`, `reorderItems` and
+       the nightly purge publish a silent `changed` — they refresh the list and say nothing.
+       Partly because "Elisabeth edited Milk" is not news to somebody holding a trolley, and
+       partly because those three take no member id, and three signature changes to attribute a
+       toast nobody wants is a bad trade.
+
+     - **Self-echo is paid for, not avoided.** Your own action invalidates twice: once from
+       `use:enhance`, once from your own event coming back. That second fetch is what keeps a
+       _second device of the same member_ correct, and it is one route-data request. The
+       alternative — threading a connection id through every form on the screen — buys nothing.
+       The toast is still suppressed for your own events, which is the part that would actually
+       have been wrong.
+
+     - **`ShoppingGroup` had to stop always winning.** It held its local order whenever the
+       member set was unchanged, which meant a housemate's drag never showed up at all. The
+       guard that mattered was "don't clobber an order still saving", so that is now what it
+       is: a `saving` flag beside `dragging`, and the server's order taken whole otherwise
+       (amends #118).
+
+     - **One process, one hub.** `Map<householdId, Set<listener>>` behind a `Symbol.for`, the
+       trick `registerCronJobs` uses and for the same reason — Vite re-evaluates the module on
+       every edit and would orphan every open stream. Losing it costs nothing (cf. the `alarms`
+       map in `cook-timers.ts`): the reconnect refetches. It works because the deploy is a
+       single container; a second node would need a broker.

@@ -320,6 +320,29 @@ export const de: Messages = {
 			action: 'Rückgängig'
 		},
 
+		live: {
+			checked: (member: string, item: string): RichText => [
+				{ text: `${member} hat ` },
+				{ text: item, strong: true },
+				{ text: ' geholt' }
+			],
+			checkedMany: (member: string, count: number): RichText => [
+				{ text: `${member} hat ` },
+				{ text: count === 1 ? '1 Sache' : `${count} Sachen`, strong: true },
+				{ text: ' geholt' }
+			],
+			added: (member: string, item: string): RichText => [
+				{ text: `${member} hat ` },
+				{ text: item, strong: true },
+				{ text: ' eingetragen' }
+			],
+			addedMany: (member: string, count: number): RichText => [
+				{ text: `${member} hat ` },
+				{ text: count === 1 ? '1 Sache' : `${count} Sachen`, strong: true },
+				{ text: ' eingetragen' }
+			]
+		},
+
 		sheet: {
 			add: 'Eintragen',
 			edit: 'Eintrag bearbeiten',

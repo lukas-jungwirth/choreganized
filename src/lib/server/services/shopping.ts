@@ -31,6 +31,7 @@ import {
 	type ShoppingItem,
 	type Store
 } from '../db/schema';
+import { publish, type LiveActor } from '../live';
 import { notifyShoppingAdd } from '../push';
 
 /*
@@ -380,6 +381,14 @@ export function addItem(householdId: string, memberId: string, input: AddItemInp
 	});
 
 	notifyShoppingAdd({ householdId, actorMemberId: memberId, itemCount: 1 });
+	// Fire-and-forget, outside the transaction, next to the push for the same
+	// reason: the row is written, and nobody's failure to hear about it may
+	// unwrite it (→ `../live.ts`, DECISIONS #135).
+	publishShopping(householdId, memberId, {
+		kind: 'added',
+		itemId: item.id,
+		name: item.name
+	});
 
 	return item;
 }
@@ -391,7 +400,7 @@ export function addItem(householdId: string, memberId: string, input: AddItemInp
  * is exactly where somebody who just edited the item would look for it.
  */
 export function updateItem(householdId: string, itemId: string, input: UpdateItemInput): boolean {
-	return db.transaction((tx) => {
+	const edited = db.transaction((tx) => {
 		const values = normalize(householdId, input);
 		const result = tx
 			.update(shoppingItems)
@@ -405,16 +414,29 @@ export function updateItem(householdId: string, itemId: string, input: UpdateIte
 		rememberName(tx, householdId, values.name);
 		return true;
 	});
+
+	// Silent: an edit changes the row for whoever is looking, but "Elisabeth
+	// edited Milk" isn't news anyone standing in a shop needs read out.
+	if (edited) publish(householdId, { topic: 'shopping', kind: 'changed' });
+
+	return edited;
 }
 
-/** Check or uncheck. Unchecking clears who checked it, so nothing lies. */
+/**
+ * Check or uncheck. Unchecking clears who checked it, so nothing lies.
+ *
+ * `RETURNING` rather than a second read: the live event names the item ("Elisabeth
+ * checked off **Tomatoes**"), and the name is right there in the row being
+ * written. It also answers "was this ours?" better than `changes` did — a row
+ * comes back or it doesn't.
+ */
 export function setChecked(
 	householdId: string,
 	itemId: string,
 	memberId: string,
 	checked: boolean
 ): boolean {
-	const result = db
+	const row = db
 		.update(shoppingItems)
 		.set(
 			checked
@@ -422,9 +444,18 @@ export function setChecked(
 				: { checkedAt: null, checkedByMemberId: null }
 		)
 		.where(and(eq(shoppingItems.id, itemId), eq(shoppingItems.householdId, householdId)))
-		.run();
+		.returning({ name: shoppingItems.name })
+		.get();
 
-	return result.changes > 0;
+	if (!row) return false;
+
+	publishShopping(householdId, memberId, {
+		kind: checked ? 'checked' : 'unchecked',
+		itemId,
+		name: row.name
+	});
+
+	return true;
 }
 
 export function deleteItem(householdId: string, itemId: string): boolean {
@@ -433,7 +464,10 @@ export function deleteItem(householdId: string, itemId: string): boolean {
 		.where(and(eq(shoppingItems.id, itemId), eq(shoppingItems.householdId, householdId)))
 		.run();
 
-	return result.changes > 0;
+	if (result.changes === 0) return false;
+
+	publish(householdId, { topic: 'shopping', kind: 'changed' });
+	return true;
 }
 
 export type IngredientInput = {
@@ -527,6 +561,12 @@ export function addIngredients(
 			itemCount: result.added,
 			toppedUpCount: result.merged
 		});
+		// One event for the batch, counted rather than named: a recipe pours in
+		// several at once, and eight toasts in a row is not an improvement.
+		publishShopping(householdId, memberId, {
+			kind: 'added',
+			count: result.added + result.merged
+		});
 	}
 
 	return result;
@@ -538,10 +578,16 @@ export function addIngredients(
  * excluded by the comparison itself.
  */
 export function purgeCheckedItems(householdId: string, before: Date): number {
-	return db
+	const purged = db
 		.delete(shoppingItems)
 		.where(and(eq(shoppingItems.householdId, householdId), lt(shoppingItems.checkedAt, before)))
 		.run().changes;
+
+	// 03:30, so almost always nobody — but a phone left open on the list
+	// overnight would otherwise keep offering rows that no longer exist.
+	if (purged > 0) publish(householdId, { topic: 'shopping', kind: 'changed' });
+
+	return purged;
 }
 
 /**
@@ -559,7 +605,7 @@ export function reorderItems(
 	storeId: string | null,
 	orderedIds: string[]
 ): boolean {
-	return db.transaction((tx) => {
+	const reordered = db.transaction((tx) => {
 		const inGroup = tx
 			.select({ id: shoppingItems.id })
 			.from(shoppingItems)
@@ -589,6 +635,45 @@ export function reorderItems(
 		writeItemOrder(tx, householdId, ordered);
 		return true;
 	});
+
+	publish(householdId, { topic: 'shopping', kind: 'changed' });
+	return reordered;
+}
+
+/**
+ * Announce a change that has a person behind it (→ `../live.ts`).
+ *
+ * The actor is looked up here rather than threaded through every signature: it
+ * is one indexed read on a table with two rows in it, and it keeps the actions
+ * thin the way `docs/ARCHITECTURE.md` asks. A member that has since left the
+ * household simply doesn't publish — an event with nobody's name and nobody's
+ * colour has nothing for the screen to do.
+ */
+function publishShopping(
+	householdId: string,
+	memberId: string,
+	change: {
+		kind: 'checked' | 'unchecked' | 'added';
+		itemId?: string;
+		name?: string;
+		count?: number;
+	}
+): void {
+	const actor = memberBadge(householdId, memberId);
+	if (!actor) return;
+
+	publish(householdId, { topic: 'shopping', ...change, actor });
+}
+
+/** Just enough of a member to name them and colour their tick. */
+function memberBadge(householdId: string, memberId: string): LiveActor | null {
+	const row = db
+		.select({ displayName: members.displayName, color: members.color })
+		.from(members)
+		.where(and(eq(members.id, memberId), eq(members.householdId, householdId)))
+		.get();
+
+	return row ? { memberId, ...row } : null;
 }
 
 /** Writes 0…n−1 down the given item ids. Mirrors stores' `writeOrder`. */
