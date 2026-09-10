@@ -1,0 +1,36 @@
+# The fields mirror what the in-app "Send feedback" sheet posts, so triage sees
+# one shape whether a report came from a phone or was typed here (→ plan 16).
+name: Bug
+description: Something in Choreganized is broken
+labels: [bug]
+body:
+  - type: textarea
+    id: what
+    attributes:
+      label: What happened?
+      placeholder: The shopping list jumped back to the top after I ticked something off.
+    validations:
+      required: true
+
+  - type: textarea
+    id: expected
+    attributes:
+      label: What did you expect instead?
+    validations:
+      required: false
+
+  - type: input
+    id: where
+    attributes:
+      label: Where in the app?
+      placeholder: Shopping · Billa
+    validations:
+      required: false
+
+  - type: input
+    id: version
+    attributes:
+      label: App version
+      description: Settings → About → Version. Leave blank if you don't have it.
+    validations:
+      required: false

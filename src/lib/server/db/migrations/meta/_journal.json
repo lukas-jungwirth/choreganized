@@ -85,6 +85,13 @@
       "when": 1786720747357,
       "tag": "0011_foamy_hellcat",
       "breakpoints": true
+    },
+    {
+      "idx": 12,
+      "version": "6",
+      "when": 1789067163517,
+      "tag": "0012_purple_smasher",
+      "breakpoints": true
     }
   ]
 }

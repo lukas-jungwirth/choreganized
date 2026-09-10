@@ -17,6 +17,7 @@
 	import EnablePush from '$lib/components/EnablePush.svelte';
 	import HomeIcon from '$lib/components/icons/HomeIcon.svelte';
 	import AiImportSheet from '$lib/components/settings/AiImportSheet.svelte';
+	import FeedbackSheet from '$lib/components/settings/FeedbackSheet.svelte';
 	import HouseholdNameSheet from '$lib/components/settings/HouseholdNameSheet.svelte';
 	import LanguageSheet from '$lib/components/settings/LanguageSheet.svelte';
 	import LeaveModal from '$lib/components/settings/LeaveModal.svelte';
@@ -29,7 +30,9 @@
 	import RowGroup from '$lib/components/ui/RowGroup.svelte';
 	import { LOCALE_NAMES, isLocale, messages } from '$lib/i18n';
 	import ChevronRight from '@lucide/svelte/icons/chevron-right';
+	import Info from '@lucide/svelte/icons/info';
 	import LogOut from '@lucide/svelte/icons/log-out';
+	import MessageSquareText from '@lucide/svelte/icons/message-square-text';
 	import Send from '@lucide/svelte/icons/send';
 	import Sparkles from '@lucide/svelte/icons/sparkles';
 	import UsersRound from '@lucide/svelte/icons/users-round';
@@ -44,6 +47,7 @@
 	let choosingTheme = $state(false);
 	let renamingHousehold = $state(false);
 	let editingAiKey = $state(false);
+	let sendingFeedback = $state(false);
 	let leaving = $state(false);
 	let sending = $state(false);
 	let signingOut = $state(false);
@@ -64,6 +68,12 @@
 	const leaveMode: 'leave' | 'last' | 'blocked' = $derived(
 		data.members.length === 1 ? 'last' : owner ? 'blocked' : 'leave'
 	);
+
+	/**
+	 * `form` is a union of every action's result, so the key has to be proven
+	 * present before it can be read — the same narrowing `testResult` does below.
+	 */
+	const feedbackSent = $derived(!!form && 'feedbackSent' in form && form.feedbackSent);
 
 	const testResult = $derived.by(() => {
 		if (!form || !('sent' in form)) return null;
@@ -279,6 +289,28 @@
 	{/if}
 </RowGroup>
 
+<!-- The app itself, under the house: reporting a bug is not a household
+	 setting, and the version is here because a report has to name one
+	 (→ SPEC §6, plan 16). -->
+<h2 class="section">{m.settings.about}</h2>
+
+<RowGroup>
+	<button type="button" class="row" onclick={() => (sendingFeedback = true)}>
+		<span class="tile" aria-hidden="true"><MessageSquareText size={18} strokeWidth={1.9} /></span>
+		<span class="label">{m.settings.feedback.row}</span>
+		<ChevronRight size={15} strokeWidth={2} class="chevron" />
+	</button>
+
+	<!-- A fact, not a control — the same shape a non-owner's household row has. -->
+	<div class="row">
+		<span class="tile" aria-hidden="true"><Info size={18} strokeWidth={1.9} /></span>
+		<span class="label">{m.settings.version}</span>
+		<span class="value">{data.appVersion}</span>
+	</div>
+</RowGroup>
+
+{#if feedbackSent}<p class="result">{m.settings.feedback.thanks}</p>{/if}
+
 <!-- No section label, like [6a]: the two ways out sit on their own. -->
 <div class="exits">
 	<RowGroup>
@@ -331,6 +363,10 @@
 		hint={data.aiImport.hint}
 		onclose={() => (editingAiKey = false)}
 	/>
+{/if}
+
+{#if sendingFeedback}
+	<FeedbackSheet versionLabel={data.appVersion} onclose={() => (sendingFeedback = false)} />
 {/if}
 
 {#if leaving}

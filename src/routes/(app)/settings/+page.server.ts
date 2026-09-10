@@ -23,6 +23,7 @@ import { isMemberColor } from '$lib/member-colors';
 import { requireMember } from '$lib/server/guards';
 import { pushConfigured, sendTestNotification, type NotificationPref } from '$lib/server/push';
 import { AiImportError, testGeminiKey } from '$lib/server/services/ai-import';
+import { FeedbackError, submitFeedback, syncFeedback } from '$lib/server/services/feedback';
 import {
 	getAiImportStatus,
 	getGeminiApiKey,
@@ -36,8 +37,10 @@ import {
 	updateProfile
 } from '$lib/server/services/household';
 import { setAway } from '$lib/server/services/tasks';
+import { appVersion } from '$lib/server/version';
 import { isTheme, THEME_COOKIE, THEME_COOKIE_MAX_AGE } from '$lib/theme';
 import { isCalendarDate, todayIn } from '$lib/utils/dates';
+import { FEEDBACK_BODY_MAX, isFeedbackKind } from '$lib/utils/feedback';
 import { DISPLAY_NAME_MAX, HOUSEHOLD_NAME_MAX, looksLikeGeminiKey } from '$lib/utils/household';
 import type { Actions, PageServerLoad } from './$types';
 
@@ -122,7 +125,13 @@ export const load: PageServerLoad = (event) => {
 		 * show there: with English chosen on a German phone it reads back
 		 * "currently English", which is the one thing that row must not say.
 		 */
-		deviceLocale: negotiateLocale(event.request.headers.get('accept-language')) ?? DEFAULT_LOCALE
+		deviceLocale: negotiateLocale(event.request.headers.get('accept-language')) ?? DEFAULT_LOCALE,
+		/**
+		 * Which build a feedback report sent from this page will say it came from
+		 * (→ `server/version.ts`). The sheet names it *before* sending, because
+		 * saying what travels with a report is the honest way to collect it.
+		 */
+		appVersion: appVersion().label
 	};
 };
 
@@ -345,6 +354,52 @@ export const actions: Actions = {
 		}
 
 		return { aiTestOk: true };
+	},
+
+	/**
+	 * A bug or an idea, from inside the app [6a] (→ SPEC §6, plan 16).
+	 *
+	 * The insert is what succeeds; the GitHub issue is a copy made afterwards
+	 * (→ DECISIONS #135) — so this answers the same "thanks" whether GitHub
+	 * replied, was down, or has no token configured yet. The mirror is `void`-ed
+	 * rather than awaited for the reason a push send is: the row is already
+	 * safe, and nobody should watch a spinner while we talk to a third party.
+	 */
+	sendFeedback: async (event) => {
+		const { householdId, member } = requireMember(event);
+		const form = await event.request.formData();
+
+		const m = catalog(event.locals.locale);
+		const kind = form.get('kind');
+		if (!isFeedbackKind(kind)) return fail(400, { error: m.settings.feedback.pickKind });
+
+		const body = String(form.get('body') ?? '').trim();
+		if (!body) return fail(400, { error: m.settings.feedback.empty });
+		if (body.length > FEEDBACK_BODY_MAX) {
+			return fail(400, { error: m.errors.keepUnder(FEEDBACK_BODY_MAX) });
+		}
+
+		let entry;
+		try {
+			entry = submitFeedback(householdId, member.id, {
+				kind,
+				body,
+				locale: event.locals.locale,
+				theme: event.locals.theme,
+				userAgent: event.request.headers.get('user-agent')
+			});
+		} catch (cause) {
+			if (cause instanceof FeedbackError) {
+				return fail(404, { error: m.errors.household['not-member'] });
+			}
+			throw cause;
+		}
+
+		// Fire-and-forget (→ ARCHITECTURE "Notifications"): the service never
+		// throws, and the cron sweep catches whatever this misses.
+		void syncFeedback(householdId, entry.id);
+
+		return { feedbackSent: true };
 	},
 
 	/**

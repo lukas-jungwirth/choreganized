@@ -1354,6 +1354,39 @@ export const en = {
 			}
 		},
 
+		/**
+		 * Below the house itself: the app, not the household.
+		 */
+		about: 'About',
+		version: 'Version',
+
+		/**
+		 * Send feedback [6a] (→ SPEC §6, plan 16). What the member writes is
+		 * *theirs* — it reaches GitHub exactly as typed, in whatever language they
+		 * wrote it in (→ SPEC §9). These are only the words around it.
+		 */
+		feedback: {
+			row: 'Send feedback',
+			title: 'Send feedback',
+			eyebrow: 'Choreganized',
+			/** Names the switch for a screen reader; the two options are its segments. */
+			kindLabel: 'Kind of feedback',
+			bug: 'Something’s broken',
+			idea: 'An idea',
+			label: 'Your message',
+			bugPlaceholder: 'What happened, and what did you expect instead?',
+			ideaPlaceholder: 'What would you like the app to do?',
+			send: 'Send',
+			sending: 'Sending…',
+			/** Said before it is sent, because it goes whether it is read or not. */
+			attached: (version: string) =>
+				`Your name, language, appearance and browser go with this, along with the app version (${version}), so it can be looked into. Write in whichever language you like.`,
+			pickKind: 'Pick a bug or an idea.',
+			empty: 'Write a line or two first.',
+			/** Says *saved* first: that is true even when GitHub is unreachable. */
+			thanks: 'Thanks — that’s saved, and on its way to Lukas.'
+		},
+
 		/** Leave household [6d] — three things to say, one confirm (→ SPEC §7). */
 		leave: {
 			label: 'Leave household',

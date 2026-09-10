@@ -6,13 +6,15 @@
  * and asks each household what time it is there (→ docs/ARCHITECTURE.md
  * "Notifications", docs/DATA-MODEL.md "Reminder time-sweep").
  *
- * The cook-timer sweep is the one job that doesn't ask: `endsAt` is an instant,
- * not a time of day, so it has no local clock to consult and runs household-blind.
+ * Two jobs don't ask, and say so where they're defined: the cook-timer sweep,
+ * whose `endsAt` is an instant rather than a time of day, and the feedback
+ * mirror, because "GitHub was down" isn't one either. Both run household-blind.
  */
 import { schedule } from 'node-cron';
 import { clockIn, todayIn, type CalendarDate } from '$lib/utils/dates';
 import { backUpDatabase, serverDay } from './backup';
 import { sweepCookTimers } from './services/cook-timers';
+import { sweepFeedback } from './services/feedback';
 import { sendClosureReminders } from './services/holidays';
 import { listHouseholdClocks } from './services/household';
 import { allReferencedImagePaths } from './services/recipes';
@@ -102,6 +104,7 @@ export function registerCronJobs(): void {
 		['task-reminders', sweepTaskReminders],
 		['shop-closures', sweepShopClosures],
 		['cook-timers', catchUpCookTimers],
+		['feedback-sync', catchUpFeedback],
 		['db-backup', runNightlyBackup],
 		['import-photo-cleanup', sweepAbandonedImportPhotos]
 	];
@@ -254,6 +257,25 @@ async function catchUpCookTimers(now: Date = new Date()): Promise<void> {
 	const rung = await sweepCookTimers(now);
 	if (rung.fired > 0) {
 		console.log(`[cron] caught up ${rung.fired} cook timer(s) → ${rung.devices} device(s)`);
+	}
+}
+
+/**
+ * Feedback reports still waiting for their GitHub issue (→ plan 16).
+ *
+ * Household-blind, like the cook-timer sweep above and for the same reason:
+ * "GitHub was down" is not a time of day, so there is no household clock to
+ * consult. Normally finds nothing — the fire-and-forget call at submit time got
+ * there first — and returns immediately when no token is configured, so a
+ * deploy without one costs a boolean per minute rather than a query.
+ */
+async function catchUpFeedback(now: Date = new Date()): Promise<void> {
+	const swept = await sweepFeedback(now);
+	if (swept.synced > 0) {
+		console.log(`[cron] mirrored ${swept.synced} feedback report(s) to GitHub`);
+	}
+	if (swept.failed > 0) {
+		console.log(`[cron] ${swept.failed} feedback report(s) still waiting on GitHub`);
 	}
 }
 

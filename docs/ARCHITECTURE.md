@@ -49,12 +49,14 @@ src/
       auth.ts                  # Better Auth instance                          [plan 00]
       guards.ts                # requireUser / requireMember helpers           [plan 00]
       push.ts                  # sendToUser/sendToMembers, prune, payload types [plan 05]
+      github.ts                # the one module that talks to api.github.com     [plan 16]
+      version.ts               # appVersion(): the build id a report names       [plan 16]
       uploads.ts               # recipe photos: sharp → WebP, store/copy/read  [plan 07]
       backup.ts                # nightly SQLite online-backup + 14-day rotation [plan 11]
       cron.ts                  # registerCronJobs(): reminders, timers, cleanup, backup [plan 05+]
       services/                # domain logic: household.ts, home.ts, shopping.ts, tasks.ts,
                                # history.ts, reminders.ts, holidays.ts, recipes.ts, meals.ts,
-                               # timers.ts
+                               # timers.ts, feedback.ts
     utils/                     # dates.ts (household-local helpers), holidays.ts (Austrian
                                # shop closures), ingredients.ts, invite-code.ts, timer-parse.ts
   routes/                      # see routing map below
@@ -227,6 +229,13 @@ prompt / subscribed).
 - Required env (see `.env.example`): `ORIGIN`, `DATABASE_PATH`, `UPLOADS_DIR`,
   `BODY_SIZE_LIMIT`, `BETTER_AUTH_SECRET`, `BETTER_AUTH_URL`, `GOOGLE_CLIENT_ID/SECRET`,
   `PUBLIC_VAPID_PUBLIC_KEY`, `VAPID_PRIVATE_KEY`, `VAPID_SUBJECT`.
+- Optional env: `GITHUB_FEEDBACK_TOKEN` (a fine-grained PAT scoped to this repo, _Issues: read
+  and write_) mirrors feedback to GitHub issues — without it reports still save and the cron
+  sweep mirrors them once a token appears (→ [DECISIONS #135](DECISIONS.md)).
+  `GITHUB_FEEDBACK_REPO` only redirects them. **Build-time**: `APP_VERSION` (a Coolify _Build
+  Variable_ — a plain env var is runtime-only and never reaches `--build-arg`) and Coolify's
+  `SOURCE_COMMIT`, baked by the Dockerfile into `APP_VERSION` / `APP_COMMIT` so a report can name
+  its build (→ [DECISIONS #136](DECISIONS.md)).
 - **`BODY_SIZE_LIMIT` is not optional once recipe photos exist.** adapter-node caps a request
   body at **512K** by default and answers 413 before the form action runs; a phone photo is
   several MB. The Vite dev server applies no limit at all, so this is invisible until the

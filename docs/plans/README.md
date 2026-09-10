@@ -26,6 +26,7 @@ plus your session date). Note deviations in the plan file and in DECISIONS.md.
 | 12  | [Recipe import from a link](12-recipe-import.md)                    | done (2026-07-25) | 07, 11                   |
 | 13  | [AI import: fallback, text & photos](13-ai-import.md)               | done (2026-07-25) | 12, 10                   |
 | 14  | ["Add a recipe" chooser & focused import modes](14-add-chooser.md)  | done (2026-07-25) | 12, 13                   |
+| 16  | [In-app feedback → a GitHub issue](16-feedback.md)                  | done (2026-09-10) | 10, 11                   |
 
 Work done after the twelve plans, tracked here so the queue stays the whole story:
 
