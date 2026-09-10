@@ -1263,6 +1263,8 @@ export const de: Messages = {
 		notFound: 'Nicht gefunden',
 		bodyTooLarge: 'Anfrage zu groß',
 		expectedJson: 'JSON erwartet',
+		noTopic: 'Kein Thema angegeben',
+		unknownTopic: (topics: string) => `Unbekanntes Thema: ${topics}`,
 		endpointMustBeHttps: 'Endpoint muss https sein',
 
 		householdMissing: 'Der Haushalts-Datensatz fehlt. Bitte wende dich an den Support.',

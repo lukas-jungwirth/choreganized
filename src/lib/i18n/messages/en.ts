@@ -1670,6 +1670,9 @@ export const en = {
 		notFound: 'Not found',
 		bodyTooLarge: 'Body too large',
 		expectedJson: 'Expected JSON',
+		/** The live stream's two protocol refusals (→ `api/live/+server.ts`). */
+		noTopic: 'Name at least one topic',
+		unknownTopic: (topics: string) => `Unknown topic: ${topics}`,
 		endpointMustBeHttps: 'Endpoint must be https',
 
 		/** The FK cascaded out from under the request (→ `(app)/+layout.server.ts`). */

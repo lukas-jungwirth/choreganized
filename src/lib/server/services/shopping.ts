@@ -636,7 +636,7 @@ export function reorderItems(
 		return true;
 	});
 
-	publish(householdId, { topic: 'shopping', kind: 'changed' });
+	if (reordered) publish(householdId, { topic: 'shopping', kind: 'changed' });
 	return reordered;
 }
 

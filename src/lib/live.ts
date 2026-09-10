@@ -78,13 +78,19 @@ export function openLiveStream(topics: LiveTopic[], { onEvent, onReconnect }: Op
 		}
 
 		stream.addEventListener('error', () => {
-			// `EventSource` retries by itself while the connection merely dropped;
-			// it goes to CLOSED for good on a refused handshake (a 401 once the
-			// session has expired), and there is nothing useful to do about that
-			// from here — the next navigation will land on /login.
-			if (dev && stream.readyState === EventSource.CLOSED) {
-				console.warn('[live] stream closed by the server');
-			}
+			// `EventSource` retries by itself while the connection merely dropped.
+			// CLOSED means it has given up for good — a refused handshake, which is
+			// what an expired session looks like from here.
+			if (stream.readyState !== EventSource.CLOSED) return;
+
+			// Let go of the corpse, so `open()` doesn't mistake it for a live stream
+			// and refuse to build a replacement. Hygiene rather than a rescue: in
+			// practice the refusal is an expired session, and the refetch that comes
+			// with the same event has already sent the screen to /login. What this
+			// buys is that recovery no longer depends on the hidden branch happening
+			// to have run first.
+			if (source === stream) source = null;
+			if (dev) console.warn('[live] stream closed by the server');
 		});
 	};
 

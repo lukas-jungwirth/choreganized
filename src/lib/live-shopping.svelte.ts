@@ -32,7 +32,7 @@ const COALESCE_MS = 200;
 const NOTICE_MS = 4000;
 
 /** A housemate's tick, on its way to the row that has to play it. */
-export type RemoteTick = { itemId: string; kind: 'checked' | 'unchecked'; actor: LiveActor };
+export type RemoteTick = { itemId: string; actor: LiveActor };
 
 export type LiveNoticeState = {
 	kind: 'checked' | 'added';
@@ -73,6 +73,12 @@ export function liveShopping(memberId: () => string, onRemoteTick: (tick: Remote
 	 * A second event from the same person while their toast is still up becomes
 	 * a count — somebody working down their half of the list should not produce
 	 * a queue of toasts. Anyone else replaces it.
+	 *
+	 * Coalescing adds to the count but **not** to the clock: a housemate working
+	 * steadily down their half sends an event every few seconds, and restarting
+	 * the four seconds each time would pin the toast over the tab bar for the
+	 * length of the shop. The window belongs to the first event; a later one
+	 * starts a fresh one.
 	 */
 	const announce = (
 		kind: 'checked' | 'added',
@@ -84,6 +90,8 @@ export function liveShopping(memberId: () => string, onRemoteTick: (tick: Remote
 		notice = same
 			? { kind, actor, name: null, count: notice!.count + n }
 			: { kind, actor, name, count: n };
+
+		if (same && expiry) return;
 
 		if (expiry) clearTimeout(expiry);
 		expiry = setTimeout(() => {
@@ -105,10 +113,13 @@ export function liveShopping(memberId: () => string, onRemoteTick: (tick: Remote
 			return;
 		}
 
-		if (event.itemId) onRemoteTick({ itemId: event.itemId, kind: event.kind, actor: event.actor });
-		// Unchecking is not news: the row comes *back* onto the list, where it is
-		// its own announcement. Only a tick takes something away from you.
-		if (event.kind === 'checked') announce('checked', event.actor, event.name ?? null, 1);
+		// Unchecking is not news, and there is nothing to play: the row comes *back*
+		// onto the list, where it is its own announcement, and the refetch above is
+		// what puts it there. Only a tick takes something away from you.
+		if (event.kind !== 'checked') return;
+
+		if (event.itemId) onRemoteTick({ itemId: event.itemId, actor: event.actor });
+		announce('checked', event.actor, event.name ?? null, 1);
 	};
 
 	return {
