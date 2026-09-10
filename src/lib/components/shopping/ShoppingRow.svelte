@@ -176,7 +176,7 @@
 	*/
 	.settling {
 		background: color-mix(in srgb, var(--tick-color) 10%, transparent);
-		animation: settle-wash 1400ms ease-out;
+		animation: settle-wash 420ms ease-out;
 	}
 
 	.settling .name {
@@ -211,14 +211,18 @@
 		}
 	}
 
-	/* Brightest as it happens, gone by the time the row leaves — so the wash is
-	   the event, not a state the row is now in. */
+	/*
+		Brightest as it lands, then down to the steady wash the rule above holds.
+
+		Only the arrival is animated, and it ends *on* the base value rather than
+		on a value of its own: a settle runs until the server agrees, not for a
+		fixed beat (→ `+page.svelte`), so an animation that faded to nothing would
+		finish, hand the row back to the base rule, and pop the tint back up in the
+		middle of a slow one.
+	*/
 	@keyframes settle-wash {
-		0% {
-			background: color-mix(in srgb, var(--tick-color) 22%, transparent);
-		}
-		100% {
-			background: color-mix(in srgb, var(--tick-color) 0%, transparent);
+		from {
+			background: color-mix(in srgb, var(--tick-color) 24%, transparent);
 		}
 	}
 

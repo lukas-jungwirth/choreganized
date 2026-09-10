@@ -234,13 +234,12 @@
 	 * place in the walking order — the same settle your own tap gets, minus the
 	 * undo bar at the end of it, because it wasn't yours to undo.
 	 */
-	function onRemoteTick({ itemId, kind, actor }: RemoteTick) {
+	function onRemoteTick({ itemId, actor }: RemoteTick) {
 		const item = items.find((row) => row.id === itemId);
 		// Only a row that is still open here has a tick to play. An event for one
 		// this client already shows as bought — a late echo, a refetch that landed
 		// first — must not haul it back out of "recently bought".
 		if (!item || item.checkedAt !== null) return;
-		if (kind !== 'checked') return;
 		// Already playing — most likely we both tapped the same row. Whoever
 		// started it keeps it; restarting would only stutter the animation.
 		if (settling.has(itemId)) return;

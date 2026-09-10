@@ -142,4 +142,39 @@ preview browser (signed in through an in-page `fetch` to `sign-in/email` with a 
   code would have been silently wrong. The run-on is load-bearing until someone renumbers the
   citations too. A comment now says so at the top of the file.
 
+- **Second review pass (`/code-review high --fix`), and what it caught.** Four more, fixed and
+  re-verified against the running app:
+
+  1. **The wash popped back up in the middle of a long settle.** `settle-wash` faded to 0 % over
+     a hard-coded 1400 ms with no `forwards`, so when it finished the row fell back to the base
+     rule's 10 % — invisible while the settle _was_ 1.4 s, and a visible flash now that it runs
+     until the server agrees. The keyframe is now a `from` only, so it ends **on** the base
+     value and the jump is impossible by construction (read back off `document.styleSheets`:
+     one `0%` stop, no `100%`). It also stops duplicating `SETTLE_MS` in two files.
+  2. **The live toast could be pinned open indefinitely.** Each coalesced event restarted the
+     four seconds, so a housemate working steadily down their half of the list would have kept
+     it over the tab bar for the whole trip. Coalescing now adds to the count but not to the
+     clock. Verified with a tick every 2.5 s: the window closed 4.4 s after the _first_ event
+     and a later one opened a fresh window.
+  3. **`reorderItems` announced reorders that never happened** — the publish sat outside the
+     guard, so a stale client posting a dead store id made every other phone refetch.
+  4. **Protocol refusals on `/api/live` were hard-coded English**, against the "no user-facing
+     string in a service" rule and unlike `api/timers`, which catalogues its own. Now
+     `m.errors.noTopic` / `unknownTopic` — checked in both languages. The same pass dropped
+     `Connection: keep-alive` from the response: it is the HTTP/1.1 default anyway and a
+     _forbidden_ header under HTTP/2, so it bought nothing and would break the day this is
+     served over h2. (Node still emits its own, which is correct.)
+
+  One reported finding was **downgraded after testing it**: retaining a permanently-closed
+  `EventSource` looked like it would strand the screen, but killing a session server-side
+  showed the refetch sends the page to /login before it can matter. The stream reference is
+  still released — it is right, and it means recovery no longer depends on the hidden→visible
+  branch having run — but the comment now says what it actually buys rather than overclaiming.
+
+  Two findings were **left alone on purpose**: the three collections behind a settle
+  (`settling`, `settleMeta`, `elapsed`) look mergeable but are deliberately split by
+  reactivity — a row should re-render when its colour changes, not when some other row's beat
+  ends — and the stream does not check `controller.desiredSize` for back-pressure, which is
+  real but unreachable at two members and 30-minute connections.
+
 - `npm run check`, `npm run build` and `npm test` (159 tests) clean.

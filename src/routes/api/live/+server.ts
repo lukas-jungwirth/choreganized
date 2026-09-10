@@ -17,6 +17,7 @@
  * `EventSource`, meanwhile, reconnects by itself.
  */
 import { error } from '@sveltejs/kit';
+import { catalog, type Messages } from '$lib/i18n';
 import { requireMemberApi } from '$lib/server/guards';
 import { isLiveTopic, subscribe, type LiveEvent, type LiveTopic } from '$lib/server/live';
 import type { RequestHandler } from './$types';
@@ -43,7 +44,9 @@ const RETRY_MS = 3000;
 
 export const GET: RequestHandler = (event) => {
 	const { householdId } = requireMemberApi(event);
-	const topics = readTopics(event.url.searchParams.get('topics'));
+	// Even a refusal nobody will read speaks the caller's language, the way the
+	// timer endpoint's do (→ DECISIONS #98).
+	const topics = readTopics(event.url.searchParams.get('topics'), catalog(event.locals.locale));
 
 	// Everything below closes over these so the two teardown paths — the stream's
 	// own `cancel`, and the request aborting — can both run, in either order.
@@ -115,8 +118,11 @@ export const GET: RequestHandler = (event) => {
 			// Never store an infinite response, and never let anything in front of us
 			// try to buffer it into one (`x-accel-buffering` is nginx's opt-out; the
 			// deploy is behind Traefik, which doesn't buffer, but the header is free).
+			//
+			// No `Connection: keep-alive`: it is the HTTP/1.1 default anyway, and it
+			// is a *forbidden* header under HTTP/2 — Node rejects it outright — so
+			// sending it buys nothing and breaks the day this is served over h2.
 			'cache-control': 'no-store',
-			connection: 'keep-alive',
 			'x-accel-buffering': 'no'
 		}
 	});
@@ -126,16 +132,16 @@ export const GET: RequestHandler = (event) => {
  * `?topics=shopping` — an allow-list, so a stream can never be talked into
  * relaying a topic this endpoint doesn't know it is allowed to relay.
  */
-function readTopics(raw: string | null): LiveTopic[] {
+function readTopics(raw: string | null, m: Messages): LiveTopic[] {
 	const asked = (raw ?? '')
 		.split(',')
 		.map((topic) => topic.trim())
 		.filter(Boolean);
 
-	if (asked.length === 0) error(400, 'Name at least one topic.');
+	if (asked.length === 0) error(400, m.errors.noTopic);
 
 	const unknown = asked.filter((topic) => !isLiveTopic(topic));
-	if (unknown.length > 0) error(400, `Unknown topic: ${unknown.join(', ')}.`);
+	if (unknown.length > 0) error(400, m.errors.unknownTopic(unknown.join(', ')));
 
 	return [...new Set(asked as LiveTopic[])];
 }
