@@ -33,33 +33,65 @@
 		 * were ticked, not by hand.
 		 */
 		reorderable?: boolean;
+		/**
+		 * This row's tick is playing out right now, in this colour — sage for your
+		 * own, the housemate's own colour for theirs (→ SPEC §3.1, DECISIONS #135).
+		 *
+		 * `undefined` is the ordinary case. While it is set the row is *visually*
+		 * checked but has not left its store group yet, which is the whole point:
+		 * you see what was ticked, where it stood in the walking order, before it
+		 * goes.
+		 */
+		settling?: string | undefined;
 	};
 
-	let { item, checked, toggle, onedit, reorderable = false }: Props = $props();
+	let { item, checked, toggle, onedit, reorderable = false, settling }: Props = $props();
 
 	const m = messages();
 
 	const quantity = $derived(m.units.quantity(item.quantity, item.unit));
+
+	/**
+	 * What the row *says* it is. During the settle the page still reports this
+	 * item as open — that is what keeps it in its group — so the tick, the label
+	 * and the form's next move all have to come from here instead, or a second
+	 * tap mid-settle would re-check something that already reads as checked.
+	 */
+	const ticked = $derived(checked || settling !== undefined);
 </script>
 
-<li class="row" class:reorderable>
+<li
+	class="row"
+	class:reorderable
+	class:settling={settling !== undefined}
+	style:--tick-color={settling}
+>
 	<form method="POST" action="?/toggle" use:enhance={toggle}>
 		<input type="hidden" name="id" value={item.id} />
-		<input type="hidden" name="checked" value={checked ? 'false' : 'true'} />
+		<input type="hidden" name="checked" value={ticked ? 'false' : 'true'} />
 		<button
 			type="submit"
 			class="tick"
-			aria-pressed={checked}
-			aria-label={checked ? m.shopping.row.uncheck(item.name) : m.shopping.row.check(item.name)}
+			aria-pressed={ticked}
+			aria-label={ticked ? m.shopping.row.uncheck(item.name) : m.shopping.row.check(item.name)}
 		>
-			<CheckCircle {checked} />
+			<CheckCircle
+				checked={ticked}
+				animate={settling !== undefined}
+				color={settling ?? 'var(--sage)'}
+			/>
 		</button>
 	</form>
 
 	<button type="button" class="body" onclick={onedit} aria-label={m.shopping.row.edit(item.name)}>
-		<span class="name" class:done={checked}>
+		<!-- Struck, but by a line that draws itself: `text-decoration` can't be
+			 animated, so the settle borrows a hairline of its own and the static
+			 rule takes over once the row lands in "recently bought". -->
+		<span class="name" class:done={checked} class:striking={settling !== undefined}>
 			{checked && quantity ? `${item.name} ${quantity}` : item.name}
 		</span>
+		<!-- Faded rather than dropped: pulling the quantity and the avatar out of
+			 the markup mid-settle would reflow the row under its own animation. -->
 		{#if !checked}
 			{#if quantity}<span class="qty">{quantity}</span>{/if}
 			{#if item.addedBy}
@@ -132,6 +164,64 @@
 		text-decoration: line-through;
 	}
 
+	/*
+		The settle. A wash of whoever ticked it — sage when that was you, their own
+		colour when it wasn't — so a housemate's check reads as *theirs* at a
+		glance, in the row's own place in the walking order, which is the one place
+		you were already looking.
+
+		`color-mix` against the colour handed in as `--tick-color`, the way
+		`ui/Avatar` takes a member's: the palette is data, so it arrives as a custom
+		property rather than as a token (→ DESIGN-SYSTEM "Member colours").
+	*/
+	.settling {
+		background: color-mix(in srgb, var(--tick-color) 10%, transparent);
+		animation: settle-wash 1400ms ease-out;
+	}
+
+	.settling .name {
+		color: var(--text-disabled);
+		transition: color 260ms ease-out;
+	}
+
+	/* The trailing detail steps back while the name is struck: bought is bought,
+	   and who wanted it stops mattering (the checked row drops them entirely). */
+	.settling .qty,
+	.settling :global(.avatar) {
+		opacity: 0;
+		transition: opacity 200ms ease-out;
+	}
+
+	/*
+		The strike, arriving rather than stated. `text-decoration` can't be animated
+		but its *colour* can, so the line is there from the start and fades in —
+		which, unlike a pseudo-element scaling across the box, still lands on every
+		line of a name that wraps. "Sonnenblumenkerne (geschält)" is two lines on a
+		390px screen and would otherwise get one bar through its middle.
+	*/
+	.striking {
+		text-decoration: line-through;
+		text-decoration-color: transparent;
+		animation: strike 260ms 60ms ease-out forwards;
+	}
+
+	@keyframes strike {
+		to {
+			text-decoration-color: currentColor;
+		}
+	}
+
+	/* Brightest as it happens, gone by the time the row leaves — so the wash is
+	   the event, not a state the row is now in. */
+	@keyframes settle-wash {
+		0% {
+			background: color-mix(in srgb, var(--tick-color) 22%, transparent);
+		}
+		100% {
+			background: color-mix(in srgb, var(--tick-color) 0%, transparent);
+		}
+	}
+
 	.qty {
 		flex: none;
 		font-size: calc(13px * var(--fs));
@@ -153,5 +243,22 @@
 
 	.grip:active {
 		cursor: grabbing;
+	}
+
+	/* The tint and the strike are the signal, so both stay — they just stop
+	   moving. The row still holds for its beat before it goes. */
+	@media (prefers-reduced-motion: reduce) {
+		.settling {
+			animation: none;
+		}
+		.settling .name,
+		.settling .qty,
+		.settling :global(.avatar) {
+			transition: none;
+		}
+		.striking {
+			text-decoration-color: currentColor;
+			animation: none;
+		}
 	}
 </style>

@@ -137,8 +137,28 @@ a danger badge with the current user's overdue count [4e].
 - Row: check circle, name, optional quantity ("×6", "2L" — quantity+unit compact), adder's mini
   avatar, and a **drag grip** at the right edge. Checking: sage fill + strikethrough, and the
   row **leaves its store group** for "Recently bought". Unchecking puts it back where it was.
-- **Undo bar**: for ~5 s after a tick, a dark toast above the tab bar says "**{item}** checked
-  off" with an **Undo** — the moment you'd notice the wrong line is also the moment the row is
+- **A tick plays out where it stands.** For ~1.4 s the row stays in its store group, visibly
+  ticked: the circle fills with a small pop and draws its ✓, the quantity and avatar fade back,
+  and a line grows through the name. Then it goes. The write is never delayed — only the row's
+  departure — so the other phone hears about it at once regardless
+  (→ [DECISIONS #135](DECISIONS.md)). Unchecking is immediate: it is a correction, and there is
+  nothing to watch. Under `prefers-reduced-motion` the tick still happens and the row still
+  holds, in about half the time, with none of the movement.
+- **The list is live while it is open** (→ [DECISIONS #135](DECISIONS.md)). Two people in one
+  shop see each other's ticks within a moment. A housemate's tick plays the same settle **in
+  their colour**, in the row's own place in the walking order — so what you read is "Elisabeth
+  got the tomatoes", where the tomatoes were, rather than a number quietly changing on a folded
+  section. Their adds, edits, deletes and drags land too; only ticks and adds are announced.
+  The connection is open only while this screen is and only while the tab is visible; coming
+  back refetches whatever was missed.
+- **Live notice**: for ~4 s, the same dark toast slot says "{member} got **{item}**" (or
+  "{member} added **{item}**"), with their avatar and no button. Several in a row from the same
+  person become "{member} got **3 things**" rather than a queue of toasts. It earns its place
+  next to the in-place tick because the row may be below the fold, or already folded into
+  "Recently bought", or the change may be an add with no row of yours to animate. The **undo
+  bar wins the slot** whenever both want it — it is the one with something to press.
+- **Undo bar**: for ~5 s **after the row leaves**, a dark toast above the tab bar says
+  "**{item}** checked off" with an **Undo** — the moment you'd notice the wrong line is also the moment the row is
   hardest to find. Inverted on purpose: in an otherwise cream-and-white list it's the one
   surface that can't be mistaken for a row (→ [DECISIONS #107](DECISIONS.md)). It replaces
   itself when the next item is ticked, and holds while a keyboard is on it. Nothing is lost when
@@ -657,7 +677,10 @@ The **History** tab is a stats landing; the full feed sits one level below it (�
 - **Points month**: completions grouped by household-local calendar month; no reset job —
   always derived.
 - **Freshness**: data refetches on tab focus/visibility and after every action (SvelteKit
-  invalidation). Real-time sync (SSE) is a later milestone.
+  invalidation). **The shopping list is additionally live** while it is on screen — an SSE
+  stream per household, opened by that screen alone, which says _what_ changed and lets the
+  page refetch its own load for the truth (→ §3.1, [DECISIONS #135](DECISIONS.md)). Every other
+  screen still refreshes on focus; they can subscribe the same way when they need to.
 - **Empty states**: every list has one (designs: [7d] [7e] [7f]).
 - **PWA**: installable (manifest + icons + service worker), portrait, `theme-color #F5F3EE`;
   push works with the app closed. Offline: app shell renders with an offline notice; no offline

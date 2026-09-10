@@ -26,9 +26,11 @@
 		/** The page owns the optimistic tick bookkeeping, so it hands in the handler. */
 		toggle: (item: ShoppingListItem) => SubmitFunction;
 		onedit: (item: ShoppingListItem) => void;
+		/** This row's tick is playing out, in this colour (→ `ShoppingRow`). */
+		settling: (itemId: string) => string | undefined;
 	};
 
-	let { group, toggle, onedit }: Props = $props();
+	let { group, toggle, onedit, settling }: Props = $props();
 
 	const m = messages();
 
@@ -37,24 +39,30 @@
 	// `untrack` says the seed is deliberately the initial value, not a binding.
 	let items = $state<ShoppingListItem[]>(untrack(() => group.items));
 	let dragging = $state(false);
+	/** An order we've dropped and posted, until the server has it. */
+	let saving = $state(false);
 	let formEl: HTMLFormElement;
 	let idsInput: HTMLInputElement;
 
 	/**
 	 * Follow the page's version of the group — but never over a live drag, and
-	 * without snapping back the order we just dropped and are still saving. While
-	 * the members are the same, our order wins and only the row data is refreshed;
-	 * the moment a row joins or leaves, the page's list (order included) is taken
-	 * whole. `untrack` keeps this a reaction to the page, not to our own writes.
+	 * never over an order we've just dropped and are still saving. Those two are
+	 * the only moments our copy is newer than the server's; every other time the
+	 * page's list, order included, is taken whole. That last part matters now that
+	 * a housemate's reorder arrives on its own (→ DECISIONS #135): holding our
+	 * order whenever the membership happened to match, which is what this did
+	 * before, meant their drag never showed up at all.
+	 *
+	 * `dragging`/`saving` are read outside `untrack` on purpose, so that finishing
+	 * a save re-runs this and picks up whatever arrived meanwhile; `untrack` keeps
+	 * it a reaction to the page rather than to our own writes.
 	 */
 	$effect(() => {
 		const next = group.items;
+		const busy = dragging || saving;
 		untrack(() => {
-			if (dragging) return;
-			const byId = new Map(next.map((item) => [item.id, item]));
-			const localIds = items.map((item) => item.id);
-			const sameMembers = localIds.length === next.length && localIds.every((id) => byId.has(id));
-			items = sameMembers ? localIds.map((id) => byId.get(id)!) : next;
+			if (busy) return;
+			items = next;
 		});
 	});
 
@@ -65,12 +73,21 @@
 
 	function handleFinalize(event: CustomEvent<DndEvent<ShoppingListItem>>) {
 		items = event.detail.items;
+		saving = true;
 		dragging = false;
 		// Svelte writes the hidden field on the next tick; `requestSubmit` reads it
 		// now, so set the value straight on the node.
 		idsInput.value = items.map((item) => item.id).join(',');
 		formEl.requestSubmit();
 	}
+
+	/** Our order stops being the newer one once the server has answered. */
+	const saved: SubmitFunction =
+		() =>
+		async ({ update }) => {
+			await update({ reset: false });
+			saving = false;
+		};
 </script>
 
 <section class="group">
@@ -98,6 +115,7 @@
 					{item}
 					reorderable
 					checked={false}
+					settling={settling(item.id)}
 					toggle={toggle(item)}
 					onedit={() => onedit(item)}
 				/>
@@ -106,7 +124,7 @@
 	</Card>
 </section>
 
-<form bind:this={formEl} method="POST" action="?/reorder" use:enhance hidden>
+<form bind:this={formEl} method="POST" action="?/reorder" use:enhance={saved} hidden>
 	<input type="hidden" name="storeId" value={group.storeId ?? ''} />
 	<input bind:this={idsInput} type="hidden" name="ids" value="" />
 </form>
