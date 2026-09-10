@@ -97,8 +97,12 @@ export async function createIssue(input: NewIssue): Promise<CreatedIssue> {
 
 	if (!response.ok) throw failure(response);
 
-	const issue = (await response.json()) as { number?: number; html_url?: string };
-	if (typeof issue.number !== 'number') throw new GitHubError('rejected', false);
+	// A 201 whose body isn't JSON — a proxy or a WAF answering in HTML — must not
+	// escape as a raw SyntaxError, or the "throws GitHubError and nothing else"
+	// contract above stops being true. It is retryable: the issue may well have
+	// been created, and the marker search on the next attempt is what finds it.
+	const issue = await parse<{ number?: number; html_url?: string }>(response);
+	if (typeof issue?.number !== 'number') throw new GitHubError('unreachable', true);
 
 	return { number: issue.number, url: issue.html_url ?? '' };
 }
@@ -126,14 +130,21 @@ export async function findIssueByMarker(marker: string): Promise<CreatedIssue | 
 
 	if (!response.ok) return null;
 
-	const found = (await response.json()) as {
-		items?: { number?: number; html_url?: string }[];
-	};
-	const first = found.items?.[0];
+	const found = await parse<{ items?: { number?: number; html_url?: string }[] }>(response);
+	const first = found?.items?.[0];
 
 	return typeof first?.number === 'number'
 		? { number: first.number, url: first.html_url ?? '' }
 		: null;
+}
+
+/** A JSON body, or `null` when it isn't one. Never throws. */
+async function parse<T>(response: Response): Promise<T | null> {
+	try {
+		return (await response.json()) as T;
+	} catch {
+		return null;
+	}
 }
 
 /**

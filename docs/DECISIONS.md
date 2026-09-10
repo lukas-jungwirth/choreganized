@@ -1586,6 +1586,12 @@ NULL` is the queue; nothing else has to be tracked.
        So `GitHubError` carries `retryable`, permanent refusals park at once, and — because every
        permanent refusal is fixed by changing configuration and redeploying — the first sweep of
        a new process un-parks everything and tries once more.
+     - **The sweep files one issue at a time.** GitHub meters content creation
+       separately from the ordinary rate limit and asks for it serially. Firing a backlog at it
+       concurrently — the obvious `Promise.all`, which the cook-timer sweep can afford because
+       push has no creation limit — is how an outage that has just ended turns into a secondary
+       rate limit with every row backing off together. A sweep is in nobody's way, so it can be
+       patient.
      - **A lost response is the one case that can still duplicate.** An attempt that created the
        issue and never saw the reply would write a second one, so the body carries a
        `<!-- choreganized:{id} -->` marker that a retry searches for first. GitHub's search index

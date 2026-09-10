@@ -25,7 +25,12 @@
 import { and, asc, eq, gte, isNull, lte, sql } from 'drizzle-orm';
 import type { Locale } from '$lib/i18n';
 import type { Theme } from '$lib/theme';
-import { FEEDBACK_TITLE_MAX, type FeedbackKind } from '$lib/utils/feedback';
+import {
+	codeFenceFor,
+	feedbackTitle,
+	FEEDBACK_BODY_MAX,
+	type FeedbackKind
+} from '$lib/utils/feedback';
 import { db } from '../db';
 import { feedback, members, type Feedback } from '../db/schema';
 import {
@@ -105,7 +110,10 @@ export function submitFeedback(
 			memberId,
 			memberName: member.displayName,
 			kind: input.kind,
-			body: input.body,
+			// Capped here as well as in the action, the way `startTimer` repairs its
+			// own label: a body past GitHub's 65536-character issue limit comes back
+			// 422 → `rejected` → not retryable, i.e. a report that never lands.
+			body: input.body.slice(0, FEEDBACK_BODY_MAX),
 			locale: input.locale,
 			theme: input.theme,
 			appVersion: appVersion().label,
@@ -133,17 +141,28 @@ export async function syncFeedback(
 	feedbackId: string,
 	now: Date = new Date()
 ): Promise<number | null> {
-	if (!githubConfigured()) return null;
+	// The belt that keeps this file's "nothing here throws" contract true, and
+	// the reason the action can say `void syncFeedback(…)` (→ `push.ts`, which
+	// carries the same one). `mirror` handles the API; what this catches is the
+	// database refusing a read or a write — SQLITE_BUSY behind the nightly
+	// backup, a full disk — which would otherwise become an unhandled rejection
+	// and, under Node's default, take the whole process down.
+	try {
+		if (!githubConfigured()) return null;
 
-	const row = db
-		.select()
-		.from(feedback)
-		.where(and(eq(feedback.id, feedbackId), eq(feedback.householdId, householdId)))
-		.get();
+		const row = db
+			.select()
+			.from(feedback)
+			.where(and(eq(feedback.id, feedbackId), eq(feedback.householdId, householdId)))
+			.get();
 
-	if (!row) return null;
+		if (!row) return null;
 
-	return mirror(row, now);
+		return await mirror(row, now);
+	} catch (error) {
+		console.error('[feedback] could not mirror a report:', error);
+		return null;
+	}
 }
 
 export type FeedbackSweep = {
@@ -169,36 +188,51 @@ export type FeedbackSweep = {
 export async function sweepFeedback(now: Date = new Date()): Promise<FeedbackSweep> {
 	if (!githubConfigured()) return { synced: 0, failed: 0 };
 
-	if (!requeuedOnBoot) {
-		requeuedOnBoot = true;
-		requeueParked(now);
+	let synced = 0;
+	let failed = 0;
+
+	// The same belt `syncFeedback` carries. `mirror` already swallows an
+	// attempt's own failure; this is for the reads and writes around it, so the
+	// counts collected before a database error still come back. `cron.ts`'s
+	// guard would catch a throw, but the contract belongs to this file rather
+	// than to its one caller.
+	try {
+		if (!requeuedOnBoot) {
+			requeuedOnBoot = true;
+			requeueParked(now);
+		}
+
+		const due = db
+			.select()
+			.from(feedback)
+			.where(
+				and(
+					isNull(feedback.issueNumber),
+					lte(feedback.nextAttemptAt, now),
+					// Keeps parked rows out of the scan; `claim` enforces the same cap
+					// as the actual guarantee. Nothing ages out on time — a report from
+					// last week is still worth filing — so there is deliberately no
+					// lower bound on `nextAttemptAt` to pair with the one above.
+					lte(feedback.attempts, MAX_ATTEMPTS - 1)
+				)
+			)
+			.orderBy(asc(feedback.nextAttemptAt))
+			.all();
+
+		// **One at a time, not `Promise.all`.** GitHub meters content creation
+		// separately from the ordinary rate limit and asks for it serially; firing
+		// a backlog at it concurrently is how an outage that has just ended becomes
+		// a secondary rate limit, with every row backing off together. A sweep is
+		// not in anybody's way, so it can afford to be patient.
+		for (const row of due) {
+			if ((await mirror(row, now)) === null) failed++;
+			else synced++;
+		}
+	} catch (error) {
+		console.error('[feedback] sweep failed:', error);
 	}
 
-	const due = db
-		.select()
-		.from(feedback)
-		.where(
-			and(
-				isNull(feedback.issueNumber),
-				lte(feedback.nextAttemptAt, now),
-				// The only thing keeping a parked row out of the scan. Nothing ages
-				// out on time — a report from last week is still worth filing — so
-				// there is deliberately no lower bound on `nextAttemptAt` to pair
-				// with the one above.
-				lte(feedback.attempts, MAX_ATTEMPTS - 1)
-			)
-		)
-		.orderBy(asc(feedback.nextAttemptAt))
-		.all();
-
-	if (due.length === 0) return { synced: 0, failed: 0 };
-
-	const results = await Promise.all(due.map((row) => mirror(row, now)));
-
-	return {
-		synced: results.filter((number) => number !== null).length,
-		failed: results.filter((number) => number === null).length
-	};
+	return { synced, failed };
 }
 
 /** Set once per process — see `sweepFeedback`. */
@@ -252,7 +286,16 @@ function claim(row: Feedback, now: Date): boolean {
 			nextAttemptAt: new Date(now.getTime() + backoffMs(spent))
 		})
 		.where(
-			and(eq(feedback.id, row.id), isNull(feedback.issueNumber), lte(feedback.nextAttemptAt, now))
+			and(
+				eq(feedback.id, row.id),
+				isNull(feedback.issueNumber),
+				lte(feedback.nextAttemptAt, now),
+				// The cap lives here rather than only in the sweep's query, because
+				// this is the one line every path goes through: `syncFeedback` is
+				// exported and reaches `mirror` directly, so a caller that isn't the
+				// sweep must not be able to keep retrying a parked row for ever.
+				lte(feedback.attempts, MAX_ATTEMPTS - 1)
+			)
 		)
 		.run();
 
@@ -321,23 +364,14 @@ function backoffMs(spent: number): number {
  */
 function issueFor(row: Feedback): NewIssue {
 	return {
-		title: `${row.kind === 'bug' ? 'Bug' : 'Idea'}: ${titleFrom(row.body)}`,
+		title: `${row.kind === 'bug' ? 'Bug' : 'Idea'}: ${feedbackTitle(row.body)}`,
 		body: bodyFor(row),
 		labels: [row.kind]
 	};
 }
 
-/** The first line, collapsed and cut — a title in a list, not a paragraph. */
-function titleFrom(body: string): string {
-	const line = body.split('\n')[0].replace(/\s+/g, ' ').trim() || 'No description';
-
-	return line.length > FEEDBACK_TITLE_MAX
-		? `${line.slice(0, FEEDBACK_TITLE_MAX - 1).trimEnd()}…`
-		: line;
-}
-
 function bodyFor(row: Feedback): string {
-	const fence = fenceFor(row.body);
+	const fence = codeFenceFor(row.body);
 
 	return [
 		`**${row.memberName}** sent this from Choreganized.`,
@@ -355,21 +389,6 @@ function bodyFor(row: Feedback): string {
 		'',
 		`<!-- ${marker(row.id)} -->`
 	].join('\n');
-}
-
-/**
- * The report goes in a fence, and the fence is longer than any run of backticks
- * inside it.
- *
- * Not cosmetic. A `@name` in a bug report must not ping a stranger, a stray
- * `#12` must not cross-link somebody else's issue, and markdown or HTML in the
- * text must not rearrange the envelope around it. Quoted, the member's words
- * reach GitHub as words (→ DECISIONS #135).
- */
-function fenceFor(body: string): string {
-	const longest = [...body.matchAll(/`+/g)].reduce((max, run) => Math.max(max, run[0].length), 0);
-
-	return '`'.repeat(Math.max(3, longest + 1));
 }
 
 /**

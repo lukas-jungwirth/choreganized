@@ -59,7 +59,7 @@ Depends on: 10, 11. SPEC: §6 + §9. Design: reuses the existing BottomSheet; no
 - [x] A permanent GitHub refusal parks the row with its error code and no response body.
 - [x] The first sweep after a restart un-parks whatever gave up earlier.
 - [x] The action's guards (empty body, unknown kind, over-length) answer in the reader's language.
-- [x] `npm run check && npm run build` clean; `npm test` 151/151.
+- [x] `npm run check && npm run build` clean; `npm test` 159/159 (8 new).
 
 ## What was verified (session 2026-09-10)
 
@@ -85,6 +85,37 @@ was untouched. Sign-in via the documented TEMP-VERIFY `emailAndPassword` route, 
   attempted and parked.
 - **Guards.** Empty body, unknown kind and a 2001-character body each returned the right German
   sentence, and created no row.
+
+### Review pass (same session)
+
+`/code-review` at extra-high effort turned up seven findings in this plan's own code; all were
+fixed before shipping and re-verified in the running app:
+
+- **`syncFeedback` could take the process down.** The header promised "nothing here throws" and
+  the action leaned on it with `void syncFeedback(…)`, but three better-sqlite3 calls inside
+  could throw — the last from inside the catch block. Under SQLITE_BUSY behind the nightly
+  backup that becomes an unhandled rejection and, on Node's default, an exit. Both exported
+  entry points now carry the belt `push.ts` documents.
+- **The attempts cap lived in the sweep's query, not in `claim`** — so the exported
+  `syncFeedback` could retry a parked row for ever. Moved to the one line every path goes
+  through.
+- **`Promise.all` filed issues concurrently**, which is what trips GitHub's secondary rate limit
+  on content creation. The sweep is serial now (→ DECISIONS #135).
+- **`createIssue` could throw a SyntaxError** from `response.json()`, breaking its own
+  "GitHubError and nothing else" contract. A non-JSON body is now a retryable `unreachable`.
+- **`fenceFor` / `titleFrom` were pure but untestable**, stranded in a db-importing module — and
+  the fence is the guarantee that a `@name` in a report doesn't ping a stranger. They moved to
+  `utils/feedback.ts` as `codeFenceFor` / `feedbackTitle` with **8 unit tests**, which is where
+  the rest of this repo's tests live.
+- **The body cap lived only in the action.** `submitFeedback` now clamps too, the way
+  `startTimer` repairs its own label.
+
+Re-verified after the fixes on `127.0.0.1:5182` against a fresh copy: an over-length body still
+refused with the right sentence; a report with a fenced code block, an `@mention` and a `#1`
+stored byte-for-byte and parked at `bad-token`; and — the interaction the cap fix could have
+broken — a row hard-parked at `attempts 8` with `next_attempt_at` **a year out** was rescued by
+requeue-on-boot after a restart, re-attempted through the new `claim` cap, and re-parked with a
+fresh error and a 5-minute slot.
 
 **Not verified, and it needs a human:** no issue was actually created on GitHub. That needs a
 real `GITHUB_FEEDBACK_TOKEN`, which this session had no way to mint — everything up to and
