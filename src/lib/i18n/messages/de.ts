@@ -1059,7 +1059,7 @@ export const de: Messages = {
 			send: 'Senden',
 			sending: 'Wird gesendet…',
 			attached: (version: string) =>
-				`Dein Name, deine Sprache, das Erscheinungsbild und dein Browser gehen mit, dazu die App-Version (${version}), damit sich das nachvollziehen lässt. Schreib in der Sprache, die dir liegt.`,
+				`Deine Worte landen auf einer öffentlichen Liste auf GitHub, dazu die App-Version (${version}), deine Sprache und das Erscheinungsbild. Dein Name und dein Browser bleiben in der App — sie werden nicht veröffentlicht. Schreib in der Sprache, die dir liegt.`,
 			pickKind: 'Wähl einen Fehler oder eine Idee.',
 			empty: 'Schreib erst ein, zwei Zeilen.',
 			thanks: 'Danke — gespeichert und auf dem Weg zu Lukas.'
