@@ -12,9 +12,17 @@ name: Triage
 on:
   issues:
     types: [opened]
+  # Re-triage an issue by hand — after a prompt change, or when a run ran out of
+  # turns. Actions → Triage → Run workflow.
+  workflow_dispatch:
+    inputs:
+      issue:
+        description: Issue number to (re-)triage
+        required: true
+        type: string
 
 concurrency:
-  group: triage-${{ github.event.issue.number }}
+  group: triage-${{ github.event.issue.number || inputs.issue }}
 
 jobs:
   triage:
@@ -46,7 +54,13 @@ jobs:
           claude_code_oauth_token: ${{ secrets.CLAUDE_CODE_OAUTH_TOKEN }}
           # Supplying a prompt puts the action in automation mode: it fires on
           # the event itself, with no @claude mention and no label_trigger.
-          prompt: '/triage-issue ${{ github.event.issue.number }}'
+          prompt: '/triage-issue ${{ github.event.issue.number || inputs.issue }}'
+          # --max-turns: 20 was too tight. The first real run spent all of it
+          # reading the issue, deduping, grepping the code and setting labels,
+          # and died before it could write the comment — which is the whole
+          # output. A run costs roughly $0.30; the ceiling is a stop, not a
+          # target. (Comments must stay out of the block scalar below: inside
+          # `|` a # is literal text and would be passed to the CLI as an arg.)
           claude_args: |
-            --max-turns 20
+            --max-turns 40
             --allowedTools "Read,Grep,Glob,Bash(git log:*),Bash(git show:*),Bash(gh issue view:*),Bash(gh issue list:*),Bash(gh issue comment:*),Bash(gh issue edit:*)"
