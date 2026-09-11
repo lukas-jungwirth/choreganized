@@ -117,10 +117,36 @@ broken — a row hard-parked at `attempts 8` with `next_attempt_at` **a year out
 requeue-on-boot after a restart, re-attempted through the new `claim` cap, and re-parked with a
 fresh error and a 5-minute slot.
 
-**Not verified, and it needs a human:** no issue was actually created on GitHub. That needs a
-real `GITHUB_FEEDBACK_TOKEN`, which this session had no way to mint — everything up to and
-including the authenticated 401 from `api.github.com` is exercised, but the 201 path, the body as
-GitHub renders it, and the marker search are not. Likewise `.github/workflows/triage.yml` cannot
-run until it is on `main`: GitHub reads `issues`-event workflows from the default branch only.
-The one-time setup (`gh auth login`, the Claude GitHub App, `CLAUDE_CODE_OAUTH_TOKEN`, the PAT,
-the label bootstrap) is listed in the handoff.
+### The triage agent, verified live (2026-09-11)
+
+Issue [#7](https://github.com/lukas-jungwirth/choreganized/issues/7) — a real idea, not a
+throwaway — was filed and triaged end to end. The agent labelled it `idea` · `area:settings` ·
+`size:s`, found the version row at `settings/+page.svelte:305` as a plain `<div class="row">`
+next to a `<button class="row">`, **found a reuse precedent nobody had pointed it at**
+(`copyLink()` in `onboarding/invite/+page.svelte:32-44`, try/catch and all), named the two i18n
+keys, and noticed that the row's own comment — "A fact, not a control" — would stop being true.
+Every claim was checked against the source and every one held. 54 s, 15 turns, about $0.19.
+
+Three things cost a run each, and are written down so they don't cost another:
+
+- **`--max-turns 20` was too tight.** The first successful-auth run spent all twenty reading the
+  issue, deduping, grepping, and setting labels, and died before the comment — which is the
+  entire output. Forty, plus a line in the prompt saying the comment is the point, brought it
+  down to fifteen.
+- **A `#` inside a `claude_args: |` block is not a comment.** It is literal text handed to the
+  CLI as an argument. Explanatory comments go above `claude_args:`, never inside it.
+- **`CLAUDE_CODE_OAUTH_TOKEN` fails silently on stray whitespace.** A token with a trailing
+  newline or a copied space fails in ~1.9 s with `total_cost_usd: 0` and `modelUsage: {}` — no
+  model call, no useful error, and the action hides the detail. That signature _is_ the
+  diagnosis. Set it with `gh secret set CLAUDE_CODE_OAUTH_TOKEN --body "$(pbpaste | tr -d '\r\n ')"`,
+  which also keeps the token out of shell history.
+
+`workflow_dispatch` with an issue number exists so a prompt change can be retried on a real
+issue instead of filing a throwaway one.
+
+**Still not verified:** the app has never actually created an issue. That needs
+`GITHUB_FEEDBACK_TOKEN` set in Coolify and a deploy; everything up to an authenticated 401 from
+`api.github.com` is exercised, but the 201 path, the body as GitHub renders it, and the marker
+search are not. Note also that **the repository is public**, so issues opened by people without
+write access are not triaged — the action refuses non-write actors by default, which keeps
+drive-by issues from spending subscription usage.
