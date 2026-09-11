@@ -49,5 +49,5 @@ test('feedback is saved even though no GitHub token is configured', async ({ pag
 
 test('the About row names the build the tests run against', async ({ page }) => {
 	await page.goto('/settings');
-	await expect(page.getByText(/^e2e(\+[0-9a-f]{7})?$/)).toBeVisible();
+	await expect(page.getByText('e2e', { exact: true })).toBeVisible();
 });

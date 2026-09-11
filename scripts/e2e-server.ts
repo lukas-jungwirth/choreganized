@@ -53,8 +53,10 @@ const child = spawn(process.execPath, ['build/index.js'], {
 		BODY_SIZE_LIMIT: '20M',
 		// Push and the GitHub mirror stay off: no keys, no token.
 		GITHUB_FEEDBACK_TOKEN: '',
+		// A constant label, on purpose: the Settings screenshot shows it, and a
+		// build id that read the commit would differ between CI and a laptop.
 		APP_VERSION: 'e2e',
-		APP_COMMIT: process.env.GITHUB_SHA ?? '',
+		APP_COMMIT: '',
 		E2E_MODE: 'true'
 	}
 });
