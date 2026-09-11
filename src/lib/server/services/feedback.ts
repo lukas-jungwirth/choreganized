@@ -370,22 +370,36 @@ function issueFor(row: Feedback): NewIssue {
 	};
 }
 
+/**
+ * **The repository is public, so the issue carries no one's name and no one's
+ * device** (→ DECISIONS #136). What a member types is theirs to publish — they
+ * chose to send it — but who they are and what they hold it in is not, and a
+ * household app's bug report can easily mention what they eat or when they shop.
+ *
+ * Role is not a safe substitute for a name here: in a house of two, "owner" and
+ * "member" each name exactly one person. So the reporter is simply absent, and
+ * the marker below is what ties the issue back to the full row — reporter,
+ * device and exact time included — in the app's own database, which only the
+ * household can read.
+ *
+ * What stays is what a fix needs: the words, the build they were written on,
+ * and the two rendering facts that decide whether a screen can be reproduced.
+ */
 function bodyFor(row: Feedback): string {
 	const fence = codeFenceFor(row.body);
 
 	return [
-		`**${row.memberName}** sent this from Choreganized.`,
+		'Sent from inside Choreganized.',
 		'',
 		`${fence}text`,
 		row.body,
 		fence,
 		'',
-		`- **Reported by** ${row.memberName}`,
-		`- **When** ${row.createdAt.toISOString()}`,
+		`- **App version** ${row.appVersion}`,
 		`- **Language** ${row.locale}`,
 		`- **Appearance** ${row.theme ?? 'system'}`,
-		`- **App version** ${row.appVersion}`,
-		`- **User agent** ${row.userAgent ? `\`${row.userAgent}\`` : '—'}`,
+		'',
+		'Who sent it, on what, and when is in the app’s own database, keyed by the id below.',
 		'',
 		`<!-- ${marker(row.id)} -->`
 	].join('\n');

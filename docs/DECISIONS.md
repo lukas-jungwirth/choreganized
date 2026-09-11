@@ -1680,6 +1680,18 @@ NULL` is the queue; nothing else has to be tracked.
        So `GitHubError` carries `retryable`, permanent refusals park at once, and — because every
        permanent refusal is fixed by changing configuration and redeploying — the first sweep of
        a new process un-parks everything and tries once more.
+     - **The repository is public, so the issue names nobody.** This was built on the answer
+       "private" and shipped before anyone checked; `gh repo view` said `PUBLIC` at setup time,
+       which is a different feature. What a member types is theirs to publish — they chose to
+       send it — but who they are and what they hold it in is not, and a household app's bug
+       report can easily mention what they eat or when they shop. **Role is not a safe
+       substitute for a name**: in a house of two, "owner" and "member" each name exactly one
+       person, so the reporter line is gone rather than pseudonymised, and the user agent goes
+       with it. What is left is what a fix needs — the words, the build, and the two rendering
+       facts that decide whether a screen can be reproduced — while the marker ties the issue
+       back to the full row in the app's own database. The sheet's "what travels with this"
+       line says all of that before you send, because a promise that is only true on a private
+       repository is worse than no promise.
      - **The sweep files one issue at a time.** GitHub meters content creation
        separately from the ordinary rate limit and asks for it serially. Firing a backlog at it
        concurrently — the obvious `Promise.all`, which the cook-timer sweep can afford because

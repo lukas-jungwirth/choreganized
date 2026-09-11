@@ -653,8 +653,11 @@ The **History** tab is a stats landing; the full feed sits one level below it (�
   "Connection works" or why not; members see only whether it's on — the key is never shown, only
   a masked hint), Members · {n} → members screen.
 - **About**: **Send feedback** → sheet — a **bug** or an **idea**, in your own words, in any
-  language, up to 2000 characters. The sheet says what travels with it _before_ you send
-  (your name, language, appearance, browser, app version). It is saved in the app first and
+  language, up to 2000 characters. The sheet says what travels with it _before_ you send, and
+  says it accurately: **the repository is public**, so the issue carries the words, the app
+  version, the language and the appearance — and nothing naming a person or their device. Who
+  sent it, on what, and when stays in the app's own database, tied to the issue by its id.
+  It is saved in the app first and
   mirrored to a GitHub issue afterwards, so a report never depends on GitHub being reachable and
   the confirmation is honest either way (→ [DECISIONS #136](DECISIONS.md)). Below it, **Version**
   — the build a report will name, `dev` outside a container

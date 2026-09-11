@@ -1408,7 +1408,7 @@ export const en = {
 			sending: 'Sending…',
 			/** Said before it is sent, because it goes whether it is read or not. */
 			attached: (version: string) =>
-				`Your name, language, appearance and browser go with this, along with the app version (${version}), so it can be looked into. Write in whichever language you like.`,
+				`Your words go on a public list on GitHub, along with the app version (${version}), your language and your appearance. Your name and your browser stay in the app — they aren’t published. Write in whichever language you like.`,
 			pickKind: 'Pick a bug or an idea.',
 			empty: 'Write a line or two first.',
 			/** Says *saved* first: that is true even when GitHub is unreachable. */
