@@ -228,7 +228,7 @@ and are deleted by the morning sweep, so the table stays at a couple of dozen ro
 
 ### `feedback`
 
-- **The row is the receipt; the issue is a copy of it** (→ [DECISIONS #135](DECISIONS.md)). One
+- **The row is the receipt; the issue is a copy of it** (→ [DECISIONS #136](DECISIONS.md)). One
   synchronous insert is all the member's tap depends on; `issueNumber` is the flag that says the
   copy exists, and a NULL one _is_ the sweep's queue. So GitHub being down, or a token nobody has
   configured yet, costs a sync and never a report.

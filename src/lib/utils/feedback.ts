@@ -57,7 +57,7 @@ export function feedbackTitle(body: string): string {
  * Not cosmetic, which is why it lives out here with a test rather than inside
  * the service: a `@name` in a bug report must not ping a stranger, a stray
  * `#12` must not cross-link somebody else's issue, and markdown or HTML in the
- * text must not rearrange the envelope around it (→ DECISIONS #135).
+ * text must not rearrange the envelope around it (→ DECISIONS #136).
  */
 export function codeFenceFor(body: string): string {
 	const longest = [...body.matchAll(/`+/g)].reduce((max, run) => Math.max(max, run[0].length), 0);

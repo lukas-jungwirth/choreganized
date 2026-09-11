@@ -94,6 +94,7 @@ api/
   auth/[...all]                 Better Auth handler (GET/POST)
   push/subscribe                POST/DELETE subscription            [plan 05]
   timers                        POST create · DELETE cancel         [plan 08]
+  live                          GET SSE stream, ?topics=shopping     [plan 15]
   uploads/[...path]             authed recipe images                [plan 07]
 ```
 
@@ -117,9 +118,24 @@ api/
   (session → user → member, one query; then `locale`, → "Language"), the `<html lang>`
   substitution, and the `init` hook: `runMigrations()` + `registerCronJobs()` (guarded against
   dev-HMR double registration via a `globalThis` flag).
-- **Freshness without SSE (v1):** actions naturally invalidate; plus a small shared
-  `refetchOnFocus` helper (visibilitychange → `invalidateAll`) in the app layout. SSE upgrade
-  is isolated in one place later.
+- **Freshness:** actions naturally invalidate; plus a small shared `refetchOnFocus` helper
+  (visibilitychange → `invalidateAll`) in the app layout. That is the whole story for every
+  screen but one.
+- **The live channel (SSE)** is the upgrade this always pointed at, and it landed where it said
+  it would — in one place (→ [DECISIONS #135](DECISIONS.md)). `lib/server/live.ts` is a hub of
+  `Map<householdId, Set<listener>>` behind a `Symbol.for` (the cron trick, for the same HMR
+  reason); services `publish` after the transaction, fire-and-forget, beside their
+  `notifyShoppingAdd`. `routes/api/live/+server.ts` streams one household's events to a
+  `requireMemberApi` caller, filtered by `?topics=`, with a 25 s heartbeat and a 30 min cap
+  (the session is resolved once at open, so the reconnect is the re-auth). In the browser
+  `lib/live.ts` owns the `EventSource` — open only while the screen is mounted _and_ the tab
+  visible — and `lib/live-shopping.svelte.ts` turns an event into a debounced
+  `invalidate('app:shopping')` plus the animation.
+  **An event is a hint, never the data**: it says what changed and who did it, and the page
+  re-runs its own load for the list. So there is no history to replay, no `Last-Event-ID`, and
+  a client that misses one catches up by refetching — which every reconnect does anyway. Only
+  works because the deploy is one container, one process; more than one node would need a
+  broker. Shopping is the only subscriber today.
 - **The one piece of live client state between loads** is `lib/cook-timer.svelte.ts`, which
   exports the `cookTimers` singleton (→ [DECISIONS #103](DECISIONS.md)). Cook timers outlive the
   screen that started them, and the `(app)` layout load reads no `event.url` and so does not
@@ -129,7 +145,8 @@ api/
   lead from zero. `refetchOnFocus`'s `invalidateAll` re-seeds it. Being a module singleton it is
   shared between requests on a server, so every write refuses outside the browser and `sync` is
   only ever called from an `$effect` — inside `untrack`, because it reads the state its own
-  200ms ticker writes. Still no polling, still no SSE.
+  200ms ticker writes. Still no polling; the SSE channel above is a separate thing and the
+  timers do not ride on it.
 
 ## Language
 
@@ -231,11 +248,11 @@ prompt / subscribed).
   `PUBLIC_VAPID_PUBLIC_KEY`, `VAPID_PRIVATE_KEY`, `VAPID_SUBJECT`.
 - Optional env: `GITHUB_FEEDBACK_TOKEN` (a fine-grained PAT scoped to this repo, _Issues: read
   and write_) mirrors feedback to GitHub issues — without it reports still save and the cron
-  sweep mirrors them once a token appears (→ [DECISIONS #135](DECISIONS.md)).
+  sweep mirrors them once a token appears (→ [DECISIONS #136](DECISIONS.md)).
   `GITHUB_FEEDBACK_REPO` only redirects them. **Build-time**: `APP_VERSION` (a Coolify _Build
   Variable_ — a plain env var is runtime-only and never reaches `--build-arg`) and Coolify's
   `SOURCE_COMMIT`, baked by the Dockerfile into `APP_VERSION` / `APP_COMMIT` so a report can name
-  its build (→ [DECISIONS #136](DECISIONS.md)).
+  its build (→ [DECISIONS #137](DECISIONS.md)).
 - **`BODY_SIZE_LIMIT` is not optional once recipe photos exist.** adapter-node caps a request
   body at **512K** by default and answers 413 before the form action runs; a phone photo is
   several MB. The Vite dev server applies no limit at all, so this is invisible until the

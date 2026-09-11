@@ -559,7 +559,7 @@ export const holidayNotices = sqliteTable(
 
 /**
  * A bug or an idea, written inside the app and mirrored to a GitHub issue
- * (→ SPEC §6, plan 16, DECISIONS #135).
+ * (→ SPEC §6, plan 16, DECISIONS #136).
  *
  * **The row is the receipt; the issue is a copy of it.** The insert is what the
  * member's tap succeeds against, and the API call happens afterwards — so

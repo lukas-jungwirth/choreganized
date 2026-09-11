@@ -417,6 +417,34 @@ export const en = {
 			action: 'Undo'
 		},
 
+		/**
+		 * A housemate changed the list while you were looking at it (→ SPEC §3.1,
+		 * DECISIONS #135). The row already ticks itself off where it stands, in
+		 * their colour — this is for the half of the list that is below the fold,
+		 * and for an add, which has no row of yours to animate.
+		 *
+		 * Parts rather than a string, like `undo.checked`: the item is the bold
+		 * run, and each language decides where that falls.
+		 */
+		live: {
+			checked: (member: string, item: string): RichText => [
+				{ text: `${member} got ` },
+				{ text: item, strong: true }
+			],
+			checkedMany: (member: string, count: number): RichText => [
+				{ text: `${member} got ` },
+				{ text: count === 1 ? '1 thing' : `${count} things`, strong: true }
+			],
+			added: (member: string, item: string): RichText => [
+				{ text: `${member} added ` },
+				{ text: item, strong: true }
+			],
+			addedMany: (member: string, count: number): RichText => [
+				{ text: `${member} added ` },
+				{ text: count === 1 ? '1 thing' : `${count} things`, strong: true }
+			]
+		},
+
 		/** Add / edit item [3a]. */
 		sheet: {
 			add: 'Add item',
@@ -1675,6 +1703,9 @@ export const en = {
 		notFound: 'Not found',
 		bodyTooLarge: 'Body too large',
 		expectedJson: 'Expected JSON',
+		/** The live stream's two protocol refusals (→ `api/live/+server.ts`). */
+		noTopic: 'Name at least one topic',
+		unknownTopic: (topics: string) => `Unknown topic: ${topics}`,
 		endpointMustBeHttps: 'Endpoint must be https',
 
 		/** The FK cascaded out from under the request (→ `(app)/+layout.server.ts`). */

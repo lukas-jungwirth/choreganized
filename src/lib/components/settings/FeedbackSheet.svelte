@@ -5,7 +5,7 @@
 	The sheet says what travels with the report *before* it is sent, because
 	saying so afterwards isn't saying so. What it doesn't promise is a round trip
 	to GitHub: the report is saved the moment this returns, and the copy is made
-	on the server's own time (→ DECISIONS #135), so "thanks" is true either way.
+	on the server's own time (→ DECISIONS #136), so "thanks" is true either way.
 
 	There is no `ui/TextArea` — the app's other two are locally styled for the
 	same reason (→ DESIGN-SYSTEM). This one borrows `TextField`'s field/label/

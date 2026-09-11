@@ -3,7 +3,7 @@ description: What's waiting in the feedback inbox — open bugs first, then idea
 ---
 
 Show me what has come in. GitHub issues are the **inbox**; `docs/plans/README.md` is the
-**queue**. They are deliberately not the same list and are never synced (→ DECISIONS #135).
+**queue**. They are deliberately not the same list and are never synced (→ DECISIONS #136).
 
 1. Open bugs, newest first, with their triage labels:
    `gh issue list --state open --label bug --json number,title,labels,createdAt,comments`

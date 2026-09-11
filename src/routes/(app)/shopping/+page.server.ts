@@ -5,6 +5,7 @@
  */
 import { fail } from '@sveltejs/kit';
 import { catalog, type Messages } from '$lib/i18n';
+import { SHOPPING_DEP } from '$lib/live';
 import { requireMember } from '$lib/server/guards';
 import { answerHolidayNotice, readHolidayAnswer } from '$lib/server/services/holidays';
 import {
@@ -22,6 +23,11 @@ import type { Actions, PageServerLoad } from './$types';
 
 export const load: PageServerLoad = (event) => {
 	const { householdId } = requireMember(event);
+
+	// What the live channel re-runs when a housemate changes something
+	// (→ `lib/live-shopping.svelte.ts`). Named rather than `invalidateAll` so a
+	// tick in the shop costs this load and not the whole layout's as well.
+	event.depends(SHOPPING_DEP);
 
 	return {
 		items: getShoppingList(householdId),

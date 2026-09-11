@@ -9,13 +9,13 @@ read-only GitHub Action triages every new issue and drafts the plan a local sess
 
 Depends on: 10, 11. SPEC: §6 + §9. Design: reuses the existing BottomSheet; no new frame.
 
-> **Numbering, and a merge this plan has not done.** Built in parallel with plan 15
-> (live shopping), which was in flight in the main checkout at the time — hence 16 rather than 15. That session also appends to `docs/DECISIONS.md`, `docs/SPEC.md`, `docs/ARCHITECTURE.md`
-> and both message catalogs. **DECISIONS is the one that bites**: an ordered numbered list where
-> two branches both append at "the next number" merges _without_ a conflict and silently
-> duplicates. Whichever branch merges second keeps the number already on `main`, renumbers its
-> own, and repoints its references — `grep -rn 'DECISIONS #135' src docs`. This plan's entries
-> are **#135–#136** as written, and neither branch was merged when it was committed.
+> **Numbering.** Built in parallel with plan 15 (live shopping), which was in flight in the main
+> checkout at the time — hence 16 rather than 15. Both branches also appended to
+> `docs/DECISIONS.md`, and both took "the next number". Resolved on merge in the flow's
+> direction (`dev` merged into this branch, then fast-forwarded): plan 15 keeps **#135**, and
+> this plan's entries became **#136–#137**, with every citation in `src`, `docs`, `.env.example`,
+> the Dockerfile and `.claude/commands/` repointed line by line — the live-shopping files' own
+> `#135` references are correct and were left alone.
 
 ## Build
 
@@ -48,7 +48,7 @@ Depends on: 10, 11. SPEC: §6 + §9. Design: reuses the existing BottomSheet; no
 - `.github/workflows/triage.yml`, `.claude/commands/triage-issue.md`,
   `.github/ISSUE_TEMPLATE/{bug,idea}.yml`, `.claude/commands/inbox.md`, and a `.gitignore`
   negation so `.claude/commands/` ships — the action's checkout needs the prompt.
-- Docs: SPEC §6 + §9, DATA-MODEL (`feedback` + the sweep line), DECISIONS #135–#136,
+- Docs: SPEC §6 + §9, DATA-MODEL (`feedback` + the sweep line), DECISIONS #136–#137,
   ARCHITECTURE (layout + env), DESIGN-SYSTEM (no new primitive), this file and a README row.
 
 ## Acceptance
@@ -100,7 +100,7 @@ fixed before shipping and re-verified in the running app:
   `syncFeedback` could retry a parked row for ever. Moved to the one line every path goes
   through.
 - **`Promise.all` filed issues concurrently**, which is what trips GitHub's secondary rate limit
-  on content creation. The sweep is serial now (→ DECISIONS #135).
+  on content creation. The sweep is serial now (→ DECISIONS #136).
 - **`createIssue` could throw a SyntaxError** from `response.json()`, breaking its own
   "GitHubError and nothing else" contract. A non-JSON body is now a retryable `unreachable`.
 - **`fenceFor` / `titleFrom` were pure but untestable**, stranded in a db-importing module — and

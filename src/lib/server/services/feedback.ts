@@ -1,7 +1,7 @@
 /**
  * Feedback: a bug or an idea, written inside the app (→ SPEC §6, plan 16).
  *
- * **The row is the receipt; the issue is a copy of it** (→ DECISIONS #135). One
+ * **The row is the receipt; the issue is a copy of it** (→ DECISIONS #136). One
  * synchronous insert is the whole of what the member's tap depends on, and the
  * GitHub call happens afterwards — fired and forgotten from the action, the way
  * a push send is (→ ARCHITECTURE "Notifications"), with the minute cron sweep as

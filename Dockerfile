@@ -3,7 +3,7 @@
 
 FROM node:22-bookworm-slim AS build
 # Which build this is, for feedback reports (→ src/lib/server/version.ts,
-# DECISIONS #136). Coolify supplies SOURCE_COMMIT on a git deployment; APP_VERSION
+# DECISIONS #137). Coolify supplies SOURCE_COMMIT on a git deployment; APP_VERSION
 # comes from a Build Variable in its UI — a plain env var is runtime-only and never
 # reaches --build-arg. An ARG does not cross a FROM, so both stages declare them.
 ARG APP_VERSION

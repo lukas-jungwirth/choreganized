@@ -15,7 +15,7 @@
  * Unlike the Gemini key, which is per household and lives in the database
  * because it bills the household (→ SPEC §4.7), this is the *app's* credential
  * for the *app's* repository. It belongs in the environment beside the VAPID
- * keys, and a household never sees or sets it (→ DECISIONS #135).
+ * keys, and a household never sees or sets it (→ DECISIONS #136).
  */
 import { env } from '$env/dynamic/private';
 import { appVersion } from './version';
@@ -116,7 +116,7 @@ export async function createIssue(input: NewIssue): Promise<CreatedIssue> {
  * that exists. That is why this returns `null` rather than throwing on a failed
  * search: a duplicate is a nuisance, a lost report is not, and the marker is
  * what makes two of them recognisable as one report afterwards
- * (→ DECISIONS #135).
+ * (→ DECISIONS #136).
  */
 export async function findIssueByMarker(marker: string): Promise<CreatedIssue | null> {
 	const query = encodeURIComponent(`repo:${feedbackRepo()} in:body "${marker}"`);

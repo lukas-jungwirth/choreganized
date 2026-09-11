@@ -360,7 +360,7 @@ export const actions: Actions = {
 	 * A bug or an idea, from inside the app [6a] (→ SPEC §6, plan 16).
 	 *
 	 * The insert is what succeeds; the GitHub issue is a copy made afterwards
-	 * (→ DECISIONS #135) — so this answers the same "thanks" whether GitHub
+	 * (→ DECISIONS #136) — so this answers the same "thanks" whether GitHub
 	 * replied, was down, or has no token configured yet. The mirror is `void`-ed
 	 * rather than awaited for the reason a push send is: the row is already
 	 * safe, and nobody should watch a spinner while we talk to a third party.

@@ -320,6 +320,29 @@ export const de: Messages = {
 			action: 'Rückgängig'
 		},
 
+		live: {
+			checked: (member: string, item: string): RichText => [
+				{ text: `${member} hat ` },
+				{ text: item, strong: true },
+				{ text: ' geholt' }
+			],
+			checkedMany: (member: string, count: number): RichText => [
+				{ text: `${member} hat ` },
+				{ text: count === 1 ? '1 Sache' : `${count} Sachen`, strong: true },
+				{ text: ' geholt' }
+			],
+			added: (member: string, item: string): RichText => [
+				{ text: `${member} hat ` },
+				{ text: item, strong: true },
+				{ text: ' eingetragen' }
+			],
+			addedMany: (member: string, count: number): RichText => [
+				{ text: `${member} hat ` },
+				{ text: count === 1 ? '1 Sache' : `${count} Sachen`, strong: true },
+				{ text: ' eingetragen' }
+			]
+		},
+
 		sheet: {
 			add: 'Eintragen',
 			edit: 'Eintrag bearbeiten',
@@ -1262,6 +1285,8 @@ export const de: Messages = {
 		notFound: 'Nicht gefunden',
 		bodyTooLarge: 'Anfrage zu groß',
 		expectedJson: 'JSON erwartet',
+		noTopic: 'Kein Thema angegeben',
+		unknownTopic: (topics: string) => `Unbekanntes Thema: ${topics}`,
 		endpointMustBeHttps: 'Endpoint muss https sein',
 
 		householdMissing: 'Der Haushalts-Datensatz fehlt. Bitte wende dich an den Support.',
