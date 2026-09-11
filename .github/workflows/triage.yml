@@ -1,0 +1,52 @@
+# Triage every new issue once, and only ever say something about it.
+#
+# The agent labels, dedupes, locates the cause in the source, and drafts the plan
+# in this repo's own format — it never writes code (→ docs/plans/16-feedback.md).
+# Building stays local, where the dev server is and where this repo's definition
+# of done can actually be met.
+#
+# NOTE: workflows for `issues` events are read from the DEFAULT branch. This file
+# does nothing until it is merged to `main`.
+name: Triage
+
+on:
+  issues:
+    types: [opened]
+
+concurrency:
+  group: triage-${{ github.event.issue.number }}
+
+jobs:
+  triage:
+    runs-on: ubuntu-latest
+    timeout-minutes: 12
+    permissions:
+      # Read-only on the repository is the guardrail that matters — issue bodies
+      # are untrusted input, and the prompt's "never edit a file" is only a
+      # second line of defence. `issues: write` is for labels and the comment;
+      # `id-token: write` lets the action mint its short-lived GitHub App token.
+      contents: read
+      issues: write
+      id-token: write
+
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          # `dev` is the superset: it carries whatever is built but not yet
+          # deployed, so triage can tell "already fixed" from "still broken".
+          ref: dev
+          fetch-depth: 0
+
+      - uses: anthropics/claude-code-action@v1
+        with:
+          # No `github_token:` on purpose. Omitted, the action mints a
+          # repo-scoped token from the Claude GitHub App and comments as
+          # claude[bot]; passing secrets.GITHUB_TOKEN instead would mean GitHub
+          # never triggers workflows from what it does.
+          claude_code_oauth_token: ${{ secrets.CLAUDE_CODE_OAUTH_TOKEN }}
+          # Supplying a prompt puts the action in automation mode: it fires on
+          # the event itself, with no @claude mention and no label_trigger.
+          prompt: '/triage-issue ${{ github.event.issue.number }}'
+          claude_args: |
+            --max-turns 20
+            --allowedTools "Read,Grep,Glob,Bash(git log:*),Bash(git show:*),Bash(gh issue view:*),Bash(gh issue list:*),Bash(gh issue comment:*),Bash(gh issue edit:*)"

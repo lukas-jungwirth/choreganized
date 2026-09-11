@@ -1642,3 +1642,79 @@ that actually adapts there; this wants checking on a real device.
        every edit and would orphan every open stream. Losing it costs nothing (cf. the `alarms`
        map in `cook-timers.ts`): the reconnect refetches. It works because the deploy is a
        single container; a second node would need a broker.
+
+136. **Feedback is a row first and an issue second** (→ SPEC §6, `server/services/feedback.ts`,
+     `server/github.ts`, plan 16). The app had no way for anyone to report anything: a bug
+     noticed on the phone at 19:00 didn't survive until the next desk session, and the other
+     member of the household had no route at all. The fix is a sheet in Settings — but where the
+     report _lands_ is the decision.
+
+     - **The row is the receipt; the issue is a copy of it.** One synchronous insert is the whole
+       of what the member's tap depends on, and the GitHub call happens afterwards, fired and
+       forgotten the way a push send is, with the minute cron as the restart-safe catch-up (the
+       same two-mechanism shape as a cook timer, → #15). So an outage, a token nobody has set
+       yet, or a deploy landing mid-request costs a _sync_, never a report — and "that's saved"
+       is true when the screen says it, rather than a guess about a third party. `issue_number IS
+NULL` is the queue; nothing else has to be tracked.
+     - **The token is the app's, not the household's.** The opposite call to the Gemini key
+       (→ SPEC §4.7), which lives per household in the database because it bills the household.
+       This one is the developer's credential for the developer's repository, so it sits in the
+       environment beside the VAPID keys and no member ever sees or sets it. A fine-grained PAT
+       scoped to Issues on one repo — which is also why the app only ever applies labels that
+       already exist: it cannot create one, and GitHub answers an unknown label with a 422, which
+       is not retryable, which would mean a report that never lands.
+     - **The report is never translated; the envelope is always English.** The words are
+       household content (→ SPEC §9) and reach GitHub byte-for-byte in whatever language they
+       were written in. The `**Reported by** / **App version**` scaffolding around them is not
+       app copy at all — it is a triage instrument read by one person, and a report whose field
+       labels changed language depending on who filed it would be worse to triage, not better.
+       It therefore deliberately does **not** come from `$lib/i18n`, which is the one place in
+       the app where a hardcoded string in a service is correct.
+     - **The words are quoted, not interpreted.** The report goes inside a fence longer than any
+       run of backticks in it. Not cosmetic: a `@name` in a bug report must not ping a stranger,
+       a stray `#12` must not cross-link somebody else's issue, and markdown in the text must not
+       rearrange the envelope around it.
+     - **Retrying has to know when to stop.** A rate limit or a 5xx is worth another go; a
+       refused token, an invisible repository or a rejected label is not, and re-sending against
+       one every five minutes forever is a log full of noise and a rate limit waiting to happen.
+       So `GitHubError` carries `retryable`, permanent refusals park at once, and — because every
+       permanent refusal is fixed by changing configuration and redeploying — the first sweep of
+       a new process un-parks everything and tries once more.
+     - **The sweep files one issue at a time.** GitHub meters content creation
+       separately from the ordinary rate limit and asks for it serially. Firing a backlog at it
+       concurrently — the obvious `Promise.all`, which the cook-timer sweep can afford because
+       push has no creation limit — is how an outage that has just ended turns into a secondary
+       rate limit with every row backing off together. A sweep is in nobody's way, so it can be
+       patient.
+     - **A lost response is the one case that can still duplicate.** An attempt that created the
+       issue and never saw the reply would write a second one, so the body carries a
+       `<!-- choreganized:{id} -->` marker that a retry searches for first. GitHub's search index
+       lags by seconds to minutes, so this is best effort and a duplicate remains possible; the
+       marker is then what makes the two recognisable as one report. Worth having, not worth
+       pretending is airtight.
+     - **The inbox and the queue are different lists, and are never synced.** A GitHub issue is
+       the inbox; `docs/plans/README.md` is the queue of work actually committed to. An idea
+       stays an open issue labelled `idea` until a session accepts it, at which point it becomes
+       `docs/plans/NN-slug.md` and the issue closes with a link to the plan. Two lists that both
+       need maintaining is how they drift.
+     - **Triage is automated; building is not** (`.github/workflows/triage.yml`,
+       `.claude/commands/triage-issue.md`). One read-only agent labels, dedupes, locates the
+       cause as a real `path:line`, notices when `dev` already fixes something `main` hasn't
+       shipped, and drafts the plan in this repo's own format. It never writes code, because this
+       repo's definition of done is a walk in the running dev server and CI has no dev server —
+       a pull request from CI would still cost a full human verification pass while putting the
+       deploy the household uses at risk. `contents: read` is the guardrail that enforces that;
+       the prompt's "never edit a file" is only the second line, since an issue body is untrusted
+       text written by whoever filed it. `.claude/commands/` is un-ignored in `.gitignore` for
+       exactly this reason — the prompt has to exist in the checkout the action makes.
+
+137. **The build id comes from a build arg, and `dev` is what dev honestly reports**
+     (→ `server/version.ts`, `Dockerfile`, plan 16). A feedback report has to name the build it
+     came from, and there is nothing in the container to ask: `.dockerignore` excludes `.git`,
+     and the built server reads no `.env`. So the Dockerfile turns `APP_VERSION` and Coolify's
+     `SOURCE_COMMIT` into baked `ENV`s (declared in both stages — an `ARG` does not cross a
+     `FROM`), and `appVersion()` reads them per call, because `$env/dynamic/private` is empty
+     while the app is building (→ `uploads.ts`). Outside a container both are unset and the label
+     is `dev`: inventing a number for a developer would put a version on a report that no deploy
+     ever had. Note that in Coolify a plain environment variable is runtime-only — `APP_VERSION`
+     has to be marked a **Build Variable** to reach `--build-arg`.

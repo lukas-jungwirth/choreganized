@@ -652,6 +652,13 @@ The **History** tab is a stats landing; the full feed sits one level below it (�
   Gemini API key for the §4.7 fallback and can **Test connection** — a live check that reports
   "Connection works" or why not; members see only whether it's on — the key is never shown, only
   a masked hint), Members · {n} → members screen.
+- **About**: **Send feedback** → sheet — a **bug** or an **idea**, in your own words, in any
+  language, up to 2000 characters. The sheet says what travels with it _before_ you send
+  (your name, language, appearance, browser, app version). It is saved in the app first and
+  mirrored to a GitHub issue afterwards, so a report never depends on GitHub being reachable and
+  the confirmation is honest either way (→ [DECISIONS #136](DECISIONS.md)). Below it, **Version**
+  — the build a report will name, `dev` outside a container
+  (→ [DECISIONS #137](DECISIONS.md)).
 - **Sign out** · **Leave household** (danger, confirm [6d]: "You'll lose access to the shared
   shopping list, tasks and meal plan. Your points stay with the household.").
 
@@ -703,8 +710,10 @@ timezone, so January reads "Jänner" (→ [DECISIONS #93](DECISIONS.md)). Every 
   absence of a choice, not a third language: it clears the column and the cookie so each device
   follows itself again. The two language names are never translated. Choosing reloads the app —
   `<html lang>`, every server-rendered string and every date have to change together.
-- **Household content is never translated.** Task names, recipes, store names, meal titles and
-  display names are what the household typed. The three starter stores and the three "popular
+- **Household content is never translated.** Task names, recipes, store names, meal titles,
+  display names and **feedback reports** are what the household typed — a report reaches GitHub
+  byte-for-byte, in the language it was written in, with only the English scaffolding around it
+  added (→ [DECISIONS #136](DECISIONS.md)). The three starter stores and the three "popular
   starters" are written in the language of whoever created them, and are theirs to rename.
 - **Units are stored canonically and shown per language** — `tbsp` reads "tbsp" or "EL", `pcs`
   reads "pcs" or "Stk.". A recipe typed in either language parses to the same rows.

@@ -235,6 +235,13 @@ none` — the knob's `transform` otherwise paints it over the input and swallows
   (→ [DECISIONS #93](DECISIONS.md), [SPEC §9](SPEC.md)).
 - **ProgressRing** — cook timer, 220px, 10px stroke, sage on `rgba(255,255,255,.08)`.
 
+**No new primitive for the feedback sheet** (plan 16): `components/settings/FeedbackSheet`
+composes `BottomSheet` · `SegmentedControl` · `Button` around a locally styled `<textarea>`,
+borrowing `TextField`'s field/label/error shape so a sheet holding both doesn't read as two
+design systems. There is no `ui/TextArea` — the app's other two textareas are local for the same
+reason — so `/dev/kit` and this inventory are unchanged. Note `SegmentedControl` posts nothing of
+its own: a form that needs its value needs a hidden input alongside it.
+
 ## Icons
 
 `@lucide/svelte`, defaults matched to the design: `size 23` in the tab bar (else 16–20),

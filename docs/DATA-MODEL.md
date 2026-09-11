@@ -13,7 +13,8 @@ user ─┬─ session / account / verification        (Better Auth)
                   │      │                     └─ recipe_step_ingredients ─┘
                   │      ├─ meals (→ recipes, one per date × slot)
                   │      ├─ tasks ──→ task_completions (snapshots)
-                  │      └─ cook_timers
+                  │      ├─ cook_timers
+                  │      └─ feedback                (mirrored to a GitHub issue)
                   └─ holiday_notices             (per member × shop closure)
 ```
 
@@ -225,6 +226,31 @@ and are deleted by the morning sweep, so the table stays at a couple of dozen ro
   for the sweep's range scan; this is the different access pattern the app-wide dock added,
   "what is this person watching?", asked once per document load.
 
+### `feedback`
+
+- **The row is the receipt; the issue is a copy of it** (→ [DECISIONS #136](DECISIONS.md)). One
+  synchronous insert is all the member's tap depends on; `issueNumber` is the flag that says the
+  copy exists, and a NULL one _is_ the sweep's queue. So GitHub being down, or a token nobody has
+  configured yet, costs a sync and never a report.
+- `body` is household content — stored exactly as typed, never translated (→ SPEC §9). Beside it
+  is the diagnostic envelope captured at submit time, because "which version was that on?" is
+  unanswerable an hour later: `locale`, `theme` (NULL = follow the device), `appVersion`,
+  `userAgent`. `memberName` is a snapshot for the same reason `task_completions.memberName` is —
+  the member reference is ON DELETE SET NULL and a report outlives the membership.
+- **Retry is a column, not arithmetic.** `nextAttemptAt` is an instant (like a timer's `endsAt`),
+  so the queue is one indexed range scan; `attempts` drives a 5 min → 6 h doubling backoff, and a
+  row parks at 8. `claim` books the next slot _before_ the API call, so the fire-and-forget send
+  and a cron tick landing together cost one attempt rather than two issues.
+- **A permanent refusal parks immediately** — a bad token, an invisible repository, a label that
+  doesn't exist. All three are fixed by changing configuration and redeploying, so the first
+  sweep of a new process un-parks everything and tries once more. `lastError` stores the error
+  _code_ only: a response body can quote the request that produced it, token and all.
+- The issue body carries `<!-- choreganized:{id} -->`, which a retry searches for before writing
+  a second issue. Best effort — GitHub's search index lags — so a duplicate is still possible,
+  and the marker is what makes two of them recognisable as one report.
+- `feedback_pending_idx (issue_number, next_attempt_at)` is the sweep's range scan; a row that
+  succeeds drops out of it. `feedback_household_idx (household_id, created_at)` is the read.
+
 ### Better Auth tables (`user`, `session`, `account`, `verification`)
 
 Hand-written to Better Auth 1.6 core schema (drizzle adapter maps on property names) and
@@ -251,6 +277,8 @@ if localNow >= today 08:00:
                 member, claimed in holiday_notices (skip away members, unclaimed; skip anyone
                 who has hidden it, and anyone with notifyShopClosures off — claimed)
 timers: cook_timers where endsAt <= now and notifiedAt/canceledAt IS NULL → push, set notifiedAt
+feedback: rows with issue_number IS NULL and next_attempt_at <= now → create the issue, store
+          the number (household-blind: "GitHub was down" is not a time of day)
 cleanup (03:30 local): checked shopping items older than 12h
 ```
 

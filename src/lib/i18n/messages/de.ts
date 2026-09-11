@@ -1043,6 +1043,28 @@ export const de: Messages = {
 			}
 		},
 
+		about: 'Über die App',
+		version: 'Version',
+
+		feedback: {
+			row: 'Feedback senden',
+			title: 'Feedback senden',
+			eyebrow: 'Choreganized',
+			kindLabel: 'Art des Feedbacks',
+			bug: 'Etwas ist kaputt',
+			idea: 'Eine Idee',
+			label: 'Deine Nachricht',
+			bugPlaceholder: 'Was ist passiert, und was hättest du stattdessen erwartet?',
+			ideaPlaceholder: 'Was soll die App können?',
+			send: 'Senden',
+			sending: 'Wird gesendet…',
+			attached: (version: string) =>
+				`Dein Name, deine Sprache, das Erscheinungsbild und dein Browser gehen mit, dazu die App-Version (${version}), damit sich das nachvollziehen lässt. Schreib in der Sprache, die dir liegt.`,
+			pickKind: 'Wähl einen Fehler oder eine Idee.',
+			empty: 'Schreib erst ein, zwei Zeilen.',
+			thanks: 'Danke — gespeichert und auf dem Weg zu Lukas.'
+		},
+
 		leave: {
 			label: 'Haushalt verlassen',
 			blockedTitle: 'Übergib das Haus zuerst',

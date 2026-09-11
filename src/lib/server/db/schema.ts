@@ -21,6 +21,7 @@ import { sqliteTable, text, integer, real, index, uniqueIndex } from 'drizzle-or
 // types — and neither resolves the alias or infers the extension
 // (`rewriteRelativeImportExtensions` in tsconfig is what makes this legal TS).
 import { LOCALES } from '../../i18n/locale.ts';
+import { THEMES } from '../../theme.ts';
 
 const id = () =>
 	text('id')
@@ -553,6 +554,93 @@ export const holidayNotices = sqliteTable(
 );
 
 /* ────────────────────────────────────────────────────────────────────────────
+ * Feedback
+ * ──────────────────────────────────────────────────────────────────────────── */
+
+/**
+ * A bug or an idea, written inside the app and mirrored to a GitHub issue
+ * (→ SPEC §6, plan 16, DECISIONS #136).
+ *
+ * **The row is the receipt; the issue is a copy of it.** The insert is what the
+ * member's tap succeeds against, and the API call happens afterwards — so
+ * GitHub having a bad afternoon, a token nobody has set yet, or a phone that
+ * walks out of signal costs a *sync*, never a report. `issueNumber` is the flag
+ * that says the copy exists, and a NULL one is the sweep's queue
+ * (→ `services/feedback.ts`).
+ *
+ * `body` is household content: stored **exactly as typed**, never translated,
+ * never tidied (→ SPEC §9). Everything beside it is the diagnostic envelope
+ * that makes a report actionable — who wrote it, which language and appearance
+ * they were reading in, which build they were on, and what browser it was.
+ * Captured at submit time, because "which version was that on?" is a question
+ * nobody can answer an hour later.
+ */
+export const feedback = sqliteTable(
+	'feedback',
+	{
+		id: id(),
+		householdId: text('household_id')
+			.notNull()
+			.references(() => households.id, { onDelete: 'cascade' }),
+		memberId: text('member_id').references(() => members.id, { onDelete: 'set null' }),
+		/**
+		 * A snapshot, for the reason `task_completions.memberName` is one: the
+		 * member reference is ON DELETE SET NULL, and a report has to keep saying
+		 * who wrote it after they leave the house.
+		 */
+		memberName: text('member_name').notNull(),
+		/** Which of the two things [6a] asks (→ `utils/feedback.ts`, kept in step). */
+		kind: text('kind', { enum: ['bug', 'idea'] }).notNull(),
+		/** As written. Household content — never translated, never rewritten. */
+		body: text('body').notNull(),
+		/** The language it was written in, which is the language its wording is in. */
+		locale: text('locale', { enum: LOCALES }).notNull(),
+		/**
+		 * The appearance it was written on, or NULL for "follow the device" — the
+		 * same three answers Settings offers, and NULL is a setting rather than an
+		 * absence here too (→ `$lib/theme`, DECISIONS #119).
+		 */
+		theme: text('theme', { enum: THEMES }),
+		/** The build, e.g. `1.0.0+9f3c1a2`, or `dev` (→ `server/version.ts`). */
+		appVersion: text('app_version').notNull(),
+		/** Verbatim `User-Agent`; NULL when the browser sent none. */
+		userAgent: text('user_agent'),
+		/** The issue this became. NULL = not mirrored yet, i.e. still queued. */
+		issueNumber: integer('issue_number'),
+		syncedAt: integer('synced_at', { mode: 'timestamp_ms' }),
+		/** Mirror attempts spent; the sweep parks a row once it has spent enough. */
+		attempts: integer('attempts').notNull().default(0),
+		/**
+		 * When the sweep may try again — an instant, like a timer's `endsAt`, so
+		 * the queue is one indexed range scan and the backoff is a column rather
+		 * than arithmetic over `attempts` at every read. Equal to `createdAt` on
+		 * insert, which is what makes a fresh row due immediately.
+		 */
+		nextAttemptAt: integer('next_attempt_at', { mode: 'timestamp_ms' })
+			.notNull()
+			.$defaultFn(() => new Date()),
+		/**
+		 * Why the last attempt failed — the only trace a silent sync leaves. The
+		 * error *code* and status, never a response body: a body can quote the
+		 * request that produced it, token and all (→ `server/github.ts`).
+		 */
+		lastError: text('last_error'),
+		createdAt: createdAt()
+	},
+	(t) => [
+		/**
+		 * The sweep's queue: everything still waiting for an issue, soonest first.
+		 * Sized like `cook_timers_ends_idx` — a range scan over an instant — and a
+		 * row that succeeds drops out of it, because a non-NULL `issue_number`
+		 * ends the scan's interest in it.
+		 */
+		index('feedback_pending_idx').on(t.issueNumber, t.nextAttemptAt),
+		/** "What has this house sent?" — the household-scoped read, newest first. */
+		index('feedback_household_idx').on(t.householdId, t.createdAt)
+	]
+);
+
+/* ────────────────────────────────────────────────────────────────────────────
  * Push notifications & cook timers
  * ──────────────────────────────────────────────────────────────────────────── */
 
@@ -631,3 +719,4 @@ export type Task = typeof tasks.$inferSelect;
 export type TaskCompletion = typeof taskCompletions.$inferSelect;
 export type PushSubscription = typeof pushSubscriptions.$inferSelect;
 export type CookTimer = typeof cookTimers.$inferSelect;
+export type Feedback = typeof feedback.$inferSelect;

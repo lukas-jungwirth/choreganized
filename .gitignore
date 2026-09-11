@@ -25,5 +25,10 @@ vite.config.ts.timestamp-*
 # App data (SQLite, uploads)
 /data
 
-# Local agent tooling (dev-server launch config)
-/.claude
+# Local agent tooling (dev-server launch config, worktrees) — but NOT the slash
+# commands: `.claude/commands/triage-issue.md` is the prompt the GitHub triage
+# workflow runs, so it has to be in the checkout the action makes (→ plan 15).
+# Ignoring the *contents* rather than the directory is what makes the negation
+# legal — git cannot re-include a file whose parent directory is excluded.
+/.claude/*
+!/.claude/commands/
