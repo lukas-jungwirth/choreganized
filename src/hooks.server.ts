@@ -18,10 +18,12 @@ import { auth } from '$lib/server/auth';
 import { registerCronJobs } from '$lib/server/cron';
 import { db, runMigrations } from '$lib/server/db';
 import { members } from '$lib/server/db/schema';
+import { assertE2EModeAllowed } from '$lib/server/e2e-mode';
 import { isTheme, THEME_COOKIE, type Theme } from '$lib/theme';
 
 /** Runs once before the first request — safe with a single instance. */
 export const init: ServerInit = () => {
+	assertE2EModeAllowed();
 	runMigrations();
 	registerCronJobs();
 };

@@ -1,5 +1,5 @@
 /**
- * `npm test` — plain `node --test`, same as `utils/shopping.test.ts`.
+ * `npm test` — Vitest, same as `utils/shopping.test.ts` (→ docs/TESTING.md).
  *
  * The hub is the one piece of the live channel that is pure: no database, no
  * request, no DOM. What is worth pinning down here is exactly what a walkthrough
@@ -9,7 +9,7 @@
  * (→ DECISIONS #135).
  */
 import assert from 'node:assert/strict';
-import { beforeEach, describe, it } from 'node:test';
+import { beforeEach, describe, it } from 'vitest';
 import { isLiveTopic, listenerCount, publish, subscribe, type LiveEvent } from './live.ts';
 
 const ACTOR = { memberId: 'm1', displayName: 'Elisabeth', color: '#7A9E7E' };

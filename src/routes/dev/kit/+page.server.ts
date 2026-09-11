@@ -1,15 +1,22 @@
 import { dev } from '$app/environment';
 import { error } from '@sveltejs/kit';
+import { e2eMode } from '$lib/server/e2e-mode';
 import { todayIn } from '$lib/utils/dates';
 import type { Actions, PageServerLoad } from './$types';
 
 /**
  * The kit gallery is a build tool, not a screen: it exists so a component can be
  * checked against design/Hearth.dc.html before the plan that first uses it
- * lands. Never reachable in production.
+ * lands. Never reachable in production — the one exception is a build running
+ * under `E2E_MODE=true`, where the visual tests screenshot it as the component
+ * inventory in both themes (→ docs/TESTING.md "Visual").
  */
+function requireGallery(): void {
+	if (!dev && !e2eMode()) error(404, 'Not found');
+}
+
 export const load: PageServerLoad = () => {
-	if (!dev) error(404, 'Not found');
+	requireGallery();
 
 	// DateField's caption needs a "today" to read dates against. Resolved here
 	// and sent down, rather than read from `Intl` in the component — there it
@@ -25,12 +32,12 @@ export const actions: Actions = {
 	 * with nothing rather than letting the switch throw a 404.
 	 */
 	away: () => {
-		if (!dev) error(404, 'Not found');
+		requireGallery();
 		return { away: true };
 	},
 
 	notify: () => {
-		if (!dev) error(404, 'Not found');
+		requireGallery();
 		return { prefSaved: true };
 	}
 };

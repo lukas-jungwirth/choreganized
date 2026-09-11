@@ -1,5 +1,5 @@
 /**
- * `npm test` — plain `node --test` (→ docs/plans/08-cook-mode.md).
+ * `npm test` — Vitest (→ docs/TESTING.md; born as `node --test` in plan 08).
  *
  * Worth having as tests rather than as a walkthrough: `negotiateLocale` decides
  * what language somebody sees *before* they have ever opened Settings, and the
@@ -9,7 +9,7 @@
  * can't reproduce", which is the worst kind of bug to chase.
  */
 import assert from 'node:assert/strict';
-import { describe, it } from 'node:test';
+import { describe, it } from 'vitest';
 import { negotiateLocale } from './locale.ts';
 
 describe('negotiateLocale', () => {

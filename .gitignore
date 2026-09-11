@@ -22,8 +22,14 @@ Thumbs.db
 vite.config.js.timestamp-*
 vite.config.ts.timestamp-*
 
-# App data (SQLite, uploads)
+# App data (SQLite, uploads) — including the throwaway e2e database under data/e2e
 /data
+
+# Playwright (→ docs/TESTING.md): minted sessions, traces, reports. The visual
+# baselines under tests/visual/__screenshots__ are NOT ignored — they are the test.
+/tests/.auth
+/test-results
+/playwright-report
 
 # Local agent tooling (dev-server launch config, worktrees) — but NOT the slash
 # commands: `.claude/commands/triage-issue.md` is the prompt the GitHub triage
@@ -32,3 +38,6 @@ vite.config.ts.timestamp-*
 # legal — git cannot re-include a file whose parent directory is excluded.
 /.claude/*
 !/.claude/commands/
+# …and the launch config: its `verify` entry is how a session signs in without
+# Google (E2E_MODE), and docs/TESTING.md points at it (→ plan 17).
+!/.claude/launch.json

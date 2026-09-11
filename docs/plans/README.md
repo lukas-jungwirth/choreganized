@@ -28,6 +28,8 @@ plus your session date). Note deviations in the plan file and in DECISIONS.md.
 | 14  | ["Add a recipe" chooser & focused import modes](14-add-chooser.md)  | done (2026-07-25) | 12, 13                   |
 | 15  | [Live shopping list](15-live-shopping.md)                           | done (2026-09-10) | 03                       |
 | 16  | [In-app feedback → a GitHub issue](16-feedback.md)                  | done (2026-09-11) | 10, 11                   |
+| 17  | [The test workflow: CI as the gate](17-test-workflow.md)            | done (2026-09-11) | 11, 16                   |
+| 18  | [Build agent: from an issue to a pull request](18-agent-build.md)   | todo              | 16, 17                   |
 
 Work done after the twelve plans, tracked here so the queue stays the whole story:
 
@@ -92,7 +94,8 @@ optional `step`, and moved the two name limits into `lib/utils/household.ts`. 08
 on that placeholder: a `dark` **tone on `BottomSheet` and `Stepper`** (extend, don't fork — the
 peek and the manual-timer sheets), the state machine in the repo's first `.svelte.ts`
 (`lib/cook-timer.svelte.ts`), `lib/utils/timer-parse.ts` + `step-highlight.ts` with the first
-`node --test` suites (`npm test`), and the timer half of the notification stack — the same
+unit suites (`npm test` — `node --test` then, Vitest since plan 17), and the timer half of the
+notification stack — the same
 `sendToUser` + one `cron.ts` registry line plan 05 laid out, plus three JSON endpoints under
 `/api/timers` behind the new **`requireMemberApi`** guard (→ DECISIONS #89), which
 `api/push/subscribe` now shares. Run `npm run dev` and open **`/dev/kit`** to see the components
@@ -107,7 +110,9 @@ on one screen before you build against them — and add your new ones to that pa
    [DATA-MODEL](../DATA-MODEL.md) for the tables you'll touch. The schema already exists —
    extending it means `npm run db:generate` for a new migration.
 3. Build. Follow the conventions (runes, tokens, guards, services — see `CLAUDE.md`).
-4. Verify: `npm run check` + `npm run build` clean, then walk the acceptance criteria in the
-   dev server (`npm run dev`) with seeded data (`npm run db:seed`, created in plan 00).
+4. Verify: `npm run verify` clean (→ [TESTING.md](../TESTING.md) — lint, types, migration
+   drift, the Vitest suites, the build and the Playwright journeys), `npm run test:visual` when a
+   screen changed, then walk the acceptance criteria in the dev server (`npm run dev`) with
+   seeded data (`npm run db:seed`, created in plan 00). Tests ship with the change.
 5. Update the status table above; log judgment calls in [DECISIONS.md](../DECISIONS.md);
    tick the plan's acceptance boxes.

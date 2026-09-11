@@ -1,5 +1,5 @@
 /**
- * `npm test` — plain `node --test`, no framework (→ docs/plans/08-cook-mode.md).
+ * `npm test` — Vitest (→ docs/TESTING.md; born as `node --test` in plan 08).
  *
  * The three halves of the shopping list that are worth pinning down in a test
  * rather than in a walkthrough: how the list splits into "still to buy" and
@@ -11,7 +11,7 @@
  * arithmetic, and arithmetic is cheaper to check here than by cooking twice.
  */
 import assert from 'node:assert/strict';
-import { describe, it } from 'node:test';
+import { describe, it } from 'vitest';
 import {
 	matchNames,
 	planAdds,

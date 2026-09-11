@@ -1,0 +1,63 @@
+# What came up after a deploy (→ docs/TESTING.md "Smoke", DECISIONS #141).
+#
+# Coolify deploys `dev` to the test environment and `main` to the household's
+# instance a few minutes after each push. This waits for /api/health to report
+# the pushed commit, then checks the doors a stranger can reach. It needs the
+# URLs as repository *variables* (Settings → Secrets and variables → Actions →
+# Variables): TEST_ENV_URL for dev, PROD_URL for main. Without them it says so
+# and passes — the smoke test can't fail a deploy it can't find.
+name: Smoke
+
+on:
+  workflow_run:
+    workflows: [CI]
+    types: [completed]
+    branches: [dev, main]
+  workflow_dispatch:
+    inputs:
+      url:
+        description: Base URL to check (defaults to the variable for this branch)
+        required: false
+        type: string
+      commit:
+        description: Commit that should be live (defaults to HEAD)
+        required: false
+        type: string
+
+permissions:
+  contents: read
+
+jobs:
+  smoke:
+    if: github.event_name == 'workflow_dispatch' || github.event.workflow_run.conclusion == 'success'
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v6
+      - uses: actions/setup-node@v6
+        with:
+          node-version: 22
+      - name: Pick the target
+        id: target
+        env:
+          BRANCH: ${{ github.event.workflow_run.head_branch || github.ref_name }}
+          INPUT_URL: ${{ inputs.url }}
+          TEST_ENV_URL: ${{ vars.TEST_ENV_URL }}
+          PROD_URL: ${{ vars.PROD_URL }}
+        run: |
+          url="$INPUT_URL"
+          if [ -z "$url" ]; then
+            case "$BRANCH" in
+              main) url="$PROD_URL" ;;
+              dev) url="$TEST_ENV_URL" ;;
+            esac
+          fi
+          echo "url=$url" >> "$GITHUB_OUTPUT"
+          if [ -z "$url" ]; then
+            echo "::notice::No URL for branch '$BRANCH' — set TEST_ENV_URL / PROD_URL as repository variables to smoke-test deploys."
+          fi
+      - name: Wait for the deploy, then check it
+        if: steps.target.outputs.url != ''
+        env:
+          COMMIT: ${{ inputs.commit || github.event.workflow_run.head_sha || github.sha }}
+        run: node scripts/smoke.ts "${{ steps.target.outputs.url }}" --commit "$COMMIT" --timeout 900

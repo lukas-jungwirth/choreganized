@@ -11,6 +11,7 @@ podium, and gentle reminders. Installable PWA (Android-first), self-hosted.
 
 ```bash
 npm install
+npx playwright install chromium   # once per machine, for `npm run test:e2e` / `verify`
 cp .env.example .env    # Google OAuth + auth secret are required to sign in
 npm run dev             # → http://localhost:5173, migrations run on boot
 ```
@@ -21,6 +22,18 @@ Sign in with Google once, then fill the app with demo data (safe to re-run):
 npm run db:seed -- you@example.com   # the Google address you signed in with
 ```
 
+## Tests
+
+```bash
+npm test               # unit · integration (in-memory SQLite) · conventions — seconds
+npm run test:e2e       # Playwright journeys against the production build
+npm run test:visual    # screenshot comparison, in Docker (Linux baselines)
+npm run verify         # everything CI runs, except the screenshots
+```
+
+CI runs all of it on every pull request and push to `dev` / `main`; `dev` deploys to the test
+environment, `main` to the household. → [docs/TESTING.md](docs/TESTING.md)
+
 ## Project state & docs
 
 The project is **specified and scaffolded; features are built plan-by-plan** by agent
@@ -30,7 +43,8 @@ sessions:
 - [docs/SPEC.md](docs/SPEC.md) — product spec · [design/Hearth.dc.html](design/Hearth.dc.html)
   — the design (open in a browser)
 - [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md) · [docs/DATA-MODEL.md](docs/DATA-MODEL.md) ·
-  [docs/DESIGN-SYSTEM.md](docs/DESIGN-SYSTEM.md) · [docs/DECISIONS.md](docs/DECISIONS.md)
+  [docs/DESIGN-SYSTEM.md](docs/DESIGN-SYSTEM.md) · [docs/DECISIONS.md](docs/DECISIONS.md) ·
+  [docs/TESTING.md](docs/TESTING.md)
 - [CLAUDE.md](CLAUDE.md) — working conventions for agents
 
 ## Deploy

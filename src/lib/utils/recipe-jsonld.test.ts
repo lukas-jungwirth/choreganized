@@ -1,5 +1,5 @@
 /**
- * `npm test` — plain `node --test`, no framework (→ docs/plans/08-cook-mode.md).
+ * `npm test` — Vitest (→ docs/TESTING.md; born as `node --test` in plan 08).
  *
  * The import parser (→ SPEC §4.7, plan 12) is the app's one reader of a format it
  * doesn't control: whatever a recipe site chose to embed. So the shapes real
@@ -7,11 +7,11 @@
  * before a good one, German yields and ISO durations — are pinned here, where a
  * regression is a failed test rather than a recipe that imports blank.
  *
- * `$lib` doesn't resolve under `node --test`, which is exactly why this module is
+ * `$lib` didn't resolve under the original `node --test` runner, which is why this module is
  * pure and imported by its relative path with the extension.
  */
 import assert from 'node:assert/strict';
-import { describe, it } from 'node:test';
+import { describe, it } from 'vitest';
 import { parseRecipeJsonLd } from './recipe-jsonld.ts';
 
 /** Wrap a JSON-LD object the way a page carries it. */

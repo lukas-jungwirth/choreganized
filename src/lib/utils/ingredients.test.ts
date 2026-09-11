@@ -1,5 +1,5 @@
 /**
- * `npm test` — plain `node --test`, no framework (→ docs/plans/08-cook-mode.md).
+ * `npm test` — Vitest (→ docs/TESTING.md; born as `node --test` in plan 08).
  *
  * `parseIngredient` and `formatIngredient` have always claimed to be inverses,
  * and the recipe form leaned on that once a save: read the stored row out as a
@@ -10,7 +10,7 @@
  * or a German label nobody aliased, would silently store the wrong thing.
  */
 import assert from 'node:assert/strict';
-import { describe, it } from 'node:test';
+import { describe, it } from 'vitest';
 import {
 	composeIngredientLine,
 	formatIngredient,
@@ -24,7 +24,7 @@ import {
 describe('formatIngredient → parseIngredient', () => {
 	it('reads every label the app shows back to the unit it labels', () => {
 		// The two `UNITS` maps at the top of en.ts and de.ts, copied rather than
-		// imported: `$lib` doesn't resolve under `node --test`. A ninth unit added
+		// imported (a habit from the `node --test` days that still keeps this pure). A ninth unit added
 		// without an alias still fails here — the copy misses the label,
 		// `unitLabel` falls back to the canonical spelling, which has no alias.
 		const en = {

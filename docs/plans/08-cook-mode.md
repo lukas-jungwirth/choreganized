@@ -11,7 +11,8 @@ DECISIONS #14/#15.
 
 - `lib/utils/timer-parse.ts` — extract first duration from step text: `8 min`, `8 minutes`,
   `8:00`, `8–10 min` (first value), `1 h` → seconds; unit tests welcome (plain assertions in
-  a `*.test.ts` run by `node --test` is fine — don't add a framework).
+  a `*.test.ts` is fine — originally run by `node --test`; since plan 17 the same files run
+  under Vitest, `import { describe, it } from 'vitest'`).
 - `/cooking/recipes/[id]/cook` — route (tab bar hidden, dark tokens, own `<meta theme-color>`
   swap): header (name, close), segment progress, "STEP i OF n", big step text with
   case-insensitive ingredient-name underlining (amber), "This step uses …" line, chips:
@@ -67,7 +68,8 @@ Out of scope: multiple parallel timers, alarm sound customization.
   open, visible page claims its alert ~2 s early and rings itself (`alarm.ts`: WebAudio beeps
   primed on the starting tap + `navigator.vibrate`); a hidden page leaves the push to do its job
   (→ #83). `wake-lock.ts` keeps the screen on and re-acquires on `visibilitychange`.
-- **The parsing is two small utils with `node --test` unit tests** (`npm test`, no framework):
+- **The parsing is two small utils with unit tests** (`npm test` — `node --test` then, Vitest
+  since plan 17):
   `timer-parse.ts` reads the first duration out of a step ("8 min", "8:00", "8–10 minutes" → the
   first value, "1 h 30 min") while refusing ovens, ratios and single-letter units, and
   `step-highlight.ts` segments the step against the ingredient names (whole-word, longest-wins,

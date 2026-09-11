@@ -14,6 +14,7 @@ import { getRequestEvent } from '$app/server';
 import { env } from '$env/dynamic/private';
 import { db } from './db';
 import { account, session, user, verification } from './db/schema';
+import { e2eMode } from './e2e-mode';
 
 /**
  * `vite build` imports server modules just to read their route options, so a
@@ -40,6 +41,19 @@ export const auth = betterAuth({
 		provider: 'sqlite',
 		schema: { user, session, account, verification }
 	}),
+	/**
+	 * Only under `E2E_MODE=true` (→ `e2e-mode.ts`, docs/TESTING.md): the way
+	 * Playwright — and a verification session with no Google account — mints a
+	 * session, via Better Auth's own `/api/auth/sign-up/email`. Off, the endpoint
+	 * still exists and answers that the method is disabled, which is what
+	 * production has always done.
+	 */
+	emailAndPassword: { enabled: e2eMode() },
+	// Better Auth rate-limits in production — three sign-ups per ten seconds per
+	// IP — and the tests run the production build from one IP: a retried
+	// journey would 429 and report it as bad credentials. Off in E2E mode only;
+	// `undefined` leaves the production default untouched.
+	rateLimit: e2eMode() ? { enabled: false } : undefined,
 	socialProviders: {
 		google: {
 			clientId: requireEnv('GOOGLE_CLIENT_ID'),

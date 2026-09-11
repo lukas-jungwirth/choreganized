@@ -89,9 +89,10 @@ docs/                          # this documentation + plans/
   tasks/history                 [8a]
   settings                      [6a]
   settings/members              [6b]   sheet: manage member [6c]
-dev/kit                         component gallery — 404 unless `dev`      [plan 02]
+dev/kit                         component gallery — 404 unless `dev` or E2E_MODE [plan 02, 17]
 api/
   auth/[...all]                 Better Auth handler (GET/POST)
+  health                        GET { ok, version, commit } — public, for the smoke test [plan 17]
   push/subscribe                POST/DELETE subscription            [plan 05]
   timers                        POST create · DELETE cancel         [plan 08]
   live                          GET SSE stream, ?topics=shopping     [plan 15]
@@ -118,6 +119,12 @@ api/
   (session → user → member, one query; then `locale`, → "Language"), the `<html lang>`
   substitution, and the `init` hook: `runMigrations()` + `registerCronJobs()` (guarded against
   dev-HMR double registration via a `globalThis` flag).
+- **Tests are part of the change** (→ [TESTING.md](TESTING.md)). Pure functions get a
+  `*.test.ts` beside them; a service gets an integration test against a migrated in-memory
+  SQLite (`tests/helpers/db.ts`); a house rule gets a convention test; a screen gets a Playwright
+  journey and a visual baseline. `E2E_MODE=true` (`lib/server/e2e-mode.ts`) is the production
+  build's one test door: password sign-in and `/dev/kit`. Never on a deployed instance — the
+  smoke test asserts it is off.
 - **Freshness:** actions naturally invalidate; plus a small shared `refetchOnFocus` helper
   (visibilitychange → `invalidateAll`) in the app layout. That is the whole story for every
   screen but one.
@@ -234,6 +241,11 @@ prompt / subscribed).
 
 ## Deployment (Coolify)
 
+- **Two instances, one image.** Coolify deploys `dev` to the **test environment** and `main` to
+  the household's instance, each on push. CI (`.github/workflows/ci.yml`) is the gate in front of
+  both branches and the smoke workflow checks what came up afterwards (→ [TESTING.md](TESTING.md)
+  "The flow", [DECISIONS #141](DECISIONS.md)). `dev` is therefore always deployable-in-principle:
+  a change that is not ready stays on its branch.
 - **One Dockerfile, one container** (see `Dockerfile`) — SQLite is embedded, so a separate DB
   image would only add failure modes. Answering the open question in the brief: no separate DB
   container.
@@ -246,6 +258,7 @@ prompt / subscribed).
 - Required env (see `.env.example`): `ORIGIN`, `DATABASE_PATH`, `UPLOADS_DIR`,
   `BODY_SIZE_LIMIT`, `BETTER_AUTH_SECRET`, `BETTER_AUTH_URL`, `GOOGLE_CLIENT_ID/SECRET`,
   `PUBLIC_VAPID_PUBLIC_KEY`, `VAPID_PRIVATE_KEY`, `VAPID_SUBJECT`.
+- **Never set on a deployed instance:** `E2E_MODE` (→ "Server patterns", `.env.example`).
 - Optional env: `GITHUB_FEEDBACK_TOKEN` (a fine-grained PAT scoped to this repo, _Issues: read
   and write_) mirrors feedback to GitHub issues — without it reports still save and the cron
   sweep mirrors them once a token appears (→ [DECISIONS #136](DECISIONS.md)).

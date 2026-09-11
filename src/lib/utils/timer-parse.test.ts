@@ -1,12 +1,12 @@
 /**
- * `npm test` — plain `node --test`, no framework (→ docs/plans/08-cook-mode.md).
+ * `npm test` — Vitest (→ docs/TESTING.md; born as `node --test` in plan 08).
  *
  * Worth having as tests rather than as a walkthrough: the whole point of the
  * parser is the sentences it must *not* find a timer in, and the only way to
  * see those in a running app is to type each one into a recipe.
  */
 import assert from 'node:assert/strict';
-import { describe, it } from 'node:test';
+import { describe, it } from 'vitest';
 import { MAX_TIMER_SECONDS, formatDuration, parseStepDuration, timerHref } from './timer-parse.ts';
 
 describe('parseStepDuration', () => {
