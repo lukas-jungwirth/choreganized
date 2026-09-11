@@ -21,6 +21,11 @@ the behaviour ground truth is `docs/SPEC.md`; the queue is `docs/plans/README.md
   repeat it in a comment — a second copy would confuse the retry that looks for it.
 - Post **exactly one** comment. If you have nothing useful to say, say that, briefly.
 
+Be economical — you have a turn budget, and **the comment in step 6 is the whole point**. Read
+what you need and no more: one `gh issue view`, one `gh issue list`, and a handful of targeted
+`Grep`/`Read` calls beat exploring the repo. If you are running long, label and comment with what
+you have rather than running out mid-investigation.
+
 ## Steps
 
 1. **Read it.** `gh issue view $1 --json number,title,body,labels,author`
