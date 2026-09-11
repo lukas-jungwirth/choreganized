@@ -1,5 +1,5 @@
 /**
- * `npm test` — plain `node --test`, like the parsers beside it.
+ * `npm test` — Vitest, like the parsers beside it (→ docs/TESTING.md).
  *
  * Worth having as tests rather than as a walkthrough for two reasons. The
  * movable holidays are computed, so "it works this year" says nothing about the
@@ -9,7 +9,7 @@
  * under way. Waiting for 1 November 2026 to find out is not a test plan.
  */
 import assert from 'node:assert/strict';
-import { describe, it } from 'node:test';
+import { describe, it } from 'vitest';
 import {
 	austrianHolidays,
 	closureAhead,

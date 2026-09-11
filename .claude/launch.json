@@ -1,0 +1,29 @@
+{
+	"version": "0.0.1",
+	"configurations": [
+		{
+			"name": "choreganized",
+			"runtimeExecutable": "npm",
+			"runtimeArgs": ["run", "dev"],
+			"port": 5173
+		},
+		{
+			"name": "verify",
+			"runtimeExecutable": "env",
+			"runtimeArgs": [
+				"DATABASE_PATH=./data/verify.db",
+				"E2E_MODE=true",
+				"BETTER_AUTH_URL=http://localhost:5180",
+				"ORIGIN=http://localhost:5180",
+				"npm",
+				"run",
+				"dev",
+				"--",
+				"--port",
+				"5180",
+				"--strictPort"
+			],
+			"port": 5180
+		}
+	]
+}

@@ -1,0 +1,89 @@
+# The gate every change passes before it can reach `dev` (the test environment)
+# or `main` (the household's deploy) — → docs/TESTING.md, DECISIONS #141.
+#
+# Three jobs, in parallel: the static checks, the Vitest suites, and the
+# browser suites against the production build. Branch protection on `dev` and
+# `main` requires all three, so a merge *is* a green run; Coolify then deploys
+# what was merged, and .github/workflows/smoke.yml checks what came up.
+name: CI
+
+on:
+  push:
+    branches: [dev, main]
+  pull_request:
+    branches: [dev, main]
+  workflow_dispatch:
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+jobs:
+  static:
+    name: Lint · types · migrations
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v6
+      - uses: actions/setup-node@v6
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci --no-audit --no-fund
+      - run: npm run lint
+      - run: npm run check
+
+  unit:
+    name: Unit · integration · conventions
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v6
+      - uses: actions/setup-node@v6
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci --no-audit --no-fund
+      - run: npm test
+
+  e2e:
+    name: End-to-end · visual
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    # The exact image `npm run test:visual` uses locally, so a baseline made on
+    # a laptop and one made here are the same pixels. The tag has to match the
+    # @playwright/test version in package-lock — tests/conventions/ci.test.ts
+    # fails the unit job when it doesn't.
+    container:
+      image: mcr.microsoft.com/playwright:v1.63.0-noble
+      options: --ipc=host
+    steps:
+      - uses: actions/checkout@v6
+      # The image ships a newer Node than the Dockerfile's node:22; the build
+      # under test should run on what production runs.
+      - uses: actions/setup-node@v6
+        with:
+          node-version: 22
+      - uses: actions/cache@v4
+        with:
+          path: ~/.npm
+          key: npm-${{ runner.os }}-${{ hashFiles('package-lock.json') }}
+      - run: npm ci --no-audit --no-fund
+      - run: npm run build
+      # setup → e2e → visual, on the production build (scripts/e2e-server.ts).
+      - run: npx playwright test
+        env:
+          CI: 1
+      - name: Upload the report and the visual diffs
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: playwright-report
+          path: |
+            playwright-report
+            test-results
+          retention-days: 7
+          if-no-files-found: ignore

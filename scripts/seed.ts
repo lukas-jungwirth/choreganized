@@ -41,6 +41,12 @@ import {
 // Relative and extensioned for the same reason the schema import is, and worth
 // importing rather than retyping: it is the key the unique index is built on.
 import { suggestionKey } from '../src/lib/utils/shopping.ts';
+import {
+	SEED_HOUSEHOLD_NAME,
+	SEED_HOUSEMATE_NAME,
+	SEED_RECIPE_NAMES,
+	SEED_STORE_NAMES
+} from './seed-data.ts';
 
 /* ── Calendar helpers ────────────────────────────────────────────────────────
  * Household-local 'YYYY-MM-DD' strings. Plan 04 builds the real
@@ -101,7 +107,13 @@ if (!owner) {
 
 /* ── Household & members ─────────────────────────────────────────────────── */
 
-const DEMO_HOUSEMATE_ID = 'seed-user-elisabeth';
+/**
+ * Every timestamp the seed writes hangs off this one instant, and the rows it
+ * writes together are spaced apart on purpose: two rows inserted in the same
+ * millisecond tie on `createdAt`/`joinedAt` and fall through to their id, so a
+ * list's order would depend on how fast the transaction ran (→ plan 17).
+ */
+const seededAt = new Date();
 const MEMBER_SAGE = '#5F8D72';
 const MEMBER_TERRACOTTA = '#C67C51';
 
@@ -134,7 +146,7 @@ const seeded = db.transaction((tx) => {
 		tx.insert(households)
 			.values({
 				id: householdId,
-				name: 'Sonnengasse 12',
+				name: SEED_HOUSEHOLD_NAME,
 				inviteCode: inviteCode(),
 				timezone: 'Europe/Vienna'
 			})
@@ -164,11 +176,16 @@ const seeded = db.transaction((tx) => {
 		.all().length;
 
 	if (memberCount < 2) {
+		// Per household, not one fixed id: a user has at most one membership
+		// (`members_user_unique`), so a shared stub user would give the second
+		// seeded household no housemate at all — silently, under DO NOTHING.
+		const housemateUserId = sid('user', 'housemate');
+
 		tx.insert(user)
 			.values({
-				id: DEMO_HOUSEMATE_ID,
-				name: 'Elisabeth',
-				email: 'elisabeth@seed.choreganized.local',
+				id: housemateUserId,
+				name: SEED_HOUSEMATE_NAME,
+				email: `${housemateUserId}@seed.choreganized.local`,
 				emailVerified: false
 			})
 			.onConflictDoNothing()
@@ -178,10 +195,13 @@ const seeded = db.transaction((tx) => {
 			.values({
 				id: sid('member', 'housemate'),
 				householdId,
-				userId: DEMO_HOUSEMATE_ID,
-				displayName: 'Elisabeth',
+				userId: housemateUserId,
+				displayName: SEED_HOUSEMATE_NAME,
 				color: MEMBER_TERRACOTTA,
-				role: 'member'
+				role: 'member',
+				// After the owner, whether the owner onboarded a year ago or was
+				// inserted one statement up: the roster is join order.
+				joinedAt: new Date(seededAt.getTime() + 60_000)
 			})
 			.onConflictDoNothing()
 			.run();
@@ -231,9 +251,9 @@ const seeded = db.transaction((tx) => {
 	 * the name first and only insert what's genuinely missing.
 	 */
 	const DEMO_STORES = [
-		{ key: 'grocery', name: 'Grocery' },
-		{ key: 'drugstore', name: 'Drugstore' },
-		{ key: 'hardware', name: 'Hardware store' }
+		{ key: 'grocery', name: SEED_STORE_NAMES[0] },
+		{ key: 'drugstore', name: SEED_STORE_NAMES[1] },
+		{ key: 'hardware', name: SEED_STORE_NAMES[2] }
 	];
 
 	const existingStores = tx
@@ -405,18 +425,20 @@ const seeded = db.transaction((tx) => {
 			{
 				id: pastaId,
 				householdId,
-				name: 'Creamy mushroom pasta',
+				name: SEED_RECIPE_NAMES.pasta,
 				timeMinutes: 30,
 				servings: 4,
-				createdByMemberId: housemateMemberId
+				createdByMemberId: housemateMemberId,
+				createdAt: daysAgo(12, 19)
 			},
 			{
 				id: curryId,
 				householdId,
-				name: 'Lentil curry',
+				name: SEED_RECIPE_NAMES.curry,
 				timeMinutes: 40,
 				servings: 4,
-				createdByMemberId: ownerMemberId
+				createdByMemberId: ownerMemberId,
+				createdAt: daysAgo(20, 18)
 			}
 		])
 		.onConflictDoNothing()
@@ -572,6 +594,7 @@ const seeded = db.transaction((tx) => {
 		.values([
 			{
 				id: sid('task', 'bedsheets'),
+				createdAt: daysAgo(30, 9),
 				householdId,
 				name: 'Change the bedsheets',
 				points: 10,
@@ -587,18 +610,21 @@ const seeded = db.transaction((tx) => {
 			},
 			{
 				id: sid('task', 'plants'),
+				createdAt: daysAgo(29, 9),
 				householdId,
 				name: 'Water the plants',
 				points: 10,
 				recurUnit: 'week',
 				recurInterval: 1,
 				dueDate: today,
+				dueReminderSentAt: daysAgo(0, 8),
 				assigneeMemberId: ownerMemberId,
 				// No flags: this is the due nudge, waiting for the next tick.
 				createdByMemberId: ownerMemberId
 			},
 			{
 				id: sid('task', 'fridge'),
+				createdAt: daysAgo(28, 9),
 				householdId,
 				name: 'Clean the fridge',
 				points: 20,
@@ -607,10 +633,15 @@ const seeded = db.transaction((tx) => {
 				dueDate: addDays(today, -1),
 				// "Anyone", so the overdue nudge goes to every opted-in member.
 				dueReminderSentAt: daysAgo(1, 8),
+				// Stamped as sent, like every seeded nudge that is already due: the
+				// minute sweep would otherwise send it on the first tick after boot and
+				// change the row under a screenshot (→ plan 17).
+				overdueReminderSentAt: daysAgo(0, 8),
 				createdByMemberId: housemateMemberId
 			},
 			{
 				id: sid('task', 'towels'),
+				createdAt: daysAgo(27, 9),
 				householdId,
 				name: 'Wash the towels',
 				points: 20,
@@ -622,6 +653,7 @@ const seeded = db.transaction((tx) => {
 			},
 			{
 				id: sid('task', 'bins'),
+				createdAt: daysAgo(26, 9),
 				householdId,
 				name: 'Take out the bins',
 				points: 5,
@@ -634,6 +666,7 @@ const seeded = db.transaction((tx) => {
 			},
 			{
 				id: sid('task', 'recycling'),
+				createdAt: daysAgo(25, 9),
 				householdId,
 				name: 'Take out the recycling',
 				points: 5,
@@ -644,6 +677,7 @@ const seeded = db.transaction((tx) => {
 			},
 			{
 				id: sid('task', 'lightbulb'),
+				createdAt: daysAgo(24, 9),
 				householdId,
 				name: 'Replace the hallway bulb',
 				points: 5,

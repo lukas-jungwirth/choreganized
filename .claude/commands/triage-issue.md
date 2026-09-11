@@ -69,7 +69,8 @@ you have rather than running out mid-investigation.
 
    ## Acceptance
    - [ ] …the observable behaviour, walked in the dev server with seeded data
-   - [ ] `npm run check && npm run build` clean
+   - [ ] a test that fails without the fix, in the layer docs/TESTING.md prescribes
+   - [ ] `npm run verify` clean (`npm run test:visual` too, if a screen changed)
    ```
 
    For an `idea`, drop the Build/Acceptance detail and instead say what it would touch, roughly

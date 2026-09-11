@@ -1,8 +1,8 @@
 /**
- * `npm test` — plain `node --test`, no framework (→ docs/plans/08-cook-mode.md).
+ * `npm test` — Vitest (→ docs/TESTING.md; born as `node --test` in plan 08).
  */
 import assert from 'node:assert/strict';
-import { describe, it } from 'node:test';
+import { describe, it } from 'vitest';
 import { highlightStep, plainName, readStep, scaleStepUses } from './step-highlight.ts';
 
 /** Shorthand: the step text rebuilt with the underlined runs marked with `«»`. */

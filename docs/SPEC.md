@@ -20,7 +20,8 @@ Tasks** — plus onboarding and settings. No finances, no message board.
 - Logo + wordmark + tagline, then sign-in.
 - **v1: "Continue with Google" only** (Better Auth). The design's email/password fields and
   Apple button are deferred (→ [DECISIONS.md #1](DECISIONS.md)). Keep the layout; render a
-  single Google button where the form is.
+  single Google button where the form is. (Password sign-in exists only as a test door behind
+  `E2E_MODE`, never on a deploy → [DECISIONS #139](DECISIONS.md), TESTING.md.)
 - Signed-in users with a household land on Home; without one, on the create-or-join step.
 
 ### 1.2 Create or join [5b]

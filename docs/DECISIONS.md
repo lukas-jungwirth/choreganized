@@ -1730,3 +1730,128 @@ NULL` is the queue; nothing else has to be tracked.
      is `dev`: inventing a number for a developer would put a version on a report that no deploy
      ever had. Note that in Coolify a plain environment variable is runtime-only — `APP_VERSION`
      has to be marked a **Build Variable** to reach `--build-arg`.
+
+138. **One runner for everything that doesn't need a browser: Vitest, through the SvelteKit
+     plugin** (→ `vite.config.ts`, `.env.test`, `tests/helpers/db.ts`, plan 17). The eight
+     `node --test` suites from plan 08 onward could only ever test pure modules, and said so in
+     every header: `$lib` doesn't resolve outside Vite, so a service — which imports
+     `$lib/server/db`, which imports `$app/environment` and `$env/dynamic/private` — was
+     untestable except by walking the app. Vitest runs _inside_ the Vite config, so the virtual
+     modules resolve and a service can be called against a real database.
+
+     - **The database is `:memory:`, one per test file.** `.env.test` (checked in — every value
+       is a stand-in) sets `DATABASE_PATH=:memory:`; Vitest gives each file its own module
+       graph, so `db/index.ts`'s singleton is a fresh empty database per file, migrated from
+       zero by the fixture. No temp files, no cleanup, and the migration folder gets applied
+       from scratch several dozen times per run — which is a test of the migrations too.
+     - **Fixtures go through the services.** `makeHousehold` calls `createHousehold` and
+       `joinHousehold`, never `insert`; a fixture that bypassed them would pass against a
+       database the app could never have produced. The one thing it writes directly is
+       `joinedAt` a minute apart per housemate, because a household created in one
+       millisecond ties on join order and falls through to the id — a random UUID — which
+       made "who is up next" a coin flip in the first run.
+     - **Every test makes its own household**, so the household boundary is exercised by every
+       test that runs after another, not only by the ones that mean to.
+     - **Vitest 4, not 5**: better-auth declares an optional peer on `^2 || ^3 || ^4`, and
+       `--legacy-peer-deps` is a debt the next `npm ci` would collect. Vitest 4 supports Vite 8.
+       The existing suites changed one import line each and nothing else.
+
+139. **`E2E_MODE=true` is the production build's one test door: password sign-in and
+     `/dev/kit`** (→ `lib/server/e2e-mode.ts`, `auth.ts`, `.env.example`, plan 17). Every
+     verification session since plan 00 had hand-patched `emailAndPassword: { enabled: true }`
+     into `auth.ts` behind a `TEMP-VERIFY` comment and reverted it after — the memory file
+     documents four generations of that recipe. Playwright needed the same thing permanently
+     and without a diff in `src`. So it is a flag.
+
+     - **A flag, not `NODE_ENV`**: the tests run `node build/index.js` with
+       `NODE_ENV=production`, on purpose — adapter-node's body limit and the baked env are part
+       of what they test — so "development only" would have meant testing a different server.
+     - **Refused off localhost, and probed from outside.** `assertE2EModeAllowed` runs at
+       boot: the flag on any `ORIGIN` but localhost is an error, not a warning — a warning
+       scrolls past in a deploy log. `scripts/smoke.ts` then probes every deploy anyway:
+       Better Auth answers `400 EMAIL_PASSWORD_DISABLED` before any user lookup when the
+       method is off and `401` for an unknown user when it is on, so a junk address is a
+       side-effect-free probe of the flag; `/dev/kit` must be a 404 as well.
+     - **Better Auth's own endpoint, not a bypass.** The setup project calls
+       `/api/auth/sign-up/email`; the cookie the tests carry is exactly the one the app sets.
+       With the flag off the endpoint still exists and answers that the method is disabled,
+       which is what production has always done.
+     - `/dev/kit` rides on the same flag because the visual suite screenshots it as the
+       component inventory in both themes — the cheapest possible regression test for
+       `lib/components/ui`, and it was already built.
+
+140. **Visual baselines are Linux-only, made in CI's own container** (→
+     `tests/visual/screens.spec.ts`, `scripts/visual.ts`, `playwright.config.ts`, plan 17).
+     A screenshot is only comparable to another taken on the same OS, the same Chromium build
+     and the same font rasteriser; macOS and Linux disagree on every glyph edge, and two Linux
+     images can disagree too. So the baselines are made in `mcr.microsoft.com/playwright` at
+     the version package-lock pins, the CI `e2e` job runs _in_ that image, and
+     `npm run test:visual` runs the same image locally through Docker. `snapshotPathTemplate`
+     drops the platform suffix — there is one baseline per screen, and the spec skips itself
+     on anything but Linux rather than producing a second set nobody can update.
+
+     - **amd64 even on Apple silicon**, because GitHub's runners are, and the point is that a
+       baseline made on a laptop and one made in CI are the same pixels. Emulation makes the
+       first local run slow; the cached `node_modules` volume makes the rest bearable.
+     - **`tests/conventions/ci.test.ts` pins the image tag to the installed
+       `@playwright/test`**, so a Playwright upgrade that forgets the workflow fails the unit
+       job with a sentence instead of failing every screenshot with a diff nobody can read.
+     - **Viewport shots, not full-page**: the tab bar is `position: fixed`, and a full-page
+       capture paints it in the middle of the content. Long screens get a second shot
+       scrolled to the bottom; the login and the kit, which have no tab bar, are full-page.
+     - **Masks over the calendar, and a household of its own.** The greeting follows the hour,
+       standings the month, due labels the day — those regions are painted over rather than
+       compared, and a screen whose whole body is the calendar (the week plan, history) is
+       not screenshotted at all. The `visual` account's household is seeded like the `owner`'s
+       and never mutated, so the journeys and the screenshots never race for a screen's state.
+     - Tolerance `maxDiffPixels: 30` — a count, not a ratio: sub-pixel antialiasing, nothing
+       more. The first draft's 0.2% ratio was ~4500 pixels on a 2.6× phone frame, and let a
+       random invite code change from run to run without a single failure. A baseline
+       update is a claim that the new look is right, and the PNG in the diff is where that
+       claim gets reviewed.
+     - **Playwright, because the visual suite needs its container.** `@playwright/test` is
+       the one browser runner that ships an image with the exact browser build and fonts it
+       drives, plus first-party screenshot diffing; the journeys ride on the same dependency
+       rather than adding a second runner for them.
+     - **The seed had to become deterministic first.** Rows a transaction inserts together
+       tie on `createdAt`/`joinedAt` when they land in the same millisecond and fall through
+       to their id — a random UUID for the app's rows, a name-sorted key for the seed's — so
+       the demo recipes and same-day chores swapped places between runs, and the second
+       seeded household silently lost its housemate to `members_user_unique`. The seed now
+       stamps its rows apart and gives each household its own stub user (→ `scripts/seed.ts`).
+
+141. **CI is the merge gate; deploys follow merges; the smoke test checks what came up** (→
+     `.github/workflows/ci.yml`, `smoke.yml`, `routes/api/health`, `scripts/smoke.ts`, plan 17).
+     Coolify now deploys `dev` to a test environment and `main` to the household, each on push.
+     That makes `dev` a deploy target, so it needs the same protection `main` always deserved:
+     three CI jobs (static · Vitest · Playwright against the production build) on every pull
+     request and push, and branch protection that requires them — set by hand, once, with the
+     command in TESTING.md, because repository settings are the owner's to change.
+
+     - **The flow is branch → PR → `dev` → test environment → PR → `main`.** Direct pushes to
+       either branch end once protection is on; a session that can't open a PR can't ship, and
+       that is the point. Until it is on, CI is advisory and a session waits for green anyway.
+     - **`/api/health` is public and household-blind** — `ok`, `version`, `commit` — because
+       the smoke test has no session and needs to know _which_ build it is looking at:
+       Coolify takes minutes after the push, and asserting against the previous deploy would
+       pass for the wrong reason. Nothing it reveals isn't in the public repository.
+     - **The smoke test needs URLs it doesn't have.** `TEST_ENV_URL` and `PROD_URL` are
+       repository variables; unset, the workflow says so and passes. Wiring Coolify's own
+       webhook into CI (deploy only after green, instead of on push) stays an option;
+       protection makes the difference moot, since a merge _is_ a green run.
+     - This lifts half of #136's "triage is automated; building is not": CI can now walk a
+       change through a browser. What stays human is the merge — plan 18 designs the agent
+       that takes an issue to a pull request, and stops there.
+
+142. **The house rules are tests** (→ `tests/conventions/`, plan 17). CLAUDE.md is read once
+     per session and forgotten by turn forty; a test that fails with `path:line  <the line>`
+     is read at exactly the moment it matters. Tokens only, the `--fs` type scale, runes only,
+     `requireMember` in every `(app)` server file and a guard in every JSON endpoint,
+     `formatShortDate` never called from a component, the two catalogs sharing their sections,
+     the migration journal matching its files, the workflow image matching the installed
+     Playwright — each is a dozen lines of `fs` and a regex, and each prints what to fix.
+     Exceptions live on an allow-list _in the test_ with a sentence of reason
+     (`PROPORTIONAL_TYPE`, `PUBLIC_ENDPOINTS`), so the next reader finds the why beside the
+     what. Schema drift is the one rule that needs drizzle-kit; the migrations test runs
+     `scripts/check-migrations.ts` for it, so `npm test` stays the single gate the sentence
+     above promises.

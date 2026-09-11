@@ -1,5 +1,6 @@
 <!--
-	Dev-only component gallery (`/dev/kit`, 404 in production).
+	Dev-only component gallery (`/dev/kit`; a 404 in production, unless the build
+	runs under `E2E_MODE` for the visual tests → docs/TESTING.md).
 
 	Plan 02 builds the shared kit that 03/04/05/07/10 run in parallel on, so most
 	of it has no screen yet. This page is where those components get looked at
