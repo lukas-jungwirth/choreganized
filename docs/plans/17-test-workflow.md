@@ -122,8 +122,11 @@ findings reported, all fixed before shipping; the ones that changed behaviour:
   (pinned with `setup-node`); the visual runner built under emulation (host build now);
   stale `node --test` mentions in plans 08 and the README.
 
-- **Not verified here**: the workflows have not run on GitHub yet — they run for the first time
-  on the push that ships this plan, and the first thing to check afterwards is the `e2e` job's
-  container run. The smoke workflow has no URLs until the repository variables exist. Docker's
+- **CI, live.** The first run on GitHub (`dev`, push) went static ✓ · unit ✓ · e2e ✗ — the
+  container ran all 17 journeys and 29 of 31 screenshots green, and the two that failed were
+  the Settings bottom shots by 235 pixels: the About row read `e2e+4d8f6ae` in CI because the
+  e2e server baked `GITHUB_SHA` into the label. Made constant; the second run was green in
+  all three jobs, ~1.5 min for the container job. The smoke workflow will run after the
+  merge to `main` and pass with a notice until `PROD_URL` / `TEST_ENV_URL` exist. Docker's
   amd64 emulation was fine for the screens here; a much larger suite may want
   `VISUAL_PLATFORM=linux/arm64` for local iteration and CI for the committed baselines.
