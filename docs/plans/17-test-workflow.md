@@ -65,8 +65,16 @@ except `/api/health`.
 
 - [x] Branch protection on `dev` and `main` requiring the three checks — applied 2026-09-14
       with the command in TESTING.md "The flow" (plan 18, together with `allow_auto_merge`).
-- [ ] `TEST_ENV_URL` / `PROD_URL` repository variables, so the smoke workflow has a target
-      (still open 2026-09-14 — the smoke workflow passes with its notice until they exist).
+- [x] `TEST_ENV_URL` / `PROD_URL` repository variables, so the smoke workflow has a target —
+      set 2026-09-14. The first real Smoke run on `main` (34879956953) passed all six checks,
+      with the script's warning that the deploy reports no commit: `SOURCE_COMMIT` /
+      `APP_VERSION` are not reaching Coolify's build yet (they must be **Build Variables**, →
+      DECISIONS #137), so `/api/health` says `commit: null` and the smoke test cannot confirm
+      the merged commit is the one live — it checks what is up. **Two Coolify settings still
+      open**, both the owner's: those build variables, and a TLS certificate for the test host,
+      which serves the app over plain HTTP but fails the HTTPS handshake (Traefik with no cert
+      for that name) — until then every Smoke run for `dev` polls for its timeout and fails.
+      Smoke is informational, not a required check, so nothing is blocked by it.
 
 ## What was verified (session 2026-09-11)
 
