@@ -28,12 +28,6 @@ on:
         required: true
         type: string
 
-# One build at a time, and never cancelled: each run branches from the `dev` the
-# previous one left, and a half-built branch is worth less than a finished one.
-concurrency:
-  group: build
-  cancel-in-progress: false
-
 jobs:
   build:
     # `sender` is who added the label. A person with write access may start any
@@ -46,6 +40,16 @@ jobs:
       contains(github.event.issue.labels.*.name, 'size:s')))) }}
     runs-on: ubuntu-latest
     timeout-minutes: 90
+    # One build at a time, never cancelled: each run branches from the `dev` the
+    # previous one left, and a half-built branch is worth less than a finished
+    # one. On the job, not the workflow: every `labeled` event creates a run, and
+    # a workflow-level group counted the ones the `if` above skips — GitHub then
+    # cancels the previously pending run in a group when another queues, and
+    # issue #18's real build survived only by order. A skipped job never enters
+    # the group.
+    concurrency:
+      group: build
+      cancel-in-progress: false
     permissions:
       contents: write
       pull-requests: write

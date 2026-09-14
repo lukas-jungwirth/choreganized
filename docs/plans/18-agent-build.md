@@ -58,8 +58,8 @@ all the way on their own, and where the brakes are (→ DECISIONS #143).
 - [x] Nothing reaches `dev` without green CI and nothing reaches `main` without a person — from
       the repository settings, not from the prompt. The gate refused PR #11 while its browser
       job was red.
-- [ ] A bot-added label on anything but `bug` + `size:s` does not start a run — the `if` is
-      reviewed and pinned by the convention test, not yet exercised (no small bug is open).
+- [x] A bot-added label on anything but `bug` + `size:s` does not start a run — the `if` is
+      pinned by the convention test; the bot path itself ran unattended on issue #18 (below).
 - [x] `tests/conventions/ci.test.ts` fails when `build.yml` loses its guard, its allow-list
       shape, its concurrency or its prompt.
 - [x] DECISIONS #143; the README row; this file's verification section.
@@ -98,6 +98,15 @@ all the way on their own, and where the brakes are (→ DECISIONS #143).
   `npm run test:visual` leaves root-owned `test-results/`, `playwright-report/` and `data/e2e/`
   behind on Linux, which made the agent's final `npm run verify` fail on cleanup after every
   layer had passed — `scripts/visual.ts` now hands the files back after the container exits.
-- **Not exercised**: the bot path (triage adding the label itself for a `bug` + `size:s`). No
-  small bug is open and none was fabricated; the first real one is the test, and
-  `workflow_dispatch` covers a chain that didn't fire.
+- **Live, the bot path — unattended, 18:34 to 18:41.** Issue #18 was sent from inside the app
+  by a household member (a German title on Home reading "Zuletzt passiert" instead of "Zuletzt
+  erledigt"), which also proves plan 16's last unverified step: `GITHUB_FEEDBACK_TOKEN` is set
+  and the app files issues. Triage found the cause at `de.ts:432`, labelled `bug` ·
+  `area:home` · `size:s`, and added `agent:build` itself. The Build run (34881670252) took
+  4 min 49 s: the one-line fix, a new `tests/e2e/home.spec.ts` that switches to German and
+  asserts the card's title, PR #19, CI green, merged by `app/claude` at 18:41:21,
+  `fixed-on-dev` set. Nobody touched it. **One thing it showed**: every `labeled` event
+  creates a run, and a workflow-level `concurrency` group counted the runs the job's `if`
+  skips — GitHub cancels the previously pending run in a group when another queues, so two
+  label-noise runs were cancelled and the real one survived by order of arrival.
+  `concurrency` now sits on the job, which a skipped job never enters.
