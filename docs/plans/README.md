@@ -30,6 +30,7 @@ plus your session date). Note deviations in the plan file and in DECISIONS.md.
 | 16  | [In-app feedback → a GitHub issue](16-feedback.md)                  | done (2026-09-11)        | 10, 11                   |
 | 17  | [The test workflow: CI as the gate](17-test-workflow.md)            | done (2026-09-11)        | 11, 16                   |
 | 18  | [Build agent: from an issue to code on `dev`](18-agent-build.md)    | in progress (2026-09-14) | 16, 17                   |
+| 19  | [Tap the version to copy it](19-copy-version.md)                    | done (2026-09-14)        | 16                       |
 
 Work done after the twelve plans, tracked here so the queue stays the whole story:
 

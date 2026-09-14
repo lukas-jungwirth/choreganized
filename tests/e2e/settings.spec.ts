@@ -51,3 +51,14 @@ test('the About row names the build the tests run against', async ({ page }) => 
 	await page.goto('/settings');
 	await expect(page.getByText('e2e', { exact: true })).toBeVisible();
 });
+
+test('tapping the version copies it, then reverts', async ({ page, context }) => {
+	await context.grantPermissions(['clipboard-read', 'clipboard-write']);
+	await page.goto('/settings');
+
+	await page.getByRole('button', { name: /^Version/ }).click();
+	await expect(page.getByText('Copied', { exact: true })).toBeVisible();
+	await expect(page.evaluate(() => navigator.clipboard.readText())).resolves.toBe('e2e');
+
+	await expect(page.getByText('e2e', { exact: true })).toBeVisible();
+});
