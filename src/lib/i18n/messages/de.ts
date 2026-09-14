@@ -429,7 +429,7 @@ export const de: Messages = {
 		},
 
 		activity: {
-			title: 'Zuletzt passiert',
+			title: 'Zuletzt erledigt',
 			all: 'Alle'
 		},
 
