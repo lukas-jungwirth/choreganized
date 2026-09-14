@@ -60,7 +60,10 @@ shows `BEHIND` and needs `gh pr update-branch`; a `WIP:` draft is a build that s
 waits for a desk session. `/inbox` lists both.
 
 **Branch protection makes the gate real.** It was applied on 2026-09-14 with the command below
-(once, as the repository owner — re-run it to change the required checks):
+(once, as the repository owner — re-run it to change the required checks). Both branches are
+strict: a PR must be up to date with its base before it merges. `main`'s history is merge
+commits of `dev`, so a `dev → main` promotion often opens as `BEHIND` — `gh pr update-branch <n>`
+merges `main` back into `dev`, CI runs once more, and the PR merges.
 
 ```bash
 for branch in dev main; do
@@ -71,6 +74,7 @@ for branch in dev main; do
   "enforce_admins": false, "required_pull_request_reviews": null, "restrictions": null }
 JSON
 done
+gh api -X PATCH repos/lukas-jungwirth/choreganized -F allow_auto_merge=true -F allow_update_branch=true
 ```
 
 The smoke workflow needs the deploy URLs as repository **variables** (not secrets):
@@ -162,7 +166,10 @@ whenever the flag is on, and `scripts/smoke.ts` asserts it is **off** on every d
 `tests/visual/screens.spec.ts` is a table: one full-page screenshot per screen at 390px,
 light and dark where the theme matters, with masks over what follows the calendar (the greeting
 follows the hour, standings the month, due labels the day). A screen whose whole body is the
-calendar — the week plan, history — is not in it. Add a screen by adding a row.
+calendar — the week plan, history — is not in it. Add a screen by adding a row. **A mask must
+cover a box that doesn't follow the text** — Home masks its whole `header`, not the `h1`, whose
+width changed with the greeting — and a sample page fixes its own clock: `/dev/kit` renders
+2026-09-11 for ever (→ DECISIONS #144).
 
 **Baselines are Linux-only** (→ DECISIONS #140): a macOS Chromium rasterises text differently
 enough to fail every comparison, so `tests/visual/__screenshots__/*.png` are made in the

@@ -1907,3 +1907,19 @@ main` stays a pull request a person merges after trying it. A person merging to 
        starts workflows; `secrets.GITHUB_TOKEN` would not, and a PR whose checks never start
        never merges. Should a live run ever show otherwise, the fallback is a fine-grained PAT
        as `github_token` — written down here so nobody rediscovers it.
+
+144. **The gallery's clock is fixed, and a mask is a block** (→ `routes/dev/kit/+page.server.ts`,
+     `tests/visual/screens.spec.ts`, plan 18). The visual baselines passed on the day they were
+     made and failed on the first pull request three days later, on four screens nobody had
+     touched. Two causes, one mistake — a screenshot that depended on when it was taken:
+
+     - The kit gallery read `today` from the server's clock, so DateField's "Tomorrow · Sep 12"
+       and the away control's "until Sep 17" moved a day each night. A gallery shows samples,
+       and a sample day is `2026-09-11`, always: the screenshots are deterministic and the page
+       still shows every relative label it was built to show.
+     - Home's greeting was masked by its `h1`, a flex item whose box is exactly as wide as its
+       text — so "Good afternoon" and "Good evening" masked different widths, and the strip
+       beside them diffed. A mask has to cover a box that does not follow the calendar: the
+       whole `header`, full width, in every hour.
+
+     The rule for the next screen: mask a block, and if a sample page needs a date, give it one.
