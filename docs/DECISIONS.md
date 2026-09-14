@@ -1923,3 +1923,12 @@ main` stays a pull request a person merges after trying it. A person merging to 
        whole `header`, full width, in every hour.
 
      The rule for the next screen: mask a block, and if a sample page needs a date, give it one.
+
+145. **The version row copies on tap, and the confirmation is the value swapping in place**
+     (→ `settings/+page.svelte`, plan 19, [issue #7](https://github.com/lukas-jungwirth/choreganized/issues/7)).
+     It was a plain fact next to a row that already acted — Send feedback — and reporting a bug
+     elsewhere meant retyping the build by eye. `copyVersion()` is `copyLink()`'s shape from the
+     invite screen (`onboarding/invite/+page.svelte`): `navigator.clipboard.writeText`, a 2s
+     flag, try/catch since the API can be blocked. No toast: the row already reads label-left,
+     value-right, so "Copied" replacing the build string in the value slot for two seconds is
+     the whole confirmation — one fewer element, same place the eye is already on.

@@ -662,7 +662,8 @@ The **History** tab is a stats landing; the full feed sits one level below it (�
   mirrored to a GitHub issue afterwards, so a report never depends on GitHub being reachable and
   the confirmation is honest either way (→ [DECISIONS #136](DECISIONS.md)). Below it, **Version**
   — the build a report will name, `dev` outside a container
-  (→ [DECISIONS #137](DECISIONS.md)).
+  (→ [DECISIONS #137](DECISIONS.md)); tap it to copy, confirmed by the value swapping to "Copied"
+  for two seconds (→ [DECISIONS #145](DECISIONS.md)).
 - **Sign out** · **Leave household** (danger, confirm [6d]: "You'll lose access to the shared
   shopping list, tasks and meal plan. Your points stay with the household.").
 

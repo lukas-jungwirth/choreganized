@@ -1386,7 +1386,11 @@ export const en = {
 		 * Below the house itself: the app, not the household.
 		 */
 		about: 'About',
-		version: 'Version',
+		version: {
+			row: 'Version',
+			/** Shown in place of the value for ~2s after a tap (→ `copyVersion`). */
+			copied: 'Copied'
+		},
 
 		/**
 		 * Send feedback [6a] (→ SPEC §6, plan 16). What the member writes is
