@@ -1903,10 +1903,17 @@ main` stays a pull request a person merges after trying it. A person merging to 
      - **Ideas become plan files in the PR.** The inbox and the queue stay two lists (→ #136):
        when a person approves an idea, the agent writes `docs/plans/NN-slug.md` from triage's
        draft, builds it, and the PR that closes the issue is the one that adds the row.
-     - **The token that opens the PR is the App's, so CI runs on it.** An installation token
-       starts workflows; `secrets.GITHUB_TOKEN` would not, and a PR whose checks never start
-       never merges. Should a live run ever show otherwise, the fallback is a fine-grained PAT
-       as `github_token` — written down here so nobody rediscovers it.
+     - **`Closes #N` only fires on the default branch, so `fixed-on-dev` bridges the gap.** The
+       agent's PR merges into `dev`, and GitHub closes an issue only for a merge into `main` —
+       PR #13 merged and issue #7 stayed open. So the agent labels the issue `fixed-on-dev`
+       (the label plan 16 made for "built, not deployed"), `/inbox` lists it, and the
+       `dev → main` promotion PR carries one `Closes #N` line per such issue, which is when they
+       close — the moment the household actually has the fix.
+     - **The token that opens the PR is the App's, so CI runs on it** — verified on the first
+       live run: PR #13's three checks started, passed, and auto-merge fired 1 min 54 s after
+       the PR opened. An installation token starts workflows; `secrets.GITHUB_TOKEN` would not,
+       and a PR whose checks never start never merges. The fallback, should that ever change, is
+       a fine-grained PAT as `github_token` — written down here so nobody rediscovers it.
 
 144. **The gallery's clock is fixed, and a mask is a block** (→ `routes/dev/kit/+page.server.ts`,
      `tests/visual/screens.spec.ts`, plan 18). The visual baselines passed on the day they were
@@ -1923,3 +1930,12 @@ main` stays a pull request a person merges after trying it. A person merging to 
        whole `header`, full width, in every hour.
 
      The rule for the next screen: mask a block, and if a sample page needs a date, give it one.
+
+145. **The version row copies on tap, and the confirmation is the value swapping in place**
+     (→ `settings/+page.svelte`, plan 19, [issue #7](https://github.com/lukas-jungwirth/choreganized/issues/7)).
+     It was a plain fact next to a row that already acted — Send feedback — and reporting a bug
+     elsewhere meant retyping the build by eye. `copyVersion()` is `copyLink()`'s shape from the
+     invite screen (`onboarding/invite/+page.svelte`): `navigator.clipboard.writeText`, a 2s
+     flag, try/catch since the API can be blocked. No toast: the row already reads label-left,
+     value-right, so "Copied" replacing the build string in the value slot for two seconds is
+     the whole confirmation — one fewer element, same place the eye is already on.

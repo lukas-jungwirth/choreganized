@@ -12,7 +12,9 @@ Since plan 18 the build agent works the inbox too, so show what it is doing as w
    doing or worth closing, and either answer is better than another month:
    `gh issue list --state open --label idea --json number,title,labels,createdAt`
 3. Anything still labelled `needs-info`, so I can answer it myself.
-4. Anything labelled `fixed-on-dev` — that is built and just waiting on a deploy.
+4. Anything labelled `fixed-on-dev` — built and merged into `dev`, waiting on the promotion.
+   `Closes #N` only acts on the default branch, so these stay open until the `dev → main` PR
+   whose body lists them merges.
 5. **The agent's pull requests** —
    `gh pr list --state open --json number,title,isDraft,headRefName,mergeStateStatus,autoMergeRequest`,
    the ones whose `headRefName` starts with `agent/`, in three groups:
@@ -24,7 +26,9 @@ Since plan 18 the build agent works the inbox too, so show what it is doing as w
 6. Issues labelled `agent:build` with no pull request, open or merged — a run that died. Retry
    with `gh workflow run build.yml -f issue=<n>` (Actions → Build → Run workflow).
 7. What `dev` has that `main` doesn't (`git log --oneline origin/main..origin/dev`) — the test
-   environment is ahead; try it there and promote with a PR `dev → main`.
+   environment is ahead; try it there and promote with a PR `dev → main` whose body carries one
+   `Closes #N` line per issue from item 4. It usually opens `BEHIND` (`main` is merge commits of
+   `dev`): `gh pr update-branch <n>`, wait for CI, merge.
 
 Present it as a short list, most actionable first: number, title, size, area, and the triage
 verdict in a handful of words. Say plainly which ones look ready to build and which are still

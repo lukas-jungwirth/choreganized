@@ -1044,7 +1044,10 @@ export const de: Messages = {
 		},
 
 		about: 'Über die App',
-		version: 'Version',
+		version: {
+			row: 'Version',
+			copied: 'Kopiert'
+		},
 
 		feedback: {
 			row: 'Feedback senden',

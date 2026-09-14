@@ -124,6 +124,21 @@
 		// `invalidateAll` so nothing of this household is left in the client cache.
 		await goto('/login', { invalidateAll: true });
 	}
+
+	/** Tap the version to copy it — the same shape as `copyLink` in the invite screen. */
+	let versionCopied = $state(false);
+	let versionCopyTimer: ReturnType<typeof setTimeout>;
+
+	async function copyVersion() {
+		try {
+			await navigator.clipboard.writeText(data.appVersion);
+			versionCopied = true;
+			clearTimeout(versionCopyTimer);
+			versionCopyTimer = setTimeout(() => (versionCopied = false), 2000);
+		} catch {
+			// Clipboard blocked (insecure context, permission) — nothing to confirm.
+		}
+	}
 </script>
 
 <svelte:head>
@@ -301,12 +316,13 @@
 		<ChevronRight size={15} strokeWidth={2} class="chevron" />
 	</button>
 
-	<!-- A fact, not a control — the same shape a non-owner's household row has. -->
-	<div class="row">
+	<!-- Tappable — copies the build a report would otherwise have to be read off
+		 the screen to name (→ #7). -->
+	<button type="button" class="row" onclick={copyVersion}>
 		<span class="tile" aria-hidden="true"><Info size={18} strokeWidth={1.9} /></span>
-		<span class="label">{m.settings.version}</span>
-		<span class="value">{data.appVersion}</span>
-	</div>
+		<span class="label">{m.settings.version.row}</span>
+		<span class="value">{versionCopied ? m.settings.version.copied : data.appVersion}</span>
+	</button>
 </RowGroup>
 
 {#if feedbackSent}<p class="result">{m.settings.feedback.thanks}</p>{/if}
