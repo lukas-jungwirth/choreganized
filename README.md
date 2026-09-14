@@ -31,8 +31,10 @@ npm run test:visual    # screenshot comparison, in Docker (Linux baselines)
 npm run verify         # everything CI runs, except the screenshots
 ```
 
-CI runs all of it on every pull request and push to `dev` / `main`; `dev` deploys to the test
-environment, `main` to the household. → [docs/TESTING.md](docs/TESTING.md)
+CI runs all of it on every pull request and push to `dev` / `main`, and branch protection
+requires it; `dev` deploys to the test environment, `main` to the household. An issue labelled
+`agent:build` is built by an agent into a PR that merges itself into `dev`
+(→ [docs/plans/18-agent-build.md](docs/plans/18-agent-build.md)). → [docs/TESTING.md](docs/TESTING.md)
 
 ## Project state & docs
 

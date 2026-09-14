@@ -36,19 +36,34 @@ the baked env and the real migration path are all in the loop.
 branch ──PR──▶ dev ──Coolify──▶ test environment ──PR──▶ main ──Coolify──▶ the household
           │                          │                     │
          CI                        smoke                  CI + smoke
+
+issue ──Triage──▶ `agent:build` ──Build──▶ agent/issue-N ──PR + auto-merge──▶ dev   (the agent lane)
 ```
 
 1. Work on a branch off `dev`. Tests ship with the change (→ "Writing tests").
 2. `npm run verify` locally; `npm run test:visual` if a screen changed.
 3. Push, open a PR against `dev`. CI runs the three jobs; the `e2e` job uploads a Playwright
    report (and the visual diffs) as an artifact when something fails.
-4. Merge when green. Coolify deploys `dev` to the test environment; the **Smoke** workflow
-   waits for `/api/health` to report the merged commit and checks the doors.
+4. Merge when green — **branch protection requires all three checks** on `dev` and `main`, so a
+   merge is a green run and a direct push is refused (admins excepted). Coolify deploys `dev` to
+   the test environment; the **Smoke** workflow waits for `/api/health` to report the merged
+   commit and checks the doors.
 5. Try it on the test environment. Promote with a PR `dev → main`; the household's instance
    follows the same way.
 
-**Branch protection makes the gate real.** Until it is on, CI is advisory — wait for green
-anyway. To require it (once, as the repository owner):
+**The agent lane** (→ [plan 18](plans/18-agent-build.md), DECISIONS #143): an issue labelled
+`agent:build` — by triage for a small bug with a located cause, by a person for anything
+`size:s` / `size:m` — starts `.github/workflows/build.yml`, which branches `agent/issue-N` off
+`dev`, builds the change with a test, runs `npm run verify`, opens the PR and enables
+auto-merge. Green CI merges it; `dev → main` is always a person. A PR that fell behind `dev`
+shows `BEHIND` and needs `gh pr update-branch`; a `WIP:` draft is a build that stayed red and
+waits for a desk session. `/inbox` lists both.
+
+**Branch protection makes the gate real.** It was applied on 2026-09-14 with the command below
+(once, as the repository owner — re-run it to change the required checks). Both branches are
+strict: a PR must be up to date with its base before it merges. `main`'s history is merge
+commits of `dev`, so a `dev → main` promotion often opens as `BEHIND` — `gh pr update-branch <n>`
+merges `main` back into `dev`, CI runs once more, and the PR merges.
 
 ```bash
 for branch in dev main; do
@@ -59,6 +74,7 @@ for branch in dev main; do
   "enforce_admins": false, "required_pull_request_reviews": null, "restrictions": null }
 JSON
 done
+gh api -X PATCH repos/lukas-jungwirth/choreganized -F allow_auto_merge=true -F allow_update_branch=true
 ```
 
 The smoke workflow needs the deploy URLs as repository **variables** (not secrets):
@@ -150,7 +166,10 @@ whenever the flag is on, and `scripts/smoke.ts` asserts it is **off** on every d
 `tests/visual/screens.spec.ts` is a table: one full-page screenshot per screen at 390px,
 light and dark where the theme matters, with masks over what follows the calendar (the greeting
 follows the hour, standings the month, due labels the day). A screen whose whole body is the
-calendar — the week plan, history — is not in it. Add a screen by adding a row.
+calendar — the week plan, history — is not in it. Add a screen by adding a row. **A mask must
+cover a box that doesn't follow the text** — Home masks its whole `header`, not the `h1`, whose
+width changed with the greeting — and a sample page fixes its own clock: `/dev/kit` renders
+2026-09-11 for ever (→ DECISIONS #144).
 
 **Baselines are Linux-only** (→ DECISIONS #140): a macOS Chromium rasterises text differently
 enough to fail every comparison, so `tests/visual/__screenshots__/*.png` are made in the

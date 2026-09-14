@@ -1,8 +1,16 @@
 import { dev } from '$app/environment';
 import { error } from '@sveltejs/kit';
 import { e2eMode } from '$lib/server/e2e-mode';
-import { todayIn } from '$lib/utils/dates';
 import type { Actions, PageServerLoad } from './$types';
+
+/**
+ * The gallery's clock never moves. Its samples read dates against "today" —
+ * DateField's caption, the away control's "until", the chore cards — and with
+ * the real date those strings changed overnight, which is how the visual
+ * baselines failed on their third day (→ DECISIONS #144). A Thursday, so the
+ * holiday sample's "closed on Monday" still reads as a coming day.
+ */
+const GALLERY_TODAY = '2026-09-11';
 
 /**
  * The kit gallery is a build tool, not a screen: it exists so a component can be
@@ -18,11 +26,10 @@ function requireGallery(): void {
 export const load: PageServerLoad = () => {
 	requireGallery();
 
-	// DateField's caption needs a "today" to read dates against. Resolved here
-	// and sent down, rather than read from `Intl` in the component — there it
-	// would resolve the server's zone while rendering and the browser's on
-	// hydration, a mismatch on the one page whose whole job is looking right.
-	return { today: todayIn(Intl.DateTimeFormat().resolvedOptions().timeZone) };
+	// DateField's caption needs a "today" to read dates against. Sent down from
+	// here rather than read in the component, so SSR and hydration agree — and
+	// fixed, so two screenshots a week apart agree too.
+	return { today: GALLERY_TODAY };
 };
 
 export const actions: Actions = {

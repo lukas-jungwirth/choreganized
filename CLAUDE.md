@@ -26,8 +26,8 @@ You are also in charge of the repository. A piece of work is not finished when t
 4. **Ship it**: commit with a message that says what changed and why, push the branch, open a PR
    against `dev`, wait for CI, merge. Coolify deploys `dev` to the **test environment** and the
    smoke workflow checks it; promote with a PR `dev → main`. **A finished step ends as working
-   code on `main`** — the household's deploy tracks it. (Until branch protection is on, CI is
-   advisory — wait for green anyway; the commands to require it are in TESTING.md.)
+   code on `main`** — the household's deploy tracks it. Branch protection requires the three CI
+   checks on both branches, so the PR is the only road; a direct push is refused.
 
 Don't ship a step that fails its own acceptance criteria; leave it on its branch and say what's
 left.
@@ -35,7 +35,11 @@ left.
 ## Start here
 
 1. **[docs/plans/README.md](docs/plans/README.md)** — the work queue. Pick the next `todo`
-   plan whose dependencies are `done`, set it `in progress`, build it, set it `done`.
+   plan whose dependencies are `done`, set it `in progress`, build it, set it `done`. Work also
+   arrives as **GitHub issues** (the inbox, `/inbox`): triage labels each one, and `agent:build`
+   hands a `size:s`/`size:m` issue to the build workflow, which opens a PR that merges itself
+   into `dev` (→ TESTING.md "The flow", plan 18). A desk session takes `size:l` — a screen
+   with no frame in the design — and the `WIP:` drafts the agent left red.
 2. **[docs/SPEC.md](docs/SPEC.md)** — behavior ground truth, screen by screen.
 3. **`design/Hearth.dc.html`** — visual ground truth. _Open it in a browser_ and build to the
    pixels. Anchors like [3a] in docs are element ids in this file.
@@ -129,6 +133,6 @@ environment, say so explicitly in the handoff — never claim untested things wo
 `src/lib/server/` db + auth + services + push + cron · `src/lib/components/` ui / shell /
 feature · `src/routes/` see ARCHITECTURE.md routing map · `tests/` integration · conventions ·
 e2e · visual (+ `helpers/`) · `scripts/` seed, e2e server, visual runner, smoke, migration check ·
-`.github/workflows/` ci · smoke · update-snapshots · triage · `design/` mockups · `docs/` specs
+`.github/workflows/` ci · smoke · update-snapshots · triage · build · `design/` mockups · `docs/` specs
 & plans · `static/` manifest + icons · `Dockerfile` single-container deploy (SQLite volume
 at `/data`).

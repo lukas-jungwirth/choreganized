@@ -1855,3 +1855,71 @@ NULL` is the queue; nothing else has to be tracked.
      what. Schema drift is the one rule that needs drizzle-kit; the migrations test runs
      `scripts/check-migrations.ts` for it, so `npm test` stays the single gate the sentence
      above promises.
+
+143. **Small bugs build themselves; everything else waits for a label; every agent PR merges
+     itself into `dev`; nothing reaches `main` without a person** (→
+     `.github/workflows/build.yml`, `.claude/commands/build-issue.md`, `triage-issue.md`,
+     plan 18). #141 left one half of #136's sentence human: the merge. With CI walking a change
+     through a browser on the production build, the remaining questions were which changes may go
+     all the way without a desk session, and where the brakes live.
+
+     - **The label is the one signal.** `agent:build` starts a build; nothing else does — not
+       the issue, not a comment, not a mention. Triage adds it itself for exactly one shape: a
+       `bug`, `size:s`, with a cause it _found_ (not "plausible"), that is not a duplicate, not
+       `needs-info`, not already on `dev`. Anything else waits for a person to add it, and that
+       is the approval: someone with write access read the report and wants it built. `size:s`
+       and `size:m` are the agent's; `size:l` is a desk session.
+     - **`size:l` means "no frame", nothing else.** A request that can be matched to a screen,
+       row, sheet or button that already exists in `design/Hearth.dc.html` is `s` or `m`, and the
+       builder makes the small design calls itself and lists them in the PR. Only a new screen,
+       tab or navigation surface — something the design file has no frame for — is `l`. Sizing
+       by effort would have sent most of the inbox to the desk, which is the queue this plan
+       exists to shorten.
+     - **The brakes are YAML and repository settings, not prose.** An issue body is untrusted
+       text, so the prompt's "never" list is the second line, as in #136. The first line: the
+       job's `if` accepts a label from a bot only when `bug` and `size:s` are also on the issue,
+       so a prompt-injected triage can start a small fix at most; branch protection requires
+       the three CI checks on `dev` and `main`, so the App token — not an admin — cannot push
+       either; the Claude GitHub App has no `workflows` scope, so the agent cannot change the
+       workflow it runs in; and `--allowedTools` lists `gh pr merge --auto` as the only merge
+       command, which cannot merge before the checks pass. `tests/conventions/ci.test.ts` fails
+       when any of those lines goes missing (→ #142).
+     - **Every agent PR auto-merges into `dev` on green.** That is what a test environment is
+       for: a change that passed the gate lands where the household can try it, and `dev →
+main` stays a pull request a person merges after trying it. A person merging to `dev`
+       as well would have made "autonomous" mean "waits for a click", the failure mode plan 16
+       was built to end. The agent enables it per PR (`gh pr merge --auto --merge`), which
+       needs the repository's `allow_auto_merge` and the protection rules — both applied
+       2026-09-14, closing plan 17's "for the owner" box.
+     - **One build at a time, rebased before push.** `concurrency: build` without
+       cancellation: each run branches from the `dev` the previous one left and rebases on
+       `origin/dev` right before pushing, because protection's "branch must be up to date"
+       would otherwise park the PR behind a click. When one does park (`BEHIND`), `/inbox`
+       says so and `gh pr update-branch` re-runs CI.
+     - **Red stays visible.** When `npm run verify` is still red after three rounds, the branch
+       is pushed as a draft titled `WIP:` with the failing test named in the comment. A draft
+       cannot auto-merge, and a half-built branch a desk session can pick up beats a run that
+       vanished with its context.
+     - **Ideas become plan files in the PR.** The inbox and the queue stay two lists (→ #136):
+       when a person approves an idea, the agent writes `docs/plans/NN-slug.md` from triage's
+       draft, builds it, and the PR that closes the issue is the one that adds the row.
+     - **The token that opens the PR is the App's, so CI runs on it.** An installation token
+       starts workflows; `secrets.GITHUB_TOKEN` would not, and a PR whose checks never start
+       never merges. Should a live run ever show otherwise, the fallback is a fine-grained PAT
+       as `github_token` — written down here so nobody rediscovers it.
+
+144. **The gallery's clock is fixed, and a mask is a block** (→ `routes/dev/kit/+page.server.ts`,
+     `tests/visual/screens.spec.ts`, plan 18). The visual baselines passed on the day they were
+     made and failed on the first pull request three days later, on four screens nobody had
+     touched. Two causes, one mistake — a screenshot that depended on when it was taken:
+
+     - The kit gallery read `today` from the server's clock, so DateField's "Tomorrow · Sep 12"
+       and the away control's "until Sep 17" moved a day each night. A gallery shows samples,
+       and a sample day is `2026-09-11`, always: the screenshots are deterministic and the page
+       still shows every relative label it was built to show.
+     - Home's greeting was masked by its `h1`, a flex item whose box is exactly as wide as its
+       text — so "Good afternoon" and "Good evening" masked different widths, and the strip
+       beside them diffed. A mask has to cover a box that does not follow the calendar: the
+       whole `header`, full width, in every hour.
+
+     The rule for the next screen: mask a block, and if a sample page needs a date, give it one.
