@@ -81,6 +81,9 @@ how a change proves itself is `docs/TESTING.md`.
    `Closes #$1`; the plan (triage's, corrected by what you found); the definition of done from
    `docs/TESTING.md` as a checklist, ticked only where true; what you verified and how; what you
    could not. Then — unless it is a draft — `gh pr merge --auto --merge <number>`: CI decides the
-   merge, and Coolify deploys `dev` to the test environment.
+   merge, and Coolify deploys `dev` to the test environment. Then
+   `gh issue edit $1 --add-label fixed-on-dev`: `Closes #$1` only closes an issue when a PR merges
+   into the default branch, and yours merges into `dev` — the label is how `/inbox` knows, and
+   the promotion PR `dev → main` is what closes it.
 
 10. **Comment once** on the issue: the PR link, and two sentences on what you decided on your own.

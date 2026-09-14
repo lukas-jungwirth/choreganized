@@ -48,14 +48,16 @@ issue ──Triage──▶ `agent:build` ──Build──▶ agent/issue-N ─
    merge is a green run and a direct push is refused (admins excepted). Coolify deploys `dev` to
    the test environment; the **Smoke** workflow waits for `/api/health` to report the merged
    commit and checks the doors.
-5. Try it on the test environment. Promote with a PR `dev → main`; the household's instance
-   follows the same way.
+5. Try it on the test environment. Promote with a PR `dev → main` whose body carries one
+   `Closes #N` line per `fixed-on-dev` issue — closing keywords only act on the default branch —
+   and the household's instance follows the same way; the issues close with it.
 
 **The agent lane** (→ [plan 18](plans/18-agent-build.md), DECISIONS #143): an issue labelled
 `agent:build` — by triage for a small bug with a located cause, by a person for anything
 `size:s` / `size:m` — starts `.github/workflows/build.yml`, which branches `agent/issue-N` off
 `dev`, builds the change with a test, runs `npm run verify`, opens the PR and enables
-auto-merge. Green CI merges it; `dev → main` is always a person. A PR that fell behind `dev`
+auto-merge. Green CI merges it, and the issue is labelled `fixed-on-dev` until the promotion
+closes it; `dev → main` is always a person. A PR that fell behind `dev`
 shows `BEHIND` and needs `gh pr update-branch`; a `WIP:` draft is a build that stayed red and
 waits for a desk session. `/inbox` lists both.
 

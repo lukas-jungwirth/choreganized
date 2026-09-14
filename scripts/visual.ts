@@ -66,4 +66,29 @@ if (result.error) {
 	);
 	process.exit(1);
 }
+
+// The container runs as root, so on Linux everything it wrote — the report,
+// the traces, the throwaway e2e database — comes back root-owned, and the next
+// `npm run verify` on the same checkout dies with EACCES while cleaning them
+// up. The build agent hit exactly that on its first run (→ plan 18). Hand the
+// files back to whoever ran this; on macOS, Docker Desktop already maps them to
+// the host user and the chown is a no-op.
+if (process.getuid && process.getgid) {
+	spawnSync(
+		'docker',
+		[
+			'run',
+			'--rm',
+			'--platform',
+			platform,
+			'-v',
+			`${process.cwd()}:/work`,
+			image,
+			'sh',
+			'-c',
+			`chown -R ${process.getuid()}:${process.getgid()} /work/test-results /work/playwright-report /work/data/e2e /work/tests/.auth 2>/dev/null || true`
+		],
+		{ stdio: 'ignore' }
+	);
+}
 process.exit(result.status ?? 1);
