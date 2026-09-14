@@ -1,0 +1,87 @@
+# Build what triage handed on, or what a person approved (→ docs/plans/18-agent-build.md,
+# DECISIONS #143). The trigger is a label, never the issue itself: `agent:build` is
+# added by triage for a `bug` that is `size:s` with a located cause, and by a person
+# for anything else the agent may build (`size:s` / `size:m`). The agent branches off
+# `dev`, builds the change with a test, runs `npm run verify`, opens a PR against
+# `dev` and enables auto-merge — CI decides the merge; `dev → main` stays a human PR.
+#
+# What keeps this safe is not the prompt (an issue body is untrusted text):
+#   - the job's `if`: a label added by a bot only counts for `bug` + `size:s`;
+#   - branch protection: nobody but an admin pushes `dev` or `main`, and the Claude
+#     GitHub App is not one — a merge *is* a green CI run;
+#   - the App token has no `workflows` scope, so the agent cannot change this file;
+#   - `--allowedTools` permits `gh pr merge --auto` and nothing else that merges.
+#
+# NOTE: workflows for `issues` events are read from the DEFAULT branch. This file
+# does nothing until it is merged to `main`.
+name: Build
+
+on:
+  issues:
+    types: [labeled]
+  # Retry by hand — after a prompt change, or when a run died before its PR.
+  # Actions → Build → Run workflow.
+  workflow_dispatch:
+    inputs:
+      issue:
+        description: Issue number to build
+        required: true
+        type: string
+
+# One build at a time, and never cancelled: each run branches from the `dev` the
+# previous one left, and a half-built branch is worth less than a finished one.
+concurrency:
+  group: build
+  cancel-in-progress: false
+
+jobs:
+  build:
+    # `sender` is who added the label. A person with write access may start any
+    # build; a bot (triage) only a small, located bug.
+    if: >-
+      ${{ github.event_name == 'workflow_dispatch' ||
+      (github.event.label.name == 'agent:build' &&
+      (github.event.sender.type != 'Bot' ||
+      (contains(github.event.issue.labels.*.name, 'bug') &&
+      contains(github.event.issue.labels.*.name, 'size:s')))) }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 90
+    permissions:
+      contents: write
+      pull-requests: write
+      issues: write
+      id-token: write
+
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          ref: dev
+          fetch-depth: 0
+
+      - uses: actions/setup-node@v6
+        with:
+          node-version: 22
+          cache: npm
+
+      - run: npm ci --no-audit --no-fund
+
+      # `npm run verify` ends in the Playwright journeys. `npm run test:visual`
+      # runs in Docker, which the runner has, so a changed screen can refresh
+      # its baselines here too.
+      - run: npx playwright install --with-deps chromium
+
+      - uses: anthropics/claude-code-action@v1
+        with:
+          # No `github_token:` on purpose: the action mints a repo-scoped token from
+          # the Claude GitHub App, and what that token pushes and opens does start
+          # workflows — CI runs on the agent's PR. secrets.GITHUB_TOKEN would not.
+          claude_code_oauth_token: ${{ secrets.CLAUDE_CODE_OAUTH_TOKEN }}
+          # Triage adds the label as claude[bot]; bots are refused unless listed.
+          allowed_bots: claude
+          prompt: '/build-issue ${{ github.event.issue.number || inputs.issue }}'
+          # A feature is several verify rounds of ~5 minutes each; the ceiling is a
+          # stop, not a target. (Comments must stay out of the block scalar below:
+          # inside `|` a # is literal text and would be passed to the CLI as an arg.)
+          claude_args: |
+            --max-turns 200
+            --allowedTools "Read,Grep,Glob,Edit,Write,MultiEdit,Bash(npm run:*),Bash(npm test:*),Bash(npx vitest:*),Bash(npx playwright:*),Bash(git:*),Bash(gh issue view:*),Bash(gh issue list:*),Bash(gh issue comment:*),Bash(gh issue edit:*),Bash(gh pr create:*),Bash(gh pr view:*),Bash(gh pr merge --auto:*)"

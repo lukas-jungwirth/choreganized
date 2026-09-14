@@ -1,51 +1,61 @@
-# 18 · Build agent: from a triaged issue to a pull request
+# 18 · Build agent: from an issue to code on `dev`
 
-**Status: todo.** A design, not yet built. Depends on: 16 (triage), 17 (the test workflow).
+**Status: in progress (2026-09-14).** Depends on: 16 (triage), 17 (the test workflow).
 
-**Goal:** let a small, well-understood fix go from a GitHub issue to a reviewed pull request
-without a desk session. Plan 16 stopped at triage because "this repo's definition of done is a
-walk in the running dev server and CI has no dev server" (→ DECISIONS #136). Plan 17 changed
-that half: CI now runs the production build with a seeded database and a browser, so a change
-can prove itself where it was written. What remains human is the decision to merge.
+**Goal:** close the loop plan 16 opened. The household reports a bug or pitches an idea from
+inside the app; triage reads it; and from there the fix or the feature reaches the test
+environment without a desk session. Plan 16 stopped at triage because CI had no browser
+(→ DECISIONS #136); plan 17 gave it one (→ #141). What this plan decides is which changes may go
+all the way on their own, and where the brakes are (→ DECISIONS #143).
 
 ## Shape
 
-- **Trigger: a label, never the issue itself.** A maintainer adds `agent:build` to an issue
-  that triage has already sized `size:s` and located. `on: issues: types: [labeled]` fires
-  only for that label. The issue body is untrusted text (→ plan 16); the label is the one
-  signal that a person with write access read it and wants it built.
-- **Workflow `.github/workflows/build.yml`**: `anthropics/claude-code-action@v1` with a prompt
-  `/build-issue N`, `permissions: contents: write, pull-requests: write, issues: write`,
-  `--max-turns` around 80, and `--allowedTools` widened to `Edit,Write,Bash(npm run *),
-Bash(npx playwright *),Bash(git *),Bash(gh pr create *),Bash(gh issue comment *)`. Playwright's
-  browsers are installed first (`npx playwright install --with-deps chromium`), or the job runs in
-  the Playwright container the `e2e` job uses.
-- **Command `.claude/commands/build-issue.md`**: read the issue and triage's comment; branch
-  `agent/issue-N` off `dev`; build the fix **with a test that fails without it** in the layer
-  `docs/TESTING.md` prescribes; update `en.ts` + `de.ts` when copy changes; `npm run verify`;
-  refresh visual baselines only when a screen changed on purpose, and say so in the PR; commit
-  with the repo's message style; `gh pr create --base dev` with the triage plan as the body and
-  the checklist from `docs/TESTING.md` "Definition of done"; comment on the issue with the PR
-  link. **Never merge, never push to `dev` or `main`, never edit a workflow, never touch
-  `schema.ts` without saying so in the PR title.**
-- **Then the ordinary flow** (→ `docs/TESTING.md` "The flow"): CI on the PR, a human merge to
-  `dev`, the test environment, the smoke test, a PR to `main`.
+- **Trigger: the `agent:build` label, never the issue itself.** Triage adds it for one shape
+  only — a `bug`, `size:s`, cause _found_ — and a person adds it for anything else that is
+  `size:s` or `size:m`. `size:l` is a desk session, and `size:l` means one thing: a screen, a tab
+  or a navigation surface with no frame in `design/Hearth.dc.html`. Everything that can be matched
+  to the existing kit is `s` or `m`, and the builder makes the small design calls itself.
+- **`.github/workflows/build.yml`** — `on: issues: [labeled]` plus `workflow_dispatch` for a
+  retry; one build at a time, never cancelled; the job's `if` lets a bot start only `bug` +
+  `size:s`; `contents` / `pull-requests` / `issues: write`; Node 22, `npm ci`, Playwright's
+  Chromium; `anthropics/claude-code-action@v1` with `allowed_bots: claude`, `--max-turns 200`,
+  and an allow-list in which `gh pr merge --auto` is the only command that merges.
+- **`.claude/commands/build-issue.md`** — read the issue and triage's draft (untrusted text);
+  branch `agent/issue-N` off `dev`; an idea becomes `docs/plans/NN-slug.md` first; build from
+  the kit and the frames, listing the design calls in the PR; a test that fails without the
+  change; `npm run verify`; docs in the same pass; review the diff; rebase on `dev`; a PR with
+  `Closes #N` and the definition-of-done checklist; `gh pr merge --auto --merge`; one comment.
+  Three red rounds end in a `WIP:` draft.
+- **Then the ordinary flow** (→ `docs/TESTING.md` "The flow"): CI on the PR merges it, Coolify
+  deploys `dev`, the smoke test checks it, Lukas tries it, a PR `dev → main`.
+- **Repository settings, applied 2026-09-14** — plan 17's "for the owner" box: the three CI
+  checks required on `dev` and `main` (strict, admins exempt), `allow_auto_merge`,
+  `allow_update_branch`, and the `agent:build` label. Without the first two, `gh pr merge --auto`
+  has nothing to wait for.
+- **`/triage-issue`** sizes by Lukas's rule and hands on with the label; **`/inbox`** lists the
+  agent's PRs (waiting · `BEHIND` · `WIP:`) and `agent:build` issues that have no PR.
 
-## Guardrails to decide before building
+## Guardrails, decided
 
-- Which labels qualify (`bug` + `size:s` only, at first — an `idea` is a plan, not a fix).
-- A spend ceiling per run and per month; the action reports `total_cost_usd`.
-- `concurrency: build-${issue}` so a re-label can't race a running build.
-- Whether a `size:s` bug fix with green CI may ever auto-merge to `dev` (recommendation: not
-  until a dozen PRs have been reviewed and the failure modes are known).
-- What the agent does when `npm run verify` stays red after N attempts: push the branch
-  anyway with a `WIP:` title and a comment naming the failing test, so nothing is lost.
+| Question from the design | Answer                                                                                                                          |
+| ------------------------ | ------------------------------------------------------------------------------------------------------------------------------- |
+| Which labels qualify     | Bot-added: `bug` + `size:s`, enforced in the job's `if`. Person-added: `size:s`, `size:m`. `size:l` is a desk session.          |
+| Spend ceiling            | `--max-turns 200`, `timeout-minutes: 90`, one build at a time. Subscription usage through `CLAUDE_CODE_OAUTH_TOKEN`.            |
+| Concurrency              | `group: build`, `cancel-in-progress: false` — serial, each build from the `dev` the previous one left.                          |
+| Auto-merge to `dev`      | **Yes, every agent PR**, on green CI — that is what the test environment is for. `dev → main` is always a person.               |
+| Verify stays red         | A draft PR titled `WIP:`, the failing test named in the comment. A draft cannot auto-merge; a desk session picks the branch up. |
 
 ## Acceptance
 
-- [ ] Labelling a triaged `size:s` bug with `agent:build` produces a PR against `dev` within
-      the turn budget, with a test that fails on `dev` and passes on the branch.
-- [ ] CI on that PR is green, or the PR says which job is red and why.
-- [ ] The PR body carries the triage plan and the definition-of-done checklist, ticked.
-- [ ] Nothing reaches `dev` or `main` without a human merge.
-- [ ] DECISIONS.md gets the entry; `docs/plans/README.md` the row; this file the verification.
+- [ ] Adding `agent:build` to a triaged `size:s` / `size:m` issue produces a PR against `dev`
+      within the budget, with a test that fails on `dev` and passes on the branch.
+- [ ] CI on that PR is green and it merges itself — or it is a `WIP:` draft that names the
+      failing test.
+- [ ] The PR body carries the plan and the definition-of-done checklist, ticked only where
+      true; an idea's PR adds `docs/plans/NN-slug.md` and its README row.
+- [ ] Nothing reaches `dev` without green CI and nothing reaches `main` without a person — from
+      the repository settings, not from the prompt.
+- [ ] A bot-added label on anything but `bug` + `size:s` does not start a run.
+- [ ] `tests/conventions/ci.test.ts` fails when `build.yml` loses its guard, its allow-list
+      shape, its concurrency or its prompt.
+- [ ] DECISIONS #143; the README row; this file's verification section.

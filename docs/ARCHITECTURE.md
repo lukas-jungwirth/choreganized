@@ -245,7 +245,10 @@ prompt / subscribed).
   the household's instance, each on push. CI (`.github/workflows/ci.yml`) is the gate in front of
   both branches and the smoke workflow checks what came up afterwards (→ [TESTING.md](TESTING.md)
   "The flow", [DECISIONS #141](DECISIONS.md)). `dev` is therefore always deployable-in-principle:
-  a change that is not ready stays on its branch.
+  a change that is not ready stays on its branch. Branch protection requires the three checks on
+  both branches; agent-built PRs (`.github/workflows/build.yml`) merge themselves into `dev` on
+  green, and `main` is always a human PR (→ [plan 18](plans/18-agent-build.md),
+  [DECISIONS #143](DECISIONS.md)).
 - **One Dockerfile, one container** (see `Dockerfile`) — SQLite is embedded, so a separate DB
   image would only add failure modes. Answering the open question in the brief: no separate DB
   container.

@@ -36,19 +36,31 @@ the baked env and the real migration path are all in the loop.
 branch ──PR──▶ dev ──Coolify──▶ test environment ──PR──▶ main ──Coolify──▶ the household
           │                          │                     │
          CI                        smoke                  CI + smoke
+
+issue ──Triage──▶ `agent:build` ──Build──▶ agent/issue-N ──PR + auto-merge──▶ dev   (the agent lane)
 ```
 
 1. Work on a branch off `dev`. Tests ship with the change (→ "Writing tests").
 2. `npm run verify` locally; `npm run test:visual` if a screen changed.
 3. Push, open a PR against `dev`. CI runs the three jobs; the `e2e` job uploads a Playwright
    report (and the visual diffs) as an artifact when something fails.
-4. Merge when green. Coolify deploys `dev` to the test environment; the **Smoke** workflow
-   waits for `/api/health` to report the merged commit and checks the doors.
+4. Merge when green — **branch protection requires all three checks** on `dev` and `main`, so a
+   merge is a green run and a direct push is refused (admins excepted). Coolify deploys `dev` to
+   the test environment; the **Smoke** workflow waits for `/api/health` to report the merged
+   commit and checks the doors.
 5. Try it on the test environment. Promote with a PR `dev → main`; the household's instance
    follows the same way.
 
-**Branch protection makes the gate real.** Until it is on, CI is advisory — wait for green
-anyway. To require it (once, as the repository owner):
+**The agent lane** (→ [plan 18](plans/18-agent-build.md), DECISIONS #143): an issue labelled
+`agent:build` — by triage for a small bug with a located cause, by a person for anything
+`size:s` / `size:m` — starts `.github/workflows/build.yml`, which branches `agent/issue-N` off
+`dev`, builds the change with a test, runs `npm run verify`, opens the PR and enables
+auto-merge. Green CI merges it; `dev → main` is always a person. A PR that fell behind `dev`
+shows `BEHIND` and needs `gh pr update-branch`; a `WIP:` draft is a build that stayed red and
+waits for a desk session. `/inbox` lists both.
+
+**Branch protection makes the gate real.** It was applied on 2026-09-14 with the command below
+(once, as the repository owner — re-run it to change the required checks):
 
 ```bash
 for branch in dev main; do

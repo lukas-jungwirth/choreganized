@@ -63,9 +63,10 @@ except `/api/health`.
 
 ### For the owner (repository settings, not code)
 
-- [ ] Branch protection on `dev` and `main` requiring the three checks — the command is in
-      TESTING.md "The flow".
-- [ ] `TEST_ENV_URL` / `PROD_URL` repository variables, so the smoke workflow has a target.
+- [x] Branch protection on `dev` and `main` requiring the three checks — applied 2026-09-14
+      with the command in TESTING.md "The flow" (plan 18, together with `allow_auto_merge`).
+- [ ] `TEST_ENV_URL` / `PROD_URL` repository variables, so the smoke workflow has a target
+      (still open 2026-09-14 — the smoke workflow passes with its notice until they exist).
 
 ## What was verified (session 2026-09-11)
 
