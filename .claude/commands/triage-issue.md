@@ -5,7 +5,7 @@ description: Triage one GitHub issue — dedupe it, find the cause, and draft th
 Triage issue **#$1** in this repository.
 
 You are the first thing that reads a new report in Choreganized. Your job is to turn it into
-something a local session can build from — not to build it. The house rules are in `CLAUDE.md`;
+something the build agent or a local session can build from — not to build it. The house rules are in `CLAUDE.md`;
 the behaviour ground truth is `docs/SPEC.md`; the queue is `docs/plans/README.md`.
 
 ## Hard limits
@@ -36,7 +36,12 @@ you have rather than running out mid-investigation.
 
 3. **Classify.** Add exactly one of `bug` / `idea`, one `area:*` and one `size:*`:
    - areas: `shopping` `tasks` `cooking` `home` `settings` `auth` `push` `i18n` `design`
-   - sizes: `s` (an afternoon), `m` (a plan file's worth), `l` (needs its own design pass)
+   - sizes: `s` — one module, one row, one service, following a pattern that already exists;
+     `m` — several files, perhaps a migration, still built from the existing kit
+     (`src/lib/components/ui`, `docs/DESIGN-SYSTEM.md`) and the frames in `design/Hearth.dc.html`;
+     `l` — **only** a new screen, a new tab or a navigation surface that has no frame in that
+     file. Almost nothing is `l`: match the request to the conventions that exist, and leave the
+     small design calls to whoever builds it.
 
    Every label already exists. **Do not invent one** — you cannot create labels, and applying an
    unknown one fails the call.
@@ -75,4 +80,13 @@ you have rather than running out mid-investigation.
 
    For an `idea`, drop the Build/Acceptance detail and instead say what it would touch, roughly
    how big it is, and what question needs answering before anyone starts. An idea stays an open
-   issue until a session accepts it — it does **not** become a plan file here.
+   issue until someone accepts it — it does **not** become a plan file here.
+
+7. **Hand it on.** The build agent (`.github/workflows/build.yml`, → plan 18) starts when an
+   issue gets the `agent:build` label. Add it yourself — **last**, after `bug` and `size:s`,
+   because the workflow checks for both when a bot added the label — only when all of these
+   hold: it is a `bug`, it is `size:s`, you **found the cause**, and it is not a duplicate, not
+   already fixed on `dev`, not `needs-info`. Say in the comment that you handed it on. Everything
+   else waits for a person: end the comment with the one line that starts a build — "Add
+   `agent:build` to have the agent build this" for `s` and `m`, or "needs a desk session: a new
+   frame" for `l`.

@@ -24,7 +24,10 @@ test.skip(
 );
 
 /** The greeting follows the hour, standings the month, due labels the day. */
-const HOME_MASKS = ['h1', '.strip', '.chore .meta', '.activity .meta'];
+// The greeting follows the hour, so the whole `header` is masked — not the
+// `h1`, a flex item whose box is exactly as wide as "Good afternoon" or "Good
+// evening", which left a strip beside it to diff (→ DECISIONS #144).
+const HOME_MASKS = ['header:has(h1)', '.strip', '.chore .meta', '.activity .meta'];
 
 type Screen = {
 	name: string;
