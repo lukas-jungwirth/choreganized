@@ -92,6 +92,13 @@
       "when": 1789067163517,
       "tag": "0012_purple_smasher",
       "breakpoints": true
+    },
+    {
+      "idx": 13,
+      "version": "6",
+      "when": 1792344733433,
+      "tag": "0013_ai_connections",
+      "breakpoints": true
     }
   ]
 }

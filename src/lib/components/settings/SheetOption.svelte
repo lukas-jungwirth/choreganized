@@ -8,14 +8,20 @@
 
 	Extracted because the two sheets had a byte-for-byte copy of it each, which
 	is two places to change the 52px row the next time [7c] moves.
+
+	With `onclick` it is a plain button instead — for a choice that is one step
+	of a longer form rather than the whole answer, like the AI provider picked
+	before its key is pasted (→ `AiConnectionForm`).
 -->
 <script lang="ts">
 	import Check from '@lucide/svelte/icons/check';
 
 	type Props = {
 		/** The form field this row answers — `name`/`value` on the button. */
-		name: string;
-		value: string;
+		name?: string;
+		value?: string;
+		/** A choice made in place rather than submitted: the row becomes `type="button"`. */
+		onclick?: () => void;
 		label: string;
 		/** The second line, where an option needs one ("Follow this device — …"). */
 		detail?: string;
@@ -23,10 +29,18 @@
 		disabled?: boolean;
 	};
 
-	let { name, value, label, detail, selected, disabled = false }: Props = $props();
+	let { name, value, onclick, label, detail, selected, disabled = false }: Props = $props();
 </script>
 
-<button type="submit" class="option" {name} {value} {disabled}>
+<button
+	type={onclick ? 'button' : 'submit'}
+	class="option"
+	name={onclick ? undefined : name}
+	value={onclick ? undefined : value}
+	aria-pressed={onclick ? selected : undefined}
+	{onclick}
+	{disabled}
+>
 	<span class="what">
 		<span class="title">{label}</span>
 		{#if detail}<span class="detail">{detail}</span>{/if}

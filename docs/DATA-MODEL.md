@@ -14,6 +14,7 @@ user ─┬─ session / account / verification        (Better Auth)
                   │      ├─ meals (→ recipes, one per date × slot)
                   │      ├─ tasks ──→ task_completions (snapshots)
                   │      ├─ cook_timers
+                  │      ├─ ai_connections          (primary + backup provider keys)
                   │      └─ feedback                (mirrored to a GitHub issue)
                   └─ holiday_notices             (per member × shop closure)
 ```
@@ -46,6 +47,23 @@ user ─┬─ session / account / verification        (Better Auth)
   alphabet (`ABCDEFGHJKMNPQRSTUVWXYZ23456789`, 6 chars, `crypto.getRandomValues`). Displayed
   with a dash (`7K4-P2`), stored/compared without, case-insensitive (store uppercase).
 - `timezone`: IANA name; drives "today", reminder mornings, and the leaderboard month.
+
+### `ai_connections` (→ plan 20, SPEC §6)
+
+- At most two rows per household, `UNIQUE(householdId, slot)`: `slot = 'primary'` is what every
+  AI feature calls; `'backup'` gets the same request when the primary fails
+  (→ `server/ai/run.ts`). No row means AI features are off. Removing the primary promotes the
+  backup; saving a "backup" with no primary stores it as the primary.
+- `provider`: `'gemini' | 'openai' | 'anthropic' | 'openrouter'` (→ `$lib/ai.ts`). `model` is the
+  provider's own id, picked from its live list or typed — never a value the app ships.
+- `apiKey`: **plaintext**, for #112's reason (a key that could decrypt it would live in the same
+  single-tenant container). Server-only: Settings loads provider, model and a masked hint.
+- `vision`: whether the model reads images, as its listing said when it was picked; `NULL` =
+  unknown (a typed id), which photo import still tries. `false` is skipped for photos.
+- Replaced plan 13's `households.gemini_api_key` in migration `0013`, which copies a non-blank
+  key into a `primary` Gemini row on `gemini-flash-latest` before dropping the column — with a
+  plain `DROP COLUMN`, never drizzle's table rebuild, whose `DROP TABLE households` would cascade
+  inside the migrator's transaction.
 
 ### `members`
 

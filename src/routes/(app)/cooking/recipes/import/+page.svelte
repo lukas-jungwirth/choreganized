@@ -53,10 +53,13 @@
 	// render, so there's no flash of the entry screen in between.
 	let saved = $state<RecipePrefill | null>(null);
 	let extractedByAi = $state(false);
+	/** "Gemini couldn't answer, so your backup did" — kept with the draft it explains. */
+	let backupNote = $state<string | undefined>();
 	$effect(() => {
 		if (form && 'draft' in form && form.draft) {
 			saved = form.draft;
 			extractedByAi = 'aiExtracted' in form && Boolean(form.aiExtracted);
+			backupNote = 'aiNote' in form && typeof form.aiNote === 'string' ? form.aiNote : undefined;
 		}
 	});
 	const draft = $derived<RecipePrefill | null>(
@@ -116,7 +119,11 @@
 		back="/cooking/recipes"
 		error={saveError}
 		field={saveField}
-		notice={aiNotice ? m.cooking.import.ai.note : undefined}
+		notice={aiNotice
+			? backupNote
+				? `${m.cooking.import.ai.note} ${backupNote}`
+				: m.cooking.import.ai.note
+			: undefined}
 	/>
 {:else if mode === 'photo'}
 	<SubHeader

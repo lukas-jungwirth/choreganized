@@ -1,24 +1,21 @@
 /**
- * AI recipe extraction (→ SPEC §4.7, plan 13) — the fallback for what plan 12's
- * JSON-LD link import can't read: a page with no `Recipe` markup, text pasted
- * from a bot-blocked site, or photos of a cookbook page. Given a household's own
- * Google Gemini key, one model call turns text or images into the same
- * `RecipePrefill` the link importer produces, so every path lands in the same
- * editor — **the AI never saves anything on its own** (→ SPEC §4.7).
+ * AI recipe extraction (→ SPEC §4.7, plans 13 & 20) — the fallback for what plan
+ * 12's JSON-LD link import can't read: a page with no `Recipe` markup, text
+ * pasted from a bot-blocked site, or photos of a cookbook page. One model call,
+ * on the household's own provider and model (→ `services/ai.ts`), turns text or
+ * images into the same `RecipePrefill` the link importer produces, so every path
+ * lands in the same editor — **the AI never saves anything on its own**
+ * (→ SPEC §4.7).
  *
  * Ingredients come back as **raw lines**, exactly as the recipe writes them, and
  * flow through the editor's own `$lib/utils/ingredients` parse — one convergent
  * path from typed input, link import, and here.
  *
- * The key is built into a client **per call** (it's per household, never a module
- * singleton) and never logged. The model is asked for structured JSON via a
- * `responseSchema`; failures are a typed `AiImportError` the import screen
- * translates. Gemini has no typed error hierarchy — a rejected key is a 400
- * "API key not valid" rather than an auth-error class — so mapping branches on
- * `ApiError.status` (→ DECISIONS).
+ * The call goes through `generateWithFallback`, so a household with a backup
+ * gets an answer when its main provider is at its limit; which one answered
+ * rides back with the draft for the screen to say.
  */
-import { ApiError, GoogleGenAI, Type, type ContentListUnion } from '@google/genai';
-import { env } from '$env/dynamic/private';
+import type { AiProvider } from '$lib/ai';
 import type { Messages } from '$lib/i18n';
 import {
 	INGREDIENT_LINE_MAX,
@@ -30,40 +27,24 @@ import {
 	STEPS_MAX,
 	type RecipePrefill
 } from '$lib/utils/recipes';
-
-/**
- * The Gemini model, resolved per call. `gemini-flash-latest` is an **alias Google
- * keeps pointed at the current Flash model** — vision-capable, cents an extraction
- * — so it survives Google's aggressive (often early) model retirements: a pinned
- * `gemini-2.5-flash` started 404-ing "no longer available" mid-2026, weeks before
- * its own scheduled shutdown (→ DECISIONS). `GEMINI_MODEL` in the env overrides it
- * without a code change if a rotation ever needs a specific id. Read lazily
- * because `$env/dynamic/private` is empty during the build (→ uploads.ts).
- */
-function resolveModel(): string {
-	return env.GEMINI_MODEL?.trim() || 'gemini-flash-latest';
-}
+import { generateWithFallback, type Answered, type Connection, type RunOptions } from '../ai/run';
+import { array, integer, nullable, object, string } from '../ai/schema';
+import { AiError, type AiPart } from '../ai/types';
+import { aiErrorMessage } from './ai';
 
 /** A generous ceiling on pasted / page-stripped text; past this it isn't a recipe. */
 const MAX_TEXT_CHARS = 40_000;
 
-/** Photos arrive already re-encoded to WebP (→ uploads.ts); Gemini decodes it natively. */
-const IMAGE_MIME = 'image/webp';
+/** Room for a long recipe's JSON — and for a model that thinks before it answers. */
+const MAX_OUTPUT_TOKENS = 16_000;
 
 export type AiImportErrorCode =
-	/** No key configured — the UI gates on this, so it's a guard, not a path. */
+	/** No connection configured — the UI gates on this, so it's a guard, not a path. */
 	| 'no-key'
-	/** The key was refused (400 "API key not valid", or 401 / 403). */
-	| 'bad-key'
-	/** Rate limited (429) — most likely the free tier's per-minute cap. */
-	| 'rate-limited'
-	/** The model 404'd — retired, or a bad `GEMINI_MODEL` override (→ resolveModel). */
-	| 'model-unavailable'
 	/** The model returned nothing usable, or the input held no recipe. */
-	| 'no-recipe'
-	/** Anything else — network, a 5xx, a shape we didn't expect. */
-	| 'failed';
+	| 'no-recipe';
 
+/** The import's own refusals; provider failures are `AiError`s (→ `server/ai`). */
 export class AiImportError extends Error {
 	constructor(readonly code: AiImportErrorCode) {
 		super(code);
@@ -71,25 +52,16 @@ export class AiImportError extends Error {
 	}
 }
 
-/** The service's refusals, in the import screen's words (→ `cooking.import.ai.error`). */
+/** Any extraction failure in the import screen's words. */
 export function aiImportErrorMessage(cause: unknown, m: Messages): string {
-	const code: AiImportErrorCode = cause instanceof AiImportError ? cause.code : 'failed';
-
-	switch (code) {
-		case 'no-key':
-			return m.cooking.import.ai.error.noKey;
-		case 'bad-key':
-			return m.cooking.import.ai.error.badKey;
-		case 'rate-limited':
-			return m.cooking.import.ai.error.rateLimited;
-		case 'model-unavailable':
-			return m.cooking.import.ai.error.modelUnavailable;
-		case 'no-recipe':
-			return m.cooking.import.ai.error.noRecipe;
-		case 'failed':
-			return m.cooking.import.ai.error.failed;
+	if (cause instanceof AiImportError) {
+		return cause.code === 'no-key' ? m.ai.error.noKey : m.cooking.import.ai.error.noRecipe;
 	}
+	return aiErrorMessage(cause, m);
 }
+
+/** A draft, and which connection produced it. */
+export type Extracted = Answered<RecipePrefill>;
 
 /**
  * The rules every extraction runs under, kept in the system instruction so the
@@ -107,136 +79,72 @@ const SYSTEM_INSTRUCTION = [
 ].join(' ');
 
 /**
- * The shape the model must return — a hand-written schema (no zod in the tree).
- * Name/ingredients/steps are required; time and servings are optional and may be
- * null. `propertyOrdering` keeps the JSON stable across calls.
+ * The shape the model must return, in the strict subset every provider takes
+ * (→ `server/ai/schema.ts`): everything required, "not stated" as null.
  */
-const RESPONSE_SCHEMA = {
-	type: Type.OBJECT,
-	properties: {
-		name: { type: Type.STRING, description: 'The recipe title, in its own language.' },
-		timeMinutes: {
-			type: Type.INTEGER,
-			nullable: true,
-			description: 'Total time in whole minutes, or null if not stated.'
-		},
-		servings: {
-			type: Type.INTEGER,
-			nullable: true,
-			description: 'Number of servings, or null if not stated.'
-		},
-		ingredients: {
-			type: Type.ARRAY,
-			items: { type: Type.STRING },
-			description: 'Raw ingredient lines, each with amount and name together.'
-		},
-		steps: {
-			type: Type.ARRAY,
-			items: { type: Type.STRING },
-			description: 'The method, one step per item, in order.'
-		}
-	},
-	required: ['name', 'ingredients', 'steps'],
-	propertyOrdering: ['name', 'timeMinutes', 'servings', 'ingredients', 'steps']
-};
+const RESPONSE_SCHEMA = object({
+	name: string({ description: 'The recipe title, in its own language.' }),
+	timeMinutes: nullable(
+		integer({ description: 'Total time in whole minutes, or null if not stated.' })
+	),
+	servings: nullable(integer({ description: 'Number of servings, or null if not stated.' })),
+	ingredients: array(string(), {
+		description: 'Raw ingredient lines, each with amount and name together.'
+	}),
+	steps: array(string(), { description: 'The method, one step per item, in order.' })
+});
 
 /** A recipe from pasted text, or from a page stripped to readable text (→ recipe-import.ts). */
-export async function extractRecipeFromText(apiKey: string, text: string): Promise<RecipePrefill> {
+export async function extractRecipeFromText(
+	connections: Connection[],
+	text: string,
+	options?: RunOptions
+): Promise<Extracted> {
 	const trimmed = text.slice(0, MAX_TEXT_CHARS).trim();
 	// Nothing to read — a page that stripped to no prose, or an empty paste. Don't
 	// spend a (billed) call to be told the input was empty; that's simply "no recipe".
 	if (!trimmed) throw new AiImportError('no-recipe');
-	return extract(apiKey, trimmed);
+	return extract(connections, [{ type: 'text', text: trimmed }], options);
 }
 
 /**
  * A recipe from 1–3 photos, already validated and re-encoded to WebP by the
  * caller (→ uploads.ts). The images lead and the instruction follows, the way
- * Gemini's multimodal prompts read.
+ * multimodal prompts read best on every provider.
  */
-export function extractRecipeFromImages(apiKey: string, images: Buffer[]): Promise<RecipePrefill> {
-	const parts = [
-		...images.map((webp) => ({
-			inlineData: { mimeType: IMAGE_MIME, data: webp.toString('base64') }
-		})),
-		{ text: 'Extract the recipe shown in these photos.' }
+export function extractRecipeFromImages(
+	connections: Connection[],
+	images: Buffer[],
+	options?: RunOptions
+): Promise<Extracted> {
+	const parts: AiPart[] = [
+		...images.map((webp) => ({ type: 'image' as const, webp })),
+		{ type: 'text', text: 'Extract the recipe shown in these photos.' }
 	];
 
-	return extract(apiKey, parts);
+	return extract(connections, parts, { ...options, needsVision: true });
 }
 
-/**
- * A "does this key work?" probe for Settings (→ plan 14): a tiny generation on
- * the same model extraction uses, so a green result really means "extraction
- * will work", not merely "the key is well-formed". Resolves on success; throws a
- * typed `AiImportError` (`bad-key` / `rate-limited` / `failed`) otherwise.
- */
-export async function testGeminiKey(apiKey: string): Promise<void> {
-	const ai = new GoogleGenAI({ apiKey });
-	try {
-		await ai.models.generateContent({
-			model: resolveModel(),
-			contents: 'ping',
-			config: { maxOutputTokens: 16, temperature: 0 }
-		});
-	} catch (cause) {
-		throw mapSdkError(cause);
-	}
-}
+/** The single model call both paths share. */
+function extract(
+	connections: Connection[],
+	parts: AiPart[],
+	options?: RunOptions
+): Promise<Extracted> {
+	if (!connections.length) throw new AiImportError('no-key');
 
-/** The single model call both paths share. `contents` is text or an array of parts. */
-async function extract(apiKey: string, contents: ContentListUnion): Promise<RecipePrefill> {
-	const ai = new GoogleGenAI({ apiKey });
-
-	let raw: string | undefined;
-	try {
-		const response = await ai.models.generateContent({
-			model: resolveModel(),
-			contents,
-			config: {
-				systemInstruction: SYSTEM_INSTRUCTION,
-				responseMimeType: 'application/json',
-				responseSchema: RESPONSE_SCHEMA,
-				// Extraction, not invention: pin it to the single most likely reading.
-				temperature: 0
-			}
-		});
-		raw = response.text;
-	} catch (cause) {
-		throw mapSdkError(cause);
-	}
-
-	return toPrefill(parseJson(raw));
-}
-
-/**
- * Map the SDK's errors to ours. Gemini throws a single `ApiError` carrying the
- * HTTP status (no `AuthenticationError`/`RateLimitError` classes to catch), so
- * the reading is by status — a rejected key is a 400 whose message names the key,
- * or a 401/403 (→ DECISIONS). The raw error is never surfaced.
- */
-function mapSdkError(cause: unknown): AiImportError {
-	if (cause instanceof ApiError) {
-		if (cause.status === 429) return new AiImportError('rate-limited');
-		if (cause.status === 401 || cause.status === 403) return new AiImportError('bad-key');
-		if (cause.status === 400 && /api[\s_-]?key/i.test(cause.message)) {
-			return new AiImportError('bad-key');
-		}
-		// 404 = the model path wasn't found: retired (Google does this early), or a
-		// bad `GEMINI_MODEL` override. Distinct from a transient failure (→ DECISIONS).
-		if (cause.status === 404) return new AiImportError('model-unavailable');
-	}
-	return new AiImportError('failed');
-}
-
-/** Structured output is meant to be valid JSON; an empty or unparseable reply is "no recipe". */
-function parseJson(raw: string | undefined): unknown {
-	if (!raw || !raw.trim()) throw new AiImportError('no-recipe');
-	try {
-		return JSON.parse(raw);
-	} catch {
-		throw new AiImportError('no-recipe');
-	}
+	return generateWithFallback(
+		connections,
+		{
+			system: SYSTEM_INSTRUCTION,
+			parts,
+			schema: RESPONSE_SCHEMA,
+			schemaName: 'recipe',
+			maxOutputTokens: MAX_OUTPUT_TOKENS
+		},
+		toPrefill,
+		options
+	);
 }
 
 /**
@@ -245,8 +153,11 @@ function parseJson(raw: string | undefined): unknown {
  * can't overfill the editor. A reply with no name and no ingredients and no steps
  * is "couldn't find a recipe" — a photo of a cat, a page that wasn't one.
  */
-function toPrefill(data: unknown): RecipePrefill {
-	if (!isObject(data)) throw new AiImportError('no-recipe');
+function toPrefill(data: unknown, provider: AiProvider): RecipePrefill {
+	// Not the object the schema promised: the provider's failure, so the backup
+	// gets a turn (→ `server/ai/run.ts`). An empty recipe below is not — that is
+	// the model saying there was nothing to find.
+	if (!isObject(data)) throw new AiError('bad-output', provider);
 
 	const name = typeof data.name === 'string' ? data.name.trim() : '';
 	const ingredientLines = toLines(data.ingredients, INGREDIENT_LINE_MAX, INGREDIENTS_MAX);

@@ -308,8 +308,8 @@ where it can still be acted on (→ [DECISIONS #131](DECISIONS.md)).
 - Grid of recipe cards (photo, name, time). Search by name.
 - The FAB (and the empty state's **Add a recipe** button) open the **"Add a recipe" chooser**
   (→ plan 14, a bottom sheet): **From a link** and **Enter by hand** always, plus **From a photo**
-  and **Paste text** (each "AI"-tagged) **only when AI import is set up** — with no key there's
-  nothing to offer, and the AI import row in Settings (§6) is where it's turned on.
+  and **Paste text** (each "AI"-tagged) **only when AI features are set up** — with no provider
+  there's nothing to offer, and the AI features row in Settings (§6) is where it's turned on.
 - Empty state [7e]: "Build your cookbook" + **Add a recipe** (opens the same chooser).
 
 ### 4.4 New/edit recipe [3c] (full-screen route, not a sheet)
@@ -459,10 +459,14 @@ where it can still be acted on (→ [DECISIONS #131](DECISIONS.md)).
   loopback / private / link-local hosts refused _before any request_ and re-checked on every
   redirect hop, redirects capped (~5), ~10 s timeout, ~3 MB page cap, `text/html` only. Each
   failure has its own translated message — unreachable · blocked · not a page · too large · no
-  recipe found. A page with no recipe offers manual entry, and — when AI import is set up — the
-  AI fallback below.
-- **AI fallback** (→ plan 13) — available only when the household has set a Google **Gemini** API
-  key in Settings (§6); nothing reaches any model without one, and every path lands in the same
+  recipe found. A page with no recipe offers manual entry, and — when AI features are set up —
+  the AI fallback below.
+- **AI fallback** (→ plans 13, 20) — available only when the household has set up an AI provider
+  in Settings (§6): its own key for Google Gemini, OpenAI (ChatGPT), Anthropic (Claude) or
+  OpenRouter, on a model it picked. Nothing reaches any model without one. When the main provider
+  can't answer (limit reached, out of credit, key refused, down), the household's **backup**
+  provider, if it has one, gets the same request, and the draft says so ("Gemini couldn't
+  answer, so your backup (Claude) did"). Every path lands in the same
   [3c] editor with a quiet "AI-extracted — check before saving" note (**the AI never saves on its
   own**). Three ways in (photo and text are their own focused modes off the chooser §4.3; the
   first is an in-context escalation off a failed link fetch):
@@ -476,7 +480,9 @@ where it can still be acted on (→ [DECISIONS #131](DECISIONS.md)).
     to WebP (EXIF stripped) before they reach the model; the first is offered as the recipe photo.
     Ingredients come back as **raw lines** and parse to amount chips exactly like typed and
     link-imported ones. Recipe content keeps its **source language** (→ §9). Failures are their own
-    messages — key refused (→ Settings) · service busy · nothing found — never a raw API error.
+    messages, naming the provider — key refused (→ Settings) · at its limit · quota or credit used
+    up · model unavailable or unable to read photos · not answering · nothing found — never a raw
+    API error; when the backup failed too, the message says that as well.
 - Household content is never translated: imported names, ingredients and steps pass through
   verbatim (→ §9).
 
@@ -649,10 +655,27 @@ The **History** tab is a stats landing; the full feed sits one level below it (�
   notification. Its own group and heading, because permission is per-browser and the switch is
   not a master over the three above (→ DECISIONS #130).
 - **Away mode**: "Going away?" — same control as 5.5.
-- **Household**: name (owner can rename), **AI recipe import** (owner sets/removes a Google
-  Gemini API key for the §4.7 fallback and can **Test connection** — a live check that reports
-  "Connection works" or why not; members see only whether it's on — the key is never shown, only
-  a masked hint), Members · {n} → members screen.
+- **Household**: name (owner can rename), **AI features** (→ plan 20), Members · {n} → members
+  screen.
+- **AI features** (owner only; members see the row read-only, e.g. "Gemini ·
+  gemini-flash-latest", or "Not set up"). A sheet with a note on top — a free tier (Gemini, or
+  OpenRouter's free models) is plenty for a household, but free tiers have limits and sometimes
+  stop answering, which is what the backup is for — and two slots:
+  - **Main** — what every AI feature calls; **Backup (optional)** — gets the same request when
+    the main one fails. Removing the main one promotes the backup.
+  - Setting one up: pick the **provider** (Google Gemini · ChatGPT (OpenAI) · Claude (Anthropic) ·
+    OpenRouter, each with a "free tier" / "paid" hint and a link to where its keys are made),
+    paste the **key**, and the **model** list loads by itself — **the provider's own live list**,
+    filtered to models that can answer in structured JSON, so a model released yesterday is
+    already there and nothing is hard-coded to go stale. A recommended model is preselected
+    (Gemini's `gemini-flash-latest`, OpenAI's newest `-mini`, Claude's newest Haiku, OpenRouter's
+    first free model that reads photos), so "paste key, Save" is the whole setup; **Other
+    model…** takes a typed id. Loading the list is the key check — a refused key says so before
+    anything is saved.
+  - Per slot: provider · model · masked key hint (first four + last four — the key itself is
+    never shown or sent back), **Edit** (the key field starts empty; leaving it empty keeps the
+    stored key while the provider stays the same), **Test connection** (a tiny live call on the
+    saved model: "Connection works" or why not), **Remove**.
 - **About**: **Send feedback** → sheet — a **bug** or an **idea**, in your own words, in any
   language, up to 2000 characters. The sheet says what travels with it _before_ you send, and
   says it accurately: **the repository is public**, so the issue carries the words, the app

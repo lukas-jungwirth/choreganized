@@ -8,8 +8,9 @@
  *   - `extractPage`  — a fetched page with no Recipe markup, read by the model.
  *   - `extractText`  — recipe text pasted by hand (the answer for 403 sites).
  *   - `extractPhotos`— 1–3 photos of a cookbook / magazine page.
- * All three need the household's own Gemini key (→ services/ai-import.ts); the UI
- * only offers them when one is set.
+ * All three need the household's own AI connection (→ services/ai.ts, plan 20);
+ * the UI only offers them when one is set up. When the backup answered for the
+ * main provider, the result says so (`aiNote`).
  *
  * `save` is the recipe editor's usual create, plus attaching whatever photo the
  * import produced. Nothing is persisted before Save but the temp photo file; an
@@ -23,12 +24,14 @@ import {
 	importRecipeOrText,
 	RecipeImportError
 } from '$lib/server/recipe-import';
+import type { Messages } from '$lib/i18n';
+import { getAiConnections, isAiEnabled } from '$lib/server/services/ai';
 import {
 	aiImportErrorMessage,
 	extractRecipeFromImages,
-	extractRecipeFromText
+	extractRecipeFromText,
+	type Extracted
 } from '$lib/server/services/ai-import';
-import { getAiImportStatus, getGeminiApiKey } from '$lib/server/services/household';
 import { claimImportedPhoto, createRecipe } from '$lib/server/services/recipes';
 import {
 	deleteUpload,
@@ -52,7 +55,7 @@ export const load: PageServerLoad = (event) => {
 		// Which focused method the "Add a recipe" chooser routed to (→ plan 14).
 		mode: readMode(event.url.searchParams),
 		// Only whether AI import is available — never the key itself (→ SPEC §4.7).
-		aiEnabled: getAiImportStatus(householdId).set
+		aiEnabled: isAiEnabled(householdId)
 	};
 };
 
@@ -60,6 +63,24 @@ export const load: PageServerLoad = (event) => {
 function readMode(params: URLSearchParams): 'link' | 'photo' | 'text' {
 	const mode = params.get('mode');
 	return mode === 'photo' || mode === 'text' ? mode : 'link';
+}
+
+/**
+ * An extraction's success payload: the draft, and — when the main provider
+ * couldn't answer and the backup did — the line that says so.
+ */
+function extracted(result: Extracted, m: Messages) {
+	const { fellBackFrom, used } = result;
+	return {
+		draft: result.value,
+		aiExtracted: true,
+		aiNote: fellBackFrom
+			? m.cooking.import.ai.usedBackup(
+					m.ai.providers[used.provider].short,
+					m.ai.providers[fellBackFrom.provider].short
+				)
+			: undefined
+	};
 }
 
 function sharedUrl(params: URLSearchParams): string {
@@ -110,16 +131,15 @@ export const actions: Actions = {
 		const m = catalog(event.locals.locale);
 		const url = String(form.get('url') ?? '').trim();
 
-		const key = getGeminiApiKey(householdId);
-		if (!key) return fail(400, { aiError: m.cooking.import.ai.error.noKey, url, noRecipe: true });
+		const connections = getAiConnections(householdId);
+		if (!connections.length) return fail(400, { aiError: m.ai.error.noKey, url, noRecipe: true });
 		if (!url) return fail(400, { fetchError: m.cooking.import.error.invalidUrl, url });
 
 		try {
 			const result = await importRecipeOrText(url);
 			// JSON-LD may have appeared on the re-fetch; use it directly if so.
 			if ('draft' in result) return { draft: result.draft };
-			const draft = await extractRecipeFromText(key, result.text);
-			return { draft, aiExtracted: true };
+			return extracted(await extractRecipeFromText(connections, result.text), m);
 		} catch (cause) {
 			const message =
 				cause instanceof RecipeImportError
@@ -136,14 +156,13 @@ export const actions: Actions = {
 		const m = catalog(event.locals.locale);
 		const text = String(form.get('text') ?? '').trim();
 
-		const key = getGeminiApiKey(householdId);
-		if (!key) return fail(400, { aiError: m.cooking.import.ai.error.noKey });
+		const connections = getAiConnections(householdId);
+		if (!connections.length) return fail(400, { aiError: m.ai.error.noKey });
 		// Keep whatever was pasted on screen so a miss isn't retyped.
 		if (!text) return fail(400, { aiError: m.cooking.import.ai.error.noRecipe, aiText: text });
 
 		try {
-			const draft = await extractRecipeFromText(key, text);
-			return { draft, aiExtracted: true };
+			return extracted(await extractRecipeFromText(connections, text), m);
 		} catch (cause) {
 			return fail(422, { aiError: aiImportErrorMessage(cause, m), aiText: text });
 		}
@@ -165,8 +184,8 @@ export const actions: Actions = {
 			.filter((entry): entry is File => entry instanceof File && entry.size > 0)
 			.slice(0, MAX_PHOTOS);
 
-		const key = getGeminiApiKey(householdId);
-		if (!key) return fail(400, { aiError: m.cooking.import.ai.error.noKey });
+		const connections = getAiConnections(householdId);
+		if (!connections.length) return fail(400, { aiError: m.ai.error.noKey });
 		if (!files.length) return fail(400, { aiError: m.cooking.import.ai.error.noPhotos });
 
 		let webps: Buffer[];
@@ -176,12 +195,13 @@ export const actions: Actions = {
 			return fail(400, { aiError: uploadErrorMessage(cause, m) });
 		}
 
-		let draft: RecipePrefill;
+		let result: Extracted;
 		try {
-			draft = await extractRecipeFromImages(key, webps);
+			result = await extractRecipeFromImages(connections, webps);
 		} catch (cause) {
 			return fail(422, { aiError: aiImportErrorMessage(cause, m) });
 		}
+		const draft: RecipePrefill = result.value;
 
 		// Keep the first photo as the recipe's — already re-encoded, so store the
 		// bytes as they are rather than running them through sharp twice. A photo is
@@ -197,7 +217,7 @@ export const actions: Actions = {
 			// Disk trouble — the recipe is still worth showing, just photo-less.
 		}
 
-		return { draft, aiExtracted: true };
+		return extracted(result, m);
 	},
 
 	/** Create the recipe — the new-recipe path, plus the imported/extracted photo. */

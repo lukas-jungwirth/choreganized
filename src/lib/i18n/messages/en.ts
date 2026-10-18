@@ -1238,21 +1238,20 @@ export const en = {
 				photoHint: 'Up to 3 photos of a cookbook or magazine page.',
 				photoSubmit: 'Extract from photos',
 				hintLead: 'No recipe data on that page. ',
-				hintLink: 'Set up AI import',
+				hintLink: 'Set up AI features',
 				hintRest: ' in Settings to extract it anyway.',
-				/** Photo/text mode with no key set — an edge (the chooser routes such
+				/** Photo/text mode with no connection — an edge (the chooser routes such
 				 *  taps to Settings), but a direct visit or a just-removed key lands here. */
 				setupCopy:
-					'AI import isn’t set up yet. Add a Google Gemini key to read recipes from photos and pasted text.',
-				setupCta: 'Set up AI import',
+					'AI features aren’t set up yet. Add a key from Gemini, ChatGPT, Claude or OpenRouter to read recipes from photos and pasted text.',
+				setupCta: 'Set up AI features',
+				/** The backup answered because the main provider couldn't (→ plan 20). */
+				usedBackup: (backup: string, main: string) =>
+					`${main} couldn’t answer, so your backup (${backup}) did.`,
+				/** Provider failures are `ai.error.*`; these two are the import's own. */
 				error: {
-					noKey: 'Set up AI import in Settings first.',
-					badKey: 'That Gemini key was refused — check it in Settings.',
-					rateLimited: 'The AI service is busy right now — give it a moment and try again.',
-					modelUnavailable: 'The AI model isn’t available — the app may need an update.',
 					noRecipe: 'Couldn’t find a recipe in that — try clearer photos or more complete text.',
-					noPhotos: 'Add at least one photo of the recipe.',
-					failed: 'AI extraction didn’t work — give it a moment and try again.'
+					noPhotos: 'Add at least one photo of the recipe.'
 				}
 			}
 		}
@@ -1352,33 +1351,59 @@ export const en = {
 			note: 'Everyone in the house sees this name.'
 		},
 
-		/** AI recipe import [6a] — owner only (→ plan 13, SPEC §4.7). The key is
-		 *  stored server-side; this screen only ever sees a masked hint. */
-		aiImport: {
-			row: 'AI recipe import',
-			on: 'On',
-			notSet: 'Not set',
-			title: 'AI recipe import',
+		/** AI features [6a] — the household's own provider keys (→ plan 20, SPEC §6).
+		 *  The keys stay server-side; this screen only ever sees a masked hint. */
+		ai: {
+			row: 'AI features',
+			notSet: 'Not set up',
+			/** The row's value: which provider and model the household's AI runs on. */
+			value: (provider: string, model: string) => `${provider} · ${model}`,
+			title: 'AI features',
 			eyebrow: 'Household',
-			what: 'Add a Google Gemini key to pull recipes from photos, pasted text, and pages that have no recipe data.',
-			cost: 'Each import costs a fraction of a cent on your own Google account — the free tier usually covers a household.',
-			getKey: 'Get a key at Google AI Studio',
-			current: (hint: string) => `Current key: ${hint}`,
-			keyLabel: 'Gemini API key',
-			keyPlaceholder: 'AQ.… or AIza…',
-			replace: 'Replace key',
-			remove: 'Remove key',
-			invalid: 'That doesn’t look like a Gemini key — paste the full key from Google AI Studio.',
-			/** "Test connection" [plan 14] — a live check of the stored key. */
+			what: 'Bring a key from an AI provider to import recipes from photos, pasted text and pages without recipe data.',
+			freeNote:
+				'A free tier (Gemini, or OpenRouter’s free models) is plenty for a household — but free tiers have limits and sometimes stop answering for a while. A backup keeps imports working when that happens.',
+			primary: 'Main',
+			backup: 'Backup',
+			backupEmpty: 'Answers when the main provider is at its limit or down.',
+			setUp: 'Set up',
+			addBackup: 'Add a backup',
+			edit: 'Edit',
+			remove: 'Remove',
+			keyHint: (hint: string) => `Key ${hint}`,
+			back: 'Back',
+
+			/** Setting up one connection — provider, key, model. */
+			connection: {
+				titlePrimary: 'Main provider',
+				titleBackup: 'Backup provider',
+				provider: 'Provider',
+				getKey: (provider: string) => `Get a ${provider} key`,
+				keyLabel: 'API key',
+				keyPlaceholder: 'Paste the key',
+				keyKeep: (hint: string) => `Leave empty to keep ${hint}.`,
+				invalidKey: 'That doesn’t look like an API key — paste the whole key.',
+				loadModels: 'Load models',
+				loadingModels: 'Loading models…',
+				modelLabel: 'Model',
+				modelsHint:
+					'Straight from the provider’s own list, so new models show up the day they ship.',
+				recommended: (label: string) => `${label} (recommended)`,
+				free: (label: string) => `${label} · free`,
+				otherModel: 'Other model…',
+				modelIdLabel: 'Model id',
+				modelIdPlaceholder: 'e.g. gemini-flash-latest',
+				invalidModel: 'Type the model id exactly as the provider writes it.',
+				needKey: 'Paste a key to see the models.',
+				save: 'Save',
+				saving: 'Saving…'
+			},
+
+			/** "Test connection" — a live call on the saved model. */
 			test: {
 				label: 'Test connection',
 				testing: 'Testing…',
-				ok: 'Connection works.',
-				noKey: 'Save a key first.',
-				badKey: 'That key was refused — check it and save again.',
-				busy: 'The AI service is busy — try again shortly.',
-				model: 'The key works, but the AI model is unavailable — the app may need an update.',
-				failed: 'Couldn’t reach the AI service — try again.'
+				ok: 'Connection works.'
 			}
 		},
 
@@ -1697,6 +1722,45 @@ export const en = {
 	 * `catalog(event.locals.locale)`, so a refusal comes back in the language the
 	 * request was made in.
 	 */
+	/* ── AI providers (→ plan 20) ──────────────────────────────────────────── */
+	ai: {
+		/** Brand names — not translated, but here so every screen names them one way. */
+		providers: {
+			gemini: { name: 'Google Gemini', short: 'Gemini', hint: 'Free tier available' },
+			openai: { name: 'ChatGPT (OpenAI)', short: 'OpenAI', hint: 'Paid, per use' },
+			anthropic: { name: 'Claude (Anthropic)', short: 'Claude', hint: 'Paid, per use' },
+			openrouter: {
+				name: 'OpenRouter',
+				short: 'OpenRouter',
+				hint: 'Free models available · one key, many providers'
+			}
+		},
+
+		/** Every provider failure, naming the provider — never the raw API error. */
+		error: {
+			noKey: 'Set up AI features in Settings first.',
+			badKey: (provider: string) => `${provider} refused the key — check it in Settings.`,
+			rateLimited: (provider: string) =>
+				`${provider} is at its limit right now — wait a minute and try again, or add a backup in Settings.`,
+			quota: (provider: string) =>
+				`${provider} says the quota or credit is used up — try again later, or add a backup in Settings.`,
+			modelUnavailable: (provider: string) =>
+				`${provider} doesn’t offer that model (any more) — pick another one in Settings.`,
+			modelUnsupported: (provider: string) =>
+				`That ${provider} model can’t do this — it may not read photos. Pick another one in Settings.`,
+			unavailable: (provider: string) =>
+				`${provider} isn’t answering right now — try again shortly.`,
+			timeout: (provider: string) => `${provider} took too long to answer — try again.`,
+			badOutput: (provider: string) =>
+				`${provider} answered, but not in a shape the app can use — try again, or another model.`,
+			failed: (provider: string) =>
+				provider
+					? `${provider} didn’t work this time — try again.`
+					: 'The AI didn’t work this time — try again.',
+			backupFailed: (provider: string) => `The backup (${provider}) didn’t work either.`
+		}
+	},
+
 	errors: {
 		/** Shared by every length-capped field. */
 		keepUnder: (max: number) => `Keep it under ${max} characters.`,

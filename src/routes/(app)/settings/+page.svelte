@@ -16,7 +16,7 @@
 	import AwayControl from '$lib/components/AwayControl.svelte';
 	import EnablePush from '$lib/components/EnablePush.svelte';
 	import HomeIcon from '$lib/components/icons/HomeIcon.svelte';
-	import AiImportSheet from '$lib/components/settings/AiImportSheet.svelte';
+	import AiFeaturesSheet from '$lib/components/settings/AiFeaturesSheet.svelte';
 	import FeedbackSheet from '$lib/components/settings/FeedbackSheet.svelte';
 	import HouseholdNameSheet from '$lib/components/settings/HouseholdNameSheet.svelte';
 	import LanguageSheet from '$lib/components/settings/LanguageSheet.svelte';
@@ -46,7 +46,7 @@
 	let choosingLanguage = $state(false);
 	let choosingTheme = $state(false);
 	let renamingHousehold = $state(false);
-	let editingAiKey = $state(false);
+	let editingAi = $state(false);
 	let sendingFeedback = $state(false);
 	let leaving = $state(false);
 	let sending = $state(false);
@@ -73,6 +73,13 @@
 	 * `form` is a union of every action's result, so the key has to be proven
 	 * present before it can be read — the same narrowing `testResult` does below.
 	 */
+	/** "Gemini · gemini-flash-latest" — which provider and model the house's AI runs on. */
+	const aiValue = $derived(
+		data.ai.primary
+			? m.settings.ai.value(m.ai.providers[data.ai.primary.provider].short, data.ai.primary.model)
+			: m.settings.ai.notSet
+	);
+
 	const feedbackSent = $derived(!!form && 'feedbackSent' in form && form.feedbackSent);
 
 	const testResult = $derived.by(() => {
@@ -281,25 +288,21 @@
 		<ChevronRight size={15} strokeWidth={2} class="chevron" />
 	</a>
 
-	<!-- AI recipe import [plan 13] — owner sets the key, everyone else sees whether
-		 it's on (→ SPEC §4.7). Like the house name, a control for the owner and a
-		 plain fact for the rest. -->
+	<!-- AI features [plan 20] — the owner sets the providers, everyone else sees
+		 which one the house runs on (→ SPEC §6). Like the house name, a control for
+		 the owner and a plain fact for the rest. -->
 	{#if owner}
-		<button type="button" class="row" onclick={() => (editingAiKey = true)}>
+		<button type="button" class="row" onclick={() => (editingAi = true)}>
 			<span class="tile" aria-hidden="true"><Sparkles size={18} strokeWidth={1.9} /></span>
-			<span class="label">{m.settings.aiImport.row}</span>
-			<span class="value">
-				{data.aiImport.set ? m.settings.aiImport.on : m.settings.aiImport.notSet}
-			</span>
+			<span class="label">{m.settings.ai.row}</span>
+			<span class="value long">{aiValue}</span>
 			<ChevronRight size={15} strokeWidth={2} class="chevron" />
 		</button>
 	{:else}
 		<div class="row">
 			<span class="tile" aria-hidden="true"><Sparkles size={18} strokeWidth={1.9} /></span>
-			<span class="label">{m.settings.aiImport.row}</span>
-			<span class="value">
-				{data.aiImport.set ? m.settings.aiImport.on : m.settings.aiImport.notSet}
-			</span>
+			<span class="label">{m.settings.ai.row}</span>
+			<span class="value long">{aiValue}</span>
 		</div>
 	{/if}
 </RowGroup>
@@ -373,12 +376,8 @@
 	/>
 {/if}
 
-{#if editingAiKey}
-	<AiImportSheet
-		isSet={data.aiImport.set}
-		hint={data.aiImport.hint}
-		onclose={() => (editingAiKey = false)}
-	/>
+{#if editingAi}
+	<AiFeaturesSheet status={data.ai} onclose={() => (editingAi = false)} />
 {/if}
 
 {#if sendingFeedback}
@@ -463,6 +462,16 @@
 		flex: none;
 		font-size: calc(14px * var(--fs));
 		color: var(--text-4);
+	}
+
+	/* A provider and a model id can outrun a 390px row ("OpenRouter ·
+	   meta-llama/llama-4-scout:free"): the value gives way, the label doesn't. */
+	.value.long {
+		flex: 0 1 auto;
+		min-width: 0;
+		overflow: hidden;
+		text-overflow: ellipsis;
+		white-space: nowrap;
 	}
 
 	.row :global(.chevron) {
