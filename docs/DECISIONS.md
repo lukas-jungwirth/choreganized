@@ -2057,3 +2057,34 @@ units | null, name}`, written back as editor lines in the reader's unit spelling
        lines** (headings, list items) with chrome and comment sections removed, and prefers
        `<main>`/`<article>`, so a model sees "Zutaten" above a list instead of one run-on
        paragraph, in fewer tokens. A page's `og:image` is the photo when its card has none.
+
+149. **A step's own amounts follow "Cooking for {n}" — rewritten at render time, only where
+     certain, never stored** (→ plan 23, SPEC §4.5, §4.6, `utils/step-amounts.ts`). #124 scaled
+     the list and #127 scaled each step's pinned shares, but the sentence still said "2 Tomaten"
+     when you cooked for twice as many. That sentence is the one thing being read at the hob.
+
+     - **Render time, no markers.** A marker syntax in the step text (or stored spans) would make
+       every typed recipe a format to get right, and the editor would show the syntax. The
+       amount is found where it is drawn instead, from what the step is already underlined for.
+       So it works for every recipe, typed, imported or AI-made, and the stored text never
+       changes.
+     - **Conservative by construction.** An amount is rewritten only when:
+       - It sits **directly before** an underlined ingredient (number, optional unit, optional
+         "of").
+       - Its unit is the row's own, in any spelling the parser reads.
+       - It agrees with what the recipe knows: on a pinned step, the share pinned there or the
+         whole row; otherwise no more than the row's total. A row with no amount vouches for
+         nothing.
+
+       "180 °C", "2 cm", "10 Minuten" and "in 4 Portionen" can't pass any of that, and a number
+       that reads two ways ("1.200": German thousands or English 1.2) is skipped. A wrong number
+       in an instruction is worse than an unscaled one.
+
+     - **The scaled reading is the input.** The text's number goes through the same
+       `scaleQuantity` the rows did, so the comparison is exact rather than "close enough".
+       Only the number changes: the unit as written ("EL" stays "EL"), a comma stays a comma,
+       a fraction stays a fraction.
+     - **Shown, not hidden.** In cook mode the amount is amber like the ingredient it measures;
+       in the recipe view it's sage and semibold. A screen reader hears what the recipe itself
+       says there. At the servings the recipe was written for, nothing is rewritten and the
+       markup is unchanged.

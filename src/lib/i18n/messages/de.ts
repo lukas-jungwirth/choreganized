@@ -853,6 +853,7 @@ export const de: Messages = {
 			peekEmpty: 'Für dieses Rezept sind keine Zutaten notiert.',
 			peekShare: (amount: string) => `von ${amount}`,
 			stepAmount: (amount: string) => `, ${amount}, `,
+			scaledFrom: (written: string) => ` (im Rezept: ${written})`,
 
 			timerTitle: 'Timer stellen',
 			timerSubtitle: 'Er klingelt, bis du ihn stoppst — auch bei gesperrtem Handy.',

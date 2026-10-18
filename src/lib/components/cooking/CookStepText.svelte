@@ -17,6 +17,11 @@
 	button. Screen readers don't tap: the amount rides along in the button, so the
 	sentence reads "sauté the mushrooms, 500 g, in butter" without a popup.
 
+	Cooking for a different number of people, an amount the sentence gives an
+	ingredient ("2 Tomaten") arrives already rewritten ("4 Tomaten") and marked
+	(→ `$lib/utils/step-amounts`, plan 23); a screen reader hears what the
+	recipe itself said beside it.
+
 	The `{#each}` has no line break anywhere inside it on purpose. Svelte turns the
 	whitespace of a prettier-formatted block into real text nodes, and a stray
 	space in the middle of "the mushrooms" is very visible at this size.
@@ -194,7 +199,10 @@
 					class:open={anchor?.at === index}
 					onclick={(event) => open(index, row, event)}
 					>{segment.text}<span class="said">{m.cooking.cook.stepAmount(said.spoken)}</span></button
-				>{:else if row}<mark>{segment.text}</mark>{:else}{segment.text}{/if}{/each}
+				>{:else if row}<mark>{segment.text}</mark>{:else if segment.scaledFrom}<span class="scaled"
+					>{segment.text}<span class="said">{m.cooking.cook.scaledFrom(segment.scaledFrom)}</span
+					></span
+				>{:else}{segment.text}{/if}{/each}
 	</p>
 
 	{#if anchor}
@@ -252,6 +260,12 @@
 	.mark:active,
 	.mark.open {
 		text-decoration-thickness: 3px;
+		color: var(--cook-amber);
+	}
+
+	/* An amount rewritten for tonight's count (→ plan 23): the same amber as the
+	   ingredient it measures, so "4 Tomaten" reads as one changed thing. */
+	.scaled {
 		color: var(--cook-amber);
 	}
 

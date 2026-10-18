@@ -71,3 +71,39 @@ test('a step’s own timer, set in the form, is the one cook mode offers by name
 	await page.getByRole('link', { name: 'Start cook mode' }).click();
 	await expect(page.getByRole('button', { name: 'Start 9:00 timer' })).toBeVisible();
 });
+
+test('cooking for more people rewrites the amounts a step names, and nothing else', async ({
+	page
+}) => {
+	await page.goto('/cooking/recipes/new');
+	await page.getByLabel('Recipe name').fill('E2E Tomatensalat');
+	await page.getByLabel('Servings').fill('2');
+	await page.getByLabel('Ingredient 1', { exact: true }).fill('2 Tomaten');
+	await page.getByRole('button', { name: 'Add ingredient' }).click();
+	await page.getByLabel('Ingredient 2', { exact: true }).fill('3 EL Olivenöl');
+	await page
+		.getByLabel('Step 1', { exact: true })
+		.fill(
+			'2 Tomaten in 2 cm Würfel schneiden, mit 3 EL Olivenöl beträufeln, 10 Minuten ziehen lassen.'
+		);
+	await page.getByRole('button', { name: 'Save recipe' }).click();
+	await expect(page.getByRole('heading', { name: 'E2E Tomatensalat', level: 1 })).toBeVisible();
+
+	// As written, nothing is marked.
+	const step = page.locator('.step-text').first();
+	await expect(step).toHaveText(
+		'2 Tomaten in 2 cm Würfel schneiden, mit 3 EL Olivenöl beträufeln, 10 Minuten ziehen lassen.'
+	);
+
+	// For four: the two amounts double, the centimetres and the minutes don't.
+	await page.goto(`${page.url()}?serves=4`);
+	// (The text a screen reader gets carries what the recipe said, beside each.)
+	await expect(step).toHaveText(
+		'4 (recipe says 2) Tomaten in 2 cm Würfel schneiden, mit 6 EL (recipe says 3 EL) Olivenöl beträufeln, 10 Minuten ziehen lassen.'
+	);
+	await expect(step.locator('.scaled')).toHaveCount(2);
+
+	// Cook mode, inheriting the count, says the same.
+	await page.getByRole('link', { name: 'Start cook mode' }).click();
+	await expect(page.locator('.scaled').first()).toContainText('4');
+});

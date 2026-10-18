@@ -29,6 +29,7 @@
 	import { keepScreenAwake } from '$lib/wake-lock';
 	import { scaleIngredients, servingsFactor } from '$lib/utils/ingredients';
 	import { readServings } from '$lib/utils/recipes';
+	import { scaleStepAmounts } from '$lib/utils/step-amounts';
 	import { plainName, readStep, scaleStepUses } from '$lib/utils/step-highlight';
 	import { messages } from '$lib/i18n';
 	import { formatDuration, parseStepDuration, TIMERS_MAX } from '$lib/utils/timer-parse';
@@ -125,6 +126,15 @@
 			{ text: step?.text ?? '', uses: scaleStepUses(step?.uses ?? null, factor) },
 			ingredients
 		)
+	);
+
+	/**
+	 * The step as it's drawn: the reading above, with every amount the sentence
+	 * gives an ingredient rewritten for tonight's count — where it's certain
+	 * (→ `$lib/utils/step-amounts`, plan 23).
+	 */
+	const segments = $derived(
+		scaleStepAmounts(read.segments, factor, ingredients, (step?.uses ?? null) !== null)
 	);
 
 	/**
@@ -239,7 +249,7 @@
 		<div class="body">
 			<p class="eyebrow">{m.cooking.cook.step(index + 1, steps.length)}</p>
 
-			<CookStepText segments={read.segments} {ingredients} />
+			<CookStepText {segments} {ingredients} />
 
 			<div class="chips">
 				{#if !ring}

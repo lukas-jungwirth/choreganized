@@ -370,6 +370,15 @@ where it can still be acted on (→ [DECISIONS #131](DECISIONS.md)).
     precision no scale can honour.
   - **Hidden entirely when the recipe never recorded its servings** — half of an unknown is
     unknown, so there is nothing honest to offer (→ [DECISIONS #124](DECISIONS.md)).
+  - **The steps' own amounts follow too** (→ plan 23, DECISIONS #149): "2 Tomaten würfeln" read
+    for twice as many says "**4** Tomaten würfeln", marked, with what the recipe says there
+    for a screen reader. Only where it is certain: the amount must sit directly before an
+    ingredient the step names, in that ingredient's unit, and agree with the recipe (the share
+    pinned to the step, or the whole row; otherwise no more than the row's total). Every other
+    number — "180 °C", "2 cm", "10 Minuten", "in 4 Portionen" — stays exactly as written, as do
+    numbers that could be read two ways ("1.200"). Only the number changes: "2 EL" becomes
+    "4 EL", a decimal comma stays a comma, a fraction stays a fraction. The editor always shows
+    the text as written.
 - **Start cook mode** (dark button) → cook mode.
 - ••• menu [7c]: Edit recipe, Duplicate, Share (v1: share plain-text recipe via Web Share API),
   Delete (confirm; meal-plan entries keep the name via snapshot).
@@ -407,8 +416,9 @@ where it can still be acted on (→ [DECISIONS #131](DECISIONS.md)).
   the row's total behind it — "20 g of 30 g" — so "how much of that was it again?" is answered
   for _now_ without losing what the recipe holds.
 - **Inherits "cooking for {n}"** from the recipe screen through `?serves=` (§4.5) — the peek
-  sheet, the "This step uses…" line, a step's own shares of an ingredient (§4.4) and the timer
-  labels all show the scaled amounts. Cook mode offers no stepper of its own: the count is
+  sheet, the "This step uses…" line, a step's own shares of an ingredient (§4.4), the amounts
+  the step's sentence gives its ingredients (in amber, → §4.5, plan 23) and the timer labels all
+  show the scaled amounts. Cook mode offers no stepper of its own: the count is
   decided before the hands are wet, and the underlines still land on the same words because only
   the numbers move. The count **stays** in the address as Prev/Next rewrite `?step=`, and rides
   the close × and Finish back to the recipe — a reload mid-cook (a backgrounded PWA waking up is

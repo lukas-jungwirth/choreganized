@@ -24,6 +24,8 @@
 	import type { MealSlot } from '$lib/utils/meals';
 	import { scaleIngredients, servingsFactor } from '$lib/utils/ingredients';
 	import { readServings } from '$lib/utils/recipes';
+	import { scaleStepAmounts } from '$lib/utils/step-amounts';
+	import { readStep, scaleStepUses } from '$lib/utils/step-highlight';
 	import { formatDuration } from '$lib/utils/timer-parse';
 	import CalendarDays from '@lucide/svelte/icons/calendar-days';
 	import ChefHat from '@lucide/svelte/icons/chef-hat';
@@ -112,6 +114,20 @@
 	const factor = $derived(servingsFactor(recipe.servings, serves ?? 0));
 	/** The amounts as this reader needs them — the whole point of the stepper. */
 	const ingredients = $derived(scaleIngredients(recipe.ingredients, factor));
+
+	/**
+	 * A step's text as runs, its ingredient amounts rewritten for the count being
+	 * read for (→ `$lib/utils/step-amounts`, plan 23). No underlines here — that
+	 * is cook mode's job; only the numbers change. As written, it's one run.
+	 */
+	function stepRuns(step: (typeof recipe.steps)[number]): { text: string; scaledFrom?: string }[] {
+		if (factor === 1) return [{ text: step.text }];
+		const read = readStep({ text: step.text, uses: scaleStepUses(step.uses, factor) }, ingredients);
+		return scaleStepAmounts(read.segments, factor, ingredients, step.uses !== null).map((run) => ({
+			text: run.text,
+			scaledFrom: run.scaledFrom
+		}));
+	}
 
 	/** Cook mode inherits the count rather than asking again with wet hands. */
 	const cookHref = $derived(
@@ -244,7 +260,13 @@
 				<li>
 					<span class="number" aria-hidden="true">{index + 1}</span>
 					<div class="step-body">
-						<span class="step-text">{step.text}</span>
+						<!-- No line breaks inside: whitespace here would be text (→ CookStepText). -->
+						<span class="step-text"
+							>{#each stepRuns(step) as run, at (at)}{#if run.scaledFrom}<span class="scaled"
+										>{run.text}<span class="said">{m.cooking.cook.scaledFrom(run.scaledFrom)}</span
+										></span
+									>{:else}{run.text}{/if}{/each}</span
+						>
 						<!-- The step's own timer (→ plan 21), so it is no surprise in cook mode. -->
 						{#if step.timer}
 							<span class="step-timer">
@@ -520,6 +542,22 @@
 		font-weight: 600;
 		color: var(--sage-deep);
 		font-variant-numeric: tabular-nums;
+	}
+
+	/* An amount rewritten for the count being read for (→ plan 23). */
+	.scaled {
+		font-weight: 600;
+		color: var(--sage-deep);
+	}
+
+	/* What the recipe itself says there, for a screen reader. */
+	.said {
+		position: absolute;
+		width: 1px;
+		height: 1px;
+		overflow: hidden;
+		clip-path: inset(50%);
+		white-space: nowrap;
 	}
 
 	.step-text {
