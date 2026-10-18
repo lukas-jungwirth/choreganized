@@ -21,8 +21,8 @@ const CURRY = {
 	servings: 4,
 	ingredientLines: ['200 g red lentils', '400 ml coconut milk', '1 onion'],
 	steps: [
-		{ text: 'Fry the onion.', uses: [{ ingredient: 2, quantity: null }] },
-		{ text: 'Add lentils and coconut milk, simmer 20 min.', uses: null }
+		{ text: 'Fry the onion.', uses: [{ ingredient: 2, quantity: null }], timer: null },
+		{ text: 'Add lentils and coconut milk, simmer 20 min.', uses: null, timer: null }
 	]
 };
 

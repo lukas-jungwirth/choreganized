@@ -7,7 +7,13 @@
  */
 import assert from 'node:assert/strict';
 import { describe, it } from 'vitest';
-import { MAX_TIMER_SECONDS, formatDuration, parseStepDuration, timerHref } from './timer-parse.ts';
+import {
+	MAX_TIMER_SECONDS,
+	formatDuration,
+	parseStepDuration,
+	stepDurations,
+	timerHref
+} from './timer-parse.ts';
 
 describe('parseStepDuration', () => {
 	it('reads the spellings a recipe uses', () => {
@@ -90,6 +96,59 @@ describe('parseStepDuration', () => {
 		assert.equal(parseStepDuration('Ferment for 24 hours'), null);
 		assert.equal(parseStepDuration('Rest 3 seconds'), null);
 		assert.equal(parseStepDuration('Prove for 12 h'), MAX_TIMER_SECONDS);
+	});
+});
+
+describe('parseStepDuration — German', () => {
+	// Before plan 21 every one of these was `null`: "minutes?" matched "Minute"
+	// and the word boundary then broke on the "n" of "Minuten".
+	it('reads the spellings a German recipe uses', () => {
+		assert.equal(parseStepDuration('Die Nudeln 10 Minuten kochen'), 600);
+		assert.equal(parseStepDuration('1 Minute ruhen lassen'), 60);
+		assert.equal(parseStepDuration('Ca. 5 Min. anbraten'), 300);
+		assert.equal(parseStepDuration('1 Stunde gehen lassen'), 3600);
+		assert.equal(parseStepDuration('2 Stunden schmoren'), 7200);
+		assert.equal(parseStepDuration('1 Std. kühlen'), 3600);
+		assert.equal(parseStepDuration('30 Sekunden mixen'), 30);
+		assert.equal(parseStepDuration('45 Sek. pürieren'), 45);
+	});
+
+	it('reads German ranges and decimals, taking the first value', () => {
+		assert.equal(parseStepDuration('5–10 Minuten köcheln'), 300);
+		assert.equal(parseStepDuration('8 bis 10 Minuten backen'), 480);
+		assert.equal(parseStepDuration('20 oder 25 Min. backen'), 1200);
+		assert.equal(parseStepDuration('1,5 Stunden ruhen'), 5400);
+	});
+
+	it('adds German minutes that follow hours immediately', () => {
+		assert.equal(parseStepDuration('1 Stunde und 30 Minuten schmoren'), 5400);
+		assert.equal(parseStepDuration('1 Std. 30 Min. garen'), 5400);
+		assert.equal(parseStepDuration('1 Stunde kühlen, dann 30 Minuten backen'), 3600);
+	});
+
+	it('does not read words that merely start like a unit', () => {
+		assert.equal(parseStepDuration('2 Minzeblätter zupfen'), null);
+		assert.equal(parseStepDuration('3 Stangen Lauch putzen'), null);
+		assert.equal(parseStepDuration('2 Stück Butter'), null);
+		assert.equal(parseStepDuration('Mit 1 Sekt aufgießen'), null);
+		assert.equal(parseStepDuration('Den Ofen auf 180 °C vorheizen'), null);
+	});
+});
+
+describe('stepDurations', () => {
+	it('lists every stated duration, both ends of a range included', () => {
+		assert.deepEqual(stepDurations('8–10 Minuten braten').sort(), [480, 600]);
+		assert.deepEqual(stepDurations('Bake 20 min, then rest 5 min').sort(), [1200, 300].sort());
+		assert.deepEqual(stepDurations('1 Std. 30 Min. garen, 2:00 ruhen').sort(), [120, 5400].sort());
+	});
+
+	it('is empty for a step that names no time — so no timer can be read into it', () => {
+		assert.deepEqual(stepDurations('Mit Salz abschmecken'), []);
+		assert.deepEqual(stepDurations('Preheat the oven to 200°C'), []);
+	});
+
+	it('leaves out what a timer could never be', () => {
+		assert.deepEqual(stepDurations('Über Nacht, mindestens 24 Stunden, marinieren'), []);
 	});
 });
 

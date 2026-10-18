@@ -24,11 +24,13 @@
 	import type { MealSlot } from '$lib/utils/meals';
 	import { scaleIngredients, servingsFactor } from '$lib/utils/ingredients';
 	import { readServings } from '$lib/utils/recipes';
+	import { formatDuration } from '$lib/utils/timer-parse';
 	import CalendarDays from '@lucide/svelte/icons/calendar-days';
 	import ChefHat from '@lucide/svelte/icons/chef-hat';
 	import ChevronLeft from '@lucide/svelte/icons/chevron-left';
 	import Clock from '@lucide/svelte/icons/clock';
 	import MoreHorizontal from '@lucide/svelte/icons/more-horizontal';
+	import Timer from '@lucide/svelte/icons/timer';
 	import Users from '@lucide/svelte/icons/users';
 	import { untrack } from 'svelte';
 	import type { PageProps } from './$types';
@@ -241,7 +243,19 @@
 			{#each recipe.steps as step, index (step.id)}
 				<li>
 					<span class="number" aria-hidden="true">{index + 1}</span>
-					<span class="step-text">{step.text}</span>
+					<div class="step-body">
+						<span class="step-text">{step.text}</span>
+						<!-- The step's own timer (→ plan 21), so it is no surprise in cook mode. -->
+						{#if step.timer}
+							<span class="step-timer">
+								<Timer size={13} strokeWidth={2.2} aria-hidden="true" />
+								{m.cooking.form.timerChip(
+									step.timer.label ?? m.cooking.cook.timerForStep(index + 1),
+									formatDuration(step.timer.seconds)
+								)}
+							</span>
+						{/if}
+					</div>
 				</li>
 			{/each}
 		</ol>
@@ -488,10 +502,28 @@
 		color: var(--on-sage);
 	}
 
-	.step-text {
+	.step-body {
 		flex: 1;
 		min-width: 0;
 		padding-top: 2px;
+	}
+
+	.step-timer {
+		display: inline-flex;
+		align-items: center;
+		gap: 5px;
+		margin-top: 6px;
+		padding: 3px 10px;
+		border-radius: var(--r-chip);
+		background: var(--sage-tint);
+		font-size: calc(12px * var(--fs));
+		font-weight: 600;
+		color: var(--sage-deep);
+		font-variant-numeric: tabular-nums;
+	}
+
+	.step-text {
+		display: block;
 		font-size: calc(14.5px * var(--fs));
 		line-height: 1.5;
 		color: var(--ink);

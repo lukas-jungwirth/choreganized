@@ -116,8 +116,12 @@ user ─┬─ session / account / verification        (Better Auth)
 - Ingredients are structured (name, quantity?, unit?) but _entered_ freeform ("400 g pasta")
   and parsed leniently (`src/lib/utils/ingredients.ts`, plan 07): `/^([\d.,½¼¾\/]+)?\s*([a-zA-Z]+)?\s+(.+)$/`-ish
   with a known-units whitelist; on no match, everything is the name.
-- Steps are plain text, ordered by `sortOrder`. Cook-mode timers are still **derived at render
-  time** from a duration regex — no columns, no authoring burden (→ DECISIONS #14).
+- Steps are plain text, ordered by `sortOrder`. A step **may carry its own timer**
+  (`timer_seconds` + an optional `timer_label`, migration 0014, → plan 21, DECISIONS #147) —
+  one per step, set in the form or by an import. `NULL` (every step written before it, and the
+  default) means cook mode **derives the timer at render time** from a duration regex over the
+  text, English or German (→ DECISIONS #14). Writes clamp to what a cook-mode timer can run
+  (5 s – 12 h, whole seconds) and drop anything else rather than refuse the step.
 - **What a step uses is derived _until somebody says otherwise_** (→ DECISIONS #127).
   `recipe_steps.ingredients_set` (migration 0010, `DEFAULT false` — every row written before it
   existed keeps reading its own text) flips a step from the matcher

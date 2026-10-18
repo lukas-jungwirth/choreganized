@@ -11,6 +11,7 @@
 import type { Messages } from '$lib/i18n';
 import { isCalendarDate, type CalendarDate } from './dates';
 import { readMealSlot, type MealSlot } from './meals';
+import { MAX_TIMER_SECONDS, MIN_TIMER_SECONDS, TIMER_LABEL_MAX } from './timer-parse';
 
 /* ── Field limits ─────────────────────────────────────────────────────────── */
 
@@ -60,7 +61,16 @@ export function uploadUrl(imagePath: string): string {
 export type StepInput = {
 	text: string;
 	uses: { ingredient: number; quantity: number | null }[] | null;
+	/** The step's own timer (→ plan 21), or null for one that reads its text. */
+	timer: StepTimer | null;
 };
+
+/**
+ * A step's own timer (→ plan 21, DECISIONS #147): whole seconds, and the name
+ * it rings with — null for "after its step" ("Step 3"). One per step, because
+ * cook mode keeps one ring per step.
+ */
+export type StepTimer = { seconds: number; label: string | null };
 
 /**
  * The same pin while the form still holds it, before anything is posted
@@ -144,8 +154,10 @@ export function readRecipeForm(
 
 	// `getAll` preserves DOM order, which is the order the rows were dragged into
 	// — so `sortOrder` is simply the index. Each step renders exactly one text
-	// field and one `stepUses`, so the two lists line up position for position.
+	// field, one `stepUses` and one `stepTimer`, so the lists line up position
+	// for position.
 	const uses = form.getAll('stepUses').map(String);
+	const timers = form.getAll('stepTimer').map(String);
 
 	return {
 		input: {
@@ -153,9 +165,11 @@ export function readRecipeForm(
 			timeMinutes: readOptionalNumber(form.get('timeMinutes')),
 			servings: readOptionalNumber(form.get('servings')),
 			ingredientLines: form.getAll('ingredient').map(String),
-			steps: form
-				.getAll('step')
-				.map((text, index) => ({ text: String(text), uses: readStepUses(uses[index]) }))
+			steps: form.getAll('step').map((text, index) => ({
+				text: String(text),
+				uses: readStepUses(uses[index]),
+				timer: readStepTimer(timers[index])
+			}))
 		}
 	};
 }
@@ -191,6 +205,43 @@ function readStepUses(value: string | undefined): StepInput['uses'] {
 			return [];
 		return [{ ingredient, quantity: typeof quantity === 'number' ? quantity : null }];
 	});
+}
+
+/**
+ * A step's own timer, off the hidden field beside it: `{"seconds":600,"label":
+ * "Nudeln"}`, or an empty string for a step that reads its text.
+ *
+ * Hand-rolled like `readStepUses` and for the same reason — a POST body owes
+ * nothing to the form that usually sends it. Anything unreadable, any length a
+ * cook-mode timer couldn't run (→ `MIN_TIMER_SECONDS`…`MAX_TIMER_SECONDS`) is
+ * no timer at all rather than an error: the step still saves, and still reads
+ * its own text. A name is trimmed and capped; an empty one means "after its step".
+ */
+export function readStepTimer(value: string | undefined): StepTimer | null {
+	if (!value) return null;
+
+	let parsed: unknown;
+	try {
+		parsed = JSON.parse(value);
+	} catch {
+		return null;
+	}
+
+	if (typeof parsed !== 'object' || parsed === null || Array.isArray(parsed)) return null;
+	const { seconds, label } = parsed as Record<string, unknown>;
+
+	if (
+		typeof seconds !== 'number' ||
+		!Number.isInteger(seconds) ||
+		seconds < MIN_TIMER_SECONDS ||
+		seconds > MAX_TIMER_SECONDS
+	) {
+		return null;
+	}
+
+	const name =
+		typeof label === 'string' ? label.replace(/\s+/g, ' ').trim().slice(0, TIMER_LABEL_MAX) : '';
+	return { seconds, label: name || null };
 }
 
 /**

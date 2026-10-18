@@ -1042,6 +1042,23 @@ export const en = {
 			usesAll: 'all',
 			usesBackToAuto: 'Read the step text instead',
 			usesEmpty: 'Add the ingredients first — then you can say which ones this step needs.',
+
+			/**
+			 * A step's own timer [3c] (→ plan 21, DECISIONS #147). The chip under a
+			 * step names it; a step without one shows what cook mode will read out of
+			 * its text ("auto"), or the invitation.
+			 */
+			timerAdd: 'Add a timer',
+			timerLabel: (index: number) => `Timer for step ${index}`,
+			/** "Nudeln · 10:00" — the name, then the clock. */
+			timerChip: (name: string, duration: string) => `${name} · ${duration}`,
+			timerSheet: {
+				title: 'Step timer',
+				eyebrow: (index: number) => `Step ${index}`,
+				subtitle: 'Cook mode offers it on this step, under this name.',
+				save: 'Save timer',
+				remove: 'Remove timer'
+			},
 			save: 'Save',
 			saveRecipe: 'Save recipe',
 			/** The reorder/remove controls beside each row. */
@@ -1100,6 +1117,8 @@ export const en = {
 			step: (index: number, total: number) => `Step ${index} of ${total}`,
 			startTimer: 'Set timer',
 			startParsedTimer: (duration: string) => `Start ${duration} timer`,
+			/** A step's own timer, by its name (→ plan 21): "Start Nudeln · 10:00". */
+			startNamedTimer: (name: string, duration: string) => `Start ${name} · ${duration}`,
 			ingredients: 'Ingredients',
 			/** "This step uses **250 g mushrooms**" — the bold is the list. */
 			usesLead: 'This step uses ',

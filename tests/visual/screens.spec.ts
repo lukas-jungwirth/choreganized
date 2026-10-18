@@ -80,6 +80,18 @@ const SCREENS: Screen[] = [
 	// A card's "30 min · added Sep 11".
 	{ name: 'recipes', path: '/cooking/recipes', mask: ['.meta'] },
 	{ name: 'recipe', path: '', navigate: openRecipe, bottom: true },
+	// The editor [3c]: each step's ingredient chips and, under them, its timer
+	// chip — "auto" where the text names a duration (→ plan 21).
+	{
+		name: 'recipe-edit',
+		path: '',
+		navigate: async (page) => {
+			await openRecipe(page);
+			await page.goto(`${page.url()}/edit`);
+			await page.getByRole('heading', { level: 1 }).waitFor();
+		},
+		bottom: true
+	},
 	{
 		name: 'cook-mode',
 		path: '',

@@ -49,8 +49,8 @@ Agents: when you make a judgment call that isn't in SPEC/ARCHITECTURE, **append 
     from step text ("8 min", "8:00", "8–10 minutes" → first value), ingredient underlines via
     case-insensitive name matching. Recipe form stays plain text ([3c] has no timer fields).
     Manual "Set timer" stepper covers unparsed steps. _(Half-superseded by #127: the reading is
-    still what a step does by default, but it can now be overruled per step. Timers are
-    unchanged.)_
+    still what a step does by default, but it can now be overruled per step. Timers followed in
+    #147: a step may carry its own named timer, and the text is the fallback.)_
 15. **Timer push precision**: in-process `setTimeout` at creation (second-precision) + minute
     cron as restart-safe catch-up; the row in `cook_timers` is the source of truth.
 16. **One meal slot per day** (dinner) — `UNIQUE(householdId, date)` per the design's week
@@ -1985,3 +1985,29 @@ main` stays a pull request a person merges after trying it. A person merging to 
      mode**, so the Playwright suite can use `scripts/fake-ai.ts` while a stray production
      variable can never send a household's key elsewhere. `GEMINI_MODEL` is retired: the model is
      the household's choice now, stored per connection.
+
+147. **A step may carry one named timer; the text stays the default reading** (→ plan 21,
+     SPEC §4.4, §4.6, `recipe_steps.timer_seconds` / `timer_label`). #14 said [3c] has no timer
+     fields and never will. Two things changed. AI import (plan 22) can now say "this step is
+     10 minutes of _Nudeln_". And the regex read nothing from a German recipe ("Minuten": the
+     `\b` after "minute" broke on the "n"), so a household cooking German recipes got no chip at
+     all.
+
+     - **One per step**, because cook mode keeps one ring per step (`cookTimers.forStep`). A
+       second timer on a step is still the Set-timer sheet's job.
+     - **Optional.** NULL keeps every existing step exactly as it was, reading its own text.
+     - **In the form**, the step's timer is a chip under its ingredients. Where the step has no
+       timer of its own, the chip shows what the text will give, marked `auto` like the
+       ingredients above it. So the regex's reading is visible before cook mode acts on it.
+     - **The sheet is `TimerFields`**, the minute stepper and name field extracted out of cook
+       mode's Set-timer sheet and shared in two tones, so the two can't drift. It counts in
+       minutes, like cook mode (#14's reason still holds), but a timer it was opened on keeps its
+       exact seconds until the stepper moves. Otherwise an imported "90 Sekunden" would come
+       back from a rename as two minutes.
+     - **Writes clamp to what a cook-mode timer can run** (5 s – 12 h, whole seconds) and drop
+       anything else silently: the form reader and the service each check, because an import
+       is a caller that isn't the form.
+     - **The parser now reads German**: `Minuten · Min. · Stunde(n) · Std. · Sekunde(n) · Sek.`,
+       `bis`/`oder` ranges, and "1 Stunde und 30 Minuten". `stepDurations()` lists every
+       duration a step states, both ends of a range included. It is what plan 22 checks an
+       AI-made timer against: a timer the text doesn't state is a timer the model invented.
