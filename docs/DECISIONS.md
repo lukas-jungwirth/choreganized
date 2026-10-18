@@ -915,7 +915,10 @@ reload`) so it can't silently regress.
      fetch of a page that just succeeded is cheap, keeps the action stateless, and avoids
      round-tripping tens of KB through a hidden field. Other providers and on-device models are
      out of scope (a PWA has no bridge to on-device Gemma; browser-local inference is GB-scale
-     downloads).
+     downloads). _Superseded in part by #146 (plan 20): the household now brings a key for any of
+     four providers plus an optional backup, the SDK and `GEMINI_MODEL` are gone, and the key moved
+     to `ai_connections`. The plaintext call, the masked hint, owner-only writes, "the model never
+     saves" and the re-fetch all stand. On-device models stay out of scope._
 
 113. **Gemini errors are mapped by HTTP status, because the SDK has no typed error hierarchy**
      (→ `services/ai-import.ts`). Unlike Anthropic's SDK, `@google/genai` throws a single
@@ -924,6 +927,8 @@ reload`) so it can't silently regress.
      and a rejected key's actual shape — a **`400` whose message says "API key not valid"** — is
      matched on that message, not on a class. Anything else, and an empty or unparseable model
      reply, becomes a generic "couldn't extract" — the raw API string is never shown to the user.
+     _Since #146 the same by-status reading covers all four providers, without any SDK
+     (→ `server/ai/http.ts`)._
 
 114. **One "Add a recipe" chooser replaces the New button + separate import link, and the import
      screen is focused per mode** (→ plan 14, SPEC §4.3/§4.7). Plans 12–13 left three doors to a
@@ -1656,8 +1661,8 @@ that actually adapts there; this wants checking on a real device.
        yet, or a deploy landing mid-request costs a _sync_, never a report — and "that's saved"
        is true when the screen says it, rather than a guess about a third party. `issue_number IS
 NULL` is the queue; nothing else has to be tracked.
-     - **The token is the app's, not the household's.** The opposite call to the Gemini key
-       (→ SPEC §4.7), which lives per household in the database because it bills the household.
+     - **The token is the app's, not the household's.** The opposite call to the AI keys
+       (→ SPEC §6, #146), which live per household in the database because they bill the household.
        This one is the developer's credential for the developer's repository, so it sits in the
        environment beside the VAPID keys and no member ever sees or sets it. A fine-grained PAT
        scoped to Issues on one repo — which is also why the app only ever applies labels that
@@ -1939,3 +1944,44 @@ main` stays a pull request a person merges after trying it. A person merging to 
      flag, try/catch since the API can be blocked. No toast: the row already reads label-left,
      value-right, so "Copied" replacing the build string in the value slot for two seconds is
      the whole confirmation — one fewer element, same place the eye is already on.
+
+146. **AI features run on the household's own provider, picked from that provider's live model
+     list, with a backup — over plain `fetch`, no SDKs** (→ plan 20, SPEC §4.7, §6,
+     `server/ai/`). A household brings a key for Google Gemini, OpenAI, Anthropic or OpenRouter
+     (OpenRouter because one key there reaches many models, free ones among them, which is what
+     makes a free backup easy). The rest follows from three choices:
+
+     - **The model list is the provider's, fetched with the key.** A select the app shipped would
+       be stale the week a provider released something. Listing the models is also the key check
+       (a refused key says so before Save), and the list is filtered to models that do structured
+       JSON (Anthropic's `capabilities.structured_outputs`, OpenRouter's `supported_parameters`,
+       id rules for OpenAI and Gemini). A recommended model is preselected by a rule over the live
+       list (Gemini's `-latest` alias, OpenAI's newest `-mini`, Claude's newest Haiku, OpenRouter's
+       first free model that reads photos) rather than a fixed id. "Other model…" takes a typed
+       id for the day a listing fails.
+     - **A backup takes over on any provider failure** (limit, quota, refused key, missing model,
+       outage, timeout, unusable answer) but not on "there is no recipe in this", which the
+       backup would only be asked again. One ~120 s budget covers both attempts, and the primary
+       gets ~60 s when a backup is waiting, so nobody watches a spinner for four minutes. A photo
+       import skips a connection whose model is known not to read images. The draft says when
+       the backup answered.
+     - **No SDKs.** Four SDKs would be four dependencies, four error hierarchies and four
+       release cycles for what is one POST each. Plain `fetch` gives one error reading by HTTP
+       status for all of them (#113, generalised), and tests inject a fake `fetch`.
+       `@google/genai` is removed. The wire details were checked against each provider's docs on
+       2026-10-18. Every one of them is unit-tested in `providers.test.ts`:
+       - Gemini: `responseSchema`, the key in `x-goog-api-key` and never in the URL.
+       - OpenAI and OpenRouter: Chat Completions with strict `json_schema`, using
+         `max_completion_tokens` on OpenAI and `provider.require_parameters` on OpenRouter.
+       - Anthropic: `output_config.format`, **not** a forced tool call, which the current models
+         refuse with a 400.
+       - **No `temperature` anywhere.** The current reasoning models reject a non-default value,
+         and Gemini 3 asks for the default.
+
+     The schema is written once, in the strict subset every provider accepts: all properties
+     required, nulls as `anyOf`, no numeric constraints. It is converted once more for Gemini's
+     OpenAPI dialect. Keys stay plaintext (#112's reasoning), now in `ai_connections`, and the
+     migration carries an existing Gemini key across. **The base URL can be overridden only in E2E
+     mode**, so the Playwright suite can use `scripts/fake-ai.ts` while a stray production
+     variable can never send a household's key elsewhere. `GEMINI_MODEL` is retired: the model is
+     the household's choice now, stored per connection.

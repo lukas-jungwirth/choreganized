@@ -7,7 +7,7 @@
  * filters the same list client-side instead.)
  */
 import { requireMember } from '$lib/server/guards';
-import { getAiImportStatus } from '$lib/server/services/household';
+import { isAiEnabled } from '$lib/server/services/ai';
 import { countRecipes, listRecipes } from '$lib/server/services/recipes';
 import type { PageServerLoad } from './$types';
 
@@ -21,6 +21,6 @@ export const load: PageServerLoad = (event) => {
 		total: countRecipes(householdId),
 		search,
 		/** Whether the "Add a recipe" chooser offers the AI options (→ plan 14). */
-		aiEnabled: getAiImportStatus(householdId).set
+		aiEnabled: isAiEnabled(householdId)
 	};
 };

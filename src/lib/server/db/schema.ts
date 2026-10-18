@@ -20,6 +20,7 @@ import { sqliteTable, text, integer, real, index, uniqueIndex } from 'drizzle-or
 // — drizzle-kit when generating a migration, and Node when `db:seed` strips its
 // types — and neither resolves the alias or infers the extension
 // (`rewriteRelativeImportExtensions` in tsconfig is what makes this legal TS).
+import { AI_PROVIDERS, AI_SLOTS } from '../../ai.ts';
 import { LOCALES } from '../../i18n/locale.ts';
 import { THEMES } from '../../theme.ts';
 
@@ -120,17 +121,46 @@ export const households = sqliteTable('households', {
 	inviteCode: text('invite_code').unique(),
 	/** IANA timezone; all calendar dates & reminder times are local to this. */
 	timezone: text('timezone').notNull().default('Europe/Vienna'),
-	/**
-	 * Household's own Google Gemini API key for AI recipe import (→ plan 13,
-	 * SPEC §4.7). NULL — the default — means AI import is off and only the
-	 * JSON-LD link import (plan 12) is offered. Stored plaintext: the DB is this
-	 * household's own file in a single-tenant container, so a key that could
-	 * decrypt it would have to live in that same container (→ DECISIONS). Never
-	 * leaves the server — the Settings load returns only a masked hint.
-	 */
-	geminiApiKey: text('gemini_api_key'),
 	createdAt: createdAt()
 });
+
+/**
+ * The household's own AI provider keys (→ plan 20, SPEC §6) — at most two: the
+ * `primary` every AI feature calls, and an optional `backup` that answers when
+ * the first is rate-limited, out of quota or down (→ `server/ai/run.ts`). No
+ * row at all means AI features are off and only the JSON-LD link import is
+ * offered.
+ *
+ * Keys are stored plaintext: the DB is this household's own file in a
+ * single-tenant container, so a key that could decrypt them would have to live
+ * in that same container (→ DECISIONS #112). They never leave the server — the
+ * Settings load returns provider, model and a masked hint only.
+ */
+export const aiConnections = sqliteTable(
+	'ai_connections',
+	{
+		id: id(),
+		householdId: text('household_id')
+			.notNull()
+			.references(() => households.id, { onDelete: 'cascade' }),
+		slot: text('slot', { enum: AI_SLOTS }).notNull(),
+		provider: text('provider', { enum: AI_PROVIDERS }).notNull(),
+		apiKey: text('api_key').notNull(),
+		/** The provider's own id, picked from its live list (or typed): `gemini-flash-latest`. */
+		model: text('model').notNull(),
+		/**
+		 * Whether the model reads images, as its provider's listing said when it
+		 * was picked. NULL = unknown (a typed id, or a listing that doesn't say):
+		 * photo import still tries it rather than refusing on a guess.
+		 */
+		vision: integer('vision', { mode: 'boolean' }),
+		createdAt: createdAt(),
+		updatedAt: integer('updated_at', { mode: 'timestamp_ms' })
+			.notNull()
+			.$defaultFn(() => new Date())
+	},
+	(t) => [uniqueIndex('ai_connections_household_slot_idx').on(t.householdId, t.slot)]
+);
 
 export const members = sqliteTable(
 	'members',
@@ -720,3 +750,4 @@ export type TaskCompletion = typeof taskCompletions.$inferSelect;
 export type PushSubscription = typeof pushSubscriptions.$inferSelect;
 export type CookTimer = typeof cookTimers.$inferSelect;
 export type Feedback = typeof feedback.$inferSelect;
+export type AiConnection = typeof aiConnections.$inferSelect;

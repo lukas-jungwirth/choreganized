@@ -139,6 +139,30 @@ npx playwright test --project=e2e -g shopping # one file, against the last build
 npx playwright test --ui                      # step through with the inspector
 ```
 
+### Fake AI
+
+AI features (→ plan 20) are tested without a key and without a network: `scripts/fake-ai.ts`
+answers all four providers' wire formats on one port, each under its own prefix (`/gemini`,
+`/openai`, `/anthropic`, `/openrouter`). `scripts/e2e-server.ts` starts it on `FAKE_AI_PORT`
+(4174) before the app and hands the app `AI_<PROVIDER>_BASE_URL` — which the app honours **only
+under `E2E_MODE`** (→ `src/lib/server/ai/index.ts`), so no deploy can be redirected by a stray
+variable. The behaviour is picked by what a test types, with no setup call:
+
+- a key containing `bad` → that provider's "key refused";
+- a model containing `busy` → `429` (a full free tier), `down` → `503`;
+- anything else → a recipe named after the provider that answered ("Claude pancakes"), in the
+  shape the request's schema asked for.
+
+`GET /__requests` lists what each call asked for, so a test can check what reached the model. By
+hand: start the `fake-ai` launch entry (port 5199) next to `verify`, which already points every
+provider at it. Below the e2e layer, each adapter is unit-tested against canned answers with an
+injected `fetch` (`src/lib/server/ai/providers/providers.test.ts`), and the backup logic against
+fake adapters (`run.test.ts`).
+
+**A live provider is never in the loop**, in CI or in a session's own checks. One live call per
+provider needs a real key in the running app, and only Lukas has those. A handoff says plainly
+whether that happened.
+
 ### E2E mode — and verifying by hand
 
 The server has one door for tests: `E2E_MODE=true` enables password sign-in and `/dev/kit`

@@ -22,16 +22,21 @@ import {
 import { isMemberColor } from '$lib/member-colors';
 import { requireMember } from '$lib/server/guards';
 import { pushConfigured, sendTestNotification, type NotificationPref } from '$lib/server/push';
-import { AiImportError, testGeminiKey } from '$lib/server/services/ai-import';
+import {
+	aiErrorMessage,
+	AiSettingsError,
+	getAiStatus,
+	listAiModels,
+	removeAiConnection,
+	saveAiConnection,
+	testAiConnection
+} from '$lib/server/services/ai';
 import { FeedbackError, submitFeedback, syncFeedback } from '$lib/server/services/feedback';
 import {
-	getAiImportStatus,
-	getGeminiApiKey,
 	getHousehold,
 	HouseholdError,
 	leaveHousehold,
 	renameHousehold,
-	setGeminiApiKey,
 	setLocale,
 	setNotificationPref,
 	updateProfile
@@ -41,7 +46,8 @@ import { appVersion } from '$lib/server/version';
 import { isTheme, THEME_COOKIE, THEME_COOKIE_MAX_AGE } from '$lib/theme';
 import { isCalendarDate, todayIn } from '$lib/utils/dates';
 import { FEEDBACK_BODY_MAX, isFeedbackKind } from '$lib/utils/feedback';
-import { DISPLAY_NAME_MAX, HOUSEHOLD_NAME_MAX, looksLikeGeminiKey } from '$lib/utils/household';
+import { isAiProvider, isAiSlot, looksLikeApiKey, looksLikeModelId } from '$lib/ai';
+import { DISPLAY_NAME_MAX, HOUSEHOLD_NAME_MAX } from '$lib/utils/household';
 import type { Actions, PageServerLoad } from './$types';
 
 /** The switches [6a] draws, and the columns `push.ts` filters sends on. */
@@ -83,17 +89,6 @@ function refuse(cause: unknown, m: Messages) {
 	throw cause;
 }
 
-/** A failed key test in this screen's words — a rejected key vs a busy/unreachable service. */
-function aiTestMessage(cause: unknown, m: Messages): string {
-	const t = m.settings.aiImport.test;
-	if (cause instanceof AiImportError) {
-		if (cause.code === 'bad-key') return t.badKey;
-		if (cause.code === 'rate-limited') return t.busy;
-		if (cause.code === 'model-unavailable') return t.model;
-	}
-	return t.failed;
-}
-
 export const load: PageServerLoad = (event) => {
 	const { user, member, householdId } = requireMember(event);
 
@@ -102,9 +97,10 @@ export const load: PageServerLoad = (event) => {
 	// this member's own preferences.
 	return {
 		email: user.email,
-		// Whether AI import is set up, and a masked hint — never the key itself
-		// (→ SPEC §4.7, §6). Members see it read-only; only the owner can change it.
-		aiImport: getAiImportStatus(householdId),
+		// Which provider and model each AI slot uses, and a masked hint — never the
+		// key itself (→ SPEC §6, plan 20). Members see it read-only; only the owner
+		// can change it.
+		ai: getAiStatus(householdId),
 		prefs: {
 			notifyTaskReminders: member.notifyTaskReminders,
 			notifyOverdueNudges: member.notifyOverdueNudges,
@@ -300,60 +296,110 @@ export const actions: Actions = {
 	},
 
 	/**
-	 * Store the household's Gemini key for AI recipe import [6a] (→ plan 13,
-	 * SPEC §4.7). Owner-only — the service enforces it (→ DECISIONS #10) — and the
-	 * shape check is deliberately loose: a real key is proven by the first
-	 * extraction, not here.
+	 * Save one AI connection [6a] (→ plan 20, SPEC §6): provider, model, and —
+	 * unless the owner is only changing the model — a new key. Owner-only, which
+	 * the service enforces (→ DECISIONS #10); the shape checks here are loose on
+	 * purpose, because the model list the sheet loaded with this key was the real
+	 * check.
 	 */
-	saveAiKey: async (event) => {
+	saveAiConnection: async (event) => {
 		const { householdId, member } = requireMember(event);
 		const form = await event.request.formData();
-
 		const m = catalog(event.locals.locale);
+		const t = m.settings.ai.connection;
+
+		const slot = form.get('slot');
+		const provider = form.get('provider');
 		const key = String(form.get('key') ?? '').trim();
-		if (!looksLikeGeminiKey(key)) return fail(400, { error: m.settings.aiImport.invalid });
+		const model = String(form.get('model') ?? '').trim();
+		const vision = form.get('vision');
+
+		if (!isAiSlot(slot) || !isAiProvider(provider)) return fail(400, { aiError: t.invalidKey });
+		if (key && !looksLikeApiKey(key)) return fail(400, { aiError: t.invalidKey });
+		if (!looksLikeModelId(model)) return fail(400, { aiError: t.invalidModel });
 
 		try {
-			setGeminiApiKey(householdId, member.id, key);
+			saveAiConnection(householdId, member.id, slot, {
+				provider,
+				apiKey: key || null,
+				model,
+				vision: vision === '1' ? true : vision === '0' ? false : null
+			});
 		} catch (cause) {
+			if (cause instanceof AiSettingsError) return fail(400, { aiError: t.invalidKey });
 			return refuse(cause, m);
 		}
 
-		return { aiKeySaved: true };
+		return { aiSaved: true };
 	},
 
-	/** Clear the key — AI import goes back off. Owner-only, like setting it. */
-	removeAiKey: async (event) => {
+	/** Remove one connection; removing the main one promotes the backup. Owner-only. */
+	removeAiConnection: async (event) => {
 		const { householdId, member } = requireMember(event);
+		const form = await event.request.formData();
+		const slot = form.get('slot');
+		if (!isAiSlot(slot)) return fail(400, {});
 
 		try {
-			setGeminiApiKey(householdId, member.id, null);
+			removeAiConnection(householdId, member.id, slot);
 		} catch (cause) {
 			return refuse(cause, catalog(event.locals.locale));
 		}
 
-		return { aiKeyRemoved: true };
+		return { aiRemoved: true };
 	},
 
 	/**
-	 * Test the stored key against the live API [6a] (→ plan 14) — a green "connection
-	 * works" or the reason it doesn't, changing nothing. Not owner-gated: the sheet is
-	 * owner-only UI, but a test mutates no data (it just spends a trivial API call).
+	 * The provider's live model list for the sheet's picker — and the key check
+	 * before anything is saved: a refused key comes back as the provider's
+	 * "refused the key" here. Owner-only, like the save it prepares. Returns ids
+	 * and labels only; the key goes no further than the provider.
 	 */
-	testAiKey: async (event) => {
-		const { householdId } = requireMember(event);
+	aiModels: async (event) => {
+		const { householdId, member } = requireMember(event);
+		const form = await event.request.formData();
 		const m = catalog(event.locals.locale);
 
-		const key = getGeminiApiKey(householdId);
-		if (!key) return fail(400, { aiTestError: m.settings.aiImport.test.noKey });
-
-		try {
-			await testGeminiKey(key);
-		} catch (cause) {
-			return fail(422, { aiTestError: aiTestMessage(cause, m) });
+		const slot = form.get('slot');
+		const provider = form.get('provider');
+		const key = String(form.get('key') ?? '').trim();
+		if (!isAiSlot(slot) || !isAiProvider(provider))
+			return fail(400, { aiModelsError: m.ai.error.failed('') });
+		if (key && !looksLikeApiKey(key)) {
+			return fail(400, { aiModelsError: m.settings.ai.connection.invalidKey });
 		}
 
-		return { aiTestOk: true };
+		try {
+			const listing = await listAiModels(householdId, member.id, slot, provider, key || null);
+			return { aiModels: { provider, ...listing } };
+		} catch (cause) {
+			if (cause instanceof AiSettingsError) {
+				return fail(400, { aiModelsError: m.settings.ai.connection.needKey });
+			}
+			if (cause instanceof HouseholdError) return refuse(cause, m);
+			return fail(422, { aiModelsError: aiErrorMessage(cause, m) });
+		}
+	},
+
+	/**
+	 * Test a saved connection against the live API [6a] — a green "connection
+	 * works" or the reason it doesn't, changing nothing. Not owner-gated: the
+	 * sheet is owner-only UI, but a test mutates no data (it spends one tiny call).
+	 */
+	testAiConnection: async (event) => {
+		const { householdId } = requireMember(event);
+		const form = await event.request.formData();
+		const m = catalog(event.locals.locale);
+		const slot = form.get('slot');
+		if (!isAiSlot(slot)) return fail(400, { aiTestError: m.ai.error.noKey });
+
+		try {
+			await testAiConnection(householdId, slot);
+		} catch (cause) {
+			return fail(422, { aiTestError: aiErrorMessage(cause, m), slot });
+		}
+
+		return { aiTestOk: true, slot };
 	},
 
 	/**
