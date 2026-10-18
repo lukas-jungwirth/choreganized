@@ -49,8 +49,8 @@ Agents: when you make a judgment call that isn't in SPEC/ARCHITECTURE, **append 
     from step text ("8 min", "8:00", "8–10 minutes" → first value), ingredient underlines via
     case-insensitive name matching. Recipe form stays plain text ([3c] has no timer fields).
     Manual "Set timer" stepper covers unparsed steps. _(Half-superseded by #127: the reading is
-    still what a step does by default, but it can now be overruled per step. Timers are
-    unchanged.)_
+    still what a step does by default, but it can now be overruled per step. Timers followed in
+    #147: a step may carry its own named timer, and the text is the fallback.)_
 15. **Timer push precision**: in-process `setTimeout` at creation (second-precision) + minute
     cron as restart-safe catch-up; the row in `cook_timers` is the source of truth.
 16. **One meal slot per day** (dinner) — `UNIQUE(householdId, date)` per the design's week
@@ -915,7 +915,10 @@ reload`) so it can't silently regress.
      fetch of a page that just succeeded is cheap, keeps the action stateless, and avoids
      round-tripping tens of KB through a hidden field. Other providers and on-device models are
      out of scope (a PWA has no bridge to on-device Gemma; browser-local inference is GB-scale
-     downloads).
+     downloads). _Superseded in part by #146 (plan 20): the household now brings a key for any of
+     four providers plus an optional backup, the SDK and `GEMINI_MODEL` are gone, and the key moved
+     to `ai_connections`. The plaintext call, the masked hint, owner-only writes, "the model never
+     saves" and the re-fetch all stand. On-device models stay out of scope._
 
 113. **Gemini errors are mapped by HTTP status, because the SDK has no typed error hierarchy**
      (→ `services/ai-import.ts`). Unlike Anthropic's SDK, `@google/genai` throws a single
@@ -924,6 +927,8 @@ reload`) so it can't silently regress.
      and a rejected key's actual shape — a **`400` whose message says "API key not valid"** — is
      matched on that message, not on a class. Anything else, and an empty or unparseable model
      reply, becomes a generic "couldn't extract" — the raw API string is never shown to the user.
+     _Since #146 the same by-status reading covers all four providers, without any SDK
+     (→ `server/ai/http.ts`)._
 
 114. **One "Add a recipe" chooser replaces the New button + separate import link, and the import
      screen is focused per mode** (→ plan 14, SPEC §4.3/§4.7). Plans 12–13 left three doors to a
@@ -1656,8 +1661,8 @@ that actually adapts there; this wants checking on a real device.
        yet, or a deploy landing mid-request costs a _sync_, never a report — and "that's saved"
        is true when the screen says it, rather than a guess about a third party. `issue_number IS
 NULL` is the queue; nothing else has to be tracked.
-     - **The token is the app's, not the household's.** The opposite call to the Gemini key
-       (→ SPEC §4.7), which lives per household in the database because it bills the household.
+     - **The token is the app's, not the household's.** The opposite call to the AI keys
+       (→ SPEC §6, #146), which live per household in the database because they bill the household.
        This one is the developer's credential for the developer's repository, so it sits in the
        environment beside the VAPID keys and no member ever sees or sets it. A fine-grained PAT
        scoped to Issues on one repo — which is also why the app only ever applies labels that
@@ -1939,3 +1944,170 @@ main` stays a pull request a person merges after trying it. A person merging to 
      flag, try/catch since the API can be blocked. No toast: the row already reads label-left,
      value-right, so "Copied" replacing the build string in the value slot for two seconds is
      the whole confirmation — one fewer element, same place the eye is already on.
+
+146. **AI features run on the household's own provider, picked from that provider's live model
+     list, with a backup — over plain `fetch`, no SDKs** (→ plan 20, SPEC §4.7, §6,
+     `server/ai/`). A household brings a key for Google Gemini, OpenAI, Anthropic or OpenRouter
+     (OpenRouter because one key there reaches many models, free ones among them, which is what
+     makes a free backup easy). The rest follows from three choices:
+
+     - **The model list is the provider's, fetched with the key.** A select the app shipped would
+       be stale the week a provider released something. Listing the models is also the key check
+       (a refused key says so before Save), and the list is filtered to models that do structured
+       JSON (Anthropic's `capabilities.structured_outputs`, OpenRouter's `supported_parameters`,
+       id rules for OpenAI and Gemini). A recommended model is preselected by a rule over the live
+       list (Gemini's `-latest` alias, OpenAI's newest `-mini`, Claude's newest Haiku, OpenRouter's
+       first free model that reads photos) rather than a fixed id. "Other model…" takes a typed
+       id for the day a listing fails.
+     - **A backup takes over on any provider failure** (limit, quota, refused key, missing model,
+       outage, timeout, unusable answer) but not on "there is no recipe in this", which the
+       backup would only be asked again. One ~120 s budget covers both attempts, and the primary
+       gets ~60 s when a backup is waiting, so nobody watches a spinner for four minutes. A photo
+       import skips a connection whose model is known not to read images. The draft says when
+       the backup answered.
+     - **No SDKs.** Four SDKs would be four dependencies, four error hierarchies and four
+       release cycles for what is one POST each. Plain `fetch` gives one error reading by HTTP
+       status for all of them (#113, generalised), and tests inject a fake `fetch`.
+       `@google/genai` is removed. The wire details were checked against each provider's docs on
+       2026-10-18. Every one of them is unit-tested in `providers.test.ts`:
+       - Gemini: `responseSchema`, the key in `x-goog-api-key` and never in the URL.
+       - OpenAI and OpenRouter: Chat Completions with strict `json_schema`, using
+         `max_completion_tokens` on OpenAI and `provider.require_parameters` on OpenRouter.
+       - Anthropic: `output_config.format`, **not** a forced tool call, which the current models
+         refuse with a 400.
+       - **No `temperature` anywhere.** The current reasoning models reject a non-default value,
+         and Gemini 3 asks for the default.
+
+     The schema is written once, in the strict subset every provider accepts: all properties
+     required, nulls as `anyOf`, no numeric constraints. It is converted once more for Gemini's
+     OpenAPI dialect. Keys stay plaintext (#112's reasoning), now in `ai_connections`, and the
+     migration carries an existing Gemini key across. **The base URL can be overridden only in E2E
+     mode**, so the Playwright suite can use `scripts/fake-ai.ts` while a stray production
+     variable can never send a household's key elsewhere. `GEMINI_MODEL` is retired: the model is
+     the household's choice now, stored per connection.
+
+147. **A step may carry one named timer; the text stays the default reading** (→ plan 21,
+     SPEC §4.4, §4.6, `recipe_steps.timer_seconds` / `timer_label`). #14 said [3c] has no timer
+     fields and never will. Two things changed. AI import (plan 22) can now say "this step is
+     10 minutes of _Nudeln_". And the regex read nothing from a German recipe ("Minuten": the
+     `\b` after "minute" broke on the "n"), so a household cooking German recipes got no chip at
+     all.
+
+     - **One per step**, because cook mode keeps one ring per step (`cookTimers.forStep`). A
+       second timer on a step is still the Set-timer sheet's job.
+     - **Optional.** NULL keeps every existing step exactly as it was, reading its own text.
+     - **In the form**, the step's timer is a chip under its ingredients. Where the step has no
+       timer of its own, the chip shows what the text will give, marked `auto` like the
+       ingredients above it. So the regex's reading is visible before cook mode acts on it.
+     - **The sheet is `TimerFields`**, the minute stepper and name field extracted out of cook
+       mode's Set-timer sheet and shared in two tones, so the two can't drift. It counts in
+       minutes, like cook mode (#14's reason still holds), but a timer it was opened on keeps its
+       exact seconds until the stepper moves. Otherwise an imported "90 Sekunden" would come
+       back from a rename as two minutes.
+     - **Writes clamp to what a cook-mode timer can run** (5 s – 12 h, whole seconds) and drop
+       anything else silently: the form reader and the service each check, because an import
+       is a caller that isn't the form.
+     - **The parser now reads German**: `Minuten · Min. · Stunde(n) · Std. · Sekunde(n) · Sek.`,
+       `bis`/`oder` ranges, and "1 Stunde und 30 Minuten". `stepDurations()` lists every
+       duration a step states, both ends of a range included. It is what plan 22 checks an
+       AI-made timer against: a timer the text doesn't state is a timer the model invented.
+
+148. **AI improves a page's own recipe card when asked, answers in one strict shape, and passes a
+     gate before the editor sees it** (→ plan 22, SPEC §4.7, §6, `services/ai-import.ts`,
+     `utils/recipe-draft.ts`, `utils/recipe-microdata.ts`). Plan 13 used AI only where the card
+     was missing, and got back flat lines. Now the model also does what a card can't: amounts and
+     units, which step uses what, named timers, metric units. That changes what has to be guarded.
+
+     - **"Improve with AI" is a switch, off until it's turned on, then remembered per device.**
+       #112's rule was "never a paid call without an explicit tap". Flipping the switch is that
+       tap, once. A switch that started on would spend a call on the first shared link nobody
+       asked to improve. Browser storage is enough: it's one person's habit on one phone, and a
+       blocked storage just means off.
+     - **Improve sends the card, not the page**: compact JSON, so there are fewer tokens and
+       nothing for the page's other text to say. Without instructions, the result **must keep the
+       card's rows** (same ingredient and step counts, and the card's own name, servings and
+       time). Otherwise it's a rewrite nobody asked for, so it's refused, the backup tries, and if
+       both fail the card opens **as written** with the reason. **Instructions free the rows**,
+       because changing them is what they're for.
+     - **One output schema for every AI path** (extract and improve, text, page and photos), in
+       the strict subset all four providers accept. Ingredients are `{quantity, unit ∈ the app's
+units | null, name}`, written back as editor lines in the reader's unit spelling so they
+       parse like typed ones. Steps carry `uses` (an index into the ingredients plus an optional
+       share) and an optional `timer`.
+     - **The gate assumes the answer is hostile**, and keeps fields one by one rather than
+       throwing the whole answer away:
+       - Wrong-typed rows are dropped and pins re-pointed past them.
+       - Control, bidi, HTML, markdown and links are stripped.
+       - Counts and lengths are capped by the form's own limits.
+       - Amounts must be finite, positive and under the cap; units must come from the list.
+       - A pin must point at a row that exists, and a share at or above the row's total means
+         "all of it".
+       - An empty `uses` becomes `null`. Only a person says "uses nothing" (#127).
+       - **A timer must equal a duration the step's own text states** (`stepDurations`, #147).
+       - Not an object at all is the provider's failure (`bad-output`, so the backup gets a
+         turn). Empty is the input's answer ("no recipe"; the backup isn't asked the same
+         question). Save then re-checks everything (`readRecipeForm`, the service's clamps).
+     - **The prompt names the household's lines as the only instructions** (standing ones from
+       Settings, plus one per import, each ≤ 300 characters and cleaned) and says that the page,
+       text and photos are data. Nothing a page says can do more than produce a draft a person
+       then reads, because the gate has already stripped links and markup.
+     - **Microdata is read without AI**, through `node-html-parser` (the one new dependency). A
+       regex can't tell the recipe's `name` from its author's, and only a tree knows which
+       `itemscope` a property belongs to. The same parser keeps the page's readable text **as
+       lines** (headings, list items) with chrome and comment sections removed, and prefers
+       `<main>`/`<article>`, so a model sees "Zutaten" above a list instead of one run-on
+       paragraph, in fewer tokens. A page's `og:image` is the photo when its card has none.
+
+149. **A step's own amounts follow "Cooking for {n}" — rewritten at render time, only where
+     certain, never stored** (→ plan 23, SPEC §4.5, §4.6, `utils/step-amounts.ts`). #124 scaled
+     the list and #127 scaled each step's pinned shares, but the sentence still said "2 Tomaten"
+     when you cooked for twice as many. That sentence is the one thing being read at the hob.
+
+     - **Render time, no markers.** A marker syntax in the step text (or stored spans) would make
+       every typed recipe a format to get right, and the editor would show the syntax. The
+       amount is found where it is drawn instead, from what the step is already underlined for.
+       So it works for every recipe, typed, imported or AI-made, and the stored text never
+       changes.
+     - **Conservative by construction.** An amount is rewritten only when:
+       - It sits **directly before** an underlined ingredient (number, optional unit, optional
+         "of").
+       - Its unit is the row's own, in any spelling the parser reads.
+       - It agrees with what the recipe knows: on a pinned step, the share pinned there or the
+         whole row; otherwise no more than the row's total. A row with no amount vouches for
+         nothing.
+
+       "180 °C", "2 cm", "10 Minuten" and "in 4 Portionen" can't pass any of that, and a number
+       that reads two ways ("1.200": German thousands or English 1.2) is skipped. A wrong number
+       in an instruction is worse than an unscaled one.
+
+     - **The scaled reading is the input.** The text's number goes through the same
+       `scaleQuantity` the rows did, so the comparison is exact rather than "close enough".
+       Only the number changes: the unit as written ("EL" stays "EL"), a comma stays a comma,
+       a fraction stays a fraction.
+     - **Shown, not hidden.** In cook mode the amount is amber like the ingredient it measures;
+       in the recipe view it's sage and semibold. A screen reader hears what the recipe itself
+       says there. At the servings the recipe was written for, nothing is rewritten and the
+       markup is unchanged.
+
+150. **Austrian wording is a household setting over a fixed list, applied at import, and every
+     pair is a synonym for the step matcher** (→ plan 24, SPEC §6, §9, `utils/wording.ts`). An
+     Austrian kitchen imports German recipes that say Sahne, Quark and Kartoffeln, but cooks and
+     shops for Obers, Topfen and Erdäpfel.
+
+     - **A fixed list, reviewed by hand, in code.** Lukas chose this over an editable list for
+       the first version. The setting is an enum (`'austrian'` | NULL) so more targets can follow
+       without a migration.
+     - **Import only, German only.** A saved recipe is never rewritten behind anyone's back.
+       `looksGerman` (a handful of words only German recipes use) decides, so an English recipe's
+       "quark" doesn't come back as "Topfen".
+     - **AI rewrites; without AI only the names change.** The model gets the list as a glossary
+       and writes Austrian German with the right articles ("das Obers"). A word-for-word swap
+       inside a sentence would give "die Obers", so without a model only the ingredient names
+       change: whole words with Unicode boundaries ("Sahnejoghurt" stays, and ß and umlauts don't
+       break the match), longest phrase first ("saure Sahne" before "Sahne"). The same pass runs
+       over an AI answer, so the names agree whatever the model did.
+     - **Synonyms keep the underline.** The step then still says "Sahne" while the row says
+       "Obers", so each pair, both ways, is an extra name in the step matcher's `aliases()`. It
+       is ranked after every shortening of the row's own name, so it only wins a word nothing
+       else claims. This holds whatever the setting, because a typed recipe mixes the two
+       Germans too.

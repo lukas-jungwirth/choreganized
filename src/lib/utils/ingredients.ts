@@ -93,6 +93,20 @@ const UNIT_ALIASES = new Map<string, RecipeUnit>(
 	} satisfies Record<string, RecipeUnit>)
 );
 
+/**
+ * A word as a unit, the way the parser reads it — "EL" → `tbsp`, "g" → `g` —
+ * or null. For the readers that meet an amount somewhere other than the start
+ * of a line: a step's "2 EL Öl" (→ `step-amounts.ts`).
+ */
+export function unitFromWord(word: string): RecipeUnit | null {
+	return UNIT_ALIASES.get(word.toLowerCase()) ?? null;
+}
+
+/** Every spelling `unitFromWord` knows, longest first — for building a pattern. */
+export const UNIT_WORDS: readonly string[] = [...UNIT_ALIASES.keys()].sort(
+	(a, b) => b.length - a.length
+);
+
 /** The vulgar fractions a keyboard offers, and the ones recipes actually use. */
 const FRACTIONS: Record<string, number> = {
 	'½': 0.5,
@@ -336,7 +350,7 @@ export function scaleQuantity(quantity: number | null, factor: number): number |
  * "0.5 tsp salt" saved from "½ tsp salt" would drift a little further from the
  * original on every edit.
  */
-function formatQuantityValue(quantity: number): string {
+export function formatQuantityValue(quantity: number): string {
 	const whole = Math.floor(quantity);
 	const rest = quantity - whole;
 

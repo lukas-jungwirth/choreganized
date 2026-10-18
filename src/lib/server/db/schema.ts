@@ -20,8 +20,10 @@ import { sqliteTable, text, integer, real, index, uniqueIndex } from 'drizzle-or
 // — drizzle-kit when generating a migration, and Node when `db:seed` strips its
 // types — and neither resolves the alias or infers the extension
 // (`rewriteRelativeImportExtensions` in tsconfig is what makes this legal TS).
+import { AI_PROVIDERS, AI_SLOTS } from '../../ai.ts';
 import { LOCALES } from '../../i18n/locale.ts';
 import { THEMES } from '../../theme.ts';
+import { RECIPE_WORDINGS } from '../../utils/wording.ts';
 
 const id = () =>
 	text('id')
@@ -121,16 +123,57 @@ export const households = sqliteTable('households', {
 	/** IANA timezone; all calendar dates & reminder times are local to this. */
 	timezone: text('timezone').notNull().default('Europe/Vienna'),
 	/**
-	 * Household's own Google Gemini API key for AI recipe import (→ plan 13,
-	 * SPEC §4.7). NULL — the default — means AI import is off and only the
-	 * JSON-LD link import (plan 12) is offered. Stored plaintext: the DB is this
-	 * household's own file in a single-tenant container, so a key that could
-	 * decrypt it would have to live in that same container (→ DECISIONS). Never
-	 * leaves the server — the Settings load returns only a masked hint.
+	 * Standing instructions for every AI import (→ plan 22, SPEC §6): "we're
+	 * vegetarian", "always metric". Set by the owner in Settings → AI features;
+	 * NULL = none. At most `AI_INSTRUCTIONS_MAX` characters.
 	 */
-	geminiApiKey: text('gemini_api_key'),
+	aiInstructions: text('ai_instructions'),
+	/**
+	 * How imported German recipes are worded (→ plan 24, SPEC §6): NULL = as the
+	 * site wrote them; `'austrian'` = Austrian German (Obers, Topfen, Erdäpfel),
+	 * from the fixed list in `utils/wording.ts`. Owner sets it.
+	 */
+	recipeWording: text('recipe_wording', { enum: RECIPE_WORDINGS }),
 	createdAt: createdAt()
 });
+
+/**
+ * The household's own AI provider keys (→ plan 20, SPEC §6) — at most two: the
+ * `primary` every AI feature calls, and an optional `backup` that answers when
+ * the first is rate-limited, out of quota or down (→ `server/ai/run.ts`). No
+ * row at all means AI features are off and only the JSON-LD link import is
+ * offered.
+ *
+ * Keys are stored plaintext: the DB is this household's own file in a
+ * single-tenant container, so a key that could decrypt them would have to live
+ * in that same container (→ DECISIONS #112). They never leave the server — the
+ * Settings load returns provider, model and a masked hint only.
+ */
+export const aiConnections = sqliteTable(
+	'ai_connections',
+	{
+		id: id(),
+		householdId: text('household_id')
+			.notNull()
+			.references(() => households.id, { onDelete: 'cascade' }),
+		slot: text('slot', { enum: AI_SLOTS }).notNull(),
+		provider: text('provider', { enum: AI_PROVIDERS }).notNull(),
+		apiKey: text('api_key').notNull(),
+		/** The provider's own id, picked from its live list (or typed): `gemini-flash-latest`. */
+		model: text('model').notNull(),
+		/**
+		 * Whether the model reads images, as its provider's listing said when it
+		 * was picked. NULL = unknown (a typed id, or a listing that doesn't say):
+		 * photo import still tries it rather than refusing on a guess.
+		 */
+		vision: integer('vision', { mode: 'boolean' }),
+		createdAt: createdAt(),
+		updatedAt: integer('updated_at', { mode: 'timestamp_ms' })
+			.notNull()
+			.$defaultFn(() => new Date())
+	},
+	(t) => [uniqueIndex('ai_connections_household_slot_idx').on(t.householdId, t.slot)]
+);
 
 export const members = sqliteTable(
 	'members',
@@ -357,6 +400,16 @@ export const recipeSteps = sqliteTable(
 			.references(() => recipes.id, { onDelete: 'cascade' }),
 		/** Plain text. Cook mode parses timer durations ("8 min", "8:00") from it. */
 		text: text('text').notNull(),
+		/**
+		 * The step's own timer, set in the form [3c] or by an AI import (→ plan 21,
+		 * DECISIONS #147): whole seconds, and an optional name ("Nudeln"). NULL —
+		 * the default, and every step written before this existed — means cook mode
+		 * reads the duration out of `text` instead (→ `utils/timer-parse.ts`). One
+		 * per step, because cook mode keeps one ring per step.
+		 */
+		timerSeconds: integer('timer_seconds'),
+		/** NULL = called after its step ("Step 3"), which is always true and never strange. */
+		timerLabel: text('timer_label'),
 		/**
 		 * Whether this step's ingredients were **chosen by hand** in the form
 		 * (→ `recipeStepIngredients`). False — the default, and every row written
@@ -720,3 +773,4 @@ export type TaskCompletion = typeof taskCompletions.$inferSelect;
 export type PushSubscription = typeof pushSubscriptions.$inferSelect;
 export type CookTimer = typeof cookTimers.$inferSelect;
 export type Feedback = typeof feedback.$inferSelect;
+export type AiConnection = typeof aiConnections.$inferSelect;

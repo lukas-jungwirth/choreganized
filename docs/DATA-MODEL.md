@@ -14,6 +14,7 @@ user ─┬─ session / account / verification        (Better Auth)
                   │      ├─ meals (→ recipes, one per date × slot)
                   │      ├─ tasks ──→ task_completions (snapshots)
                   │      ├─ cook_timers
+                  │      ├─ ai_connections          (primary + backup provider keys)
                   │      └─ feedback                (mirrored to a GitHub issue)
                   └─ holiday_notices             (per member × shop closure)
 ```
@@ -46,6 +47,29 @@ user ─┬─ session / account / verification        (Better Auth)
   alphabet (`ABCDEFGHJKMNPQRSTUVWXYZ23456789`, 6 chars, `crypto.getRandomValues`). Displayed
   with a dash (`7K4-P2`), stored/compared without, case-insensitive (store uppercase).
 - `timezone`: IANA name; drives "today", reminder mornings, and the leaderboard month.
+- `aiInstructions` (migration 0015, → plan 22): the household's standing instructions for every
+  AI import, ≤ 300 chars, whitespace collapsed and control/bidi characters stripped on write
+  (`$lib/ai.ts` `cleanInstructions`); `NULL` = none. Owner-only, like the connections.
+- `recipeWording` (migration 0016, → plan 24): `'austrian'` or `NULL` (as written) — how
+  imported German recipes are worded, from the fixed list in `utils/wording.ts`. Applied at
+  import only; nothing saved is ever rewritten. Owner-only.
+
+### `ai_connections` (→ plan 20, SPEC §6)
+
+- At most two rows per household, `UNIQUE(householdId, slot)`: `slot = 'primary'` is what every
+  AI feature calls; `'backup'` gets the same request when the primary fails
+  (→ `server/ai/run.ts`). No row means AI features are off. Removing the primary promotes the
+  backup; saving a "backup" with no primary stores it as the primary.
+- `provider`: `'gemini' | 'openai' | 'anthropic' | 'openrouter'` (→ `$lib/ai.ts`). `model` is the
+  provider's own id, picked from its live list or typed — never a value the app ships.
+- `apiKey`: **plaintext**, for #112's reason (a key that could decrypt it would live in the same
+  single-tenant container). Server-only: Settings loads provider, model and a masked hint.
+- `vision`: whether the model reads images, as its listing said when it was picked; `NULL` =
+  unknown (a typed id), which photo import still tries. `false` is skipped for photos.
+- Replaced plan 13's `households.gemini_api_key` in migration `0013`, which copies a non-blank
+  key into a `primary` Gemini row on `gemini-flash-latest` before dropping the column — with a
+  plain `DROP COLUMN`, never drizzle's table rebuild, whose `DROP TABLE households` would cascade
+  inside the migrator's transaction.
 
 ### `members`
 
@@ -98,8 +122,12 @@ user ─┬─ session / account / verification        (Better Auth)
 - Ingredients are structured (name, quantity?, unit?) but _entered_ freeform ("400 g pasta")
   and parsed leniently (`src/lib/utils/ingredients.ts`, plan 07): `/^([\d.,½¼¾\/]+)?\s*([a-zA-Z]+)?\s+(.+)$/`-ish
   with a known-units whitelist; on no match, everything is the name.
-- Steps are plain text, ordered by `sortOrder`. Cook-mode timers are still **derived at render
-  time** from a duration regex — no columns, no authoring burden (→ DECISIONS #14).
+- Steps are plain text, ordered by `sortOrder`. A step **may carry its own timer**
+  (`timer_seconds` + an optional `timer_label`, migration 0014, → plan 21, DECISIONS #147) —
+  one per step, set in the form or by an import. `NULL` (every step written before it, and the
+  default) means cook mode **derives the timer at render time** from a duration regex over the
+  text, English or German (→ DECISIONS #14). Writes clamp to what a cook-mode timer can run
+  (5 s – 12 h, whole seconds) and drop anything else rather than refuse the step.
 - **What a step uses is derived _until somebody says otherwise_** (→ DECISIONS #127).
   `recipe_steps.ingredients_set` (migration 0010, `DEFAULT false` — every row written before it
   existed keeps reading its own text) flips a step from the matcher

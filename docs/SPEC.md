@@ -308,8 +308,8 @@ where it can still be acted on (→ [DECISIONS #131](DECISIONS.md)).
 - Grid of recipe cards (photo, name, time). Search by name.
 - The FAB (and the empty state's **Add a recipe** button) open the **"Add a recipe" chooser**
   (→ plan 14, a bottom sheet): **From a link** and **Enter by hand** always, plus **From a photo**
-  and **Paste text** (each "AI"-tagged) **only when AI import is set up** — with no key there's
-  nothing to offer, and the AI import row in Settings (§6) is where it's turned on.
+  and **Paste text** (each "AI"-tagged) **only when AI features are set up** — with no provider
+  there's nothing to offer, and the AI features row in Settings (§6) is where it's turned on.
 - Empty state [7e]: "Build your cookbook" + **Add a recipe** (opens the same chooser).
 
 ### 4.4 New/edit recipe [3c] (full-screen route, not a sheet)
@@ -342,6 +342,13 @@ where it can still be acted on (→ [DECISIONS #131](DECISIONS.md)).
     with the row's total beside it ("of 3 tbsp"). Empty means the whole row. Shares are written
     in recipe-as-written terms, so **Cooking for {n}** (§4.5) scales them exactly like the
     ingredient list: 1 tsp and 2 tsp for two people are 2 tsp and 4 tsp for four.
+- Under the ingredient chips, each step has **a timer chip** (→ plan 21, DECISIONS #147): the
+  step's own timer by name ("Nudeln · 10:00"), else the duration cook mode will read out of the
+  text, marked `auto` ("9:00 auto"), else **Add a timer**. It opens a sheet with the minute
+  stepper and the optional **What for?** name of cook mode's Set-timer sheet (§4.6), seeded
+  from the saved timer, else the text's duration, else 5 minutes, with **Save timer** and
+  **Remove timer**. A saved timer keeps its exact seconds ("90 Sekunden") unless the stepper is
+  moved. One timer per step; removing it hands the step back to its text.
 
 ### 4.5 Recipe view [7a]
 
@@ -363,6 +370,15 @@ where it can still be acted on (→ [DECISIONS #131](DECISIONS.md)).
     precision no scale can honour.
   - **Hidden entirely when the recipe never recorded its servings** — half of an unknown is
     unknown, so there is nothing honest to offer (→ [DECISIONS #124](DECISIONS.md)).
+  - **The steps' own amounts follow too** (→ plan 23, DECISIONS #149): "2 Tomaten würfeln" read
+    for twice as many says "**4** Tomaten würfeln", marked, with what the recipe says there
+    for a screen reader. Only where it is certain: the amount must sit directly before an
+    ingredient the step names, in that ingredient's unit, and agree with the recipe (the share
+    pinned to the step, or the whole row; otherwise no more than the row's total). Every other
+    number — "180 °C", "2 cm", "10 Minuten", "in 4 Portionen" — stays exactly as written, as do
+    numbers that could be read two ways ("1.200"). Only the number changes: "2 EL" becomes
+    "4 EL", a decimal comma stays a comma, a fraction stays a fraction. The editor always shows
+    the text as written.
 - **Start cook mode** (dark button) → cook mode.
 - ••• menu [7c]: Edit recipe, Duplicate, Share (v1: share plain-text recipe via Web Share API),
   Delete (confirm; meal-plan entries keep the name via snapshot).
@@ -382,10 +398,13 @@ where it can still be acted on (→ [DECISIONS #131](DECISIONS.md)).
   read; any tap, Escape or the next step closes it. An underline with **no** amount to give
   ("Salt", "a splash of oil") is not a button — there is nothing for a tap to reveal. This is
   the one amount that survives a running timer, which clears the "This step uses…" line [7h].
-- **Timer chip** — shown when a duration is parsed from the step text ("8 min", "8:00",
-  "8–10 minutes" → first value): "Start 8:00 timer". A manual "Set timer" affordance (minute
-  stepper) is always available in the header/overflow.
-- **A timer is named after its step** — "Step 2" — unless the cook names it in the Set-timer
+- **Timer chip** — the step's own timer when it has one, by name: "Start Nudeln · 10:00"
+  (→ §4.4, plan 21). Otherwise shown when a duration is parsed from the step text, in English or
+  German ("8 min", "8:00", "8–10 minutes", "10 Minuten", "1 Std. 30 Min.", "5 bis 10 Min." →
+  first value): "Start 8:00 timer". A manual "Set timer" affordance (minute stepper) is always
+  available in the header/overflow.
+- **A timer is named after its step** — "Step 2" — unless the step's own timer has a name, or
+  the cook names it in the Set-timer
   sheet (→ [DECISIONS #134](DECISIONS.md)). That sheet's **What for?** field is optional and
   never has to be typed: under it sit the step's own ingredients as one-tap chips, short names
   ("Kartoffeln", not "Kartoffeln (festkochen)"), and tapping the chosen one again clears it. The
@@ -397,8 +416,9 @@ where it can still be acted on (→ [DECISIONS #131](DECISIONS.md)).
   the row's total behind it — "20 g of 30 g" — so "how much of that was it again?" is answered
   for _now_ without losing what the recipe holds.
 - **Inherits "cooking for {n}"** from the recipe screen through `?serves=` (§4.5) — the peek
-  sheet, the "This step uses…" line, a step's own shares of an ingredient (§4.4) and the timer
-  labels all show the scaled amounts. Cook mode offers no stepper of its own: the count is
+  sheet, the "This step uses…" line, a step's own shares of an ingredient (§4.4), the amounts
+  the step's sentence gives its ingredients (in amber, → §4.5, plan 23) and the timer labels all
+  show the scaled amounts. Cook mode offers no stepper of its own: the count is
   decided before the hands are wet, and the underlines still land on the same words because only
   the numbers move. The count **stays** in the address as Prev/Next rewrite `?step=`, and rides
   the close × and Finish back to the recipe — a reload mid-cook (a backgrounded PWA waking up is
@@ -443,13 +463,32 @@ where it can still be acted on (→ [DECISIONS #131](DECISIONS.md)).
   stacked page (→ plan 14). The **OS share sheet** also lands here: the PWA registers a share
   target (§8) so sharing a page from a browser opens link mode with the URL filled in and
   auto-fetched.
-- Paste a recipe URL → **Fetch recipe**. The server reads the page's Schema.org `Recipe` JSON-LD
-  (no AI, no dependency — nearly every recipe site embeds one for Google). `@graph` wrappers and
-  `@type` arrays are handled; a malformed block never sinks the next; the first `Recipe` wins.
-  Fields map to the editor: name, `totalTime` (else `prepTime`+`cookTime`) → minutes,
-  `recipeYield` → servings, `recipeIngredient[]` → raw ingredient lines (the editor parses them
-  to amount chips like every typed row), `recipeInstructions` → steps in order, `image` →
-  photo.
+- Paste a recipe URL → **Fetch recipe**. The server reads the page's own **recipe card**: its
+  Schema.org `Recipe` as JSON-LD (no AI — nearly every recipe site embeds one for Google), else
+  the same card written as **Microdata** in the page's HTML (`itemscope itemtype=…/Recipe`,
+  `itemprop`s; → plan 22 — older templates and hand-built blogs). `@graph` wrappers and `@type`
+  arrays are handled; a malformed block never sinks the next; the first `Recipe` wins; a nested
+  item's properties (an author's `name`) are never taken for the recipe's. Fields map to the
+  editor: name, `totalTime` (else `prepTime`+`cookTime`) → minutes, `recipeYield` → servings,
+  `recipeIngredient[]` → raw ingredient lines (the editor parses them to amount chips like every
+  typed row), `recipeInstructions` → steps in order, `image` → photo — else the page's
+  `og:image`.
+- **Improve with AI** (→ plan 22) — a switch under the link field, shown only when AI features are
+  set up. **Off until someone turns it on**, then remembered on that device (turning it on is the
+  go-ahead a paid call needs; a first shared link never spends one). The share sheet honours it
+  too. With it on:
+  - a page **with** a recipe card is sent to the model **as the card** (compact JSON, not the
+    whole page) to be **improved**: each ingredient's amount and unit sorted out, which
+    ingredients each step uses — and how much, when a step takes part of one — and a **named
+    timer** where a step states a duration (→ §4.4). The card's rows stay the card's: the same
+    ingredients and steps in the same order, with its name, servings and time. If the model
+    can't improve it (busy, quota, a rewrite that changed the rows), the card **still opens, as
+    the site wrote it**, with a line saying why ("Imported as the site wrote it — Gemini is at
+    its limit…").
+  - a page **without** a card is read by the model from its text (as "Try AI extraction" below
+    does, one tap sooner).
+  - The loader shows while the model works, and **Instructions for the AI** (below) are one tap
+    away.
 - On success the ordinary **recipe editor [3c] opens prefilled**, the photo already downloaded
   and re-encoded to WebP like any upload (a missing or unfetchable photo is non-fatal — the draft
   just has none). The preview _is_ the editor, so every imperfect parse is a two-second fix.
@@ -459,13 +498,18 @@ where it can still be acted on (→ [DECISIONS #131](DECISIONS.md)).
   loopback / private / link-local hosts refused _before any request_ and re-checked on every
   redirect hop, redirects capped (~5), ~10 s timeout, ~3 MB page cap, `text/html` only. Each
   failure has its own translated message — unreachable · blocked · not a page · too large · no
-  recipe found. A page with no recipe offers manual entry, and — when AI import is set up — the
-  AI fallback below.
-- **AI fallback** (→ plan 13) — available only when the household has set a Google **Gemini** API
-  key in Settings (§6); nothing reaches any model without one, and every path lands in the same
-  [3c] editor with a quiet "AI-extracted — check before saving" note (**the AI never saves on its
-  own**). Three ways in (photo and text are their own focused modes off the chooser §4.3; the
-  first is an in-context escalation off a failed link fetch):
+  recipe found. A page with no recipe offers manual entry, and — when AI features are set up —
+  the AI fallback below.
+- **AI fallback** (→ plans 13, 20) — available only when the household has set up an AI provider
+  in Settings (§6): its own key for Google Gemini, OpenAI (ChatGPT), Anthropic (Claude) or
+  OpenRouter, on a model it picked. Nothing reaches any model without one. When the main provider
+  can't answer (limit reached, out of credit, key refused, down), the household's **backup**
+  provider, if it has one, gets the same request, and the draft says so ("Gemini couldn't
+  answer, so your backup (Claude) did"). Every path lands in the same
+  [3c] editor with a quiet "Made with AI — check it over before saving" note (**the AI never
+  saves on its own**). Three ways in besides **Improve with AI** (photo and text are their own
+  focused modes off the chooser §4.3; the first is an in-context escalation off a failed link
+  fetch):
   - **A fetched page with no recipe data** — in link mode the dead end becomes a **Try AI
     extraction** button (plus quiet links to the photo/text modes). The tap is deliberate (a paid
     call is never silent): the URL is re-fetched under the same guards, stripped to readable text
@@ -473,12 +517,32 @@ where it can still be acted on (→ [DECISIONS #131](DECISIONS.md)).
   - **Pasted text** — the text mode: paste the recipe into a box, the answer for sites that block
     the server (Cloudflare 403), since the browser can still load them.
   - **Photos** — the photo mode: 1–3 photos of a cookbook/magazine page, validated and re-encoded
-    to WebP (EXIF stripped) before they reach the model; the first is offered as the recipe photo.
-    Ingredients come back as **raw lines** and parse to amount chips exactly like typed and
-    link-imported ones. Recipe content keeps its **source language** (→ §9). Failures are their own
-    messages — key refused (→ Settings) · service busy · nothing found — never a raw API error.
-- Household content is never translated: imported names, ingredients and steps pass through
-  verbatim (→ §9).
+    to WebP (EXIF stripped) before they reach the model; the first is offered as the recipe photo
+    (stored only once the model has answered, so a failed import leaves no file).
+  - **Instructions for the AI** (→ plan 22) — every AI path takes one optional line, up to 300
+    characters ("mit Tofu statt Fleisch", "für 2 Personen"), behind a quiet "Add instructions for
+    the AI" link, on top of the household's **standing instructions** from Settings (§6), which
+    the screen shows ("Always applied: …"). They may change ingredients, amounts and steps; the
+    draft quotes the line it was asked ("Adapted: “mit Tofu statt Fleisch”.").
+  - **What the model returns** is one strict shape: name, servings, time; ingredients as amount
+    - unit (g · kg · ml · L · pcs · pack · tbsp · tsp, or none) + name — cups, oz and lb are
+      converted to metric and °F to °C; steps with the ingredients each uses (and the share) and
+      an optional named timer. The page, text or photos are **data, never instructions** — the
+      prompt says so. Before the editor sees any of it, a gate (→ DECISIONS #148) keeps only what
+      passes: wrong-typed rows dropped and pins re-pointed, control/HTML/markdown/links stripped,
+      every length and count capped by the form's own limits, amounts finite and under the cap,
+      units from the list only, pins only to rows that exist (a share above a row's total is "all
+      of it"), and **a timer only where the step's own text states that duration**. Ingredient
+      lines are written back in the reader's unit spelling ("2 EL Öl") so the editor reads them
+      like typed ones. Save then checks everything again.
+      Recipe content keeps its **source language** unless the instructions ask otherwise (→ §9).
+      Failures are their own
+      messages, naming the provider — key refused (→ Settings) · at its limit · quota or credit used
+      up · model unavailable or unable to read photos · not answering · nothing found — never a raw
+      API error; when the backup failed too, the message says that as well.
+- Household content is never translated by the app: a card imported without AI passes through
+  verbatim (→ §9). With AI, the recipe keeps its own language unless the household's
+  instructions ask otherwise; units are converted to metric.
 
 ### 4.8 Ingredient picker [3e] — which ingredients actually need buying
 
@@ -649,10 +713,40 @@ The **History** tab is a stats landing; the full feed sits one level below it (�
   notification. Its own group and heading, because permission is per-browser and the switch is
   not a master over the three above (→ DECISIONS #130).
 - **Away mode**: "Going away?" — same control as 5.5.
-- **Household**: name (owner can rename), **AI recipe import** (owner sets/removes a Google
-  Gemini API key for the §4.7 fallback and can **Test connection** — a live check that reports
-  "Connection works" or why not; members see only whether it's on — the key is never shown, only
-  a masked hint), Members · {n} → members screen.
+- **Household**: name (owner can rename), **AI features** (→ plan 20), Members · {n} → members
+  screen.
+- **AI features** (owner only; members see the row read-only, e.g. "Gemini ·
+  gemini-flash-latest", or "Not set up"). A sheet with a note on top — a free tier (Gemini, or
+  OpenRouter's free models) is plenty for a household, but free tiers have limits and sometimes
+  stop answering, which is what the backup is for — and two slots:
+  - **Main** — what every AI feature calls; **Backup (optional)** — gets the same request when
+    the main one fails. Removing the main one promotes the backup.
+  - Setting one up: pick the **provider** (Google Gemini · ChatGPT (OpenAI) · Claude (Anthropic) ·
+    OpenRouter, each with a "free tier" / "paid" hint and a link to where its keys are made),
+    paste the **key**, and the **model** list loads by itself — **the provider's own live list**,
+    filtered to models that can answer in structured JSON, so a model released yesterday is
+    already there and nothing is hard-coded to go stale. A recommended model is preselected
+    (Gemini's `gemini-flash-latest`, OpenAI's newest `-mini`, Claude's newest Haiku, OpenRouter's
+    first free model that reads photos), so "paste key, Save" is the whole setup; **Other
+    model…** takes a typed id. Loading the list is the key check — a refused key says so before
+    anything is saved.
+  - Per slot: provider · model · masked key hint (first four + last four — the key itself is
+    never shown or sent back), **Edit** (the key field starts empty; leaving it empty keeps the
+    stored key while the provider stays the same), **Test connection** (a tiny live call on the
+    saved model: "Connection works" or why not), **Remove**.
+  - **Household instructions** (→ plan 22, once a provider is set up): one standing line, up to
+    300 characters ("we're vegetarian; use metric units"), applied to every AI import on top of
+    whatever is typed for one recipe. Owner sets it; the import screen shows it.
+- **Recipe wording** (→ plan 24, owner sets; members see the row read-only): **As written**
+  (default) or **Austrian German**. With Austrian German, a German recipe imported from then on
+  uses the Austrian words — Sahne → Obers, saure Sahne → Sauerrahm, Quark → Topfen, Hackfleisch
+  → Faschiertes, Kartoffeln → Erdäpfel, Tomaten → Paradeiser, Aprikosen → Marillen, … — from a
+  **fixed list** in the app (not editable in v1). With AI the model rewrites the whole recipe in
+  Austrian German and gets the grammar right ("das Obers"); without AI only the **ingredient
+  names** are swapped, whole words only ("Sahnejoghurt" stays), because a word swap inside a
+  sentence would break its articles. Recipes in other languages, and saved recipes, are never
+  touched. Either way cook mode still underlines a step's "Sahne" for an "Obers" row: each pair
+  is a synonym for the step matcher (§4.4), whatever the setting.
 - **About**: **Send feedback** → sheet — a **bug** or an **idea**, in your own words, in any
   language, up to 2000 characters. The sheet says what travels with it _before_ you send, and
   says it accurately: **the repository is public**, so the issue carries the words, the app
@@ -720,6 +814,9 @@ timezone, so January reads "Jänner" (→ [DECISIONS #93](DECISIONS.md)). Every 
   byte-for-byte, in the language it was written in, with only the English scaffolding around it
   added (→ [DECISIONS #136](DECISIONS.md)). The three starter stores and the three "popular
   starters" are written in the language of whoever created them, and are theirs to rename.
+  The language switch never rewrites any of it. What a household **chooses** for its own
+  imports is a different thing: its recipe wording (§6, plan 24) and its AI instructions (§4.7)
+  shape a recipe once, as it is imported — never one already saved.
 - **Units are stored canonically and shown per language** — `tbsp` reads "tbsp" or "EL", `pcs`
   reads "pcs" or "Stk.". A recipe typed in either language parses to the same rows.
 - **Notifications** go to a device, so they use the recipient's own language: their explicit

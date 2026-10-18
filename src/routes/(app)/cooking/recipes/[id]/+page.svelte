@@ -24,11 +24,15 @@
 	import type { MealSlot } from '$lib/utils/meals';
 	import { scaleIngredients, servingsFactor } from '$lib/utils/ingredients';
 	import { readServings } from '$lib/utils/recipes';
+	import { scaleStepAmounts } from '$lib/utils/step-amounts';
+	import { readStep, scaleStepUses } from '$lib/utils/step-highlight';
+	import { formatDuration } from '$lib/utils/timer-parse';
 	import CalendarDays from '@lucide/svelte/icons/calendar-days';
 	import ChefHat from '@lucide/svelte/icons/chef-hat';
 	import ChevronLeft from '@lucide/svelte/icons/chevron-left';
 	import Clock from '@lucide/svelte/icons/clock';
 	import MoreHorizontal from '@lucide/svelte/icons/more-horizontal';
+	import Timer from '@lucide/svelte/icons/timer';
 	import Users from '@lucide/svelte/icons/users';
 	import { untrack } from 'svelte';
 	import type { PageProps } from './$types';
@@ -110,6 +114,20 @@
 	const factor = $derived(servingsFactor(recipe.servings, serves ?? 0));
 	/** The amounts as this reader needs them — the whole point of the stepper. */
 	const ingredients = $derived(scaleIngredients(recipe.ingredients, factor));
+
+	/**
+	 * A step's text as runs, its ingredient amounts rewritten for the count being
+	 * read for (→ `$lib/utils/step-amounts`, plan 23). No underlines here — that
+	 * is cook mode's job; only the numbers change. As written, it's one run.
+	 */
+	function stepRuns(step: (typeof recipe.steps)[number]): { text: string; scaledFrom?: string }[] {
+		if (factor === 1) return [{ text: step.text }];
+		const read = readStep({ text: step.text, uses: scaleStepUses(step.uses, factor) }, ingredients);
+		return scaleStepAmounts(read.segments, factor, ingredients, step.uses !== null).map((run) => ({
+			text: run.text,
+			scaledFrom: run.scaledFrom
+		}));
+	}
 
 	/** Cook mode inherits the count rather than asking again with wet hands. */
 	const cookHref = $derived(
@@ -241,7 +259,25 @@
 			{#each recipe.steps as step, index (step.id)}
 				<li>
 					<span class="number" aria-hidden="true">{index + 1}</span>
-					<span class="step-text">{step.text}</span>
+					<div class="step-body">
+						<!-- No line breaks inside: whitespace here would be text (→ CookStepText). -->
+						<span class="step-text"
+							>{#each stepRuns(step) as run, at (at)}{#if run.scaledFrom}<span class="scaled"
+										>{run.text}<span class="said">{m.cooking.cook.scaledFrom(run.scaledFrom)}</span
+										></span
+									>{:else}{run.text}{/if}{/each}</span
+						>
+						<!-- The step's own timer (→ plan 21), so it is no surprise in cook mode. -->
+						{#if step.timer}
+							<span class="step-timer">
+								<Timer size={13} strokeWidth={2.2} aria-hidden="true" />
+								{m.cooking.form.timerChip(
+									step.timer.label ?? m.cooking.cook.timerForStep(index + 1),
+									formatDuration(step.timer.seconds)
+								)}
+							</span>
+						{/if}
+					</div>
 				</li>
 			{/each}
 		</ol>
@@ -488,10 +524,44 @@
 		color: var(--on-sage);
 	}
 
-	.step-text {
+	.step-body {
 		flex: 1;
 		min-width: 0;
 		padding-top: 2px;
+	}
+
+	.step-timer {
+		display: inline-flex;
+		align-items: center;
+		gap: 5px;
+		margin-top: 6px;
+		padding: 3px 10px;
+		border-radius: var(--r-chip);
+		background: var(--sage-tint);
+		font-size: calc(12px * var(--fs));
+		font-weight: 600;
+		color: var(--sage-deep);
+		font-variant-numeric: tabular-nums;
+	}
+
+	/* An amount rewritten for the count being read for (→ plan 23). */
+	.scaled {
+		font-weight: 600;
+		color: var(--sage-deep);
+	}
+
+	/* What the recipe itself says there, for a screen reader. */
+	.said {
+		position: absolute;
+		width: 1px;
+		height: 1px;
+		overflow: hidden;
+		clip-path: inset(50%);
+		white-space: nowrap;
+	}
+
+	.step-text {
+		display: block;
 		font-size: calc(14.5px * var(--fs));
 		line-height: 1.5;
 		color: var(--ink);

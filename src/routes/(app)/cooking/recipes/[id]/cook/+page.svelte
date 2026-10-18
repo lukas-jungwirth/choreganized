@@ -29,6 +29,7 @@
 	import { keepScreenAwake } from '$lib/wake-lock';
 	import { scaleIngredients, servingsFactor } from '$lib/utils/ingredients';
 	import { readServings } from '$lib/utils/recipes';
+	import { scaleStepAmounts } from '$lib/utils/step-amounts';
 	import { plainName, readStep, scaleStepUses } from '$lib/utils/step-highlight';
 	import { messages } from '$lib/i18n';
 	import { formatDuration, parseStepDuration, TIMERS_MAX } from '$lib/utils/timer-parse';
@@ -127,17 +128,32 @@
 		)
 	);
 
-	/** A duration the step mentions, if it mentions one (→ DECISIONS #14). */
-	const parsed = $derived(step ? parseStepDuration(step.text) : null);
+	/**
+	 * The step as it's drawn: the reading above, with every amount the sentence
+	 * gives an ingredient rewritten for tonight's count — where it's certain
+	 * (→ `$lib/utils/step-amounts`, plan 23).
+	 */
+	const segments = $derived(
+		scaleStepAmounts(read.segments, factor, ingredients, (step?.uses ?? null) !== null)
+	);
 
 	/**
-	 * What a timer here is called unless the cook says otherwise: the step it was
-	 * set on (→ DECISIONS #134). It used to be the step's first ingredient, which
-	 * was a guess — right often enough to keep offering, wrong often enough that
-	 * "Kartoffeln (festkochen)" ended up on a lock screen and a 20-minute bake got
-	 * named after the butter it was greased with. The step is simply true.
+	 * How long the chip's timer runs: the step's own timer, set in the form or by
+	 * an import (→ plan 21), else a duration the step mentions (→ DECISIONS #14).
 	 */
-	const label = $derived(m.cooking.cook.timerForStep(index + 1));
+	const parsed = $derived(step ? (step.timer?.seconds ?? parseStepDuration(step.text)) : null);
+
+	/**
+	 * What a timer here is called unless the cook says otherwise: the step's own
+	 * timer's name, else the step it was set on (→ DECISIONS #134). It used to be
+	 * the step's first ingredient, which was a guess — right often enough to keep
+	 * offering, wrong often enough that "Kartoffeln (festkochen)" ended up on a
+	 * lock screen and a 20-minute bake got named after the butter it was greased
+	 * with. A name someone gave the step's timer is better still; the step is the
+	 * fallback because it is always true.
+	 */
+	const named = $derived(step?.timer?.label ?? null);
+	const label = $derived(named ?? m.cooking.cook.timerForStep(index + 1));
 
 	/**
 	 * What the sheet offers instead, one tap each: the step's own ingredients by
@@ -233,7 +249,7 @@
 		<div class="body">
 			<p class="eyebrow">{m.cooking.cook.step(index + 1, steps.length)}</p>
 
-			<CookStepText segments={read.segments} {ingredients} />
+			<CookStepText {segments} {ingredients} />
 
 			<div class="chips">
 				{#if !ring}
@@ -241,7 +257,9 @@
 						<TimerIcon size={20} strokeWidth={1.9} class="amber" aria-hidden="true" />
 						{parsed === null
 							? m.cooking.cook.startTimer
-							: m.cooking.cook.startParsedTimer(formatDuration(parsed))}
+							: named
+								? m.cooking.cook.startNamedTimer(named, formatDuration(parsed))
+								: m.cooking.cook.startParsedTimer(formatDuration(parsed))}
 					</button>
 				{/if}
 				<button type="button" class="chip outlined" onclick={() => (peeking = true)}>

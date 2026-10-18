@@ -114,6 +114,15 @@ const checks: [string, () => Promise<void>][] = [
 				body: JSON.stringify({ email: 'smoke-probe@example.invalid', password: 'x' })
 			});
 			const body = (await response.json().catch(() => ({}))) as { code?: string };
+			// A 403 INVALID_ORIGIN never reaches the flag: Better Auth refused the
+			// request because the deploy's ORIGIN / BETTER_AUTH_URL are not this URL —
+			// a Coolify setting, and one that breaks real sign-in the same way (the
+			// test environment's first smoke run, 2026-09-14).
+			if (response.status === 403 && body.code === 'INVALID_ORIGIN') {
+				throw new Error(
+					`sign-in/email answered 403 INVALID_ORIGIN — the deploy's ORIGIN / BETTER_AUTH_URL are not ${base}; Google sign-in fails there too`
+				);
+			}
 			if (response.status !== 400 || body.code !== 'EMAIL_PASSWORD_DISABLED') {
 				throw new Error(
 					`sign-in/email answered ${response.status} ${body.code ?? ''} — E2E_MODE is on in a deployed instance!`

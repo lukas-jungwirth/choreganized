@@ -8,10 +8,15 @@
  * and a test that files a GitHub issue or writes into somebody's household is
  * not a test. `E2E_MODE=true` is what lets the setup project sign up without
  * Google (→ src/lib/server/e2e-mode.ts).
+ *
+ * Every AI provider is pointed at `scripts/fake-ai.ts`, started here first, so
+ * AI imports run end to end with no key and no network — and fail on cue for
+ * the backup's tests (→ docs/TESTING.md "Fake AI").
  */
 import { spawn } from 'node:child_process';
 import { existsSync, mkdirSync, rmSync } from 'node:fs';
 import { dirname } from 'node:path';
+import { fakeAiEnv, startFakeAi } from './fake-ai.ts';
 
 const port = process.env.PORT ?? '4173';
 const origin = `http://127.0.0.1:${port}`;
@@ -33,6 +38,9 @@ if (!existsSync('build/index.js')) {
 const dataDir = dirname(databasePath);
 rmSync(dataDir, { recursive: true, force: true });
 mkdirSync(dataDir, { recursive: true });
+
+// A fixed port, so a test can read `/__requests` off it (→ tests/e2e/ai.spec.ts).
+const fakeAi = await startFakeAi(Number(process.env.FAKE_AI_PORT ?? 4174));
 
 const child = spawn(process.execPath, ['build/index.js'], {
 	stdio: 'inherit',
@@ -57,11 +65,15 @@ const child = spawn(process.execPath, ['build/index.js'], {
 		// build id that read the commit would differ between CI and a laptop.
 		APP_VERSION: 'e2e',
 		APP_COMMIT: '',
-		E2E_MODE: 'true'
+		E2E_MODE: 'true',
+		...fakeAiEnv(fakeAi.url)
 	}
 });
 
 for (const signal of ['SIGINT', 'SIGTERM'] as const) {
 	process.on(signal, () => child.kill(signal));
 }
-child.on('exit', (code, signal) => process.exit(code ?? (signal ? 1 : 0)));
+child.on('exit', (code, signal) => {
+	void fakeAi.close();
+	process.exit(code ?? (signal ? 1 : 0));
+});

@@ -429,7 +429,7 @@ export const de: Messages = {
 		},
 
 		activity: {
-			title: 'Zuletzt passiert',
+			title: 'Zuletzt erledigt',
 			all: 'Alle'
 		},
 
@@ -783,6 +783,17 @@ export const de: Messages = {
 			usesAll: 'alles',
 			usesBackToAuto: 'Lieber aus dem Text lesen',
 			usesEmpty: 'Trag zuerst die Zutaten ein — dann kannst du sie den Schritten zuordnen.',
+
+			timerAdd: 'Timer hinzufügen',
+			timerLabel: (index: number) => `Timer für Schritt ${index}`,
+			timerChip: (name: string, duration: string) => `${name} · ${duration}`,
+			timerSheet: {
+				title: 'Timer für den Schritt',
+				eyebrow: (index: number) => `Schritt ${index}`,
+				subtitle: 'Der Kochmodus bietet ihn bei diesem Schritt an, unter diesem Namen.',
+				save: 'Timer speichern',
+				remove: 'Timer entfernen'
+			},
 			save: 'Speichern',
 			saveRecipe: 'Rezept speichern',
 			moveIngredientUp: (index: number) => `Zutat ${index} nach oben`,
@@ -826,6 +837,7 @@ export const de: Messages = {
 			step: (index: number, total: number) => `Schritt ${index} von ${total}`,
 			startTimer: 'Timer stellen',
 			startParsedTimer: (duration: string) => `${duration}-Timer starten`,
+			startNamedTimer: (name: string, duration: string) => `${name} · ${duration} starten`,
 			ingredients: 'Zutaten',
 			usesLead: 'Dieser Schritt braucht ',
 			previous: 'Vorheriger Schritt',
@@ -841,6 +853,7 @@ export const de: Messages = {
 			peekEmpty: 'Für dieses Rezept sind keine Zutaten notiert.',
 			peekShare: (amount: string) => `von ${amount}`,
 			stepAmount: (amount: string) => `, ${amount}, `,
+			scaledFrom: (written: string) => ` (im Rezept: ${written})`,
 
 			timerTitle: 'Timer stellen',
 			timerSubtitle: 'Er klingelt, bis du ihn stoppst — auch bei gesperrtem Handy.',
@@ -907,7 +920,16 @@ export const de: Messages = {
 			},
 
 			ai: {
-				note: 'Per KI erkannt — vor dem Speichern kurz prüfen.',
+				note: 'Mit KI erstellt — vor dem Speichern kurz prüfen.',
+				adapted: (instructions: string) => `Angepasst: „${instructions}“.`,
+				withoutAi: (reason: string) => `So übernommen, wie die Seite es schreibt — ${reason}`,
+				improve: 'Mit KI verbessern',
+				improveHint:
+					'Ordnet Mengen, verknüpft Zutaten mit ihren Schritten und stellt Timer — und liest auch Seiten ohne Rezeptdaten. Nutzt deinen KI-Anbieter.',
+				instructionsToggle: 'Anweisungen für die KI hinzufügen',
+				instructionsLabel: 'Anweisungen für die KI',
+				instructionsPlaceholder: 'z. B. mit Tofu statt Fleisch, für 2 Personen',
+				instructionsHousehold: (instructions: string) => `Gilt immer: „${instructions}“`,
 				pageLead: 'Diese Seite hat keine direkt lesbaren Rezeptdaten. Mit KI auslesen?',
 				tryPage: 'Mit KI auslesen',
 				extracting: 'Wird ausgelesen…',
@@ -927,20 +949,17 @@ export const de: Messages = {
 				photoHint: 'Bis zu 3 Fotos einer Kochbuch- oder Magazinseite.',
 				photoSubmit: 'Aus Fotos auslesen',
 				hintLead: 'Keine Rezeptdaten auf der Seite. ',
-				hintLink: 'KI-Import einrichten',
+				hintLink: 'KI-Funktionen einrichten',
 				hintRest: ', um es trotzdem auszulesen.',
 				setupCopy:
-					'Der KI-Import ist noch nicht eingerichtet. Füg einen Google-Gemini-Schlüssel hinzu, um Rezepte aus Fotos und eingefügtem Text zu lesen.',
-				setupCta: 'KI-Import einrichten',
+					'Die KI-Funktionen sind noch nicht eingerichtet. Füg einen Schlüssel von Gemini, ChatGPT, Claude oder OpenRouter hinzu, um Rezepte aus Fotos und eingefügtem Text zu lesen.',
+				setupCta: 'KI-Funktionen einrichten',
+				usedBackup: (backup: string, main: string) =>
+					`${main} konnte nicht antworten, darum hat dein Ersatz (${backup}) übernommen.`,
 				error: {
-					noKey: 'Richte zuerst den KI-Import in den Einstellungen ein.',
-					badKey: 'Der Gemini-Schlüssel wurde abgelehnt — prüf ihn in den Einstellungen.',
-					rateLimited: 'Der KI-Dienst ist gerade ausgelastet — kurz warten und nochmal versuchen.',
-					modelUnavailable: 'Das KI-Modell ist nicht verfügbar — die App braucht evtl. ein Update.',
 					noRecipe:
 						'Darin war kein Rezept zu finden — versuch klarere Fotos oder vollständigeren Text.',
-					noPhotos: 'Füg mindestens ein Foto des Rezepts hinzu.',
-					failed: 'Das KI-Auslesen hat nicht geklappt — kurz warten und nochmal versuchen.'
+					noPhotos: 'Füg mindestens ein Foto des Rezepts hinzu.'
 				}
 			}
 		}
@@ -1014,33 +1033,74 @@ export const de: Messages = {
 			note: 'Alle im Haus sehen diesen Namen.'
 		},
 
-		aiImport: {
-			row: 'KI-Rezeptimport',
-			on: 'An',
+		ai: {
+			row: 'KI-Funktionen',
 			notSet: 'Nicht eingerichtet',
-			title: 'KI-Rezeptimport',
+			value: (provider: string, model: string) => `${provider} · ${model}`,
+			title: 'KI-Funktionen',
 			eyebrow: 'Haushalt',
-			what: 'Füg einen Google-Gemini-Schlüssel hinzu, um Rezepte aus Fotos, eingefügtem Text und Seiten ohne Rezeptdaten zu holen.',
-			cost: 'Jeder Import kostet Bruchteile eines Cents über dein eigenes Google-Konto — das Gratis-Kontingent reicht meist für einen Haushalt.',
-			getKey: 'Schlüssel im Google AI Studio holen',
-			current: (hint: string) => `Aktueller Schlüssel: ${hint}`,
-			keyLabel: 'Gemini-API-Schlüssel',
-			keyPlaceholder: 'AQ.… oder AIza…',
-			replace: 'Schlüssel ersetzen',
-			remove: 'Schlüssel entfernen',
-			invalid:
-				'Das sieht nicht nach einem Gemini-Schlüssel aus — füg den vollständigen Schlüssel aus dem Google AI Studio ein.',
+			what: 'Bring einen Schlüssel eines KI-Anbieters mit, um Rezepte aus Fotos, eingefügtem Text und Seiten ohne Rezeptdaten zu importieren.',
+			freeNote:
+				'Ein Gratis-Kontingent (Gemini oder die Gratis-Modelle von OpenRouter) reicht für einen Haushalt — aber Gratis-Kontingente sind begrenzt und antworten manchmal eine Zeit lang nicht. Ein Ersatz hält die Importe dann am Laufen.',
+			primary: 'Haupt-Anbieter',
+			backup: 'Ersatz',
+			backupEmpty: 'Springt ein, wenn der Haupt-Anbieter am Limit oder nicht erreichbar ist.',
+			setUp: 'Einrichten',
+			addBackup: 'Ersatz hinzufügen',
+			edit: 'Bearbeiten',
+			remove: 'Entfernen',
+			keyHint: (hint: string) => `Schlüssel ${hint}`,
+			back: 'Zurück',
+
+			connection: {
+				titlePrimary: 'Haupt-Anbieter',
+				titleBackup: 'Ersatz-Anbieter',
+				provider: 'Anbieter',
+				getKey: (provider: string) => `${provider}-Schlüssel holen`,
+				keyLabel: 'API-Schlüssel',
+				keyPlaceholder: 'Schlüssel einfügen',
+				keyKeep: (hint: string) => `Leer lassen, um ${hint} zu behalten.`,
+				invalidKey: 'Das sieht nicht nach einem API-Schlüssel aus — füg den ganzen Schlüssel ein.',
+				loadModels: 'Modelle laden',
+				loadingModels: 'Modelle werden geladen…',
+				modelLabel: 'Modell',
+				modelsHint:
+					'Direkt aus der Liste des Anbieters — neue Modelle tauchen auf, sobald es sie gibt.',
+				recommended: (label: string) => `${label} (empfohlen)`,
+				free: (label: string) => `${label} · gratis`,
+				otherModel: 'Anderes Modell…',
+				modelIdLabel: 'Modell-ID',
+				modelIdPlaceholder: 'z. B. gemini-flash-latest',
+				invalidModel: 'Schreib die Modell-ID genau so, wie der Anbieter sie schreibt.',
+				needKey: 'Füg einen Schlüssel ein, um die Modelle zu sehen.',
+				save: 'Speichern',
+				saving: 'Wird gespeichert…'
+			},
+
 			test: {
 				label: 'Verbindung testen',
 				testing: 'Wird getestet…',
-				ok: 'Verbindung funktioniert.',
-				noKey: 'Speichere zuerst einen Schlüssel.',
-				badKey: 'Der Schlüssel wurde abgelehnt — prüf ihn und speichere neu.',
-				busy: 'Der KI-Dienst ist ausgelastet — versuch es gleich nochmal.',
-				model:
-					'Der Schlüssel funktioniert, aber das KI-Modell ist nicht verfügbar — die App braucht evtl. ein Update.',
-				failed: 'Der KI-Dienst war nicht erreichbar — versuch es nochmal.'
+				ok: 'Verbindung funktioniert.'
+			},
+
+			instructions: {
+				label: 'Anweisungen für den Haushalt',
+				hint: 'Gelten für jeden KI-Import, zusätzlich zu dem, was du bei einem Rezept eintippst.',
+				placeholder: 'z. B. wir essen vegetarisch; metrische Einheiten',
+				save: 'Anweisungen speichern',
+				saved: 'Gespeichert.'
 			}
+		},
+
+		wording: {
+			row: 'Wortwahl in Rezepten',
+			title: 'Wortwahl in Rezepten',
+			asWritten: 'Wie geschrieben',
+			asWrittenDetail: 'Importierte Rezepte behalten die Wörter der Seite.',
+			austrian: 'Österreichisch',
+			austrianDetail:
+				'Aus Sahne wird Obers, aus Quark Topfen, aus Kartoffeln Erdäpfel — in importierten deutschen Rezepten.',
+			note: 'Gilt für Rezepte, die du ab jetzt importierst; gespeicherte bleiben, wie sie sind. Mit KI wird das ganze Rezept umgeschrieben, ohne die Namen der Zutaten.'
 		},
 
 		about: 'Über die App',
@@ -1280,6 +1340,49 @@ export const de: Messages = {
 	},
 
 	/* ── Refusals ──────────────────────────────────────────────────────────── */
+	/* ── KI-Anbieter (→ plan 20) ───────────────────────────────────────────── */
+	ai: {
+		providers: {
+			gemini: { name: 'Google Gemini', short: 'Gemini', hint: 'Mit Gratis-Kontingent' },
+			openai: { name: 'ChatGPT (OpenAI)', short: 'OpenAI', hint: 'Kostenpflichtig, pro Nutzung' },
+			anthropic: {
+				name: 'Claude (Anthropic)',
+				short: 'Claude',
+				hint: 'Kostenpflichtig, pro Nutzung'
+			},
+			openrouter: {
+				name: 'OpenRouter',
+				short: 'OpenRouter',
+				hint: 'Mit Gratis-Modellen · ein Schlüssel, viele Anbieter'
+			}
+		},
+
+		error: {
+			noKey: 'Richte zuerst die KI-Funktionen in den Einstellungen ein.',
+			badKey: (provider: string) =>
+				`${provider} hat den Schlüssel abgelehnt — prüf ihn in den Einstellungen.`,
+			rateLimited: (provider: string) =>
+				`${provider} ist gerade am Limit — kurz warten und nochmal versuchen, oder in den Einstellungen einen Ersatz hinzufügen.`,
+			quota: (provider: string) =>
+				`Bei ${provider} ist das Kontingent oder Guthaben aufgebraucht — später nochmal versuchen, oder in den Einstellungen einen Ersatz hinzufügen.`,
+			modelUnavailable: (provider: string) =>
+				`${provider} bietet dieses Modell (nicht mehr) an — wähl in den Einstellungen ein anderes.`,
+			modelUnsupported: (provider: string) =>
+				`Dieses ${provider}-Modell kann das nicht — vielleicht liest es keine Fotos. Wähl in den Einstellungen ein anderes.`,
+			unavailable: (provider: string) =>
+				`${provider} antwortet gerade nicht — versuch es gleich nochmal.`,
+			timeout: (provider: string) =>
+				`${provider} hat zu lange für die Antwort gebraucht — versuch es nochmal.`,
+			badOutput: (provider: string) =>
+				`${provider} hat geantwortet, aber nicht in einer Form, mit der die App etwas anfangen kann — nochmal versuchen, oder ein anderes Modell.`,
+			failed: (provider: string) =>
+				provider
+					? `${provider} hat diesmal nicht geklappt — versuch es nochmal.`
+					: 'Die KI hat diesmal nicht geklappt — versuch es nochmal.',
+			backupFailed: (provider: string) => `Der Ersatz (${provider}) hat auch nicht geklappt.`
+		}
+	},
+
 	errors: {
 		keepUnder: (max: number) => `Höchstens ${max} Zeichen.`,
 

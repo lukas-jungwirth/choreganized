@@ -38,18 +38,22 @@
 		type RecipeFormField,
 		type RecipePrefill,
 		type StepChoice,
+		type StepTimer,
 		type StepUseDraft
 	} from '$lib/utils/recipes';
-	import { highlightStep } from '$lib/utils/step-highlight';
+	import { highlightStep, plainName } from '$lib/utils/step-highlight';
+	import { formatDuration, parseStepDuration } from '$lib/utils/timer-parse';
 	import Camera from '@lucide/svelte/icons/camera';
 	import ChevronDown from '@lucide/svelte/icons/chevron-down';
 	import ChevronUp from '@lucide/svelte/icons/chevron-up';
 	import Plus from '@lucide/svelte/icons/plus';
+	import TimerIcon from '@lucide/svelte/icons/timer';
 	import X from '@lucide/svelte/icons/x';
 	import { untrack } from 'svelte';
 	import IngredientSheet from './IngredientSheet.svelte';
 	import RecipeImage from './RecipeImage.svelte';
 	import StepIngredientsSheet from './StepIngredientsSheet.svelte';
+	import StepTimerSheet from './StepTimerSheet.svelte';
 
 	type Props = {
 		/** The recipe being edited; null when creating or importing. */
@@ -87,16 +91,23 @@
 	/**
 	 * A step also carries what it uses (→ SPEC §4.4): null while it reads its own
 	 * text, a list — possibly empty — once someone has said. Pins name ingredient
-	 * *rows*, so they survive a reorder and go away with a removal.
+	 * *rows*, so they survive a reorder and go away with a removal. And it may
+	 * carry a timer of its own (→ plan 21): null while cook mode reads the
+	 * duration out of the text.
 	 */
-	type StepRow = Row & { uses: StepUseDraft[] | null };
+	type StepRow = Row & { uses: StepUseDraft[] | null; timer: StepTimer | null };
 
 	let nextKey = 0;
 	/** A counter rather than randomness: the server and the browser agree on it. */
 	const row = (text = ''): Row => ({ key: `r${nextKey++}`, text });
-	const stepRow = (text = '', uses: StepUseDraft[] | null = null): StepRow => ({
+	const stepRow = (
+		text = '',
+		uses: StepUseDraft[] | null = null,
+		timer: StepTimer | null = null
+	): StepRow => ({
 		...row(text),
-		uses
+		uses,
+		timer
 	});
 
 	/**
@@ -105,6 +116,11 @@
 	 * translated into the keys this form works in.
 	 */
 	const rowForIngredientId = new Map<string, string>();
+	/**
+	 * The same for an import draft, whose pins name ingredients by their *index*
+	 * in `ingredientLines` (→ plan 22): row keys in line order.
+	 */
+	const rowForDraftIndex: string[] = [];
 
 	// Seeded from the import draft when there is one, else from the recipe being
 	// edited, else empty. An imported ingredient stays the *raw line* the site
@@ -119,7 +135,11 @@
 		untrack(() => {
 			if (prefill) {
 				return prefill.ingredientLines.length
-					? prefill.ingredientLines.map((line) => row(line))
+					? prefill.ingredientLines.map((line) => {
+							const created = row(line);
+							rowForDraftIndex.push(created.key);
+							return created;
+						})
 					: [row()];
 			}
 
@@ -134,10 +154,20 @@
 	);
 	let steps = $state<StepRow[]>(
 		untrack(() => {
-			// An imported draft has text and nothing else, which is exactly what the
-			// matcher is for: its steps arrive reading themselves.
+			// A page's own recipe card has text and nothing else, which is exactly what
+			// the matcher is for: its steps arrive reading themselves. An AI draft may
+			// also know what each step uses and its timer (→ plan 22) — those arrive
+			// pinned, and a pin to a line that isn't there is dropped.
 			if (prefill) {
-				return prefill.steps.length ? prefill.steps.map((text) => stepRow(text)) : [stepRow()];
+				if (!prefill.steps.length) return [stepRow()];
+				return prefill.steps.map((step) => {
+					const uses = step.uses?.flatMap((use) => {
+						const key = rowForDraftIndex[use.ingredient];
+						return key ? [{ ingredient: key, quantity: use.quantity }] : [];
+					});
+					// Nothing left to pin reads the text — "uses nothing" is a person's call.
+					return stepRow(step.text, uses?.length ? uses : null, step.timer);
+				});
 			}
 
 			if (!recipe?.steps.length) return [stepRow()];
@@ -150,7 +180,8 @@
 					step.uses?.flatMap((use) => {
 						const key = rowForIngredientId.get(use.ingredientId);
 						return key ? [{ ingredient: key, quantity: use.quantity }] : [];
-					}) ?? null
+					}) ?? null,
+					step.timer
 				)
 			);
 		})
@@ -322,6 +353,45 @@
 				return at === undefined ? [] : [{ ingredient: at, quantity: use.quantity }];
 			})
 		);
+	}
+
+	/** Which step's timer sheet is open, by row key. */
+	let timing = $state<string | null>(null);
+
+	/**
+	 * What the timer chip under a step says: its own timer by name, else the
+	 * duration cook mode will read out of the text (marked "auto", like the
+	 * ingredients above it), else an invitation.
+	 */
+	function timerChip(step: StepRow, index: number): { set: boolean; auto: boolean; text: string } {
+		if (step.timer) {
+			return {
+				set: true,
+				auto: false,
+				text: m.cooking.form.timerChip(
+					step.timer.label ?? m.cooking.cook.timerForStep(index + 1),
+					formatDuration(step.timer.seconds)
+				)
+			};
+		}
+		const read = parseStepDuration(step.text);
+		return read === null
+			? { set: false, auto: false, text: m.cooking.form.timerAdd }
+			: { set: false, auto: true, text: formatDuration(read) };
+	}
+
+	/** The step's timer on the wire — empty for "read the text" (→ `readRecipeForm`). */
+	function postedTimer(step: StepRow): string {
+		return step.timer ? JSON.stringify(step.timer) : '';
+	}
+
+	/** The step's ingredients by their short names: the timer sheet's one-tap suggestions. */
+	function timerNames(step: StepRow): string[] {
+		const names = (step.uses ?? suggest(step.text)).flatMap((use) => {
+			const choice = choices.find((item) => item.key === use.ingredient);
+			return choice ? [plainName(choice.name)] : [];
+		});
+		return [...new Set(names)];
 	}
 
 	/** Textareas grow with their step instead of scrolling inside two lines. */
@@ -515,6 +585,7 @@
 	<ol class="steps">
 		{#each steps as step, index (step.key)}
 			{@const uses = chips(step)}
+			{@const timer = timerChip(step, index)}
 			<li class="step">
 				<span class="number" aria-hidden="true">{index + 1}</span>
 				<div class="field">
@@ -558,9 +629,27 @@
 						{/if}
 					</button>
 
-					<!-- One per step, always — `readRecipeForm` lines the two lists up by
+					<!-- The step's own timer (→ plan 21): named and timed here, or —
+						 marked "auto" — whatever cook mode will read out of the text. -->
+					<button
+						type="button"
+						class="timer"
+						class:set={timer.set}
+						aria-label={m.cooking.form.timerLabel(index + 1)}
+						onclick={() => (timing = step.key)}
+					>
+						<span class="chip" class:empty={!timer.set && !timer.auto}>
+							<TimerIcon size={13} strokeWidth={2.2} aria-hidden="true" />{timer.text}
+						</span>
+						{#if timer.auto}
+							<span class="auto">{m.cooking.form.usesAuto}</span>
+						{/if}
+					</button>
+
+					<!-- One each per step, always — `readRecipeForm` lines the lists up by
 						 position, so a step that reads its own text still has to post. -->
 					<input type="hidden" name="stepUses" value={postedUses(step)} />
+					<input type="hidden" name="stepTimer" value={postedTimer(step)} />
 				</div>
 				<span class="step-controls">
 					{@render controls(index, steps.length, 'step', (direction) => {
@@ -570,6 +659,7 @@
 						}
 
 						if (steps[index].key === pinning) pinning = null;
+						if (steps[index].key === timing) timing = null;
 						steps = remove(steps, index, () => stepRow());
 					})}
 				</span>
@@ -616,6 +706,21 @@
 			onsave={(uses) => (steps[at].uses = uses)}
 			onauto={() => (steps[at].uses = null)}
 			onclose={() => (pinning = null)}
+		/>
+	{/if}
+{/if}
+
+{#if timing}
+	{@const at = steps.findIndex((step) => step.key === timing)}
+	{#if at >= 0}
+		<StepTimerSheet
+			index={at + 1}
+			timer={steps[at].timer}
+			suggestedSeconds={parseStepDuration(steps[at].text)}
+			names={timerNames(steps[at])}
+			onsave={(timer) => (steps[at].timer = timer)}
+			onremove={() => (steps[at].timer = null)}
+			onclose={() => (timing = null)}
 		/>
 	{/if}
 {/if}
@@ -1029,6 +1134,25 @@
 		padding-left: 0;
 		font-weight: 500;
 		color: var(--text-disabled);
+	}
+
+	/* The step's timer, under its ingredients: the same chip, one target. */
+	.timer {
+		display: flex;
+		align-items: center;
+		gap: 6px;
+		margin-top: 2px;
+		padding: 2px 6px;
+		text-align: left;
+	}
+
+	.timer .chip {
+		align-items: center;
+	}
+
+	.timer.set .chip {
+		background: var(--sage-tint);
+		color: var(--sage-deep);
 	}
 
 	/* Says where the chips came from, quietly. It disappears the moment the list

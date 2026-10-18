@@ -5,20 +5,22 @@ server. Everything a feature needs — UI, server logic, DB, cron, push — live
 
 ## Stack (installed & pinned in package.json)
 
-| Concern   | Choice                                    | Notes                                                |
-| --------- | ----------------------------------------- | ---------------------------------------------------- |
-| Framework | SvelteKit 2 + Svelte 5 (**runes**)        | Runes mode is forced in `vite.config.ts`             |
-| Adapter   | `@sveltejs/adapter-node`                  | Long-running Node server (cron, push)                |
-| DB        | SQLite via `better-sqlite3`               | WAL, `busy_timeout`, FKs on — see `db/index.ts`      |
-| ORM       | Drizzle (`drizzle-orm` + `drizzle-kit`)   | Schema-as-code, generated SQL migrations             |
-| Auth      | Better Auth (`better-auth`)               | Google OAuth only in v1                              |
-| Push      | `web-push` (VAPID)                        | Hand-written service worker handlers                 |
-| Scheduler | `node-cron`                               | In-process, 1-min tick, started in server `init`     |
-| Dates     | `date-fns` + `Intl`                       | Calendar math; `Intl` for timezone rendering         |
-| Images    | `sharp`                                   | Recipe photos → ≤1200px WebP (→ [#62](DECISIONS.md)) |
-| Fonts     | `@fontsource-variable/{fraunces,figtree}` | Self-hosted (PWA/offline friendly)                   |
-| Icons     | `@lucide/svelte`                          | Matches design's stroke style; bespoke logo SVGs     |
-| Styling   | Vanilla CSS + custom properties           | **No Tailwind** — tokens in `src/app.css`            |
+| Concern   | Choice                                    | Notes                                                 |
+| --------- | ----------------------------------------- | ----------------------------------------------------- |
+| Framework | SvelteKit 2 + Svelte 5 (**runes**)        | Runes mode is forced in `vite.config.ts`              |
+| Adapter   | `@sveltejs/adapter-node`                  | Long-running Node server (cron, push)                 |
+| DB        | SQLite via `better-sqlite3`               | WAL, `busy_timeout`, FKs on — see `db/index.ts`       |
+| ORM       | Drizzle (`drizzle-orm` + `drizzle-kit`)   | Schema-as-code, generated SQL migrations              |
+| Auth      | Better Auth (`better-auth`)               | Google OAuth only in v1                               |
+| Push      | `web-push` (VAPID)                        | Hand-written service worker handlers                  |
+| Scheduler | `node-cron`                               | In-process, 1-min tick, started in server `init`      |
+| Dates     | `date-fns` + `Intl`                       | Calendar math; `Intl` for timezone rendering          |
+| Images    | `sharp`                                   | Recipe photos → ≤1200px WebP (→ [#62](DECISIONS.md))  |
+| AI        | plain `fetch` (no SDK)                    | Gemini · OpenAI · Anthropic · OpenRouter (→ #146)     |
+| HTML      | `node-html-parser`                        | Import: Microdata cards, page → readable lines (#148) |
+| Fonts     | `@fontsource-variable/{fraunces,figtree}` | Self-hosted (PWA/offline friendly)                    |
+| Icons     | `@lucide/svelte`                          | Matches design's stroke style; bespoke logo SVGs      |
+| Styling   | Vanilla CSS + custom properties           | **No Tailwind** — tokens in `src/app.css`             |
 
 ## Directory layout
 
@@ -33,6 +35,7 @@ src/
     refetch.ts                 # refetchOnFocus(): visibilitychange → invalidateAll [plan 02]
     scroll-lock.ts             # ref-counted body lock shared by the dialogs     [plan 02]
     push-client.ts             # permission/subscribe state for the browser      [plan 05]
+    ai.ts                      # AI providers + slots, key/model shape checks     [plan 20]
     i18n/                      # locale.ts (negotiation), context.ts (per-request catalog),
                                # messages/en.ts (the schema) + messages/de.ts       [i18n]
     components/
@@ -52,13 +55,17 @@ src/
       github.ts                # the one module that talks to api.github.com     [plan 16]
       version.ts               # appVersion(): the build id a report names       [plan 16]
       uploads.ts               # recipe photos: sharp → WebP, store/copy/read  [plan 07]
+      recipe-import.ts         # SSRF-guarded fetch of a recipe page + its photo [plan 12]
+      ai/                      # provider adapters (plain fetch), run.ts (primary → backup),
+                               # schema.ts (strict JSON Schema + Gemini dialect)  [plan 20]
       backup.ts                # nightly SQLite online-backup + 14-day rotation [plan 11]
       cron.ts                  # registerCronJobs(): reminders, timers, cleanup, backup [plan 05+]
       services/                # domain logic: household.ts, home.ts, shopping.ts, tasks.ts,
                                # history.ts, reminders.ts, holidays.ts, recipes.ts, meals.ts,
-                               # timers.ts, feedback.ts
+                               # timers.ts, feedback.ts, ai.ts (connections), ai-import.ts
     utils/                     # dates.ts (household-local helpers), holidays.ts (Austrian
-                               # shop closures), ingredients.ts, invite-code.ts, timer-parse.ts
+                               # shop closures), ingredients.ts, invite-code.ts, timer-parse.ts,
+                               # recipe-jsonld.ts (the import's page reader)
   routes/                      # see routing map below
 static/                        # icons/ (placeholders [05]), manifest.webmanifest [plan 11]
 design/Hearth.dc.html          # the design mockups (open in a browser)
@@ -82,6 +89,7 @@ docs/                          # this documentation + plans/
   cooking                       [04]   sheet: plan meal [3d]
   cooking/recipes               (browse all)
   cooking/recipes/new           [3c]
+  cooking/recipes/import        [3c as preview] link · photo · text import  [plans 12–14]
   cooking/recipes/[id]          [7a]   sheet: ••• [7c]
   cooking/recipes/[id]/edit     [3c]
   cooking/recipes/[id]/cook     [7b/7h] cook mode (hides tab bar)
@@ -265,7 +273,9 @@ prompt / subscribed).
 - Optional env: `GITHUB_FEEDBACK_TOKEN` (a fine-grained PAT scoped to this repo, _Issues: read
   and write_) mirrors feedback to GitHub issues — without it reports still save and the cron
   sweep mirrors them once a token appears (→ [DECISIONS #136](DECISIONS.md)).
-  `GITHUB_FEEDBACK_REPO` only redirects them. **Build-time**: `APP_VERSION` (a Coolify _Build
+  `GITHUB_FEEDBACK_REPO` only redirects them. AI keys are **not** env: each household brings
+  its own in Settings (→ [DECISIONS #146](DECISIONS.md)); `AI_<PROVIDER>_BASE_URL` points a
+  provider at `scripts/fake-ai.ts` and is honoured only under `E2E_MODE`. **Build-time**: `APP_VERSION` (a Coolify _Build
   Variable_ — a plain env var is runtime-only and never reaches `--build-arg`) and Coolify's
   `SOURCE_COMMIT`, baked by the Dockerfile into `APP_VERSION` / `APP_COMMIT` so a report can name
   its build (→ [DECISIONS #137](DECISIONS.md)).

@@ -17,6 +17,7 @@ import { and, asc, eq, ne, sql } from 'drizzle-orm';
 import type { Locale } from '$lib/i18n';
 import { isMemberColor } from '$lib/member-colors';
 import { toCalendarDate, type CalendarDate } from '$lib/utils/dates';
+import type { RecipeWording } from '$lib/utils/wording';
 import {
 	generateInviteCode,
 	INVITE_CODE_LENGTH,
@@ -52,7 +53,7 @@ export class HouseholdError extends Error {
 	}
 }
 
-type Transaction = Parameters<Parameters<typeof db.transaction>[0]>[0];
+export type Transaction = Parameters<Parameters<typeof db.transaction>[0]>[0];
 
 /** The invite code is globally unique, so retry the (vanishingly rare) clash. */
 function unusedInviteCode(tx: Transaction): string {
@@ -96,8 +97,13 @@ function memberIn(tx: Transaction, householdId: string, memberId: string): Membe
 	return member;
 }
 
-/** The actor, having proved they own the place (→ DECISIONS #10). */
-function requireOwner(tx: Transaction, householdId: string, actorMemberId: string): Member {
+/**
+ * The actor, having proved they own the place (→ DECISIONS #10). Exported for
+ * the other owner-only writes that live in their own service — the AI keys
+ * (→ `services/ai.ts`) — so the check stays one function, inside their
+ * transaction.
+ */
+export function requireOwner(tx: Transaction, householdId: string, actorMemberId: string): Member {
 	const actor = memberIn(tx, householdId, actorMemberId);
 	if (actor.role !== 'owner') throw new HouseholdError('not-owner');
 	return actor;
@@ -395,58 +401,29 @@ export function renameHousehold(householdId: string, actorMemberId: string, name
 	});
 }
 
-/* ── AI recipe import key [6a] (→ plan 13, SPEC §4.7) ──────────────────────── */
-
-/**
- * The household's Gemini key, read for a server-side extraction call only
- * (→ services/ai-import.ts). **Never returned to the browser** — Settings shows
- * `getAiImportStatus` instead. Any member may trigger an import, so this is not
- * owner-gated; only *changing* the key is (→ `setGeminiApiKey`).
- */
-export function getGeminiApiKey(householdId: string): string | null {
-	const row = db
-		.select({ key: households.geminiApiKey })
-		.from(households)
-		.where(eq(households.id, householdId))
-		.get();
-
-	return row?.key ?? null;
+/** How imported German recipes are worded (→ plan 24); null = as the site wrote them. */
+export function getRecipeWording(householdId: string): RecipeWording | null {
+	return (
+		db
+			.select({ wording: households.recipeWording })
+			.from(households)
+			.where(eq(households.id, householdId))
+			.get()?.wording ?? null
+	);
 }
 
-/** What Settings may know about the key: that one is set, and a masked hint. */
-export type AiImportStatus = { set: boolean; hint: string | null };
-
-/**
- * Whether a key is set and a masked hint (first four + last four, e.g. `AQ.A…wxyz`)
- * — never the value itself (→ SPEC §6). Enough for an owner to recognise which key
- * is stored without it ever leaving the server.
- */
-export function getAiImportStatus(householdId: string): AiImportStatus {
-	const key = getGeminiApiKey(householdId);
-	if (!key) return { set: false, hint: null };
-	return { set: true, hint: maskKey(key) };
-}
-
-function maskKey(key: string): string {
-	if (key.length <= 8) return '••••';
-	return `${key.slice(0, 4)}…${key.slice(-4)}`;
-}
-
-/**
- * Set or clear the household's Gemini key. Owner-only, enforced next to the write
- * (→ DECISIONS #10): `null` clears it and turns AI import back off. The value is
- * trimmed by the action; the only shape check is that it's plausibly a key (no
- * prefix gate — Gemini keys come as `AIza…` or `AQ.…`), and real validation is
- * the first extraction call.
- */
-export function setGeminiApiKey(
+/** The owner's to change, like the house's name — it shapes everyone's imports (→ #10). */
+export function setRecipeWording(
 	householdId: string,
 	actorMemberId: string,
-	key: string | null
+	wording: RecipeWording | null
 ): void {
 	db.transaction((tx) => {
 		requireOwner(tx, householdId, actorMemberId);
-		tx.update(households).set({ geminiApiKey: key }).where(eq(households.id, householdId)).run();
+		tx.update(households)
+			.set({ recipeWording: wording })
+			.where(eq(households.id, householdId))
+			.run();
 	});
 }
 

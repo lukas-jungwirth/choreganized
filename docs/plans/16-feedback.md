@@ -144,9 +144,8 @@ Three things cost a run each, and are written down so they don't cost another:
 `workflow_dispatch` with an issue number exists so a prompt change can be retried on a real
 issue instead of filing a throwaway one.
 
-**Still not verified:** the app has never actually created an issue. That needs
-`GITHUB_FEEDBACK_TOKEN` set in Coolify and a deploy; everything up to an authenticated 401 from
-`api.github.com` is exercised, but the 201 path, the body as GitHub renders it, and the marker
-search are not. Note also that **the repository is public**, so issues opened by people without
+**Verified 2026-09-14:** with `GITHUB_FEEDBACK_TOKEN` set in Coolify, a bug sent from inside
+the app became issue #18 within the minute — the fenced report, the English envelope, the
+marker — and triage, then the build agent (plan 18), took it from there without a person. Note also that **the repository is public**, so issues opened by people without
 write access are not triaged — the action refuses non-write actors by default, which keeps
 drive-by issues from spending subscription usage.

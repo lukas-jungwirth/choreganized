@@ -15,6 +15,10 @@
 				"E2E_MODE=true",
 				"BETTER_AUTH_URL=http://localhost:5180",
 				"ORIGIN=http://localhost:5180",
+				"AI_GEMINI_BASE_URL=http://127.0.0.1:5199/gemini",
+				"AI_OPENAI_BASE_URL=http://127.0.0.1:5199/openai",
+				"AI_ANTHROPIC_BASE_URL=http://127.0.0.1:5199/anthropic",
+				"AI_OPENROUTER_BASE_URL=http://127.0.0.1:5199/openrouter",
 				"npm",
 				"run",
 				"dev",
@@ -24,6 +28,12 @@
 				"--strictPort"
 			],
 			"port": 5180
+		},
+		{
+			"name": "fake-ai",
+			"runtimeExecutable": "node",
+			"runtimeArgs": ["scripts/fake-ai.ts", "5199"],
+			"port": 5199
 		}
 	]
 }

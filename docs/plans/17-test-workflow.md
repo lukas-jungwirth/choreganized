@@ -70,11 +70,13 @@ except `/api/health`.
       with the script's warning that the deploy reports no commit: `SOURCE_COMMIT` /
       `APP_VERSION` are not reaching Coolify's build yet (they must be **Build Variables**, →
       DECISIONS #137), so `/api/health` says `commit: null` and the smoke test cannot confirm
-      the merged commit is the one live — it checks what is up. **Two Coolify settings still
-      open**, both the owner's: those build variables, and a TLS certificate for the test host,
-      which serves the app over plain HTTP but fails the HTTPS handshake (Traefik with no cert
-      for that name) — until then every Smoke run for `dev` polls for its timeout and fails.
-      Smoke is informational, not a required check, so nothing is blocked by it.
+      the merged commit is the one live — it checks what is up. The test host got its TLS
+      certificate the same evening, and its first smoke run found the next thing: sign-in
+      answers `403 INVALID_ORIGIN`, i.e. the deploy's `ORIGIN` / `BETTER_AUTH_URL` are not
+      `https://…` of that host — Google sign-in fails there the same way. **Two Coolify
+      settings still open**, both the owner's: the build variables for the commit, and the
+      test environment's origin. The script now names an origin mismatch instead of blaming
+      `E2E_MODE` for it. Smoke is informational, not a required check, so nothing is blocked.
 
 ## What was verified (session 2026-09-11)
 

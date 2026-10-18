@@ -33,12 +33,18 @@
 // Written with its extension for the same reason `ingredients.ts` is: `node
 // --test` only strips types, it does not resolve a bare './ingredients'.
 import { scaleQuantity } from './ingredients.ts';
+import { wordingSynonyms } from './wording.ts';
 
 /** What the caller gets back: run these in order and the step reads as typed. */
 export type StepSegment<T> = {
 	text: string;
 	/** The ingredient this run names, or `null` for ordinary prose. */
 	ingredient: T | null;
+	/**
+	 * Set on a run that is an amount rewritten for a different number of people
+	 * (→ `step-amounts.ts`, plan 23): what the recipe itself says there.
+	 */
+	scaledFrom?: string;
 };
 
 export type StepHighlight<T> = {
@@ -237,6 +243,12 @@ function aliases<T extends { name: string }>(ingredient: T): Candidate<T>[] {
 	for (let dropped = 1; dropped <= Math.min(MAX_DROPPED_WORDS, words.length - 1); dropped++) {
 		offer(words.slice(dropped).join(' '), dropped + 1);
 	}
+
+	// The same thing in the other German (→ `wording.ts`, plan 24): an "Obers" row
+	// is the "Sahne" a step left as the site wrote it, and the other way round.
+	// Ranked after every shortening of the name itself, so it only wins a word
+	// nothing else wants.
+	for (const synonym of wordingSynonyms(plain)) offer(synonym, MAX_DROPPED_WORDS + 2);
 
 	return found;
 }

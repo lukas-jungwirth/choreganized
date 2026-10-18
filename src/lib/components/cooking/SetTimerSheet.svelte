@@ -1,25 +1,19 @@
 <!--
-	"Set a timer" — the manual way in, for the steps the parser can't read a
-	duration out of, the ones where you want a different one anyway
-	(→ DECISIONS #14), and the ones where the timer wants a name of its own
-	(→ DECISIONS #134).
+	"Set a timer" — the manual way in, for the steps with no timer of their own
+	and no duration in their text, the ones where you want a different one anyway
+	(→ DECISIONS #14, #147), and the ones where the timer wants a name of its own
+	(→ DECISIONS #134). How long and what for are `TimerFields`, shared with the
+	recipe form's step timer.
 
 	Minutes only. Recipes are written in minutes, a stepper you can also type into
 	covers 1 to 12 hours, and seconds would be a second control for a case
 	("boil for 90 seconds") that reads fine as 2.
-
-	**The name is optional and never has to be typed.** Left empty a timer is
-	called after its step, which is always true and never strange; the suggestions
-	are the step's own ingredients, short names, one tap each. The field is there
-	for the thing the recipe never listed — "Oven", "Rice" — and for telling two
-	timers on one step apart.
 -->
 <script lang="ts">
+	import TimerFields from '$lib/components/cooking/TimerFields.svelte';
 	import BottomSheet from '$lib/components/ui/BottomSheet.svelte';
-	import Stepper from '$lib/components/ui/Stepper.svelte';
-	import TextField from '$lib/components/ui/TextField.svelte';
 	import { messages } from '$lib/i18n';
-	import { MAX_TIMER_SECONDS, TIMER_LABEL_MAX } from '$lib/utils/timer-parse';
+	import { MAX_TIMER_SECONDS } from '$lib/utils/timer-parse';
 	import TimerIcon from '@lucide/svelte/icons/timer';
 	import { untrack } from 'svelte';
 
@@ -46,7 +40,7 @@
 	let open = $state(true);
 	// Seeded once from the step it was opened on, then owned by the stepper — the
 	// same `untrack` contract as TaskFormSheet.
-	let minutes = $state(
+	let minutes = $state<number | null>(
 		untrack(() =>
 			suggestedSeconds ? Math.max(1, Math.round(suggestedSeconds / 60)) : FALLBACK_MINUTES
 		)
@@ -56,11 +50,6 @@
 	$effect(() => {
 		if (!open) onclose();
 	});
-
-	/** Tapping the chip that is already in the field takes it back out again. */
-	function suggest(suggestion: string) {
-		name = name.trim() === suggestion ? '' : suggestion;
-	}
 
 	function start() {
 		// The stepper hands back `null` for an emptied field; it isn't `clearable`
@@ -77,40 +66,7 @@
 	tone="dark"
 >
 	<div class="body">
-		<Stepper
-			label={m.cooking.cook.minutes}
-			bind:value={minutes}
-			min={1}
-			max={MAX_MINUTES}
-			tone="dark"
-		/>
-
-		<div class="naming">
-			<TextField
-				label={m.cooking.cook.timerName}
-				bind:value={name}
-				placeholder={defaultName}
-				maxlength={TIMER_LABEL_MAX}
-				enterkeyhint="done"
-				tone="dark"
-			/>
-
-			{#if names.length > 0}
-				<div class="chips">
-					{#each names as suggestion (suggestion)}
-						<button
-							type="button"
-							class="chip"
-							class:picked={name.trim() === suggestion}
-							aria-pressed={name.trim() === suggestion}
-							onclick={() => suggest(suggestion)}
-						>
-							{suggestion}
-						</button>
-					{/each}
-				</div>
-			{/if}
-		</div>
+		<TimerFields bind:minutes bind:name {defaultName} {names} tone="dark" />
 
 		<button type="button" class="start" onclick={start}>
 			<TimerIcon size={18} strokeWidth={2} aria-hidden="true" />
@@ -124,36 +80,6 @@
 		display: flex;
 		flex-direction: column;
 		gap: 22px;
-	}
-
-	/* The suggestions belong to the field above them, not to the sheet — one
-		 block with one micro-label, the way a labelled control reads. */
-	.naming {
-		display: flex;
-		flex-direction: column;
-		gap: 10px;
-	}
-
-	.chips {
-		display: flex;
-		flex-wrap: wrap;
-		gap: 8px;
-	}
-
-	.chip {
-		padding: 9px 14px;
-		border: 1px solid transparent;
-		border-radius: var(--r-chip);
-		background: var(--cook-surface);
-		font-size: calc(14px * var(--fs));
-		font-weight: 600;
-		color: var(--cook-text-2);
-	}
-
-	.picked {
-		border-color: var(--cook-amber-line);
-		background: var(--cook-amber-tint);
-		color: var(--cook-amber);
 	}
 
 	.start {

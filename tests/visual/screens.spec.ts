@@ -50,7 +50,21 @@ async function openRecipe(page: Page): Promise<void> {
 		.getByRole('link', { name: new RegExp(SEED.recipes.curry) })
 		.first()
 		.click();
+	// The library has an h1 too, so the heading alone can resolve before the
+	// click has navigated — wait for the recipe's own address first. (The
+	// editor shot appended `/edit` to the library's URL once, and screenshotted
+	// a 404.)
+	await page.waitForURL(/\/cooking\/recipes\/(?!new$|import)[^/?]+(?:\?.*)?$/);
 	await page.getByRole('heading', { level: 1 }).waitFor();
+}
+
+async function openAiFeatures(page: Page): Promise<void> {
+	await page.goto('/settings');
+	await page.getByRole('button', { name: /^AI features/ }).click();
+	await page
+		.getByRole('dialog')
+		.getByText(/free tiers have limits/)
+		.waitFor();
 }
 
 const SCREENS: Screen[] = [
@@ -71,6 +85,18 @@ const SCREENS: Screen[] = [
 	// A card's "30 min · added Sep 11".
 	{ name: 'recipes', path: '/cooking/recipes', mask: ['.meta'] },
 	{ name: 'recipe', path: '', navigate: openRecipe, bottom: true },
+	// The editor [3c]: each step's ingredient chips and, under them, its timer
+	// chip — "auto" where the text names a duration (→ plan 21).
+	{
+		name: 'recipe-edit',
+		path: '',
+		navigate: async (page) => {
+			await openRecipe(page);
+			await page.goto(`${new URL(page.url()).pathname}/edit`);
+			await page.getByRole('textbox', { name: 'Recipe name' }).waitFor();
+		},
+		bottom: true
+	},
 	{
 		name: 'cook-mode',
 		path: '',
@@ -82,6 +108,24 @@ const SCREENS: Screen[] = [
 	},
 	{ name: 'settings', path: '/settings', bottom: true },
 	{ name: 'settings-dark', path: '/settings', theme: 'dark', bottom: true },
+	// The AI features sheet as a household first meets it: nothing set up yet,
+	// the free-tier note above the two slots (→ plan 20).
+	{ name: 'settings-ai', path: '', navigate: openAiFeatures },
+	{ name: 'settings-ai-dark', path: '', navigate: openAiFeatures, theme: 'dark' },
+	// Setting up the main provider, the fake Gemini's model list loaded by the
+	// pasted key. Nothing is saved, so the household stays as seeded.
+	{
+		name: 'settings-ai-setup',
+		path: '',
+		navigate: async (page) => {
+			await openAiFeatures(page);
+			const sheet = page.getByRole('dialog');
+			await sheet.getByRole('button', { name: 'Set up' }).click();
+			await sheet.getByLabel('API key').fill('fake-gemini-key-0123456789');
+			await expect(sheet.getByLabel('Model')).toHaveValue('gemini-flash-latest');
+			await page.locator('.save').scrollIntoViewIfNeeded();
+		}
+	},
 	// "Owner · joined Sep 11", and the pending invite's code, random per seed.
 	{ name: 'members', path: '/settings/members', mask: ['.member .meta', '.invite .pending'] }
 ];

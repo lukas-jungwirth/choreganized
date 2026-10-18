@@ -114,6 +114,19 @@ if (!owner) {
  * list's order would depend on how fast the transaction ran (→ plan 17).
  */
 const seededAt = new Date();
+
+/**
+ * Stamp rows a minute apart in array order. A store group's open items sort
+ * by `createdAt`, and two seeded in the same millisecond fell through to their
+ * ids and swapped places between two visual runs (Shampoo / Cotton pads,
+ * → plan 18). An explicit `createdAt` on a row still wins.
+ */
+function spaced<T extends { createdAt?: Date }>(rows: T[]): T[] {
+	return rows.map((row, index) => ({
+		createdAt: new Date(seededAt.getTime() - (rows.length - index) * 60_000),
+		...row
+	}));
+}
 const MEMBER_SAGE = '#5F8D72';
 const MEMBER_TERRACOTTA = '#C67C51';
 
@@ -283,93 +296,95 @@ const seeded = db.transaction((tx) => {
 		.run();
 
 	tx.insert(shoppingItems)
-		.values([
-			{
-				id: sid('item', 'tomatoes'),
-				householdId,
-				storeId: storeId('grocery'),
-				name: 'Tomatoes',
-				quantity: 6,
-				unit: 'pcs',
-				addedByMemberId: ownerMemberId
-			},
-			{
-				id: sid('item', 'spinach'),
-				householdId,
-				storeId: storeId('grocery'),
-				name: 'Baby spinach',
-				addedByMemberId: housemateMemberId
-			},
-			{
-				id: sid('item', 'oat-milk'),
-				householdId,
-				storeId: storeId('grocery'),
-				name: 'Oat milk',
-				quantity: 2,
-				unit: 'L',
-				addedByMemberId: ownerMemberId
-			},
-			{
-				id: sid('item', 'olive-oil'),
-				householdId,
-				storeId: storeId('grocery'),
-				name: 'Olive oil',
-				addedByMemberId: housemateMemberId
-			},
-			{
-				id: sid('item', 'avocado'),
-				householdId,
-				storeId: storeId('grocery'),
-				name: 'Avocado',
-				quantity: 2,
-				unit: 'pcs',
-				addedByMemberId: ownerMemberId,
-				checkedAt: daysAgo(0, 9),
-				checkedByMemberId: housemateMemberId
-			},
-			{
-				id: sid('item', 'yogurt'),
-				householdId,
-				storeId: storeId('grocery'),
-				name: 'Greek yogurt',
-				addedByMemberId: housemateMemberId,
-				checkedAt: daysAgo(0, 9),
-				checkedByMemberId: housemateMemberId
-			},
-			{
-				id: sid('item', 'shampoo'),
-				householdId,
-				storeId: storeId('drugstore'),
-				name: 'Shampoo',
-				addedByMemberId: housemateMemberId
-			},
-			{
-				id: sid('item', 'cotton-pads'),
-				householdId,
-				storeId: storeId('drugstore'),
-				name: 'Cotton pads',
-				quantity: 2,
-				unit: 'pack',
-				addedByMemberId: housemateMemberId
-			},
-			{
-				id: sid('item', 'bulbs'),
-				householdId,
-				storeId: storeId('hardware'),
-				name: 'LED bulbs (E27)',
-				quantity: 2,
-				unit: 'pcs',
-				addedByMemberId: ownerMemberId
-			},
-			{
-				id: sid('item', 'batteries'),
-				householdId,
-				name: 'AA batteries',
-				quantity: 4,
-				unit: 'pcs',
-				addedByMemberId: ownerMemberId
-			}
-		])
+		.values(
+			spaced([
+				{
+					id: sid('item', 'tomatoes'),
+					householdId,
+					storeId: storeId('grocery'),
+					name: 'Tomatoes',
+					quantity: 6,
+					unit: 'pcs',
+					addedByMemberId: ownerMemberId
+				},
+				{
+					id: sid('item', 'spinach'),
+					householdId,
+					storeId: storeId('grocery'),
+					name: 'Baby spinach',
+					addedByMemberId: housemateMemberId
+				},
+				{
+					id: sid('item', 'oat-milk'),
+					householdId,
+					storeId: storeId('grocery'),
+					name: 'Oat milk',
+					quantity: 2,
+					unit: 'L',
+					addedByMemberId: ownerMemberId
+				},
+				{
+					id: sid('item', 'olive-oil'),
+					householdId,
+					storeId: storeId('grocery'),
+					name: 'Olive oil',
+					addedByMemberId: housemateMemberId
+				},
+				{
+					id: sid('item', 'avocado'),
+					householdId,
+					storeId: storeId('grocery'),
+					name: 'Avocado',
+					quantity: 2,
+					unit: 'pcs',
+					addedByMemberId: ownerMemberId,
+					checkedAt: daysAgo(0, 9),
+					checkedByMemberId: housemateMemberId
+				},
+				{
+					id: sid('item', 'yogurt'),
+					householdId,
+					storeId: storeId('grocery'),
+					name: 'Greek yogurt',
+					addedByMemberId: housemateMemberId,
+					checkedAt: daysAgo(0, 9),
+					checkedByMemberId: housemateMemberId
+				},
+				{
+					id: sid('item', 'shampoo'),
+					householdId,
+					storeId: storeId('drugstore'),
+					name: 'Shampoo',
+					addedByMemberId: housemateMemberId
+				},
+				{
+					id: sid('item', 'cotton-pads'),
+					householdId,
+					storeId: storeId('drugstore'),
+					name: 'Cotton pads',
+					quantity: 2,
+					unit: 'pack',
+					addedByMemberId: housemateMemberId
+				},
+				{
+					id: sid('item', 'bulbs'),
+					householdId,
+					storeId: storeId('hardware'),
+					name: 'LED bulbs (E27)',
+					quantity: 2,
+					unit: 'pcs',
+					addedByMemberId: ownerMemberId
+				},
+				{
+					id: sid('item', 'batteries'),
+					householdId,
+					name: 'AA batteries',
+					quantity: 4,
+					unit: 'pcs',
+					addedByMemberId: ownerMemberId
+				}
+			])
+		)
 		.onConflictDoNothing()
 		.run();
 
