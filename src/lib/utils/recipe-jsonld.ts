@@ -144,7 +144,8 @@ function mapTime(node: Record<string, unknown>): number | null {
 	return parts > 0 ? parts : null;
 }
 
-function isoDurationToMinutes(value: string | null): number | null {
+/** Exported for the Microdata reader, which writes durations the same way (→ plan 22). */
+export function isoDurationToMinutes(value: string | null): number | null {
 	if (!value) return null;
 	const match = ISO_DURATION.exec(value.trim());
 	if (!match) return null;
@@ -167,7 +168,7 @@ function isoDurationToMinutes(value: string | null): number | null {
  * of either. Take the first digit run of whatever it is — the amount, wherever
  * the words put it.
  */
-function mapYield(value: unknown): number | null {
+export function mapYield(value: unknown): number | null {
 	const first = Array.isArray(value) ? value.find((one) => one != null) : value;
 
 	if (typeof first === 'number')

@@ -1,7 +1,9 @@
 /**
- * Import a recipe from a link (→ SPEC §4.7, plan 12): fetch the page, read its
- * Schema.org `Recipe` JSON-LD (→ `$lib/utils/recipe-jsonld`), download the photo,
- * and hand back the draft the editor opens on. No AI, no new dependency.
+ * Import a recipe from a link (→ SPEC §4.7, plans 12 & 22): fetch the page, read
+ * its own recipe card — Schema.org `Recipe` as JSON-LD (→ `$lib/utils/recipe-jsonld`),
+ * else as Microdata (→ `$lib/utils/recipe-microdata`) — strip it to readable text
+ * for a model, download the photo, and hand back what the import screen needs.
+ * Whether a model then reads or improves it is `services/ai-import.ts`'s business.
  *
  * The one interesting risk is that **the server fetches a URL the user typed**,
  * so this is where the SSRF guard lives: `http(s)` only, the hostname resolved
@@ -15,13 +17,17 @@
  * Every failure is a typed `RecipeImportError`, so the UI can translate it into
  * the language the form was filled in (→ `importErrorMessage`).
  */
+import { parse, type HTMLElement } from 'node-html-parser';
 import { lookup } from 'node:dns/promises';
 import { isIPv4, isIPv6 } from 'node:net';
 import type { Messages } from '$lib/i18n';
-import { decodeEntities, parseRecipeJsonLd } from '$lib/utils/recipe-jsonld';
+import { decodeEntities, parseRecipeJsonLd, type RecipeJsonLd } from '$lib/utils/recipe-jsonld';
+import { parseRecipeMicrodata } from '$lib/utils/recipe-microdata';
 import {
+	clampCount,
 	INGREDIENTS_MAX,
 	INGREDIENT_LINE_MAX,
+	plainStep,
 	RECIPE_NAME_MAX,
 	RECIPE_SERVINGS_MAX,
 	RECIPE_TIME_MAX,
@@ -84,53 +90,115 @@ export function importErrorMessage(cause: unknown, m: Messages): string {
 	}
 }
 
+/** One fetched recipe page, read every way the import may need it. */
+export type RecipePage = {
+	/** Where the redirects ended — what relative image links resolve against. */
+	finalUrl: string;
+	/** The page's own recipe card: JSON-LD, else Microdata — null when it has neither. */
+	card: RecipeJsonLd | null;
+	/** The page as readable lines, for a model to read when there is no card (→ plan 13). */
+	text: string;
+	/** A photo to offer: the card's own, else the page's `og:image` (unresolved). */
+	image: string | null;
+};
+
 /**
- * The whole import, composed: fetch → parse → download the photo, and — when the
- * page has **no** Recipe JSON-LD — the page stripped to readable text instead, for
- * the AI fallback to extract from (→ plan 13). One fetch serves both.
- *
- * The `text` branch is the crucial distinction the import screen acts on: "we
- * fetched the page but found no recipe markup" is retryable with AI, whereas a
- * blocked or unreachable page (thrown as `RecipeImportError`, never returned) is
- * not — there's nothing to hand a model. A missing or unfetchable *photo* is not
- * an error either; the draft just has none.
+ * Fetch a recipe page once and read it every way: its card, its text, its
+ * photo. A blocked or unreachable page throws (`RecipeImportError`) — there is
+ * nothing to hand anyone. A page with no card is not an error: that is the
+ * import screen's "no recipe data here — try with AI?".
  */
-export async function importRecipeOrText(
-	url: string
-): Promise<{ draft: RecipePrefill } | { text: string }> {
+export async function readRecipePage(url: string): Promise<RecipePage> {
 	const { html, finalUrl } = await fetchRecipePage(url);
+	const card = parseRecipeJsonLd(html) ?? parseRecipeMicrodata(html);
+	const { text, ogImage } = readableParts(html);
 
-	const parsed = parseRecipeJsonLd(html);
-	if (!parsed) return { text: htmlToReadableText(html) };
-
-	const photo = parsed.image ? await importPhoto(parsed.image, finalUrl) : null;
-
-	return {
-		draft: {
-			name: parsed.name.slice(0, RECIPE_NAME_MAX),
-			timeMinutes: clampCount(parsed.timeMinutes, RECIPE_TIME_MAX),
-			servings: clampCount(parsed.servings, RECIPE_SERVINGS_MAX),
-			// Cap rows and line length here, the way `writeChildren` caps at insert —
-			// so a paste-bomb page never fills the editor with hundreds of rows
-			// (→ plan 07 "learned this the hard way").
-			ingredientLines: parsed.ingredientLines
-				.map((line) => line.slice(0, INGREDIENT_LINE_MAX))
-				.slice(0, INGREDIENTS_MAX),
-			steps: parsed.steps.map((step) => step.slice(0, STEP_TEXT_MAX)).slice(0, STEPS_MAX),
-			photo
-		}
-	};
+	return { finalUrl, card, text, image: card?.image ?? ogImage };
 }
 
 /**
- * A page stripped to the readable text the AI fallback extracts from (→ plan 13,
- * SPEC §4.7). Whole `script`/`style`/`head`/`nav`/`header`/`footer`/… blocks go
- * first — their contents aren't prose — then remaining tags become spaces,
- * entities are decoded, and whitespace is collapsed, with a generous cap so a
- * decoy page can't bloat the request. Good enough to feed a model, not a parser:
- * the model reads the visible recipe wherever the markup happened to put it.
+ * A card as the editor's draft, capped the way `writeChildren` caps at insert —
+ * so a paste-bomb page never fills the editor with hundreds of rows (→ plan 07).
+ * Its steps read their own text: a card knows nothing about which ingredient
+ * goes where, or for how long.
+ */
+export function draftFromCard(card: RecipeJsonLd, photo: RecipePrefill['photo']): RecipePrefill {
+	return {
+		name: card.name.slice(0, RECIPE_NAME_MAX),
+		timeMinutes: clampCount(card.timeMinutes, RECIPE_TIME_MAX),
+		servings: clampCount(card.servings, RECIPE_SERVINGS_MAX),
+		ingredientLines: card.ingredientLines
+			.map((line) => line.slice(0, INGREDIENT_LINE_MAX))
+			.slice(0, INGREDIENTS_MAX),
+		steps: card.steps.map((step) => plainStep(step.slice(0, STEP_TEXT_MAX))).slice(0, STEPS_MAX),
+		photo
+	};
+}
+
+/** The page's photo, downloaded and re-encoded — or null, never an error (→ SPEC §4.7). */
+export function importPagePhoto(page: RecipePage): Promise<RecipePrefill['photo']> {
+	return page.image ? importPhoto(page.image, page.finalUrl) : Promise.resolve(null);
+}
+
+/** Elements whose content is never the recipe: code, chrome, and the page's furniture. */
+const NOT_PROSE =
+	'script, style, head, nav, header, footer, aside, noscript, svg, template, form, iframe, button, select';
+
+/**
+ * A page stripped to the readable text a model extracts from (→ plans 13, 22).
+ * Kept as **lines** — headings, paragraphs and list items each on their own —
+ * because "Zutaten" above a list reads as a structure, where one run-on
+ * paragraph made the model guess where the ingredients ended. Chrome
+ * (`nav`/`header`/`footer`/…) and comment sections go first; if the page marks
+ * up its content as `<main>` or `<article>` and that holds a real amount of
+ * text, only that is kept. Fewer tokens is kinder to a free tier.
  */
 export function htmlToReadableText(html: string): string {
+	return readableParts(html).text;
+}
+
+function readableParts(html: string): { text: string; ogImage: string | null } {
+	let root: HTMLElement;
+	try {
+		root = parse(html, { comment: false });
+	} catch {
+		// A parser that chokes is no reason to fail the import; the old flattening
+		// still gives a model something to read.
+		return { text: flatten(html), ogImage: null };
+	}
+
+	const ogImage =
+		root
+			.querySelectorAll('meta')
+			.find((meta) => /^og:image(?::url)?$/i.test(meta.getAttribute('property') ?? ''))
+			?.getAttribute('content')
+			?.trim() || null;
+
+	for (const element of root.querySelectorAll(NOT_PROSE)) element.remove();
+	for (const element of root.querySelectorAll('[id], [class]')) {
+		const names = `${element.id} ${element.getAttribute('class') ?? ''}`.toLowerCase();
+		if (/comment|kommentar/.test(names)) element.remove();
+	}
+
+	const content = [root.querySelector('main'), root.querySelector('article')].find(
+		(candidate) => candidate && candidate.text.trim().length >= MIN_CONTENT_CHARS
+	);
+
+	const text = (content ?? root).structuredText
+		.split('\n')
+		.map((line) => decodeEntities(line).replace(/\s+/g, ' ').trim())
+		.filter(Boolean)
+		.join('\n')
+		.slice(0, MAX_READABLE_CHARS);
+
+	return { text, ogImage };
+}
+
+/** Below this a `<main>` is a wrapper around a hero image, not the page's content. */
+const MIN_CONTENT_CHARS = 400;
+
+/** The pre-parser fallback: tags to spaces, entities decoded, one long line. */
+function flatten(html: string): string {
 	const stripped = html
 		.replace(/<!--[\s\S]*?-->/g, ' ')
 		.replace(
@@ -419,11 +487,4 @@ function expandV6(ip: string): number[] | null {
 	}
 
 	return head.length === 8 ? head : null;
-}
-
-/** Whole, positive, capped — or nothing, which the editor's fields both allow. */
-function clampCount(value: number | null, max: number): number | null {
-	if (value === null || !Number.isFinite(value)) return null;
-	const rounded = Math.round(Math.min(Math.max(value, 0), max));
-	return rounded > 0 ? rounded : null;
 }

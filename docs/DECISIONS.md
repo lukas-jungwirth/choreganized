@@ -2011,3 +2011,49 @@ main` stays a pull request a person merges after trying it. A person merging to 
        `bis`/`oder` ranges, and "1 Stunde und 30 Minuten". `stepDurations()` lists every
        duration a step states, both ends of a range included. It is what plan 22 checks an
        AI-made timer against: a timer the text doesn't state is a timer the model invented.
+
+148. **AI improves a page's own recipe card when asked, answers in one strict shape, and passes a
+     gate before the editor sees it** (→ plan 22, SPEC §4.7, §6, `services/ai-import.ts`,
+     `utils/recipe-draft.ts`, `utils/recipe-microdata.ts`). Plan 13 used AI only where the card
+     was missing, and got back flat lines. Now the model also does what a card can't: amounts and
+     units, which step uses what, named timers, metric units. That changes what has to be guarded.
+
+     - **"Improve with AI" is a switch, off until it's turned on, then remembered per device.**
+       #112's rule was "never a paid call without an explicit tap". Flipping the switch is that
+       tap, once. A switch that started on would spend a call on the first shared link nobody
+       asked to improve. Browser storage is enough: it's one person's habit on one phone, and a
+       blocked storage just means off.
+     - **Improve sends the card, not the page**: compact JSON, so there are fewer tokens and
+       nothing for the page's other text to say. Without instructions, the result **must keep the
+       card's rows** (same ingredient and step counts, and the card's own name, servings and
+       time). Otherwise it's a rewrite nobody asked for, so it's refused, the backup tries, and if
+       both fail the card opens **as written** with the reason. **Instructions free the rows**,
+       because changing them is what they're for.
+     - **One output schema for every AI path** (extract and improve, text, page and photos), in
+       the strict subset all four providers accept. Ingredients are `{quantity, unit ∈ the app's
+units | null, name}`, written back as editor lines in the reader's unit spelling so they
+       parse like typed ones. Steps carry `uses` (an index into the ingredients plus an optional
+       share) and an optional `timer`.
+     - **The gate assumes the answer is hostile**, and keeps fields one by one rather than
+       throwing the whole answer away:
+       - Wrong-typed rows are dropped and pins re-pointed past them.
+       - Control, bidi, HTML, markdown and links are stripped.
+       - Counts and lengths are capped by the form's own limits.
+       - Amounts must be finite, positive and under the cap; units must come from the list.
+       - A pin must point at a row that exists, and a share at or above the row's total means
+         "all of it".
+       - An empty `uses` becomes `null`. Only a person says "uses nothing" (#127).
+       - **A timer must equal a duration the step's own text states** (`stepDurations`, #147).
+       - Not an object at all is the provider's failure (`bad-output`, so the backup gets a
+         turn). Empty is the input's answer ("no recipe"; the backup isn't asked the same
+         question). Save then re-checks everything (`readRecipeForm`, the service's clamps).
+     - **The prompt names the household's lines as the only instructions** (standing ones from
+       Settings, plus one per import, each ≤ 300 characters and cleaned) and says that the page,
+       text and photos are data. Nothing a page says can do more than produce a draft a person
+       then reads, because the gate has already stripped links and markup.
+     - **Microdata is read without AI**, through `node-html-parser` (the one new dependency). A
+       regex can't tell the recipe's `name` from its author's, and only a tree knows which
+       `itemscope` a property belongs to. The same parser keeps the page's readable text **as
+       lines** (headings, list items) with chrome and comment sections removed, and prefers
+       `<main>`/`<article>`, so a model sees "Zutaten" above a list instead of one run-on
+       paragraph, in fewer tokens. A page's `og:image` is the photo when its card has none.

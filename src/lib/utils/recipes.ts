@@ -113,6 +113,11 @@ export type RecipeInput = {
  * the draft carries a `preview` (a data URL — the temp file isn't servable until
  * it's attached) and the temp `path` the save action attaches.
  *
+ * Steps are `StepInput`s — text, and what an AI import (→ plan 22) worked out
+ * about them: the ingredients each one uses (by index into `ingredientLines`)
+ * and its timer. A page's own recipe card knows neither, so its steps arrive
+ * with `uses: null` and `timer: null` and read their own text, like typed ones.
+ *
  * Declared here beside `RecipeInput` so the form component and the import route
  * both name it without importing from `$lib/server`.
  */
@@ -121,9 +126,25 @@ export type RecipePrefill = {
 	timeMinutes: number | null;
 	servings: number | null;
 	ingredientLines: string[];
-	steps: string[];
+	steps: StepInput[];
 	photo: { path: string; preview: string } | null;
 };
+
+/** A step as a page's recipe card gives it: text, and nothing worked out about it. */
+export function plainStep(text: string): StepInput {
+	return { text, uses: null, timer: null };
+}
+
+/**
+ * Whole, positive, capped — or nothing, which the editor's two number fields
+ * allow. For counts that arrive from outside (a page's recipe card, a model's
+ * answer), where anything at all may turn up.
+ */
+export function clampCount(value: unknown, max: number): number | null {
+	if (typeof value !== 'number' || !Number.isFinite(value)) return null;
+	const rounded = Math.round(Math.min(Math.max(value, 0), max));
+	return rounded > 0 ? rounded : null;
+}
 
 /**
  * Which field a rejected save is about. The form has two things that can be

@@ -1232,10 +1232,25 @@ export const en = {
 				noRecipe: 'No recipe data on that page.'
 			},
 
-			/** The AI fallback [plan 13]: read a page with no recipe data, pasted text,
-			 *  or photos. Only offered when a household Gemini key is set (→ SPEC §4.7). */
+			/** AI import [plans 13, 22]: read a page with no recipe data, pasted text
+			 *  or photos, and improve a page's own recipe card. Only offered when the
+			 *  household has an AI provider set up (→ SPEC §4.7). */
 			ai: {
-				note: 'AI-extracted — check it over before saving.',
+				note: 'Made with AI — check it over before saving.',
+				/** The line typed for this import, quoted back on the draft it shaped. */
+				adapted: (instructions: string) => `Adapted: “${instructions}”.`,
+				/** A recipe card the model couldn't improve still opens, as the site wrote it. */
+				withoutAi: (reason: string) => `Imported as the site wrote it — ${reason}`,
+
+				/** The link screen's toggle (→ plan 22) and the line under it. */
+				improve: 'Improve with AI',
+				improveHint:
+					'Sorts out amounts, links ingredients to their steps and sets timers — and reads pages without recipe data. Uses your AI provider.',
+				instructionsToggle: 'Add instructions for the AI',
+				instructionsLabel: 'Instructions for the AI',
+				instructionsPlaceholder: 'e.g. with tofu instead of meat, for 2 people',
+				/** The household's standing line from Settings, shown so it's no surprise. */
+				instructionsHousehold: (instructions: string) => `Always applied: “${instructions}”`,
 				pageLead:
 					'This page has no recipe data we can read directly. Want to try reading it with AI?',
 				tryPage: 'Try AI extraction',
@@ -1423,6 +1438,15 @@ export const en = {
 				label: 'Test connection',
 				testing: 'Testing…',
 				ok: 'Connection works.'
+			},
+
+			/** Standing instructions for every AI import (→ plan 22). */
+			instructions: {
+				label: 'Household instructions',
+				hint: 'Applied to every AI import, on top of anything typed for one recipe.',
+				placeholder: 'e.g. we’re vegetarian; use metric units',
+				save: 'Save instructions',
+				saved: 'Saved.'
 			}
 		},
 

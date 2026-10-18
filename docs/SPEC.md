@@ -453,13 +453,32 @@ where it can still be acted on (→ [DECISIONS #131](DECISIONS.md)).
   stacked page (→ plan 14). The **OS share sheet** also lands here: the PWA registers a share
   target (§8) so sharing a page from a browser opens link mode with the URL filled in and
   auto-fetched.
-- Paste a recipe URL → **Fetch recipe**. The server reads the page's Schema.org `Recipe` JSON-LD
-  (no AI, no dependency — nearly every recipe site embeds one for Google). `@graph` wrappers and
-  `@type` arrays are handled; a malformed block never sinks the next; the first `Recipe` wins.
-  Fields map to the editor: name, `totalTime` (else `prepTime`+`cookTime`) → minutes,
-  `recipeYield` → servings, `recipeIngredient[]` → raw ingredient lines (the editor parses them
-  to amount chips like every typed row), `recipeInstructions` → steps in order, `image` →
-  photo.
+- Paste a recipe URL → **Fetch recipe**. The server reads the page's own **recipe card**: its
+  Schema.org `Recipe` as JSON-LD (no AI — nearly every recipe site embeds one for Google), else
+  the same card written as **Microdata** in the page's HTML (`itemscope itemtype=…/Recipe`,
+  `itemprop`s; → plan 22 — older templates and hand-built blogs). `@graph` wrappers and `@type`
+  arrays are handled; a malformed block never sinks the next; the first `Recipe` wins; a nested
+  item's properties (an author's `name`) are never taken for the recipe's. Fields map to the
+  editor: name, `totalTime` (else `prepTime`+`cookTime`) → minutes, `recipeYield` → servings,
+  `recipeIngredient[]` → raw ingredient lines (the editor parses them to amount chips like every
+  typed row), `recipeInstructions` → steps in order, `image` → photo — else the page's
+  `og:image`.
+- **Improve with AI** (→ plan 22) — a switch under the link field, shown only when AI features are
+  set up. **Off until someone turns it on**, then remembered on that device (turning it on is the
+  go-ahead a paid call needs; a first shared link never spends one). The share sheet honours it
+  too. With it on:
+  - a page **with** a recipe card is sent to the model **as the card** (compact JSON, not the
+    whole page) to be **improved**: each ingredient's amount and unit sorted out, which
+    ingredients each step uses — and how much, when a step takes part of one — and a **named
+    timer** where a step states a duration (→ §4.4). The card's rows stay the card's: the same
+    ingredients and steps in the same order, with its name, servings and time. If the model
+    can't improve it (busy, quota, a rewrite that changed the rows), the card **still opens, as
+    the site wrote it**, with a line saying why ("Imported as the site wrote it — Gemini is at
+    its limit…").
+  - a page **without** a card is read by the model from its text (as "Try AI extraction" below
+    does, one tap sooner).
+  - The loader shows while the model works, and **Instructions for the AI** (below) are one tap
+    away.
 - On success the ordinary **recipe editor [3c] opens prefilled**, the photo already downloaded
   and re-encoded to WebP like any upload (a missing or unfetchable photo is non-fatal — the draft
   just has none). The preview _is_ the editor, so every imperfect parse is a two-second fix.
@@ -477,9 +496,10 @@ where it can still be acted on (→ [DECISIONS #131](DECISIONS.md)).
   can't answer (limit reached, out of credit, key refused, down), the household's **backup**
   provider, if it has one, gets the same request, and the draft says so ("Gemini couldn't
   answer, so your backup (Claude) did"). Every path lands in the same
-  [3c] editor with a quiet "AI-extracted — check before saving" note (**the AI never saves on its
-  own**). Three ways in (photo and text are their own focused modes off the chooser §4.3; the
-  first is an in-context escalation off a failed link fetch):
+  [3c] editor with a quiet "Made with AI — check it over before saving" note (**the AI never
+  saves on its own**). Three ways in besides **Improve with AI** (photo and text are their own
+  focused modes off the chooser §4.3; the first is an in-context escalation off a failed link
+  fetch):
   - **A fetched page with no recipe data** — in link mode the dead end becomes a **Try AI
     extraction** button (plus quiet links to the photo/text modes). The tap is deliberate (a paid
     call is never silent): the URL is re-fetched under the same guards, stripped to readable text
@@ -487,14 +507,32 @@ where it can still be acted on (→ [DECISIONS #131](DECISIONS.md)).
   - **Pasted text** — the text mode: paste the recipe into a box, the answer for sites that block
     the server (Cloudflare 403), since the browser can still load them.
   - **Photos** — the photo mode: 1–3 photos of a cookbook/magazine page, validated and re-encoded
-    to WebP (EXIF stripped) before they reach the model; the first is offered as the recipe photo.
-    Ingredients come back as **raw lines** and parse to amount chips exactly like typed and
-    link-imported ones. Recipe content keeps its **source language** (→ §9). Failures are their own
-    messages, naming the provider — key refused (→ Settings) · at its limit · quota or credit used
-    up · model unavailable or unable to read photos · not answering · nothing found — never a raw
-    API error; when the backup failed too, the message says that as well.
-- Household content is never translated: imported names, ingredients and steps pass through
-  verbatim (→ §9).
+    to WebP (EXIF stripped) before they reach the model; the first is offered as the recipe photo
+    (stored only once the model has answered, so a failed import leaves no file).
+  - **Instructions for the AI** (→ plan 22) — every AI path takes one optional line, up to 300
+    characters ("mit Tofu statt Fleisch", "für 2 Personen"), behind a quiet "Add instructions for
+    the AI" link, on top of the household's **standing instructions** from Settings (§6), which
+    the screen shows ("Always applied: …"). They may change ingredients, amounts and steps; the
+    draft quotes the line it was asked ("Adapted: “mit Tofu statt Fleisch”.").
+  - **What the model returns** is one strict shape: name, servings, time; ingredients as amount
+    - unit (g · kg · ml · L · pcs · pack · tbsp · tsp, or none) + name — cups, oz and lb are
+      converted to metric and °F to °C; steps with the ingredients each uses (and the share) and
+      an optional named timer. The page, text or photos are **data, never instructions** — the
+      prompt says so. Before the editor sees any of it, a gate (→ DECISIONS #148) keeps only what
+      passes: wrong-typed rows dropped and pins re-pointed, control/HTML/markdown/links stripped,
+      every length and count capped by the form's own limits, amounts finite and under the cap,
+      units from the list only, pins only to rows that exist (a share above a row's total is "all
+      of it"), and **a timer only where the step's own text states that duration**. Ingredient
+      lines are written back in the reader's unit spelling ("2 EL Öl") so the editor reads them
+      like typed ones. Save then checks everything again.
+      Recipe content keeps its **source language** unless the instructions ask otherwise (→ §9).
+      Failures are their own
+      messages, naming the provider — key refused (→ Settings) · at its limit · quota or credit used
+      up · model unavailable or unable to read photos · not answering · nothing found — never a raw
+      API error; when the backup failed too, the message says that as well.
+- Household content is never translated by the app: a card imported without AI passes through
+  verbatim (→ §9). With AI, the recipe keeps its own language unless the household's
+  instructions ask otherwise; units are converted to metric.
 
 ### 4.8 Ingredient picker [3e] — which ingredients actually need buying
 
@@ -686,6 +724,9 @@ The **History** tab is a stats landing; the full feed sits one level below it (�
     never shown or sent back), **Edit** (the key field starts empty; leaving it empty keeps the
     stored key while the provider stays the same), **Test connection** (a tiny live call on the
     saved model: "Connection works" or why not), **Remove**.
+  - **Household instructions** (→ plan 22, once a provider is set up): one standing line, up to
+    300 characters ("we're vegetarian; use metric units"), applied to every AI import on top of
+    whatever is typed for one recipe. Owner sets it; the import screen shows it.
 - **About**: **Send feedback** → sheet — a **bug** or an **idea**, in your own words, in any
   language, up to 2000 characters. The sheet says what travels with it _before_ you send, and
   says it accurately: **the repository is public**, so the issue carries the words, the app

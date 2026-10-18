@@ -47,6 +47,9 @@ user ─┬─ session / account / verification        (Better Auth)
   alphabet (`ABCDEFGHJKMNPQRSTUVWXYZ23456789`, 6 chars, `crypto.getRandomValues`). Displayed
   with a dash (`7K4-P2`), stored/compared without, case-insensitive (store uppercase).
 - `timezone`: IANA name; drives "today", reminder mornings, and the leaderboard month.
+- `aiInstructions` (migration 0015, → plan 22): the household's standing instructions for every
+  AI import, ≤ 300 chars, whitespace collapsed and control/bidi characters stripped on write
+  (`$lib/ai.ts` `cleanInstructions`); `NULL` = none. Owner-only, like the connections.
 
 ### `ai_connections` (→ plan 20, SPEC §6)
 

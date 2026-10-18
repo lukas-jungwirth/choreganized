@@ -29,6 +29,7 @@ import {
 	listAiModels,
 	removeAiConnection,
 	saveAiConnection,
+	setAiInstructions,
 	testAiConnection
 } from '$lib/server/services/ai';
 import { FeedbackError, submitFeedback, syncFeedback } from '$lib/server/services/feedback';
@@ -400,6 +401,24 @@ export const actions: Actions = {
 		}
 
 		return { aiTestOk: true, slot };
+	},
+
+	/**
+	 * The household's standing instructions for every AI import (→ plan 22).
+	 * Owner-only like the connections — they shape every member's imports — and
+	 * cleaned in the service, whatever arrives here. Empty clears them.
+	 */
+	saveAiInstructions: async (event) => {
+		const { householdId, member } = requireMember(event);
+		const form = await event.request.formData();
+
+		try {
+			setAiInstructions(householdId, member.id, form.get('instructions'));
+		} catch (cause) {
+			return refuse(cause, catalog(event.locals.locale));
+		}
+
+		return { aiInstructionsSaved: true };
 	},
 
 	/**

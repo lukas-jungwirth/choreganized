@@ -12,14 +12,14 @@
  * member may import a recipe.
  */
 import { and, eq } from 'drizzle-orm';
-import type { AiProvider, AiSlot } from '$lib/ai';
+import { cleanInstructions, type AiProvider, type AiSlot } from '$lib/ai';
 import type { Messages } from '$lib/i18n';
 import { ADAPTERS, baseUrlFor } from '../ai';
 import { AiFallbackError, type Connection } from '../ai/run';
 import { object, boolean } from '../ai/schema';
 import { AiError, type ModelInfo } from '../ai/types';
 import { db } from '../db';
-import { aiConnections } from '../db/schema';
+import { aiConnections, households } from '../db/schema';
 import { requireOwner } from './household';
 
 /** What Settings may know about one connection. */
@@ -30,7 +30,12 @@ export type AiConnectionStatus = {
 	hint: string;
 };
 
-export type AiStatus = { primary: AiConnectionStatus | null; backup: AiConnectionStatus | null };
+export type AiStatus = {
+	primary: AiConnectionStatus | null;
+	backup: AiConnectionStatus | null;
+	/** The household's standing instructions for every import (→ plan 22), or null. */
+	instructions: string | null;
+};
 
 export type AiSettingsErrorCode =
 	/** Saving or listing with no key typed and none stored for that provider. */
@@ -52,11 +57,44 @@ function rows(householdId: string) {
 }
 
 export function getAiStatus(householdId: string): AiStatus {
-	const status: AiStatus = { primary: null, backup: null };
+	const status: AiStatus = {
+		primary: null,
+		backup: null,
+		instructions: getAiInstructions(householdId)
+	};
 	for (const row of rows(householdId)) {
 		status[row.slot] = { provider: row.provider, model: row.model, hint: maskKey(row.apiKey) };
 	}
 	return status;
+}
+
+/** The household's standing instructions for every AI import — read by any member's import. */
+export function getAiInstructions(householdId: string): string | null {
+	return (
+		db
+			.select({ instructions: households.aiInstructions })
+			.from(households)
+			.where(eq(households.id, householdId))
+			.get()?.instructions ?? null
+	);
+}
+
+/**
+ * Set or clear them. Owner-only like the connections (→ DECISIONS #10): they
+ * shape every member's imports. Cleaned here, whatever the action sent.
+ */
+export function setAiInstructions(
+	householdId: string,
+	actorMemberId: string,
+	instructions: unknown
+): void {
+	db.transaction((tx) => {
+		requireOwner(tx, householdId, actorMemberId);
+		tx.update(households)
+			.set({ aiInstructions: cleanInstructions(instructions) })
+			.where(eq(households.id, householdId))
+			.run();
+	});
 }
 
 export function isAiEnabled(householdId: string): boolean {
