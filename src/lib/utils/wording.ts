@@ -166,21 +166,29 @@ export function applyWording(
 }
 
 /**
- * Every word pair, both ways, as extra names an ingredient answers to in a
- * step: an "Obers" row underlines "Sahne", a "Sahne" row underlines "Obers".
- * Whatever the household chose — a typed recipe mixes them too.
+ * Every word pair, both ways, compiled once: an "Obers" row also answers to
+ * "Sahne", a "Sahne" row to "Obers". The step matcher asks for each ingredient
+ * on every keystroke in the editor, so the patterns are built here once and a
+ * plain substring test skips the ones that can't apply.
  */
-export const WORDING_SYNONYMS: readonly (readonly [string, string])[] = AUSTRIAN_TERMS.flatMap(
-	([from, to]) =>
-		[
-			[from, to],
-			[to, from]
-		] as const
-);
+const SYNONYMS = AUSTRIAN_TERMS.flatMap(([from, to]) => [
+	{ from: from.toLowerCase(), pattern: wholeWord(from), to },
+	{ from: to.toLowerCase(), pattern: wholeWord(to), to: from }
+]);
 
-/** `text` with `from` swapped for `to` as a whole word — unchanged when it isn't there. */
-export function swapWord(text: string, from: string, to: string): string {
-	return text.replace(wholeWord(from), to);
+/**
+ * The other names an ingredient goes by in the other German — whatever the
+ * household chose, because a typed recipe mixes them too (→ step-highlight).
+ */
+export function wordingSynonyms(name: string): string[] {
+	const lower = name.toLowerCase();
+	const found: string[] = [];
+	for (const { from, pattern, to } of SYNONYMS) {
+		if (!lower.includes(from)) continue;
+		const swapped = name.replace(pattern, to);
+		if (swapped !== name) found.push(swapped);
+	}
+	return found;
 }
 
 /** The glossary line the AI prompt carries for a household that chose Austrian wording. */
