@@ -39,6 +39,11 @@ export type StepSegment<T> = {
 	text: string;
 	/** The ingredient this run names, or `null` for ordinary prose. */
 	ingredient: T | null;
+	/**
+	 * Set on a run that is an amount rewritten for a different number of people
+	 * (→ `step-amounts.ts`, plan 23): what the recipe itself says there.
+	 */
+	scaledFrom?: string;
 };
 
 export type StepHighlight<T> = {

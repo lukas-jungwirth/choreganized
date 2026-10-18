@@ -1144,6 +1144,8 @@ export const en = {
 			 * amount the bubble shows on tap: "the mushrooms, 500 g, in butter".
 			 */
 			stepAmount: (amount: string) => `, ${amount}, `,
+			/** A step amount rewritten for tonight's count, said with what the recipe wrote (→ plan 23). */
+			scaledFrom: (written: string) => ` (recipe says ${written})`,
 
 			/** The manual timer sheet (→ DECISIONS #14). */
 			timerTitle: 'Set a timer',

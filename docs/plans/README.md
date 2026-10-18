@@ -34,7 +34,7 @@ plus your session date). Note deviations in the plan file and in DECISIONS.md.
 | 20  | [AI providers: your own key, live model picker, backup](20-ai-providers.md)   | done (2026-10-18) | 13, 14                   |
 | 21  | [Named step timers & German durations](21-step-timers.md)                     | done (2026-10-18) | 08                       |
 | 22  | [Smarter import: link + AI, Microdata, enriched drafts](22-smarter-import.md) | done (2026-10-18) | 20, 21                   |
-| 23  | [Amounts in step text follow servings](23-step-amounts.md)                    | todo              | 07                       |
+| 23  | [Amounts in step text follow servings](23-step-amounts.md)                    | done (2026-10-18) | 07                       |
 | 24  | [Austrian wording (fixed word list)](24-austrian-wording.md)                  | todo              | 22                       |
 
 Work done after the twelve plans, tracked here so the queue stays the whole story:
