@@ -32,6 +32,7 @@ import {
 	type RecipePage
 } from '$lib/server/recipe-import';
 import { getAiConnections, getAiInstructions, isAiEnabled } from '$lib/server/services/ai';
+import { getRecipeWording } from '$lib/server/services/household';
 import {
 	aiImportErrorMessage,
 	extractRecipe,
@@ -48,6 +49,7 @@ import {
 	uploadErrorMessage
 } from '$lib/server/uploads';
 import { readRecipeForm, type RecipePrefill } from '$lib/utils/recipes';
+import { applyWording, type RecipeWording } from '$lib/utils/wording';
 import type { Actions, PageServerLoad } from './$types';
 
 /** A cookbook spread is a page or two — more than three photos is a different job. */
@@ -94,8 +96,24 @@ function contextFor(householdId: string, form: FormData, m: Messages): ImportCon
 			household: getAiInstructions(householdId),
 			now: cleanInstructions(form.get('instructions'))
 		},
-		labels: m.units.labels
+		labels: m.units.labels,
+		wording: getRecipeWording(householdId)
 	};
+}
+
+/**
+ * A page's card as written — in the household's wording, when it chose one
+ * and the card is German: the ingredient names only, since without a model a
+ * word swap inside a sentence would break its grammar (→ plan 24).
+ */
+function cardDraft(
+	card: NonNullable<RecipePage['card']>,
+	photo: RecipePrefill['photo'],
+	wording: RecipeWording | null
+): RecipePrefill {
+	const draft = draftFromCard(card, photo);
+	const steps = draft.steps.map((step) => step.text);
+	return { ...draft, ingredientLines: applyWording(draft.ingredientLines, steps, wording) };
 }
 
 /**
@@ -156,7 +174,7 @@ async function importLink(event: RequestEvent, ai: 'off' | 'if-set-up' | 'ask') 
 	if (page.card) {
 		// The photo downloads while the model works; the card opens with it either way.
 		const photo = importPagePhoto(page);
-		if (!withAi) return { draft: draftFromCard(page.card, await photo) };
+		if (!withAi) return { draft: cardDraft(page.card, await photo, context.wording ?? null) };
 
 		try {
 			const result = await improveRecipe(connections, page.card, context);
@@ -166,7 +184,7 @@ async function importLink(event: RequestEvent, ai: 'off' | 'if-set-up' | 'ask') 
 			};
 		} catch (cause) {
 			return {
-				draft: draftFromCard(page.card, await photo),
+				draft: cardDraft(page.card, await photo, context.wording ?? null),
 				notice: m.cooking.import.ai.withoutAi(aiImportErrorMessage(cause, m))
 			};
 		}

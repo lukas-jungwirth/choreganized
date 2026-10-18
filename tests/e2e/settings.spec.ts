@@ -62,3 +62,24 @@ test('tapping the version copies it, then reverts', async ({ page, context }) =>
 
 	await expect(page.getByText('e2e', { exact: true })).toBeVisible();
 });
+
+test('recipe wording is chosen in a sheet and named on its row', async ({ page }) => {
+	await page.goto('/settings');
+	const row = page.getByRole('button', { name: /^Recipe wording/ });
+	await expect(row).toContainText('As written');
+
+	await row.click();
+	await page
+		.getByRole('dialog')
+		.getByRole('button', { name: /^Austrian German/ })
+		.click();
+	await expect(row).toContainText('Austrian German');
+
+	// Back to the default, so other journeys import as written.
+	await row.click();
+	await page
+		.getByRole('dialog')
+		.getByRole('button', { name: /^As written/ })
+		.click();
+	await expect(row).toContainText('As written');
+});

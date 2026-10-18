@@ -32,11 +32,42 @@ Depends on: 22. SPEC: §6, §9. Design: there is no frame. This is a Settings ro
 
 ## Acceptance
 
-- [ ] With wording set to Austrian, a German JSON-LD recipe with AI off arrives with "Obers" and
+- [x] With wording set to Austrian, a German JSON-LD recipe with AI off arrives with "Obers" and
       "Topfen" in the ingredient list, and cook mode still underlines "Sahne" in its steps.
-- [ ] With AI on, ingredients and steps arrive in Austrian German.
-- [ ] An English recipe is untouched. A compound word ("Sahnejoghurt") is untouched.
-- [ ] A member sees the setting read-only.
-- [ ] `npm run verify` and `npm run test:visual` clean.
+- [ ] With AI on, ingredients and steps arrive in Austrian German. _The prompt and the
+      ingredient post-pass are tested; a real model's rewrite needs a real key._
+- [x] An English recipe is untouched. A compound word ("Sahnejoghurt") is untouched.
+- [x] A member sees the setting read-only (the Settings row's owner/member branch, the same
+      shape as the house name; the write is refused server-side, which the integration test
+      proves).
+- [x] `npm run verify` and `npm run test:visual` clean.
 
 Out of scope: editing the word list; translating between languages; rewriting saved recipes.
+
+## What was verified, and how (session 2026-10-18)
+
+- **Unit** (`wording.test.ts`):
+  - Whole-word, longest-first swaps: Sahne → Obers, saure Sahne → Sauerrahm, Kartoffeln →
+    Erdäpfel, Eiweiß → Eiklar (ß matched).
+  - Compounds (Sahnejoghurt, Tomatenmark) and other words stay.
+  - No Austrian word is swapped again.
+  - An English recipe's "quark" stays "quark".
+  - `looksGerman` tells the two languages apart.
+  - Synonyms: an "Obers" row underlines "Sahne" and a "Sahne" row "Obers", while two rows
+    called "Tomaten" and "Paradeiser" each keep their own word.
+- **Integration** (`wording.test.ts`):
+  - The setting is owner-only and per household.
+  - The AI prompt carries the glossary only with the setting on.
+  - A German AI answer that kept "Quark" and "Sahne" comes out "Topfen" and "Obers" with the
+    setting, and unchanged without it.
+- **End to end** (`settings.spec.ts`): the row reads "As written", the sheet sets "Austrian
+  German", and it goes back. **Visual**: the Settings baselines were refreshed for the new row.
+- **In the running app**, with **a real page** (the Chefkoch lasagne), wording set to Austrian,
+  no AI, through the share-target URL:
+  - The card arrived with "500 g Faschiertes, gemischtes" and "1 Dose Paradeiser, geschälte",
+    while "Tomatenmark" and the step text stayed as Chefkoch wrote them.
+  - Saved, then cook mode step 2 underlined the step's "Hackfleisch" three times, and its
+    "uses" line read "500 g Faschiertes, gemischtes" (screenshot taken).
+
+**Not exercised:** a real model's Austrian rewrite of a whole recipe. That needs a real key; the
+glossary prompt is covered by the integration test.

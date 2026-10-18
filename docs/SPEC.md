@@ -737,6 +737,16 @@ The **History** tab is a stats landing; the full feed sits one level below it (�
   - **Household instructions** (→ plan 22, once a provider is set up): one standing line, up to
     300 characters ("we're vegetarian; use metric units"), applied to every AI import on top of
     whatever is typed for one recipe. Owner sets it; the import screen shows it.
+- **Recipe wording** (→ plan 24, owner sets; members see the row read-only): **As written**
+  (default) or **Austrian German**. With Austrian German, a German recipe imported from then on
+  uses the Austrian words — Sahne → Obers, saure Sahne → Sauerrahm, Quark → Topfen, Hackfleisch
+  → Faschiertes, Kartoffeln → Erdäpfel, Tomaten → Paradeiser, Aprikosen → Marillen, … — from a
+  **fixed list** in the app (not editable in v1). With AI the model rewrites the whole recipe in
+  Austrian German and gets the grammar right ("das Obers"); without AI only the **ingredient
+  names** are swapped, whole words only ("Sahnejoghurt" stays), because a word swap inside a
+  sentence would break its articles. Recipes in other languages, and saved recipes, are never
+  touched. Either way cook mode still underlines a step's "Sahne" for an "Obers" row: each pair
+  is a synonym for the step matcher (§4.4), whatever the setting.
 - **About**: **Send feedback** → sheet — a **bug** or an **idea**, in your own words, in any
   language, up to 2000 characters. The sheet says what travels with it _before_ you send, and
   says it accurately: **the repository is public**, so the issue carries the words, the app
@@ -804,6 +814,9 @@ timezone, so January reads "Jänner" (→ [DECISIONS #93](DECISIONS.md)). Every 
   byte-for-byte, in the language it was written in, with only the English scaffolding around it
   added (→ [DECISIONS #136](DECISIONS.md)). The three starter stores and the three "popular
   starters" are written in the language of whoever created them, and are theirs to rename.
+  The language switch never rewrites any of it. What a household **chooses** for its own
+  imports is a different thing: its recipe wording (§6, plan 24) and its AI instructions (§4.7)
+  shape a recipe once, as it is imported — never one already saved.
 - **Units are stored canonically and shown per language** — `tbsp` reads "tbsp" or "EL", `pcs`
   reads "pcs" or "Stk.". A recipe typed in either language parses to the same rows.
 - **Notifications** go to a device, so they use the recipient's own language: their explicit

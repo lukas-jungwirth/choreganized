@@ -1,0 +1,1 @@
+ALTER TABLE `households` ADD `recipe_wording` text;

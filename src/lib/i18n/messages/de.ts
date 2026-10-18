@@ -1092,6 +1092,17 @@ export const de: Messages = {
 			}
 		},
 
+		wording: {
+			row: 'Wortwahl in Rezepten',
+			title: 'Wortwahl in Rezepten',
+			asWritten: 'Wie geschrieben',
+			asWrittenDetail: 'Importierte Rezepte behalten die Wörter der Seite.',
+			austrian: 'Österreichisch',
+			austrianDetail:
+				'Aus Sahne wird Obers, aus Quark Topfen, aus Kartoffeln Erdäpfel — in importierten deutschen Rezepten.',
+			note: 'Gilt für Rezepte, die du ab jetzt importierst; gespeicherte bleiben, wie sie sind. Mit KI wird das ganze Rezept umgeschrieben, ohne die Namen der Zutaten.'
+		},
+
 		about: 'Über die App',
 		version: {
 			row: 'Version',
