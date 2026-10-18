@@ -5,21 +5,22 @@ server. Everything a feature needs — UI, server logic, DB, cron, push — live
 
 ## Stack (installed & pinned in package.json)
 
-| Concern   | Choice                                    | Notes                                                |
-| --------- | ----------------------------------------- | ---------------------------------------------------- |
-| Framework | SvelteKit 2 + Svelte 5 (**runes**)        | Runes mode is forced in `vite.config.ts`             |
-| Adapter   | `@sveltejs/adapter-node`                  | Long-running Node server (cron, push)                |
-| DB        | SQLite via `better-sqlite3`               | WAL, `busy_timeout`, FKs on — see `db/index.ts`      |
-| ORM       | Drizzle (`drizzle-orm` + `drizzle-kit`)   | Schema-as-code, generated SQL migrations             |
-| Auth      | Better Auth (`better-auth`)               | Google OAuth only in v1                              |
-| Push      | `web-push` (VAPID)                        | Hand-written service worker handlers                 |
-| Scheduler | `node-cron`                               | In-process, 1-min tick, started in server `init`     |
-| Dates     | `date-fns` + `Intl`                       | Calendar math; `Intl` for timezone rendering         |
-| Images    | `sharp`                                   | Recipe photos → ≤1200px WebP (→ [#62](DECISIONS.md)) |
-| AI        | plain `fetch` (no SDK)                    | Gemini · OpenAI · Anthropic · OpenRouter (→ #146)    |
-| Fonts     | `@fontsource-variable/{fraunces,figtree}` | Self-hosted (PWA/offline friendly)                   |
-| Icons     | `@lucide/svelte`                          | Matches design's stroke style; bespoke logo SVGs     |
-| Styling   | Vanilla CSS + custom properties           | **No Tailwind** — tokens in `src/app.css`            |
+| Concern   | Choice                                    | Notes                                                 |
+| --------- | ----------------------------------------- | ----------------------------------------------------- |
+| Framework | SvelteKit 2 + Svelte 5 (**runes**)        | Runes mode is forced in `vite.config.ts`              |
+| Adapter   | `@sveltejs/adapter-node`                  | Long-running Node server (cron, push)                 |
+| DB        | SQLite via `better-sqlite3`               | WAL, `busy_timeout`, FKs on — see `db/index.ts`       |
+| ORM       | Drizzle (`drizzle-orm` + `drizzle-kit`)   | Schema-as-code, generated SQL migrations              |
+| Auth      | Better Auth (`better-auth`)               | Google OAuth only in v1                               |
+| Push      | `web-push` (VAPID)                        | Hand-written service worker handlers                  |
+| Scheduler | `node-cron`                               | In-process, 1-min tick, started in server `init`      |
+| Dates     | `date-fns` + `Intl`                       | Calendar math; `Intl` for timezone rendering          |
+| Images    | `sharp`                                   | Recipe photos → ≤1200px WebP (→ [#62](DECISIONS.md))  |
+| AI        | plain `fetch` (no SDK)                    | Gemini · OpenAI · Anthropic · OpenRouter (→ #146)     |
+| HTML      | `node-html-parser`                        | Import: Microdata cards, page → readable lines (#148) |
+| Fonts     | `@fontsource-variable/{fraunces,figtree}` | Self-hosted (PWA/offline friendly)                    |
+| Icons     | `@lucide/svelte`                          | Matches design's stroke style; bespoke logo SVGs      |
+| Styling   | Vanilla CSS + custom properties           | **No Tailwind** — tokens in `src/app.css`             |
 
 ## Directory layout
 

@@ -16,13 +16,14 @@
 	import AiConnectionForm from '$lib/components/settings/AiConnectionForm.svelte';
 	import BottomSheet from '$lib/components/ui/BottomSheet.svelte';
 	import Button from '$lib/components/ui/Button.svelte';
-	import type { AiSlot } from '$lib/ai';
+	import { AI_INSTRUCTIONS_MAX, type AiSlot } from '$lib/ai';
 	import { messages } from '$lib/i18n';
 	import type { AiStatus } from '$lib/server/services/ai';
 	import Check from '@lucide/svelte/icons/check';
 	import ChevronLeft from '@lucide/svelte/icons/chevron-left';
 	import CircleAlert from '@lucide/svelte/icons/circle-alert';
 	import Info from '@lucide/svelte/icons/info';
+	import { untrack } from 'svelte';
 
 	type Props = {
 		status: AiStatus;
@@ -45,6 +46,11 @@
 	$effect(() => {
 		if (!open) onclose();
 	});
+
+	/** The standing instructions as typed — seeded once, owned by the field after. */
+	let instructions = $state(untrack(() => status.instructions ?? ''));
+	let instructionsSaved = $state(false);
+	const instructionsId = $props.id();
 
 	const title = $derived(
 		editing === 'primary'
@@ -156,6 +162,42 @@
 				{/if}
 			</section>
 		{/each}
+
+		<!-- What every import is asked to do (→ plan 22) — only once there is an AI
+			 to ask. A form of its own: saving the line touches nothing above it. -->
+		{#if status.primary}
+			<form
+				class="instructions"
+				method="POST"
+				action="?/saveAiInstructions"
+				use:enhance={() => {
+					instructionsSaved = false;
+					return async ({ result, update }) => {
+						await update({ reset: false });
+						instructionsSaved = result.type === 'success';
+					};
+				}}
+			>
+				<label class="slot-label" for={instructionsId}>{t.instructions.label}</label>
+				<textarea
+					id={instructionsId}
+					name="instructions"
+					rows="2"
+					maxlength={AI_INSTRUCTIONS_MAX}
+					placeholder={t.instructions.placeholder}
+					bind:value={instructions}
+					oninput={() => (instructionsSaved = false)}></textarea>
+				<p class="empty">{t.instructions.hint}</p>
+				<div class="instructions-save">
+					<button type="submit" class="chip">{t.instructions.save}</button>
+					{#if instructionsSaved}
+						<span class="result ok" role="status">
+							<Check size={14} strokeWidth={2.6} />{t.instructions.saved}
+						</span>
+					{/if}
+				</div>
+			</form>
+		{/if}
 	{/if}
 </BottomSheet>
 
@@ -284,6 +326,46 @@
 
 	.result.ok {
 		color: var(--sage);
+	}
+
+	.instructions {
+		display: flex;
+		flex-direction: column;
+		gap: 8px;
+		margin-top: 4px;
+	}
+
+	/* TextField's well, as a textarea — there is no `ui/` one (→ DESIGN-SYSTEM). */
+	textarea {
+		width: 100%;
+		padding: 13px 16px;
+		border: 1.5px solid transparent;
+		border-radius: var(--r-input);
+		background: var(--input-surface, var(--card));
+		font: inherit;
+		font-size: calc(14.5px * var(--fs));
+		line-height: 1.45;
+		color: var(--ink);
+		resize: vertical;
+	}
+
+	textarea::placeholder {
+		color: var(--text-disabled);
+	}
+
+	textarea:focus {
+		outline: none;
+		border-color: var(--sage);
+	}
+
+	.instructions-save {
+		display: flex;
+		align-items: center;
+		gap: 12px;
+	}
+
+	.instructions-save .result {
+		margin: 0;
 	}
 
 	.back {

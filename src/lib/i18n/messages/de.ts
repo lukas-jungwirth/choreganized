@@ -919,7 +919,16 @@ export const de: Messages = {
 			},
 
 			ai: {
-				note: 'Per KI erkannt — vor dem Speichern kurz prüfen.',
+				note: 'Mit KI erstellt — vor dem Speichern kurz prüfen.',
+				adapted: (instructions: string) => `Angepasst: „${instructions}“.`,
+				withoutAi: (reason: string) => `So übernommen, wie die Seite es schreibt — ${reason}`,
+				improve: 'Mit KI verbessern',
+				improveHint:
+					'Ordnet Mengen, verknüpft Zutaten mit ihren Schritten und stellt Timer — und liest auch Seiten ohne Rezeptdaten. Nutzt deinen KI-Anbieter.',
+				instructionsToggle: 'Anweisungen für die KI hinzufügen',
+				instructionsLabel: 'Anweisungen für die KI',
+				instructionsPlaceholder: 'z. B. mit Tofu statt Fleisch, für 2 Personen',
+				instructionsHousehold: (instructions: string) => `Gilt immer: „${instructions}“`,
 				pageLead: 'Diese Seite hat keine direkt lesbaren Rezeptdaten. Mit KI auslesen?',
 				tryPage: 'Mit KI auslesen',
 				extracting: 'Wird ausgelesen…',
@@ -1071,6 +1080,14 @@ export const de: Messages = {
 				label: 'Verbindung testen',
 				testing: 'Wird getestet…',
 				ok: 'Verbindung funktioniert.'
+			},
+
+			instructions: {
+				label: 'Anweisungen für den Haushalt',
+				hint: 'Gelten für jeden KI-Import, zusätzlich zu dem, was du bei einem Rezept eintippst.',
+				placeholder: 'z. B. wir essen vegetarisch; metrische Einheiten',
+				save: 'Anweisungen speichern',
+				saved: 'Gespeichert.'
 			}
 		},
 

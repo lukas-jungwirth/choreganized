@@ -124,3 +124,118 @@ test('editing reloads the saved provider’s list with the stored key, even afte
 	await sheet.getByRole('button', { name: /^Google Gemini/ }).click();
 	await expect(sheet.getByLabel('Model')).toHaveValue('gemini-flash-latest');
 });
+
+/** The quick way in for tests that are about importing, not about Settings. */
+async function setUpGemini(page: Page, baseURL: string) {
+	const saved = await page.request.post('/settings?/saveAiConnection', {
+		form: {
+			slot: 'primary',
+			provider: 'gemini',
+			key: 'fake-gemini-key-0123456789',
+			model: 'gemini-flash-latest',
+			vision: '1'
+		},
+		headers: { origin: baseURL, 'x-sveltekit-action': 'true' }
+	});
+	expect(saved.ok()).toBe(true);
+}
+
+/** The fake provider's own port (→ scripts/e2e-server.ts `FAKE_AI_PORT`). */
+const FAKE_AI = 'http://127.0.0.1:4174';
+
+test('an AI import arrives pinned and timed, adapted as asked, and saves into cook mode', async ({
+	page,
+	baseURL
+}) => {
+	await setUpGemini(page, baseURL!);
+	// A clean slate on the fake's log, so what reached the model is this test's.
+	await page.request.get(`${FAKE_AI}/__reset`);
+
+	await page.goto('/cooking/recipes/import?mode=text');
+	await page.getByRole('button', { name: 'Add instructions for the AI' }).click();
+	await page.getByLabel('Instructions for the AI').fill('mit Tofu statt Ei');
+	await page
+		.getByLabel('Recipe text')
+		.fill('Pancakes: flour, eggs, milk. Whisk; fry 2 minutes a side.');
+	await page.getByRole('button', { name: 'Extract recipe' }).click();
+
+	// The draft says what made it, and what it was asked.
+	await expect(page.getByText(/Made with AI — check it over before saving\./)).toBeVisible();
+	await expect(page.getByText(/Adapted: “mit Tofu statt Ei”\./)).toBeVisible();
+
+	// Step 1 arrives with its ingredients pinned (no "auto" marker), step 2 with a named timer.
+	const uses = page.getByRole('button', { name: 'Ingredients for step 1' });
+	await expect(uses).toContainText('flour');
+	await expect(uses).not.toContainText('auto');
+	await expect(page.getByRole('button', { name: 'Timer for step 2' })).toContainText(
+		'Pancake · 2:00'
+	);
+
+	// The line reached the model, in the household-instructions block of the prompt.
+	const log = await (await page.request.get(`${FAKE_AI}/__requests`)).json();
+	expect(JSON.stringify(log.at(-1).body)).toContain('mit Tofu statt Ei');
+
+	await page.getByRole('button', { name: 'Save recipe' }).click();
+	await expect(page.getByRole('heading', { name: 'Gemini pancakes', level: 1 })).toBeVisible();
+	await page.getByRole('link', { name: 'Start cook mode' }).click();
+	await page.getByRole('button', { name: 'Next' }).click();
+	await expect(page.getByRole('button', { name: 'Start Pancake · 2:00' })).toBeVisible();
+});
+
+test('"Improve with AI" is off until turned on, then remembered on this device', async ({
+	page,
+	baseURL
+}) => {
+	await setUpGemini(page, baseURL!);
+	await page.goto('/cooking/recipes/import');
+
+	const toggle = page.getByRole('checkbox', { name: 'Improve with AI' });
+	await expect(toggle).not.toBeChecked();
+	await expect(page.getByRole('button', { name: 'Add instructions for the AI' })).toHaveCount(0);
+
+	await toggle.check();
+	await expect(page.getByRole('button', { name: 'Add instructions for the AI' })).toBeVisible();
+
+	await page.reload();
+	await expect(page.getByRole('checkbox', { name: 'Improve with AI' })).toBeChecked();
+
+	// Off again for whoever comes next on this browser profile.
+	await page.getByRole('checkbox', { name: 'Improve with AI' }).uncheck();
+});
+
+test('standing instructions are the owner’s, and every import shows them', async ({
+	page,
+	baseURL
+}) => {
+	await setUpGemini(page, baseURL!);
+	const sheet = await openAiSheet(page);
+	await sheet.getByLabel('Household instructions').fill('Wir essen vegetarisch.');
+	await sheet.getByRole('button', { name: 'Save instructions' }).click();
+	await expect(sheet.getByRole('status')).toHaveText('Saved.');
+
+	await page.goto('/cooking/recipes/import?mode=text');
+	await expect(page.getByText('Always applied: “Wir essen vegetarisch.”')).toBeVisible();
+
+	// Cleared again, so other journeys import without it.
+	const cleared = await page.request.post('/settings?/saveAiInstructions', {
+		form: { instructions: '' },
+		headers: { origin: baseURL!, 'x-sveltekit-action': 'true' }
+	});
+	expect(cleared.ok()).toBe(true);
+});
+
+test('a remembered "Improve with AI" after AI was removed just imports without it', async ({
+	page,
+	baseURL
+}) => {
+	// No connection (afterEach removed them). The toggle's `ai=1` may still be
+	// remembered on the phone; the fetch must carry on, not ask for Settings.
+	// A blocked address proves it got as far as fetching — no network needed.
+	const response = await page.request.post('/cooking/recipes/import?/fetch', {
+		form: { url: 'http://127.0.0.1/rezept', ai: '1' },
+		headers: { origin: baseURL!, 'x-sveltekit-action': 'true' }
+	});
+	const body = await response.text();
+	expect(body).toContain('can’t be opened from here');
+	expect(body).not.toContain('Set up AI features in Settings first');
+});

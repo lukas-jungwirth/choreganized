@@ -79,21 +79,69 @@ existing primitives on the import screen.
 
 ## Acceptance
 
-- [ ] The JSON-LD sites (bbcgoodfood pancakes, gutekueche Palatschinken) with AI off import exactly
-      as before. With AI on they import with step pins and timers, and the counts are unchanged.
-- [ ] A Microdata page imports without AI.
-- [ ] A page with no structured data imports with AI on in one call. With AI off it offers "Try
-      with AI".
-- [ ] Pasted text with "mit Tofu statt Fleisch" comes back adapted, and the notice quotes the
-      instruction. The standing instruction applies too.
-- [ ] "1 cup flour" arrives as millilitres or grams.
-- [ ] The validator's adversarial fixtures (wrong types, NaN, out-of-range pins, an invented timer,
-      HTML/URL/injection strings, oversized arrays) never produce a draft field outside the
-      limits.
-- [ ] AI down on an enhance → the plain draft, with a notice.
-- [ ] The share target respects the toggle.
-- [ ] `npm run verify` and `npm run test:visual` clean. Live providers are exercised only with a
-      real key, and the handoff says so.
+- [x] The JSON-LD sites with AI off import exactly as before. With AI on, the card goes to the
+      model to be improved, and a rewrite that changes the counts is refused (seen live on
+      bbcgoodfood). _A real model's successful improve needs a real key: covered by fake-adapter
+      tests only._
+- [x] A Microdata page imports without AI (constructed cards; no real Microdata site checked).
+- [x] With AI off, a page with no structured data offers "Try with AI". With AI on, it is read in
+      one call (service and route code shared with "Try with AI"; not run against a live page).
+- [x] Pasted text with an instruction comes back adapted, and the notice quotes it. The standing
+      instruction reaches the prompt too (e2e, and the fake's request log).
+- [ ] "1 cup flour" arrives as millilitres or grams. _A prompt rule; it needs a real model to
+      prove it._
+- [x] The validator's adversarial fixtures never produce a draft field outside the limits.
+- [x] AI down (or refusing the card) on an improve → the plain draft, with a notice (seen live).
+- [x] The share target respects the toggle (the auto-submit reads the remembered choice before
+      it submits; covered by code review, not a separate journey).
+- [x] `npm run verify` and `npm run test:visual` clean. Live providers were not exercised, and
+      the handoff says so.
 
 Out of scope: multi-recipe pages; rewriting saved recipes; client-rendered (SPA) recipe pages
 that serve no content.
+
+## What was verified, and how (session 2026-10-18)
+
+- **`npm run verify` clean**: 341 Vitest tests and 28 Playwright journeys.
+  **`npm run test:visual`**: all 19 screens unchanged.
+- **The gate** (`recipe-draft.test.ts`): wrong types, NaN / 1e9 / negative amounts, units outside
+  the list, pins to rows that don't exist, repeated pins, shares above the total, an invented
+  timer, a timer cook mode can't run, HTML / script / links / bidi override / markdown bullets,
+  1000 rows and 10 000-character fields. None of them gets through. Pins are re-pointed past
+  dropped rows. An improvement that changed the rows is refused; with instructions it isn't.
+- **Microdata** (`recipe-microdata.test.ts`): a classic card, a nested author whose `name` must
+  not become the recipe's, `HowToStep` items, a plain numbered method, a type list, a meta
+  image, and a template stub.
+- **Readable text** (`recipe-import.test.ts`): lines, not one paragraph; nav, header, footer,
+  scripts and comment sections gone; `<main>` preferred when it holds the content.
+- **Service** (`tests/integration/ai-import.test.ts`, fake adapters):
+  - Improving a card structures it and keeps the card's facts.
+  - A rewrite is refused and the backup tries; if both fail, the screen falls back to the card.
+  - Instructions reach the prompt and free the rows.
+  - "No recipe" doesn't ask the backup.
+  - Photos skip a text-only model.
+  - Standing instructions are owner-only, cleaned, capped and clearable (`ai.test.ts`).
+- **End to end** (`ai.spec.ts`, fake providers):
+  - A text import with an instruction arrives with the notice quoting it, step 1 pinned (no
+    "auto"), and step 2's named "Pancake · 2:00" timer. The instruction reached the model's
+    prompt. It saves, and cook mode offers "Start Pancake · 2:00".
+  - The toggle is off by default and remembered after a reload.
+  - Standing instructions save, and the import screen shows them.
+  - A remembered toggle after AI was removed just imports without AI. Review found that case;
+    the journey fails without the fix.
+- **In the running app** (the `verify` dev server, signed in, German, dark, Gemini pointed at
+  `scripts/fake-ai.ts`), with **a real page**, `bbcgoodfood.com/recipes/easy-pancakes`, toggle
+  on:
+  - The card (6 ingredients) was sent as compact JSON with the improve rules, the
+    Gemini-dialect schema and no temperature (read off the fake's `/__requests`).
+  - The fake's 3-ingredient answer failed the fidelity check. The card opened as written, with
+    "So übernommen, wie die Seite es schreibt — Gemini hat geantwortet, aber nicht in einer
+    Form…".
+  - The English steps showed "30:00 auto" and "1:00 auto" timers.
+  - A pasted-text import showed the pinned chips and the named timer in the editor.
+
+**Not exercised:**
+
+- Anything a real model does: a successful improve, metric conversion, photos. Those need a
+  real key, which this session doesn't have.
+- A real Microdata site.

@@ -116,6 +116,11 @@
 	 * translated into the keys this form works in.
 	 */
 	const rowForIngredientId = new Map<string, string>();
+	/**
+	 * The same for an import draft, whose pins name ingredients by their *index*
+	 * in `ingredientLines` (→ plan 22): row keys in line order.
+	 */
+	const rowForDraftIndex: string[] = [];
 
 	// Seeded from the import draft when there is one, else from the recipe being
 	// edited, else empty. An imported ingredient stays the *raw line* the site
@@ -130,7 +135,11 @@
 		untrack(() => {
 			if (prefill) {
 				return prefill.ingredientLines.length
-					? prefill.ingredientLines.map((line) => row(line))
+					? prefill.ingredientLines.map((line) => {
+							const created = row(line);
+							rowForDraftIndex.push(created.key);
+							return created;
+						})
 					: [row()];
 			}
 
@@ -145,10 +154,20 @@
 	);
 	let steps = $state<StepRow[]>(
 		untrack(() => {
-			// An imported draft has text and nothing else, which is exactly what the
-			// matcher is for: its steps arrive reading themselves.
+			// A page's own recipe card has text and nothing else, which is exactly what
+			// the matcher is for: its steps arrive reading themselves. An AI draft may
+			// also know what each step uses and its timer (→ plan 22) — those arrive
+			// pinned, and a pin to a line that isn't there is dropped.
 			if (prefill) {
-				return prefill.steps.length ? prefill.steps.map((text) => stepRow(text)) : [stepRow()];
+				if (!prefill.steps.length) return [stepRow()];
+				return prefill.steps.map((step) => {
+					const uses = step.uses?.flatMap((use) => {
+						const key = rowForDraftIndex[use.ingredient];
+						return key ? [{ ingredient: key, quantity: use.quantity }] : [];
+					});
+					// Nothing left to pin reads the text — "uses nothing" is a person's call.
+					return stepRow(step.text, uses?.length ? uses : null, step.timer);
+				});
 			}
 
 			if (!recipe?.steps.length) return [stepRow()];

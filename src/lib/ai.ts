@@ -58,6 +58,25 @@ export function looksLikeApiKey(key: string): boolean {
 }
 
 /**
+ * Instructions for the AI (→ plan 22): the household's standing line in
+ * Settings, and the one typed for a single import. Short on purpose — a line
+ * of what to change ("mit Tofu statt Fleisch"), not a prompt.
+ */
+export const AI_INSTRUCTIONS_MAX = 300;
+
+/** Instructions as stored and sent: whitespace collapsed, control characters out, capped; '' → null. */
+export function cleanInstructions(value: unknown): string | null {
+	if (typeof value !== 'string') return null;
+	const text = value
+		.replace(/[\u0000-\u001F\u007F​-‏‪-‮⁠-⁩﻿]/g, ' ')
+		.replace(/\s+/g, ' ')
+		.trim()
+		.slice(0, AI_INSTRUCTIONS_MAX)
+		.trim();
+	return text || null;
+}
+
+/**
  * A model id as the providers write them: `gemini-flash-latest`,
  * `gpt-5-mini`, `claude-haiku-5-5`, `meta-llama/llama-4-scout:free`. Typed by
  * hand only when a listing fails, so the check is shape, not membership.

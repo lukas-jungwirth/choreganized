@@ -121,6 +121,12 @@ export const households = sqliteTable('households', {
 	inviteCode: text('invite_code').unique(),
 	/** IANA timezone; all calendar dates & reminder times are local to this. */
 	timezone: text('timezone').notNull().default('Europe/Vienna'),
+	/**
+	 * Standing instructions for every AI import (→ plan 22, SPEC §6): "we're
+	 * vegetarian", "always metric". Set by the owner in Settings → AI features;
+	 * NULL = none. At most `AI_INSTRUCTIONS_MAX` characters.
+	 */
+	aiInstructions: text('ai_instructions'),
 	createdAt: createdAt()
 });
 

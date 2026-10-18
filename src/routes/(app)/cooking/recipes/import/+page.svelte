@@ -1,14 +1,17 @@
 <!--
-	Recipe import (→ SPEC §4.7, plans 12–14). The "Add a recipe" chooser routes
+	Recipe import (→ SPEC §4.7, plans 12–14, 22). The "Add a recipe" chooser routes
 	here with a focused `mode`, so each method is its own clean screen rather than
 	one stacked page:
-	  - link  (default) — paste a URL; its Schema.org Recipe fills the editor, and
-	           on a page with no recipe data the AI fallback is one tap away.
+	  - link  (default) — paste a URL; the page's own recipe card fills the editor.
+	           With **Improve with AI** on (→ plan 22) the model structures it —
+	           amounts, which step uses what, timers — and reads pages that have
+	           no card at all; off, a page with no card offers AI one tap away.
 	  - photo — 1–3 cookbook photos, read by AI.
 	  - text  — paste the recipe text, read by AI (the answer for 403 sites).
-	Every success lands in the ordinary editor [3c] with an "AI-extracted — check
-	before saving" note; the AI never saves on its own. The share target lands in
-	link mode with the URL prefilled and auto-fetched.
+	Every AI path takes a line of instructions ("with tofu instead of meat") on
+	top of the household's standing ones. Every success lands in the ordinary
+	editor [3c] with a notice from the server; the AI never saves on its own. The
+	share target lands in link mode with the URL prefilled and auto-fetched.
 -->
 <script lang="ts">
 	import { enhance } from '$app/forms';
@@ -19,18 +22,21 @@
 	import Banner from '$lib/components/ui/Banner.svelte';
 	import Button from '$lib/components/ui/Button.svelte';
 	import TextField from '$lib/components/ui/TextField.svelte';
+	import Toggle from '$lib/components/ui/Toggle.svelte';
+	import { AI_INSTRUCTIONS_MAX } from '$lib/ai';
 	import { messages } from '$lib/i18n';
 	import type { RecipePrefill } from '$lib/utils/recipes';
 	import Camera from '@lucide/svelte/icons/camera';
 	import CircleAlert from '@lucide/svelte/icons/circle-alert';
 	import FileText from '@lucide/svelte/icons/file-text';
 	import Sparkles from '@lucide/svelte/icons/sparkles';
-	import { untrack } from 'svelte';
+	import { onMount, tick, untrack } from 'svelte';
 	import type { PageProps } from './$types';
 
 	let { data, form }: PageProps = $props();
 
 	const m = messages();
+	const t = m.cooking.import.ai;
 
 	const mode = $derived(data.mode);
 
@@ -52,21 +58,16 @@
 	// lose the edits. A fresh result replaces it; the `$derived` picks it up the same
 	// render, so there's no flash of the entry screen in between.
 	let saved = $state<RecipePrefill | null>(null);
-	let extractedByAi = $state(false);
-	/** "Gemini couldn't answer, so your backup did" — kept with the draft it explains. */
-	let backupNote = $state<string | undefined>();
+	/** The line above the draft the server wrote: made with AI, adapted, by the backup… */
+	let savedNotice = $state<string | undefined>();
 	$effect(() => {
 		if (form && 'draft' in form && form.draft) {
 			saved = form.draft;
-			extractedByAi = 'aiExtracted' in form && Boolean(form.aiExtracted);
-			backupNote = 'aiNote' in form && typeof form.aiNote === 'string' ? form.aiNote : undefined;
+			savedNotice = 'notice' in form && typeof form.notice === 'string' ? form.notice : undefined;
 		}
 	});
 	const draft = $derived<RecipePrefill | null>(
 		saved ?? (form && 'draft' in form ? (form.draft ?? null) : null)
-	);
-	const aiNotice = $derived(
-		extractedByAi || (form && 'aiExtracted' in form && Boolean(form.aiExtracted))
 	);
 
 	// Seeded from the share-target link, or the URL kept on screen after a failed
@@ -82,6 +83,36 @@
 	/** The photos picked in photo mode — gates the submit and posts as `photos`. */
 	let photos = $state<File[]>([]);
 
+	/**
+	 * "Improve with AI" on a link (→ plan 22). **Off until someone turns it on**,
+	 * then remembered on this device: turning it on is the explicit go-ahead a
+	 * paid call needs (→ DECISIONS #112), so a first shared link never spends
+	 * one nobody agreed to. Browser storage, because it is one person's habit
+	 * on one phone — and a blocked storage just means "off".
+	 */
+	const IMPROVE_KEY = 'choreganized.import.improve';
+	let improve = $state(false);
+
+	function readImprove(): boolean {
+		try {
+			return localStorage.getItem(IMPROVE_KEY) === '1';
+		} catch {
+			return false;
+		}
+	}
+
+	function rememberImprove(on: boolean) {
+		try {
+			localStorage.setItem(IMPROVE_KEY, on ? '1' : '0');
+		} catch {
+			// Private mode or blocked storage: it works, it just isn't remembered.
+		}
+	}
+
+	/** The optional line for this import — always one tap away, never in the way. */
+	let instructions = $state('');
+	let showInstructions = $state(false);
+
 	/** The shared pending flag for the AI forms — only one submits at a time. */
 	function aiEnhance() {
 		extracting = true;
@@ -91,12 +122,23 @@
 		};
 	}
 
-	// A shared link auto-fetches once, so the recipe is on screen without a tap.
+	// The remembered choice, read once in the browser.
+	onMount(() => {
+		if (data.aiEnabled) improve = readImprove();
+	});
+
+	// A shared link auto-fetches once, so the recipe is on screen without a tap —
+	// honouring the remembered choice too, read here *before* the submit: the
+	// hidden `ai` field has to say so by the time the form goes, not after.
 	let autoSubmitted = false;
 	$effect(() => {
 		if (autoSubmitted || draft || !data.url || !fetchForm) return;
 		autoSubmitted = true;
-		fetchForm.requestSubmit();
+		const form = fetchForm;
+		untrack(() => {
+			if (data.aiEnabled) improve = readImprove();
+		});
+		tick().then(() => form.requestSubmit());
 	});
 
 	const headTitle = $derived(
@@ -119,11 +161,7 @@
 		back="/cooking/recipes"
 		error={saveError}
 		field={saveField}
-		notice={aiNotice
-			? backupNote
-				? `${m.cooking.import.ai.note} ${backupNote}`
-				: m.cooking.import.ai.note
-			: undefined}
+		notice={savedNotice}
 	/>
 {:else if mode === 'photo'}
 	<SubHeader
@@ -141,11 +179,12 @@
 			use:enhance={aiEnhance}
 		>
 			<MultiPhotoField bind:files={photos} max={3} />
-			<p class="hint">{m.cooking.import.ai.photoHint}</p>
+			<p class="hint">{t.photoHint}</p>
+			{@render instructionsField()}
 			<div class="submit">
 				<Button type="submit" disabled={extracting || photos.length === 0}>
 					<Camera size={16} strokeWidth={2} />
-					{extracting ? m.cooking.import.ai.extracting : m.cooking.import.ai.photoSubmit}
+					{extracting ? t.extracting : t.photoSubmit}
 				</Button>
 			</div>
 		</form>
@@ -166,11 +205,12 @@
 				name="text"
 				bind:value={pasteValue}
 				rows="10"
-				placeholder={m.cooking.import.ai.pastePlaceholder}
-				aria-label={m.cooking.import.ai.pasteLabel}></textarea>
+				placeholder={t.pastePlaceholder}
+				aria-label={t.pasteLabel}></textarea>
+			{@render instructionsField()}
 			<div class="submit">
 				<Button type="submit" disabled={extracting || !pasteValue.trim()}>
-					{extracting ? m.cooking.import.ai.extracting : m.cooking.import.ai.pasteSubmit}
+					{extracting ? t.extracting : t.pasteSubmit}
 				</Button>
 			</div>
 		</form>
@@ -197,9 +237,12 @@
 		bind:this={fetchForm}
 		use:enhance={() => {
 			fetching = true;
+			// With AI it's a model call, not a page load: the cooking loader says so.
+			if (improve) extracting = true;
 			return async ({ update }) => {
-				await update();
+				await update({ reset: false });
 				fetching = false;
+				extracting = false;
 			};
 		}}
 	>
@@ -214,6 +257,19 @@
 			autocomplete="off"
 			spellcheck={false}
 		/>
+
+		{#if data.aiEnabled}
+			<input type="hidden" name="ai" value={improve ? '1' : ''} />
+			<div class="improve">
+				<div class="improve-copy">
+					<span class="improve-label"><Sparkles size={15} strokeWidth={2} />{t.improve}</span>
+					<span class="improve-hint">{t.improveHint}</span>
+				</div>
+				<Toggle bind:checked={improve} label={t.improve} onchange={rememberImprove} />
+			</div>
+			{#if improve}{@render instructionsField()}{/if}
+		{/if}
+
 		<div class="submit">
 			<Button type="submit" disabled={fetching || !url.trim()}>
 				{fetching ? m.cooking.import.fetching : m.cooking.import.fetch}
@@ -224,12 +280,13 @@
 	{#if noRecipe}
 		{#if data.aiEnabled}
 			<div class="ai-page">
-				<p class="ai-lead">{m.cooking.import.ai.pageLead}</p>
+				<p class="ai-lead">{t.pageLead}</p>
 				<form method="POST" action="?/extractPage" use:enhance={aiEnhance}>
 					<input type="hidden" name="url" value={url} />
+					<input type="hidden" name="instructions" value={instructions} />
 					<Button type="submit" disabled={extracting || !url.trim()}>
 						<Sparkles size={16} strokeWidth={2} />
-						{extracting ? m.cooking.import.ai.extracting : m.cooking.import.ai.tryPage}
+						{extracting ? t.extracting : t.tryPage}
 					</Button>
 				</form>
 				<p class="ai-alt">
@@ -239,8 +296,7 @@
 			</div>
 		{:else}
 			<p class="ai-hint-line">
-				{m.cooking.import.ai.hintLead}<a href="/settings">{m.cooking.import.ai.hintLink}</a>{m
-					.cooking.import.ai.hintRest}
+				{t.hintLead}<a href="/settings">{t.hintLink}</a>{t.hintRest}
 			</p>
 		{/if}
 	{/if}
@@ -264,10 +320,35 @@
 	</div>
 {/snippet}
 
+<!-- The line for this import, behind a quiet link until it's wanted; the
+	 household's standing line, when there is one, said underneath. -->
+{#snippet instructionsField()}
+	<div class="instructions">
+		{#if showInstructions || instructions}
+			<label class="instructions-label" for="ai-instructions">{t.instructionsLabel}</label>
+			<textarea
+				id="ai-instructions"
+				class="short"
+				name="instructions"
+				rows="2"
+				maxlength={AI_INSTRUCTIONS_MAX}
+				placeholder={t.instructionsPlaceholder}
+				bind:value={instructions}></textarea>
+		{:else}
+			<button type="button" class="instructions-toggle" onclick={() => (showInstructions = true)}>
+				{t.instructionsToggle}
+			</button>
+		{/if}
+		{#if data.aiInstructions}
+			<p class="hint">{t.instructionsHousehold(data.aiInstructions)}</p>
+		{/if}
+	</div>
+{/snippet}
+
 {#snippet aiSetup()}
 	<div class="ai-setup">
-		<p>{m.cooking.import.ai.setupCopy}</p>
-		<Button href="/settings" variant="secondary">{m.cooking.import.ai.setupCta}</Button>
+		<p>{t.setupCopy}</p>
+		<Button href="/settings" variant="secondary">{t.setupCta}</Button>
 	</div>
 {/snippet}
 
@@ -301,6 +382,10 @@
 		resize: vertical;
 	}
 
+	textarea.short {
+		min-height: 0;
+	}
+
 	textarea:focus {
 		outline: 1.5px solid var(--sage);
 	}
@@ -314,6 +399,66 @@
 		font-size: calc(12.5px * var(--fs));
 		line-height: 1.5;
 		color: var(--text-5);
+	}
+
+	/* "Improve with AI": a row like Settings' switches — what it does on the
+	   left, the switch on the right. */
+	.improve {
+		display: flex;
+		align-items: center;
+		gap: 14px;
+		margin-top: 16px;
+		padding: 14px 16px;
+		border-radius: var(--r-block);
+		background: var(--card);
+	}
+
+	.improve-copy {
+		display: flex;
+		flex-direction: column;
+		gap: 3px;
+		flex: 1;
+		min-width: 0;
+	}
+
+	.improve-label {
+		display: inline-flex;
+		align-items: center;
+		gap: 7px;
+		font-size: calc(14.5px * var(--fs));
+		font-weight: 600;
+		color: var(--ink);
+	}
+
+	.improve-label :global(svg) {
+		color: var(--sage);
+	}
+
+	.improve-hint {
+		font-size: calc(12.5px * var(--fs));
+		line-height: 1.45;
+		color: var(--text-4);
+	}
+
+	.instructions {
+		margin-top: 14px;
+	}
+
+	.instructions-label {
+		display: block;
+		margin: 0 2px 8px;
+		font-size: calc(11px * var(--fs));
+		font-weight: 700;
+		letter-spacing: 0.1em;
+		text-transform: uppercase;
+		color: var(--text-5);
+	}
+
+	.instructions-toggle {
+		padding: 2px;
+		font-size: calc(13.5px * var(--fs));
+		font-weight: 600;
+		color: var(--sage);
 	}
 
 	/* "Try AI extraction" on a fetched page with no recipe data. */

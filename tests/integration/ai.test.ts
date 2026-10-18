@@ -10,15 +10,18 @@ import Database from 'better-sqlite3';
 import { readMigrationFiles } from 'drizzle-orm/migrator';
 import assert from 'node:assert/strict';
 import { describe, it } from 'vitest';
+import { AI_INSTRUCTIONS_MAX } from '$lib/ai';
 import { HouseholdError } from '$lib/server/services/household';
 import {
 	AiSettingsError,
 	getAiConnections,
+	getAiInstructions,
 	getAiStatus,
 	isAiEnabled,
 	listAiModels,
 	removeAiConnection,
-	saveAiConnection
+	saveAiConnection,
+	setAiInstructions
 } from '$lib/server/services/ai';
 import { makeHousehold } from '../helpers/db';
 
@@ -55,8 +58,34 @@ describe('getAiStatus', () => {
 		setUp();
 		const other = makeHousehold();
 		assert.equal(isAiEnabled(other.householdId), false);
-		assert.deepEqual(getAiStatus(other.householdId), { primary: null, backup: null });
+		assert.deepEqual(getAiStatus(other.householdId), {
+			primary: null,
+			backup: null,
+			instructions: null
+		});
 		assert.deepEqual(getAiConnections(other.householdId), []);
+	});
+});
+
+describe('standing instructions (→ plan 22)', () => {
+	it('are the owner’s to set, cleaned, and cleared by an empty line', () => {
+		const { householdId, owner, housemate } = setUp();
+
+		setAiInstructions(householdId, owner.id, '  Wir essen\n vegetarisch.‮  ');
+		assert.equal(getAiInstructions(householdId), 'Wir essen vegetarisch.');
+		assert.equal(getAiStatus(householdId).instructions, 'Wir essen vegetarisch.');
+
+		assert.throws(
+			() => setAiInstructions(householdId, housemate.id, 'Fleisch!'),
+			(cause: unknown) => cause instanceof HouseholdError && cause.code === 'not-owner'
+		);
+		assert.equal(getAiInstructions(householdId), 'Wir essen vegetarisch.');
+
+		setAiInstructions(householdId, owner.id, 'x'.repeat(1000));
+		assert.equal(getAiInstructions(householdId)?.length, AI_INSTRUCTIONS_MAX);
+
+		setAiInstructions(householdId, owner.id, '   ');
+		assert.equal(getAiInstructions(householdId), null);
 	});
 });
 
