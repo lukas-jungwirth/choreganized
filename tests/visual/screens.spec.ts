@@ -50,6 +50,11 @@ async function openRecipe(page: Page): Promise<void> {
 		.getByRole('link', { name: new RegExp(SEED.recipes.curry) })
 		.first()
 		.click();
+	// The library has an h1 too, so the heading alone can resolve before the
+	// click has navigated — wait for the recipe's own address first. (The
+	// editor shot appended `/edit` to the library's URL once, and screenshotted
+	// a 404.)
+	await page.waitForURL(/\/cooking\/recipes\/(?!new$|import)[^/?]+(?:\?.*)?$/);
 	await page.getByRole('heading', { level: 1 }).waitFor();
 }
 
@@ -87,8 +92,8 @@ const SCREENS: Screen[] = [
 		path: '',
 		navigate: async (page) => {
 			await openRecipe(page);
-			await page.goto(`${page.url()}/edit`);
-			await page.getByRole('heading', { level: 1 }).waitFor();
+			await page.goto(`${new URL(page.url()).pathname}/edit`);
+			await page.getByRole('textbox', { name: 'Recipe name' }).waitFor();
 		},
 		bottom: true
 	},
