@@ -388,6 +388,16 @@ export const recipeSteps = sqliteTable(
 		/** Plain text. Cook mode parses timer durations ("8 min", "8:00") from it. */
 		text: text('text').notNull(),
 		/**
+		 * The step's own timer, set in the form [3c] or by an AI import (→ plan 21,
+		 * DECISIONS #147): whole seconds, and an optional name ("Nudeln"). NULL —
+		 * the default, and every step written before this existed — means cook mode
+		 * reads the duration out of `text` instead (→ `utils/timer-parse.ts`). One
+		 * per step, because cook mode keeps one ring per step.
+		 */
+		timerSeconds: integer('timer_seconds'),
+		/** NULL = called after its step ("Step 3"), which is always true and never strange. */
+		timerLabel: text('timer_label'),
+		/**
 		 * Whether this step's ingredients were **chosen by hand** in the form
 		 * (→ `recipeStepIngredients`). False — the default, and every row written
 		 * before this column existed — means cook mode reads them out of the text

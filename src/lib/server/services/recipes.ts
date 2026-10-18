@@ -27,9 +27,11 @@ import {
 	STEPS_MAX,
 	STEP_TEXT_MAX,
 	type RecipeInput,
-	type StepInput
+	type StepInput,
+	type StepTimer
 } from '$lib/utils/recipes';
 import type { StepUse } from '$lib/utils/step-highlight';
+import { MAX_TIMER_SECONDS, MIN_TIMER_SECONDS, TIMER_LABEL_MAX } from '$lib/utils/timer-parse';
 import { db } from '../db';
 import {
 	meals,
@@ -72,6 +74,8 @@ export type RecipeStepRow = {
 	 * "this step uses nothing", said by hand.
 	 */
 	uses: StepUse[] | null;
+	/** The step's own timer (→ plan 21), or null for one that reads its text. */
+	timer: StepTimer | null;
 };
 
 export type RecipeDetail = RecipeSummary & {
@@ -276,7 +280,13 @@ function listIngredients(recipeId: string): RecipeIngredientRow[] {
 
 function listSteps(recipeId: string): RecipeStepRow[] {
 	const steps = db
-		.select({ id: recipeSteps.id, text: recipeSteps.text, set: recipeSteps.ingredientsSet })
+		.select({
+			id: recipeSteps.id,
+			text: recipeSteps.text,
+			set: recipeSteps.ingredientsSet,
+			timerSeconds: recipeSteps.timerSeconds,
+			timerLabel: recipeSteps.timerLabel
+		})
 		.from(recipeSteps)
 		.where(eq(recipeSteps.recipeId, recipeId))
 		.orderBy(asc(recipeSteps.sortOrder), asc(recipeSteps.id))
@@ -289,7 +299,8 @@ function listSteps(recipeId: string): RecipeStepRow[] {
 		text: step.text,
 		// The flag decides, not the count: a step whose list is empty on purpose
 		// must not fall back to reading its own text (→ DECISIONS #127).
-		uses: step.set ? (pinned.get(step.id) ?? []) : null
+		uses: step.set ? (pinned.get(step.id) ?? []) : null,
+		timer: step.timerSeconds ? { seconds: step.timerSeconds, label: step.timerLabel } : null
 	}));
 }
 
@@ -485,6 +496,8 @@ export function duplicateRecipe(
 							recipeId: copy.id,
 							text: step.text,
 							ingredientsSet: step.uses !== null,
+							timerSeconds: step.timer?.seconds ?? null,
+							timerLabel: step.timer?.label ?? null,
 							sortOrder
 						};
 					})
@@ -608,12 +621,34 @@ function writeChildren(tx: Transaction, recipeId: string, input: RecipeInput): v
 		if (!text) continue;
 
 		const id = crypto.randomUUID();
-		steps.push({ id, recipeId, text, ingredientsSet: step.uses !== null, sortOrder: steps.length });
+		const timer = normalizeTimer(step.timer);
+		steps.push({
+			id,
+			recipeId,
+			text,
+			ingredientsSet: step.uses !== null,
+			timerSeconds: timer?.seconds ?? null,
+			timerLabel: timer?.label ?? null,
+			sortOrder: steps.length
+		});
 		if (step.uses) pins.push(...pinRows(id, step.uses, kept));
 	}
 
 	if (steps.length) tx.insert(recipeSteps).values(steps).run();
 	if (pins.length) tx.insert(recipeStepIngredients).values(pins).run();
+}
+
+/**
+ * A step's timer as stored: whole seconds a cook-mode timer can run, and a name
+ * trimmed to what the timer sheet allows — the form reader does the same, and
+ * this is the write's own check, for a caller that isn't the form (an import).
+ */
+function normalizeTimer(timer: StepTimer | null | undefined): StepTimer | null {
+	if (!timer || !Number.isFinite(timer.seconds)) return null;
+	const seconds = Math.round(timer.seconds);
+	if (seconds < MIN_TIMER_SECONDS || seconds > MAX_TIMER_SECONDS) return null;
+	const label = timer.label?.replace(/\s+/g, ' ').trim().slice(0, TIMER_LABEL_MAX) || null;
+	return { seconds, label };
 }
 
 /**

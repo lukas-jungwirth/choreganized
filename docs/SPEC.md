@@ -342,6 +342,13 @@ where it can still be acted on (→ [DECISIONS #131](DECISIONS.md)).
     with the row's total beside it ("of 3 tbsp"). Empty means the whole row. Shares are written
     in recipe-as-written terms, so **Cooking for {n}** (§4.5) scales them exactly like the
     ingredient list: 1 tsp and 2 tsp for two people are 2 tsp and 4 tsp for four.
+- Under the ingredient chips, each step has **a timer chip** (→ plan 21, DECISIONS #147): the
+  step's own timer by name ("Nudeln · 10:00"), else the duration cook mode will read out of the
+  text, marked `auto` ("9:00 auto"), else **Add a timer**. It opens a sheet with the minute
+  stepper and the optional **What for?** name of cook mode's Set-timer sheet (§4.6), seeded
+  from the saved timer, else the text's duration, else 5 minutes, with **Save timer** and
+  **Remove timer**. A saved timer keeps its exact seconds ("90 Sekunden") unless the stepper is
+  moved. One timer per step; removing it hands the step back to its text.
 
 ### 4.5 Recipe view [7a]
 
@@ -382,10 +389,13 @@ where it can still be acted on (→ [DECISIONS #131](DECISIONS.md)).
   read; any tap, Escape or the next step closes it. An underline with **no** amount to give
   ("Salt", "a splash of oil") is not a button — there is nothing for a tap to reveal. This is
   the one amount that survives a running timer, which clears the "This step uses…" line [7h].
-- **Timer chip** — shown when a duration is parsed from the step text ("8 min", "8:00",
-  "8–10 minutes" → first value): "Start 8:00 timer". A manual "Set timer" affordance (minute
-  stepper) is always available in the header/overflow.
-- **A timer is named after its step** — "Step 2" — unless the cook names it in the Set-timer
+- **Timer chip** — the step's own timer when it has one, by name: "Start Nudeln · 10:00"
+  (→ §4.4, plan 21). Otherwise shown when a duration is parsed from the step text, in English or
+  German ("8 min", "8:00", "8–10 minutes", "10 Minuten", "1 Std. 30 Min.", "5 bis 10 Min." →
+  first value): "Start 8:00 timer". A manual "Set timer" affordance (minute stepper) is always
+  available in the header/overflow.
+- **A timer is named after its step** — "Step 2" — unless the step's own timer has a name, or
+  the cook names it in the Set-timer
   sheet (→ [DECISIONS #134](DECISIONS.md)). That sheet's **What for?** field is optional and
   never has to be typed: under it sit the step's own ingredients as one-tap chips, short names
   ("Kartoffeln", not "Kartoffeln (festkochen)"), and tapping the chosen one again clears it. The

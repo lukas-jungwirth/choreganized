@@ -783,6 +783,17 @@ export const de: Messages = {
 			usesAll: 'alles',
 			usesBackToAuto: 'Lieber aus dem Text lesen',
 			usesEmpty: 'Trag zuerst die Zutaten ein — dann kannst du sie den Schritten zuordnen.',
+
+			timerAdd: 'Timer hinzufügen',
+			timerLabel: (index: number) => `Timer für Schritt ${index}`,
+			timerChip: (name: string, duration: string) => `${name} · ${duration}`,
+			timerSheet: {
+				title: 'Timer für den Schritt',
+				eyebrow: (index: number) => `Schritt ${index}`,
+				subtitle: 'Der Kochmodus bietet ihn bei diesem Schritt an, unter diesem Namen.',
+				save: 'Timer speichern',
+				remove: 'Timer entfernen'
+			},
 			save: 'Speichern',
 			saveRecipe: 'Rezept speichern',
 			moveIngredientUp: (index: number) => `Zutat ${index} nach oben`,
@@ -826,6 +837,7 @@ export const de: Messages = {
 			step: (index: number, total: number) => `Schritt ${index} von ${total}`,
 			startTimer: 'Timer stellen',
 			startParsedTimer: (duration: string) => `${duration}-Timer starten`,
+			startNamedTimer: (name: string, duration: string) => `${name} · ${duration} starten`,
 			ingredients: 'Zutaten',
 			usesLead: 'Dieser Schritt braucht ',
 			previous: 'Vorheriger Schritt',
