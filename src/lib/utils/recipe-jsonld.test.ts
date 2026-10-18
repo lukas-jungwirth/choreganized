@@ -189,6 +189,35 @@ describe('parseRecipeJsonLd — instructions', () => {
 		assert.deepEqual(recipe?.steps, ['Step one.', 'Step two.', 'Step three.']);
 	});
 
+	it('keeps a step’s ingredient lines with its instruction (issue #31)', () => {
+		const recipe = parseRecipeJsonLd(
+			page({
+				'@type': 'Recipe',
+				name: 'Quiche',
+				recipeInstructions:
+					'4Eier (Größe M),\n200 mlSahne (30 % Fett),\netwas Mehl zum Bearbeiten\nEier und Sahne verrühren.\nLachs in Würfel schneiden.'
+			})
+		);
+		assert.deepEqual(recipe?.steps, [
+			'4Eier (Größe M), 200 mlSahne (30 % Fett), etwas Mehl zum Bearbeiten Eier und Sahne verrühren.',
+			'Lachs in Würfel schneiden.'
+		]);
+	});
+
+	it('does not make a step of a lone-word name without text (issue #31)', () => {
+		const recipe = parseRecipeJsonLd(
+			page({
+				'@type': 'Recipe',
+				name: 'x',
+				recipeInstructions: [
+					{ '@type': 'HowToStep', name: 'Eier' },
+					{ '@type': 'HowToStep', name: 'Eier', text: 'Eier verrühren.' }
+				]
+			})
+		);
+		assert.deepEqual(recipe?.steps, ['Eier verrühren.']);
+	});
+
 	it('strips tags and decodes entities in step text', () => {
 		const recipe = parseRecipeJsonLd(
 			page({

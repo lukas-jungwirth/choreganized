@@ -2111,3 +2111,18 @@ units | null, name}`, written back as editor lines in the reader's unit spelling
        is ranked after every shortening of the row's own name, so it only wins a word nothing
        else claims. This holds whatever the setting, because a typed recipe mixes the two
        Germans too.
+
+151. **A step keeps its ingredient lines; a lone word is no step** (issue #31, SPEC §4.7,
+     `recipe-jsonld.ts`, `recipe-microdata.ts`). Sites such as einfachkochen.de print a step's
+     ingredients inside the step, so splitting on every line, `li` or `p` cut "Schritt 4" down to
+     "Eier".
+
+     - **JSON-LD string method.** Lines are still split, but a line that ends on a comma, or
+       opens on a quantity or "etwas" and never closes a sentence, joins the line after it.
+     - **A `HowToStep` name is a title.** With no `text`, a one-word `name` is dropped rather
+       than made a step.
+     - **Microdata.** A `HowToStep` with no `text` property is one step made of its whole
+       markup. In a plain method only top-level `li`/`p` blocks make steps, so a nested
+       ingredient list stays inside its step.
+     - **Not verified against the live page.** The agent could not fetch it; the rules follow
+       the shapes quoted in the issue.
