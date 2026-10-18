@@ -472,7 +472,8 @@ where it can still be acted on (→ [DECISIONS #131](DECISIONS.md)).
   editor: name, `totalTime` (else `prepTime`+`cookTime`) → minutes, `recipeYield` → servings,
   `recipeIngredient[]` → raw ingredient lines (the editor parses them to amount chips like every
   typed row), `recipeInstructions` → steps in order, `image` → photo — else the page's
-  `og:image`.
+  `og:image`. A step that lists its own ingredients stays one step with them in its text
+  (DECISIONS #151); a one-word step title with no text is not a step.
 - **Improve with AI** (→ plan 22) — a switch under the link field, shown only when AI features are
   set up. **Off until someone turns it on**, then remembered on that device (turning it on is the
   go-ahead a paid call needs; a first shared link never spends one). The share sheet honours it

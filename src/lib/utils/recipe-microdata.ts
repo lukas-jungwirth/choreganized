@@ -117,16 +117,32 @@ function stepsOf(element: HTMLElement): string[] {
 		const own = ownProperties(element);
 		const nested = own.get('itemListElement') ?? own.get('step');
 		if (nested?.length) return nested.flatMap(stepsOf);
-		const text = own.get('text')?.[0] ?? own.get('name')?.[0];
+		const title = own.get('name')?.[0];
+		const text = own.get('text')?.[0] ?? (title && /\s/.test(clean(valueOf(title))) ? title : null);
 		if (text) return [clean(valueOf(text))].filter(Boolean);
+		// A step with no text property of its own is its whole markup — often the ingredient
+		// list followed by the instruction. One step, never split into rows.
+		return [clean(element.structuredText).replace(/^\d+[.)]\s+/, '')].filter(Boolean);
 	}
 
-	const blocks = element.querySelectorAll('li, p');
+	// Top-level blocks only: an ingredient list inside a step is part of that step.
+	const blocks = element
+		.querySelectorAll('li, p')
+		.filter((block) => !hasBlockAncestor(block, element));
 	const lines = blocks.length
 		? blocks.map((block) => block.text)
 		: element.structuredText.split(/\n+/);
 
 	return lines.map((line) => clean(line).replace(/^\d+[.)]\s+/, '')).filter(Boolean);
+}
+
+function hasBlockAncestor(block: HTMLElement, within: HTMLElement): boolean {
+	let parent = block.parentNode as HTMLElement | null;
+	while (parent && parent !== within) {
+		if (['li', 'p'].includes(parent.tagName?.toLowerCase())) return true;
+		parent = parent.parentNode as HTMLElement | null;
+	}
+	return false;
 }
 
 function clean(text: string): string {

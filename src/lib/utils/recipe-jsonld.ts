@@ -203,6 +203,13 @@ function mapInstructions(value: unknown): string[] {
 	return steps;
 }
 
+/** An ingredient-list line inside a step: ends on a comma, or opens on a quantity and never closes a sentence. */
+function isFragment(line: string): boolean {
+	if (line.endsWith(',')) return true;
+	if (/^\d+[.)]\s/.test(line) || /[.!?:;]$/.test(line)) return false;
+	return /^(\d|etwas\b|eine? (prise|handvoll)\b)/i.test(line) && line.split(' ').length <= 8;
+}
+
 function collectSteps(value: unknown, into: string[]): void {
 	if (value == null) return;
 
@@ -210,10 +217,19 @@ function collectSteps(value: unknown, into: string[]): void {
 		// A single string is often the whole method with the steps on their own
 		// lines — split so it isn't one giant step. (A HowToStep's own text, by
 		// contrast, has its newlines collapsed by `cleanText` and stays one step.)
+		let pending = '';
 		for (const part of value.split(/\r?\n+/)) {
 			const text = cleanText(part);
-			if (text) into.push(text);
+			if (!text) continue;
+			// A step may list its ingredients on lines of their own before the instruction;
+			// those fragments belong to the step that follows, not to steps of their own.
+			pending = pending ? `${pending} ${text}` : text;
+			if (!isFragment(text)) {
+				into.push(pending);
+				pending = '';
+			}
 		}
+		if (pending) into.push(pending);
 		return;
 	}
 
@@ -227,7 +243,9 @@ function collectSteps(value: unknown, into: string[]): void {
 			collectSteps(value.itemListElement, into);
 			return;
 		}
-		const text = asString(value.text) ?? asString(value.name);
+		// `name` is a step's title ("Eier"), not its instruction — a lone word is no step.
+		const name = asString(value.name);
+		const text = asString(value.text) ?? (name && /\s/.test(name.trim()) ? name : null);
 		if (text) {
 			const cleaned = cleanText(text);
 			if (cleaned) into.push(cleaned);
