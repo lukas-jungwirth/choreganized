@@ -50,6 +50,9 @@ user ─┬─ session / account / verification        (Better Auth)
 - `aiInstructions` (migration 0015, → plan 22): the household's standing instructions for every
   AI import, ≤ 300 chars, whitespace collapsed and control/bidi characters stripped on write
   (`$lib/ai.ts` `cleanInstructions`); `NULL` = none. Owner-only, like the connections.
+- `recipeWording` (migration 0016, → plan 24): `'austrian'` or `NULL` (as written) — how
+  imported German recipes are worded, from the fixed list in `utils/wording.ts`. Applied at
+  import only; nothing saved is ever rewritten. Owner-only.
 
 ### `ai_connections` (→ plan 20, SPEC §6)
 

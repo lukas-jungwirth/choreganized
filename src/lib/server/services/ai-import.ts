@@ -25,6 +25,7 @@ import { RECIPE_UNITS } from '$lib/utils/ingredients';
 import { validateRecipeDraft, type SourceRecipe } from '$lib/utils/recipe-draft';
 import type { RecipePrefill } from '$lib/utils/recipes';
 import type { UnitLabels } from '$lib/utils/shopping';
+import { applyWording, austrianGlossary, type RecipeWording } from '$lib/utils/wording';
 import { generateWithFallback, type Answered, type Connection, type RunOptions } from '../ai/run';
 import { array, integer, nullable, number, object, string } from '../ai/schema';
 import { AiError, type AiPart } from '../ai/types';
@@ -66,6 +67,8 @@ export type RecipeInstructions = { household: string | null; now: string | null 
 
 export type ImportContext = {
 	instructions: RecipeInstructions;
+	/** How the household words imported German recipes (→ plan 24); null = as written. */
+	wording?: RecipeWording | null;
 	/** The unit spellings ingredient lines are written back in (the reader's). */
 	labels?: UnitLabels;
 	run?: RunOptions;
@@ -120,7 +123,8 @@ export const RECIPE_DRAFT_SCHEMA = object({
  */
 export function buildRecipePrompt(
 	mode: 'extract' | 'improve',
-	instructions: RecipeInstructions
+	instructions: RecipeInstructions,
+	wording: RecipeWording | null = null
 ): string {
 	const lines = [
 		'You turn a cooking recipe into structured data for a household recipe app.',
@@ -143,6 +147,13 @@ export function buildRecipePrompt(
 		lines.push(
 			'',
 			'You are given a recipe card the website published. Keep exactly its ingredients and its steps: the same number, in the same order — never merge, split, add or drop one. Keep the step text as written, only removing leftover numbering or markup. Your job is to structure the ingredient lines, link each step to the ingredients it uses, and add timers.'
+		);
+	}
+
+	if (wording === 'austrian') {
+		lines.push(
+			'',
+			`If the recipe is in German, write it in Austrian German, the way an Austrian kitchen says it: use the Austrian words for ingredients and kitchen terms, with their correct articles and grammar (das Obers, der Topfen). These pairs, German → Austrian: ${austrianGlossary()}. A recipe in another language stays as it is.`
 		);
 	}
 
@@ -228,7 +239,7 @@ function call(
 	return generateWithFallback(
 		connections,
 		{
-			system: buildRecipePrompt(mode, context.instructions),
+			system: buildRecipePrompt(mode, context.instructions, context.wording ?? null),
 			parts,
 			schema: RECIPE_DRAFT_SCHEMA,
 			schemaName: 'recipe',
@@ -236,7 +247,16 @@ function call(
 		},
 		(data: unknown, provider: AiProvider) => {
 			const check = validateRecipeDraft(data, { source, instructed, labels: context.labels });
-			if (check.ok) return check.draft;
+			if (check.ok) {
+				// The model was asked for the household's wording; the fixed list makes
+				// sure the ingredient names agree with it either way (→ plan 24).
+				const { draft } = check;
+				const steps = draft.steps.map((step) => step.text);
+				return {
+					...draft,
+					ingredientLines: applyWording(draft.ingredientLines, steps, context.wording ?? null)
+				};
+			}
 
 			// "Nothing here" from a photo or a paste is the answer — the backup would
 			// only be asked the same question. Anything else (the wrong shape, an

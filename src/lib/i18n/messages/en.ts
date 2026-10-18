@@ -1452,6 +1452,18 @@ export const en = {
 			}
 		},
 
+		/** Recipe wording [6a] (→ plan 24): imported German recipes as written, or Austrian. */
+		wording: {
+			row: 'Recipe wording',
+			title: 'Recipe wording',
+			asWritten: 'As written',
+			asWrittenDetail: 'Imported recipes keep the words the site used.',
+			austrian: 'Austrian German',
+			austrianDetail:
+				'Sahne becomes Obers, Quark Topfen, Kartoffeln Erdäpfel — in imported German recipes.',
+			note: 'Applies to recipes you import from now on; saved recipes stay as they are. With AI it rewrites the whole recipe; without, the ingredient names.'
+		},
+
 		/**
 		 * Below the house itself: the app, not the household.
 		 */

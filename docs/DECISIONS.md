@@ -2088,3 +2088,26 @@ units | null, name}`, written back as editor lines in the reader's unit spelling
        in the recipe view it's sage and semibold. A screen reader hears what the recipe itself
        says there. At the servings the recipe was written for, nothing is rewritten and the
        markup is unchanged.
+
+150. **Austrian wording is a household setting over a fixed list, applied at import, and every
+     pair is a synonym for the step matcher** (→ plan 24, SPEC §6, §9, `utils/wording.ts`). An
+     Austrian kitchen imports German recipes that say Sahne, Quark and Kartoffeln, but cooks and
+     shops for Obers, Topfen and Erdäpfel.
+
+     - **A fixed list, reviewed by hand, in code.** Lukas chose this over an editable list for
+       the first version. The setting is an enum (`'austrian'` | NULL) so more targets can follow
+       without a migration.
+     - **Import only, German only.** A saved recipe is never rewritten behind anyone's back.
+       `looksGerman` (a handful of words only German recipes use) decides, so an English recipe's
+       "quark" doesn't come back as "Topfen".
+     - **AI rewrites; without AI only the names change.** The model gets the list as a glossary
+       and writes Austrian German with the right articles ("das Obers"). A word-for-word swap
+       inside a sentence would give "die Obers", so without a model only the ingredient names
+       change: whole words with Unicode boundaries ("Sahnejoghurt" stays, and ß and umlauts don't
+       break the match), longest phrase first ("saure Sahne" before "Sahne"). The same pass runs
+       over an AI answer, so the names agree whatever the model did.
+     - **Synonyms keep the underline.** The step then still says "Sahne" while the row says
+       "Obers", so each pair, both ways, is an extra name in the step matcher's `aliases()`. It
+       is ranked after every shortening of the row's own name, so it only wins a word nothing
+       else claims. This holds whatever the setting, because a typed recipe mixes the two
+       Germans too.

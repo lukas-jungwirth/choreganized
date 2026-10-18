@@ -35,11 +35,13 @@ import {
 import { FeedbackError, submitFeedback, syncFeedback } from '$lib/server/services/feedback';
 import {
 	getHousehold,
+	getRecipeWording,
 	HouseholdError,
 	leaveHousehold,
 	renameHousehold,
 	setLocale,
 	setNotificationPref,
+	setRecipeWording,
 	updateProfile
 } from '$lib/server/services/household';
 import { setAway } from '$lib/server/services/tasks';
@@ -49,6 +51,7 @@ import { isCalendarDate, todayIn } from '$lib/utils/dates';
 import { FEEDBACK_BODY_MAX, isFeedbackKind } from '$lib/utils/feedback';
 import { isAiProvider, isAiSlot, looksLikeApiKey, looksLikeModelId } from '$lib/ai';
 import { DISPLAY_NAME_MAX, HOUSEHOLD_NAME_MAX } from '$lib/utils/household';
+import { isRecipeWording } from '$lib/utils/wording';
 import type { Actions, PageServerLoad } from './$types';
 
 /** The switches [6a] draws, and the columns `push.ts` filters sends on. */
@@ -102,6 +105,8 @@ export const load: PageServerLoad = (event) => {
 		// key itself (→ SPEC §6, plan 20). Members see it read-only; only the owner
 		// can change it.
 		ai: getAiStatus(householdId),
+		// How imported German recipes are worded (→ plan 24); null = as written.
+		recipeWording: getRecipeWording(householdId),
 		prefs: {
 			notifyTaskReminders: member.notifyTaskReminders,
 			notifyOverdueNudges: member.notifyOverdueNudges,
@@ -401,6 +406,26 @@ export const actions: Actions = {
 		}
 
 		return { aiTestOk: true, slot };
+	},
+
+	/**
+	 * Recipe wording [6a] (→ plan 24): imported German recipes as written, or in
+	 * Austrian German. Owner-only like the house's name; an empty value is "as
+	 * written".
+	 */
+	recipeWording: async (event) => {
+		const { householdId, member } = requireMember(event);
+		const form = await event.request.formData();
+		const value = form.get('wording');
+		const wording = isRecipeWording(value) ? value : null;
+
+		try {
+			setRecipeWording(householdId, member.id, wording);
+		} catch (cause) {
+			return refuse(cause, catalog(event.locals.locale));
+		}
+
+		return { wordingSaved: true };
 	},
 
 	/**

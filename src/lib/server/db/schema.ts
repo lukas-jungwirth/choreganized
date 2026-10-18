@@ -23,6 +23,7 @@ import { sqliteTable, text, integer, real, index, uniqueIndex } from 'drizzle-or
 import { AI_PROVIDERS, AI_SLOTS } from '../../ai.ts';
 import { LOCALES } from '../../i18n/locale.ts';
 import { THEMES } from '../../theme.ts';
+import { RECIPE_WORDINGS } from '../../utils/wording.ts';
 
 const id = () =>
 	text('id')
@@ -127,6 +128,12 @@ export const households = sqliteTable('households', {
 	 * NULL = none. At most `AI_INSTRUCTIONS_MAX` characters.
 	 */
 	aiInstructions: text('ai_instructions'),
+	/**
+	 * How imported German recipes are worded (→ plan 24, SPEC §6): NULL = as the
+	 * site wrote them; `'austrian'` = Austrian German (Obers, Topfen, Erdäpfel),
+	 * from the fixed list in `utils/wording.ts`. Owner sets it.
+	 */
+	recipeWording: text('recipe_wording', { enum: RECIPE_WORDINGS }),
 	createdAt: createdAt()
 });
 
