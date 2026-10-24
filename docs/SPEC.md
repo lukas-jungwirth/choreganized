@@ -473,7 +473,9 @@ where it can still be acted on (→ [DECISIONS #131](DECISIONS.md)).
   `recipeIngredient[]` → raw ingredient lines (the editor parses them to amount chips like every
   typed row), `recipeInstructions` → steps in order, `image` → photo — else the page's
   `og:image`. A step that lists its own ingredients stays one step with them in its text
-  (DECISIONS #151); a one-word step title with no text is not a step.
+  (DECISIONS #151); a one-word step title with no text is not a step. A step whose text arrives
+  in pieces (an array, as einfachkochen.de sends it) is one step with its pieces joined by
+  commas (DECISIONS #152).
 - **Improve with AI** (→ plan 22) — a switch under the link field, shown only when AI features are
   set up. **Off until someone turns it on**, then remembered on that device (turning it on is the
   go-ahead a paid call needs; a first shared link never spends one). The share sheet honours it
