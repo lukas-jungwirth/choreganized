@@ -330,10 +330,13 @@ where it can still be acted on (→ [DECISIONS #131](DECISIONS.md)).
     ingredient list and a sentence disagree about: the note in a name ("Olive oil (extra
     virgin)", "Chicken breast, diced"), the descriptors in front of it ("1 small red onion" is
     "the onion", "Prise Muskat" is "Muskat"), and number in both languages ("Zwiebeln" ⇄
-    "Zwiebel", "berries" ⇄ "berry"). Where a shortened name would name two different
+    "Zwiebel", "berries" ⇄ "berry", and the German plurals no ending reaches: "Ei" ⇄ "Eier",
+    "Apfel" ⇄ "Äpfel", "Nuss" ⇄ "Nüsse"). Where a shortened name would name two different
     ingredients it names neither — a recipe with "olive oil" **and** "sunflower oil" gets no
     "oil", and one with "red pepper" beside plain "pepper" gives the word to the ingredient
-    actually called that.
+    actually called that. It matches **whole words only**: "egg-white" names the egg, but
+    "Ober- und Unterhitze" is not the Obers, and a compound ("Sahnemischung", "Lachswürfel")
+    is not its ingredient; pinning is how a cook links one (DECISIONS #154).
   - The sheet opens **already ticked the way the text was read** — adjusting a guess, not
     filling in a form — and what leaves it is the step's own list from then on, including an
     empty one ("this step uses nothing"). **Read the step text instead** hands it back to the
