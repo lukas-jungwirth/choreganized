@@ -2146,3 +2146,13 @@ units | null, name}`, written back as editor lines in the reader's unit spelling
      - **The fixture is the real page's JSON-LD**, kept byte for byte
        (`src/lib/utils/fixtures/einfachkochen-quiche.html`, Prettier-ignored). The rest of the
        page's ~600 KB is ads and scripts the parser never reads, and the page has no Microdata.
+
+153. **The visual household answers the shop-closure banner in setup** (`tests/e2e/setup.ts`,
+     TESTING.md "Visual"). The banner (SPEC §3.6) shows on Home and Shopping for the three days
+     before a holiday closure, so from 2026-10-24, with National Day two days off, the four Home
+     and Shopping screenshots failed on every branch, untouched `dev` included. A mask can't fix
+     that, because the banner pushes everything below it down. Setup posts the banner's own "Got
+     it" action for the `visual` account, for the closure `closureAhead` finds in the seeded
+     timezone (`SEED_TIMEZONE`, now shared with the seed), and checks the answer was written. The
+     screens then look the same any day of the year. When a closure is due is pinned by
+     `utils/holidays.test.ts`, not by screenshots.
