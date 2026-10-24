@@ -2156,3 +2156,25 @@ units | null, name}`, written back as editor lines in the reader's unit spelling
      timezone (`SEED_TIMEZONE`, now shared with the seed), and checks the answer was written. The
      screens then look the same any day of the year. When a closure is due is pinned by
      `utils/holidays.test.ts`, not by screenshots.
+
+154. **The step matcher: a suspended hyphen is no word, "Ei" is one, compounds stay unlinked**
+     (issue #31, SPEC §4.4, `step-highlight.ts`). Three things the real einfachkochen.de quiche
+     showed once its steps imported whole (#152):
+
+     - **"Ober- und Unterhitze" underlined the Obers.** "Obers" loses its "s" as if it were a
+       plural, and "-" counted as the end of a word. A hyphen followed by a space or the end of
+       the text holds a German compound's place ("Ober- und Unterhitze", "Weizen- oder
+       Dinkelmehl"), so a match may not end on one. A hyphen inside a word still ends a match,
+       as before: "egg-white" names the egg.
+     - **"Eier" never found "Ei (Größe M)".** "Ei" is under the three-letter minimum, and the
+       ending rules can't make "Eier" from it. A small table, `IRREGULAR`, holds the German
+       plurals no ending reaches (Ei/Eier, Apfel/Äpfel, Nuss/Nüsse, each with its dative "-n").
+       A word in the table answers to its own forms only, so "Ei" may be two letters without
+       "ein" or "Eis" becoming an egg. Add to the table as recipes turn them up.
+     - **Compounds stay unlinked, by decision.** Step 5 says "Sahnemischung", not "Sahne", so the
+       Obers isn't underlined there, and "Lachswürfel" isn't the Lachsfilet. Linking them means
+       splitting German compounds, which needs a dictionary: a prefix match makes "einfach" an
+       "Ei" and "Maische" "Mais", and the safer suffix direction ("Blattspinat" → "Spinat") still
+       can't tell where a word splits. A missed underline costs a tap in the form, where pinning
+       links any ingredient to a step (#127); a wrong one misleads at the stove. So whole words
+       only, as SPEC §4.4 says.

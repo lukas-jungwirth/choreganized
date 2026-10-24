@@ -16,7 +16,8 @@
  * ingredient list and a sentence rarely agree word for word:
  *
  * - **Whole words only.** "oil" must not light up inside "boiling", and "egg"
- *   must not light up inside "eggplant".
+ *   must not light up inside "eggplant" — nor "Sahne" inside "Sahnemischung",
+ *   and "Ober- und Unterhitze" is not the Obers (DECISIONS #154).
  * - **Longest wins.** A recipe with both "olive oil" and "oil" underlines
  *   "olive oil" as one thing, not "oil" with two orphaned words in front of it.
  * - **The descriptors are optional.** "1 small red onion" is written down as
@@ -224,8 +225,9 @@ function aliases<T extends { name: string }>(ingredient: T): Candidate<T>[] {
 	const seen = new Set<string>();
 
 	const offer = (text: string, rank: number) => {
-		if (text.length < MIN_NAME_LENGTH) return;
 		const key = keyOf(text);
+		// "Ei" is two letters and still an egg; nothing else that short is a name.
+		if (text.length < MIN_NAME_LENGTH && !IRREGULAR.has(key)) return;
 		if (!key || seen.has(key)) return;
 		seen.add(key);
 		found.push({ ingredient, text, key, owner, rank });
@@ -271,11 +273,13 @@ function keyOf(text: string): string {
  *
  * The boundaries are lookarounds over Unicode letters and digits rather than
  * `\b`, which is ASCII-only: `\b` would happily end a match in the middle of
- * "crème fraîche".
+ * "crème fraîche". A hyphen ends a word ("egg-white" names the egg), except the
+ * German one that holds a compound's place until its second half comes along:
+ * "Ober- und Unterhitze" is Oberhitze, never the Obers (issue #31).
  */
 function build<T>(candidates: readonly Candidate<T>[]): RegExp {
 	const alternation = candidates.map((c) => `(${pattern(c.text)})`).join('|');
-	return new RegExp(`(?<![\\p{L}\\p{N}])(?:${alternation})(?![\\p{L}\\p{N}])`, 'giu');
+	return new RegExp(`(?<![\\p{L}\\p{N}])(?:${alternation})(?![\\p{L}\\p{N}]|-(?:\\s|$))`, 'giu');
 }
 
 /**
@@ -302,7 +306,11 @@ function pattern(text: string): string {
  */
 function numbers(word: string): string {
 	const stem = singular(word);
-	const forms = new Set([word, stem, `${stem}s`, `${stem}n`]);
+	const plural = IRREGULAR.get(stem.toLowerCase());
+	// Only its own forms: the endings below would make "Ei" answer to "ein" and "Eis".
+	const forms = plural
+		? new Set([stem, plural, `${plural}n`])
+		: new Set([word, stem, `${stem}s`, `${stem}n`]);
 
 	if (/[sxzo]$/i.test(stem) || /(?:ch|sh)$/i.test(stem)) forms.add(`${stem}es`);
 	if (/y$/i.test(stem)) forms.add(`${stem.slice(0, -1)}ies`);
@@ -325,6 +333,10 @@ function numbers(word: string): string {
 function singular(word: string): string {
 	if (word.length <= MIN_NAME_LENGTH) return word;
 
+	const lower = word.toLowerCase();
+	const irregular = SINGULAR.get(lower) ?? SINGULAR.get(lower.replace(/n$/, ''));
+	if (irregular) return irregular;
+
 	if (/[^aeiou]ies$/i.test(word)) return `${word.slice(0, -3)}y`;
 	if (/(?:ch|sh|[sxzo])es$/i.test(word)) return word.slice(0, -2);
 	if (/s$/i.test(word) && !/ss$/i.test(word)) return word.slice(0, -1);
@@ -332,6 +344,20 @@ function singular(word: string): string {
 
 	return word;
 }
+
+/**
+ * German plurals no ending rule reaches — a vowel that takes an umlaut, or "-er"
+ * — keyed by the singular, lowercase. Only words a recipe uses: "Ei" is the one
+ * every recipe has (issue #31: "Eier" never found its "Ei"). The dative "-n"
+ * ("mit den Eiern") comes with each.
+ */
+const IRREGULAR = new Map([
+	['ei', 'eier'],
+	['apfel', 'äpfel'],
+	['nuss', 'nüsse']
+]);
+
+const SINGULAR = new Map([...IRREGULAR].map(([one, many]) => [many, one]));
 
 /**
  * `-` is deliberately not escaped: outside a character class it is an ordinary
