@@ -45,7 +45,8 @@ import {
 	SEED_HOUSEHOLD_NAME,
 	SEED_HOUSEMATE_NAME,
 	SEED_RECIPE_NAMES,
-	SEED_STORE_NAMES
+	SEED_STORE_NAMES,
+	SEED_TIMEZONE
 } from './seed-data.ts';
 
 /* ── Calendar helpers ────────────────────────────────────────────────────────
@@ -161,7 +162,7 @@ const seeded = db.transaction((tx) => {
 				id: householdId,
 				name: SEED_HOUSEHOLD_NAME,
 				inviteCode: inviteCode(),
-				timezone: 'Europe/Vienna'
+				timezone: SEED_TIMEZONE
 			})
 			.onConflictDoNothing()
 			.run();

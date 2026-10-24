@@ -2125,4 +2125,34 @@ units | null, name}`, written back as editor lines in the reader's unit spelling
        markup. In a plain method only top-level `li`/`p` blocks make steps, so a nested
        ingredient list stays inside its step.
      - **Not verified against the live page.** The agent could not fetch it; the rules follow
-       the shapes quoted in the issue.
+       the shapes quoted in the issue. The live page turned out to fail for another reason
+       (→ #152).
+
+152. **A `HowToStep` whose `text` is an array is one step, its pieces joined** (issue #31, SPEC
+     §4.7, `recipe-jsonld.ts` `stepText`). Read against the live einfachkochen.de page, which
+     sends every step's `text` as an array split on its commas
+     (`["Eier", "Sahne", "Crème fraîche und Senf glattrühren …", …]`). The shared `asString`
+     keeps the first string of an array, which is right for `name` and `recipeYield`
+     (`["8", "8 servings"]`) but left Schritt 4 as "Eier" and cut every other step at its first
+     comma.
+
+     - **Join with ", "**, which gives back the page's own sentence, checked step by step against
+       its visible text. After a piece that already ends on `.!?:;` the join is a space, so a
+       site that sends whole sentences as pieces doesn't get "vorheizen., Form".
+     - **One step, not several.** The pieces are fragments of one instruction, not steps, so
+       #151's fragment rules don't apply to them.
+     - **`asString` is unchanged**, so `name`, the times, the yield and the image keep taking the
+       first string.
+     - **The fixture is the real page's JSON-LD**, kept byte for byte
+       (`src/lib/utils/fixtures/einfachkochen-quiche.html`, Prettier-ignored). The rest of the
+       page's ~600 KB is ads and scripts the parser never reads, and the page has no Microdata.
+
+153. **The visual household answers the shop-closure banner in setup** (`tests/e2e/setup.ts`,
+     TESTING.md "Visual"). The banner (SPEC §3.6) shows on Home and Shopping for the three days
+     before a holiday closure, so from 2026-10-24, with National Day two days off, the four Home
+     and Shopping screenshots failed on every branch, untouched `dev` included. A mask can't fix
+     that, because the banner pushes everything below it down. Setup posts the banner's own "Got
+     it" action for the `visual` account, for the closure `closureAhead` finds in the seeded
+     timezone (`SEED_TIMEZONE`, now shared with the seed), and checks the answer was written. The
+     screens then look the same any day of the year. When a closure is due is pinned by
+     `utils/holidays.test.ts`, not by screenshots.
