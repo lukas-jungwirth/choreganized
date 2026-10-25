@@ -76,6 +76,15 @@ function daysAgo(days: number, hour: number): Date {
 	return at.getTime() > now ? new Date(now - days * 86_400_000 - 90 * 60_000) : at;
 }
 
+/**
+ * When the two seeded items were "just bought": an hour and a half ago, whatever
+ * the hour. The nightly cleanup clears items checked over 12 h before it runs,
+ * and a fresh server runs it on its first tick after 03:30, so "today at 09:12"
+ * was gone on any server started after 21:12. That emptied "Recently bought" on
+ * the Shopping screenshot for every late-evening CI run (→ DECISIONS #155).
+ */
+const JUST_BOUGHT = new Date(Date.now() - 90 * 60_000);
+
 /* ── Connect ─────────────────────────────────────────────────────────────── */
 
 const email = process.argv[2];
@@ -339,7 +348,7 @@ const seeded = db.transaction((tx) => {
 					quantity: 2,
 					unit: 'pcs',
 					addedByMemberId: ownerMemberId,
-					checkedAt: daysAgo(0, 9),
+					checkedAt: JUST_BOUGHT,
 					checkedByMemberId: housemateMemberId
 				},
 				{
@@ -348,7 +357,7 @@ const seeded = db.transaction((tx) => {
 					storeId: storeId('grocery'),
 					name: 'Greek yogurt',
 					addedByMemberId: housemateMemberId,
-					checkedAt: daysAgo(0, 9),
+					checkedAt: JUST_BOUGHT,
 					checkedByMemberId: housemateMemberId
 				},
 				{

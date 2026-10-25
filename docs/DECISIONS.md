@@ -2178,3 +2178,11 @@ units | null, name}`, written back as editor lines in the reader's unit spelling
        can't tell where a word splits. A missed underline costs a tap in the form, where pinning
        links any ingredient to a step (#127); a wrong one misleads at the stove. So whole words
        only, as SPEC §4.4 says.
+
+155. **The seed's bought items are 90 minutes old, not "today at 09:12"** (`scripts/seed.ts`
+     `JUST_BOUGHT`). The nightly cleanup (#13) clears items checked more than 12 h before it
+     runs, and a server started after 03:30 runs it on its first tick. So the Playwright server
+     deleted both seeded "bought" items whenever a run started after 21:12 Vienna time, and the
+     Shopping screenshots read "0 of 8 done" with no "Recently bought". It failed on `dev` after
+     #33 and #34 merged at 23:44 and 23:48. Like the closure banner (#153), the screens now look
+     the same at any hour. Both rows keep one shared stamp, so their order is what it was.
