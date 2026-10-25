@@ -14,7 +14,7 @@ audit, "One agent or several?":
 
 ## Build
 
-- **Triage reproduces when it can.** With plan 25's probes and `evidence/`, triage states one of
+- **Triage reproduces when it can.** With `WebFetch` and the import probe (plan 25), triage states one of
   **reproduced** (a probe shows the reported symptom on `dev`), **found the cause**, **plausible
   cause** or **cannot tell**. "Found" from reading code alone is no longer enough for an automatic
   hand-off.
@@ -33,7 +33,7 @@ audit, "One agent or several?":
     guard on the automatic path. A person adding `agent:build` works as today.
 - **`/build-issue` reproduces before it fixes.**
   - The first commit is **"Reproduce #N: …"** and holds only the regression test. The test is
-    built from the reporter's artefact: an `evidence/` fixture, a probe's saved page, or seeded
+    built from the reporter's artefact: a probe's saved page, the reporter's own input, or seeded
     data driven by Playwright for a screen. It asserts the reporter's observation in their own
     terms, for example "Schritt 4 contains 'glattrühren'".
   - The agent runs it on the untouched branch and confirms it fails _for the reported reason_.
