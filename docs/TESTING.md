@@ -195,7 +195,9 @@ follows the hour, standings the month, due labels the day). A screen whose whole
 calendar — the week plan, history — is not in it. Add a screen by adding a row. **A mask must
 cover a box that doesn't follow the text** — Home masks its whole `header`, not the `h1`, whose
 width changed with the greeting — and a sample page fixes its own clock: `/dev/kit` renders
-2026-09-11 for ever (→ DECISIONS #144).
+2026-09-11 for ever (→ DECISIONS #144). Something that **appears** with the calendar can't be
+masked, because it moves everything below it: the shop-closure banner on Home and Shopping is
+answered "Got it" for the `visual` account by the setup project instead (→ DECISIONS #153).
 
 **Baselines are Linux-only** (→ DECISIONS #140): a macOS Chromium rasterises text differently
 enough to fail every comparison, so `tests/visual/__screenshots__/*.png` are made in the

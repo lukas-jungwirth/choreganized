@@ -2,8 +2,12 @@
  * `npm test` — Vitest (→ docs/TESTING.md; born as `node --test` in plan 08).
  */
 import assert from 'node:assert/strict';
+import { readFileSync } from 'node:fs';
 import { describe, it } from 'vitest';
+import { parseIngredient } from './ingredients.ts';
+import { parseRecipeJsonLd } from './recipe-jsonld.ts';
 import { highlightStep, plainName, readStep, scaleStepUses } from './step-highlight.ts';
+import { applyWording } from './wording.ts';
 
 /** Shorthand: the step text rebuilt with the underlined runs marked with `«»`. */
 function marked(text: string, names: string[]): string {
@@ -148,6 +152,75 @@ describe('highlightStep', () => {
 		assert.equal(marked('Die Zwiebel anbraten', ['2 Zwiebeln']), 'Die «Zwiebel» anbraten');
 		assert.equal(marked('Tomaten dazugeben', ['Tomate']), '«Tomaten» dazugeben');
 		assert.equal(marked('Mit Berries servieren', ['Berry']), 'Mit «Berries» servieren');
+	});
+
+	it('leaves a word alone that only opens a compound written out later', () => {
+		// "Ober- und Unterhitze" is Oberhitze, not the Obers (issue #31's quiche).
+		assert.equal(
+			marked('Backofen auf 200 Grad Ober- und Unterhitze vorheizen', ['Obers (30 % Fett)']),
+			'Backofen auf 200 Grad Ober- und Unterhitze vorheizen'
+		);
+		assert.equal(
+			marked('Weizen- oder Dinkelmehl, dazu Weizen', ['Weizen']),
+			'Weizen- oder Dinkelmehl, dazu «Weizen»'
+		);
+	});
+
+	it('knows the German plurals no ending rule reaches', () => {
+		assert.equal(
+			marked('Eier, Sahne und Senf glattrühren', ['Ei (Größe M)']),
+			'«Eier», Sahne und Senf glattrühren'
+		);
+		assert.equal(
+			marked('Mit Butter, Salz, Ei und Wasser', ['Ei']),
+			'Mit Butter, Salz, «Ei» und Wasser'
+		);
+		assert.equal(marked('Mit den Eiern verrühren', ['4 Eier']), 'Mit den «Eiern» verrühren');
+		assert.equal(marked('Ein Ei trennen', ['Eier']), 'Ein «Ei» trennen');
+		assert.equal(marked('Äpfel schälen', ['Apfel']), '«Äpfel» schälen');
+		assert.equal(marked('Die Nüsse rösten', ['Haselnuss']), 'Die Nüsse rösten');
+		assert.equal(marked('Die Nüsse rösten', ['Nuss']), 'Die «Nüsse» rösten');
+	});
+
+	it('lets "Ei" be short without making "ein" or "Eis" an egg', () => {
+		assert.equal(
+			marked('Ein Eis dazu, ein Eigelb und Eiweiß', ['Ei']),
+			'Ein Eis dazu, ein Eigelb und Eiweiß'
+		);
+	});
+});
+
+/**
+ * Issue #31, from the real page: what the quiche's steps underline once imported in
+ * Austrian wording (→ recipe-jsonld.test.ts for the import itself).
+ */
+describe('highlightStep — the einfachkochen.de quiche', () => {
+	const recipe = parseRecipeJsonLd(
+		readFileSync(new URL('./fixtures/einfachkochen-quiche.html', import.meta.url), 'utf8')
+	);
+	assert.ok(recipe);
+	const rows = applyWording(recipe.ingredientLines, recipe.steps, 'austrian')
+		.map((line) => parseIngredient(line))
+		.filter((row) => row !== null && row.name !== '') as { name: string }[];
+	const underlined = (step: number) =>
+		highlightStep(recipe.steps[step - 1], rows)
+			.segments.filter((segment) => segment.ingredient)
+			.map((segment) => segment.text);
+
+	it('does not take Oberhitze for the Obers (step 3)', () => {
+		assert.ok(!underlined(3).includes('Ober'));
+	});
+
+	it('links the eggs and the cream in step 4', () => {
+		assert.deepEqual(underlined(4).slice(0, 2), ['Eier', 'Sahne']);
+	});
+
+	it('links the egg in step 1', () => {
+		assert.ok(underlined(1).includes('Ei'));
+	});
+
+	it('leaves step 5 alone: its "Sahnemischung" is a compound (DECISIONS #154)', () => {
+		assert.deepEqual(underlined(5), []);
 	});
 });
 

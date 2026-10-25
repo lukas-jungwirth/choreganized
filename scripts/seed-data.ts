@@ -5,6 +5,8 @@
  * Content only: quantities, dates and steps stay in seed.ts beside the rows.
  */
 export const SEED_HOUSEHOLD_NAME = 'Sonnengasse 12';
+/** Where the demo household keeps time; the visual setup reads the date in it. */
+export const SEED_TIMEZONE = 'Europe/Vienna';
 export const SEED_HOUSEMATE_NAME = 'Elisabeth';
 export const SEED_STORE_NAMES = ['Grocery', 'Drugstore', 'Hardware store'] as const;
 export const SEED_ITEM_NAMES = [

@@ -245,7 +245,7 @@ function collectSteps(value: unknown, into: string[]): void {
 		}
 		// `name` is a step's title ("Eier"), not its instruction — a lone word is no step.
 		const name = asString(value.name);
-		const text = asString(value.text) ?? (name && /\s/.test(name.trim()) ? name : null);
+		const text = stepText(value.text) ?? (name && /\s/.test(name.trim()) ? name : null);
 		if (text) {
 			const cleaned = cleanText(text);
 			if (cleaned) into.push(cleaned);
@@ -254,6 +254,21 @@ function collectSteps(value: unknown, into: string[]): void {
 		// An untyped wrapper that still holds a list of steps.
 		if (value.itemListElement !== undefined) collectSteps(value.itemListElement, into);
 	}
+}
+
+/**
+ * A `HowToStep`'s `text`. Some sites send it as an array: einfachkochen.de splits
+ * every step on its commas (issue #31), so it is one instruction in pieces, not
+ * several steps. Put the commas back, except after a piece that already ends a
+ * sentence. (`asString` would keep only the first piece: Schritt 4 = "Eier".)
+ */
+function stepText(value: unknown): string | null {
+	if (!Array.isArray(value)) return asString(value);
+	const pieces = value
+		.map((one) => asString(one)?.trim())
+		.filter((one): one is string => Boolean(one));
+	if (pieces.length === 0) return null;
+	return pieces.reduce((text, piece) => `${text}${/[.!?:;]$/.test(text) ? ' ' : ', '}${piece}`);
 }
 
 /* ── Image ────────────────────────────────────────────────────────────────── */

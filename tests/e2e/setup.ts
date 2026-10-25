@@ -8,7 +8,10 @@
  * developer looks at, idempotent, bound to the user by email.
  */
 import { spawnSync } from 'node:child_process';
-import { expect, request, test as setup } from '@playwright/test';
+import { expect, request, test as setup, type APIRequestContext } from '@playwright/test';
+import { SEED_TIMEZONE } from '../../scripts/seed-data';
+import { todayIn } from '../../src/lib/utils/dates';
+import { closureAhead } from '../../src/lib/utils/holidays';
 import { ACCOUNTS, DATABASE_PATH, storageStateFor } from './accounts';
 
 setup('sign up the test accounts and seed their households', async ({ baseURL }) => {
@@ -27,12 +30,35 @@ setup('sign up the test accounts and seed their households', async ({ baseURL })
 		}
 
 		await api.storageState({ path: storageStateFor(account.key) });
-		await api.dispose();
 
 		const seed = spawnSync(process.execPath, ['scripts/seed.ts', account.email], {
 			encoding: 'utf8',
 			env: { ...process.env, DATABASE_PATH }
 		});
 		expect(seed.status, `seed for ${account.email}:\n${seed.stdout}${seed.stderr}`).toBe(0);
+
+		if (account.key === 'visual') await answerClosureNotice(api, baseURL!);
+		await api.dispose();
 	}
 });
+
+/**
+ * The shop-closure banner (→ SPEC §3.6) sits on Home and Shopping for the three
+ * days before a holiday, so a screenshot taken then differed from the
+ * baselines: every PR from 24 October failed on National Day. The visual
+ * household answers "Got it" to whatever closure is in view, the way a member
+ * would, so those screens no longer depend on the date (→ DECISIONS #153). The
+ * banner itself is the unit tests' (`utils/holidays.test.ts`).
+ */
+async function answerClosureNotice(api: APIRequestContext, baseURL: string): Promise<void> {
+	const closure = closureAhead(todayIn(SEED_TIMEZONE));
+	if (!closure) return;
+
+	const answered = await api.post('/home?/holidayNotice', {
+		headers: { origin: baseURL, 'x-sveltekit-action': 'true' },
+		form: { closureDate: closure.closureDate, answer: 'dismiss' }
+	});
+	// The action's data is devalue-encoded: `[{ holidayAnswered: 1 }, true]`.
+	const [, written] = JSON.parse((await answered.json()).data);
+	expect(written, `dismissing the ${closure.closureDate} closure notice`).toBe(true);
+}

@@ -2125,4 +2125,64 @@ units | null, name}`, written back as editor lines in the reader's unit spelling
        markup. In a plain method only top-level `li`/`p` blocks make steps, so a nested
        ingredient list stays inside its step.
      - **Not verified against the live page.** The agent could not fetch it; the rules follow
-       the shapes quoted in the issue.
+       the shapes quoted in the issue. The live page turned out to fail for another reason
+       (→ #152).
+
+152. **A `HowToStep` whose `text` is an array is one step, its pieces joined** (issue #31, SPEC
+     §4.7, `recipe-jsonld.ts` `stepText`). Read against the live einfachkochen.de page, which
+     sends every step's `text` as an array split on its commas
+     (`["Eier", "Sahne", "Crème fraîche und Senf glattrühren …", …]`). The shared `asString`
+     keeps the first string of an array, which is right for `name` and `recipeYield`
+     (`["8", "8 servings"]`) but left Schritt 4 as "Eier" and cut every other step at its first
+     comma.
+
+     - **Join with ", "**, which gives back the page's own sentence, checked step by step against
+       its visible text. After a piece that already ends on `.!?:;` the join is a space, so a
+       site that sends whole sentences as pieces doesn't get "vorheizen., Form".
+     - **One step, not several.** The pieces are fragments of one instruction, not steps, so
+       #151's fragment rules don't apply to them.
+     - **`asString` is unchanged**, so `name`, the times, the yield and the image keep taking the
+       first string.
+     - **The fixture is the real page's JSON-LD**, kept byte for byte
+       (`src/lib/utils/fixtures/einfachkochen-quiche.html`, Prettier-ignored). The rest of the
+       page's ~600 KB is ads and scripts the parser never reads, and the page has no Microdata.
+
+153. **The visual household answers the shop-closure banner in setup** (`tests/e2e/setup.ts`,
+     TESTING.md "Visual"). The banner (SPEC §3.6) shows on Home and Shopping for the three days
+     before a holiday closure, so from 2026-10-24, with National Day two days off, the four Home
+     and Shopping screenshots failed on every branch, untouched `dev` included. A mask can't fix
+     that, because the banner pushes everything below it down. Setup posts the banner's own "Got
+     it" action for the `visual` account, for the closure `closureAhead` finds in the seeded
+     timezone (`SEED_TIMEZONE`, now shared with the seed), and checks the answer was written. The
+     screens then look the same any day of the year. When a closure is due is pinned by
+     `utils/holidays.test.ts`, not by screenshots.
+
+154. **The step matcher: a suspended hyphen is no word, "Ei" is one, compounds stay unlinked**
+     (issue #31, SPEC §4.4, `step-highlight.ts`). Three things the real einfachkochen.de quiche
+     showed once its steps imported whole (#152):
+
+     - **"Ober- und Unterhitze" underlined the Obers.** "Obers" loses its "s" as if it were a
+       plural, and "-" counted as the end of a word. A hyphen followed by a space or the end of
+       the text holds a German compound's place ("Ober- und Unterhitze", "Weizen- oder
+       Dinkelmehl"), so a match may not end on one. A hyphen inside a word still ends a match,
+       as before: "egg-white" names the egg.
+     - **"Eier" never found "Ei (Größe M)".** "Ei" is under the three-letter minimum, and the
+       ending rules can't make "Eier" from it. A small table, `IRREGULAR`, holds the German
+       plurals no ending reaches (Ei/Eier, Apfel/Äpfel, Nuss/Nüsse, each with its dative "-n").
+       A word in the table answers to its own forms only, so "Ei" may be two letters without
+       "ein" or "Eis" becoming an egg. Add to the table as recipes turn them up.
+     - **Compounds stay unlinked, by decision.** Step 5 says "Sahnemischung", not "Sahne", so the
+       Obers isn't underlined there, and "Lachswürfel" isn't the Lachsfilet. Linking them means
+       splitting German compounds, which needs a dictionary: a prefix match makes "einfach" an
+       "Ei" and "Maische" "Mais", and the safer suffix direction ("Blattspinat" → "Spinat") still
+       can't tell where a word splits. A missed underline costs a tap in the form, where pinning
+       links any ingredient to a step (#127); a wrong one misleads at the stove. So whole words
+       only, as SPEC §4.4 says.
+
+155. **The seed's bought items are 90 minutes old, not "today at 09:12"** (`scripts/seed.ts`
+     `JUST_BOUGHT`). The nightly cleanup (#13) clears items checked more than 12 h before it
+     runs, and a server started after 03:30 runs it on its first tick. So the Playwright server
+     deleted both seeded "bought" items whenever a run started after 21:12 Vienna time, and the
+     Shopping screenshots read "0 of 8 done" with no "Recently bought". It failed on `dev` after
+     #33 and #34 merged at 23:44 and 23:48. Like the closure banner (#153), the screens now look
+     the same at any hour. Both rows keep one shared stamp, so their order is what it was.
