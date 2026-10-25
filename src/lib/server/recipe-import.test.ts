@@ -5,7 +5,7 @@
  */
 import assert from 'node:assert/strict';
 import { describe, it } from 'vitest';
-import { htmlToReadableText } from './recipe-import';
+import { htmlToReadableText, readFetchedPage } from './recipe-import';
 
 const article = `
 	<h1>Linsencurry</h1>
@@ -65,5 +65,34 @@ describe('htmlToReadableText', () => {
 			`<html><body><main><img alt=""></main><div>${article}</div></body></html>`
 		);
 		assert.ok(text.includes('200 g rote Linsen'));
+	});
+});
+
+/** Which reader found the card — what `npm run import:probe` reports (→ plan 25). */
+describe('readFetchedPage', () => {
+	const read = (body: string) =>
+		readFetchedPage({ html: `<html><body>${body}</body></html>`, finalUrl: 'https://x.test/r' });
+
+	it('names JSON-LD when the page has a JSON-LD card', () => {
+		const page = read(
+			`<script type="application/ld+json">{"@type":"Recipe","name":"Gulasch"}</script>`
+		);
+		assert.equal(page.reader, 'json-ld');
+		assert.equal(page.card?.name, 'Gulasch');
+	});
+
+	it('names Microdata when only Microdata carries the card', () => {
+		const page = read(
+			`<div itemscope itemtype="https://schema.org/Recipe"><h1 itemprop="name">Strudel</h1></div>`
+		);
+		assert.equal(page.reader, 'microdata');
+		assert.equal(page.card?.name, 'Strudel');
+	});
+
+	it('names no reader when there is no card', () => {
+		const page = read(article);
+		assert.equal(page.reader, null);
+		assert.equal(page.card, null);
+		assert.ok(page.text.includes('Zutaten'));
 	});
 });

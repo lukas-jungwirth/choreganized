@@ -2,6 +2,11 @@
 
 **Status: done (2026-09-14).** Depends on: 16 (triage), 17 (the test workflow).
 
+> **Changed by [plan 25](25-agent-evidence.md) (2026-10-25):** the build job no longer runs on an
+> allow-list. It runs `--permission-mode auto` with a deny list, both agents pin a model, and
+> each run writes a summary of its denials, commands and verify exit codes (DECISIONS #157). The
+> allow-list below is history.
+
 **Goal:** close the loop plan 16 opened. The household reports a bug or pitches an idea from
 inside the app; triage reads it; and from there the fix or the feature reaches the test
 environment without a desk session. Plan 16 stopped at triage because CI had no browser

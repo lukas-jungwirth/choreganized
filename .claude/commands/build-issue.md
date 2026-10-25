@@ -31,6 +31,12 @@ how a change proves itself is `docs/TESTING.md`.
    or if it carries `needs-info`, `duplicate` or `fixed-on-dev`. Triage's comment is your plan
    draft: check its `path:line` claims against the source before you build on them.
 
+   **A report that links a recipe page** is checked against the page, not a guess of it: run
+   `npm run import:probe -- <url> --save <site-dish>` before you change anything. It prints what
+   the importer reads there and keeps the raw page in `src/lib/utils/fixtures/` — your test reads
+   that fixture (as `recipe-jsonld.test.ts` reads `einfachkochen-quiche.html`), and a probe run
+   after the fix shows it worked on the real page. You have no `WebFetch`, on purpose.
+
 2. **Branch.** `git switch -c agent/issue-$1 origin/dev`.
 
 3. **Decide what kind of change it is.**
@@ -55,11 +61,14 @@ how a change proves itself is `docs/TESTING.md`.
    `docs/TESTING.md` prescribes: a pure function → `*.test.ts` beside it; a service →
    `tests/integration/`; a rule → `tests/conventions/`; a screen or a sheet → `tests/e2e/`.
 
-5. **Verify.** `npm run verify` — lint, types, migration drift, every Vitest suite, the build,
-   the Playwright journeys. Run `npm run test:visual -- --update-snapshots` **only** when a
-   screen changed on purpose; commit the PNGs under `tests/visual/__screenshots__` and say in the
-   PR which screens changed and why. Three rounds of fixing at most. If it is still red, push
-   anyway as a **draft** PR titled `WIP: …` and name the failing test in your comment — a draft
+5. **Verify.** `set -o pipefail && npm run verify 2>&1 | tail -60` — lint, types, migration
+   drift, every Vitest suite, the build, the Playwright journeys. Run it exactly like that:
+   `pipefail` keeps verify's own exit code, and the run summary on this workflow run lists every
+   verify with its exit code, so anyone can check your checklist against it. Run
+   `npm run test:visual -- --update-snapshots` **only** when a screen changed on purpose; commit
+   the PNGs under `tests/visual/__screenshots__` and say in the PR which screens changed and why.
+   Three rounds of fixing at most. If it is still red, push anyway as a **draft** PR titled
+   `WIP: …` and name the failing test in your comment — a draft
    cannot auto-merge, and nothing is lost.
 
 6. **Docs in the same pass.** A judgment call gets a numbered entry **appended to the end** of
@@ -80,8 +89,11 @@ how a change proves itself is `docs/TESTING.md`.
    `gh pr create --base dev --title "<what changed>" --body-file <that file>`. The body carries
    `Closes #$1`; the plan (triage's, corrected by what you found); the definition of done from
    `docs/TESTING.md` as a checklist, ticked only where true; what you verified and how; what you
-   could not. Then — unless it is a draft — `gh pr merge --auto --merge <number>`: CI decides the
-   merge, and Coolify deploys `dev` to the test environment. Then
+   could not. **"`npm run verify` clean" is ticked only if your _last_ verify exited 0** — not an
+   earlier one, not a single suite you re-ran afterwards — and under it, in a code block, paste
+   that run's closing summary lines (Vitest's `Test Files` / `Tests` lines and Playwright's
+   `passed` / `failed` lines). Then — unless it is a draft — `gh pr merge --auto --merge <number>`:
+   CI decides the merge, and Coolify deploys `dev` to the test environment. Then
    `gh issue edit $1 --add-label fixed-on-dev`: `Closes #$1` only closes an issue when a PR merges
    into the default branch, and yours merges into `dev` — the label is how `/inbox` knows, and
    the promotion PR `dev → main` is what closes it.

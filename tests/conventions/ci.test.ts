@@ -15,6 +15,43 @@ import { describe, it } from 'vitest';
 import { playwrightImage } from '../../scripts/playwright-image';
 import { sourceFiles } from '../helpers/source';
 
+/** A quoted tool list from `claude_args`, split the way the action splits it: on commas. */
+function toolList(yml: string, flag: '--allowedTools' | '--disallowedTools'): string[] {
+	const list = yml.match(new RegExp(`${flag} "([^"]+)"`))?.[1];
+	assert.ok(list, `an explicit ${flag} list`);
+	return list.split(',').map((tool) => tool.trim());
+}
+
+/**
+ * The shell a workflow runs: every `run:` (and github-script `script:`) value,
+ * inline or as a block scalar. An expression there is pasted into the script
+ * before the shell parses it, so an issue body in one is code — the s1ngularity
+ * injection. Through `env:` it stays a string (→ plan 25).
+ */
+function runBlocks(yml: string): string[] {
+	const lines = yml.split('\n');
+	const blocks: string[] = [];
+	lines.forEach((line, index) => {
+		const step = /^(\s*)(?:- )?(run|script):\s*(.*)$/.exec(line);
+		if (!step) return;
+		const [, indent, , rest] = step;
+		if (!/^[|>][-+]?\s*$/.test(rest)) return void blocks.push(rest);
+		const body: string[] = [];
+		for (const next of lines.slice(index + 1)) {
+			if (next.trim() && next.length - next.trimStart().length <= indent.length) break;
+			body.push(next);
+		}
+		blocks.push(body.join('\n'));
+	});
+	return blocks;
+}
+
+/** An expression that pastes text someone outside the repository wrote. */
+const UNTRUSTED =
+	/\$\{\{[^}]*github\.event\.(issue|comment|pull_request|review|discussion)\.(body|title)/;
+
+const AGENT_WORKFLOWS = ['triage.yml', 'build.yml'];
+
 const workflow = (name: string) => {
 	const path = `.github/workflows/${name}`;
 	assert.ok(existsSync(path), `${path} exists`);
@@ -68,16 +105,46 @@ describe('the build workflow', () => {
 		}
 	});
 
-	it('can merge only by auto-merge, and cannot touch workflows or the web', () => {
+	it('runs in auto mode, and the deny list keeps the hard nos', () => {
 		const build = workflow('build.yml');
 		assert.ok(!/^\s+workflows:/m.test(build), 'no workflows permission');
 		assert.ok(!/actions:\s*write/.test(build), 'no actions: write');
-		const tools = build.match(/--allowedTools "([^"]+)"/)?.[1];
-		assert.ok(tools, 'an explicit --allowedTools list');
-		const merges = tools.split(',').filter((tool) => tool.startsWith('Bash(gh pr merge'));
-		assert.deepEqual(merges, ['Bash(gh pr merge --auto:*)'], 'auto-merge is the one merge command');
-		for (const tool of ['WebFetch', 'WebSearch', 'Bash(gh api', 'Bash(gh workflow']) {
-			assert.ok(!tools.includes(tool), `${tool} is not allowed`);
+		assert.match(build, /^\s+--permission-mode auto$/m, 'auto mode (→ plan 25)');
+		assert.ok(!build.includes('--allowedTools'), 'no allow-list beside auto mode');
+
+		const denied = toolList(build, '--disallowedTools');
+		for (const rule of [
+			'WebFetch',
+			'WebSearch',
+			'Bash(gh api:*)',
+			'Bash(gh workflow:*)',
+			'Edit(.github/**)',
+			'Write(.github/**)'
+		]) {
+			assert.ok(denied.includes(rule), `--disallowedTools names ${rule}`);
+		}
+		assert.ok(
+			denied.some((rule) => rule.startsWith('Bash(gh pr merge') && rule.includes('--admin')),
+			'an admin merge is denied'
+		);
+		for (const flag of ['--force', '-f']) {
+			assert.ok(
+				denied.some((rule) => rule.startsWith('Bash(git push') && rule.includes(flag)),
+				`git push ${flag} is denied`
+			);
+		}
+		assert.ok(
+			!denied.some((rule) => rule.startsWith('Bash(gh pr merge --auto')),
+			'auto-merge is not denied'
+		);
+	});
+
+	it('merges only by auto-merge', () => {
+		const prompt = readFileSync('.claude/commands/build-issue.md', 'utf8');
+		const merges = [...prompt.matchAll(/gh pr merge[^`\n]*/g)].map((m) => m[0].trim());
+		assert.ok(merges.length > 0, 'the prompt says how to merge');
+		for (const merge of merges) {
+			assert.ok(merge.startsWith('gh pr merge --auto'), `"${merge}" is the one merge command`);
 		}
 	});
 
@@ -97,5 +164,73 @@ describe('the build workflow', () => {
 		assert.ok(existsSync('.claude/commands/build-issue.md'), 'the slash command exists');
 		const triage = readFileSync('.claude/commands/triage-issue.md', 'utf8');
 		assert.ok(triage.includes('agent:build'), 'triage hands on with the label');
+	});
+});
+
+describe('the agent lane (→ docs/plans/25-agent-evidence.md)', () => {
+	it('pins a model in both agent jobs', () => {
+		for (const name of AGENT_WORKFLOWS) {
+			assert.match(workflow(name), /^\s+--model claude-[a-z]+-[\d-]+$/m, `${name} pins --model`);
+		}
+	});
+
+	it('writes a run summary after both agents, even when they fail', () => {
+		assert.ok(existsSync('scripts/agent-run-summary.ts'), 'the summary script exists');
+		for (const name of AGENT_WORKFLOWS) {
+			const yml = workflow(name);
+			assert.match(
+				yml,
+				/uses: anthropics\/claude-code-action@v1\n\s+id: claude\n/,
+				`${name}: the action has id: claude`
+			);
+			const step = yml.slice(yml.indexOf('- name: Run summary'));
+			assert.ok(step.startsWith('- name: Run summary'), `${name} has a Run summary step`);
+			assert.match(step, /^\s+if: always\(\)$/m, `${name}: the summary runs when the agent failed`);
+			assert.ok(
+				step.includes('${{ steps.claude.outputs.execution_file }}') &&
+					step.includes('node scripts/agent-run-summary.ts "$EXECUTION_FILE"'),
+				`${name}: the summary reads the action's execution file through env`
+			);
+		}
+	});
+
+	it('lets triage read a linked page and probe an import, still read-only', () => {
+		const triage = workflow('triage.yml');
+		const allowed = toolList(triage, '--allowedTools');
+		assert.ok(allowed.includes('WebFetch'), 'triage may fetch a linked page');
+		assert.ok(allowed.includes('Bash(npm run import:probe:*)'), 'triage may run the import probe');
+		assert.match(triage, /contents: read/);
+		assert.ok(!/contents: write/.test(triage), 'triage never writes the repository');
+		assert.match(triage, /persist-credentials: false/, 'no token in .git/config beside WebFetch');
+		const build = readFileSync('.claude/commands/build-issue.md', 'utf8');
+		assert.ok(build.includes('npm run import:probe'), 'build knows the probe');
+	});
+
+	it('never pastes an issue’s body or title into a shell', () => {
+		for (const file of sourceFiles('.github/workflows', ['.yml'])) {
+			for (const block of runBlocks(file.text)) {
+				assert.ok(
+					!UNTRUSTED.test(block),
+					`${file.path} interpolates untrusted text: ${block.trim()}`
+				);
+			}
+		}
+	});
+
+	it('finds that interpolation inline, in a block, and leaves env alone', () => {
+		const yml = [
+			'    steps:',
+			'      - run: echo "${{ github.event.issue.title }}"',
+			'      - name: b',
+			'        env:',
+			'          BODY: ${{ github.event.issue.body }}',
+			'        run: |',
+			'          echo ok',
+			'          echo "${{ github.event.issue.body }}"',
+			'      - run: echo "$BODY"'
+		].join('\n');
+		const flagged = runBlocks(yml).filter((block) => UNTRUSTED.test(block));
+		assert.equal(flagged.length, 2);
+		assert.ok(!runBlocks(yml).some((block) => block.includes('BODY: ')));
 	});
 });

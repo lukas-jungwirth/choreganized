@@ -2201,3 +2201,38 @@ units | null, name}`, written back as editor lines in the reader's unit spelling
        masked in the card and in the link.
      - **The invite landing** reads the `visual` household's code off the members screen, then
        signs out. The landing never prints the code, so it needs no mask.
+
+157. **The agent lane runs on evidence: auto mode with a deny list, pinned models, a receipt per
+     run** (`.github/workflows/build.yml`, `triage.yml`, `scripts/agent-run-summary.ts`,
+     `scripts/import-probe.ts`, plan 25). Issue #31's agents were refused a page in silence —
+     triage 2 denials, build 9 — guessed at its shape, and a PR fixing the guess passed CI and
+     merged. An allow-list fails closed _and quiet_ in headless Claude Code, so it was the wrong
+     tool for the build job.
+
+     - **Build runs `--permission-mode auto`** with `--disallowedTools` for the hard nos: the web,
+       `gh api`, `gh workflow`, an admin merge, a force push, edits under `.github/`. Deny rules
+       outrank auto mode, and mid-pattern `*` (`Bash(gh pr merge *--admin*)`,
+       `Bash(git push * -f*)`) catches the flag anywhere in the command — checked headless on
+       2026-10-25, along with `agent/issue-12-fix` still pushing. The real boundary stays outside
+       the prompt: the App token without `workflows`, branch protection, the job's `if`.
+     - **Triage keeps its allow-list** and gains `WebFetch` and the probe. Because a page an
+       untrusted issue names is now reachable, its checkout sets `persist-credentials: false`:
+       no job token in `.git/config` to send there.
+     - **Models are pinned**: Sonnet 5.5 for triage (reading, cheap), Opus 5.5 for build (the
+       hardest job). Unpinned, a Claude Code release could change either unnoticed.
+     - **The run summary** writes model, turns, duration, cost, every denied call (tool + 80
+       characters of input), every Bash command (120 characters, de-duplicated) and every
+       `npm run verify` with its exit code to the job summary — **no message text**, the
+       repository is public. Denials come from three places because Claude Code reports them in
+       three: the result's `permission_denials`, the `permission_denied` system message (which
+       survives a run that dies first), and a path rule's refusal, which only the tool result
+       carries. A verify whose code another command decides (`| tail` without `pipefail`,
+       `|| true`, `;`) is shown but never called clean, and `/build-issue` now runs it with
+       `pipefail` and ticks "verify clean" only off its last run.
+     - **One probe, for import only.** `WebFetch` hands the model a summary, and the summary drops
+       the JSON-LD the importer reads. `npm run import:probe` loads `recipe-import.ts` through a
+       middleware-mode Vite server (the importer needs `$lib` and `$env`), so it is the app's own
+       guarded fetch and readers, not a copy. Another area gets a probe when a real bug shows it
+       needed one.
+     - Triage retitles issues; safe because the retry searches `in:body` for the marker, now
+       pinned by `src/lib/server/github.test.ts`.

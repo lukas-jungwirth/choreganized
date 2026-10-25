@@ -19,6 +19,7 @@ npm run test:visual # the screenshots, in Docker — only when a screen changed 
 | Static          | —                             | prettier · svelte-check      | formatting, types, a `de.ts` key missing against `en.ts`, `$props()` misuse                                    | `npm run lint` · `check`                   |
 | Migration drift | `scripts/check-migrations.ts` | drizzle-kit, run by Vitest   | `schema.ts` edited without `npm run db:generate` — compiles, passes every test, fails in production            | `npm test` (or `npm run check:migrations`) |
 | Unit            | `src/**/*.test.ts`            | Vitest                       | the pure functions beside the module they pin: parsers, calendar maths, amounts, the i18n negotiation          | `npm test`                                 |
+| Unit (tooling)  | `scripts/**/*.test.ts`        | Vitest                       | the repo's own scripts: the agent run summary, the import probe's report                                       | `npm test`                                 |
 | Integration     | `tests/integration/`          | Vitest + in-memory SQLite    | services against a migrated database: the household boundary, points and undo, invite codes, feedback receipts | `npm test`                                 |
 | Conventions     | `tests/conventions/`          | Vitest + `fs`                | the house rules from CLAUDE.md as tests: tokens only, type scale, runes, guards, workflow drift                | `npm test`                                 |
 | End-to-end      | `tests/e2e/`                  | Playwright, production build | user journeys on a 390px phone: sign-in doors, onboarding, shopping, chores, cook mode, language, feedback     | `npm run test:e2e`                         |
@@ -60,6 +61,17 @@ auto-merge. Green CI merges it, and the issue is labelled `fixed-on-dev` until t
 closes it; `dev → main` is always a person. A PR that fell behind `dev`
 shows `BEHIND` and needs `gh pr update-branch`; a `WIP:` draft is a build that stayed red and
 waits for a desk session. `/inbox` lists both.
+
+**Every agent run leaves a receipt** (→ [plan 25](plans/25-agent-evidence.md), DECISIONS #157).
+Build runs in `--permission-mode auto` with a deny list for the hard nos, triage on an allow-list
+that includes `WebFetch`; both pin their model. After each action, `scripts/agent-run-summary.ts`
+writes the run's summary page: model, turns, duration, cost, **every denied tool call**, every
+Bash command, and every `npm run verify` with its exit code — no message text. So a PR's ticked
+"verify clean" can be checked against the run that opened it (Actions → the run → Summary), and
+a refusal is a line on that page, not a silent guess. For a report that links a recipe page,
+both agents run `npm run import:probe -- <url>`: the app's own importer on the real page, which
+prints the reader that matched, the steps and the ingredients — and `--save <name>` keeps the
+page as a fixture in `src/lib/utils/fixtures/` for the test.
 
 **Branch protection makes the gate real.** It was applied on 2026-09-14 with the command below
 (once, as the repository owner — re-run it to change the required checks). Both branches are

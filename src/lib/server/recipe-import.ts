@@ -96,6 +96,8 @@ export type RecipePage = {
 	finalUrl: string;
 	/** The page's own recipe card: JSON-LD, else Microdata — null when it has neither. */
 	card: RecipeJsonLd | null;
+	/** Which reader found the card — what the import probe reports (→ plan 25). */
+	reader: 'json-ld' | 'microdata' | null;
 	/** The page as readable lines, for a model to read when there is no card (→ plan 13). */
 	text: string;
 	/** A photo to offer: the card's own, else the page's `og:image` (unresolved). */
@@ -109,11 +111,27 @@ export type RecipePage = {
  * import screen's "no recipe data here — try with AI?".
  */
 export async function readRecipePage(url: string): Promise<RecipePage> {
-	const { html, finalUrl } = await fetchRecipePage(url);
-	const card = parseRecipeJsonLd(html) ?? parseRecipeMicrodata(html);
+	return readFetchedPage(await fetchRecipePage(url));
+}
+
+/**
+ * The reading half of `readRecipePage`, for HTML already in hand — split out
+ * so `npm run import:probe` can keep the raw page for `--save` and still read
+ * it exactly the way an import does (→ plan 25).
+ */
+export function readFetchedPage({
+	html,
+	finalUrl
+}: {
+	html: string;
+	finalUrl: string;
+}): RecipePage {
+	const jsonLd = parseRecipeJsonLd(html);
+	const card = jsonLd ?? parseRecipeMicrodata(html);
+	const reader = jsonLd ? 'json-ld' : card ? 'microdata' : null;
 	const { text, ogImage } = readableParts(html);
 
-	return { finalUrl, card, text, image: card?.image ?? ogImage };
+	return { finalUrl, card, reader, text, image: card?.image ?? ogImage };
 }
 
 /**

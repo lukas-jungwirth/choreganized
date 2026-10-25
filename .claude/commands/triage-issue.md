@@ -30,6 +30,11 @@ you have rather than running out mid-investigation.
 
 1. **Read it.** `gh issue view $1 --json number,title,body,labels,author`
 
+   **Give it a readable title.** The app files a report under its first line, often a cut-off
+   sentence. Set a short title in the reporter's language — at most 70 characters, keeping the
+   `Bug:` / `Idea:` prefix — with `gh issue edit $1 --title "Bug: …"`. Change only the title:
+   the app finds its issues by the marker in the body, never by title.
+
 2. **Dedupe.** `gh issue list --state open --limit 50 --json number,title,labels`
    If this is the same report as an existing open issue, comment with a link to it, add the
    `duplicate` label, and **stop** — do not analyse it a second time.
@@ -55,6 +60,14 @@ you have rather than running out mid-investigation.
      the list sorted by?", not "please provide more detail".
 
    Never claim to have reproduced anything. You read code; you did not run the app.
+
+   **If the report links a page, read the page** — don't guess its shape. `WebFetch` it for what
+   the reporter saw. For a **recipe import** bug, also run `npm run import:probe -- <url>` (never
+   `--save`: you don't write files). It fetches the page through the app's own importer and
+   prints which reader matched (JSON-LD, Microdata or none) and the exact steps and ingredients an
+   import produces — a `WebFetch` summary drops the raw JSON-LD the importer reads, and issue #31's
+   cause (each `HowToStep.text` sent as an array) was only visible there. Quote what the probe
+   printed in your comment.
 
 5. **Check whether `dev` already fixes it.** `git log --oneline dev ^origin/main` shows what is
    built but not yet deployed. The reporter is on `main`. If the fix is already sitting on `dev`,
