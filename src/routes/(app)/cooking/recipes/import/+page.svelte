@@ -46,6 +46,7 @@
 	const fetchError = $derived(form && 'fetchError' in form ? form.fetchError : undefined);
 	const aiError = $derived(form && 'aiError' in form ? form.aiError : undefined);
 	const noRecipe = $derived(form && 'noRecipe' in form ? Boolean(form.noRecipe) : false);
+	const refused = $derived(form && 'refused' in form ? Boolean(form.refused) : false);
 	const fetchedUrl = $derived(
 		form && 'url' in form && typeof form.url === 'string' ? form.url : undefined
 	);
@@ -276,6 +277,15 @@
 			</Button>
 		</div>
 	</form>
+
+	<!-- A site that refuses the server: copy it over from the browser — pasted
+		 text or a photo with AI; by hand (the line below) without. -->
+	{#if refused && data.aiEnabled}
+		<p class="ai-alt">
+			<a href="?mode=text"><FileText size={14} strokeWidth={2} />{m.cooking.add.text}</a>
+			<a href="?mode=photo"><Camera size={14} strokeWidth={2} />{m.cooking.add.photo}</a>
+		</p>
+	{/if}
 
 	{#if noRecipe}
 		{#if data.aiEnabled}

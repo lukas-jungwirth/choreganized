@@ -16,7 +16,14 @@
  * (→ DECISIONS #148).
  */
 import { parse, type HTMLElement } from 'node-html-parser';
-import { isoDurationToMinutes, mapYield, type RecipeJsonLd } from './recipe-jsonld';
+import {
+	cardSize,
+	isoDurationToMinutes,
+	mapYield,
+	tidyIngredientLines,
+	tidySteps,
+	type RecipeJsonLd
+} from './recipe-jsonld';
 
 /** `itemtype` is a space-separated list of type URLs. */
 const RECIPE_TYPE = /(?:^|\s)https?:\/\/schema\.org\/Recipe(?:\s|$)/i;
@@ -42,16 +49,47 @@ export function parseRecipeMicrodata(html: string): RecipeJsonLd | null {
 		timeMinutes: time(props),
 		servings: mapYield(first('recipeYield') ? valueOf(first('recipeYield')!) : null),
 		// `ingredients` is the deprecated spelling, as in JSON-LD.
-		ingredientLines: [...(props.get('recipeIngredient') ?? []), ...(props.get('ingredients') ?? [])]
-			.map((element) => clean(valueOf(element)))
-			.filter(Boolean),
-		steps: (props.get('recipeInstructions') ?? []).flatMap(stepsOf),
+		ingredientLines: tidyIngredientLines(
+			[...(props.get('recipeIngredient') ?? []), ...(props.get('ingredients') ?? [])]
+				.map((element) => clean(valueOf(element)))
+				.filter(Boolean)
+		),
+		steps: tidySteps(
+			props.has('recipeInstructions')
+				? props.get('recipeInstructions')!.flatMap(stepsOf)
+				: markedUpSteps(scope)
+		),
 		image: first('image') ? valueOf(first('image')!) || null : null
 	};
 
-	// A Recipe scope with nothing in it is a template stub, not a recipe.
-	if (!recipe.name && !recipe.ingredientLines.length && !recipe.steps.length) return null;
-	return recipe;
+	// A Recipe scope with no rows is a template stub or a teaser, not a recipe.
+	return cardSize(recipe) ? recipe : null;
+}
+
+/**
+ * Where recipe plugins put the method when they don't mark it up as
+ * `recipeInstructions`: the h-recipe microformat's `e-instructions` (Jetpack's
+ * recipe card on smittenkitchen.com marks its ingredients as Microdata and its
+ * directions only this way), and the plugins' own wrappers.
+ */
+const INSTRUCTION_BLOCKS =
+	'.e-instructions, .jetpack-recipe-directions, .wprm-recipe-instructions, .tasty-recipes-instructions, .mv-create-instructions';
+
+/**
+ * A method the page shows but its recipe card doesn't carry — read from the
+ * first instruction block a plugin left, inside `within` (a Microdata scope or
+ * the whole page). For a JSON-LD card that came without steps, too
+ * (→ `server/recipe-import.ts`).
+ */
+export function markedUpSteps(within: HTMLElement | string): string[] {
+	let root: HTMLElement;
+	try {
+		root = typeof within === 'string' ? parse(within) : within;
+	} catch {
+		return [];
+	}
+	const block = root.querySelector(INSTRUCTION_BLOCKS);
+	return block ? stepsOf(block) : [];
 }
 
 /**
@@ -125,25 +163,46 @@ function stepsOf(element: HTMLElement): string[] {
 		return [clean(element.structuredText).replace(/^\d+[.)]\s+/, '')].filter(Boolean);
 	}
 
-	// Top-level blocks only: an ingredient list inside a step is part of that step.
-	const blocks = element
-		.querySelectorAll('li, p')
-		.filter((block) => !hasBlockAncestor(block, element));
-	const lines = blocks.length
-		? blocks.map((block) => block.text)
-		: element.structuredText.split(/\n+/);
-
-	return lines.map((line) => clean(line).replace(/^\d+[.)]\s+/, '')).filter(Boolean);
+	return topLevelBlocks(element)
+		.map((line) => clean(line).replace(/^\d+[.)]\s+/, ''))
+		.filter(Boolean);
 }
 
-function hasBlockAncestor(block: HTMLElement, within: HTMLElement): boolean {
-	let parent = block.parentNode as HTMLElement | null;
-	while (parent && parent !== within) {
-		if (['li', 'p'].includes(parent.tagName?.toLowerCase())) return true;
-		parent = parent.parentNode as HTMLElement | null;
+/**
+ * A method's lines: each top-level `<li>`, `<p>` and heading whole — an ingredient list
+ * inside a step is part of that step — and the loose text between them as a
+ * line of its own (Jetpack opens its directions with a bare paragraph before
+ * the first `<p>`). A `<br>` in loose text breaks it, as it does on screen.
+ */
+function topLevelBlocks(element: HTMLElement): string[] {
+	const lines: string[] = [];
+	let loose = '';
+	const flush = () => {
+		if (loose.trim()) lines.push(loose);
+		loose = '';
+	};
+
+	for (const node of element.childNodes) {
+		const tag = (node as HTMLElement).tagName?.toLowerCase();
+		if (tag === 'li' || tag === 'p' || /^h[1-6]$/.test(tag ?? '')) {
+			flush();
+			lines.push(node.text);
+		} else if (tag && CONTAINERS.has(tag)) {
+			flush();
+			lines.push(...topLevelBlocks(node as HTMLElement));
+		} else if (tag === 'br') {
+			flush();
+		} else {
+			loose += node.text;
+		}
 	}
-	return false;
+
+	flush();
+	return lines;
 }
+
+/** Block wrappers a method's lines are found inside, never lines themselves. */
+const CONTAINERS = new Set(['ol', 'ul', 'div', 'section', 'article']);
 
 function clean(text: string): string {
 	return text.replace(/\s+/g, ' ').trim();

@@ -21,8 +21,13 @@ import { parse, type HTMLElement } from 'node-html-parser';
 import { lookup } from 'node:dns/promises';
 import { isIPv4, isIPv6 } from 'node:net';
 import type { Messages } from '$lib/i18n';
-import { decodeEntities, parseRecipeJsonLd, type RecipeJsonLd } from '$lib/utils/recipe-jsonld';
-import { parseRecipeMicrodata } from '$lib/utils/recipe-microdata';
+import {
+	decodeEntities,
+	parseRecipeJsonLd,
+	tidySteps,
+	type RecipeJsonLd
+} from '$lib/utils/recipe-jsonld';
+import { markedUpSteps, parseRecipeMicrodata } from '$lib/utils/recipe-microdata';
 import {
 	clampCount,
 	INGREDIENTS_MAX,
@@ -60,7 +65,7 @@ const REDIRECT_STATUSES = new Set([301, 302, 303, 307, 308]);
 
 /** Why an import was refused — the words live in `$lib/i18n` (`cooking.import.error`). */
 export type RecipeImportErrorCode =
-	'invalid-url' | 'blocked' | 'unreachable' | 'not-html' | 'too-large' | 'no-recipe';
+	'invalid-url' | 'blocked' | 'unreachable' | 'refused' | 'not-html' | 'too-large' | 'no-recipe';
 
 export class RecipeImportError extends Error {
 	constructor(readonly code: RecipeImportErrorCode) {
@@ -81,6 +86,8 @@ export function importErrorMessage(cause: unknown, m: Messages): string {
 			return m.cooking.import.error.blocked;
 		case 'unreachable':
 			return m.cooking.import.error.unreachable;
+		case 'refused':
+			return m.cooking.import.error.refused;
 		case 'not-html':
 			return m.cooking.import.error.notHtml;
 		case 'too-large':
@@ -126,12 +133,22 @@ export function readFetchedPage({
 	html: string;
 	finalUrl: string;
 }): RecipePage {
-	const jsonLd = parseRecipeJsonLd(html);
+	const jsonLd = withMarkedUpSteps(parseRecipeJsonLd(html), html);
 	const card = jsonLd ?? parseRecipeMicrodata(html);
 	const reader = jsonLd ? 'json-ld' : card ? 'microdata' : null;
 	const { text, ogImage } = readableParts(html);
 
 	return { finalUrl, card, reader, text, image: card?.image ?? ogImage };
+}
+
+/**
+ * A JSON-LD card that lists the ingredients but no method, on a page whose
+ * recipe plugin shows the method in its own markup: the steps are read from
+ * there rather than opening a recipe with nothing to do (→ `markedUpSteps`).
+ */
+function withMarkedUpSteps(card: RecipeJsonLd | null, html: string): RecipeJsonLd | null {
+	if (!card || card.steps.length) return card;
+	return { ...card, steps: tidySteps(markedUpSteps(html)) };
 }
 
 /**
@@ -347,7 +364,7 @@ async function fetchGuarded(
 
 		if (!response.ok) {
 			await discard(response);
-			throw new RecipeImportError('unreachable');
+			throw new RecipeImportError(failureCode(response));
 		}
 
 		return { response, finalUrl: current.href };
@@ -356,6 +373,21 @@ async function fetchGuarded(
 	// Fell out of the loop still redirecting — a redirect chain or a loop.
 	throw new RecipeImportError('unreachable');
 }
+
+/**
+ * Why a page answered with an error. A site that turns bots away — a 403 from
+ * Cloudflare, the 402 "pay per crawl" Dotdash sites (Allrecipes, Serious Eats)
+ * answer, a 429, a challenge page — is `refused`: the link is fine and a browser
+ * opens it, so "check your connection" would send the person the wrong way.
+ * Exported for its tests.
+ */
+export function failureCode(response: Response): RecipeImportErrorCode {
+	if (REFUSING_STATUSES.has(response.status)) return 'refused';
+	if (response.headers.has('cf-mitigated')) return 'refused';
+	return 'unreachable';
+}
+
+const REFUSING_STATUSES = new Set([401, 402, 403, 429]);
 
 function assertHttp(url: URL): void {
 	if (url.protocol !== 'http:' && url.protocol !== 'https:') {
