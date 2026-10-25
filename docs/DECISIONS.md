@@ -2186,3 +2186,18 @@ units | null, name}`, written back as editor lines in the reader's unit spelling
      Shopping screenshots read "0 of 8 done" with no "Recently bought". It failed on `dev` after
      #33 and #34 merged at 23:44 and 23:48. Like the closure banner (#153), the screens now look
      the same at any hour. Both rows keep one shared stamp, so their order is what it was.
+
+156. **Every page has a screenshot or a written excuse** (`tests/conventions/visual-coverage.test.ts`,
+     TESTING.md "Visual"). The visual suite guarded only the screens someone remembered to list:
+     import, new recipe, stores, all four onboarding steps and the invite landing could change
+     their look and no test would notice. Each row in `screens.spec.ts` now names its `route`,
+     and the convention test holds those against every `+page.svelte`, the way `guards.test.ts`
+     holds `requireMember`.
+
+     - **Excused, with reasons in the test**: `/` (always redirects), and the week plan and both
+       history lists (their whole body is the calendar, as before).
+     - **Onboarding signs up a fresh account per test.** Both seeded accounts own a household,
+       and the onboarding pages are only reachable without one. The invite step's random code is
+       masked in the card and in the link.
+     - **The invite landing** reads the `visual` household's code off the members screen, then
+       signs out. The landing never prints the code, so it needs no mask.

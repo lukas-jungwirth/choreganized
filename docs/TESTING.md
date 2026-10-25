@@ -192,7 +192,11 @@ whenever the flag is on, and `scripts/smoke.ts` asserts it is **off** on every d
 `tests/visual/screens.spec.ts` is a table: one full-page screenshot per screen at 390px,
 light and dark where the theme matters, with masks over what follows the calendar (the greeting
 follows the hour, standings the month, due labels the day). A screen whose whole body is the
-calendar — the week plan, history — is not in it. Add a screen by adding a row. **A mask must
+calendar — the week plan, history — is not in it. Add a screen by adding a row, with the
+`route` it shows: **every page must be in the table or excused** —
+`tests/conventions/visual-coverage.test.ts` fails `npm test` for a page in `src/routes` that is
+neither, and an excuse there carries its reason (→ DECISIONS #156). The onboarding screens sign
+up a fresh account per test, since both seeded accounts already own a household. **A mask must
 cover a box that doesn't follow the text** — Home masks its whole `header`, not the `h1`, whose
 width changed with the greeting — and a sample page fixes its own clock: `/dev/kit` renders
 2026-09-11 for ever (→ DECISIONS #144). Something that **appears** with the calendar can't be

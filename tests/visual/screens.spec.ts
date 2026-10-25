@@ -13,7 +13,9 @@
  * Masks cover what changes with the calendar: the greeting follows the hour,
  * standings the month, due labels and "added on" / "joined" lines the day. A
  * screen whose whole body is the calendar (the week plan, history) is not here
- * at all.
+ * at all — it is excused, with that reason, in
+ * tests/conventions/visual-coverage.test.ts, which fails for any page that is
+ * neither here nor excused. Each screen names its `route` for that test.
  */
 import { expect, test, type Page } from '@playwright/test';
 import { SEED } from '../e2e/accounts';
@@ -31,6 +33,8 @@ const HOME_MASKS = ['header:has(h1)', '.strip', '.chore .meta', '.activity .meta
 
 type Screen = {
 	name: string;
+	/** The SvelteKit route id it shows — tests/conventions/visual-coverage.test.ts reads it. */
+	route: string;
 	/** Where to go — or how to get there, when a URL alone won't do. */
 	path: string;
 	navigate?: (page: Page) => Promise<void>;
@@ -58,6 +62,21 @@ async function openRecipe(page: Page): Promise<void> {
 	await page.getByRole('heading', { level: 1 }).waitFor();
 }
 
+/**
+ * A brand-new sign-up with no household, for the onboarding screens — the only
+ * way to reach them, since both seeded accounts own one. A new account per test
+ * (→ tests/e2e/onboarding.spec.ts), so nothing here touches the `visual`
+ * household. The name is fixed: "Welcome, Fresh" is on the screen.
+ */
+async function freshAccount(page: Page): Promise<void> {
+	await page.context().clearCookies();
+	const email = `visual-fresh-${Date.now()}-${Math.random().toString(36).slice(2, 8)}@e2e.test`;
+	const signUp = await page.request.post('/api/auth/sign-up/email', {
+		data: { name: 'Fresh Person', email, password: 'e2e-password-fresh' }
+	});
+	expect(signUp.ok()).toBe(true);
+}
+
 async function openAiFeatures(page: Page): Promise<void> {
 	await page.goto('/settings');
 	await page.getByRole('button', { name: /^AI features/ }).click();
@@ -68,27 +87,35 @@ async function openAiFeatures(page: Page): Promise<void> {
 }
 
 const SCREENS: Screen[] = [
-	{ name: 'login', path: '/login', signedOut: true, fullPage: true },
-	{ name: 'kit-light', path: '/dev/kit', fullPage: true },
-	{ name: 'kit-dark', path: '/dev/kit', theme: 'dark', fullPage: true },
-	{ name: 'home', path: '/home', mask: HOME_MASKS, bottom: true },
-	{ name: 'home-dark', path: '/home', theme: 'dark', mask: HOME_MASKS },
-	{ name: 'shopping', path: '/shopping', bottom: true },
-	{ name: 'shopping-dark', path: '/shopping', theme: 'dark' },
+	{ name: 'login', route: '/login', path: '/login', signedOut: true, fullPage: true },
+	{ name: 'kit-light', route: '/dev/kit', path: '/dev/kit', fullPage: true },
+	{ name: 'kit-dark', route: '/dev/kit', path: '/dev/kit', theme: 'dark', fullPage: true },
+	{ name: 'home', route: '/(app)/home', path: '/home', mask: HOME_MASKS, bottom: true },
+	{ name: 'home-dark', route: '/(app)/home', path: '/home', theme: 'dark', mask: HOME_MASKS },
+	{ name: 'shopping', route: '/(app)/shopping', path: '/shopping', bottom: true },
+	{ name: 'shopping-dark', route: '/(app)/shopping', path: '/shopping', theme: 'dark' },
 	// `.footer` is the overdue row's "reminded yesterday & this morning" line.
 	{
 		name: 'tasks',
+		route: '/(app)/tasks',
 		path: '/tasks',
 		mask: ['.task .meta', '.task .footer', '.summary'],
 		bottom: true
 	},
 	// A card's "30 min · added Sep 11".
-	{ name: 'recipes', path: '/cooking/recipes', mask: ['.meta'] },
-	{ name: 'recipe', path: '', navigate: openRecipe, bottom: true },
+	{ name: 'recipes', route: '/(app)/cooking/recipes', path: '/cooking/recipes', mask: ['.meta'] },
+	{
+		name: 'recipe',
+		route: '/(app)/cooking/recipes/[id]',
+		path: '',
+		navigate: openRecipe,
+		bottom: true
+	},
 	// The editor [3c]: each step's ingredient chips and, under them, its timer
 	// chip — "auto" where the text names a duration (→ plan 21).
 	{
 		name: 'recipe-edit',
+		route: '/(app)/cooking/recipes/[id]/edit',
 		path: '',
 		navigate: async (page) => {
 			await openRecipe(page);
@@ -99,6 +126,7 @@ const SCREENS: Screen[] = [
 	},
 	{
 		name: 'cook-mode',
+		route: '/(app)/cooking/recipes/[id]/cook',
 		path: '',
 		navigate: async (page) => {
 			await openRecipe(page);
@@ -106,16 +134,29 @@ const SCREENS: Screen[] = [
 			await page.getByText(/^Step 1 of/).waitFor();
 		}
 	},
-	{ name: 'settings', path: '/settings', bottom: true },
-	{ name: 'settings-dark', path: '/settings', theme: 'dark', bottom: true },
+	{ name: 'settings', route: '/(app)/settings', path: '/settings', bottom: true },
+	{
+		name: 'settings-dark',
+		route: '/(app)/settings',
+		path: '/settings',
+		theme: 'dark',
+		bottom: true
+	},
 	// The AI features sheet as a household first meets it: nothing set up yet,
 	// the free-tier note above the two slots (→ plan 20).
-	{ name: 'settings-ai', path: '', navigate: openAiFeatures },
-	{ name: 'settings-ai-dark', path: '', navigate: openAiFeatures, theme: 'dark' },
+	{ name: 'settings-ai', route: '/(app)/settings', path: '', navigate: openAiFeatures },
+	{
+		name: 'settings-ai-dark',
+		route: '/(app)/settings',
+		path: '',
+		navigate: openAiFeatures,
+		theme: 'dark'
+	},
 	// Setting up the main provider, the fake Gemini's model list loaded by the
 	// pasted key. Nothing is saved, so the household stays as seeded.
 	{
 		name: 'settings-ai-setup',
+		route: '/(app)/settings',
 		path: '',
 		navigate: async (page) => {
 			await openAiFeatures(page);
@@ -127,7 +168,95 @@ const SCREENS: Screen[] = [
 		}
 	},
 	// "Owner · joined Sep 11", and the pending invite's code, random per seed.
-	{ name: 'members', path: '/settings/members', mask: ['.member .meta', '.invite .pending'] }
+	{
+		name: 'members',
+		route: '/(app)/settings/members',
+		path: '/settings/members',
+		mask: ['.member .meta', '.invite .pending']
+	},
+	// The add-a-recipe screens [3d]: import by link (AI off for this household, so
+	// the plain link field), and the empty editor.
+	{
+		name: 'recipe-import',
+		route: '/(app)/cooking/recipes/import',
+		path: '/cooking/recipes/import'
+	},
+	{
+		name: 'recipe-new',
+		route: '/(app)/cooking/recipes/new',
+		path: '/cooking/recipes/new',
+		bottom: true
+	},
+	{ name: 'stores', route: '/(app)/shopping/stores', path: '/shopping/stores' },
+	// Onboarding [5a]–[5d], each as a fresh sign-up meets it. The invite step's
+	// code is random, so it is masked — in the card and in the link under it.
+	{
+		name: 'onboarding',
+		route: '/onboarding',
+		path: '',
+		navigate: async (page) => {
+			await freshAccount(page);
+			await page.goto('/onboarding');
+			await page.getByRole('heading', { name: 'Welcome, Fresh' }).waitFor();
+		},
+		fullPage: true
+	},
+	{
+		name: 'onboarding-create',
+		route: '/onboarding/create',
+		path: '',
+		navigate: async (page) => {
+			await freshAccount(page);
+			await page.goto('/onboarding/create');
+			await page.getByLabel('Household name').waitFor();
+		},
+		fullPage: true
+	},
+	{
+		name: 'onboarding-invite',
+		route: '/onboarding/invite',
+		path: '',
+		navigate: async (page) => {
+			await freshAccount(page);
+			await page.goto('/onboarding/create');
+			await page.getByLabel('Household name').fill('Testgasse 1');
+			await page.getByLabel('Your display name').fill('Fresh');
+			await page.getByRole('button', { name: 'Continue' }).click();
+			await page.waitForURL(/\/onboarding\/invite$/);
+			await page.locator('.code').waitFor();
+		},
+		mask: ['.code', '.link .url'],
+		fullPage: true
+	},
+	{
+		name: 'onboarding-join',
+		route: '/onboarding/join',
+		path: '',
+		navigate: async (page) => {
+			await freshAccount(page);
+			await page.goto('/onboarding/join');
+			await page.getByRole('heading', { level: 1 }).waitFor();
+		},
+		fullPage: true
+	},
+	// The public invite landing [5e], as someone who got the link sees it: signed
+	// out, the household's real code. The code is random per seed, so read it off
+	// the members screen first; the landing itself never prints it.
+	{
+		name: 'invite',
+		route: '/j/[code]',
+		path: '',
+		navigate: async (page) => {
+			await page.goto('/settings/members');
+			const detail = await page.locator('.invite .pending .detail').innerText();
+			const code = detail.match(/[A-Z2-9]{3}-?[A-Z2-9]{3}/)?.[0];
+			expect(code, `an invite code in "${detail}"`).toBeTruthy();
+			await page.context().clearCookies();
+			await page.goto(`/j/${code!.replace('-', '')}`);
+			await page.getByRole('heading', { level: 1 }).waitFor();
+		},
+		fullPage: true
+	}
 ];
 
 async function settle(page: Page): Promise<void> {
