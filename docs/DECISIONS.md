@@ -2303,7 +2303,9 @@ units | null, name}`, written back as editor lines in the reader's unit spelling
        1 h. Each L1 compaction runs that cleanup anyway. L1 every 15 min, L2 every 6 h, a
        daily snapshot kept 14 days, `sync-interval: 10s` (uploads are free, and 10 s is the
        crash-loss window). Worst case about 470 LIST and 100 GET a day, about 75 LIST on an
-       idle day, measured against a counting proxy (BACKUP.md "Request budget").
+       idle day. Those are estimates from Litestream's source. Measured against a counting
+       proxy: one L1 merge was 3 LIST, 1 delete and 1 upload, and an idle stretch made no
+       request at all (BACKUP.md "Request budget").
      - **The app now exits on SIGTERM.** It never did: node-cron's tick kept Node alive after
        adapter-node closed HTTP, and Docker SIGKILLed it (exit 137). Under Litestream that
        kill would cut the last upload. `hooks.server.ts` listens for `sveltekit:shutdown`,

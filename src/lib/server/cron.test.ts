@@ -4,7 +4,7 @@
  * Only the start and the stop of the schedule, not the jobs: those have their own tests
  * through the services they call. The stop is what lets the built server exit on SIGTERM
  * (→ hooks.server.ts). While any task is registered, its timer keeps Node alive, Docker
- * SIGKILLs it, and under Litestream the last upload goes with it (→ DECISIONS #157).
+ * SIGKILLs it, and under Litestream the last upload goes with it (→ DECISIONS #158).
  */
 import assert from 'node:assert/strict';
 import { getTasks } from 'node-cron';

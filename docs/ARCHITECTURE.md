@@ -269,7 +269,7 @@ prompt / subscribed).
   empty volume from the replica, then runs `litestream replicate -exec "node build/index.js"`.
   With none set, the app starts alone, as in dev and the tests. Config in `litestream.yml`,
   runbook, Coolify variables and B2 request budget in [BACKUP.md](BACKUP.md)
-  (→ [DECISIONS #157](DECISIONS.md)). Recipe photos (`/data/uploads`) are files, not rows,
+  (→ [DECISIONS #158](DECISIONS.md)). Recipe photos (`/data/uploads`) are files, not rows,
   and are not replicated.
 - **Graceful stop.** On SIGTERM adapter-node closes HTTP (`SHUTDOWN_TIMEOUT=3`), then
   `hooks.server.ts` stops the cron tick, closes the database and exits. Without that, the

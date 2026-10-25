@@ -1,5 +1,5 @@
 #!/bin/sh
-# The container's start (→ docs/BACKUP.md, DECISIONS #157). The app command arrives as
+# The container's start (→ docs/BACKUP.md, DECISIONS #158). The app command arrives as
 # "$@" (the Dockerfile's CMD, `node build/index.js`).
 #
 # No LITESTREAM_* variable set: run the app exactly as before, with no Litestream. That

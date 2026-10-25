@@ -2,7 +2,7 @@
 
 How the household's database is kept safe, and how to get it back. The pieces:
 `litestream.yml`, `scripts/docker-entrypoint.sh`, the `Dockerfile`, and the nightly backup in
-`lib/server/backup.ts` (→ DECISIONS #91, #157).
+`lib/server/backup.ts` (→ DECISIONS #91, #158).
 
 | Layer                      | Where                                      | History                                      | Covers       |
 | -------------------------- | ------------------------------------------ | -------------------------------------------- | ------------ |
@@ -92,6 +92,12 @@ on every pass and filters what it gets back itself, so the cost is in how often 
 | Restore into an empty volume                | rarely                            | about 25      | ~30 or fewer    |
 | **Worst case:** writes every 15 min all day |                                   | **≈ 470/day** | **≈ 100/day**   |
 | **Idle day** (nothing written)              |                                   | **≈ 75/day**  | **0**           |
+
+The table is estimated from Litestream 0.5.17's source. A counting proxy in front of a local
+S3 server (2026-10-25) confirmed the pieces it could see: no request at all in three idle
+minutes, 3 LIST + 1 delete + 1 upload for a 15-minute merge, and about 40 LIST for a restore
+plus start. Right after a restore, the first merge also GETs the level-0 files the previous
+container wrote (5 in the test), once.
 
 Starts add up: ten deploys in a day add about 400 LIST. All of it stays far under the 2,500
 a day. The value that mattered: Litestream's default `l0-retention-check-interval` of 15 s

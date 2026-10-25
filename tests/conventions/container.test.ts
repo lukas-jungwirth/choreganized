@@ -1,5 +1,5 @@
 /**
- * The container's start (→ docs/BACKUP.md, DECISIONS #157). Four files have to agree: the
+ * The container's start (→ docs/BACKUP.md, DECISIONS #158). Four files have to agree: the
  * Dockerfile runs scripts/docker-entrypoint.sh, the script decides from the LITESTREAM_*
  * variables whether Litestream runs, litestream.yml reads those variables, and
  * .env.example documents them. The script runs here for real, under `sh`, with

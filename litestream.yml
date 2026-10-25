@@ -1,5 +1,5 @@
 # Litestream 0.5: the database, continuously copied to S3-compatible storage
-# (→ docs/BACKUP.md, DECISIONS #157). The image installs this file at /etc/litestream.yml
+# (→ docs/BACKUP.md, DECISIONS #158). The image installs this file at /etc/litestream.yml
 # and scripts/docker-entrypoint.sh starts Litestream only when every LITESTREAM_* variable
 # it lists is set, so `${…}` here is never expanded to an empty string.
 #
@@ -10,8 +10,9 @@
 # and 2,500 Class C (LIST) requests a day. Uploads and deletes are Class A, which is free.
 # Litestream lists a whole level on every pass (there is no "start after"), so what costs
 # is how often it lists, not how often it uploads. Worst case with these values, writes in
-# every 15-minute window all day: about 470 LIST and 100 GET a day. Budget in
-# docs/BACKUP.md "Request budget".
+# every 15-minute window all day: about 470 LIST and 100 GET a day, estimated from
+# Litestream's source. Measured through a counting proxy: one 15-minute merge was 3 LIST,
+# and an idle stretch was nothing. Budget in docs/BACKUP.md "Request budget".
 
 # Docker sends SIGKILL 10 s after SIGTERM. The app gets up to 5 of them (SHUTDOWN_TIMEOUT
 # in the Dockerfile, plus a running cron job) and Litestream's last upload gets these 4.
