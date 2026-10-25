@@ -44,8 +44,23 @@ jobs:
           # deployed, so triage can tell "already fixed" from "still broken".
           ref: dev
           fetch-depth: 0
+          # Triage reads and never pushes, and it may WebFetch a page an
+          # untrusted issue names: no job token left in .git/config to send
+          # there (→ plan 25).
+          persist-credentials: false
+
+      # Node and the app's dependencies: `npm run import:probe` reads a linked
+      # recipe page through the importer itself (→ plan 25), and the run summary
+      # below is a Node script.
+      - uses: actions/setup-node@v6
+        with:
+          node-version: 22
+          cache: npm
+
+      - run: npm ci --no-audit --no-fund
 
       - uses: anthropics/claude-code-action@v1
+        id: claude
         with:
           # No `github_token:` on purpose. Omitted, the action mints a
           # repo-scoped token from the Claude GitHub App and comments as
@@ -59,8 +74,23 @@ jobs:
           # reading the issue, deduping, grepping the code and setting labels,
           # and died before it could write the comment — which is the whole
           # output. A run costs roughly $0.30; the ceiling is a stop, not a
-          # target. (Comments must stay out of the block scalar below: inside
-          # `|` a # is literal text and would be passed to the CLI as an arg.)
+          # target. The model is pinned (→ plan 25): Sonnet is fast and cheap
+          # enough for reading, and the action's default can change under a
+          # Claude Code update without anyone noticing. WebFetch reads a page
+          # the report links to — without it, headless Claude Code refuses
+          # silently and the agent guesses (issue #31). (Comments must stay out
+          # of the block scalar below: inside `|` a # is literal text and would
+          # be passed to the CLI as an arg.)
           claude_args: |
+            --model claude-sonnet-5-5
             --max-turns 40
-            --allowedTools "Read,Grep,Glob,Bash(git log:*),Bash(git show:*),Bash(gh issue view:*),Bash(gh issue list:*),Bash(gh issue comment:*),Bash(gh issue edit:*)"
+            --allowedTools "Read,Grep,Glob,WebFetch,Bash(git log:*),Bash(git show:*),Bash(gh issue view:*),Bash(gh issue list:*),Bash(gh issue comment:*),Bash(gh issue edit:*),Bash(npm run import:probe:*)"
+
+      # The receipt (→ plan 25): model, turns, cost, every denied tool call and
+      # every command, on the run's summary page — no message text. Runs when
+      # the agent failed too; that is when it matters most.
+      - name: Run summary
+        if: always()
+        env:
+          EXECUTION_FILE: ${{ steps.claude.outputs.execution_file }}
+        run: node scripts/agent-run-summary.ts "$EXECUTION_FILE" --title Triage

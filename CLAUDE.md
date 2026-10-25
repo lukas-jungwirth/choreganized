@@ -72,6 +72,7 @@ npm run check:migrations  # schema.ts edited without a migration? (also run by `
 npm run db:generate    # new migration after editing schema.ts
 npm run db:seed -- you@example.com   # demo data for a signed-in user (idempotent)
 npm run db:studio      # inspect the DB
+npm run import:probe -- <url> [--save <name>]  # what the recipe importer reads on a page
 npm run format         # prettier
 ```
 
@@ -138,7 +139,7 @@ environment, say so explicitly in the handoff — never claim untested things wo
 
 `src/lib/server/` db + auth + services + push + cron · `src/lib/components/` ui / shell /
 feature · `src/routes/` see ARCHITECTURE.md routing map · `tests/` integration · conventions ·
-e2e · visual (+ `helpers/`) · `scripts/` seed, e2e server, visual runner, smoke, migration check ·
+e2e · visual (+ `helpers/`) · `scripts/` seed, e2e server, visual runner, smoke, migration check, import probe, agent run summary ·
 `.github/workflows/` ci · smoke · update-snapshots · triage · build · `design/` mockups · `docs/` specs
 & plans · `static/` manifest + icons · `Dockerfile` single-container deploy (SQLite volume
 at `/data`).
