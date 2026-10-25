@@ -36,6 +36,9 @@ plus your session date). Note deviations in the plan file and in DECISIONS.md.
 | 22  | [Smarter import: link + AI, Microdata, enriched drafts](22-smarter-import.md) | done (2026-10-18) | 20, 21                   |
 | 23  | [Amounts in step text follow servings](23-step-amounts.md)                    | done (2026-10-18) | 07                       |
 | 24  | [Austrian wording (fixed word list)](24-austrian-wording.md)                  | done (2026-10-18) | 22                       |
+| 25  | [Agent lane: no silent refusals, runs you can check](25-agent-evidence.md)    | todo              | 18                       |
+| 26  | [Agent lane: reproduce first, review second](26-agent-reproduce-review.md)    | todo              | 25                       |
+| 27  | [Agent lane: ideas as proposals, a hardened lane](27-agent-ideas-safety.md)   | todo              | 26                       |
 
 Work done after the twelve plans, tracked here so the queue stays the whole story:
 
