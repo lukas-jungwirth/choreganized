@@ -93,6 +93,36 @@ describe('parseRecipeMicrodata', () => {
 		assert.deepEqual(recipe?.steps, ['Toast the bread.', 'Butter it.']);
 	});
 
+	it('keeps a step with an ingredient list as one step (issue #31)', () => {
+		const recipe = parseRecipeMicrodata(
+			page(`
+			<div itemscope itemtype="https://schema.org/Recipe">
+				<span itemprop="name">Quiche</span>
+				<div itemprop="recipeInstructions" itemscope itemtype="https://schema.org/HowToStep">
+					<span itemprop="name">Eier</span>
+					<ul><li>4 Eier</li><li>200 ml Sahne</li></ul>
+					<p>Eier und Sahne verrühren.</p>
+				</div>
+			</div>`)
+		);
+		assert.deepEqual(recipe?.steps, ['Eier 4 Eier 200 ml Sahne Eier und Sahne verrühren.']);
+	});
+
+	it('does not split a nested list inside a plain method’s paragraph', () => {
+		const recipe = parseRecipeMicrodata(
+			page(`
+			<div itemscope itemtype="https://schema.org/Recipe">
+				<span itemprop="name">Quiche</span>
+				<div itemprop="recipeInstructions">
+					<li>Zutaten mischen: <ul><li>Eier</li><li>Sahne</li></ul> Dann backen.</li>
+					<li>Servieren.</li>
+				</div>
+			</div>`)
+		);
+		assert.equal(recipe?.steps.length, 2);
+		assert.match(recipe!.steps[0], /Eier.*Sahne.*Dann backen/);
+	});
+
 	it('takes a type list and a meta image', () => {
 		const recipe = parseRecipeMicrodata(
 			page(`

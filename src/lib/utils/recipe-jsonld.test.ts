@@ -11,6 +11,7 @@
  * pure and imported by its relative path with the extension.
  */
 import assert from 'node:assert/strict';
+import { readFileSync } from 'node:fs';
 import { describe, it } from 'vitest';
 import { parseRecipeJsonLd } from './recipe-jsonld.ts';
 
@@ -189,6 +190,35 @@ describe('parseRecipeJsonLd — instructions', () => {
 		assert.deepEqual(recipe?.steps, ['Step one.', 'Step two.', 'Step three.']);
 	});
 
+	it('keeps a step’s ingredient lines with its instruction (issue #31)', () => {
+		const recipe = parseRecipeJsonLd(
+			page({
+				'@type': 'Recipe',
+				name: 'Quiche',
+				recipeInstructions:
+					'4Eier (Größe M),\n200 mlSahne (30 % Fett),\netwas Mehl zum Bearbeiten\nEier und Sahne verrühren.\nLachs in Würfel schneiden.'
+			})
+		);
+		assert.deepEqual(recipe?.steps, [
+			'4Eier (Größe M), 200 mlSahne (30 % Fett), etwas Mehl zum Bearbeiten Eier und Sahne verrühren.',
+			'Lachs in Würfel schneiden.'
+		]);
+	});
+
+	it('does not make a step of a lone-word name without text (issue #31)', () => {
+		const recipe = parseRecipeJsonLd(
+			page({
+				'@type': 'Recipe',
+				name: 'x',
+				recipeInstructions: [
+					{ '@type': 'HowToStep', name: 'Eier' },
+					{ '@type': 'HowToStep', name: 'Eier', text: 'Eier verrühren.' }
+				]
+			})
+		);
+		assert.deepEqual(recipe?.steps, ['Eier verrühren.']);
+	});
+
 	it('strips tags and decodes entities in step text', () => {
 		const recipe = parseRecipeJsonLd(
 			page({
@@ -198,6 +228,56 @@ describe('parseRecipeJsonLd — instructions', () => {
 			})
 		);
 		assert.deepEqual(recipe?.steps, ['Salz & Pfeffer dazugeben.']);
+	});
+
+	it('joins a HowToStep text sent as an array of fragments into one step', () => {
+		const recipe = parseRecipeJsonLd(
+			page({
+				'@type': 'Recipe',
+				name: 'x',
+				recipeInstructions: [
+					{ '@type': 'HowToStep', text: ['Mit Butter', 'Salz', 'Ei verkneten.'] },
+					{ '@type': 'HowToStep', text: ['Ofen vorheizen.', 'Form fetten.'] }
+				]
+			})
+		);
+		assert.deepEqual(recipe?.steps, [
+			'Mit Butter, Salz, Ei verkneten.',
+			// A fragment that already ends a sentence needs no comma after it.
+			'Ofen vorheizen. Form fetten.'
+		]);
+	});
+});
+
+/**
+ * Issue #31, from the real page: einfachkochen.de sends each `HowToStep.text` as an
+ * array, split on every comma. Reading only the first fragment left Schritt 4 as "Eier".
+ */
+describe('parseRecipeJsonLd — einfachkochen.de (issue #31)', () => {
+	const html = readFileSync(
+		new URL('./fixtures/einfachkochen-quiche.html', import.meta.url),
+		'utf8'
+	);
+	const steps = parseRecipeJsonLd(html)?.steps ?? [];
+
+	it('keeps Schritt 4 whole, not just "Eier"', () => {
+		assert.match(steps[3], /glattrühren/);
+		assert.match(steps[3], /Quicheform/);
+	});
+
+	it('keeps step 1 to its end', () => {
+		assert.match(steps[0], /kaltstellen/);
+	});
+
+	it('reads every step the way the page prints it', () => {
+		assert.deepEqual(steps, [
+			'Für den Teig Mehl und Backpulver mischen. Mit Butter, Salz, Ei und Wasser zu einem glatten Teig verkneten und kaltstellen.',
+			'Für die Füllung Spinat auftauen, abtropfen lassen und gut ausdrücken. Knoblauch abziehen und fein würfeln. Porree waschen, abtropfen lassen, putzen und in feine Scheiben schneiden.',
+			'Backofen auf 200 Grad Ober- und Unterhitze (Umluft: 180°C) vorheizen. Eine Quicheform (Ø 26 cm) einfetten. Knoblauchwürfel und Porree in einer Pfanne in Öl 1-2 Minuten glasig dünsten, Spinat untermengen und mit Salz, Pfeffer und Muskatnuss abschmecken.',
+			'Eier, Sahne, Crème fraîche und Senf glattrühren und mit Salz und Pfeffer würzen. Lachsfilet in 2-3 cm große Würfel schneiden. Teig auf einer bemehlten Arbeitsfläche rund ausrollen (ca. Ø 28 cm), mit bemehlten Händen in die Quicheform drücken und einen Rand formen.',
+			'5 EL der Sahnemischung auf dem Teig verteilen, mit Spinat belegen, Lachswürfel gleichmäßig darauf verteilen, leicht eindrücken, mit der restlichen Sahnemischung begießen und im vorgeheizten Ofen auf der untersten Schiene ca. 35 Minuten backen.',
+			'Quiche etwas abkühlen lassen, aus der Form lösen, in Stücke schneiden und nach Wunsch mit buntem Blattsalat servieren. Die Quiche ergibt ca. 8 große Stücke. Guten Appetit!'
+		]);
 	});
 });
 

@@ -5,3 +5,5 @@ data
 design
 package-lock.json
 src/lib/server/db/migrations
+# third-party pages kept byte for byte as import fixtures
+src/lib/utils/fixtures
