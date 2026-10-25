@@ -501,8 +501,8 @@ where it can still be acted on (→ [DECISIONS #131](DECISIONS.md)).
   **Save** creates the recipe through the normal path and attaches the photo; nothing is stored
   before Save but the temp photo, and an abandoned import's photo is swept nightly.
 - **Fetching is guarded** (the server fetches a user-supplied URL): `http(s)` only,
-  loopback / private / link-local hosts refused _before any request_ and re-checked on every
-  redirect hop, redirects capped (~5), ~10 s timeout, ~3 MB page cap, `text/html` only. Each
+  loopback / private / link-local hosts refused _before any request_ — including an IPv4 one
+  wrapped in IPv6 (`[::ffff:127.0.0.1]`, NAT64, 6to4) — and re-checked on every redirect hop, redirects capped (~5), ~10 s timeout, ~3 MB page cap, `text/html` only. Each
   failure has its own translated message — unreachable · blocked · not a page · too large · no
   recipe found. A page with no recipe offers manual entry, and — when AI features are set up —
   the AI fallback below.

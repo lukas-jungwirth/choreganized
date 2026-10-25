@@ -40,9 +40,12 @@ import {
 	type Extracted,
 	type ImportContext
 } from '$lib/server/services/ai-import';
-import { claimImportedPhoto, createRecipe } from '$lib/server/services/recipes';
 import {
-	deleteUpload,
+	claimImportedPhoto,
+	createRecipe,
+	discardImportedPhoto
+} from '$lib/server/services/recipes';
+import {
 	reencodeUpload,
 	storePhotoFromForm,
 	storeRecipePhoto,
@@ -323,10 +326,10 @@ export const actions: Actions = {
 		if (picked) {
 			// A fresh pick wins; the imported photo is now litter.
 			imagePath = picked;
-			if (imported) deleteUpload(imported);
+			if (imported) discardImportedPhoto(imported);
 		} else if (form.get('removePhoto') === '1') {
 			imagePath = null;
-			if (imported) deleteUpload(imported);
+			if (imported) discardImportedPhoto(imported);
 		} else {
 			// Attach the imported temp — but only if it's genuinely an unclaimed
 			// temp file (→ `claimImportedPhoto`); a forged path drops to no photo.
