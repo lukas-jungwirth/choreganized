@@ -28,6 +28,12 @@ You are also in charge of the repository. A piece of work is not finished when t
    smoke workflow checks it; promote with a PR `dev → main`. **A finished step ends as working
    code on `main`** — the household's deploy tracks it. Branch protection requires the three CI
    checks on both branches, so the PR is the only road; a direct push is refused.
+5. **Leave the checkout clean**: GitHub deletes the merged branch, but nothing deletes your local
+   copy. After the merge, `git switch dev && git pull`, delete the branch (`git branch -d`), and
+   `git worktree remove` the worktree if you worked in one. Anything older:
+   `git fetch --prune && git branch -vv | awk '/: gone]/{print $1}' | xargs -r git branch -d`
+   (`-d` refuses an unmerged branch). Never delete a branch or worktree with uncommitted work or
+   an open PR; it may be another session's.
 
 Don't ship a step that fails its own acceptance criteria; leave it on its branch and say what's
 left.
