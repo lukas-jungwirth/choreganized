@@ -7,6 +7,7 @@ import assert from 'node:assert/strict';
 import { createServer } from 'node:http';
 import { describe, it } from 'vitest';
 import {
+	failureCode,
 	fetchRecipePage,
 	htmlToReadableText,
 	isBlockedAddress,
@@ -82,7 +83,7 @@ describe('readFetchedPage', () => {
 
 	it('names JSON-LD when the page has a JSON-LD card', () => {
 		const page = read(
-			`<script type="application/ld+json">{"@type":"Recipe","name":"Gulasch"}</script>`
+			`<script type="application/ld+json">{"@type":"Recipe","name":"Gulasch","recipeIngredient":["1 kg Rindfleisch"]}</script>`
 		);
 		assert.equal(page.reader, 'json-ld');
 		assert.equal(page.card?.name, 'Gulasch');
@@ -90,10 +91,18 @@ describe('readFetchedPage', () => {
 
 	it('names Microdata when only Microdata carries the card', () => {
 		const page = read(
-			`<div itemscope itemtype="https://schema.org/Recipe"><h1 itemprop="name">Strudel</h1></div>`
+			`<div itemscope itemtype="https://schema.org/Recipe"><h1 itemprop="name">Strudel</h1><li itemprop="recipeIngredient">6 Äpfel</li></div>`
 		);
 		assert.equal(page.reader, 'microdata');
 		assert.equal(page.card?.name, 'Strudel');
+	});
+
+	it('reads a JSON-LD card’s missing method from the plugin markup on the page', () => {
+		const page = read(
+			`<script type="application/ld+json">{"@type":"Recipe","name":"Pierogi","recipeIngredient":["1 Zwiebel"]}</script>
+			<div class="e-instructions"><p>Zwiebel anbraten.</p><p>1. Pierogi dazu.</p></div>`
+		);
+		assert.deepEqual(page.card?.steps, ['Zwiebel anbraten.', 'Pierogi dazu.']);
 	});
 
 	it('names no reader when there is no card', () => {
@@ -162,6 +171,22 @@ describe('fetchRecipePage', () => {
 			assert.equal(requests, 0);
 		} finally {
 			server.close();
+		}
+	});
+});
+
+describe('failureCode', () => {
+	const answer = (status: number, headers: Record<string, string> = {}) =>
+		failureCode(new Response(null, { status, headers }));
+
+	it('calls a site that turns the server away refused, not unreachable', () => {
+		for (const status of [401, 402, 403, 429]) assert.equal(answer(status), 'refused', `${status}`);
+		assert.equal(answer(503, { 'cf-mitigated': 'challenge' }), 'refused');
+	});
+
+	it('keeps a missing or broken page unreachable', () => {
+		for (const status of [404, 410, 500, 502, 503]) {
+			assert.equal(answer(status), 'unreachable', `${status}`);
 		}
 	});
 });

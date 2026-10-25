@@ -169,7 +169,10 @@ async function importLink(event: RequestEvent, ai: 'off' | 'if-set-up' | 'ask') 
 	try {
 		page = await readRecipePage(url);
 	} catch (cause) {
-		return fail(422, { fetchError: importErrorMessage(cause, m), url });
+		// A site that turns the server away still opens in the browser: the screen
+		// points at the ways to bring the recipe over from there.
+		const refused = cause instanceof RecipeImportError && cause.code === 'refused';
+		return fail(422, { fetchError: importErrorMessage(cause, m), url, refused });
 	}
 
 	const context = contextFor(householdId, form, m);

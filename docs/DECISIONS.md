@@ -2247,3 +2247,36 @@ units | null, name}`, written back as editor lines in the reader's unit spelling
      deleted whatever `importedPhoto` path the form sent when a new photo replaced it; a forged
      path naming an attached recipe photo deleted that file. `discardImportedPhoto` runs it
      through `claimImportedPhoto` first, so only an unclaimed temp goes.
+
+159. **The recipe readers tidy what sites send; an empty card is no card; a refusal says so**
+     (`utils/recipe-jsonld.ts`, `utils/recipe-microdata.ts`, `utils/ingredients.ts`,
+     `utils/timer-parse.ts`, `server/recipe-import.ts`, audit 2026-10-25). Twenty-four real
+     links imported without AI turned up the gaps, each now pinned by a test, three against
+     saved pages (`fixtures/zuckerjagdwurst-curry`, `einfachkochen-kaiserschmarrn`,
+     `smittenkitchen-pierogi`):
+     - **Which card.** A lecker.de listing's JSON-LD names a `Recipe` with nothing in it, and it
+       opened as an empty editor instead of "no recipe — try with AI?". Now every `Recipe` on
+       the page is weighed (nested ones too: `mainEntity`, `ItemList`, `schema:Recipe`), the one
+       with the most ingredients + steps wins, and one with neither counts as no card, in both
+       readers. Improve with AI couldn't rescue an empty card: it must keep the card's rows.
+     - **Tidying, in both readers** (`tidySteps`, `tidyIngredientLines`): a method sent as one
+       HTML string splits at `<li>`/`<p>`/`<br>` (it was one giant step); "1. " / "Schritt 2:"
+       come off; a heading step (short, ends on a colon) is joined to the next step rather than
+       dropped, since it says which part of the dish the steps are for; a section title among
+       the ingredients **is** dropped — rows have no groups, and on the shopping list it would
+       be a thing to buy; a line with an unclosed bracket takes the next one in when that one
+       closes it (einfachkochen splits "Milch (1,8 % Fett)" on its comma, as it split steps in
+       #31). The card's rows are tidied before AI sees them, so the fidelity rule (#148)
+       compares tidy with tidy.
+     - **A card without a method** (smittenkitchen's Jetpack card marks ingredients as
+       Microdata, directions only as h-recipe `e-instructions`) takes its steps from the
+       plugin's markup: `e-instructions`, Jetpack, WP Recipe Maker, Tasty, Mediavine. Loose
+       text before a block's first `<p>` is a step of its own.
+     - **Ranges** in a typed or imported line keep the first value and the unit ("2-3 EL Öl" →
+       2 tbsp; it read as 2 of "-3 EL Öl"), the rule timers already follow. **"1½ Std."** and
+       "½ Stunde" now give a timer. Decimal ISO hours (`PT1.5H`) and double-escaped entities
+       read too.
+     - **Refused** is its own failure: 401/402/403/429 or a `cf-mitigated` header. Allrecipes,
+       Serious Eats and Simply Recipes answer 402 ("pay per crawl"), Budget Bytes and Rezeptwelt
+       403; "check your connection" sent people the wrong way. No header gets past these, so the
+       message points at the browser, and with AI on, at the text and photo modes.

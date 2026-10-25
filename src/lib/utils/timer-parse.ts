@@ -56,8 +56,19 @@ export function timerHref(recipeId: string | null, stepIndex: number | null): st
 	return `/cooking/recipes/${recipeId}/cook` + (stepIndex === null ? '' : `?step=${stepIndex + 1}`);
 }
 
-/** "400", "1.5", "1,5" — a comma is how half the world writes a decimal point. */
-const NUMBER = String.raw`\d+(?:[.,]\d+)?`;
+/**
+ * "400", "1.5", "1,5" — a comma is how half the world writes a decimal point —
+ * and "1½", "1 ½", "½": German recipes write "1½ Std." as often as "1,5 Std.".
+ */
+const NUMBER = String.raw`(?:\d+(?:[.,]\d+)?(?:\s?[½¼¾⅓⅔])?|[½¼¾⅓⅔])`;
+
+const FRACTIONS: Record<string, number> = {
+	'½': 0.5,
+	'¼': 0.25,
+	'¾': 0.75,
+	'⅓': 1 / 3,
+	'⅔': 2 / 3
+};
 
 /**
  * "8–10", "8-10", "8 to 10", "8 or 10", "8 bis 10" — recipes hedge, and the
@@ -192,7 +203,10 @@ function hoursTail(
 }
 
 function decimal(value: string): number {
-	return Number(value.replace(',', '.'));
+	const glyph = value.at(-1) ?? '';
+	if (!(glyph in FRACTIONS)) return Number(value.replace(',', '.'));
+	const whole = value.slice(0, -1).trim();
+	return (whole ? Number(whole.replace(',', '.')) : 0) + FRACTIONS[glyph];
 }
 
 /**

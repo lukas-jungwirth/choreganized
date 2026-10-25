@@ -135,6 +135,19 @@ describe('parseStepDuration — German', () => {
 	});
 });
 
+describe('parseStepDuration — fractions', () => {
+	it('reads a fraction glyph, with or without a whole number before it', () => {
+		assert.equal(parseStepDuration('1½ Std. schmoren'), 5400);
+		assert.equal(parseStepDuration('1 ½ Stunden ziehen lassen'), 5400);
+		assert.equal(parseStepDuration('½ Stunde rasten lassen'), 1800);
+		assert.equal(parseStepDuration('¾ hour'), 2700);
+	});
+
+	it('lets a timer the model read off "1½ Std." pass the gate', () => {
+		assert.deepEqual(stepDurations('1½ Std. schmoren'), [5400]);
+	});
+});
+
 describe('stepDurations', () => {
 	it('lists every stated duration, both ends of a range included', () => {
 		assert.deepEqual(stepDurations('8–10 Minuten braten').sort(), [480, 600]);

@@ -913,6 +913,8 @@ export const de: Messages = {
 				invalidUrl: 'Das sieht nicht nach einer Web-Adresse aus — füg den Link zum Rezept ein.',
 				blocked: 'Dieser Link lässt sich von hier nicht öffnen. Nimm die öffentliche Web-Adresse.',
 				unreachable: 'Die Seite war nicht erreichbar — prüf den Link und deine Verbindung.',
+				refused:
+					'Diese Seite lässt Apps ihre Rezepte nicht lesen. Öffne sie im Browser und kopier das Rezept von dort.',
 				notHtml:
 					'Dieser Link ist keine Webseite. Füg die Rezeptseite ein, keine Datei und kein Bild.',
 				tooLarge: 'Die Seite ist zu groß zum Einlesen — versuch einen direkten Link zum Rezept.',

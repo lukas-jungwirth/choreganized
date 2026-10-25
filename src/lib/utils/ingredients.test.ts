@@ -78,6 +78,31 @@ describe('formatIngredient → parseIngredient', () => {
 	});
 });
 
+describe('parseIngredient — ranges', () => {
+	it('keeps the first value of a range, and the unit after it', () => {
+		assert.deepEqual(parseIngredient('2-3 EL Öl'), { quantity: 2, unit: 'tbsp', name: 'Öl' });
+		assert.deepEqual(parseIngredient('1–2 Zehen Knoblauch'), {
+			quantity: 1,
+			unit: null,
+			name: 'Zehen Knoblauch'
+		});
+		assert.deepEqual(parseIngredient('100 bis 150 g Zucker'), {
+			quantity: 100,
+			unit: 'g',
+			name: 'Zucker'
+		});
+		assert.deepEqual(parseIngredient('½-1 TL Salz'), { quantity: 0.5, unit: 'tsp', name: 'Salz' });
+	});
+
+	it('leaves a hyphen that starts a word alone', () => {
+		assert.deepEqual(parseIngredient('2 -Minuten-Eier'), {
+			quantity: 2,
+			unit: null,
+			name: '-Minuten-Eier'
+		});
+	});
+});
+
 describe('composeIngredientLine', () => {
 	it('writes a line the parser reads back the same way', () => {
 		const { line, reading } = composeIngredientLine('pasta', '400', 'g');
