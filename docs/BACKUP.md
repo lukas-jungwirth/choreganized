@@ -122,7 +122,8 @@ litestream restore -config /etc/litestream.yml -timestamp 2026-10-20T18:00:00Z \
   -integrity-check quick -o /data/choreganized.db.restore /data/choreganized.db
 ```
 
-4. **Restart** the app in Coolify. The start script puts the staged file in place before
+4. **Restart** the app in Coolify. The start script checks that the staged file is a SQLite
+   database (anything else is renamed `.restore.rejected` and the current one kept), then puts it in place before
    anything opens the database, and moves the old one to `/data/pre-restore-<time>/` together
    with its WAL and Litestream's position. Log: `[start] Put the staged … in place`.
    Litestream then reports `detected database behind replica` and carries on from the restored
@@ -137,7 +138,8 @@ To only look at an old state, restore to `-o /tmp/look.db` and leave it there. A
 This works with or without Litestream, from any day in `/data/backups`:
 
 ```bash
-cp /data/backups/2026-10-20.db /data/choreganized.db.restore
+# Copy, then rename: a restart mid-copy must not find a half-written .restore
+cp /data/backups/2026-10-20.db /data/restore.tmp && mv /data/restore.tmp /data/choreganized.db.restore
 ```
 
 Then restart, as in step 4. Litestream replicates the snapshot onwards like any restored state.

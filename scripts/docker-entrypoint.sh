@@ -23,6 +23,14 @@ set -eu
 CONFIG=/etc/litestream.yml
 REQUIRED='LITESTREAM_ACCESS_KEY_ID LITESTREAM_SECRET_ACCESS_KEY LITESTREAM_S3_ENDPOINT LITESTREAM_S3_BUCKET LITESTREAM_S3_REGION LITESTREAM_REPLICA_PATH'
 
+if [ -n "${DATABASE_PATH:-}" ] && [ -f "$DATABASE_PATH.restore" ] &&
+	[ "$(head -c 15 "$DATABASE_PATH.restore")" != 'SQLite format 3' ]; then
+	# An empty or foreign file would open as an empty database, and Litestream would make
+	# that the newest state in the bucket. Keep the current database instead.
+	mv "$DATABASE_PATH.restore" "$DATABASE_PATH.restore.rejected"
+	echo "[start] $DATABASE_PATH.restore is not a SQLite database. Kept the current one, renamed it to .restore.rejected" >&2
+fi
+
 if [ -n "${DATABASE_PATH:-}" ] && [ -f "$DATABASE_PATH.restore" ]; then
 	dir=$(dirname "$DATABASE_PATH")
 	aside="$dir/pre-restore-$(date -u +%Y%m%dT%H%M%SZ)"
@@ -66,6 +74,13 @@ fi
 # it the newest state in the bucket. Coolify restarts the container, which retries.
 echo "[start] Litestream on: replica ${LITESTREAM_S3_BUCKET}/${LITESTREAM_REPLICA_PATH}"
 had_database=$([ -e "$DATABASE_PATH" ] && echo yes || echo no)
+# Litestream's position, left behind when only the database was deleted, describes a file
+# that is gone. Litestream's docs say to clear it whenever the database is recreated.
+position="$(dirname "$DATABASE_PATH")/.$(basename "$DATABASE_PATH")-litestream"
+if [ "$had_database" = no ] && [ -e "$position" ]; then
+	mv "$position" "$position.stale-$(date -u +%Y%m%dT%H%M%SZ)"
+	echo "[start] No database, but a Litestream position: moved it aside before restoring"
+fi
 litestream restore -config "$CONFIG" -if-db-not-exists -if-replica-exists "$DATABASE_PATH"
 if [ "$had_database" = no ] && [ -e "$DATABASE_PATH" ]; then
 	echo "[start] Restored $DATABASE_PATH from the replica"

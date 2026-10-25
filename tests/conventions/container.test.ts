@@ -33,6 +33,9 @@ const LITESTREAM_ENV = {
 	LITESTREAM_REPLICA_PATH: 'choreganized/test'
 };
 
+/** What a database file starts with; the swap checks for it. */
+const STAGED = 'SQLite format 3\u0000 staged';
+
 type StartOptions = {
 	/** What `litestream restore` exits with. */
 	restoreExit?: number;
@@ -142,7 +145,7 @@ describe('the start script', () => {
 					'choreganized.db-wal': 'live wal',
 					'choreganized.db-shm': 'live shm',
 					'.choreganized.db-litestream/ltx/0/1.ltx': 'position',
-					'choreganized.db.restore': 'staged',
+					'choreganized.db.restore': STAGED,
 					'choreganized.db.restore-wal': 'staged wal',
 					'choreganized.db.restore-shm': 'staged shm'
 				}
@@ -151,7 +154,7 @@ describe('the start script', () => {
 		assert.equal(status, 0);
 		assert.match(stdout, /previous database is in \/data\/pre-restore-/);
 		assert.deepEqual(files, {
-			'/data/choreganized.db': 'staged',
+			'/data/choreganized.db': STAGED,
 			'/data/choreganized.db-wal': 'staged wal',
 			'/data/pre-restore-<time>/choreganized.db': 'live',
 			'/data/pre-restore-<time>/choreganized.db-wal': 'live wal',
@@ -162,13 +165,39 @@ describe('the start script', () => {
 
 	it('swaps before the replica restore runs, so that restore finds a database and skips', () => {
 		const { stdout, calls } = start(LITESTREAM_ENV, {
-			volume: { 'choreganized.db.restore': 'staged' }
+			volume: { 'choreganized.db.restore': STAGED }
 		});
 		const swapped = stdout.indexOf('Put the staged');
 		assert.ok(swapped >= 0, 'the staged file was put in place');
 		assert.ok(swapped < stdout.indexOf('Litestream on'), 'before Litestream was started');
 		assert.ok(calls[0].includes('-if-db-not-exists'));
 		assert.doesNotMatch(stdout, /Restored/);
+	});
+
+	it('rejects a staged file that is not a SQLite database, and keeps the current one', () => {
+		const { status, stderr, files } = start(
+			{},
+			{ volume: { 'choreganized.db': 'live', 'choreganized.db.restore': '' } }
+		);
+		assert.equal(status, 0, 'the app still starts');
+		assert.match(stderr, /not a SQLite database/);
+		assert.deepEqual(files, {
+			'/data/choreganized.db': 'live',
+			'/data/choreganized.db.restore.rejected': ''
+		});
+	});
+
+	it('moves a stale Litestream position aside when the database itself is gone', () => {
+		const { stdout, files } = start(LITESTREAM_ENV, {
+			volume: { '.choreganized.db-litestream/ltx/0/1.ltx': 'old position' }
+		});
+		assert.match(stdout, /moved it aside before restoring/);
+		const kept = Object.keys(files).filter((path) => path.includes('-litestream'));
+		assert.equal(kept.length, 1);
+		assert.match(
+			kept[0],
+			/\/data\/\.choreganized\.db-litestream\.stale-\d{8}T\d{6}Z\/ltx\/0\/1\.ltx$/
+		);
 	});
 
 	it('refuses to start half-configured, and names what is missing', () => {
@@ -233,6 +262,25 @@ describe('the Litestream pieces agree', () => {
 	it('keeps the request-heavy pass off its 15 s default (B2 free tier)', () => {
 		const interval = config.match(/^l0-retention-check-interval:\s*(\S+)/m)?.[1];
 		assert.equal(interval, '1h', 'the 15 s default LISTs about 11,500 times a day');
+	});
+
+	it("the built server exits on SIGTERM within Docker's 10 s", () => {
+		// Without the listener, node-cron's tick keeps Node alive until SIGKILL, and under
+		// Litestream that kill cuts the last upload (→ hooks.server.ts).
+		const hooks = read('src/hooks.server.ts');
+		assert.match(
+			hooks,
+			/process\.once\('sveltekit:shutdown'/,
+			'hooks.server.ts listens for the shutdown'
+		);
+		assert.match(hooks, /await stopCronJobs\(\)/, 'and stops the schedule');
+		assert.match(hooks, /process\.exit\(/, 'and exits');
+		const timeout = Number(read('Dockerfile').match(/SHUTDOWN_TIMEOUT=(\d+)/)?.[1]);
+		const sync = Number(config.match(/^shutdown-sync-timeout:\s*(\d+)s$/m)?.[1]);
+		assert.ok(
+			timeout + 2 + sync < 10,
+			`HTTP ${timeout} s + cron 2 s + upload ${sync} s fit in 10 s`
+		);
 	});
 
 	it('the image pins Litestream and starts through the script', () => {
