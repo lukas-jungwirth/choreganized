@@ -436,9 +436,9 @@ async function discard(response: Response): Promise<void> {
  * Whether an address is one the server must not be steered onto — the SSRF
  * blocklist. Covers loopback, RFC 1918 private, link-local, CGNAT and the
  * reserved/multicast ranges, for both families; an unrecognised string is
- * refused rather than trusted.
+ * refused rather than trusted. Exported for its tests.
  */
-function isBlockedAddress(ip: string): boolean {
+export function isBlockedAddress(ip: string): boolean {
 	if (isIPv4(ip)) return isBlockedV4(ip);
 	if (isIPv6(ip)) return isBlockedV6(ip.toLowerCase());
 	return true;
@@ -466,18 +466,17 @@ function isBlockedV4(ip: string): boolean {
 }
 
 function isBlockedV6(ip: string): boolean {
-	// IPv4-mapped / embedded (`::ffff:1.2.3.4`, `64:ff9b::1.2.3.4`): the address
-	// that actually gets routed is the trailing IPv4, so classify that.
-	if (ip.includes('.')) {
-		const embedded = ip.slice(ip.lastIndexOf(':') + 1);
-		return isIPv4(embedded) ? isBlockedV4(embedded) : true;
-	}
-
 	const groups = expandV6(ip);
 	if (!groups) return true;
 
 	if (groups.every((g) => g === 0)) return true; // ::   unspecified
 	if (groups.slice(0, 7).every((g) => g === 0) && groups[7] === 1) return true; // ::1 loopback
+
+	// An IPv4 address carried inside an IPv6 one is routed as that IPv4, so it
+	// is classified as one. The WHATWG URL parser writes `[::ffff:127.0.0.1]` as
+	// `[::ffff:7f00:1]` — hex, no dots — so the dotted spelling can't be the test.
+	const embedded = embeddedV4(groups);
+	if (embedded) return isBlockedV4(embedded);
 
 	const first = groups[0];
 	if ((first & 0xfe00) === 0xfc00) return true; // fc00::/7  unique local
@@ -487,10 +486,38 @@ function isBlockedV6(ip: string): boolean {
 	return false;
 }
 
-/** A validated IPv6 string to its eight 16-bit groups, `::` expanded. */
+/**
+ * The IPv4 address an IPv6 one wraps, if it is one of the forms that reach it:
+ * mapped (`::ffff:a.b.c.d`), compatible (`::a.b.c.d`), translated
+ * (`::ffff:0:a.b.c.d`), NAT64 (`64:ff9b::a.b.c.d`) and 6to4 (`2002:aabb:ccdd::`).
+ */
+function embeddedV4(groups: number[]): string | null {
+	const zero = (from: number, to: number) => groups.slice(from, to).every((g) => g === 0);
+	const v4 = (high: number, low: number) =>
+		[high >> 8, high & 0xff, low >> 8, low & 0xff].join('.');
+
+	if (zero(0, 5) && (groups[5] === 0xffff || groups[5] === 0)) return v4(groups[6], groups[7]);
+	if (zero(0, 4) && groups[4] === 0xffff && groups[5] === 0) return v4(groups[6], groups[7]);
+	if (groups[0] === 0x64 && groups[1] === 0xff9b && zero(2, 6)) return v4(groups[6], groups[7]);
+	if (groups[0] === 0x2002) return v4(groups[1], groups[2]);
+	return null;
+}
+
+/**
+ * A validated IPv6 string to its eight 16-bit groups, `::` expanded — and a
+ * dotted IPv4 tail (`::ffff:1.2.3.4`) read as the two groups it stands for.
+ */
 function expandV6(ip: string): number[] | null {
-	const withoutZone = ip.split('%')[0];
-	const halves = withoutZone.split('::');
+	let text = ip.split('%')[0];
+
+	const dotted = /^(.*:)([^:]*\.[^:]*)$/.exec(text);
+	if (dotted) {
+		if (!isIPv4(dotted[2])) return null;
+		const [a, b, c, d] = dotted[2].split('.').map(Number);
+		text = `${dotted[1]}${((a << 8) | b).toString(16)}:${((c << 8) | d).toString(16)}`;
+	}
+
+	const halves = text.split('::');
 	if (halves.length > 2) return null;
 
 	const toGroups = (part: string) => (part ? part.split(':').map((h) => parseInt(h, 16)) : []);

@@ -226,6 +226,16 @@ export function claimImportedPhoto(imagePath: string): string | null {
 	return owned ? null : imagePath;
 }
 
+/**
+ * Throw away an import's temp photo the person replaced or removed — only if
+ * it **is** one (→ `claimImportedPhoto`). The path came back from the form, so
+ * a forged one naming an attached recipe photo must delete nothing.
+ */
+export function discardImportedPhoto(imagePath: string): void {
+	const temp = claimImportedPhoto(imagePath);
+	if (temp) deleteUpload(temp);
+}
+
 /** The "Browse all · {n}" count [04]. */
 export function countRecipes(householdId: string): number {
 	const row = db

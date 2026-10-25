@@ -2236,3 +2236,14 @@ units | null, name}`, written back as editor lines in the reader's unit spelling
        needed one.
      - Triage retitles issues; safe because the retry searches `in:body` for the marker, now
        pinned by `src/lib/server/github.test.ts`.
+
+158. **The SSRF guard reads an IPv4 address inside an IPv6 one, and Save deletes only a real temp
+     photo** (`server/recipe-import.ts`, `services/recipes.ts`, audit 2026-10-25). The WHATWG
+     URL parser writes `http://[::ffff:127.0.0.1]/` as `[::ffff:7f00:1]` — hex, no dots — and
+     the old check only unwrapped the dotted spelling, so that link fetched the server's own
+     loopback (reproduced against a local listener). The address is now expanded to its eight
+     groups first and the mapped, compatible, translated, NAT64 (`64:ff9b::/96`) and 6to4
+     (`2002::/16`) forms are classified as the IPv4 they carry. Separately, the import's Save
+     deleted whatever `importedPhoto` path the form sent when a new photo replaced it; a forged
+     path naming an attached recipe photo deleted that file. `discardImportedPhoto` runs it
+     through `claimImportedPhoto` first, so only an unclaimed temp goes.

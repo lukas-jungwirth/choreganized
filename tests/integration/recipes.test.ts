@@ -3,15 +3,20 @@
  * written on create, replaced on update, carried by a duplicate, and refused —
  * quietly, as "no timer" — when it isn't one cook mode could run, whoever the
  * caller is (the form reader has its own check; an import may not).
+ *
+ * And an import's temp photo, thrown away when the person picks another: only
+ * a real unclaimed temp, never a recipe's photo named by a forged form field.
  */
 import assert from 'node:assert/strict';
 import { describe, it } from 'vitest';
 import {
 	createRecipe,
+	discardImportedPhoto,
 	duplicateRecipe,
 	getRecipe,
 	updateRecipe
 } from '$lib/server/services/recipes';
+import { storeRecipePhoto, uploadExists } from '$lib/server/uploads';
 import type { RecipeInput } from '$lib/utils/recipes';
 import { MAX_TIMER_SECONDS } from '$lib/utils/timer-parse';
 import { makeHousehold } from '../helpers/db';
@@ -108,5 +113,22 @@ describe('step timers', () => {
 			getRecipe(householdId, id)!.steps.map((step) => step.timer),
 			[null, null, null, { seconds: 90, label: 'Reis' }]
 		);
+	});
+});
+
+describe('discardImportedPhoto', () => {
+	it('deletes an unclaimed import temp', () => {
+		const temp = storeRecipePhoto(Buffer.from('webp'));
+		discardImportedPhoto(temp);
+		assert.equal(uploadExists(temp), false);
+	});
+
+	it('leaves a recipe’s own photo alone, whatever the form claims', () => {
+		const { householdId, owner } = makeHousehold();
+		const photo = storeRecipePhoto(Buffer.from('webp'));
+		createRecipe(householdId, owner.id, input([]), photo);
+
+		discardImportedPhoto(photo);
+		assert.equal(uploadExists(photo), true);
 	});
 });

@@ -4,8 +4,15 @@
  * fewer tokens for a free tier, and structure the model can see.
  */
 import assert from 'node:assert/strict';
+import { createServer } from 'node:http';
 import { describe, it } from 'vitest';
-import { htmlToReadableText, readFetchedPage } from './recipe-import';
+import {
+	fetchRecipePage,
+	htmlToReadableText,
+	isBlockedAddress,
+	readFetchedPage,
+	RecipeImportError
+} from './recipe-import';
 
 const article = `
 	<h1>Linsencurry</h1>
@@ -94,5 +101,67 @@ describe('readFetchedPage', () => {
 		assert.equal(page.reader, null);
 		assert.equal(page.card, null);
 		assert.ok(page.text.includes('Zutaten'));
+	});
+});
+
+/**
+ * The SSRF guard's address check. An IPv4 address can ride inside an IPv6 one,
+ * and the URL parser writes `[::ffff:127.0.0.1]` as `[::ffff:7f00:1]` — hex, no
+ * dots — which the old dotted-only check let through to loopback.
+ */
+describe('isBlockedAddress', () => {
+	it('refuses private IPv4 however IPv6 wraps it', () => {
+		for (const ip of [
+			'::ffff:127.0.0.1',
+			'::ffff:7f00:1',
+			'::ffff:a9fe:a9fe',
+			'::ffff:c0a8:101',
+			'::7f00:1',
+			'::ffff:0:7f00:1',
+			'64:ff9b::7f00:1',
+			'64:ff9b::169.254.169.254',
+			'2002:7f00:1::'
+		]) {
+			assert.equal(isBlockedAddress(ip), true, ip);
+		}
+	});
+
+	it('lets a public IPv4 through the same wrappers', () => {
+		for (const ip of ['::ffff:5db8:d822', '::ffff:93.184.216.34', '64:ff9b::5db8:d822']) {
+			assert.equal(isBlockedAddress(ip), false, ip);
+		}
+	});
+
+	it('keeps the plain IPv6 rules', () => {
+		for (const ip of ['::', '::1', 'fc00::1', 'fd12:3456::1', 'fe80::1', 'ff02::1', 'nonsense']) {
+			assert.equal(isBlockedAddress(ip), true, ip);
+		}
+		assert.equal(isBlockedAddress('2606:4700::6810:84e5'), false);
+	});
+});
+
+describe('fetchRecipePage', () => {
+	it('refuses a mapped loopback URL before any request is made', async () => {
+		let requests = 0;
+		const server = createServer((_request, response) => {
+			requests++;
+			response.setHeader('content-type', 'text/html');
+			response.end('<h1>internal</h1>');
+		});
+		await new Promise<void>((ready) => server.listen(0, '127.0.0.1', ready));
+		const { port } = server.address() as { port: number };
+
+		try {
+			for (const host of ['127.0.0.1', '[::ffff:127.0.0.1]', '[::ffff:7f00:1]']) {
+				await assert.rejects(
+					fetchRecipePage(`http://${host}:${port}/`),
+					(error) => error instanceof RecipeImportError && error.code === 'blocked',
+					host
+				);
+			}
+			assert.equal(requests, 0);
+		} finally {
+			server.close();
+		}
 	});
 });
