@@ -1,0 +1,52 @@
+# Litestream 0.5: the database, continuously copied to S3-compatible storage
+# (→ docs/BACKUP.md, DECISIONS #157). The image installs this file at /etc/litestream.yml
+# and scripts/docker-entrypoint.sh starts Litestream only when every LITESTREAM_* variable
+# it lists is set, so `${…}` here is never expanded to an empty string.
+#
+# The credentials are not in this file: Litestream reads LITESTREAM_ACCESS_KEY_ID and
+# LITESTREAM_SECRET_ACCESS_KEY from the environment on its own.
+#
+# Every interval is sized for Backblaze B2's no-card tier: about 2,500 Class B (GET, HEAD)
+# and 2,500 Class C (LIST) requests a day. Uploads and deletes are Class A, which is free.
+# Litestream lists a whole level on every pass (there is no "start after"), so what costs
+# is how often it lists, not how often it uploads. Worst case with these values, writes in
+# every 15-minute window all day: about 470 LIST and 100 GET a day. Budget in
+# docs/BACKUP.md "Request budget".
+
+# Docker sends SIGKILL 10 s after SIGTERM. The app gets up to 5 of them (SHUTDOWN_TIMEOUT
+# in the Dockerfile, plus a running cron job) and Litestream's last upload gets these 4.
+shutdown-sync-timeout: 4s
+
+# L0 (one file per sync) is deleted once L1 has it and it is 5 minutes old. Every L1
+# compaction runs that cleanup already. This hourly pass only catches leftovers. The 15 s
+# default would LIST L0 and L1 about 11,500 times a day, even with no writes at all.
+l0-retention-check-interval: 1h
+
+levels:
+  # L1: the restore points once L0 is gone, so point-in-time restore is to the 15 minutes.
+  # A compaction only runs when something was written: a quiet night costs nothing.
+  - interval: 15m
+  # L2: fewer, larger files, so a restore replays a few instead of a day's worth of L1.
+  - interval: 6h
+
+# A full snapshot a day, kept 14 days. Retention prunes every level to the oldest snapshot
+# it keeps, so this is also how far back a point-in-time restore can go. B2's lifecycle rule
+# then keeps deleted files another 30 days.
+snapshot:
+  interval: 24h
+  retention: 336h
+
+dbs:
+  - path: '${DATABASE_PATH}'
+    replica:
+      type: s3
+      endpoint: '${LITESTREAM_S3_ENDPOINT}'
+      bucket: '${LITESTREAM_S3_BUCKET}'
+      region: '${LITESTREAM_S3_REGION}'
+      path: '${LITESTREAM_REPLICA_PATH}'
+      # B2 and MinIO both serve path-style URLs. Litestream detects B2 by its hostname
+      # anyway; this makes MinIO on localhost work the same way.
+      force-path-style: true
+      # A crash (not a stop) loses at most this much. Uploads are free on B2. A clean stop
+      # uploads what is left before it exits.
+      sync-interval: 10s

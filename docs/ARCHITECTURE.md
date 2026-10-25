@@ -263,8 +263,17 @@ prompt / subscribed).
 - Persistent volume mounted at `/data` (DB + WAL files + uploads + `backups/`). Nightly backup
   is an **in-process** `better-sqlite3.backup()` to `/data/backups/YYYY-MM-DD.db`, 14-day
   rotation (`lib/server/backup.ts`, registered in `cron.ts`; restore procedure in
-  [plan 11](plans/11-pwa-deploy.md)). No `sqlite3` CLI dependency. Litestream to S3 stays the
-  optional upgrade (→ [DECISIONS #91](DECISIONS.md)).
+  [plan 11](plans/11-pwa-deploy.md)). No `sqlite3` CLI dependency.
+- **Off-site: Litestream to Backblaze B2.** The image starts through
+  `scripts/docker-entrypoint.sh`. With the six `LITESTREAM_*` variables set, it restores an
+  empty volume from the replica, then runs `litestream replicate -exec "node build/index.js"`.
+  With none set, the app starts alone, as in dev and the tests. Config in `litestream.yml`,
+  runbook, Coolify variables and B2 request budget in [BACKUP.md](BACKUP.md)
+  (→ [DECISIONS #157](DECISIONS.md)). Recipe photos (`/data/uploads`) are files, not rows,
+  and are not replicated.
+- **Graceful stop.** On SIGTERM adapter-node closes HTTP (`SHUTDOWN_TIMEOUT=3`), then
+  `hooks.server.ts` stops the cron tick, closes the database and exits. Without that, the
+  tick keeps Node alive until Docker's SIGKILL.
 - Migrations run automatically at boot (`init` hook) — safe with a single instance.
 - Required env (see `.env.example`): `ORIGIN`, `DATABASE_PATH`, `UPLOADS_DIR`,
   `BODY_SIZE_LIMIT`, `BETTER_AUTH_SECRET`, `BETTER_AUTH_URL`, `GOOGLE_CLIENT_ID/SECRET`,
@@ -273,6 +282,9 @@ prompt / subscribed).
 - Optional env: `GITHUB_FEEDBACK_TOKEN` (a fine-grained PAT scoped to this repo, _Issues: read
   and write_) mirrors feedback to GitHub issues — without it reports still save and the cron
   sweep mirrors them once a token appears (→ [DECISIONS #136](DECISIONS.md)).
+  `LITESTREAM_ACCESS_KEY_ID`, `LITESTREAM_SECRET_ACCESS_KEY`, `LITESTREAM_S3_ENDPOINT`,
+  `LITESTREAM_S3_BUCKET`, `LITESTREAM_S3_REGION`, `LITESTREAM_REPLICA_PATH`: all six or none,
+  one prefix per instance (→ [BACKUP.md](BACKUP.md)).
   `GITHUB_FEEDBACK_REPO` only redirects them. AI keys are **not** env: each household brings
   its own in Settings (→ [DECISIONS #146](DECISIONS.md)); `AI_<PROVIDER>_BASE_URL` points a
   provider at `scripts/fake-ai.ts` and is honoured only under `E2E_MODE`. **Build-time**: `APP_VERSION` (a Coolify _Build
