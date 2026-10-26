@@ -2406,3 +2406,37 @@ units | null, name}`, written back as editor lines in the reader's unit spelling
      - **Replayed on #31.** The probe on `dev` before #32, and after it, prints `4. Eier`, the
        reporter's own words. A `Reproduce #31` test from the saved page stays red under #32's
        change (plan 26, "Built").
+
+165. **Expenses join the app as a fifth tab, and the house is one pot** (SPEC §11, plans 29–30).
+     The spec said "No finances", which was a v1 scope cut, not a principle. Lukas asked for a
+     Splitwise-style tally (2026-10-26), and it lives where the household already is.
+     - **A tab, not a Home card.** Logging a spend right after the shop has to be quick. Home
+       gets one line, not a new tile.
+     - **Always simplified, no pairwise view, no switch.** Each person has one net balance
+       and the app suggests the fewest payments (greedy, ≤ n − 1). Pairwise debts are a
+       group-of-strangers feature. In a household they only add explaining, and for two
+       people both views are the same anyway.
+     - **No groups.** The household is the group. A subset is chosen per expense, which covers
+       "just the two of us" without a concept to manage.
+     - **A payment is an expense row of `kind='payment'`** whose one share is the recipient's.
+       One balance formula, one history list, one edit/delete path.
+     - **V1 = plan 29 (log, split, settle, search, categories) + plan 30 (recurring, push).**
+       Receipt photos, the shopping-trip "log this?" hook, guests, several currencies and
+       charts wait (SPEC §11.14).
+166. **Splits point at `ledger_people`, not at `members`** (plan 29). Two reasons, one
+     table. A member who leaves owing money must keep that balance, but `task_completions`'
+     snapshot + `SET NULL` trick loses the identity that a balance has to add up against.
+     And guests (people outside the household) need to pay and share without being members. A
+     `ledger_people` row is created with every membership, follows its name and colour, and
+     outlives it with `memberId` NULL. Guests will be `kind='guest'` rows with no member and
+     no migration of old data. Linking people across households stays out (multi-household is
+     deferred, #Later).
+167. **Money is integer cents, split by largest remainder** (`utils/money.ts`, plan 29). No
+     float ever holds an amount. Equal, % and shares compute each share's exact fraction,
+     floor it to cents, and give the leftover cents one each to the largest remainders, ties
+     in list order. The server recomputes every split from what was typed (`input`) and never
+     stores client-computed shares, so `Σ shares = amount` holds for every row.
+168. **One currency per household, locked once there are expenses** (SPEC §11.10). Amounts
+     carry no currency of their own. Changing the setting later would relabel every stored
+     number (€42 becoming 42 CHF), so the owner can pick it only while the tally is empty.
+     Several currencies with conversion is out of scope.
