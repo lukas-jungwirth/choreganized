@@ -131,7 +131,7 @@ on one screen before you build against them — and add your new ones to that pa
 
 **Where work comes from now** (plan 18): the plans above are the queue; GitHub issues are the
 inbox. Triage labels every new issue; a person adding `agent:build` to any `size:s` / `size:m`
-issue — or triage's own dispatch, for a small bug the import probe reproduced (plan 26) — starts
+issue — or triage's own dispatch, for a small bug whose cause it found (plan 26) — starts
 the build workflow, which branches off `dev`, reproduces the report in a test, fixes it, has the
 `reviewer` subagent read the diff, and opens a PR that merges itself into `dev` on green CI. An approved idea becomes its plan file in that PR. A desk session takes `size:l`
 (a screen with no frame in `design/Hearth.dc.html`) and whatever the agent left as a `WIP:`

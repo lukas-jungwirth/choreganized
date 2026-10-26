@@ -30,7 +30,7 @@
 		},
 		"reproduced": {
 			"type": "boolean",
-			"description": "true only when the import probe output shows the symptom the reporter describes, on dev. Reading the source is never a reproduction."
+			"description": "true only when the import probe output shows the symptom the reporter describes, on dev. Reading the source is never a reproduction. Reported in the comment, not required for a build."
 		},
 		"open_questions": {
 			"type": "array",

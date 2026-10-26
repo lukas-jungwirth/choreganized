@@ -2406,3 +2406,17 @@ units | null, name}`, written back as editor lines in the reader's unit spelling
      - **Replayed on #31.** The probe on `dev` before #32, and after it, prints `4. Eier`, the
        reporter's own words. A `Reproduce #31` test from the saved page stays red under #32's
        change (plan 26, "Built").
+
+165. **A small bug with a found cause builds without a person; `reproduced` is reported, not
+     required** (`triage.yml`'s hand-on `if:`, `/triage-issue`, Lukas's call 2026-10-26). #164
+     started a build by itself only when the import probe had shown the symptom. Triage has no
+     running app, so that meant recipe-import bugs only. "The button does nothing, and the code
+     plainly has no handler" waited for a person like everything else. The check #164 wanted,
+     seeing the bug before fixing it, already sits in the build: `Reproduce #N` must fail on
+     `dev` for the reported reason, or the build stops with `needs-info` or a `WIP:` draft. So
+     the dispatch now needs `bug`, `size:s`, `confidence: found`, no open questions and nothing
+     fixing it on `dev`. Triage keeps `found` for a cause it can point at that explains the whole
+     report. A cause the probe contradicts is `plausible`, and that, an open question or
+     `size:m` still waits. The human gate is unchanged: agent PRs merge into `dev` on green CI,
+     and `main` moves only when Lukas merges the release PR. The costs are more build runs (some
+     end in "couldn't reproduce") and more agent PRs in each release.
