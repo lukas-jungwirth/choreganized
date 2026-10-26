@@ -35,7 +35,8 @@ how a change proves itself is `docs/TESTING.md`.
    `npm run import:probe -- <url> --save <site-dish>` before you change anything. It prints what
    the importer reads there and keeps the raw page in `src/lib/utils/fixtures/` — your test reads
    that fixture (as `recipe-jsonld.test.ts` reads `einfachkochen-quiche.html`), and a probe run
-   after the fix shows it worked on the real page. You have no `WebFetch`, on purpose.
+   after the fix shows it worked on the real page. Triage did not open the page (it has no web
+   access), so its draft is a reading of the code only. You have no `WebFetch`, on purpose.
 
 2. **Branch.** `git switch -c agent/issue-$1 origin/dev`.
 

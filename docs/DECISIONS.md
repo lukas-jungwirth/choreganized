@@ -2347,3 +2347,17 @@ units | null, name}`, written back as editor lines in the reader's unit spelling
      household read „Wörter werden gehackt…" as odd rather than playful. The English line goes
      too, so the two catalogs cycle the same four lines; `messages/loading.test.ts` holds both
      to that. `AiCookingLoader` cycles by `phrases.length`, so no component changed.
+
+163. **Triage has no web access; it writes only its comment draft, to `/tmp`** (`triage.yml`,
+     `/triage-issue`, plan 25's first live run on issue #48). Plan 25 gave triage `WebFetch` and
+     the import probe so it would read a linked page instead of guessing. Both open any URL an
+     untrusted issue names, and a URL can carry out whatever the agent read
+     (`https://…/?q=<secret>`) — the one leak path a read-only job still had. The page matters to
+     one area (recipe import), and the build agent probes it before changing anything, so triage
+     gives it up: `WebFetch`/`WebSearch` are denied, not merely unlisted, so they are never offered
+     and never tried, and triage says a linked page went unread. Its first run was refused seven
+     times trying to post a multi-line comment and fell back to one paragraph, so it may now write
+     **`/tmp` only**, posting with `gh issue comment --body-file`. The rule is `Edit(//tmp/**)`:
+     checked headless 2026-10-26, an allow rule for writing is spelled `Edit` (`Write(//tmp/**)`
+     allows nothing) and `//` makes the path absolute; a write inside the project stays refused.
+     The job no longer needs `npm ci`.

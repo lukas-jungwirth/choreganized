@@ -194,16 +194,27 @@ describe('the agent lane (→ docs/plans/25-agent-evidence.md)', () => {
 		}
 	});
 
-	it('lets triage read a linked page and probe an import, still read-only', () => {
+	it('keeps triage off the web, writing only its comment draft to /tmp', () => {
 		const triage = workflow('triage.yml');
 		const allowed = toolList(triage, '--allowedTools');
-		assert.ok(allowed.includes('WebFetch'), 'triage may fetch a linked page');
-		assert.ok(allowed.includes('Bash(npm run import:probe:*)'), 'triage may run the import probe');
+		const denied = toolList(triage, '--disallowedTools');
+		for (const tool of ['WebFetch', 'WebSearch']) {
+			assert.ok(denied.includes(tool), `triage denies ${tool} (→ DECISIONS #163)`);
+			assert.ok(!allowed.includes(tool), `triage does not allow ${tool}`);
+		}
+		assert.ok(
+			!allowed.some((tool) => tool.includes('import:probe')),
+			'the probe opens any URL too: build only'
+		);
+		const writes = allowed.filter((tool) => /^(Edit|Write|MultiEdit|NotebookEdit)\b/.test(tool));
+		assert.deepEqual(writes, ['Edit(//tmp/**)'], 'the one writable place is /tmp');
 		assert.match(triage, /contents: read/);
 		assert.ok(!/contents: write/.test(triage), 'triage never writes the repository');
-		assert.match(triage, /persist-credentials: false/, 'no token in .git/config beside WebFetch');
+		assert.match(triage, /persist-credentials: false/, 'no token left in .git/config');
+		const prompt = readFileSync('.claude/commands/triage-issue.md', 'utf8');
+		assert.ok(prompt.includes('--body-file /tmp/'), 'triage posts its comment from a file');
 		const build = readFileSync('.claude/commands/build-issue.md', 'utf8');
-		assert.ok(build.includes('npm run import:probe'), 'build knows the probe');
+		assert.ok(build.includes('npm run import:probe'), 'build probes a linked page');
 	});
 
 	it('never pastes an issue’s body or title into a shell', () => {

@@ -69,12 +69,12 @@ waits for a desk session. `/inbox` lists both.
 
 **Every agent run leaves a receipt** (→ [plan 25](plans/25-agent-evidence.md), DECISIONS #157).
 Build runs in `--permission-mode auto` with a deny list for the hard nos, triage on an allow-list
-that includes `WebFetch`; both pin their model. After each action, `scripts/agent-run-summary.ts`
+with no web access at all (DECISIONS #163); both pin their model. After each action, `scripts/agent-run-summary.ts`
 writes the run's summary page: model, turns, duration, cost, **every denied tool call**, every
 Bash command, and every `npm run verify` with its exit code — no message text. So a PR's ticked
 "verify clean" can be checked against the run that opened it (Actions → the run → Summary), and
 a refusal is a line on that page, not a silent guess. For a report that links a recipe page,
-both agents run `npm run import:probe -- <url>`: the app's own importer on the real page, which
+the build agent runs `npm run import:probe -- <url>` (triage only notes the link): the app's own importer on the real page, which
 prints the reader that matched, the steps and the ingredients — and `--save <name>` keeps the
 page as a fixture in `src/lib/utils/fixtures/` for the test.
 

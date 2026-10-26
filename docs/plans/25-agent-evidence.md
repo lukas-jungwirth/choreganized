@@ -1,7 +1,7 @@
 # 25 · Agent lane: no silent refusals, runs you can check
 
-**Status: in progress — built 2026-10-25; the four live-run boxes wait for the `dev → main`
-promotion** (workflows for `issues` events run from `main`). Depends on: 18 (the build agent).
+**Status: done (2026-10-26).** Depends on: 18 (the build agent). Changed after the first live
+run: triage has no web access after all (DECISIONS #163), so the probe is the build's alone.
 
 **Goal:** the agents fix what the reporter saw, not what they guess, and every run's claims can be
 checked afterwards. Issue #31 showed the gap. The report linked an einfachkochen.de recipe, but
@@ -84,15 +84,18 @@ JSON-LD the importer reads.
 
 ## Acceptance
 
-- [ ] The run summary appears on both workflows and lists denials, commands, model and the verify
-      exit code. It contains no message text. _Proven offline against two real recordings (below);
-      the first live run of each workflow is the box._
-- [ ] A small `agent:build` issue builds green under auto mode, and its summary shows no
-      unexpected denials. _Live only._
-- [ ] Triage reads a page an issue links to, and its summary shows no denied fetch. _Live only._
-- [ ] Triage retitles a new issue. A second sync of the same report still finds that issue. _The
-      second half is pinned by `src/lib/server/github.test.ts` (the retry searches `in:body`); the
-      retitle is live only._
+- [x] The run summary appears on both workflows and lists denials, commands, model and the verify
+      exit code. It contains no message text. _Issue #48: triage run 40312086362, build run 40312340015. It also showed a false "verify ran" in triage, now fixed (below)._
+- [x] A small `agent:build` issue builds green under auto mode, and its summary shows no
+      unexpected denials. _#48 → PR #50: Opus 5.5, auto mode, 13 turns, $0.39, **0 denials**,
+      verify clean with its lines pasted, CI green, auto-merge enabled by the agent itself._
+- ~~Triage reads a page an issue links to, and its summary shows no denied fetch.~~ **Not doing**
+  (DECISIONS #163): `WebFetch` and the probe both open any URL, a channel a steered agent could
+  send what it read out through. Triage now says a linked page is unread; build probes it.
+- [x] Triage retitles a new issue. A second sync of the same report still finds that issue. _#48
+      was filed under its first line, "Wörter werden gehackt beim Ladescreen…", and triage
+      retitled it to a short `Bug:` title. The app's search (`in:body` + marker) still returns
+      #48, and `src/lib/server/github.test.ts` pins that query._
 - [x] `npm run import:probe -- https://www.einfachkochen.de/rezepte/quiche-mit-lachs-genial-einfach-so-lecker`
       prints the JSON-LD reader and six whole steps.
 - [x] `ci.test.ts` fails when a model pin, the summary step or the deny list is removed, and when
@@ -152,3 +155,16 @@ JSON-LD the importer reads.
   and promoting `dev → main` is Lukas's call. Whether auto mode's classifier lets
   `gh pr merge --auto` and `npm run test:visual` (Docker) through is exactly what the first
   build run's summary will show.
+
+## The first live run (2026-10-26, issue #48)
+
+- **Build** behaved: auto mode let `gh pr merge --auto` through, the PR ticked "verify clean" off
+  a real last run and left unticked what it hadn't done. PR #50 then waited `BEHIND` because `dev`
+  moved during the run — the old strict-protection gap, not this plan's.
+- **Triage was refused 7 times**, all while trying to post its multi-line comment: `Write` to
+  `/tmp/c48.md` and `.git/c48.md`, and shell-variable tricks the allow-list doesn't match. It fell
+  back to one run-on paragraph. Fixed: `Edit(//tmp/**)` (an allow rule for writing is spelled
+  `Edit`; `Write(//tmp/**)` was checked headless and does nothing) and `--body-file`.
+- **The summary miscounted**: "npm run verify ran 1×" in triage, from those words inside a
+  comment's `--body`. It now counts verify only as a command, with quoted text and heredoc
+  bodies blanked first (`shellOnly`, tested with #48's own command).
