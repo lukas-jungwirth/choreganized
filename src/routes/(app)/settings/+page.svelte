@@ -301,14 +301,14 @@
 	{#if owner}
 		<button type="button" class="row" onclick={() => (editingAi = true)}>
 			<span class="tile" aria-hidden="true"><Sparkles size={18} strokeWidth={1.9} /></span>
-			<span class="label">{m.settings.ai.row}</span>
+			<span class="label whole">{m.settings.ai.row}</span>
 			<span class="value long">{aiValue}</span>
 			<ChevronRight size={15} strokeWidth={2} class="chevron" />
 		</button>
 	{:else}
 		<div class="row">
 			<span class="tile" aria-hidden="true"><Sparkles size={18} strokeWidth={1.9} /></span>
-			<span class="label">{m.settings.ai.row}</span>
+			<span class="label whole">{m.settings.ai.row}</span>
 			<span class="value long">{aiValue}</span>
 		</div>
 	{/if}
@@ -493,7 +493,14 @@
 	}
 
 	/* A provider and a model id can outrun a 390px row ("OpenRouter ·
-	   meta-llama/llama-4-scout:free"): the value gives way, the label doesn't. */
+	   meta-llama/llama-4-scout:free"): the value gives way, the label doesn't.
+	   The label has to be sized by its text for that: with `flex: 1` its basis
+	   is 0, it gets only what the value leaves, and "KI-Funktionen" broke into
+	   "KI-" / "Funktione" / "n" (#56). */
+	.label.whole {
+		flex: 1 0 auto;
+	}
+
 	.value.long {
 		flex: 0 1 auto;
 		min-width: 0;

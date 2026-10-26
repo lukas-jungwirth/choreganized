@@ -2420,3 +2420,12 @@ units | null, name}`, written back as editor lines in the reader's unit spelling
      `size:m` still waits. The human gate is unchanged: agent PRs merge into `dev` on green CI,
      and `main` moves only when Lukas merges the release PR. The costs are more build runs (some
      end in "couldn't reproduce") and more agent PRs in each release.
+
+166. **A settings row with a long value keeps its label whole and cuts the value instead** (#56,
+     `settings/+page.svelte` `.label.whole`). The AI row's label had `flex: 1`, a basis of 0, so
+     it only got what `Gemini · gemini-flash-latest` left over. At 390px in German that broke
+     "KI-Funktionen" into three lines, and with "Nicht eingerichtet" it broke at 360px. Its label
+     is now sized by its own text (`flex: 1 0 auto`), and the value gets the ellipsis, down to
+     "Gemini · …" at 320px. The row is still the way in to the sheet, which names the full model.
+     The other rows keep `flex: 1` and `overflow-wrap: anywhere`, because their labels are short
+     and their values are, too.
