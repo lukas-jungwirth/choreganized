@@ -96,6 +96,7 @@ how a change proves itself is `docs/TESTING.md`.
    CI decides the merge, and Coolify deploys `dev` to the test environment. Then
    `gh issue edit $1 --add-label fixed-on-dev`: `Closes #$1` only closes an issue when a PR merges
    into the default branch, and yours merges into `dev` — the label is how `/inbox` knows, and
-   the promotion PR `dev → main` is what closes it.
+   the release PR `dev → main` (opened and kept current by `release.yml`, merged by Lukas) is
+   what closes it. Never open or edit a PR against `main` yourself.
 
 10. **Comment once** on the issue: the PR link, and two sentences on what you decided on your own.
