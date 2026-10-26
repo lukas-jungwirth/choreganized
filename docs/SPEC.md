@@ -9,7 +9,8 @@
 > [DECISIONS.md](DECISIONS.md).
 
 The app is an installable PWA (Android-first) with four tabs — **Home, Shopping, Cooking,
-Tasks** — plus onboarding and settings. No finances, no message board.
+Tasks** — plus onboarding and settings. No message board. A fifth tab, **Expenses**, is
+specified in §11 and not built yet (→ plans 29, 30, [DECISIONS #167](DECISIONS.md)).
 
 ---
 
@@ -97,7 +98,8 @@ avatars. Then, in order:
    "All →" to Tasks → History. Hidden when there are no completions yet. Last on the screen:
    pleasant to see, never the reason the app was opened.
 
-Bottom tab bar on all four tabs: Home, Shopping, Cooking, Tasks; active = sage. Tasks tab shows
+Bottom tab bar on all four tabs: Home, Shopping, Cooking, Tasks; active = sage. (Once plan 29
+adds Expenses as a fifth tab, only the active tab shows its label → §11.2.) Tasks tab shows
 a danger badge with the current user's overdue count [4e].
 
 ---
@@ -866,3 +868,202 @@ that comes forward gets lighter rather than darker (→ [DECISIONS #119, #120](D
   someone whose avatar shifted hue at night would stop being recognisable at a glance.
 - The **offline page** follows the device only — it is served by the service worker, which
   can't read the httpOnly cookie.
+
+---
+
+## 11. Expenses — who paid, who owes (→ plans 29, 30; not built yet)
+
+A shared tally for the household, in the spirit of Splitwise but smaller: log what you paid,
+say who it was for, and always know who owes whom. **Easy to log, calm to read.** The tab
+answers one question first, "are we square?", and keeps everything else one tap away
+(→ [DECISIONS #167](DECISIONS.md)). The app only keeps the tally. No money moves through it,
+and it connects to no bank.
+
+Frames: **[`design/Expenses.dc.html`](../design/Expenses.dc.html)**, a page of its own beside
+`Hearth.dc.html` (→ [DECISIONS #171](DECISIONS.md)). **[9a]** tab, with its states
+`9a-owe` (3 people, overflow open) · `9a-settled` · `9a-tabbar` · `9a-dark` · **[9b]** add
+expense, with `9b-suggest` · `9b-edit` · **[9c]** split (amounts, not adding up), with `9c-ok`
+(%) · **[9d]** settle up · **[9e]** expense detail · **[9f]** all activity · **[9g]** empty
+state · **[9h]** recurring (plan 30), with `9h-stop` · plus the Home line. Mock date: Monday
+24 November.
+
+### 11.1 Vocabulary
+
+- **Expense**: something one person paid for others (or for others plus themselves): an
+  amount, what it was for, who paid, a date, a category, and how it is split.
+- **Person**: anyone who can pay or share. Today that is exactly the household's members, plus
+  former members who still have a balance. The model keeps the door open for **guests**
+  (a friend on a trip, the cleaner) without building them yet (→ [DECISIONS #168](DECISIONS.md)).
+- **Balance**: one number per person, `everything they paid − their share of everything`.
+  Positive = they are owed, negative = they owe. All balances add up to zero.
+- **Settling up**: recording that money changed hands outside the app ("Elisabeth paid me
+  €24.50"). It is a payment, not an expense, and is shown differently.
+
+### 11.2 The tab [9a] (fifth tab, after Tasks)
+
+Tab bar order: **Home · Shopping · Cooking · Tasks · Expenses** ("Expenses" / "Ausgaben").
+With five tabs **only the active one carries its label**, in a sage pill; the others are
+icons. That holds on every tab, not just this one, so the bar changes app-wide [9a-tabbar]
+(→ [DECISIONS #171](DECISIONS.md)). The header's **•••** menu holds **Recurring** (with a
+count) · **All activity** · **Expense settings** (→ §11.10).
+
+1. **Balance card**: the one thing you read:
+   - "You're owed **€24.50**" (sage) · "You owe **€12.00**" (terracotta) · "All settled up"
+     (neutral, with a quiet check).
+   - Under it, the **payments that would settle the house**, at most one line per payment,
+     each line where you are involved first: "Elisabeth → you · €24.50", "You → Marco · €8".
+     Lines that don't involve you are shown smaller and below yours. Each line has a
+     **Settle up** button that opens [9d] prefilled with that payment.
+   - These are the _simplified_ payments (→ §11.6). There is no pairwise view and no switch.
+2. **Recent**: this month's activity, newest first: expenses and payments mixed, grouped by
+   day like the task history (§5.8). An expense row shows category icon, description, "{payer}
+   paid €42.10", and on the right **your part** of it: "you lent €21.05" (sage) / "you borrowed
+   €21.05" (terracotta) / "not involved" (muted). A payment row reads "Elisabeth paid Lukas
+   €24.50" with a transfer icon and no category. Tap → detail [9e]. Footer link **All
+   activity →** [9f].
+3. **FAB "+"** → add expense [9b]. The only way to add; settle up lives on the balance card.
+
+Empty state [9g] (no expense ever): a friendly illustration, "Nothing to split yet", "Log the
+weekly shop, the rent, the pizza. Choreganized keeps the tally.", button **Add an expense**.
+
+### 11.3 Add / edit an expense [9b]
+
+A bottom sheet. Its fields, in this order:
+
+1. **Amount**: large, first, focused on open, decimal keypad (`inputmode="decimal"`). Accepts
+   `12,50` and `12.50` in either language, at most two decimals, more than 0, at most
+   1 000 000. In the household currency (§11.10).
+2. **What for?**: description, required, up to 80 characters. Suggests past descriptions as
+   you type, matched anywhere inside the words (the household's own vocabulary, like the
+   shopping add field §3.1) [9b-suggest]. Picking a past
+   one also proposes its last category.
+3. **Category**: one chip from the fixed list (§11.7). Defaults to the guess from the
+   description, else **Other**. Optional for the user, never empty in the data.
+4. **Paid by**: avatar chips of the household's people, **you** preselected. Picking someone
+   else is how you log a spend someone else made.
+5. **Date**: "Today" chip. Tapping it opens the date field. A date in the future is refused.
+6. **Split**: one summary row, "Split equally · everyone · €21.05 each", or "Split by % ·
+   Lukas 30 · Elisabeth 70". Tapping it opens [9c]. New expenses start from the
+   **household default split** (§11.5).
+7. (plan 30) **Repeats**: Never · Weekly · Monthly · Yearly (§11.9).
+
+**Save** is disabled until amount, description and a valid split exist. Editing opens the same
+sheet filled in, with **Delete** at the bottom. Delete removes the expense right away, with
+an undo bar like shopping's (§3.1). Any member may add, edit or delete any expense: it is a
+household of people who trust each other. The detail shows who did it last.
+
+### 11.4 Split [9c]
+
+A second sheet over [9b]:
+
+- **Who's in**: one row per person, a checkbox and an avatar. Defaults to everyone in the
+  default split. At least one person must stay in. The payer doesn't have to be in, so "I
+  bought Elisabeth's train ticket" works: Elisabeth's share is 100%.
+- **How**: segmented control **Equally · Amounts · % · Shares**:
+  - _Equally_: everyone in pays the same. Each row shows the result read-only.
+  - _Amounts_: type each person's amount. Footer: "€3.20 left to assign" / "€1.00 too
+    much" / "Adds up ✓".
+  - _%_: type each person's percent (whole numbers or one decimal). Footer: "15% left" / "Adds
+    up to 100% ✓". With two people in, typing one fills the other.
+  - _Shares_: whole numbers (1, 2, 3 …, default 1). No sum to hit. Each row shows its
+    amount live.
+- Every row always shows the resulting money amount. **Done** is disabled until it adds up.
+- **Make this the household default**: a small link under the rows, for _Equally_, _%_ and
+  _Shares_ (_Amounts_ can't be a default because it depends on the total). One confirm line:
+  "New expenses will start split 30 / 70." Same setting as Settings → Expenses (§11.10).
+- **Rounding** (shown nowhere, true everywhere): shares are computed in cents, and leftover
+  cents go one at a time to the people with the largest remainder, ties in the order of the
+  list. The shares always add up exactly to the amount (→ [DECISIONS #169](DECISIONS.md)).
+
+### 11.5 Default split
+
+The household has one default: _Equally between everyone_ (out of the box), or a stored
+_%_ / _Shares_ split over a set of people. A new member joins the default as follows. With
+_Equally_ they are simply in. With _%_ or _Shares_ the default is left as it was, and a
+small note on [9c] says "Marco isn't part of the default split", so a percentage nobody
+agreed to is never invented.
+
+### 11.6 Balances and "who pays whom"
+
+- Balance per person = Σ paid − Σ own shares, over every expense and every payment (a payment
+  from A to B counts as A paying an "expense" that is all B's share, so the same sum covers
+  both). Always derived from the rows. Nothing is cached, and there is no reset.
+- **Simplified payments**: take the people who owe, largest first, and match each with the
+  people owed, largest first, until everything is zero. At most _n − 1_ payments. With your
+  example of A → B €10, B → C €10, C → A €10, everyone is at 0, so nobody owes anything. Two
+  people always see exactly one line, or none (→ [DECISIONS #167](DECISIONS.md)).
+- Amounts are shown in the household currency, formatted for the reader's language
+  (`€24.50` / `24,50 €`).
+
+### 11.7 Categories
+
+Fixed list, not editable (v1), with an icon each: **Groceries · Household · Rent & bills ·
+Eating out · Transport · Leisure · Travel · Other**. Payments have none. Stored as keys, named
+by the catalog (§9).
+
+### 11.8 Settle up [9d]
+
+A sheet: **From** (avatar chips) → **To** (avatar chips), **Amount**, **Date** (Today).
+Opened from a balance line it comes prefilled with that payment, and the amount can be
+lowered for a partial payment. Copy under the button: "This only records it — send the
+money however you usually do." Saving shows the balance card updating. Edit and delete work
+as they do for expenses.
+
+### 11.9 Recurring expenses [9h] (→ plan 30)
+
+- An expense can **repeat** weekly, monthly or yearly, starting at its date. A monthly one on
+  the 31st lands on the last day of shorter months.
+- Each time it comes due, a normal expense is created at **06:00 household-local** with
+  the template's amount, payer, category and split, and marked with a small repeat icon. The
+  people in it get a push (§11.11). A missed day (server down) is caught up, once per
+  occurrence, never twice.
+- Editing a created expense changes only that one. Editing the **template** (from [9h], or
+  from "Repeats monthly · Edit series" in the detail) changes future ones only. **Stop
+  repeating** ends the series and keeps the past.
+- [9h] lists the series: description, amount, "Monthly · next 1 Dec", payer avatar. It is
+  reached from the tab's overflow menu.
+
+### 11.10 Settings
+
+- **Household → Expenses** (owner edits, members see it read-only):
+  - **Currency**: ISO list, EUR by default. Changeable **only while the household has no
+    expenses**. After that the row says why it is locked, since relabelling stored amounts
+    would make them wrong (→ [DECISIONS #170](DECISIONS.md)).
+  - **Default split**: opens [9c] in default mode (§11.5).
+- **Notifications → Expenses** (plan 30): per member, default **on** (§11.11).
+
+### 11.11 Notifications (→ plan 30)
+
+To the people in an expense, never to the one who did the action, in their own language:
+
+- added: "Elisabeth added Groceries · €42.10 · your share €21.05"
+- edited, if your share changed: "Elisabeth changed Groceries · your share is now €18.00"
+- payment to you: "Lukas paid you €24.50"
+- a recurring expense was added: "Rent was added · your share €450.00"
+
+No digest and no "you owe money" nagging. The balance card is the reminder.
+
+### 11.12 All activity & search [9f]
+
+`/expenses/history`: a search field (description, case-insensitive) and filter chips:
+**Category** · **Person** (paid by or in it) · **Only mine** (involves you) · **Payments**
+(only settle-ups). Results grouped by month with a month total of expenses. Paged one month
+at a time, like the task history (→ DECISIONS #76). Filters live in the URL, so back works.
+
+### 11.13 Home and the rest of the app
+
+- **Home**: below the stat tiles, one line "You're owed €24.50 · Elisabeth →", or "You owe
+  Elisabeth €12 →", linking to the tab. Hidden when you are settled up and when the household
+  has no expenses yet. No new tile, so Home doesn't grow.
+- **Leaving / removing a member** ([6d], §7): the confirm adds "Lukas still owes €12.00 —
+  settle up first?" without blocking. A former member's balance stays, under their name with
+  "Former member", until it is settled. After that they drop out of pickers but stay in
+  history (→ [DECISIONS #168](DECISIONS.md)).
+- **Away mode** doesn't affect expenses.
+- **Points**: none. Paying for things is not a chore.
+
+### 11.14 Not in v1 (on purpose)
+
+Guests and people outside the household (the model is ready, → #168) · linking with other
+Choreganized households · receipt photos · "log what this shop cost?" after a shopping trip ·
+several currencies · statistics and charts · groups or trips inside a household · export.
