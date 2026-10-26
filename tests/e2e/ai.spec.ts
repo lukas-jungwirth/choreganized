@@ -241,6 +241,15 @@ test('a remembered "Improve with AI" after AI was removed just imports without i
 });
 
 test.describe('the Settings row in German (#56)', () => {
+	test.beforeEach(async ({ page, baseURL }) => {
+		const german = await page.request.post('/settings?/language', {
+			form: { locale: 'de' },
+			headers: { origin: baseURL! },
+			maxRedirects: 0
+		});
+		expect([200, 303]).toContain(german.status());
+	});
+
 	test.afterEach(async ({ page, baseURL }) => {
 		const restored = await page.request.post('/settings?/language', {
 			form: { locale: 'en' },
@@ -250,27 +259,30 @@ test.describe('the Settings row in German (#56)', () => {
 		expect([200, 303]).toContain(restored.status());
 	});
 
+	/** The reporter saw "KI-" / "Funktione" / "n": count the label's line boxes. */
+	async function labelLines(page: Page, value: string) {
+		await page.goto('/settings');
+		const row = page.getByRole('button', { name: /^KI-Funktionen/ });
+		await expect(row).toContainText(value);
+		return row.getByText('KI-Funktionen', { exact: true }).evaluate((label) => {
+			const range = document.createRange();
+			range.selectNodeContents(label);
+			return new Set([...range.getClientRects()].map((rect) => Math.round(rect.top))).size;
+		});
+	}
+
 	test('"KI-Funktionen" stays on one line next to "Gemini · gemini-flash-latest"', async ({
 		page,
 		baseURL
 	}) => {
 		await setUpGemini(page, baseURL!);
-		await page.request.post('/settings?/language', {
-			form: { locale: 'de' },
-			headers: { origin: baseURL! },
-			maxRedirects: 0
-		});
-		await page.goto('/settings');
+		expect(await labelLines(page, 'Gemini · gemini-flash-latest')).toBe(1);
+	});
 
-		const row = page.getByRole('button', { name: /^KI-Funktionen/ });
-		await expect(row).toContainText('Gemini · gemini-flash-latest');
-
-		// The reporter saw "KI-" / "Funktione" / "n": count the label's line boxes.
-		const lines = await row.getByText('KI-Funktionen', { exact: true }).evaluate((label) => {
-			const range = document.createRange();
-			range.selectNodeContents(label);
-			return new Set([...range.getClientRects()].map((rect) => Math.round(rect.top))).size;
-		});
-		expect(lines).toBe(1);
+	test('"KI-Funktionen" stays on one line next to "Nicht eingerichtet" on a 360px phone', async ({
+		page
+	}) => {
+		await page.setViewportSize({ width: 360, height: 800 });
+		expect(await labelLines(page, 'Nicht eingerichtet')).toBe(1);
 	});
 });
