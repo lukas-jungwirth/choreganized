@@ -183,6 +183,18 @@
 
 	const splitJson = $derived(JSON.stringify(rows ?? []));
 
+	/**
+	 * The default is about expenses to come, so it is only offered while everyone
+	 * ticked is a current member — a former member still owed something can be
+	 * in today's split, but in none of tomorrow's. `everyone` is every current
+	 * member ticked, which is what the default's own `equal` means (→ SPEC §11.5).
+	 */
+	const memberIds = $derived(people.filter((person) => person.memberId).map((person) => person.id));
+	const defaultable = $derived(inIds.every((id) => memberIds.includes(id)));
+	const everyone = $derived(defaultable && memberIds.every((id) => inIds.includes(id)));
+	/** An equal split over a subset is "1 share each" as a default. */
+	const defaultMode = $derived(mode === 'equal' && !everyone ? 'shares' : mode);
+
 	function done() {
 		ondone({ mode, inIds: [...inIds], inputs: { ...inputs } });
 		open = false;
@@ -281,7 +293,7 @@
 			<Button type="submit" disabled={!valid}>{m.expenses.split.done}</Button>
 		</form>
 	{:else}
-		{#if mode !== 'amounts'}
+		{#if mode !== 'amounts' && defaultable}
 			{#if savedDefault}
 				<p class="saved" role="status">{savedDefault}</p>
 			{:else}
@@ -290,9 +302,6 @@
 					action="?/splitDefault"
 					use:enhance={() => {
 						error = undefined;
-						// An equal split over a subset is "1 share each" as a default:
-						// the default's own `equal` means everyone (→ SPEC §11.5).
-						const everyone = inIds.length === people.filter((p) => p.memberId).length;
 						const label =
 							mode === 'equal' && everyone
 								? m.expenses.split.defaultEqual
@@ -307,13 +316,7 @@
 						};
 					}}
 				>
-					<input
-						type="hidden"
-						name="mode"
-						value={mode === 'equal' && inIds.length !== people.filter((p) => p.memberId).length
-							? 'shares'
-							: mode}
-					/>
+					<input type="hidden" name="mode" value={defaultMode} />
 					<input
 						type="hidden"
 						name="split"

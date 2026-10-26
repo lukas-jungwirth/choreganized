@@ -810,6 +810,14 @@ export const ledgerPeople = sqliteTable(
 		memberId: text('member_id')
 			.unique()
 			.references(() => members.id, { onDelete: 'set null' }),
+		/**
+		 * The person behind the membership, kept after it ends: someone who
+		 * leaves and joins the same household again is reconnected to this row,
+		 * debts and all, instead of becoming a second person with their name
+		 * (→ DECISIONS #174). NULL for guests. Deliberately not a foreign key: the
+		 * person — and what they owe — outlives even the account.
+		 */
+		userId: text('user_id'),
 		kind: text('kind', { enum: ['member', 'guest'] })
 			.notNull()
 			.default('member'),
@@ -823,7 +831,10 @@ export const ledgerPeople = sqliteTable(
 		defaultWeight: integer('default_weight'),
 		createdAt: createdAt()
 	},
-	(t) => [index('ledger_people_household_idx').on(t.householdId)]
+	(t) => [
+		index('ledger_people_household_idx').on(t.householdId),
+		index('ledger_people_user_idx').on(t.householdId, t.userId)
+	]
 );
 
 /**

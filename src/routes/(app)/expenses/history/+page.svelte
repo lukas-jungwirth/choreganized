@@ -29,10 +29,15 @@
 	let timer: ReturnType<typeof setTimeout> | undefined;
 
 	// Back and forward change the URL under the field: follow it, so a stale
-	// word isn't resubmitted with the next chip. While typing, the URL catches up
-	// with the field, so this writes back what is already there.
+	// word isn't resubmitted with the next chip. Not while the field has the
+	// focus — then the reply to a search sent mid-word would overwrite what has
+	// been typed since.
+	let field: HTMLElement | undefined = $state();
 	$effect(() => {
-		query = data.filters.query;
+		const next = data.filters.query;
+		untrack(() => {
+			if (!field?.contains(document.activeElement)) query = next;
+		});
 	});
 
 	const names = $derived(Object.fromEntries(data.people.map((person) => [person.id, person.name])));
@@ -72,13 +77,15 @@
 	data-sveltekit-noscroll
 	aria-label={m.expenses.history.filters}
 >
-	<SearchField
-		label={m.expenses.history.search}
-		placeholder={m.expenses.history.search}
-		name="q"
-		bind:value={query}
-		oninput={onSearch}
-	/>
+	<div class="search" bind:this={field}>
+		<SearchField
+			label={m.expenses.history.search}
+			placeholder={m.expenses.history.search}
+			name="q"
+			bind:value={query}
+			oninput={onSearch}
+		/>
+	</div>
 
 	<div class="chips">
 		<label class="chip select" class:on={data.filters.category}>

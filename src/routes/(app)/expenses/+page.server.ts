@@ -15,6 +15,7 @@ import {
 } from '$lib/server/expense-actions';
 import {
 	balancesOf,
+	deletedExpense,
 	descriptionSuggestions,
 	getExpenseSettings,
 	listLedger,
@@ -30,7 +31,7 @@ export const load: PageServerLoad = (event) => {
 	const { householdId, member } = requireMember(event);
 
 	const people = listPeople(householdId);
-	const ledger = listLedger(householdId);
+	const ledger = listLedger(householdId, people);
 	const settings = getExpenseSettings(householdId);
 
 	return {
@@ -42,7 +43,15 @@ export const load: PageServerLoad = (event) => {
 		currency: settings.currency,
 		splitDefault: settings.splitDefault,
 		currencyLocked: settings.hasExpenses,
-		suggestions: descriptionSuggestions(ledger)
+		suggestions: descriptionSuggestions(ledger),
+		/**
+		 * The detail screen deletes, then comes here with `?deleted=` for the undo
+		 * bar. Only a row that really is deleted, and this household's, gets one.
+		 */
+		justDeleted: (() => {
+			const id = event.url.searchParams.get('deleted');
+			return id ? deletedExpense(householdId, id) : null;
+		})()
 	};
 };
 

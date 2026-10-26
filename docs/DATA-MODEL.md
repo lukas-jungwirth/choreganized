@@ -292,7 +292,9 @@ and are deleted by the morning sweep, so the table stays at a couple of dozen ro
   backfilled the existing ones), and **outlives it**: leaving or removal writes the member's
   name and colour into the row and sets `memberId` NULL, so a balance a former member still owes
   stays readable. While the membership lasts, the `members` row is the truth for name and colour
-  (`listPeople` joins it). `kind = 'guest'` is reserved for people outside the household; nothing
+  (`listPeople` joins it). `userId` (plain text, not a foreign key) remembers the user behind the
+  membership, so someone who leaves and joins again gets the same person back, debts included
+  (→ #174). `kind = 'guest'` is reserved for people outside the household; nothing
   writes it yet. A person is never deleted except with the household, so the references to it
   cascade rather than restrict (a RESTRICT would make deleting a household fail).
 - **An expense and a payment are the same row** (→ #167): `kind = 'payment'` is paid by the

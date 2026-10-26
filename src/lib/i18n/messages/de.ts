@@ -1015,6 +1015,7 @@ export const de: Messages = {
 					? `Du hast ${to} ${amount} gezahlt`
 					: `${from} hat ${to ?? 'dir'} ${amount} gezahlt`,
 			paymentMeta: (when: string) => `Zahlung · ${when}`,
+			paymentPlain: 'Zahlung',
 			repeats: 'Wiederholt sich'
 		},
 

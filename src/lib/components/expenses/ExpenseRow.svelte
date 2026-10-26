@@ -19,8 +19,8 @@
 		/** Person id → name. */
 		names: Record<string, string>;
 		currency: string;
-		/** The payment's second line: a time on the tab, a date in History. */
-		when: string;
+		/** The payment's second line: a time on the tab, a date in History; null says just "Payment". */
+		when: string | null;
 	};
 
 	let { item, me, names, currency, when }: Props = $props();
@@ -47,7 +47,9 @@
 						money(item.amountMinor)
 					)}</span
 				>
-				<span class="meta">{m.expenses.row.paymentMeta(when)}</span>
+				<span class="meta"
+					>{when ? m.expenses.row.paymentMeta(when) : m.expenses.row.paymentPlain}</span
+				>
 			{:else}
 				<span class="title">{item.description}</span>
 				<span class="meta">{m.expenses.row.paid(who(item.paidById), money(item.amountMinor))}</span>

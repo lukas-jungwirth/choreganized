@@ -173,6 +173,12 @@ expense_shares
   week of expenses with one settle-up, so the tab, the visual suite and `npm run db:seed` all
   open on a balance.
 - **The Recurring menu entry, the repeat badge and the push** wait for plan 30.
+- **Second review, fixed before merging** (→ DECISIONS #174): a rejoining member gets their old
+  person back (`ledger_people.user_id`, migration 0018); the default split names current members
+  only; a picked suggestion keeps its category through edits; a payment row shows its clock time
+  only when logged that day; the undo bar's `?deleted=` is checked by the load; History's search
+  field no longer loses typing to a slow reply; `DeleteExpenseForm` is shared by both edit sheets;
+  `listLedger` takes the people its caller already read.
 - **The 9a frame's "SATURDAY · 22 NOV" day heads** use the app's existing `m.date.dayLabel`
   ("Sat 22 Nov"), the same as the task history.
 

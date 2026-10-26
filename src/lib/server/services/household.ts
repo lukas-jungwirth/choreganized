@@ -13,7 +13,7 @@
  * is enforced next to the write — an action that forgot to ask cannot make the
  * write happen anyway.
  */
-import { and, asc, eq, ne, sql } from 'drizzle-orm';
+import { and, asc, eq, isNull, ne, sql } from 'drizzle-orm';
 import type { Locale } from '$lib/i18n';
 import { isMemberColor } from '$lib/member-colors';
 import { toCalendarDate, type CalendarDate } from '$lib/utils/dates';
@@ -85,17 +85,43 @@ function membershipOf(tx: Transaction, userId: string): Member | undefined {
  * Every membership comes with the person the expenses ledger knows it by
  * (→ DECISIONS #168), written in the same transaction so there is never a
  * member who can't pay for anything.
+ *
+ * Someone who left this household and is joining it again gets their old
+ * person back — whatever they still owed or were owed included — rather than
+ * a second person under the same name whose balance never meets the first
+ * (→ DECISIONS #174).
  */
 function insertMember(tx: Transaction, values: typeof members.$inferInsert): Member {
 	const member = tx.insert(members).values(values).returning().get();
-	tx.insert(ledgerPeople)
-		.values({
-			householdId: member.householdId,
-			memberId: member.id,
-			name: member.displayName,
-			color: member.color
-		})
-		.run();
+
+	const former = tx
+		.select({ id: ledgerPeople.id })
+		.from(ledgerPeople)
+		.where(
+			and(
+				eq(ledgerPeople.householdId, member.householdId),
+				eq(ledgerPeople.userId, member.userId),
+				isNull(ledgerPeople.memberId)
+			)
+		)
+		.get();
+
+	if (former) {
+		tx.update(ledgerPeople)
+			.set({ memberId: member.id, name: member.displayName, color: member.color })
+			.where(eq(ledgerPeople.id, former.id))
+			.run();
+	} else {
+		tx.insert(ledgerPeople)
+			.values({
+				householdId: member.householdId,
+				memberId: member.id,
+				userId: member.userId,
+				name: member.displayName,
+				color: member.color
+			})
+			.run();
+	}
 	return member;
 }
 

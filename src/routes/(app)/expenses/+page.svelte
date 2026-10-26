@@ -30,7 +30,7 @@
 	import FAB from '$lib/components/ui/FAB.svelte';
 	import UndoToast from '$lib/components/ui/UndoToast.svelte';
 	import { messages } from '$lib/i18n';
-	import { formatTimeIn } from '$lib/utils/dates';
+	import { formatTimeIn, toCalendarDate } from '$lib/utils/dates';
 	import type { Payment } from '$lib/utils/money';
 	import type { PageProps } from './$types';
 
@@ -53,12 +53,26 @@
 	const isOwner = $derived(data.currentMember.role === 'owner');
 
 	// The detail screen deletes, then sends the reader here to offer the undo.
+	// The load has checked the row really is waiting for one; either way the
+	// parameter leaves the address, so back and reload don't raise it again.
 	$effect(() => {
-		const id = page.url.searchParams.get('deleted');
-		if (!id) return;
-		deleted = { id, label: page.url.searchParams.get('what') || m.expenses.undo.payment };
+		if (!page.url.searchParams.has('deleted')) return;
+		const gone = data.justDeleted;
+		if (gone) deleted = { id: gone.id, label: gone.description ?? m.expenses.undo.payment };
 		void goto('/expenses', { replaceState: true, noScroll: true, keepFocus: true });
 	});
+
+	/**
+	 * A payment's second line under its day heading: the clock time it was
+	 * logged — but only when it was logged that same day. One recorded later for
+	 * an earlier day would otherwise read as if it happened at that time.
+	 */
+	function paymentWhen(item: (typeof data.recent)[number]): string | null {
+		const tz = data.household.timezone;
+		return toCalendarDate(item.createdAt, tz) === item.date
+			? formatTimeIn(item.createdAt, tz)
+			: null;
+	}
 
 	function closeMenu(event: MouseEvent) {
 		if (!(event.target as HTMLElement).closest('.menu-wrap')) menuOpen = false;
@@ -139,7 +153,7 @@
 						me={data.me}
 						{names}
 						currency={data.currency}
-						when={formatTimeIn(item.createdAt, data.household.timezone)}
+						when={paymentWhen(item)}
 					/>
 				{/each}
 			</ul>

@@ -41,6 +41,6 @@ export const load: PageServerLoad = async (event) => {
 		me,
 		filters,
 		currency: getExpenseSettings(householdId).currency,
-		...filterHistory(listLedger(householdId), filters, me, today, params.get('from'))
+		...filterHistory(listLedger(householdId, people), filters, me, today, params.get('from'))
 	};
 };

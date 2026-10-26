@@ -9,7 +9,6 @@
 <script lang="ts">
 	import { enhance } from '$app/forms';
 	import ArrowDown from '@lucide/svelte/icons/arrow-down';
-	import Trash from '@lucide/svelte/icons/trash-2';
 	import Avatar from '$lib/components/ui/Avatar.svelte';
 	import BottomSheet from '$lib/components/ui/BottomSheet.svelte';
 	import Button from '$lib/components/ui/Button.svelte';
@@ -21,6 +20,7 @@
 	import { untrack } from 'svelte';
 	import AmountField from './AmountField.svelte';
 	import DateRow from './DateRow.svelte';
+	import DeleteExpenseForm from './DeleteExpenseForm.svelte';
 
 	type Props = {
 		/** A recorded payment to edit; otherwise a new one. */
@@ -160,27 +160,12 @@
 	</form>
 
 	{#if item}
-		<form
-			method="POST"
-			action="?/delete"
-			use:enhance={() =>
-				async ({ result, update }) => {
-					// The screen that asked for the delete moves on by itself (the detail
-					// goes back to the tab); reloading it first would load a deleted row.
-					const gone = result.type === 'success' && Boolean(result.data?.deleted);
-					if (!gone || !ondeleted) await update({ reset: false });
-					if (gone) {
-						ondeleted?.(item.id);
-						open = false;
-					}
-				}}
-		>
-			<input type="hidden" name="id" value={item.id} />
-			<button type="submit" class="delete">
-				<Trash size={15} strokeWidth={2} aria-hidden="true" />
-				{m.expenses.settle.delete}
-			</button>
-		</form>
+		<DeleteExpenseForm
+			id={item.id}
+			label={m.expenses.settle.delete}
+			{ondeleted}
+			ondone={() => (open = false)}
+		/>
 	{/if}
 </BottomSheet>
 
@@ -249,18 +234,5 @@
 		line-height: 1.45;
 		text-align: center;
 		color: var(--text-4);
-	}
-
-	.delete {
-		display: flex;
-		align-items: center;
-		justify-content: center;
-		gap: 6px;
-		width: 100%;
-		margin-top: 8px;
-		padding: 12px;
-		font-size: calc(14px * var(--fs));
-		font-weight: 600;
-		color: var(--danger);
 	}
 </style>

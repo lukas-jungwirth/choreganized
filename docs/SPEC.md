@@ -1058,7 +1058,8 @@ at a time, like the task history (→ DECISIONS #76). Filters live in the URL, s
   Elisabeth €12 →", linking to the tab. Hidden when you are settled up and when the household
   has no expenses yet. No new tile, so Home doesn't grow.
 - **Leaving / removing a member** ([6d], §7): the confirm adds "Lukas still owes €12.00 —
-  settle up first?" without blocking. A former member's balance stays, under their name with
+  settle up first?" without blocking. Someone who later joins the same household again picks
+  up their old balance where they left it. A former member's balance stays, under their name with
   "Former member", until it is settled. After that they drop out of pickers but stay in
   history (→ [DECISIONS #168](DECISIONS.md)).
 - **Away mode** doesn't affect expenses.

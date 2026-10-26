@@ -12,7 +12,6 @@
 	import { enhance } from '$app/forms';
 	import ChevronRight from '@lucide/svelte/icons/chevron-right';
 	import Percent from '@lucide/svelte/icons/percent';
-	import Trash from '@lucide/svelte/icons/trash-2';
 	import Avatar from '$lib/components/ui/Avatar.svelte';
 	import BottomSheet from '$lib/components/ui/BottomSheet.svelte';
 	import Button from '$lib/components/ui/Button.svelte';
@@ -30,6 +29,7 @@
 	import AmountField from './AmountField.svelte';
 	import CategoryIcon from './CategoryIcon.svelte';
 	import DateRow from './DateRow.svelte';
+	import DeleteExpenseForm from './DeleteExpenseForm.svelte';
 	import SplitSheet from './SplitSheet.svelte';
 	import {
 		draftFromDefault,
@@ -141,9 +141,16 @@
 
 	const splitJson = $derived(JSON.stringify(draftRows(draft, currency) ?? []));
 
+	/**
+	 * A picked suggestion settles the category the way a tapped chip does, so
+	 * adding " + drinks" to "Weekly shop · Billa" keeps it under Groceries.
+	 */
 	function pick(suggestion: { description: string; category: ExpenseCategory }) {
 		description = suggestion.description;
-		if (!categoryChosen) category = suggestion.category;
+		if (!categoryChosen) {
+			category = suggestion.category;
+			categoryChosen = true;
+		}
 		describing = false;
 	}
 
@@ -265,27 +272,12 @@
 	</form>
 
 	{#if item}
-		<form
-			method="POST"
-			action="?/delete"
-			use:enhance={() =>
-				async ({ result, update }) => {
-					// The screen that asked for the delete moves on by itself (the detail
-					// goes back to the tab); reloading it first would load a deleted row.
-					const gone = result.type === 'success' && Boolean(result.data?.deleted);
-					if (!gone || !ondeleted) await update({ reset: false });
-					if (gone) {
-						ondeleted?.(item.id);
-						open = false;
-					}
-				}}
-		>
-			<input type="hidden" name="id" value={item.id} />
-			<button type="submit" class="delete">
-				<Trash size={15} strokeWidth={2} aria-hidden="true" />
-				{m.expenses.form.delete}
-			</button>
-		</form>
+		<DeleteExpenseForm
+			id={item.id}
+			label={m.expenses.form.delete}
+			{ondeleted}
+			ondone={() => (open = false)}
+		/>
 	{/if}
 </BottomSheet>
 
@@ -446,19 +438,6 @@
 		border-radius: var(--r-input);
 		background: var(--danger-tint);
 		font-size: calc(13px * var(--fs));
-		color: var(--danger);
-	}
-
-	.delete {
-		display: flex;
-		align-items: center;
-		justify-content: center;
-		gap: 6px;
-		width: 100%;
-		margin-top: 8px;
-		padding: 12px;
-		font-size: calc(14px * var(--fs));
-		font-weight: 600;
 		color: var(--danger);
 	}
 </style>

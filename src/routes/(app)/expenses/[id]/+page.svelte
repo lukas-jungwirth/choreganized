@@ -62,8 +62,7 @@
 	}
 
 	function afterDelete() {
-		const what = item.kind === 'payment' ? m.expenses.undo.payment : (item.description ?? '');
-		void goto(`/expenses?deleted=${encodeURIComponent(item.id)}&what=${encodeURIComponent(what)}`);
+		void goto(`/expenses?deleted=${encodeURIComponent(item.id)}`);
 	}
 </script>
 

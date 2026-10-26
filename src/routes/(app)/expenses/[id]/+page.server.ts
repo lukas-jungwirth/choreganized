@@ -28,11 +28,11 @@ export const load: PageServerLoad = (event) => {
 	// The whole ledger, not one row: the edit sheet completes descriptions from
 	// it and the settle sheet names what is owed, and the lookup is the scoping —
 	// another household's id simply isn't in it.
-	const ledger = listLedger(householdId);
+	const people = listPeople(householdId);
+	const ledger = listLedger(householdId, people);
 	const item = ledger.find((row) => row.id === event.params.id);
 	if (!item) error(404, catalog(event.locals.locale).expenses.errors.notFound);
 
-	const people = listPeople(householdId);
 	const settings = getExpenseSettings(householdId);
 
 	return {

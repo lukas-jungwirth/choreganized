@@ -749,6 +749,11 @@ const seeded = db.transaction((tx) => {
 				id: sid('person', member.id),
 				householdId,
 				memberId: member.id,
+				userId: tx
+					.select({ userId: members.userId })
+					.from(members)
+					.where(eq(members.id, member.id))
+					.get()?.userId,
 				name: member.displayName,
 				color: member.id === ownerMemberId ? MEMBER_SAGE : MEMBER_TERRACOTTA
 			})

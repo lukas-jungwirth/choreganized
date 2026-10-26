@@ -182,7 +182,11 @@ export type ExpenseItem = {
  * Every live expense and payment, newest first (by date, then by when it was
  * logged). The one read the tab, the balance and History all start from.
  */
-export function listLedger(householdId: string): ExpenseItem[] {
+export function listLedger(
+	householdId: string,
+	/** The household's `listPeople`, when the caller has it already — it fixes the shares' order. */
+	people: ExpensePerson[] = listPeople(householdId)
+): ExpenseItem[] {
 	const creator = db
 		.select({ id: members.id, name: members.displayName })
 		.from(members)
@@ -198,7 +202,7 @@ export function listLedger(householdId: string): ExpenseItem[] {
 		.all();
 	if (rows.length === 0) return [];
 
-	const order = new Map(listPeople(householdId).map((person, index) => [person.id, index]));
+	const order = new Map(people.map((person, index) => [person.id, index]));
 	// Joined on the household rather than listing every id: one fixed query
 	// however long the ledger gets.
 	const shares = db
@@ -264,7 +268,7 @@ export function balancesOf(people: ExpensePerson[], ledger: ExpenseItem[]): Bala
  */
 export function balancesByMember(householdId: string): Record<string, number> {
 	const people = listPeople(householdId);
-	const { byPerson } = balancesOf(people, listLedger(householdId));
+	const { byPerson } = balancesOf(people, listLedger(householdId, people));
 	return Object.fromEntries(
 		people
 			.filter((person) => person.memberId !== null)
@@ -285,7 +289,7 @@ export function homeBalance(
 	const me = people.find((person) => person.memberId === memberId);
 	if (!me) return null;
 
-	const { byPerson, payments } = balancesOf(people, listLedger(householdId));
+	const { byPerson, payments } = balancesOf(people, listLedger(householdId, people));
 	const balanceMinor = byPerson[me.id] ?? 0;
 	if (balanceMinor === 0) return null;
 
@@ -662,6 +666,26 @@ export function restoreExpense(householdId: string, id: string): boolean {
 	);
 }
 
+/**
+ * What the tab's undo bar names after the detail screen deleted something
+ * (→ SPEC §11.3): the row, only if it is this household's and still waiting
+ * for its undo — so an old link or a back button can't raise an Undo that
+ * would restore nothing.
+ */
+export function deletedExpense(
+	householdId: string,
+	id: string
+): { id: string; description: string | null } | null {
+	const row = db
+		.select({ id: expenses.id, description: expenses.description })
+		.from(expenses)
+		.where(
+			and(eq(expenses.id, id), eq(expenses.householdId, householdId), isNotNull(expenses.deletedAt))
+		)
+		.get();
+	return row ?? null;
+}
+
 /** The 03:30 cleanup's part (→ `cron.ts`): deletions older than `before` are final. */
 export function purgeDeletedExpenses(householdId: string, before: Date): number {
 	return db
@@ -736,12 +760,17 @@ export function setSplitDefault(
 
 	db.transaction((tx) => {
 		if (mode !== 'equal') {
-			const known = peopleIn(
-				tx,
-				householdId,
-				weights.map((row) => row.personId)
+			// Current members only: a default is about the expenses to come, and
+			// someone who has left won't be in any of them.
+			const current = new Set(
+				tx
+					.select({ id: ledgerPeople.id })
+					.from(ledgerPeople)
+					.where(and(eq(ledgerPeople.householdId, householdId), isNotNull(ledgerPeople.memberId)))
+					.all()
+					.map((row) => row.id)
 			);
-			if (weights.some((row) => !known.has(row.personId))) throw new ExpenseError('person');
+			if (weights.some((row) => !current.has(row.personId))) throw new ExpenseError('person');
 			const check = splitAmount(
 				10_000,
 				mode,

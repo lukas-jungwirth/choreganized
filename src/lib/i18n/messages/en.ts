@@ -1353,6 +1353,7 @@ export const en = {
 			payment: (from: string | null, to: string | null, amount: string) =>
 				`${from ?? 'You'} paid ${to ?? 'you'} ${amount}`,
 			paymentMeta: (when: string) => `Payment · ${when}`,
+			paymentPlain: 'Payment',
 			repeats: 'Repeats'
 		},
 

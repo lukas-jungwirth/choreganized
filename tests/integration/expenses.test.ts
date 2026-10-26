@@ -14,6 +14,7 @@ import {
 	balancesOf,
 	createExpense,
 	createPayment,
+	deletedExpense,
 	deleteExpense,
 	descriptionSuggestions,
 	ExpenseError,
@@ -30,7 +31,12 @@ import {
 	type ExpenseInput,
 	type HistoryFilters
 } from '$lib/server/services/expenses';
-import { leaveHousehold, removeMember, updateProfile } from '$lib/server/services/household';
+import {
+	joinHousehold,
+	leaveHousehold,
+	removeMember,
+	updateProfile
+} from '$lib/server/services/household';
 import { MEMBER_COLORS } from '$lib/member-colors';
 import { db, makeHousehold, tables } from '../helpers/db';
 
@@ -86,6 +92,25 @@ describe('ledger people', () => {
 		assert.deepEqual(
 			{ name: people[1].name, memberId: people[1].memberId },
 			{ name: 'Elisabeth', memberId: null }
+		);
+		assert.equal(balances(householdId).byPerson[ids[1]], -2105);
+	});
+
+	it('a member who leaves and joins again gets their old person back, debt included', () => {
+		const { householdId, owner, members, ids, inviteCode } = household(['Elisabeth']);
+		createExpense(householdId, owner.id, groceries(ids[0], ids), TODAY);
+		leaveHousehold(householdId, members[1].id);
+
+		const back = joinHousehold(members[1].userId, inviteCode, {
+			displayName: 'Lisi',
+			color: MEMBER_COLORS[2].value
+		});
+
+		const people = listPeople(householdId);
+		assert.equal(people.length, 2, 'no second "Elisabeth"');
+		assert.deepEqual(
+			{ id: people[1].id, memberId: people[1].memberId, name: people[1].name },
+			{ id: ids[1], memberId: back.id, name: 'Lisi' }
 		);
 		assert.equal(balances(householdId).byPerson[ids[1]], -2105);
 	});
@@ -232,6 +257,19 @@ describe('logging expenses', () => {
 		assert.equal(deleteExpense(b.householdId, id), false);
 		assert.equal(listLedger(a.householdId).length, 1);
 		assert.equal(listLedger(b.householdId).length, 0);
+	});
+
+	it('only a row that is waiting for its undo is offered one', () => {
+		const a = household();
+		const b = household();
+		const id = createExpense(a.householdId, a.owner.id, groceries(a.ids[0], a.ids), TODAY);
+
+		assert.equal(deletedExpense(a.householdId, id), null, 'not deleted yet');
+		deleteExpense(a.householdId, id);
+		assert.deepEqual(deletedExpense(a.householdId, id), { id, description: 'Weekly shop · Billa' });
+		assert.equal(deletedExpense(b.householdId, id), null, 'another household’s');
+		restoreExpense(a.householdId, id);
+		assert.equal(deletedExpense(a.householdId, id), null, 'already restored');
 	});
 
 	it('delete takes it out of every read, undo puts it back, and the cleanup makes it final', () => {
@@ -416,6 +454,20 @@ describe('settings', () => {
 
 		setSplitDefault(householdId, 'equal', []);
 		assert.deepEqual(getExpenseSettings(householdId).splitDefault, { mode: 'equal', weights: {} });
+	});
+
+	it('a default can only name current members', () => {
+		const { householdId, members, ids } = household(['Elisabeth', 'Marco']);
+		leaveHousehold(householdId, members[2].id);
+
+		assert.throws(
+			() =>
+				setSplitDefault(householdId, 'shares', [
+					{ personId: ids[0], weight: 1 },
+					{ personId: ids[2], weight: 1 }
+				]),
+			rejects('person')
+		);
 	});
 
 	it('the currency is the owner’s, and only until the first expense', () => {

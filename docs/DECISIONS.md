@@ -2500,3 +2500,24 @@ units | null, name}`, written back as editor lines in the reader's unit spelling
      - **German rows say "ausgelegt" / "dein Anteil"**, not "du bekommst" / "du schuldest". A
        row is your part of one expense, not what is owed today; the balance card says that.
      - **No new dependency.** Amounts and currencies are `Intl.NumberFormat`.
+174. **A member who leaves and joins again gets their old ledger person back** (`ledger_people.user_id`,
+     migration 0018, `services/household.ts` `insertMember`). Without it, a housemate who left owing
+     €12 and later rejoined would be two people with one name: the debt stuck on the "Former
+     member", new expenses on the new one, and the two balances never netting. So the person keeps
+     the user behind the membership, and a join looks for that user's former person in the same
+     household before creating one. `user_id` is deliberately **not** a foreign key. SQLite's
+     `ALTER TABLE` can't add one with `ON DELETE SET NULL`, and a plain reference would block
+     deleting an account. The person, and what they owe, outlives even the account anyway. Also
+     from the second review of plan 29:
+     - **The household default names current members only.** The service refuses a former
+       person. The split sheet hides "Make this the household default" while one is ticked, and
+       "everyone" means every current member ticked, not the same count.
+     - **A picked suggestion settles the category** like a tapped chip, so editing its text keeps
+       it.
+     - **A payment row's clock time shows only when it was logged that day.** Otherwise it
+       reads just "Payment" under its day heading.
+     - **The undo bar after a detail-screen delete is checked by the load.**
+       `?deleted=` raises it only for a row of this household that is still waiting for its
+       undo. The label comes from the row, not the URL.
+     - **History's search field follows back/forward, but not while it has the focus.** Otherwise
+       the reply to a search sent mid-word overwrote what was typed since.
