@@ -1,0 +1,44 @@
+# The release PR, `dev → main` (→ docs/TESTING.md "The flow", DECISIONS #161).
+#
+# No agent opens a PR against `main`. Every push to `dev` — a desk session's merge,
+# the build lane's auto-merge, an update-branch — runs scripts/release-pr.ts, which
+# opens the one release PR when `dev` is ahead of `main`, or rewrites the description
+# of the open one: every PR since the last release, and a `Closes #N` per
+# `fixed-on-dev` issue. Lukas merges it; nothing else does.
+#
+# The PR is opened with this run's GITHUB_TOKEN, so GitHub starts no workflow for it —
+# it doesn't need one: its head is `dev`'s tip, which CI already checked on the push,
+# and branch protection reads the checks off that commit. It needs "Allow GitHub
+# Actions to create and approve pull requests" (Settings → Actions → General).
+name: Release PR
+
+on:
+  push:
+    branches: [dev]
+  workflow_dispatch:
+
+# The newest push writes the newest list; an older run has nothing left to add.
+concurrency:
+  group: release-pr
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+  pull-requests: write
+  issues: read
+
+jobs:
+  release-pr:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-node@v6
+        with:
+          node-version: 22
+      - name: Open or update the release PR
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: node scripts/release-pr.ts

@@ -49,16 +49,21 @@ issue ──Triage──▶ `agent:build` ──Build──▶ agent/issue-N ─
    merge is a green run and a direct push is refused (admins excepted). Coolify deploys `dev` to
    the test environment; the **Smoke** workflow waits for `/api/health` to report the merged
    commit and checks the doors.
-5. Try it on the test environment. Promote with a PR `dev → main` whose body carries one
-   `Closes #N` line per `fixed-on-dev` issue — closing keywords only act on the default branch —
-   and the household's instance follows the same way; the issues close with it.
+5. **The release PR** (DECISIONS #161). No agent opens a PR against `main`. Every push to `dev`
+   runs `.github/workflows/release.yml`, which opens the one `Release: dev → main` PR when `dev`
+   is ahead, or rewrites the open one's description (`scripts/release-pr.ts`): every PR merged
+   since the last release, and one `Closes #N` line per `fixed-on-dev` issue — closing keywords
+   only act on the default branch, so that line is what closes them. The code needs no updating:
+   the PR's head _is_ `dev`, and its checks are the ones CI ran on the push. Lukas tries the
+   test environment and merges it; the household's instance follows, and the issues close with
+   it. Actions → Release PR → Run workflow rewrites it by hand.
 
 **The agent lane** (→ [plan 18](plans/18-agent-build.md), DECISIONS #143): an issue labelled
 `agent:build` — by triage for a small bug with a located cause, by a person for anything
 `size:s` / `size:m` — starts `.github/workflows/build.yml`, which branches `agent/issue-N` off
 `dev`, builds the change with a test, runs `npm run verify`, opens the PR and enables
 auto-merge. Green CI merges it, and the issue is labelled `fixed-on-dev` until the promotion
-closes it; `dev → main` is always a person. A PR that fell behind `dev`
+closes it; the release PR lists it, and merging that is always a person. A PR that fell behind `dev`
 shows `BEHIND` and needs `gh pr update-branch`; a `WIP:` draft is a build that stayed red and
 waits for a desk session. `/inbox` lists both.
 
