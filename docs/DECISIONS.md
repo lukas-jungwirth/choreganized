@@ -2361,3 +2361,48 @@ units | null, name}`, written back as editor lines in the reader's unit spelling
      checked headless 2026-10-26, an allow rule for writing is spelled `Edit` (`Write(//tmp/**)`
      allows nothing) and `//` makes the path absolute; a write inside the project stays refused.
      The job no longer needs `npm ci`.
+
+164. **Reproduce first, review second; triage decides, the workflow acts** (plan 26,
+     `triage.yml`, `build.yml`, `merged.yml`, `/build-issue`, `.claude/agents/reviewer.md`).
+     Issue #31 passed every gate with the wrong fix. Its test failed without the change, but it
+     encoded the agent's guess, and the open question that held the bug went unanswered. The
+     lane's rules now live in YAML and in files a test reads, not in a prompt.
+
+     - **Triage returns a verdict, and a job without Claude acts on it.** The action runs with
+       `--json-schema` (`scripts/triage-verdict.schema.json`, compacted by `jq` in a step). Its
+       `structured_output` becomes the job's output, and the `apply` job (`issues: write`,
+       `actions: write`) sets the labels and the title through `scripts/triage-apply.ts`.
+       Triage lost `gh issue edit`. Every label comes from an enum the script checks again, and
+       the verdict reaches scripts through `env` only (`ci.test.ts`).
+     - **The one automatic path into the build is a dispatch.** The rule is in the step's `if:`:
+       `bug`, `size == 's'`, `reproduced`, `confidence == 'found'`, no open questions, nothing on
+       `dev` that fixes it already. A label added with `GITHUB_TOKEN` would start nothing, but
+       `gh workflow run` does. `build.yml` stops honouring a bot's `agent:build`, and
+       `allowed_bots` names `github-actions`, the dispatching actor, instead of `claude`.
+       `apply` adds `agent:build` first, so the issue shows it.
+     - **Reproduction without giving triage the web back** (#163 stands). A `probe` job runs
+       first, with no Claude and no secret but the read-only job token. It feeds the issue's
+       links (at most three, GitHub's own skipped) to `npm run import:probe` without a shell,
+       and hands the report over as an artifact, outside the `/tmp` the agent may write. So
+       "reproduced" exists for recipe-import bugs only, the one area with a probe (plan 25).
+       Every other bug waits for a person, and triage's comment says why. That is deliberate:
+       "found from reading the source" was #31's failure.
+     - **The build reproduces before it fixes.** The first commit is `Reproduce #N: …`, the
+       regression test alone. It is built from the reporter's artefact and asserts their
+       observation in their terms, and it must fail on `dev` for the reported reason. With no
+       reproduction, or an open question it can't answer with evidence, it stops with
+       `needs-info` and one question, or a `WIP:` draft.
+     - **A fresh-context reviewer, one round.** The `reviewer` subagent (Opus) gets the issue
+       number, the test's name and the base ref, and none of the builder's reasoning. It answers
+       three questions with at most five findings and skips style, which is CI's job. The builder
+       fixes or rejects each finding with a reason in the PR's Review section and does not send it
+       back, which keeps the pair from looping. Its `tools:` are `Read, Grep, Glob, Bash`: a
+       subagent's `tools:` takes names, and `Bash(git diff:*)` there would drop Bash, not scope
+       it. The prompt limits its Bash to reading.
+     - **`fixed-on-dev` when the PR merges, not when it opens.** `merged.yml` runs on
+       `pull_request: closed` into `dev`, only if the PR merged. It reads the closing keywords
+       (`scripts/fixed-on-dev.ts`) and may only label. Agent and desk PRs are treated alike, and
+       the build agent no longer sets the label.
+     - **Replayed on #31.** The probe on `dev` before #32, and after it, prints `4. Eier`, the
+       reporter's own words. A `Reproduce #31` test from the saved page stays red under #32's
+       change (plan 26, "Built").
