@@ -38,7 +38,7 @@ branch ──PR──▶ dev ──Coolify──▶ test environment ──PR─
           │                          │                     │
          CI                        smoke                  CI + smoke
 
-issue ──Triage──▶ `agent:build` ──Build──▶ agent/issue-N ──PR + auto-merge──▶ dev   (the agent lane)
+issue ──probe·Triage·apply──▶ dispatch / `agent:build` ──Build──▶ agent/issue-N ──PR + auto-merge──▶ dev ──merged.yml──▶ `fixed-on-dev`
 ```
 
 1. Work on a branch off `dev`. Tests ship with the change (→ "Writing tests").
@@ -58,14 +58,33 @@ issue ──Triage──▶ `agent:build` ──Build──▶ agent/issue-N ─
    test environment and merges it; the household's instance follows, and the issues close with
    it. Actions → Release PR → Run workflow rewrites it by hand.
 
-**The agent lane** (→ [plan 18](plans/18-agent-build.md), DECISIONS #143): an issue labelled
-`agent:build` — by triage for a small bug with a located cause, by a person for anything
-`size:s` / `size:m` — starts `.github/workflows/build.yml`, which branches `agent/issue-N` off
-`dev`, builds the change with a test, runs `npm run verify`, opens the PR and enables
-auto-merge. Green CI merges it, and the issue is labelled `fixed-on-dev` until the promotion
-closes it; the release PR lists it, and merging that is always a person. A PR that fell behind `dev`
-shows `BEHIND` and needs `gh pr update-branch`; a `WIP:` draft is a build that stayed red and
-waits for a desk session. `/inbox` lists both.
+**The agent lane** (→ [plan 18](plans/18-agent-build.md), DECISIONS #143,
+[plan 26](plans/26-agent-reproduce-review.md), DECISIONS #164). Triage runs as three jobs, and
+the agent decides while the workflow acts:
+
+- **`probe`** has no Claude and no secrets. It runs `npm run import:probe` on every page the issue
+  links to, and hands the report to triage as a file.
+- **`triage`** reads the issue, the code and that report, posts its one comment, and returns a
+  verdict through `--json-schema` (`scripts/triage-verdict.schema.json`). It has no
+  `gh issue edit`.
+- **`apply`** has no Claude. It sets the labels and the title from the verdict
+  (`scripts/triage-apply.ts`). It dispatches `build.yml` itself only for a `bug` of `size:s`
+  that the probe **reproduced**, whose cause triage **found**, with no open questions and
+  nothing on `dev` that fixes it already. That condition is the step's `if:`. A cause found
+  only by reading the source waits for a person.
+
+A person adds `agent:build` to anything `size:s` / `size:m`; a label a bot adds starts nothing.
+Build branches `agent/issue-N` off `dev` and commits a **`Reproduce #N`** test that fails on
+`dev` for the reported reason ("Writing tests" below). It answers triage's open questions with
+evidence, fixes the bug, and has the read-only `reviewer` subagent (`.claude/agents/reviewer.md`)
+read the diff. It decides each finding itself, runs `npm run verify`, opens the PR (red output,
+green output, a Review section) and enables auto-merge. With no reproduction it leaves a
+`needs-info` question or a `WIP:` draft, never a fix on a guess. Green CI merges the PR. Then
+**`.github/workflows/merged.yml`** labels each `Closes #N` issue `fixed-on-dev`, for agent and
+desk PRs alike, and only when the PR has merged. The label stays until the release PR closes
+the issue, and merging that PR is always a person. A PR that fell behind `dev` shows `BEHIND`
+and needs `gh pr update-branch`; a `WIP:` draft is a build that stayed red and waits for a desk
+session. `/inbox` lists both.
 
 **Every agent run leaves a receipt** (→ [plan 25](plans/25-agent-evidence.md), DECISIONS #157).
 Build runs in `--permission-mode auto` with a deny list for the hard nos, triage on an allow-list
@@ -74,9 +93,10 @@ writes the run's summary page: model, turns, duration, cost, **every denied tool
 Bash command, and every `npm run verify` with its exit code — no message text. So a PR's ticked
 "verify clean" can be checked against the run that opened it (Actions → the run → Summary), and
 a refusal is a line on that page, not a silent guess. For a report that links a recipe page,
-the build agent runs `npm run import:probe -- <url>` (triage only notes the link): the app's own importer on the real page, which
-prints the reader that matched, the steps and the ingredients — and `--save <name>` keeps the
-page as a fixture in `src/lib/utils/fixtures/` for the test.
+`npm run import:probe -- <url>` is the app's own importer on the real page. It prints the reader
+that matched, the steps and the ingredients, and `--save <name>` keeps the page as a fixture in
+`src/lib/utils/fixtures/` for the test. Triage's `probe` job runs it for triage, since the agent
+has no web; the build agent runs it itself.
 
 **Branch protection makes the gate real.** It was applied on 2026-09-14 with the command below
 (once, as the repository owner — re-run it to change the required checks). Both branches are
@@ -106,6 +126,14 @@ A service → `tests/integration/`. A rule about the source tree → `tests/conv
 only a browser shows (a sheet, a redirect, a screen) → `tests/e2e/`. The look of a screen →
 `tests/visual/`. Assertions are `node:assert/strict`, as they always were; `describe`/`it`
 come from `vitest`.
+
+**A bug is reproduced before it is fixed** (→ plan 26). The regression test is built from the
+reporter's artefact: the page the probe saved, their own input, or seeded data driven by
+Playwright for a screen. It asserts what they observed, in their terms ("Schritt 4 contains
+'glattrühren'"), not the shape of the code you expect to change. Run it on the untouched branch
+and read the failure: it must fail _for the reported reason_. Then commit it alone as
+`Reproduce #N: …` before the fix. A test that encodes a guess at the cause also "fails without
+the change", and issue #31's wrong fix passed every gate with one.
 
 ### Integration
 

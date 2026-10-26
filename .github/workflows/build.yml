@@ -1,12 +1,15 @@
 # Build what triage handed on, or what a person approved (→ docs/plans/18-agent-build.md,
-# DECISIONS #143). The trigger is a label, never the issue itself: `agent:build` is
-# added by triage for a `bug` that is `size:s` with a located cause, and by a person
-# for anything else the agent may build (`size:s` / `size:m`). The agent branches off
-# `dev`, builds the change with a test, runs `npm run verify`, opens a PR against
-# `dev` and enables auto-merge — CI decides the merge; the release PR `dev → main` (release.yml) stays a human merge.
+# DECISIONS #143). The trigger is never the issue itself: a person adds `agent:build`
+# to anything the agent may build (`size:s` / `size:m`), and triage's apply job
+# dispatches this workflow for a small bug the import probe reproduced (→ plan 26,
+# DECISIONS #164). The agent branches off `dev`, commits a test that reproduces the
+# report, fixes it, has a fresh-context reviewer read the diff, runs `npm run verify`,
+# opens a PR against `dev` and enables auto-merge — CI decides the merge; the
+# release PR `dev → main` (release.yml) stays a human merge.
 #
 # What keeps this safe is not the prompt (an issue body is untrusted text):
-#   - the job's `if`: a label added by a bot only counts for `bug` + `size:s`;
+#   - the job's `if`: a label added by a bot never starts a build — the one
+#     automatic path is triage's dispatch, whose condition is in triage.yml;
 #   - branch protection: nobody but an admin pushes `dev` or `main`, and the Claude
 #     GitHub App is not one — a merge *is* a green CI run;
 #   - the App token has no `workflows` scope, so the agent cannot change this file;
@@ -21,7 +24,7 @@ on:
   issues:
     types: [labeled]
   # Retry by hand — after a prompt change, or when a run died before its PR.
-  # Actions → Build → Run workflow.
+  # Actions → Build → Run workflow. Triage's apply job dispatches it too.
   workflow_dispatch:
     inputs:
       issue:
@@ -32,13 +35,13 @@ on:
 jobs:
   build:
     # `sender` is who added the label. A person with write access may start any
-    # build; a bot (triage) only a small, located bug.
+    # build; a bot's label starts none. A dispatch needs the right to run
+    # workflows: a person, or triage's apply job when its verdict passes the
+    # condition there.
     if: >-
       ${{ github.event_name == 'workflow_dispatch' ||
       (github.event.label.name == 'agent:build' &&
-      (github.event.sender.type != 'Bot' ||
-      (contains(github.event.issue.labels.*.name, 'bug') &&
-      contains(github.event.issue.labels.*.name, 'size:s')))) }}
+      github.event.sender.type != 'Bot') }}
     runs-on: ubuntu-latest
     timeout-minutes: 90
     # One build at a time, never cancelled: each run branches from the `dev` the
@@ -82,8 +85,9 @@ jobs:
           # the Claude GitHub App, and what that token pushes and opens does start
           # workflows — CI runs on the agent's PR. secrets.GITHUB_TOKEN would not.
           claude_code_oauth_token: ${{ secrets.CLAUDE_CODE_OAUTH_TOKEN }}
-          # Triage adds the label as claude[bot]; bots are refused unless listed.
-          allowed_bots: claude
+          # Triage's apply job dispatches as github-actions[bot]; the action
+          # refuses a bot that is not listed. No label a bot adds gets this far.
+          allowed_bots: github-actions
           prompt: '/build-issue ${{ github.event.issue.number || inputs.issue }}'
           # A feature is several verify rounds of ~5 minutes each; the ceiling is a
           # stop, not a target. Opus, pinned, because this is the hardest job in

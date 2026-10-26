@@ -1,0 +1,52 @@
+{
+	"$comment": "The verdict of triage (→ docs/plans/26-agent-reproduce-review.md). triage.yml passes it to the action as --json-schema, and scripts/triage-apply.ts reads the same file. It sits inside single quotes on a command line there, so no text in it may contain an apostrophe (ci.test.ts holds that).",
+	"type": "object",
+	"additionalProperties": false,
+	"required": [
+		"kind",
+		"area",
+		"size",
+		"confidence",
+		"reproduced",
+		"open_questions",
+		"fixed_on_dev_commit",
+		"title"
+	],
+	"properties": {
+		"kind": {
+			"enum": ["bug", "idea", "duplicate"],
+			"description": "duplicate: the same report as an open issue, linked in the comment."
+		},
+		"area": {
+			"enum": ["shopping", "tasks", "cooking", "home", "settings", "auth", "push", "i18n", "design"]
+		},
+		"size": {
+			"enum": ["s", "m", "l"],
+			"description": "l only for a new screen, tab or navigation surface with no frame in design/Hearth.dc.html."
+		},
+		"confidence": {
+			"enum": ["found", "plausible", "cannot-tell", "not-a-bug"],
+			"description": "For a bug: found the cause, a plausible cause, or cannot tell from the report. not-a-bug for an idea or a duplicate."
+		},
+		"reproduced": {
+			"type": "boolean",
+			"description": "true only when the import probe output shows the symptom the reporter describes, on dev. Reading the source is never a reproduction."
+		},
+		"open_questions": {
+			"type": "array",
+			"items": { "type": "string", "minLength": 1 },
+			"description": "Every question the fix depends on that nothing here answered. Empty only when there is none."
+		},
+		"fixed_on_dev_commit": {
+			"type": "string",
+			"pattern": "^([0-9a-f]{7,40})?$",
+			"description": "The commit on dev that already fixes this, or the empty string."
+		},
+		"title": {
+			"type": "string",
+			"minLength": 1,
+			"maxLength": 70,
+			"description": "A short title in the reporter language, keeping the Bug: or Idea: prefix."
+		}
+	}
+}

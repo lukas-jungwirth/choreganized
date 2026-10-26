@@ -1,0 +1,47 @@
+# `fixed-on-dev` when a PR merges into `dev` (→ docs/plans/26-agent-reproduce-review.md,
+# DECISIONS #164).
+#
+# `Closes #N` only acts on the default branch, so an issue fixed on `dev` stays open
+# until the release PR merges; the label is how `/inbox` and release.yml know it is
+# built. The build agent used to add it when its PR *opened*, and issue #31 carried it
+# for a fix that never worked. Now this adds it when the PR has merged — agent and
+# desk PRs alike — and a PR closed unmerged labels nothing.
+#
+# `pull_request`, never `pull_request_target`: a PR from a fork gets a read-only
+# token here and labels nothing, which is right. The description is read through
+# env, never pasted into the script.
+name: Merged
+
+on:
+  pull_request:
+    types: [closed]
+    branches: [dev]
+
+permissions: {}
+
+jobs:
+  fixed-on-dev:
+    if: github.event.pull_request.merged == true
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    permissions:
+      contents: read
+      issues: write
+    steps:
+      # `dev`, not the PR's merge ref: once a PR has merged GitHub may no longer
+      # keep `refs/pull/N/merge`, and `dev` now holds the merge anyway.
+      - uses: actions/checkout@v6
+        with:
+          ref: dev
+          persist-credentials: false
+
+      - uses: actions/setup-node@v6
+        with:
+          node-version: 22
+
+      - name: Label the issues it closes
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GH_REPO: ${{ github.repository }}
+          BODY: ${{ github.event.pull_request.body }}
+        run: node scripts/fixed-on-dev.ts

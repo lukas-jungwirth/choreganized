@@ -37,7 +37,7 @@ plus your session date). Note deviations in the plan file and in DECISIONS.md.
 | 23  | [Amounts in step text follow servings](23-step-amounts.md)                                       | done (2026-10-18) | 07                       |
 | 24  | [Austrian wording (fixed word list)](24-austrian-wording.md)                                     | done (2026-10-18) | 22                       |
 | 25  | [Agent lane: no silent refusals, runs you can check](25-agent-evidence.md)                       | done (2026-10-26) | 18                       |
-| 26  | [Agent lane: reproduce first, review second](26-agent-reproduce-review.md)                       | todo              | 25                       |
+| 26  | [Agent lane: reproduce first, review second](26-agent-reproduce-review.md)                       | done (2026-10-26) | 25                       |
 | 27  | [Agent lane: ideas as proposals, a hardened lane](27-agent-ideas-safety.md)                      | todo              | 26                       |
 | 28  | [Import: AI repairs bad cards, text without AI, smaller photos](28-import-repair-text-photos.md) | todo              | 22                       |
 
@@ -130,9 +130,9 @@ on one screen before you build against them — and add your new ones to that pa
    tick the plan's acceptance boxes.
 
 **Where work comes from now** (plan 18): the plans above are the queue; GitHub issues are the
-inbox. Triage labels every new issue; `agent:build` — added by triage for a small bug with a
-located cause, by a person for any `size:s` / `size:m` issue — starts the build workflow, which
-branches off `dev`, builds the change with a test, and opens a PR that merges itself into `dev`
-on green CI. An approved idea becomes its plan file in that PR. A desk session takes `size:l`
+inbox. Triage labels every new issue; a person adding `agent:build` to any `size:s` / `size:m`
+issue — or triage's own dispatch, for a small bug the import probe reproduced (plan 26) — starts
+the build workflow, which branches off `dev`, reproduces the report in a test, fixes it, has the
+`reviewer` subagent read the diff, and opens a PR that merges itself into `dev` on green CI. An approved idea becomes its plan file in that PR. A desk session takes `size:l`
 (a screen with no frame in `design/Hearth.dc.html`) and whatever the agent left as a `WIP:`
 draft; `/inbox` shows both.

@@ -145,7 +145,7 @@ environment, say so explicitly in the handoff — never claim untested things wo
 
 `src/lib/server/` db + auth + services + push + cron · `src/lib/components/` ui / shell /
 feature · `src/routes/` see ARCHITECTURE.md routing map · `tests/` integration · conventions ·
-e2e · visual (+ `helpers/`) · `scripts/` seed, e2e server, visual runner, smoke, migration check, import probe, agent run summary, release PR ·
-`.github/workflows/` ci · smoke · update-snapshots · triage · build · release · `design/` mockups · `docs/` specs
+e2e · visual (+ `helpers/`) · `scripts/` seed, e2e server, visual runner, smoke, migration check, import probe, agent run summary, release PR, triage verdict/apply/issue probe, fixed-on-dev ·
+`.github/workflows/` ci · smoke · update-snapshots · triage · build · merged · release · `design/` mockups · `docs/` specs
 & plans · `static/` manifest + icons · `Dockerfile` single-container deploy (SQLite volume
 at `/data`, started by `scripts/docker-entrypoint.sh`, replicated by `litestream.yml`).
