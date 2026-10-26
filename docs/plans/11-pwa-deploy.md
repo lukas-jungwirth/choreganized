@@ -87,7 +87,7 @@ from DECISIONS #45. No `sqlite3` CLI dependency (not in the slim image). → DEC
 
 ### Restore procedure
 
-> **Superseded since Litestream (2026-10-25, DECISIONS #158):** use [BACKUP.md](../BACKUP.md).
+> **Superseded since Litestream (2026-10-25, DECISIONS #160):** use [BACKUP.md](../BACKUP.md).
 > A nightly snapshot now goes in by copying it to `/data/choreganized.db.restore` and
 > restarting. The start script swaps it in, together with the WAL and Litestream's position,
 > which the manual steps below don't handle. They're kept for the record.

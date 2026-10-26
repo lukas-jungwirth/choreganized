@@ -2,7 +2,7 @@
 # SQLite is embedded; no separate DB image. Persist /data as a volume.
 
 # Litestream copies the database to S3-compatible storage while the app runs and restores
-# it into an empty volume on start (→ docs/BACKUP.md, DECISIONS #158). Only its static
+# it into an empty volume on start (→ docs/BACKUP.md, DECISIONS #160). Only its static
 # binary is used. Pinned to the release and to the digest of its multi-arch index, so a
 # rebuild can't pick up a different binary. 0.5's config format is not 0.3's: bump the
 # version and litestream.yml together.
@@ -38,7 +38,7 @@ WORKDIR /app
 # live list's event stream never closes on its own. Its default of 30 s is more than
 # Docker's 10 s before SIGKILL. The 10 s are shared: 3 s for connections, up to 2 s for a
 # running cron job (→ hooks.server.ts), up to 4 s for Litestream's last upload
-# (→ litestream.yml, DECISIONS #158).
+# (→ litestream.yml, DECISIONS #160).
 ENV NODE_ENV=production \
     PORT=3000 \
     DATABASE_PATH=/data/choreganized.db \

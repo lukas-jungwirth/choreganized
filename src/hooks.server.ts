@@ -29,7 +29,7 @@ export const init: ServerInit = () => {
 	// adapter-node emits this once SIGTERM has closed the HTTP server. Node would still
 	// not exit: the cron tick and any running cook timer keep it alive until Docker's
 	// SIGKILL, and under Litestream that SIGKILL would also cut its last upload
-	// (→ docs/BACKUP.md, DECISIONS #158). Only the built server emits it.
+	// (→ docs/BACKUP.md, DECISIONS #160). Only the built server emits it.
 	if (!dev) process.once('sveltekit:shutdown', () => void shutDown());
 };
 

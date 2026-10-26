@@ -2,7 +2,7 @@
 
 How the household's database is kept safe, and how to get it back. The pieces:
 `litestream.yml`, `scripts/docker-entrypoint.sh`, the `Dockerfile`, and the nightly backup in
-`lib/server/backup.ts` (→ DECISIONS #91, #158).
+`lib/server/backup.ts` (→ DECISIONS #91, #160).
 
 | Layer                      | Where                                      | History                                      | Covers       |
 | -------------------------- | ------------------------------------------ | -------------------------------------------- | ------------ |

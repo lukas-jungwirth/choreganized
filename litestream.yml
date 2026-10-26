@@ -1,5 +1,5 @@
 # Litestream 0.5: the database, continuously copied to S3-compatible storage
-# (→ docs/BACKUP.md, DECISIONS #158). The image installs this file at /etc/litestream.yml
+# (→ docs/BACKUP.md, DECISIONS #160). The image installs this file at /etc/litestream.yml
 # and scripts/docker-entrypoint.sh starts Litestream only when every LITESTREAM_* variable
 # it lists is set, so `${…}` here is never expanded to an empty string.
 #
