@@ -239,3 +239,38 @@ test('a remembered "Improve with AI" after AI was removed just imports without i
 	expect(body).toContain('can’t be opened from here');
 	expect(body).not.toContain('Set up AI features in Settings first');
 });
+
+test.describe('the Settings row in German (#56)', () => {
+	test.afterEach(async ({ page, baseURL }) => {
+		const restored = await page.request.post('/settings?/language', {
+			form: { locale: 'en' },
+			headers: { origin: baseURL! },
+			maxRedirects: 0
+		});
+		expect([200, 303]).toContain(restored.status());
+	});
+
+	test('"KI-Funktionen" stays on one line next to "Gemini · gemini-flash-latest"', async ({
+		page,
+		baseURL
+	}) => {
+		await setUpGemini(page, baseURL!);
+		await page.request.post('/settings?/language', {
+			form: { locale: 'de' },
+			headers: { origin: baseURL! },
+			maxRedirects: 0
+		});
+		await page.goto('/settings');
+
+		const row = page.getByRole('button', { name: /^KI-Funktionen/ });
+		await expect(row).toContainText('Gemini · gemini-flash-latest');
+
+		// The reporter saw "KI-" / "Funktione" / "n": count the label's line boxes.
+		const lines = await row.getByText('KI-Funktionen', { exact: true }).evaluate((label) => {
+			const range = document.createRange();
+			range.selectNodeContents(label);
+			return new Set([...range.getClientRects()].map((rect) => Math.round(rect.top))).size;
+		});
+		expect(lines).toBe(1);
+	});
+});
