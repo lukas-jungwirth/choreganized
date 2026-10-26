@@ -25,9 +25,14 @@ You are also in charge of the repository. A piece of work is not finished when t
    and fix what it turns up before shipping, not after.
 4. **Ship it**: commit with a message that says what changed and why, push the branch, open a PR
    against `dev`, wait for CI, merge. Coolify deploys `dev` to the **test environment** and the
-   smoke workflow checks it; promote with a PR `dev → main`. **A finished step ends as working
-   code on `main`** — the household's deploy tracks it. Branch protection requires the three CI
-   checks on both branches, so the PR is the only road; a direct push is refused.
+   smoke workflow checks it. **A finished step ends as working code on `dev`, listed in the
+   release PR.** Branch protection requires the three CI checks on both branches, so the PR is
+   the only road; a direct push is refused.
+   **No agent opens, edits or merges a PR against `main`** — not a session, not the build lane.
+   `.github/workflows/release.yml` keeps the one `Release: dev → main` PR open and its
+   description current on every push to `dev` (every PR since the last release, a `Closes #N`
+   per `fixed-on-dev` issue). Lukas tries the test environment and merges it; the household's
+   deploy follows `main`. In the handoff, say "merged into `dev`, in the release PR".
 5. **Leave the checkout clean**: GitHub deletes the merged branch, but nothing deletes your local
    copy. After the merge, `git switch dev && git pull`, delete the branch (`git branch -d`), and
    `git worktree remove` the worktree if you worked in one. Anything older:
@@ -140,7 +145,7 @@ environment, say so explicitly in the handoff — never claim untested things wo
 
 `src/lib/server/` db + auth + services + push + cron · `src/lib/components/` ui / shell /
 feature · `src/routes/` see ARCHITECTURE.md routing map · `tests/` integration · conventions ·
-e2e · visual (+ `helpers/`) · `scripts/` seed, e2e server, visual runner, smoke, migration check, import probe, agent run summary ·
-`.github/workflows/` ci · smoke · update-snapshots · triage · build · `design/` mockups · `docs/` specs
+e2e · visual (+ `helpers/`) · `scripts/` seed, e2e server, visual runner, smoke, migration check, import probe, agent run summary, release PR ·
+`.github/workflows/` ci · smoke · update-snapshots · triage · build · release · `design/` mockups · `docs/` specs
 & plans · `static/` manifest + icons · `Dockerfile` single-container deploy (SQLite volume
 at `/data`, started by `scripts/docker-entrypoint.sh`, replicated by `litestream.yml`).

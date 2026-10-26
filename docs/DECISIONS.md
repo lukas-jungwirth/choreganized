@@ -2325,3 +2325,20 @@ units | null, name}`, written back as editor lines in the reader's unit spelling
      - **Photos are not covered.** `UPLOADS_DIR` holds files, and Litestream copies only
        SQLite. A server move copies `/data/uploads` by hand (BACKUP.md).
      - **The local restore test runs on SeaweedFS.** MinIO no longer publishes Docker images.
+
+161. **No agent opens a PR against `main`; a workflow keeps the one release PR current**
+     (`.github/workflows/release.yml`, `scripts/release-pr.ts`, → TESTING.md "The flow"). Who
+     opened the `dev → main` PR was never written down: each session decided, one skipped it
+     because #42 was already open, and its body then missed every later PR and `Closes #N`.
+     Now every push to `dev` opens `Release: dev → main` when `dev` is ahead, or rewrites the
+     open one's description: every PR since the last release, one `Closes #N` per
+     `fixed-on-dev` issue. Lukas merges it; `dev` stays autonomous.
+
+     - **No review gate on `dev`.** Desk sessions open PRs as Lukas, and GitHub doesn't let an
+       author approve their own PR, so a required review would block every one of them. The
+       test environment and the release PR are the check; the batch is what he reads.
+     - **Opened with `GITHUB_TOKEN`, which starts no workflow — and needs none.** The PR's head
+       is `dev`'s tip, which CI checked on the push; protection reads checks off the commit. It
+       does need "Allow GitHub Actions to create and approve pull requests" on the repository.
+     - **The body is rebuilt from scratch every run**, not appended to, so a run that was
+       cancelled by a newer push loses nothing.
