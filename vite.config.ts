@@ -49,6 +49,7 @@ export default defineConfig(({ mode }) => {
 		 *
 		 * Three kinds of test, one runner:
 		 *   src/**\/*.test.ts         unit — pure functions beside the module they pin
+		 *   scripts/**\/*.test.ts     unit — the same, for the repo's own tooling
 		 *   tests/integration/**     services against a migrated in-memory SQLite
 		 *   tests/conventions/**     the house rules from CLAUDE.md, as failing tests
 		 * Playwright (tests/e2e, tests/visual) is deliberately not here.
@@ -56,6 +57,7 @@ export default defineConfig(({ mode }) => {
 		test: {
 			include: [
 				'src/**/*.test.ts',
+				'scripts/**/*.test.ts',
 				'tests/integration/**/*.test.ts',
 				'tests/conventions/**/*.test.ts'
 			],

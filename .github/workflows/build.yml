@@ -10,7 +10,8 @@
 #   - branch protection: nobody but an admin pushes `dev` or `main`, and the Claude
 #     GitHub App is not one — a merge *is* a green CI run;
 #   - the App token has no `workflows` scope, so the agent cannot change this file;
-#   - `--allowedTools` permits `gh pr merge --auto` and nothing else that merges.
+#   - `--disallowedTools` keeps the hard nos (the web, `gh api`, `gh workflow`, an
+#     admin merge, a force push, edits under `.github/`) in auto mode (→ plan 25).
 #
 # NOTE: workflows for `issues` events are read from the DEFAULT branch. This file
 # does nothing until it is merged to `main`.
@@ -75,6 +76,7 @@ jobs:
       - run: npx playwright install --with-deps chromium
 
       - uses: anthropics/claude-code-action@v1
+        id: claude
         with:
           # No `github_token:` on purpose: the action mints a repo-scoped token from
           # the Claude GitHub App, and what that token pushes and opens does start
@@ -84,8 +86,29 @@ jobs:
           allowed_bots: claude
           prompt: '/build-issue ${{ github.event.issue.number || inputs.issue }}'
           # A feature is several verify rounds of ~5 minutes each; the ceiling is a
-          # stop, not a target. (Comments must stay out of the block scalar below:
-          # inside `|` a # is literal text and would be passed to the CLI as an arg.)
+          # stop, not a target. Opus, pinned, because this is the hardest job in
+          # the lane and the action's default can change unnoticed (→ plan 25).
+          #
+          # Auto mode, not an allow-list: a hand-kept list refused ordinary work
+          # in silence (9 denials on issue #31's build, → DECISIONS #157), where
+          # auto mode's classifier allows it. The deny list keeps the hard nos,
+          # and outranks auto mode. Mid-pattern `*` catches the flag anywhere:
+          # `gh pr merge 5 --admin`, `git push -f origin x`. No rule may contain
+          # a comma — the action splits the list on commas. (Comments must stay
+          # out of the block scalar below: inside `|` a # is literal text and
+          # would be passed to the CLI as an arg.)
           claude_args: |
+            --model claude-opus-5-5
             --max-turns 200
-            --allowedTools "Read,Grep,Glob,Edit,Write,MultiEdit,Bash(npm run:*),Bash(npm test:*),Bash(npx vitest:*),Bash(npx playwright:*),Bash(git:*),Bash(gh issue view:*),Bash(gh issue list:*),Bash(gh issue comment:*),Bash(gh issue edit:*),Bash(gh pr create:*),Bash(gh pr view:*),Bash(gh pr merge --auto:*)"
+            --permission-mode auto
+            --disallowedTools "WebFetch,WebSearch,Bash(gh api:*),Bash(gh workflow:*),Bash(gh pr merge *--admin*),Bash(git push *--force*),Bash(git push -f*),Bash(git push * -f*),Edit(.github/**),Write(.github/**)"
+
+      # The receipt (→ plan 25): model, turns, cost, every denied tool call,
+      # every command and every `npm run verify` with its exit code — so the
+      # PR's "verify clean" can be checked against the run that opened it. No
+      # message text. Runs when the agent failed too.
+      - name: Run summary
+        if: always()
+        env:
+          EXECUTION_FILE: ${{ steps.claude.outputs.execution_file }}
+        run: node scripts/agent-run-summary.ts "$EXECUTION_FILE" --title Build

@@ -318,7 +318,8 @@ where it can still be acted on (→ [DECISIONS #131](DECISIONS.md)).
 - Photo picker (optional; stored resized to ≤1200px WebP under `UPLOADS_DIR`).
 - Fields: name (required), time (minutes), servings.
 - **Ingredients**: one typed row each, written the way you'd write them on paper ("400 g pasta")
-  and parsed leniently to (quantity, unit, name); unparsed input becomes name-only. Each row
+  and parsed leniently to (quantity, unit, name); unparsed input becomes name-only, and a range
+  keeps its first value with its unit ("2-3 EL Öl" → 2 tbsp Öl, DECISIONS #159). Each row
   shows what the parse made of it as a quiet amount chip; tapping the chip opens a sheet with
   the name, the amount and the units of §3.2 plus tbsp · tsp and "no unit", which writes the row
   back as a line and shows the reading that line will get (→ DECISIONS #100–101). Reorder with
@@ -403,8 +404,8 @@ where it can still be acted on (→ [DECISIONS #131](DECISIONS.md)).
   the one amount that survives a running timer, which clears the "This step uses…" line [7h].
 - **Timer chip** — the step's own timer when it has one, by name: "Start Nudeln · 10:00"
   (→ §4.4, plan 21). Otherwise shown when a duration is parsed from the step text, in English or
-  German ("8 min", "8:00", "8–10 minutes", "10 Minuten", "1 Std. 30 Min.", "5 bis 10 Min." →
-  first value): "Start 8:00 timer". A manual "Set timer" affordance (minute stepper) is always
+  German ("8 min", "8:00", "8–10 minutes", "10 Minuten", "1 Std. 30 Min.", "1½ Std.", "5 bis
+  10 Min." → first value): "Start 8:00 timer". A manual "Set timer" affordance (minute stepper) is always
   available in the header/overflow.
 - **A timer is named after its step** — "Step 2" — unless the step's own timer has a name, or
   the cook names it in the Set-timer
@@ -470,15 +471,24 @@ where it can still be acted on (→ [DECISIONS #131](DECISIONS.md)).
   Schema.org `Recipe` as JSON-LD (no AI — nearly every recipe site embeds one for Google), else
   the same card written as **Microdata** in the page's HTML (`itemscope itemtype=…/Recipe`,
   `itemprop`s; → plan 22 — older templates and hand-built blogs). `@graph` wrappers and `@type`
-  arrays are handled; a malformed block never sinks the next; the first `Recipe` wins; a nested
-  item's properties (an author's `name`) are never taken for the recipe's. Fields map to the
+  arrays are handled, and so is a `Recipe` nested deeper (a `WebPage`'s `mainEntity`, an
+  `ItemList`) or typed `schema:Recipe`; a malformed block never sinks the next; when a page has
+  several, the one with the most ingredients and steps wins (a teaser card first on the page
+  doesn't), and a card with **no ingredients and no steps is no card** — the page gets the "no
+  recipe" answer and the AI offer, not an empty editor. A nested item's properties (an author's
+  `name`) are never taken for the recipe's. Fields map to the
   editor: name, `totalTime` (else `prepTime`+`cookTime`) → minutes, `recipeYield` → servings,
   `recipeIngredient[]` → raw ingredient lines (the editor parses them to amount chips like every
   typed row), `recipeInstructions` → steps in order, `image` → photo — else the page's
   `og:image`. A step that lists its own ingredients stays one step with them in its text
   (DECISIONS #151); a one-word step title with no text is not a step. A step whose text arrives
   in pieces (an array, as einfachkochen.de sends it) is one step with its pieces joined by
-  commas (DECISIONS #152).
+  commas (DECISIONS #152). Either reader tidies what it found (DECISIONS #159): a method sent as
+  one HTML string splits at its `<li>`, `<p>` and `<br>`; leftover numbering ("1. ", "Schritt
+  2:") comes off; a heading step ("Für die Soße:") joins the step it heads; a section title among
+  the ingredients is dropped; an ingredient the site split on its own comma ("200 ml Milch (1" ·
+  "8 % Fett)") is one line again. A card without a method takes it from the recipe plugin's own
+  markup on the page (`e-instructions`, Jetpack, WP Recipe Maker, Tasty, Mediavine).
 - **Improve with AI** (→ plan 22) — a switch under the link field, shown only when AI features are
   set up. **Off until someone turns it on**, then remembered on that device (turning it on is the
   go-ahead a paid call needs; a first shared link never spends one). The share sheet honours it
@@ -501,10 +511,13 @@ where it can still be acted on (→ [DECISIONS #131](DECISIONS.md)).
   **Save** creates the recipe through the normal path and attaches the photo; nothing is stored
   before Save but the temp photo, and an abandoned import's photo is swept nightly.
 - **Fetching is guarded** (the server fetches a user-supplied URL): `http(s)` only,
-  loopback / private / link-local hosts refused _before any request_ and re-checked on every
-  redirect hop, redirects capped (~5), ~10 s timeout, ~3 MB page cap, `text/html` only. Each
-  failure has its own translated message — unreachable · blocked · not a page · too large · no
-  recipe found. A page with no recipe offers manual entry, and — when AI features are set up —
+  loopback / private / link-local hosts refused _before any request_ — including an IPv4 one
+  wrapped in IPv6 (`[::ffff:127.0.0.1]`, NAT64, 6to4) — and re-checked on every redirect hop,
+  redirects capped (~5), ~10 s timeout, ~3 MB page cap, `text/html` only. Each failure has its
+  own translated message — unreachable · blocked · **refused** (the site turns apps away:
+  401/402/403/429 or a Cloudflare challenge — "open it in your browser and copy the recipe", with
+  links to the text and photo modes when AI is set up) · not a page · too large · no recipe
+  found. A page with no recipe offers manual entry, and — when AI features are set up —
   the AI fallback below.
 - **AI fallback** (→ plans 13, 20) — available only when the household has set up an AI provider
   in Settings (§6): its own key for Google Gemini, OpenAI (ChatGPT), Anthropic (Claude) or

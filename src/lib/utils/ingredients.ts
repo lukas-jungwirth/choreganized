@@ -144,6 +144,12 @@ const AMOUNT = new RegExp(
 		`|([${FRACTION_CHARS}]))` // ½
 );
 
+/** The rest of a range after its first amount: "-3", "– 3", "bis 3", "-½". */
+const RANGE_REST = new RegExp(
+	`^(?:[-–—]|bis\\b)\\s*(?:\\d+(?:[.,]\\d+)?\\s*[${FRACTION_CHARS}]?|[${FRACTION_CHARS}])(?=\\s|$)`,
+	'i'
+);
+
 export type ParsedIngredient = {
 	quantity: number | null;
 	unit: string | null;
@@ -163,7 +169,9 @@ export function parseIngredient(input: string): ParsedIngredient | null {
 	if (!amount) return { quantity: null, unit: null, name: line };
 
 	const quantity = amountValue(amount);
-	const rest = line.slice(amount[0].length).trim();
+	// "2-3 EL Öl", "1 bis 2 Zehen": a range keeps its first value, like a step's
+	// timer does (→ timer-parse) — the unit after it is still the unit.
+	const rest = line.slice(amount[0].length).trim().replace(RANGE_REST, '').trim();
 
 	// "2" on its own, or "400 g" with nothing to measure — the line never named
 	// a thing, so it becomes one rather than a dangling amount.

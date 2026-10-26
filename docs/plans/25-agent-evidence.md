@@ -1,6 +1,7 @@
 # 25 · Agent lane: no silent refusals, runs you can check
 
-**Status: todo.** Depends on: 18 (the build agent).
+**Status: in progress — built 2026-10-25; the four live-run boxes wait for the `dev → main`
+promotion** (workflows for `issues` events run from `main`). Depends on: 18 (the build agent).
 
 **Goal:** the agents fix what the reporter saw, not what they guess, and every run's claims can be
 checked afterwards. Issue #31 showed the gap. The report linked an einfachkochen.de recipe, but
@@ -84,13 +85,70 @@ JSON-LD the importer reads.
 ## Acceptance
 
 - [ ] The run summary appears on both workflows and lists denials, commands, model and the verify
-      exit code. It contains no message text.
+      exit code. It contains no message text. _Proven offline against two real recordings (below);
+      the first live run of each workflow is the box._
 - [ ] A small `agent:build` issue builds green under auto mode, and its summary shows no
-      unexpected denials.
-- [ ] Triage reads a page an issue links to, and its summary shows no denied fetch.
-- [ ] Triage retitles a new issue. A second sync of the same report still finds that issue.
-- [ ] `npm run import:probe -- https://www.einfachkochen.de/rezepte/quiche-mit-lachs-genial-einfach-so-lecker`
+      unexpected denials. _Live only._
+- [ ] Triage reads a page an issue links to, and its summary shows no denied fetch. _Live only._
+- [ ] Triage retitles a new issue. A second sync of the same report still finds that issue. _The
+      second half is pinned by `src/lib/server/github.test.ts` (the retry searches `in:body`); the
+      retitle is live only._
+- [x] `npm run import:probe -- https://www.einfachkochen.de/rezepte/quiche-mit-lachs-genial-einfach-so-lecker`
       prints the JSON-LD reader and six whole steps.
-- [ ] `ci.test.ts` fails when a model pin, the summary step or the deny list is removed, and when
+- [x] `ci.test.ts` fails when a model pin, the summary step or the deny list is removed, and when
       a `run:` step interpolates the issue body.
-- [ ] `npm run verify` clean.
+- [x] `npm run verify` clean.
+
+## What was built, and where it differs from the plan
+
+- `scripts/agent-run-summary.ts` (+ test, + `scripts/fixtures/agent-run.json`), the `Run summary`
+  step in both workflows, `id: claude` on both actions. Tests for `scripts/` now run in Vitest
+  (`scripts/**/*.test.ts`, TESTING.md "The layers").
+- Denials come from **three** places, not one: the result's `permission_denials`, the
+  `permission_denied` system message, and — found while verifying — a path rule's refusal
+  (`Write(.github/**)`), which Claude Code reports only as an error tool result. Without the third,
+  the summary would have missed exactly the refusal this plan is about.
+- A verify run whose exit code another command decides (`| tail` without `pipefail`, `|| true`,
+  `;`, a second line) is listed but never called clean. `/build-issue` runs
+  `set -o pipefail && npm run verify 2>&1 | tail -60` so its code is verify's own.
+- The deny list uses mid-pattern wildcards where the plan wrote prefixes:
+  `Bash(gh pr merge *--admin*)`, `Bash(git push *--force*)`, `Bash(git push -f*)`,
+  `Bash(git push * -f*)` — a prefix rule misses `gh pr merge 5 --admin`.
+- **Triage's checkout sets `persist-credentials: false`** — not in the plan. Once triage may
+  `WebFetch` a URL an untrusted issue names, a job token in `.git/config` is one `Read` away from
+  being sent there. Triage never pushes, so it needs none.
+- `readRecipePage` is split into `fetchRecipePage` + `readFetchedPage`, and `RecipePage` gains
+  `reader`, so the probe keeps the raw HTML for `--save` and still reads it the import's way. The
+  probe loads the importer through a middleware-mode Vite server, because it imports `$lib` and
+  `$env`.
+- `--save` never overwrites a fixture, and takes only a kebab-case name.
+
+## What was verified (session 2026-10-25)
+
+- **The execution file's shape**, from the action's source (`base-action/src/run-claude-sdk.ts`,
+  `execution-file.ts`): a JSON array of Agent SDK messages, written to
+  `$RUNNER_TEMP/claude-execution-output.json`, cut after the result message; `execution_file` is
+  set only when the file exists, so the script falls back to that path.
+- **A real recording as the fixture**: `claude -p --output-format stream-json` (the same SDK
+  messages) in a throwaway package whose `verify` failed once, with `WebFetch` unlisted. The
+  summary read model, 7 turns, cost, the denied fetch, three distinct commands and verify codes
+  1 → 0 → 0, and no prose: the test checks every text, thinking and tool-output line of the
+  fixture against the rendered summary.
+- **Auto mode and the deny list, headless** (Sonnet 5.5, `--permission-mode auto`, `echo`
+  stand-ins in a scratch directory): `echo merge --admin now` and `echo push -f origin x` were
+  denied, `echo push -u origin agent/issue-12-fix` and `echo merge now` ran, `.github/x.txt` was
+  refused and `notes.txt` written, and `WebFetch` was not offered at all. The summary listed all
+  three refusals.
+- **The probe, live**: the einfachkochen URL printed `Reader: JSON-LD` and six whole steps (step 4
+  ends "…einen Rand formen."); `http://127.0.0.1/x` printed `Refused: blocked`; a gutekueche.at
+  link showed its redirect; `--save` wrote a fixture with the doctype first, then refused to
+  overwrite it (the test file was deleted afterwards).
+- **The convention tests bite**: each of these mutations to the real workflows failed
+  `ci.test.ts` — deleting triage's `--model`, renaming build's summary step, `if: success()` on
+  the summary, deleting `--disallowedTools`, dropping `WebFetch` from it, deleting
+  `--permission-mode auto`, and `run: echo "${{ github.event.issue.body }}"` (two failures: the
+  workflow scan and the summary step).
+- **Not verified**: anything that needs the workflows to run on GitHub — they run from `main`,
+  and promoting `dev → main` is Lukas's call. Whether auto mode's classifier lets
+  `gh pr merge --auto` and `npm run test:visual` (Docker) through is exactly what the first
+  build run's summary will show.

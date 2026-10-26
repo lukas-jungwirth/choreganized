@@ -6,8 +6,9 @@
  * `HowToStep` items or as one plain list.
  */
 import assert from 'node:assert/strict';
+import { readFileSync } from 'node:fs';
 import { describe, it } from 'vitest';
-import { parseRecipeMicrodata } from './recipe-microdata';
+import { markedUpSteps, parseRecipeMicrodata } from './recipe-microdata';
 
 const page = (body: string) =>
 	`<!doctype html><html><head><title>x</title></head><body>${body}</body></html>`;
@@ -149,6 +150,38 @@ describe('parseRecipeMicrodata', () => {
 		);
 		assert.equal(
 			parseRecipeMicrodata(page('<div itemscope itemtype="https://schema.org/Recipe"></div>')),
+			null
+		);
+	});
+});
+
+describe('parseRecipeMicrodata — a method outside the card', () => {
+	it('reads Jetpack’s directions, loose first paragraph included (smittenkitchen.com)', () => {
+		const recipe = parseRecipeMicrodata(
+			readFileSync('src/lib/utils/fixtures/smittenkitchen-pierogi.html', 'utf8')
+		);
+		assert.equal(recipe?.ingredientLines.length, 11);
+		assert.equal(recipe?.steps.length, 3);
+		assert.match(recipe!.steps[0], /^Start with the vegetables: Heat a large, deep skillet/);
+		assert.match(recipe!.steps[2], /^To finish:/);
+	});
+
+	it('reads a WP Recipe Maker block on a whole page', () => {
+		assert.deepEqual(
+			markedUpSteps(
+				page(`<div class="wprm-recipe-instructions"><ul><li>Mix.</li><li>Bake.</li></ul></div>`)
+			),
+			['Mix.', 'Bake.']
+		);
+	});
+
+	it('is no recipe when the scope holds a name and nothing to cook', () => {
+		assert.equal(
+			parseRecipeMicrodata(
+				page(
+					`<div itemscope itemtype="https://schema.org/Recipe"><h2 itemprop="name">Teaser</h2></div>`
+				)
+			),
 			null
 		);
 	});

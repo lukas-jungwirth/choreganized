@@ -9,55 +9,58 @@ design frames and SPEC sections apply, and how to know it's done.
 Update this table when you start/finish a plan (statuses: `todo` · `in progress` · `done`,
 plus your session date). Note deviations in the plan file and in DECISIONS.md.
 
-| #   | Plan                                                                          | Status            | Depends on               |
-| --- | ----------------------------------------------------------------------------- | ----------------- | ------------------------ |
-| 00  | [Foundation: auth, guards, hooks, login](00-foundation.md)                    | done (2026-07-22) | —                        |
-| 01  | [Onboarding & household](01-onboarding.md)                                    | done (2026-07-22) | 00                       |
-| 02  | [App shell & Home v1](02-shell-home.md)                                       | done (2026-07-22) | 01                       |
-| 03  | [Shopping](03-shopping.md)                                                    | done (2026-07-22) | 02                       |
-| 04  | [Tasks core](04-tasks.md)                                                     | done (2026-07-22) | 02                       |
-| 05  | [Push infrastructure](05-push-infra.md)                                       | done (2026-07-22) | 02                       |
-| 06  | [Task reminders](06-task-reminders.md)                                        | done (2026-07-22) | 04, 05                   |
-| 07  | [Cooking: recipes & meal plan](07-cooking.md)                                 | done (2026-07-22) | 02 (03 for shopping add) |
-| 08  | [Cook mode & timers](08-cook-mode.md)                                         | done (2026-07-22) | 07, 05                   |
-| 09  | [History, leaderboard & Home completion](09-history-leaderboard.md)           | done (2026-07-22) | 04                       |
-| 10  | [Settings & members](10-settings-members.md)                                  | done (2026-07-22) | 01 (05 for prefs)        |
-| 11  | [PWA, polish & deploy](11-pwa-deploy.md)                                      | done (2026-07-23) | all                      |
-| 12  | [Recipe import from a link](12-recipe-import.md)                              | done (2026-07-25) | 07, 11                   |
-| 13  | [AI import: fallback, text & photos](13-ai-import.md)                         | done (2026-07-25) | 12, 10                   |
-| 14  | ["Add a recipe" chooser & focused import modes](14-add-chooser.md)            | done (2026-07-25) | 12, 13                   |
-| 15  | [Live shopping list](15-live-shopping.md)                                     | done (2026-09-10) | 03                       |
-| 16  | [In-app feedback → a GitHub issue](16-feedback.md)                            | done (2026-09-11) | 10, 11                   |
-| 17  | [The test workflow: CI as the gate](17-test-workflow.md)                      | done (2026-09-11) | 11, 16                   |
-| 18  | [Build agent: from an issue to code on `dev`](18-agent-build.md)              | done (2026-09-14) | 16, 17                   |
-| 19  | [Tap the version to copy it](19-copy-version.md)                              | done (2026-09-14) | 16                       |
-| 20  | [AI providers: your own key, live model picker, backup](20-ai-providers.md)   | done (2026-10-18) | 13, 14                   |
-| 21  | [Named step timers & German durations](21-step-timers.md)                     | done (2026-10-18) | 08                       |
-| 22  | [Smarter import: link + AI, Microdata, enriched drafts](22-smarter-import.md) | done (2026-10-18) | 20, 21                   |
-| 23  | [Amounts in step text follow servings](23-step-amounts.md)                    | done (2026-10-18) | 07                       |
-| 24  | [Austrian wording (fixed word list)](24-austrian-wording.md)                  | done (2026-10-18) | 22                       |
-| 25  | [Agent lane: no silent refusals, runs you can check](25-agent-evidence.md)    | todo              | 18                       |
-| 26  | [Agent lane: reproduce first, review second](26-agent-reproduce-review.md)    | todo              | 25                       |
-| 27  | [Agent lane: ideas as proposals, a hardened lane](27-agent-ideas-safety.md)   | todo              | 26                       |
+| #   | Plan                                                                                             | Status                                                    | Depends on               |
+| --- | ------------------------------------------------------------------------------------------------ | --------------------------------------------------------- | ------------------------ |
+| 00  | [Foundation: auth, guards, hooks, login](00-foundation.md)                                       | done (2026-07-22)                                         | —                        |
+| 01  | [Onboarding & household](01-onboarding.md)                                                       | done (2026-07-22)                                         | 00                       |
+| 02  | [App shell & Home v1](02-shell-home.md)                                                          | done (2026-07-22)                                         | 01                       |
+| 03  | [Shopping](03-shopping.md)                                                                       | done (2026-07-22)                                         | 02                       |
+| 04  | [Tasks core](04-tasks.md)                                                                        | done (2026-07-22)                                         | 02                       |
+| 05  | [Push infrastructure](05-push-infra.md)                                                          | done (2026-07-22)                                         | 02                       |
+| 06  | [Task reminders](06-task-reminders.md)                                                           | done (2026-07-22)                                         | 04, 05                   |
+| 07  | [Cooking: recipes & meal plan](07-cooking.md)                                                    | done (2026-07-22)                                         | 02 (03 for shopping add) |
+| 08  | [Cook mode & timers](08-cook-mode.md)                                                            | done (2026-07-22)                                         | 07, 05                   |
+| 09  | [History, leaderboard & Home completion](09-history-leaderboard.md)                              | done (2026-07-22)                                         | 04                       |
+| 10  | [Settings & members](10-settings-members.md)                                                     | done (2026-07-22)                                         | 01 (05 for prefs)        |
+| 11  | [PWA, polish & deploy](11-pwa-deploy.md)                                                         | done (2026-07-23)                                         | all                      |
+| 12  | [Recipe import from a link](12-recipe-import.md)                                                 | done (2026-07-25)                                         | 07, 11                   |
+| 13  | [AI import: fallback, text & photos](13-ai-import.md)                                            | done (2026-07-25)                                         | 12, 10                   |
+| 14  | ["Add a recipe" chooser & focused import modes](14-add-chooser.md)                               | done (2026-07-25)                                         | 12, 13                   |
+| 15  | [Live shopping list](15-live-shopping.md)                                                        | done (2026-09-10)                                         | 03                       |
+| 16  | [In-app feedback → a GitHub issue](16-feedback.md)                                               | done (2026-09-11)                                         | 10, 11                   |
+| 17  | [The test workflow: CI as the gate](17-test-workflow.md)                                         | done (2026-09-11)                                         | 11, 16                   |
+| 18  | [Build agent: from an issue to code on `dev`](18-agent-build.md)                                 | done (2026-09-14)                                         | 16, 17                   |
+| 19  | [Tap the version to copy it](19-copy-version.md)                                                 | done (2026-09-14)                                         | 16                       |
+| 20  | [AI providers: your own key, live model picker, backup](20-ai-providers.md)                      | done (2026-10-18)                                         | 13, 14                   |
+| 21  | [Named step timers & German durations](21-step-timers.md)                                        | done (2026-10-18)                                         | 08                       |
+| 22  | [Smarter import: link + AI, Microdata, enriched drafts](22-smarter-import.md)                    | done (2026-10-18)                                         | 20, 21                   |
+| 23  | [Amounts in step text follow servings](23-step-amounts.md)                                       | done (2026-10-18)                                         | 07                       |
+| 24  | [Austrian wording (fixed word list)](24-austrian-wording.md)                                     | done (2026-10-18)                                         | 22                       |
+| 25  | [Agent lane: no silent refusals, runs you can check](25-agent-evidence.md)                       | in progress (built 2026-10-25, live runs after promotion) | 18                       |
+| 26  | [Agent lane: reproduce first, review second](26-agent-reproduce-review.md)                       | todo                                                      | 25                       |
+| 27  | [Agent lane: ideas as proposals, a hardened lane](27-agent-ideas-safety.md)                      | todo                                                      | 26                       |
+| 28  | [Import: AI repairs bad cards, text without AI, smaller photos](28-import-repair-text-photos.md) | todo                                                      | 22                       |
 
 Work done after the twelve plans, tracked here so the queue stays the whole story:
 
-| Change                                                                                                                    | Status            |
-| ------------------------------------------------------------------------------------------------------------------------- | ----------------- |
-| **English + German** (`lib/i18n`, Settings → Language, SPEC §9)                                                           | done (2026-07-24) |
-| **Plan next week** (`/cooking?week=`, two-week switch, SPEC §4.1, DECISIONS #99)                                          | done (2026-07-24) |
-| **Structured ingredient amounts** (`cooking/IngredientSheet`, SPEC §4.4, DECISIONS #100–101)                              | done (2026-07-24) |
-| **Multiple cook timers + the running-timer dock** (`cook-timers.ts`, `cook-timer.svelte.ts`, SPEC §4.6)                   | done (2026-07-24) |
-| **Shopping: "Recently bought" + add-field suggestions** (SPEC §3.1, DECISIONS #105–106)                                   | done (2026-07-24) |
-| **Shopping: undo bar after a tick** (`shopping/UndoBar`, SPEC §3.1, DECISIONS #107)                                       | done (2026-07-24) |
-| **Ingredient picker + merging amounts** (`cooking/IngredientPickSheet`, SPEC §4.8, DECISIONS #123)                        | done (2026-07-31) |
-| **Cooking for {n}: use-time ingredient scaling** (SPEC §4.5, §4.6, §4.8, DECISIONS #124)                                  | done (2026-07-31) |
-| **One type scale token** (`--fs` in `app.css`, DESIGN-SYSTEM "Type scale", DECISIONS #125)                                | done (2026-08-08) |
-| **Several meals a day** (`meals.slot`, SPEC §2, §4.1–4.2, DATA-MODEL, DECISIONS #126)                                     | done (2026-08-08) |
-| **What a step uses** (`recipe_step_ingredients`, SPEC §4.4, §4.6, DATA-MODEL, DECISIONS #127)                             | done (2026-08-10) |
-| **A row per meal, one day open** (`cooking/MealRow`, `cooking/DayMealsSheet`, SPEC §4.1, DECISIONS #129)                  | done (2026-08-11) |
-| **Holiday shop-closure notice** (`utils/holidays.ts`, `services/holidays.ts`, `HolidayNotice`, SPEC §3.6, DECISIONS #131) | done (2026-08-14) |
-| **One row, one action in the week** (`cooking/MealRow`, `cooking/MealActionsSheet`, SPEC §4.1, DECISIONS #132)            | done (2026-08-18) |
+| Change                                                                                                                          | Status            |
+| ------------------------------------------------------------------------------------------------------------------------------- | ----------------- |
+| **English + German** (`lib/i18n`, Settings → Language, SPEC §9)                                                                 | done (2026-07-24) |
+| **Plan next week** (`/cooking?week=`, two-week switch, SPEC §4.1, DECISIONS #99)                                                | done (2026-07-24) |
+| **Structured ingredient amounts** (`cooking/IngredientSheet`, SPEC §4.4, DECISIONS #100–101)                                    | done (2026-07-24) |
+| **Multiple cook timers + the running-timer dock** (`cook-timers.ts`, `cook-timer.svelte.ts`, SPEC §4.6)                         | done (2026-07-24) |
+| **Shopping: "Recently bought" + add-field suggestions** (SPEC §3.1, DECISIONS #105–106)                                         | done (2026-07-24) |
+| **Shopping: undo bar after a tick** (`shopping/UndoBar`, SPEC §3.1, DECISIONS #107)                                             | done (2026-07-24) |
+| **Ingredient picker + merging amounts** (`cooking/IngredientPickSheet`, SPEC §4.8, DECISIONS #123)                              | done (2026-07-31) |
+| **Cooking for {n}: use-time ingredient scaling** (SPEC §4.5, §4.6, §4.8, DECISIONS #124)                                        | done (2026-07-31) |
+| **One type scale token** (`--fs` in `app.css`, DESIGN-SYSTEM "Type scale", DECISIONS #125)                                      | done (2026-08-08) |
+| **Several meals a day** (`meals.slot`, SPEC §2, §4.1–4.2, DATA-MODEL, DECISIONS #126)                                           | done (2026-08-08) |
+| **What a step uses** (`recipe_step_ingredients`, SPEC §4.4, §4.6, DATA-MODEL, DECISIONS #127)                                   | done (2026-08-10) |
+| **A row per meal, one day open** (`cooking/MealRow`, `cooking/DayMealsSheet`, SPEC §4.1, DECISIONS #129)                        | done (2026-08-11) |
+| **Holiday shop-closure notice** (`utils/holidays.ts`, `services/holidays.ts`, `HolidayNotice`, SPEC §3.6, DECISIONS #131)       | done (2026-08-14) |
+| **One row, one action in the week** (`cooking/MealRow`, `cooking/MealActionsSheet`, SPEC §4.1, DECISIONS #132)                  | done (2026-08-18) |
+| **Every page has a screenshot or an excuse** (`tests/conventions/visual-coverage.test.ts`, TESTING.md "Visual", DECISIONS #156) | done (2026-10-25) |
+| **Litestream to B2, restore on empty `/data`** (`litestream.yml`, BACKUP.md, DECISIONS #160)                                    | done (2026-10-25) |
 
 ## Dependency graph & parallelization
 

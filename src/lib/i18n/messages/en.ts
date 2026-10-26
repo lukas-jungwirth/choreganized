@@ -1229,6 +1229,8 @@ export const en = {
 				invalidUrl: 'That doesn’t look like a web address — paste the recipe’s link.',
 				blocked: 'That link can’t be opened from here. Try the recipe’s public web address.',
 				unreachable: 'Couldn’t reach that page — check the link and your connection.',
+				refused:
+					'That site doesn’t let apps read its recipes. Open it in your browser and copy the recipe from there.',
 				notHtml: 'That link isn’t a web page. Paste the recipe’s page, not a file or an image.',
 				tooLarge: 'That page is too big to read — try a direct link to the recipe.',
 				noRecipe: 'No recipe data on that page.'

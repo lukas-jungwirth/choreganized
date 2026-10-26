@@ -21,8 +21,13 @@ import { parse, type HTMLElement } from 'node-html-parser';
 import { lookup } from 'node:dns/promises';
 import { isIPv4, isIPv6 } from 'node:net';
 import type { Messages } from '$lib/i18n';
-import { decodeEntities, parseRecipeJsonLd, type RecipeJsonLd } from '$lib/utils/recipe-jsonld';
-import { parseRecipeMicrodata } from '$lib/utils/recipe-microdata';
+import {
+	decodeEntities,
+	parseRecipeJsonLd,
+	tidySteps,
+	type RecipeJsonLd
+} from '$lib/utils/recipe-jsonld';
+import { markedUpSteps, parseRecipeMicrodata } from '$lib/utils/recipe-microdata';
 import {
 	clampCount,
 	INGREDIENTS_MAX,
@@ -60,7 +65,7 @@ const REDIRECT_STATUSES = new Set([301, 302, 303, 307, 308]);
 
 /** Why an import was refused — the words live in `$lib/i18n` (`cooking.import.error`). */
 export type RecipeImportErrorCode =
-	'invalid-url' | 'blocked' | 'unreachable' | 'not-html' | 'too-large' | 'no-recipe';
+	'invalid-url' | 'blocked' | 'unreachable' | 'refused' | 'not-html' | 'too-large' | 'no-recipe';
 
 export class RecipeImportError extends Error {
 	constructor(readonly code: RecipeImportErrorCode) {
@@ -81,6 +86,8 @@ export function importErrorMessage(cause: unknown, m: Messages): string {
 			return m.cooking.import.error.blocked;
 		case 'unreachable':
 			return m.cooking.import.error.unreachable;
+		case 'refused':
+			return m.cooking.import.error.refused;
 		case 'not-html':
 			return m.cooking.import.error.notHtml;
 		case 'too-large':
@@ -96,6 +103,8 @@ export type RecipePage = {
 	finalUrl: string;
 	/** The page's own recipe card: JSON-LD, else Microdata — null when it has neither. */
 	card: RecipeJsonLd | null;
+	/** Which reader found the card — what the import probe reports (→ plan 25). */
+	reader: 'json-ld' | 'microdata' | null;
 	/** The page as readable lines, for a model to read when there is no card (→ plan 13). */
 	text: string;
 	/** A photo to offer: the card's own, else the page's `og:image` (unresolved). */
@@ -109,11 +118,37 @@ export type RecipePage = {
  * import screen's "no recipe data here — try with AI?".
  */
 export async function readRecipePage(url: string): Promise<RecipePage> {
-	const { html, finalUrl } = await fetchRecipePage(url);
-	const card = parseRecipeJsonLd(html) ?? parseRecipeMicrodata(html);
+	return readFetchedPage(await fetchRecipePage(url));
+}
+
+/**
+ * The reading half of `readRecipePage`, for HTML already in hand — split out
+ * so `npm run import:probe` can keep the raw page for `--save` and still read
+ * it exactly the way an import does (→ plan 25).
+ */
+export function readFetchedPage({
+	html,
+	finalUrl
+}: {
+	html: string;
+	finalUrl: string;
+}): RecipePage {
+	const jsonLd = withMarkedUpSteps(parseRecipeJsonLd(html), html);
+	const card = jsonLd ?? parseRecipeMicrodata(html);
+	const reader = jsonLd ? 'json-ld' : card ? 'microdata' : null;
 	const { text, ogImage } = readableParts(html);
 
-	return { finalUrl, card, text, image: card?.image ?? ogImage };
+	return { finalUrl, card, reader, text, image: card?.image ?? ogImage };
+}
+
+/**
+ * A JSON-LD card that lists the ingredients but no method, on a page whose
+ * recipe plugin shows the method in its own markup: the steps are read from
+ * there rather than opening a recipe with nothing to do (→ `markedUpSteps`).
+ */
+function withMarkedUpSteps(card: RecipeJsonLd | null, html: string): RecipeJsonLd | null {
+	if (!card || card.steps.length) return card;
+	return { ...card, steps: tidySteps(markedUpSteps(html)) };
 }
 
 /**
@@ -329,7 +364,7 @@ async function fetchGuarded(
 
 		if (!response.ok) {
 			await discard(response);
-			throw new RecipeImportError('unreachable');
+			throw new RecipeImportError(failureCode(response));
 		}
 
 		return { response, finalUrl: current.href };
@@ -338,6 +373,21 @@ async function fetchGuarded(
 	// Fell out of the loop still redirecting — a redirect chain or a loop.
 	throw new RecipeImportError('unreachable');
 }
+
+/**
+ * Why a page answered with an error. A site that turns bots away — a 403 from
+ * Cloudflare, the 402 "pay per crawl" Dotdash sites (Allrecipes, Serious Eats)
+ * answer, a 429, a challenge page — is `refused`: the link is fine and a browser
+ * opens it, so "check your connection" would send the person the wrong way.
+ * Exported for its tests.
+ */
+export function failureCode(response: Response): RecipeImportErrorCode {
+	if (REFUSING_STATUSES.has(response.status)) return 'refused';
+	if (response.headers.has('cf-mitigated')) return 'refused';
+	return 'unreachable';
+}
+
+const REFUSING_STATUSES = new Set([401, 402, 403, 429]);
 
 function assertHttp(url: URL): void {
 	if (url.protocol !== 'http:' && url.protocol !== 'https:') {
@@ -418,9 +468,9 @@ async function discard(response: Response): Promise<void> {
  * Whether an address is one the server must not be steered onto — the SSRF
  * blocklist. Covers loopback, RFC 1918 private, link-local, CGNAT and the
  * reserved/multicast ranges, for both families; an unrecognised string is
- * refused rather than trusted.
+ * refused rather than trusted. Exported for its tests.
  */
-function isBlockedAddress(ip: string): boolean {
+export function isBlockedAddress(ip: string): boolean {
 	if (isIPv4(ip)) return isBlockedV4(ip);
 	if (isIPv6(ip)) return isBlockedV6(ip.toLowerCase());
 	return true;
@@ -448,18 +498,17 @@ function isBlockedV4(ip: string): boolean {
 }
 
 function isBlockedV6(ip: string): boolean {
-	// IPv4-mapped / embedded (`::ffff:1.2.3.4`, `64:ff9b::1.2.3.4`): the address
-	// that actually gets routed is the trailing IPv4, so classify that.
-	if (ip.includes('.')) {
-		const embedded = ip.slice(ip.lastIndexOf(':') + 1);
-		return isIPv4(embedded) ? isBlockedV4(embedded) : true;
-	}
-
 	const groups = expandV6(ip);
 	if (!groups) return true;
 
 	if (groups.every((g) => g === 0)) return true; // ::   unspecified
 	if (groups.slice(0, 7).every((g) => g === 0) && groups[7] === 1) return true; // ::1 loopback
+
+	// An IPv4 address carried inside an IPv6 one is routed as that IPv4, so it
+	// is classified as one. The WHATWG URL parser writes `[::ffff:127.0.0.1]` as
+	// `[::ffff:7f00:1]` — hex, no dots — so the dotted spelling can't be the test.
+	const embedded = embeddedV4(groups);
+	if (embedded) return isBlockedV4(embedded);
 
 	const first = groups[0];
 	if ((first & 0xfe00) === 0xfc00) return true; // fc00::/7  unique local
@@ -469,10 +518,38 @@ function isBlockedV6(ip: string): boolean {
 	return false;
 }
 
-/** A validated IPv6 string to its eight 16-bit groups, `::` expanded. */
+/**
+ * The IPv4 address an IPv6 one wraps, if it is one of the forms that reach it:
+ * mapped (`::ffff:a.b.c.d`), compatible (`::a.b.c.d`), translated
+ * (`::ffff:0:a.b.c.d`), NAT64 (`64:ff9b::a.b.c.d`) and 6to4 (`2002:aabb:ccdd::`).
+ */
+function embeddedV4(groups: number[]): string | null {
+	const zero = (from: number, to: number) => groups.slice(from, to).every((g) => g === 0);
+	const v4 = (high: number, low: number) =>
+		[high >> 8, high & 0xff, low >> 8, low & 0xff].join('.');
+
+	if (zero(0, 5) && (groups[5] === 0xffff || groups[5] === 0)) return v4(groups[6], groups[7]);
+	if (zero(0, 4) && groups[4] === 0xffff && groups[5] === 0) return v4(groups[6], groups[7]);
+	if (groups[0] === 0x64 && groups[1] === 0xff9b && zero(2, 6)) return v4(groups[6], groups[7]);
+	if (groups[0] === 0x2002) return v4(groups[1], groups[2]);
+	return null;
+}
+
+/**
+ * A validated IPv6 string to its eight 16-bit groups, `::` expanded — and a
+ * dotted IPv4 tail (`::ffff:1.2.3.4`) read as the two groups it stands for.
+ */
 function expandV6(ip: string): number[] | null {
-	const withoutZone = ip.split('%')[0];
-	const halves = withoutZone.split('::');
+	let text = ip.split('%')[0];
+
+	const dotted = /^(.*:)([^:]*\.[^:]*)$/.exec(text);
+	if (dotted) {
+		if (!isIPv4(dotted[2])) return null;
+		const [a, b, c, d] = dotted[2].split('.').map(Number);
+		text = `${dotted[1]}${((a << 8) | b).toString(16)}:${((c << 8) | d).toString(16)}`;
+	}
+
+	const halves = text.split('::');
 	if (halves.length > 2) return null;
 
 	const toGroups = (part: string) => (part ? part.split(':').map((h) => parseInt(h, 16)) : []);

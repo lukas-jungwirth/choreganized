@@ -1,0 +1,875 @@
+[
+	{
+		"type": "system",
+		"subtype": "init",
+		"cwd": "/home/runner/work/choreganized/choreganized",
+		"session_id": "0114436a-6156-49a6-9c50-42fd1cb8891d",
+		"tools": ["Bash", "Read", "WebFetch"],
+		"model": "claude-haiku-5-5",
+		"permissionMode": "default",
+		"claude_code_version": "2.1.258",
+		"uuid": "3c2a3b7e-3a49-4bb3-9b04-0084df5e1167"
+	},
+	{
+		"type": "system",
+		"subtype": "thinking_tokens",
+		"estimated_tokens": 50,
+		"estimated_tokens_delta": 50,
+		"session_id": "0114436a-6156-49a6-9c50-42fd1cb8891d",
+		"uuid": "eb15cf9f-86f2-4a03-9e52-58cfe308a337"
+	},
+	{
+		"type": "system",
+		"subtype": "thinking_tokens",
+		"estimated_tokens": 305,
+		"estimated_tokens_delta": 255,
+		"session_id": "0114436a-6156-49a6-9c50-42fd1cb8891d",
+		"uuid": "6447b09d-bcfc-42d6-ac1d-0aa34aebea4c"
+	},
+	{
+		"type": "assistant",
+		"message": {
+			"model": "claude-haiku-5-5",
+			"id": "msg_011CgPHAaBL7gC3KQUKTpEXy",
+			"type": "message",
+			"role": "assistant",
+			"content": [
+				{
+					"type": "thinking",
+					"thinking": "",
+					"signature": "(redacted)"
+				}
+			],
+			"container": null,
+			"stop_reason": null,
+			"stop_sequence": null,
+			"stop_details": null,
+			"usage": {
+				"input_tokens": 2,
+				"cache_creation_input_tokens": 46667,
+				"cache_read_input_tokens": 0,
+				"cache_creation": {
+					"ephemeral_5m_input_tokens": 0,
+					"ephemeral_1h_input_tokens": 46667
+				},
+				"output_tokens": 4,
+				"service_tier": "standard",
+				"inference_geo": "global",
+				"speed": "standard"
+			},
+			"diagnostics": null,
+			"context_management": null
+		},
+		"parent_tool_use_id": null,
+		"session_id": "0114436a-6156-49a6-9c50-42fd1cb8891d",
+		"uuid": "302129f2-4915-46ee-8d02-e6b7d79ad0e0",
+		"timestamp": "2026-10-25T16:34:58.505Z",
+		"request_id": "req_011CgPHAZuTUW898ixjjpowm"
+	},
+	{
+		"type": "assistant",
+		"message": {
+			"model": "claude-haiku-5-5",
+			"id": "msg_011CgPHAaBL7gC3KQUKTpEXy",
+			"type": "message",
+			"role": "assistant",
+			"content": [
+				{
+					"type": "tool_use",
+					"id": "toolu_01YYuYE43jzRu7ffB8R52Zqp",
+					"name": "Bash",
+					"input": {
+						"command": "npm run verify",
+						"description": "Run npm verify script (first run)"
+					},
+					"caller": {
+						"type": "direct"
+					}
+				}
+			],
+			"container": null,
+			"stop_reason": null,
+			"stop_sequence": null,
+			"stop_details": null,
+			"usage": {
+				"input_tokens": 2,
+				"cache_creation_input_tokens": 46667,
+				"cache_read_input_tokens": 0,
+				"cache_creation": {
+					"ephemeral_5m_input_tokens": 0,
+					"ephemeral_1h_input_tokens": 46667
+				},
+				"output_tokens": 4,
+				"service_tier": "standard",
+				"inference_geo": "global",
+				"speed": "standard"
+			},
+			"diagnostics": null,
+			"context_management": null
+		},
+		"parent_tool_use_id": null,
+		"session_id": "0114436a-6156-49a6-9c50-42fd1cb8891d",
+		"uuid": "4ed9a235-0ad8-47f2-a1eb-937456523a10",
+		"timestamp": "2026-10-25T16:34:58.558Z",
+		"request_id": "req_011CgPHAZuTUW898ixjjpowm"
+	},
+	{
+		"type": "system",
+		"subtype": "task_summary",
+		"detail": "Running npm verify script (first run)",
+		"uuid": "ce7564c9-9ddc-4ac3-a11c-952892b59132",
+		"session_id": "0114436a-6156-49a6-9c50-42fd1cb8891d"
+	},
+	{
+		"type": "user",
+		"message": {
+			"role": "user",
+			"content": [
+				{
+					"type": "tool_result",
+					"content": "Exit code 1\n\n> verify\n> node -e \"const ok=require('fs').existsSync('ok'); console.log(ok?'all green':'1 failed'); process.exit(ok?0:1)\"\n\n1 failed",
+					"is_error": true,
+					"tool_use_id": "toolu_01YYuYE43jzRu7ffB8R52Zqp"
+				}
+			]
+		},
+		"parent_tool_use_id": null,
+		"session_id": "0114436a-6156-49a6-9c50-42fd1cb8891d",
+		"uuid": "9305c21d-bc2d-4aef-8522-71ad578c3ccd",
+		"timestamp": "2026-10-25T16:34:59.463Z",
+		"tool_use_result": "Error: Exit code 1\n\n> verify\n> node -e \"const ok=require('fs').existsSync('ok'); console.log(ok?'all green':'1 failed'); process.exit(ok?0:1)\"\n\n1 failed"
+	},
+	{
+		"type": "assistant",
+		"message": {
+			"model": "claude-haiku-5-5",
+			"id": "msg_011CgPHApdEehnrdaknY85Dr",
+			"type": "message",
+			"role": "assistant",
+			"content": [
+				{
+					"type": "tool_use",
+					"id": "toolu_01Qg87QxYyW2LXeXULH88g5e",
+					"name": "Bash",
+					"input": {
+						"command": "touch ok",
+						"description": "Create file named ok"
+					},
+					"caller": {
+						"type": "direct"
+					}
+				}
+			],
+			"container": null,
+			"stop_reason": null,
+			"stop_sequence": null,
+			"stop_details": null,
+			"usage": {
+				"input_tokens": 2,
+				"cache_creation_input_tokens": 398,
+				"cache_read_input_tokens": 46667,
+				"cache_creation": {
+					"ephemeral_5m_input_tokens": 0,
+					"ephemeral_1h_input_tokens": 398
+				},
+				"output_tokens": 16,
+				"service_tier": "standard",
+				"inference_geo": "global",
+				"speed": "standard"
+			},
+			"diagnostics": null,
+			"context_management": null
+		},
+		"parent_tool_use_id": null,
+		"session_id": "0114436a-6156-49a6-9c50-42fd1cb8891d",
+		"uuid": "c2104b0c-d77f-46a4-82a1-80874f5c6966",
+		"timestamp": "2026-10-25T16:35:00.724Z",
+		"request_id": "req_011CgPHApQLvXDHpfjjyLNoM"
+	},
+	{
+		"type": "user",
+		"message": {
+			"role": "user",
+			"content": [
+				{
+					"tool_use_id": "toolu_01Qg87QxYyW2LXeXULH88g5e",
+					"type": "tool_result",
+					"content": "(Bash completed with no output)",
+					"is_error": false
+				}
+			]
+		},
+		"parent_tool_use_id": null,
+		"session_id": "0114436a-6156-49a6-9c50-42fd1cb8891d",
+		"uuid": "50059a1a-945c-4b1f-9437-69382c5ee74b",
+		"timestamp": "2026-10-25T16:35:00.750Z",
+		"tool_use_result": {
+			"stdout": "",
+			"stderr": "",
+			"interrupted": false,
+			"isImage": false,
+			"noOutputExpected": true
+		}
+	},
+	{
+		"type": "assistant",
+		"message": {
+			"model": "claude-haiku-5-5",
+			"id": "msg_011CgPHAv9s8W1bLHiNu527X",
+			"type": "message",
+			"role": "assistant",
+			"content": [
+				{
+					"type": "tool_use",
+					"id": "toolu_019gc6UQU3PGDMdzfiw7MxgC",
+					"name": "Bash",
+					"input": {
+						"command": "set -o pipefail && npm run verify 2>&1 | tail -5",
+						"description": "Run verify again and show last 5 lines"
+					},
+					"caller": {
+						"type": "direct"
+					}
+				}
+			],
+			"container": null,
+			"stop_reason": null,
+			"stop_sequence": null,
+			"stop_details": null,
+			"usage": {
+				"input_tokens": 2,
+				"cache_creation_input_tokens": 115,
+				"cache_read_input_tokens": 47065,
+				"cache_creation": {
+					"ephemeral_5m_input_tokens": 0,
+					"ephemeral_1h_input_tokens": 115
+				},
+				"output_tokens": 16,
+				"service_tier": "standard",
+				"inference_geo": "global",
+				"speed": "standard"
+			},
+			"diagnostics": null,
+			"context_management": null
+		},
+		"parent_tool_use_id": null,
+		"session_id": "0114436a-6156-49a6-9c50-42fd1cb8891d",
+		"uuid": "0662ac31-8e06-4fff-8131-fd062a9427cf",
+		"timestamp": "2026-10-25T16:35:02.155Z",
+		"request_id": "req_011CgPHAutF9pfZPL2FjGVFz"
+	},
+	{
+		"type": "user",
+		"message": {
+			"role": "user",
+			"content": [
+				{
+					"tool_use_id": "toolu_019gc6UQU3PGDMdzfiw7MxgC",
+					"type": "tool_result",
+					"content": "> verify\n> node -e \"const ok=require('fs').existsSync('ok'); console.log(ok?'all green':'1 failed'); process.exit(ok?0:1)\"\n\nall green",
+					"is_error": false
+				}
+			]
+		},
+		"parent_tool_use_id": null,
+		"session_id": "0114436a-6156-49a6-9c50-42fd1cb8891d",
+		"uuid": "ab437e35-33a5-4663-8b6d-38046bbc5dcd",
+		"timestamp": "2026-10-25T16:35:02.302Z",
+		"tool_use_result": {
+			"stdout": "> verify\n> node -e \"const ok=require('fs').existsSync('ok'); console.log(ok?'all green':'1 failed'); process.exit(ok?0:1)\"\n\nall green",
+			"stderr": "",
+			"interrupted": false,
+			"isImage": false,
+			"noOutputExpected": false
+		}
+	},
+	{
+		"type": "assistant",
+		"message": {
+			"model": "claude-haiku-5-5",
+			"id": "msg_011CgPHB3dLF546ppjxsRZJd",
+			"type": "message",
+			"role": "assistant",
+			"content": [
+				{
+					"type": "text",
+					"text": "WebFetch is a deferred tool, so I'm loading its schema before fetching example.com."
+				}
+			],
+			"container": null,
+			"stop_reason": null,
+			"stop_sequence": null,
+			"stop_details": null,
+			"usage": {
+				"input_tokens": 2,
+				"cache_creation_input_tokens": 193,
+				"cache_read_input_tokens": 47180,
+				"cache_creation": {
+					"ephemeral_5m_input_tokens": 0,
+					"ephemeral_1h_input_tokens": 193
+				},
+				"output_tokens": 1,
+				"service_tier": "standard",
+				"inference_geo": "global",
+				"speed": "standard"
+			},
+			"diagnostics": null,
+			"context_management": null
+		},
+		"parent_tool_use_id": null,
+		"session_id": "0114436a-6156-49a6-9c50-42fd1cb8891d",
+		"uuid": "23440be0-65c9-4898-a947-2d6b983fae8a",
+		"timestamp": "2026-10-25T16:35:03.773Z",
+		"request_id": "req_011CgPHB3PSVRJgriaZ64ezu"
+	},
+	{
+		"type": "assistant",
+		"message": {
+			"model": "claude-haiku-5-5",
+			"id": "msg_011CgPHB3dLF546ppjxsRZJd",
+			"type": "message",
+			"role": "assistant",
+			"content": [
+				{
+					"type": "tool_use",
+					"id": "toolu_01SkvfQCW1m7JJaJKDZE9oHx",
+					"name": "ToolSearch",
+					"input": {
+						"query": "select:WebFetch",
+						"max_results": 1
+					},
+					"caller": {
+						"type": "direct"
+					}
+				}
+			],
+			"container": null,
+			"stop_reason": null,
+			"stop_sequence": null,
+			"stop_details": null,
+			"usage": {
+				"input_tokens": 2,
+				"cache_creation_input_tokens": 193,
+				"cache_read_input_tokens": 47180,
+				"cache_creation": {
+					"ephemeral_5m_input_tokens": 0,
+					"ephemeral_1h_input_tokens": 193
+				},
+				"output_tokens": 1,
+				"service_tier": "standard",
+				"inference_geo": "global",
+				"speed": "standard"
+			},
+			"diagnostics": null,
+			"context_management": null
+		},
+		"parent_tool_use_id": null,
+		"session_id": "0114436a-6156-49a6-9c50-42fd1cb8891d",
+		"uuid": "6499e5cb-6141-4e07-8cf9-54865fb263f5",
+		"timestamp": "2026-10-25T16:35:03.915Z",
+		"request_id": "req_011CgPHB3PSVRJgriaZ64ezu"
+	},
+	{
+		"type": "user",
+		"message": {
+			"role": "user",
+			"content": [
+				{
+					"type": "tool_result",
+					"tool_use_id": "toolu_01SkvfQCW1m7JJaJKDZE9oHx",
+					"content": [
+						{
+							"type": "tool_reference",
+							"tool_name": "WebFetch"
+						}
+					]
+				}
+			]
+		},
+		"parent_tool_use_id": null,
+		"session_id": "0114436a-6156-49a6-9c50-42fd1cb8891d",
+		"uuid": "0f267a40-79d5-4212-ae61-1069a1007160",
+		"timestamp": "2026-10-25T16:35:03.921Z",
+		"tool_use_result": {
+			"matches": ["WebFetch"],
+			"query": "select:WebFetch",
+			"total_deferred_tools": 24
+		}
+	},
+	{
+		"type": "system",
+		"subtype": "thinking_tokens",
+		"estimated_tokens": 50,
+		"estimated_tokens_delta": 50,
+		"session_id": "0114436a-6156-49a6-9c50-42fd1cb8891d",
+		"uuid": "d650b124-c988-4221-84d0-78b1411ee82d"
+	},
+	{
+		"type": "system",
+		"subtype": "thinking_tokens",
+		"estimated_tokens": 246,
+		"estimated_tokens_delta": 196,
+		"session_id": "0114436a-6156-49a6-9c50-42fd1cb8891d",
+		"uuid": "034e1647-e767-4419-978d-4ecd0774bdcb"
+	},
+	{
+		"type": "assistant",
+		"message": {
+			"model": "claude-haiku-5-5",
+			"id": "msg_011CgPHB9nA8RG6GuaieuWBm",
+			"type": "message",
+			"role": "assistant",
+			"content": [
+				{
+					"type": "thinking",
+					"thinking": "",
+					"signature": "(redacted)"
+				}
+			],
+			"container": null,
+			"stop_reason": null,
+			"stop_sequence": null,
+			"stop_details": null,
+			"usage": {
+				"input_tokens": 2,
+				"cache_creation_input_tokens": 963,
+				"cache_read_input_tokens": 47373,
+				"cache_creation": {
+					"ephemeral_5m_input_tokens": 0,
+					"ephemeral_1h_input_tokens": 963
+				},
+				"output_tokens": 2,
+				"service_tier": "standard",
+				"inference_geo": "global",
+				"speed": "standard"
+			},
+			"diagnostics": null,
+			"context_management": null
+		},
+		"parent_tool_use_id": null,
+		"session_id": "0114436a-6156-49a6-9c50-42fd1cb8891d",
+		"uuid": "bb3c00d0-624a-4c65-bf14-37af90bdf219",
+		"timestamp": "2026-10-25T16:35:05.612Z",
+		"request_id": "req_011CgPHB9XHWHyKa6MMr3urJ"
+	},
+	{
+		"type": "assistant",
+		"message": {
+			"model": "claude-haiku-5-5",
+			"id": "msg_011CgPHB9nA8RG6GuaieuWBm",
+			"type": "message",
+			"role": "assistant",
+			"content": [
+				{
+					"type": "tool_use",
+					"id": "toolu_019f5q5QcBBVhPmAbtZ8JCse",
+					"name": "WebFetch",
+					"input": {
+						"url": "https://example.com",
+						"prompt": "What is the page title?"
+					},
+					"caller": {
+						"type": "direct"
+					}
+				}
+			],
+			"container": null,
+			"stop_reason": null,
+			"stop_sequence": null,
+			"stop_details": null,
+			"usage": {
+				"input_tokens": 2,
+				"cache_creation_input_tokens": 963,
+				"cache_read_input_tokens": 47373,
+				"cache_creation": {
+					"ephemeral_5m_input_tokens": 0,
+					"ephemeral_1h_input_tokens": 963
+				},
+				"output_tokens": 2,
+				"service_tier": "standard",
+				"inference_geo": "global",
+				"speed": "standard"
+			},
+			"diagnostics": null,
+			"context_management": null
+		},
+		"parent_tool_use_id": null,
+		"session_id": "0114436a-6156-49a6-9c50-42fd1cb8891d",
+		"uuid": "b9fae8fe-151d-4dc4-9321-05c61921e0a9",
+		"timestamp": "2026-10-25T16:35:05.761Z",
+		"request_id": "req_011CgPHB9XHWHyKa6MMr3urJ"
+	},
+	{
+		"type": "system",
+		"subtype": "permission_denied",
+		"tool_name": "WebFetch",
+		"tool_use_id": "toolu_019f5q5QcBBVhPmAbtZ8JCse",
+		"message": "Claude requested permissions to use WebFetch, but you haven't granted it yet.",
+		"uuid": "03bd5c1e-0623-41b7-bfb5-be5c0bca6d15",
+		"session_id": "0114436a-6156-49a6-9c50-42fd1cb8891d"
+	},
+	{
+		"type": "user",
+		"message": {
+			"role": "user",
+			"content": [
+				{
+					"type": "tool_result",
+					"content": "Claude requested permissions to use WebFetch, but you haven't granted it yet.",
+					"is_error": true,
+					"tool_use_id": "toolu_019f5q5QcBBVhPmAbtZ8JCse"
+				}
+			]
+		},
+		"parent_tool_use_id": null,
+		"session_id": "0114436a-6156-49a6-9c50-42fd1cb8891d",
+		"uuid": "344ce6b5-cd42-4fd0-bf4f-c2fa52decf7f",
+		"timestamp": "2026-10-25T16:35:05.764Z",
+		"tool_use_result": "Error: Claude requested permissions to use WebFetch, but you haven't granted it yet.",
+		"tool_result_meta": [
+			{
+				"id": "toolu_019f5q5QcBBVhPmAbtZ8JCse",
+				"non_execution_kind": "user-rejected"
+			}
+		]
+	},
+	{
+		"type": "system",
+		"subtype": "thinking_tokens",
+		"estimated_tokens": 50,
+		"estimated_tokens_delta": 50,
+		"session_id": "0114436a-6156-49a6-9c50-42fd1cb8891d",
+		"uuid": "e0a6cefe-c2d5-43e7-8d74-b59d3ee3398e"
+	},
+	{
+		"type": "system",
+		"subtype": "thinking_tokens",
+		"estimated_tokens": 294,
+		"estimated_tokens_delta": 244,
+		"session_id": "0114436a-6156-49a6-9c50-42fd1cb8891d",
+		"uuid": "75fb12ce-d36a-42fb-9053-526d01f9ae74"
+	},
+	{
+		"type": "assistant",
+		"message": {
+			"model": "claude-haiku-5-5",
+			"id": "msg_011CgPHBHfg5Hd6sgFm7TQPy",
+			"type": "message",
+			"role": "assistant",
+			"content": [
+				{
+					"type": "thinking",
+					"thinking": "",
+					"signature": "(redacted)"
+				}
+			],
+			"container": null,
+			"stop_reason": null,
+			"stop_sequence": null,
+			"stop_details": null,
+			"usage": {
+				"input_tokens": 2,
+				"cache_creation_input_tokens": 220,
+				"cache_read_input_tokens": 48336,
+				"cache_creation": {
+					"ephemeral_5m_input_tokens": 0,
+					"ephemeral_1h_input_tokens": 220
+				},
+				"output_tokens": 7,
+				"service_tier": "standard",
+				"inference_geo": "global",
+				"speed": "standard"
+			},
+			"diagnostics": null,
+			"context_management": null
+		},
+		"parent_tool_use_id": null,
+		"session_id": "0114436a-6156-49a6-9c50-42fd1cb8891d",
+		"uuid": "c3a398ae-40e2-4411-bd9d-3f8d48488dfd",
+		"timestamp": "2026-10-25T16:35:07.540Z",
+		"request_id": "req_011CgPHBHNKkeL7wv6v8Dvyc"
+	},
+	{
+		"type": "assistant",
+		"message": {
+			"model": "claude-haiku-5-5",
+			"id": "msg_011CgPHBHfg5Hd6sgFm7TQPy",
+			"type": "message",
+			"role": "assistant",
+			"content": [
+				{
+					"type": "text",
+					"text": "WebFetch was not permitted, so step 4 didn't run. I'll run the final verify step and report the block."
+				}
+			],
+			"container": null,
+			"stop_reason": null,
+			"stop_sequence": null,
+			"stop_details": null,
+			"usage": {
+				"input_tokens": 2,
+				"cache_creation_input_tokens": 220,
+				"cache_read_input_tokens": 48336,
+				"cache_creation": {
+					"ephemeral_5m_input_tokens": 0,
+					"ephemeral_1h_input_tokens": 220
+				},
+				"output_tokens": 7,
+				"service_tier": "standard",
+				"inference_geo": "global",
+				"speed": "standard"
+			},
+			"diagnostics": null,
+			"context_management": null
+		},
+		"parent_tool_use_id": null,
+		"session_id": "0114436a-6156-49a6-9c50-42fd1cb8891d",
+		"uuid": "9a8bca4c-96e5-4a9d-8142-4b3325223daa",
+		"timestamp": "2026-10-25T16:35:07.817Z",
+		"request_id": "req_011CgPHBHNKkeL7wv6v8Dvyc"
+	},
+	{
+		"type": "assistant",
+		"message": {
+			"model": "claude-haiku-5-5",
+			"id": "msg_011CgPHBHfg5Hd6sgFm7TQPy",
+			"type": "message",
+			"role": "assistant",
+			"content": [
+				{
+					"type": "tool_use",
+					"id": "toolu_014e7H5sHodJcHdeeWgkNqZx",
+					"name": "Bash",
+					"input": {
+						"command": "npm run verify",
+						"description": "Run npm verify script (second run)"
+					},
+					"caller": {
+						"type": "direct"
+					}
+				}
+			],
+			"container": null,
+			"stop_reason": null,
+			"stop_sequence": null,
+			"stop_details": null,
+			"usage": {
+				"input_tokens": 2,
+				"cache_creation_input_tokens": 220,
+				"cache_read_input_tokens": 48336,
+				"cache_creation": {
+					"ephemeral_5m_input_tokens": 0,
+					"ephemeral_1h_input_tokens": 220
+				},
+				"output_tokens": 7,
+				"service_tier": "standard",
+				"inference_geo": "global",
+				"speed": "standard"
+			},
+			"diagnostics": null,
+			"context_management": null
+		},
+		"parent_tool_use_id": null,
+		"session_id": "0114436a-6156-49a6-9c50-42fd1cb8891d",
+		"uuid": "666b6a7e-edd0-4b35-b6a7-53735144fbf2",
+		"timestamp": "2026-10-25T16:35:07.979Z",
+		"request_id": "req_011CgPHBHNKkeL7wv6v8Dvyc"
+	},
+	{
+		"type": "user",
+		"message": {
+			"role": "user",
+			"content": [
+				{
+					"tool_use_id": "toolu_014e7H5sHodJcHdeeWgkNqZx",
+					"type": "tool_result",
+					"content": "> verify\n> node -e \"const ok=require('fs').existsSync('ok'); console.log(ok?'all green':'1 failed'); process.exit(ok?0:1)\"\n\nall green",
+					"is_error": false
+				}
+			]
+		},
+		"parent_tool_use_id": null,
+		"session_id": "0114436a-6156-49a6-9c50-42fd1cb8891d",
+		"uuid": "031b14e9-701e-46ae-a66b-92f6acbe7059",
+		"timestamp": "2026-10-25T16:35:08.142Z",
+		"tool_use_result": {
+			"stdout": "> verify\n> node -e \"const ok=require('fs').existsSync('ok'); console.log(ok?'all green':'1 failed'); process.exit(ok?0:1)\"\n\nall green",
+			"stderr": "",
+			"interrupted": false,
+			"isImage": false,
+			"noOutputExpected": false
+		}
+	},
+	{
+		"type": "system",
+		"subtype": "thinking_tokens",
+		"estimated_tokens": 50,
+		"estimated_tokens_delta": 50,
+		"session_id": "0114436a-6156-49a6-9c50-42fd1cb8891d",
+		"uuid": "84992a56-c591-4fb5-bae5-02c6cd856375"
+	},
+	{
+		"type": "system",
+		"subtype": "thinking_tokens",
+		"estimated_tokens": 351,
+		"estimated_tokens_delta": 301,
+		"session_id": "0114436a-6156-49a6-9c50-42fd1cb8891d",
+		"uuid": "e9242947-69f2-4d32-9a46-5368d514bf3d"
+	},
+	{
+		"type": "assistant",
+		"message": {
+			"model": "claude-haiku-5-5",
+			"id": "msg_011CgPHBTkekWrNGWRzGN4Z3",
+			"type": "message",
+			"role": "assistant",
+			"content": [
+				{
+					"type": "thinking",
+					"thinking": "",
+					"signature": "(redacted)"
+				}
+			],
+			"container": null,
+			"stop_reason": null,
+			"stop_sequence": null,
+			"stop_details": null,
+			"usage": {
+				"input_tokens": 2,
+				"cache_creation_input_tokens": 342,
+				"cache_read_input_tokens": 48556,
+				"cache_creation": {
+					"ephemeral_5m_input_tokens": 0,
+					"ephemeral_1h_input_tokens": 342
+				},
+				"output_tokens": 3,
+				"service_tier": "standard",
+				"inference_geo": "global",
+				"speed": "standard"
+			},
+			"diagnostics": null,
+			"context_management": null
+		},
+		"parent_tool_use_id": null,
+		"session_id": "0114436a-6156-49a6-9c50-42fd1cb8891d",
+		"uuid": "8b9a46d7-dc9e-4e02-b324-2626333e09e2",
+		"timestamp": "2026-10-25T16:35:10.281Z",
+		"request_id": "req_011CgPHBTWGDTW2A9dkeu2Kc"
+	},
+	{
+		"type": "assistant",
+		"message": {
+			"model": "claude-haiku-5-5",
+			"id": "msg_011CgPHBTkekWrNGWRzGN4Z3",
+			"type": "message",
+			"role": "assistant",
+			"content": [
+				{
+					"type": "text",
+					"text": "SECRET-MESSAGE-TEXT not done: WebFetch to example.com was refused with \"haven't granted it yet,\" so step 4 (reading the page title) did not run, though the other four steps completed."
+				}
+			],
+			"container": null,
+			"stop_reason": null,
+			"stop_sequence": null,
+			"stop_details": null,
+			"usage": {
+				"input_tokens": 2,
+				"cache_creation_input_tokens": 342,
+				"cache_read_input_tokens": 48556,
+				"cache_creation": {
+					"ephemeral_5m_input_tokens": 0,
+					"ephemeral_1h_input_tokens": 342
+				},
+				"output_tokens": 3,
+				"service_tier": "standard",
+				"inference_geo": "global",
+				"speed": "standard"
+			},
+			"diagnostics": null,
+			"context_management": null
+		},
+		"parent_tool_use_id": null,
+		"session_id": "0114436a-6156-49a6-9c50-42fd1cb8891d",
+		"uuid": "a6478edd-7294-4b1a-8cd3-d168c4e01a9a",
+		"timestamp": "2026-10-25T16:35:10.556Z",
+		"request_id": "req_011CgPHBTWGDTW2A9dkeu2Kc"
+	},
+	{
+		"type": "system",
+		"subtype": "post_turn_summary",
+		"summarizes_uuid": "a6478edd-7294-4b1a-8cd3-d168c4e01a9a",
+		"status_category": "blocked",
+		"status_detail": "WebFetch to example.com blocked; step 4 skipped",
+		"needs_action": "grant WebFetch permission for example.com",
+		"uuid": "a3cc912f-87df-41c0-976e-aa92b01849d2",
+		"session_id": "0114436a-6156-49a6-9c50-42fd1cb8891d"
+	},
+	{
+		"duration_api_ms": 13345,
+		"stop_reason": "end_turn",
+		"session_id": "0114436a-6156-49a6-9c50-42fd1cb8891d",
+		"total_cost_usd": 0.6639885,
+		"usage": {
+			"input_tokens": 14,
+			"cache_creation_input_tokens": 48898,
+			"cache_read_input_tokens": 285177,
+			"output_tokens": 1294,
+			"output_tokens_details": {
+				"thinking_tokens": 653
+			},
+			"server_tool_use": {
+				"web_search_requests": 0,
+				"web_fetch_requests": 0
+			},
+			"service_tier": "standard",
+			"cache_creation": {
+				"ephemeral_1h_input_tokens": 48898,
+				"ephemeral_5m_input_tokens": 0
+			},
+			"inference_geo": "global",
+			"speed": "standard"
+		},
+		"modelUsage": {
+			"claude-haiku-5-5": {
+				"inputTokens": 14,
+				"outputTokens": 1294,
+				"cacheReadInputTokens": 285177,
+				"cacheCreationInputTokens": 48898,
+				"webSearchRequests": 0,
+				"costUSD": 0.6639885,
+				"contextWindow": 200000,
+				"maxOutputTokens": 32000,
+				"thinkingTokens": 653,
+				"canonicalModel": "claude-haiku-5-5",
+				"provider": "firstParty",
+				"costBasis": "unknown"
+			}
+		},
+		"permission_denials": [
+			{
+				"tool_name": "WebFetch",
+				"tool_use_id": "toolu_019f5q5QcBBVhPmAbtZ8JCse",
+				"tool_input": {
+					"url": "https://example.com",
+					"prompt": "What is the page title?"
+				}
+			}
+		],
+		"terminal_reason": "completed",
+		"fast_mode_state": "off",
+		"fast_mode_disabled_reason": "sdk_opt_in_required",
+		"is_error": false,
+		"num_turns": 7,
+		"subtype": "success",
+		"api_error_status": null,
+		"result": "SECRET-MESSAGE-TEXT not done: WebFetch to example.com was refused with \"haven't granted it yet,\" so step 4 (reading the page title) did not run, though the other four steps completed.",
+		"ttft_ms": 2547,
+		"type": "result",
+		"duration_ms": 16293,
+		"uuid": "d2baf264-c9e8-438e-81fc-85ac41cf592e",
+		"ttft_stream_ms": 1380,
+		"time_to_request_ms": 47,
+		"queued_turn_count": 0
+	}
+]

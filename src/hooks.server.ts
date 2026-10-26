@@ -2,7 +2,7 @@
  * Server wiring: boot tasks (`init`) and per-request auth + language context
  * (`handle`).
  */
-import { building } from '$app/environment';
+import { building, dev } from '$app/environment';
 import { isAuthPath, svelteKitHandler } from 'better-auth/svelte-kit';
 import { eq } from 'drizzle-orm';
 import type { Handle, RequestEvent, ServerInit } from '@sveltejs/kit';
@@ -15,7 +15,7 @@ import {
 	type Locale
 } from '$lib/i18n/locale';
 import { auth } from '$lib/server/auth';
-import { registerCronJobs } from '$lib/server/cron';
+import { registerCronJobs, stopCronJobs } from '$lib/server/cron';
 import { db, runMigrations } from '$lib/server/db';
 import { members } from '$lib/server/db/schema';
 import { assertE2EModeAllowed } from '$lib/server/e2e-mode';
@@ -26,7 +26,25 @@ export const init: ServerInit = () => {
 	assertE2EModeAllowed();
 	runMigrations();
 	registerCronJobs();
+	// adapter-node emits this once SIGTERM has closed the HTTP server. Node would still
+	// not exit: the cron tick and any running cook timer keep it alive until Docker's
+	// SIGKILL, and under Litestream that SIGKILL would also cut its last upload
+	// (→ docs/BACKUP.md, DECISIONS #160). Only the built server emits it.
+	if (!dev) process.once('sveltekit:shutdown', () => void shutDown());
 };
+
+/** Stop the schedule, close the database, exit. Timers that were running resume on boot. */
+async function shutDown() {
+	let code = 0;
+	try {
+		await stopCronJobs();
+		db.$client.close();
+	} catch (error) {
+		console.error('[shutdown] could not stop cleanly:', error);
+		code = 1;
+	}
+	process.exit(code);
+}
 
 export const handle: Handle = async ({ event, resolve }) => {
 	// Set before the branch below: `App.Locals.locale` promises it is always

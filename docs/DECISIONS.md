@@ -2186,3 +2186,142 @@ units | null, name}`, written back as editor lines in the reader's unit spelling
      Shopping screenshots read "0 of 8 done" with no "Recently bought". It failed on `dev` after
      #33 and #34 merged at 23:44 and 23:48. Like the closure banner (#153), the screens now look
      the same at any hour. Both rows keep one shared stamp, so their order is what it was.
+
+156. **Every page has a screenshot or a written excuse** (`tests/conventions/visual-coverage.test.ts`,
+     TESTING.md "Visual"). The visual suite guarded only the screens someone remembered to list:
+     import, new recipe, stores, all four onboarding steps and the invite landing could change
+     their look and no test would notice. Each row in `screens.spec.ts` now names its `route`,
+     and the convention test holds those against every `+page.svelte`, the way `guards.test.ts`
+     holds `requireMember`.
+
+     - **Excused, with reasons in the test**: `/` (always redirects), and the week plan and both
+       history lists (their whole body is the calendar, as before).
+     - **Onboarding signs up a fresh account per test.** Both seeded accounts own a household,
+       and the onboarding pages are only reachable without one. The invite step's random code is
+       masked in the card and in the link.
+     - **The invite landing** reads the `visual` household's code off the members screen, then
+       signs out. The landing never prints the code, so it needs no mask.
+
+157. **The agent lane runs on evidence: auto mode with a deny list, pinned models, a receipt per
+     run** (`.github/workflows/build.yml`, `triage.yml`, `scripts/agent-run-summary.ts`,
+     `scripts/import-probe.ts`, plan 25). Issue #31's agents were refused a page in silence —
+     triage 2 denials, build 9 — guessed at its shape, and a PR fixing the guess passed CI and
+     merged. An allow-list fails closed _and quiet_ in headless Claude Code, so it was the wrong
+     tool for the build job.
+
+     - **Build runs `--permission-mode auto`** with `--disallowedTools` for the hard nos: the web,
+       `gh api`, `gh workflow`, an admin merge, a force push, edits under `.github/`. Deny rules
+       outrank auto mode, and mid-pattern `*` (`Bash(gh pr merge *--admin*)`,
+       `Bash(git push * -f*)`) catches the flag anywhere in the command — checked headless on
+       2026-10-25, along with `agent/issue-12-fix` still pushing. The real boundary stays outside
+       the prompt: the App token without `workflows`, branch protection, the job's `if`.
+     - **Triage keeps its allow-list** and gains `WebFetch` and the probe. Because a page an
+       untrusted issue names is now reachable, its checkout sets `persist-credentials: false`:
+       no job token in `.git/config` to send there.
+     - **Models are pinned**: Sonnet 5.5 for triage (reading, cheap), Opus 5.5 for build (the
+       hardest job). Unpinned, a Claude Code release could change either unnoticed.
+     - **The run summary** writes model, turns, duration, cost, every denied call (tool + 80
+       characters of input), every Bash command (120 characters, de-duplicated) and every
+       `npm run verify` with its exit code to the job summary — **no message text**, the
+       repository is public. Denials come from three places because Claude Code reports them in
+       three: the result's `permission_denials`, the `permission_denied` system message (which
+       survives a run that dies first), and a path rule's refusal, which only the tool result
+       carries. A verify whose code another command decides (`| tail` without `pipefail`,
+       `|| true`, `;`) is shown but never called clean, and `/build-issue` now runs it with
+       `pipefail` and ticks "verify clean" only off its last run.
+     - **One probe, for import only.** `WebFetch` hands the model a summary, and the summary drops
+       the JSON-LD the importer reads. `npm run import:probe` loads `recipe-import.ts` through a
+       middleware-mode Vite server (the importer needs `$lib` and `$env`), so it is the app's own
+       guarded fetch and readers, not a copy. Another area gets a probe when a real bug shows it
+       needed one.
+     - Triage retitles issues; safe because the retry searches `in:body` for the marker, now
+       pinned by `src/lib/server/github.test.ts`.
+
+158. **The SSRF guard reads an IPv4 address inside an IPv6 one, and Save deletes only a real temp
+     photo** (`server/recipe-import.ts`, `services/recipes.ts`, audit 2026-10-25). The WHATWG
+     URL parser writes `http://[::ffff:127.0.0.1]/` as `[::ffff:7f00:1]` — hex, no dots — and
+     the old check only unwrapped the dotted spelling, so that link fetched the server's own
+     loopback (reproduced against a local listener). The address is now expanded to its eight
+     groups first and the mapped, compatible, translated, NAT64 (`64:ff9b::/96`) and 6to4
+     (`2002::/16`) forms are classified as the IPv4 they carry. Separately, the import's Save
+     deleted whatever `importedPhoto` path the form sent when a new photo replaced it; a forged
+     path naming an attached recipe photo deleted that file. `discardImportedPhoto` runs it
+     through `claimImportedPhoto` first, so only an unclaimed temp goes.
+
+159. **The recipe readers tidy what sites send; an empty card is no card; a refusal says so**
+     (`utils/recipe-jsonld.ts`, `utils/recipe-microdata.ts`, `utils/ingredients.ts`,
+     `utils/timer-parse.ts`, `server/recipe-import.ts`, audit 2026-10-25). Twenty-four real
+     links imported without AI turned up the gaps, each now pinned by a test, three against
+     saved pages (`fixtures/zuckerjagdwurst-curry`, `einfachkochen-kaiserschmarrn`,
+     `smittenkitchen-pierogi`):
+     - **Which card.** A lecker.de listing's JSON-LD names a `Recipe` with nothing in it, and it
+       opened as an empty editor instead of "no recipe — try with AI?". Now every `Recipe` on
+       the page is weighed (nested ones too: `mainEntity`, `ItemList`, `schema:Recipe`), the one
+       with the most ingredients + steps wins, and one with neither counts as no card, in both
+       readers. Improve with AI couldn't rescue an empty card: it must keep the card's rows.
+     - **Tidying, in both readers** (`tidySteps`, `tidyIngredientLines`): a method sent as one
+       HTML string splits at `<li>`/`<p>`/`<br>` (it was one giant step); "1. " / "Schritt 2:"
+       come off; a heading step (short, ends on a colon) is joined to the next step rather than
+       dropped, since it says which part of the dish the steps are for; a section title among
+       the ingredients **is** dropped — rows have no groups, and on the shopping list it would
+       be a thing to buy; a line with an unclosed bracket takes the next one in when that one
+       closes it (einfachkochen splits "Milch (1,8 % Fett)" on its comma, as it split steps in
+       #31). The card's rows are tidied before AI sees them, so the fidelity rule (#148)
+       compares tidy with tidy.
+     - **A card without a method** (smittenkitchen's Jetpack card marks ingredients as
+       Microdata, directions only as h-recipe `e-instructions`) takes its steps from the
+       plugin's markup: `e-instructions`, Jetpack, WP Recipe Maker, Tasty, Mediavine. Loose
+       text before a block's first `<p>` is a step of its own.
+     - **Ranges** in a typed or imported line keep the first value and the unit ("2-3 EL Öl" →
+       2 tbsp; it read as 2 of "-3 EL Öl"), the rule timers already follow. **"1½ Std."** and
+       "½ Stunde" now give a timer. Decimal ISO hours (`PT1.5H`) and double-escaped entities
+       read too.
+     - **Refused** is its own failure: 401/402/403/429 or a `cf-mitigated` header. Allrecipes,
+       Serious Eats and Simply Recipes answer 402 ("pay per crawl"), Budget Bytes and Rezeptwelt
+       403; "check your connection" sent people the wrong way. No header gets past these, so the
+       message points at the browser, and with AI on, at the text and photo modes.
+
+160. **Litestream copies the database to B2, and the container restores from it on an empty
+     volume** (`litestream.yml`, `scripts/docker-entrypoint.sh`, `Dockerfile`, runbook in
+     [BACKUP.md](BACKUP.md)). It is the upgrade #91 left open, wanted now for a server move:
+     deploy on the new server, and the data comes back from S3. The nightly `.backup()` stays
+     as a local extra.
+
+     - **Litestream 0.5.17, pinned by tag and index digest**, binary copied from the official
+       image. 0.5's config (`replica:`, `levels`, `snapshot`) is not 0.3's, so the version
+       and `litestream.yml` change together.
+     - **All six `LITESTREAM_*` variables or none.** None: the app starts as before, which is
+       what local dev, `npm test` and e2e need. Some: the container refuses to start, because
+       a production that started without replication would go unnoticed. Credentials stay
+       out of the YAML (Litestream reads `LITESTREAM_ACCESS_KEY_ID`/`_SECRET_ACCESS_KEY`
+       itself), so a key with odd characters can't break the parse.
+     - **A failed restore stops the start.** Starting anyway would create an empty database,
+       and replicating it would make it the newest state in the bucket.
+     - **Intervals for the B2 no-card tier** (about 2,500 LIST and 2,500 GET a day). Litestream
+       0.5 lists a whole level on every pass, with no "start after". Its 15 s default L0
+       cleanup pass alone would be about 11,500 LISTs a day, even with nothing written. Set to
+       1 h. Each L1 compaction runs that cleanup anyway. L1 every 15 min, L2 every 6 h, a
+       daily snapshot kept 14 days, `sync-interval: 10s` (uploads are free, and 10 s is the
+       crash-loss window). Worst case about 470 LIST and 100 GET a day, about 75 LIST on an
+       idle day. Those are estimates from Litestream's source. Measured against a counting
+       proxy: one L1 merge was 3 LIST, 1 delete and 1 upload, and an idle stretch made no
+       request at all (BACKUP.md "Request budget").
+     - **The app now exits on SIGTERM.** It never did: node-cron's tick kept Node alive after
+       adapter-node closed HTTP, and Docker SIGKILLed it (exit 137). Under Litestream that
+       kill would cut the last upload. `hooks.server.ts` listens for `sveltekit:shutdown`,
+       stops the schedule (`stopCronJobs`, a running job gets 2 s), closes the database and
+       exits. `SHUTDOWN_TIMEOUT=3` (adapter-node's default 30 s would wait out the live list's
+       open stream past Docker's 10 s) and `shutdown-sync-timeout: 4s` share the 10 s.
+     - **A staged restore swaps in at start.** The app holds the database open while it runs,
+       so a point-in-time restore goes to `$DATABASE_PATH.restore`. On the next start the script
+       moves the live database, its WAL and Litestream's position to `pre-restore-<time>/`,
+       then puts the staged file in place. A nightly snapshot copied there goes in the same
+       way. Litestream sees "database behind replica" and carries on from it. Verified
+       end-to-end: restore to T, write, wipe the volume, restore: rows before T plus the new
+       ones, nothing from after T.
+     - **Checkpoints unchanged.** The app runs no manual checkpoint and keeps SQLite's
+       default `wal_autocheckpoint`, with WAL and `busy_timeout=5000` as Litestream asks.
+       Disabling autocheckpoint is Litestream's advice for very high write loads only.
+     - **Photos are not covered.** `UPLOADS_DIR` holds files, and Litestream copies only
+       SQLite. A server move copies `/data/uploads` by hand (BACKUP.md).
+     - **The local restore test runs on SeaweedFS.** MinIO no longer publishes Docker images.
