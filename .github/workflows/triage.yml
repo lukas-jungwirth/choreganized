@@ -9,7 +9,7 @@
 #   triage  reads the issue, the code and that report, posts its one comment, and
 #           returns a verdict shaped by scripts/triage-verdict.schema.json;
 #   apply   no Claude: sets the labels and the title from the verdict, and starts
-#           a build only for a small bug the probe reproduced.
+#           a build only for a small bug whose cause triage found.
 #
 # NOTE: workflows for `issues` events are read from the DEFAULT branch. This file
 # does nothing until it is merged to `main`.
@@ -210,11 +210,15 @@ jobs:
       - name: Labels and title from the verdict
         run: node scripts/triage-apply.ts
 
-      # The automatic path into the build lane, and the only one (→ plan 26).
-      # A small bug whose symptom the probe showed on `dev`, whose cause triage
-      # found, with nothing left to ask and nothing on `dev` that fixes it
-      # already. A cause found only by reading the source waits for a person,
-      # who adds `agent:build` as before. `agent:build` goes on first so the
+      # The automatic path into the build lane, and the only one (→ plan 26,
+      # DECISIONS #165). A small bug whose cause triage found and can show,
+      # with nothing left to ask and nothing on `dev` that fixes it already.
+      # `reproduced` is not required: triage has no app to click through, so
+      # it can only see recipe-import bugs happen. The build's own first step
+      # is the reproduction — a test that must fail on `dev` for the reported
+      # reason, or the build stops with a question. A `plausible` cause, an
+      # open question or `size:m` waits for a person, who adds `agent:build`
+      # as before. `agent:build` goes on first so the
       # issue says what is happening; this token's label starts nothing itself.
       # An issue that already carries it was handed on before (a re-triage by
       # hand): no second build.
@@ -222,7 +226,6 @@ jobs:
         if: >-
           ${{ fromJSON(env.VERDICT).kind == 'bug' &&
           fromJSON(env.VERDICT).size == 's' &&
-          fromJSON(env.VERDICT).reproduced == true &&
           fromJSON(env.VERDICT).confidence == 'found' &&
           join(fromJSON(env.VERDICT).open_questions, '') == '' &&
           fromJSON(env.VERDICT).fixed_on_dev_commit == '' }}

@@ -70,13 +70,18 @@ you have and return the verdict rather than running out mid-investigation.
    **`reproduced`** is `true` only when that report shows **the symptom the reporter describes**,
    on `dev` — the step they say is cut short is cut short there, the ingredient they say is
    missing is missing. Reading the source is never a reproduction, and a probe that shows the
-   page imports fine is evidence _against_ the report: say so.
+   page imports fine is evidence _against_ the report: say so, and the cause is then not
+   `found`. Most bugs have nothing to probe; `reproduced` is then `false`, and that is fine —
+   the build agent reproduces before it fixes.
 
    **Then find the cause by reading.** `Grep` and `Read` the source and report what you actually
    found:
    - Name a real `path:line` and quote the expression you believe is wrong.
-   - `confidence` is exactly one of **`found`** (the cause, and you can show it), **`plausible`**
-     or **`cannot-tell`** from this description. An idea or a duplicate is `not-a-bug`.
+   - `confidence` is exactly one of **`found`**, **`plausible`** or **`cannot-tell`** from this
+     description. An idea or a duplicate is `not-a-bug`. **`found` starts a build without a
+     person** for a small bug, so keep it for a cause you can point at and that explains the
+     report fully — "the button has no `onclick`", the line that drops the second fragment. A
+     cause that only might explain it, or that the probe contradicts, is `plausible`.
    - `cannot-tell` gets the `needs-info` label from the workflow, and your comment asks **one
      specific question** — "which store was the list sorted by?", not "please provide more
      detail".
@@ -124,13 +129,12 @@ you have and return the verdict rather than running out mid-investigation.
    file here.
 
 7. **Say where it goes next** — the last line of the comment. The workflow starts a build by
-   itself **only** for a `bug` of `size: s` that is `reproduced`, with `confidence: found`, no
-   `open_questions` and nothing on `dev` that fixes it already (the rule is in
-   `.github/workflows/triage.yml`). When yours meets all of that, end with "Reproduced and
-   located: the build agent picks this up." Otherwise, end with the reason it waits and the one
-   line that starts a build. Name what is missing: "the cause was found by reading the source,
-   not reproduced", "not reproduced: the probe shows the steps whole", or "one open question".
-   Then: "Add `agent:build` to have the agent build this" for `s` and `m`, or "needs a desk
-   session: a new frame" for `l`.
+   itself **only** for a `bug` of `size: s` with `confidence: found`, no `open_questions` and
+   nothing on `dev` that fixes it already (the rule is in `.github/workflows/triage.yml`;
+   `reproduced` is reported, not required). When yours meets all of that, end with "Located:
+   the build agent picks this up and reproduces it first." Otherwise, end with the reason it
+   waits and the one line that starts a build. Name what is missing: "the cause is plausible,
+   not found", "one open question", or "size m". Then: "Add `agent:build` to have the agent
+   build this" for `s` and `m`, or "needs a desk session: a new frame" for `l`.
 
 8. **Return the verdict** as your structured output, matching what the comment says.

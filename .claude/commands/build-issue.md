@@ -7,7 +7,8 @@ Build issue **#$1** in this repository.
 You are the build agent (→ `docs/plans/18-agent-build.md`, DECISIONS #143, plan 26 and
 DECISIONS #164). Triage has already read this issue, labelled it and drafted a plan in its
 comment. You are here because a person added `agent:build`, or because triage's workflow handed
-on a small bug whose symptom the import probe showed on `dev`. Your output is a pull request
+on a small bug whose cause it found in the source — usually without having seen it happen, so
+your reproduction in step 4 is the first proof the report is real. Your output is a pull request
 against `dev` that passes the gate and merges itself. The house rules are in `CLAUDE.md`; the
 behaviour ground truth is `docs/SPEC.md`; the design is `design/Hearth.dc.html`; how a change
 proves itself is `docs/TESTING.md`.

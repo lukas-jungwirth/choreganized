@@ -330,7 +330,7 @@ describe('the agent lane: reproduce first, review second (→ docs/plans/26-agen
 		assert.match(job(workflow('triage.yml'), 'triage'), /needs: probe/);
 	});
 
-	it('the apply job labels from the verdict and dispatches only a reproduced small bug', () => {
+	it('the apply job labels from the verdict and dispatches only a small bug with a found cause', () => {
 		const apply = job(workflow('triage.yml'), 'apply');
 		assert.match(apply, /needs: triage/);
 		assert.ok(!apply.includes('claude-code-action'), 'no agent in the apply job');
@@ -344,7 +344,6 @@ describe('the agent lane: reproduce first, review second (→ docs/plans/26-agen
 		for (const term of [
 			"fromJSON(env.VERDICT).kind == 'bug'",
 			"fromJSON(env.VERDICT).size == 's'",
-			'fromJSON(env.VERDICT).reproduced == true',
 			"fromJSON(env.VERDICT).confidence == 'found'",
 			"join(fromJSON(env.VERDICT).open_questions, '') == ''",
 			"fromJSON(env.VERDICT).fixed_on_dev_commit == ''"
@@ -352,6 +351,14 @@ describe('the agent lane: reproduce first, review second (→ docs/plans/26-agen
 			assert.ok(condition.includes(term), `the dispatch condition names ${term}`);
 		}
 		assert.ok(!condition.includes('||'), 'every term must hold');
+		// Exactly these fields, no more and no fewer: `reproduced` is reported, not
+		// required — the build's own reproduction is the check (→ DECISIONS #165).
+		const fields = [...condition.matchAll(/fromJSON\(env\.VERDICT\)\.(\w+)/g)].map((m) => m[1]);
+		assert.deepEqual(
+			[...new Set(fields)].sort(),
+			['confidence', 'fixed_on_dev_commit', 'kind', 'open_questions', 'size'],
+			'the dispatch reads kind, size, confidence, open questions and fixed-on-dev'
+		);
 		assert.match(
 			apply,
 			/if: \$\{\{ !cancelled\(\) && needs\.triage\.result == 'success' \}\}/,
@@ -363,13 +370,7 @@ describe('the agent lane: reproduce first, review second (→ docs/plans/26-agen
 		// names the same terms, so a change to one shows up in the other.
 		const prompt = readFileSync('.claude/commands/triage-issue.md', 'utf8');
 		const rule = prompt.slice(prompt.indexOf('7. **Say where it goes next**'));
-		for (const term of [
-			'`bug`',
-			'`size: s`',
-			'`reproduced`',
-			'`confidence: found`',
-			'`open_questions`'
-		]) {
+		for (const term of ['`bug`', '`size: s`', '`confidence: found`', '`open_questions`']) {
 			assert.ok(rule.includes(term), `the prompt's hand-on rule names ${term}`);
 		}
 		assert.ok(step.includes('gh workflow run build.yml -f issue="$ISSUE"'), 'it dispatches');

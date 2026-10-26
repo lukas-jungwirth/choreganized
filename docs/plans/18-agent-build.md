@@ -4,7 +4,7 @@
 
 > **Since [plan 26](26-agent-reproduce-review.md) (2026-10-26, DECISIONS #164)** triage no longer
 > adds `agent:build`, and a label a bot adds starts no build. Triage's `apply` job _dispatches_
-> `build.yml` itself for a small bug the import probe reproduced. The bot-label rule below is
+> `build.yml` itself for a small bug whose cause it found (#165). The bot-label rule below is
 > history. Build now commits a `Reproduce #N` test first and asks the `reviewer` subagent before
 > its PR. `fixed-on-dev` is set by `merged.yml` when the PR merges, not by the agent when it
 > opens.
