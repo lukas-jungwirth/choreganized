@@ -10,7 +10,7 @@
  * whose `endsAt` is an instant rather than a time of day, and the feedback
  * mirror, because "GitHub was down" isn't one either. Both run household-blind.
  */
-import { schedule } from 'node-cron';
+import { schedule, shutdown } from 'node-cron';
 import { clockIn, todayIn, type CalendarDate } from '$lib/utils/dates';
 import { backUpDatabase, serverDay } from './backup';
 import { sweepCookTimers } from './services/cook-timers';
@@ -120,6 +120,16 @@ export function registerCronJobs(): void {
 	}
 
 	console.log(`[cron] registered ${jobs.length} job(s) on a one-minute tick`);
+}
+
+/**
+ * Stop the tick on shutdown (→ hooks.server.ts). A sweep that is mid-run gets `graceMs`
+ * to finish. The jobs are idempotent, so one cut short by the deadline just runs on the
+ * next boot. Until this runs, the schedule's timers keep Node alive after SIGTERM.
+ */
+export async function stopCronJobs(graceMs = 2000): Promise<void> {
+	await shutdown(graceMs);
+	delete (globalThis as CronGlobal)[REGISTERED];
 }
 
 type Job = [name: string, run: () => void | Promise<void>];

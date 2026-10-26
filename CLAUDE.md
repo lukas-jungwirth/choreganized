@@ -52,6 +52,7 @@ left.
 4. [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md) · [docs/DATA-MODEL.md](docs/DATA-MODEL.md) ·
    [docs/DESIGN-SYSTEM.md](docs/DESIGN-SYSTEM.md) · [docs/DECISIONS.md](docs/DECISIONS.md) ·
    [docs/TESTING.md](docs/TESTING.md) — the layers, the fixtures, the flow to `main`.
+   [docs/BACKUP.md](docs/BACKUP.md) — Litestream to B2, restoring, the Coolify variables.
 
 The DB schema is **already written** (`src/lib/server/db/schema.ts`) with the initial
 migration generated. Read DATA-MODEL.md before touching it; schema changes require
@@ -142,4 +143,4 @@ feature · `src/routes/` see ARCHITECTURE.md routing map · `tests/` integration
 e2e · visual (+ `helpers/`) · `scripts/` seed, e2e server, visual runner, smoke, migration check, import probe, agent run summary ·
 `.github/workflows/` ci · smoke · update-snapshots · triage · build · `design/` mockups · `docs/` specs
 & plans · `static/` manifest + icons · `Dockerfile` single-container deploy (SQLite volume
-at `/data`).
+at `/data`, started by `scripts/docker-entrypoint.sh`, replicated by `litestream.yml`).

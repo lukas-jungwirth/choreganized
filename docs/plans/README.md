@@ -59,6 +59,7 @@ Work done after the twelve plans, tracked here so the queue stays the whole stor
 | **Holiday shop-closure notice** (`utils/holidays.ts`, `services/holidays.ts`, `HolidayNotice`, SPEC §3.6, DECISIONS #131)       | done (2026-08-14) |
 | **One row, one action in the week** (`cooking/MealRow`, `cooking/MealActionsSheet`, SPEC §4.1, DECISIONS #132)                  | done (2026-08-18) |
 | **Every page has a screenshot or an excuse** (`tests/conventions/visual-coverage.test.ts`, TESTING.md "Visual", DECISIONS #156) | done (2026-10-25) |
+| **Litestream to B2, restore on empty `/data`** (`litestream.yml`, BACKUP.md, DECISIONS #160)                                    | done (2026-10-25) |
 
 ## Dependency graph & parallelization
 

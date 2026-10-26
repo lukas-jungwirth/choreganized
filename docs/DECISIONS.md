@@ -2280,3 +2280,48 @@ units | null, name}`, written back as editor lines in the reader's unit spelling
        Serious Eats and Simply Recipes answer 402 ("pay per crawl"), Budget Bytes and Rezeptwelt
        403; "check your connection" sent people the wrong way. No header gets past these, so the
        message points at the browser, and with AI on, at the text and photo modes.
+
+160. **Litestream copies the database to B2, and the container restores from it on an empty
+     volume** (`litestream.yml`, `scripts/docker-entrypoint.sh`, `Dockerfile`, runbook in
+     [BACKUP.md](BACKUP.md)). It is the upgrade #91 left open, wanted now for a server move:
+     deploy on the new server, and the data comes back from S3. The nightly `.backup()` stays
+     as a local extra.
+
+     - **Litestream 0.5.17, pinned by tag and index digest**, binary copied from the official
+       image. 0.5's config (`replica:`, `levels`, `snapshot`) is not 0.3's, so the version
+       and `litestream.yml` change together.
+     - **All six `LITESTREAM_*` variables or none.** None: the app starts as before, which is
+       what local dev, `npm test` and e2e need. Some: the container refuses to start, because
+       a production that started without replication would go unnoticed. Credentials stay
+       out of the YAML (Litestream reads `LITESTREAM_ACCESS_KEY_ID`/`_SECRET_ACCESS_KEY`
+       itself), so a key with odd characters can't break the parse.
+     - **A failed restore stops the start.** Starting anyway would create an empty database,
+       and replicating it would make it the newest state in the bucket.
+     - **Intervals for the B2 no-card tier** (about 2,500 LIST and 2,500 GET a day). Litestream
+       0.5 lists a whole level on every pass, with no "start after". Its 15 s default L0
+       cleanup pass alone would be about 11,500 LISTs a day, even with nothing written. Set to
+       1 h. Each L1 compaction runs that cleanup anyway. L1 every 15 min, L2 every 6 h, a
+       daily snapshot kept 14 days, `sync-interval: 10s` (uploads are free, and 10 s is the
+       crash-loss window). Worst case about 470 LIST and 100 GET a day, about 75 LIST on an
+       idle day. Those are estimates from Litestream's source. Measured against a counting
+       proxy: one L1 merge was 3 LIST, 1 delete and 1 upload, and an idle stretch made no
+       request at all (BACKUP.md "Request budget").
+     - **The app now exits on SIGTERM.** It never did: node-cron's tick kept Node alive after
+       adapter-node closed HTTP, and Docker SIGKILLed it (exit 137). Under Litestream that
+       kill would cut the last upload. `hooks.server.ts` listens for `sveltekit:shutdown`,
+       stops the schedule (`stopCronJobs`, a running job gets 2 s), closes the database and
+       exits. `SHUTDOWN_TIMEOUT=3` (adapter-node's default 30 s would wait out the live list's
+       open stream past Docker's 10 s) and `shutdown-sync-timeout: 4s` share the 10 s.
+     - **A staged restore swaps in at start.** The app holds the database open while it runs,
+       so a point-in-time restore goes to `$DATABASE_PATH.restore`. On the next start the script
+       moves the live database, its WAL and Litestream's position to `pre-restore-<time>/`,
+       then puts the staged file in place. A nightly snapshot copied there goes in the same
+       way. Litestream sees "database behind replica" and carries on from it. Verified
+       end-to-end: restore to T, write, wipe the volume, restore: rows before T plus the new
+       ones, nothing from after T.
+     - **Checkpoints unchanged.** The app runs no manual checkpoint and keeps SQLite's
+       default `wal_autocheckpoint`, with WAL and `busy_timeout=5000` as Litestream asks.
+       Disabling autocheckpoint is Litestream's advice for very high write loads only.
+     - **Photos are not covered.** `UPLOADS_DIR` holds files, and Litestream copies only
+       SQLite. A server move copies `/data/uploads` by hand (BACKUP.md).
+     - **The local restore test runs on SeaweedFS.** MinIO no longer publishes Docker images.
