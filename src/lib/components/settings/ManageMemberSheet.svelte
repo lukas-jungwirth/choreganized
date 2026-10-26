@@ -26,10 +26,12 @@
 		/** Their points this household-local month — the leaderboard's number. */
 		points: number;
 		today: CalendarDate;
+		/** What removing them would leave on the ledger, if anything (→ SPEC §11.13). */
+		balanceNote?: string | null;
 		onclose: () => void;
 	};
 
-	let { member, points, today, onclose }: Props = $props();
+	let { member, points, today, balanceNote = null, onclose }: Props = $props();
 
 	const m = messages();
 
@@ -114,6 +116,7 @@
 			<div class="well" aria-hidden="true"><UserRoundX size={26} strokeWidth={1.9} /></div>
 			<h3>{m.settings.manage.removeConfirm(member.displayName)}</h3>
 			<p class="copy">{m.settings.manage.removeCopy}</p>
+			{#if balanceNote}<p class="balance">{balanceNote}</p>{/if}
 		{:else}
 			<div class="well calm" aria-hidden="true"><CrownIcon size={28} /></div>
 			<h3>{m.settings.manage.ownerConfirm(member.displayName)}</h3>
@@ -144,6 +147,15 @@
 </BottomSheet>
 
 <style>
+	.balance {
+		margin: -6px 0 16px;
+		font-size: calc(14px * var(--fs));
+		font-weight: 600;
+		line-height: 1.45;
+		text-align: center;
+		color: var(--owe);
+	}
+
 	/* The rows of [6c]'s sunken block; `RowGroup surface="sunken"` is the block. */
 	.item {
 		display: flex;

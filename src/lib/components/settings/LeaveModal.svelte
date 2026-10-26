@@ -20,10 +20,12 @@
 	type Props = {
 		householdName: string;
 		mode: 'leave' | 'last' | 'blocked';
+		/** "You still owe €12.00 — settle up first?" — said, never blocking (→ SPEC §11.13). */
+		balanceNote?: string | null;
 		onclose: () => void;
 	};
 
-	let { householdName, mode, onclose }: Props = $props();
+	let { householdName, mode, balanceNote = null, onclose }: Props = $props();
 
 	const m = messages();
 
@@ -58,6 +60,7 @@
 				{m.settings.leave.copy}
 			{/if}
 		</p>
+		{#if balanceNote && mode === 'leave'}<p class="balance">{balanceNote}</p>{/if}
 
 		{#if error}<p class="error">{error}</p>{/if}
 
@@ -120,6 +123,15 @@
 		font-size: calc(14px * var(--fs));
 		line-height: 1.5;
 		color: var(--text-4);
+	}
+
+	.balance {
+		margin: -8px 0 16px;
+		font-size: calc(14px * var(--fs));
+		font-weight: 600;
+		line-height: 1.45;
+		text-align: center;
+		color: var(--owe);
 	}
 
 	.error {

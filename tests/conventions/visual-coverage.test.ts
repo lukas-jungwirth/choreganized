@@ -23,7 +23,11 @@ const NOT_SCREENSHOTTED: Record<string, string> = {
 	// day. A mask over all of it would compare nothing. Covered by the journeys.
 	'/(app)/cooking': 'the body is the calendar',
 	'/(app)/tasks/history': 'the body is the calendar',
-	'/(app)/tasks/history/all': 'the body is the calendar'
+	'/(app)/tasks/history/all': 'the body is the calendar',
+	// Months of the seed's spending, headed by month names and dates; at the
+	// turn of a month the seed's week splits across two groups. Covered by
+	// tests/e2e/expenses.spec.ts.
+	'/(app)/expenses/history': 'the body is the calendar'
 };
 
 /** `src/routes/(app)/cooking/+page.svelte` → `/(app)/cooking`, SvelteKit's route id. */

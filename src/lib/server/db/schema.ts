@@ -15,7 +15,15 @@
  *
  * Rationale for individual modelling choices: docs/DATA-MODEL.md
  */
-import { sqliteTable, text, integer, real, index, uniqueIndex } from 'drizzle-orm/sqlite-core';
+import {
+	sqliteTable,
+	text,
+	integer,
+	real,
+	index,
+	primaryKey,
+	uniqueIndex
+} from 'drizzle-orm/sqlite-core';
 // Relative and extensioned, not `$lib`: two things load this file outside Vite
 // — drizzle-kit when generating a migration, and Node when `db:seed` strips its
 // types — and neither resolves the alias or infers the extension
@@ -23,6 +31,13 @@ import { sqliteTable, text, integer, real, index, uniqueIndex } from 'drizzle-or
 import { AI_PROVIDERS, AI_SLOTS } from '../../ai.ts';
 import { LOCALES } from '../../i18n/locale.ts';
 import { THEMES } from '../../theme.ts';
+import {
+	DEFAULT_CURRENCY,
+	DEFAULT_SPLIT_MODES,
+	EXPENSE_CATEGORIES,
+	EXPENSE_KINDS,
+	SPLIT_MODES
+} from '../../utils/expenses.ts';
 import { RECIPE_WORDINGS } from '../../utils/wording.ts';
 
 const id = () =>
@@ -134,6 +149,21 @@ export const households = sqliteTable('households', {
 	 * from the fixed list in `utils/wording.ts`. Owner sets it.
 	 */
 	recipeWording: text('recipe_wording', { enum: RECIPE_WORDINGS }),
+	/**
+	 * The one currency every expense amount is in (→ plan 29, SPEC §11.10). The
+	 * amounts carry none of their own, so the owner can change this only while
+	 * the household has no expenses — later it would relabel them (→ DECISIONS
+	 * #170).
+	 */
+	currency: text('currency').notNull().default(DEFAULT_CURRENCY),
+	/**
+	 * How a new expense starts out split (→ SPEC §11.5). `equal` means between
+	 * everyone; `percent` / `shares` read each person's
+	 * `ledger_people.defaultWeight`.
+	 */
+	splitDefaultMode: text('split_default_mode', { enum: DEFAULT_SPLIT_MODES })
+		.notNull()
+		.default('equal'),
 	createdAt: createdAt()
 });
 
@@ -753,6 +783,135 @@ export const cookTimers = sqliteTable(
 	]
 );
 
+/* ────────────────────────────────────────────────────────────────────────────
+ * Expenses (→ plan 29, SPEC §11, docs/DATA-MODEL.md)
+ * ──────────────────────────────────────────────────────────────────────────── */
+
+/**
+ * Anyone who can pay for or share an expense (→ DECISIONS #168). Today that is
+ * one row per membership, created in the same transaction as the membership. A
+ * member who leaves keeps their row, with `memberId` NULL and the name and
+ * colour they had, so a balance they still owe stays readable. Guests will be
+ * `kind = 'guest'` rows that never had a member.
+ *
+ * `name` and `color` are a snapshot taken when the membership ends; while it
+ * lasts, the member row is the truth and the read joins it.
+ *
+ * Never deleted on its own: only with the household, which is why the expense
+ * references to it cascade rather than restrict.
+ */
+export const ledgerPeople = sqliteTable(
+	'ledger_people',
+	{
+		id: id(),
+		householdId: text('household_id')
+			.notNull()
+			.references(() => households.id, { onDelete: 'cascade' }),
+		memberId: text('member_id')
+			.unique()
+			.references(() => members.id, { onDelete: 'set null' }),
+		/**
+		 * The person behind the membership, kept after it ends: someone who
+		 * leaves and joins the same household again is reconnected to this row,
+		 * debts and all, instead of becoming a second person with their name
+		 * (→ DECISIONS #174). NULL for guests. Deliberately not a foreign key: the
+		 * person — and what they owe — outlives even the account.
+		 */
+		userId: text('user_id'),
+		kind: text('kind', { enum: ['member', 'guest'] })
+			.notNull()
+			.default('member'),
+		name: text('name').notNull(),
+		color: text('color').notNull(),
+		/**
+		 * Their part of the household's default split (→ SPEC §11.5): a percentage
+		 * ×100 or a number of shares, by `households.splitDefaultMode`. NULL means
+		 * not in the default. Unused while the default is `equal`.
+		 */
+		defaultWeight: integer('default_weight'),
+		createdAt: createdAt()
+	},
+	(t) => [
+		index('ledger_people_household_idx').on(t.householdId),
+		index('ledger_people_user_idx').on(t.householdId, t.userId)
+	]
+);
+
+/**
+ * One expense, or one payment between two people (→ DECISIONS #167). A payment
+ * is a row whose single share is the recipient's, so the one balance formula
+ * — paid minus shares — covers both.
+ *
+ * Money is integer minor units (cents) and never a float (→ DECISIONS #169).
+ */
+export const expenses = sqliteTable(
+	'expenses',
+	{
+		id: id(),
+		householdId: text('household_id')
+			.notNull()
+			.references(() => households.id, { onDelete: 'cascade' }),
+		kind: text('kind', { enum: EXPENSE_KINDS }).notNull(),
+		/** Household content, never translated. NULL for payments. */
+		description: text('description'),
+		/** NULL for payments. */
+		category: text('category', { enum: EXPENSE_CATEGORIES }),
+		amountMinor: integer('amount_minor').notNull(),
+		/** Household-local `YYYY-MM-DD`; never in the future. */
+		date: text('date').notNull(),
+		paidById: text('paid_by_id')
+			.notNull()
+			.references(() => ledgerPeople.id, { onDelete: 'cascade' }),
+		splitMode: text('split_mode', { enum: SPLIT_MODES }).notNull(),
+		createdByMemberId: text('created_by_member_id').references(() => members.id, {
+			onDelete: 'set null'
+		}),
+		updatedByMemberId: text('updated_by_member_id').references(() => members.id, {
+			onDelete: 'set null'
+		}),
+		createdAt: createdAt(),
+		updatedAt: integer('updated_at', { mode: 'timestamp_ms' })
+			.notNull()
+			.$defaultFn(() => new Date()),
+		/**
+		 * Set by Delete, cleared by its undo bar; the 03:30 cleanup removes rows
+		 * deleted more than a day ago. Every read filters it out.
+		 */
+		deletedAt: integer('deleted_at', { mode: 'timestamp_ms' })
+	},
+	(t) => [
+		index('expenses_household_date_idx').on(t.householdId, t.date),
+		index('expenses_paid_by_idx').on(t.paidById)
+	]
+);
+
+/**
+ * Who owes what of an expense. `Σ shareMinor = expenses.amountMinor`, always —
+ * the service computes the shares from `input` and writes both in one
+ * transaction (→ DECISIONS #169).
+ */
+export const expenseShares = sqliteTable(
+	'expense_shares',
+	{
+		expenseId: text('expense_id')
+			.notNull()
+			.references(() => expenses.id, { onDelete: 'cascade' }),
+		personId: text('person_id')
+			.notNull()
+			.references(() => ledgerPeople.id, { onDelete: 'cascade' }),
+		shareMinor: integer('share_minor').notNull(),
+		/**
+		 * What was typed: minor units for `amounts`, a percentage ×100 for
+		 * `percent`, a count for `shares`; NULL for `equal` and payments.
+		 */
+		input: integer('input')
+	},
+	(t) => [
+		primaryKey({ columns: [t.expenseId, t.personId] }),
+		index('expense_shares_person_idx').on(t.personId)
+	]
+);
+
 /* ── Inferred row types ────────────────────────────────────────────────────── */
 
 export type User = typeof user.$inferSelect;
@@ -774,3 +933,6 @@ export type PushSubscription = typeof pushSubscriptions.$inferSelect;
 export type CookTimer = typeof cookTimers.$inferSelect;
 export type Feedback = typeof feedback.$inferSelect;
 export type AiConnection = typeof aiConnections.$inferSelect;
+export type LedgerPerson = typeof ledgerPeople.$inferSelect;
+export type Expense = typeof expenses.$inferSelect;
+export type ExpenseShare = typeof expenseShares.$inferSelect;

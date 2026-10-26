@@ -16,6 +16,7 @@
 	import NextChoreCard from '$lib/components/home/NextChoreCard.svelte';
 	import StandingsStrip from '$lib/components/home/StandingsStrip.svelte';
 	import StatTile from '$lib/components/home/StatTile.svelte';
+	import BalanceLine from '$lib/components/home/BalanceLine.svelte';
 	import BasketIcon from '$lib/components/icons/BasketIcon.svelte';
 	import ChecklistIcon from '$lib/components/icons/ChecklistIcon.svelte';
 	import SnoozeSheet from '$lib/components/tasks/SnoozeSheet.svelte';
@@ -153,6 +154,10 @@
 			{#snippet icon()}<ChecklistIcon size={22} strokeWidth={1.8} />{/snippet}
 		</StatTile>
 	</div>
+
+	{#if data.balance}
+		<BalanceLine balance={data.balance} />
+	{/if}
 
 	{#if data.standings}
 		<StandingsStrip standings={data.standings} members={data.members} />

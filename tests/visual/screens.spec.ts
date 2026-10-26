@@ -77,6 +77,18 @@ async function freshAccount(page: Page): Promise<void> {
 	expect(signUp.ok()).toBe(true);
 }
 
+/** [9b] with an amount and a description typed, as it looks just before Save. */
+async function openAddExpense(page: Page): Promise<void> {
+	await page.goto('/expenses');
+	await page.getByRole('button', { name: 'Add expense' }).click();
+	const sheet = page.getByRole('dialog', { name: 'Add expense' });
+	await sheet.getByLabel('Amount').fill('42.10');
+	await sheet.getByLabel('What for?').fill('Weekly shop · Billa');
+	await sheet.getByLabel('What for?').blur();
+}
+
+const EXPENSE_MASKS = ['.day-label', '.row .meta'];
+
 async function openAiFeatures(page: Page): Promise<void> {
 	await page.goto('/settings');
 	await page.getByRole('button', { name: /^AI features/ }).click();
@@ -133,6 +145,59 @@ const SCREENS: Screen[] = [
 			await page.getByRole('link', { name: 'Start cook mode' }).click();
 			await page.getByText(/^Step 1 of/).waitFor();
 		}
+	},
+	// Day heads and a payment's clock time follow the calendar; every amount is
+	// the seed's, so the numbers themselves stay unmasked.
+	{
+		name: 'expenses',
+		route: '/(app)/expenses',
+		path: '/expenses',
+		mask: EXPENSE_MASKS,
+		bottom: true
+	},
+	{
+		name: 'expenses-dark',
+		route: '/(app)/expenses',
+		path: '/expenses',
+		theme: 'dark',
+		mask: EXPENSE_MASKS
+	},
+	{ name: 'expenses-add', route: '/(app)/expenses', path: '', navigate: openAddExpense },
+	{
+		name: 'expenses-split',
+		route: '/(app)/expenses',
+		path: '',
+		navigate: async (page) => {
+			await openAddExpense(page);
+			await page.getByRole('button', { name: /^Split/ }).click();
+			const split = page.getByRole('dialog', { name: 'Split' });
+			await split.getByRole('tab', { name: 'Amounts', exact: true }).click();
+			await split.getByRole('textbox').first().fill('20');
+		}
+	},
+	{
+		name: 'expenses-settle',
+		route: '/(app)/expenses',
+		path: '/expenses',
+		navigate: async (page) => {
+			await page.goto('/expenses');
+			await page
+				.getByRole('button', { name: /^Settle up/ })
+				.first()
+				.click();
+			await page.getByRole('dialog', { name: 'Settle up' }).waitFor();
+		}
+	},
+	{
+		name: 'expense-detail',
+		route: '/(app)/expenses/[id]',
+		path: '',
+		navigate: async (page) => {
+			await page.goto('/expenses');
+			await page.getByRole('link', { name: /Strom · Wien Energie/ }).click();
+			await page.getByRole('heading', { name: 'Strom · Wien Energie' }).waitFor();
+		},
+		mask: ['.meta', '.stamps']
 	},
 	{ name: 'settings', route: '/(app)/settings', path: '/settings', bottom: true },
 	{

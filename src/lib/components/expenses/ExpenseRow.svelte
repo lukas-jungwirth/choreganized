@@ -1,0 +1,150 @@
+<!--
+	One line of the ledger [9a] [9f]: what it was and who paid, and on the right
+	the reader's own part of it — sage when they lent, terracotta when they
+	borrowed, quiet when it isn't theirs. A payment has no part to show: its
+	title already says who paid whom.
+
+	A link to the detail [9e], so the row is the tap target and back works.
+-->
+<script lang="ts">
+	import { messages } from '$lib/i18n';
+	import type { ExpenseItem } from '$lib/server/services/expenses';
+	import CategoryIcon from './CategoryIcon.svelte';
+	import { yourPart } from './split-draft';
+
+	type Props = {
+		item: ExpenseItem;
+		/** The reader's ledger person. */
+		me: string;
+		/** Person id → name. */
+		names: Record<string, string>;
+		currency: string;
+		/** The payment's second line: a time on the tab, a date in History; null says just "Payment". */
+		when: string | null;
+	};
+
+	let { item, me, names, currency, when }: Props = $props();
+
+	const m = messages();
+
+	const money = (minor: number) => m.expenses.money(minor, currency);
+	// Rows name everyone, the reader included — "Lukas paid €42.10" [9a]: the
+	// right-hand column is where "you" is spoken.
+	const who = (id: string) => names[id] ?? '?';
+	const part = $derived(yourPart(item, me));
+	const recipient = $derived(item.shares[0]?.personId ?? '');
+</script>
+
+<li>
+	<a class="row" href="/expenses/{item.id}" data-testid="expense-row">
+		<CategoryIcon category={item.category} />
+		<span class="text">
+			{#if item.kind === 'payment'}
+				<span class="title"
+					>{m.expenses.row.payment(
+						who(item.paidById),
+						who(recipient),
+						money(item.amountMinor)
+					)}</span
+				>
+				<span class="meta"
+					>{when ? m.expenses.row.paymentMeta(when) : m.expenses.row.paymentPlain}</span
+				>
+			{:else}
+				<span class="title">{item.description}</span>
+				<span class="meta">{m.expenses.row.paid(who(item.paidById), money(item.amountMinor))}</span>
+			{/if}
+		</span>
+		{#if item.kind === 'expense'}
+			<span class="part {part.kind}">
+				{#if part.kind === 'none' || part.kind === 'own'}
+					<span class="part-label">
+						{part.kind === 'own' ? m.expenses.row.justYou : m.expenses.row.notInvolved}
+					</span>
+				{:else}
+					<span class="part-label"
+						>{part.kind === 'lent' ? m.expenses.row.lent : m.expenses.row.borrowed}</span
+					>
+					<span class="part-amount">{money(part.amountMinor)}</span>
+				{/if}
+			</span>
+		{/if}
+	</a>
+</li>
+
+<style>
+	li {
+		border-top: 1px solid var(--divider);
+	}
+
+	li:first-child {
+		border-top: none;
+	}
+
+	.row {
+		display: flex;
+		align-items: center;
+		gap: 12px;
+		padding: 12px 15px;
+		color: var(--ink);
+	}
+
+	.text {
+		flex: 1;
+		min-width: 0;
+		display: flex;
+		flex-direction: column;
+		gap: 2px;
+	}
+
+	.title {
+		overflow: hidden;
+		font-size: calc(14.5px * var(--fs));
+		font-weight: 600;
+		line-height: 1.25;
+		color: var(--ink);
+		text-overflow: ellipsis;
+		white-space: nowrap;
+		font-variant-numeric: tabular-nums;
+	}
+
+	.meta {
+		font-size: calc(12px * var(--fs));
+		color: var(--text-4);
+		font-variant-numeric: tabular-nums;
+	}
+
+	.part {
+		flex: none;
+		display: flex;
+		flex-direction: column;
+		align-items: flex-end;
+		gap: 1px;
+		text-align: right;
+	}
+
+	.part-label {
+		font-size: calc(11.5px * var(--fs));
+		font-weight: 600;
+	}
+
+	.part-amount {
+		font-size: calc(15px * var(--fs));
+		font-weight: 700;
+		font-variant-numeric: tabular-nums;
+	}
+
+	.lent {
+		color: var(--owed);
+	}
+
+	.borrowed {
+		color: var(--owe);
+	}
+
+	.none .part-label,
+	.own .part-label {
+		font-weight: 500;
+		color: var(--text-5);
+	}
+</style>

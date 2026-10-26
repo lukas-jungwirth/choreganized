@@ -19,11 +19,15 @@ import { sendClosureReminders } from './services/holidays';
 import { listHouseholdClocks } from './services/household';
 import { allReferencedImagePaths } from './services/recipes';
 import { sendTaskReminders } from './services/reminders';
+import { purgeDeletedExpenses } from './services/expenses';
 import { purgeCheckedItems } from './services/shopping';
 import { sweepUnreferencedRecipePhotos } from './uploads';
 
 /** Checked items survive the shopping trip and the evening (→ DECISIONS #13). */
 const CHECKED_ITEM_TTL_MS = 12 * 60 * 60 * 1000;
+
+/** A deleted expense can be undone for a day; after that it is gone (→ SPEC §11.3). */
+const DELETED_EXPENSE_TTL_MS = 24 * 60 * 60 * 1000;
 
 /** 03:30 household-local — late enough that nobody is mid-trip. */
 const CLEANUP_MINUTE_OF_DAY = 3 * 60 + 30;
@@ -160,7 +164,8 @@ function report(name: string, error: unknown): void {
 /**
  * Delete shopping items checked off more than 12 h ago, once a night per
  * household (→ SPEC §3.1). The list keeps its "2 of 9 done" context for the
- * whole trip and the evening after it, and is clean again by morning.
+ * whole trip and the evening after it, and is clean again by morning. The same
+ * pass makes expense deletions older than a day final (→ SPEC §11.3).
  */
 function cleanUpCheckedShoppingItems(now: Date = new Date()): void {
 	const households = listHouseholdClocks();
@@ -188,6 +193,14 @@ function cleanUpCheckedShoppingItems(now: Date = new Date()): void {
 				console.log(
 					`[cron] cleared ${removed} checked shopping item(s) in household ${household.id}`
 				);
+			}
+
+			const purged = purgeDeletedExpenses(
+				household.id,
+				new Date(now.getTime() - DELETED_EXPENSE_TTL_MS)
+			);
+			if (purged > 0) {
+				console.log(`[cron] purged ${purged} deleted expense(s) in household ${household.id}`);
 			}
 		});
 	}

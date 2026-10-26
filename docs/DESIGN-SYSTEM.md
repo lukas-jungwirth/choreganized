@@ -39,6 +39,7 @@ Dark is not an inversion. Three rules decide a value:
 | Text       | `--ink` `--text-2…5` `--text-disabled`                                                                                   | 6-step ramp; `--text-5` for uppercase labels; `--text-disabled` for placeholders & struck items                                                                                  |
 | Sage       | `--sage` `--sage-strong` `--sage-hover` `--sage-tint` `--sage-tint-2` `--sage-row` `--sage-deep` `--on-sage`             | primary buttons, active tab, checked circles, selected chips, highlight rows                                                                                                     |
 | Terracotta | `--terracotta` `--terracotta-tint(-2)` `--terracotta-deep`                                                               | points (`+10`), second member, "due today" meta                                                                                                                                  |
+| Money      | `--owed` `--owed-tint` `--owe` `--owe-tint`                                                                              | the expenses balance [9a]: sage = you are owed, terracotta = you owe — deepened for text in light, lifted in dark, each on a tint of itself                                      |
 | Danger     | `--danger` `--danger-tint` `--danger-border` `--danger-deep` `--danger-soft`                                             | overdue, destructive actions, badges; `-soft` = subtitle copy on a danger tint                                                                                                   |
 | Info       | `--info-tint` `--info-border` `--info-soft`                                                                              | the holiday banner [4a]; its title uses `--sage-deep`                                                                                                                            |
 | Accents    | `--gold` `--gold-tint`                                                                                                   | crown / 1st place                                                                                                                                                                |
@@ -118,6 +119,15 @@ carries no `name` on any field and is mounted outside the `<form>`, because the 
 still the only thing that posts (→ [DECISIONS #100](DECISIONS.md)). The store shape it all rests
 on — one singleton, N dumb readers — is what any future state that outlives a single screen
 should copy.
+
+Plan 29 lifted the undo bar's shell into **`ui/UndoToast`** (message as `RichText`, its own form
+action and fields, an optional icon), so shopping's tick and an expense's delete raise the same
+toast; `shopping/UndoBar` is now a thin wrapper. The expenses screens added
+`components/expenses/` — `BalanceCard`, `ExpenseRow`, `CategoryIcon`, `AmountField` (the hero
+amount, in the display face), `DateRow`, `ExpenseSheet`, `SplitSheet`, `SettleSheet`,
+`ExpenseSettingsSheet` — plus `icons/ReceiptIcon` for the fifth tab, drawn in
+`design/Expenses.dc.html`. Every amount uses `font-variant-numeric: tabular-nums`, so columns of
+money line up.
 
 Shopping later gained three more feature components in `components/shopping/`, again no `ui/`
 primitives. **`UndoBar`** — "**Tomatoes** checked off · Undo" for five seconds after a tick

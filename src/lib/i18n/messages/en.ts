@@ -33,6 +33,7 @@ import {
 import { INTL_LOCALE } from '$lib/i18n/locale';
 import type { HolidayKey } from '$lib/utils/holidays';
 import { formatAmount, formatIngredient } from '$lib/utils/ingredients';
+import { currencySymbol, formatMoney } from '$lib/utils/money';
 import type { MealSlot } from '$lib/utils/meals';
 import { formatQuantity, type UnitLabels } from '$lib/utils/shopping';
 import type { RecurUnit } from '$lib/utils/tasks';
@@ -161,6 +162,7 @@ export const en = {
 		shopping: 'Shopping',
 		tasks: 'Tasks',
 		cooking: 'Cooking',
+		expenses: 'Expenses',
 		/** The tab bar itself, for a screen reader's landmark list. */
 		sections: 'Sections',
 		/** The Tasks tab's overdue badge, read out rather than seen. */
@@ -1291,6 +1293,269 @@ export const en = {
 					noPhotos: 'Add at least one photo of the recipe.'
 				}
 			}
+		}
+	},
+
+	/* ── Expenses [9a]–[9g] (→ SPEC §11) ───────────────────────────────────── */
+	/*
+	 * A person is passed as their name, or as `null` when it is the reader —
+	 * "Elisabeth → you", "You owe Marco" — because who "you" is changes the
+	 * sentence, not just a word in it, and German changes it differently.
+	 */
+	expenses: {
+		title: 'Expenses',
+		/** The header's ••• [9a-owe]. */
+		menu: {
+			label: 'More',
+			allActivity: 'All activity',
+			settings: 'Expense settings'
+		},
+		/** Amounts are the household currency, written the reader's way: "€24.50". */
+		money: (minor: number, currency: string) => formatMoney(minor, currency, INTL_LOCALE[L]),
+		/** The currency's mark beside the amount field [9b]. */
+		symbol: (currency: string) => currencySymbol(currency, INTL_LOCALE[L]),
+		/** Whether amounts are typed back as "24,50" rather than "24.50". */
+		decimalComma: false,
+
+		/** The balance card [9a]. */
+		balance: {
+			owed: 'You’re owed',
+			owe: 'You owe',
+			settled: 'All settled up',
+			settledDetail: 'Nobody owes anybody anything.',
+			/** One payment that would settle the house: "Elisabeth → you". */
+			line: (from: string | null, to: string | null) => `${from ?? 'You'} → ${to ?? 'you'}`,
+			settleUp: 'Settle up',
+			/** The button, read out with the line it settles. */
+			settleLabel: (action: string, line: string) => `${action}: ${line}`,
+			/** The line, read out whole. */
+			lineLabel: (from: string | null, to: string | null, amount: string) =>
+				from === null
+					? `You pay ${to} ${amount}`
+					: to === null
+						? `${from} pays you ${amount}`
+						: `${from} pays ${to} ${amount}`
+		},
+
+		recent: 'Recent',
+		allActivity: 'All activity',
+		add: 'Add expense',
+
+		/** A row in Recent and All activity [9a] [9f]. */
+		row: {
+			paid: (who: string | null, amount: string) => `${who ?? 'You'} paid ${amount}`,
+			lent: 'you lent',
+			borrowed: 'you borrowed',
+			notInvolved: 'not involved',
+			/** Paid by you, for you alone. */
+			justYou: 'just you',
+			/** A payment's title: "Elisabeth paid Lukas €18.00". */
+			payment: (from: string | null, to: string | null, amount: string) =>
+				`${from ?? 'You'} paid ${to ?? 'you'} ${amount}`,
+			paymentMeta: (when: string) => `Payment · ${when}`,
+			paymentPlain: 'Payment',
+			repeats: 'Repeats'
+		},
+
+		/** [9g] */
+		empty: {
+			title: 'Nothing to split yet',
+			copy: 'Log the weekly shop, the rent, the pizza. Choreganized keeps the tally.',
+			add: 'Add an expense'
+		},
+
+		/** Add / edit [9b]. */
+		form: {
+			new: 'Add expense',
+			edit: 'Edit expense',
+			amount: 'Amount',
+			whatFor: 'What for?',
+			whatForPlaceholder: 'Weekly shop, rent, pizza…',
+			suggestions: 'Past expenses',
+			category: 'Category',
+			paidBy: 'Paid by',
+			you: 'you',
+			split: 'Split',
+			date: 'Date',
+			today: 'Today',
+			save: 'Save',
+			delete: 'Delete expense'
+		},
+
+		/** The split row's summary in [9b]: "Equally · everyone · €21.05 each". */
+		summary: {
+			everyone: 'everyone',
+			people: (count: number) => (count === 1 ? '1 person' : `${count} people`),
+			equal: (who: string, each: string) => `Equally · ${who} · ${each} each`,
+			amounts: (who: string) => `Amounts · ${who}`,
+			/** "Lukas 30 · Elisabeth 70". */
+			parts: (parts: { name: string; value: string }[]) =>
+				parts.map(({ name, value }) => `${name} ${value}`).join(' · '),
+			percent: (parts: string) => `By % · ${parts}`,
+			shares: (parts: string) => `By shares · ${parts}`,
+			invalid: 'Doesn’t add up yet'
+		},
+
+		/** [9c] */
+		split: {
+			title: 'Split',
+			defaultTitle: 'Default split',
+			subtitle: (amount: string, what: string) => (what ? `${amount} · ${what}` : amount),
+			mode: 'How to split',
+			modes: {
+				equal: 'Equally',
+				amounts: 'Amounts',
+				percent: '%',
+				shares: 'Shares'
+			},
+			paid: 'paid',
+			notIn: 'not in',
+			include: (name: string) => `${name} is in this`,
+			input: (name: string) => `${name}’s part`,
+			left: (amount: string) => `${amount} left to assign`,
+			over: (amount: string) => `${amount} too much`,
+			ofTotal: (sum: string, total: string) => `${sum} of ${total}`,
+			addsUp: 'Adds up',
+			percentOk: 'Adds up to 100%',
+			percentLeft: (percent: string) => `${percent}% left`,
+			percentOver: (percent: string) => `${percent}% too much`,
+			sharesTotal: (count: number) => (count === 1 ? '1 share in all' : `${count} shares in all`),
+			nobody: 'Pick at least one person.',
+			done: 'Done',
+			makeDefault: 'Make this the household default',
+			defaultSaved: (parts: string) => `New expenses will start split ${parts}.`,
+			defaultEqual: 'New expenses will start split equally between everyone.',
+			/** A member who joined after a % or shares default was set (→ SPEC §11.5). */
+			notInDefault: (name: string) => `${name} isn’t part of the default split.`
+		},
+
+		/** [9d] */
+		settle: {
+			title: 'Settle up',
+			edit: 'Edit payment',
+			from: 'From',
+			to: 'To',
+			swap: 'Swap',
+			owes: (from: string | null, to: string | null, amount: string) =>
+				`${from ?? 'You'} ${from === null ? 'owe' : 'owes'} ${to ?? 'you'} ${amount} · lower it for a partial payment`,
+			record: 'Record payment',
+			delete: 'Delete payment',
+			note: 'This only records it — send the money however you usually do.'
+		},
+
+		/** [9e] */
+		detail: {
+			back: 'Back to expenses',
+			edit: 'Edit',
+			payment: 'Payment',
+			meta: (category: string, date: string) => `${category} · ${date}`,
+			/** "Monday, Oct 26" — the weekday and the date, joined the language's way. */
+			dateLine: (weekday: string, date: string) => `${weekday}, ${date}`,
+			/** "Added by Lukas · Oct 26, 19:00" — a day and a clock time. */
+			stamp: (day: string, time: string) => `${day}, ${time}`,
+			paidBy: 'Paid by',
+			shares: (how: string) => `Shares · ${how}`,
+			how: {
+				equal: 'split equally',
+				amounts: 'split by amounts',
+				percent: 'split by %',
+				shares: 'split by shares'
+			},
+			you: 'you',
+			formerMember: 'Former member',
+			/** Under a share that isn't the payer's own. */
+			owesFor: (who: string | null, payer: string | null, amount: string) =>
+				who === null
+					? `you owe ${payer} ${amount} for this`
+					: `owes ${payer ?? 'you'} ${amount} for this`,
+			added: (who: string, when: string) => `Added by ${who} · ${when}`,
+			edited: (who: string, when: string) => `Edited by ${who} · ${when}`,
+			someone: 'someone'
+		},
+
+		/** [9f] */
+		history: {
+			title: 'All activity',
+			back: 'Back to expenses',
+			search: 'Search descriptions',
+			category: 'Category',
+			anyCategory: 'Any category',
+			person: 'Person',
+			anyone: 'Anyone',
+			mine: 'Only mine',
+			payments: 'Payments',
+			filters: 'Filters',
+			spent: (amount: string) => `${amount} spent`,
+			load: (month: string) => `Load ${month}`,
+			empty: 'Nothing matches',
+			emptyCopy: 'Try another word, or fewer filters.'
+		},
+
+		/** The fixed list [9b], keyed by `utils/expenses` `EXPENSE_CATEGORIES`. */
+		categories: {
+			groceries: 'Groceries',
+			household: 'Household',
+			bills: 'Rent & bills',
+			eatingOut: 'Eating out',
+			transport: 'Transport',
+			leisure: 'Leisure',
+			travel: 'Travel',
+			other: 'Other'
+		},
+
+		/** The undo bar after a delete (→ SPEC §11.3). */
+		undo: {
+			deleted: (what: string): RichText => [{ text: what, strong: true }, { text: ' deleted' }],
+			payment: 'Payment',
+			action: 'Undo'
+		},
+
+		/** Settings → Expenses, and the tab's "Expense settings" (→ SPEC §11.10). */
+		settings: {
+			row: 'Expenses',
+			title: 'Expenses',
+			currency: 'Currency',
+			currencyLocked:
+				'Set once, before the first expense — changing it later would relabel every amount.',
+			ownerOnly: 'Only the owner can change the currency.',
+			defaultSplit: 'Default split',
+			equalEveryone: 'Equally between everyone',
+			saved: 'Saved'
+		},
+
+		/** Home's one line (→ SPEC §11.13). */
+		home: {
+			owed: (amount: string, from: string): RichText => [
+				{ text: 'You’re owed ' },
+				{ text: amount, strong: true },
+				{ text: ` · ${from}` }
+			],
+			owe: (to: string, amount: string): RichText => [
+				{ text: `You owe ${to} ` },
+				{ text: amount, strong: true }
+			]
+		},
+
+		/** Leaving or removing someone who isn't square (→ SPEC §11.13). */
+		leaveBalance: (who: string | null, owes: boolean, amount: string) =>
+			who === null
+				? owes
+					? `You still owe ${amount} — settle up first?`
+					: `You’re still owed ${amount} — settle up first?`
+				: owes
+					? `${who} still owes ${amount} — settle up first?`
+					: `${who} is still owed ${amount} — settle up first?`,
+
+		errors: {
+			amount: 'Enter an amount above 0.',
+			description: 'Say what it was for.',
+			date: 'The date can’t be in the future.',
+			person: 'Someone here isn’t part of the household.',
+			split: 'The split doesn’t add up.',
+			samePerson: 'Pick two different people.',
+			notFound: 'That expense isn’t there any more.',
+			currency: 'Pick one of the listed currencies.',
+			currencyLocked: 'The currency is fixed once there are expenses.'
 		}
 	},
 

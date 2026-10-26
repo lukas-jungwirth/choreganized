@@ -18,6 +18,7 @@ import {
 	revokeInviteCode,
 	transferOwnership
 } from '$lib/server/services/household';
+import { balancesByMember } from '$lib/server/services/expenses';
 import { monthPointsByMember } from '$lib/server/services/tasks';
 import { formatInviteCode } from '$lib/utils/invite-code';
 import type { Actions, PageServerLoad } from './$types';
@@ -47,6 +48,12 @@ export const load: PageServerLoad = async (event) => {
 						})
 					)
 				: {},
+		/**
+		 * What removing each housemate would leave on the ledger [6c] (→ SPEC
+		 * §11.13) — the owner's sheet only, for the same reason as `points`.
+		 */
+		balances: member.role === 'owner' ? balancesByMember(householdId) : {},
+		currency: record.currency,
 		inviteCode: record.inviteCode,
 		formattedCode: record.inviteCode ? formatInviteCode(record.inviteCode) : null
 	};
