@@ -52,8 +52,9 @@ left.
    into `dev` (→ TESTING.md "The flow", plan 18). A desk session takes `size:l` — a screen
    with no frame in the design — and the `WIP:` drafts the agent left red.
 2. **[docs/SPEC.md](docs/SPEC.md)** — behavior ground truth, screen by screen.
-3. **`design/Hearth.dc.html`** — visual ground truth. _Open it in a browser_ and build to the
-   pixels. Anchors like [3a] in docs are element ids in this file.
+3. **`design/Hearth.dc.html`** (+ `design/Expenses.dc.html` for SPEC §11) — visual ground
+   truth. _Open it in a browser_ and build to the pixels. Anchors like [3a] in docs are
+   element ids in these files.
 4. [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md) · [docs/DATA-MODEL.md](docs/DATA-MODEL.md) ·
    [docs/DESIGN-SYSTEM.md](docs/DESIGN-SYSTEM.md) · [docs/DECISIONS.md](docs/DECISIONS.md) ·
    [docs/TESTING.md](docs/TESTING.md) — the layers, the fixtures, the flow to `main`.

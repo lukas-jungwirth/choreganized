@@ -69,9 +69,10 @@ the agent decides while the workflow acts:
   `gh issue edit`.
 - **`apply`** has no Claude. It sets the labels and the title from the verdict
   (`scripts/triage-apply.ts`). It dispatches `build.yml` itself only for a `bug` of `size:s`
-  that the probe **reproduced**, whose cause triage **found**, with no open questions and
-  nothing on `dev` that fixes it already. That condition is the step's `if:`. A cause found
-  only by reading the source waits for a person.
+  whose cause triage **found**, with no open questions and nothing on `dev` that fixes it
+  already. That condition is the step's `if:`. Triage reports whether the probe
+  **reproduced** it, but doesn't require it (DECISIONS #165): the build's first step is the
+  reproduction. A `plausible` cause, an open question or `size:m` waits for a person.
 
 A person adds `agent:build` to anything `size:s` / `size:m`; a label a bot adds starts nothing.
 Build branches `agent/issue-N` off `dev` and commits a **`Reproduce #N`** test that fails on

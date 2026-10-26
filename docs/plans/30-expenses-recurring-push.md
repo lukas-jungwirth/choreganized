@@ -2,8 +2,8 @@
 
 **Status: todo.** Depends on: 29, 05 (push), 06 (the reminder shape).
 SPEC: [§11.9 and §11.11](../SPEC.md) (recurring, notifications).
-Design: **[9h]** plus the "Repeats" row
-in [9b], drawn in the same design pass as plan 29.
+Design: [`design/Expenses.dc.html`](../../design/Expenses.dc.html): **[9h]**, `9h-stop`, the
+"Repeats" row in [9b] and the repeat badge in [9e].
 
 **Goal:** rent and subscriptions log themselves, and the people in an expense hear about it.
 

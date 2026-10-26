@@ -1,0 +1,1197 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet data-dc-atomics="">
+<meta name="design_doc_mode" content="canvas">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin="">
+<link href="https://fonts.googleapis.com/css2?family=Figtree:wght@400;500;600;700;800&amp;family=Fraunces:opsz,wght@9..144,500;9..144,600&amp;display=swap" rel="stylesheet">
+<style>
+  *{box-sizing:border-box}
+  body{margin:0;background:#E9E5DD;font-family:'Figtree',system-ui,sans-serif;-webkit-font-smoothing:antialiased;color:#22201C}
+  a{color:#5F8D72;text-decoration:none}
+  a:hover{color:#4d7a5e}
+  .ph-scroll::-webkit-scrollbar{display:none}
+</style>
+</helmet>
+
+<div style="padding:48px 56px 72px">
+  <div style="margin-bottom:44px">
+    <div style="font-size:11px;font-weight:700;letter-spacing:.16em;color:#A7A29A;text-transform:uppercase;margin-bottom:8px">Choreganized · Spec §11</div>
+    <h1 style="font-family:'Fraunces',serif;font-size:36px;font-weight:600;margin:0 0 10px;letter-spacing:-.01em">Expenses</h1>
+    <p style="max-width:720px;font-size:14.5px;line-height:1.6;color:#8A867E;margin:0">A shared tally for the household, in the same language as the rest of the app. The tab answers "are we square?" before anything else, and every money figure uses tabular figures so amounts line up in columns. Mock date: Monday 24 November.</p>
+  </div>
+
+  <div style="margin-bottom:64px">
+    <div style="display:flex;align-items:baseline;gap:10px;margin-bottom:6px">
+      <span style="font:600 11px ui-monospace,monospace;padding:3px 8px;background:#5F8D72;color:#fff;border-radius:5px">01</span>
+      <span style="font-weight:600;font-size:15px">The tab</span>
+    </div>
+    <p style="max-width:780px;font-size:14px;line-height:1.55;color:#8A867E;margin:0 0 30px">The balance card is the one thing you read. Its colour carries the answer: sage when you are owed, terracotta when you owe, neutral when settled.</p>
+    <div style="display:flex;flex-wrap:wrap;gap:48px;align-items:flex-start">
+      <div id="9a" style="flex:none;width:390px">
+        <div style="display:flex;align-items:center;gap:10px;margin-bottom:6px;padding-left:4px">
+          <a href="#9a" style="font:600 10.5px ui-monospace,monospace;padding:3px 7px;background:rgba(0,0,0,.08);color:#22201C;border-radius:5px">9a</a>
+          <span style="font-size:13px;font-weight:600;color:#22201C">Tab · you're owed · 2 people</span>
+        </div>
+        <p style="font-size:12.5px;line-height:1.5;color:#A7A29A;margin:0 0 14px;padding-left:4px;max-width:390px">Two people always see one line or none. The payment that settles the house sits right under the number, with its button.</p>
+        <div style="width:390px;height:812px;border-radius:46px;background:#F5F3EE;color:#22201C;position:relative;overflow:hidden;box-shadow:0 30px 60px -20px rgba(40,34,24,.28),0 0 0 1px rgba(0,0,0,.06)">
+          <div style="height:52px;display:flex;align-items:center;justify-content:space-between;padding:0 30px 0 34px;font-weight:600;font-size:15px;color:#22201C"><span>9:41</span><span style="display:flex;gap:7px;align-items:center"><svg width="18" height="12" viewBox="0 0 18 12" fill="#22201C"><rect x="0" y="7" width="3" height="5" rx=".6"/><rect x="5" y="4.5" width="3" height="7.5" rx=".6"/><rect x="10" y="2" width="3" height="10" rx=".6"/><rect x="15" y="0" width="3" height="12" rx=".6" opacity=".35"/></svg><svg width="24" height="12" viewBox="0 0 24 12" fill="#22201C"><rect x="0" y="0" width="21" height="12" rx="3" fill="none" stroke="#22201C" stroke-opacity=".4"/><rect x="1.5" y="1.5" width="15" height="9" rx="1.6"/><rect x="22" y="4" width="1.6" height="4" rx=".8" opacity=".4"/></svg></span></div>
+          <div class="ph-scroll" style="height:calc(100% - 52px - 84px);overflow:auto;padding:8px 22px 96px">
+            <div style="display:flex;align-items:center;justify-content:space-between;padding:8px 0 16px">
+              <h2 style="font-family:'Fraunces',serif;font-size:30px;font-weight:600;margin:0;color:#22201C">Expenses</h2>
+              <span style="width:38px;height:38px;border-radius:50%;background:#fff;box-shadow:0 1px 3px rgba(40,34,24,.05);display:flex;align-items:center;justify-content:center"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="#8A867E" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><circle cx="5" cy="12" r="1"/><circle cx="12" cy="12" r="1"/><circle cx="19" cy="12" r="1"/></svg></span>
+            </div>
+            <div style="background:rgba(95,141,114,.10);border-radius:24px;padding:20px 18px 10px;margin-bottom:26px">
+              <div style="font-size:14px;font-weight:600;color:#3F6B52;margin-bottom:2px">You're owed</div>
+              <div style="font-family:'Fraunces',serif;font-size:44px;font-weight:600;line-height:1.05;color:#3F6B52;font-variant-numeric:tabular-nums;margin-bottom:10px">€24.50</div>
+              <div style="border-top:1px solid rgba(63,107,82,.14)">
+                <div style="display:flex;align-items:center;gap:10px;padding:11px 0">
+                  <span style="display:flex;align-items:center;gap:3px;flex:none"><span style="width:24px;height:24px;border-radius:50%;background:#C67C51;color:#fff;font-size:11px;font-weight:700;display:flex;align-items:center;justify-content:center;flex:none">E</span><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#A7A29A" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h13M14 7.5l4.5 4.5-4.5 4.5"/></svg><span style="width:24px;height:24px;border-radius:50%;background:#5F8D72;color:#fff;font-size:11px;font-weight:700;display:flex;align-items:center;justify-content:center;flex:none">L</span></span>
+                  <span style="flex:1;min-width:0;display:flex;flex-direction:column;gap:1px"><span style="font-size:13.5px;font-weight:600;color:#22201C;white-space:nowrap">Elisabeth → you</span><span style="font-size:16.5px;font-weight:700;color:#22201C;font-variant-numeric:tabular-nums;line-height:1.15">€24.50</span></span>
+                  <span style="flex:none;font-size:13px;font-weight:700;color:#3F6B52;background:#fff;padding:8px 14px;border-radius:999px;box-shadow:0 1px 3px rgba(40,34,24,.05)">Settle up</span>
+                </div>
+
+              </div>
+            </div>
+            <div style="font-size:11px;font-weight:700;letter-spacing:.12em;color:#A7A29A;text-transform:uppercase;margin:0 4px 8px;font-size:12px;letter-spacing:.1em;margin-bottom:12px;color:#8A867E">Recent</div>
+            <div style="font-size:11px;font-weight:700;letter-spacing:.12em;color:#A7A29A;text-transform:uppercase;margin:0 4px 8px">Today</div>
+            <div style="background:#fff;border-radius:20px;overflow:hidden;box-shadow:0 1px 3px rgba(40,34,24,.05);margin-bottom:20px">
+              <div style="display:flex;align-items:center;gap:12px;padding:12px 15px;border-bottom:1px solid #F1EEE7">
+                <span style="width:36px;height:36px;border-radius:12px;background:#F1EEE7;flex:none;display:flex;align-items:center;justify-content:center"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#6E6A62" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M4 10h16l-1.6 8.4a2 2 0 0 1-2 1.6H7.6a2 2 0 0 1-2-1.6z"/><path d="M8.5 10l3-6M15.5 10l-3-6M9 14v2.5M15 14v2.5"/></svg></span>
+                <div style="flex:1;min-width:0">
+                  <div style="display:flex;align-items:center;gap:6px"><span style="font-size:14.5px;font-weight:600;line-height:1.25;color:#22201C">Weekly shop · Billa</span></div>
+                  <div style="font-size:12px;color:#8A867E;margin-top:2px">Lukas paid <span style="font-variant-numeric:tabular-nums">€42.10</span></div>
+                </div>
+                <div style="text-align:right;flex:none"><div style="font-size:11.5px;font-weight:600;color:#3F6B52">you lent</div><div style="font-size:15px;font-weight:700;color:#3F6B52;font-variant-numeric:tabular-nums;margin-top:1px">€21.05</div></div>
+              </div>
+              <div style="display:flex;align-items:center;gap:12px;padding:12px 15px">
+                <span style="width:36px;height:36px;border-radius:12px;background:#F1EEE7;flex:none;display:flex;align-items:center;justify-content:center"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#6E6A62" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M7 3v7.5M5 3v5a2 2 0 0 0 4 0V3M7 10.5V21"/><path d="M17 21V3c-2 1.6-3 4.4-3 8h3"/></svg></span>
+                <div style="flex:1;min-width:0">
+                  <div style="display:flex;align-items:center;gap:6px"><span style="font-size:14.5px;font-weight:600;line-height:1.25;color:#22201C">Pizza at Riva</span></div>
+                  <div style="font-size:12px;color:#8A867E;margin-top:2px">Elisabeth paid <span style="font-variant-numeric:tabular-nums">€31.80</span></div>
+                </div>
+                <div style="text-align:right;flex:none"><div style="font-size:11.5px;font-weight:600;color:#A35A33">you borrowed</div><div style="font-size:15px;font-weight:700;color:#A35A33;font-variant-numeric:tabular-nums;margin-top:1px">€15.90</div></div>
+              </div>
+            </div>
+            <div style="font-size:11px;font-weight:700;letter-spacing:.12em;color:#A7A29A;text-transform:uppercase;margin:0 4px 8px">Saturday · 22 Nov</div>
+            <div style="background:#fff;border-radius:20px;overflow:hidden;box-shadow:0 1px 3px rgba(40,34,24,.05);margin-bottom:20px">
+              <div style="display:flex;align-items:center;gap:12px;padding:12px 15px;border-bottom:1px solid #F1EEE7">
+                <span style="width:36px;height:36px;border-radius:12px;background:#F1EEE7;flex:none;display:flex;align-items:center;justify-content:center"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#6E6A62" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M5 11V9a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2v2"/><path d="M3.5 11.5a1.5 1.5 0 0 1 3 0V13h11v-1.5a1.5 1.5 0 0 1 3 0V17H3.5z"/><path d="M5.5 17v2M18.5 17v2"/></svg></span>
+                <div style="flex:1;min-width:0">
+                  <div style="display:flex;align-items:center;gap:6px"><span style="font-size:14.5px;font-weight:600;line-height:1.25;color:#22201C">Dish soap &amp; sponges</span></div>
+                  <div style="font-size:12px;color:#8A867E;margin-top:2px">Lukas paid <span style="font-variant-numeric:tabular-nums">€8.70</span></div>
+                </div>
+                <div style="text-align:right;flex:none"><div style="font-size:11.5px;font-weight:600;color:#3F6B52">you lent</div><div style="font-size:15px;font-weight:700;color:#3F6B52;font-variant-numeric:tabular-nums;margin-top:1px">€4.35</div></div>
+              </div>
+              <div style="display:flex;align-items:center;gap:12px;padding:12px 15px">
+                <span style="width:36px;height:36px;border-radius:50%;background:rgba(95,141,114,.10);flex:none;display:flex;align-items:center;justify-content:center"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#5F8D72" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4.5 8.5h14l-3.5-3.5"/><path d="M19.5 15.5h-14l3.5 3.5"/></svg></span>
+                <div style="flex:1;min-width:0">
+                  <div style="font-size:14.5px;font-weight:600;line-height:1.25">Elisabeth paid Lukas <span style="font-variant-numeric:tabular-nums">€18.00</span></div>
+                  <div style="font-size:12px;color:#8A867E;margin-top:2px">Payment · 18:40</div>
+                </div>
+              </div>
+            </div>
+            <div style="font-size:11px;font-weight:700;letter-spacing:.12em;color:#A7A29A;text-transform:uppercase;margin:0 4px 8px">Thursday · 20 Nov</div>
+            <div style="background:#fff;border-radius:20px;overflow:hidden;box-shadow:0 1px 3px rgba(40,34,24,.05);margin-bottom:20px">
+              <div style="display:flex;align-items:center;gap:12px;padding:12px 15px">
+                <span style="width:36px;height:36px;border-radius:12px;background:#F1EEE7;flex:none;display:flex;align-items:center;justify-content:center"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#6E6A62" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M7 3.5h7.5L18 7v13.5H7z"/><path d="M14.5 3.5V7H18M10 11h5M10 14.5h5M10 18h3"/></svg></span>
+                <div style="flex:1;min-width:0">
+                  <div style="display:flex;align-items:center;gap:6px"><span style="font-size:14.5px;font-weight:600;line-height:1.25;color:#22201C">Strom · Wien Energie</span><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#A7A29A" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 11a7 7 0 0 1 12-4.9L18 8"/><path d="M18 4v4h-4"/><path d="M20 13a7 7 0 0 1-12 4.9L6 16"/><path d="M6 20v-4h4"/></svg></div>
+                  <div style="font-size:12px;color:#8A867E;margin-top:2px">Lukas paid <span style="font-variant-numeric:tabular-nums">€86.40</span></div>
+                </div>
+                <div style="text-align:right;flex:none"><div style="font-size:11.5px;font-weight:600;color:#3F6B52">you lent</div><div style="font-size:15px;font-weight:700;color:#3F6B52;font-variant-numeric:tabular-nums;margin-top:1px">€43.20</div></div>
+              </div>
+            </div>
+            <div style="display:flex;align-items:center;justify-content:center;gap:8px;padding:13px;border-radius:16px;background:rgba(95,141,114,.10);color:#3F6B52;font-size:13px;font-weight:600">All activity <svg width="7" height="12" viewBox="0 0 8 14" fill="none" stroke="#5F8D72" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M1 1l6 6-6 6"/></svg></div>
+          </div>
+          <div style="position:absolute;right:22px;bottom:100px;width:54px;height:54px;border-radius:50%;background:#5F8D72;box-shadow:0 8px 20px -4px rgba(95,141,114,.6);display:flex;align-items:center;justify-content:center"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M12 5v14M5 12h14"/></svg></div>
+          <div style="position:absolute;bottom:0;left:0;right:0;height:84px;background:rgba(255,255,255,.9);backdrop-filter:blur(18px) saturate(1.1);border-top:1px solid rgba(236,233,226,.8);box-shadow:0 -10px 26px -14px rgba(40,34,24,.16);display:flex;justify-content:space-between;align-items:center;padding:0 16px">
+            <div style="color:#A29E96;padding:10px 8px;flex:none"><svg width="23" height="23" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M2.6 11.7 12 4l9.4 7.7"/><path d="M5 10.2v8.4a1 1 0 0 0 1 1h3.2v-4.3a1.8 1.8 0 0 1 3.6 0v4.3H18a1 1 0 0 0 1-1v-8.4"/></svg></div>
+            <div style="color:#A29E96;padding:10px 8px;flex:none"><svg width="23" height="23" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M5.6 9.7a1.4 1.4 0 0 1 1.4-1.5h10a1.4 1.4 0 0 1 1.4 1.5l.6 9.1a1.8 1.8 0 0 1-1.8 1.9H6.8a1.8 1.8 0 0 1-1.8-1.9z"/><path d="M9.2 10.6V7.3a2.8 2.8 0 0 1 5.6 0v3.3"/></svg></div>
+            <div style="color:#A29E96;padding:10px 8px;flex:none"><svg width="23" height="23" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M7 14.5C4.8 14 3.3 12.3 3.3 10.4 3.3 8.2 5.1 6.5 7.3 6.6 8 4.5 9.9 3.3 12 3.3 14.1 3.3 16 4.5 16.7 6.6 18.9 6.5 20.7 8.2 20.7 10.4 20.7 12.3 19.2 14 17 14.5V19.4a.9.9 0 0 1-.9.9H7.9a.9.9 0 0 1-.9-.9Z"/><path d="M7 16.9h10"/></svg></div>
+            <div style="color:#A29E96;padding:10px 8px;flex:none"><svg width="23" height="23" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M4.5 7.2h8.5M4.5 12h8.5M4.5 16.8h5.5"/><path d="M16.6 6.4l1.7 1.7 3.1-3.2"/></svg></div>
+            <div style="display:flex;align-items:center;gap:8px;padding:10px 15px;border-radius:20px;background:rgba(95,141,114,.14);color:#3F6B52;flex:none"><svg width="21" height="21" viewBox="0 0 24 24" fill="none" stroke="#5F8D72" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 3.5h12v17l-2-1.4-2 1.4-2-1.4-2 1.4-2-1.4-2 1.4z"/><path d="M9 8.5h6M9 12h6M9 15.5h3.5"/></svg><span style="font-size:13.5px;font-weight:600;white-space:nowrap">Expenses</span></div>
+          </div>
+          <div style="position:absolute;bottom:8px;left:50%;transform:translateX(-50%);width:134px;height:5px;border-radius:3px;background:rgba(34,32,28,.22)"></div>
+        </div>
+      </div>
+      <div id="9a-owe" style="flex:none;width:390px">
+        <div style="display:flex;align-items:center;gap:10px;margin-bottom:6px;padding-left:4px">
+          <a href="#9a-owe" style="font:600 10.5px ui-monospace,monospace;padding:3px 7px;background:rgba(0,0,0,.08);color:#22201C;border-radius:5px">9a · owe</a>
+          <span style="font-size:13px;font-weight:600;color:#22201C">Tab · you owe · 3 people · overflow open</span>
+        </div>
+        <p style="font-size:12.5px;line-height:1.5;color:#A7A29A;margin:0 0 14px;padding-left:4px;max-width:390px">Your lines first; payments between the others are smaller and below. The ••• menu holds Recurring, All activity and settings.</p>
+        <div style="width:390px;height:812px;border-radius:46px;background:#F5F3EE;color:#22201C;position:relative;overflow:hidden;box-shadow:0 30px 60px -20px rgba(40,34,24,.28),0 0 0 1px rgba(0,0,0,.06)">
+          <div style="height:52px;display:flex;align-items:center;justify-content:space-between;padding:0 30px 0 34px;font-weight:600;font-size:15px;color:#22201C"><span>9:41</span><span style="display:flex;gap:7px;align-items:center"><svg width="18" height="12" viewBox="0 0 18 12" fill="#22201C"><rect x="0" y="7" width="3" height="5" rx=".6"/><rect x="5" y="4.5" width="3" height="7.5" rx=".6"/><rect x="10" y="2" width="3" height="10" rx=".6"/><rect x="15" y="0" width="3" height="12" rx=".6" opacity=".35"/></svg><svg width="24" height="12" viewBox="0 0 24 12" fill="#22201C"><rect x="0" y="0" width="21" height="12" rx="3" fill="none" stroke="#22201C" stroke-opacity=".4"/><rect x="1.5" y="1.5" width="15" height="9" rx="1.6"/><rect x="22" y="4" width="1.6" height="4" rx=".8" opacity=".4"/></svg></span></div>
+          <div class="ph-scroll" style="height:calc(100% - 52px - 84px);overflow:auto;padding:8px 22px 96px">
+            <div style="display:flex;align-items:center;justify-content:space-between;padding:8px 0 16px">
+              <h2 style="font-family:'Fraunces',serif;font-size:30px;font-weight:600;margin:0;color:#22201C">Expenses</h2>
+              <span style="width:38px;height:38px;border-radius:50%;background:#F1EEE7;box-shadow:none;display:flex;align-items:center;justify-content:center"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="#8A867E" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><circle cx="5" cy="12" r="1"/><circle cx="12" cy="12" r="1"/><circle cx="19" cy="12" r="1"/></svg></span>
+            </div>
+            <div style="background:rgba(198,124,81,.11);border-radius:24px;padding:20px 18px 10px;margin-bottom:26px">
+              <div style="font-size:14px;font-weight:600;color:#A35A33;margin-bottom:2px">You owe</div>
+              <div style="font-family:'Fraunces',serif;font-size:44px;font-weight:600;line-height:1.05;color:#A35A33;font-variant-numeric:tabular-nums;margin-bottom:10px">€12.00</div>
+              <div style="border-top:1px solid rgba(163,90,51,.14)">
+                <div style="display:flex;align-items:center;gap:10px;padding:11px 0">
+                  <span style="display:flex;align-items:center;gap:3px;flex:none"><span style="width:24px;height:24px;border-radius:50%;background:#5F8D72;color:#fff;font-size:11px;font-weight:700;display:flex;align-items:center;justify-content:center;flex:none">L</span><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#A7A29A" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h13M14 7.5l4.5 4.5-4.5 4.5"/></svg><span style="width:24px;height:24px;border-radius:50%;background:#5E7CA3;color:#fff;font-size:11px;font-weight:700;display:flex;align-items:center;justify-content:center;flex:none">M</span></span>
+                  <span style="flex:1;min-width:0;display:flex;flex-direction:column;gap:1px"><span style="font-size:13.5px;font-weight:600;color:#22201C;white-space:nowrap">You → Marco</span><span style="font-size:16.5px;font-weight:700;color:#22201C;font-variant-numeric:tabular-nums;line-height:1.15">€12.00</span></span>
+                  <span style="flex:none;font-size:13px;font-weight:700;color:#A35A33;background:#fff;padding:8px 14px;border-radius:999px;box-shadow:0 1px 3px rgba(40,34,24,.05)">Settle up</span>
+                </div>
+                <div style="border-top:1px dashed rgba(163,90,51,.18);margin-top:2px">
+                <div style="display:flex;align-items:center;gap:10px;padding:9px 0">
+                  <span style="display:flex;align-items:center;gap:3px;flex:none"><span style="width:20px;height:20px;border-radius:50%;background:#C67C51;color:#fff;font-size:9px;font-weight:700;display:flex;align-items:center;justify-content:center;flex:none">E</span><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#A7A29A" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h13M14 7.5l4.5 4.5-4.5 4.5"/></svg><span style="width:20px;height:20px;border-radius:50%;background:#5E7CA3;color:#fff;font-size:9px;font-weight:700;display:flex;align-items:center;justify-content:center;flex:none">M</span></span>
+                  <span style="flex:1;min-width:0;display:flex;flex-direction:column;gap:1px"><span style="font-size:12.5px;font-weight:500;color:#8A867E;white-space:nowrap">Elisabeth → Marco</span><span style="font-size:14px;font-weight:700;color:#8A867E;font-variant-numeric:tabular-nums;line-height:1.15">€8.40</span></span>
+                  <span style="flex:none;font-size:12px;font-weight:700;color:#A35A33;background:#fff;padding:6px 11px;border-radius:999px;box-shadow:0 1px 3px rgba(40,34,24,.05)">Settle up</span>
+                </div>
+                </div>
+              </div>
+            </div>
+            <div style="font-size:11px;font-weight:700;letter-spacing:.12em;color:#A7A29A;text-transform:uppercase;margin:0 4px 8px;font-size:12px;letter-spacing:.1em;margin-bottom:12px;color:#8A867E">Recent</div>
+            <div style="font-size:11px;font-weight:700;letter-spacing:.12em;color:#A7A29A;text-transform:uppercase;margin:0 4px 8px">Today</div>
+            <div style="background:#fff;border-radius:20px;overflow:hidden;box-shadow:0 1px 3px rgba(40,34,24,.05);margin-bottom:20px">
+              <div style="display:flex;align-items:center;gap:12px;padding:12px 15px;border-bottom:1px solid #F1EEE7">
+                <span style="width:36px;height:36px;border-radius:12px;background:#F1EEE7;flex:none;display:flex;align-items:center;justify-content:center"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#6E6A62" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="7" width="16" height="12.5" rx="2.2"/><path d="M9 7V5.2a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1V7M4 12.5h16"/></svg></span>
+                <div style="flex:1;min-width:0">
+                  <div style="display:flex;align-items:center;gap:6px"><span style="font-size:14.5px;font-weight:600;line-height:1.25;color:#22201C">Train to Graz</span></div>
+                  <div style="font-size:12px;color:#8A867E;margin-top:2px">Marco paid <span style="font-variant-numeric:tabular-nums">€54.60</span></div>
+                </div>
+                <div style="text-align:right;flex:none"><div style="font-size:11.5px;font-weight:600;color:#A35A33">you borrowed</div><div style="font-size:15px;font-weight:700;color:#A35A33;font-variant-numeric:tabular-nums;margin-top:1px">€18.20</div></div>
+              </div>
+              <div style="display:flex;align-items:center;gap:12px;padding:12px 15px">
+                <span style="width:36px;height:36px;border-radius:12px;background:#F1EEE7;flex:none;display:flex;align-items:center;justify-content:center"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#6E6A62" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M4 10h16l-1.6 8.4a2 2 0 0 1-2 1.6H7.6a2 2 0 0 1-2-1.6z"/><path d="M8.5 10l3-6M15.5 10l-3-6M9 14v2.5M15 14v2.5"/></svg></span>
+                <div style="flex:1;min-width:0">
+                  <div style="display:flex;align-items:center;gap:6px"><span style="font-size:14.5px;font-weight:600;line-height:1.25;color:#22201C">Weekly shop · Hofer</span></div>
+                  <div style="font-size:12px;color:#8A867E;margin-top:2px">Lukas paid <span style="font-variant-numeric:tabular-nums">€36.90</span></div>
+                </div>
+                <div style="text-align:right;flex:none"><div style="font-size:11.5px;font-weight:600;color:#3F6B52">you lent</div><div style="font-size:15px;font-weight:700;color:#3F6B52;font-variant-numeric:tabular-nums;margin-top:1px">€24.60</div></div>
+              </div>
+            </div>
+            <div style="font-size:11px;font-weight:700;letter-spacing:.12em;color:#A7A29A;text-transform:uppercase;margin:0 4px 8px">Yesterday</div>
+            <div style="background:#fff;border-radius:20px;overflow:hidden;box-shadow:0 1px 3px rgba(40,34,24,.05);margin-bottom:20px">
+              <div style="display:flex;align-items:center;gap:12px;padding:12px 15px;border-bottom:1px solid #F1EEE7">
+                <span style="width:36px;height:36px;border-radius:12px;background:#F1EEE7;flex:none;display:flex;align-items:center;justify-content:center"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#6E6A62" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M4 7.5h16V10a2 2 0 0 0 0 4v2.5H4V14a2 2 0 0 0 0-4z"/><path d="M14 7.5v9" stroke-dasharray="1.6 2"/></svg></span>
+                <div style="flex:1;min-width:0">
+                  <div style="display:flex;align-items:center;gap:6px"><span style="font-size:14.5px;font-weight:600;line-height:1.25;color:#8A867E">Kino · Votiv</span></div>
+                  <div style="font-size:12px;color:#8A867E;margin-top:2px">Elisabeth paid <span style="font-variant-numeric:tabular-nums">€24.00</span></div>
+                </div>
+                <div style="text-align:right;flex:none;font-size:12px;font-weight:600;color:#A7A29A">not involved</div>
+              </div>
+              <div style="display:flex;align-items:center;gap:12px;padding:12px 15px">
+                <span style="width:36px;height:36px;border-radius:12px;background:#F1EEE7;flex:none;display:flex;align-items:center;justify-content:center"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#6E6A62" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M7 3v7.5M5 3v5a2 2 0 0 0 4 0V3M7 10.5V21"/><path d="M17 21V3c-2 1.6-3 4.4-3 8h3"/></svg></span>
+                <div style="flex:1;min-width:0">
+                  <div style="display:flex;align-items:center;gap:6px"><span style="font-size:14.5px;font-weight:600;line-height:1.25;color:#22201C">Kebab after football</span></div>
+                  <div style="font-size:12px;color:#8A867E;margin-top:2px">Marco paid <span style="font-variant-numeric:tabular-nums">€19.80</span></div>
+                </div>
+                <div style="text-align:right;flex:none"><div style="font-size:11.5px;font-weight:600;color:#A35A33">you borrowed</div><div style="font-size:15px;font-weight:700;color:#A35A33;font-variant-numeric:tabular-nums;margin-top:1px">€6.60</div></div>
+              </div>
+            </div>
+            <div style="display:flex;align-items:center;justify-content:center;gap:8px;padding:13px;border-radius:16px;background:rgba(95,141,114,.10);color:#3F6B52;font-size:13px;font-weight:600">All activity <svg width="7" height="12" viewBox="0 0 8 14" fill="none" stroke="#5F8D72" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M1 1l6 6-6 6"/></svg></div>
+          </div>
+          <div style="position:absolute;top:110px;right:22px;width:214px;background:#fff;border-radius:18px;box-shadow:0 14px 34px -8px rgba(40,34,24,.28),0 0 0 1px rgba(40,34,24,.05);padding:6px;z-index:5">
+            <div style="display:flex;align-items:center;gap:12px;padding:12px 12px;border-radius:12px;background:#F1EEE7"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#8A867E" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M4 11a7 7 0 0 1 12-4.9L18 8"/><path d="M18 4v4h-4"/><path d="M20 13a7 7 0 0 1-12 4.9L6 16"/><path d="M6 20v-4h4"/></svg><span style="flex:1;font-size:14.5px;font-weight:600">Recurring</span><span style="font-size:12px;font-weight:700;color:#A7A29A;font-variant-numeric:tabular-nums">5</span></div>
+            <div style="display:flex;align-items:center;gap:12px;padding:12px 12px;border-radius:12px"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#8A867E" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="6.5"/><path d="M16 16l4 4"/></svg><span style="flex:1;font-size:14.5px;font-weight:600">All activity</span></div>
+            <div style="display:flex;align-items:center;gap:12px;padding:12px 12px;border-radius:12px"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#8A867E" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M12 3v2.5M12 18.5V21M3 12h2.5M18.5 12H21M5.6 5.6l1.8 1.8M16.6 16.6l1.8 1.8M5.6 18.4l1.8-1.8M16.6 7.4l1.8-1.8"/></svg><span style="flex:1;font-size:14.5px;font-weight:600">Expense settings</span></div>
+          </div>
+          <div style="position:absolute;right:22px;bottom:100px;width:54px;height:54px;border-radius:50%;background:#5F8D72;box-shadow:0 8px 20px -4px rgba(95,141,114,.6);display:flex;align-items:center;justify-content:center"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M12 5v14M5 12h14"/></svg></div>
+          <div style="position:absolute;bottom:0;left:0;right:0;height:84px;background:rgba(255,255,255,.9);backdrop-filter:blur(18px) saturate(1.1);border-top:1px solid rgba(236,233,226,.8);box-shadow:0 -10px 26px -14px rgba(40,34,24,.16);display:flex;justify-content:space-between;align-items:center;padding:0 16px">
+            <div style="color:#A29E96;padding:10px 8px;flex:none"><svg width="23" height="23" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M2.6 11.7 12 4l9.4 7.7"/><path d="M5 10.2v8.4a1 1 0 0 0 1 1h3.2v-4.3a1.8 1.8 0 0 1 3.6 0v4.3H18a1 1 0 0 0 1-1v-8.4"/></svg></div>
+            <div style="color:#A29E96;padding:10px 8px;flex:none"><svg width="23" height="23" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M5.6 9.7a1.4 1.4 0 0 1 1.4-1.5h10a1.4 1.4 0 0 1 1.4 1.5l.6 9.1a1.8 1.8 0 0 1-1.8 1.9H6.8a1.8 1.8 0 0 1-1.8-1.9z"/><path d="M9.2 10.6V7.3a2.8 2.8 0 0 1 5.6 0v3.3"/></svg></div>
+            <div style="color:#A29E96;padding:10px 8px;flex:none"><svg width="23" height="23" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M7 14.5C4.8 14 3.3 12.3 3.3 10.4 3.3 8.2 5.1 6.5 7.3 6.6 8 4.5 9.9 3.3 12 3.3 14.1 3.3 16 4.5 16.7 6.6 18.9 6.5 20.7 8.2 20.7 10.4 20.7 12.3 19.2 14 17 14.5V19.4a.9.9 0 0 1-.9.9H7.9a.9.9 0 0 1-.9-.9Z"/><path d="M7 16.9h10"/></svg></div>
+            <div style="color:#A29E96;padding:10px 8px;flex:none"><svg width="23" height="23" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M4.5 7.2h8.5M4.5 12h8.5M4.5 16.8h5.5"/><path d="M16.6 6.4l1.7 1.7 3.1-3.2"/></svg></div>
+            <div style="display:flex;align-items:center;gap:8px;padding:10px 15px;border-radius:20px;background:rgba(95,141,114,.14);color:#3F6B52;flex:none"><svg width="21" height="21" viewBox="0 0 24 24" fill="none" stroke="#5F8D72" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 3.5h12v17l-2-1.4-2 1.4-2-1.4-2 1.4-2-1.4-2 1.4z"/><path d="M9 8.5h6M9 12h6M9 15.5h3.5"/></svg><span style="font-size:13.5px;font-weight:600;white-space:nowrap">Expenses</span></div>
+          </div>
+          <div style="position:absolute;bottom:8px;left:50%;transform:translateX(-50%);width:134px;height:5px;border-radius:3px;background:rgba(34,32,28,.22)"></div>
+        </div>
+      </div>
+      <div id="9a-settled" style="flex:none;width:390px">
+        <div style="display:flex;align-items:center;gap:10px;margin-bottom:6px;padding-left:4px">
+          <a href="#9a-settled" style="font:600 10.5px ui-monospace,monospace;padding:3px 7px;background:rgba(0,0,0,.08);color:#22201C;border-radius:5px">9a · settled</a>
+          <span style="font-size:13px;font-weight:600;color:#22201C">Tab · all settled up</span>
+        </div>
+        <p style="font-size:12.5px;line-height:1.5;color:#A7A29A;margin:0 0 14px;padding-left:4px;max-width:390px">Neutral, with a quiet check. Today&rsquo;s payment row is what settled it.</p>
+        <div style="width:390px;height:812px;border-radius:46px;background:#F5F3EE;color:#22201C;position:relative;overflow:hidden;box-shadow:0 30px 60px -20px rgba(40,34,24,.28),0 0 0 1px rgba(0,0,0,.06)">
+          <div style="height:52px;display:flex;align-items:center;justify-content:space-between;padding:0 30px 0 34px;font-weight:600;font-size:15px;color:#22201C"><span>9:41</span><span style="display:flex;gap:7px;align-items:center"><svg width="18" height="12" viewBox="0 0 18 12" fill="#22201C"><rect x="0" y="7" width="3" height="5" rx=".6"/><rect x="5" y="4.5" width="3" height="7.5" rx=".6"/><rect x="10" y="2" width="3" height="10" rx=".6"/><rect x="15" y="0" width="3" height="12" rx=".6" opacity=".35"/></svg><svg width="24" height="12" viewBox="0 0 24 12" fill="#22201C"><rect x="0" y="0" width="21" height="12" rx="3" fill="none" stroke="#22201C" stroke-opacity=".4"/><rect x="1.5" y="1.5" width="15" height="9" rx="1.6"/><rect x="22" y="4" width="1.6" height="4" rx=".8" opacity=".4"/></svg></span></div>
+          <div class="ph-scroll" style="height:calc(100% - 52px - 84px);overflow:auto;padding:8px 22px 96px">
+            <div style="display:flex;align-items:center;justify-content:space-between;padding:8px 0 16px">
+              <h2 style="font-family:'Fraunces',serif;font-size:30px;font-weight:600;margin:0;color:#22201C">Expenses</h2>
+              <span style="width:38px;height:38px;border-radius:50%;background:#fff;box-shadow:0 1px 3px rgba(40,34,24,.05);display:flex;align-items:center;justify-content:center"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="#8A867E" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><circle cx="5" cy="12" r="1"/><circle cx="12" cy="12" r="1"/><circle cx="19" cy="12" r="1"/></svg></span>
+            </div>
+            <div style="background:#fff;border-radius:24px;padding:22px 20px;box-shadow:0 1px 3px rgba(40,34,24,.05);margin-bottom:26px;display:flex;align-items:center;gap:14px">
+              <span style="width:40px;height:40px;border-radius:50%;background:#F1EEE7;flex:none;display:flex;align-items:center;justify-content:center"><svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="#8A867E" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg></span>
+              <div><div style="font-family:'Fraunces',serif;font-size:26px;font-weight:600;line-height:1.1">All settled up</div><div style="font-size:13px;color:#8A867E;margin-top:4px">Nobody owes anybody anything.</div></div>
+            </div>
+            <div style="font-size:11px;font-weight:700;letter-spacing:.12em;color:#A7A29A;text-transform:uppercase;margin:0 4px 8px;font-size:12px;letter-spacing:.1em;margin-bottom:12px;color:#8A867E">Recent</div>
+            <div style="font-size:11px;font-weight:700;letter-spacing:.12em;color:#A7A29A;text-transform:uppercase;margin:0 4px 8px">Today</div>
+            <div style="background:#fff;border-radius:20px;overflow:hidden;box-shadow:0 1px 3px rgba(40,34,24,.05);margin-bottom:20px">
+              <div style="display:flex;align-items:center;gap:12px;padding:12px 15px;border-bottom:1px solid #F1EEE7">
+                <span style="width:36px;height:36px;border-radius:50%;background:rgba(95,141,114,.10);flex:none;display:flex;align-items:center;justify-content:center"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#5F8D72" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4.5 8.5h14l-3.5-3.5"/><path d="M19.5 15.5h-14l3.5 3.5"/></svg></span>
+                <div style="flex:1;min-width:0">
+                  <div style="font-size:14.5px;font-weight:600;line-height:1.25">Elisabeth paid Lukas <span style="font-variant-numeric:tabular-nums">€24.50</span></div>
+                  <div style="font-size:12px;color:#8A867E;margin-top:2px">Payment · 19:12</div>
+                </div>
+              </div>
+              <div style="display:flex;align-items:center;gap:12px;padding:12px 15px;border-bottom:1px solid #F1EEE7">
+                <span style="width:36px;height:36px;border-radius:12px;background:#F1EEE7;flex:none;display:flex;align-items:center;justify-content:center"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#6E6A62" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M4 10h16l-1.6 8.4a2 2 0 0 1-2 1.6H7.6a2 2 0 0 1-2-1.6z"/><path d="M8.5 10l3-6M15.5 10l-3-6M9 14v2.5M15 14v2.5"/></svg></span>
+                <div style="flex:1;min-width:0">
+                  <div style="display:flex;align-items:center;gap:6px"><span style="font-size:14.5px;font-weight:600;line-height:1.25;color:#22201C">Weekly shop · Billa</span></div>
+                  <div style="font-size:12px;color:#8A867E;margin-top:2px">Lukas paid <span style="font-variant-numeric:tabular-nums">€42.10</span></div>
+                </div>
+                <div style="text-align:right;flex:none"><div style="font-size:11.5px;font-weight:600;color:#3F6B52">you lent</div><div style="font-size:15px;font-weight:700;color:#3F6B52;font-variant-numeric:tabular-nums;margin-top:1px">€21.05</div></div>
+              </div>
+              <div style="display:flex;align-items:center;gap:12px;padding:12px 15px">
+                <span style="width:36px;height:36px;border-radius:12px;background:#F1EEE7;flex:none;display:flex;align-items:center;justify-content:center"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#6E6A62" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M7 3v7.5M5 3v5a2 2 0 0 0 4 0V3M7 10.5V21"/><path d="M17 21V3c-2 1.6-3 4.4-3 8h3"/></svg></span>
+                <div style="flex:1;min-width:0">
+                  <div style="display:flex;align-items:center;gap:6px"><span style="font-size:14.5px;font-weight:600;line-height:1.25;color:#22201C">Pizza at Riva</span></div>
+                  <div style="font-size:12px;color:#8A867E;margin-top:2px">Elisabeth paid <span style="font-variant-numeric:tabular-nums">€31.80</span></div>
+                </div>
+                <div style="text-align:right;flex:none"><div style="font-size:11.5px;font-weight:600;color:#A35A33">you borrowed</div><div style="font-size:15px;font-weight:700;color:#A35A33;font-variant-numeric:tabular-nums;margin-top:1px">€15.90</div></div>
+              </div>
+            </div>
+            <div style="font-size:11px;font-weight:700;letter-spacing:.12em;color:#A7A29A;text-transform:uppercase;margin:0 4px 8px">Saturday · 22 Nov</div>
+            <div style="background:#fff;border-radius:20px;overflow:hidden;box-shadow:0 1px 3px rgba(40,34,24,.05);margin-bottom:20px">
+              <div style="display:flex;align-items:center;gap:12px;padding:12px 15px">
+                <span style="width:36px;height:36px;border-radius:12px;background:#F1EEE7;flex:none;display:flex;align-items:center;justify-content:center"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#6E6A62" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M5 11V9a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2v2"/><path d="M3.5 11.5a1.5 1.5 0 0 1 3 0V13h11v-1.5a1.5 1.5 0 0 1 3 0V17H3.5z"/><path d="M5.5 17v2M18.5 17v2"/></svg></span>
+                <div style="flex:1;min-width:0">
+                  <div style="display:flex;align-items:center;gap:6px"><span style="font-size:14.5px;font-weight:600;line-height:1.25;color:#22201C">Dish soap &amp; sponges</span></div>
+                  <div style="font-size:12px;color:#8A867E;margin-top:2px">Lukas paid <span style="font-variant-numeric:tabular-nums">€8.70</span></div>
+                </div>
+                <div style="text-align:right;flex:none"><div style="font-size:11.5px;font-weight:600;color:#3F6B52">you lent</div><div style="font-size:15px;font-weight:700;color:#3F6B52;font-variant-numeric:tabular-nums;margin-top:1px">€4.35</div></div>
+              </div>
+            </div>
+            <div style="display:flex;align-items:center;justify-content:center;gap:8px;padding:13px;border-radius:16px;background:rgba(95,141,114,.10);color:#3F6B52;font-size:13px;font-weight:600">All activity <svg width="7" height="12" viewBox="0 0 8 14" fill="none" stroke="#5F8D72" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M1 1l6 6-6 6"/></svg></div>
+          </div>
+          <div style="position:absolute;right:22px;bottom:100px;width:54px;height:54px;border-radius:50%;background:#5F8D72;box-shadow:0 8px 20px -4px rgba(95,141,114,.6);display:flex;align-items:center;justify-content:center"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M12 5v14M5 12h14"/></svg></div>
+          <div style="position:absolute;bottom:0;left:0;right:0;height:84px;background:rgba(255,255,255,.9);backdrop-filter:blur(18px) saturate(1.1);border-top:1px solid rgba(236,233,226,.8);box-shadow:0 -10px 26px -14px rgba(40,34,24,.16);display:flex;justify-content:space-between;align-items:center;padding:0 16px">
+            <div style="color:#A29E96;padding:10px 8px;flex:none"><svg width="23" height="23" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M2.6 11.7 12 4l9.4 7.7"/><path d="M5 10.2v8.4a1 1 0 0 0 1 1h3.2v-4.3a1.8 1.8 0 0 1 3.6 0v4.3H18a1 1 0 0 0 1-1v-8.4"/></svg></div>
+            <div style="color:#A29E96;padding:10px 8px;flex:none"><svg width="23" height="23" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M5.6 9.7a1.4 1.4 0 0 1 1.4-1.5h10a1.4 1.4 0 0 1 1.4 1.5l.6 9.1a1.8 1.8 0 0 1-1.8 1.9H6.8a1.8 1.8 0 0 1-1.8-1.9z"/><path d="M9.2 10.6V7.3a2.8 2.8 0 0 1 5.6 0v3.3"/></svg></div>
+            <div style="color:#A29E96;padding:10px 8px;flex:none"><svg width="23" height="23" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M7 14.5C4.8 14 3.3 12.3 3.3 10.4 3.3 8.2 5.1 6.5 7.3 6.6 8 4.5 9.9 3.3 12 3.3 14.1 3.3 16 4.5 16.7 6.6 18.9 6.5 20.7 8.2 20.7 10.4 20.7 12.3 19.2 14 17 14.5V19.4a.9.9 0 0 1-.9.9H7.9a.9.9 0 0 1-.9-.9Z"/><path d="M7 16.9h10"/></svg></div>
+            <div style="color:#A29E96;padding:10px 8px;flex:none"><svg width="23" height="23" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M4.5 7.2h8.5M4.5 12h8.5M4.5 16.8h5.5"/><path d="M16.6 6.4l1.7 1.7 3.1-3.2"/></svg></div>
+            <div style="display:flex;align-items:center;gap:8px;padding:10px 15px;border-radius:20px;background:rgba(95,141,114,.14);color:#3F6B52;flex:none"><svg width="21" height="21" viewBox="0 0 24 24" fill="none" stroke="#5F8D72" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 3.5h12v17l-2-1.4-2 1.4-2-1.4-2 1.4-2-1.4-2 1.4z"/><path d="M9 8.5h6M9 12h6M9 15.5h3.5"/></svg><span style="font-size:13.5px;font-weight:600;white-space:nowrap">Expenses</span></div>
+          </div>
+          <div style="position:absolute;bottom:8px;left:50%;transform:translateX(-50%);width:134px;height:5px;border-radius:3px;background:rgba(34,32,28,.22)"></div>
+        </div>
+      </div>
+      <div id="9a-tabbar" style="flex:none;width:390px">
+        <div style="display:flex;align-items:center;gap:10px;margin-bottom:6px;padding-left:4px">
+          <a href="#9a-tabbar" style="font:600 10.5px ui-monospace,monospace;padding:3px 7px;background:rgba(0,0,0,.08);color:#22201C;border-radius:5px">9a · tab bar</a>
+          <span style="font-size:13px;font-weight:600;color:#22201C">Five tabs at 390px</span>
+        </div>
+        <p style="font-size:12.5px;line-height:1.5;color:#A7A29A;margin:0 0 14px;padding-left:4px;max-width:390px">Only the active tab carries a label, so five fit with room to spare. Checked with the longest labels in both languages.</p>
+
+        <div style="display:flex;flex-direction:column;gap:16px">
+          <div>
+            <div style="font-size:11px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:#A7A29A;margin:0 0 7px 4px">Expenses</div>
+            <div style="position:relative;width:390px;height:96px;border-radius:22px;overflow:hidden;background:#F5F3EE;box-shadow:0 0 0 1px rgba(0,0,0,.06)"><div style="position:absolute;bottom:0;left:0;right:0;height:84px;background:rgba(255,255,255,.9);backdrop-filter:blur(18px) saturate(1.1);border-top:1px solid rgba(236,233,226,.8);box-shadow:0 -10px 26px -14px rgba(40,34,24,.16);display:flex;justify-content:space-between;align-items:center;padding:0 16px">
+            <div style="color:#A29E96;padding:10px 8px;flex:none"><svg width="23" height="23" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M2.6 11.7 12 4l9.4 7.7"/><path d="M5 10.2v8.4a1 1 0 0 0 1 1h3.2v-4.3a1.8 1.8 0 0 1 3.6 0v4.3H18a1 1 0 0 0 1-1v-8.4"/></svg></div>
+            <div style="color:#A29E96;padding:10px 8px;flex:none"><svg width="23" height="23" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M5.6 9.7a1.4 1.4 0 0 1 1.4-1.5h10a1.4 1.4 0 0 1 1.4 1.5l.6 9.1a1.8 1.8 0 0 1-1.8 1.9H6.8a1.8 1.8 0 0 1-1.8-1.9z"/><path d="M9.2 10.6V7.3a2.8 2.8 0 0 1 5.6 0v3.3"/></svg></div>
+            <div style="color:#A29E96;padding:10px 8px;flex:none"><svg width="23" height="23" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M7 14.5C4.8 14 3.3 12.3 3.3 10.4 3.3 8.2 5.1 6.5 7.3 6.6 8 4.5 9.9 3.3 12 3.3 14.1 3.3 16 4.5 16.7 6.6 18.9 6.5 20.7 8.2 20.7 10.4 20.7 12.3 19.2 14 17 14.5V19.4a.9.9 0 0 1-.9.9H7.9a.9.9 0 0 1-.9-.9Z"/><path d="M7 16.9h10"/></svg></div>
+            <div style="color:#A29E96;padding:10px 8px;flex:none"><svg width="23" height="23" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M4.5 7.2h8.5M4.5 12h8.5M4.5 16.8h5.5"/><path d="M16.6 6.4l1.7 1.7 3.1-3.2"/></svg></div>
+            <div style="display:flex;align-items:center;gap:8px;padding:10px 15px;border-radius:20px;background:rgba(95,141,114,.14);color:#3F6B52;flex:none"><svg width="21" height="21" viewBox="0 0 24 24" fill="none" stroke="#5F8D72" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 3.5h12v17l-2-1.4-2 1.4-2-1.4-2 1.4-2-1.4-2 1.4z"/><path d="M9 8.5h6M9 12h6M9 15.5h3.5"/></svg><span style="font-size:13.5px;font-weight:600;white-space:nowrap">Expenses</span></div>
+          </div>
+          <div style="position:absolute;bottom:8px;left:50%;transform:translateX(-50%);width:134px;height:5px;border-radius:3px;background:rgba(34,32,28,.22)"></div></div>
+          </div>
+          <div>
+            <div style="font-size:11px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:#A7A29A;margin:0 0 7px 4px">Ausgaben</div>
+            <div style="position:relative;width:390px;height:96px;border-radius:22px;overflow:hidden;background:#F5F3EE;box-shadow:0 0 0 1px rgba(0,0,0,.06)"><div style="position:absolute;bottom:0;left:0;right:0;height:84px;background:rgba(255,255,255,.9);backdrop-filter:blur(18px) saturate(1.1);border-top:1px solid rgba(236,233,226,.8);box-shadow:0 -10px 26px -14px rgba(40,34,24,.16);display:flex;justify-content:space-between;align-items:center;padding:0 16px">
+            <div style="color:#A29E96;padding:10px 8px;flex:none"><svg width="23" height="23" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M2.6 11.7 12 4l9.4 7.7"/><path d="M5 10.2v8.4a1 1 0 0 0 1 1h3.2v-4.3a1.8 1.8 0 0 1 3.6 0v4.3H18a1 1 0 0 0 1-1v-8.4"/></svg></div>
+            <div style="color:#A29E96;padding:10px 8px;flex:none"><svg width="23" height="23" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M5.6 9.7a1.4 1.4 0 0 1 1.4-1.5h10a1.4 1.4 0 0 1 1.4 1.5l.6 9.1a1.8 1.8 0 0 1-1.8 1.9H6.8a1.8 1.8 0 0 1-1.8-1.9z"/><path d="M9.2 10.6V7.3a2.8 2.8 0 0 1 5.6 0v3.3"/></svg></div>
+            <div style="color:#A29E96;padding:10px 8px;flex:none"><svg width="23" height="23" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M7 14.5C4.8 14 3.3 12.3 3.3 10.4 3.3 8.2 5.1 6.5 7.3 6.6 8 4.5 9.9 3.3 12 3.3 14.1 3.3 16 4.5 16.7 6.6 18.9 6.5 20.7 8.2 20.7 10.4 20.7 12.3 19.2 14 17 14.5V19.4a.9.9 0 0 1-.9.9H7.9a.9.9 0 0 1-.9-.9Z"/><path d="M7 16.9h10"/></svg></div>
+            <div style="color:#A29E96;padding:10px 8px;flex:none"><svg width="23" height="23" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M4.5 7.2h8.5M4.5 12h8.5M4.5 16.8h5.5"/><path d="M16.6 6.4l1.7 1.7 3.1-3.2"/></svg></div>
+            <div style="display:flex;align-items:center;gap:8px;padding:10px 15px;border-radius:20px;background:rgba(95,141,114,.14);color:#3F6B52;flex:none"><svg width="21" height="21" viewBox="0 0 24 24" fill="none" stroke="#5F8D72" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 3.5h12v17l-2-1.4-2 1.4-2-1.4-2 1.4-2-1.4-2 1.4z"/><path d="M9 8.5h6M9 12h6M9 15.5h3.5"/></svg><span style="font-size:13.5px;font-weight:600;white-space:nowrap">Ausgaben</span></div>
+          </div>
+          <div style="position:absolute;bottom:8px;left:50%;transform:translateX(-50%);width:134px;height:5px;border-radius:3px;background:rgba(34,32,28,.22)"></div></div>
+          </div>
+          <div>
+            <div style="font-size:11px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:#A7A29A;margin:0 0 7px 4px">Einkaufen · longest</div>
+            <div style="position:relative;width:390px;height:96px;border-radius:22px;overflow:hidden;background:#F5F3EE;box-shadow:0 0 0 1px rgba(0,0,0,.06)"><div style="position:absolute;bottom:0;left:0;right:0;height:84px;background:rgba(255,255,255,.9);backdrop-filter:blur(18px) saturate(1.1);border-top:1px solid rgba(236,233,226,.8);box-shadow:0 -10px 26px -14px rgba(40,34,24,.16);display:flex;justify-content:space-between;align-items:center;padding:0 16px">
+            <div style="color:#A29E96;padding:10px 8px;flex:none"><svg width="23" height="23" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M2.6 11.7 12 4l9.4 7.7"/><path d="M5 10.2v8.4a1 1 0 0 0 1 1h3.2v-4.3a1.8 1.8 0 0 1 3.6 0v4.3H18a1 1 0 0 0 1-1v-8.4"/></svg></div>
+            <div style="display:flex;align-items:center;gap:8px;padding:10px 15px;border-radius:20px;background:rgba(95,141,114,.14);color:#3F6B52;flex:none"><svg width="21" height="21" viewBox="0 0 24 24" fill="none" stroke="#5F8D72" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5.6 9.7a1.4 1.4 0 0 1 1.4-1.5h10a1.4 1.4 0 0 1 1.4 1.5l.6 9.1a1.8 1.8 0 0 1-1.8 1.9H6.8a1.8 1.8 0 0 1-1.8-1.9z"/><path d="M9.2 10.6V7.3a2.8 2.8 0 0 1 5.6 0v3.3"/></svg><span style="font-size:13.5px;font-weight:600;white-space:nowrap">Einkaufen</span></div>
+            <div style="color:#A29E96;padding:10px 8px;flex:none"><svg width="23" height="23" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M7 14.5C4.8 14 3.3 12.3 3.3 10.4 3.3 8.2 5.1 6.5 7.3 6.6 8 4.5 9.9 3.3 12 3.3 14.1 3.3 16 4.5 16.7 6.6 18.9 6.5 20.7 8.2 20.7 10.4 20.7 12.3 19.2 14 17 14.5V19.4a.9.9 0 0 1-.9.9H7.9a.9.9 0 0 1-.9-.9Z"/><path d="M7 16.9h10"/></svg></div>
+            <div style="color:#A29E96;padding:10px 8px;flex:none"><svg width="23" height="23" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M4.5 7.2h8.5M4.5 12h8.5M4.5 16.8h5.5"/><path d="M16.6 6.4l1.7 1.7 3.1-3.2"/></svg></div>
+            <div style="color:#A29E96;padding:10px 8px;flex:none"><svg width="23" height="23" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M6 3.5h12v17l-2-1.4-2 1.4-2-1.4-2 1.4-2-1.4-2 1.4z"/><path d="M9 8.5h6M9 12h6M9 15.5h3.5"/></svg></div>
+          </div>
+          <div style="position:absolute;bottom:8px;left:50%;transform:translateX(-50%);width:134px;height:5px;border-radius:3px;background:rgba(34,32,28,.22)"></div></div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+
+  <div style="margin-bottom:64px">
+    <div style="display:flex;align-items:baseline;gap:10px;margin-bottom:6px">
+      <span style="font:600 11px ui-monospace,monospace;padding:3px 8px;background:#5F8D72;color:#fff;border-radius:5px">02</span>
+      <span style="font-weight:600;font-size:15px">Dark theme</span>
+    </div>
+    <p style="max-width:780px;font-size:14px;line-height:1.55;color:#8A867E;margin:0 0 30px">Sage still means owed and terracotta still means owe.</p>
+    <div style="display:flex;flex-wrap:wrap;gap:48px;align-items:flex-start;background:#100E0B;border-radius:32px;padding:44px 44px 34px;margin:0 -8px">
+      <div id="9a-dark" style="flex:none;width:390px">
+        <div style="display:flex;align-items:center;gap:10px;margin-bottom:6px;padding-left:4px">
+          <a href="#9a-dark" style="font:600 10.5px ui-monospace,monospace;padding:3px 7px;background:rgba(255,255,255,.12);color:#EFE9DE;border-radius:5px">9a · dark</a>
+          <span style="font-size:13px;font-weight:600;color:#EFE9DE">Tab · dark theme</span>
+        </div>
+        <p style="font-size:12.5px;line-height:1.5;color:#8C877D;margin:0 0 14px;padding-left:4px;max-width:390px">Owed lifts to <span style="font-family:ui-monospace,monospace">#93C2A2</span>, owe to <span style="font-family:ui-monospace,monospace">#E6AA78</span>, both on their own 14% tint. Avatars keep their exact colours — they belong to the people, not the theme.</p>
+        <div style="width:390px;height:812px;border-radius:46px;background:#1A1712;color:#EFE9DE;position:relative;overflow:hidden;box-shadow:0 30px 60px -20px rgba(0,0,0,.6),0 0 0 1px rgba(255,255,255,.06)">
+          <div style="height:52px;display:flex;align-items:center;justify-content:space-between;padding:0 30px 0 34px;font-weight:600;font-size:15px;color:#EFE9DE"><span>9:41</span><span style="display:flex;gap:7px;align-items:center"><svg width="18" height="12" viewBox="0 0 18 12" fill="#EFE9DE"><rect x="0" y="7" width="3" height="5" rx=".6"/><rect x="5" y="4.5" width="3" height="7.5" rx=".6"/><rect x="10" y="2" width="3" height="10" rx=".6"/><rect x="15" y="0" width="3" height="12" rx=".6" opacity=".35"/></svg><svg width="24" height="12" viewBox="0 0 24 12" fill="#EFE9DE"><rect x="0" y="0" width="21" height="12" rx="3" fill="none" stroke="#EFE9DE" stroke-opacity=".4"/><rect x="1.5" y="1.5" width="15" height="9" rx="1.6"/><rect x="22" y="4" width="1.6" height="4" rx=".8" opacity=".4"/></svg></span></div>
+          <div class="ph-scroll" style="height:calc(100% - 52px - 84px);overflow:auto;padding:8px 22px 96px">
+            <div style="display:flex;align-items:center;justify-content:space-between;padding:8px 0 16px">
+              <h2 style="font-family:'Fraunces',serif;font-size:30px;font-weight:600;margin:0;color:#EFE9DE">Expenses</h2>
+              <span style="width:38px;height:38px;border-radius:50%;background:#221F1A;box-shadow:0 1px 3px rgba(0,0,0,.45);display:flex;align-items:center;justify-content:center"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="#A5A096" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><circle cx="5" cy="12" r="1"/><circle cx="12" cy="12" r="1"/><circle cx="19" cy="12" r="1"/></svg></span>
+            </div>
+            <div style="background:rgba(116,165,133,.14);border-radius:24px;padding:20px 18px 10px;margin-bottom:26px">
+              <div style="font-size:14px;font-weight:600;color:#93C2A2;margin-bottom:2px">You're owed</div>
+              <div style="font-family:'Fraunces',serif;font-size:44px;font-weight:600;line-height:1.05;color:#93C2A2;font-variant-numeric:tabular-nums;margin-bottom:10px">€24.50</div>
+              <div style="border-top:1px solid rgba(63,107,82,.14)">
+                <div style="display:flex;align-items:center;gap:10px;padding:11px 0">
+                  <span style="display:flex;align-items:center;gap:3px;flex:none"><span style="width:24px;height:24px;border-radius:50%;background:#C67C51;color:#fff;font-size:11px;font-weight:700;display:flex;align-items:center;justify-content:center;flex:none">E</span><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#8C877D" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h13M14 7.5l4.5 4.5-4.5 4.5"/></svg><span style="width:24px;height:24px;border-radius:50%;background:#5F8D72;color:#fff;font-size:11px;font-weight:700;display:flex;align-items:center;justify-content:center;flex:none">L</span></span>
+                  <span style="flex:1;min-width:0;display:flex;flex-direction:column;gap:1px"><span style="font-size:13.5px;font-weight:600;color:#EFE9DE;white-space:nowrap">Elisabeth → you</span><span style="font-size:16.5px;font-weight:700;color:#EFE9DE;font-variant-numeric:tabular-nums;line-height:1.15">€24.50</span></span>
+                  <span style="flex:none;font-size:13px;font-weight:700;color:#93C2A2;background:#221F1A;padding:8px 14px;border-radius:999px;box-shadow:0 1px 3px rgba(0,0,0,.45)">Settle up</span>
+                </div>
+
+              </div>
+            </div>
+            <div style="font-size:11px;font-weight:700;letter-spacing:.12em;color:#8C877D;text-transform:uppercase;margin:0 4px 8px;font-size:12px;letter-spacing:.1em;margin-bottom:12px;color:#A5A096">Recent</div>
+            <div style="font-size:11px;font-weight:700;letter-spacing:.12em;color:#8C877D;text-transform:uppercase;margin:0 4px 8px">Today</div>
+            <div style="background:#221F1A;border-radius:20px;overflow:hidden;box-shadow:0 1px 3px rgba(0,0,0,.45);margin-bottom:20px">
+              <div style="display:flex;align-items:center;gap:12px;padding:12px 15px;border-bottom:1px solid #302C26">
+                <span style="width:36px;height:36px;border-radius:12px;background:#302C26;flex:none;display:flex;align-items:center;justify-content:center"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#B4AEA3" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M4 10h16l-1.6 8.4a2 2 0 0 1-2 1.6H7.6a2 2 0 0 1-2-1.6z"/><path d="M8.5 10l3-6M15.5 10l-3-6M9 14v2.5M15 14v2.5"/></svg></span>
+                <div style="flex:1;min-width:0">
+                  <div style="display:flex;align-items:center;gap:6px"><span style="font-size:14.5px;font-weight:600;line-height:1.25;color:#EFE9DE">Weekly shop · Billa</span></div>
+                  <div style="font-size:12px;color:#A5A096;margin-top:2px">Lukas paid <span style="font-variant-numeric:tabular-nums">€42.10</span></div>
+                </div>
+                <div style="text-align:right;flex:none"><div style="font-size:11.5px;font-weight:600;color:#93C2A2">you lent</div><div style="font-size:15px;font-weight:700;color:#93C2A2;font-variant-numeric:tabular-nums;margin-top:1px">€21.05</div></div>
+              </div>
+              <div style="display:flex;align-items:center;gap:12px;padding:12px 15px">
+                <span style="width:36px;height:36px;border-radius:12px;background:#302C26;flex:none;display:flex;align-items:center;justify-content:center"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#B4AEA3" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M7 3v7.5M5 3v5a2 2 0 0 0 4 0V3M7 10.5V21"/><path d="M17 21V3c-2 1.6-3 4.4-3 8h3"/></svg></span>
+                <div style="flex:1;min-width:0">
+                  <div style="display:flex;align-items:center;gap:6px"><span style="font-size:14.5px;font-weight:600;line-height:1.25;color:#EFE9DE">Pizza at Riva</span></div>
+                  <div style="font-size:12px;color:#A5A096;margin-top:2px">Elisabeth paid <span style="font-variant-numeric:tabular-nums">€31.80</span></div>
+                </div>
+                <div style="text-align:right;flex:none"><div style="font-size:11.5px;font-weight:600;color:#E6AA78">you borrowed</div><div style="font-size:15px;font-weight:700;color:#E6AA78;font-variant-numeric:tabular-nums;margin-top:1px">€15.90</div></div>
+              </div>
+            </div>
+            <div style="font-size:11px;font-weight:700;letter-spacing:.12em;color:#8C877D;text-transform:uppercase;margin:0 4px 8px">Saturday · 22 Nov</div>
+            <div style="background:#221F1A;border-radius:20px;overflow:hidden;box-shadow:0 1px 3px rgba(0,0,0,.45);margin-bottom:20px">
+              <div style="display:flex;align-items:center;gap:12px;padding:12px 15px;border-bottom:1px solid #302C26">
+                <span style="width:36px;height:36px;border-radius:12px;background:#302C26;flex:none;display:flex;align-items:center;justify-content:center"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#B4AEA3" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M5 11V9a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2v2"/><path d="M3.5 11.5a1.5 1.5 0 0 1 3 0V13h11v-1.5a1.5 1.5 0 0 1 3 0V17H3.5z"/><path d="M5.5 17v2M18.5 17v2"/></svg></span>
+                <div style="flex:1;min-width:0">
+                  <div style="display:flex;align-items:center;gap:6px"><span style="font-size:14.5px;font-weight:600;line-height:1.25;color:#EFE9DE">Dish soap &amp; sponges</span></div>
+                  <div style="font-size:12px;color:#A5A096;margin-top:2px">Lukas paid <span style="font-variant-numeric:tabular-nums">€8.70</span></div>
+                </div>
+                <div style="text-align:right;flex:none"><div style="font-size:11.5px;font-weight:600;color:#93C2A2">you lent</div><div style="font-size:15px;font-weight:700;color:#93C2A2;font-variant-numeric:tabular-nums;margin-top:1px">€4.35</div></div>
+              </div>
+              <div style="display:flex;align-items:center;gap:12px;padding:12px 15px">
+                <span style="width:36px;height:36px;border-radius:50%;background:rgba(116,165,133,.14);flex:none;display:flex;align-items:center;justify-content:center"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#74A585" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4.5 8.5h14l-3.5-3.5"/><path d="M19.5 15.5h-14l3.5 3.5"/></svg></span>
+                <div style="flex:1;min-width:0">
+                  <div style="font-size:14.5px;font-weight:600;line-height:1.25">Elisabeth paid Lukas <span style="font-variant-numeric:tabular-nums">€18.00</span></div>
+                  <div style="font-size:12px;color:#A5A096;margin-top:2px">Payment · 18:40</div>
+                </div>
+              </div>
+            </div>
+            <div style="font-size:11px;font-weight:700;letter-spacing:.12em;color:#8C877D;text-transform:uppercase;margin:0 4px 8px">Thursday · 20 Nov</div>
+            <div style="background:#221F1A;border-radius:20px;overflow:hidden;box-shadow:0 1px 3px rgba(0,0,0,.45);margin-bottom:20px">
+              <div style="display:flex;align-items:center;gap:12px;padding:12px 15px">
+                <span style="width:36px;height:36px;border-radius:12px;background:#302C26;flex:none;display:flex;align-items:center;justify-content:center"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#B4AEA3" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M7 3.5h7.5L18 7v13.5H7z"/><path d="M14.5 3.5V7H18M10 11h5M10 14.5h5M10 18h3"/></svg></span>
+                <div style="flex:1;min-width:0">
+                  <div style="display:flex;align-items:center;gap:6px"><span style="font-size:14.5px;font-weight:600;line-height:1.25;color:#EFE9DE">Strom · Wien Energie</span><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#8C877D" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 11a7 7 0 0 1 12-4.9L18 8"/><path d="M18 4v4h-4"/><path d="M20 13a7 7 0 0 1-12 4.9L6 16"/><path d="M6 20v-4h4"/></svg></div>
+                  <div style="font-size:12px;color:#A5A096;margin-top:2px">Lukas paid <span style="font-variant-numeric:tabular-nums">€86.40</span></div>
+                </div>
+                <div style="text-align:right;flex:none"><div style="font-size:11.5px;font-weight:600;color:#93C2A2">you lent</div><div style="font-size:15px;font-weight:700;color:#93C2A2;font-variant-numeric:tabular-nums;margin-top:1px">€43.20</div></div>
+              </div>
+            </div>
+            <div style="display:flex;align-items:center;justify-content:center;gap:8px;padding:13px;border-radius:16px;background:rgba(116,165,133,.14);color:#93C2A2;font-size:13px;font-weight:600">All activity <svg width="7" height="12" viewBox="0 0 8 14" fill="none" stroke="#74A585" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M1 1l6 6-6 6"/></svg></div>
+          </div>
+          <div style="position:absolute;right:22px;bottom:100px;width:54px;height:54px;border-radius:50%;background:#74A585;box-shadow:0 8px 20px -4px rgba(116,165,133,.45);display:flex;align-items:center;justify-content:center"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#171410" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M12 5v14M5 12h14"/></svg></div>
+          <div style="position:absolute;bottom:0;left:0;right:0;height:84px;background:rgba(32,29,24,.88);backdrop-filter:blur(18px) saturate(1.1);border-top:1px solid rgba(255,255,255,.07);box-shadow:0 -10px 26px -14px rgba(40,34,24,.16);display:flex;justify-content:space-between;align-items:center;padding:0 16px">
+            <div style="color:#8C877D;padding:10px 8px;flex:none"><svg width="23" height="23" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M2.6 11.7 12 4l9.4 7.7"/><path d="M5 10.2v8.4a1 1 0 0 0 1 1h3.2v-4.3a1.8 1.8 0 0 1 3.6 0v4.3H18a1 1 0 0 0 1-1v-8.4"/></svg></div>
+            <div style="color:#8C877D;padding:10px 8px;flex:none"><svg width="23" height="23" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M5.6 9.7a1.4 1.4 0 0 1 1.4-1.5h10a1.4 1.4 0 0 1 1.4 1.5l.6 9.1a1.8 1.8 0 0 1-1.8 1.9H6.8a1.8 1.8 0 0 1-1.8-1.9z"/><path d="M9.2 10.6V7.3a2.8 2.8 0 0 1 5.6 0v3.3"/></svg></div>
+            <div style="color:#8C877D;padding:10px 8px;flex:none"><svg width="23" height="23" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M7 14.5C4.8 14 3.3 12.3 3.3 10.4 3.3 8.2 5.1 6.5 7.3 6.6 8 4.5 9.9 3.3 12 3.3 14.1 3.3 16 4.5 16.7 6.6 18.9 6.5 20.7 8.2 20.7 10.4 20.7 12.3 19.2 14 17 14.5V19.4a.9.9 0 0 1-.9.9H7.9a.9.9 0 0 1-.9-.9Z"/><path d="M7 16.9h10"/></svg></div>
+            <div style="color:#8C877D;padding:10px 8px;flex:none"><svg width="23" height="23" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M4.5 7.2h8.5M4.5 12h8.5M4.5 16.8h5.5"/><path d="M16.6 6.4l1.7 1.7 3.1-3.2"/></svg></div>
+            <div style="display:flex;align-items:center;gap:8px;padding:10px 15px;border-radius:20px;background:rgba(116,165,133,.2);color:#93C2A2;flex:none"><svg width="21" height="21" viewBox="0 0 24 24" fill="none" stroke="#93C2A2" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 3.5h12v17l-2-1.4-2 1.4-2-1.4-2 1.4-2-1.4-2 1.4z"/><path d="M9 8.5h6M9 12h6M9 15.5h3.5"/></svg><span style="font-size:13.5px;font-weight:600;white-space:nowrap">Expenses</span></div>
+          </div>
+          <div style="position:absolute;bottom:8px;left:50%;transform:translateX(-50%);width:134px;height:5px;border-radius:3px;background:rgba(239,233,222,.32)"></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+
+  <div style="margin-bottom:64px">
+    <div style="display:flex;align-items:baseline;gap:10px;margin-bottom:6px">
+      <span style="font:600 11px ui-monospace,monospace;padding:3px 8px;background:#5F8D72;color:#fff;border-radius:5px">03</span>
+      <span style="font-weight:600;font-size:15px">Adding an expense</span>
+    </div>
+    <p style="max-width:780px;font-size:14px;line-height:1.55;color:#8A867E;margin:0 0 30px">A bottom sheet in the order you think: how much, what for, who paid, then the split. The category row scrolls sideways so the sheet never needs to.</p>
+    <div style="display:flex;flex-wrap:wrap;gap:48px;align-items:flex-start">
+      <div id="9b" style="flex:none;width:390px">
+        <div style="display:flex;align-items:center;gap:10px;margin-bottom:6px;padding-left:4px">
+          <a href="#9b" style="font:600 10.5px ui-monospace,monospace;padding:3px 7px;background:rgba(0,0,0,.08);color:#22201C;border-radius:5px">9b</a>
+          <span style="font-size:13px;font-weight:600;color:#22201C">Add expense · on open</span>
+        </div>
+        <p style="font-size:12.5px;line-height:1.5;color:#A7A29A;margin:0 0 14px;padding-left:4px;max-width:390px">Amount first and focused. Save stays disabled until amount, description and a valid split exist.</p>
+        <div style="width:390px;height:812px;border-radius:46px;background:#F5F3EE;color:#22201C;position:relative;overflow:hidden;box-shadow:0 30px 60px -20px rgba(40,34,24,.28),0 0 0 1px rgba(0,0,0,.06)">
+          <div style="height:52px;display:flex;align-items:center;justify-content:space-between;padding:0 30px 0 34px;font-weight:600;font-size:15px;color:#22201C"><span>9:41</span><span style="display:flex;gap:7px;align-items:center"><svg width="18" height="12" viewBox="0 0 18 12" fill="#22201C"><rect x="0" y="7" width="3" height="5" rx=".6"/><rect x="5" y="4.5" width="3" height="7.5" rx=".6"/><rect x="10" y="2" width="3" height="10" rx=".6"/><rect x="15" y="0" width="3" height="12" rx=".6" opacity=".35"/></svg><svg width="24" height="12" viewBox="0 0 24 12" fill="#22201C"><rect x="0" y="0" width="21" height="12" rx="3" fill="none" stroke="#22201C" stroke-opacity=".4"/><rect x="1.5" y="1.5" width="15" height="9" rx="1.6"/><rect x="22" y="4" width="1.6" height="4" rx=".8" opacity=".4"/></svg></span></div>
+          <div style="padding:8px 22px;opacity:.5">
+            <h2 style="font-family:'Fraunces',serif;font-size:30px;font-weight:600;margin:8px 0 16px">Expenses</h2>
+            <div style="background:rgba(95,141,114,.10);border-radius:24px;height:150px;margin-bottom:22px"></div>
+            <div style="background:#fff;border-radius:20px;height:130px"></div>
+          </div>
+          <div style="position:absolute;inset:0;background:rgba(34,32,28,.4)"></div>
+          <div style="position:absolute;top:58px;bottom:0;left:0;right:0;background:#fff;border-radius:28px 28px 0 0;padding:14px 22px 30px;box-shadow:0 -12px 40px rgba(40,34,24,.18)">
+            <div style="width:38px;height:5px;border-radius:3px;background:#E4DFD5;margin:0 auto 16px"></div>
+            <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:18px"><div><h3 style="font-family:'Fraunces',serif;font-size:22px;font-weight:600;margin:0">Add expense</h3></div><span style="width:30px;height:30px;border-radius:50%;background:#F1EEE7;display:flex;align-items:center;justify-content:center"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#8A867E" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M6 6l12 12M18 6L6 18"/></svg></span></div>
+            <div style="display:flex;flex-direction:column;align-items:center;background:#F5F3EE;border-radius:20px;padding:16px 16px 14px;margin-bottom:16px;border:1.5px solid #5F8D72">
+              <div style="display:flex;align-items:center;justify-content:center;gap:6px;height:60px">
+                <span style="font-family:'Fraunces',serif;font-size:30px;font-weight:600;color:#8A867E">€</span>
+                <span style="font-family:'Fraunces',serif;font-size:54px;font-weight:600;line-height:1;font-variant-numeric:tabular-nums;color:#22201C">42.10</span><span style="width:2.5px;height:46px;background:#5F8D72;border-radius:2px;margin-left:3px"></span>
+              </div>
+              
+            </div>
+            <div style="font-size:11px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:#A7A29A;margin:0 0 8px">What for?</div>
+            <div style="position:relative;margin-bottom:16px">
+              <div style="display:flex;align-items:center;background:#F5F3EE;border:1.5px solid transparent;border-radius:14px;padding:13px 15px"><span style="font-size:15px;color:#B7B2A9">Weekly shop, rent, pizza…</span></div>
+
+            </div>
+            <div style="font-size:11px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:#A7A29A;margin:0 0 8px">Category</div>
+            <div style="display:flex;gap:8px;overflow:hidden;margin:0 -22px 16px;padding:0 22px;-webkit-mask-image:linear-gradient(90deg,#000 85%,transparent);mask-image:linear-gradient(90deg,#000 85%,transparent)">
+              <span style="flex:none;display:flex;align-items:center;gap:7px;padding:8px 13px 8px 10px;border-radius:999px;font-size:13px;font-weight:600;background:#fff;color:#57534C;border:1.5px solid #E4DFD5"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#6E6A62" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M4 10h16l-1.6 8.4a2 2 0 0 1-2 1.6H7.6a2 2 0 0 1-2-1.6z"/><path d="M8.5 10l3-6M15.5 10l-3-6M9 14v2.5M15 14v2.5"/></svg>Groceries</span>
+              <span style="flex:none;display:flex;align-items:center;gap:7px;padding:8px 13px 8px 10px;border-radius:999px;font-size:13px;font-weight:600;background:#fff;color:#57534C;border:1.5px solid #E4DFD5"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#6E6A62" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M5 11V9a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2v2"/><path d="M3.5 11.5a1.5 1.5 0 0 1 3 0V13h11v-1.5a1.5 1.5 0 0 1 3 0V17H3.5z"/><path d="M5.5 17v2M18.5 17v2"/></svg>Household</span>
+              <span style="flex:none;display:flex;align-items:center;gap:7px;padding:8px 13px 8px 10px;border-radius:999px;font-size:13px;font-weight:600;background:#fff;color:#57534C;border:1.5px solid #E4DFD5"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#6E6A62" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M7 3.5h7.5L18 7v13.5H7z"/><path d="M14.5 3.5V7H18M10 11h5M10 14.5h5M10 18h3"/></svg>Rent & bills</span>
+              <span style="flex:none;display:flex;align-items:center;gap:7px;padding:8px 13px 8px 10px;border-radius:999px;font-size:13px;font-weight:600;background:#fff;color:#57534C;border:1.5px solid #E4DFD5"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#6E6A62" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M7 3v7.5M5 3v5a2 2 0 0 0 4 0V3M7 10.5V21"/><path d="M17 21V3c-2 1.6-3 4.4-3 8h3"/></svg>Eating out</span>
+              <span style="flex:none;display:flex;align-items:center;gap:7px;padding:8px 13px 8px 10px;border-radius:999px;font-size:13px;font-weight:600;background:#fff;color:#57534C;border:1.5px solid #E4DFD5"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#6E6A62" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><rect x="5" y="3.5" width="14" height="13.5" rx="3"/><path d="M5 11h14M8.5 21l1.5-4M15.5 21L14 17M9 14h.01M15 14h.01"/></svg>Transport</span>
+              <span style="flex:none;display:flex;align-items:center;gap:7px;padding:8px 13px 8px 10px;border-radius:999px;font-size:13px;font-weight:600;background:#fff;color:#57534C;border:1.5px solid #E4DFD5"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#6E6A62" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M4 7.5h16V10a2 2 0 0 0 0 4v2.5H4V14a2 2 0 0 0 0-4z"/><path d="M14 7.5v9" stroke-dasharray="1.6 2"/></svg>Leisure</span>
+              <span style="flex:none;display:flex;align-items:center;gap:7px;padding:8px 13px 8px 10px;border-radius:999px;font-size:13px;font-weight:600;background:#fff;color:#57534C;border:1.5px solid #E4DFD5"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#6E6A62" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="7" width="16" height="12.5" rx="2.2"/><path d="M9 7V5.2a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1V7M4 12.5h16"/></svg>Travel</span>
+              <span style="flex:none;display:flex;align-items:center;gap:7px;padding:8px 13px 8px 10px;border-radius:999px;font-size:13px;font-weight:600;background:#5F8D72;color:#fff;border:1.5px solid #5F8D72"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="8.5"/><path d="M8.5 12h.01M12 12h.01M15.5 12h.01" stroke-width="2.6"/></svg>Other</span>
+            </div>
+            <div style="font-size:11px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:#A7A29A;margin:0 0 8px">Paid by</div>
+            <div style="display:flex;gap:8px;margin-bottom:18px"><span style="display:flex;align-items:center;gap:8px;padding:5px 13px 5px 5px;border-radius:999px;font-size:13.5px;font-weight:600;background:rgba(95,141,114,.13);color:#3F6B52;border:1.5px solid #5F8D72"><span style="width:26px;height:26px;border-radius:50%;background:#5F8D72;color:#fff;font-size:12px;font-weight:700;display:flex;align-items:center;justify-content:center;flex:none">L</span>Lukas<span style="font-size:11.5px;font-weight:600;color:#3F6B52;opacity:.8">you</span></span><span style="display:flex;align-items:center;gap:8px;padding:5px 13px 5px 5px;border-radius:999px;font-size:13.5px;font-weight:600;background:#fff;color:#57534C;border:1.5px solid #E4DFD5"><span style="width:26px;height:26px;border-radius:50%;background:#C67C51;color:#fff;font-size:12px;font-weight:700;display:flex;align-items:center;justify-content:center;flex:none">E</span>Elisabeth</span></div>
+            <div style="background:#fff;border:1.5px solid #F1EEE7;border-radius:18px;overflow:hidden;margin-bottom:18px">
+              <div style="display:flex;align-items:center;gap:12px;padding:13px 15px;border-bottom:1px solid #F1EEE7">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#8A867E" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><circle cx="8" cy="8" r="3"/><circle cx="16" cy="16" r="3"/><path d="M18.5 5.5l-13 13"/></svg>
+                <span style="font-size:14px;font-weight:600;flex:none">Split</span>
+                <span style="flex:1;text-align:right;font-size:13.5px;color:#8A867E;min-width:0">Equally · everyone · <span style="font-variant-numeric:tabular-nums">€21.05</span> each</span>
+                <svg width="7" height="12" viewBox="0 0 8 14" fill="none" stroke="#B7B2A9" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M1 1l6 6-6 6"/></svg>
+              </div>
+              <div style="display:flex;align-items:center;gap:12px;padding:11px 15px;border-bottom:1px solid #F1EEE7">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#8A867E" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="5" width="16" height="15" rx="2.5"/><path d="M4 9.5h16M8.5 3v4M15.5 3v4"/></svg>
+                <span style="font-size:14px;font-weight:600;flex:1">Date</span>
+                <span style="font-size:13px;font-weight:700;color:#3F6B52;background:rgba(95,141,114,.13);padding:6px 12px;border-radius:999px">Today</span>
+              </div>
+              <div style="display:flex;align-items:center;gap:12px;padding:13px 15px">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#8A867E" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M4 11a7 7 0 0 1 12-4.9L18 8"/><path d="M18 4v4h-4"/><path d="M20 13a7 7 0 0 1-12 4.9L6 16"/><path d="M6 20v-4h4"/></svg>
+                <span style="font-size:14px;font-weight:600;flex:none">Repeats</span>
+                <span style="flex:1;text-align:right;font-size:13.5px;color:#8A867E;min-width:0">Never</span>
+                <svg width="7" height="12" viewBox="0 0 8 14" fill="none" stroke="#B7B2A9" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M1 1l6 6-6 6"/></svg>
+              </div>
+            </div>
+            <div style="background:#F1EEE7;color:#A7A29A;text-align:center;font-weight:700;font-size:16px;padding:16px;border-radius:16px">Save</div>
+
+          </div>
+          <div style="position:absolute;bottom:8px;left:50%;transform:translateX(-50%);width:134px;height:5px;border-radius:3px;background:rgba(34,32,28,.22)"></div>
+        </div>
+      </div>
+      <div id="9b-suggest" style="flex:none;width:390px">
+        <div style="display:flex;align-items:center;gap:10px;margin-bottom:6px;padding-left:4px">
+          <a href="#9b-suggest" style="font:600 10.5px ui-monospace,monospace;padding:3px 7px;background:rgba(0,0,0,.08);color:#22201C;border-radius:5px">9b · suggestions</a>
+          <span style="font-size:13px;font-weight:600;color:#22201C">Add expense · typing "What for?"</span>
+        </div>
+        <p style="font-size:12.5px;line-height:1.5;color:#A7A29A;margin:0 0 14px;padding-left:4px;max-width:390px">Past descriptions, matched inside words. Picking one also proposes its last category.</p>
+        <div style="width:390px;height:812px;border-radius:46px;background:#F5F3EE;color:#22201C;position:relative;overflow:hidden;box-shadow:0 30px 60px -20px rgba(40,34,24,.28),0 0 0 1px rgba(0,0,0,.06)">
+          <div style="height:52px;display:flex;align-items:center;justify-content:space-between;padding:0 30px 0 34px;font-weight:600;font-size:15px;color:#22201C"><span>9:41</span><span style="display:flex;gap:7px;align-items:center"><svg width="18" height="12" viewBox="0 0 18 12" fill="#22201C"><rect x="0" y="7" width="3" height="5" rx=".6"/><rect x="5" y="4.5" width="3" height="7.5" rx=".6"/><rect x="10" y="2" width="3" height="10" rx=".6"/><rect x="15" y="0" width="3" height="12" rx=".6" opacity=".35"/></svg><svg width="24" height="12" viewBox="0 0 24 12" fill="#22201C"><rect x="0" y="0" width="21" height="12" rx="3" fill="none" stroke="#22201C" stroke-opacity=".4"/><rect x="1.5" y="1.5" width="15" height="9" rx="1.6"/><rect x="22" y="4" width="1.6" height="4" rx=".8" opacity=".4"/></svg></span></div>
+          <div style="padding:8px 22px;opacity:.5">
+            <h2 style="font-family:'Fraunces',serif;font-size:30px;font-weight:600;margin:8px 0 16px">Expenses</h2>
+            <div style="background:rgba(95,141,114,.10);border-radius:24px;height:150px;margin-bottom:22px"></div>
+            <div style="background:#fff;border-radius:20px;height:130px"></div>
+          </div>
+          <div style="position:absolute;inset:0;background:rgba(34,32,28,.4)"></div>
+          <div style="position:absolute;top:58px;bottom:0;left:0;right:0;background:#fff;border-radius:28px 28px 0 0;padding:14px 22px 30px;box-shadow:0 -12px 40px rgba(40,34,24,.18)">
+            <div style="width:38px;height:5px;border-radius:3px;background:#E4DFD5;margin:0 auto 16px"></div>
+            <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:18px"><div><h3 style="font-family:'Fraunces',serif;font-size:22px;font-weight:600;margin:0">Add expense</h3></div><span style="width:30px;height:30px;border-radius:50%;background:#F1EEE7;display:flex;align-items:center;justify-content:center"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#8A867E" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M6 6l12 12M18 6L6 18"/></svg></span></div>
+            <div style="display:flex;flex-direction:column;align-items:center;background:#F5F3EE;border-radius:20px;padding:16px 16px 14px;margin-bottom:16px;border:1.5px solid transparent">
+              <div style="display:flex;align-items:center;justify-content:center;gap:6px;height:60px">
+                <span style="font-family:'Fraunces',serif;font-size:30px;font-weight:600;color:#8A867E">€</span>
+                <span style="font-family:'Fraunces',serif;font-size:54px;font-weight:600;line-height:1;font-variant-numeric:tabular-nums;color:#22201C">42.10</span>
+              </div>
+              
+            </div>
+            <div style="font-size:11px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:#A7A29A;margin:0 0 8px">What for?</div>
+            <div style="position:relative;margin-bottom:16px">
+              <div style="display:flex;align-items:center;background:#F5F3EE;border:1.5px solid #5F8D72;border-radius:14px;padding:13px 15px"><span style="font-size:15px;color:#22201C">Wee</span><span style="width:2px;height:19px;background:#5F8D72;margin-left:1px;border-radius:1px"></span></div>
+              <div style="position:absolute;top:56px;left:0;right:0;background:#fff;border-radius:16px;box-shadow:0 14px 34px -8px rgba(40,34,24,.28),0 0 0 1px rgba(40,34,24,.05);padding:6px;z-index:3">
+                <div style="display:flex;align-items:center;gap:11px;padding:9px 10px;border-radius:11px;background:#F1EEE7"><span style="width:30px;height:30px;border-radius:10px;background:#F1EEE7;flex:none;display:flex;align-items:center;justify-content:center"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#6E6A62" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M4 10h16l-1.6 8.4a2 2 0 0 1-2 1.6H7.6a2 2 0 0 1-2-1.6z"/><path d="M8.5 10l3-6M15.5 10l-3-6M9 14v2.5M15 14v2.5"/></svg></span><span style="flex:1;font-size:14.5px;font-weight:500"><b style="font-weight:700;color:#22201C">Wee</b>kly shop · Billa</span><span style="font-size:11.5px;color:#A7A29A;font-variant-numeric:tabular-nums">last €38.20</span></div>
+                <div style="display:flex;align-items:center;gap:11px;padding:9px 10px;border-radius:11px"><span style="width:30px;height:30px;border-radius:10px;background:#F1EEE7;flex:none;display:flex;align-items:center;justify-content:center"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#6E6A62" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M4 10h16l-1.6 8.4a2 2 0 0 1-2 1.6H7.6a2 2 0 0 1-2-1.6z"/><path d="M8.5 10l3-6M15.5 10l-3-6M9 14v2.5M15 14v2.5"/></svg></span><span style="flex:1;font-size:14.5px;font-weight:500"><b style="font-weight:700;color:#22201C">Wee</b>kly shop · Hofer</span><span style="font-size:11.5px;color:#A7A29A;font-variant-numeric:tabular-nums">last €36.90</span></div>
+                <div style="display:flex;align-items:center;gap:11px;padding:9px 10px;border-radius:11px"><span style="width:30px;height:30px;border-radius:10px;background:#F1EEE7;flex:none;display:flex;align-items:center;justify-content:center"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#6E6A62" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M5 11V9a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2v2"/><path d="M3.5 11.5a1.5 1.5 0 0 1 3 0V13h11v-1.5a1.5 1.5 0 0 1 3 0V17H3.5z"/><path d="M5.5 17v2M18.5 17v2"/></svg></span><span style="flex:1;font-size:14.5px;font-weight:500">Bet<b style="font-weight:700;color:#22201C">wee</b>n-shops top-up</span><span style="font-size:11.5px;color:#A7A29A;font-variant-numeric:tabular-nums">last €9.40</span></div>
+              </div>
+            </div>
+            <div style="font-size:11px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:#A7A29A;margin:0 0 8px">Category</div>
+            <div style="display:flex;gap:8px;overflow:hidden;margin:0 -22px 16px;padding:0 22px;-webkit-mask-image:linear-gradient(90deg,#000 85%,transparent);mask-image:linear-gradient(90deg,#000 85%,transparent)">
+              <span style="flex:none;display:flex;align-items:center;gap:7px;padding:8px 13px 8px 10px;border-radius:999px;font-size:13px;font-weight:600;background:#fff;color:#57534C;border:1.5px solid #E4DFD5"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#6E6A62" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M4 10h16l-1.6 8.4a2 2 0 0 1-2 1.6H7.6a2 2 0 0 1-2-1.6z"/><path d="M8.5 10l3-6M15.5 10l-3-6M9 14v2.5M15 14v2.5"/></svg>Groceries</span>
+              <span style="flex:none;display:flex;align-items:center;gap:7px;padding:8px 13px 8px 10px;border-radius:999px;font-size:13px;font-weight:600;background:#fff;color:#57534C;border:1.5px solid #E4DFD5"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#6E6A62" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M5 11V9a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2v2"/><path d="M3.5 11.5a1.5 1.5 0 0 1 3 0V13h11v-1.5a1.5 1.5 0 0 1 3 0V17H3.5z"/><path d="M5.5 17v2M18.5 17v2"/></svg>Household</span>
+              <span style="flex:none;display:flex;align-items:center;gap:7px;padding:8px 13px 8px 10px;border-radius:999px;font-size:13px;font-weight:600;background:#fff;color:#57534C;border:1.5px solid #E4DFD5"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#6E6A62" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M7 3.5h7.5L18 7v13.5H7z"/><path d="M14.5 3.5V7H18M10 11h5M10 14.5h5M10 18h3"/></svg>Rent & bills</span>
+              <span style="flex:none;display:flex;align-items:center;gap:7px;padding:8px 13px 8px 10px;border-radius:999px;font-size:13px;font-weight:600;background:#fff;color:#57534C;border:1.5px solid #E4DFD5"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#6E6A62" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M7 3v7.5M5 3v5a2 2 0 0 0 4 0V3M7 10.5V21"/><path d="M17 21V3c-2 1.6-3 4.4-3 8h3"/></svg>Eating out</span>
+              <span style="flex:none;display:flex;align-items:center;gap:7px;padding:8px 13px 8px 10px;border-radius:999px;font-size:13px;font-weight:600;background:#fff;color:#57534C;border:1.5px solid #E4DFD5"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#6E6A62" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><rect x="5" y="3.5" width="14" height="13.5" rx="3"/><path d="M5 11h14M8.5 21l1.5-4M15.5 21L14 17M9 14h.01M15 14h.01"/></svg>Transport</span>
+              <span style="flex:none;display:flex;align-items:center;gap:7px;padding:8px 13px 8px 10px;border-radius:999px;font-size:13px;font-weight:600;background:#fff;color:#57534C;border:1.5px solid #E4DFD5"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#6E6A62" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M4 7.5h16V10a2 2 0 0 0 0 4v2.5H4V14a2 2 0 0 0 0-4z"/><path d="M14 7.5v9" stroke-dasharray="1.6 2"/></svg>Leisure</span>
+              <span style="flex:none;display:flex;align-items:center;gap:7px;padding:8px 13px 8px 10px;border-radius:999px;font-size:13px;font-weight:600;background:#fff;color:#57534C;border:1.5px solid #E4DFD5"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#6E6A62" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="7" width="16" height="12.5" rx="2.2"/><path d="M9 7V5.2a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1V7M4 12.5h16"/></svg>Travel</span>
+              <span style="flex:none;display:flex;align-items:center;gap:7px;padding:8px 13px 8px 10px;border-radius:999px;font-size:13px;font-weight:600;background:#5F8D72;color:#fff;border:1.5px solid #5F8D72"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="8.5"/><path d="M8.5 12h.01M12 12h.01M15.5 12h.01" stroke-width="2.6"/></svg>Other</span>
+            </div>
+            <div style="font-size:11px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:#A7A29A;margin:0 0 8px">Paid by</div>
+            <div style="display:flex;gap:8px;margin-bottom:18px"><span style="display:flex;align-items:center;gap:8px;padding:5px 13px 5px 5px;border-radius:999px;font-size:13.5px;font-weight:600;background:rgba(95,141,114,.13);color:#3F6B52;border:1.5px solid #5F8D72"><span style="width:26px;height:26px;border-radius:50%;background:#5F8D72;color:#fff;font-size:12px;font-weight:700;display:flex;align-items:center;justify-content:center;flex:none">L</span>Lukas<span style="font-size:11.5px;font-weight:600;color:#3F6B52;opacity:.8">you</span></span><span style="display:flex;align-items:center;gap:8px;padding:5px 13px 5px 5px;border-radius:999px;font-size:13.5px;font-weight:600;background:#fff;color:#57534C;border:1.5px solid #E4DFD5"><span style="width:26px;height:26px;border-radius:50%;background:#C67C51;color:#fff;font-size:12px;font-weight:700;display:flex;align-items:center;justify-content:center;flex:none">E</span>Elisabeth</span></div>
+            <div style="background:#fff;border:1.5px solid #F1EEE7;border-radius:18px;overflow:hidden;margin-bottom:18px">
+              <div style="display:flex;align-items:center;gap:12px;padding:13px 15px;border-bottom:1px solid #F1EEE7">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#8A867E" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><circle cx="8" cy="8" r="3"/><circle cx="16" cy="16" r="3"/><path d="M18.5 5.5l-13 13"/></svg>
+                <span style="font-size:14px;font-weight:600;flex:none">Split</span>
+                <span style="flex:1;text-align:right;font-size:13.5px;color:#8A867E;min-width:0">Equally · everyone · <span style="font-variant-numeric:tabular-nums">€21.05</span> each</span>
+                <svg width="7" height="12" viewBox="0 0 8 14" fill="none" stroke="#B7B2A9" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M1 1l6 6-6 6"/></svg>
+              </div>
+              <div style="display:flex;align-items:center;gap:12px;padding:11px 15px;border-bottom:1px solid #F1EEE7">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#8A867E" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="5" width="16" height="15" rx="2.5"/><path d="M4 9.5h16M8.5 3v4M15.5 3v4"/></svg>
+                <span style="font-size:14px;font-weight:600;flex:1">Date</span>
+                <span style="font-size:13px;font-weight:700;color:#3F6B52;background:rgba(95,141,114,.13);padding:6px 12px;border-radius:999px">Today</span>
+              </div>
+              <div style="display:flex;align-items:center;gap:12px;padding:13px 15px">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#8A867E" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M4 11a7 7 0 0 1 12-4.9L18 8"/><path d="M18 4v4h-4"/><path d="M20 13a7 7 0 0 1-12 4.9L6 16"/><path d="M6 20v-4h4"/></svg>
+                <span style="font-size:14px;font-weight:600;flex:none">Repeats</span>
+                <span style="flex:1;text-align:right;font-size:13.5px;color:#8A867E;min-width:0">Never</span>
+                <svg width="7" height="12" viewBox="0 0 8 14" fill="none" stroke="#B7B2A9" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M1 1l6 6-6 6"/></svg>
+              </div>
+            </div>
+            <div style="background:#F1EEE7;color:#A7A29A;text-align:center;font-weight:700;font-size:16px;padding:16px;border-radius:16px">Save</div>
+
+          </div>
+          <div style="position:absolute;bottom:8px;left:50%;transform:translateX(-50%);width:134px;height:5px;border-radius:3px;background:rgba(34,32,28,.22)"></div>
+        </div>
+      </div>
+      <div id="9b-edit" style="flex:none;width:390px">
+        <div style="display:flex;align-items:center;gap:10px;margin-bottom:6px;padding-left:4px">
+          <a href="#9b-edit" style="font:600 10.5px ui-monospace,monospace;padding:3px 7px;background:rgba(0,0,0,.08);color:#22201C;border-radius:5px">9b · edit</a>
+          <span style="font-size:13px;font-weight:600;color:#22201C">Edit expense</span>
+        </div>
+        <p style="font-size:12.5px;line-height:1.5;color:#A7A29A;margin:0 0 14px;padding-left:4px;max-width:390px">Same sheet, filled in. Delete removes it at once, with an undo bar.</p>
+        <div style="width:390px;height:812px;border-radius:46px;background:#F5F3EE;color:#22201C;position:relative;overflow:hidden;box-shadow:0 30px 60px -20px rgba(40,34,24,.28),0 0 0 1px rgba(0,0,0,.06)">
+          <div style="height:52px;display:flex;align-items:center;justify-content:space-between;padding:0 30px 0 34px;font-weight:600;font-size:15px;color:#22201C"><span>9:41</span><span style="display:flex;gap:7px;align-items:center"><svg width="18" height="12" viewBox="0 0 18 12" fill="#22201C"><rect x="0" y="7" width="3" height="5" rx=".6"/><rect x="5" y="4.5" width="3" height="7.5" rx=".6"/><rect x="10" y="2" width="3" height="10" rx=".6"/><rect x="15" y="0" width="3" height="12" rx=".6" opacity=".35"/></svg><svg width="24" height="12" viewBox="0 0 24 12" fill="#22201C"><rect x="0" y="0" width="21" height="12" rx="3" fill="none" stroke="#22201C" stroke-opacity=".4"/><rect x="1.5" y="1.5" width="15" height="9" rx="1.6"/><rect x="22" y="4" width="1.6" height="4" rx=".8" opacity=".4"/></svg></span></div>
+          <div style="padding:8px 22px;opacity:.5">
+            <h2 style="font-family:'Fraunces',serif;font-size:30px;font-weight:600;margin:8px 0 16px">Expenses</h2>
+            <div style="background:rgba(95,141,114,.10);border-radius:24px;height:150px;margin-bottom:22px"></div>
+            <div style="background:#fff;border-radius:20px;height:130px"></div>
+          </div>
+          <div style="position:absolute;inset:0;background:rgba(34,32,28,.4)"></div>
+          <div style="position:absolute;top:52px;bottom:0;left:0;right:0;background:#fff;border-radius:28px 28px 0 0;padding:14px 22px 30px;box-shadow:0 -12px 40px rgba(40,34,24,.18)">
+            <div style="width:38px;height:5px;border-radius:3px;background:#E4DFD5;margin:0 auto 16px"></div>
+            <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:18px"><div><h3 style="font-family:'Fraunces',serif;font-size:22px;font-weight:600;margin:0">Edit expense</h3></div><span style="width:30px;height:30px;border-radius:50%;background:#F1EEE7;display:flex;align-items:center;justify-content:center"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#8A867E" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M6 6l12 12M18 6L6 18"/></svg></span></div>
+            <div style="display:flex;flex-direction:column;align-items:center;background:#F5F3EE;border-radius:20px;padding:16px 16px 14px;margin-bottom:16px;border:1.5px solid transparent">
+              <div style="display:flex;align-items:center;justify-content:center;gap:6px;height:60px">
+                <span style="font-family:'Fraunces',serif;font-size:30px;font-weight:600;color:#8A867E">€</span>
+                <span style="font-family:'Fraunces',serif;font-size:54px;font-weight:600;line-height:1;font-variant-numeric:tabular-nums;color:#22201C">86.40</span>
+              </div>
+              
+            </div>
+            <div style="font-size:11px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:#A7A29A;margin:0 0 8px">What for?</div>
+            <div style="position:relative;margin-bottom:16px">
+              <div style="display:flex;align-items:center;background:#F5F3EE;border:1.5px solid transparent;border-radius:14px;padding:13px 15px"><span style="font-size:15px;color:#22201C">Strom · Wien Energie</span></div>
+
+            </div>
+            <div style="font-size:11px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:#A7A29A;margin:0 0 8px">Category</div>
+            <div style="display:flex;gap:8px;overflow:hidden;margin:0 -22px 16px;padding:0 22px;-webkit-mask-image:linear-gradient(90deg,#000 85%,transparent);mask-image:linear-gradient(90deg,#000 85%,transparent)">
+              <span style="flex:none;display:flex;align-items:center;gap:7px;padding:8px 13px 8px 10px;border-radius:999px;font-size:13px;font-weight:600;background:#fff;color:#57534C;border:1.5px solid #E4DFD5"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#6E6A62" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M4 10h16l-1.6 8.4a2 2 0 0 1-2 1.6H7.6a2 2 0 0 1-2-1.6z"/><path d="M8.5 10l3-6M15.5 10l-3-6M9 14v2.5M15 14v2.5"/></svg>Groceries</span>
+              <span style="flex:none;display:flex;align-items:center;gap:7px;padding:8px 13px 8px 10px;border-radius:999px;font-size:13px;font-weight:600;background:#fff;color:#57534C;border:1.5px solid #E4DFD5"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#6E6A62" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M5 11V9a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2v2"/><path d="M3.5 11.5a1.5 1.5 0 0 1 3 0V13h11v-1.5a1.5 1.5 0 0 1 3 0V17H3.5z"/><path d="M5.5 17v2M18.5 17v2"/></svg>Household</span>
+              <span style="flex:none;display:flex;align-items:center;gap:7px;padding:8px 13px 8px 10px;border-radius:999px;font-size:13px;font-weight:600;background:#5F8D72;color:#fff;border:1.5px solid #5F8D72"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M7 3.5h7.5L18 7v13.5H7z"/><path d="M14.5 3.5V7H18M10 11h5M10 14.5h5M10 18h3"/></svg>Rent & bills</span>
+              <span style="flex:none;display:flex;align-items:center;gap:7px;padding:8px 13px 8px 10px;border-radius:999px;font-size:13px;font-weight:600;background:#fff;color:#57534C;border:1.5px solid #E4DFD5"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#6E6A62" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M7 3v7.5M5 3v5a2 2 0 0 0 4 0V3M7 10.5V21"/><path d="M17 21V3c-2 1.6-3 4.4-3 8h3"/></svg>Eating out</span>
+              <span style="flex:none;display:flex;align-items:center;gap:7px;padding:8px 13px 8px 10px;border-radius:999px;font-size:13px;font-weight:600;background:#fff;color:#57534C;border:1.5px solid #E4DFD5"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#6E6A62" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><rect x="5" y="3.5" width="14" height="13.5" rx="3"/><path d="M5 11h14M8.5 21l1.5-4M15.5 21L14 17M9 14h.01M15 14h.01"/></svg>Transport</span>
+              <span style="flex:none;display:flex;align-items:center;gap:7px;padding:8px 13px 8px 10px;border-radius:999px;font-size:13px;font-weight:600;background:#fff;color:#57534C;border:1.5px solid #E4DFD5"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#6E6A62" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M4 7.5h16V10a2 2 0 0 0 0 4v2.5H4V14a2 2 0 0 0 0-4z"/><path d="M14 7.5v9" stroke-dasharray="1.6 2"/></svg>Leisure</span>
+              <span style="flex:none;display:flex;align-items:center;gap:7px;padding:8px 13px 8px 10px;border-radius:999px;font-size:13px;font-weight:600;background:#fff;color:#57534C;border:1.5px solid #E4DFD5"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#6E6A62" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="7" width="16" height="12.5" rx="2.2"/><path d="M9 7V5.2a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1V7M4 12.5h16"/></svg>Travel</span>
+              <span style="flex:none;display:flex;align-items:center;gap:7px;padding:8px 13px 8px 10px;border-radius:999px;font-size:13px;font-weight:600;background:#fff;color:#57534C;border:1.5px solid #E4DFD5"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#6E6A62" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="8.5"/><path d="M8.5 12h.01M12 12h.01M15.5 12h.01" stroke-width="2.6"/></svg>Other</span>
+            </div>
+            <div style="font-size:11px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:#A7A29A;margin:0 0 8px">Paid by</div>
+            <div style="display:flex;gap:8px;margin-bottom:18px"><span style="display:flex;align-items:center;gap:8px;padding:5px 13px 5px 5px;border-radius:999px;font-size:13.5px;font-weight:600;background:rgba(95,141,114,.13);color:#3F6B52;border:1.5px solid #5F8D72"><span style="width:26px;height:26px;border-radius:50%;background:#5F8D72;color:#fff;font-size:12px;font-weight:700;display:flex;align-items:center;justify-content:center;flex:none">L</span>Lukas<span style="font-size:11.5px;font-weight:600;color:#3F6B52;opacity:.8">you</span></span><span style="display:flex;align-items:center;gap:8px;padding:5px 13px 5px 5px;border-radius:999px;font-size:13.5px;font-weight:600;background:#fff;color:#57534C;border:1.5px solid #E4DFD5"><span style="width:26px;height:26px;border-radius:50%;background:#C67C51;color:#fff;font-size:12px;font-weight:700;display:flex;align-items:center;justify-content:center;flex:none">E</span>Elisabeth</span></div>
+            <div style="background:#fff;border:1.5px solid #F1EEE7;border-radius:18px;overflow:hidden;margin-bottom:14px">
+              <div style="display:flex;align-items:center;gap:12px;padding:13px 15px;border-bottom:1px solid #F1EEE7">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#8A867E" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><circle cx="8" cy="8" r="3"/><circle cx="16" cy="16" r="3"/><path d="M18.5 5.5l-13 13"/></svg>
+                <span style="font-size:14px;font-weight:600;flex:none">Split</span>
+                <span style="flex:1;text-align:right;font-size:13.5px;color:#8A867E;min-width:0">Equally · everyone · <span style="font-variant-numeric:tabular-nums">€43.20</span> each</span>
+                <svg width="7" height="12" viewBox="0 0 8 14" fill="none" stroke="#B7B2A9" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M1 1l6 6-6 6"/></svg>
+              </div>
+              <div style="display:flex;align-items:center;gap:12px;padding:11px 15px;border-bottom:1px solid #F1EEE7">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#8A867E" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="5" width="16" height="15" rx="2.5"/><path d="M4 9.5h16M8.5 3v4M15.5 3v4"/></svg>
+                <span style="font-size:14px;font-weight:600;flex:1">Date</span>
+                <span style="font-size:13px;font-weight:700;color:#3F6B52;background:rgba(95,141,114,.13);padding:6px 12px;border-radius:999px">3 Nov</span>
+              </div>
+              <div style="display:flex;align-items:center;gap:12px;padding:13px 15px">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#8A867E" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M4 11a7 7 0 0 1 12-4.9L18 8"/><path d="M18 4v4h-4"/><path d="M20 13a7 7 0 0 1-12 4.9L6 16"/><path d="M6 20v-4h4"/></svg>
+                <span style="font-size:14px;font-weight:600;flex:none">Repeats</span>
+                <span style="flex:1;text-align:right;font-size:13.5px;color:#22201C;min-width:0">Monthly</span>
+                <svg width="7" height="12" viewBox="0 0 8 14" fill="none" stroke="#B7B2A9" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M1 1l6 6-6 6"/></svg>
+              </div>
+            </div>
+            <div style="background:#5F8D72;color:#fff;text-align:center;font-weight:700;font-size:16px;padding:16px;border-radius:16px;box-shadow:0 8px 20px -6px rgba(95,141,114,.5)">Save changes</div>
+            <div style="display:flex;align-items:center;justify-content:center;gap:8px;margin-top:14px;font-size:14px;font-weight:600;color:#B83E31"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#B83E31" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M5 7h14M10 7V4.8h4V7M7 7l.8 12.2a1.6 1.6 0 0 0 1.6 1.5h5.2a1.6 1.6 0 0 0 1.6-1.5L17 7"/></svg>Delete expense</div>
+          </div>
+          <div style="position:absolute;bottom:8px;left:50%;transform:translateX(-50%);width:134px;height:5px;border-radius:3px;background:rgba(34,32,28,.22)"></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+
+  <div style="margin-bottom:64px">
+    <div style="display:flex;align-items:baseline;gap:10px;margin-bottom:6px">
+      <span style="font:600 11px ui-monospace,monospace;padding:3px 8px;background:#5F8D72;color:#fff;border-radius:5px">04</span>
+      <span style="font-weight:600;font-size:15px">Splitting, settling, detail</span>
+    </div>
+    <p style="max-width:780px;font-size:14px;line-height:1.55;color:#8A867E;margin:0 0 30px">The split sheet sits over the add sheet. Every row always shows its money amount, whatever the mode.</p>
+    <div style="display:flex;flex-wrap:wrap;gap:48px;align-items:flex-start">
+      <div id="9c" style="flex:none;width:390px">
+        <div style="display:flex;align-items:center;gap:10px;margin-bottom:6px;padding-left:4px">
+          <a href="#9c" style="font:600 10.5px ui-monospace,monospace;padding:3px 7px;background:rgba(0,0,0,.08);color:#22201C;border-radius:5px">9c</a>
+          <span style="font-size:13px;font-weight:600;color:#22201C">Split · amounts · doesn't add up</span>
+        </div>
+        <p style="font-size:12.5px;line-height:1.5;color:#A7A29A;margin:0 0 14px;padding-left:4px;max-width:390px">Marco is out of this one. Done stays disabled while money is left over.</p>
+        <div style="width:390px;height:812px;border-radius:46px;background:#F5F3EE;color:#22201C;position:relative;overflow:hidden;box-shadow:0 30px 60px -20px rgba(40,34,24,.28),0 0 0 1px rgba(0,0,0,.06)">
+          <div style="height:52px;display:flex;align-items:center;justify-content:space-between;padding:0 30px 0 34px;font-weight:600;font-size:15px;color:#22201C"><span>9:41</span><span style="display:flex;gap:7px;align-items:center"><svg width="18" height="12" viewBox="0 0 18 12" fill="#22201C"><rect x="0" y="7" width="3" height="5" rx=".6"/><rect x="5" y="4.5" width="3" height="7.5" rx=".6"/><rect x="10" y="2" width="3" height="10" rx=".6"/><rect x="15" y="0" width="3" height="12" rx=".6" opacity=".35"/></svg><svg width="24" height="12" viewBox="0 0 24 12" fill="#22201C"><rect x="0" y="0" width="21" height="12" rx="3" fill="none" stroke="#22201C" stroke-opacity=".4"/><rect x="1.5" y="1.5" width="15" height="9" rx="1.6"/><rect x="22" y="4" width="1.6" height="4" rx=".8" opacity=".4"/></svg></span></div>
+          <div style="padding:8px 22px;opacity:.5">
+            <h2 style="font-family:'Fraunces',serif;font-size:30px;font-weight:600;margin:8px 0 16px">Expenses</h2>
+            <div style="background:rgba(95,141,114,.10);border-radius:24px;height:150px;margin-bottom:22px"></div>
+            <div style="background:#fff;border-radius:20px;height:130px"></div>
+          </div>
+          <div style="position:absolute;inset:0;background:rgba(34,32,28,.4)"></div>
+          <div style="position:absolute;top:58px;left:12px;right:12px;height:200px;background:#E2DDD4;border-radius:24px 24px 0 0;padding:18px 20px"><div style="font-family:'Fraunces',serif;font-size:19px;font-weight:600;color:#8A867E">Add expense</div></div>
+          <div style="position:absolute;bottom:0;left:0;right:0;background:#fff;border-radius:28px 28px 0 0;padding:14px 22px 30px;box-shadow:0 -12px 40px rgba(40,34,24,.18)">
+            <div style="width:38px;height:5px;border-radius:3px;background:#E4DFD5;margin:0 auto 16px"></div>
+            <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:16px"><div><h3 style="font-family:'Fraunces',serif;font-size:22px;font-weight:600;margin:0">Split</h3><div style="font-size:12.5px;color:#8A867E;margin-top:3px"><span style="font-variant-numeric:tabular-nums">€42.10</span> · Weekly shop · Billa</div></div><span style="width:30px;height:30px;border-radius:50%;background:#F1EEE7;display:flex;align-items:center;justify-content:center"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#8A867E" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M6 6l12 12M18 6L6 18"/></svg></span></div>
+            <div style="display:flex;background:#EAE6DD;border-radius:13px;padding:3px;margin-bottom:16px">
+              <div style="flex:1;text-align:center;padding:8px 0;border-radius:10px;font-size:13.5px;font-weight:600;color:#8A867E">Equally</div>
+              <div style="flex:1;text-align:center;padding:8px 0;border-radius:10px;font-size:13.5px;font-weight:600;background:#fff;box-shadow:0 1px 2px rgba(40,34,24,.08);color:#22201C">Amounts</div>
+              <div style="flex:1;text-align:center;padding:8px 0;border-radius:10px;font-size:13.5px;font-weight:600;color:#8A867E">%</div>
+              <div style="flex:1;text-align:center;padding:8px 0;border-radius:10px;font-size:13.5px;font-weight:600;color:#8A867E">Shares</div>
+            </div>
+            <div>
+              <div style="display:flex;align-items:center;gap:12px;padding:11px 0;border-bottom:1px solid #F1EEE7">
+                <span style="width:24px;height:24px;border-radius:8px;background:#5F8D72;flex:none;display:flex;align-items:center;justify-content:center"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg></span>
+                <span style="opacity:1;display:flex"><span style="width:28px;height:28px;border-radius:50%;background:#5F8D72;color:#fff;font-size:13px;font-weight:700;display:flex;align-items:center;justify-content:center;flex:none">L</span></span>
+                <span style="flex:1;font-size:15px;font-weight:600;color:#22201C">Lukas<span style="font-size:11.5px;font-weight:600;color:#A7A29A;margin-left:6px">paid</span></span>
+                <span style="width:104px;flex:none;display:flex;align-items:center;justify-content:flex-end;gap:3px;background:#F5F3EE;border:1.5px solid transparent;border-radius:11px;padding:9px 11px;font-size:15px;font-weight:600;font-variant-numeric:tabular-nums"><span style="color:#A7A29A;font-weight:500">€</span>20.00</span>
+              </div>
+              <div style="display:flex;align-items:center;gap:12px;padding:11px 0;border-bottom:1px solid #F1EEE7">
+                <span style="width:24px;height:24px;border-radius:8px;background:#5F8D72;flex:none;display:flex;align-items:center;justify-content:center"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg></span>
+                <span style="opacity:1;display:flex"><span style="width:28px;height:28px;border-radius:50%;background:#C67C51;color:#fff;font-size:13px;font-weight:700;display:flex;align-items:center;justify-content:center;flex:none">E</span></span>
+                <span style="flex:1;font-size:15px;font-weight:600;color:#22201C">Elisabeth</span>
+                <span style="width:104px;flex:none;display:flex;align-items:center;justify-content:flex-end;gap:3px;background:#F5F3EE;border:1.5px solid #5F8D72;border-radius:11px;padding:9px 11px;font-size:15px;font-weight:600;font-variant-numeric:tabular-nums"><span style="color:#A7A29A;font-weight:500">€</span>18.90<span style="width:2px;height:17px;background:#5F8D72;border-radius:1px"></span></span>
+              </div>
+              <div style="display:flex;align-items:center;gap:12px;padding:11px 0">
+                <span style="width:24px;height:24px;border-radius:8px;border:2px solid #E4DFD5;flex:none"></span>
+                <span style="opacity:0.45;display:flex"><span style="width:28px;height:28px;border-radius:50%;background:#5E7CA3;color:#fff;font-size:13px;font-weight:700;display:flex;align-items:center;justify-content:center;flex:none">M</span></span>
+                <span style="flex:1;font-size:15px;font-weight:600;color:#A7A29A">Marco</span>
+                <span style="width:104px;text-align:right;font-size:13px;font-weight:600;color:#B7B2A9">not in</span>
+              </div>
+            </div>
+            <div style="display:flex;align-items:center;gap:9px;background:rgba(192,71,58,.09);color:#B83E31;border-radius:14px;padding:12px 14px;margin:14px 0 16px;font-size:14px;font-weight:700"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="#B83E31" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="8.5"/><path d="M12 8v4.6M12 15.8h.01"/></svg><span style="font-variant-numeric:tabular-nums">€3.20 left to assign</span><span style="flex:1"></span><span style="font-size:12px;font-weight:600;opacity:.85;font-variant-numeric:tabular-nums">€38.90 of €42.10</span></div>
+            <div style="background:#F1EEE7;color:#A7A29A;text-align:center;font-weight:700;font-size:16px;padding:16px;border-radius:16px">Done</div>
+          </div>
+          <div style="position:absolute;bottom:8px;left:50%;transform:translateX(-50%);width:134px;height:5px;border-radius:3px;background:rgba(34,32,28,.22)"></div>
+        </div>
+      </div>
+      <div id="9c-ok" style="flex:none;width:390px">
+        <div style="display:flex;align-items:center;gap:10px;margin-bottom:6px;padding-left:4px">
+          <a href="#9c-ok" style="font:600 10.5px ui-monospace,monospace;padding:3px 7px;background:rgba(0,0,0,.08);color:#22201C;border-radius:5px">9c · adds up</a>
+          <span style="font-size:13px;font-weight:600;color:#22201C">Split · % · adds up</span>
+        </div>
+        <p style="font-size:12.5px;line-height:1.5;color:#A7A29A;margin:0 0 14px;padding-left:4px;max-width:390px">With two people in, typing one percentage fills the other. The default link confirms with "New expenses will start split 30 / 70."</p>
+        <div style="width:390px;height:812px;border-radius:46px;background:#F5F3EE;color:#22201C;position:relative;overflow:hidden;box-shadow:0 30px 60px -20px rgba(40,34,24,.28),0 0 0 1px rgba(0,0,0,.06)">
+          <div style="height:52px;display:flex;align-items:center;justify-content:space-between;padding:0 30px 0 34px;font-weight:600;font-size:15px;color:#22201C"><span>9:41</span><span style="display:flex;gap:7px;align-items:center"><svg width="18" height="12" viewBox="0 0 18 12" fill="#22201C"><rect x="0" y="7" width="3" height="5" rx=".6"/><rect x="5" y="4.5" width="3" height="7.5" rx=".6"/><rect x="10" y="2" width="3" height="10" rx=".6"/><rect x="15" y="0" width="3" height="12" rx=".6" opacity=".35"/></svg><svg width="24" height="12" viewBox="0 0 24 12" fill="#22201C"><rect x="0" y="0" width="21" height="12" rx="3" fill="none" stroke="#22201C" stroke-opacity=".4"/><rect x="1.5" y="1.5" width="15" height="9" rx="1.6"/><rect x="22" y="4" width="1.6" height="4" rx=".8" opacity=".4"/></svg></span></div>
+          <div style="padding:8px 22px;opacity:.5">
+            <h2 style="font-family:'Fraunces',serif;font-size:30px;font-weight:600;margin:8px 0 16px">Expenses</h2>
+            <div style="background:rgba(95,141,114,.10);border-radius:24px;height:150px;margin-bottom:22px"></div>
+            <div style="background:#fff;border-radius:20px;height:130px"></div>
+          </div>
+          <div style="position:absolute;inset:0;background:rgba(34,32,28,.4)"></div>
+          <div style="position:absolute;top:58px;left:12px;right:12px;height:200px;background:#E2DDD4;border-radius:24px 24px 0 0;padding:18px 20px"><div style="font-family:'Fraunces',serif;font-size:19px;font-weight:600;color:#8A867E">Add expense</div></div>
+          <div style="position:absolute;bottom:0;left:0;right:0;background:#fff;border-radius:28px 28px 0 0;padding:14px 22px 30px;box-shadow:0 -12px 40px rgba(40,34,24,.18)">
+            <div style="width:38px;height:5px;border-radius:3px;background:#E4DFD5;margin:0 auto 16px"></div>
+            <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:16px"><div><h3 style="font-family:'Fraunces',serif;font-size:22px;font-weight:600;margin:0">Split</h3><div style="font-size:12.5px;color:#8A867E;margin-top:3px"><span style="font-variant-numeric:tabular-nums">€42.10</span> · Weekly shop · Billa</div></div><span style="width:30px;height:30px;border-radius:50%;background:#F1EEE7;display:flex;align-items:center;justify-content:center"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#8A867E" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M6 6l12 12M18 6L6 18"/></svg></span></div>
+            <div style="display:flex;background:#EAE6DD;border-radius:13px;padding:3px;margin-bottom:16px">
+              <div style="flex:1;text-align:center;padding:8px 0;border-radius:10px;font-size:13.5px;font-weight:600;color:#8A867E">Equally</div>
+              <div style="flex:1;text-align:center;padding:8px 0;border-radius:10px;font-size:13.5px;font-weight:600;color:#8A867E">Amounts</div>
+              <div style="flex:1;text-align:center;padding:8px 0;border-radius:10px;font-size:13.5px;font-weight:600;background:#fff;box-shadow:0 1px 2px rgba(40,34,24,.08);color:#22201C">%</div>
+              <div style="flex:1;text-align:center;padding:8px 0;border-radius:10px;font-size:13.5px;font-weight:600;color:#8A867E">Shares</div>
+            </div>
+            <div>
+              <div style="display:flex;align-items:center;gap:12px;padding:11px 0;border-bottom:1px solid #F1EEE7">
+                <span style="width:24px;height:24px;border-radius:8px;background:#5F8D72;flex:none;display:flex;align-items:center;justify-content:center"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg></span>
+                <span style="opacity:1;display:flex"><span style="width:28px;height:28px;border-radius:50%;background:#5F8D72;color:#fff;font-size:13px;font-weight:700;display:flex;align-items:center;justify-content:center;flex:none">L</span></span>
+                <span style="flex:1;font-size:15px;font-weight:600;color:#22201C">Lukas<span style="font-size:11.5px;font-weight:600;color:#A7A29A;margin-left:6px">paid</span></span>
+                <span style="width:72px;flex:none;display:flex;align-items:center;justify-content:flex-end;gap:3px;background:#F5F3EE;border:1.5px solid transparent;border-radius:11px;padding:9px 11px;font-size:15px;font-weight:600;font-variant-numeric:tabular-nums">30<span style="color:#A7A29A;font-weight:500">%</span></span><span style="width:66px;text-align:right;font-size:14px;font-weight:700;font-variant-numeric:tabular-nums">€12.63</span>
+              </div>
+              <div style="display:flex;align-items:center;gap:12px;padding:11px 0;border-bottom:1px solid #F1EEE7">
+                <span style="width:24px;height:24px;border-radius:8px;background:#5F8D72;flex:none;display:flex;align-items:center;justify-content:center"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg></span>
+                <span style="opacity:1;display:flex"><span style="width:28px;height:28px;border-radius:50%;background:#C67C51;color:#fff;font-size:13px;font-weight:700;display:flex;align-items:center;justify-content:center;flex:none">E</span></span>
+                <span style="flex:1;font-size:15px;font-weight:600;color:#22201C">Elisabeth</span>
+                <span style="width:72px;flex:none;display:flex;align-items:center;justify-content:flex-end;gap:3px;background:#F5F3EE;border:1.5px solid #5F8D72;border-radius:11px;padding:9px 11px;font-size:15px;font-weight:600;font-variant-numeric:tabular-nums">70<span style="width:2px;height:17px;background:#5F8D72;border-radius:1px"></span><span style="color:#A7A29A;font-weight:500">%</span></span><span style="width:66px;text-align:right;font-size:14px;font-weight:700;font-variant-numeric:tabular-nums">€29.47</span>
+              </div>
+              <div style="display:flex;align-items:center;gap:12px;padding:11px 0">
+                <span style="width:24px;height:24px;border-radius:8px;border:2px solid #E4DFD5;flex:none"></span>
+                <span style="opacity:0.45;display:flex"><span style="width:28px;height:28px;border-radius:50%;background:#5E7CA3;color:#fff;font-size:13px;font-weight:700;display:flex;align-items:center;justify-content:center;flex:none">M</span></span>
+                <span style="flex:1;font-size:15px;font-weight:600;color:#A7A29A">Marco</span>
+                <span style="width:150px;text-align:right;font-size:13px;font-weight:600;color:#B7B2A9">not in</span>
+              </div>
+            </div>
+            <div style="display:flex;align-items:center;gap:9px;background:rgba(95,141,114,.10);color:#3F6B52;border-radius:14px;padding:12px 14px;margin:14px 0 12px;font-size:14px;font-weight:700"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="#5F8D72" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg>Adds up to 100%</div>
+            <div style="text-align:center;font-size:13.5px;font-weight:600;color:#3F6B52;margin-bottom:16px">Make this the household default</div>
+            <div style="background:#5F8D72;color:#fff;text-align:center;font-weight:700;font-size:16px;padding:16px;border-radius:16px;box-shadow:0 8px 20px -6px rgba(95,141,114,.5)">Done</div>
+          </div>
+          <div style="position:absolute;bottom:8px;left:50%;transform:translateX(-50%);width:134px;height:5px;border-radius:3px;background:rgba(34,32,28,.22)"></div>
+        </div>
+      </div>
+      <div id="9d" style="flex:none;width:390px">
+        <div style="display:flex;align-items:center;gap:10px;margin-bottom:6px;padding-left:4px">
+          <a href="#9d" style="font:600 10.5px ui-monospace,monospace;padding:3px 7px;background:rgba(0,0,0,.08);color:#22201C;border-radius:5px">9d</a>
+          <span style="font-size:13px;font-weight:600;color:#22201C">Settle up</span>
+        </div>
+        <p style="font-size:12.5px;line-height:1.5;color:#A7A29A;margin:0 0 14px;padding-left:4px;max-width:390px">Opened from Elisabeth&rsquo;s line on the balance card, so it arrives filled in.</p>
+        <div style="width:390px;height:812px;border-radius:46px;background:#F5F3EE;color:#22201C;position:relative;overflow:hidden;box-shadow:0 30px 60px -20px rgba(40,34,24,.28),0 0 0 1px rgba(0,0,0,.06)">
+          <div style="height:52px;display:flex;align-items:center;justify-content:space-between;padding:0 30px 0 34px;font-weight:600;font-size:15px;color:#22201C"><span>9:41</span><span style="display:flex;gap:7px;align-items:center"><svg width="18" height="12" viewBox="0 0 18 12" fill="#22201C"><rect x="0" y="7" width="3" height="5" rx=".6"/><rect x="5" y="4.5" width="3" height="7.5" rx=".6"/><rect x="10" y="2" width="3" height="10" rx=".6"/><rect x="15" y="0" width="3" height="12" rx=".6" opacity=".35"/></svg><svg width="24" height="12" viewBox="0 0 24 12" fill="#22201C"><rect x="0" y="0" width="21" height="12" rx="3" fill="none" stroke="#22201C" stroke-opacity=".4"/><rect x="1.5" y="1.5" width="15" height="9" rx="1.6"/><rect x="22" y="4" width="1.6" height="4" rx=".8" opacity=".4"/></svg></span></div>
+          <div style="padding:8px 22px;opacity:.5">
+            <h2 style="font-family:'Fraunces',serif;font-size:30px;font-weight:600;margin:8px 0 16px">Expenses</h2>
+            <div style="background:rgba(95,141,114,.10);border-radius:24px;height:150px;margin-bottom:22px"></div>
+            <div style="background:#fff;border-radius:20px;height:130px"></div>
+          </div>
+          <div style="position:absolute;inset:0;background:rgba(34,32,28,.4)"></div>
+          <div style="position:absolute;bottom:0;left:0;right:0;background:#fff;border-radius:28px 28px 0 0;padding:14px 22px 30px;box-shadow:0 -12px 40px rgba(40,34,24,.18)">
+            <div style="width:38px;height:5px;border-radius:3px;background:#E4DFD5;margin:0 auto 16px"></div>
+            <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:18px"><div><h3 style="font-family:'Fraunces',serif;font-size:22px;font-weight:600;margin:0">Settle up</h3></div><span style="width:30px;height:30px;border-radius:50%;background:#F1EEE7;display:flex;align-items:center;justify-content:center"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#8A867E" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M6 6l12 12M18 6L6 18"/></svg></span></div>
+            <div style="font-size:11px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:#A7A29A;margin:0 0 8px">From</div>
+            <div style="display:flex;gap:8px;margin-bottom:8px"><span style="display:flex;align-items:center;gap:8px;padding:5px 13px 5px 5px;border-radius:999px;font-size:13.5px;font-weight:600;background:rgba(95,141,114,.13);color:#3F6B52;border:1.5px solid #5F8D72"><span style="width:26px;height:26px;border-radius:50%;background:#C67C51;color:#fff;font-size:12px;font-weight:700;display:flex;align-items:center;justify-content:center;flex:none">E</span>Elisabeth</span><span style="display:flex;align-items:center;gap:8px;padding:5px 13px 5px 5px;border-radius:999px;font-size:13.5px;font-weight:600;background:#fff;color:#57534C;border:1.5px solid #E4DFD5"><span style="width:26px;height:26px;border-radius:50%;background:#5F8D72;color:#fff;font-size:12px;font-weight:700;display:flex;align-items:center;justify-content:center;flex:none">L</span>Lukas<span style="font-size:11.5px;font-weight:600;color:#A7A29A;opacity:.8">you</span></span></div>
+            <div style="display:flex;align-items:center;gap:10px;margin:6px 0 10px 14px">
+              <span style="width:30px;height:30px;border-radius:50%;background:#F1EEE7;display:flex;align-items:center;justify-content:center"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#8A867E" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 5v13M7.5 13.5L12 18l4.5-4.5"/></svg></span>
+            </div>
+            <div style="font-size:11px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:#A7A29A;margin:0 0 8px">To</div>
+            <div style="display:flex;gap:8px;margin-bottom:20px"><span style="display:flex;align-items:center;gap:8px;padding:5px 13px 5px 5px;border-radius:999px;font-size:13.5px;font-weight:600;background:rgba(95,141,114,.13);color:#3F6B52;border:1.5px solid #5F8D72"><span style="width:26px;height:26px;border-radius:50%;background:#5F8D72;color:#fff;font-size:12px;font-weight:700;display:flex;align-items:center;justify-content:center;flex:none">L</span>Lukas<span style="font-size:11.5px;font-weight:600;color:#3F6B52;opacity:.8">you</span></span><span style="display:flex;align-items:center;gap:8px;padding:5px 13px 5px 5px;border-radius:999px;font-size:13.5px;font-weight:600;background:#fff;color:#57534C;border:1.5px solid #E4DFD5"><span style="width:26px;height:26px;border-radius:50%;background:#C67C51;color:#fff;font-size:12px;font-weight:700;display:flex;align-items:center;justify-content:center;flex:none">E</span>Elisabeth</span></div>
+            <div style="display:flex;flex-direction:column;align-items:center;background:#F5F3EE;border-radius:20px;padding:16px 16px 14px;margin-bottom:16px;border:1.5px solid transparent">
+              <div style="display:flex;align-items:center;justify-content:center;gap:6px;height:60px">
+                <span style="font-family:'Fraunces',serif;font-size:30px;font-weight:600;color:#8A867E">€</span>
+                <span style="font-family:'Fraunces',serif;font-size:54px;font-weight:600;line-height:1;font-variant-numeric:tabular-nums;color:#22201C">24.50</span>
+              </div>
+              <div style="font-size:12px;color:#8A867E;margin-top:4px">Elisabeth owes you <span style="font-variant-numeric:tabular-nums">€24.50</span> · lower it for a partial payment</div>
+            </div>
+            <div style="display:flex;align-items:center;gap:12px;padding:12px 15px;border:1.5px solid #F1EEE7;border-radius:16px;margin-bottom:18px">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#8A867E" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="5" width="16" height="15" rx="2.5"/><path d="M4 9.5h16M8.5 3v4M15.5 3v4"/></svg>
+              <span style="font-size:14px;font-weight:600;flex:1">Date</span>
+              <span style="font-size:13px;font-weight:700;color:#3F6B52;background:rgba(95,141,114,.13);padding:6px 12px;border-radius:999px">Today</span>
+            </div>
+            <div style="background:#5F8D72;color:#fff;text-align:center;font-weight:700;font-size:16px;padding:16px;border-radius:16px;box-shadow:0 8px 20px -6px rgba(95,141,114,.5)">Record payment</div>
+            <div style="font-size:12.5px;color:#8A867E;text-align:center;line-height:1.45;margin-top:12px;padding:0 10px">This only records it — send the money however you usually do.</div>
+          </div>
+          <div style="position:absolute;bottom:8px;left:50%;transform:translateX(-50%);width:134px;height:5px;border-radius:3px;background:rgba(34,32,28,.22)"></div>
+        </div>
+      </div>
+      <div id="9e" style="flex:none;width:390px">
+        <div style="display:flex;align-items:center;gap:10px;margin-bottom:6px;padding-left:4px">
+          <a href="#9e" style="font:600 10.5px ui-monospace,monospace;padding:3px 7px;background:rgba(0,0,0,.08);color:#22201C;border-radius:5px">9e</a>
+          <span style="font-size:13px;font-weight:600;color:#22201C">Expense detail</span>
+        </div>
+        <p style="font-size:12.5px;line-height:1.5;color:#A7A29A;margin:0 0 14px;padding-left:4px;max-width:390px">Every share, who paid, and who touched it last. "Edit series" changes future ones only.</p>
+        <div style="width:390px;height:812px;border-radius:46px;background:#F5F3EE;color:#22201C;position:relative;overflow:hidden;box-shadow:0 30px 60px -20px rgba(40,34,24,.28),0 0 0 1px rgba(0,0,0,.06)">
+          <div style="height:52px;display:flex;align-items:center;justify-content:space-between;padding:0 30px 0 34px;font-weight:600;font-size:15px;color:#22201C"><span>9:41</span><span style="display:flex;gap:7px;align-items:center"><svg width="18" height="12" viewBox="0 0 18 12" fill="#22201C"><rect x="0" y="7" width="3" height="5" rx=".6"/><rect x="5" y="4.5" width="3" height="7.5" rx=".6"/><rect x="10" y="2" width="3" height="10" rx=".6"/><rect x="15" y="0" width="3" height="12" rx=".6" opacity=".35"/></svg><svg width="24" height="12" viewBox="0 0 24 12" fill="#22201C"><rect x="0" y="0" width="21" height="12" rx="3" fill="none" stroke="#22201C" stroke-opacity=".4"/><rect x="1.5" y="1.5" width="15" height="9" rx="1.6"/><rect x="22" y="4" width="1.6" height="4" rx=".8" opacity=".4"/></svg></span></div>
+          <div style="display:flex;align-items:center;gap:12px;padding:6px 18px 10px">
+            <span style="width:38px;height:38px;border-radius:50%;background:#fff;box-shadow:0 1px 3px rgba(40,34,24,.05);display:flex;align-items:center;justify-content:center;flex:none"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#22201C" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M14.5 5.5L8 12l6.5 6.5"/></svg></span>
+            <span style="flex:1;font-family:'Fraunces',serif;font-size:21px;font-weight:600"></span>
+            <span style="font-size:14.5px;font-weight:700;color:#3F6B52;padding:8px 6px">Edit</span>
+          </div>
+          <div class="ph-scroll" style="height:calc(100% - 52px - 54px);overflow:auto;padding:4px 22px 30px">
+            <div style="display:flex;flex-direction:column;align-items:center;text-align:center;padding:6px 0 22px">
+              <span style="width:56px;height:56px;border-radius:18px;background:#F1EEE7;flex:none;display:flex;align-items:center;justify-content:center"><svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="#6E6A62" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M7 3.5h7.5L18 7v13.5H7z"/><path d="M14.5 3.5V7H18M10 11h5M10 14.5h5M10 18h3"/></svg></span>
+              <div style="font-size:15px;font-weight:600;color:#8A867E;margin-top:14px">Strom · Wien Energie</div>
+              <div style="font-family:'Fraunces',serif;font-size:46px;font-weight:600;line-height:1.1;font-variant-numeric:tabular-nums;margin-top:2px">€86.40</div>
+              <div style="font-size:13px;color:#8A867E;margin-top:6px">Rent &amp; bills · Monday, 3 Nov</div>
+              <div style="display:flex;align-items:center;gap:7px;margin-top:14px;padding:7px 13px 7px 11px;border-radius:999px;background:#F1EEE7;font-size:12.5px;font-weight:600;color:#57534C"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#8A867E" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 11a7 7 0 0 1 12-4.9L18 8"/><path d="M18 4v4h-4"/><path d="M20 13a7 7 0 0 1-12 4.9L6 16"/><path d="M6 20v-4h4"/></svg>Repeats monthly<span style="color:#B7B2A9">·</span><span style="color:#3F6B52;font-weight:700">Edit series</span></div>
+            </div>
+            <div style="font-size:11px;font-weight:700;letter-spacing:.12em;color:#A7A29A;text-transform:uppercase;margin:0 4px 8px">Paid by</div>
+            <div style="background:#fff;border-radius:20px;overflow:hidden;box-shadow:0 1px 3px rgba(40,34,24,.05);margin-bottom:20px">
+              <div style="display:flex;align-items:center;gap:12px;padding:14px 15px"><span style="width:30px;height:30px;border-radius:50%;background:#5F8D72;color:#fff;font-size:14px;font-weight:700;display:flex;align-items:center;justify-content:center;flex:none">L</span><span style="flex:1;font-size:15px;font-weight:600">Lukas<span style="font-size:11.5px;color:#A7A29A;margin-left:6px">you</span></span><span style="font-size:15px;font-weight:700;font-variant-numeric:tabular-nums">€86.40</span></div>
+            </div>
+            <div style="display:flex;align-items:baseline;justify-content:space-between;margin:0 4px 8px"><div style="font-size:11px;font-weight:700;letter-spacing:.12em;color:#A7A29A;text-transform:uppercase;margin:0 4px 8px;margin:0">Shares · split equally</div></div>
+            <div style="background:#fff;border-radius:20px;overflow:hidden;box-shadow:0 1px 3px rgba(40,34,24,.05);margin-bottom:22px">
+              <div style="display:flex;align-items:center;gap:12px;padding:14px 15px;border-bottom:1px solid #F1EEE7"><span style="width:30px;height:30px;border-radius:50%;background:#5F8D72;color:#fff;font-size:14px;font-weight:700;display:flex;align-items:center;justify-content:center;flex:none">L</span><span style="flex:1;font-size:15px;font-weight:600">Lukas</span><span style="font-size:15px;font-weight:700;font-variant-numeric:tabular-nums">€43.20</span></div>
+              <div style="display:flex;align-items:center;gap:12px;padding:14px 15px"><span style="width:30px;height:30px;border-radius:50%;background:#C67C51;color:#fff;font-size:14px;font-weight:700;display:flex;align-items:center;justify-content:center;flex:none">E</span><div style="flex:1"><div style="font-size:15px;font-weight:600">Elisabeth</div><div style="font-size:12px;color:#A35A33;font-weight:600;margin-top:2px">owes Lukas <span style="font-variant-numeric:tabular-nums">€43.20</span> for this</div></div><span style="font-size:15px;font-weight:700;font-variant-numeric:tabular-nums">€43.20</span></div>
+            </div>
+            <div style="font-size:12.5px;color:#A7A29A;text-align:center;line-height:1.6">Added by Lukas · 3 Nov, 06:00<br>Edited by Elisabeth · 4 Nov</div>
+          </div>
+          <div style="position:absolute;bottom:8px;left:50%;transform:translateX(-50%);width:134px;height:5px;border-radius:3px;background:rgba(34,32,28,.22)"></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+
+  <div style="margin-bottom:64px">
+    <div style="display:flex;align-items:baseline;gap:10px;margin-bottom:6px">
+      <span style="font:600 11px ui-monospace,monospace;padding:3px 8px;background:#5F8D72;color:#fff;border-radius:5px">05</span>
+      <span style="font-weight:600;font-size:15px">History, recurring and the empty tab</span>
+    </div>
+    <p style="max-width:780px;font-size:14px;line-height:1.55;color:#8A867E;margin:0 0 30px"></p>
+    <div style="display:flex;flex-wrap:wrap;gap:48px;align-items:flex-start">
+      <div id="9f" style="flex:none;width:390px">
+        <div style="display:flex;align-items:center;gap:10px;margin-bottom:6px;padding-left:4px">
+          <a href="#9f" style="font:600 10.5px ui-monospace,monospace;padding:3px 7px;background:rgba(0,0,0,.08);color:#22201C;border-radius:5px">9f</a>
+          <span style="font-size:13px;font-weight:600;color:#22201C">All activity · "Only mine" on</span>
+        </div>
+        <p style="font-size:12.5px;line-height:1.5;color:#A7A29A;margin:0 0 14px;padding-left:4px;max-width:390px">Grouped by month with what the household spent; paged a month at a time.</p>
+        <div style="width:390px;height:812px;border-radius:46px;background:#F5F3EE;color:#22201C;position:relative;overflow:hidden;box-shadow:0 30px 60px -20px rgba(40,34,24,.28),0 0 0 1px rgba(0,0,0,.06)">
+          <div style="height:52px;display:flex;align-items:center;justify-content:space-between;padding:0 30px 0 34px;font-weight:600;font-size:15px;color:#22201C"><span>9:41</span><span style="display:flex;gap:7px;align-items:center"><svg width="18" height="12" viewBox="0 0 18 12" fill="#22201C"><rect x="0" y="7" width="3" height="5" rx=".6"/><rect x="5" y="4.5" width="3" height="7.5" rx=".6"/><rect x="10" y="2" width="3" height="10" rx=".6"/><rect x="15" y="0" width="3" height="12" rx=".6" opacity=".35"/></svg><svg width="24" height="12" viewBox="0 0 24 12" fill="#22201C"><rect x="0" y="0" width="21" height="12" rx="3" fill="none" stroke="#22201C" stroke-opacity=".4"/><rect x="1.5" y="1.5" width="15" height="9" rx="1.6"/><rect x="22" y="4" width="1.6" height="4" rx=".8" opacity=".4"/></svg></span></div>
+          <div style="display:flex;align-items:center;gap:12px;padding:6px 18px 10px">
+            <span style="width:38px;height:38px;border-radius:50%;background:#fff;box-shadow:0 1px 3px rgba(40,34,24,.05);display:flex;align-items:center;justify-content:center;flex:none"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#22201C" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M14.5 5.5L8 12l6.5 6.5"/></svg></span>
+            <span style="flex:1;font-family:'Fraunces',serif;font-size:21px;font-weight:600">All activity</span>
+            
+          </div>
+          <div style="padding:0 22px">
+            <div style="display:flex;align-items:center;gap:10px;background:#fff;border-radius:14px;padding:12px 14px;box-shadow:0 1px 3px rgba(40,34,24,.05);margin-bottom:12px"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#A7A29A" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="6.5"/><path d="M16 16l4 4"/></svg><span style="font-size:15px;color:#B7B2A9">Search descriptions</span></div>
+            <div style="display:flex;gap:8px;overflow:hidden;margin:0 -22px 18px;padding:0 22px"><span style="flex:none;display:flex;align-items:center;gap:6px;padding:8px 13px;border-radius:999px;font-size:13px;font-weight:600;background:#fff;color:#57534C;border:1.5px solid #E4DFD5">Category<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#A7A29A" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M6 9l6 6 6-6"/></svg></span><span style="flex:none;display:flex;align-items:center;gap:6px;padding:8px 13px;border-radius:999px;font-size:13px;font-weight:600;background:#fff;color:#57534C;border:1.5px solid #E4DFD5">Person<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#A7A29A" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M6 9l6 6 6-6"/></svg></span><span style="flex:none;display:flex;align-items:center;gap:6px;padding:8px 13px;border-radius:999px;font-size:13px;font-weight:600;background:#5F8D72;color:#fff;border:1.5px solid #5F8D72"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg>Only mine</span><span style="flex:none;display:flex;align-items:center;gap:6px;padding:8px 13px;border-radius:999px;font-size:13px;font-weight:600;background:#fff;color:#57534C;border:1.5px solid #E4DFD5">Payments</span></div>
+          </div>
+          <div class="ph-scroll" style="height:calc(100% - 52px - 54px - 120px);overflow:auto;padding:0 22px 30px">
+            <div style="display:flex;align-items:baseline;justify-content:space-between;margin:4px 4px 10px">
+              <span style="font-family:'Fraunces',serif;font-size:19px;font-weight:600">November</span>
+              <span style="font-size:12.5px;font-weight:600;color:#8A867E"><span style="font-variant-numeric:tabular-nums;font-weight:700;color:#22201C">€296.40</span> spent</span>
+            </div>
+            <div style="background:#fff;border-radius:20px;overflow:hidden;box-shadow:0 1px 3px rgba(40,34,24,.05);margin-bottom:22px">
+              <div style="display:flex;align-items:center;gap:12px;padding:12px 15px;border-bottom:1px solid #F1EEE7">
+                <span style="width:36px;height:36px;border-radius:12px;background:#F1EEE7;flex:none;display:flex;align-items:center;justify-content:center"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#6E6A62" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M4 10h16l-1.6 8.4a2 2 0 0 1-2 1.6H7.6a2 2 0 0 1-2-1.6z"/><path d="M8.5 10l3-6M15.5 10l-3-6M9 14v2.5M15 14v2.5"/></svg></span>
+                <div style="flex:1;min-width:0">
+                  <div style="display:flex;align-items:center;gap:6px"><span style="font-size:14.5px;font-weight:600;line-height:1.25;color:#22201C">Weekly shop · Billa</span></div>
+                  <div style="font-size:12px;color:#8A867E;margin-top:2px">Lukas paid <span style="font-variant-numeric:tabular-nums">€42.10</span></div>
+                </div>
+                <div style="text-align:right;flex:none"><div style="font-size:11.5px;font-weight:600;color:#3F6B52">you lent</div><div style="font-size:15px;font-weight:700;color:#3F6B52;font-variant-numeric:tabular-nums;margin-top:1px">€21.05</div></div>
+              </div>
+              <div style="display:flex;align-items:center;gap:12px;padding:12px 15px;border-bottom:1px solid #F1EEE7">
+                <span style="width:36px;height:36px;border-radius:12px;background:#F1EEE7;flex:none;display:flex;align-items:center;justify-content:center"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#6E6A62" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M7 3v7.5M5 3v5a2 2 0 0 0 4 0V3M7 10.5V21"/><path d="M17 21V3c-2 1.6-3 4.4-3 8h3"/></svg></span>
+                <div style="flex:1;min-width:0">
+                  <div style="display:flex;align-items:center;gap:6px"><span style="font-size:14.5px;font-weight:600;line-height:1.25;color:#22201C">Pizza at Riva</span></div>
+                  <div style="font-size:12px;color:#8A867E;margin-top:2px">Elisabeth paid <span style="font-variant-numeric:tabular-nums">€31.80</span></div>
+                </div>
+                <div style="text-align:right;flex:none"><div style="font-size:11.5px;font-weight:600;color:#A35A33">you borrowed</div><div style="font-size:15px;font-weight:700;color:#A35A33;font-variant-numeric:tabular-nums;margin-top:1px">€15.90</div></div>
+              </div>
+              <div style="display:flex;align-items:center;gap:12px;padding:12px 15px;border-bottom:1px solid #F1EEE7">
+                <span style="width:36px;height:36px;border-radius:12px;background:#F1EEE7;flex:none;display:flex;align-items:center;justify-content:center"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#6E6A62" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M5 11V9a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2v2"/><path d="M3.5 11.5a1.5 1.5 0 0 1 3 0V13h11v-1.5a1.5 1.5 0 0 1 3 0V17H3.5z"/><path d="M5.5 17v2M18.5 17v2"/></svg></span>
+                <div style="flex:1;min-width:0">
+                  <div style="display:flex;align-items:center;gap:6px"><span style="font-size:14.5px;font-weight:600;line-height:1.25;color:#22201C">Dish soap &amp; sponges</span></div>
+                  <div style="font-size:12px;color:#8A867E;margin-top:2px">Lukas paid <span style="font-variant-numeric:tabular-nums">€8.70</span></div>
+                </div>
+                <div style="text-align:right;flex:none"><div style="font-size:11.5px;font-weight:600;color:#3F6B52">you lent</div><div style="font-size:15px;font-weight:700;color:#3F6B52;font-variant-numeric:tabular-nums;margin-top:1px">€4.35</div></div>
+              </div>
+              <div style="display:flex;align-items:center;gap:12px;padding:12px 15px;border-bottom:1px solid #F1EEE7">
+                <span style="width:36px;height:36px;border-radius:50%;background:rgba(95,141,114,.10);flex:none;display:flex;align-items:center;justify-content:center"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#5F8D72" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4.5 8.5h14l-3.5-3.5"/><path d="M19.5 15.5h-14l3.5 3.5"/></svg></span>
+                <div style="flex:1;min-width:0">
+                  <div style="font-size:14.5px;font-weight:600;line-height:1.25">Elisabeth paid Lukas <span style="font-variant-numeric:tabular-nums">€18.00</span></div>
+                  <div style="font-size:12px;color:#8A867E;margin-top:2px">Payment · 22 Nov</div>
+                </div>
+              </div>
+              <div style="display:flex;align-items:center;gap:12px;padding:12px 15px;border-bottom:1px solid #F1EEE7">
+                <span style="width:36px;height:36px;border-radius:12px;background:#F1EEE7;flex:none;display:flex;align-items:center;justify-content:center"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#6E6A62" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M7 3.5h7.5L18 7v13.5H7z"/><path d="M14.5 3.5V7H18M10 11h5M10 14.5h5M10 18h3"/></svg></span>
+                <div style="flex:1;min-width:0">
+                  <div style="display:flex;align-items:center;gap:6px"><span style="font-size:14.5px;font-weight:600;line-height:1.25;color:#22201C">Strom · Wien Energie</span><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#A7A29A" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 11a7 7 0 0 1 12-4.9L18 8"/><path d="M18 4v4h-4"/><path d="M20 13a7 7 0 0 1-12 4.9L6 16"/><path d="M6 20v-4h4"/></svg></div>
+                  <div style="font-size:12px;color:#8A867E;margin-top:2px">Lukas paid <span style="font-variant-numeric:tabular-nums">€86.40</span></div>
+                </div>
+                <div style="text-align:right;flex:none"><div style="font-size:11.5px;font-weight:600;color:#3F6B52">you lent</div><div style="font-size:15px;font-weight:700;color:#3F6B52;font-variant-numeric:tabular-nums;margin-top:1px">€43.20</div></div>
+              </div>
+              <div style="display:flex;align-items:center;gap:12px;padding:12px 15px">
+                <span style="width:36px;height:36px;border-radius:12px;background:#F1EEE7;flex:none;display:flex;align-items:center;justify-content:center"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#6E6A62" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="5" y="3.5" width="14" height="13.5" rx="3"/><path d="M5 11h14M8.5 21l1.5-4M15.5 21L14 17M9 14h.01M15 14h.01"/></svg></span>
+                <div style="flex:1;min-width:0">
+                  <div style="display:flex;align-items:center;gap:6px"><span style="font-size:14.5px;font-weight:600;line-height:1.25;color:#22201C">Wiener Linien · 2 tickets</span></div>
+                  <div style="font-size:12px;color:#8A867E;margin-top:2px">Elisabeth paid <span style="font-variant-numeric:tabular-nums">€6.80</span></div>
+                </div>
+                <div style="text-align:right;flex:none"><div style="font-size:11.5px;font-weight:600;color:#A35A33">you borrowed</div><div style="font-size:15px;font-weight:700;color:#A35A33;font-variant-numeric:tabular-nums;margin-top:1px">€3.40</div></div>
+              </div>
+            </div>
+            <div style="display:flex;align-items:baseline;justify-content:space-between;margin:4px 4px 10px">
+              <span style="font-family:'Fraunces',serif;font-size:19px;font-weight:600">October</span>
+              <span style="font-size:12.5px;font-weight:600;color:#8A867E"><span style="font-variant-numeric:tabular-nums;font-weight:700;color:#22201C">€1,168.30</span> spent</span>
+            </div>
+            <div style="background:#fff;border-radius:20px;overflow:hidden;box-shadow:0 1px 3px rgba(40,34,24,.05);margin-bottom:16px">
+              <div style="display:flex;align-items:center;gap:12px;padding:12px 15px;border-bottom:1px solid #F1EEE7">
+                <span style="width:36px;height:36px;border-radius:12px;background:#F1EEE7;flex:none;display:flex;align-items:center;justify-content:center"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#6E6A62" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M7 3.5h7.5L18 7v13.5H7z"/><path d="M14.5 3.5V7H18M10 11h5M10 14.5h5M10 18h3"/></svg></span>
+                <div style="flex:1;min-width:0">
+                  <div style="display:flex;align-items:center;gap:6px"><span style="font-size:14.5px;font-weight:600;line-height:1.25;color:#22201C">Rent</span><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#A7A29A" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 11a7 7 0 0 1 12-4.9L18 8"/><path d="M18 4v4h-4"/><path d="M20 13a7 7 0 0 1-12 4.9L6 16"/><path d="M6 20v-4h4"/></svg></div>
+                  <div style="font-size:12px;color:#8A867E;margin-top:2px">Lukas paid <span style="font-variant-numeric:tabular-nums">€900.00</span></div>
+                </div>
+                <div style="text-align:right;flex:none"><div style="font-size:11.5px;font-weight:600;color:#3F6B52">you lent</div><div style="font-size:15px;font-weight:700;color:#3F6B52;font-variant-numeric:tabular-nums;margin-top:1px">€450.00</div></div>
+              </div>
+              <div style="display:flex;align-items:center;gap:12px;padding:12px 15px;border-bottom:1px solid #F1EEE7">
+                <span style="width:36px;height:36px;border-radius:50%;background:rgba(95,141,114,.10);flex:none;display:flex;align-items:center;justify-content:center"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#5F8D72" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4.5 8.5h14l-3.5-3.5"/><path d="M19.5 15.5h-14l3.5 3.5"/></svg></span>
+                <div style="flex:1;min-width:0">
+                  <div style="font-size:14.5px;font-weight:600;line-height:1.25">Lukas paid Elisabeth <span style="font-variant-numeric:tabular-nums">€40.00</span></div>
+                  <div style="font-size:12px;color:#8A867E;margin-top:2px">Payment · 28 Oct</div>
+                </div>
+              </div>
+              <div style="display:flex;align-items:center;gap:12px;padding:12px 15px">
+                <span style="width:36px;height:36px;border-radius:12px;background:#F1EEE7;flex:none;display:flex;align-items:center;justify-content:center"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#6E6A62" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M4 7.5h16V10a2 2 0 0 0 0 4v2.5H4V14a2 2 0 0 0 0-4z"/><path d="M14 7.5v9" stroke-dasharray="1.6 2"/></svg></span>
+                <div style="flex:1;min-width:0">
+                  <div style="display:flex;align-items:center;gap:6px"><span style="font-size:14.5px;font-weight:600;line-height:1.25;color:#22201C">Konzerthaus tickets</span></div>
+                  <div style="font-size:12px;color:#8A867E;margin-top:2px">Elisabeth paid <span style="font-variant-numeric:tabular-nums">€78.00</span></div>
+                </div>
+                <div style="text-align:right;flex:none"><div style="font-size:11.5px;font-weight:600;color:#A35A33">you borrowed</div><div style="font-size:15px;font-weight:700;color:#A35A33;font-variant-numeric:tabular-nums;margin-top:1px">€39.00</div></div>
+              </div>
+            </div>
+            <div style="text-align:center;font-size:13px;font-weight:600;color:#3F6B52;padding:8px">Load September</div>
+          </div>
+          <div style="position:absolute;bottom:8px;left:50%;transform:translateX(-50%);width:134px;height:5px;border-radius:3px;background:rgba(34,32,28,.22)"></div>
+        </div>
+      </div>
+      <div id="9h" style="flex:none;width:390px">
+        <div style="display:flex;align-items:center;gap:10px;margin-bottom:6px;padding-left:4px">
+          <a href="#9h" style="font:600 10.5px ui-monospace,monospace;padding:3px 7px;background:rgba(0,0,0,.08);color:#22201C;border-radius:5px">9h</a>
+          <span style="font-size:13px;font-weight:600;color:#22201C">Recurring</span>
+        </div>
+        <p style="font-size:12.5px;line-height:1.5;color:#A7A29A;margin:0 0 14px;padding-left:4px;max-width:390px">Reached from the tab&rsquo;s ••• menu.</p>
+        <div style="width:390px;height:812px;border-radius:46px;background:#F5F3EE;color:#22201C;position:relative;overflow:hidden;box-shadow:0 30px 60px -20px rgba(40,34,24,.28),0 0 0 1px rgba(0,0,0,.06)">
+          <div style="height:52px;display:flex;align-items:center;justify-content:space-between;padding:0 30px 0 34px;font-weight:600;font-size:15px;color:#22201C"><span>9:41</span><span style="display:flex;gap:7px;align-items:center"><svg width="18" height="12" viewBox="0 0 18 12" fill="#22201C"><rect x="0" y="7" width="3" height="5" rx=".6"/><rect x="5" y="4.5" width="3" height="7.5" rx=".6"/><rect x="10" y="2" width="3" height="10" rx=".6"/><rect x="15" y="0" width="3" height="12" rx=".6" opacity=".35"/></svg><svg width="24" height="12" viewBox="0 0 24 12" fill="#22201C"><rect x="0" y="0" width="21" height="12" rx="3" fill="none" stroke="#22201C" stroke-opacity=".4"/><rect x="1.5" y="1.5" width="15" height="9" rx="1.6"/><rect x="22" y="4" width="1.6" height="4" rx=".8" opacity=".4"/></svg></span></div>
+          <div style="display:flex;align-items:center;gap:12px;padding:6px 18px 10px">
+            <span style="width:38px;height:38px;border-radius:50%;background:#fff;box-shadow:0 1px 3px rgba(40,34,24,.05);display:flex;align-items:center;justify-content:center;flex:none"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#22201C" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M14.5 5.5L8 12l6.5 6.5"/></svg></span>
+            <span style="flex:1;font-family:'Fraunces',serif;font-size:21px;font-weight:600">Recurring</span>
+            
+          </div>
+          <div class="ph-scroll" style="height:calc(100% - 52px - 54px);overflow:auto;padding:4px 22px 30px">
+            <div style="font-size:13px;color:#8A867E;line-height:1.5;margin:0 4px 16px">Each one is added as a normal expense on its day, at 06:00. Changes here apply to future ones only.</div>
+            <div style="background:#fff;border-radius:20px;overflow:hidden;box-shadow:0 1px 3px rgba(40,34,24,.05)">
+              <div style="display:flex;align-items:center;gap:12px;padding:13px 15px;border-bottom:1px solid #F1EEE7">
+                <span style="width:36px;height:36px;border-radius:12px;background:#F1EEE7;flex:none;display:flex;align-items:center;justify-content:center"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#6E6A62" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M7 3.5h7.5L18 7v13.5H7z"/><path d="M14.5 3.5V7H18M10 11h5M10 14.5h5M10 18h3"/></svg></span>
+                <div style="flex:1;min-width:0">
+                  <div style="font-size:14.5px;font-weight:600">Rent</div>
+                  <div style="font-size:12px;color:#8A867E;margin-top:2px"><span style="font-variant-numeric:tabular-nums;font-weight:600;color:#57534C">€900.00</span> · Monthly · next 1 Dec</div>
+                </div>
+                <span style="width:24px;height:24px;border-radius:50%;background:#5F8D72;color:#fff;font-size:11px;font-weight:700;display:flex;align-items:center;justify-content:center;flex:none">L</span>
+              </div>
+              <div style="display:flex;align-items:center;gap:12px;padding:13px 15px;border-bottom:1px solid #F1EEE7">
+                <span style="width:36px;height:36px;border-radius:12px;background:#F1EEE7;flex:none;display:flex;align-items:center;justify-content:center"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#6E6A62" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M7 3.5h7.5L18 7v13.5H7z"/><path d="M14.5 3.5V7H18M10 11h5M10 14.5h5M10 18h3"/></svg></span>
+                <div style="flex:1;min-width:0">
+                  <div style="font-size:14.5px;font-weight:600">Strom · Wien Energie</div>
+                  <div style="font-size:12px;color:#8A867E;margin-top:2px"><span style="font-variant-numeric:tabular-nums;font-weight:600;color:#57534C">€86.40</span> · Monthly · next 3 Dec</div>
+                </div>
+                <span style="width:24px;height:24px;border-radius:50%;background:#5F8D72;color:#fff;font-size:11px;font-weight:700;display:flex;align-items:center;justify-content:center;flex:none">L</span>
+              </div>
+              <div style="display:flex;align-items:center;gap:12px;padding:13px 15px;border-bottom:1px solid #F1EEE7">
+                <span style="width:36px;height:36px;border-radius:12px;background:#F1EEE7;flex:none;display:flex;align-items:center;justify-content:center"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#6E6A62" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M7 3.5h7.5L18 7v13.5H7z"/><path d="M14.5 3.5V7H18M10 11h5M10 14.5h5M10 18h3"/></svg></span>
+                <div style="flex:1;min-width:0">
+                  <div style="font-size:14.5px;font-weight:600">Internet · Magenta</div>
+                  <div style="font-size:12px;color:#8A867E;margin-top:2px"><span style="font-variant-numeric:tabular-nums;font-weight:600;color:#57534C">€39.90</span> · Monthly · next 15 Dec</div>
+                </div>
+                <span style="width:24px;height:24px;border-radius:50%;background:#C67C51;color:#fff;font-size:11px;font-weight:700;display:flex;align-items:center;justify-content:center;flex:none">E</span>
+              </div>
+              <div style="display:flex;align-items:center;gap:12px;padding:13px 15px;border-bottom:1px solid #F1EEE7">
+                <span style="width:36px;height:36px;border-radius:12px;background:#F1EEE7;flex:none;display:flex;align-items:center;justify-content:center"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#6E6A62" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M4 7.5h16V10a2 2 0 0 0 0 4v2.5H4V14a2 2 0 0 0 0-4z"/><path d="M14 7.5v9" stroke-dasharray="1.6 2"/></svg></span>
+                <div style="flex:1;min-width:0">
+                  <div style="font-size:14.5px;font-weight:600">Netflix</div>
+                  <div style="font-size:12px;color:#8A867E;margin-top:2px"><span style="font-variant-numeric:tabular-nums;font-weight:600;color:#57534C">€13.99</span> · Monthly · next 28 Nov</div>
+                </div>
+                <span style="width:24px;height:24px;border-radius:50%;background:#C67C51;color:#fff;font-size:11px;font-weight:700;display:flex;align-items:center;justify-content:center;flex:none">E</span>
+              </div>
+              <div style="display:flex;align-items:center;gap:12px;padding:13px 15px">
+                <span style="width:36px;height:36px;border-radius:12px;background:#F1EEE7;flex:none;display:flex;align-items:center;justify-content:center"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#6E6A62" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M5 11V9a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2v2"/><path d="M3.5 11.5a1.5 1.5 0 0 1 3 0V13h11v-1.5a1.5 1.5 0 0 1 3 0V17H3.5z"/><path d="M5.5 17v2M18.5 17v2"/></svg></span>
+                <div style="flex:1;min-width:0">
+                  <div style="font-size:14.5px;font-weight:600">Household insurance</div>
+                  <div style="font-size:12px;color:#8A867E;margin-top:2px"><span style="font-variant-numeric:tabular-nums;font-weight:600;color:#57534C">€184.00</span> · Yearly · next 12 Mar</div>
+                </div>
+                <span style="width:24px;height:24px;border-radius:50%;background:#5F8D72;color:#fff;font-size:11px;font-weight:700;display:flex;align-items:center;justify-content:center;flex:none">L</span>
+              </div>
+            </div>
+          </div>
+          <div style="position:absolute;bottom:8px;left:50%;transform:translateX(-50%);width:134px;height:5px;border-radius:3px;background:rgba(34,32,28,.22)"></div>
+        </div>
+      </div>
+      <div id="9h-stop" style="flex:none;width:390px">
+        <div style="display:flex;align-items:center;gap:10px;margin-bottom:6px;padding-left:4px">
+          <a href="#9h-stop" style="font:600 10.5px ui-monospace,monospace;padding:3px 7px;background:rgba(0,0,0,.08);color:#22201C;border-radius:5px">9h · stop</a>
+          <span style="font-size:13px;font-weight:600;color:#22201C">Recurring · one series</span>
+        </div>
+        <p style="font-size:12.5px;line-height:1.5;color:#A7A29A;margin:0 0 14px;padding-left:4px;max-width:390px">Stopping ends the series and keeps the past.</p>
+        <div style="width:390px;height:812px;border-radius:46px;background:#F5F3EE;color:#22201C;position:relative;overflow:hidden;box-shadow:0 30px 60px -20px rgba(40,34,24,.28),0 0 0 1px rgba(0,0,0,.06)">
+          <div style="height:52px;display:flex;align-items:center;justify-content:space-between;padding:0 30px 0 34px;font-weight:600;font-size:15px;color:#22201C"><span>9:41</span><span style="display:flex;gap:7px;align-items:center"><svg width="18" height="12" viewBox="0 0 18 12" fill="#22201C"><rect x="0" y="7" width="3" height="5" rx=".6"/><rect x="5" y="4.5" width="3" height="7.5" rx=".6"/><rect x="10" y="2" width="3" height="10" rx=".6"/><rect x="15" y="0" width="3" height="12" rx=".6" opacity=".35"/></svg><svg width="24" height="12" viewBox="0 0 24 12" fill="#22201C"><rect x="0" y="0" width="21" height="12" rx="3" fill="none" stroke="#22201C" stroke-opacity=".4"/><rect x="1.5" y="1.5" width="15" height="9" rx="1.6"/><rect x="22" y="4" width="1.6" height="4" rx=".8" opacity=".4"/></svg></span></div>
+          <div style="display:flex;align-items:center;gap:12px;padding:6px 18px 10px">
+            <span style="width:38px;height:38px;border-radius:50%;background:#fff;box-shadow:0 1px 3px rgba(40,34,24,.05);display:flex;align-items:center;justify-content:center;flex:none"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#22201C" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M14.5 5.5L8 12l6.5 6.5"/></svg></span>
+            <span style="flex:1;font-family:'Fraunces',serif;font-size:21px;font-weight:600">Recurring</span>
+            
+          </div>
+          <div style="padding:4px 22px;opacity:.5"><div style="background:#fff;border-radius:20px;overflow:hidden;box-shadow:0 1px 3px rgba(40,34,24,.05)">
+              <div style="display:flex;align-items:center;gap:12px;padding:13px 15px;border-bottom:1px solid #F1EEE7">
+                <span style="width:36px;height:36px;border-radius:12px;background:#F1EEE7;flex:none;display:flex;align-items:center;justify-content:center"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#6E6A62" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M7 3.5h7.5L18 7v13.5H7z"/><path d="M14.5 3.5V7H18M10 11h5M10 14.5h5M10 18h3"/></svg></span>
+                <div style="flex:1;min-width:0">
+                  <div style="font-size:14.5px;font-weight:600">Rent</div>
+                  <div style="font-size:12px;color:#8A867E;margin-top:2px"><span style="font-variant-numeric:tabular-nums;font-weight:600;color:#57534C">€900.00</span> · Monthly · next 1 Dec</div>
+                </div>
+                <span style="width:24px;height:24px;border-radius:50%;background:#5F8D72;color:#fff;font-size:11px;font-weight:700;display:flex;align-items:center;justify-content:center;flex:none">L</span>
+              </div>
+              <div style="display:flex;align-items:center;gap:12px;padding:13px 15px;border-bottom:1px solid #F1EEE7">
+                <span style="width:36px;height:36px;border-radius:12px;background:#F1EEE7;flex:none;display:flex;align-items:center;justify-content:center"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#6E6A62" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M7 3.5h7.5L18 7v13.5H7z"/><path d="M14.5 3.5V7H18M10 11h5M10 14.5h5M10 18h3"/></svg></span>
+                <div style="flex:1;min-width:0">
+                  <div style="font-size:14.5px;font-weight:600">Strom · Wien Energie</div>
+                  <div style="font-size:12px;color:#8A867E;margin-top:2px"><span style="font-variant-numeric:tabular-nums;font-weight:600;color:#57534C">€86.40</span> · Monthly · next 3 Dec</div>
+                </div>
+                <span style="width:24px;height:24px;border-radius:50%;background:#5F8D72;color:#fff;font-size:11px;font-weight:700;display:flex;align-items:center;justify-content:center;flex:none">L</span>
+              </div>
+              <div style="display:flex;align-items:center;gap:12px;padding:13px 15px;border-bottom:1px solid #F1EEE7">
+                <span style="width:36px;height:36px;border-radius:12px;background:#F1EEE7;flex:none;display:flex;align-items:center;justify-content:center"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#6E6A62" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M7 3.5h7.5L18 7v13.5H7z"/><path d="M14.5 3.5V7H18M10 11h5M10 14.5h5M10 18h3"/></svg></span>
+                <div style="flex:1;min-width:0">
+                  <div style="font-size:14.5px;font-weight:600">Internet · Magenta</div>
+                  <div style="font-size:12px;color:#8A867E;margin-top:2px"><span style="font-variant-numeric:tabular-nums;font-weight:600;color:#57534C">€39.90</span> · Monthly · next 15 Dec</div>
+                </div>
+                <span style="width:24px;height:24px;border-radius:50%;background:#C67C51;color:#fff;font-size:11px;font-weight:700;display:flex;align-items:center;justify-content:center;flex:none">E</span>
+              </div>
+              <div style="display:flex;align-items:center;gap:12px;padding:13px 15px">
+                <span style="width:36px;height:36px;border-radius:12px;background:#F1EEE7;flex:none;display:flex;align-items:center;justify-content:center"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#6E6A62" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M4 7.5h16V10a2 2 0 0 0 0 4v2.5H4V14a2 2 0 0 0 0-4z"/><path d="M14 7.5v9" stroke-dasharray="1.6 2"/></svg></span>
+                <div style="flex:1;min-width:0">
+                  <div style="font-size:14.5px;font-weight:600">Netflix</div>
+                  <div style="font-size:12px;color:#8A867E;margin-top:2px"><span style="font-variant-numeric:tabular-nums;font-weight:600;color:#57534C">€13.99</span> · Monthly · next 28 Nov</div>
+                </div>
+                <span style="width:24px;height:24px;border-radius:50%;background:#C67C51;color:#fff;font-size:11px;font-weight:700;display:flex;align-items:center;justify-content:center;flex:none">E</span>
+              </div>
+            </div></div>
+          <div style="position:absolute;inset:0;background:rgba(34,32,28,.4)"></div>
+          <div style="position:absolute;bottom:0;left:0;right:0;background:#fff;border-radius:28px 28px 0 0;padding:14px 22px 30px;box-shadow:0 -12px 40px rgba(40,34,24,.18)">
+            <div style="width:38px;height:5px;border-radius:3px;background:#E4DFD5;margin:0 auto 16px"></div>
+            <div style="display:flex;align-items:center;gap:13px;margin-bottom:20px"><span style="width:44px;height:44px;border-radius:14px;background:#F1EEE7;flex:none;display:flex;align-items:center;justify-content:center"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#6E6A62" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M7 3.5h7.5L18 7v13.5H7z"/><path d="M14.5 3.5V7H18M10 11h5M10 14.5h5M10 18h3"/></svg></span><div style="flex:1"><h3 style="font-family:'Fraunces',serif;font-size:22px;font-weight:600;margin:0">Rent</h3><div style="font-size:13px;color:#8A867E;margin-top:2px"><span style="font-variant-numeric:tabular-nums">€900.00</span> · Monthly on the 1st · Lukas pays</div></div></div>
+            <div style="background:#F5F3EE;border-radius:16px;padding:13px 15px;display:flex;align-items:center;gap:10px;margin-bottom:16px"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="#8A867E" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="5" width="16" height="15" rx="2.5"/><path d="M4 9.5h16M8.5 3v4M15.5 3v4"/></svg><span style="flex:1;font-size:14px;font-weight:600">Next one</span><span style="font-size:14px;font-weight:700">Mon, 1 Dec</span></div>
+            <div style="border:1.5px solid #F1EEE7;border-radius:18px;overflow:hidden;margin-bottom:12px">
+              <div style="display:flex;align-items:center;gap:12px;padding:15px"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#8A867E" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M4 20h4L19 9l-4-4L4 16z"/><path d="M13.5 6.5l4 4"/></svg><div style="flex:1"><div style="font-size:14.5px;font-weight:600">Edit series</div><div style="font-size:12px;color:#8A867E;margin-top:2px">Future rents only</div></div><svg width="7" height="12" viewBox="0 0 8 14" fill="none" stroke="#B7B2A9" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M1 1l6 6-6 6"/></svg></div>
+              <div style="display:flex;align-items:center;gap:12px;padding:15px;border-top:1px solid #F1EEE7"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#B83E31" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="8.5"/><path d="M8.5 8.5l7 7"/></svg><div style="flex:1"><div style="font-size:14.5px;font-weight:600;color:#B83E31">Stop repeating</div><div style="font-size:12px;color:#8A867E;margin-top:2px">The 11 rents already added stay as they are</div></div></div>
+            </div>
+          </div>
+          <div style="position:absolute;bottom:8px;left:50%;transform:translateX(-50%);width:134px;height:5px;border-radius:3px;background:rgba(34,32,28,.22)"></div>
+        </div>
+      </div>
+      <div id="9g" style="flex:none;width:390px">
+        <div style="display:flex;align-items:center;gap:10px;margin-bottom:6px;padding-left:4px">
+          <a href="#9g" style="font:600 10.5px ui-monospace,monospace;padding:3px 7px;background:rgba(0,0,0,.08);color:#22201C;border-radius:5px">9g</a>
+          <span style="font-size:13px;font-weight:600;color:#22201C">Empty state</span>
+        </div>
+        <p style="font-size:12.5px;line-height:1.5;color:#A7A29A;margin:0 0 14px;padding-left:4px;max-width:390px">Same family as 7d / 7e / 7f.</p>
+        <div style="width:390px;height:812px;border-radius:46px;background:#F5F3EE;color:#22201C;position:relative;overflow:hidden;box-shadow:0 30px 60px -20px rgba(40,34,24,.28),0 0 0 1px rgba(0,0,0,.06)">
+          <div style="height:52px;display:flex;align-items:center;justify-content:space-between;padding:0 30px 0 34px;font-weight:600;font-size:15px;color:#22201C"><span>9:41</span><span style="display:flex;gap:7px;align-items:center"><svg width="18" height="12" viewBox="0 0 18 12" fill="#22201C"><rect x="0" y="7" width="3" height="5" rx=".6"/><rect x="5" y="4.5" width="3" height="7.5" rx=".6"/><rect x="10" y="2" width="3" height="10" rx=".6"/><rect x="15" y="0" width="3" height="12" rx=".6" opacity=".35"/></svg><svg width="24" height="12" viewBox="0 0 24 12" fill="#22201C"><rect x="0" y="0" width="21" height="12" rx="3" fill="none" stroke="#22201C" stroke-opacity=".4"/><rect x="1.5" y="1.5" width="15" height="9" rx="1.6"/><rect x="22" y="4" width="1.6" height="4" rx=".8" opacity=".4"/></svg></span></div>
+          <div class="ph-scroll" style="height:calc(100% - 52px - 84px);overflow:auto;padding:8px 22px 96px">
+            <div style="display:flex;align-items:center;justify-content:space-between;padding:8px 0 16px">
+              <h2 style="font-family:'Fraunces',serif;font-size:30px;font-weight:600;margin:0;color:#22201C">Expenses</h2>
+              <span style="width:38px;height:38px;border-radius:50%;background:#fff;box-shadow:0 1px 3px rgba(40,34,24,.05);display:flex;align-items:center;justify-content:center"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="#8A867E" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><circle cx="5" cy="12" r="1"/><circle cx="12" cy="12" r="1"/><circle cx="19" cy="12" r="1"/></svg></span>
+            </div>
+          </div>
+          <div style="position:absolute;top:47%;left:0;right:0;transform:translateY(-50%);text-align:center;padding:0 40px"><div style="width:88px;height:88px;border-radius:26px;background:#EFEBE2;margin:0 auto 22px;display:flex;align-items:center;justify-content:center"><svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="#B7B2A9" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M6 3.5h12v17l-2-1.4-2 1.4-2-1.4-2 1.4-2-1.4-2 1.4z"/><path d="M9 8.5h6M9 12h6M9 15.5h3.5"/></svg></div><div style="font-family:'Fraunces',serif;font-size:21px;font-weight:600;margin-bottom:8px">Nothing to split yet</div><div style="font-size:14px;color:#8A867E;line-height:1.5;margin-bottom:22px">Log the weekly shop, the rent, the pizza. Choreganized keeps the tally.</div><div style="display:inline-flex;align-items:center;gap:8px;background:#5F8D72;color:#fff;font-weight:700;font-size:15px;padding:13px 22px;border-radius:14px;box-shadow:0 8px 20px -6px rgba(95,141,114,.5)"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M12 5v14M5 12h14"/></svg>Add an expense</div></div>
+          <div style="position:absolute;bottom:0;left:0;right:0;height:84px;background:rgba(255,255,255,.9);backdrop-filter:blur(18px) saturate(1.1);border-top:1px solid rgba(236,233,226,.8);box-shadow:0 -10px 26px -14px rgba(40,34,24,.16);display:flex;justify-content:space-between;align-items:center;padding:0 16px">
+            <div style="color:#A29E96;padding:10px 8px;flex:none"><svg width="23" height="23" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M2.6 11.7 12 4l9.4 7.7"/><path d="M5 10.2v8.4a1 1 0 0 0 1 1h3.2v-4.3a1.8 1.8 0 0 1 3.6 0v4.3H18a1 1 0 0 0 1-1v-8.4"/></svg></div>
+            <div style="color:#A29E96;padding:10px 8px;flex:none"><svg width="23" height="23" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M5.6 9.7a1.4 1.4 0 0 1 1.4-1.5h10a1.4 1.4 0 0 1 1.4 1.5l.6 9.1a1.8 1.8 0 0 1-1.8 1.9H6.8a1.8 1.8 0 0 1-1.8-1.9z"/><path d="M9.2 10.6V7.3a2.8 2.8 0 0 1 5.6 0v3.3"/></svg></div>
+            <div style="color:#A29E96;padding:10px 8px;flex:none"><svg width="23" height="23" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M7 14.5C4.8 14 3.3 12.3 3.3 10.4 3.3 8.2 5.1 6.5 7.3 6.6 8 4.5 9.9 3.3 12 3.3 14.1 3.3 16 4.5 16.7 6.6 18.9 6.5 20.7 8.2 20.7 10.4 20.7 12.3 19.2 14 17 14.5V19.4a.9.9 0 0 1-.9.9H7.9a.9.9 0 0 1-.9-.9Z"/><path d="M7 16.9h10"/></svg></div>
+            <div style="color:#A29E96;padding:10px 8px;flex:none"><svg width="23" height="23" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M4.5 7.2h8.5M4.5 12h8.5M4.5 16.8h5.5"/><path d="M16.6 6.4l1.7 1.7 3.1-3.2"/></svg></div>
+            <div style="display:flex;align-items:center;gap:8px;padding:10px 15px;border-radius:20px;background:rgba(95,141,114,.14);color:#3F6B52;flex:none"><svg width="21" height="21" viewBox="0 0 24 24" fill="none" stroke="#5F8D72" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 3.5h12v17l-2-1.4-2 1.4-2-1.4-2 1.4-2-1.4-2 1.4z"/><path d="M9 8.5h6M9 12h6M9 15.5h3.5"/></svg><span style="font-size:13.5px;font-weight:600;white-space:nowrap">Expenses</span></div>
+          </div>
+          <div style="position:absolute;bottom:8px;left:50%;transform:translateX(-50%);width:134px;height:5px;border-radius:3px;background:rgba(34,32,28,.22)"></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+
+  <div style="margin-bottom:64px">
+    <div style="display:flex;align-items:baseline;gap:10px;margin-bottom:6px">
+      <span style="font:600 11px ui-monospace,monospace;padding:3px 8px;background:#5F8D72;color:#fff;border-radius:5px">06</span>
+      <span style="font-weight:600;font-size:15px">Home</span>
+    </div>
+    <p style="max-width:780px;font-size:14px;line-height:1.55;color:#8A867E;margin:0 0 30px">The one line Home gains: below the stat tiles, hidden when you are settled up or the household has no expenses yet.</p>
+    <div style="display:flex;flex-wrap:wrap;gap:48px;align-items:flex-start">
+      <div id="8b-expenses" style="flex:none">
+        <div style="display:flex;align-items:center;gap:8px;margin-bottom:14px;padding-left:4px"><a href="#8b-expenses" style="font:600 10.5px ui-monospace,monospace;padding:3px 7px;background:rgba(0,0,0,.08);color:#22201C;border-radius:5px">8b · expenses</a><span style="font-size:13px;color:#6E6A62">Home · with the expenses line</span></div>
+        <div style="width:390px;height:812px;border-radius:46px;background:#F5F3EE;position:relative;overflow:hidden;box-shadow:0 30px 60px -20px rgba(40,34,24,.28),0 0 0 1px rgba(0,0,0,.06)">
+          <div style="height:52px;display:flex;align-items:center;justify-content:space-between;padding:0 30px 0 34px;font-weight:600;font-size:15px"><span>9:41</span><span style="display:flex;gap:7px;align-items:center;opacity:.9"><svg width="18" height="12" viewBox="0 0 18 12"><rect x="0" y="7" width="3" height="5" rx=".6"></rect><rect x="5" y="4.5" width="3" height="7.5" rx=".6"></rect><rect x="10" y="2" width="3" height="10" rx=".6"></rect><rect x="15" y="0" width="3" height="12" rx=".6" opacity=".35"></rect></svg><svg width="24" height="12" viewBox="0 0 24 12"><rect x="0" y="0" width="21" height="12" rx="3" fill="none" stroke="#22201C" stroke-opacity=".4"></rect><rect x="1.5" y="1.5" width="15" height="9" rx="1.6"></rect><rect x="22" y="4" width="1.6" height="4" rx=".8" opacity=".4"></rect></svg></span></div>
+
+          <div class="ph-scroll" style="height:calc(100% - 52px - 84px);overflow:auto;padding:8px 22px 24px">
+            <div style="display:flex;align-items:flex-start;justify-content:space-between;padding:8px 0 20px">
+              <div>
+                <div style="font-size:11px;font-weight:700;letter-spacing:.14em;color:#A7A29A;text-transform:uppercase;margin-bottom:6px">Sonnengasse 12</div>
+                <div style="font-family:'Fraunces',serif;font-size:27px;font-weight:600;line-height:1.05">Good morning,<br>Lukas</div>
+              </div>
+              <div style="display:flex">
+                <div style="width:36px;height:36px;border-radius:50%;background:#5F8D72;color:#fff;font-weight:700;font-size:14px;display:flex;align-items:center;justify-content:center;border:2.5px solid #F5F3EE">L</div>
+                <div style="width:36px;height:36px;border-radius:50%;background:#C67C51;color:#fff;font-weight:700;font-size:14px;display:flex;align-items:center;justify-content:center;border:2.5px solid #F5F3EE;margin-left:-12px">E</div>
+              </div>
+            </div>
+
+            <!-- recent activity mini-feed → links to history -->
+            <a href="#1b" style="text-decoration:none;color:inherit;display:block;margin-bottom:14px">
+              <div style="background:#fff;border-radius:22px;padding:15px 16px 8px;box-shadow:0 1px 3px rgba(40,34,24,.05)">
+                <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px">
+                  <div style="font-size:10px;font-weight:700;letter-spacing:.12em;color:#5F8D72;text-transform:uppercase">Recent activity</div>
+                  <div style="display:flex;align-items:center;gap:3px;font-size:12px;font-weight:600;color:#8A867E">All<svg width="6" height="10" viewBox="0 0 8 14" fill="none" stroke="#C4BFB6" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M1 1l6 6-6 6"></path></svg></div>
+                </div>
+                <div style="display:flex;align-items:center;gap:11px;padding-bottom:11px;border-bottom:1px solid #F1EEE7">
+                  <span style="width:28px;height:28px;border-radius:50%;background:#EEF3F0;flex:none;display:flex;align-items:center;justify-content:center"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#5F8D72" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M4 12l5 5L20 6"></path></svg></span>
+                  <div style="flex:1"><span style="font-size:14px;font-weight:600">Change the bedsheets</span><div style="font-size:11.5px;color:#8A867E;margin-top:1px">Lukas · 8:20</div></div>
+                  <span style="font-size:12px;font-weight:700;color:#5F8D72">+20</span>
+                </div>
+                <div style="display:flex;align-items:center;gap:11px;padding:11px 0 12px">
+                  <span style="width:28px;height:28px;border-radius:50%;background:#F7EDE6;flex:none;display:flex;align-items:center;justify-content:center"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#C67C51" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M4 12l5 5L20 6"></path></svg></span>
+                  <div style="flex:1"><span style="font-size:14px;font-weight:600">Water the plants</span><div style="font-size:11.5px;color:#8A867E;margin-top:1px">Elisabeth · 7:45</div></div>
+                  <span style="font-size:12px;font-weight:700;color:#C67C51">+5</span>
+                </div>
+              </div>
+            </a>
+
+            <div style="background:#fff;border-radius:22px;padding:16px;display:flex;gap:14px;align-items:center;box-shadow:0 1px 3px rgba(40,34,24,.05);margin-bottom:14px">
+              <div style="width:66px;height:66px;border-radius:16px;flex:none;background:repeating-linear-gradient(45deg,#EFEBE2,#EFEBE2 6px,#E6E1D6 6px,#E6E1D6 12px);display:flex;align-items:center;justify-content:center;font-family:ui-monospace,monospace;font-size:8px;color:#A7A29A;text-align:center">dish<br>photo</div>
+              <div style="flex:1">
+                <div style="font-size:10px;font-weight:700;letter-spacing:.12em;color:#5F8D72;text-transform:uppercase;margin-bottom:4px">Tonight's dinner</div>
+                <div style="font-family:'Fraunces',serif;font-size:18px;font-weight:600;line-height:1.15;margin-bottom:5px">Creamy mushroom pasta</div>
+                <div style="display:flex;align-items:center;gap:6px;font-size:12px;color:#8A867E"><span style="width:18px;height:18px;border-radius:50%;background:#C67C51;color:#fff;font-size:9px;font-weight:700;display:flex;align-items:center;justify-content:center">E</span>Elisabeth is cooking</div>
+              </div>
+            </div>
+
+            <div style="display:flex;gap:12px;margin-bottom:14px">
+              <div style="flex:1;background:#fff;border-radius:20px;padding:15px;box-shadow:0 1px 3px rgba(40,34,24,.05)">
+                <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#5F8D72" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" style="margin-bottom:10px"><path d="M6 8h12l-1 11a2 2 0 0 1-2 2H9a2 2 0 0 1-2-2L6 8z"></path><path d="M9 8a3 3 0 0 1 6 0"></path></svg>
+                <div style="font-family:'Fraunces',serif;font-size:24px;font-weight:600;line-height:1">7</div>
+                <div style="font-size:12.5px;color:#8A867E;margin-top:3px">on shopping list</div>
+              </div>
+              <div style="flex:1;background:#fff;border-radius:20px;padding:15px;box-shadow:0 1px 3px rgba(40,34,24,.05)">
+                <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#C67C51" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" style="margin-bottom:10px"><path d="M4 7h11M4 12h11M4 17h7"></path><path d="M18.5 6l1.6 1.6L23 4.5"></path></svg>
+                <div style="font-family:'Fraunces',serif;font-size:24px;font-weight:600;line-height:1">2</div>
+                <div style="font-size:12.5px;color:#8A867E;margin-top:3px">tasks due today</div>
+              </div>
+            </div>
+            <a href="#9a" style="display:flex;align-items:center;gap:11px;background:#fff;border-radius:16px;padding:13px 16px;box-shadow:0 1px 3px rgba(40,34,24,.05);margin-bottom:14px;color:inherit;text-decoration:none">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#5F8D72" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M6 3.5h12v17l-2-1.4-2 1.4-2-1.4-2 1.4-2-1.4-2 1.4z"/><path d="M9 8.5h6M9 12h6M9 15.5h3.5"/></svg>
+              <span style="flex:1;font-size:14px;font-weight:600;color:#22201C">You&rsquo;re owed <span style="color:#3F6B52;font-variant-numeric:tabular-nums">€24.50</span> <span style="color:#8A867E;font-weight:500">· Elisabeth</span></span>
+              <svg width="7" height="12" viewBox="0 0 8 14" fill="none" stroke="#C4BFB6" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M1 1l6 6-6 6"/></svg>
+            </a>
+
+            <!-- slim standings strip → History -->
+            <a href="#1b" style="text-decoration:none;color:inherit;display:block">
+              <div style="background:#fff;border-radius:22px;padding:14px 16px;display:flex;align-items:center;gap:12px;box-shadow:0 1px 3px rgba(40,34,24,.05)">
+                <span style="width:36px;height:36px;border-radius:12px;flex:none;background:#FBF3DE;display:flex;align-items:center;justify-content:center"><svg width="20" height="16" viewBox="0 0 24 24" fill="#E4B23C"><path d="M3 7l4.5 4L12 4l4.5 7L21 7l-1.6 12H4.6L3 7z"></path></svg></span>
+                <div style="flex:1">
+                  <div style="font-size:14.5px;font-weight:700;line-height:1.15">You're 1st this month</div>
+                  <div style="font-size:12px;color:#8A867E;margin-top:1px">240 pts · 30 ahead of Elisabeth</div>
+                </div>
+                <div style="display:flex;align-items:center">
+                  <span style="width:26px;height:26px;border-radius:50%;background:#5F8D72;color:#fff;font-size:10px;font-weight:700;display:flex;align-items:center;justify-content:center;border:2px solid #fff">L</span>
+                  <span style="width:26px;height:26px;border-radius:50%;background:#C67C51;color:#fff;font-size:10px;font-weight:700;display:flex;align-items:center;justify-content:center;border:2px solid #fff;margin-left:-9px">E</span>
+                  <span style="width:26px;height:26px;border-radius:50%;background:#5E7CA3;color:#fff;font-size:10px;font-weight:700;display:flex;align-items:center;justify-content:center;border:2px solid #fff;margin-left:-9px">M</span>
+                </div>
+              </div>
+            </a>
+          </div>
+
+          <div style="position:absolute;bottom:0;left:0;right:0;height:84px;background:rgba(255,255,255,.9);backdrop-filter:blur(18px) saturate(1.1);border-top:1px solid rgba(236,233,226,.8);box-shadow:0 -10px 26px -14px rgba(40,34,24,.16);display:flex;justify-content:space-between;align-items:center;padding:0 16px">
+            <div style="display:flex;align-items:center;gap:8px;padding:10px 15px;border-radius:20px;background:rgba(95,141,114,.14);color:#3F6B52;flex:none"><svg width="21" height="21" viewBox="0 0 24 24" fill="none" stroke="#5F8D72" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M2.6 11.7 12 4l9.4 7.7"/><path d="M5 10.2v8.4a1 1 0 0 0 1 1h3.2v-4.3a1.8 1.8 0 0 1 3.6 0v4.3H18a1 1 0 0 0 1-1v-8.4"/></svg><span style="font-size:13.5px;font-weight:600;white-space:nowrap">Home</span></div>
+            <div style="color:#A29E96;padding:10px 8px;flex:none"><svg width="23" height="23" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M5.6 9.7a1.4 1.4 0 0 1 1.4-1.5h10a1.4 1.4 0 0 1 1.4 1.5l.6 9.1a1.8 1.8 0 0 1-1.8 1.9H6.8a1.8 1.8 0 0 1-1.8-1.9z"/><path d="M9.2 10.6V7.3a2.8 2.8 0 0 1 5.6 0v3.3"/></svg></div>
+            <div style="color:#A29E96;padding:10px 8px;flex:none"><svg width="23" height="23" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M7 14.5C4.8 14 3.3 12.3 3.3 10.4 3.3 8.2 5.1 6.5 7.3 6.6 8 4.5 9.9 3.3 12 3.3 14.1 3.3 16 4.5 16.7 6.6 18.9 6.5 20.7 8.2 20.7 10.4 20.7 12.3 19.2 14 17 14.5V19.4a.9.9 0 0 1-.9.9H7.9a.9.9 0 0 1-.9-.9Z"/><path d="M7 16.9h10"/></svg></div>
+            <div style="color:#A29E96;padding:10px 8px;flex:none"><svg width="23" height="23" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M4.5 7.2h8.5M4.5 12h8.5M4.5 16.8h5.5"/><path d="M16.6 6.4l1.7 1.7 3.1-3.2"/></svg></div>
+            <div style="color:#A29E96;padding:10px 8px;flex:none"><svg width="23" height="23" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M6 3.5h12v17l-2-1.4-2 1.4-2-1.4-2 1.4-2-1.4-2 1.4z"/><path d="M9 8.5h6M9 12h6M9 15.5h3.5"/></svg></div>
+          </div>
+          <div style="position:absolute;bottom:8px;left:50%;transform:translateX(-50%);width:134px;height:5px;border-radius:3px;background:rgba(34,32,28,.22)"></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+</div>
+</x-dc>
+</body>
+</html>

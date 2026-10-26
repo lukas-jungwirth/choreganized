@@ -1,17 +1,28 @@
 # 29 · Expenses: log, split, settle up
 
-**Status: todo — waiting for design.** Depends on: 10 (settings), 09 (history paging shape).
+**Status: todo.** Depends on: 10 (settings), 09 (history paging shape).
 SPEC: [§11](../SPEC.md) "Expenses".
-Design: **[9a]–[9g] don't exist yet**. A design pass draws them into
-`design/Hearth.dc.html` first. Until then this is `size:l` and no agent builds it.
+Design: **[`design/Expenses.dc.html`](../../design/Expenses.dc.html)**, frames [9a]–[9g] and
+their state variants (SPEC §11 lists them). Open it in a browser and build to the pixels.
 
 **Goal:** the fifth tab. A member logs what they (or a housemate) paid, splits it four ways,
 and sees at a glance who owes whom, with the house's debts reduced to the fewest payments.
 Recurring expenses and push are plan 30.
 
-## For the design pass
+## From the design
 
-What the frames need to answer. SPEC §11 has the behaviour and the copy.
+Things the frames decided that the build must carry:
+
+- **The tab bar changes for every tab** [9a-tabbar]: icons only, and the active tab gets a
+  sage pill with its label. That is a change to `shell/TabBar`, so every screen's visual
+  baseline moves with this plan. Refresh them on purpose, in the same PR.
+- **Dark money colours** [9a-dark]: owed `#93C2A2`, owe `#E6AA78`, each on a 14% tint of
+  itself. They become `light-dark()` tokens in `app.css` (e.g. `--owed`, `--owe`,
+  `--owed-tint`, `--owe-tint`), not hexes in components.
+- **Money uses tabular figures** everywhere. One utility class or token in `app.css`.
+- The ••• menu [9a-owe] holds Recurring (count), All activity and Expense settings.
+
+What the design pass was asked for, kept as the checklist the frames were drawn against:
 
 - **[9a] tab**: balance card in its three states (owed · owe · settled), with one, two and
   three settle-up lines (2-person and 3-person households). The recent list with an expense
@@ -36,13 +47,13 @@ What the frames need to answer. SPEC §11 has the behaviour and the copy.
 ## Data model
 
 New tables, all household-scoped (DATA-MODEL principle 1). Money is **integer minor units**
-(cents) everywhere. Floats never touch it (→ DECISIONS #167).
+(cents) everywhere. Floats never touch it (→ DECISIONS #168).
 
 ```ts
 households.currency            text NOT NULL DEFAULT 'EUR'   // ISO 4217; locked once expenses exist
 households.splitDefaultMode    text enum('equal','percent','shares') NOT NULL DEFAULT 'equal'
 
-ledger_people                                     // the "person" seam (→ DECISIONS #166)
+ledger_people                                     // the "person" seam (→ DECISIONS #167)
   id, householdId → households CASCADE
   memberId → members SET NULL, UNIQUE where not null   // null = former member (later: guest)
   kind      text enum('member','guest') NOT NULL DEFAULT 'member'   // 'guest' reserved, unused
@@ -142,5 +153,6 @@ expense_shares
       and settling it removes them from pickers.
 - [ ] Currency locked after the first expense. `24,50 €` in German, `€24.50` in English.
 - [ ] Both themes, 390px, five-tab bar fits in both languages.
-- [ ] `npm run verify` + `npm run test:visual` clean. DATA-MODEL, ARCHITECTURE routing map
-      and DECISIONS updated.
+- [ ] Screens match `design/Expenses.dc.html`, including the new tab bar on all five tabs.
+- [ ] `npm run verify` + `npm run test:visual` clean (baselines refreshed for the tab bar).
+      DATA-MODEL, ARCHITECTURE routing map and DECISIONS updated.

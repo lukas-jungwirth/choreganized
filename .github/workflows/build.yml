@@ -1,8 +1,8 @@
 # Build what triage handed on, or what a person approved (→ docs/plans/18-agent-build.md,
 # DECISIONS #143). The trigger is never the issue itself: a person adds `agent:build`
 # to anything the agent may build (`size:s` / `size:m`), and triage's apply job
-# dispatches this workflow for a small bug the import probe reproduced (→ plan 26,
-# DECISIONS #164). The agent branches off `dev`, commits a test that reproduces the
+# dispatches this workflow for a small bug whose cause it found (→ plan 26,
+# DECISIONS #164, #165). The agent branches off `dev`, commits a test that reproduces the
 # report, fixes it, has a fresh-context reviewer read the diff, runs `npm run verify`,
 # opens a PR against `dev` and enables auto-merge — CI decides the merge; the
 # release PR `dev → main` (release.yml) stays a human merge.

@@ -127,10 +127,18 @@ adapter: the old `RecipePage` has no `reader` field.
 4. #32 also set `fixed-on-dev` when it opened. Now `merged.yml` sets it at merge, which doesn't
    prevent a wrong fix by itself. With the red reproduction, though, there is no merge.
 
+**Widened the same day** (DECISIONS #165): the dispatch no longer requires `reproduced`. Triage
+has no app to click through, so only recipe-import bugs could ever be "reproduced" there, and a
+UI bug whose cause is plain in the code (a button with no handler) always waited for a person.
+The check the plan wanted moved into the build itself: its `Reproduce #N` test must fail on
+`dev` for the reported reason, or it stops with a question. Triage still reports `reproduced`,
+keeps `found` for a cause it can point at, and calls a cause the probe contradicts `plausible`.
+
 ## Acceptance
 
 - [ ] A small bug with a probe-reproduced symptom builds without a person. A small bug that is
-      only "found" from source waits, and the comment says why. _Live run after the release PR.
+      only "found" from source waits, and the comment says why. _Changed by DECISIONS #165: a
+      small bug with a found cause builds without a person; a `plausible` one waits._ _Live run after the release PR.
       Checked so far: the dispatch condition, `--json-schema` returning a verdict from the CLI,
       the schema surviving the action's own argument parsing (shell-quote), and the probe job's
       script on #31's real page._

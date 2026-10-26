@@ -2407,7 +2407,20 @@ units | null, name}`, written back as editor lines in the reader's unit spelling
        reporter's own words. A `Reproduce #31` test from the saved page stays red under #32's
        change (plan 26, "Built").
 
-165. **Expenses join the app as a fifth tab, and the house is one pot** (SPEC §11, plans 29–30).
+165. **A small bug with a found cause builds without a person; `reproduced` is reported, not
+     required** (`triage.yml`'s hand-on `if:`, `/triage-issue`, Lukas's call 2026-10-26). #164
+     started a build by itself only when the import probe had shown the symptom. Triage has no
+     running app, so that meant recipe-import bugs only. "The button does nothing, and the code
+     plainly has no handler" waited for a person like everything else. The check #164 wanted,
+     seeing the bug before fixing it, already sits in the build: `Reproduce #N` must fail on
+     `dev` for the reported reason, or the build stops with `needs-info` or a `WIP:` draft. So
+     the dispatch now needs `bug`, `size:s`, `confidence: found`, no open questions and nothing
+     fixing it on `dev`. Triage keeps `found` for a cause it can point at that explains the whole
+     report. A cause the probe contradicts is `plausible`, and that, an open question or
+     `size:m` still waits. The human gate is unchanged: agent PRs merge into `dev` on green CI,
+     and `main` moves only when Lukas merges the release PR. The costs are more build runs (some
+     end in "couldn't reproduce") and more agent PRs in each release.
+166. **Expenses join the app as a fifth tab, and the house is one pot** (SPEC §11, plans 29–30).
      The spec said "No finances", which was a v1 scope cut, not a principle. Lukas asked for a
      Splitwise-style tally (2026-10-26), and it lives where the household already is.
      - **A tab, not a Home card.** Logging a spend right after the shop has to be quick. Home
@@ -2423,7 +2436,7 @@ units | null, name}`, written back as editor lines in the reader's unit spelling
      - **V1 = plan 29 (log, split, settle, search, categories) + plan 30 (recurring, push).**
        Receipt photos, the shopping-trip "log this?" hook, guests, several currencies and
        charts wait (SPEC §11.14).
-166. **Splits point at `ledger_people`, not at `members`** (plan 29). Two reasons, one
+167. **Splits point at `ledger_people`, not at `members`** (plan 29). Two reasons, one
      table. A member who leaves owing money must keep that balance, but `task_completions`'
      snapshot + `SET NULL` trick loses the identity that a balance has to add up against.
      And guests (people outside the household) need to pay and share without being members. A
@@ -2431,12 +2444,20 @@ units | null, name}`, written back as editor lines in the reader's unit spelling
      outlives it with `memberId` NULL. Guests will be `kind='guest'` rows with no member and
      no migration of old data. Linking people across households stays out (multi-household is
      deferred, #Later).
-167. **Money is integer cents, split by largest remainder** (`utils/money.ts`, plan 29). No
+168. **Money is integer cents, split by largest remainder** (`utils/money.ts`, plan 29). No
      float ever holds an amount. Equal, % and shares compute each share's exact fraction,
      floor it to cents, and give the leftover cents one each to the largest remainders, ties
      in list order. The server recomputes every split from what was typed (`input`) and never
      stores client-computed shares, so `Σ shares = amount` holds for every row.
-168. **One currency per household, locked once there are expenses** (SPEC §11.10). Amounts
+169. **One currency per household, locked once there are expenses** (SPEC §11.10). Amounts
      carry no currency of their own. Changing the setting later would relabel every stored
      number (€42 becoming 42 CHF), so the owner can pick it only while the tally is empty.
      Several currencies with conversion is out of scope.
+170. **The expenses design lives in its own page, and five tabs show one label**
+     (`design/Expenses.dc.html`, SPEC §11.2). Claude Design drew the frames into a new page
+     rather than the July canvas. It reads the same `support.js`. Copying them into
+     `Hearth.dc.html` would mean rewriting an exported canvas by hand, for no gain. Anchors
+     stay `9a`–`9h`, with suffixed state variants (`9a-owe`, `9c-ok`). Five labelled tabs
+     don't fit 390px in German, so the bar becomes **icons, with only the active tab labelled**
+     in a sage pill. That holds for all five tabs, so plan 29 changes `shell/TabBar` and
+     refreshes every screen's baseline.
