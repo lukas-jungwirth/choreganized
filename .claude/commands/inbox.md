@@ -12,7 +12,8 @@ Since plan 18 the build agent works the inbox too, so show what it is doing as w
    doing or worth closing, and either answer is better than another month:
    `gh issue list --state open --label idea --json number,title,labels,createdAt`
 3. Anything still labelled `needs-info`, so I can answer it myself.
-4. Anything labelled `fixed-on-dev` — built and merged into `dev`, waiting on the promotion.
+4. Anything labelled `fixed-on-dev` — built and merged into `dev` (`merged.yml` adds the label
+   when the PR merges), waiting on the promotion.
    `Closes #N` only acts on the default branch, so these stay open until the release PR
    (`Release: dev → main`, whose body `release.yml` keeps listing them) merges.
 5. **The agent's pull requests** —
@@ -24,7 +25,9 @@ Since plan 18 the build agent works the inbox too, so show what it is doing as w
    - **draft `WIP:`** — the agent gave up; its comment names the failing test. A desk session
      picks the branch up.
 6. Issues labelled `agent:build` with no pull request, open or merged — a run that died. Retry
-   with `gh workflow run build.yml -f issue=<n>` (Actions → Build → Run workflow).
+   with `gh workflow run build.yml -f issue=<n>` (Actions → Build → Run workflow). One that
+   also carries `needs-info` stopped on purpose: the agent couldn't reproduce it, or couldn't
+   answer one of triage's open questions, and its comment asks the one question (→ plan 26).
 7. The release PR — `gh pr list --base main --head dev --state open --json number,title,mergeStateStatus`.
    `release.yml` opens it and rewrites its body on every push to `dev`; don't open one by hand.
    If `dev` is ahead (`git log --oneline origin/main..origin/dev`) and there is none, the

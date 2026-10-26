@@ -9,37 +9,37 @@ design frames and SPEC sections apply, and how to know it's done.
 Update this table when you start/finish a plan (statuses: `todo` · `in progress` · `done`,
 plus your session date). Note deviations in the plan file and in DECISIONS.md.
 
-| #   | Plan                                                                                             | Status                                                    | Depends on               |
-| --- | ------------------------------------------------------------------------------------------------ | --------------------------------------------------------- | ------------------------ |
-| 00  | [Foundation: auth, guards, hooks, login](00-foundation.md)                                       | done (2026-07-22)                                         | —                        |
-| 01  | [Onboarding & household](01-onboarding.md)                                                       | done (2026-07-22)                                         | 00                       |
-| 02  | [App shell & Home v1](02-shell-home.md)                                                          | done (2026-07-22)                                         | 01                       |
-| 03  | [Shopping](03-shopping.md)                                                                       | done (2026-07-22)                                         | 02                       |
-| 04  | [Tasks core](04-tasks.md)                                                                        | done (2026-07-22)                                         | 02                       |
-| 05  | [Push infrastructure](05-push-infra.md)                                                          | done (2026-07-22)                                         | 02                       |
-| 06  | [Task reminders](06-task-reminders.md)                                                           | done (2026-07-22)                                         | 04, 05                   |
-| 07  | [Cooking: recipes & meal plan](07-cooking.md)                                                    | done (2026-07-22)                                         | 02 (03 for shopping add) |
-| 08  | [Cook mode & timers](08-cook-mode.md)                                                            | done (2026-07-22)                                         | 07, 05                   |
-| 09  | [History, leaderboard & Home completion](09-history-leaderboard.md)                              | done (2026-07-22)                                         | 04                       |
-| 10  | [Settings & members](10-settings-members.md)                                                     | done (2026-07-22)                                         | 01 (05 for prefs)        |
-| 11  | [PWA, polish & deploy](11-pwa-deploy.md)                                                         | done (2026-07-23)                                         | all                      |
-| 12  | [Recipe import from a link](12-recipe-import.md)                                                 | done (2026-07-25)                                         | 07, 11                   |
-| 13  | [AI import: fallback, text & photos](13-ai-import.md)                                            | done (2026-07-25)                                         | 12, 10                   |
-| 14  | ["Add a recipe" chooser & focused import modes](14-add-chooser.md)                               | done (2026-07-25)                                         | 12, 13                   |
-| 15  | [Live shopping list](15-live-shopping.md)                                                        | done (2026-09-10)                                         | 03                       |
-| 16  | [In-app feedback → a GitHub issue](16-feedback.md)                                               | done (2026-09-11)                                         | 10, 11                   |
-| 17  | [The test workflow: CI as the gate](17-test-workflow.md)                                         | done (2026-09-11)                                         | 11, 16                   |
-| 18  | [Build agent: from an issue to code on `dev`](18-agent-build.md)                                 | done (2026-09-14)                                         | 16, 17                   |
-| 19  | [Tap the version to copy it](19-copy-version.md)                                                 | done (2026-09-14)                                         | 16                       |
-| 20  | [AI providers: your own key, live model picker, backup](20-ai-providers.md)                      | done (2026-10-18)                                         | 13, 14                   |
-| 21  | [Named step timers & German durations](21-step-timers.md)                                        | done (2026-10-18)                                         | 08                       |
-| 22  | [Smarter import: link + AI, Microdata, enriched drafts](22-smarter-import.md)                    | done (2026-10-18)                                         | 20, 21                   |
-| 23  | [Amounts in step text follow servings](23-step-amounts.md)                                       | done (2026-10-18)                                         | 07                       |
-| 24  | [Austrian wording (fixed word list)](24-austrian-wording.md)                                     | done (2026-10-18)                                         | 22                       |
-| 25  | [Agent lane: no silent refusals, runs you can check](25-agent-evidence.md)                       | in progress (built 2026-10-25, live runs after promotion) | 18                       |
-| 26  | [Agent lane: reproduce first, review second](26-agent-reproduce-review.md)                       | todo                                                      | 25                       |
-| 27  | [Agent lane: ideas as proposals, a hardened lane](27-agent-ideas-safety.md)                      | todo                                                      | 26                       |
-| 28  | [Import: AI repairs bad cards, text without AI, smaller photos](28-import-repair-text-photos.md) | todo                                                      | 22                       |
+| #   | Plan                                                                                             | Status            | Depends on               |
+| --- | ------------------------------------------------------------------------------------------------ | ----------------- | ------------------------ |
+| 00  | [Foundation: auth, guards, hooks, login](00-foundation.md)                                       | done (2026-07-22) | —                        |
+| 01  | [Onboarding & household](01-onboarding.md)                                                       | done (2026-07-22) | 00                       |
+| 02  | [App shell & Home v1](02-shell-home.md)                                                          | done (2026-07-22) | 01                       |
+| 03  | [Shopping](03-shopping.md)                                                                       | done (2026-07-22) | 02                       |
+| 04  | [Tasks core](04-tasks.md)                                                                        | done (2026-07-22) | 02                       |
+| 05  | [Push infrastructure](05-push-infra.md)                                                          | done (2026-07-22) | 02                       |
+| 06  | [Task reminders](06-task-reminders.md)                                                           | done (2026-07-22) | 04, 05                   |
+| 07  | [Cooking: recipes & meal plan](07-cooking.md)                                                    | done (2026-07-22) | 02 (03 for shopping add) |
+| 08  | [Cook mode & timers](08-cook-mode.md)                                                            | done (2026-07-22) | 07, 05                   |
+| 09  | [History, leaderboard & Home completion](09-history-leaderboard.md)                              | done (2026-07-22) | 04                       |
+| 10  | [Settings & members](10-settings-members.md)                                                     | done (2026-07-22) | 01 (05 for prefs)        |
+| 11  | [PWA, polish & deploy](11-pwa-deploy.md)                                                         | done (2026-07-23) | all                      |
+| 12  | [Recipe import from a link](12-recipe-import.md)                                                 | done (2026-07-25) | 07, 11                   |
+| 13  | [AI import: fallback, text & photos](13-ai-import.md)                                            | done (2026-07-25) | 12, 10                   |
+| 14  | ["Add a recipe" chooser & focused import modes](14-add-chooser.md)                               | done (2026-07-25) | 12, 13                   |
+| 15  | [Live shopping list](15-live-shopping.md)                                                        | done (2026-09-10) | 03                       |
+| 16  | [In-app feedback → a GitHub issue](16-feedback.md)                                               | done (2026-09-11) | 10, 11                   |
+| 17  | [The test workflow: CI as the gate](17-test-workflow.md)                                         | done (2026-09-11) | 11, 16                   |
+| 18  | [Build agent: from an issue to code on `dev`](18-agent-build.md)                                 | done (2026-09-14) | 16, 17                   |
+| 19  | [Tap the version to copy it](19-copy-version.md)                                                 | done (2026-09-14) | 16                       |
+| 20  | [AI providers: your own key, live model picker, backup](20-ai-providers.md)                      | done (2026-10-18) | 13, 14                   |
+| 21  | [Named step timers & German durations](21-step-timers.md)                                        | done (2026-10-18) | 08                       |
+| 22  | [Smarter import: link + AI, Microdata, enriched drafts](22-smarter-import.md)                    | done (2026-10-18) | 20, 21                   |
+| 23  | [Amounts in step text follow servings](23-step-amounts.md)                                       | done (2026-10-18) | 07                       |
+| 24  | [Austrian wording (fixed word list)](24-austrian-wording.md)                                     | done (2026-10-18) | 22                       |
+| 25  | [Agent lane: no silent refusals, runs you can check](25-agent-evidence.md)                       | done (2026-10-26) | 18                       |
+| 26  | [Agent lane: reproduce first, review second](26-agent-reproduce-review.md)                       | done (2026-10-26) | 25                       |
+| 27  | [Agent lane: ideas as proposals, a hardened lane](27-agent-ideas-safety.md)                      | todo              | 26                       |
+| 28  | [Import: AI repairs bad cards, text without AI, smaller photos](28-import-repair-text-photos.md) | todo              | 22                       |
 
 Work done after the twelve plans, tracked here so the queue stays the whole story:
 
@@ -130,9 +130,9 @@ on one screen before you build against them — and add your new ones to that pa
    tick the plan's acceptance boxes.
 
 **Where work comes from now** (plan 18): the plans above are the queue; GitHub issues are the
-inbox. Triage labels every new issue; `agent:build` — added by triage for a small bug with a
-located cause, by a person for any `size:s` / `size:m` issue — starts the build workflow, which
-branches off `dev`, builds the change with a test, and opens a PR that merges itself into `dev`
-on green CI. An approved idea becomes its plan file in that PR. A desk session takes `size:l`
+inbox. Triage labels every new issue; a person adding `agent:build` to any `size:s` / `size:m`
+issue — or triage's own dispatch, for a small bug whose cause it found (plan 26) — starts
+the build workflow, which branches off `dev`, reproduces the report in a test, fixes it, has the
+`reviewer` subagent read the diff, and opens a PR that merges itself into `dev` on green CI. An approved idea becomes its plan file in that PR. A desk session takes `size:l`
 (a screen with no frame in `design/Hearth.dc.html`) and whatever the agent left as a `WIP:`
 draft; `/inbox` shows both.

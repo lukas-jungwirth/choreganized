@@ -41,3 +41,6 @@ vite.config.ts.timestamp-*
 # …and the launch config: its `verify` entry is how a session signs in without
 # Google (E2E_MODE), and docs/TESTING.md points at it (→ plan 17).
 !/.claude/launch.json
+# …and the subagents: `reviewer.md` is the fresh-context reviewer the build agent
+# runs before its PR (→ plan 26).
+!/.claude/agents/
