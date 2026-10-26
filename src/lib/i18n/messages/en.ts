@@ -1263,7 +1263,6 @@ export const en = {
 				loading: [
 					'Reading the recipe…',
 					'Measuring the ingredients…',
-					'Chopping the words…',
 					'Letting it simmer…',
 					'Plating it up…'
 				],

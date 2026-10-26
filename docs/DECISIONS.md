@@ -2342,3 +2342,8 @@ units | null, name}`, written back as editor lines in the reader's unit spelling
        does need "Allow GitHub Actions to create and approve pull requests" on the repository.
      - **The body is rebuilt from scratch every run**, not appended to, so a run that was
        cancelled by a newer push loses nothing.
+
+162. **The AI import loader drops "Chopping the words…" in both languages** (issue #48). The
+     household read „Wörter werden gehackt…" as odd rather than playful. The English line goes
+     too, so the two catalogs cycle the same four lines; `messages/loading.test.ts` holds both
+     to that. `AiCookingLoader` cycles by `phrases.length`, so no component changed.
