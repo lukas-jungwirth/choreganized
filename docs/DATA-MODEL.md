@@ -15,7 +15,9 @@ user ─┬─ session / account / verification        (Better Auth)
                   │      ├─ tasks ──→ task_completions (snapshots)
                   │      ├─ cook_timers
                   │      ├─ ai_connections          (primary + backup provider keys)
-                  │      └─ feedback                (mirrored to a GitHub issue)
+                  │      ├─ feedback                (mirrored to a GitHub issue)
+                  │      └─ ledger_people ─→ expenses ──→ expense_shares
+                  │           (one per membership, outlives it)
                   └─ holiday_notices             (per member × shop closure)
 ```
 
@@ -279,7 +281,37 @@ and are deleted by the morning sweep, so the table stays at a couple of dozen ro
 - `feedback_pending_idx (issue_number, next_attempt_at)` is the sweep's range scan; a row that
   succeeds drops out of it. `feedback_household_idx (household_id, created_at)` is the read.
 
-### Better Auth tables (`user`, `session`, `account`, `verification`)
+### `ledger_people` / `expenses` / `expense_shares` (→ plan 29, SPEC §11)
+
+- **Money is an integer of the currency's minor unit** (`amountMinor`, `shareMinor`), never a
+  float (→ [DECISIONS #169](DECISIONS.md)). The household has one currency
+  (`households.currency`, default `EUR`), which the owner can change only while the household
+  has no expense rows at all — deleted ones included (→ #170).
+- **`ledger_people` is "anyone who can pay or share"** (→ #168). One row is written in the same
+  transaction as every membership (`services/household.ts` `insertMember`; migration `0017`
+  backfilled the existing ones), and **outlives it**: leaving or removal writes the member's
+  name and colour into the row and sets `memberId` NULL, so a balance a former member still owes
+  stays readable. While the membership lasts, the `members` row is the truth for name and colour
+  (`listPeople` joins it). `kind = 'guest'` is reserved for people outside the household; nothing
+  writes it yet. A person is never deleted except with the household, so the references to it
+  cascade rather than restrict (a RESTRICT would make deleting a household fail).
+- **An expense and a payment are the same row** (→ #167): `kind = 'payment'` is paid by the
+  sender, has no description or category, and one share — the recipient's, the whole amount.
+  So the balance is one formula over every row: `Σ amountMinor where paidById = p − Σ shareMinor
+where personId = p`. Always derived on read, never stored; there is no reset.
+- **`Σ shareMinor = amountMinor` for every expense.** The service splits on the server from what
+  was typed (`expense_shares.input`: cents for `amounts`, a percentage ×100 for `percent`, a count
+  for `shares`, NULL for `equal`) with `utils/money` `splitAmount` — largest remainder, ties to
+  the earlier person — and writes the shares in the transaction that writes the expense.
+- **Delete is soft.** `deletedAt` is set by Delete and cleared by its undo bar; every read
+  filters it out; the 03:30 cleanup (`cron.ts`) removes rows deleted more than a day ago.
+- **The default split** is `households.splitDefaultMode` (`equal` = everyone) plus each person's
+  `ledger_people.defaultWeight` for `percent` / `shares`. A member who joins later has none, so a
+  percentage default never silently includes them (→ SPEC §11.5).
+- `expenses_household_date_idx (household_id, date)` serves the ledger read, which loads a
+  household's rows whole (→ #172); `expense_shares_person_idx` serves the person lookups.
+
+(`user`, `session`, `account`, `verification`)
 
 Hand-written to Better Auth 1.6 core schema (drizzle adapter maps on property names) and
 verified field-by-field against 1.6.23's generated reference in plan 00 — all timestamps are

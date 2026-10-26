@@ -8,9 +8,9 @@
 > This document is the ground truth for _behavior_. Where the two conflict, see
 > [DECISIONS.md](DECISIONS.md).
 
-The app is an installable PWA (Android-first) with four tabs — **Home, Shopping, Cooking,
-Tasks** — plus onboarding and settings. No message board. A fifth tab, **Expenses**, is
-specified in §11 and not built yet (→ plans 29, 30, [DECISIONS #167](DECISIONS.md)).
+The app is an installable PWA (Android-first) with five tabs — **Home, Shopping, Cooking,
+Tasks, Expenses** — plus onboarding and settings. No message board. Expenses, the
+household's shared tally, came after v1 (§11, → plans 29–30, [DECISIONS #167](DECISIONS.md)).
 
 ---
 
@@ -98,8 +98,7 @@ avatars. Then, in order:
    "All →" to Tasks → History. Hidden when there are no completions yet. Last on the screen:
    pleasant to see, never the reason the app was opened.
 
-Bottom tab bar on all four tabs: Home, Shopping, Cooking, Tasks; active = sage. (Once plan 29
-adds Expenses as a fifth tab, only the active tab shows its label → §11.2.) Tasks tab shows
+Bottom tab bar on all five tabs: Home, Shopping, Cooking, Tasks, Expenses; active = sage. The fifth tab, Expenses, is §11. Tasks tab shows
 a danger badge with the current user's overdue count [4e].
 
 ---
@@ -871,7 +870,7 @@ that comes forward gets lighter rather than darker (→ [DECISIONS #119, #120](D
 
 ---
 
-## 11. Expenses — who paid, who owes (→ plans 29, 30; not built yet)
+## 11. Expenses — who paid, who owes (→ plans 29, 30)
 
 A shared tally for the household, in the spirit of Splitwise but smaller: log what you paid,
 say who it was for, and always know who owes whom. **Easy to log, calm to read.** The tab
@@ -902,10 +901,11 @@ state · **[9h]** recurring (plan 30), with `9h-stop` · plus the Home line. Moc
 ### 11.2 The tab [9a] (fifth tab, after Tasks)
 
 Tab bar order: **Home · Shopping · Cooking · Tasks · Expenses** ("Expenses" / "Ausgaben").
-With five tabs **only the active one carries its label**, in a sage pill; the others are
-icons. That holds on every tab, not just this one, so the bar changes app-wide [9a-tabbar]
-(→ [DECISIONS #171](DECISIONS.md)). The header's **•••** menu holds **Recurring** (with a
-count) · **All activity** · **Expense settings** (→ §11.10).
+Only the active tab carries its label, in a sage pill; the others are icons — the bar's
+own treatment since [01/1d], which is what lets five fit at 390px in both languages
+[9a-tabbar] (→ [DECISIONS #171](DECISIONS.md)). The header's **•••** menu holds **All activity** · **Expense settings** (→ §11.10), and
+**Recurring** (with a count) once plan 30 lands. While the undo bar is up after a delete, the
+FAB stands down — the two share the corner, and Undo is the one that can't wait.
 
 1. **Balance card**: the one thing you read:
    - "You're owed **€24.50**" (sage) · "You owe **€12.00**" (terracotta) · "All settled up"
@@ -915,9 +915,10 @@ count) · **All activity** · **Expense settings** (→ §11.10).
      Lines that don't involve you are shown smaller and below yours. Each line has a
      **Settle up** button that opens [9d] prefilled with that payment.
    - These are the _simplified_ payments (→ §11.6). There is no pairwise view and no switch.
-2. **Recent**: this month's activity, newest first: expenses and payments mixed, grouped by
+2. **Recent**: the 20 latest rows, newest first (→ [DECISIONS #173](DECISIONS.md)): expenses and payments mixed, grouped by
    day like the task history (§5.8). An expense row shows category icon, description, "{payer}
-   paid €42.10", and on the right **your part** of it: "you lent €21.05" (sage) / "you borrowed
+   paid €42.10" — the payer always by name, the reader included, because the right-hand
+   column is where "you" is spoken, and on the right **your part** of it: "you lent €21.05" (sage) / "you borrowed
    €21.05" (terracotta) / "not involved" (muted). A payment row reads "Elisabeth paid Lukas
    €24.50" with a transfer icon and no category. Tap → detail [9e]. Footer link **All
    activity →** [9f].
@@ -993,7 +994,7 @@ agreed to is never invented.
   example of A → B €10, B → C €10, C → A €10, everyone is at 0, so nobody owes anything. Two
   people always see exactly one line, or none (→ [DECISIONS #167](DECISIONS.md)).
 - Amounts are shown in the household currency, formatted for the reader's language
-  (`€24.50` / `24,50 €`).
+  (`€24.50` in English, `€ 24,50` in Austrian German).
 
 ### 11.7 Categories
 
@@ -1025,11 +1026,12 @@ as they do for expenses.
 
 ### 11.10 Settings
 
-- **Household → Expenses** (owner edits, members see it read-only):
+- **Household → Expenses**, also the tab's "Expense settings":
   - **Currency**: ISO list, EUR by default. Changeable **only while the household has no
     expenses**. After that the row says why it is locked, since relabelling stored amounts
     would make them wrong (→ [DECISIONS #170](DECISIONS.md)).
-  - **Default split**: opens [9c] in default mode (§11.5).
+  - **Default split**: opens [9c] in default mode (§11.5). Anyone may set it, here or from
+    [9c]'s link: it only pre-fills a form everyone can change (→ [DECISIONS #173](DECISIONS.md)).
 - **Notifications → Expenses** (plan 30): per member, default **on** (§11.11).
 
 ### 11.11 Notifications (→ plan 30)

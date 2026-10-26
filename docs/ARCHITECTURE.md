@@ -95,6 +95,9 @@ docs/                          # this documentation + plans/
   cooking/recipes/[id]/cook     [7b/7h] cook mode (hides tab bar)
   tasks                         [05/4a] sheets: new/edit [3b], detail [4b], snooze [4c], done [4d]
   tasks/history                 [8a]
+  expenses                      [9a]   sheets: add/edit [9b], split [9c], settle up [9d], settings  [plan 29]
+  expenses/[id]                 [9e]   edit opens [9b] / [9d]; delete returns to the tab's undo bar
+  expenses/history              [9f]   ?q= ?category= ?person= ?mine=1 ?payments=1 ?from=YYYY-MM-01
   settings                      [6a]
   settings/members              [6b]   sheet: manage member [6c]
 dev/kit                         component gallery — 404 unless `dev` or E2E_MODE [plan 02, 17]
@@ -107,7 +110,10 @@ api/
   uploads/[...path]             authed recipe images                [plan 07]
 ```
 
-`[5a]`-style anchors reference `design/Hearth.dc.html`.
+`[5a]`-style anchors reference `design/Hearth.dc.html`; `[9a]`–`[9h]` reference
+`design/Expenses.dc.html`. The expense form actions live once in
+`lib/server/expense-actions.ts` and are mounted by the tab, the detail and Settings, so the
+same form means the same thing wherever it is posted from.
 
 ## Server patterns
 

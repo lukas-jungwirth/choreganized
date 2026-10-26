@@ -1,5 +1,5 @@
 <!--
-	The four tabs [02], treatment [01/1d]: outline, icon-only when idle; the
+	The five tabs [02] [9a-tabbar], treatment [01/1d]: outline, icon-only when idle; the
 	active tab fills its icon, reveals its label, and wears a soft sage pill.
 	That pill is a single element [.bubble] measured to the active tab and
 	transitioned between them, so switching tabs slides + resizes it into place.
@@ -14,6 +14,7 @@
 	import ChecklistIcon from '$lib/components/icons/ChecklistIcon.svelte';
 	import ChefHatIcon from '$lib/components/icons/ChefHatIcon.svelte';
 	import HomeIcon from '$lib/components/icons/HomeIcon.svelte';
+	import ReceiptIcon from '$lib/components/icons/ReceiptIcon.svelte';
 	import { messages } from '$lib/i18n';
 	import type { Component } from 'svelte';
 
@@ -40,7 +41,8 @@
 		{ href: '/home', label: m.nav.home, icon: HomeIcon },
 		{ href: '/shopping', label: m.nav.shopping, icon: BasketIcon },
 		{ href: '/cooking', label: m.nav.cooking, icon: ChefHatIcon },
-		{ href: '/tasks', label: m.nav.tasks, icon: ChecklistIcon, badge: true }
+		{ href: '/tasks', label: m.nav.tasks, icon: ChecklistIcon, badge: true },
+		{ href: '/expenses', label: m.nav.expenses, icon: ReceiptIcon }
 	];
 
 	/** `/tasks/history` keeps the Tasks tab lit. */

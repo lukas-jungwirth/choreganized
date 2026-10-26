@@ -21,6 +21,18 @@
 
 	const m = messages();
 
+	/** "Elisabeth still owes €12.00 — settle up first?" for a housemate who isn't square. */
+	function balanceNote(memberId: string): string | null {
+		const balance = data.balances[memberId] ?? 0;
+		if (balance === 0) return null;
+		const name = data.roster.find((row) => row.id === memberId)?.displayName ?? '';
+		return m.expenses.leaveBalance(
+			name,
+			balance < 0,
+			m.expenses.money(Math.abs(balance), data.currency)
+		);
+	}
+
 	let managing = $state<MemberProfile | null>(null);
 	let working = $state(false);
 
@@ -107,6 +119,7 @@
 		{member}
 		points={data.points[member.id] ?? 0}
 		today={data.today}
+		balanceNote={balanceNote(member.id)}
 		onclose={() => (managing = null)}
 	/>
 {/if}

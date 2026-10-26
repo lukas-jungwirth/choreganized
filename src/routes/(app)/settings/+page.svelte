@@ -21,6 +21,8 @@
 	import HouseholdNameSheet from '$lib/components/settings/HouseholdNameSheet.svelte';
 	import LanguageSheet from '$lib/components/settings/LanguageSheet.svelte';
 	import LeaveModal from '$lib/components/settings/LeaveModal.svelte';
+	import ExpenseSettingsSheet from '$lib/components/expenses/ExpenseSettingsSheet.svelte';
+	import ReceiptIcon from '$lib/components/icons/ReceiptIcon.svelte';
 	import PrefRow from '$lib/components/settings/PrefRow.svelte';
 	import ProfileSheet from '$lib/components/settings/ProfileSheet.svelte';
 	import ThemeSheet from '$lib/components/settings/ThemeSheet.svelte';
@@ -50,6 +52,7 @@
 	let renamingHousehold = $state(false);
 	let editingAi = $state(false);
 	let choosingWording = $state(false);
+	let expenseSettings = $state(false);
 	let sendingFeedback = $state(false);
 	let leaving = $state(false);
 	let sending = $state(false);
@@ -329,6 +332,15 @@
 			<span class="value">{wordingValue}</span>
 		</div>
 	{/if}
+
+	<!-- The currency (owner, before the first expense) and the default split
+		 (anyone) — one sheet, shared with the Expenses tab (→ SPEC §11.10). -->
+	<button type="button" class="row" onclick={() => (expenseSettings = true)}>
+		<span class="tile" aria-hidden="true"><ReceiptIcon size={18} strokeWidth={1.9} /></span>
+		<span class="label">{m.expenses.settings.row}</span>
+		<span class="value">{data.expenses.currency}</span>
+		<ChevronRight size={15} strokeWidth={2} class="chevron" />
+	</button>
 </RowGroup>
 
 <!-- The app itself, under the house: reporting a bug is not a household
@@ -408,6 +420,17 @@
 	<WordingSheet chosen={data.recipeWording} onclose={() => (choosingWording = false)} />
 {/if}
 
+{#if expenseSettings}
+	<ExpenseSettingsSheet
+		people={data.expenses.people}
+		currency={data.expenses.currency}
+		currencyLocked={data.expenses.currencyLocked}
+		isOwner={owner}
+		splitDefault={data.expenses.splitDefault}
+		onclose={() => (expenseSettings = false)}
+	/>
+{/if}
+
 {#if sendingFeedback}
 	<FeedbackSheet versionLabel={data.appVersion} onclose={() => (sendingFeedback = false)} />
 {/if}
@@ -416,6 +439,13 @@
 	<LeaveModal
 		householdName={data.household.name}
 		mode={leaveMode}
+		balanceNote={data.expenses.myBalance === 0
+			? null
+			: m.expenses.leaveBalance(
+					null,
+					data.expenses.myBalance < 0,
+					m.expenses.money(Math.abs(data.expenses.myBalance), data.expenses.currency)
+				)}
 		onclose={() => (leaving = false)}
 	/>
 {/if}

@@ -89,6 +89,13 @@
 	--terracotta-deep: light-dark(#8a4b29, #e8b592);
 
 	/* ── Danger (overdue, destructive) ────────────────────────── */
+	/* Money [9a] (→ SPEC §11): sage when you are owed, terracotta when you owe —
+	   both deepened for text in light, lifted on the dark (→ DECISIONS #171). */
+	--owed: light-dark(#3f6b52, #93c2a2);
+	--owed-tint: light-dark(rgba(95, 141, 114, 0.1), rgba(116, 165, 133, 0.14));
+	--owe: light-dark(#a35a33, #e6aa78);
+	--owe-tint: light-dark(rgba(198, 124, 81, 0.11), rgba(230, 170, 120, 0.14));
+
 	--danger: light-dark(#c0473a, #dc6152);
 	--danger-tint: light-dark(#f7e9e6, #2e1b17);
 	--danger-border: light-dark(#e8cfc9, #452520);

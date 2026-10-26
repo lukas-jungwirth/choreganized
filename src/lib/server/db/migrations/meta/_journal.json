@@ -120,6 +120,13 @@
       "when": 1792348436010,
       "tag": "0016_recipe_wording",
       "breakpoints": true
+    },
+    {
+      "idx": 17,
+      "version": "6",
+      "when": 1793023415616,
+      "tag": "0017_expenses",
+      "breakpoints": true
     }
   ]
 }

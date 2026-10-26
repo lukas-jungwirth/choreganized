@@ -40,7 +40,7 @@ plus your session date). Note deviations in the plan file and in DECISIONS.md.
 | 26  | [Agent lane: reproduce first, review second](26-agent-reproduce-review.md)                       | done (2026-10-26) | 25                       |
 | 27  | [Agent lane: ideas as proposals, a hardened lane](27-agent-ideas-safety.md)                      | todo              | 26                       |
 | 28  | [Import: AI repairs bad cards, text without AI, smaller photos](28-import-repair-text-photos.md) | todo              | 22                       |
-| 29  | [Expenses: log, split, settle up](29-expenses.md)                                                | todo              | 09, 10                   |
+| 29  | [Expenses: log, split, settle up](29-expenses.md)                                                | done (2026-10-26) | 09, 10                   |
 | 30  | [Expenses: recurring series and notifications](30-expenses-recurring-push.md)                    | todo              | 29, 05, 06               |
 
 Work done after the twelve plans, tracked here so the queue stays the whole story:

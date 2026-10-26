@@ -1,6 +1,7 @@
 # Choreganized — Agent Guide
 
-Household PWA for two (shopping list, meal plan + cook mode, recurring chores with points).
+Household PWA for two (shopping list, meal plan + cook mode, recurring chores with points,
+shared expenses).
 SvelteKit + SQLite, single process, single container. Tagline: _Every chore, organized._
 
 ## This is an agent-built repo, and you own the git history

@@ -33,6 +33,7 @@ import {
 import { INTL_LOCALE } from '$lib/i18n/locale';
 import type { HolidayKey } from '$lib/utils/holidays';
 import { formatAmount, formatIngredient } from '$lib/utils/ingredients';
+import { currencySymbol, formatMoney } from '$lib/utils/money';
 import type { MealSlot } from '$lib/utils/meals';
 import { formatQuantity, type UnitLabels } from '$lib/utils/shopping';
 import type { RecurUnit } from '$lib/utils/tasks';
@@ -130,6 +131,7 @@ export const de: Messages = {
 		shopping: 'Einkauf',
 		tasks: 'Aufgaben',
 		cooking: 'Kochen',
+		expenses: 'Ausgaben',
 		sections: 'Bereiche',
 		overdueBadge: (count: number) => `${count} überfällig`,
 		back: 'Zurück'
@@ -963,6 +965,244 @@ export const de: Messages = {
 					noPhotos: 'Füg mindestens ein Foto des Rezepts hinzu.'
 				}
 			}
+		}
+	},
+
+	/* ── Expenses [9a]–[9g] (→ SPEC §11) ───────────────────────────────────── */
+	expenses: {
+		title: 'Ausgaben',
+		menu: {
+			label: 'Mehr',
+			allActivity: 'Alle Einträge',
+			settings: 'Einstellungen für Ausgaben'
+		},
+		money: (minor: number, currency: string) => formatMoney(minor, currency, INTL_LOCALE[L]),
+		/** The currency's mark beside the amount field [9b]. */
+		symbol: (currency: string) => currencySymbol(currency, INTL_LOCALE[L]),
+		/** Whether amounts are typed back as "24,50" rather than "24.50". */
+		decimalComma: true,
+
+		balance: {
+			owed: 'Du bekommst',
+			owe: 'Du schuldest',
+			settled: 'Alles ausgeglichen',
+			settledDetail: 'Niemand schuldet jemandem etwas.',
+			line: (from: string | null, to: string | null) => `${from ?? 'Du'} → ${to ?? 'dir'}`,
+			settleUp: 'Ausgleichen',
+			/** The button, read out with the line it settles. */
+			settleLabel: (action: string, line: string) => `${action}: ${line}`,
+			lineLabel: (from: string | null, to: string | null, amount: string) =>
+				from === null
+					? `Du zahlst ${to} ${amount}`
+					: to === null
+						? `${from} zahlt dir ${amount}`
+						: `${from} zahlt ${to} ${amount}`
+		},
+
+		recent: 'Zuletzt',
+		allActivity: 'Alle Einträge',
+		add: 'Ausgabe hinzufügen',
+
+		row: {
+			paid: (who: string | null, amount: string) =>
+				who === null ? `Du hast ${amount} bezahlt` : `${who} hat ${amount} bezahlt`,
+			lent: 'ausgelegt',
+			borrowed: 'dein Anteil',
+			notInvolved: 'nicht beteiligt',
+			justYou: 'nur du',
+			payment: (from: string | null, to: string | null, amount: string) =>
+				from === null
+					? `Du hast ${to} ${amount} gezahlt`
+					: `${from} hat ${to ?? 'dir'} ${amount} gezahlt`,
+			paymentMeta: (when: string) => `Zahlung · ${when}`,
+			repeats: 'Wiederholt sich'
+		},
+
+		empty: {
+			title: 'Noch nichts zu teilen',
+			copy: 'Trag den Wocheneinkauf ein, die Miete, die Pizza. Choreganized rechnet mit.',
+			add: 'Ausgabe eintragen'
+		},
+
+		form: {
+			new: 'Ausgabe hinzufügen',
+			edit: 'Ausgabe bearbeiten',
+			amount: 'Betrag',
+			whatFor: 'Wofür?',
+			whatForPlaceholder: 'Wocheneinkauf, Miete, Pizza …',
+			suggestions: 'Frühere Ausgaben',
+			category: 'Kategorie',
+			paidBy: 'Bezahlt von',
+			you: 'du',
+			split: 'Aufteilung',
+			date: 'Datum',
+			today: 'Heute',
+			save: 'Speichern',
+			delete: 'Ausgabe löschen'
+		},
+
+		summary: {
+			everyone: 'alle',
+			people: (count: number) => (count === 1 ? '1 Person' : `${count} Personen`),
+			equal: (who: string, each: string) => `Gleich · ${who} · je ${each}`,
+			amounts: (who: string) => `Beträge · ${who}`,
+			parts: (parts: { name: string; value: string }[]) =>
+				parts.map(({ name, value }) => `${name} ${value}`).join(' · '),
+			percent: (parts: string) => `Nach % · ${parts}`,
+			shares: (parts: string) => `Nach Anteilen · ${parts}`,
+			invalid: 'Geht noch nicht auf'
+		},
+
+		split: {
+			title: 'Aufteilung',
+			defaultTitle: 'Standard-Aufteilung',
+			subtitle: (amount: string, what: string) => (what ? `${amount} · ${what}` : amount),
+			mode: 'Wie aufteilen',
+			modes: {
+				equal: 'Gleich',
+				amounts: 'Beträge',
+				percent: '%',
+				shares: 'Anteile'
+			},
+			paid: 'bezahlt',
+			notIn: 'nicht dabei',
+			include: (name: string) => `${name} ist dabei`,
+			input: (name: string) => `Teil von ${name}`,
+			left: (amount: string) => `${amount} noch offen`,
+			over: (amount: string) => `${amount} zu viel`,
+			ofTotal: (sum: string, total: string) => `${sum} von ${total}`,
+			addsUp: 'Geht auf',
+			percentOk: 'Ergibt 100 %',
+			percentLeft: (percent: string) => `${percent} % noch offen`,
+			percentOver: (percent: string) => `${percent} % zu viel`,
+			sharesTotal: (count: number) =>
+				count === 1 ? '1 Anteil insgesamt' : `${count} Anteile insgesamt`,
+			nobody: 'Wähl mindestens eine Person.',
+			done: 'Fertig',
+			makeDefault: 'Als Standard für den Haushalt',
+			defaultSaved: (parts: string) => `Neue Ausgaben starten mit ${parts}.`,
+			defaultEqual: 'Neue Ausgaben werden gleich auf alle aufgeteilt.',
+			notInDefault: (name: string) => `${name} ist nicht Teil der Standard-Aufteilung.`
+		},
+
+		settle: {
+			title: 'Ausgleichen',
+			edit: 'Zahlung bearbeiten',
+			from: 'Von',
+			to: 'An',
+			swap: 'Tauschen',
+			owes: (from: string | null, to: string | null, amount: string) =>
+				`${from === null ? `Du schuldest ${to}` : `${from} schuldet ${to ?? 'dir'}`} ${amount} · für eine Teilzahlung einfach weniger eintragen`,
+			record: 'Zahlung eintragen',
+			delete: 'Zahlung löschen',
+			note: 'Das trägt sie nur ein — das Geld schickst du, wie ihr es immer macht.'
+		},
+
+		detail: {
+			back: 'Zurück zu den Ausgaben',
+			edit: 'Bearbeiten',
+			payment: 'Zahlung',
+			meta: (category: string, date: string) => `${category} · ${date}`,
+			/** "Monday, Oct 26" — the weekday and the date, joined the language's way. */
+			dateLine: (weekday: string, date: string) => `${weekday}, ${date}`,
+			/** "Added by Lukas · Oct 26, 19:00" — a day and a clock time. */
+			stamp: (day: string, time: string) => `${day}, ${time}`,
+			paidBy: 'Bezahlt von',
+			shares: (how: string) => `Anteile · ${how}`,
+			how: {
+				equal: 'gleich aufgeteilt',
+				amounts: 'nach Beträgen',
+				percent: 'nach %',
+				shares: 'nach Anteilen'
+			},
+			you: 'du',
+			formerMember: 'Ehemaliges Mitglied',
+			owesFor: (who: string | null, payer: string | null, amount: string) =>
+				who === null
+					? `du schuldest ${payer} dafür ${amount}`
+					: `schuldet ${payer ?? 'dir'} dafür ${amount}`,
+			added: (who: string, when: string) => `Eingetragen von ${who} · ${when}`,
+			edited: (who: string, when: string) => `Bearbeitet von ${who} · ${when}`,
+			someone: 'jemandem'
+		},
+
+		history: {
+			title: 'Alle Einträge',
+			back: 'Zurück zu den Ausgaben',
+			search: 'Beschreibungen durchsuchen',
+			category: 'Kategorie',
+			anyCategory: 'Alle Kategorien',
+			person: 'Person',
+			anyone: 'Alle',
+			mine: 'Nur meine',
+			payments: 'Zahlungen',
+			filters: 'Filter',
+			spent: (amount: string) => `${amount} ausgegeben`,
+			load: (month: string) => `${month} laden`,
+			empty: 'Nichts gefunden',
+			emptyCopy: 'Versuch ein anderes Wort oder weniger Filter.'
+		},
+
+		categories: {
+			groceries: 'Lebensmittel',
+			household: 'Haushalt',
+			bills: 'Miete & Rechnungen',
+			eatingOut: 'Auswärts essen',
+			transport: 'Unterwegs',
+			leisure: 'Freizeit',
+			travel: 'Reisen',
+			other: 'Sonstiges'
+		},
+
+		undo: {
+			deleted: (what: string): RichText => [{ text: what, strong: true }, { text: ' gelöscht' }],
+			payment: 'Zahlung',
+			action: 'Rückgängig'
+		},
+
+		settings: {
+			row: 'Ausgaben',
+			title: 'Ausgaben',
+			currency: 'Währung',
+			currencyLocked:
+				'Wird einmal festgelegt, vor der ersten Ausgabe — später würde sie jeden Betrag umbenennen.',
+			ownerOnly: 'Nur der Eigentümer kann die Währung ändern.',
+			defaultSplit: 'Standard-Aufteilung',
+			equalEveryone: 'Gleich auf alle',
+			saved: 'Gespeichert'
+		},
+
+		home: {
+			owed: (amount: string, from: string): RichText => [
+				{ text: 'Du bekommst ' },
+				{ text: amount, strong: true },
+				{ text: ` · ${from}` }
+			],
+			owe: (to: string, amount: string): RichText => [
+				{ text: `Du schuldest ${to} ` },
+				{ text: amount, strong: true }
+			]
+		},
+
+		leaveBalance: (who: string | null, owes: boolean, amount: string) =>
+			who === null
+				? owes
+					? `Du schuldest noch ${amount} — vorher ausgleichen?`
+					: `Du bekommst noch ${amount} — vorher ausgleichen?`
+				: owes
+					? `${who} schuldet noch ${amount} — vorher ausgleichen?`
+					: `${who} bekommt noch ${amount} — vorher ausgleichen?`,
+
+		errors: {
+			amount: 'Gib einen Betrag über 0 ein.',
+			description: 'Schreib dazu, wofür.',
+			date: 'Das Datum darf nicht in der Zukunft liegen.',
+			person: 'Jemand hier gehört nicht zum Haushalt.',
+			split: 'Die Aufteilung geht nicht auf.',
+			samePerson: 'Wähl zwei verschiedene Personen.',
+			notFound: 'Diese Ausgabe gibt es nicht mehr.',
+			currency: 'Wähl eine der angebotenen Währungen.',
+			currencyLocked: 'Die Währung steht fest, sobald es Ausgaben gibt.'
 		}
 	},
 

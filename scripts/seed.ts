@@ -24,7 +24,10 @@ import { migrate } from 'drizzle-orm/better-sqlite3/migrator';
 import { mkdirSync } from 'node:fs';
 import { dirname } from 'node:path';
 import {
+	expenseShares,
+	expenses,
 	households,
+	ledgerPeople,
 	meals,
 	members,
 	recipeIngredients,
@@ -734,6 +737,90 @@ const seeded = db.transaction((tx) => {
 		.onConflictDoNothing()
 		.run();
 
+	/* ── Expenses (→ plan 29) ─────────────────────────────────────────────
+	 * Every membership needs its ledger person; the app makes one with the
+	 * membership, but the stub housemate above was inserted by hand. Then a
+	 * week of ordinary spending, split equally, and one settle-up — enough to
+	 * put a balance on the card and every kind of row in the list.
+	 */
+	for (const member of [ownerMember, housemate]) {
+		tx.insert(ledgerPeople)
+			.values({
+				id: sid('person', member.id),
+				householdId,
+				memberId: member.id,
+				name: member.displayName,
+				color: member.id === ownerMemberId ? MEMBER_SAGE : MEMBER_TERRACOTTA
+			})
+			.onConflictDoNothing()
+			.run();
+	}
+
+	const personOf = (memberId: string) =>
+		tx
+			.select({ id: ledgerPeople.id })
+			.from(ledgerPeople)
+			.where(eq(ledgerPeople.memberId, memberId))
+			.get()?.id ?? '';
+	const ownerPerson = personOf(ownerMemberId);
+	const housematePerson = personOf(housemateMemberId);
+	const both = [...new Set([ownerPerson, housematePerson])];
+
+	const spend = (
+		key: string,
+		days: number,
+		description: string | null,
+		category: (typeof expenses.$inferInsert)['category'],
+		amountMinor: number,
+		paidById: string,
+		to?: string
+	) => {
+		const id = sid('expense', key);
+		const created = tx
+			.insert(expenses)
+			.values({
+				id,
+				householdId,
+				kind: to ? 'payment' : 'expense',
+				description,
+				category,
+				amountMinor,
+				date: addDays(today, -days),
+				paidById,
+				splitMode: to ? 'amounts' : 'equal',
+				createdByMemberId: ownerMemberId,
+				updatedByMemberId: ownerMemberId,
+				createdAt: daysAgo(days, 19),
+				updatedAt: daysAgo(days, 19)
+			})
+			.onConflictDoNothing()
+			.run().changes;
+		if (!created) return;
+
+		// Equal halves; the odd cent goes to the first person, as the app does it.
+		const owers = to ? [to] : both;
+		const each = Math.floor(amountMinor / owers.length);
+		tx.insert(expenseShares)
+			.values(
+				owers.map((personId, index) => ({
+					expenseId: id,
+					personId,
+					shareMinor: each + (index < amountMinor - each * owers.length ? 1 : 0),
+					input: null
+				}))
+			)
+			.run();
+	};
+
+	spend('billa', 0, 'Weekly shop · Billa', 'groceries', 4210, ownerPerson);
+	spend('pizza', 0, 'Pizza at Riva', 'eatingOut', 3180, housematePerson);
+	spend('soap', 2, 'Dish soap & sponges', 'household', 870, ownerPerson);
+	if (housematePerson !== ownerPerson) {
+		spend('payment', 2, null, null, 1800, housematePerson, ownerPerson);
+	}
+	spend('strom', 4, 'Strom · Wien Energie', 'bills', 8640, ownerPerson);
+	spend('tickets', 5, 'Wiener Linien · 2 tickets', 'transport', 680, housematePerson);
+
 	return {
 		householdName: household?.name ?? 'your household',
 		members:
@@ -748,6 +835,7 @@ console.log(`  household  ${seeded.householdName} — ${seeded.members}`);
 console.log('  shopping   3 stores · 10 items (2 already checked off)');
 console.log('  cooking    2 recipes · meals planned for today, tomorrow and the day after');
 console.log('  tasks      7 tasks (overdue · today · upcoming · undated) · 8 history entries');
+console.log('  expenses   5 expenses · 1 settle-up');
 console.log(`  → ${rowsWritten() - before} rows written; anything already there was left alone.`);
 
 sqlite.close();

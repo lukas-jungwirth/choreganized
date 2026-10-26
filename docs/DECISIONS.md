@@ -2467,6 +2467,36 @@ units | null, name}`, written back as editor lines in the reader's unit spelling
      rather than the July canvas. It reads the same `support.js`. Copying them into
      `Hearth.dc.html` would mean rewriting an exported canvas by hand, for no gain. Anchors
      stay `9a`–`9h`, with suffixed state variants (`9a-owe`, `9c-ok`). Five labelled tabs
-     don't fit 390px in German, so the bar becomes **icons, with only the active tab labelled**
-     in a sage pill. That holds for all five tabs, so plan 29 changes `shell/TabBar` and
-     refreshes every screen's baseline.
+     wouldn't fit 390px in German, and they don't have to: the bar has been **icons, with only
+     the active tab labelled** in a sage pill, since [01/1d]. The design just shows that it
+     holds with five. _Corrected by plan 29_: this entry first said the bar would change
+     app-wide; the build found it already worked that way and only added the fifth tab. Every
+     screen's baseline still moves, because the icons are spaced out for five.
+172. **The expenses ledger is read whole, and History filters in memory** (`services/expenses.ts`,
+     plan 29). The balance needs every row anyway, and a household logs a few hundred
+     expenses a year. So one read serves the balance card, the Recent list, the description
+     suggestions and History. A second, filtered SQL path would duplicate the scoping and the
+     share loading for no measurable gain. Filtering in JavaScript is also what makes the search
+     match inside words with the reader's own idea of case (`toLocaleLowerCase`, so "BILLA"
+     finds "Billa" and umlauts behave). SQLite's `LIKE` folds ASCII only. Revisit if a
+     household's ledger ever reaches tens of thousands of rows.
+173. **Plan 29's smaller calls.**
+     - **Recent is the 20 latest rows, not "this month".** On the 1st, "this month" would show
+       an empty list under a balance that isn't empty. History has the months.
+     - **The default split is anyone's; the currency is the owner's.** The default only
+       pre-fills a form everyone can change. The currency rewrites the meaning of every stored
+       amount (→ #170). An equal split over a subset, saved as a default, is stored as one share
+       each, because the `equal` default means everyone.
+     - **One set of form actions** (`lib/server/expense-actions.ts`), mounted by the tab, the
+       detail and Settings, so a form means the same thing wherever it is posted from.
+     - **Delete is soft, undo is exact.** The undo restores the row as it was (shares, who
+       logged it, when) rather than re-creating it from what the page had. The 03:30 cleanup
+       makes deletions older than a day final.
+     - **The undo toast is one component** (`ui/UndoToast`), lifted out of shopping's
+       `UndoBar`, which now wraps it. While it is up on the Expenses tab, the FAB stands down:
+       both sit in the bottom-right corner, and the e2e journey caught the FAB covering Undo.
+     - **Rows name the payer even when it is you** ("Lukas paid €42.10"), as the design does.
+       The right-hand column is where "you lent / you borrowed" speaks to the reader.
+     - **German rows say "ausgelegt" / "dein Anteil"**, not "du bekommst" / "du schuldest". A
+       row is your part of one expense, not what is owed today; the balance card says that.
+     - **No new dependency.** Amounts and currencies are `Intl.NumberFormat`.
