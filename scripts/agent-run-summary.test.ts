@@ -9,7 +9,7 @@
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
 import { describe, it } from 'vitest';
-import { clip, parseExecutionFile, render, summarize } from './agent-run-summary';
+import { clip, parseExecutionFile, render, runsVerify, summarize } from './agent-run-summary';
 
 const recorded = parseExecutionFile(
 	readFileSync(new URL('./fixtures/agent-run.json', import.meta.url), 'utf8')
@@ -160,6 +160,26 @@ describe('summarize — verify', () => {
 			).verifies;
 			assert.deepEqual(verify, { command, exitCode: 0 });
 		}
+	});
+
+	it('does not count a verify that is only mentioned (issue #48’s triage)', () => {
+		for (const command of [
+			'gh issue edit 48 --title "Bug: x" --add-label area:cooking && gh issue comment 48 --body "Acceptance: npm run verify clean"',
+			"gh issue comment 48 --body '; npm run verify'",
+			"gh issue comment 48 --body-file - <<'EOF'\n## Acceptance\nnpm run verify clean\nEOF",
+			'echo npm run verify'
+		]) {
+			const summary = summarize(run([{ id: 'a', command, result: 'ok' }]));
+			assert.deepEqual(summary.verifies, [], command);
+			assert.equal(summary.commands.length, 1, 'still listed as a command');
+		}
+	});
+
+	it('still sees a verify after a heredoc or a quoted argument', () => {
+		const command = 'cat > /tmp/n.md <<\'EOF\'\nnote\nEOF\ncd "app dir" && npm run verify';
+		assert.equal(runsVerify(command), true);
+		const [verify] = summarize(run([{ id: 'a', command, result: 'ok' }])).verifies;
+		assert.deepEqual(verify, { command: clip(command, 120), exitCode: 0 });
 	});
 
 	it('reads the code from "Exit code N"', () => {

@@ -22,7 +22,8 @@ import { join } from 'node:path';
 /** How much of a denied call's input, and of a command, the summary keeps. */
 const DENIAL_INPUT_CHARS = 80;
 const COMMAND_CHARS = 120;
-const VERIFY = /\bnpm run verify\b/;
+/** `npm run verify` as a command: at the start, or after `&&`, `||`, `;`, `|`, `(` or a newline. */
+const VERIFY = /(?:^|[;&|(\n])\s*npm run verify\b/;
 /** How Claude Code words a refusal in the tool result — never how a command's output starts. */
 const REFUSED =
 	/^(<tool_use_error>)?(Permission to use .* has been denied|Claude requested permissions to use .* but you haven't granted it|.*denied by your permission settings)/;
@@ -98,6 +99,27 @@ function resultText(content: unknown): string {
 }
 
 /**
+ * The command as the shell runs it, with the text it only carries blanked out:
+ * quoted strings and heredoc bodies. Issue #48's triage put "npm run verify
+ * clean" in a comment's `--body`, and the summary counted a verify that never
+ * ran. A quoted string shrinks to its two quote marks, so it still reads as one
+ * argument and never as a command.
+ */
+export function shellOnly(command: string): string {
+	return command
+		.replace(
+			/<<-?\s*(['"]?)(\w+)\1[^\n]*\n[\s\S]*?\n\s*\2(?=\s|$)/g,
+			(heredoc) => heredoc.split('\n')[0]
+		)
+		.replace(/'[^']*'|"(?:\\.|[^"\\])*"/g, (quoted) => `${quoted[0]}${quoted.at(-1)}`);
+}
+
+/** Whether a command runs `npm run verify` — not merely mentions it. */
+export function runsVerify(command: string): boolean {
+	return VERIFY.test(shellOnly(command));
+}
+
+/**
  * A Bash result's exit code. Claude Code marks a non-zero exit `is_error` and
  * opens the output with "Exit code N". That is verify's own code only when
  * nothing after it can replace it: `&&` and redirections keep it, but a pipe
@@ -111,7 +133,8 @@ function exitCodeOf(command: string, result: Block | undefined): RunSummary['ver
 
 	const text = resultText(result.content);
 	const exitCode = result.is_error ? Number(/^Exit code (\d+)/.exec(text)?.[1] ?? 1) : 0;
-	const after = command.slice(command.search(VERIFY) + 'npm run verify'.length);
+	const shell = shellOnly(command);
+	const after = shell.slice(shell.search(VERIFY)).replace(/^[\s\S]*?npm run verify/, '');
 	const piped = /(?<!\|)\|(?!\|)/.test(after) && !/pipefail/.test(command);
 	if (piped || /\|\||;|\n/.test(after)) {
 		return { command: clipped, exitCode, note: 'another command decides this exit code' };
@@ -168,7 +191,7 @@ export function summarize(messages: Message[]): RunSummary {
 		const command = call.input?.command;
 		if (call.name !== 'Bash' || typeof command !== 'string' || denied.has(call.id!)) continue;
 		commands.add(clip(command, COMMAND_CHARS));
-		if (!VERIFY.test(command)) continue;
+		if (!runsVerify(command)) continue;
 		verifies.push(
 			call.input?.run_in_background
 				? { command: clip(command, COMMAND_CHARS), exitCode: null, note: 'in the background' }

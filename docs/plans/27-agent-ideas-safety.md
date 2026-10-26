@@ -50,10 +50,11 @@ the audit: [Choreganized — Agentic Workflow Audit](https://claude.ai/artifact/
   - It starts in `egress-policy: audit` for about ten agent runs, then switches to `block`, with
     the endpoints those runs actually used: the npm registry, the Anthropic API, GitHub's hosts,
     the Playwright download CDN and `mcr.microsoft.com` for the visual suite.
-  - Under `block`, triage's `WebFetch` and the import probe can no longer reach arbitrary
-    pages. A small job with open egress and no secrets runs before the agent, fetches the pages
-    the issue links to (with the probe), and hands them over as an artifact. The agent then never
-    needs the open web, and a steered agent has nowhere to send anything.
+  - Triage already has no web access (DECISIONS #163, 2026-10-26); under `block`, the build's
+    import probe can no longer reach arbitrary pages either. A small job with open egress and no
+    secrets runs before the build agent, fetches the pages the issue links to (with the probe),
+    and hands them over as an artifact. The agent then never needs the open web, and a steered
+    agent has nowhere to send anything.
 - **Pinned actions.** Every `uses:` in `.github/workflows/` names a 40-character commit SHA,
   with the version in a comment. `.github/dependabot.yml` bumps `github-actions` weekly.
 - **Tests** (`tests/conventions/ci.test.ts`):
