@@ -938,7 +938,6 @@ export const de: Messages = {
 				loading: [
 					'Rezept wird gelesen…',
 					'Zutaten werden abgemessen…',
-					'Wörter werden gehackt…',
 					'Lass es köcheln…',
 					'Wird angerichtet…'
 				],
