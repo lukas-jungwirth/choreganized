@@ -47,13 +47,13 @@ What the design pass was asked for, kept as the checklist the frames were drawn 
 ## Data model
 
 New tables, all household-scoped (DATA-MODEL principle 1). Money is **integer minor units**
-(cents) everywhere. Floats never touch it (→ DECISIONS #168).
+(cents) everywhere. Floats never touch it (→ DECISIONS #169).
 
 ```ts
 households.currency            text NOT NULL DEFAULT 'EUR'   // ISO 4217; locked once expenses exist
 households.splitDefaultMode    text enum('equal','percent','shares') NOT NULL DEFAULT 'equal'
 
-ledger_people                                     // the "person" seam (→ DECISIONS #167)
+ledger_people                                     // the "person" seam (→ DECISIONS #168)
   id, householdId → households CASCADE
   memberId → members SET NULL, UNIQUE where not null   // null = former member (later: guest)
   kind      text enum('member','guest') NOT NULL DEFAULT 'member'   // 'guest' reserved, unused

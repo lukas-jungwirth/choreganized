@@ -2420,7 +2420,16 @@ units | null, name}`, written back as editor lines in the reader's unit spelling
      `size:m` still waits. The human gate is unchanged: agent PRs merge into `dev` on green CI,
      and `main` moves only when Lukas merges the release PR. The costs are more build runs (some
      end in "couldn't reproduce") and more agent PRs in each release.
-166. **Expenses join the app as a fifth tab, and the house is one pot** (SPEC §11, plans 29–30).
+
+166. **A settings row with a long value keeps its label whole and cuts the value instead** (#56,
+     `settings/+page.svelte` `.label.whole`). The AI row's label had `flex: 1`, a basis of 0, so
+     it only got what `Gemini · gemini-flash-latest` left over. At 390px in German that broke
+     "KI-Funktionen" into three lines, and with "Nicht eingerichtet" it broke at 360px. Its label
+     is now sized by its own text (`flex: 1 0 auto`), and the value gets the ellipsis, down to
+     "Gemini · …" at 320px. The row is still the way in to the sheet, which names the full model.
+     The other rows keep `flex: 1` and `overflow-wrap: anywhere`, because their labels are short
+     and their values are, too.
+167. **Expenses join the app as a fifth tab, and the house is one pot** (SPEC §11, plans 29–30).
      The spec said "No finances", which was a v1 scope cut, not a principle. Lukas asked for a
      Splitwise-style tally (2026-10-26), and it lives where the household already is.
      - **A tab, not a Home card.** Logging a spend right after the shop has to be quick. Home
@@ -2436,7 +2445,7 @@ units | null, name}`, written back as editor lines in the reader's unit spelling
      - **V1 = plan 29 (log, split, settle, search, categories) + plan 30 (recurring, push).**
        Receipt photos, the shopping-trip "log this?" hook, guests, several currencies and
        charts wait (SPEC §11.14).
-167. **Splits point at `ledger_people`, not at `members`** (plan 29). Two reasons, one
+168. **Splits point at `ledger_people`, not at `members`** (plan 29). Two reasons, one
      table. A member who leaves owing money must keep that balance, but `task_completions`'
      snapshot + `SET NULL` trick loses the identity that a balance has to add up against.
      And guests (people outside the household) need to pay and share without being members. A
@@ -2444,16 +2453,16 @@ units | null, name}`, written back as editor lines in the reader's unit spelling
      outlives it with `memberId` NULL. Guests will be `kind='guest'` rows with no member and
      no migration of old data. Linking people across households stays out (multi-household is
      deferred, #Later).
-168. **Money is integer cents, split by largest remainder** (`utils/money.ts`, plan 29). No
+169. **Money is integer cents, split by largest remainder** (`utils/money.ts`, plan 29). No
      float ever holds an amount. Equal, % and shares compute each share's exact fraction,
      floor it to cents, and give the leftover cents one each to the largest remainders, ties
      in list order. The server recomputes every split from what was typed (`input`) and never
      stores client-computed shares, so `Σ shares = amount` holds for every row.
-169. **One currency per household, locked once there are expenses** (SPEC §11.10). Amounts
+170. **One currency per household, locked once there are expenses** (SPEC §11.10). Amounts
      carry no currency of their own. Changing the setting later would relabel every stored
      number (€42 becoming 42 CHF), so the owner can pick it only while the tally is empty.
      Several currencies with conversion is out of scope.
-170. **The expenses design lives in its own page, and five tabs show one label**
+171. **The expenses design lives in its own page, and five tabs show one label**
      (`design/Expenses.dc.html`, SPEC §11.2). Claude Design drew the frames into a new page
      rather than the July canvas. It reads the same `support.js`. Copying them into
      `Hearth.dc.html` would mean rewriting an exported canvas by hand, for no gain. Anchors
