@@ -333,7 +333,7 @@ where personId = p`. Always derived on read, never stored; there is no reset.
   Editing the series keeps the anchor unless the next date or the unit changes.
 - **Stopping sets `stoppedAt`**; the row stays and so do its occurrences. Leaving or removal
   stops every running series the member's ledger person pays or shares in, in the departure's
-  own transaction (`services/household.ts` `departMember`, → #178).
+  own transaction (`services/household.ts` `departMember`, → #180).
   `expenses.recurrenceId` is `ON DELETE SET NULL` (added by hand to migration 0019, → #175), so
   even deleting a series would leave the expenses it logged.
 - `members.notifyExpenses` (default on) silences the expense notices for one member (→ #176).
@@ -344,7 +344,9 @@ Hand-written to Better Auth 1.6 core schema (drizzle adapter maps on property na
 verified field-by-field against 1.6.23's generated reference in plan 00 — all timestamps are
 `timestamp_ms`, `verification.created_at/updated_at` are NOT NULL and `identifier` is indexed
 (migration 0001). `verification` also holds the OAuth state during the Google round-trip, so
-it's live from the first sign-in. After a Better Auth upgrade, re-run the diff:
+it's live from the first sign-in. Since plan 31 it also holds the email sign-in codes
+(identifier `sign-in-otp-<email>`, value the **hashed** code plus its attempt count, 5-minute
+expiry → DECISIONS #178). No table of its own. After a Better Auth upgrade, re-run the diff:
 `npx @better-auth/cli generate` cannot read `auth.ts` (SvelteKit's `$app`/`$env` modules don't
 resolve outside Vite) — point it at a throwaway config with the same options minus those
 imports, and compare its output to `schema.ts`.

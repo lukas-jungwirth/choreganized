@@ -346,6 +346,19 @@ needs `http://localhost:3000/api/auth/callback/google` added to the OAuth client
   bound to the public key; replacing it invalidates every stored subscription and each device
   must re-subscribe. Dev may use its own throwaway pair.
 
+- **SMTP** (`SMTP_HOST`, `SMTP_PORT`, `SMTP_USER`, `SMTP_PASS`, `MAIL_FROM`): the sign-in code
+  mail (→ `lib/server/mail.ts`, DECISIONS #179). Optional. Without it the login page offers
+  Google only. Set SPF/DKIM/DMARC for `MAIL_FROM`'s domain at the provider, or the codes land in
+  spam. Test and production may share a provider but should send from their own address.
+
+## Email
+
+One message: the sign-in code (→ `auth.ts`'s `emailOTP` plugin, DECISIONS #178).
+`lib/server/mail.ts` picks a route per send: the `MAIL_OUTBOX` file (E2E/dev only), SMTP, the
+terminal (dev), or off. `mailEnabled()` is how the login page knows whether to show the email
+form. The message text is in the catalog (`auth.mail`), in the language of the login page that
+asked for it.
+
 ## Conventions that keep the codebase coherent
 
 - **Svelte 5 runes only**: `$props()`, `$state()`, `$derived()`, `$effect()`; snippets over

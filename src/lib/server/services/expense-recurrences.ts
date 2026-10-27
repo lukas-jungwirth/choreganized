@@ -155,7 +155,7 @@ function readSeries(householdId: string, id: string | null): SeriesItem[] {
 
 /**
  * The running series each current member pays or shares in, by member id —
- * what leaving or removing them would stop (→ SPEC §11.13, DECISIONS #178).
+ * what leaving or removing them would stop (→ SPEC §11.13, DECISIONS #180).
  */
 export function seriesByMember(householdId: string): Record<string, string[]> {
 	const memberOf = new Map(

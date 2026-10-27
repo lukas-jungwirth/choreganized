@@ -19,15 +19,28 @@ household's shared tally, came after v1 (§11, → plans 29–30, [DECISIONS #16
 ### 1.1 Log in [5a]
 
 - Logo + wordmark + tagline, then sign-in.
-- **v1: "Continue with Google" only** (Better Auth). The design's email/password fields and
-  Apple button are deferred (→ [DECISIONS.md #1](DECISIONS.md)). Keep the layout; render a
-  single Google button where the form is. (Password sign-in exists only as a test door behind
-  `E2E_MODE`, never on a deploy → [DECISIONS #139](DECISIONS.md), TESTING.md.)
+- **Email code, then Google** (Better Auth, plan 31 → [DECISIONS #178](DECISIONS.md)). The
+  design's **Email** field, then **Email me a code**. The page then says "We sent a 6-digit code
+  to {email}. It works for 5 minutes." and asks for the **Code**. The sixth digit signs in
+  (there is also a **Sign in** button). Under it are **Use a different email** and **Send a new
+  code**. Then the design's "or" rule and **Continue with Google**. A first code for a new
+  address creates the account. Errors go in the alert box: not a valid address, wrong code,
+  code expired, too many tries with this code, too many requests (wait a minute), mail couldn't
+  be sent. Footnote: "New here? Signing in creates your account."
+- **A deploy with no mail settings shows Google alone**, as v1 did, with the footnote "New here?
+  Signing in with Google creates your account." (→ [DECISIONS #179](DECISIONS.md)).
+- No password field and no Apple button (→ [DECISIONS.md #1](DECISIONS.md)). Password sign-in
+  exists only as a test door behind `E2E_MODE`, never on a deploy
+  (→ [DECISIONS #139](DECISIONS.md), TESTING.md).
+- **The code mail** is plain text in the login page's language. Subject: "{code} is your
+  Choreganized code". The body has the code, how long it works, and "if you didn't ask for it,
+  ignore this".
 - Signed-in users with a household land on Home; without one, on the create-or-join step.
 
 ### 1.2 Create or join [5b]
 
-- "Welcome, {firstName}" (from Google profile). Two selectable cards: **Create a household**
+- "Welcome, {firstName}" (from Google profile; just "Welcome" for an email-code account, which
+  has no name until [5c] asks for one). Two selectable cards: **Create a household**
   ("Start fresh and invite the people you live with.") / **Join a household** ("Got an invite
   link or code? Enter it here."). Continue button.
 
@@ -1075,7 +1088,7 @@ at a time, like the task history (→ DECISIONS #76). Filters live in the URL, s
   up their old balance where they left it. A former member's balance stays, under their name with
   "Former member", until it is settled. After that they drop out of pickers but stay in
   history (→ [DECISIONS #168](DECISIONS.md)).
-- **Recurring expenses stop with the member** (→ [DECISIONS #178](DECISIONS.md)): leaving or
+- **Recurring expenses stop with the member** (→ [DECISIONS #180](DECISIONS.md)): leaving or
   being removed stops every series they pay or share in, and the confirm says so — "Rent and
   Netflix will stop repeating." What they already logged stays. The others can start a new
   series with the right people from the next expense.

@@ -504,7 +504,7 @@ export function transferOwnership(
  * (→ DECISIONS #12): the membership row goes, their tasks become **Anyone**,
  * their completions keep the name snapshot — the points stay with the house —
  * and their ledger person stays behind with whatever they still owe or are owed.
- * Every recurring expense they pay or share in stops (→ DECISIONS #178): left
+ * Every recurring expense they pay or share in stops (→ DECISIONS #180): left
  * running, it would keep adding to a balance nobody is there to settle.
  *
  * Assignment is cleared here rather than left to the FK's `ON DELETE SET NULL`

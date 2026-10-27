@@ -42,6 +42,7 @@ plus your session date). Note deviations in the plan file and in DECISIONS.md.
 | 28  | [Import: AI repairs bad cards, text without AI, smaller photos](28-import-repair-text-photos.md) | todo              | 22                       |
 | 29  | [Expenses: log, split, settle up](29-expenses.md)                                                | done (2026-10-26) | 09, 10                   |
 | 30  | [Expenses: recurring series and notifications](30-expenses-recurring-push.md)                    | done (2026-10-27) | 29, 05, 06               |
+| 31  | [Sign in with an email code](31-email-sign-in.md)                                                | done (2026-10-27) | 00                       |
 
 Work done after the twelve plans, tracked here so the queue stays the whole story:
 
@@ -63,7 +64,7 @@ Work done after the twelve plans, tracked here so the queue stays the whole stor
 | **One row, one action in the week** (`cooking/MealRow`, `cooking/MealActionsSheet`, SPEC §4.1, DECISIONS #132)                  | done (2026-08-18) |
 | **Every page has a screenshot or an excuse** (`tests/conventions/visual-coverage.test.ts`, TESTING.md "Visual", DECISIONS #156) | done (2026-10-25) |
 | **Litestream to B2, restore on empty `/data`** (`litestream.yml`, BACKUP.md, DECISIONS #160)                                    | done (2026-10-25) |
-| **Recurring expenses stop when a member leaves** (`services/household.ts` `departMember`, SPEC §11.13, DECISIONS #178)          | done (2026-10-27) |
+| **Recurring expenses stop when a member leaves** (`services/household.ts` `departMember`, SPEC §11.13, DECISIONS #180)          | done (2026-10-27) |
 
 ## Dependency graph & parallelization
 
