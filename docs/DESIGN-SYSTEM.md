@@ -88,7 +88,7 @@ Built so far — plan 01: **Button · TextField · Avatar · ColorPicker** + `sh
 480px page shell for onboarding/login). Plan 02: **Card · AvatarStack · CheckCircle · Chip ·
 SegmentedControl · Toggle · ProgressBar · Banner · EmptyState · FAB · BottomSheet ·
 CenterModal**, plus `shell/TabBar` · `shell/PageHeader` and the bespoke icons in
-`components/icons/`. Plan 03: **Select · Stepper** + `shell/SubHeader`. Plan 04: **DateField**.
+`components/icons/`. Plan 03: **Select · Stepper** + `shell/SubHeader`. Plan 04: **DateField**. Plan 31: **CodeInput**.
 Plan 05: **RowGroup**, `Banner` gained an acting/dismissable form, plus the feature component
 **`components/EnablePush`** (the push permission state machine, in a Settings row or as Home's
 one-time prompt card). Plan 07: **SearchField**, and `RowGroup` gained the `surface="sunken"`
@@ -160,6 +160,10 @@ background at all when there is nothing to measure.
   mode"). Full-width by default; renders an `<a>` when given `href`.
 - **TextField** — uppercase micro-label + white field, `--r-input`, sage border on focus,
   `error` prop for the message a failed form action sends back.
+- **CodeInput** — a one-time code as a row of boxes, one digit each, with TextField's micro-label
+  (the sign-in code [5a]). One real input laid invisibly over the boxes, so iOS code autofill,
+  pasting "123 456" and screen readers all see one field; digits only; `oncomplete` fires on the
+  last digit; `invalid` outlines every box (→ DECISIONS #181).
 - **ColorPicker** — the member palette (`$lib/member-colors`) as a radio group; `taken`
   colours render disabled. Pair it with a 52px Avatar preview [5c].
 - **RowGroup** — the white block a settings-style list sits in: `--r-card`, `--shadow-card`, a

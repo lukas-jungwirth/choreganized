@@ -1492,14 +1492,17 @@ export const de: Messages = {
 
 		email: 'E-Mail',
 		emailPlaceholder: 'du@beispiel.at',
-		sendCode: 'Code per E-Mail schicken',
+		sendCode: 'Anmeldecode anfordern',
 		sendingCode: 'Wird gesendet…',
 		codeSent: (email: string, minutes: number) =>
 			`Wir haben einen 6-stelligen Code an ${email} geschickt. Er gilt ${minutes} Minuten.`,
 		code: 'Code',
 		verifyCode: 'Anmelden',
 		verifyingCode: 'Anmeldung läuft…',
-		resendCode: 'Neuen Code schicken',
+		noCode: 'Keinen Code bekommen?',
+		resendCode: 'Nochmal schicken',
+		codeResent: (email: string, minutes: number) =>
+			`Wir haben einen neuen Code an ${email} geschickt. Er gilt ${minutes} Minuten, der alte nicht mehr.`,
 		changeEmail: 'Andere E-Mail verwenden',
 		or: 'oder',
 		invalidEmail: 'Gib eine gültige E-Mail-Adresse ein.',
