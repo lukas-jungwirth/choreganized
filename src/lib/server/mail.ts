@@ -110,8 +110,12 @@ export async function sendMail(message: MailMessage): Promise<void> {
 	}
 }
 
-/** How long a sign-in code works, in minutes — `auth.ts` sets the expiry from it. */
-export const SIGN_IN_CODE_MINUTES = 5;
+/**
+ * How long a sign-in code works, in minutes — `auth.ts` sets the expiry from it,
+ * and the page and the mail say it. Ten, like most apps: room for a slow mail,
+ * and no easier to guess, since three wrong tries kill a code (→ DECISIONS #182).
+ */
+export const SIGN_IN_CODE_MINUTES = 10;
 
 /** The sign-in code mail, in the language the login page was shown in. */
 export function signInCodeMail(to: string, code: string, locale: Locale): MailMessage {

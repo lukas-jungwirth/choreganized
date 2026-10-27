@@ -153,4 +153,19 @@ describe('email code sign-in', () => {
 		const email = freshEmail();
 		assert.match(await requestCode(email), /^\d{6}$/);
 	});
+
+	it('keeps a code for ten minutes', async () => {
+		const email = freshEmail();
+		const before = Date.now();
+		await requestCode(email);
+
+		const row = db
+			.select()
+			.from(tables.verification)
+			.where(eq(tables.verification.identifier, `sign-in-otp-${email}`))
+			.get();
+		assert.ok(row);
+		const minutes = (row.expiresAt.getTime() - before) / 60_000;
+		assert.ok(minutes > 9.9 && minutes <= 10.1, `expires after ${minutes.toFixed(2)} minutes`);
+	});
 });
