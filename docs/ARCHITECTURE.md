@@ -357,7 +357,8 @@ One message: the sign-in code (→ `auth.ts`'s `emailOTP` plugin, DECISIONS #178
 `lib/server/mail.ts` picks a route per send: the `MAIL_OUTBOX` file (E2E/dev only), SMTP, the
 terminal (dev), or off. `mailEnabled()` is how the login page knows whether to show the email
 form. The message text is in the catalog (`auth.mail`), in the language of the login page that
-asked for it.
+asked for it. `lib/server/send-limit.ts` limits how often one address is mailed a code (one a
+minute, five an hour, in memory); `auth.ts` checks it in a before-hook (→ DECISIONS #183).
 
 ## Conventions that keep the codebase coherent
 

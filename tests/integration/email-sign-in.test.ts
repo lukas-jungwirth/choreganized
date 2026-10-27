@@ -168,4 +168,38 @@ describe('email code sign-in', () => {
 		const minutes = (row.expiresAt.getTime() - before) / 60_000;
 		assert.ok(minutes > 9.9 && minutes <= 10.1, `expires after ${minutes.toFixed(2)} minutes`);
 	});
+
+	it('holds a second code to the same address for a minute, whoever asks', async () => {
+		const email = freshEmail();
+		await requestCode(email);
+
+		// Another IP, same address: the per-IP limit wouldn't stop this one.
+		const error = await auth.api
+			.sendVerificationOTP({
+				body: { email: email.toUpperCase(), type: 'sign-in' },
+				headers: headers()
+			})
+			.then(
+				() => assert.fail('a second code went out within the minute'),
+				(e: { statusCode?: number; body?: { code?: string; retryAfter?: number } }) => e
+			);
+
+		assert.equal(error.statusCode, 429);
+		assert.equal(error.body?.code, 'CODE_COOLDOWN');
+		assert.ok(error.body?.retryAfter && error.body.retryAfter <= 60);
+		assert.equal(sent.filter((mail) => mail.to === email).length, 1);
+	});
+
+	it('does not count a send whose mail never left', async () => {
+		const email = `refused-${freshEmail()}`;
+		const send = () =>
+			auth.api.sendVerificationOTP({ body: { email, type: 'sign-in' }, headers: headers() }).then(
+				() => undefined,
+				(e: { body?: { code?: string } }) => e.body?.code
+			);
+
+		assert.equal(await send(), 'MAIL_SEND_FAILED');
+		// Straight away again: still the mail's failure, not "wait a minute".
+		assert.equal(await send(), 'MAIL_SEND_FAILED');
+	});
 });

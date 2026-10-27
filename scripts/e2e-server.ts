@@ -68,6 +68,9 @@ const child = spawn(process.execPath, ['build/index.js'], {
 		E2E_MODE: 'true',
 		// Sign-in codes land here, not in a mailbox (→ tests/e2e/email-sign-in.spec.ts).
 		MAIL_OUTBOX: `${dataDir}/outbox.jsonl`,
+		// A journey watches "Send again" count down and come back; a minute is too
+		// long to wait (→ lib/server/send-limit.ts, honoured in E2E mode only).
+		SIGN_IN_CODE_COOLDOWN_SECONDS: '3',
 		...fakeAiEnv(fakeAi.url)
 	}
 });

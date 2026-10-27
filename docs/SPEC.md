@@ -30,6 +30,12 @@ household's shared tally, came after v1 (§11, → plans 29–30, [DECISIONS #16
   code expired, too many tries with this code, too many requests (wait a minute), and mail couldn't
   be sent ("The email couldn't be sent, so no code is on its way. Try again in a moment, or
   continue with Google." — the page stays on the email step). Footnote: "New here? Signing in creates your account."
+- **How often a code can be sent** (→ [DECISIONS #183](DECISIONS.md)): one per address per
+  minute, five per address per hour, on top of three requests per minute per IP. After each
+  code, **Send again** counts down ("Send again in 0:42") and comes back after a minute. Asking
+  again too soon says "Wait {n} seconds before asking for another code."; the sixth in an hour
+  says "That's enough codes for this address for now. Try again in {n} minutes, or continue with
+  Google." The answer is the same whether or not the address has an account.
 - **A deploy with no mail settings shows Google alone**, as v1 did, with the footnote "New here?
   Signing in with Google creates your account." (→ [DECISIONS #179](DECISIONS.md)).
 - No password field and no Apple button (→ [DECISIONS.md #1](DECISIONS.md)). Password sign-in

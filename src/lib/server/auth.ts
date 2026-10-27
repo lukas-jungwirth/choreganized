@@ -20,6 +20,7 @@ import { db } from './db';
 import { account, session, user, verification } from './db/schema';
 import { e2eMode } from './e2e-mode';
 import { SIGN_IN_CODE_MINUTES, sendMail, signInCodeMail } from './mail';
+import { activeSendLimits, createSendLimiter } from './send-limit';
 
 /**
  * `vite build` imports server modules just to read their route options, so a
@@ -58,6 +59,17 @@ const failedSends = new WeakSet<object>();
 /** The code the login page maps to "couldn't send" (→ `routes/login`, which spells it out). */
 const MAIL_SEND_FAILED = 'MAIL_SEND_FAILED';
 
+const SEND_CODE_PATH = '/email-otp/send-verification-otp';
+
+/**
+ * One code a minute and five an hour per address (→ `send-limit.ts`,
+ * DECISIONS #183) — on top of the plugin's per-IP limit, which can't stop
+ * someone with many IPs filling one inbox through our mail account. Made on
+ * first use: the environment is empty while the app builds.
+ */
+let sendLimiter: ReturnType<typeof createSendLimiter> | undefined;
+const limiter = () => (sendLimiter ??= createSendLimiter(activeSendLimits()));
+
 export const auth = betterAuth({
 	appName: 'Choreganized',
 	secret: requireEnv('BETTER_AUTH_SECRET'),
@@ -88,8 +100,26 @@ export const auth = betterAuth({
 		}
 	},
 	hooks: {
+		before: createAuthMiddleware(async (ctx) => {
+			if (ctx.path !== SEND_CODE_PATH) return;
+			const email = (ctx.body as { email?: unknown } | undefined)?.email;
+			if (typeof email !== 'string') return; // the plugin's own validation answers
+			const check = limiter().check(email);
+			if (!check.ok) {
+				// The same answer whether or not the address has an account.
+				throw new APIError('TOO_MANY_REQUESTS', {
+					code: check.reason === 'cooldown' ? 'CODE_COOLDOWN' : 'CODE_HOURLY_LIMIT',
+					message: 'Too many sign-in codes for this address.',
+					retryAfter: check.retryAfterSeconds
+				});
+			}
+			limiter().record(email);
+		}),
 		after: createAuthMiddleware(async (ctx) => {
-			if (ctx.path === '/email-otp/send-verification-otp' && failedSends.has(ctx.context)) {
+			if (ctx.path === SEND_CODE_PATH && failedSends.has(ctx.context)) {
+				// A mail that never left shouldn't hold the address back.
+				const email = (ctx.body as { email?: unknown } | undefined)?.email;
+				if (typeof email === 'string') limiter().forget(email);
 				throw new APIError('SERVICE_UNAVAILABLE', {
 					code: MAIL_SEND_FAILED,
 					message: 'The sign-in code could not be sent.'
