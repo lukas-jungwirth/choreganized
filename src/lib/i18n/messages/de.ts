@@ -1507,7 +1507,8 @@ export const de: Messages = {
 		codeExpired: 'Der Code ist abgelaufen. Schick dir einen neuen.',
 		tooManyAttempts: 'Zu viele Versuche mit diesem Code. Schick dir einen neuen.',
 		tooManyRequests: 'Zu viele Versuche. Warte eine Minute und versuch es dann nochmal.',
-		sendFailed: 'Die E-Mail konnte nicht gesendet werden. Versuch es nochmal.',
+		sendFailed:
+			'Die E-Mail konnte nicht gesendet werden, es ist also kein Code unterwegs. Versuch es gleich nochmal oder melde dich mit Google an.',
 
 		mail: {
 			subject: (code: string) => `${code} ist dein Choreganized-Code`,

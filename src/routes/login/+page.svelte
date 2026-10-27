@@ -43,6 +43,8 @@
 				return m.auth.tooManyAttempts;
 			case 'INVALID_EMAIL':
 				return m.auth.invalidEmail;
+			case 'MAIL_SEND_FAILED':
+				return m.auth.sendFailed;
 			default:
 				return fallback;
 		}

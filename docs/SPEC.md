@@ -25,8 +25,9 @@ household's shared tally, came after v1 (§11, → plans 29–30, [DECISIONS #16
   (there is also a **Sign in** button). Under it are **Use a different email** and **Send a new
   code**. Then the design's "or" rule and **Continue with Google**. A first code for a new
   address creates the account. Errors go in the alert box: not a valid address, wrong code,
-  code expired, too many tries with this code, too many requests (wait a minute), mail couldn't
-  be sent. Footnote: "New here? Signing in creates your account."
+  code expired, too many tries with this code, too many requests (wait a minute), and mail couldn't
+  be sent ("The email couldn't be sent, so no code is on its way. Try again in a moment, or
+  continue with Google." — the page stays on the email step). Footnote: "New here? Signing in creates your account."
 - **A deploy with no mail settings shows Google alone**, as v1 did, with the footnote "New here?
   Signing in with Google creates your account." (→ [DECISIONS #179](DECISIONS.md)).
 - No password field and no Apple button (→ [DECISIONS.md #1](DECISIONS.md)). Password sign-in

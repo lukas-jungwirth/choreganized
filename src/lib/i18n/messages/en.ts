@@ -1928,7 +1928,9 @@ export const en = {
 		codeExpired: 'That code has expired. Send yourself a new one.',
 		tooManyAttempts: 'Too many tries with that code. Send yourself a new one.',
 		tooManyRequests: 'Too many tries. Wait a minute, then try again.',
-		sendFailed: 'We couldn’t send the email. Please try again.',
+		/** The mail server refused or was unreachable (plan 31 → DECISIONS #178). */
+		sendFailed:
+			'The email couldn’t be sent, so no code is on its way. Try again in a moment, or continue with Google.',
 
 		/** The sign-in mail itself — plain text (→ `lib/server/mail.ts`). */
 		mail: {
