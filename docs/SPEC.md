@@ -1075,6 +1075,10 @@ at a time, like the task history (→ DECISIONS #76). Filters live in the URL, s
   up their old balance where they left it. A former member's balance stays, under their name with
   "Former member", until it is settled. After that they drop out of pickers but stay in
   history (→ [DECISIONS #168](DECISIONS.md)).
+- **Recurring expenses stop with the member** (→ [DECISIONS #178](DECISIONS.md)): leaving or
+  being removed stops every series they pay or share in, and the confirm says so — "Rent and
+  Netflix will stop repeating." What they already logged stays. The others can start a new
+  series with the right people from the next expense.
 - **Away mode** doesn't affect expenses.
 - **Points**: none. Paying for things is not a chore.
 

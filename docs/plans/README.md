@@ -63,6 +63,7 @@ Work done after the twelve plans, tracked here so the queue stays the whole stor
 | **One row, one action in the week** (`cooking/MealRow`, `cooking/MealActionsSheet`, SPEC §4.1, DECISIONS #132)                  | done (2026-08-18) |
 | **Every page has a screenshot or an excuse** (`tests/conventions/visual-coverage.test.ts`, TESTING.md "Visual", DECISIONS #156) | done (2026-10-25) |
 | **Litestream to B2, restore on empty `/data`** (`litestream.yml`, BACKUP.md, DECISIONS #160)                                    | done (2026-10-25) |
+| **Recurring expenses stop when a member leaves** (`services/household.ts` `departMember`, SPEC §11.13, DECISIONS #178)          | done (2026-10-27) |
 
 ## Dependency graph & parallelization
 

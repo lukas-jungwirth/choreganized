@@ -33,6 +33,12 @@
 		);
 	}
 
+	/** "Rent and Netflix will stop repeating." for a housemate in a recurring expense. */
+	function seriesNote(memberId: string): string | null {
+		const names = data.series[memberId] ?? [];
+		return names.length > 0 ? m.expenses.leaveSeries(names) : null;
+	}
+
 	let managing = $state<MemberProfile | null>(null);
 	let working = $state(false);
 
@@ -120,6 +126,7 @@
 		points={data.points[member.id] ?? 0}
 		today={data.today}
 		balanceNote={balanceNote(member.id)}
+		seriesNote={seriesNote(member.id)}
 		onclose={() => (managing = null)}
 	/>
 {/if}

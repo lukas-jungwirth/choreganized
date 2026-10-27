@@ -1594,6 +1594,15 @@ export const en = {
 			]
 		},
 
+		/**
+		 * Leaving or removing someone who is in a recurring expense: those series
+		 * stop (→ SPEC §11.13). Up to three by name; past that, two and a count.
+		 */
+		leaveSeries: (names: string[]) => {
+			const shown = names.length > 3 ? [...names.slice(0, 2), `${names.length - 2} more`] : names;
+			return `${list(shown)} will stop repeating.`;
+		},
+
 		/** Leaving or removing someone who isn't square (→ SPEC §11.13). */
 		leaveBalance: (who: string | null, owes: boolean, amount: string) =>
 			who === null

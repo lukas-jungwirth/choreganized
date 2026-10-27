@@ -16,6 +16,7 @@ import { expenseNotices, type ExpenseEvent } from '$lib/server/services/expense-
 import {
 	countSeries,
 	getSeries,
+	seriesByMember,
 	listSeries,
 	materializeDue,
 	stopSeries,
@@ -32,6 +33,7 @@ import {
 	updateExpense,
 	type ExpenseInput
 } from '$lib/server/services/expenses';
+import { leaveHousehold, removeMember } from '$lib/server/services/household';
 import { db, makeHousehold, tables } from '../helpers/db';
 
 const TODAY = '2026-11-24';
@@ -330,6 +332,78 @@ describe('editing and stopping', () => {
 		assert.throws(
 			() => updateSeries(b.householdId, series.id, seriesInput(a.ids), TODAY),
 			rejects('not-found')
+		);
+	});
+});
+
+describe('when someone leaves', () => {
+	it('every series they pay or share in stops; the others run on, and the past stays', () => {
+		const { householdId, owner, members, ids } = household(['Elisabeth', 'Marco']);
+		const [lukas, elisabeth] = ids;
+		createExpense(
+			householdId,
+			owner.id,
+			{ ...rent(lukas, ids, '2026-10-01'), description: 'Rent' },
+			TODAY,
+			'month'
+		);
+		createExpense(
+			householdId,
+			owner.id,
+			{ ...rent(elisabeth, [elisabeth], '2026-10-05', 1399), description: 'Netflix' },
+			TODAY,
+			'month'
+		);
+		createExpense(
+			householdId,
+			owner.id,
+			{ ...rent(lukas, [lukas], '2026-10-07', 3990), description: 'Internet' },
+			TODAY,
+			'month'
+		);
+		materializeDue(householdId, TODAY);
+
+		assert.deepEqual(seriesByMember(householdId)[members[1].id]?.sort(), ['Netflix', 'Rent']);
+
+		leaveHousehold(householdId, members[1].id);
+
+		assert.deepEqual(
+			listSeries(householdId).map((series) => series.description),
+			['Internet']
+		);
+		// Rent and Netflix logged twice each before the leave, and never again; only
+		// Internet (Dec 7) comes due after it.
+		assert.equal(materializeDue(householdId, '2026-12-31').length, 1);
+		const counts = Object.fromEntries(
+			['Rent', 'Netflix', 'Internet'].map((what) => [
+				what,
+				listLedger(householdId).filter((item) => item.description === what).length
+			])
+		);
+		assert.deepEqual(counts, { Rent: 2, Netflix: 2, Internet: 3 });
+	});
+
+	it('removal stops them too, and never another household’s', () => {
+		const a = household(['Elisabeth']);
+		const b = household(['Elisabeth']);
+		createExpense(a.householdId, a.owner.id, rent(a.ids[0], a.ids, TODAY), TODAY, 'month');
+		createExpense(b.householdId, b.owner.id, rent(b.ids[0], b.ids, TODAY), TODAY, 'month');
+
+		removeMember(a.householdId, a.owner.id, a.members[1].id);
+		assert.equal(countSeries(a.householdId), 0);
+		assert.equal(countSeries(b.householdId), 1);
+	});
+
+	it('the confirm names the first three, then counts', () => {
+		const en = catalog('en');
+		assert.equal(en.expenses.leaveSeries(['Rent']), 'Rent will stop repeating.');
+		assert.equal(
+			en.expenses.leaveSeries(['Rent', 'Netflix', 'Internet', 'Gym']),
+			'Rent, Netflix, and 2 more will stop repeating.'
+		);
+		assert.equal(
+			catalog('de').expenses.leaveSeries(['Miete', 'Netflix']),
+			'Miete und Netflix wiederholen sich dann nicht mehr.'
 		);
 	});
 });

@@ -18,6 +18,7 @@ import {
 	revokeInviteCode,
 	transferOwnership
 } from '$lib/server/services/household';
+import { seriesByMember } from '$lib/server/services/expense-recurrences';
 import { balancesByMember } from '$lib/server/services/expenses';
 import { monthPointsByMember } from '$lib/server/services/tasks';
 import { formatInviteCode } from '$lib/utils/invite-code';
@@ -53,6 +54,8 @@ export const load: PageServerLoad = async (event) => {
 		 * §11.13) — the owner's sheet only, for the same reason as `points`.
 		 */
 		balances: member.role === 'owner' ? balancesByMember(householdId) : {},
+		/** The series a removal would stop, by member (→ SPEC §11.13). */
+		series: member.role === 'owner' ? seriesByMember(householdId) : {},
 		currency: record.currency,
 		inviteCode: record.inviteCode,
 		formattedCode: record.inviteCode ? formatInviteCode(record.inviteCode) : null

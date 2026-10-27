@@ -331,7 +331,9 @@ where personId = p`. Always derived on read, never stored; there is no reset.
 (household_id, next_date)` makes the every-minute "anything due?" one index probe.
 - **The anchor stops drift**: a month clamps to its last day without forgetting the 31st.
   Editing the series keeps the anchor unless the next date or the unit changes.
-- **Stopping sets `stoppedAt`**; the row stays and so do its occurrences.
+- **Stopping sets `stoppedAt`**; the row stays and so do its occurrences. Leaving or removal
+  stops every running series the member's ledger person pays or shares in, in the departure's
+  own transaction (`services/household.ts` `departMember`, → #178).
   `expenses.recurrenceId` is `ON DELETE SET NULL` (added by hand to migration 0019, → #175), so
   even deleting a series would leave the expenses it logged.
 - `members.notifyExpenses` (default on) silences the expense notices for one member (→ #176).

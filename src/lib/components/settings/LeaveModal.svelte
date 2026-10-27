@@ -22,10 +22,12 @@
 		mode: 'leave' | 'last' | 'blocked';
 		/** "You still owe €12.00 — settle up first?" — said, never blocking (→ SPEC §11.13). */
 		balanceNote?: string | null;
+		/** "Rent and Netflix will stop repeating." (→ SPEC §11.13). */
+		seriesNote?: string | null;
 		onclose: () => void;
 	};
 
-	let { householdName, mode, balanceNote = null, onclose }: Props = $props();
+	let { householdName, mode, balanceNote = null, seriesNote = null, onclose }: Props = $props();
 
 	const m = messages();
 
@@ -61,6 +63,7 @@
 			{/if}
 		</p>
 		{#if balanceNote && mode === 'leave'}<p class="balance">{balanceNote}</p>{/if}
+		{#if seriesNote && mode === 'leave'}<p class="series">{seriesNote}</p>{/if}
 
 		{#if error}<p class="error">{error}</p>{/if}
 
@@ -132,6 +135,14 @@
 		line-height: 1.45;
 		text-align: center;
 		color: var(--owe);
+	}
+
+	.series {
+		margin: -8px 0 16px;
+		font-size: calc(13.5px * var(--fs));
+		line-height: 1.45;
+		text-align: center;
+		color: var(--text-3);
 	}
 
 	.error {

@@ -33,6 +33,7 @@ import {
 	testAiConnection
 } from '$lib/server/services/ai';
 import { currencyAction, splitDefaultAction } from '$lib/server/expense-actions';
+import { seriesByMember } from '$lib/server/services/expense-recurrences';
 import { balancesByMember, getExpenseSettings, listPeople } from '$lib/server/services/expenses';
 import { FeedbackError, submitFeedback, syncFeedback } from '$lib/server/services/feedback';
 import {
@@ -121,7 +122,9 @@ export const load: PageServerLoad = (event) => {
 				currency: settings.currency,
 				currencyLocked: settings.hasExpenses,
 				splitDefault: settings.splitDefault,
-				myBalance: balancesByMember(householdId)[member.id] ?? 0
+				myBalance: balancesByMember(householdId)[member.id] ?? 0,
+				/** The series leaving would stop (→ SPEC §11.13). */
+				mySeries: seriesByMember(householdId)[member.id] ?? []
 			};
 		})(),
 		prefs: {

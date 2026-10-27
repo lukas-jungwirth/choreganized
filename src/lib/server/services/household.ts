@@ -13,7 +13,7 @@
  * is enforced next to the write — an action that forgot to ask cannot make the
  * write happen anyway.
  */
-import { and, asc, eq, isNull, ne, sql } from 'drizzle-orm';
+import { and, asc, eq, inArray, isNull, ne, or, sql } from 'drizzle-orm';
 import type { Locale } from '$lib/i18n';
 import { isMemberColor } from '$lib/member-colors';
 import { toCalendarDate, type CalendarDate } from '$lib/utils/dates';
@@ -25,6 +25,8 @@ import {
 } from '$lib/utils/invite-code';
 import { db } from '../db';
 import {
+	expenseRecurrenceShares,
+	expenseRecurrences,
 	households,
 	ledgerPeople,
 	members,
@@ -502,6 +504,8 @@ export function transferOwnership(
  * (→ DECISIONS #12): the membership row goes, their tasks become **Anyone**,
  * their completions keep the name snapshot — the points stay with the house —
  * and their ledger person stays behind with whatever they still owe or are owed.
+ * Every recurring expense they pay or share in stops (→ DECISIONS #178): left
+ * running, it would keep adding to a balance nobody is there to settle.
  *
  * Assignment is cleared here rather than left to the FK's `ON DELETE SET NULL`
  * because `rotate` has to go with it: "alternate each time" has nobody to
@@ -510,6 +514,34 @@ export function transferOwnership(
  */
 function departMember(tx: Transaction, householdId: string, memberId: string): void {
 	const member = memberIn(tx, householdId, memberId);
+
+	const person = tx
+		.select({ id: ledgerPeople.id })
+		.from(ledgerPeople)
+		.where(and(eq(ledgerPeople.householdId, householdId), eq(ledgerPeople.memberId, memberId)))
+		.get();
+	if (person) {
+		const now = new Date();
+		tx.update(expenseRecurrences)
+			.set({ stoppedAt: now, updatedAt: now })
+			.where(
+				and(
+					eq(expenseRecurrences.householdId, householdId),
+					isNull(expenseRecurrences.stoppedAt),
+					or(
+						eq(expenseRecurrences.paidById, person.id),
+						inArray(
+							expenseRecurrences.id,
+							tx
+								.select({ id: expenseRecurrenceShares.recurrenceId })
+								.from(expenseRecurrenceShares)
+								.where(eq(expenseRecurrenceShares.personId, person.id))
+						)
+					)
+				)
+			)
+			.run();
+	}
 
 	// Their ledger person outlives them, frozen as they were (→ DECISIONS #168):
 	// a balance they still owe has to stay readable under a name. The FK would
