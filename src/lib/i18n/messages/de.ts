@@ -1481,7 +1481,33 @@ export const de: Messages = {
 		openingGoogle: 'Google wird geöffnet…',
 		failed: 'Die Anmeldung ist nicht durchgegangen. Versuch es nochmal.',
 		footnote: 'Neu hier? Mit der Google-Anmeldung wird dein Konto angelegt.',
-		redirecting: 'Weiter zu Choreganized…'
+		footnoteEmail: 'Neu hier? Mit der Anmeldung wird dein Konto angelegt.',
+		redirecting: 'Weiter zu Choreganized…',
+
+		email: 'E-Mail',
+		emailPlaceholder: 'du@beispiel.at',
+		sendCode: 'Code per E-Mail schicken',
+		sendingCode: 'Wird gesendet…',
+		codeSent: (email: string, minutes: number) =>
+			`Wir haben einen 6-stelligen Code an ${email} geschickt. Er gilt ${minutes} Minuten.`,
+		code: 'Code',
+		verifyCode: 'Anmelden',
+		verifyingCode: 'Anmeldung läuft…',
+		resendCode: 'Neuen Code schicken',
+		changeEmail: 'Andere E-Mail verwenden',
+		or: 'oder',
+		invalidEmail: 'Gib eine gültige E-Mail-Adresse ein.',
+		wrongCode: 'Der Code stimmt nicht. Schau nochmal in die E-Mail.',
+		codeExpired: 'Der Code ist abgelaufen. Schick dir einen neuen.',
+		tooManyAttempts: 'Zu viele Versuche mit diesem Code. Schick dir einen neuen.',
+		tooManyRequests: 'Zu viele Versuche. Warte eine Minute und versuch es dann nochmal.',
+		sendFailed: 'Die E-Mail konnte nicht gesendet werden. Versuch es nochmal.',
+
+		mail: {
+			subject: (code: string) => `${code} ist dein Choreganized-Code`,
+			body: (code: string, minutes: number) =>
+				`Dein Anmeldecode für Choreganized:\n\n${code}\n\nEr gilt ${minutes} Minuten. Wenn du ihn nicht angefordert hast, kannst du diese E-Mail ignorieren – ohne den Code kann sich niemand anmelden.`
+		}
 	},
 
 	onboarding: {
@@ -1490,7 +1516,7 @@ export const de: Messages = {
 
 		start: {
 			title: 'Los geht’s',
-			welcome: (name: string) => `Willkommen, ${name}`,
+			welcome: (name: string) => (name ? `Willkommen, ${name}` : 'Willkommen'),
 			question: 'Wie möchtest du starten?',
 			createTitle: 'Haushalt anlegen',
 			createCopy: 'Frisch anfangen und die Leute einladen, mit denen du wohnst.',

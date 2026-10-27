@@ -209,6 +209,16 @@ fake adapters (`run.test.ts`).
 provider needs a real key in the running app, and only Lukas has those. A handoff says plainly
 whether that happened.
 
+### Mail outbox
+
+No test sends a real mail. `scripts/e2e-server.ts` gives the server
+`MAIL_OUTBOX=data/e2e/outbox.jsonl`. Every mail is appended there as one JSON line
+(`to`, `subject`, `text`), and `tests/e2e/email-sign-in.spec.ts` reads the code from it. The
+`verify` launch entry writes to `data/verify-outbox.jsonl`. With no outbox, `npm run dev`
+prints the mail to the terminal. The outbox works only in E2E mode or dev (→ DECISIONS #179). The
+integration test mocks `sendMail` and drives Better Auth's own endpoints
+(`tests/integration/email-sign-in.test.ts`).
+
 ### E2E mode — and verifying by hand
 
 The server has one door for tests: `E2E_MODE=true` enables password sign-in, `/dev/kit` and

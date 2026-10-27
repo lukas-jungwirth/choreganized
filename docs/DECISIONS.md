@@ -9,6 +9,8 @@ Agents: when you make a judgment call that isn't in SPEC/ARCHITECTURE, **append 
 1. **Auth is Google-only in v1** — design [5a] shows email+password and an Apple button; the
    stack decision (Better Auth, Google OAuth only, email later) wins. Login renders a single
    Google button; Settings has no Password row. Revisit when adding email or passkeys.
+   _Revisited by plan 31 (→ #178): the design's email field now takes an address and signs in
+   with a code sent to it. Still no password and no Apple button._
 2. **Effort presets are the canonical points**: 5 / 10 / 20 / 40 (Small/Medium/Large/Very
    large) per [3b] and the brief. The stray +15/+25 values in some mockups are design
    artifacts. `points` is stored as an int, so custom values are possible later without
@@ -1036,7 +1038,7 @@ theme is…"). It looks like a typo and it is, but breaking it makes Prettier re
 1 as one ordered list and renumber 119+ — every `DECISIONS #N` citation in `src/` and `docs/`
 would silently point at the wrong entry. Fix it only together with those citations. -->
 
-~~SSE live updates~~ — resolved 2026-09-10 (→ #135) · passkeys · email auth ·
+~~SSE live updates~~ — resolved 2026-09-10 (→ #135) · passkeys · ~~email auth~~ — resolved 2026-10-27 (→ #178) ·
 Apple sign-in · multi-household · meal slots beyond dinner · offline mutations ·
 iOS polish pass. 119. **The theme is a per-device cookie, not a column on the membership** (→ SPEC §10). Language
 is stored on `members.locale` because the server genuinely needs it — the cron sweep has to
@@ -2577,3 +2579,43 @@ units | null, name}`, written back as editor lines in the reader's unit spelling
        404 otherwise), so the Playwright journey doesn't wait for a household clock to pass 06:00.
      - **The seed makes Strom a monthly series** started from its expense, next due a month
        later, so Recurring [9h] and the repeat badge have something to show.
+178. **Email sign-in is a six-digit code, not a magic link and not a password** (plan 31,
+     `lib/server/auth.ts`, SPEC §1.1). Some members won't use Google, so the login page now takes
+     an email address and mails a code to it. Better Auth's `emailOTP` plugin does the work. The
+     code lives hashed in the existing `verification` table, so there are no new tables and no
+     migration. It works for 5 minutes, three wrong tries kill it, and the plugin allows three
+     sends and three sign-ins per minute per IP. A first code for a new address creates the
+     account, as a first Google sign-in does. A code for a Google user's address signs into that
+     same account. Why a code:
+     - **An installed iOS PWA keeps its own cookies, apart from Safari.** A magic link tapped in
+       Mail opens Safari, signs Safari in, and leaves the app on the home screen signed out. A code
+       is typed into the app, so the session lands where the person is.
+     - **Mail scanners open links.** Outlook "safe links" and company filters fetch every link in
+       a new mail, which spends a one-time link before its owner taps it. Nothing can spend a
+       code by reading it.
+     - **No passwords.** They would bring hashing, resets, breach checks and a reset mail anyway,
+       and a password can be phished or reused. `emailAndPassword` stays the E2E-only test door
+       (→ #139).
+     - **Passkeys are the next step, not this one.** `@better-auth/passkey` (a new `passkey`
+       table) fits best as "add a passkey" in Settings, for someone who is already signed in.
+     - **The code mail is awaited**, against the plugin's timing advice: sign-up is open, so
+       every address gets a code and the timing says nothing. A mail that failed must say so on
+       the login page, not vanish.
+     - **The rate limit keys on `X-Forwarded-For`, and only when it holds one address.**
+       Coolify's Traefik replaces the client's header, so it does. If a proxy chain in front
+       (Cloudflare, say) ever adds a second address, Better Auth logs "Rate limiting could not
+       determine a client IP" and every client shares one bucket. That fails safe against
+       guessing, but anyone could use up the bucket for everyone. The fix then is
+       `advanced.ipAddress.trustedProxies` in `auth.ts`.
+     - **The sixth digit signs in**, with no button press, so iOS's code autofill is one tap. A new
+       account has no name yet; onboarding says "Welcome" and asks for one.
+179. **Mail goes out over SMTP through nodemailer, as plain text** (`lib/server/mail.ts`, new
+     dependency `nodemailer`). SMTP works with any provider (Brevo, Postmark, Resend, Scaleway,
+     an own server), so changing provider means changing env variables, not code. Port 465 is TLS
+     from the start; any other port must upgrade with STARTTLS (`requireTLS`) or nothing is sent.
+     The mail is plain text: a code needs no layout, spam filters trust text most, and HTML mail
+     would need colours that the design tokens can't reach. Without `SMTP_HOST` + `MAIL_FROM` a
+     deploy shows Google alone, so email sign-in arrives on a server only once its mail is set
+     up. Dev prints the mail to the terminal. E2E mode (and dev, if asked) appends it to a
+     `MAIL_OUTBOX` file, which Playwright reads the code from. That outbox wins over SMTP, so a
+     test never mails anyone, and a deploy ignores it, so sign-in codes are never written to disk.
