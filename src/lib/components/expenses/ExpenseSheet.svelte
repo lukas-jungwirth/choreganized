@@ -298,6 +298,7 @@
 				{today}
 				name={series ? 'nextDate' : 'date'}
 				upcoming={series !== null}
+				min={series && series.nextDate < today ? series.nextDate : today}
 			/>
 			{#if repeatable}
 				<RepeatRow bind:value={repeat} name={series ? 'unit' : 'repeat'} never={!series} />

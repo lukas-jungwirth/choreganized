@@ -102,7 +102,12 @@ function readSeries(householdId: string, id: string | null): SeriesItem[] {
 		})
 		.from(expenseRecurrenceShares)
 		.innerJoin(expenseRecurrences, eq(expenseRecurrences.id, expenseRecurrenceShares.recurrenceId))
-		.where(eq(expenseRecurrences.householdId, householdId))
+		.where(
+			and(
+				eq(expenseRecurrences.householdId, householdId),
+				id === null ? undefined : eq(expenseRecurrenceShares.recurrenceId, id)
+			)
+		)
 		.all();
 
 	const logged = new Map(
@@ -280,12 +285,13 @@ export function materializeDue(householdId: string, today: CalendarDate): string
 		.all();
 
 	const logged: string[] = [];
+	const order = due.length > 0 ? rosterOrder(householdId) : new Map<string, number>();
 	for (const { id } of due) {
 		// One occurrence per transaction, until the series is caught up.
 		for (;;) {
 			let expenseId: string | null;
 			try {
-				expenseId = logOccurrence(householdId, id, today);
+				expenseId = logOccurrence(householdId, id, today, order);
 			} catch (error) {
 				// Another sweep advanced this series first; it logged the occurrence.
 				if (error instanceof TransactionRollbackError) break;
@@ -306,7 +312,12 @@ export function materializeDue(householdId: string, today: CalendarDate): string
  * or neither. Returns the new expense's id, or null when nothing was due (or
  * another sweep got there first).
  */
-function logOccurrence(householdId: string, id: string, today: CalendarDate): string | null {
+function logOccurrence(
+	householdId: string,
+	id: string,
+	today: CalendarDate,
+	order: Map<string, number>
+): string | null {
 	return db.transaction((tx) => {
 		const series = tx
 			.select()
@@ -323,7 +334,7 @@ function logOccurrence(householdId: string, id: string, today: CalendarDate): st
 		if (!series) return null;
 
 		const typed = inRosterOrder(
-			rosterOrder(householdId),
+			order,
 			tx
 				.select({ id: expenseRecurrenceShares.personId, input: expenseRecurrenceShares.input })
 				.from(expenseRecurrenceShares)

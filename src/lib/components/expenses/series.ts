@@ -17,7 +17,10 @@ export function seriesRule(m: Messages, series: Series): string {
 	// is still "on the 31st".
 	if (series.unit === 'month')
 		return rule.month(series.anchorDay ?? Number(series.nextDate.slice(8)));
-	return rule.year(m.date.short(series.nextDate));
+	// Named on a leap year, so a series of 29 Feb says so even while it is
+	// parked on the 28th.
+	const day = String(series.anchorDay ?? Number(series.nextDate.slice(8))).padStart(2, '0');
+	return rule.year(m.date.short(`2000-${series.nextDate.slice(5, 7)}-${day}`));
 }
 
 export function seriesSchedule(m: Messages, series: Series, today: CalendarDate): string {

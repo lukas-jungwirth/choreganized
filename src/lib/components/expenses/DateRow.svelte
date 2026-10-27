@@ -17,9 +17,11 @@
 		name?: string;
 		/** A date to come rather than one that has been: the series' next occurrence. */
 		upcoming?: boolean;
+		/** The earliest pick when `upcoming` — today, or a due date the sweep hasn't reached yet. */
+		min?: CalendarDate;
 	};
 
-	let { value = $bindable(), today, name = 'date', upcoming = false }: Props = $props();
+	let { value = $bindable(), today, name = 'date', upcoming = false, min }: Props = $props();
 
 	const m = messages();
 	const id = $props.id();
@@ -42,7 +44,7 @@
 		type="date"
 		{name}
 		bind:value
-		min={upcoming ? today : undefined}
+		min={upcoming ? (min ?? today) : undefined}
 		max={upcoming ? undefined : today}
 		required
 		onclick={(event) => event.currentTarget.showPicker?.()}
