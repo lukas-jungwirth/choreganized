@@ -42,6 +42,7 @@
 	import Select from '$lib/components/ui/Select.svelte';
 	import Stepper from '$lib/components/ui/Stepper.svelte';
 	import TextField from '$lib/components/ui/TextField.svelte';
+	import CodeInput from '$lib/components/ui/CodeInput.svelte';
 	import Toggle from '$lib/components/ui/Toggle.svelte';
 	import CookStepText from '$lib/components/cooking/CookStepText.svelte';
 	import type { NextChore } from '$lib/server/services/home';
@@ -239,6 +240,12 @@
 		<h2>TextField</h2>
 		<TextField label="Household name" name="demo-name" value="Sonnengasse 12" />
 		<TextField label="Display name" name="demo-error" value="" error="Enter a name" />
+	</section>
+
+	<section>
+		<h2>CodeInput</h2>
+		<CodeInput label="Code" name="demo-code" value="482" />
+		<CodeInput label="Wrong code" name="demo-code-wrong" value="000000" invalid />
 	</section>
 
 	<section>

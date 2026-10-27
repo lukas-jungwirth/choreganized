@@ -2637,3 +2637,13 @@ units | null, name}`, written back as editor lines in the reader's unit spelling
      up, and an `equal` one quietly raising everyone else's share is a change nobody agreed to.
      The household restarts a series with the right people in one save. Rejoining doesn't restart
      them.
+181. **The sign-in code is six boxes over one input, and the button asks for a "sign-in code"**
+     (`ui/CodeInput`, `routes/login`, asked for by Lukas 2026-10-27). Boxes make clear how many
+     digits are coming and where the next one goes. One real input under them, not six inputs:
+     six fields break iOS's "from Mail" code autofill (it fills only the first) and pasting the
+     whole code, and a screen reader would announce six unlabelled fields. The input has no
+     `maxlength`, because that would cut a pasted "123 456" to "123 45" before the component
+     strips the space. "Email me a code" became **"Get a sign-in code"** / **"Anmeldecode
+     anfordern"**. The old label didn't say what the code was for. "Anmelde-" matches the app's
+     "Anmelden" over "Login-". The resend link reads "Didn't get the code? Send again", as in the
+     reference Lukas sent, and a resend says the old code no longer works.

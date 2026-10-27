@@ -34,7 +34,7 @@ storeOTP: 'hashed' })`. Sign-in codes only, mailed in the request's locale.
 
 ## Acceptance
 
-- [x] With SMTP (or the outbox) configured, the login page shows Email → **Email me a code**,
+- [x] With SMTP (or the outbox) configured, the login page shows Email → **Get a sign-in code**,
       the "or" rule, then Google. With nothing configured on a deploy it shows only Google.
 - [x] A code arrives (outbox/terminal locally). Typing it signs in. A new address lands on
       onboarding with "Welcome", and an existing account signs into itself.
