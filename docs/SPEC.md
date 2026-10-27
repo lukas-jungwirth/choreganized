@@ -21,7 +21,7 @@ household's shared tally, came after v1 (§11, → plans 29–30, [DECISIONS #16
 - Logo + wordmark + tagline, then sign-in.
 - **Email code, then Google** (Better Auth, plan 31 → [DECISIONS #178](DECISIONS.md)). The
   design's **Email** field, then **Get a sign-in code** (de "Anmeldecode anfordern"). The page
-  then says "We sent a 6-digit code to {email}. It works for 5 minutes." and asks for the
+  then says "We sent a 6-digit code to {email}. It works for 10 minutes." and asks for the
   **Code** in six boxes, one digit each (`ui/CodeInput`). The sixth digit signs in (there is
   also a **Sign in** button). Under it: "Didn't get the code? **Send again**" (the line above
   then says a new code is on its way and the old one no longer works) and **Use a different

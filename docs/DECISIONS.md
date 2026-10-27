@@ -2583,7 +2583,7 @@ units | null, name}`, written back as editor lines in the reader's unit spelling
      `lib/server/auth.ts`, SPEC §1.1). Some members won't use Google, so the login page now takes
      an email address and mails a code to it. Better Auth's `emailOTP` plugin does the work. The
      code lives hashed in the existing `verification` table, so there are no new tables and no
-     migration. It works for 5 minutes, three wrong tries kill it, and the plugin allows three
+     migration. It works for 10 minutes (5 until #182), three wrong tries kill it, and the plugin allows three
      sends and three sign-ins per minute per IP. A first code for a new address creates the
      account, as a first Google sign-in does. A code for a Google user's address signs into that
      same account. Why a code:
@@ -2647,3 +2647,8 @@ units | null, name}`, written back as editor lines in the reader's unit spelling
      anfordern"**. The old label didn't say what the code was for. "Anmelde-" matches the app's
      "Anmelden" over "Login-". The resend link reads "Didn't get the code? Send again", as in the
      reference Lukas sent, and a resend says the old code no longer works.
+182. **A sign-in code works for 10 minutes, not 5** (`SIGN_IN_CODE_MINUTES`, `lib/server/mail.ts`,
+     asked for by Lukas 2026-10-27). Five was Better Auth's default; ten is what most apps give,
+     and it leaves room for a mail that arrives late or a phone that was in a pocket. Guessing
+     gets no easier: three wrong tries kill a code, so a code allows three guesses whether it
+     lives five minutes or ten, and asking for a new one replaces it.
