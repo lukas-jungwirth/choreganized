@@ -61,7 +61,8 @@ const PREFS: NotificationPref[] = [
 	'notifyTaskReminders',
 	'notifyOverdueNudges',
 	'notifyShoppingUpdates',
-	'notifyShopClosures'
+	'notifyShopClosures',
+	'notifyExpenses'
 ];
 
 function isPref(value: unknown): value is NotificationPref {
@@ -127,7 +128,8 @@ export const load: PageServerLoad = (event) => {
 			notifyTaskReminders: member.notifyTaskReminders,
 			notifyOverdueNudges: member.notifyOverdueNudges,
 			notifyShoppingUpdates: member.notifyShoppingUpdates,
-			notifyShopClosures: member.notifyShopClosures
+			notifyShopClosures: member.notifyShopClosures,
+			notifyExpenses: member.notifyExpenses
 		},
 		/** The stored choice, not the resolved language: null is "System" [6a]. */
 		chosenLocale: member.locale,

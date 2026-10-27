@@ -74,3 +74,69 @@ test('log a split expense, settle up, find it, delete and undo', async ({ page }
 	await expect(page.getByRole('link', { name: new RegExp(name) })).toHaveCount(1);
 	await expect(page.getByTestId('balance-card')).toContainText('All settled up');
 });
+
+test('a monthly expense logged late catches up, then edits and stops as a series', async ({
+	page
+}) => {
+	const name = `Internet ${Date.now().toString(36)}`;
+	// Forty days back: its next occurrence is already due, the one after isn't
+	// — so the sweep has exactly one copy to add, whatever today is.
+	const started = new Date(Date.now() - 40 * 86_400_000).toISOString().slice(0, 10);
+
+	await page.goto('/expenses');
+	await page.getByRole('button', { name: 'Add expense' }).click();
+	const sheet = page.getByRole('dialog', { name: 'Add expense' });
+	await sheet.getByLabel('Amount').fill('39.90');
+	await sheet.getByLabel('What for?').fill(name);
+	await sheet.getByRole('textbox', { name: /^Date/ }).fill(started);
+	await sheet.getByRole('combobox', { name: /^Repeats/ }).selectOption('month');
+	await expect(sheet.getByRole('combobox', { name: /^Repeats/ })).toHaveValue('month');
+	await sheet.getByRole('button', { name: 'Save', exact: true }).click();
+	await expect(sheet).toBeHidden();
+
+	const rows = () =>
+		page
+			.goto(`/expenses/history?q=${encodeURIComponent(name)}&from=${started}`)
+			.then(() => page.getByRole('link', { name: new RegExp(name) }).count());
+	expect(await rows()).toBe(1);
+
+	// The 06:00 sweep, run now: this month's copy appears — and only once.
+	for (let run = 0; run < 2; run++) {
+		const swept = await page.request.post('/api/e2e/recurring-expenses');
+		expect(swept.ok()).toBe(true);
+	}
+	expect(await rows()).toBe(2);
+	await expect(
+		page
+			.getByRole('link', { name: new RegExp(name) })
+			.first()
+			.getByRole('img', { name: 'Repeats' })
+	).toBeVisible();
+
+	// Recurring [9h]: edit the series — the logged two keep their amount.
+	await page.goto('/expenses');
+	await page.getByRole('button', { name: 'More' }).click();
+	await page.getByRole('menuitem', { name: /Recurring/ }).click();
+	await page.getByTestId('series-row').filter({ hasText: name }).click();
+	const series = page.getByRole('dialog', { name });
+	await series.getByRole('button', { name: /Edit series/ }).click();
+	const edit = page.getByRole('dialog', { name: 'Edit series' });
+	await edit.getByLabel('Amount').fill('44.90');
+	await edit.getByRole('button', { name: 'Save changes' }).click();
+	await expect(edit).toBeHidden();
+	await expect(page.getByTestId('series-row').filter({ hasText: name })).toContainText('€44.90');
+
+	await page.goto(`/expenses/history?q=${encodeURIComponent(name)}&from=${started}`);
+	await expect(page.getByRole('link', { name: new RegExp(name) })).toHaveCount(2);
+	await expect(page.getByRole('link', { name: /€44\.90/ })).toHaveCount(0);
+
+	// Stop repeating: the series leaves the list, its expenses stay.
+	await page.goto('/expenses/recurring');
+	await page.getByTestId('series-row').filter({ hasText: name }).click();
+	await page
+		.getByRole('dialog', { name })
+		.getByRole('button', { name: /Stop repeating/ })
+		.click();
+	await expect(page.getByTestId('series-row').filter({ hasText: name })).toHaveCount(0);
+	expect(await rows()).toBe(2);
+});

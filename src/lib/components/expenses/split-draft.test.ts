@@ -22,7 +22,9 @@ function item(paidById: string, shares: [string, number][]): ExpenseItem {
 		updatedBy: null,
 		edited: false,
 		createdAt: new Date(),
-		updatedAt: new Date()
+		updatedAt: new Date(),
+		recurrenceId: null,
+		repeats: null
 	};
 }
 

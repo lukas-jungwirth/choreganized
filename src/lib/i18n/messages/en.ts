@@ -100,6 +100,13 @@ function list(items: string[]): string {
  * there is still time today, "tomorrow", else the weekday. Never a bare date —
  * the notice never runs more than three days, so a weekday can't be ambiguous.
  */
+/** "1st", "2nd", "3rd", "11th", "22nd" — a day of the month said the English way. */
+function ordinal(day: number): string {
+	const teen = day % 100 >= 11 && day % 100 <= 13;
+	const suffix = teen ? 'th' : (['th', 'st', 'nd', 'rd'][day % 10] ?? 'th');
+	return `${day}${suffix}`;
+}
+
 function shoppingDay(lastOpenDay: CalendarDate, today: CalendarDate): string {
 	const days = daysBetween(today, lastOpenDay);
 	if (days <= 0) return 'today';
@@ -1308,7 +1315,9 @@ export const en = {
 		menu: {
 			label: 'More',
 			allActivity: 'All activity',
-			settings: 'Expense settings'
+			settings: 'Expense settings',
+			/** The series [9h], with how many are running beside it. */
+			recurring: 'Recurring'
 		},
 		/** Amounts are the household currency, written the reader's way: "€24.50". */
 		money: (minor: number, currency: string) => formatMoney(minor, currency, INTL_LOCALE[L]),
@@ -1379,7 +1388,18 @@ export const en = {
 			date: 'Date',
 			today: 'Today',
 			save: 'Save',
-			delete: 'Delete expense'
+			delete: 'Delete expense',
+			/** The Repeats row [9b] (→ SPEC §11.9), and its choices. */
+			repeats: 'Repeats',
+			repeat: {
+				never: 'Never',
+				week: 'Weekly',
+				month: 'Monthly',
+				year: 'Yearly'
+			},
+			/** The sheet when it edits a series [9h-stop]: the date row names the next one. */
+			editSeries: 'Edit series',
+			nextOne: 'Next one'
 		},
 
 		/** The split row's summary in [9b]: "Equally · everyone · €21.05 each". */
@@ -1470,7 +1490,45 @@ export const en = {
 					: `owes ${payer ?? 'you'} ${amount} for this`,
 			added: (who: string, when: string) => `Added by ${who} · ${when}`,
 			edited: (who: string, when: string) => `Edited by ${who} · ${when}`,
-			someone: 'someone'
+			someone: 'someone',
+			/** The pill under the date of an expense whose series is running [9e]. */
+			repeats: {
+				week: 'Repeats weekly',
+				month: 'Repeats monthly',
+				year: 'Repeats yearly'
+			},
+			editSeries: 'Edit series'
+		},
+
+		/** Recurring [9h] [9h-stop] (→ SPEC §11.9). */
+		recurring: {
+			title: 'Recurring',
+			back: 'Back to expenses',
+			intro:
+				'Each one is added as a normal expense on its day, at 06:00. Changes here apply to future ones only.',
+			/** A row's second line: "Monthly · next Dec 1". */
+			schedule: (unit: string, next: string) => `${unit} · next ${next}`,
+			/** The sheet's subtitle: "€900.00 · Monthly on the 1st · Lukas pays". */
+			summary: (amount: string, rule: string, pays: string) => `${amount} · ${rule} · ${pays}`,
+			rule: {
+				week: (weekday: string) => `Every ${weekday}`,
+				month: (day: number) => `Monthly on the ${ordinal(day)}`,
+				year: (date: string) => `Yearly on ${date}`
+			},
+			pays: (who: string | null) => (who === null ? 'you pay' : `${who} pays`),
+			nextOne: 'Next one',
+			editSeries: 'Edit series',
+			editSeriesDetail: 'Only the ones still to come',
+			stop: 'Stop repeating',
+			stopDetail: (count: number) =>
+				count === 0
+					? 'Nothing has been added from it yet'
+					: count === 1
+						? 'The one already added stays as it is'
+						: `The ${count} already added stay as they are`,
+			empty: 'Nothing repeats yet',
+			emptyCopy:
+				'Rent, subscriptions, the internet bill: pick “Repeats” when you add one, and it logs itself.'
 		},
 
 		/** [9f] */
@@ -1555,7 +1613,8 @@ export const en = {
 			samePerson: 'Pick two different people.',
 			notFound: 'That expense isn’t there any more.',
 			currency: 'Pick one of the listed currencies.',
-			currencyLocked: 'The currency is fixed once there are expenses.'
+			currencyLocked: 'The currency is fixed once there are expenses.',
+			nextDate: 'The next one can’t be before today.'
 		}
 	},
 
@@ -1621,6 +1680,8 @@ export const en = {
 			shoppingUpdatesDetail: 'When a housemate adds to the list',
 			shopClosures: 'Shop closing days',
 			shopClosuresDetail: 'A few days before a holiday shuts the shops',
+			expenses: 'Expenses',
+			expensesDetail: 'When an expense involves you',
 			/** Says the half the switches can't: these are the account, not the phone. */
 			note: 'This applies on every device you switch on below.'
 		},
@@ -2034,7 +2095,19 @@ export const en = {
 		testBody: 'This is what a nudge from Choreganized looks like.',
 
 		/** A cook timer that rang while the phone was locked (→ SPEC §4.6). */
-		timerDone: (label: string) => `⏲️ ${label} is done`
+		timerDone: (label: string) => `⏲️ ${label} is done`,
+
+		/**
+		 * The expense notices (→ SPEC §11.11), to the people in one and never to
+		 * whoever did it. `what` is the household's own description, untranslated.
+		 */
+		expenseAdded: (who: string, what: string, amount: string, share: string) =>
+			`🧾 ${who} added ${what} · ${amount} · your share ${share}`,
+		expenseChanged: (who: string, what: string, share: string) =>
+			`🧾 ${who} changed ${what} · your share is now ${share}`,
+		paidYou: (who: string, amount: string) => `💸 ${who} paid you ${amount}`,
+		/** An occurrence the 06:00 sweep logged — nobody did it, so nobody is named. */
+		expenseRepeated: (what: string, share: string) => `🔁 ${what} was added · your share ${share}`
 	},
 
 	/* ── Refusals ──────────────────────────────────────────────────────────── */

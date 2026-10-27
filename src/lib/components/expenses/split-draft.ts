@@ -70,9 +70,9 @@ export function draftFromDefault(
 	};
 }
 
-/** An existing expense, back into fields [9b-edit]. */
+/** An existing expense — or a series' template [9h-stop] — back into fields [9b-edit]. */
 export function draftFromItem(
-	item: ExpenseItem,
+	item: Pick<ExpenseItem, 'splitMode' | 'shares'>,
 	currency: string,
 	decimalComma: boolean
 ): SplitDraft {

@@ -3,12 +3,14 @@
 	under each share that isn't the payer's own, what that person owes for it —
 	then who logged it and who touched it last. Edit opens the add sheet [9b-edit]
 	(or, for a payment, the settle sheet [9d]); a delete goes back to the tab,
-	which offers the undo.
+	which offers the undo. One that came from a running series says so, and
+	"Edit series" opens the same sheet on the series instead (→ SPEC §11.9).
 -->
 <script lang="ts">
 	import { goto } from '$app/navigation';
 	import ChevronLeft from '@lucide/svelte/icons/chevron-left';
 	import CategoryIcon from '$lib/components/expenses/CategoryIcon.svelte';
+	import RepeatIcon from '$lib/components/icons/RepeatIcon.svelte';
 	import ExpenseSheet from '$lib/components/expenses/ExpenseSheet.svelte';
 	import SettleSheet from '$lib/components/expenses/SettleSheet.svelte';
 	import { pickablePeople } from '$lib/components/expenses/split-draft';
@@ -22,6 +24,7 @@
 	const m = messages();
 
 	let editing = $state(false);
+	let editingSeries = $state(false);
 
 	const item = $derived(data.item);
 	const byId = $derived(new Map(data.people.map((person) => [person.id, person])));
@@ -32,7 +35,14 @@
 	const pickable = $derived.by(() => {
 		const people = pickablePeople(data.people, data.balances.byPerson);
 		// Someone who has left still has to show up in an old expense's pickers.
-		const involved = new Set([item.paidById, ...item.shares.map((share) => share.personId)]);
+		// The series, too: "Edit series" may name people this occurrence doesn't.
+		const involved = new Set([
+			item.paidById,
+			...item.shares.map((share) => share.personId),
+			...(data.series
+				? [data.series.paidById, ...data.series.shares.map((share) => share.personId)]
+				: [])
+		]);
 		return data.people.filter((person) => people.includes(person) || involved.has(person.id));
 	});
 
@@ -92,6 +102,14 @@
 			? m.expenses.detail.meta(m.expenses.categories[item.category], dateLine)
 			: dateLine}
 	</p>
+	{#if data.series && item.repeats}
+		<button type="button" class="repeats" onclick={() => (editingSeries = true)}>
+			<RepeatIcon size={14} />
+			{m.expenses.detail.repeats[item.repeats]}
+			<span class="dot" aria-hidden="true">·</span>
+			<span class="series-link">{m.expenses.detail.editSeries}</span>
+		</button>
+	{/if}
 </header>
 
 {#if item.kind === 'payment'}
@@ -151,7 +169,19 @@
 	{/if}
 </p>
 
-{#if editing && item.kind === 'expense'}
+{#if editingSeries && data.series}
+	<ExpenseSheet
+		item={null}
+		series={data.series}
+		people={pickable}
+		me={data.me}
+		currency={data.currency}
+		today={data.today}
+		splitDefault={data.splitDefault}
+		suggestions={data.suggestions}
+		onclose={() => (editingSeries = false)}
+	/>
+{:else if editing && item.kind === 'expense'}
 	<ExpenseSheet
 		{item}
 		people={pickable}
@@ -239,6 +269,28 @@
 		margin: 2px 0 0;
 		font-size: calc(13px * var(--fs));
 		color: var(--text-4);
+	}
+
+	.repeats {
+		display: flex;
+		align-items: center;
+		gap: 7px;
+		margin-top: 14px;
+		padding: 7px 13px 7px 11px;
+		border-radius: var(--r-chip);
+		background: var(--sunken);
+		font-size: calc(12.5px * var(--fs));
+		font-weight: 600;
+		color: var(--text-3);
+	}
+
+	.dot {
+		color: var(--text-disabled);
+	}
+
+	.series-link {
+		font-weight: 700;
+		color: var(--sage-deep);
 	}
 
 	.payment-line {

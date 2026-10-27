@@ -7,6 +7,7 @@
 	A link to the detail [9e], so the row is the tap target and back works.
 -->
 <script lang="ts">
+	import RepeatIcon from '$lib/components/icons/RepeatIcon.svelte';
 	import { messages } from '$lib/i18n';
 	import type { ExpenseItem } from '$lib/server/services/expenses';
 	import CategoryIcon from './CategoryIcon.svelte';
@@ -51,7 +52,14 @@
 					>{when ? m.expenses.row.paymentMeta(when) : m.expenses.row.paymentPlain}</span
 				>
 			{:else}
-				<span class="title">{item.description}</span>
+				<span class="title-line">
+					<span class="title">{item.description}</span>
+					{#if item.repeats}
+						<span class="repeats" role="img" aria-label={m.expenses.row.repeats}>
+							<RepeatIcon size={13} />
+						</span>
+					{/if}
+				</span>
 				<span class="meta">{m.expenses.row.paid(who(item.paidById), money(item.amountMinor))}</span>
 			{/if}
 		</span>
@@ -106,6 +114,20 @@
 		text-overflow: ellipsis;
 		white-space: nowrap;
 		font-variant-numeric: tabular-nums;
+	}
+
+	/* The repeat badge sits right after the words, and the words give way to it. */
+	.title-line {
+		display: flex;
+		align-items: center;
+		gap: 6px;
+		min-width: 0;
+	}
+
+	.repeats {
+		flex: none;
+		display: flex;
+		color: var(--text-5);
 	}
 
 	.meta {

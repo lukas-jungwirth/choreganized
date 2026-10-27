@@ -24,9 +24,15 @@ import {
 	updatePayment,
 	type ExpenseErrorCode
 } from '$lib/server/services/expenses';
+import { stopSeries, updateSeries } from '$lib/server/services/expense-recurrences';
 import { getHousehold, HouseholdError } from '$lib/server/services/household';
 import { todayIn } from '$lib/utils/dates';
-import { isDefaultSplitMode, isExpenseCategory, isSplitMode } from '$lib/utils/expenses';
+import {
+	isDefaultSplitMode,
+	isExpenseCategory,
+	isRepeatUnit,
+	isSplitMode
+} from '$lib/utils/expenses';
 import { parseAmount, type SplitRow } from '$lib/utils/money';
 
 const MESSAGE: Record<ExpenseErrorCode, keyof Messages['expenses']['errors']> = {
@@ -38,7 +44,8 @@ const MESSAGE: Record<ExpenseErrorCode, keyof Messages['expenses']['errors']> = 
 	'same-person': 'samePerson',
 	'not-found': 'notFound',
 	currency: 'currency',
-	'currency-locked': 'currencyLocked'
+	'currency-locked': 'currencyLocked',
+	'next-date': 'nextDate'
 };
 
 function failWith(event: RequestEvent, error: unknown) {
@@ -89,34 +96,75 @@ function readAmount(form: FormData, currency: string): number {
 	return amount;
 }
 
-/** Create or update an expense [9b]; `id` decides which. */
+/** What [9b] and the series sheet share: the expense minus its date. */
+function readTemplate(form: FormData, currency: string) {
+	const category = String(form.get('category') ?? '');
+	const splitMode = String(form.get('splitMode') ?? '');
+	if (!isExpenseCategory(category) || !isSplitMode(splitMode)) throw new ExpenseError('split');
+
+	return {
+		description: String(form.get('description') ?? ''),
+		category,
+		amountMinor: readAmount(form, currency),
+		paidById: String(form.get('paidById') ?? ''),
+		splitMode,
+		rows: readRows(form.get('split'))
+	};
+}
+
+/**
+ * Create or update an expense [9b]; `id` decides which. `repeat` — `week`,
+ * `month` or `year` — also starts a series from it (→ SPEC §11.9); anything
+ * else, the Repeats row's "Never" included, starts none.
+ */
 export async function saveExpenseAction(event: RequestEvent) {
 	const form = await event.request.formData();
 	try {
 		const { householdId, member, today, currency } = context(event);
-		const category = String(form.get('category') ?? '');
-		const splitMode = String(form.get('splitMode') ?? '');
-		if (!isExpenseCategory(category) || !isSplitMode(splitMode)) throw new ExpenseError('split');
-
 		const input = {
-			description: String(form.get('description') ?? ''),
-			category,
-			amountMinor: readAmount(form, currency),
-			date: String(form.get('date') ?? '') || today,
-			paidById: String(form.get('paidById') ?? ''),
-			splitMode,
-			rows: readRows(form.get('split'))
+			...readTemplate(form, currency),
+			date: String(form.get('date') ?? '') || today
 		};
+		const repeat = form.get('repeat');
+		const unit = isRepeatUnit(repeat) ? repeat : null;
 
 		const id = String(form.get('id') ?? '');
 		if (id) {
-			updateExpense(householdId, member.id, id, input, today);
+			updateExpense(householdId, member.id, id, input, today, unit);
 			return { saved: id };
 		}
-		return { saved: createExpense(householdId, member.id, input, today) };
+		return { saved: createExpense(householdId, member.id, input, today, unit) };
 	} catch (error) {
 		return failWith(event, error);
 	}
+}
+
+/** "Edit series" [9h-stop] [9e]: the template and when the next one is due. */
+export async function saveSeriesAction(event: RequestEvent) {
+	const form = await event.request.formData();
+	try {
+		const { householdId, today, currency } = context(event);
+		const unit = form.get('unit');
+		if (!isRepeatUnit(unit)) throw new ExpenseError('split');
+
+		const id = String(form.get('id') ?? '');
+		updateSeries(
+			householdId,
+			id,
+			{ ...readTemplate(form, currency), unit, nextDate: String(form.get('nextDate') ?? '') },
+			today
+		);
+		return { saved: id };
+	} catch (error) {
+		return failWith(event, error);
+	}
+}
+
+/** "Stop repeating" [9h-stop]. */
+export async function stopSeriesAction(event: RequestEvent) {
+	const { householdId } = requireMember(event);
+	const id = String((await event.request.formData()).get('id') ?? '');
+	return { stopped: stopSeries(householdId, id) ? id : null };
 }
 
 /** Create or update a payment [9d]. */

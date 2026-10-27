@@ -10,8 +10,10 @@ import {
 	deleteExpenseAction,
 	saveExpenseAction,
 	savePaymentAction,
+	saveSeriesAction,
 	splitDefaultAction
 } from '$lib/server/expense-actions';
+import { getSeries } from '$lib/server/services/expense-recurrences';
 import {
 	balancesOf,
 	descriptionSuggestions,
@@ -42,7 +44,9 @@ export const load: PageServerLoad = (event) => {
 		balances: balancesOf(people, ledger),
 		currency: settings.currency,
 		splitDefault: settings.splitDefault,
-		suggestions: descriptionSuggestions(ledger)
+		suggestions: descriptionSuggestions(ledger),
+		/** The running series it came from — "Repeats monthly · Edit series" [9e]. */
+		series: item.repeats && item.recurrenceId ? getSeries(householdId, item.recurrenceId) : null
 	};
 };
 
@@ -50,5 +54,6 @@ export const actions: Actions = {
 	save: saveExpenseAction,
 	pay: savePaymentAction,
 	delete: deleteExpenseAction,
+	saveSeries: saveSeriesAction,
 	splitDefault: splitDefaultAction
 };

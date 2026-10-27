@@ -59,10 +59,12 @@ src/
       ai/                      # provider adapters (plain fetch), run.ts (primary → backup),
                                # schema.ts (strict JSON Schema + Gemini dialect)  [plan 20]
       backup.ts                # nightly SQLite online-backup + 14-day rotation [plan 11]
-      cron.ts                  # registerCronJobs(): reminders, timers, cleanup, backup [plan 05+]
+      cron.ts                  # registerCronJobs(): reminders, timers, cleanup, backup,
+                               # recurring expenses [plan 05+, 30]
       services/                # domain logic: household.ts, home.ts, shopping.ts, tasks.ts,
                                # history.ts, reminders.ts, holidays.ts, recipes.ts, meals.ts,
-                               # timers.ts, feedback.ts, ai.ts (connections), ai-import.ts
+                               # timers.ts, feedback.ts, ai.ts (connections), ai-import.ts,
+                               # expenses.ts, expense-recurrences.ts, expense-notify.ts
     utils/                     # dates.ts (household-local helpers), holidays.ts (Austrian
                                # shop closures), ingredients.ts, invite-code.ts, timer-parse.ts,
                                # recipe-jsonld.ts (the import's page reader)
@@ -98,6 +100,7 @@ docs/                          # this documentation + plans/
   expenses                      [9a]   sheets: add/edit [9b], split [9c], settle up [9d], settings  [plan 29]
   expenses/[id]                 [9e]   edit opens [9b] / [9d]; delete returns to the tab's undo bar
   expenses/history              [9f]   ?q= ?category= ?person= ?mine=1 ?payments=1 ?from=YYYY-MM-01
+  expenses/recurring            [9h]   sheets: one series [9h-stop], edit series (the [9b] sheet)  [plan 30]
   settings                      [6a]
   settings/members              [6b]   sheet: manage member [6c]
 dev/kit                         component gallery — 404 unless `dev` or E2E_MODE [plan 02, 17]
@@ -108,6 +111,7 @@ api/
   timers                        POST create · DELETE cancel         [plan 08]
   live                          GET SSE stream, ?topics=shopping     [plan 15]
   uploads/[...path]             authed recipe images                [plan 07]
+  e2e/recurring-expenses        POST run the 06:00 expense sweep now — 404 unless E2E_MODE [plan 30]
 ```
 
 `[5a]`-style anchors reference `design/Hearth.dc.html`; `[9a]`–`[9h]` reference
@@ -197,7 +201,8 @@ Two delivery paths, one send module (`lib/server/push.ts`):
 1. **Event-driven** (someone did something): called fire-and-forget from the action/service —
    `void sendToMembers(...)` — never awaited in the request path, errors logged, 404/410 prunes
    the subscription row.
-2. **Time-driven** (reminders, shop closures, timers, cleanup): `node-cron` minute tick scanning
+2. **Time-driven** (reminders, shop closures, recurring expenses, timers, cleanup): `node-cron`
+   minute tick scanning
    the DB with idempotency flags and an effective lookback (see DATA-MODEL.md → "Reminder
    time-sweep"). Cook timers additionally get a precise in-process `setTimeout` at creation; the
    cron sweep is the restart-safe fallback. The shop-closure notice (→ SPEC §3.6) is the one

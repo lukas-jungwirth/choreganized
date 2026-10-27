@@ -206,7 +206,7 @@
 	</button>
 </RowGroup>
 
-<!-- Two groups, not one list of four (→ DECISIONS #130). What you want to hear
+<!-- Two groups, not one list (→ DECISIONS #130). What you want to hear
 	 about is one answer for the account and follows you between devices; whether
 	 push can reach *this* browser is a separate, per-device fact the browser
 	 owns. Stacked in one `RowGroup` the first row read as a master switch over
@@ -237,6 +237,12 @@
 		label={m.settings.prefs.shopClosures}
 		detail={m.settings.prefs.shopClosuresDetail}
 		checked={data.prefs.notifyShopClosures}
+	/>
+	<PrefRow
+		pref="notifyExpenses"
+		label={m.settings.prefs.expenses}
+		detail={m.settings.prefs.expensesDetail}
+		checked={data.prefs.notifyExpenses}
 	/>
 </RowGroup>
 

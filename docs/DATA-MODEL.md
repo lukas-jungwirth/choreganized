@@ -17,7 +17,9 @@ user ─┬─ session / account / verification        (Better Auth)
                   │      ├─ ai_connections          (primary + backup provider keys)
                   │      ├─ feedback                (mirrored to a GitHub issue)
                   │      └─ ledger_people ─→ expenses ──→ expense_shares
-                  │           (one per membership, outlives it)
+                  │           │  (one per membership,  └─→ expense_recurrences (series it came from)
+                  │           │   outlives it)                └─ expense_recurrence_shares
+                  │           └─ (payer and people of a series)
                   └─ holiday_notices             (per member × shop closure)
 ```
 
@@ -312,6 +314,27 @@ where personId = p`. Always derived on read, never stored; there is no reset.
   percentage default never silently includes them (→ SPEC §11.5).
 - `expenses_household_date_idx (household_id, date)` serves the ledger read, which loads a
   household's rows whole (→ #172); `expense_shares_person_idx` serves the person lookups.
+
+### `expense_recurrences` / `expense_recurrence_shares` (→ plan 30, SPEC §11.9)
+
+- **A series is a template and a date.** `expense_recurrences` holds what each occurrence copies
+  (description, category, `amountMinor`, payer, `splitMode`) plus `unit` (`week` · `month` ·
+  `year`), `anchorDay` (1–31 for months and years, NULL for weeks) and `nextDate`, the
+  household-local date the next occurrence is due. `expense_recurrence_shares` keeps only what was
+  typed per person (`input`, as in `expense_shares`); the shares are split again from it, at the
+  template's amount, for every occurrence, in roster order (→ #169, #175).
+- **`nextDate` is the sweep's only memory** (→ #175). From 06:00 household-local, every minute,
+  `materializeDue` logs each due occurrence as an ordinary expense dated `nextDate`, with
+  `expenses.recurrenceId` pointing back, and moves `nextDate` on with `utils/dates` `addRepeat`
+  in the same transaction — guarded by `nextDate` still reading what was read. Catch-up after
+  downtime is the loop; running twice logs nothing twice. `expense_recurrences_due_idx
+(household_id, next_date)` makes the every-minute "anything due?" one index probe.
+- **The anchor stops drift**: a month clamps to its last day without forgetting the 31st.
+  Editing the series keeps the anchor unless the next date or the unit changes.
+- **Stopping sets `stoppedAt`**; the row stays and so do its occurrences.
+  `expenses.recurrenceId` is `ON DELETE SET NULL` (added by hand to migration 0019, → #175), so
+  even deleting a series would leave the expenses it logged.
+- `members.notifyExpenses` (default on) silences the expense notices for one member (→ #176).
 
 (`user`, `session`, `account`, `verification`)
 

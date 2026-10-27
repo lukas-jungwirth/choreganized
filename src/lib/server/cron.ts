@@ -14,6 +14,7 @@ import { schedule, shutdown } from 'node-cron';
 import { clockIn, todayIn, type CalendarDate } from '$lib/utils/dates';
 import { backUpDatabase, serverDay } from './backup';
 import { sweepCookTimers } from './services/cook-timers';
+import { materializeDue } from './services/expense-recurrences';
 import { sweepFeedback } from './services/feedback';
 import { sendClosureReminders } from './services/holidays';
 import { listHouseholdClocks } from './services/household';
@@ -31,6 +32,9 @@ const DELETED_EXPENSE_TTL_MS = 24 * 60 * 60 * 1000;
 
 /** 03:30 household-local — late enough that nobody is mid-trip. */
 const CLEANUP_MINUTE_OF_DAY = 3 * 60 + 30;
+
+/** 06:00 household-local — a recurring expense is logged "on its day, at 06:00" (→ SPEC §11.9). */
+const RECURRING_EXPENSE_MINUTE_OF_DAY = 6 * 60;
 
 /** 08:00 household-local — "the morning it's due" (→ SPEC §5.6). */
 const REMINDER_MINUTE_OF_DAY = 8 * 60;
@@ -107,6 +111,7 @@ export function registerCronJobs(): void {
 		['shopping-cleanup', cleanUpCheckedShoppingItems],
 		['task-reminders', sweepTaskReminders],
 		['shop-closures', sweepShopClosures],
+		['recurring-expenses', logRecurringExpenses],
 		['cook-timers', catchUpCookTimers],
 		['feedback-sync', catchUpFeedback],
 		['db-backup', runNightlyBackup],
@@ -262,6 +267,31 @@ async function sweepShopClosures(now: Date = new Date()): Promise<void> {
 			if (sent.notices > 0) {
 				console.log(
 					`[cron] told ${sent.notices} member(s) in household ${household.id} the shops are closing → ${sent.devices} device(s)`
+				);
+			}
+		});
+	}
+}
+
+/**
+ * Recurring expenses that have come due, from 06:00 on the household's own
+ * clock (→ SPEC §11.9, `services/expense-recurrences.ts`).
+ *
+ * No ledger, like the task nudges: each series' `nextDate` moves on in the same
+ * transaction that logs its occurrence, so the sweep can ask every minute until
+ * midnight and still log each occurrence once — and a server that was down for
+ * days logs every one it missed on its first tick back.
+ */
+function logRecurringExpenses(now: Date = new Date()): void {
+	for (const household of listHouseholdClocks()) {
+		guard(`recurring-expenses ${household.id}`, () => {
+			const { hour, minute } = clockIn(household.timezone, now);
+			if (hour * 60 + minute < RECURRING_EXPENSE_MINUTE_OF_DAY) return;
+
+			const logged = materializeDue(household.id, todayIn(household.timezone, now));
+			if (logged.length > 0) {
+				console.log(
+					`[cron] logged ${logged.length} recurring expense(s) in household ${household.id}`
 				);
 			}
 		});

@@ -199,6 +199,25 @@ const SCREENS: Screen[] = [
 		},
 		mask: ['.meta', '.stamps']
 	},
+	// Recurring [9h] and one series [9h-stop]: the seed's monthly Strom. Its
+	// next date follows the calendar, so the schedule line is masked.
+	{
+		name: 'expenses-recurring',
+		route: '/(app)/expenses/recurring',
+		path: '/expenses/recurring',
+		mask: ['.row .meta']
+	},
+	{
+		name: 'expenses-series',
+		route: '/(app)/expenses/recurring',
+		path: '',
+		navigate: async (page) => {
+			await page.goto('/expenses/recurring');
+			await page.getByTestId('series-row').first().click();
+			await page.getByRole('dialog', { name: 'Strom · Wien Energie' }).waitFor();
+		},
+		mask: ['.row .meta', '.next-date', '.subtitle']
+	},
 	{ name: 'settings', route: '/(app)/settings', path: '/settings', bottom: true },
 	{
 		name: 'settings-dark',

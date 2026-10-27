@@ -103,6 +103,33 @@ export function addInterval(date: CalendarDate, count: number, unit: IntervalUni
 	return toCalendarString(moved);
 }
 
+/**
+ * The next occurrence of a recurring expense (→ SPEC §11.9). A week is seven
+ * days; a month or a year keeps to the day of the month the series started on,
+ * `anchorDay`, clamped to the end of a shorter month — and only clamped, never
+ * moved: 31 Jan → 28 Feb → 31 Mar, where `addInterval` would drift to the 28th
+ * for good, and 29 Feb → 28 Feb → … → 29 Feb in the next leap year.
+ *
+ * @param anchorDay 1–31; null reads it off `date`
+ */
+export function addRepeat(
+	date: CalendarDate,
+	unit: 'week' | 'month' | 'year',
+	anchorDay: number | null
+): CalendarDate {
+	if (unit === 'week') return addInterval(date, 1, 'week');
+
+	const [year, month] = date.split('-').map(Number);
+	const index = year * 12 + (month - 1) + (unit === 'month' ? 1 : 12);
+	const nextYear = Math.floor(index / 12);
+	const nextMonth = (index % 12) + 1;
+	// Day 0 of the following month is the last day of this one.
+	const lastDay = new Date(Date.UTC(nextYear, nextMonth, 0)).getUTCDate();
+	const day = Math.min(anchorDay ?? Number(date.slice(8, 10)), lastDay);
+
+	return `${String(nextYear).padStart(4, '0')}-${String(nextMonth).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
+}
+
 export function addDays(date: CalendarDate, days: number): CalendarDate {
 	return addInterval(date, days, 'day');
 }

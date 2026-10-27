@@ -127,7 +127,10 @@ toast; `shopping/UndoBar` is now a thin wrapper. The expenses screens added
 amount, in the display face), `DateRow`, `ExpenseSheet`, `SplitSheet`, `SettleSheet`,
 `ExpenseSettingsSheet` — plus `icons/ReceiptIcon` for the fifth tab, drawn in
 `design/Expenses.dc.html`. Every amount uses `font-variant-numeric: tabular-nums`, so columns of
-money line up.
+money line up. Plan 30 added `RepeatRow` (the Repeats row, a native select over the row like
+`DateRow`'s date input; `DateRow` gained `upcoming` for a series' "Next one"), `SeriesSheet`
+[9h-stop], `series.ts` (how a series' rule is said) and `icons/RepeatIcon`, the two-arrow mark on
+a repeating row, in the detail's pill and in the ••• menu.
 
 Shopping later gained three more feature components in `components/shopping/`, again no `ui/`
 primitives. **`UndoBar`** — "**Tomatoes** checked off · Undo" for five seconds after a tick

@@ -24,6 +24,7 @@
 	import SettleSheet from '$lib/components/expenses/SettleSheet.svelte';
 	import { groupByDay, pickablePeople } from '$lib/components/expenses/split-draft';
 	import ReceiptIcon from '$lib/components/icons/ReceiptIcon.svelte';
+	import RepeatIcon from '$lib/components/icons/RepeatIcon.svelte';
 	import PageHeader from '$lib/components/shell/PageHeader.svelte';
 	import Button from '$lib/components/ui/Button.svelte';
 	import EmptyState from '$lib/components/ui/EmptyState.svelte';
@@ -100,6 +101,11 @@
 			</button>
 			{#if menuOpen}
 				<div class="menu" role="menu">
+					<a role="menuitem" href="/expenses/recurring" onclick={() => (menuOpen = false)}>
+						<RepeatIcon size={16} />
+						<span class="menu-label">{m.expenses.menu.recurring}</span>
+						{#if data.seriesCount > 0}<span class="count">{data.seriesCount}</span>{/if}
+					</a>
 					<a role="menuitem" href="/expenses/history" onclick={() => (menuOpen = false)}>
 						<Search size={16} strokeWidth={2} aria-hidden="true" />
 						{m.expenses.menu.allActivity}
@@ -268,6 +274,17 @@
 
 	.menu :global(svg) {
 		color: var(--text-4);
+	}
+
+	.menu-label {
+		flex: 1;
+	}
+
+	.count {
+		font-size: calc(12px * var(--fs));
+		font-weight: 700;
+		color: var(--text-5);
+		font-variant-numeric: tabular-nums;
 	}
 
 	.menu a:hover,

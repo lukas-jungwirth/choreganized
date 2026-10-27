@@ -134,6 +134,13 @@
       "when": 1793026466998,
       "tag": "0018_ledger_people_user",
       "breakpoints": true
+    },
+    {
+      "idx": 19,
+      "version": "6",
+      "when": 1793113106243,
+      "tag": "0019_expense_recurrences",
+      "breakpoints": true
     }
   ]
 }
