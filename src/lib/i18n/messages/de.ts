@@ -1229,6 +1229,12 @@ export const de: Messages = {
 			]
 		},
 
+		leaveSeries: (names: string[]) => {
+			const shown =
+				names.length > 3 ? [...names.slice(0, 2), `${names.length - 2} weitere`] : names;
+			return `${list(shown)} ${names.length === 1 ? 'wiederholt' : 'wiederholen'} sich dann nicht mehr.`;
+		},
+
 		leaveBalance: (who: string | null, owes: boolean, amount: string) =>
 			who === null
 				? owes

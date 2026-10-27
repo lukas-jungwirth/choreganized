@@ -2619,3 +2619,13 @@ units | null, name}`, written back as editor lines in the reader's unit spelling
      up. Dev prints the mail to the terminal. E2E mode (and dev, if asked) appends it to a
      `MAIL_OUTBOX` file, which Playwright reads the code from. That outbox wins over SMTP, so a
      test never mails anyone, and a deploy ignores it, so sign-in codes are never written to disk.
+180. **Recurring expenses stop when someone in them leaves** (`services/household.ts`
+     `departMember`, SPEC §11.13). A series stores ledger people, not memberships, so before this
+     it kept logging a leaver's share, or their payments, every month. The balance grew for
+     someone who wasn't there to see it or settle it, and nobody was told. Leaving or removal now
+     stops every running series the member pays or shares in, in the departure's own transaction,
+     and both confirms name them ("Rent and Netflix will stop repeating."; up to three by name, past
+     that two and a count). **Stop, not re-split**: a `%` or `amounts` template can't drop a person and still add
+     up, and an `equal` one quietly raising everyone else's share is a change nobody agreed to.
+     The household restarts a series with the right people in one save. Rejoining doesn't restart
+     them.

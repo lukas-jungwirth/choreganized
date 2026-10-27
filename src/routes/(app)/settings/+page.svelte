@@ -452,6 +452,9 @@
 					data.expenses.myBalance < 0,
 					m.expenses.money(Math.abs(data.expenses.myBalance), data.expenses.currency)
 				)}
+		seriesNote={data.expenses.mySeries.length > 0
+			? m.expenses.leaveSeries(data.expenses.mySeries)
+			: null}
 		onclose={() => (leaving = false)}
 	/>
 {/if}

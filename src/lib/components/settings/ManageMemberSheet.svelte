@@ -28,10 +28,12 @@
 		today: CalendarDate;
 		/** What removing them would leave on the ledger, if anything (→ SPEC §11.13). */
 		balanceNote?: string | null;
+		/** "Rent and Netflix will stop repeating." — their series end with them (→ SPEC §11.13). */
+		seriesNote?: string | null;
 		onclose: () => void;
 	};
 
-	let { member, points, today, balanceNote = null, onclose }: Props = $props();
+	let { member, points, today, balanceNote = null, seriesNote = null, onclose }: Props = $props();
 
 	const m = messages();
 
@@ -117,6 +119,7 @@
 			<h3>{m.settings.manage.removeConfirm(member.displayName)}</h3>
 			<p class="copy">{m.settings.manage.removeCopy}</p>
 			{#if balanceNote}<p class="balance">{balanceNote}</p>{/if}
+			{#if seriesNote}<p class="series">{seriesNote}</p>{/if}
 		{:else}
 			<div class="well calm" aria-hidden="true"><CrownIcon size={28} /></div>
 			<h3>{m.settings.manage.ownerConfirm(member.displayName)}</h3>
@@ -154,6 +157,14 @@
 		line-height: 1.45;
 		text-align: center;
 		color: var(--owe);
+	}
+
+	.series {
+		margin: -6px 0 16px;
+		font-size: calc(13.5px * var(--fs));
+		line-height: 1.45;
+		text-align: center;
+		color: var(--text-3);
 	}
 
 	/* The rows of [6c]'s sunken block; `RowGroup surface="sunken"` is the block. */
