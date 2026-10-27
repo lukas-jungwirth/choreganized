@@ -1501,6 +1501,12 @@ export const de: Messages = {
 		verifyingCode: 'Anmeldung läuft…',
 		noCode: 'Keinen Code bekommen?',
 		resendCode: 'Nochmal schicken',
+		resendIn: (seconds: number) =>
+			`Nochmal schicken in ${Math.floor(seconds / 60)}:${String(seconds % 60).padStart(2, '0')}`,
+		codeCooldown: (seconds: number) =>
+			`Warte ${seconds} ${seconds === 1 ? 'Sekunde' : 'Sekunden'}, bevor du einen neuen Code anforderst.`,
+		codeHourlyLimit: (minutes: number) =>
+			`Für diese Adresse wurden gerade genug Codes verschickt. Versuch es in ${minutes} ${minutes === 1 ? 'Minute' : 'Minuten'} nochmal oder melde dich mit Google an.`,
 		codeResent: (email: string, minutes: number) =>
 			`Wir haben einen neuen Code an ${email} geschickt. Er gilt ${minutes} Minuten, der alte nicht mehr.`,
 		changeEmail: 'Andere E-Mail verwenden',

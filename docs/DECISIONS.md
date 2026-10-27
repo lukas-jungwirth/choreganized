@@ -2652,3 +2652,23 @@ units | null, name}`, written back as editor lines in the reader's unit spelling
      and it leaves room for a mail that arrives late or a phone that was in a pocket. Guessing
      gets no easier: three wrong tries kill a code, so a code allows three guesses whether it
      lives five minutes or ten, and asking for a new one replaces it.
+183. **One sign-in code per address per minute, five per hour, and "Send again" counts down**
+     (`lib/server/send-limit.ts`, the before-hook in `auth.ts`, `routes/login`, asked for by Lukas
+     2026-10-27). The plugin's limit counts per IP, so someone with many IPs could fill one inbox
+     with codes. Each one goes out through the household's own mail account (mailbox.org), which
+     may throttle or block an account that suddenly sends hundreds. The limit counts per
+     recipient, so it holds whoever asks. Smaller calls:
+     - **In memory, not a table.** One process, a one-hour window. A restart forgets it, which at
+       worst allows one extra hour's worth.
+     - **Refused before the plugin runs**, as 429 `CODE_COOLDOWN` or `CODE_HOURLY_LIMIT` with
+       `retryAfter` seconds. A refused request creates no code and replaces none, so it can't
+       spend the code someone is about to type. The answer doesn't depend on whether the address
+       has an account.
+     - **A mail that never left doesn't count** (the after-hook forgets it). Otherwise a wrong
+       SMTP password would also lock the address for a minute.
+     - **The countdown starts from the server's own number** (`codeCooldownSeconds` in the page
+       data, `retryAfter` on a refusal), so the page and the server can't disagree. E2E mode may
+       shorten it (`SIGN_IN_CODE_COOLDOWN_SECONDS`); a deploy can't.
+     - **No Turnstile yet.** Cloudflare's captcha would stop bots outright, and Better Auth's
+       `captcha` plugin supports it. But it puts a third-party script on the login page and adds
+       friction for a household of a few people. Add it if the logs ever show real abuse.

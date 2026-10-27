@@ -99,12 +99,30 @@ test('the code shows one digit per box, and a pasted code fills them all', async
 	await expect(boxes).toHaveCount(6);
 	await expect(boxes).toHaveText(['4', '8', '2', '', '', '']);
 
-	// "Send again" says a new code is coming; the old one is dead.
-	await page.getByRole('button', { name: 'Send again' }).click();
+	// "Send again" counts down first (a minute on a deploy, 3 s here), then says
+	// a new code is coming and the old one is dead.
+	await expect(page.getByRole('button', { name: /^Send again in 0:0\d$/ })).toBeDisabled();
+	await page.getByRole('button', { name: 'Send again', exact: true }).click();
 	await expect(page.getByRole('status')).toHaveText(/We sent a new code/);
 
 	// A pasted code with a space in it ("123 456" from the mail) still signs in.
 	const code = await codeFor(email);
 	await input.fill(`${code.slice(0, 3)} ${code.slice(3)}`);
 	await expect(page).toHaveURL(/\/onboarding$/);
+});
+
+test('the same address cannot be sent a second code straight away', async ({ page }) => {
+	const email = `cooldown-${Date.now()}@e2e.test`;
+	await page.goto('/login');
+	await page.getByLabel('Email').fill(email);
+	await page.getByRole('button', { name: 'Get a sign-in code' }).click();
+	await expect(page.getByLabel('Code')).toBeVisible();
+
+	// Back to the email step and ask again at once: the server refuses.
+	await page.getByRole('button', { name: 'Use a different email' }).click();
+	await page.getByLabel('Email').fill(email);
+	await page.getByRole('button', { name: 'Get a sign-in code' }).click();
+	await expect(page.getByRole('alert')).toHaveText(
+		/^Wait \d seconds? before asking for another code\.$/
+	);
 });

@@ -32,12 +32,37 @@
 	/** Set once "Send again" worked, so the line above the boxes says a new one is coming. */
 	let resent = $state(false);
 
+	/**
+	 * When "Send again" comes back: a minute after each code (the server's limit
+	 * per address → DECISIONS #183), or whenever the server says to retry.
+	 */
+	let cooldownUntil = $state(0);
+	let now = $state(Date.now());
+	const cooldownLeft = $derived(Math.max(0, Math.ceil((cooldownUntil - now) / 1000)));
+
+	$effect(() => {
+		if (cooldownUntil <= Date.now()) return;
+		const tick = setInterval(() => (now = Date.now()), 1000);
+		return () => clearInterval(tick);
+	});
+
+	function holdResend(seconds: number) {
+		now = Date.now();
+		cooldownUntil = now + seconds * 1000;
+	}
+
 	const errorMessage = $derived(clientError ?? (data.signInFailed ? m.auth.failed : null));
 
+	type AuthError = { code?: string; status: number; retryAfter?: number };
+
 	/** Better Auth's error codes → the catalog; anything else is "didn't complete". */
-	function describe(error: { code?: string; status: number }, fallback: string): string {
-		if (error.status === 429) return m.auth.tooManyRequests;
+	function describe(error: AuthError, fallback: string): string {
+		const retryAfter = error.retryAfter ?? 60;
 		switch (error.code) {
+			case 'CODE_COOLDOWN':
+				return m.auth.codeCooldown(retryAfter);
+			case 'CODE_HOURLY_LIMIT':
+				return m.auth.codeHourlyLimit(Math.ceil(retryAfter / 60));
 			case 'INVALID_OTP':
 				return m.auth.wrongCode;
 			case 'OTP_EXPIRED':
@@ -49,7 +74,7 @@
 			case 'MAIL_SEND_FAILED':
 				return m.auth.sendFailed;
 			default:
-				return fallback;
+				return error.status === 429 ? m.auth.tooManyRequests : fallback;
 		}
 	}
 
@@ -86,11 +111,15 @@
 		pending = null;
 		if (error) {
 			clientError = describe(error, m.auth.sendFailed);
+			if (error.code === 'CODE_COOLDOWN' && step === 'code') {
+				holdResend((error as AuthError).retryAfter ?? 60);
+			}
 			return;
 		}
 		code = '';
 		resent = again;
 		step = 'code';
+		holdResend(data.codeCooldownSeconds);
 	}
 
 	async function verifyCode(event?: SubmitEvent) {
@@ -115,6 +144,7 @@
 		step = 'email';
 		code = '';
 		resent = false;
+		cooldownUntil = 0;
 		clientError = null;
 	}
 </script>
@@ -189,9 +219,9 @@
 							type="button"
 							class="link"
 							onclick={() => sendCode()}
-							disabled={pending !== null}
+							disabled={pending !== null || cooldownLeft > 0}
 						>
-							{m.auth.resendCode}
+							{cooldownLeft > 0 ? m.auth.resendIn(cooldownLeft) : m.auth.resendCode}
 						</button>
 					</p>
 					<button
