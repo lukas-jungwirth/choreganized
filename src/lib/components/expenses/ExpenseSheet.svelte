@@ -7,6 +7,10 @@
 	The split is edited on its own sheet [9c], mounted over this one while open.
 	It sits outside this form on purpose: its "make this the default" link is a
 	form of its own, and forms don't nest.
+
+	The same sheet edits a recurring series [9h-stop] (→ SPEC §11.9): the
+	template's fields, "Next one" in place of the date, and the unit — posted to
+	`?/saveSeries`, and touching none of the expenses already logged.
 -->
 <script lang="ts">
 	import { enhance } from '$app/forms';
@@ -17,12 +21,14 @@
 	import Button from '$lib/components/ui/Button.svelte';
 	import Chip from '$lib/components/ui/Chip.svelte';
 	import { messages } from '$lib/i18n';
+	import type { SeriesItem } from '$lib/server/services/expense-recurrences';
 	import type { ExpenseItem, ExpensePerson, SplitDefault } from '$lib/server/services/expenses';
 	import type { CalendarDate } from '$lib/utils/dates';
 	import {
 		EXPENSE_CATEGORIES,
 		EXPENSE_DESCRIPTION_MAX,
-		type ExpenseCategory
+		type ExpenseCategory,
+		type RepeatUnit
 	} from '$lib/utils/expenses';
 	import { formatAmountInput, parseAmount } from '$lib/utils/money';
 	import { untrack } from 'svelte';
@@ -30,6 +36,7 @@
 	import CategoryIcon from './CategoryIcon.svelte';
 	import DateRow from './DateRow.svelte';
 	import DeleteExpenseForm from './DeleteExpenseForm.svelte';
+	import RepeatRow from './RepeatRow.svelte';
 	import SplitSheet from './SplitSheet.svelte';
 	import {
 		draftFromDefault,
@@ -40,8 +47,10 @@
 	} from './split-draft';
 
 	type Props = {
-		/** The expense being edited; null when adding. */
+		/** The expense being edited; null when adding (or editing a series). */
 		item: ExpenseItem | null;
+		/** The series being edited instead of an expense [9h-stop]. */
+		series?: SeriesItem | null;
 		/** Who can pay or share — members, plus anyone still owed or owing. */
 		people: ExpensePerson[];
 		me: string;
@@ -54,25 +63,47 @@
 		ondeleted?: (id: string) => void;
 	};
 
-	let { item, people, me, currency, today, splitDefault, suggestions, onclose, ondeleted }: Props =
-		$props();
+	let {
+		item,
+		series = null,
+		people,
+		me,
+		currency,
+		today,
+		splitDefault,
+		suggestions,
+		onclose,
+		ondeleted
+	}: Props = $props();
 
 	const m = messages();
 	const comma = m.expenses.decimalComma;
 
+	/** What the fields start from: the expense, the series' template, or nothing yet. */
+	const source = untrack(() => item ?? series);
+
 	let open = $state(true);
 	let amount = $state(
-		untrack(() => (item ? formatAmountInput(item.amountMinor, currency, comma) : ''))
+		untrack(() => (source ? formatAmountInput(source.amountMinor, currency, comma) : ''))
 	);
-	let description = $state(untrack(() => item?.description ?? ''));
-	let category = $state<ExpenseCategory | null>(untrack(() => item?.category ?? null));
+	let description = $state(source?.description ?? '');
+	let category = $state<ExpenseCategory | null>(source?.category ?? null);
 	/** Set once a chip is tapped; until then the description's history may choose. */
-	let categoryChosen = $state(untrack(() => item !== null));
-	let paidById = $state(untrack(() => item?.paidById ?? me));
-	let date = $state(untrack(() => item?.date ?? today));
+	let categoryChosen = $state(source !== null);
+	let paidById = $state(untrack(() => source?.paidById ?? me));
+	let date = $state(untrack(() => series?.nextDate ?? item?.date ?? today));
+	let repeat = $state<RepeatUnit | 'never'>(untrack(() => series?.unit ?? 'never'));
+	/**
+	 * Adding, editing a series, or editing an expense that doesn't repeat yet —
+	 * which can start a series from itself. An occurrence of a running series
+	 * has nothing to choose here: its detail links to the series [9e].
+	 */
+	const repeatable = untrack(() => series !== null || item === null || item.repeats === null);
 	let draft = $state<SplitDraft>(
 		untrack(() =>
-			item ? draftFromItem(item, currency, comma) : draftFromDefault(people, splitDefault, comma)
+			source
+				? draftFromItem(source, currency, comma)
+				: draftFromDefault(people, splitDefault, comma)
 		)
 	);
 	let splitting = $state(false);
@@ -157,10 +188,13 @@
 	const uid = $props.id();
 </script>
 
-<BottomSheet bind:open title={item ? m.expenses.form.edit : m.expenses.form.new}>
+<BottomSheet
+	bind:open
+	title={series ? m.expenses.form.editSeries : item ? m.expenses.form.edit : m.expenses.form.new}
+>
 	<form
 		method="POST"
-		action="?/save"
+		action={series ? '?/saveSeries' : '?/save'}
 		use:enhance={() => {
 			submitting = true;
 			error = undefined;
@@ -175,14 +209,14 @@
 			};
 		}}
 	>
-		{#if item}<input type="hidden" name="id" value={item.id} />{/if}
+		{#if source}<input type="hidden" name="id" value={source.id} />{/if}
 
 		<AmountField
 			bind:value={amount}
 			name="amount"
 			{currency}
 			label={m.expenses.form.amount}
-			autofocus={!item}
+			autofocus={!source}
 			required
 		/>
 
@@ -259,7 +293,16 @@
 				<span class="row-value" class:invalid={!splitValid && amountMinor !== null}>{summary}</span>
 				<ChevronRight size={16} strokeWidth={2} aria-hidden="true" />
 			</button>
-			<DateRow bind:value={date} {today} />
+			<DateRow
+				bind:value={date}
+				{today}
+				name={series ? 'nextDate' : 'date'}
+				upcoming={series !== null}
+				min={series && series.nextDate < today ? series.nextDate : today}
+			/>
+			{#if repeatable}
+				<RepeatRow bind:value={repeat} name={series ? 'unit' : 'repeat'} never={!series} />
+			{/if}
 		</div>
 		<input type="hidden" name="splitMode" value={draft.mode} />
 		<input type="hidden" name="split" value={splitJson} />
@@ -267,7 +310,7 @@
 		{#if error}<p class="error" role="alert">{error}</p>{/if}
 
 		<Button type="submit" disabled={!valid || submitting}>
-			{item ? m.common.saveChanges : m.expenses.form.save}
+			{source ? m.common.saveChanges : m.expenses.form.save}
 		</Button>
 	</form>
 

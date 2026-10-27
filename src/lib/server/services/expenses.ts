@@ -19,7 +19,7 @@
  * the reader's own idea of upper and lower case (→ DECISIONS #172).
  */
 import { and, asc, desc, eq, inArray, isNotNull, isNull, lt } from 'drizzle-orm';
-import { isCalendarDate, startOfMonth, type CalendarDate } from '$lib/utils/dates';
+import { addRepeat, isCalendarDate, startOfMonth, type CalendarDate } from '$lib/utils/dates';
 import {
 	AMOUNT_MAX_MAJOR,
 	EXPENSE_DESCRIPTION_MAX,
@@ -30,6 +30,7 @@ import {
 	type DefaultSplitMode,
 	type ExpenseCategory,
 	type ExpenseKind,
+	type RepeatUnit,
 	type SplitMode
 } from '$lib/utils/expenses';
 import {
@@ -41,7 +42,16 @@ import {
 	type SplitRow
 } from '$lib/utils/money';
 import { db } from '../db';
-import { expenseShares, expenses, households, ledgerPeople, members } from '../db/schema';
+import {
+	expenseRecurrenceShares,
+	expenseRecurrences,
+	expenseShares,
+	expenses,
+	households,
+	ledgerPeople,
+	members
+} from '../db/schema';
+import { notifyExpense, sharesOf } from './expense-notify';
 import { requireOwner, type Transaction } from './household';
 
 export type ExpenseErrorCode =
@@ -62,7 +72,9 @@ export type ExpenseErrorCode =
 	/** Not one of the currencies Settings offers. */
 	| 'currency'
 	/** The household already has expenses in its currency (→ DECISIONS #170). */
-	| 'currency-locked';
+	| 'currency-locked'
+	/** A series' next occurrence set before today (→ SPEC §11.9). */
+	| 'next-date';
 
 /** Expected, user-facing failures — actions map these to inline messages. */
 export class ExpenseError extends Error {
@@ -176,6 +188,10 @@ export type ExpenseItem = {
 	/** Instants — a payment shows its time [9a], the detail who did what when [9e]. */
 	createdAt: Date;
 	updatedAt: Date;
+	/** The series it came from, running or stopped (→ SPEC §11.9). */
+	recurrenceId: string | null;
+	/** How often that series repeats while it is running — the repeat badge [9e]; else null. */
+	repeats: RepeatUnit | null;
 };
 
 /**
@@ -217,12 +233,23 @@ export function listLedger(
 		.where(and(eq(expenses.householdId, householdId), isNull(expenses.deletedAt)))
 		.all();
 
-	const sharesOf = new Map<string, ExpenseShareRow[]>();
+	const sharesByExpense = new Map<string, ExpenseShareRow[]>();
 	for (const share of shares) {
-		const list = sharesOf.get(share.expenseId) ?? [];
+		const list = sharesByExpense.get(share.expenseId) ?? [];
 		list.push({ personId: share.personId, shareMinor: share.shareMinor, input: share.input });
-		sharesOf.set(share.expenseId, list);
+		sharesByExpense.set(share.expenseId, list);
 	}
+
+	const running = new Map(
+		db
+			.select({ id: expenseRecurrences.id, unit: expenseRecurrences.unit })
+			.from(expenseRecurrences)
+			.where(
+				and(eq(expenseRecurrences.householdId, householdId), isNull(expenseRecurrences.stoppedAt))
+			)
+			.all()
+			.map((row) => [row.id, row.unit])
+	);
 
 	return rows.map((row) => ({
 		id: row.id,
@@ -233,14 +260,16 @@ export function listLedger(
 		date: row.date,
 		paidById: row.paidById,
 		splitMode: row.splitMode,
-		shares: (sharesOf.get(row.id) ?? []).sort(
+		shares: (sharesByExpense.get(row.id) ?? []).sort(
 			(a, b) => (order.get(a.personId) ?? 0) - (order.get(b.personId) ?? 0)
 		),
 		createdBy: row.createdByMemberId ? (nameOf.get(row.createdByMemberId) ?? null) : null,
 		updatedBy: row.updatedByMemberId ? (nameOf.get(row.updatedByMemberId) ?? null) : null,
 		edited: row.updatedAt.getTime() - row.createdAt.getTime() > 1000,
 		createdAt: row.createdAt,
-		updatedAt: row.updatedAt
+		updatedAt: row.updatedAt,
+		recurrenceId: row.recurrenceId,
+		repeats: row.recurrenceId ? (running.get(row.recurrenceId) ?? null) : null
 	}));
 }
 
@@ -444,7 +473,7 @@ function liveExpense(tx: Transaction, householdId: string, id: string) {
 	return row;
 }
 
-function writeShares(
+export function writeShares(
 	tx: Transaction,
 	expenseId: string,
 	shares: { id: string; shareMinor: number; input: number | null }[]
@@ -462,11 +491,15 @@ function writeShares(
 		.run();
 }
 
-function validExpense(
+/**
+ * Everything an expense and a series template have in common — what for, how
+ * much, who paid, who is in it — checked, and the split worked out. Only the
+ * date's rule differs between the two, so it is the caller's.
+ */
+export function validTemplate(
 	tx: Transaction,
 	householdId: string,
-	input: ExpenseInput,
-	today: CalendarDate
+	input: Omit<ExpenseInput, 'date'>
 ) {
 	const description = input.description.trim();
 	if (!description || description.length > EXPENSE_DESCRIPTION_MAX) {
@@ -476,7 +509,6 @@ function validExpense(
 		throw new ExpenseError('split');
 	}
 	checkAmount(tx, householdId, input.amountMinor);
-	checkDate(input.date, today);
 
 	const ids = [input.paidById, ...input.rows.map((row) => row.id)];
 	const known = peopleIn(tx, householdId, ids);
@@ -488,19 +520,89 @@ function validExpense(
 	return { description, shares: split.shares };
 }
 
+function validExpense(
+	tx: Transaction,
+	householdId: string,
+	input: ExpenseInput,
+	today: CalendarDate
+) {
+	checkDate(input.date, today);
+	return validTemplate(tx, householdId, input);
+}
+
+/**
+ * Turn a just-written expense into the first of a series (→ SPEC §11.9): the
+ * template is the expense as saved, and the next one is due one `unit` after
+ * its date — which may already have passed, for an expense logged late; the
+ * 06:00 sweep then catches up (→ `services/expense-recurrences.ts`).
+ */
+function startSeries(
+	tx: Transaction,
+	householdId: string,
+	actorMemberId: string,
+	expenseId: string,
+	input: ExpenseInput,
+	template: ReturnType<typeof validTemplate>,
+	unit: RepeatUnit
+): void {
+	const anchorDay = unit === 'week' ? null : Number(input.date.slice(8, 10));
+	const now = new Date();
+
+	const { id } = tx
+		.insert(expenseRecurrences)
+		.values({
+			householdId,
+			description: template.description,
+			category: input.category,
+			amountMinor: input.amountMinor,
+			paidById: input.paidById,
+			splitMode: input.splitMode,
+			unit,
+			anchorDay,
+			nextDate: addRepeat(input.date, unit, anchorDay),
+			createdByMemberId: actorMemberId,
+			createdAt: now,
+			updatedAt: now
+		})
+		.returning({ id: expenseRecurrences.id })
+		.get();
+
+	tx.insert(expenseRecurrenceShares)
+		.values(
+			template.shares.map((share) => ({ recurrenceId: id, personId: share.id, input: share.input }))
+		)
+		.run();
+	tx.update(expenses).set({ recurrenceId: id }).where(eq(expenses.id, expenseId)).run();
+}
+
+/** Whether this expense belongs to a series that is still running. */
+function inRunningSeries(tx: Transaction, recurrenceId: string | null): boolean {
+	if (!recurrenceId) return false;
+	return Boolean(
+		tx
+			.select({ id: expenseRecurrences.id })
+			.from(expenseRecurrences)
+			.where(and(eq(expenseRecurrences.id, recurrenceId), isNull(expenseRecurrences.stoppedAt)))
+			.get()
+	);
+}
+
 /**
  * Log an expense (→ SPEC §11.3). Any member may log one for anyone, including
  * one they aren't part of: the household trusts itself, and the detail [9e]
- * says who did it.
+ * says who did it. With `repeat`, it is also the first of a series (§11.9).
+ * The people in it are told once it has committed (→ `expense-notify.ts`).
  */
 export function createExpense(
 	householdId: string,
 	actorMemberId: string,
 	input: ExpenseInput,
-	today: CalendarDate
+	today: CalendarDate,
+	repeat: RepeatUnit | null = null
 ): string {
-	return db.transaction((tx) => {
-		const { description, shares } = validExpense(tx, householdId, input, today);
+	const created = db.transaction((tx) => {
+		const template = validExpense(tx, householdId, input, today);
+		const { description, shares } = template;
 		const now = new Date();
 
 		const { id } = tx
@@ -523,21 +625,34 @@ export function createExpense(
 			.get();
 
 		writeShares(tx, id, shares);
+		if (repeat) startSeries(tx, householdId, actorMemberId, id, input, template, repeat);
 		return id;
 	});
+
+	void notifyExpense(householdId, { kind: 'added', expenseId: created, actorMemberId });
+	return created;
 }
 
+/**
+ * Change one expense — only this one, even when it came from a series: the
+ * series is edited on its own (→ SPEC §11.9). An expense that isn't part of a
+ * running series can start one here with `repeat`. Whoever's share moved is
+ * told (→ SPEC §11.11).
+ */
 export function updateExpense(
 	householdId: string,
 	actorMemberId: string,
 	id: string,
 	input: ExpenseInput,
-	today: CalendarDate
+	today: CalendarDate,
+	repeat: RepeatUnit | null = null
 ): void {
-	db.transaction((tx) => {
+	const before = db.transaction((tx) => {
 		const row = liveExpense(tx, householdId, id);
 		if (row.kind !== 'expense') throw new ExpenseError('not-found');
-		const { description, shares } = validExpense(tx, householdId, input, today);
+		const template = validExpense(tx, householdId, input, today);
+		const { description, shares } = template;
+		const before = sharesOf(id);
 
 		tx.update(expenses)
 			.set({
@@ -554,7 +669,13 @@ export function updateExpense(
 			.run();
 
 		writeShares(tx, id, shares);
+		if (repeat && !inRunningSeries(tx, row.recurrenceId)) {
+			startSeries(tx, householdId, actorMemberId, id, input, template, repeat);
+		}
+		return before;
 	});
+
+	void notifyExpense(householdId, { kind: 'changed', expenseId: id, actorMemberId, before });
 }
 
 function validPayment(
@@ -572,7 +693,8 @@ function validPayment(
 
 /**
  * Record that money changed hands outside the app [9d]: a row paid by `from`
- * whose one share is `to`'s (→ DECISIONS #167). The app moves no money.
+ * whose one share is `to`'s (→ DECISIONS #167). The app moves no money; the
+ * recipient is told it did (→ SPEC §11.11).
  */
 export function createPayment(
 	householdId: string,
@@ -580,7 +702,7 @@ export function createPayment(
 	input: PaymentInput,
 	today: CalendarDate
 ): string {
-	return db.transaction((tx) => {
+	const created = db.transaction((tx) => {
 		validPayment(tx, householdId, input, today);
 		const now = new Date();
 
@@ -604,6 +726,9 @@ export function createPayment(
 		writeShares(tx, id, [{ id: input.toId, shareMinor: input.amountMinor, input: null }]);
 		return id;
 	});
+
+	void notifyExpense(householdId, { kind: 'paid', expenseId: created, actorMemberId });
+	return created;
 }
 
 export function updatePayment(

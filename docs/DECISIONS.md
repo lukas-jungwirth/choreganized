@@ -2521,3 +2521,59 @@ units | null, name}`, written back as editor lines in the reader's unit spelling
        undo. The label comes from the row, not the URL.
      - **History's search field follows back/forward, but not while it has the focus.** Otherwise
        the reply to a search sent mid-word overwrote what was typed since.
+175. **A recurring expense's next date is its whole memory** (`expense_recurrences.next_date`,
+     `services/expense-recurrences.ts`, plan 30). The sweep logs one occurrence and moves
+     `next_date` on in the same transaction, and the move only goes through while `next_date`
+     still reads what the sweep read. So a server that was down for three months logs three on its
+     first tick back, a second sweep logs none, and the cron job keeps no ledger of its own — the
+     task reminders' shape (→ DATA-MODEL "Reminder time-sweep"), not the cleanup's. Gated "at or
+     after 06:00 household-local", like the other time-of-day jobs. Around it:
+     - **Only the inputs are stored.** `expense_recurrence_shares` keeps what was typed per
+       person; every occurrence splits the template's amount again (→ #169), in roster order, so
+       its leftover cent lands where the expense it started from put it.
+     - **A month keeps its anchor day.** `addRepeat` clamps the 31st to a short month's end without
+       forgetting it: 31 Jan → 28 Feb → 31 Mar, and 29 Feb yearly comes back in the next leap
+       year. Editing the series re-anchors only when the next date or the unit moves.
+     - **A series starts from an expense**, logged with Repeats, or an existing one edited to
+       repeat; the first occurrence is that expense. A date in the past is allowed, and the sweep
+       catches up the rest.
+     - **Each occurrence is an ordinary expense.** Editing one changes only it. Editing the series
+       changes only those to come; its next date can be moved to today or later, and one the sweep
+       hasn't reached yet can be kept. Stopping sets
+       `stopped_at` and keeps the series row and every occurrence; the repeat badge and the
+       detail's "Repeats monthly · Edit series" show only while the series runs.
+     - **An occurrence is "Added by" whoever set up the series**, at the time it was logged.
+     - **A template that no longer splits stops** with a log line rather than failing every
+       minute. The service never writes one; this is the belt for a hand-edited database.
+     - **`ALTER TABLE ADD COLUMN … REFERENCES … ON DELETE SET NULL` does work in SQLite** when the
+       column defaults to NULL. drizzle-kit drops the `ON DELETE` clause from the generated
+       statement, so migration 0019 adds it by hand (checked with `pragma_foreign_key_list`).
+176. **Expense notices name the household's own description, and say "your share"**
+     (`services/expense-notify.ts`, SPEC §11.11). The SPEC's examples read "added Groceries", but a
+     category is the wrong handle: "Weekly shop · Billa" is how the household knows the row. Who
+     hears what:
+     - **added**: everyone with a share above zero, minus whoever logged it.
+     - **changed**: only people whose own share moved, including one taken out of it ("is now
+       €0.00") or newly put in it. A new wording alone sends nothing.
+     - **paid**: the recipient, minus whoever recorded it, named by who paid. Recording someone
+       else's payment still tells the recipient.
+     - **repeated**: everyone with a share, **the payer included**, because nobody did this one.
+     - Current members only, with `members.notify_expenses` on (default on, Settings →
+       Notifications). Each in their own language through `push.ts`, with one emoji like the
+       other pushes (🧾 · 💸 · 🔁, → #55). Edits and payment edits other than those above, and
+       deletes, send nothing.
+     - The deciding half (`expenseNotices`) is synchronous and reads the committed rows, so the
+       integration suite asserts the exact sentences without a push service. The services call
+       `notifyExpense` after their transaction commits, fire-and-forget.
+177. **Plan 30's smaller calls.**
+     - **The Repeats row and the series' unit are a native `<select>` over the row**, like
+       DateRow's date input: the device's own picker and nothing to keep in sync. Editing a series
+       offers no "Never"; stopping is its own action in [9h-stop].
+     - **"Edit series" reuses the add sheet** in a series mode: the template's fields, "Next one"
+       instead of the date (today or later), the unit, no delete, posted to `?/saveSeries`.
+     - **An occurrence of a running series shows no Repeats row** when edited. Its detail links
+       to the series instead, so "edit this one" and "edit all to come" are never one form.
+     - **The sweep can be run on demand only in E2E mode** (`POST /api/e2e/recurring-expenses`,
+       404 otherwise), so the Playwright journey doesn't wait for a household clock to pass 06:00.
+     - **The seed makes Strom a monthly series** started from its expense, next due a month
+       later, so Recurring [9h] and the repeat badge have something to show.

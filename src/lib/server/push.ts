@@ -52,9 +52,13 @@ export type PushPayload = {
 	requireInteraction?: boolean;
 };
 
-/** The `members` columns that gate a category of notification (→ SPEC §3.5, §3.6, §5.6). */
+/** The `members` columns that gate a category of notification (→ SPEC §3.5, §3.6, §5.6, §11.11). */
 export type NotificationPref =
-	'notifyTaskReminders' | 'notifyOverdueNudges' | 'notifyShoppingUpdates' | 'notifyShopClosures';
+	| 'notifyTaskReminders'
+	| 'notifyOverdueNudges'
+	| 'notifyShoppingUpdates'
+	| 'notifyShopClosures'
+	| 'notifyExpenses';
 
 /**
  * A notification, written in the recipient's language.

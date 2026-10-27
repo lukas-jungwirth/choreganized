@@ -24,6 +24,8 @@ import { migrate } from 'drizzle-orm/better-sqlite3/migrator';
 import { mkdirSync } from 'node:fs';
 import { dirname } from 'node:path';
 import {
+	expenseRecurrenceShares,
+	expenseRecurrences,
 	expenseShares,
 	expenses,
 	households,
@@ -44,6 +46,7 @@ import {
 // Relative and extensioned for the same reason the schema import is, and worth
 // importing rather than retyping: it is the key the unique index is built on.
 import { suggestionKey } from '../src/lib/utils/shopping.ts';
+import { addRepeat } from '../src/lib/utils/dates.ts';
 import {
 	SEED_HOUSEHOLD_NAME,
 	SEED_HOUSEMATE_NAME,
@@ -826,6 +829,41 @@ const seeded = db.transaction((tx) => {
 	spend('strom', 4, 'Strom · Wien Energie', 'bills', 8640, ownerPerson);
 	spend('tickets', 5, 'Wiener Linien · 2 tickets', 'transport', 680, housematePerson);
 
+	// The electricity bill repeats monthly (→ plan 30): a series started from
+	// the expense above, next due a month after it, so Recurring [9h] has a row
+	// and Strom carries the repeat badge. The sweep logs nothing until then.
+	const stromDate = addDays(today, -4);
+	const anchorDay = Number(stromDate.slice(8, 10));
+	const series = sid('series', 'strom');
+	const started = tx
+		.insert(expenseRecurrences)
+		.values({
+			id: series,
+			householdId,
+			description: 'Strom · Wien Energie',
+			category: 'bills',
+			amountMinor: 8640,
+			paidById: ownerPerson,
+			splitMode: 'equal',
+			unit: 'month',
+			anchorDay,
+			nextDate: addRepeat(stromDate, 'month', anchorDay),
+			createdByMemberId: ownerMemberId,
+			createdAt: daysAgo(4, 19),
+			updatedAt: daysAgo(4, 19)
+		})
+		.onConflictDoNothing()
+		.run().changes;
+	if (started) {
+		tx.insert(expenseRecurrenceShares)
+			.values(both.map((personId) => ({ recurrenceId: series, personId, input: null })))
+			.run();
+		tx.update(expenses)
+			.set({ recurrenceId: series })
+			.where(eq(expenses.id, sid('expense', 'strom')))
+			.run();
+	}
+
 	return {
 		householdName: household?.name ?? 'your household',
 		members:
@@ -840,7 +878,7 @@ console.log(`  household  ${seeded.householdName} — ${seeded.members}`);
 console.log('  shopping   3 stores · 10 items (2 already checked off)');
 console.log('  cooking    2 recipes · meals planned for today, tomorrow and the day after');
 console.log('  tasks      7 tasks (overdue · today · upcoming · undated) · 8 history entries');
-console.log('  expenses   5 expenses · 1 settle-up');
+console.log('  expenses   5 expenses · 1 settle-up · 1 monthly series');
 console.log(`  → ${rowsWritten() - before} rows written; anything already there was left alone.`);
 
 sqlite.close();

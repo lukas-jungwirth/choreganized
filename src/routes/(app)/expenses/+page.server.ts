@@ -13,6 +13,7 @@ import {
 	savePaymentAction,
 	splitDefaultAction
 } from '$lib/server/expense-actions';
+import { countSeries } from '$lib/server/services/expense-recurrences';
 import {
 	balancesOf,
 	deletedExpense,
@@ -44,6 +45,8 @@ export const load: PageServerLoad = (event) => {
 		splitDefault: settings.splitDefault,
 		currencyLocked: settings.hasExpenses,
 		suggestions: descriptionSuggestions(ledger),
+		/** Running series, for the ••• menu's "Recurring" [9a-owe]. */
+		seriesCount: countSeries(householdId),
 		/**
 		 * The detail screen deletes, then comes here with `?deleted=` for the undo
 		 * bar. Only a row that really is deleted, and this household's, gets one.

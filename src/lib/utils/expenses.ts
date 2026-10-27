@@ -32,6 +32,13 @@ export type SplitMode = (typeof SPLIT_MODES)[number];
 export const DEFAULT_SPLIT_MODES = ['equal', 'percent', 'shares'] as const;
 export type DefaultSplitMode = (typeof DEFAULT_SPLIT_MODES)[number];
 
+/**
+ * How often a recurring expense comes back [9b] [9h] (→ SPEC §11.9). The
+ * Repeats row's fourth choice, "Never", is the absence of a series, not a unit.
+ */
+export const REPEAT_UNITS = ['week', 'month', 'year'] as const;
+export type RepeatUnit = (typeof REPEAT_UNITS)[number];
+
 export const EXPENSE_DESCRIPTION_MAX = 80;
 
 /** One million in the household currency's major unit (→ SPEC §11.3). */
@@ -69,6 +76,10 @@ export function isExpenseCategory(value: unknown): value is ExpenseCategory {
 
 export function isSplitMode(value: unknown): value is SplitMode {
 	return SPLIT_MODES.includes(value as SplitMode);
+}
+
+export function isRepeatUnit(value: unknown): value is RepeatUnit {
+	return REPEAT_UNITS.includes(value as RepeatUnit);
 }
 
 export function isDefaultSplitMode(value: unknown): value is DefaultSplitMode {

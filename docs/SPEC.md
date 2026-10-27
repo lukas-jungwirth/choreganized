@@ -904,7 +904,7 @@ Tab bar order: **Home · Shopping · Cooking · Tasks · Expenses** ("Expenses" 
 Only the active tab carries its label, in a sage pill; the others are icons — the bar's
 own treatment since [01/1d], which is what lets five fit at 390px in both languages
 [9a-tabbar] (→ [DECISIONS #171](DECISIONS.md)). The header's **•••** menu holds **All activity** · **Expense settings** (→ §11.10), and
-**Recurring** (with a count) once plan 30 lands. While the undo bar is up after a delete, the
+**Recurring** (with how many series are running), first, then the other two. While the undo bar is up after a delete, the
 FAB stands down — the two share the corner, and Undo is the one that can't wait.
 
 1. **Balance card**: the one thing you read:
@@ -946,7 +946,9 @@ A bottom sheet. Its fields, in this order:
 6. **Split**: one summary row, "Split equally · everyone · €21.05 each", or "Split by % ·
    Lukas 30 · Elisabeth 70". Tapping it opens [9c]. New expenses start from the
    **household default split** (§11.5).
-7. (plan 30) **Repeats**: Never · Weekly · Monthly · Yearly (§11.9).
+7. **Repeats**: Never · Weekly · Monthly · Yearly (§11.9). Editing an expense that doesn't
+   repeat can start a series from it; an occurrence of a running series has no Repeats row,
+   since its detail links to the series.
 
 **Save** is disabled until amount, description and a valid split exist. Editing opens the same
 sheet filled in, with **Delete** at the bottom. Delete removes the expense right away, with
@@ -1010,7 +1012,7 @@ lowered for a partial payment. Copy under the button: "This only records it — 
 money however you usually do." Saving shows the balance card updating. Edit and delete work
 as they do for expenses.
 
-### 11.9 Recurring expenses [9h] (→ plan 30)
+### 11.9 Recurring expenses [9h] (→ plan 30, DECISIONS #175, #177)
 
 - An expense can **repeat** weekly, monthly or yearly, starting at its date. A monthly one on
   the 31st lands on the last day of shorter months.
@@ -1021,8 +1023,16 @@ as they do for expenses.
 - Editing a created expense changes only that one. Editing the **template** (from [9h], or
   from "Repeats monthly · Edit series" in the detail) changes future ones only. **Stop
   repeating** ends the series and keeps the past.
-- [9h] lists the series: description, amount, "Monthly · next 1 Dec", payer avatar. It is
-  reached from the tab's overflow menu.
+- [9h] (`/expenses/recurring`) lists the running series, soonest first: description, amount,
+  "Monthly · next 1 Dec", payer avatar. It is reached from the tab's overflow menu. Tapping
+  one opens [9h-stop]: "€900.00 · Monthly on the 1st · Lukas pays", the next date, **Edit
+  series** (the add sheet [9b] with "Next one" in place of the date — today or later — and the
+  unit; no "Never") and **Stop repeating** ("The 11 already added stay as they are").
+- The series starts from the expense saved with Repeats, which is its first occurrence; the next
+  is one unit after its date. A date logged late is caught up by the next sweep. Each occurrence
+  is dated the day it was due, "Added by" whoever set up the series.
+- The repeat badge (rows) and "Repeats monthly · Edit series" (detail) show while the series
+  runs; a stopped series' expenses look like any others.
 
 ### 11.10 Settings
 
@@ -1032,16 +1042,19 @@ as they do for expenses.
     would make them wrong (→ [DECISIONS #170](DECISIONS.md)).
   - **Default split**: opens [9c] in default mode (§11.5). Anyone may set it, here or from
     [9c]'s link: it only pre-fills a form everyone can change (→ [DECISIONS #173](DECISIONS.md)).
-- **Notifications → Expenses** (plan 30): per member, default **on** (§11.11).
+- **Notifications → Expenses**: per member, default **on** (§11.11).
 
-### 11.11 Notifications (→ plan 30)
+### 11.11 Notifications (→ plan 30, DECISIONS #176)
 
-To the people in an expense, never to the one who did the action, in their own language:
+To the people in an expense, never to the one who did the action, in their own language. The
+expense is named by its description, the household's own words:
 
-- added: "Elisabeth added Groceries · €42.10 · your share €21.05"
-- edited, if your share changed: "Elisabeth changed Groceries · your share is now €18.00"
-- payment to you: "Lukas paid you €24.50"
-- a recurring expense was added: "Rent was added · your share €450.00"
+- added, to everyone with a share: "🧾 Elisabeth added Weekly shop · €42.10 · your share €21.05"
+- edited, only to those whose share changed (taken out included):
+  "🧾 Elisabeth changed Weekly shop · your share is now €18.00"
+- payment to you, named by who paid: "💸 Lukas paid you €24.50"
+- a recurring expense was added, to everyone with a share, the payer included (nobody did it):
+  "🔁 Rent was added · your share €450.00"
 
 No digest and no "you owe money" nagging. The balance card is the reminder.
 

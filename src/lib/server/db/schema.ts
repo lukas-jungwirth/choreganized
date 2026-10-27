@@ -36,6 +36,7 @@ import {
 	DEFAULT_SPLIT_MODES,
 	EXPENSE_CATEGORIES,
 	EXPENSE_KINDS,
+	REPEAT_UNITS,
 	SPLIT_MODES
 } from '../../utils/expenses.ts';
 import { RECIPE_WORDINGS } from '../../utils/wording.ts';
@@ -253,6 +254,12 @@ export const members = sqliteTable(
 		notifyShopClosures: integer('notify_shop_closures', { mode: 'boolean' })
 			.notNull()
 			.default(true),
+		/**
+		 * Expenses that involve you — added, your share changed, paid to you, a
+		 * repeat logged (→ SPEC §11.11). On by default: it fires only for money
+		 * that is yours, never for the household's in general.
+		 */
+		notifyExpenses: integer('notify_expenses', { mode: 'boolean' }).notNull().default(true),
 		joinedAt: integer('joined_at', { mode: 'timestamp_ms' })
 			.notNull()
 			.$defaultFn(() => new Date())
@@ -877,11 +884,20 @@ export const expenses = sqliteTable(
 		 * Set by Delete, cleared by its undo bar; the 03:30 cleanup removes rows
 		 * deleted more than a day ago. Every read filters it out.
 		 */
-		deletedAt: integer('deleted_at', { mode: 'timestamp_ms' })
+		deletedAt: integer('deleted_at', { mode: 'timestamp_ms' }),
+		/**
+		 * The series this occurrence belongs to (→ SPEC §11.9) — the first one,
+		 * logged by hand with "Repeats", and every one the 06:00 sweep adds. A
+		 * plain link: editing the series never rewrites a row already logged.
+		 */
+		recurrenceId: text('recurrence_id').references(() => expenseRecurrences.id, {
+			onDelete: 'set null'
+		})
 	},
 	(t) => [
 		index('expenses_household_date_idx').on(t.householdId, t.date),
-		index('expenses_paid_by_idx').on(t.paidById)
+		index('expenses_paid_by_idx').on(t.paidById),
+		index('expenses_recurrence_idx').on(t.recurrenceId)
 	]
 );
 
@@ -912,6 +928,66 @@ export const expenseShares = sqliteTable(
 	]
 );
 
+/**
+ * A recurring expense — the template the 06:00 sweep copies into a normal
+ * expense each time `nextDate` comes round (→ SPEC §11.9, plan 30).
+ *
+ * Only the inputs are stored: the split's shares are recomputed from
+ * `expense_recurrence_shares.input` on every occurrence, so editing the amount
+ * can never leave a stale share behind (→ DECISIONS #169).
+ */
+export const expenseRecurrences = sqliteTable(
+	'expense_recurrences',
+	{
+		id: id(),
+		householdId: text('household_id')
+			.notNull()
+			.references(() => households.id, { onDelete: 'cascade' }),
+		description: text('description').notNull(),
+		category: text('category', { enum: EXPENSE_CATEGORIES }).notNull(),
+		amountMinor: integer('amount_minor').notNull(),
+		paidById: text('paid_by_id')
+			.notNull()
+			.references(() => ledgerPeople.id, { onDelete: 'cascade' }),
+		splitMode: text('split_mode', { enum: SPLIT_MODES }).notNull(),
+		unit: text('unit', { enum: REPEAT_UNITS }).notNull(),
+		/**
+		 * The day of the month it was started on (1–31), for `month` and `year`;
+		 * a short month clamps to its last day without forgetting it, so a series
+		 * from 31 Jan lands on 28 Feb and then 31 Mar (→ `utils/dates`
+		 * `addRepeat`). NULL for `week`.
+		 */
+		anchorDay: integer('anchor_day'),
+		/** Household-local `YYYY-MM-DD`: the next occurrence the sweep will add. */
+		nextDate: text('next_date').notNull(),
+		/** Set by "Stop repeating"; the series and its past stay (→ SPEC §11.9). */
+		stoppedAt: integer('stopped_at', { mode: 'timestamp_ms' }),
+		createdByMemberId: text('created_by_member_id').references(() => members.id, {
+			onDelete: 'set null'
+		}),
+		createdAt: createdAt(),
+		updatedAt: integer('updated_at', { mode: 'timestamp_ms' })
+			.notNull()
+			.$defaultFn(() => new Date())
+	},
+	(t) => [index('expense_recurrences_due_idx').on(t.householdId, t.nextDate)]
+);
+
+/** Who is in a series' split and what was typed for them — `expense_shares`' `input`, kept. */
+export const expenseRecurrenceShares = sqliteTable(
+	'expense_recurrence_shares',
+	{
+		recurrenceId: text('recurrence_id')
+			.notNull()
+			.references(() => expenseRecurrences.id, { onDelete: 'cascade' }),
+		personId: text('person_id')
+			.notNull()
+			.references(() => ledgerPeople.id, { onDelete: 'cascade' }),
+		input: integer('input')
+	},
+	(t) => [primaryKey({ columns: [t.recurrenceId, t.personId] })]
+);
+
 /* ── Inferred row types ────────────────────────────────────────────────────── */
 
 export type User = typeof user.$inferSelect;
@@ -936,3 +1012,4 @@ export type AiConnection = typeof aiConnections.$inferSelect;
 export type LedgerPerson = typeof ledgerPeople.$inferSelect;
 export type Expense = typeof expenses.$inferSelect;
 export type ExpenseShare = typeof expenseShares.$inferSelect;
+export type ExpenseRecurrence = typeof expenseRecurrences.$inferSelect;

@@ -974,7 +974,8 @@ export const de: Messages = {
 		menu: {
 			label: 'Mehr',
 			allActivity: 'Alle Einträge',
-			settings: 'Einstellungen für Ausgaben'
+			settings: 'Einstellungen für Ausgaben',
+			recurring: 'Wiederkehrend'
 		},
 		money: (minor: number, currency: string) => formatMoney(minor, currency, INTL_LOCALE[L]),
 		/** The currency's mark beside the amount field [9b]. */
@@ -1039,7 +1040,16 @@ export const de: Messages = {
 			date: 'Datum',
 			today: 'Heute',
 			save: 'Speichern',
-			delete: 'Ausgabe löschen'
+			delete: 'Ausgabe löschen',
+			repeats: 'Wiederholen',
+			repeat: {
+				never: 'Nie',
+				week: 'Wöchentlich',
+				month: 'Monatlich',
+				year: 'Jährlich'
+			},
+			editSeries: 'Serie bearbeiten',
+			nextOne: 'Nächstes Mal'
 		},
 
 		summary: {
@@ -1124,7 +1134,41 @@ export const de: Messages = {
 					: `schuldet ${payer ?? 'dir'} dafür ${amount}`,
 			added: (who: string, when: string) => `Eingetragen von ${who} · ${when}`,
 			edited: (who: string, when: string) => `Bearbeitet von ${who} · ${when}`,
-			someone: 'jemandem'
+			someone: 'jemandem',
+			repeats: {
+				week: 'Wiederholt sich wöchentlich',
+				month: 'Wiederholt sich monatlich',
+				year: 'Wiederholt sich jährlich'
+			},
+			editSeries: 'Serie bearbeiten'
+		},
+
+		recurring: {
+			title: 'Wiederkehrend',
+			back: 'Zurück zu den Ausgaben',
+			intro:
+				'Jede wird an ihrem Tag um 6:00 als normale Ausgabe eingetragen. Änderungen hier gelten nur für die kommenden.',
+			schedule: (unit: string, next: string) => `${unit} · als Nächstes ${next}`,
+			summary: (amount: string, rule: string, pays: string) => `${amount} · ${rule} · ${pays}`,
+			rule: {
+				week: (weekday: string) => `Jeden ${weekday}`,
+				month: (day: number) => `Monatlich am ${day}.`,
+				year: (date: string) => `Jährlich am ${date}`
+			},
+			pays: (who: string | null) => (who === null ? 'du zahlst' : `${who} zahlt`),
+			nextOne: 'Nächstes Mal',
+			editSeries: 'Serie bearbeiten',
+			editSeriesDetail: 'Nur die kommenden',
+			stop: 'Nicht mehr wiederholen',
+			stopDetail: (count: number) =>
+				count === 0
+					? 'Bisher wurde noch keine eingetragen'
+					: count === 1
+						? 'Die eine schon eingetragene bleibt, wie sie ist'
+						: `Die ${count} schon eingetragenen bleiben, wie sie sind`,
+			empty: 'Noch nichts Wiederkehrendes',
+			emptyCopy:
+				'Miete, Abos, Internet: Wähl beim Eintragen „Wiederholen“, dann trägt es sich von selbst ein.'
 		},
 
 		history: {
@@ -1203,7 +1247,8 @@ export const de: Messages = {
 			samePerson: 'Wähl zwei verschiedene Personen.',
 			notFound: 'Diese Ausgabe gibt es nicht mehr.',
 			currency: 'Wähl eine der angebotenen Währungen.',
-			currencyLocked: 'Die Währung steht fest, sobald es Ausgaben gibt.'
+			currencyLocked: 'Die Währung steht fest, sobald es Ausgaben gibt.',
+			nextDate: 'Das nächste Mal kann nicht vor heute liegen.'
 		}
 	},
 
@@ -1247,6 +1292,8 @@ export const de: Messages = {
 			shoppingUpdatesDetail: 'Wenn jemand etwas auf die Liste setzt',
 			shopClosures: 'Einkaufen vor Feiertagen',
 			shopClosuresDetail: 'Ein paar Tage bevor ein Feiertag die Geschäfte zusperrt',
+			expenses: 'Ausgaben',
+			expensesDetail: 'Wenn eine Ausgabe dich betrifft',
 			note: 'Das gilt auf jedem Gerät, das du unten einschaltest.'
 		},
 
@@ -1578,7 +1625,15 @@ export const de: Messages = {
 		testTitle: '🔔 Benachrichtigungen sind an',
 		testBody: 'So sieht ein Hinweis von Choreganized aus.',
 
-		timerDone: (label: string) => `⏲️ ${label} ist fertig`
+		timerDone: (label: string) => `⏲️ ${label} ist fertig`,
+
+		expenseAdded: (who: string, what: string, amount: string, share: string) =>
+			`🧾 ${who} hat ${what} eingetragen · ${amount} · dein Anteil ${share}`,
+		expenseChanged: (who: string, what: string, share: string) =>
+			`🧾 ${who} hat ${what} geändert · dein Anteil ist jetzt ${share}`,
+		paidYou: (who: string, amount: string) => `💸 ${who} hat dir ${amount} gezahlt`,
+		expenseRepeated: (what: string, share: string) =>
+			`🔁 ${what} wurde eingetragen · dein Anteil ${share}`
 	},
 
 	/* ── Refusals ──────────────────────────────────────────────────────────── */

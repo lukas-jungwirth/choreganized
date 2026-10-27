@@ -211,8 +211,9 @@ whether that happened.
 
 ### E2E mode — and verifying by hand
 
-The server has one door for tests: `E2E_MODE=true` enables password sign-in and `/dev/kit`
-(→ `src/lib/server/e2e-mode.ts`, DECISIONS #139). It is refused outright on any `ORIGIN` that
+The server has one door for tests: `E2E_MODE=true` enables password sign-in, `/dev/kit` and
+`POST /api/e2e/recurring-expenses`, which runs the 06:00 recurring-expense sweep for the
+caller's household now (→ `src/lib/server/e2e-mode.ts`, DECISIONS #139, #177). It is refused outright on any `ORIGIN` that
 is not localhost, so it cannot be left on a deploy by accident. `scripts/e2e-server.ts` sets it
 for the production build the tests drive; the `verify` entry in `.claude/launch.json` (checked
 in) sets it for a **dev server** on port 5180 with its own, initially empty database at

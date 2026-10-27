@@ -2,6 +2,9 @@
 	"Date · Today" [9b] [9d]: a row whose chip names the day, over the device's
 	own date picker. Never later than today — an expense is something that
 	already happened (→ SPEC §11.3).
+
+	Editing a series turns it round [9h-stop]: "Next one", today or later
+	(→ SPEC §11.9), and the chip says how far off it is ("Tomorrow · Dec 1").
 -->
 <script lang="ts">
 	import Calendar from '@lucide/svelte/icons/calendar';
@@ -12,26 +15,37 @@
 		value: CalendarDate;
 		today: CalendarDate;
 		name?: string;
+		/** A date to come rather than one that has been: the series' next occurrence. */
+		upcoming?: boolean;
+		/** The earliest pick when `upcoming` — today, or a due date the sweep hasn't reached yet. */
+		min?: CalendarDate;
 	};
 
-	let { value = $bindable(), today, name = 'date' }: Props = $props();
+	let { value = $bindable(), today, name = 'date', upcoming = false, min }: Props = $props();
 
 	const m = messages();
 	const id = $props.id();
 
-	const chip = $derived(value === today ? m.expenses.form.today : m.date.shortAuto(value, today));
+	const chip = $derived(
+		upcoming
+			? m.date.dateLabel(value, today)
+			: value === today
+				? m.expenses.form.today
+				: m.date.shortAuto(value, today)
+	);
 </script>
 
 <label class="row" for={id}>
 	<Calendar size={17} strokeWidth={1.8} aria-hidden="true" />
-	<span class="label">{m.expenses.form.date}</span>
+	<span class="label">{upcoming ? m.expenses.form.nextOne : m.expenses.form.date}</span>
 	<span class="chip">{chip}</span>
 	<input
 		{id}
 		type="date"
 		{name}
 		bind:value
-		max={today}
+		min={upcoming ? (min ?? today) : undefined}
+		max={upcoming ? undefined : today}
 		required
 		onclick={(event) => event.currentTarget.showPicker?.()}
 	/>
