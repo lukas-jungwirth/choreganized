@@ -66,6 +66,8 @@ const child = spawn(process.execPath, ['build/index.js'], {
 		APP_VERSION: 'e2e',
 		APP_COMMIT: '',
 		E2E_MODE: 'true',
+		// Sign-in codes land here, not in a mailbox (→ tests/e2e/email-sign-in.spec.ts).
+		MAIL_OUTBOX: `${dataDir}/outbox.jsonl`,
 		...fakeAiEnv(fakeAi.url)
 	}
 });

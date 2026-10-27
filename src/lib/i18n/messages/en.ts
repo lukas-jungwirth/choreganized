@@ -1895,8 +1895,38 @@ export const en = {
 		openingGoogle: 'Opening Google…',
 		failed: 'Sign-in didn’t complete. Please try again.',
 		footnote: 'New here? Signing in with Google creates your account.',
+		/** The footnote when email codes are on too (plan 31). */
+		footnoteEmail: 'New here? Signing in creates your account.',
 		/** `/` while the redirect is in flight — a no-JS fallback nobody reads. */
-		redirecting: 'Taking you to Choreganized…'
+		redirecting: 'Taking you to Choreganized…',
+
+		/** Sign in with an emailed code [5a] (plan 31). */
+		email: 'Email',
+		emailPlaceholder: 'you@example.com',
+		sendCode: 'Email me a code',
+		sendingCode: 'Sending…',
+		codeSent: (email: string, minutes: number) =>
+			`We sent a 6-digit code to ${email}. It works for ${minutes} minutes.`,
+		code: 'Code',
+		verifyCode: 'Sign in',
+		verifyingCode: 'Signing in…',
+		resendCode: 'Send a new code',
+		changeEmail: 'Use a different email',
+		/** Between the email form and the Google button, as in the design. */
+		or: 'or',
+		invalidEmail: 'Enter a valid email address.',
+		wrongCode: 'That code isn’t right. Check the email and try again.',
+		codeExpired: 'That code has expired. Send yourself a new one.',
+		tooManyAttempts: 'Too many tries with that code. Send yourself a new one.',
+		tooManyRequests: 'Too many tries. Wait a minute, then try again.',
+		sendFailed: 'We couldn’t send the email. Please try again.',
+
+		/** The sign-in mail itself — plain text (→ `lib/server/mail.ts`). */
+		mail: {
+			subject: (code: string) => `${code} is your Choreganized code`,
+			body: (code: string, minutes: number) =>
+				`Your sign-in code for Choreganized:\n\n${code}\n\nIt works for ${minutes} minutes. If you didn’t ask for it, you can ignore this email — nobody can sign in without the code.`
+		}
 	},
 
 	onboarding: {
@@ -1907,7 +1937,8 @@ export const en = {
 		/** Create or join [5b]. */
 		start: {
 			title: 'Get started',
-			welcome: (name: string) => `Welcome, ${name}`,
+			/** `name` is empty for an email-code account, which has none yet (plan 31). */
+			welcome: (name: string) => (name ? `Welcome, ${name}` : 'Welcome'),
 			question: 'How would you like to start?',
 			createTitle: 'Create a household',
 			createCopy: 'Start fresh and invite the people you live with.',

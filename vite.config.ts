@@ -19,7 +19,11 @@ const TEST_ENV = {
 	GITHUB_FEEDBACK_TOKEN: '',
 	PUBLIC_VAPID_PUBLIC_KEY: '',
 	VAPID_PRIVATE_KEY: '',
-	E2E_MODE: ''
+	E2E_MODE: '',
+	// Never a real mail from a test: `mail.ts` is mocked where it matters, and
+	// the rest must not find an SMTP server in somebody's `.env`.
+	SMTP_HOST: '',
+	MAIL_OUTBOX: ''
 };
 
 export default defineConfig(({ mode }) => {

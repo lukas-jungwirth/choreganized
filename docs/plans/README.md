@@ -42,6 +42,7 @@ plus your session date). Note deviations in the plan file and in DECISIONS.md.
 | 28  | [Import: AI repairs bad cards, text without AI, smaller photos](28-import-repair-text-photos.md) | todo              | 22                       |
 | 29  | [Expenses: log, split, settle up](29-expenses.md)                                                | done (2026-10-26) | 09, 10                   |
 | 30  | [Expenses: recurring series and notifications](30-expenses-recurring-push.md)                    | done (2026-10-27) | 29, 05, 06               |
+| 31  | [Sign in with an email code](31-email-sign-in.md)                                                | done (2026-10-27) | 00                       |
 
 Work done after the twelve plans, tracked here so the queue stays the whole story:
 

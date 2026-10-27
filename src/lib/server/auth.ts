@@ -1,5 +1,6 @@
 /**
- * Better Auth instance — Google OAuth only in v1 (→ docs/DECISIONS.md #1).
+ * Better Auth instance — Google OAuth, and a code sent by email (plan 31).
+ * Passwords stay off outside E2E mode (→ docs/DECISIONS.md #1, plan 31's entry).
  *
  * The four auth tables live in `db/schema.ts` and are handed to the drizzle
  * adapter explicitly; the adapter maps Better Auth's field names onto the
@@ -8,13 +9,16 @@
  */
 import { betterAuth } from 'better-auth';
 import { drizzleAdapter } from 'better-auth/adapters/drizzle';
+import { emailOTP } from 'better-auth/plugins';
 import { sveltekitCookies } from 'better-auth/svelte-kit';
 import { building } from '$app/environment';
 import { getRequestEvent } from '$app/server';
 import { env } from '$env/dynamic/private';
+import { DEFAULT_LOCALE, type Locale } from '$lib/i18n';
 import { db } from './db';
 import { account, session, user, verification } from './db/schema';
 import { e2eMode } from './e2e-mode';
+import { SIGN_IN_CODE_MINUTES, sendMail, signInCodeMail } from './mail';
 
 /**
  * `vite build` imports server modules just to read their route options, so a
@@ -29,6 +33,16 @@ function requireEnv(name: string): string {
 	if (value) return value;
 	if (building) return `build-time-placeholder-${name}`;
 	throw new Error(`Missing required environment variable ${name} — see .env.example.`);
+}
+
+/** The language of the login page that asked for the code, so the mail matches it. */
+function requestLocale(): Locale {
+	try {
+		return getRequestEvent().locals.locale ?? DEFAULT_LOCALE;
+	} catch {
+		// `auth.api.*` called outside a request (the integration tests).
+		return DEFAULT_LOCALE;
+	}
 }
 
 export const auth = betterAuth({
@@ -60,7 +74,34 @@ export const auth = betterAuth({
 			clientSecret: requireEnv('GOOGLE_CLIENT_SECRET')
 		}
 	},
-	// Must stay last: writes cookies from server-side `auth.api.*` calls (the
-	// session refresh in hooks.server.ts) onto the SvelteKit response.
-	plugins: [sveltekitCookies(getRequestEvent)]
+	plugins: [
+		/**
+		 * Sign in with a six-digit code sent by email (plan 31, SPEC §1.1). A
+		 * code rather than a magic link: an installed iOS PWA keeps its own
+		 * cookies, so a link tapped in Mail would sign Safari in and leave the
+		 * app signed out, and mail scanners that open links would burn it. The
+		 * codes live hashed in `verification`; three wrong tries kill one, and
+		 * the plugin's own rate limit allows three sends and three sign-ins per
+		 * minute per IP. A first code for a new address creates the account,
+		 * exactly as a first Google sign-in does.
+		 */
+		emailOTP({
+			otpLength: 6,
+			expiresIn: SIGN_IN_CODE_MINUTES * 60,
+			allowedAttempts: 3,
+			storeOTP: 'hashed',
+			async sendVerificationOTP({ email, otp, type }) {
+				// Only sign-in exists: no passwords to reset, and no address
+				// changes. The plugin's other endpoints mail nothing.
+				if (type !== 'sign-in') return;
+				// Awaited, against the plugin's timing advice: sign-up is open, so
+				// every address gets a code and the timing reveals nothing — and a
+				// mail that couldn't be sent must say so on the login page.
+				await sendMail(signInCodeMail(email, otp, requestLocale()));
+			}
+		}),
+		// Must stay last: writes cookies from server-side `auth.api.*` calls (the
+		// session refresh in hooks.server.ts) onto the SvelteKit response.
+		sveltekitCookies(getRequestEvent)
+	]
 });
