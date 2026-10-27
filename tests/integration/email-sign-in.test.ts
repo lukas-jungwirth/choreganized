@@ -14,6 +14,8 @@ const sent = vi.hoisted(() => [] as MailMessage[]);
 vi.mock('$lib/server/mail', async (importOriginal) => ({
 	...(await importOriginal<typeof import('$lib/server/mail')>()),
 	sendMail: async (message: MailMessage) => {
+		// The SMTP server refusing us, e.g. a wrong app password (535).
+		if (message.to.startsWith('refused-')) throw new Error('535 authentication failed');
 		sent.push(message);
 	}
 }));
@@ -123,5 +125,32 @@ describe('email code sign-in', () => {
 		await signInWith(email, code);
 
 		assert.ok(await errorCodeOf(signInWith(email, code)));
+	});
+
+	it('answers 503 MAIL_SEND_FAILED when the mail could not be sent, instead of a silent 200', async () => {
+		// Better Auth logs a failing send and answers success; the after-hook in
+		// auth.ts is what makes the login page say it failed (→ DECISIONS #178).
+		const email = `refused-${freshEmail()}`;
+		const error = await auth.api
+			.sendVerificationOTP({ body: { email, type: 'sign-in' }, headers: headers() })
+			.then(
+				() => assert.fail('the send succeeded although the mail was refused'),
+				(e: { statusCode?: number; body?: { code?: string } }) => e
+			);
+
+		assert.equal(error.statusCode, 503);
+		assert.equal(error.body?.code, 'MAIL_SEND_FAILED');
+	});
+
+	it('does not let one failed send mark the next request as failed', async () => {
+		await auth.api
+			.sendVerificationOTP({
+				body: { email: `refused-${freshEmail()}`, type: 'sign-in' },
+				headers: headers()
+			})
+			.catch(() => undefined);
+
+		const email = freshEmail();
+		assert.match(await requestCode(email), /^\d{6}$/);
 	});
 });

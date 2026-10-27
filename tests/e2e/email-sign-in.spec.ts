@@ -67,3 +67,17 @@ test('a bad address never leaves the page', async ({ page }) => {
 	await page.getByRole('button', { name: 'Email me a code' }).click();
 	await expect(page.getByRole('alert')).toHaveText('Enter a valid email address.');
 });
+
+test('a mail that could not be sent says so, and stays on the email step', async ({ page }) => {
+	// The E2E outbox refuses this domain the way a wrong SMTP password does
+	// (→ lib/server/mail.ts). Before the fix the page said "We sent a code".
+	await page.goto('/login');
+	await page.getByLabel('Email').fill('someone@mail-fails.test');
+	await page.getByRole('button', { name: 'Email me a code' }).click();
+
+	await expect(page.getByRole('alert')).toHaveText(
+		/The email couldn’t be sent, so no code is on its way/
+	);
+	await expect(page.getByText('We sent a 6-digit code')).toHaveCount(0);
+	await expect(page.getByLabel('Email')).toHaveValue('someone@mail-fails.test');
+});

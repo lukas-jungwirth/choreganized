@@ -2601,6 +2601,14 @@ units | null, name}`, written back as editor lines in the reader's unit spelling
      - **The code mail is awaited**, against the plugin's timing advice: sign-up is open, so
        every address gets a code and the timing says nothing. A mail that failed must say so on
        the login page, not vanish.
+     - **A failed send answers 503 `MAIL_SEND_FAILED`, through an after-hook** (corrected
+       2026-10-27, found on the test environment's first send). Awaiting was not enough: Better
+       Auth runs the callback through `runInBackgroundOrAwait`, which logs a thrown error and
+       answers 200, so the page said "We sent a code" for a mail mailbox.org had refused (535).
+       The callback now catches the error, logs it, and marks the request's context (a
+       per-request object the after-hook sees too) in a `WeakSet`. The hook turns that into the
+       503, and the page says "The email couldn't be sent, so no code is on its way" and stays on
+       the email step.
      - **The rate limit keys on `X-Forwarded-For`, and only when it holds one address.**
        Coolify's Traefik replaces the client's header, so it does. If a proxy chain in front
        (Cloudflare, say) ever adds a second address, Better Auth logs "Rate limiting could not

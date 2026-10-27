@@ -9,6 +9,7 @@
  */
 import { betterAuth } from 'better-auth';
 import { drizzleAdapter } from 'better-auth/adapters/drizzle';
+import { APIError, createAuthMiddleware } from 'better-auth/api';
 import { emailOTP } from 'better-auth/plugins';
 import { sveltekitCookies } from 'better-auth/svelte-kit';
 import { building } from '$app/environment';
@@ -45,6 +46,18 @@ function requestLocale(): Locale {
 	}
 }
 
+/**
+ * Requests whose code mail could not be sent, keyed by Better Auth's
+ * per-request context: the send callback and the after-hook below see the same
+ * object. Better Auth runs the callback through `runInBackgroundOrAwait`, which
+ * logs a thrown error and answers 200 anyway, so without this the login page
+ * said "We sent a code" for a mail that never left (→ DECISIONS #178).
+ */
+const failedSends = new WeakSet<object>();
+
+/** The code the login page maps to "couldn't send" (→ `routes/login`, which spells it out). */
+const MAIL_SEND_FAILED = 'MAIL_SEND_FAILED';
+
 export const auth = betterAuth({
 	appName: 'Choreganized',
 	secret: requireEnv('BETTER_AUTH_SECRET'),
@@ -74,6 +87,16 @@ export const auth = betterAuth({
 			clientSecret: requireEnv('GOOGLE_CLIENT_SECRET')
 		}
 	},
+	hooks: {
+		after: createAuthMiddleware(async (ctx) => {
+			if (ctx.path === '/email-otp/send-verification-otp' && failedSends.has(ctx.context)) {
+				throw new APIError('SERVICE_UNAVAILABLE', {
+					code: MAIL_SEND_FAILED,
+					message: 'The sign-in code could not be sent.'
+				});
+			}
+		})
+	},
 	plugins: [
 		/**
 		 * Sign in with a six-digit code sent by email (plan 31, SPEC §1.1). A
@@ -90,14 +113,21 @@ export const auth = betterAuth({
 			expiresIn: SIGN_IN_CODE_MINUTES * 60,
 			allowedAttempts: 3,
 			storeOTP: 'hashed',
-			async sendVerificationOTP({ email, otp, type }) {
+			async sendVerificationOTP({ email, otp, type }, ctx) {
 				// Only sign-in exists: no passwords to reset, and no address
 				// changes. The plugin's other endpoints mail nothing.
 				if (type !== 'sign-in') return;
 				// Awaited, against the plugin's timing advice: sign-up is open, so
 				// every address gets a code and the timing reveals nothing — and a
 				// mail that couldn't be sent must say so on the login page.
-				await sendMail(signInCodeMail(email, otp, requestLocale()));
+				try {
+					await sendMail(signInCodeMail(email, otp, requestLocale()));
+				} catch (error) {
+					// The plugin would swallow this; the hook below turns it into a 503.
+					console.error('[mail] the sign-in code could not be sent:', error);
+					if (!ctx) throw error;
+					failedSends.add(ctx.context);
+				}
 			}
 		}),
 		// Must stay last: writes cookies from server-side `auth.api.*` calls (the

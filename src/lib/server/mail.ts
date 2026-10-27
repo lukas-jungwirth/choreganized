@@ -10,7 +10,9 @@
  *   outbox   `MAIL_OUTBOX` names a file and this is E2E mode or `npm run dev`:
  *            one JSON line per message, which is how Playwright reads the code.
  *            Checked first so a test run never sends a real mail, and refused
- *            on a deploy, where it would write sign-in codes to disk.
+ *            on a deploy, where it would write sign-in codes to disk. A mail to
+ *            an address at `mail-fails.test` throws instead, the way a refused
+ *            SMTP login does, so a test can see what the login page says then.
  *   smtp     `SMTP_HOST` + `MAIL_FROM`: any provider, through nodemailer.
  *   console  `npm run dev` with neither: the code is printed to the terminal.
  *   off      none of the above. Email sign-in is hidden (→ `routes/login`),
@@ -56,6 +58,9 @@ function currentRoute(): MailRoute {
 	return mailRoute(env, { dev, e2e: e2eMode() });
 }
 
+/** Mail to this domain fails in the outbox (dev/E2E only) — see the header. */
+export const OUTBOX_FAILING_DOMAIN = 'mail-fails.test';
+
 /** Whether this server can send mail at all — the login page asks. */
 export function mailEnabled(): boolean {
 	return currentRoute().kind !== 'off';
@@ -88,6 +93,9 @@ export async function sendMail(message: MailMessage): Promise<void> {
 	const route = currentRoute();
 	switch (route.kind) {
 		case 'outbox':
+			if (message.to.endsWith(`@${OUTBOX_FAILING_DOMAIN}`)) {
+				throw new Error(`outbox: ${OUTBOX_FAILING_DOMAIN} refuses mail, on purpose`);
+			}
 			mkdirSync(dirname(route.path), { recursive: true });
 			appendFileSync(route.path, JSON.stringify({ ...message, at: Date.now() }) + '\n');
 			return;
