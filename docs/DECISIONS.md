@@ -2768,3 +2768,11 @@ units | null, name}`, written back as editor lines in the reader's unit spelling
      previous preset looking selected), and opens its fields in place in All filters instead of
      closing it for the Time sheet — the other two filters stay in view, and each date applies
      as it is set, like every other pick there.
+
+193. **The category filter shows each category's list icon; Payments gets the arrows**
+     (`/expenses/history`, `CategoryIcon`). As a plain word among the categories, "Payments"
+     read as a ninth category nobody had used. Giving only it an icon would single it out, so
+     every row and chip wears the glyph its entries have in the list: the category's well in the
+     Category sheet (32, beside the Paid by sheet's 32 avatars) and the bare glyph on All
+     filters' chips, like the add sheet's category chips [9b]. Payments gets the sage arrows
+     disc, and "All categories" a neutral grid, matching "Any payer"'s people icon.
