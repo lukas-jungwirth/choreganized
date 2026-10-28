@@ -20,13 +20,22 @@ household's shared tally, came after v1 (§11, → plans 29–30, [DECISIONS #16
 
 - Logo + wordmark + tagline, then sign-in.
 - **Email code, then Google** (Better Auth, plan 31 → [DECISIONS #178](DECISIONS.md)). The
-  design's **Email** field, then **Email me a code**. The page then says "We sent a 6-digit code
-  to {email}. It works for 5 minutes." and asks for the **Code**. The sixth digit signs in
-  (there is also a **Sign in** button). Under it are **Use a different email** and **Send a new
-  code**. Then the design's "or" rule and **Continue with Google**. A first code for a new
+  design's **Email** field, then **Get a sign-in code** (de "Anmeldecode anfordern"). The page
+  then says "We sent a 6-digit code to {email}. It works for 10 minutes." and asks for the
+  **Code** in six boxes, one digit each (`ui/CodeInput`). The sixth digit signs in (there is
+  also a **Sign in** button). Under it: "Didn't get the code? **Send again**" (the line above
+  then says a new code is on its way and the old one no longer works) and **Use a different
+  email**. Then the design's "or" rule and **Continue with Google**. A first code for a new
   address creates the account. Errors go in the alert box: not a valid address, wrong code,
-  code expired, too many tries with this code, too many requests (wait a minute), mail couldn't
-  be sent. Footnote: "New here? Signing in creates your account."
+  code expired, too many tries with this code, too many requests (wait a minute), and mail couldn't
+  be sent ("The email couldn't be sent, so no code is on its way. Try again in a moment, or
+  continue with Google." — the page stays on the email step). Footnote: "New here? Signing in creates your account."
+- **How often a code can be sent** (→ [DECISIONS #183](DECISIONS.md)): one per address per
+  minute, five per address per hour, on top of three requests per minute per IP. After each
+  code, **Send again** counts down ("Send again in 0:42") and comes back after a minute. Asking
+  again too soon says "Wait {n} seconds before asking for another code."; the sixth in an hour
+  says "That's enough codes for this address for now. Try again in {n} minutes, or continue with
+  Google." The answer is the same whether or not the address has an account.
 - **A deploy with no mail settings shows Google alone**, as v1 did, with the footnote "New here?
   Signing in with Google creates your account." (→ [DECISIONS #179](DECISIONS.md)).
 - No password field and no Apple button (→ [DECISIONS.md #1](DECISIONS.md)). Password sign-in
@@ -46,7 +55,7 @@ household's shared tally, came after v1 (§11, → plans 29–30, [DECISIONS #16
 - Under Continue: "Signed in as {email}" and **Use another account**, which signs out to the
   login screen. Members never see this step, so someone who already lives in a household and
   lands here is signed in with another account (usually another email) — the way back is
-  signing out, not joining (→ [DECISIONS #181](DECISIONS.md)).
+  signing out, not joining (→ [DECISIONS #184](DECISIONS.md)).
 
 ### 1.3 Create → set up your home [5c] (step 1 of 2)
 

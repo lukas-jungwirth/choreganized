@@ -1492,14 +1492,23 @@ export const de: Messages = {
 
 		email: 'E-Mail',
 		emailPlaceholder: 'du@beispiel.at',
-		sendCode: 'Code per E-Mail schicken',
+		sendCode: 'Anmeldecode anfordern',
 		sendingCode: 'Wird gesendet…',
 		codeSent: (email: string, minutes: number) =>
 			`Wir haben einen 6-stelligen Code an ${email} geschickt. Er gilt ${minutes} Minuten.`,
 		code: 'Code',
 		verifyCode: 'Anmelden',
 		verifyingCode: 'Anmeldung läuft…',
-		resendCode: 'Neuen Code schicken',
+		noCode: 'Keinen Code bekommen?',
+		resendCode: 'Nochmal schicken',
+		resendIn: (seconds: number) =>
+			`Nochmal schicken in ${Math.floor(seconds / 60)}:${String(seconds % 60).padStart(2, '0')}`,
+		codeCooldown: (seconds: number) =>
+			`Warte ${seconds} ${seconds === 1 ? 'Sekunde' : 'Sekunden'}, bevor du einen neuen Code anforderst.`,
+		codeHourlyLimit: (minutes: number) =>
+			`Für diese Adresse wurden gerade genug Codes verschickt. Versuch es in ${minutes} ${minutes === 1 ? 'Minute' : 'Minuten'} nochmal oder melde dich mit Google an.`,
+		codeResent: (email: string, minutes: number) =>
+			`Wir haben einen neuen Code an ${email} geschickt. Er gilt ${minutes} Minuten, der alte nicht mehr.`,
 		changeEmail: 'Andere E-Mail verwenden',
 		or: 'oder',
 		invalidEmail: 'Gib eine gültige E-Mail-Adresse ein.',
@@ -1507,7 +1516,8 @@ export const de: Messages = {
 		codeExpired: 'Der Code ist abgelaufen. Schick dir einen neuen.',
 		tooManyAttempts: 'Zu viele Versuche mit diesem Code. Schick dir einen neuen.',
 		tooManyRequests: 'Zu viele Versuche. Warte eine Minute und versuch es dann nochmal.',
-		sendFailed: 'Die E-Mail konnte nicht gesendet werden. Versuch es nochmal.',
+		sendFailed:
+			'Die E-Mail konnte nicht gesendet werden, es ist also kein Code unterwegs. Versuch es gleich nochmal oder melde dich mit Google an.',
 
 		mail: {
 			subject: (code: string) => `${code} ist dein Choreganized-Code`,

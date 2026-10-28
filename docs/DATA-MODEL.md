@@ -345,7 +345,7 @@ verified field-by-field against 1.6.23's generated reference in plan 00 — all 
 `timestamp_ms`, `verification.created_at/updated_at` are NOT NULL and `identifier` is indexed
 (migration 0001). `verification` also holds the OAuth state during the Google round-trip, so
 it's live from the first sign-in. Since plan 31 it also holds the email sign-in codes
-(identifier `sign-in-otp-<email>`, value the **hashed** code plus its attempt count, 5-minute
+(identifier `sign-in-otp-<email>`, value the **hashed** code plus its attempt count, 10-minute
 expiry → DECISIONS #178). No table of its own. After a Better Auth upgrade, re-run the diff:
 `npx @better-auth/cli generate` cannot read `auth.ts` (SvelteKit's `$app`/`$env` modules don't
 resolve outside Vite) — point it at a throwaway config with the same options minus those

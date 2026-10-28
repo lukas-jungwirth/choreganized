@@ -2583,7 +2583,7 @@ units | null, name}`, written back as editor lines in the reader's unit spelling
      `lib/server/auth.ts`, SPEC §1.1). Some members won't use Google, so the login page now takes
      an email address and mails a code to it. Better Auth's `emailOTP` plugin does the work. The
      code lives hashed in the existing `verification` table, so there are no new tables and no
-     migration. It works for 5 minutes, three wrong tries kill it, and the plugin allows three
+     migration. It works for 10 minutes (5 until #182), three wrong tries kill it, and the plugin allows three
      sends and three sign-ins per minute per IP. A first code for a new address creates the
      account, as a first Google sign-in does. A code for a Google user's address signs into that
      same account. Why a code:
@@ -2601,6 +2601,14 @@ units | null, name}`, written back as editor lines in the reader's unit spelling
      - **The code mail is awaited**, against the plugin's timing advice: sign-up is open, so
        every address gets a code and the timing says nothing. A mail that failed must say so on
        the login page, not vanish.
+     - **A failed send answers 503 `MAIL_SEND_FAILED`, through an after-hook** (corrected
+       2026-10-27, found on the test environment's first send). Awaiting was not enough: Better
+       Auth runs the callback through `runInBackgroundOrAwait`, which logs a thrown error and
+       answers 200, so the page said "We sent a code" for a mail mailbox.org had refused (535).
+       The callback now catches the error, logs it, and marks the request's context (a
+       per-request object the after-hook sees too) in a `WeakSet`. The hook turns that into the
+       503, and the page says "The email couldn't be sent, so no code is on its way" and stays on
+       the email step.
      - **The rate limit keys on `X-Forwarded-For`, and only when it holds one address.**
        Coolify's Traefik replaces the client's header, so it does. If a proxy chain in front
        (Cloudflare, say) ever adds a second address, Better Auth logs "Rate limiting could not
@@ -2629,7 +2637,42 @@ units | null, name}`, written back as editor lines in the reader's unit spelling
      up, and an `equal` one quietly raising everyone else's share is a change nobody agreed to.
      The household restarts a series with the right people in one save. Rejoining doesn't restart
      them.
-181. **Full-screen pages fill the viewport with `min-height: 100%`, not `100dvh`**
+181. **The sign-in code is six boxes over one input, and the button asks for a "sign-in code"**
+     (`ui/CodeInput`, `routes/login`, asked for by Lukas 2026-10-27). Boxes make clear how many
+     digits are coming and where the next one goes. One real input under them, not six inputs:
+     six fields break iOS's "from Mail" code autofill (it fills only the first) and pasting the
+     whole code, and a screen reader would announce six unlabelled fields. The input has no
+     `maxlength`, because that would cut a pasted "123 456" to "123 45" before the component
+     strips the space. "Email me a code" became **"Get a sign-in code"** / **"Anmeldecode
+     anfordern"**. The old label didn't say what the code was for. "Anmelde-" matches the app's
+     "Anmelden" over "Login-". The resend link reads "Didn't get the code? Send again", as in the
+     reference Lukas sent, and a resend says the old code no longer works.
+182. **A sign-in code works for 10 minutes, not 5** (`SIGN_IN_CODE_MINUTES`, `lib/server/mail.ts`,
+     asked for by Lukas 2026-10-27). Five was Better Auth's default; ten is what most apps give,
+     and it leaves room for a mail that arrives late or a phone that was in a pocket. Guessing
+     gets no easier: three wrong tries kill a code, so a code allows three guesses whether it
+     lives five minutes or ten, and asking for a new one replaces it.
+183. **One sign-in code per address per minute, five per hour, and "Send again" counts down**
+     (`lib/server/send-limit.ts`, the before-hook in `auth.ts`, `routes/login`, asked for by Lukas
+     2026-10-27). The plugin's limit counts per IP, so someone with many IPs could fill one inbox
+     with codes. Each one goes out through the household's own mail account (mailbox.org), which
+     may throttle or block an account that suddenly sends hundreds. The limit counts per
+     recipient, so it holds whoever asks. Smaller calls:
+     - **In memory, not a table.** One process, a one-hour window. A restart forgets it, which at
+       worst allows one extra hour's worth.
+     - **Refused before the plugin runs**, as 429 `CODE_COOLDOWN` or `CODE_HOURLY_LIMIT` with
+       `retryAfter` seconds. A refused request creates no code and replaces none, so it can't
+       spend the code someone is about to type. The answer doesn't depend on whether the address
+       has an account.
+     - **A mail that never left doesn't count** (the after-hook forgets it). Otherwise a wrong
+       SMTP password would also lock the address for a minute.
+     - **The countdown starts from the server's own number** (`codeCooldownSeconds` in the page
+       data, `retryAfter` on a refusal), so the page and the server can't disagree. E2E mode may
+       shorten it (`SIGN_IN_CODE_COOLDOWN_SECONDS`); a deploy can't.
+     - **No Turnstile yet.** Cloudflare's captcha would stop bots outright, and Better Auth's
+       `captcha` plugin supports it. But it puts a third-party script on the login page and adds
+       friction for a household of a few people. Add it if the logs ever show real abuse.
+184. **Full-screen pages fill the viewport with `min-height: 100%`, not `100dvh`**
      (`shell/Screen.svelte`, `html, body { height: 100% }` in `app.css`). In the installed PWA on
      a Pixel 9a, `100dvh` counted the status bar the page doesn't get, so the onboarding chooser
      ran a status bar too tall and Continue sat half below the screen. A percentage of the real

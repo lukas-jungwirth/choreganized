@@ -1912,14 +1912,25 @@ export const en = {
 		/** Sign in with an emailed code [5a] (plan 31). */
 		email: 'Email',
 		emailPlaceholder: 'you@example.com',
-		sendCode: 'Email me a code',
+		sendCode: 'Get a sign-in code',
 		sendingCode: 'Sending…',
 		codeSent: (email: string, minutes: number) =>
 			`We sent a 6-digit code to ${email}. It works for ${minutes} minutes.`,
 		code: 'Code',
 		verifyCode: 'Sign in',
 		verifyingCode: 'Signing in…',
-		resendCode: 'Send a new code',
+		/** "Didn't get the code? Send again" under the boxes. */
+		noCode: 'Didn’t get the code?',
+		resendCode: 'Send again',
+		/** The same link while it counts down: "Send again in 0:42" (→ DECISIONS #183). */
+		resendIn: (seconds: number) =>
+			`Send again in ${Math.floor(seconds / 60)}:${String(seconds % 60).padStart(2, '0')}`,
+		codeCooldown: (seconds: number) =>
+			`Wait ${seconds} ${seconds === 1 ? 'second' : 'seconds'} before asking for another code.`,
+		codeHourlyLimit: (minutes: number) =>
+			`That’s enough codes for this address for now. Try again in ${minutes} ${minutes === 1 ? 'minute' : 'minutes'}, or continue with Google.`,
+		codeResent: (email: string, minutes: number) =>
+			`We sent a new code to ${email}. It works for ${minutes} minutes; the old one no longer does.`,
 		changeEmail: 'Use a different email',
 		/** Between the email form and the Google button, as in the design. */
 		or: 'or',
@@ -1928,7 +1939,9 @@ export const en = {
 		codeExpired: 'That code has expired. Send yourself a new one.',
 		tooManyAttempts: 'Too many tries with that code. Send yourself a new one.',
 		tooManyRequests: 'Too many tries. Wait a minute, then try again.',
-		sendFailed: 'We couldn’t send the email. Please try again.',
+		/** The mail server refused or was unreachable (plan 31 → DECISIONS #178). */
+		sendFailed:
+			'The email couldn’t be sent, so no code is on its way. Try again in a moment, or continue with Google.',
 
 		/** The sign-in mail itself — plain text (→ `lib/server/mail.ts`). */
 		mail: {

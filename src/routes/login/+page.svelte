@@ -1,7 +1,7 @@
 <!--
 	Log in [5a]. The design's email field signs in with a code sent by email
-	rather than a password (plan 31, SPEC §1.1): email → "Email me a code" →
-	the code, then the "or" rule and Google. The Apple button stays out
+	rather than a password (plan 31, SPEC §1.1): email → "Get a sign-in code" →
+	the code in six boxes, then the "or" rule and Google. The Apple button stays out
 	(DECISIONS #1). A deploy with no mail settings shows Google alone, as v1 did.
 	Everything else is the design: logo tile, wordmark, tagline rule, footer
 	line pinned to the bottom.
@@ -13,6 +13,7 @@
 	import { emailOtp, signIn } from '$lib/auth-client';
 	import Screen from '$lib/components/shell/Screen.svelte';
 	import Button from '$lib/components/ui/Button.svelte';
+	import CodeInput from '$lib/components/ui/CodeInput.svelte';
 	import TextField from '$lib/components/ui/TextField.svelte';
 	import { messages } from '$lib/i18n';
 	import type { PageProps } from './$types';
@@ -28,13 +29,40 @@
 	let code = $state('');
 	let pending = $state<'google' | 'send' | 'verify' | null>(null);
 	let clientError = $state<string | null>(null);
+	/** Set once "Send again" worked, so the line above the boxes says a new one is coming. */
+	let resent = $state(false);
+
+	/**
+	 * When "Send again" comes back: a minute after each code (the server's limit
+	 * per address → DECISIONS #183), or whenever the server says to retry.
+	 */
+	let cooldownUntil = $state(0);
+	let now = $state(Date.now());
+	const cooldownLeft = $derived(Math.max(0, Math.ceil((cooldownUntil - now) / 1000)));
+
+	$effect(() => {
+		if (cooldownUntil <= Date.now()) return;
+		const tick = setInterval(() => (now = Date.now()), 1000);
+		return () => clearInterval(tick);
+	});
+
+	function holdResend(seconds: number) {
+		now = Date.now();
+		cooldownUntil = now + seconds * 1000;
+	}
 
 	const errorMessage = $derived(clientError ?? (data.signInFailed ? m.auth.failed : null));
 
+	type AuthError = { code?: string; status: number; retryAfter?: number };
+
 	/** Better Auth's error codes → the catalog; anything else is "didn't complete". */
-	function describe(error: { code?: string; status: number }, fallback: string): string {
-		if (error.status === 429) return m.auth.tooManyRequests;
+	function describe(error: AuthError, fallback: string): string {
+		const retryAfter = error.retryAfter ?? 60;
 		switch (error.code) {
+			case 'CODE_COOLDOWN':
+				return m.auth.codeCooldown(retryAfter);
+			case 'CODE_HOURLY_LIMIT':
+				return m.auth.codeHourlyLimit(Math.ceil(retryAfter / 60));
 			case 'INVALID_OTP':
 				return m.auth.wrongCode;
 			case 'OTP_EXPIRED':
@@ -43,8 +71,10 @@
 				return m.auth.tooManyAttempts;
 			case 'INVALID_EMAIL':
 				return m.auth.invalidEmail;
+			case 'MAIL_SEND_FAILED':
+				return m.auth.sendFailed;
 			default:
-				return fallback;
+				return error.status === 429 ? m.auth.tooManyRequests : fallback;
 		}
 	}
 
@@ -67,6 +97,7 @@
 
 	async function sendCode(event?: SubmitEvent) {
 		event?.preventDefault();
+		const again = step === 'code';
 		email = email.trim();
 		if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
 			clientError = m.auth.invalidEmail;
@@ -80,10 +111,15 @@
 		pending = null;
 		if (error) {
 			clientError = describe(error, m.auth.sendFailed);
+			if (error.code === 'CODE_COOLDOWN' && step === 'code') {
+				holdResend((error as AuthError).retryAfter ?? 60);
+			}
 			return;
 		}
 		code = '';
+		resent = again;
 		step = 'code';
+		holdResend(data.codeCooldownSeconds);
 	}
 
 	async function verifyCode(event?: SubmitEvent) {
@@ -107,13 +143,9 @@
 	function useDifferentEmail() {
 		step = 'email';
 		code = '';
+		resent = false;
+		cooldownUntil = 0;
 		clientError = null;
-	}
-
-	/** iOS offers the code above the keyboard; filling it in is the tap that signs in. */
-	function onCodeInput() {
-		code = code.replace(/\D/g, '').slice(0, CODE_LENGTH);
-		if (code.length === CODE_LENGTH) void verifyCode();
 	}
 </script>
 
@@ -158,16 +190,19 @@
 				</form>
 			{:else}
 				<form class="email-form" onsubmit={verifyCode} novalidate>
-					<p class="sent" role="status">{m.auth.codeSent(email, data.codeMinutes)}</p>
-					<TextField
+					<p class="sent" role="status">
+						{resent
+							? m.auth.codeResent(email, data.codeMinutes)
+							: m.auth.codeSent(email, data.codeMinutes)}
+					</p>
+					<!-- iOS offers the code above the keyboard; the sixth digit is the tap that signs in. -->
+					<CodeInput
 						label={m.auth.code}
 						name="code"
-						autocomplete="one-time-code"
-						inputmode="numeric"
-						pattern="[0-9]*"
-						maxlength={CODE_LENGTH}
+						length={CODE_LENGTH}
 						bind:value={code}
-						oninput={onCodeInput}
+						invalid={clientError === m.auth.wrongCode}
+						oncomplete={() => void verifyCode()}
 						disabled={pending !== null}
 						required
 					/>
@@ -178,24 +213,25 @@
 					>
 						{pending === 'verify' ? m.auth.verifyingCode : m.auth.verifyCode}
 					</Button>
-					<div class="links">
-						<button
-							type="button"
-							class="link"
-							onclick={useDifferentEmail}
-							disabled={pending !== null}
-						>
-							{m.auth.changeEmail}
-						</button>
+					<p class="resend">
+						{m.auth.noCode}
 						<button
 							type="button"
 							class="link"
 							onclick={() => sendCode()}
-							disabled={pending !== null}
+							disabled={pending !== null || cooldownLeft > 0}
 						>
-							{m.auth.resendCode}
+							{cooldownLeft > 0 ? m.auth.resendIn(cooldownLeft) : m.auth.resendCode}
 						</button>
-					</div>
+					</p>
+					<button
+						type="button"
+						class="link other-email"
+						onclick={useDifferentEmail}
+						disabled={pending !== null}
+					>
+						{m.auth.changeEmail}
+					</button>
 				</form>
 			{/if}
 
@@ -298,16 +334,15 @@
 		color: var(--text-3);
 	}
 
-	/* The code reads as one word: wide-set digits, like the mail shows it. */
-	.email-form :global(input[name='code']) {
-		font-variant-numeric: tabular-nums;
-		letter-spacing: 0.3em;
+	/* "Didn't get the code? Send again" — the prompt muted, the action a link. */
+	.resend {
+		margin: 0;
+		font-size: calc(13px * var(--fs));
+		color: var(--text-4);
 	}
 
-	.links {
-		display: flex;
-		justify-content: space-between;
-		gap: 12px;
+	.other-email {
+		align-self: flex-start;
 	}
 
 	.link {

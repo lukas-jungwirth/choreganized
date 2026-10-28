@@ -215,7 +215,12 @@ No test sends a real mail. `scripts/e2e-server.ts` gives the server
 `MAIL_OUTBOX=data/e2e/outbox.jsonl`. Every mail is appended there as one JSON line
 (`to`, `subject`, `text`), and `tests/e2e/email-sign-in.spec.ts` reads the code from it. The
 `verify` launch entry writes to `data/verify-outbox.jsonl`. With no outbox, `npm run dev`
-prints the mail to the terminal. The outbox works only in E2E mode or dev (→ DECISIONS #179). The
+prints the mail to the terminal. The outbox works only in E2E mode or dev (→ DECISIONS #179). A
+mail to an address at `mail-fails.test` throws instead of landing in the outbox, so a journey
+can check what the login page says when the mail server refuses (→ DECISIONS #178). The e2e
+server also sets `SIGN_IN_CODE_COOLDOWN_SECONDS=3` (honoured in E2E mode only), so a journey can
+watch "Send again" count down and come back without waiting the real minute (→ DECISIONS #183).
+The
 integration test mocks `sendMail` and drives Better Auth's own endpoints
 (`tests/integration/email-sign-in.test.ts`).
 

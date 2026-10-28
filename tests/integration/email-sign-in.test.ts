@@ -14,6 +14,8 @@ const sent = vi.hoisted(() => [] as MailMessage[]);
 vi.mock('$lib/server/mail', async (importOriginal) => ({
 	...(await importOriginal<typeof import('$lib/server/mail')>()),
 	sendMail: async (message: MailMessage) => {
+		// The SMTP server refusing us, e.g. a wrong app password (535).
+		if (message.to.startsWith('refused-')) throw new Error('535 authentication failed');
 		sent.push(message);
 	}
 }));
@@ -123,5 +125,81 @@ describe('email code sign-in', () => {
 		await signInWith(email, code);
 
 		assert.ok(await errorCodeOf(signInWith(email, code)));
+	});
+
+	it('answers 503 MAIL_SEND_FAILED when the mail could not be sent, instead of a silent 200', async () => {
+		// Better Auth logs a failing send and answers success; the after-hook in
+		// auth.ts is what makes the login page say it failed (→ DECISIONS #178).
+		const email = `refused-${freshEmail()}`;
+		const error = await auth.api
+			.sendVerificationOTP({ body: { email, type: 'sign-in' }, headers: headers() })
+			.then(
+				() => assert.fail('the send succeeded although the mail was refused'),
+				(e: { statusCode?: number; body?: { code?: string } }) => e
+			);
+
+		assert.equal(error.statusCode, 503);
+		assert.equal(error.body?.code, 'MAIL_SEND_FAILED');
+	});
+
+	it('does not let one failed send mark the next request as failed', async () => {
+		await auth.api
+			.sendVerificationOTP({
+				body: { email: `refused-${freshEmail()}`, type: 'sign-in' },
+				headers: headers()
+			})
+			.catch(() => undefined);
+
+		const email = freshEmail();
+		assert.match(await requestCode(email), /^\d{6}$/);
+	});
+
+	it('keeps a code for ten minutes', async () => {
+		const email = freshEmail();
+		const before = Date.now();
+		await requestCode(email);
+
+		const row = db
+			.select()
+			.from(tables.verification)
+			.where(eq(tables.verification.identifier, `sign-in-otp-${email}`))
+			.get();
+		assert.ok(row);
+		const minutes = (row.expiresAt.getTime() - before) / 60_000;
+		assert.ok(minutes > 9.9 && minutes <= 10.1, `expires after ${minutes.toFixed(2)} minutes`);
+	});
+
+	it('holds a second code to the same address for a minute, whoever asks', async () => {
+		const email = freshEmail();
+		await requestCode(email);
+
+		// Another IP, same address: the per-IP limit wouldn't stop this one.
+		const error = await auth.api
+			.sendVerificationOTP({
+				body: { email: email.toUpperCase(), type: 'sign-in' },
+				headers: headers()
+			})
+			.then(
+				() => assert.fail('a second code went out within the minute'),
+				(e: { statusCode?: number; body?: { code?: string; retryAfter?: number } }) => e
+			);
+
+		assert.equal(error.statusCode, 429);
+		assert.equal(error.body?.code, 'CODE_COOLDOWN');
+		assert.ok(error.body?.retryAfter && error.body.retryAfter <= 60);
+		assert.equal(sent.filter((mail) => mail.to === email).length, 1);
+	});
+
+	it('does not count a send whose mail never left', async () => {
+		const email = `refused-${freshEmail()}`;
+		const send = () =>
+			auth.api.sendVerificationOTP({ body: { email, type: 'sign-in' }, headers: headers() }).then(
+				() => undefined,
+				(e: { body?: { code?: string } }) => e.body?.code
+			);
+
+		assert.equal(await send(), 'MAIL_SEND_FAILED');
+		// Straight away again: still the mail's failure, not "wait a minute".
+		assert.equal(await send(), 'MAIL_SEND_FAILED');
 	});
 });
