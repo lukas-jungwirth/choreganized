@@ -22,6 +22,7 @@
 <script lang="ts">
 	import { applyAction, enhance } from '$app/forms';
 	import { invalidateAll } from '$app/navigation';
+	import Bell from '@lucide/svelte/icons/bell';
 	import Check from '@lucide/svelte/icons/check';
 	import ChevronDown from '@lucide/svelte/icons/chevron-down';
 	import Avatar from '$lib/components/ui/Avatar.svelte';
@@ -151,6 +152,7 @@
 				<Check size={14} strokeWidth={2.6} aria-hidden="true" />
 				{m.expenses.balance.reminded}
 			{:else}
+				<Bell size={14} strokeWidth={2.2} aria-hidden="true" />
 				{label}
 			{/if}
 		</button>
@@ -242,7 +244,7 @@
 				</button>
 			{/if}
 			{#if remindable}
-				{@render remind(null, m.expenses.balance.remindEveryone, 'link')}
+				{@render remind(null, m.expenses.balance.remindEveryone, 'soft wide')}
 			{/if}
 		{/if}
 
@@ -355,6 +357,10 @@
 		cursor: default;
 	}
 
+	.rows + .remind-form .wide {
+		margin-top: 6px;
+	}
+
 	.rows {
 		margin: 16px 0 0;
 		padding: 0;
@@ -396,21 +402,18 @@
 		font-weight: 600;
 	}
 
-	.more,
-	.link {
+	/* A quiet text toggle, so it never reads as part of the Remind button under it. */
+	.more {
 		display: flex;
 		align-items: center;
 		justify-content: center;
-		gap: 5px;
+		gap: 4px;
 		width: 100%;
-		padding: 12px 0 0;
-		font-size: calc(14px * var(--fs));
-		font-weight: 600;
-		color: var(--sage-deep);
-	}
-
-	.more {
+		padding: 12px 0 2px;
 		border-top: 1px solid var(--divider);
+		font-size: calc(13.5px * var(--fs));
+		font-weight: 600;
+		color: var(--text-4);
 	}
 
 	.more :global(svg) {
@@ -421,16 +424,21 @@
 		transform: rotate(180deg);
 	}
 
-	.rows + .remind-form .link {
-		border-top: 1px solid var(--divider);
+	/* Remind everyone: a real button of its own, set off from the rows above. */
+	.wide {
+		display: flex;
+		align-items: center;
+		justify-content: center;
+		gap: 6px;
+		width: 100%;
+		margin-top: 14px;
+		padding: 11px 15px;
+		border-radius: var(--r-chip);
+		font-size: calc(14px * var(--fs));
+		font-weight: 700;
 	}
 
-	.more + .remind-form .link {
-		padding-top: 10px;
-	}
-
-	.link:disabled {
-		cursor: default;
+	.wide:disabled {
 		color: var(--text-4);
 	}
 

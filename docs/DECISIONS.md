@@ -2814,3 +2814,9 @@ units | null, name}`, written back as editor lines in the reader's unit spelling
      because German puts the verb last ("Du hast € 42,10 für was? bezahlt"). Each field keeps
      its plain accessible name (Paid by, Amount, What for?). `AmountField` stays for the
      settle-up sheet [9d].
+
+197. **Remind is a button with a bell; "Show N more" a quiet grey link** (`BalanceCard`; amends
+     #195) [10a · 4]. In the frame both were centred sage text one under the other, and on a
+     phone they read as one control. Lukas: separate them. "Show N more" stays a text toggle,
+     in `--text-4`; Remind everyone is a full-width soft-sage pill with a bell, 14px below it,
+     and the single Remind wears the same bell.
