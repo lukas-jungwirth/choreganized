@@ -1538,7 +1538,11 @@ export const de: Messages = {
 			createCopy: 'Frisch anfangen und die Leute einladen, mit denen du wohnst.',
 			joinTitle: 'Haushalt beitreten',
 			joinCopy: 'Einladungslink oder Code da? Hier eintragen.',
-			continue: 'Weiter'
+			continue: 'Weiter',
+			signedInAs: (email) => `Angemeldet als ${email}`,
+			switchAccount: 'Anderes Konto verwenden',
+			switchingAccount: 'Wird abgemeldet…',
+			switchFailed: 'Abmelden hat nicht geklappt — prüf die Verbindung und versuch es nochmal.'
 		},
 
 		create: {

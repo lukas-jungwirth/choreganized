@@ -2686,3 +2686,11 @@ units | null, name}`, written back as editor lines in the reader's unit spelling
      cook timers need time to pass. **A preload, not Playwright's `page.clock`**: the server
      renders most dates, and the seed stamps them. **2036**: the browser's cookie jar keeps
      the real clock, and a session expiring "in the past" would be dropped.
+185. **Full-screen pages fill the viewport with `min-height: 100%`, not `100dvh`**
+     (`shell/Screen.svelte`, `html, body { height: 100% }` in `app.css`). In the installed PWA on
+     a Pixel 9a, `100dvh` counted the status bar the page doesn't get, so the onboarding chooser
+     ran a status bar too tall and Continue sat half below the screen. A percentage of the real
+     page height can't disagree with it. The chooser also gained **"Signed in as {email} · Use
+     another account"** under Continue (SPEC §1.2): a member never reaches it, so whoever lives
+     in a household and lands there signed in with the wrong account, and the way back is signing
+     out, not "Join".

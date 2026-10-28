@@ -41,3 +41,32 @@ test('create a household: chooser → set up → invite → home', async ({ brow
 
 	await context.close();
 });
+
+test('the chooser shows who is signed in and lets them switch account', async ({
+	browser,
+	baseURL
+}) => {
+	const api = await request.newContext({ baseURL });
+	const email = `wrong-account-${Date.now()}@e2e.test`;
+	const signUp = await api.post('/api/auth/sign-up/email', {
+		data: { name: 'Wrong Account', email, password: 'e2e-password-wrong' }
+	});
+	expect(signUp.ok()).toBe(true);
+	const context = await browser.newContext({ storageState: await api.storageState() });
+	await api.dispose();
+	const page = await context.newPage();
+
+	await page.goto('/onboarding');
+	await expect(page.getByText(`Signed in as ${email}`)).toBeVisible();
+	// Continue stays on screen at the phone width the app is built for.
+	await page.setViewportSize({ width: 390, height: 700 });
+	await expect(page.getByRole('button', { name: 'Continue' })).toBeInViewport({ ratio: 1 });
+
+	await page.getByRole('button', { name: 'Use another account' }).click();
+	await expect(page).toHaveURL(/\/login$/);
+	// Signed out for real: onboarding sends us back to login.
+	await page.goto('/onboarding');
+	await expect(page).toHaveURL(/\/login$/);
+
+	await context.close();
+});

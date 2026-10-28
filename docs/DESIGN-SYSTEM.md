@@ -163,7 +163,7 @@ background at all when there is nothing to measure.
 - **CodeInput** — a one-time code as a row of boxes, one digit each, with TextField's micro-label
   (the sign-in code [5a]). One real input laid invisibly over the boxes, so iOS code autofill,
   pasting "123 456" and screen readers all see one field; digits only; `oncomplete` fires on the
-  last digit; `invalid` outlines every box (→ DECISIONS #181).
+  last digit; `invalid` outlines every box (→ DECISIONS #184).
 - **ColorPicker** — the member palette (`$lib/member-colors`) as a radio group; `taken`
   colours render disabled. Pair it with a 52px Avatar preview [5c].
 - **RowGroup** — the white block a settings-style list sits in: `--r-card`, `--shadow-card`, a
