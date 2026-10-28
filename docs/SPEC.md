@@ -1061,9 +1061,10 @@ as they do for expenses.
   "Quarterly on the 1st"), the next date, **Edit
   series** (the add sheet [9b] with "Next one" in place of the date — today or later — and the
   repeat; no "Never") and **Stop repeating** ("The 11 already added stay as they are").
-- **New recurring expense** on [9h] — the empty state's button, then a FAB as on the tab —
-  opens the add sheet [9b] with Repeats already on **Monthly**. Saving logs the first one, as
-  from the tab, and the series appears in the list.
+- **Add expense** on [9h] — the empty state's button, then a FAB — is the tab's own: the same
+  add sheet [9b], Repeats on **Never**, so nothing repeats that wasn't set to (→ [DECISIONS
+  #194](DECISIONS.md)). Picking a repeat and saving logs the first one, and the series appears
+  in the list; saved without one, it is an ordinary expense on the tab.
 - The series starts from the expense saved with Repeats, which is its first occurrence; the next
   is one repeat (N units) after its date. A date logged late is caught up by the next sweep. Each occurrence
   is dated the day it was due, "Added by" whoever set up the series.

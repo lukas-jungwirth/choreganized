@@ -2776,3 +2776,12 @@ units | null, name}`, written back as editor lines in the reader's unit spelling
      Category sheet (32, beside the Paid by sheet's 32 avatars) and the bare glyph on All
      filters' chips, like the add sheet's category chips [9b]. Payments gets the sage arrows
      disc, and "All categories" a neutral grid, matching "Any payer"'s people icon.
+
+194. **Recurring's add is the tab's own, Repeats on "Never"** (`/expenses/recurring`; amends
+     #190). #190 opened the add sheet with Repeats preset to Monthly under "New recurring
+     expense". Lukas: a preset someone doesn't notice makes a series nobody asked for, and
+     every month adds another expense until someone finds it. A forgotten repeat is far worse
+     than a repeat picked by hand, so the screen offers the same "Add expense" as the tab, with
+     the same sheet and no preset; the empty state's copy says to pick how often it repeats.
+     The FAB and empty-state button stay where #190 put them. `ExpenseSheet` lost its
+     `repeating` prop, which had no other caller.

@@ -4,9 +4,10 @@
 	opens the series [9h-stop]; "Edit series" there swaps in the add sheet in
 	its series mode. Both are state, not routes (→ DECISIONS #17).
 
-	"New recurring expense" — the empty state's button, then the FAB, as on the
-	tab itself — opens the same add sheet with Repeats on Monthly: a series
-	starts from the expense it is first logged as (→ SPEC §11.9).
+	"Add expense" — the empty state's button, then the FAB — is the tab's own:
+	the same sheet with Repeats on "Never", so nothing repeats that wasn't asked
+	to. A series starts from the expense it is first logged as (→ SPEC §11.9,
+	DECISIONS #194).
 -->
 <script lang="ts">
 	import Plus from '@lucide/svelte/icons/plus';
@@ -62,7 +63,7 @@
 		{#snippet action()}
 			<Button onclick={() => (sheet = { kind: 'add' })}>
 				<Plus size={18} strokeWidth={2.4} aria-hidden="true" />
-				{m.expenses.recurring.add}
+				{m.expenses.add}
 			</Button>
 		{/snippet}
 	</EmptyState>
@@ -93,7 +94,7 @@
 		{/each}
 	</ul>
 
-	<FAB label={m.expenses.recurring.add} onclick={() => (sheet = { kind: 'add' })}>
+	<FAB label={m.expenses.add} onclick={() => (sheet = { kind: 'add' })}>
 		<Plus size={24} strokeWidth={2.4} />
 	</FAB>
 {/if}
@@ -101,7 +102,6 @@
 {#if sheet?.kind === 'add'}
 	<ExpenseSheet
 		item={null}
-		repeating={{ unit: 'month', interval: 1 }}
 		people={pickablePeople(data.people, data.balances)}
 		me={data.me}
 		currency={data.currency}
