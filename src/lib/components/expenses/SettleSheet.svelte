@@ -271,19 +271,21 @@
 		text-underline-offset: 5px;
 	}
 
-	/* Wider than the 32px gap it sits in, so the boxes tuck over its rim and
-	   the two read as one pair; the icon itself stays clear of them. */
+	/* White and outlined, so it stands apart from the two boxes and the sheet;
+	   it only just reaches under their edges, enough to read as one pair. */
 	.swap {
 		display: flex;
 		align-self: center;
 		align-items: center;
 		justify-content: center;
-		width: 56px;
-		height: 56px;
-		margin: -12px 0;
+		width: 50px;
+		height: 50px;
+		margin: -5px 0;
+		border: 1.5px solid var(--border);
 		border-radius: 50%;
-		background: var(--sage);
-		color: var(--on-sage);
+		background: var(--card);
+		box-shadow: var(--shadow-card);
+		color: var(--text-2);
 	}
 
 	.swap:active {

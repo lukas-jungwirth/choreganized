@@ -1061,8 +1061,8 @@ by the catalog (§9).
 A sheet (→ [DECISIONS #198](DECISIONS.md)):
 
 - **From → To**: two boxes, one above the other so a long name keeps the width, each a
-  micro-label, the avatar and the name. Between them, a round sage swap button,
-  wider than the gap, so the boxes tuck over its rim. Each name is a picker of the household's people, for a payment the card didn't
+  micro-label, the avatar and the name. Between them, a round, outlined white swap
+  button; the boxes only just reach over its rim. Each name is a picker of the household's people, for a payment the card didn't
   suggest. You appear by your own name, marked: "Lukas (you)" / "Lukas (du)", the one form that
   reads right in both slots (German would need "mir" after Von and "mich" after An).
 - **Amount**: centred, sized like the add sheet's sentence, not a hero.
