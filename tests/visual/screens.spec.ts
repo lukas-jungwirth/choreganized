@@ -106,6 +106,18 @@ const SCREENS: Screen[] = [
 	{ name: 'tasks-history-all', route: '/(app)/tasks/history/all', path: '/tasks/history/all' },
 	{ name: 'week', route: '/(app)/cooking', path: '/cooking', bottom: true },
 	{ name: 'expenses-history', route: '/(app)/expenses/history', path: '/expenses/history' },
+	// The Category sheet: checkboxes, each wearing its rows' icon in the list —
+	// the arrows on Payments included (→ DECISIONS #193).
+	{
+		name: 'expenses-history-category',
+		route: '/(app)/expenses/history',
+		path: '',
+		navigate: async (page) => {
+			await page.goto('/expenses/history?category=payments');
+			await page.getByRole('button', { name: 'Payments', exact: true }).click();
+			await page.getByRole('dialog', { name: 'Category' }).waitFor();
+		}
+	},
 	{ name: 'recipes', route: '/(app)/cooking/recipes', path: '/cooking/recipes' },
 	{
 		name: 'recipe',
