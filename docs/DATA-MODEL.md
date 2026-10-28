@@ -319,7 +319,8 @@ where personId = p`. Always derived on read, never stored; there is no reset.
 
 - **A series is a template and a date.** `expense_recurrences` holds what each occurrence copies
   (description, category, `amountMinor`, payer, `splitMode`) plus `unit` (`week` · `month` ·
-  `year`), `anchorDay` (1–31 for months and years, NULL for weeks) and `nextDate`, the
+  `year`) and `interval` (every N units, 1–99, default 1 — quarterly is 3 months; → #189),
+  `anchorDay` (1–31 for months and years, NULL for weeks) and `nextDate`, the
   household-local date the next occurrence is due. `expense_recurrence_shares` keeps only what was
   typed per person (`input`, as in `expense_shares`); the shares are split again from it, at the
   template's amount, for every occurrence, in roster order (→ #169, #175).
@@ -330,7 +331,9 @@ where personId = p`. Always derived on read, never stored; there is no reset.
   downtime is the loop; running twice logs nothing twice. `expense_recurrences_due_idx
 (household_id, next_date)` makes the every-minute "anything due?" one index probe.
 - **The anchor stops drift**: a month clamps to its last day without forgetting the 31st.
-  Editing the series keeps the anchor unless the next date or the unit changes.
+  Editing the series keeps the anchor unless the next date, the unit or the interval changes.
+  `addRepeat(date, unit, anchorDay, interval)` steps N months as one jump from the anchor, so
+  every-N-months clamps exactly as monthly does.
 - **Stopping sets `stoppedAt`**; the row stays and so do its occurrences. Leaving or removal
   stops every running series the member's ledger person pays or shares in, in the departure's
   own transaction (`services/household.ts` `departMember`, → #180).

@@ -1,10 +1,12 @@
 /**
  * Recurring [9h] [9h-stop] (→ SPEC §11.9): every running series, the soonest
  * due first, and the two things to do with one — edit the ones to come, or
- * stop. Reached from the tab's ••• menu.
+ * stop. Reached from the tab's ••• menu. "New recurring expense" logs the
+ * first one through the same `save` the tab uses, with Repeats already on.
  */
 import { requireMember } from '$lib/server/guards';
 import {
+	saveExpenseAction,
 	saveSeriesAction,
 	splitDefaultAction,
 	stopSeriesAction
@@ -41,6 +43,7 @@ export const load: PageServerLoad = (event) => {
 };
 
 export const actions: Actions = {
+	save: saveExpenseAction,
 	saveSeries: saveSeriesAction,
 	stop: stopSeriesAction,
 	splitDefault: splitDefaultAction

@@ -31,6 +31,7 @@ import {
 	type CalendarDate
 } from '$lib/utils/dates';
 import { INTL_LOCALE } from '$lib/i18n/locale';
+import type { RepeatUnit } from '$lib/utils/expenses';
 import type { HolidayKey } from '$lib/utils/holidays';
 import { formatAmount, formatIngredient } from '$lib/utils/ingredients';
 import { currencySymbol, formatMoney } from '$lib/utils/money';
@@ -1042,12 +1043,30 @@ export const de: Messages = {
 			save: 'Speichern',
 			delete: 'Ausgabe löschen',
 			repeats: 'Wiederholen',
-			repeat: {
-				never: 'Nie',
-				week: 'Wöchentlich',
-				month: 'Monatlich',
-				year: 'Jährlich'
+			never: 'Nie',
+			repeat: (unit: RepeatUnit, interval: number) => {
+				if (interval === 1) {
+					return unit === 'week' ? 'Wöchentlich' : unit === 'month' ? 'Monatlich' : 'Jährlich';
+				}
+				if (unit === 'month' && interval === 3) return 'Vierteljährlich';
+				const plural = unit === 'week' ? 'Wochen' : unit === 'month' ? 'Monate' : 'Jahre';
+				return `Alle ${interval} ${plural}`;
 			},
+			repeatCustom: 'Eigener Rhythmus…',
+			every: 'Alle',
+			unit: 'Einheit',
+			units: (unit: RepeatUnit, count: number) =>
+				unit === 'week'
+					? count === 1
+						? 'Woche'
+						: 'Wochen'
+					: unit === 'month'
+						? count === 1
+							? 'Monat'
+							: 'Monate'
+						: count === 1
+							? 'Jahr'
+							: 'Jahre',
 			editSeries: 'Serie bearbeiten',
 			nextOne: 'Nächstes Mal'
 		},
@@ -1135,11 +1154,8 @@ export const de: Messages = {
 			added: (who: string, when: string) => `Eingetragen von ${who} · ${when}`,
 			edited: (who: string, when: string) => `Bearbeitet von ${who} · ${when}`,
 			someone: 'jemandem',
-			repeats: {
-				week: 'Wiederholt sich wöchentlich',
-				month: 'Wiederholt sich monatlich',
-				year: 'Wiederholt sich jährlich'
-			},
+			repeats: (cadence: string) =>
+				`Wiederholt sich ${cadence.charAt(0).toLowerCase()}${cadence.slice(1)}`,
 			editSeries: 'Serie bearbeiten'
 		},
 
@@ -1148,12 +1164,19 @@ export const de: Messages = {
 			back: 'Zurück zu den Ausgaben',
 			intro:
 				'Jede wird an ihrem Tag um 6:00 als normale Ausgabe eingetragen. Änderungen hier gelten nur für die kommenden.',
-			schedule: (unit: string, next: string) => `${unit} · als Nächstes ${next}`,
+			schedule: (cadence: string, next: string) => `${cadence} · als Nächstes ${next}`,
 			summary: (amount: string, rule: string, pays: string) => `${amount} · ${rule} · ${pays}`,
 			rule: {
-				week: (weekday: string) => `Jeden ${weekday}`,
-				month: (day: number) => `Monatlich am ${day}.`,
-				year: (date: string) => `Jährlich am ${date}`
+				week: (weekday: string, interval: number) =>
+					interval === 1 ? `Jeden ${weekday}` : `Alle ${interval} Wochen am ${weekday}`,
+				month: (day: number, interval: number) =>
+					interval === 1
+						? `Monatlich am ${day}.`
+						: interval === 3
+							? `Vierteljährlich am ${day}.`
+							: `Alle ${interval} Monate am ${day}.`,
+				year: (date: string, interval: number) =>
+					interval === 1 ? `Jährlich am ${date}` : `Alle ${interval} Jahre am ${date}`
 			},
 			pays: (who: string | null) => (who === null ? 'du zahlst' : `${who} zahlt`),
 			nextOne: 'Nächstes Mal',
@@ -1168,7 +1191,8 @@ export const de: Messages = {
 						: `Die ${count} schon eingetragenen bleiben, wie sie sind`,
 			empty: 'Noch nichts Wiederkehrendes',
 			emptyCopy:
-				'Miete, Abos, Internet: Wähl beim Eintragen „Wiederholen“, dann trägt es sich von selbst ein.'
+				'Miete, Abos, Internet: Leg es hier an oder wähl bei einer Ausgabe „Wiederholen“, dann trägt es sich von selbst ein.',
+			add: 'Neue wiederkehrende Ausgabe'
 		},
 
 		history: {

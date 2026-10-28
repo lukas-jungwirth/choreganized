@@ -39,6 +39,35 @@ export type DefaultSplitMode = (typeof DEFAULT_SPLIT_MODES)[number];
 export const REPEAT_UNITS = ['week', 'month', 'year'] as const;
 export type RepeatUnit = (typeof REPEAT_UNITS)[number];
 
+/** How often a series comes back: every `interval` × `unit` — 3 months is quarterly. */
+export type Repeat = { unit: RepeatUnit; interval: number };
+
+/** "Every 99 months" is already absurd; beyond it, it's a typo (as for chores). */
+export const REPEAT_INTERVAL_MAX = 99;
+
+/**
+ * The Repeats row's quick choices [9b], ahead of "Custom…" — which reveals the
+ * count + unit pair the way a chore's repeat does (→ SPEC §5.2, §11.9).
+ */
+export const REPEAT_PRESETS = [
+	{ value: 'week-1', unit: 'week', interval: 1 },
+	{ value: 'month-1', unit: 'month', interval: 1 },
+	{ value: 'month-3', unit: 'month', interval: 3 },
+	{ value: 'year-1', unit: 'year', interval: 1 }
+] as const satisfies readonly (Repeat & { value: string })[];
+
+export type RepeatPreset = (typeof REPEAT_PRESETS)[number]['value'];
+
+export const CUSTOM_REPEAT = 'custom';
+
+/** Which Repeats choice a stored repeat sits on — `custom` when no preset fits. */
+export function repeatChoice(repeat: Repeat): RepeatPreset | typeof CUSTOM_REPEAT {
+	const preset = REPEAT_PRESETS.find(
+		(option) => option.unit === repeat.unit && option.interval === repeat.interval
+	);
+	return preset?.value ?? CUSTOM_REPEAT;
+}
+
 export const EXPENSE_DESCRIPTION_MAX = 80;
 
 /** One million in the household currency's major unit (→ SPEC §11.3). */
@@ -80,6 +109,18 @@ export function isSplitMode(value: unknown): value is SplitMode {
 
 export function isRepeatUnit(value: unknown): value is RepeatUnit {
 	return REPEAT_UNITS.includes(value as RepeatUnit);
+}
+
+/**
+ * A repeat from the two form fields, or null when it isn't one — "Never", a
+ * unit we don't know, an interval that isn't a whole 1–99.
+ */
+export function readRepeat(unit: unknown, interval: unknown): Repeat | null {
+	if (!isRepeatUnit(unit)) return null;
+	const count =
+		interval === null || interval === undefined || interval === '' ? 1 : Number(interval);
+	if (!Number.isInteger(count) || count < 1 || count > REPEAT_INTERVAL_MAX) return null;
+	return { unit, interval: count };
 }
 
 export function isDefaultSplitMode(value: unknown): value is DefaultSplitMode {

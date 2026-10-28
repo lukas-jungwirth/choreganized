@@ -30,7 +30,7 @@ import { todayIn } from '$lib/utils/dates';
 import {
 	isDefaultSplitMode,
 	isExpenseCategory,
-	isRepeatUnit,
+	readRepeat,
 	isSplitMode
 } from '$lib/utils/expenses';
 import { parseAmount, type SplitRow } from '$lib/utils/money';
@@ -114,8 +114,8 @@ function readTemplate(form: FormData, currency: string) {
 
 /**
  * Create or update an expense [9b]; `id` decides which. `repeat` — `week`,
- * `month` or `year` — also starts a series from it (→ SPEC §11.9); anything
- * else, the Repeats row's "Never" included, starts none.
+ * `month` or `year`, every `interval` of them — also starts a series from it
+ * (→ SPEC §11.9); anything else, the Repeats row's "Never" included, starts none.
  */
 export async function saveExpenseAction(event: RequestEvent) {
 	const form = await event.request.formData();
@@ -125,15 +125,14 @@ export async function saveExpenseAction(event: RequestEvent) {
 			...readTemplate(form, currency),
 			date: String(form.get('date') ?? '') || today
 		};
-		const repeat = form.get('repeat');
-		const unit = isRepeatUnit(repeat) ? repeat : null;
+		const repeat = readRepeat(form.get('repeat'), form.get('interval'));
 
 		const id = String(form.get('id') ?? '');
 		if (id) {
-			updateExpense(householdId, member.id, id, input, today, unit);
+			updateExpense(householdId, member.id, id, input, today, repeat);
 			return { saved: id };
 		}
-		return { saved: createExpense(householdId, member.id, input, today, unit) };
+		return { saved: createExpense(householdId, member.id, input, today, repeat) };
 	} catch (error) {
 		return failWith(event, error);
 	}
@@ -144,14 +143,14 @@ export async function saveSeriesAction(event: RequestEvent) {
 	const form = await event.request.formData();
 	try {
 		const { householdId, today, currency } = context(event);
-		const unit = form.get('unit');
-		if (!isRepeatUnit(unit)) throw new ExpenseError('split');
+		const repeat = readRepeat(form.get('unit'), form.get('interval'));
+		if (!repeat) throw new ExpenseError('split');
 
 		const id = String(form.get('id') ?? '');
 		updateSeries(
 			householdId,
 			id,
-			{ ...readTemplate(form, currency), unit, nextDate: String(form.get('nextDate') ?? '') },
+			{ ...readTemplate(form, currency), ...repeat, nextDate: String(form.get('nextDate') ?? '') },
 			today
 		);
 		return { saved: id };

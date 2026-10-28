@@ -11,10 +11,11 @@ function series(
 	start: string,
 	unit: 'week' | 'month' | 'year',
 	count: number,
-	anchorDay: number | null = null
+	anchorDay: number | null = null,
+	interval = 1
 ): string[] {
 	const dates = [start];
-	while (dates.length < count) dates.push(addRepeat(dates.at(-1)!, unit, anchorDay));
+	while (dates.length < count) dates.push(addRepeat(dates.at(-1)!, unit, anchorDay, interval));
 	return dates;
 }
 
@@ -56,5 +57,41 @@ describe('addRepeat', () => {
 	it('without an anchor, reads the day off the date', () => {
 		assert.equal(addRepeat('2026-01-15', 'month', null), '2026-02-15');
 		assert.equal(addRepeat('2026-01-31', 'month', null), '2026-02-28');
+	});
+
+	it('quarterly from the 31st clamps each quarter and keeps the anchor', () => {
+		assert.deepEqual(series('2026-01-31', 'month', 5, 31, 3), [
+			'2026-01-31',
+			'2026-04-30',
+			'2026-07-31',
+			'2026-10-31',
+			'2027-01-31'
+		]);
+	});
+
+	it('every second month from the 30th crosses February and the year', () => {
+		assert.deepEqual(series('2026-12-30', 'month', 4, 30, 2), [
+			'2026-12-30',
+			'2027-02-28',
+			'2027-04-30',
+			'2027-06-30'
+		]);
+	});
+
+	it('every 2 weeks is fourteen days, every 2 years from 29 Feb waits for a leap year', () => {
+		assert.deepEqual(series('2026-10-21', 'week', 3, null, 2), [
+			'2026-10-21',
+			'2026-11-04',
+			'2026-11-18'
+		]);
+		assert.deepEqual(series('2028-02-29', 'year', 3, 29, 2), [
+			'2028-02-29',
+			'2030-02-28',
+			'2032-02-29'
+		]);
+	});
+
+	it('every 18 months is a year and a half', () => {
+		assert.equal(addRepeat('2026-08-15', 'month', 15, 18), '2028-02-15');
 	});
 });

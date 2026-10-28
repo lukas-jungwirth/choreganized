@@ -972,7 +972,9 @@ A bottom sheet. Its fields, in this order:
 6. **Split**: one summary row, "Split equally · everyone · €21.05 each", or "Split by % ·
    Lukas 30 · Elisabeth 70". Tapping it opens [9c]. New expenses start from the
    **household default split** (§11.5).
-7. **Repeats**: Never · Weekly · Monthly · Yearly (§11.9). Editing an expense that doesn't
+7. **Repeats**: Never · Weekly · Monthly · Quarterly · Yearly · Custom… (§11.9). Custom opens
+   **Every** (a 1–99 stepper) and a **unit** (weeks · months · years) under the row, as a
+   chore's repeat does (§5.2). Editing an expense that doesn't
    repeat can start a series from it; an occurrence of a running series has no Repeats row,
    since its detail links to the series.
 
@@ -1038,10 +1040,12 @@ lowered for a partial payment. Copy under the button: "This only records it — 
 money however you usually do." Saving shows the balance card updating. Edit and delete work
 as they do for expenses.
 
-### 11.9 Recurring expenses [9h] (→ plan 30, DECISIONS #175, #177)
+### 11.9 Recurring expenses [9h] (→ plan 30, DECISIONS #175, #177, #189)
 
-- An expense can **repeat** weekly, monthly or yearly, starting at its date. A monthly one on
-  the 31st lands on the last day of shorter months.
+- An expense can **repeat** every N weeks, months or years (N 1–99), starting at its date:
+  weekly, monthly, quarterly (every 3 months) and yearly are the quick choices, anything else
+  is Custom. A monthly one on the 31st lands on the last day of shorter months; so does every
+  N months (quarterly from 31 Jan: 30 Apr, 31 Jul, 31 Oct).
 - Each time it comes due, a normal expense is created at **06:00 household-local** with
   the template's amount, payer, category and split, and marked with a small repeat icon. The
   people in it get a push (§11.11). A missed day (server down) is caught up, once per
@@ -1050,14 +1054,21 @@ as they do for expenses.
   from "Repeats monthly · Edit series" in the detail) changes future ones only. **Stop
   repeating** ends the series and keeps the past.
 - [9h] (`/expenses/recurring`) lists the running series, soonest first: description, amount,
-  "Monthly · next 1 Dec", payer avatar. It is reached from the tab's overflow menu. Tapping
-  one opens [9h-stop]: "€900.00 · Monthly on the 1st · Lukas pays", the next date, **Edit
+  "Monthly · next 1 Dec" ("Every 2 months · next 1 Dec", "Quarterly · …"), payer avatar. It is
+  reached from the tab's overflow menu (which counts the series); the tab has no bottom row
+  for it — that row is All activity's, continuing the Recent list. Tapping
+  one opens [9h-stop]: "€900.00 · Monthly on the 1st · Lukas pays" ("Every 2 weeks on Monday",
+  "Quarterly on the 1st"), the next date, **Edit
   series** (the add sheet [9b] with "Next one" in place of the date — today or later — and the
-  unit; no "Never") and **Stop repeating** ("The 11 already added stay as they are").
+  repeat; no "Never") and **Stop repeating** ("The 11 already added stay as they are").
+- **New recurring expense** on [9h] — the empty state's button, then a FAB as on the tab —
+  opens the add sheet [9b] with Repeats already on **Monthly**. Saving logs the first one, as
+  from the tab, and the series appears in the list.
 - The series starts from the expense saved with Repeats, which is its first occurrence; the next
-  is one unit after its date. A date logged late is caught up by the next sweep. Each occurrence
+  is one repeat (N units) after its date. A date logged late is caught up by the next sweep. Each occurrence
   is dated the day it was due, "Added by" whoever set up the series.
-- The repeat badge (rows) and "Repeats monthly · Edit series" (detail) show while the series
+- The repeat badge (rows) and "Repeats monthly · Edit series" ("Repeats every 2 months",
+  "Repeats quarterly") (detail) show while the series
   runs; a stopped series' expenses look like any others.
 
 ### 11.10 Settings
