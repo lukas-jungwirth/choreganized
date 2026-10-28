@@ -1028,7 +1028,7 @@ export const de: Messages = {
 			remindOff: (name: string | null) =>
 				name
 					? `${name} hat Benachrichtigungen zu Ausgaben nicht eingeschaltet.`
-					: 'Hier hat niemand Benachrichtigungen zu Ausgaben eingeschaltet.',
+					: 'Niemand in deinem Haushalt hat Benachrichtigungen zu Ausgaben eingeschaltet.',
 			remindLabel: (name: string) => `${name} erinnern`,
 			settle: 'Ausgleichen',
 			settleUp: 'Ausgleichen',
@@ -1174,11 +1174,11 @@ export const de: Messages = {
 			from: 'Von',
 			to: 'An',
 			swap: 'Tauschen',
+			me: (name: string) => `${name} (du)`,
 			owes: (from: string | null, to: string | null, amount: string) =>
 				`${from === null ? `Du schuldest ${to}` : `${from} schuldet ${to ?? 'dir'}`} ${amount} · für eine Teilzahlung einfach weniger eintragen`,
 			record: 'Zahlung eintragen',
-			delete: 'Zahlung löschen',
-			note: 'Das trägt sie nur ein — das Geld schickst du, wie ihr es immer macht.'
+			delete: 'Zahlung löschen'
 		},
 
 		detail: {

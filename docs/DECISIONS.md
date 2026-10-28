@@ -2820,3 +2820,16 @@ units | null, name}`, written back as editor lines in the reader's unit spelling
      phone they read as one control. Lukas: separate them. "Show N more" stays a text toggle,
      in `--text-4`; Remind everyone is a full-width soft-sage pill with a bell, 14px below it,
      and the single Remind wears the same bell.
+
+198. **Settle up shows two names, not two walls of chips** (`SettleSheet`; amends the [9d]
+     frame). Opened from the card, the sheet already knows the answer, but it showed every
+     person twice as chips, a small arrow, a 46px amount and a footnote. Lukas: too much happens.
+     Now From → To is two stacked rows (side by side cut long names short), each an avatar and
+     a name that is a real `<select>` for the rarer payment the card didn't suggest, in its own box,
+     with the swap tucked behind the gap between them (Lukas picked this from three variants). The reader is "Lukas (du)", not "Du": "Von Du" / "An Du" are wrong,
+     the right cases differ per slot (mir / mich), and the name plus marker fits both. The amount shrinks to the add
+     sentence's scale (`AmountField` 46 → 32px, now only used here). The date is the ordinary
+     `DateField` with a Today shortcut, as in the task sheet, instead of the add sheet's
+     "Date · Today" row. The "This only records it" note is gone: the tab's whole premise says
+     it already. Copy: "Nobody in your household has expense notifications turned on" (was
+     "Nobody here").
