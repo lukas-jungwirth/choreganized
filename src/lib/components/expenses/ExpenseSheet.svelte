@@ -10,8 +10,7 @@
 
 	The same sheet edits a recurring series [9h-stop] (→ SPEC §11.9): the
 	template's fields, "Next one" in place of the date, and the repeat — posted
-	to `?/saveSeries`, and touching none of the expenses already logged. From
-	the Recurring screen it adds one with Repeats already on (`repeating`).
+	to `?/saveSeries`, and touching none of the expenses already logged.
 	The repeat is the RepeatRow's own state; it posts its two fields itself.
 -->
 <script lang="ts">
@@ -29,8 +28,7 @@
 	import {
 		EXPENSE_CATEGORIES,
 		EXPENSE_DESCRIPTION_MAX,
-		type ExpenseCategory,
-		type Repeat
+		type ExpenseCategory
 	} from '$lib/utils/expenses';
 	import { formatAmountInput, parseAmount } from '$lib/utils/money';
 	import { untrack } from 'svelte';
@@ -53,8 +51,6 @@
 		item: ExpenseItem | null;
 		/** The series being edited instead of an expense [9h-stop]. */
 		series?: SeriesItem | null;
-		/** Adding: start with Repeats on this rather than "Never" [9h]. */
-		repeating?: Repeat | null;
 		/** Who can pay or share — members, plus anyone still owed or owing. */
 		people: ExpensePerson[];
 		me: string;
@@ -70,7 +66,6 @@
 	let {
 		item,
 		series = null,
-		repeating = null,
 		people,
 		me,
 		currency,
@@ -97,9 +92,7 @@
 	let categoryChosen = $state(source !== null);
 	let paidById = $state(untrack(() => source?.paidById ?? me));
 	let date = $state(untrack(() => series?.nextDate ?? item?.date ?? today));
-	const repeat = untrack(() =>
-		series ? { unit: series.unit, interval: series.interval } : repeating
-	);
+	const repeat = untrack(() => (series ? { unit: series.unit, interval: series.interval } : null));
 	/**
 	 * Adding, editing a series, or editing an expense that doesn't repeat yet —
 	 * which can start a series from itself. An occurrence of a running series

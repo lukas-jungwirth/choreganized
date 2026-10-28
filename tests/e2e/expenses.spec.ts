@@ -141,16 +141,17 @@ test('a monthly expense logged late catches up, then edits and stops as a series
 	expect(await rows()).toBe(2);
 });
 
-// Lukas's two asks on Recurring [9h] (→ SPEC §11.9): start a series from the
-// screen itself, and repeat it on any count of weeks, months or years.
+// Lukas's asks on Recurring [9h] (→ SPEC §11.9): start a series from the
+// screen itself — with the tab's own sheet, which repeats nothing until told
+// to (→ DECISIONS #194) — and repeat it on any count of weeks, months or years.
 test('start a series from Recurring every 2 months, then make it quarterly', async ({ page }) => {
 	const name = `Insurance ${Date.now().toString(36)}`;
 
 	await page.goto('/expenses/recurring');
-	await page.getByRole('button', { name: 'New recurring expense' }).click();
+	await page.getByRole('button', { name: 'Add expense' }).click();
 	const sheet = page.getByRole('dialog', { name: 'Add expense' });
 	const repeats = sheet.getByRole('combobox', { name: /^Repeats/ });
-	await expect(repeats).toHaveValue('month-1');
+	await expect(repeats).toHaveValue('never');
 	await sheet.getByLabel('Amount').fill('120');
 	await sheet.getByLabel('What for?').fill(name);
 	await repeats.selectOption('custom');

@@ -1543,9 +1543,7 @@ export const en = {
 						: `The ${count} already added stay as they are`,
 			empty: 'Nothing repeats yet',
 			emptyCopy:
-				'Rent, subscriptions, the internet bill: add one here, or pick “Repeats” on any expense, and it logs itself.',
-			/** The empty state's button and the FAB: the add sheet with Repeats already on. */
-			add: 'New recurring expense'
+				'Rent, subscriptions, the internet bill: add an expense and pick how often it “Repeats”, and it logs itself.'
 		},
 
 		/** [9f] */

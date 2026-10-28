@@ -1,8 +1,8 @@
 /**
  * Recurring [9h] [9h-stop] (→ SPEC §11.9): every running series, the soonest
  * due first, and the two things to do with one — edit the ones to come, or
- * stop. Reached from the tab's ••• menu. "New recurring expense" logs the
- * first one through the same `save` the tab uses, with Repeats already on.
+ * stop. Reached from the tab's ••• menu. "Add expense" logs through the same
+ * `save` the tab uses.
  */
 import { requireMember } from '$lib/server/guards';
 import {

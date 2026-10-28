@@ -1191,8 +1191,7 @@ export const de: Messages = {
 						: `Die ${count} schon eingetragenen bleiben, wie sie sind`,
 			empty: 'Noch nichts Wiederkehrendes',
 			emptyCopy:
-				'Miete, Abos, Internet: Leg es hier an oder wähl bei einer Ausgabe „Wiederholen“, dann trägt es sich von selbst ein.',
-			add: 'Neue wiederkehrende Ausgabe'
+				'Miete, Abos, Internet: Leg eine Ausgabe an und wähl bei „Wiederholen“, wie oft – dann trägt sie sich von selbst ein.'
 		},
 
 		history: {
