@@ -1112,7 +1112,8 @@ three filter chips under it that **name their current value** and start at "all"
 - **Category** — All categories · the eight categories · **Payments**, ticked **any number at
   once** (→ [DECISIONS #191](DECISIONS.md)): the list shows rows in any ticked category, and
   settle-ups when Payments is ticked. Settle-ups have no category, so "Payments" stands in for
-  one. The chip names the first ticked and counts the rest: "Groceries +2".
+  one. The chip names the first ticked and counts the rest: "Groceries +2". In the Category
+  sheet and on All filters' chips each category wears its list icon, Payments the sage arrows.
 
 Tapping Time or Paid by opens that filter's sheet; a pick applies and closes it. Category's
 sheet is checkboxes: each tick applies and the sheet stays open, with "Show 9 expenses" to

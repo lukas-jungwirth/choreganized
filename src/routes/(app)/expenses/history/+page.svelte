@@ -12,11 +12,13 @@
 <script lang="ts">
 	import Calendar from '@lucide/svelte/icons/calendar';
 	import ChevronDown from '@lucide/svelte/icons/chevron-down';
+	import LayoutGrid from '@lucide/svelte/icons/layout-grid';
 	import Check from '@lucide/svelte/icons/check';
 	import SlidersHorizontal from '@lucide/svelte/icons/sliders-horizontal';
 	import Users from '@lucide/svelte/icons/users';
 	import X from '@lucide/svelte/icons/x';
 	import { goto } from '$app/navigation';
+	import CategoryIcon from '$lib/components/expenses/CategoryIcon.svelte';
 	import ExpenseRow from '$lib/components/expenses/ExpenseRow.svelte';
 	import ReceiptIcon from '$lib/components/icons/ReceiptIcon.svelte';
 	import SubHeader from '$lib/components/shell/SubHeader.svelte';
@@ -148,6 +150,9 @@
 			? h.anyPayer
 			: h.paidByChip(current.payer === data.me ? null : (names[current.payer] ?? null))
 	);
+
+	/** CategoryIcon's key: a settle-up has no category, and gets the list's arrows. */
+	const iconFor = (key: HistoryCategory) => (key === PAYMENTS_ONLY ? null : key);
 
 	const categoryName = (key: HistoryCategory) =>
 		key === PAYMENTS_ONLY ? h.paymentsCategory : m.expenses.categories[key];
@@ -442,24 +447,29 @@
 	</div>
 </BottomSheet>
 
-<!-- Several can be ticked, so each tick applies and the sheet stays open. -->
+<!-- Several can be ticked, so each tick applies and the sheet stays open.
+     Each row wears the icon its entries have in the list. -->
 <BottomSheet bind:open={categoryOpen} title={h.category}>
 	<div class="options" role="group" aria-label={h.category}>
+		{#snippet allIcon()}
+			<span class="option-icon" aria-hidden="true"><LayoutGrid size={16} strokeWidth={2} /></span>
+		{/snippet}
 		{@render option(
 			current.categories.length === 0,
 			h.allCategories,
 			() => apply({ categories: [] }),
 			undefined,
-			undefined,
+			allIcon,
 			'checkbox'
 		)}
 		{#each HISTORY_CATEGORIES as key (key)}
+			{#snippet icon()}<CategoryIcon category={iconFor(key)} size={32} />{/snippet}
 			{@render option(
 				current.categories.includes(key),
 				categoryName(key),
 				() => toggleCategory(key),
 				undefined,
-				undefined,
+				icon,
 				'checkbox'
 			)}
 		{/each}
@@ -531,6 +541,7 @@
 				selected={current.categories.includes(key)}
 				onclick={() => toggleCategory(key)}
 			>
+				<CategoryIcon category={iconFor(key)} size={15} bare />
 				{categoryName(key)}
 			</Chip>
 		{/each}

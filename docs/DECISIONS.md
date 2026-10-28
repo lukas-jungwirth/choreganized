@@ -2769,7 +2769,15 @@ units | null, name}`, written back as editor lines in the reader's unit spelling
      closing it for the Time sheet — the other two filters stay in view, and each date applies
      as it is set, like every other pick there.
 
-193. **Recurring's add is the tab's own, Repeats on "Never"** (`/expenses/recurring`; amends
+193. **The category filter shows each category's list icon; Payments gets the arrows**
+     (`/expenses/history`, `CategoryIcon`). As a plain word among the categories, "Payments"
+     read as a ninth category nobody had used. Giving only it an icon would single it out, so
+     every row and chip wears the glyph its entries have in the list: the category's well in the
+     Category sheet (32, beside the Paid by sheet's 32 avatars) and the bare glyph on All
+     filters' chips, like the add sheet's category chips [9b]. Payments gets the sage arrows
+     disc, and "All categories" a neutral grid, matching "Any payer"'s people icon.
+
+194. **Recurring's add is the tab's own, Repeats on "Never"** (`/expenses/recurring`; amends
      #190). #190 opened the add sheet with Repeats preset to Monthly under "New recurring
      expense". Lukas: a preset someone doesn't notice makes a series nobody asked for, and
      every month adds another expense until someone finds it. A forgotten repeat is far worse
