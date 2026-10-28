@@ -55,7 +55,7 @@ household's shared tally, came after v1 (§11, → plans 29–30, [DECISIONS #16
 - Under Continue: "Signed in as {email}" and **Use another account**, which signs out to the
   login screen. Members never see this step, so someone who already lives in a household and
   lands here is signed in with another account (usually another email) — the way back is
-  signing out, not joining (→ [DECISIONS #184](DECISIONS.md)).
+  signing out, not joining (→ [DECISIONS #185](DECISIONS.md)).
 
 ### 1.3 Create → set up your home [5c] (step 1 of 2)
 
