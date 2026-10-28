@@ -2,6 +2,13 @@
  * Dev seed — demo household data so the later plans have something to render.
  *
  *   npm run db:seed -- you@example.com
+ *   npm run db:seed -- you@example.com --full-house
+ *
+ * `--full-house` fills the household to as many members as the app allows —
+ * one per colour in the member palette, since two members can't share one —
+ * with stub housemates who each have a task done, so the avatar stacks, the
+ * leaderboard and the expense split are seen at their widest. Off by default:
+ * the browser tests and screenshots are taken of the two-person household.
  *
  * The email is the Google account you signed in with: the seed binds the demo
  * household to that existing user, so **sign in once before running it**. If you
@@ -47,7 +54,9 @@ import {
 // importing rather than retyping: it is the key the unique index is built on.
 import { suggestionKey } from '../src/lib/utils/shopping.ts';
 import { addRepeat } from '../src/lib/utils/dates.ts';
+import { MEMBER_COLORS } from '../src/lib/member-colors.ts';
 import {
+	SEED_EXTRA_MEMBER_NAMES,
 	SEED_HOUSEHOLD_NAME,
 	SEED_HOUSEMATE_NAME,
 	SEED_RECIPE_NAMES,
@@ -93,10 +102,12 @@ const JUST_BOUGHT = new Date(Date.now() - 90 * 60_000);
 
 /* ── Connect ─────────────────────────────────────────────────────────────── */
 
-const email = process.argv[2];
+const args = process.argv.slice(2);
+const fullHouse = args.includes('--full-house');
+const email = args.find((arg) => !arg.startsWith('--'));
 
 if (!email) {
-	console.error('Usage: npm run db:seed -- you@example.com');
+	console.error('Usage: npm run db:seed -- you@example.com [--full-house]');
 	process.exit(1);
 }
 
@@ -236,12 +247,53 @@ const seeded = db.transaction((tx) => {
 			.run();
 	}
 
+	// --full-house: a stub member per colour nobody has taken yet, up to the
+	// palette's size. Keyed by colour, so a re-run (or a real housemate who
+	// took one of them meanwhile) never adds a sixth.
+	if (fullHouse) {
+		const taken = tx
+			.select({ color: members.color })
+			.from(members)
+			.where(eq(members.householdId, householdId))
+			.all()
+			.map(({ color }) => color);
+		const free = MEMBER_COLORS.filter((color) => !taken.includes(color.value));
+
+		free.forEach((color, index) => {
+			const userId = sid('user', color.key);
+			const displayName = SEED_EXTRA_MEMBER_NAMES[index % SEED_EXTRA_MEMBER_NAMES.length];
+
+			tx.insert(user)
+				.values({
+					id: userId,
+					name: displayName,
+					email: `${userId}@seed.choreganized.local`,
+					emailVerified: false
+				})
+				.onConflictDoNothing()
+				.run();
+
+			tx.insert(members)
+				.values({
+					id: sid('member', color.key),
+					householdId,
+					userId,
+					displayName,
+					color: color.value,
+					role: 'member',
+					joinedAt: new Date(seededAt.getTime() + (index + 2) * 60_000)
+				})
+				.onConflictDoNothing()
+				.run();
+		});
+	}
+
 	// Resolve the two members the demo data hangs off *after* the inserts: the
 	// housemate may be a real person who joined (stub skipped), or the stub
 	// insert may have been a no-op. Everything below references these ids, so
 	// they have to be ids that exist.
 	const householdMembers = tx
-		.select({ id: members.id, displayName: members.displayName })
+		.select({ id: members.id, displayName: members.displayName, color: members.color })
 		.from(members)
 		.where(eq(members.householdId, householdId))
 		.orderBy(asc(members.joinedAt))
@@ -740,13 +792,39 @@ const seeded = db.transaction((tx) => {
 		.onConflictDoNothing()
 		.run();
 
+	// A task each for the --full-house stubs, at different points, so every
+	// member stands somewhere on the leaderboard rather than tying at zero.
+	const stubs = householdMembers.filter((member) =>
+		MEMBER_COLORS.some((color) => member.id === sid('member', color.key))
+	);
+	if (stubs.length > 0) {
+		tx.insert(taskCompletions)
+			.values(
+				stubs.map((member, index) => ({
+					id: sid('done', `stub-${member.id}`),
+					householdId,
+					taskId: sid('task', 'plants'),
+					taskName: 'Water the plants',
+					points: 15 - index * 5,
+					memberId: member.id,
+					memberName: member.displayName,
+					completedAt: daysAgo(index + 1, 9 + index)
+				}))
+			)
+			.onConflictDoNothing()
+			.run();
+	}
+
 	/* ── Expenses (→ plan 29) ─────────────────────────────────────────────
 	 * Every membership needs its ledger person; the app makes one with the
 	 * membership, but the stub housemate above was inserted by hand. Then a
 	 * week of ordinary spending, split equally, and one settle-up — enough to
 	 * put a balance on the card and every kind of row in the list.
 	 */
-	for (const member of [ownerMember, housemate]) {
+	// Every member, not just the two below: a --full-house stub needs one as
+	// much as the housemate does, and a real member's existing person makes
+	// the insert a no-op.
+	for (const member of householdMembers) {
 		tx.insert(ledgerPeople)
 			.values({
 				id: sid('person', member.id),
@@ -758,7 +836,7 @@ const seeded = db.transaction((tx) => {
 					.where(eq(members.id, member.id))
 					.get()?.userId,
 				name: member.displayName,
-				color: member.id === ownerMemberId ? MEMBER_SAGE : MEMBER_TERRACOTTA
+				color: member.color
 			})
 			.onConflictDoNothing()
 			.run();
@@ -866,10 +944,11 @@ const seeded = db.transaction((tx) => {
 
 	return {
 		householdName: household?.name ?? 'your household',
-		members:
-			housemate.id === ownerMemberId
-				? `${ownerName} (owner)`
-				: `${ownerName} (owner) + ${housemateName}`
+		members: householdMembers
+			.map((member) =>
+				member.id === ownerMemberId ? `${member.displayName} (owner)` : member.displayName
+			)
+			.join(' + ')
 	};
 });
 

@@ -15,6 +15,7 @@ import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import Database from 'better-sqlite3';
 import { afterAll, describe, it } from 'vitest';
+import { MEMBER_COLORS } from '../../src/lib/member-colors';
 
 /** `cron.ts`'s `CHECKED_ITEM_TTL_MS`: what the cleanup keeps. */
 const CHECKED_ITEM_TTL_MS = 12 * 60 * 60 * 1000;
@@ -26,13 +27,15 @@ function lateEveningZone(now = new Date()): string {
 	return offset === 0 ? 'Etc/GMT' : `Etc/GMT${offset > 0 ? '-' : '+'}${Math.abs(offset)}`;
 }
 
-describe('scripts/seed.ts', () => {
+// Each case spawns real seed processes that migrate a fresh database; under the
+// whole suite's load that outgrows Vitest's 5 s default.
+describe('scripts/seed.ts', { timeout: 30_000 }, () => {
 	const dir = mkdtempSync(join(tmpdir(), 'choreganized-seed-'));
 	const databasePath = join(dir, 'seed.db');
 	afterAll(() => rmSync(dir, { recursive: true, force: true }));
 
-	function seed(timezone: string) {
-		return spawnSync(process.execPath, ['scripts/seed.ts', 'seed@example.test'], {
+	function seed(timezone: string, ...flags: string[]) {
+		return spawnSync(process.execPath, ['scripts/seed.ts', 'seed@example.test', ...flags], {
 			encoding: 'utf8',
 			env: { ...process.env, DATABASE_PATH: databasePath, TZ: timezone }
 		});
@@ -63,5 +66,35 @@ describe('scripts/seed.ts', () => {
 				`bought at ${new Date(at).toISOString()} is past the cleanup (${zone})`
 			);
 		}
+	});
+
+	it('--full-house fills the household to one member per palette colour, once', () => {
+		// Runs after the case above, against the two-person household it seeded.
+		for (const run of [seed('UTC', '--full-house'), seed('UTC', '--full-house')]) {
+			assert.equal(run.status, 0, run.stdout + run.stderr);
+		}
+
+		const sqlite = new Database(databasePath, { readonly: true });
+		const roster = sqlite
+			.prepare(
+				`select m.color, p.id as person from members m
+				 left join ledger_people p on p.member_id = m.id`
+			)
+			.all() as { color: string; person: string | null }[];
+		const stubDone = sqlite
+			.prepare(`select count(*) from task_completions where id like '%:done:stub-%'`)
+			.pluck()
+			.get();
+		sqlite.close();
+
+		assert.deepEqual(
+			roster.map(({ color }) => color).sort(),
+			MEMBER_COLORS.map(({ value }) => value).sort()
+		);
+		assert.ok(
+			roster.every(({ person }) => person),
+			'every member has a ledger person'
+		);
+		assert.equal(stubDone, MEMBER_COLORS.length - 2);
 	});
 });

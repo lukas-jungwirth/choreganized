@@ -2694,3 +2694,12 @@ units | null, name}`, written back as editor lines in the reader's unit spelling
      another account"** under Continue (SPEC §1.2): a member never reaches it, so whoever lives
      in a household and lands there signed in with the wrong account, and the way back is signing
      out, not "Join".
+
+186. **`db:seed --full-house` fills the household to five members, opt-in** (`scripts/seed.ts`).
+     The household's real ceiling is the member palette: joining refuses a colour someone has
+     (`color-taken`), and there are five. The flag adds a stub member per free colour (Jakob,
+     Mira, Theo after Elisabeth), each with a ledger person and one task done at different
+     points, so avatar stacks, the leaderboard and the expense split can be looked at at their
+     widest. Off by default because every e2e journey and screenshot is taken of the two-person
+     household; turning it on there would move every baseline. The seed's ledger people now take
+     each member's own colour instead of a hardcoded sage/terracotta pair.
