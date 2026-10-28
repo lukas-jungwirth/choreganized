@@ -1536,13 +1536,47 @@ export const en = {
 			title: 'All activity',
 			back: 'Back to expenses',
 			search: 'Search descriptions',
-			category: 'Category',
-			anyCategory: 'Any category',
-			person: 'Person',
-			anyone: 'Anyone',
-			mine: 'Only mine',
-			payments: 'Payments',
 			filters: 'Filters',
+			allFilters: 'All filters',
+			clearAll: 'Clear all',
+			/** The × on a set chip. */
+			clear: (filter: string) => `Clear ${filter}`,
+			time: 'Time',
+			ranges: {
+				all: 'All time',
+				thisMonth: 'This month',
+				lastMonth: 'Last month',
+				last3Months: 'Last 3 months',
+				thisYear: 'This year',
+				custom: 'Pick dates…'
+			},
+			/** Under each preset in the Time sheet: what it covers, then how it groups. */
+			rangeHint: (covers: string | null, byDay: boolean) =>
+				covers
+					? `${covers} · ${byDay ? 'grouped by day' : 'grouped by month'}`
+					: byDay
+						? 'Grouped by day'
+						: 'Grouped by month',
+			/** The chip once dates are picked: "Oct 3 – Oct 20", "From Oct 3", "Until Oct 20". */
+			customRange: (from: string | null, to: string | null) =>
+				from && to ? `${from} – ${to}` : from ? `From ${from}` : `Until ${to}`,
+			from: 'From',
+			to: 'To',
+			apply: 'Apply',
+			paidBy: 'Paid by',
+			paidByHint: 'Who paid for it.',
+			anyPayer: 'Any payer',
+			you: 'You',
+			/** A set payer chip: "Paid by you", "Paid by Elisabeth". */
+			paidByChip: (name: string | null) => `Paid by ${name ?? 'you'}`,
+			category: 'Category',
+			allCategories: 'All categories',
+			paymentsOnly: 'Payments only',
+			/** "142 entries" — a mix of expenses and settle-ups. */
+			entries: (count: number) => (count === 1 ? '1 entry' : `${count} entries`),
+			expenses: (count: number) => (count === 1 ? '1 expense' : `${count} expenses`),
+			payments: (count: number) => (count === 1 ? '1 payment' : `${count} payments`),
+			show: (counted: string) => `Show ${counted}`,
 			spent: (amount: string) => `${amount} spent`,
 			load: (month: string) => `Load ${month}`,
 			empty: 'Nothing matches',

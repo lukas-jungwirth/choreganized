@@ -3,12 +3,18 @@
  *
  *   npm run db:seed -- you@example.com
  *   npm run db:seed -- you@example.com --full-house
+ *   npm run db:seed -- you@example.com --history
  *
  * `--full-house` fills the household to as many members as the app allows —
  * one per colour in the member palette, since two members can't share one —
  * with stub housemates who each have a task done, so the avatar stacks, the
  * leaderboard and the expense split are seen at their widest. Off by default:
  * the browser tests and screenshots are taken of the two-person household.
+ *
+ * `--history` adds about fourteen months of older spending behind that week —
+ * the weekly shop, the monthly bills, evenings out, a trip, a settle-up a
+ * month — so All activity [9f] has months and a last year to page and filter
+ * through. Off by default for the same reason.
  *
  * The email is the Google account you signed in with: the seed binds the demo
  * household to that existing user, so **sign in once before running it**. If you
@@ -104,10 +110,11 @@ const JUST_BOUGHT = new Date(Date.now() - 90 * 60_000);
 
 const args = process.argv.slice(2);
 const fullHouse = args.includes('--full-house');
+const history = args.includes('--history');
 const email = args.find((arg) => !arg.startsWith('--'));
 
 if (!email) {
-	console.error('Usage: npm run db:seed -- you@example.com [--full-house]');
+	console.error('Usage: npm run db:seed -- you@example.com [--full-house] [--history]');
 	process.exit(1);
 }
 
@@ -942,6 +949,68 @@ const seeded = db.transaction((tx) => {
 			.run();
 	}
 
+	// --history: older spending, a day at a time back to fourteen months ago.
+	// Amounts vary by a fixed rule rather than at random, so a re-run writes the
+	// same rows; the payer alternates so "Paid by" has something to split.
+	if (history) {
+		const other = housematePerson;
+		const vary = (base: number, day: number) => base + ((day * 37) % 23) * 50 - 500;
+		for (let day = 7; day <= 430; day++) {
+			const payer = day % 2 ? ownerPerson : other;
+			const date = addDays(today, -day);
+			const dom = Number(date.slice(8, 10));
+			if (day % 7 === 0) {
+				spend(`h:billa:${day}`, day, 'Weekly shop · Billa', 'groceries', vary(6400, day), payer);
+			}
+			if (day % 7 === 3) {
+				spend(`h:hofer:${day}`, day, 'Hofer', 'groceries', vary(2800, day), payer);
+			}
+			if (dom === 1) {
+				spend(`h:rent:${day}`, day, 'Miete', 'bills', 98000, ownerPerson);
+				spend(`h:internet:${day}`, day, 'Internet · Magenta', 'bills', 3990, other);
+			}
+			if (dom === 15)
+				spend(`h:strom:${day}`, day, 'Strom · Wien Energie', 'bills', vary(8600, day), ownerPerson);
+			if (day % 11 === 5) {
+				const places = ['Pizza at Riva', 'Figlmüller', 'Ramen · Mochi', 'Heuriger'];
+				spend(
+					`h:out:${day}`,
+					day,
+					places[day % places.length],
+					'eatingOut',
+					vary(4800, day),
+					payer
+				);
+			}
+			if (day % 13 === 4)
+				spend(`h:dm:${day}`, day, 'dm · Drogerie', 'household', vary(1900, day), payer);
+			if (day % 17 === 9)
+				spend(`h:tickets:${day}`, day, 'Wiener Linien · 2 tickets', 'transport', 680, payer);
+			if (day % 23 === 6) spend(`h:kino:${day}`, day, 'Kino · Votiv', 'leisure', 2400, payer);
+			if (day === 120 || day === 300) {
+				spend(
+					`h:trip:${day}`,
+					day,
+					day === 120 ? 'Hotel · Salzburg' : 'Ferienwohnung · Grado',
+					'travel',
+					42000,
+					other
+				);
+			}
+			if (dom === 28 && other !== ownerPerson) {
+				spend(
+					`h:payment:${day}`,
+					day,
+					null,
+					null,
+					vary(6000, day),
+					day % 2 ? other : ownerPerson,
+					day % 2 ? ownerPerson : other
+				);
+			}
+		}
+	}
+
 	return {
 		householdName: household?.name ?? 'your household',
 		members: householdMembers
@@ -958,6 +1027,7 @@ console.log('  shopping   3 stores · 10 items (2 already checked off)');
 console.log('  cooking    2 recipes · meals planned for today, tomorrow and the day after');
 console.log('  tasks      7 tasks (overdue · today · upcoming · undated) · 8 history entries');
 console.log('  expenses   5 expenses · 1 settle-up · 1 monthly series');
+if (history) console.log('  history    ~14 months of older expenses and monthly settle-ups');
 console.log(`  → ${rowsWritten() - before} rows written; anything already there was left alone.`);
 
 sqlite.close();

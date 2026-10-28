@@ -20,6 +20,7 @@
  */
 import { and, asc, desc, eq, inArray, isNotNull, isNull, lt } from 'drizzle-orm';
 import { addRepeat, isCalendarDate, startOfMonth, type CalendarDate } from '$lib/utils/dates';
+import { historyPeriod, PAYMENTS_ONLY, type HistoryRange } from '$lib/utils/expense-history';
 import {
 	AMOUNT_MAX_MAJOR,
 	EXPENSE_DESCRIPTION_MAX,
@@ -359,64 +360,89 @@ export function descriptionSuggestions(
 
 export type HistoryFilters = {
 	query: string;
-	category: ExpenseCategory | null;
-	/** Paid by them, or in the split. */
-	personId: string | null;
-	/** Only what involves the reader. */
-	mine: boolean;
-	/** Only settle-ups. */
-	payments: boolean;
+	range: HistoryRange;
+	/** "Pick dates…" — only read when `range` is `custom`. */
+	start: CalendarDate | null;
+	end: CalendarDate | null;
+	/** Who paid: the person who paid for an expense, or who sent a settle-up. */
+	payerId: string | null;
+	/** A category, or "Payments only"; null shows both kinds. */
+	category: ExpenseCategory | typeof PAYMENTS_ONLY | null;
 };
 
-export function involves(item: ExpenseItem, personId: string): boolean {
-	return item.paidById === personId || item.shares.some((share) => share.personId === personId);
-}
+export type HistoryGroup = {
+	/** The day, or the first of the month. */
+	key: CalendarDate;
+	spentMinor: number;
+	items: ExpenseItem[];
+};
 
 /**
- * What History shows for these filters: the matching rows from the start of
- * `from`'s month to today, grouped by month, plus the next older month that
- * has a match — so "Show September" always reveals something (→ DECISIONS #76,
- * the task history's paging, which this copies).
+ * What History shows for these filters. A bounded period shows all of itself,
+ * by day when it is a month or less; "All time" shows the matching rows from the
+ * start of `from`'s month to today, by month, plus the next older month that
+ * has a match — so "Load September" always reveals something (→ DECISIONS #76,
+ * the task history's paging, which this copies). `count` and `spentMinor` cover
+ * every match, not just the page; settle-ups never count as spending.
  */
 export function filterHistory(
 	ledger: ExpenseItem[],
 	filters: HistoryFilters,
-	readerPersonId: string,
 	today: CalendarDate,
 	from: unknown
 ): {
-	months: { month: CalendarDate; spentMinor: number; items: ExpenseItem[] }[];
-	from: CalendarDate;
+	groups: HistoryGroup[];
+	byDay: boolean;
+	count: number;
+	spentMinor: number;
 	older: CalendarDate | null;
 } {
-	const thisMonth = startOfMonth(today);
-	const requested = isCalendarDate(from) && from < thisMonth ? startOfMonth(from) : thisMonth;
+	const period = historyPeriod(filters.range, today, filters.start, filters.end);
 	const query = filters.query.trim().toLocaleLowerCase();
 
 	const matching = ledger.filter((item) => {
-		if (filters.payments && item.kind !== 'payment') return false;
-		if (filters.category && item.category !== filters.category) return false;
-		if (filters.personId && !involves(item, filters.personId)) return false;
-		if (filters.mine && !involves(item, readerPersonId)) return false;
+		if (period.from && item.date < period.from) return false;
+		if (period.to && item.date > period.to) return false;
+		if (filters.category === PAYMENTS_ONLY) {
+			if (item.kind !== 'payment') return false;
+		} else if (filters.category && item.category !== filters.category) return false;
+		if (filters.payerId && item.paidById !== filters.payerId) return false;
 		if (query && !(item.description ?? '').toLocaleLowerCase().includes(query)) return false;
 		return true;
 	});
 
-	const months: { month: CalendarDate; spentMinor: number; items: ExpenseItem[] }[] = [];
+	const spent = (items: ExpenseItem[]) =>
+		items.reduce((sum, item) => sum + (item.kind === 'expense' ? item.amountMinor : 0), 0);
+
+	const thisMonth = startOfMonth(today);
+	const requested =
+		filters.range !== 'all'
+			? null
+			: isCalendarDate(from) && from < thisMonth
+				? startOfMonth(from)
+				: thisMonth;
+
+	const groups: HistoryGroup[] = [];
 	for (const item of matching) {
-		if (item.date < requested) break;
-		const month = startOfMonth(item.date);
-		let group = months.at(-1);
-		if (!group || group.month !== month) {
-			group = { month, spentMinor: 0, items: [] };
-			months.push(group);
+		if (requested && item.date < requested) break;
+		const key = period.byDay ? item.date : startOfMonth(item.date);
+		let group = groups.at(-1);
+		if (!group || group.key !== key) {
+			group = { key, spentMinor: 0, items: [] };
+			groups.push(group);
 		}
 		group.items.push(item);
-		if (item.kind === 'expense') group.spentMinor += item.amountMinor;
 	}
+	for (const group of groups) group.spentMinor = spent(group.items);
 
-	const next = matching.find((item) => item.date < requested);
-	return { months, from: requested, older: next ? startOfMonth(next.date) : null };
+	const next = requested ? matching.find((item) => item.date < requested) : undefined;
+	return {
+		groups,
+		byDay: period.byDay,
+		count: matching.length,
+		spentMinor: spent(matching),
+		older: next ? startOfMonth(next.date) : null
+	};
 }
 
 /* ── Writing ──────────────────────────────────────────────────────────────── */
