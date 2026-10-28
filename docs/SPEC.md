@@ -909,7 +909,10 @@ Frames: **[`design/Expenses.dc.html`](../design/Expenses.dc.html)**, a page of i
 `9a-owe` (3 people, overflow open) · `9a-settled` · `9a-tabbar` · `9a-dark` · **[9b]** add
 expense, with `9b-suggest` · `9b-edit` · **[9c]** split (amounts, not adding up), with `9c-ok`
 (%) · **[9d]** settle up · **[9e]** expense detail · **[9f]** all activity · **[9g]** empty
-state · **[9h]** recurring (plan 30), with `9h-stop` · plus the Home line. Mock date: Monday
+state · **[9h]** recurring (plan 30), with `9h-stop` · plus the Home line. **[10a]** the
+balance card as a sentence (one person · `10a · 2` two owe you · `10a · 3` you owe two ·
+`10a · 4` four, collapsed) and **[10b]** the add sheet's sentence come from Lukas's frames of
+28 October, not yet in the design file. Mock date: Monday
 24 November.
 
 ### 11.1 Vocabulary
@@ -933,13 +936,31 @@ own treatment since [01/1d], which is what lets five fit at 390px in both langua
 **Recurring** (with how many series are running), first, then the other two. While the undo bar is up after a delete, the
 FAB stands down — the two share the corner, and Undo is the one that can't wait.
 
-1. **Balance card**: the one thing you read:
-   - "You're owed **€24.50**" (sage) · "You owe **€12.00**" (terracotta) · "All settled up"
-     (neutral, with a quiet check).
-   - Under it, the **payments that would settle the house**, at most one line per payment,
-     each line where you are involved first: "Elisabeth → you · €24.50", "You → Marco · €8".
-     Lines that don't involve you are shown smaller and below yours. Each line has a
-     **Settle up** button that opens [9d] prefilled with that payment.
+1. **Balance card** [10a]: the one thing you read, **as a sentence**, the way you would say it,
+   on a plain card, with the amount in the answer's colour (sage owed, terracotta owe)
+   (→ [DECISIONS #195](DECISIONS.md)). Built from the payments that would settle the house
+   (§11.6), the ones involving you, largest first:
+   - **One person**: "Elisabeth owes you **€24.50**" with **Mark as paid** and a gentle
+     **Remind** · "You owe Marco **€12.00**" with **Settle up**.
+   - **Two or three** [10a · 2] [10a · 3]: their avatars stacked above one sentence for the
+     total, "Elisabeth and Marco owe you **€41.30**" / "You owe Elisabeth and Marco **€32.40**",
+     then a row per person with their own amount and **Paid** / **Settle**. Owed adds
+     **Remind everyone** under the rows.
+   - **Four or more** [10a · 4]: the sentence counts instead of naming ("Four people owe you
+     **€81.30**", "Vier Personen schulden dir …"), and only the two largest rows show until
+     **Show 2 more**.
+   - **Payments between the others** follow the sentence as one quiet line each: "Elisabeth also
+     owes Marco **€8.40**" ("also" only when you have a payment of your own). Tapping one opens
+     [9d] for it, so a payment between two others can still be recorded.
+   - Every Mark as paid / Paid / Settle up / Settle opens [9d] prefilled with that payment; the
+     amount can still be lowered there.
+   - **Remind** sends the person who owes you a push, "👋 A nudge from Lukas · you owe €24.50"
+     (§11.11). The button then reads **Reminded ✓** — only for someone who will hear it:
+     with expense notifications off, or no phone set up for push, nobody is nudged and the card
+     says so. If the card was out of date (they paid in the meantime), it just redraws. A former member can't be reminded, so the button
+     only shows when at least one of the people who owe you is still a member.
+   - **All settled up** (neutral, with a quiet check) when none of the payments involve you,
+     with the others' payments under it if there are any, else "Nobody owes anybody anything."
    - These are the _simplified_ payments (→ §11.6). There is no pairwise view and no switch.
 2. **Recent**: the 20 latest rows, newest first (→ [DECISIONS #173](DECISIONS.md)): expenses and payments mixed, grouped by
    day like the task history (§5.8). An expense row shows category icon, description, "{payer}
@@ -957,22 +978,25 @@ weekly shop, the rent, the pizza. Choreganized keeps the tally.", button **Add a
 
 A bottom sheet. Its fields, in this order:
 
-1. **Amount**: large, first, focused on open, decimal keypad (`inputmode="decimal"`). Accepts
-   `12,50` and `12.50` in either language, at most two decimals, more than 0, at most
-   1 000 000. In the household currency (§11.10).
-2. **What for?**: description, required, up to 80 characters. Suggests past descriptions as
-   you type, matched anywhere inside the words (the household's own vocabulary, like the
-   shopping add field §3.1) [9b-suggest]. Picking a past
-   one also proposes its last category.
-3. **Category**: one chip from the fixed list (§11.7). Defaults to the guess from the
+1. **The sentence** [10b] (→ [DECISIONS #196](DECISIONS.md)): who paid, the amount and what it
+   was for as one line, "**You ⌄** paid **€42.10** for **what?**" ("**Du ⌄** hast **€ 42,10** für
+   **was?** bezahlt"), each field underlined in place, sage while focused. Each language orders
+   the words its own way (`m.expenses.form.sentence`).
+   - **Who paid**: a picker of the household's people, **you** preselected. Picking someone
+     else is how you log a spend someone else made ("Elisabeth ⌄ paid …").
+   - **Amount**: focused on open, decimal keypad (`inputmode="decimal"`). Accepts `12,50` and
+     `12.50` in either language, at most two decimals, more than 0, at most 1 000 000. In the
+     household currency (§11.10).
+   - **What for?**: description, required, up to 80 characters. Suggests past descriptions as
+     you type, matched anywhere inside the words (the household's own vocabulary, like the
+     shopping add field §3.1) [9b-suggest]. Picking a past one also proposes its last category.
+2. **Category**: one chip from the fixed list (§11.7). Defaults to the guess from the
    description, else **Other**. Optional for the user, never empty in the data.
-4. **Paid by**: avatar chips of the household's people, **you** preselected. Picking someone
-   else is how you log a spend someone else made.
-5. **Date**: "Today" chip. Tapping it opens the date field. A date in the future is refused.
-6. **Split**: one summary row, "Split equally · everyone · €21.05 each", or "Split by % ·
+3. **Date**: "Today" chip. Tapping it opens the date field. A date in the future is refused.
+4. **Split**: one summary row, "Split equally · everyone · €21.05 each", or "Split by % ·
    Lukas 30 · Elisabeth 70". Tapping it opens [9c]. New expenses start from the
    **household default split** (§11.5).
-7. **Repeats**: Never · Weekly · Monthly · Quarterly · Yearly · Custom… (§11.9). Custom opens
+5. **Repeats**: Never · Weekly · Monthly · Quarterly · Yearly · Custom… (§11.9). Custom opens
    **Every** (a 1–99 stepper) and a **unit** (weeks · months · years) under the row, as a
    chore's repeat does (§5.2). Editing an expense that doesn't
    repeat can start a series from it; an occurrence of a running series has no Repeats row,
@@ -1094,7 +1118,12 @@ expense is named by its description, the household's own words:
 - a recurring expense was added, to everyone with a share, the payer included (nobody did it):
   "🔁 Rent was added · your share €450.00"
 
-No digest and no "you owe money" nagging. The balance card is the reminder.
+- a nudge from the balance card's **Remind** [10a], to the one who owes the sender, or to
+  everyone who does: "👋 A nudge from Lukas · you owe €24.50". One tag per sender, so a second
+  nudge replaces the first on the lock screen without buzzing again.
+
+No digest and no automatic "you owe money" nagging. The balance card is the reminder; the only
+nudge is one a person sends by hand (→ [DECISIONS #195](DECISIONS.md)).
 
 ### 11.12 All activity & search [9f]
 

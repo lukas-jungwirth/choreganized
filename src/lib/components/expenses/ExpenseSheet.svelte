@@ -1,8 +1,10 @@
 <!--
 	Add / edit an expense [9b] [9b-suggest] [9b-edit], in the order you think:
-	how much, what for, who paid, then the split. The amount is the hero and
-	takes the focus; with the household default and "paid by you" already chosen,
-	amount → what for → Save is the whole job (→ plan 29 acceptance).
+	who paid, how much, what for, then the split. The first three are one
+	sentence, "You ⌄ paid €42.10 for what?" [10b] (→ `ExpenseSentence`), whose
+	amount takes the focus; with the household default and "paid by you"
+	already chosen, amount → what for → Save is the whole job (→ plan 29
+	acceptance).
 
 	The split is edited on its own sheet [9c], mounted over this one while open.
 	It sits outside this form on purpose: its "make this the default" link is a
@@ -17,7 +19,6 @@
 	import { enhance } from '$app/forms';
 	import ChevronRight from '@lucide/svelte/icons/chevron-right';
 	import Percent from '@lucide/svelte/icons/percent';
-	import Avatar from '$lib/components/ui/Avatar.svelte';
 	import BottomSheet from '$lib/components/ui/BottomSheet.svelte';
 	import Button from '$lib/components/ui/Button.svelte';
 	import Chip from '$lib/components/ui/Chip.svelte';
@@ -25,17 +26,13 @@
 	import type { SeriesItem } from '$lib/server/services/expense-recurrences';
 	import type { ExpenseItem, ExpensePerson, SplitDefault } from '$lib/server/services/expenses';
 	import type { CalendarDate } from '$lib/utils/dates';
-	import {
-		EXPENSE_CATEGORIES,
-		EXPENSE_DESCRIPTION_MAX,
-		type ExpenseCategory
-	} from '$lib/utils/expenses';
+	import { EXPENSE_CATEGORIES, type ExpenseCategory } from '$lib/utils/expenses';
 	import { formatAmountInput, parseAmount } from '$lib/utils/money';
 	import { untrack } from 'svelte';
-	import AmountField from './AmountField.svelte';
 	import CategoryIcon from './CategoryIcon.svelte';
 	import DateRow from './DateRow.svelte';
 	import DeleteExpenseForm from './DeleteExpenseForm.svelte';
+	import ExpenseSentence from './ExpenseSentence.svelte';
 	import RepeatRow from './RepeatRow.svelte';
 	import SplitSheet from './SplitSheet.svelte';
 	import {
@@ -211,29 +208,20 @@
 	>
 		{#if source}<input type="hidden" name="id" value={source.id} />{/if}
 
-		<AmountField
-			bind:value={amount}
-			name="amount"
-			{currency}
-			label={m.expenses.form.amount}
-			autofocus={!source}
-			required
-		/>
-
-		<label class="label" for="{uid}-what">{m.expenses.form.whatFor}</label>
 		<div class="what">
-			<input
-				id="{uid}-what"
-				class="text"
-				name="description"
-				bind:value={description}
-				placeholder={m.expenses.form.whatForPlaceholder}
-				maxlength={EXPENSE_DESCRIPTION_MAX}
-				autocomplete="off"
-				required
-				onfocus={() => (describing = true)}
-				oninput={() => (describing = true)}
-				onblur={() => setTimeout(() => (describing = false), 150)}
+			<ExpenseSentence
+				bind:amount
+				bind:description
+				bind:paidById
+				{people}
+				{me}
+				{currency}
+				autofocus={!source}
+				describe={{
+					onfocus: () => (describing = true),
+					oninput: () => (describing = true),
+					onblur: () => setTimeout(() => (describing = false), 150)
+				}}
 			/>
 			{#if matches.length > 0}
 				<ul class="suggestions" aria-label={m.expenses.form.suggestions}>
@@ -269,22 +257,6 @@
 			{/each}
 		</div>
 		<input type="hidden" name="category" value={category ?? 'other'} />
-
-		<p class="label" id="{uid}-payer">{m.expenses.form.paidBy}</p>
-		<div class="chips" role="group" aria-labelledby="{uid}-payer">
-			{#each people as person (person.id)}
-				<Chip
-					color={person.color}
-					selected={paidById === person.id}
-					onclick={() => (paidById = person.id)}
-				>
-					<Avatar name={person.name} color={person.color} size={24} />
-					{person.name}
-					{#if person.id === me}<span class="you">{m.expenses.form.you}</span>{/if}
-				</Chip>
-			{/each}
-		</div>
-		<input type="hidden" name="paidById" value={paidById} />
 
 		<div class="group">
 			<button type="button" class="row" onclick={() => (splitting = true)}>
@@ -356,25 +328,6 @@
 		position: relative;
 	}
 
-	.text {
-		width: 100%;
-		padding: 14px 16px;
-		border: 1.5px solid transparent;
-		border-radius: var(--r-input);
-		background: var(--field);
-		font-size: calc(15px * var(--fs));
-		color: var(--ink);
-		outline: none;
-	}
-
-	.text:focus {
-		border-color: var(--sage);
-	}
-
-	.text::placeholder {
-		color: var(--text-disabled);
-	}
-
 	.suggestions {
 		margin: 6px 0 0;
 		padding: 4px;
@@ -423,12 +376,6 @@
 
 	.scroll :global(button) {
 		flex: none;
-	}
-
-	.you {
-		font-size: calc(12px * var(--fs));
-		font-weight: 500;
-		color: var(--text-5);
 	}
 
 	.group {

@@ -8,6 +8,7 @@ import { requireMember } from '$lib/server/guards';
 import {
 	currencyAction,
 	deleteExpenseAction,
+	remindAction,
 	restoreExpenseAction,
 	saveExpenseAction,
 	savePaymentAction,
@@ -63,6 +64,7 @@ export const actions: Actions = {
 	pay: savePaymentAction,
 	delete: deleteExpenseAction,
 	restore: restoreExpenseAction,
+	remind: remindAction,
 	splitDefault: splitDefaultAction,
 	currency: currencyAction
 };

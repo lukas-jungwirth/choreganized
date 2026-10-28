@@ -131,6 +131,21 @@ export function pushConfigured(): boolean {
 	return vapidConfigured;
 }
 
+/**
+ * Whether this user has any device a push could reach — a Remind [10a] only
+ * says "Reminded" to someone who will actually hear it.
+ */
+export function hasDevice(userId: string): boolean {
+	return (
+		db
+			.select({ id: pushSubscriptions.id })
+			.from(pushSubscriptions)
+			.where(eq(pushSubscriptions.userId, userId))
+			.limit(1)
+			.get() !== undefined
+	);
+}
+
 /* ── Sending ──────────────────────────────────────────────────────────────── */
 
 /**

@@ -24,6 +24,7 @@ import {
 	listPeople,
 	personIdFor,
 	purgeDeletedExpenses,
+	reminders,
 	restoreExpense,
 	setCurrency,
 	setSplitDefault,
@@ -37,6 +38,7 @@ import {
 	removeMember,
 	updateProfile
 } from '$lib/server/services/household';
+import { catalog } from '$lib/i18n';
 import { MEMBER_COLORS } from '$lib/member-colors';
 import { db, makeHousehold, tables } from '../helpers/db';
 
@@ -343,6 +345,98 @@ describe('settling up', () => {
 			byPerson: { [a]: 0, [b]: 0, [c]: 0 },
 			payments: []
 		});
+	});
+});
+
+describe('reminders', () => {
+	/** A phone that has said yes to push — a nudge needs somewhere to land. */
+	function subscribe(userId: string) {
+		db.insert(tables.pushSubscriptions)
+			.values({
+				userId,
+				endpoint: `https://push.example.test/${userId}`,
+				p256dh: 'key',
+				auth: 'auth'
+			})
+			.run();
+	}
+
+	/** A household whose housemates each have a phone subscribed. */
+	function subscribed(housemates?: string[]) {
+		const fixture = household(housemates);
+		for (const member of fixture.members.slice(1)) subscribe(member.userId);
+		return fixture;
+	}
+
+	/** Who a Remind from `memberId` reaches, and the line they read. */
+	function nudges(householdId: string, memberId: string, personId: string | null = null) {
+		return reminders(householdId, memberId, personId).notices.map((notice) => ({
+			personId: notice.personId,
+			title: notice.payload(catalog('en')).title,
+			de: notice.payload(catalog('de')).title
+		}));
+	}
+
+	it('reaches whoever owes the sender, with the amount their own card shows', () => {
+		const { householdId, owner, ids } = subscribed(['Elisabeth', 'Marco']);
+		createExpense(householdId, owner.id, groceries(ids[0], ids, 3000), TODAY);
+
+		assert.deepEqual(nudges(householdId, owner.id), [
+			{
+				personId: ids[1],
+				title: '👋 A nudge from Owner · you owe €10.00',
+				de: '👋 Erinnerung von Owner · du schuldest €\u00a010,00'
+			},
+			{
+				personId: ids[2],
+				title: '👋 A nudge from Owner · you owe €10.00',
+				de: '👋 Erinnerung von Owner · du schuldest €\u00a010,00'
+			}
+		]);
+		// One of them only, from their row.
+		assert.deepEqual(
+			nudges(householdId, owner.id, ids[2]).map((nudge) => nudge.personId),
+			[ids[2]]
+		);
+	});
+
+	it('nobody owing the sender reaches nobody — the debtor can’t nudge their creditor', () => {
+		const { householdId, owner, members, ids } = subscribed();
+		createExpense(householdId, owner.id, groceries(ids[0], ids, 4900), TODAY);
+		assert.deepEqual(reminders(householdId, members[1].id, null), { owing: 0, notices: [] });
+
+		createPayment(
+			householdId,
+			members[1].id,
+			{ fromId: ids[1], toId: ids[0], amountMinor: 2450, date: TODAY },
+			TODAY
+		);
+		// "Owing nobody" — the card was stale — is not "muted".
+		assert.deepEqual(reminders(householdId, owner.id, ids[1]), { owing: 0, notices: [] });
+	});
+
+	it('skips someone with expense notifications off, or no device to hear it on', () => {
+		const { householdId, owner, members, ids } = household(['Elisabeth', 'Marco']);
+		createExpense(householdId, owner.id, groceries(ids[0], ids, 3000), TODAY);
+		subscribe(members[1].userId);
+		db.update(tables.members)
+			.set({ notifyExpenses: false })
+			.where(eq(tables.members.id, members[1].id))
+			.run();
+
+		// Elisabeth muted it, Marco never set push up: two owe, nobody hears.
+		const { owing, notices } = reminders(householdId, owner.id, null);
+		assert.equal(owing, 2);
+		assert.deepEqual(notices, []);
+	});
+
+	it('one tag per sender: a second nudge replaces the first instead of stacking', () => {
+		const { householdId, owner, ids } = subscribed();
+		createExpense(householdId, owner.id, groceries(ids[0], ids, 4900), TODAY);
+		const [first] = reminders(householdId, owner.id, null).notices;
+		const payload = first.payload(catalog('en'));
+		assert.equal(payload.tag, `expense-reminder-${ids[0]}`);
+		assert.equal(payload.renotify, undefined);
 	});
 });
 

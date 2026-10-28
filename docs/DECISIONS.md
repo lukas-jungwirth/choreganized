@@ -2785,3 +2785,32 @@ units | null, name}`, written back as editor lines in the reader's unit spelling
      the same sheet and no preset; the empty state's copy says to pick how often it repeats.
      The FAB and empty-state button stay where #190 put them. `ExpenseSheet` lost its
      `repeating` prop, which had no other caller.
+
+195. **The balance card says it as a sentence, and can send a nudge** (`BalanceCard`,
+     `reminderNotices`, `?/remind`; amends #167, #176) [10a]. "You're owed €24.50" above a list
+     of "Elisabeth → you" arrows was two readings of one answer. Now the card says it once —
+     "Elisabeth owes you €24.50", "Elisabeth and Marco owe you €41.30", from four on "Four
+     people owe you €81.30" (naming five people doesn't read) — with one row per person once
+     there are several, the two largest only from four. The card is plain; the amount carries
+     the colour. Mark as paid / Paid open the settle-up sheet prefilled rather than recording
+     at once: the same road as Settle, and a partial payment stays one edit away. Payments
+     between the others are a quiet line under the sentence, still tappable, since this card
+     is the only door to recording a payment. **Remind** is new, and goes against #176's "no
+     nagging" only in letter: the app still never nudges on its own; a person taps it. It is
+     kept gentle by construction — one push tag per sender, so a second tap replaces the first
+     nudge on a lock screen without buzzing, the debtor's own notification setting is
+     respected, and the amount is recounted on the server, not taken from the card. There is
+     no rate limit stored: the tag already keeps it to one notification. "Reminded" is only
+     said of someone with the setting on **and** a subscribed device; anyone else gets "hasn't
+     turned on expense notifications" rather than a claim nobody can keep. When nobody owes
+     the sender any more (paid on another phone), the server says so and the card redraws
+     instead of blaming anyone's settings.
+
+196. **The add sheet opens on a sentence: "You ⌄ paid €42.10 for what?"** (`ExpenseSentence`)
+     [10b]. The big centred amount and a separate "What for?" field read as a form; the sentence
+     reads as what happened. Who paid moved into it as a picker (a real `<select>`, so a phone
+     opens its own list), which replaces the Paid by chips — two places to pick one person
+     would disagree. The words are a list of parts with the fields between them per language,
+     because German puts the verb last ("Du hast € 42,10 für was? bezahlt"). Each field keeps
+     its plain accessible name (Paid by, Amount, What for?). `AmountField` stays for the
+     settle-up sheet [9d].

@@ -170,10 +170,8 @@ const SCREENS: Screen[] = [
 		path: '/expenses',
 		navigate: async (page) => {
 			await page.goto('/expenses');
-			await page
-				.getByRole('button', { name: /^Settle up/ })
-				.first()
-				.click();
+			// The seed has Elisabeth owing the reader: one payment, Mark as paid [10a].
+			await page.getByRole('button', { name: /^Mark as paid/ }).click();
 			await page.getByRole('dialog', { name: 'Settle up' }).waitFor();
 		}
 	},
