@@ -50,11 +50,15 @@ test('log a split expense, settle up, find it, delete and undo', async ({ page }
 	await expect.poll(() => balance(page)).toBe(before + 2100);
 	await expect(page.getByRole('link', { name: new RegExp(name) })).toContainText('€21.00');
 
+	// The card says it as a sentence [10a], with a gentle nudge on offer.
+	const card = page.getByTestId('balance-card');
+	await expect(card).toContainText(/owes you €/);
+	// The seeded housemate never subscribed a phone, so the card won't claim she heard it.
+	await card.getByRole('button', { name: /^Remind/ }).click();
+	await expect(card.getByRole('status')).toHaveText(/hasn’t turned on expense notifications/);
+
 	// Settle the whole house: one payment, and the card says so.
-	await page
-		.getByRole('button', { name: /^Settle up/ })
-		.first()
-		.click();
+	await card.getByRole('button', { name: /^Mark as paid/ }).click();
 	const settle = page.getByRole('dialog', { name: 'Settle up' });
 	await settle.getByRole('button', { name: 'Record payment' }).click();
 	await expect(settle).toBeHidden();

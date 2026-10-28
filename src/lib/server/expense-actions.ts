@@ -16,6 +16,7 @@ import {
 	createPayment,
 	deleteExpense,
 	ExpenseError,
+	reminders,
 	getExpenseSettings,
 	restoreExpense,
 	setCurrency,
@@ -25,6 +26,7 @@ import {
 	type ExpenseErrorCode
 } from '$lib/server/services/expenses';
 import { stopSeries, updateSeries } from '$lib/server/services/expense-recurrences';
+import { sendNotices } from '$lib/server/services/expense-notify';
 import { getHousehold, HouseholdError } from '$lib/server/services/household';
 import { todayIn } from '$lib/utils/dates';
 import {
@@ -199,6 +201,21 @@ export async function restoreExpenseAction(event: RequestEvent) {
 	const { householdId } = requireMember(event);
 	const id = String((await event.request.formData()).get('id') ?? '');
 	return { restored: restoreExpense(householdId, id) };
+}
+
+/**
+ * Remind / Remind everyone on the balance card [10a]: a nudge to whoever owes
+ * the reader, or just `personId`. Answers with the people it reached, so the
+ * card says "Reminded" only to those who will actually hear it, and with
+ * whether anybody still owes at all — the card may be older than the ledger.
+ */
+export async function remindAction(event: RequestEvent) {
+	const { householdId, member } = requireMember(event);
+	const personId = String((await event.request.formData()).get('personId') ?? '') || null;
+	const { owing, notices } = reminders(householdId, member.id, personId);
+	// Fire-and-forget like every push: a slow push service must not hold the tap.
+	void sendNotices(notices).catch((error) => console.error('[push] reminder failed:', error));
+	return { owing, reminded: notices.map((notice) => notice.personId) };
 }
 
 /**

@@ -48,8 +48,38 @@ import type { RecurUnit } from '$lib/utils/tasks';
  */
 export type RichText = readonly { text: string; strong?: boolean }[];
 
+/**
+ * A sentence with form fields inside it [10b]: the words, in the language's
+ * order, and where each field sits between them.
+ */
+export type SentencePart = string | { field: 'payer' | 'amount' | 'what' };
+
 /** Bound into every date wrapper below, so a screen never passes a language. */
 const L = 'en';
+
+const COUNTS = [
+	'zero',
+	'one',
+	'two',
+	'three',
+	'four',
+	'five',
+	'six',
+	'seven',
+	'eight',
+	'nine',
+	'ten'
+];
+
+/**
+ * Who a balance sentence is about [10a]: named up to three ("Elisabeth and
+ * Marco"), counted from four ("Four people"), capitalised when it opens one.
+ */
+function people(names: string[], start: boolean): string {
+	if (names.length < 4) return list(names);
+	const count = COUNTS[names.length] ?? String(names.length);
+	return `${start ? count[0].toUpperCase() + count.slice(1) : count} people`;
+}
 
 /**
  * Units are stored canonically ('pcs', 'tbsp') and shown per language, so
@@ -1329,13 +1359,52 @@ export const en = {
 
 		/** The balance card [9a]. */
 		balance: {
-			owed: 'You’re owed',
-			owe: 'You owe',
+			/**
+			 * The card's sentence [10a]: "Elisabeth owes you €24.50", "Elisabeth and
+			 * Marco owe you €41.30" — and from four people on it counts, "Four
+			 * people owe you €81.30". The amount is the emphasised run.
+			 */
+			owedBy: (names: string[], amount: string): RichText => [
+				{ text: `${people(names, true)} ${names.length === 1 ? 'owes' : 'owe'} you ` },
+				{ text: amount, strong: true }
+			],
+			/** "You owe Marco €12.00" · "You owe Elisabeth and Marco €32.40" · "You owe four people …". */
+			youOwe: (names: string[], amount: string): RichText => [
+				{ text: `You owe ${people(names, false)} ` },
+				{ text: amount, strong: true }
+			],
+			/**
+			 * A payment between two others, under the sentence: "Elisabeth also owes
+			 * Marco €8.40" — no "also" when the reader is square themselves.
+			 */
+			between: (from: string, to: string, amount: string, also: boolean): RichText => [
+				{ text: `${from} ${also ? 'also ' : ''}owes ${to} ` },
+				{ text: amount, strong: true }
+			],
 			settled: 'All settled up',
 			settledDetail: 'Nobody owes anybody anything.',
-			/** One payment that would settle the house: "Elisabeth → you". */
-			line: (from: string | null, to: string | null) => `${from ?? 'You'} → ${to ?? 'you'}`,
+			/** One person owes you: they paid you outside the app [10a]. */
+			markPaid: 'Mark as paid',
+			/** The same, on one row of several [10a · 2]. */
+			paid: 'Paid',
+			remind: 'Remind',
+			remindEveryone: 'Remind everyone',
+			reminded: 'Reminded',
+			/**
+			 * Nobody it was meant for will hear the nudge (→ SPEC §11.11): expense
+			 * notifications switched off, or never set up on a device.
+			 */
+			remindOff: (name: string | null) =>
+				name
+					? `${name} hasn’t turned on expense notifications.`
+					: 'Nobody here has expense notifications turned on.',
+			remindLabel: (name: string) => `Remind ${name}`,
+			/** One row of several you owe [10a · 3]. */
+			settle: 'Settle',
 			settleUp: 'Settle up',
+			/** Four or more rows: the two largest show until this [10a · 4]. */
+			showMore: (count: number) => `Show ${count} more`,
+			showLess: 'Show less',
 			/** The button, read out with the line it settles. */
 			settleLabel: (action: string, line: string) => `${action}: ${line}`,
 			/** The line, read out whole. */
@@ -1381,6 +1450,23 @@ export const en = {
 			amount: 'Amount',
 			whatFor: 'What for?',
 			whatForPlaceholder: 'Weekly shop, rent, pizza…',
+			/**
+			 * Who paid, the amount and the description as one sentence [10b]: "You ⌄
+			 * paid €42.10 for what?". Words between the fields; the language decides
+			 * where they sit (German puts the verb last). `you` is whether the payer
+			 * picked is the reader, for the verb's agreement.
+			 */
+			sentence: (you: boolean): SentencePart[] => [
+				{ field: 'payer' },
+				'paid',
+				{ field: 'amount' },
+				'for',
+				{ field: 'what' }
+			],
+			/** The reader among the payer picker's names. */
+			payerYou: 'You',
+			/** The description's placeholder inside the sentence. */
+			whatPlaceholder: 'what?',
 			suggestions: 'Past expenses',
 			category: 'Category',
 			paidBy: 'Paid by',
@@ -2217,7 +2303,9 @@ export const en = {
 			`🧾 ${who} changed ${what} · your share is now ${share}`,
 		paidYou: (who: string, amount: string) => `💸 ${who} paid you ${amount}`,
 		/** An occurrence the 06:00 sweep logged — nobody did it, so nobody is named. */
-		expenseRepeated: (what: string, share: string) => `🔁 ${what} was added · your share ${share}`
+		expenseRepeated: (what: string, share: string) => `🔁 ${what} was added · your share ${share}`,
+		/** Remind on the balance card [10a]: sent by hand, never by the app. */
+		reminder: (who: string, amount: string) => `👋 A nudge from ${who} · you owe ${amount}`
 	},
 
 	/* ── Refusals ──────────────────────────────────────────────────────────── */

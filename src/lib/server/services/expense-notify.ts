@@ -7,6 +7,7 @@
  *   changed    "Elisabeth changed Weekly shop · your share is now €18.00"
  *   paid       "Lukas paid you €24.50"
  *   repeated   "Rent was added · your share €450.00"
+ *   reminder   "A nudge from Lukas · you owe €24.50"
  *
  * Split in two on purpose. `expenseNotices` answers "who is told what?" from
  * the committed rows, synchronously, and is what the integration tests read;
@@ -15,12 +16,15 @@
  * `services/expense-recurrences.ts`), fire-and-forget like every other
  * event-driven push (→ docs/ARCHITECTURE.md "Notifications").
  *
- * No digest and no "you still owe" nagging: the balance card is the reminder.
+ * No digest and no automatic "you still owe" nagging: the balance card is the
+ * reminder. The one exception is a nudge somebody sends by hand from it
+ * (`reminderNotices`) — a person asking, not the app.
  */
 import { and, eq, isNotNull, isNull } from 'drizzle-orm';
 import { db } from '../db';
 import { expenseShares, expenses, households, ledgerPeople, members } from '../db/schema';
-import { sendToUser, type PayloadFor } from '../push';
+import { hasDevice, sendToUser, type PayloadFor } from '../push';
+import type { Payment } from '$lib/utils/money';
 
 export type ExpenseEvent =
 	/** Someone logged an expense by hand [9b]. */
@@ -99,18 +103,7 @@ export function expenseNotices(householdId: string, event: ExpenseEvent): Expens
 	}
 	if (told.size === 0) return [];
 
-	const people = db
-		.select({
-			personId: ledgerPeople.id,
-			memberId: members.id,
-			userId: members.userId,
-			name: members.displayName,
-			notify: members.notifyExpenses
-		})
-		.from(ledgerPeople)
-		.innerJoin(members, eq(members.id, ledgerPeople.memberId))
-		.where(and(eq(ledgerPeople.householdId, householdId), isNotNull(ledgerPeople.memberId)))
-		.all();
+	const people = reachable(householdId);
 
 	const actorId = event.kind === 'repeated' ? null : event.actorMemberId;
 	const actor = people.find((person) => person.memberId === actorId);
@@ -174,15 +167,91 @@ export function expenseNotices(householdId: string, event: ExpenseEvent): Expens
  */
 export async function notifyExpense(householdId: string, event: ExpenseEvent): Promise<number> {
 	try {
-		const notices = expenseNotices(householdId, event);
-		const delivered = await Promise.all(
-			notices.map((notice) => sendToUser(notice.userId, notice.payload))
-		);
-		return delivered.reduce((total, count) => total + count, 0);
+		return await sendNotices(expenseNotices(householdId, event));
 	} catch (error) {
 		console.error('[push] expense notification failed:', error);
 		return 0;
 	}
+}
+
+/**
+ * The people a notice can reach: current members, each with their ledger
+ * person and whether they take expense notifications. A former member's ledger
+ * person has no account behind it any more.
+ */
+function reachable(householdId: string) {
+	return db
+		.select({
+			personId: ledgerPeople.id,
+			memberId: members.id,
+			userId: members.userId,
+			name: members.displayName,
+			notify: members.notifyExpenses
+		})
+		.from(ledgerPeople)
+		.innerJoin(members, eq(members.id, ledgerPeople.memberId))
+		.where(and(eq(ledgerPeople.householdId, householdId), isNotNull(ledgerPeople.memberId)))
+		.all();
+}
+
+/** A reminder knows whose ledger person it is for — the card marks them "Reminded". */
+export type ReminderNotice = ExpenseNotice & { personId: string };
+
+/**
+ * The Remind on the balance card [10a] (→ SPEC §11.2, §11.11): each person who
+ * owes the reminder's sender, by the simplified payments the card shows, hears
+ * "A nudge from Lukas · you owe €24.50" — the amount their own card shows them.
+ * `only` narrows it to one of them; null is "Remind everyone".
+ *
+ * Gentle by construction: one tag per sender, so a second nudge replaces the
+ * first on a lock screen instead of stacking up, without buzzing again. Only
+ * current members can hear one: with expense notifications on, and a device
+ * to hear it on. `owing` counts who was meant, heard or not — zero means the
+ * card the tap came from was out of date, not that anybody is muted.
+ */
+export function reminderNotices(
+	householdId: string,
+	actorMemberId: string,
+	payments: Payment[],
+	only: string | null
+): { owing: number; notices: ReminderNotice[] } {
+	const household = db
+		.select({ currency: households.currency })
+		.from(households)
+		.where(eq(households.id, householdId))
+		.get();
+	const people = reachable(householdId);
+	const actor = people.find((person) => person.memberId === actorMemberId);
+	if (!household || !actor) return { owing: 0, notices: [] };
+
+	const owed = payments.filter(
+		(payment) => payment.to === actor.personId && (only === null || payment.from === only)
+	);
+	const notices = owed.flatMap((payment) => {
+		const person = people.find((candidate) => candidate.personId === payment.from);
+		if (!person?.notify || !hasDevice(person.userId)) return [];
+		const payload: PayloadFor = (m) => ({
+			title: m.push.reminder(actor.name, m.expenses.money(payment.amountMinor, household.currency)),
+			tag: `expense-reminder-${actor.personId}`,
+			url: '/expenses'
+		});
+		return [
+			{ personId: person.personId, memberId: person.memberId, userId: person.userId, payload }
+		];
+	});
+	return { owing: owed.length, notices };
+}
+
+/**
+ * Send what `expenseNotices` / `reminderNotices` decided.
+ *
+ * @returns how many devices took one; 0 is a normal answer
+ */
+export async function sendNotices(notices: ExpenseNotice[]): Promise<number> {
+	const delivered = await Promise.all(
+		notices.map((notice) => sendToUser(notice.userId, notice.payload))
+	);
+	return delivered.reduce((total, count) => total + count, 0);
 }
 
 /** Each person's share of an expense, for the `changed` event's `before`. */

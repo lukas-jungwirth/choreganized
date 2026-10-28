@@ -57,7 +57,7 @@ import {
 	ledgerPeople,
 	members
 } from '../db/schema';
-import { notifyExpense, sharesOf } from './expense-notify';
+import { notifyExpense, reminderNotices, sharesOf, type ReminderNotice } from './expense-notify';
 import { requireOwner, type Transaction } from './household';
 
 export type ExpenseErrorCode =
@@ -313,6 +313,22 @@ export function balancesByMember(householdId: string): Record<string, number> {
 			.filter((person) => person.memberId !== null)
 			.map((person) => [person.memberId, byPerson[person.id] ?? 0])
 	);
+}
+
+/**
+ * Who a Remind from the balance card [10a] reaches, and what they read
+ * (→ `reminderNotices`): the people who owe `actorMemberId` right now — counted
+ * here, from the rows, not from the amount the card was showing when tapped.
+ * `personId` narrows it to one of them; null reminds everyone who owes.
+ */
+export function reminders(
+	householdId: string,
+	actorMemberId: string,
+	personId: string | null
+): { owing: number; notices: ReminderNotice[] } {
+	const people = listPeople(householdId);
+	const { payments } = balancesOf(people, listLedger(householdId, people));
+	return reminderNotices(householdId, actorMemberId, payments, personId);
 }
 
 /**

@@ -38,9 +38,30 @@ import { currencySymbol, formatMoney } from '$lib/utils/money';
 import type { MealSlot } from '$lib/utils/meals';
 import { formatQuantity, type UnitLabels } from '$lib/utils/shopping';
 import type { RecurUnit } from '$lib/utils/tasks';
-import type { Messages, RichText } from './en';
+import type { Messages, RichText, SentencePart } from './en';
 
 const L = 'de';
+
+const COUNTS = [
+	'null',
+	'eine',
+	'zwei',
+	'drei',
+	'vier',
+	'fünf',
+	'sechs',
+	'sieben',
+	'acht',
+	'neun',
+	'zehn'
+];
+
+/** "Elisabeth und Marco" up to three, "Vier Personen" from four (→ `people` in en.ts). */
+function people(names: string[], start: boolean): string {
+	if (names.length < 4) return list(names);
+	const count = COUNTS[names.length] ?? String(names.length);
+	return `${start ? count[0].toUpperCase() + count.slice(1) : count} Personen`;
+}
 
 /** Stored canonically, shown in German: "EL"/"TL" are what a recipe here says. */
 const UNITS: UnitLabels = {
@@ -985,12 +1006,34 @@ export const de: Messages = {
 		decimalComma: true,
 
 		balance: {
-			owed: 'Du bekommst',
-			owe: 'Du schuldest',
+			owedBy: (names: string[], amount: string): RichText => [
+				{ text: `${people(names, true)} ${names.length === 1 ? 'schuldet' : 'schulden'} dir ` },
+				{ text: amount, strong: true }
+			],
+			youOwe: (names: string[], amount: string): RichText => [
+				{ text: `Du schuldest ${people(names, false)} ` },
+				{ text: amount, strong: true }
+			],
+			between: (from: string, to: string, amount: string, also: boolean): RichText => [
+				{ text: `${from} schuldet ${also ? 'außerdem ' : ''}${to} ` },
+				{ text: amount, strong: true }
+			],
 			settled: 'Alles ausgeglichen',
 			settledDetail: 'Niemand schuldet jemandem etwas.',
-			line: (from: string | null, to: string | null) => `${from ?? 'Du'} → ${to ?? 'dir'}`,
+			markPaid: 'Als bezahlt markieren',
+			paid: 'Bezahlt',
+			remind: 'Erinnern',
+			remindEveryone: 'Alle erinnern',
+			reminded: 'Erinnert',
+			remindOff: (name: string | null) =>
+				name
+					? `${name} hat Benachrichtigungen zu Ausgaben nicht eingeschaltet.`
+					: 'Hier hat niemand Benachrichtigungen zu Ausgaben eingeschaltet.',
+			remindLabel: (name: string) => `${name} erinnern`,
+			settle: 'Ausgleichen',
 			settleUp: 'Ausgleichen',
+			showMore: (count: number) => `${count} weitere anzeigen`,
+			showLess: 'Weniger anzeigen',
 			/** The button, read out with the line it settles. */
 			settleLabel: (action: string, line: string) => `${action}: ${line}`,
 			lineLabel: (from: string | null, to: string | null, amount: string) =>
@@ -1033,6 +1076,16 @@ export const de: Messages = {
 			amount: 'Betrag',
 			whatFor: 'Wofür?',
 			whatForPlaceholder: 'Wocheneinkauf, Miete, Pizza …',
+			sentence: (you: boolean): SentencePart[] => [
+				{ field: 'payer' },
+				you ? 'hast' : 'hat',
+				{ field: 'amount' },
+				'für',
+				{ field: 'what' },
+				'bezahlt'
+			],
+			payerYou: 'Du',
+			whatPlaceholder: 'was?',
 			suggestions: 'Frühere Ausgaben',
 			category: 'Kategorie',
 			paidBy: 'Bezahlt von',
@@ -1731,7 +1784,8 @@ export const de: Messages = {
 			`🧾 ${who} hat ${what} geändert · dein Anteil ist jetzt ${share}`,
 		paidYou: (who: string, amount: string) => `💸 ${who} hat dir ${amount} gezahlt`,
 		expenseRepeated: (what: string, share: string) =>
-			`🔁 ${what} wurde eingetragen · dein Anteil ${share}`
+			`🔁 ${what} wurde eingetragen · dein Anteil ${share}`,
+		reminder: (who: string, amount: string) => `👋 Erinnerung von ${who} · du schuldest ${amount}`
 	},
 
 	/* ── Refusals ──────────────────────────────────────────────────────────── */
