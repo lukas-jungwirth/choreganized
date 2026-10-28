@@ -20,7 +20,7 @@
 import { and, asc, count, eq, isNull, lte, TransactionRollbackError } from 'drizzle-orm';
 import { addRepeat, isCalendarDate, type CalendarDate } from '$lib/utils/dates';
 import {
-	isRepeatUnit,
+	readRepeat,
 	type ExpenseCategory,
 	type RepeatUnit,
 	type SplitMode
@@ -48,6 +48,8 @@ export type SeriesItem = {
 	/** Everyone in it, what was typed for them, and what that comes to at today's amount. */
 	shares: ExpenseShareRow[];
 	unit: RepeatUnit;
+	/** Every how many units: 1 for weekly/monthly/yearly, 3 months for quarterly. */
+	interval: number;
 	/** The day of the month it keeps to (1–31); null for weekly. */
 	anchorDay: number | null;
 	nextDate: CalendarDate;
@@ -146,6 +148,7 @@ function readSeries(householdId: string, id: string | null): SeriesItem[] {
 				input: input.input
 			})),
 			unit: row.unit,
+			interval: row.interval,
 			anchorDay: row.anchorDay,
 			nextDate: row.nextDate,
 			occurrences: logged.get(row.id) ?? 0
@@ -189,6 +192,7 @@ export function countSeries(householdId: string): number {
 
 export type SeriesInput = Omit<ExpenseInput, 'date'> & {
 	unit: RepeatUnit;
+	interval: number;
 	/** When the next one is due: today or later. */
 	nextDate: CalendarDate;
 };
@@ -200,7 +204,7 @@ export type SeriesInput = Omit<ExpenseInput, 'date'> & {
  * The next date may be today — the sweep then adds it on its next tick once it
  * is past 06:00 — but can't be moved earlier: a date that has gone is logged
  * as an expense, not scheduled. One the sweep hasn't reached yet may be kept.
- * Moving the date (or the unit) re-anchors the series on the new day of the
+ * Moving the date (or the unit or interval) re-anchors the series on the new day of the
  * month; saving it unchanged keeps the anchor, so a series parked on 28 Feb
  * still goes back to the 31st in March.
  */
@@ -210,7 +214,7 @@ export function updateSeries(
 	input: SeriesInput,
 	today: CalendarDate
 ): void {
-	if (!isRepeatUnit(input.unit)) throw new ExpenseError('split');
+	if (!readRepeat(input.unit, input.interval)) throw new ExpenseError('split');
 	if (!isCalendarDate(input.nextDate)) throw new ExpenseError('next-date');
 
 	db.transaction((tx) => {
@@ -234,7 +238,8 @@ export function updateSeries(
 		}
 
 		const { description, shares } = validTemplate(tx, householdId, input);
-		const moved = input.nextDate !== row.nextDate || input.unit !== row.unit;
+		const moved =
+			input.nextDate !== row.nextDate || input.unit !== row.unit || input.interval !== row.interval;
 		const anchorDay =
 			input.unit === 'week'
 				? null
@@ -250,6 +255,7 @@ export function updateSeries(
 				paidById: input.paidById,
 				splitMode: input.splitMode,
 				unit: input.unit,
+				interval: input.interval,
 				anchorDay,
 				nextDate: input.nextDate,
 				updatedAt: new Date()
@@ -400,7 +406,7 @@ function logOccurrence(
 
 		const advanced = tx
 			.update(expenseRecurrences)
-			.set({ nextDate: addRepeat(series.nextDate, series.unit, series.anchorDay) })
+			.set({ nextDate: addRepeat(series.nextDate, series.unit, series.anchorDay, series.interval) })
 			.where(and(eq(expenseRecurrences.id, id), eq(expenseRecurrences.nextDate, series.nextDate)))
 			.run();
 		// Someone else moved it in between: undo the insert rather than log twice.

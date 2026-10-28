@@ -104,23 +104,26 @@ export function addInterval(date: CalendarDate, count: number, unit: IntervalUni
 }
 
 /**
- * The next occurrence of a recurring expense (→ SPEC §11.9). A week is seven
- * days; a month or a year keeps to the day of the month the series started on,
- * `anchorDay`, clamped to the end of a shorter month — and only clamped, never
- * moved: 31 Jan → 28 Feb → 31 Mar, where `addInterval` would drift to the 28th
- * for good, and 29 Feb → 28 Feb → … → 29 Feb in the next leap year.
+ * The next occurrence of a recurring expense (→ SPEC §11.9): `interval` weeks,
+ * months or years on. A week is seven days; a month or a year keeps to the day
+ * of the month the series started on, `anchorDay`, clamped to the end of a
+ * shorter month — and only clamped, never moved: 31 Jan → 28 Feb → 31 Mar,
+ * where `addInterval` would drift to the 28th for good, and 29 Feb → 28 Feb →
+ * … → 29 Feb in the next leap year. Quarterly from 31 Jan is 30 Apr → 31 Jul.
  *
  * @param anchorDay 1–31; null reads it off `date`
+ * @param interval how many units at a time, 1 or more
  */
 export function addRepeat(
 	date: CalendarDate,
 	unit: 'week' | 'month' | 'year',
-	anchorDay: number | null
+	anchorDay: number | null,
+	interval = 1
 ): CalendarDate {
-	if (unit === 'week') return addInterval(date, 1, 'week');
+	if (unit === 'week') return addInterval(date, interval, 'week');
 
 	const [year, month] = date.split('-').map(Number);
-	const index = year * 12 + (month - 1) + (unit === 'month' ? 1 : 12);
+	const index = year * 12 + (month - 1) + interval * (unit === 'month' ? 1 : 12);
 	const nextYear = Math.floor(index / 12);
 	const nextMonth = (index % 12) + 1;
 	// Day 0 of the following month is the last day of this one.

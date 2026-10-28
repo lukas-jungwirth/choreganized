@@ -951,6 +951,8 @@ export const expenseRecurrences = sqliteTable(
 			.references(() => ledgerPeople.id, { onDelete: 'cascade' }),
 		splitMode: text('split_mode', { enum: SPLIT_MODES }).notNull(),
 		unit: text('unit', { enum: REPEAT_UNITS }).notNull(),
+		/** Every `interval` units: 1 = weekly/monthly/yearly, 3 months = quarterly (→ DECISIONS #189). */
+		interval: integer('interval').notNull().default(1),
 		/**
 		 * The day of the month it was started on (1–31), for `month` and `year`;
 		 * a short month clamps to its last day without forgetting it, so a series

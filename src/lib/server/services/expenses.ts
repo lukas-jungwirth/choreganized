@@ -31,7 +31,7 @@ import {
 	type DefaultSplitMode,
 	type ExpenseCategory,
 	type ExpenseKind,
-	type RepeatUnit,
+	type Repeat,
 	type SplitMode
 } from '$lib/utils/expenses';
 import {
@@ -192,7 +192,7 @@ export type ExpenseItem = {
 	/** The series it came from, running or stopped (→ SPEC §11.9). */
 	recurrenceId: string | null;
 	/** How often that series repeats while it is running — the repeat badge [9e]; else null. */
-	repeats: RepeatUnit | null;
+	repeats: Repeat | null;
 };
 
 /**
@@ -243,13 +243,17 @@ export function listLedger(
 
 	const running = new Map(
 		db
-			.select({ id: expenseRecurrences.id, unit: expenseRecurrences.unit })
+			.select({
+				id: expenseRecurrences.id,
+				unit: expenseRecurrences.unit,
+				interval: expenseRecurrences.interval
+			})
 			.from(expenseRecurrences)
 			.where(
 				and(eq(expenseRecurrences.householdId, householdId), isNull(expenseRecurrences.stoppedAt))
 			)
 			.all()
-			.map((row) => [row.id, row.unit])
+			.map((row) => [row.id, { unit: row.unit, interval: row.interval }])
 	);
 
 	return rows.map((row) => ({
@@ -558,7 +562,7 @@ function validExpense(
 
 /**
  * Turn a just-written expense into the first of a series (→ SPEC §11.9): the
- * template is the expense as saved, and the next one is due one `unit` after
+ * template is the expense as saved, and the next one is due one `repeat` after
  * its date — which may already have passed, for an expense logged late; the
  * 06:00 sweep then catches up (→ `services/expense-recurrences.ts`).
  */
@@ -569,7 +573,7 @@ function startSeries(
 	expenseId: string,
 	input: ExpenseInput,
 	template: ReturnType<typeof validTemplate>,
-	unit: RepeatUnit
+	{ unit, interval }: Repeat
 ): void {
 	const anchorDay = unit === 'week' ? null : Number(input.date.slice(8, 10));
 	const now = new Date();
@@ -584,8 +588,9 @@ function startSeries(
 			paidById: input.paidById,
 			splitMode: input.splitMode,
 			unit,
+			interval,
 			anchorDay,
-			nextDate: addRepeat(input.date, unit, anchorDay),
+			nextDate: addRepeat(input.date, unit, anchorDay, interval),
 			createdByMemberId: actorMemberId,
 			createdAt: now,
 			updatedAt: now
@@ -624,7 +629,7 @@ export function createExpense(
 	actorMemberId: string,
 	input: ExpenseInput,
 	today: CalendarDate,
-	repeat: RepeatUnit | null = null
+	repeat: Repeat | null = null
 ): string {
 	const created = db.transaction((tx) => {
 		const template = validExpense(tx, householdId, input, today);
@@ -671,7 +676,7 @@ export function updateExpense(
 	id: string,
 	input: ExpenseInput,
 	today: CalendarDate,
-	repeat: RepeatUnit | null = null
+	repeat: Repeat | null = null
 ): void {
 	const before = db.transaction((tx) => {
 		const row = liveExpense(tx, householdId, id);

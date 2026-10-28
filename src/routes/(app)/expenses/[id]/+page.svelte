@@ -105,7 +105,7 @@
 	{#if data.series && item.repeats}
 		<button type="button" class="repeats" onclick={() => (editingSeries = true)}>
 			<RepeatIcon size={14} />
-			{m.expenses.detail.repeats[item.repeats]}
+			{m.expenses.detail.repeats(m.expenses.form.repeat(item.repeats.unit, item.repeats.interval))}
 			<span class="dot" aria-hidden="true">·</span>
 			<span class="series-link">{m.expenses.detail.editSeries}</span>
 		</button>

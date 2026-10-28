@@ -37,6 +37,8 @@ import { leaveHousehold, removeMember } from '$lib/server/services/household';
 import { db, makeHousehold, tables } from '../helpers/db';
 
 const TODAY = '2026-11-24';
+const MONTHLY = { unit: 'month', interval: 1 } as const;
+const WEEKLY = { unit: 'week', interval: 1 } as const;
 
 function household(housemates = ['Elisabeth']) {
 	const fixture = makeHousehold({ housemates });
@@ -74,12 +76,13 @@ describe('starting a series', () => {
 			owner.id,
 			rent(ids[0], ids, '2026-11-01'),
 			TODAY,
-			'month'
+			MONTHLY
 		);
 
 		const [series] = listSeries(householdId);
 		assert.equal(series.description, 'Rent');
 		assert.equal(series.unit, 'month');
+		assert.equal(series.interval, 1);
 		assert.equal(series.anchorDay, 1);
 		assert.equal(series.nextDate, '2026-12-01');
 		assert.equal(series.occurrences, 1);
@@ -90,13 +93,13 @@ describe('starting a series', () => {
 
 		const first = listLedger(householdId).find((item) => item.id === id);
 		assert.equal(first?.recurrenceId, series.id);
-		assert.equal(first?.repeats, 'month');
+		assert.deepEqual(first?.repeats, MONTHLY);
 		assert.equal(countSeries(householdId), 1);
 	});
 
 	it('a weekly series has no anchor day', () => {
 		const { householdId, owner, ids } = household();
-		createExpense(householdId, owner.id, rent(ids[0], ids, '2026-11-20'), TODAY, 'week');
+		createExpense(householdId, owner.id, rent(ids[0], ids, '2026-11-20'), TODAY, WEEKLY);
 
 		const [series] = listSeries(householdId);
 		assert.equal(series.anchorDay, null);
@@ -108,13 +111,13 @@ describe('starting a series', () => {
 		const id = createExpense(householdId, owner.id, rent(ids[0], ids, '2026-11-03'), TODAY);
 		assert.equal(listSeries(householdId).length, 0);
 
-		updateExpense(householdId, owner.id, id, rent(ids[0], ids, '2026-11-03', 8640), TODAY, 'month');
+		updateExpense(householdId, owner.id, id, rent(ids[0], ids, '2026-11-03', 8640), TODAY, MONTHLY);
 		const [series] = listSeries(householdId);
 		assert.equal(series.amountMinor, 8640);
 		assert.equal(series.nextDate, '2026-12-03');
 
 		// Saving it again with "Repeats" set doesn't start a second one.
-		updateExpense(householdId, owner.id, id, rent(ids[0], ids, '2026-11-03', 8640), TODAY, 'month');
+		updateExpense(householdId, owner.id, id, rent(ids[0], ids, '2026-11-03', 8640), TODAY, MONTHLY);
 		assert.equal(listSeries(householdId).length, 1);
 	});
 });
@@ -122,7 +125,7 @@ describe('starting a series', () => {
 describe('the sweep', () => {
 	it('catches up three missed months with three expenses, and a second run adds none', () => {
 		const { householdId, owner, ids } = household();
-		createExpense(householdId, owner.id, rent(ids[0], ids, '2026-08-01'), TODAY, 'month');
+		createExpense(householdId, owner.id, rent(ids[0], ids, '2026-08-01'), TODAY, MONTHLY);
 		const [series] = listSeries(householdId);
 
 		const logged = materializeDue(householdId, TODAY);
@@ -141,7 +144,7 @@ describe('the sweep', () => {
 
 	it('logs an occurrence on its own day — not before', () => {
 		const { householdId, owner, ids } = household();
-		createExpense(householdId, owner.id, rent(ids[0], ids, '2026-10-25'), TODAY, 'month');
+		createExpense(householdId, owner.id, rent(ids[0], ids, '2026-10-25'), TODAY, MONTHLY);
 
 		assert.deepEqual(materializeDue(householdId, TODAY), []);
 		assert.equal(materializeDue(householdId, '2026-11-25').length, 1);
@@ -149,7 +152,7 @@ describe('the sweep', () => {
 
 	it('a series from the 31st keeps to the month’s end and comes back to the 31st', () => {
 		const { householdId, owner, ids } = household();
-		createExpense(householdId, owner.id, rent(ids[0], ids, '2026-01-31'), '2026-01-31', 'month');
+		createExpense(householdId, owner.id, rent(ids[0], ids, '2026-01-31'), '2026-01-31', MONTHLY);
 		const [series] = listSeries(householdId);
 
 		materializeDue(householdId, '2026-05-31');
@@ -169,7 +172,7 @@ describe('the sweep', () => {
 			members[1].id,
 			{ ...rent(ids[0], ids, '2026-10-24', 10000), splitMode: 'equal' },
 			TODAY,
-			'month'
+			MONTHLY
 		);
 		const [series] = listSeries(householdId);
 		const [expenseId] = materializeDue(householdId, TODAY);
@@ -184,10 +187,50 @@ describe('the sweep', () => {
 		);
 	});
 
+	it('every 3 months from 31 Jan: Apr 30, Jul 31, Oct 31 — and nothing in between', () => {
+		const { householdId, owner, ids } = household();
+		const id = createExpense(householdId, owner.id, rent(ids[0], ids, '2026-01-31'), '2026-01-31', {
+			unit: 'month',
+			interval: 3
+		});
+		const [series] = listSeries(householdId);
+		assert.equal(series.interval, 3);
+		assert.equal(series.nextDate, '2026-04-30');
+		assert.deepEqual(listLedger(householdId).find((item) => item.id === id)?.repeats, {
+			unit: 'month',
+			interval: 3
+		});
+
+		materializeDue(householdId, TODAY);
+		assert.deepEqual(occurrences(householdId, series.id), [
+			'2026-01-31',
+			'2026-04-30',
+			'2026-07-31',
+			'2026-10-31'
+		]);
+		assert.equal(getSeries(householdId, series.id)?.nextDate, '2027-01-31');
+	});
+
+	it('every 2 weeks is fourteen days apart', () => {
+		const { householdId, owner, ids } = household();
+		createExpense(householdId, owner.id, rent(ids[0], ids, '2026-10-27'), TODAY, {
+			unit: 'week',
+			interval: 2
+		});
+		const [series] = listSeries(householdId);
+
+		materializeDue(householdId, TODAY);
+		assert.deepEqual(occurrences(householdId, series.id), [
+			'2026-10-27',
+			'2026-11-10',
+			'2026-11-24'
+		]);
+	});
+
 	it('never touches another household’s series', () => {
 		const a = household();
 		const b = household();
-		createExpense(a.householdId, a.owner.id, rent(a.ids[0], a.ids, '2026-10-01'), TODAY, 'month');
+		createExpense(a.householdId, a.owner.id, rent(a.ids[0], a.ids, '2026-10-01'), TODAY, MONTHLY);
 
 		assert.deepEqual(materializeDue(b.householdId, TODAY), []);
 		assert.equal(materializeDue(a.householdId, TODAY).length, 1);
@@ -197,7 +240,7 @@ describe('the sweep', () => {
 describe('editing and stopping', () => {
 	function seriesInput(ids: string[], patch: Partial<SeriesInput> = {}): SeriesInput {
 		const { date: _date, ...template } = rent(ids[0], ids, TODAY);
-		return { ...template, unit: 'month', nextDate: '2026-12-01', ...patch };
+		return { ...template, unit: 'month', interval: 1, nextDate: '2026-12-01', ...patch };
 	}
 
 	it('editing the series changes the ones to come, never the ones logged', () => {
@@ -207,7 +250,7 @@ describe('editing and stopping', () => {
 			owner.id,
 			rent(ids[0], ids, '2026-10-01'),
 			TODAY,
-			'month'
+			MONTHLY
 		);
 		const [series] = listSeries(householdId);
 		materializeDue(householdId, TODAY);
@@ -249,7 +292,7 @@ describe('editing and stopping', () => {
 			owner.id,
 			rent(ids[0], ids, '2026-11-01'),
 			TODAY,
-			'month'
+			MONTHLY
 		);
 
 		updateExpense(householdId, owner.id, first, rent(ids[0], ids, '2026-11-01', 12000), TODAY);
@@ -260,7 +303,7 @@ describe('editing and stopping', () => {
 
 	it('the next date can’t be in the past; moving it re-anchors, keeping it doesn’t', () => {
 		const { householdId, owner, ids } = household();
-		createExpense(householdId, owner.id, rent(ids[0], ids, '2026-01-31'), '2026-01-31', 'month');
+		createExpense(householdId, owner.id, rent(ids[0], ids, '2026-01-31'), '2026-01-31', MONTHLY);
 		const [series] = listSeries(householdId);
 		materializeDue(householdId, '2026-01-31');
 		assert.equal(getSeries(householdId, series.id)?.nextDate, '2026-02-28');
@@ -303,9 +346,47 @@ describe('editing and stopping', () => {
 		assert.equal(getSeries(householdId, series.id)?.anchorDay, 15);
 	});
 
+	it('changing the interval re-anchors on the next date and steps by the new interval', () => {
+		const { householdId, owner, ids } = household();
+		createExpense(householdId, owner.id, rent(ids[0], ids, '2026-11-15'), TODAY, MONTHLY);
+		const [series] = listSeries(householdId);
+
+		updateSeries(
+			householdId,
+			series.id,
+			seriesInput(ids, { interval: 2, nextDate: '2026-12-15' }),
+			TODAY
+		);
+		const edited = getSeries(householdId, series.id);
+		assert.equal(edited?.interval, 2);
+		assert.equal(edited?.anchorDay, 15);
+
+		materializeDue(householdId, '2027-04-15');
+		assert.deepEqual(occurrences(householdId, series.id), [
+			'2026-11-15',
+			'2026-12-15',
+			'2027-02-15',
+			'2027-04-15'
+		]);
+	});
+
+	it('an interval outside 1–99 is refused', () => {
+		const { householdId, owner, ids } = household();
+		createExpense(householdId, owner.id, rent(ids[0], ids, '2026-11-15'), TODAY, MONTHLY);
+		const [series] = listSeries(householdId);
+
+		for (const interval of [0, 100, 1.5]) {
+			assert.throws(
+				() => updateSeries(householdId, series.id, seriesInput(ids, { interval }), TODAY),
+				rejects('split')
+			);
+		}
+		assert.equal(getSeries(householdId, series.id)?.interval, 1);
+	});
+
 	it('stopping ends the series and keeps every occurrence', () => {
 		const { householdId, owner, ids } = household();
-		createExpense(householdId, owner.id, rent(ids[0], ids, '2026-09-01'), TODAY, 'month');
+		createExpense(householdId, owner.id, rent(ids[0], ids, '2026-09-01'), TODAY, MONTHLY);
 		const [series] = listSeries(householdId);
 		materializeDue(householdId, TODAY);
 		assert.equal(getSeries(householdId, series.id)?.occurrences, 3);
@@ -324,7 +405,7 @@ describe('editing and stopping', () => {
 	it('another household can neither see, edit nor stop a series', () => {
 		const a = household();
 		const b = household();
-		createExpense(a.householdId, a.owner.id, rent(a.ids[0], a.ids, TODAY), TODAY, 'month');
+		createExpense(a.householdId, a.owner.id, rent(a.ids[0], a.ids, TODAY), TODAY, MONTHLY);
 		const [series] = listSeries(a.householdId);
 
 		assert.equal(getSeries(b.householdId, series.id), null);
@@ -345,21 +426,21 @@ describe('when someone leaves', () => {
 			owner.id,
 			{ ...rent(lukas, ids, '2026-10-01'), description: 'Rent' },
 			TODAY,
-			'month'
+			MONTHLY
 		);
 		createExpense(
 			householdId,
 			owner.id,
 			{ ...rent(elisabeth, [elisabeth], '2026-10-05', 1399), description: 'Netflix' },
 			TODAY,
-			'month'
+			MONTHLY
 		);
 		createExpense(
 			householdId,
 			owner.id,
 			{ ...rent(lukas, [lukas], '2026-10-07', 3990), description: 'Internet' },
 			TODAY,
-			'month'
+			MONTHLY
 		);
 		materializeDue(householdId, TODAY);
 
@@ -386,8 +467,8 @@ describe('when someone leaves', () => {
 	it('removal stops them too, and never another household’s', () => {
 		const a = household(['Elisabeth']);
 		const b = household(['Elisabeth']);
-		createExpense(a.householdId, a.owner.id, rent(a.ids[0], a.ids, TODAY), TODAY, 'month');
-		createExpense(b.householdId, b.owner.id, rent(b.ids[0], b.ids, TODAY), TODAY, 'month');
+		createExpense(a.householdId, a.owner.id, rent(a.ids[0], a.ids, TODAY), TODAY, MONTHLY);
+		createExpense(b.householdId, b.owner.id, rent(b.ids[0], b.ids, TODAY), TODAY, MONTHLY);
 
 		removeMember(a.householdId, a.owner.id, a.members[1].id);
 		assert.equal(countSeries(a.householdId), 0);
@@ -543,7 +624,7 @@ describe('notices', () => {
 
 	it('a repeat tells everyone with a share, the payer included — nobody did it', () => {
 		const { householdId, members, ids } = household();
-		createExpense(householdId, members[0].id, rent(ids[0], ids, '2026-10-24'), TODAY, 'month');
+		createExpense(householdId, members[0].id, rent(ids[0], ids, '2026-10-24'), TODAY, MONTHLY);
 		const [expenseId] = materializeDue(householdId, TODAY);
 
 		assert.deepEqual(titles(householdId, { kind: 'repeated', expenseId }), [

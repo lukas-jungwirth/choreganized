@@ -89,8 +89,8 @@ test('a monthly expense logged late catches up, then edits and stops as a series
 	await sheet.getByLabel('Amount').fill('39.90');
 	await sheet.getByLabel('What for?').fill(name);
 	await sheet.getByRole('textbox', { name: /^Date/ }).fill(started);
-	await sheet.getByRole('combobox', { name: /^Repeats/ }).selectOption('month');
-	await expect(sheet.getByRole('combobox', { name: /^Repeats/ })).toHaveValue('month');
+	await sheet.getByRole('combobox', { name: /^Repeats/ }).selectOption('month-1');
+	await expect(sheet.getByRole('combobox', { name: /^Repeats/ })).toHaveValue('month-1');
 	await sheet.getByRole('button', { name: 'Save', exact: true }).click();
 	await expect(sheet).toBeHidden();
 
@@ -139,6 +139,53 @@ test('a monthly expense logged late catches up, then edits and stops as a series
 		.click();
 	await expect(page.getByTestId('series-row').filter({ hasText: name })).toHaveCount(0);
 	expect(await rows()).toBe(2);
+});
+
+// Lukas's two asks on Recurring [9h] (→ SPEC §11.9): start a series from the
+// screen itself, and repeat it on any count of weeks, months or years.
+test('start a series from Recurring every 2 months, then make it quarterly', async ({ page }) => {
+	const name = `Insurance ${Date.now().toString(36)}`;
+
+	await page.goto('/expenses/recurring');
+	await page.getByRole('button', { name: 'New recurring expense' }).click();
+	const sheet = page.getByRole('dialog', { name: 'Add expense' });
+	const repeats = sheet.getByRole('combobox', { name: /^Repeats/ });
+	await expect(repeats).toHaveValue('month-1');
+	await sheet.getByLabel('Amount').fill('120');
+	await sheet.getByLabel('What for?').fill(name);
+	await repeats.selectOption('custom');
+	await sheet.getByRole('button', { name: 'Increase every' }).click();
+	await expect(sheet.getByRole('spinbutton', { name: 'Every' })).toHaveValue('3');
+	await sheet.getByRole('button', { name: 'Decrease every' }).click();
+	await expect(sheet.getByRole('combobox', { name: 'Unit' })).toHaveValue('month');
+	await expect(sheet.getByText('Every 2 months')).toBeVisible();
+	await sheet.getByRole('button', { name: 'Save', exact: true }).click();
+	await expect(sheet).toBeHidden();
+
+	// Logged today as the first one; the list names the cadence and the next.
+	const row = page.getByTestId('series-row').filter({ hasText: name });
+	await expect(row).toContainText('Every 2 months · next');
+	await row.click();
+	const series = page.getByRole('dialog', { name });
+	await expect(series).toContainText(/Every 2 months on the \d+(st|nd|rd|th)/);
+
+	// Edit series opens on the custom pair; Quarterly is one of the quick choices.
+	await series.getByRole('button', { name: /Edit series/ }).click();
+	const edit = page.getByRole('dialog', { name: 'Edit series' });
+	await expect(edit.getByRole('combobox', { name: /^Repeats/ })).toHaveValue('custom');
+	await expect(edit.getByRole('spinbutton', { name: 'Every' })).toHaveValue('2');
+	await edit.getByRole('combobox', { name: /^Repeats/ }).selectOption('month-3');
+	await edit.getByRole('button', { name: 'Save changes' }).click();
+	await expect(edit).toBeHidden();
+	await expect(row).toContainText('Quarterly · next');
+
+	// Tidy up: other runs share the household.
+	await row.click();
+	await page
+		.getByRole('dialog', { name })
+		.getByRole('button', { name: /Stop repeating/ })
+		.click();
+	await expect(row).toHaveCount(0);
 });
 
 // All activity's filters [9f] (→ SPEC §11.12): each chip opens its own sheet

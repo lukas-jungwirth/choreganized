@@ -2724,3 +2724,23 @@ units | null, name}`, written back as editor lines in the reader's unit spelling
      trips and a settle-up on the 28th, from both people, with amounts varied by a fixed rule so
      a re-run writes nothing new. Off by default for the same reason as `--full-house` (#186):
      every e2e journey and screenshot reads the one-week ledger.
+
+189. **A recurring expense repeats every N weeks, months or years**
+     (`expense_recurrences.interval`, migration 0020, SPEC §11.9). Weekly/monthly/yearly were the
+     only choices, so quarterly bills and every-second-month ones couldn't be a series. Modelled
+     on a chore's repeat (`tasks.recurInterval`): quick choices — Weekly, Monthly, **Quarterly**
+     (3 months, the common bill cadence), Yearly — plus **Custom…**, which opens the same
+     stepper + unit pair as the task sheet, capped at 99 like chores. No day unit: nothing in a
+     household's bills repeats daily. Existing rows default to 1. The interval is part of what
+     "moves" a series, so changing it re-anchors on the next date. Labels count ("Every 2
+     months") except the every-one cadences and the quarter, which get their own word. The row
+     posts `repeat`/`unit` plus `interval`; `utils/expenses` `readRepeat` validates both.
+
+190. **Recurring adds with a FAB and the empty state's button, not a header button**
+     (`/expenses/recurring`). The screen was empty with no way to start a series. Every other
+     "add" in the app — the Expenses tab, Recipes — is the empty state's button, then a FAB once
+     there is a list; a header button here would be the one exception. Both open the existing
+     add sheet [9b] with Repeats on Monthly (the bills this screen is for are mostly monthly) and
+     post to the shared `save` action, so a series still starts as its first expense. The tab
+     gets no bottom "Recurring" row beside All activity: [9a-owe] keeps Recurring in the •••
+     menu with its count, and the bottom row continues the Recent list it sits under.

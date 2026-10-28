@@ -1,0 +1,1 @@
+ALTER TABLE `expense_recurrences` ADD `interval` integer DEFAULT 1 NOT NULL;

@@ -31,6 +31,7 @@ import {
 	type CalendarDate
 } from '$lib/utils/dates';
 import { INTL_LOCALE } from '$lib/i18n/locale';
+import type { RepeatUnit } from '$lib/utils/expenses';
 import type { HolidayKey } from '$lib/utils/holidays';
 import { formatAmount, formatIngredient } from '$lib/utils/ingredients';
 import { currencySymbol, formatMoney } from '$lib/utils/money';
@@ -1391,12 +1392,23 @@ export const en = {
 			delete: 'Delete expense',
 			/** The Repeats row [9b] (→ SPEC §11.9), and its choices. */
 			repeats: 'Repeats',
-			repeat: {
-				never: 'Never',
-				week: 'Weekly',
-				month: 'Monthly',
-				year: 'Yearly'
+			never: 'Never',
+			/**
+			 * A series' cadence: "Weekly", "Quarterly", "Every 2 months". The
+			 * every-one cadences and the quarter get their own word; the rest count.
+			 */
+			repeat: (unit: RepeatUnit, interval: number) => {
+				if (interval === 1)
+					return unit === 'week' ? 'Weekly' : unit === 'month' ? 'Monthly' : 'Yearly';
+				if (unit === 'month' && interval === 3) return 'Quarterly';
+				return `Every ${interval} ${unit}s`;
 			},
+			/** The choice that reveals the count + unit pair, as a chore's repeat does. */
+			repeatCustom: 'Custom…',
+			every: 'Every',
+			unit: 'Unit',
+			/** The custom row's unit dropdown, agreeing with the count before it. */
+			units: (unit: RepeatUnit, count: number) => (count === 1 ? unit : `${unit}s`),
 			/** The sheet when it edits a series [9h-stop]: the date row names the next one. */
 			editSeries: 'Edit series',
 			nextOne: 'Next one'
@@ -1491,12 +1503,8 @@ export const en = {
 			added: (who: string, when: string) => `Added by ${who} · ${when}`,
 			edited: (who: string, when: string) => `Edited by ${who} · ${when}`,
 			someone: 'someone',
-			/** The pill under the date of an expense whose series is running [9e]. */
-			repeats: {
-				week: 'Repeats weekly',
-				month: 'Repeats monthly',
-				year: 'Repeats yearly'
-			},
+			/** The pill under the date of an expense whose series is running [9e]: "Repeats quarterly". */
+			repeats: (cadence: string) => `Repeats ${cadence.charAt(0).toLowerCase()}${cadence.slice(1)}`,
 			editSeries: 'Edit series'
 		},
 
@@ -1506,14 +1514,21 @@ export const en = {
 			back: 'Back to expenses',
 			intro:
 				'Each one is added as a normal expense on its day, at 06:00. Changes here apply to future ones only.',
-			/** A row's second line: "Monthly · next Dec 1". */
-			schedule: (unit: string, next: string) => `${unit} · next ${next}`,
+			/** A row's second line: "Monthly · next Dec 1", "Every 2 months · next Dec 1". */
+			schedule: (cadence: string, next: string) => `${cadence} · next ${next}`,
 			/** The sheet's subtitle: "€900.00 · Monthly on the 1st · Lukas pays". */
 			summary: (amount: string, rule: string, pays: string) => `${amount} · ${rule} · ${pays}`,
 			rule: {
-				week: (weekday: string) => `Every ${weekday}`,
-				month: (day: number) => `Monthly on the ${ordinal(day)}`,
-				year: (date: string) => `Yearly on ${date}`
+				week: (weekday: string, interval: number) =>
+					interval === 1 ? `Every ${weekday}` : `Every ${interval} weeks on ${weekday}`,
+				month: (day: number, interval: number) =>
+					interval === 1
+						? `Monthly on the ${ordinal(day)}`
+						: interval === 3
+							? `Quarterly on the ${ordinal(day)}`
+							: `Every ${interval} months on the ${ordinal(day)}`,
+				year: (date: string, interval: number) =>
+					interval === 1 ? `Yearly on ${date}` : `Every ${interval} years on ${date}`
 			},
 			pays: (who: string | null) => (who === null ? 'you pay' : `${who} pays`),
 			nextOne: 'Next one',
@@ -1528,7 +1543,9 @@ export const en = {
 						: `The ${count} already added stay as they are`,
 			empty: 'Nothing repeats yet',
 			emptyCopy:
-				'Rent, subscriptions, the internet bill: pick “Repeats” when you add one, and it logs itself.'
+				'Rent, subscriptions, the internet bill: add one here, or pick “Repeats” on any expense, and it logs itself.',
+			/** The empty state's button and the FAB: the add sheet with Repeats already on. */
+			add: 'New recurring expense'
 		},
 
 		/** [9f] */

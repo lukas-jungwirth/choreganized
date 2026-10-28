@@ -3,8 +3,13 @@
 	first — what it is, how much, how often and when next, and who pays. A row
 	opens the series [9h-stop]; "Edit series" there swaps in the add sheet in
 	its series mode. Both are state, not routes (→ DECISIONS #17).
+
+	"New recurring expense" — the empty state's button, then the FAB, as on the
+	tab itself — opens the same add sheet with Repeats on Monthly: a series
+	starts from the expense it is first logged as (→ SPEC §11.9).
 -->
 <script lang="ts">
+	import Plus from '@lucide/svelte/icons/plus';
 	import CategoryIcon from '$lib/components/expenses/CategoryIcon.svelte';
 	import ExpenseSheet from '$lib/components/expenses/ExpenseSheet.svelte';
 	import SeriesSheet from '$lib/components/expenses/SeriesSheet.svelte';
@@ -13,7 +18,9 @@
 	import RepeatIcon from '$lib/components/icons/RepeatIcon.svelte';
 	import SubHeader from '$lib/components/shell/SubHeader.svelte';
 	import Avatar from '$lib/components/ui/Avatar.svelte';
+	import Button from '$lib/components/ui/Button.svelte';
 	import EmptyState from '$lib/components/ui/EmptyState.svelte';
+	import FAB from '$lib/components/ui/FAB.svelte';
 	import { messages } from '$lib/i18n';
 	import type { PageProps } from './$types';
 
@@ -21,11 +28,12 @@
 
 	const m = messages();
 
-	type Sheet = { kind: 'series'; id: string } | { kind: 'edit'; id: string };
+	type Sheet = { kind: 'series'; id: string } | { kind: 'edit'; id: string } | { kind: 'add' };
 	let sheet = $state<Sheet | null>(null);
 
 	/** Looked up by id, so the sheet follows the list as it reloads — and closes if it's gone. */
-	const open = $derived(sheet ? data.series.find((series) => series.id === sheet?.id) : undefined);
+	const openId = $derived(sheet && sheet.kind !== 'add' ? sheet.id : null);
+	const open = $derived(data.series.find((series) => series.id === openId));
 	const byId = $derived(new Map(data.people.map((person) => [person.id, person])));
 	const pickable = $derived.by(() => {
 		const people = pickablePeople(data.people, data.balances);
@@ -51,6 +59,12 @@
 	<EmptyState title={m.expenses.recurring.empty}>
 		{#snippet icon()}<RepeatIcon size={34} strokeWidth={1.6} />{/snippet}
 		{m.expenses.recurring.emptyCopy}
+		{#snippet action()}
+			<Button onclick={() => (sheet = { kind: 'add' })}>
+				<Plus size={18} strokeWidth={2.4} aria-hidden="true" />
+				{m.expenses.recurring.add}
+			</Button>
+		{/snippet}
 	</EmptyState>
 {:else}
 	<p class="intro">{m.expenses.recurring.intro}</p>
@@ -78,9 +92,25 @@
 			</li>
 		{/each}
 	</ul>
+
+	<FAB label={m.expenses.recurring.add} onclick={() => (sheet = { kind: 'add' })}>
+		<Plus size={24} strokeWidth={2.4} />
+	</FAB>
 {/if}
 
-{#if open && sheet?.kind === 'series'}
+{#if sheet?.kind === 'add'}
+	<ExpenseSheet
+		item={null}
+		repeating={{ unit: 'month', interval: 1 }}
+		people={pickablePeople(data.people, data.balances)}
+		me={data.me}
+		currency={data.currency}
+		today={data.today}
+		splitDefault={data.splitDefault}
+		suggestions={data.suggestions}
+		onclose={() => (sheet = null)}
+	/>
+{:else if open && sheet?.kind === 'series'}
 	<SeriesSheet
 		series={open}
 		people={data.people}
@@ -115,7 +145,8 @@
 	}
 
 	.list {
-		margin: 0;
+		/* Room for the FAB, which would otherwise sit on the last row's payer. */
+		margin: 0 0 64px;
 		padding: 0;
 		overflow: hidden;
 		list-style: none;
