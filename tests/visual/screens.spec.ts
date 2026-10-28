@@ -10,12 +10,13 @@
  * because a macOS Chromium renders text differently enough to fail every one
  * of them.
  *
- * Masks cover what changes with the calendar: the greeting follows the hour,
- * standings the month, due labels and "added on" / "joined" lines the day. A
- * screen whose whole body is the calendar (the week plan, history) is not here
- * at all — it is excused, with that reason, in
- * tests/conventions/visual-coverage.test.ts, which fails for any page that is
- * neither here nor excused. Each screen names its `route` for that test.
+ * Every run happens on the same afternoon (→ playwright.config.ts, "The fixed
+ * clock" in docs/TESTING.md), so greetings, due labels, day heads and "added on"
+ * lines are part of the picture, not masked. Masks are left for what is random
+ * (an invite code) or stamped at the minute the seed ran. A screen whose whole
+ * body is the calendar (the week plan, history) is still not here — it is
+ * excused in tests/conventions/visual-coverage.test.ts, which fails for any page
+ * that is neither here nor excused. Each screen names its `route` for that test.
  */
 import { expect, test, type Page } from '@playwright/test';
 import { SEED } from '../e2e/accounts';
@@ -24,12 +25,6 @@ test.skip(
 	process.platform !== 'linux',
 	'Visual baselines are Linux-only — run `npm run test:visual` (Docker) or let CI compare.'
 );
-
-/** The greeting follows the hour, standings the month, due labels the day. */
-// The greeting follows the hour, so the whole `header` is masked — not the
-// `h1`, a flex item whose box is exactly as wide as "Good afternoon" or "Good
-// evening", which left a strip beside it to diff (→ DECISIONS #144).
-const HOME_MASKS = ['header:has(h1)', '.strip', '.chore .meta', '.activity .meta'];
 
 type Screen = {
 	name: string;
@@ -87,8 +82,6 @@ async function openAddExpense(page: Page): Promise<void> {
 	await sheet.getByLabel('What for?').blur();
 }
 
-const EXPENSE_MASKS = ['.day-label', '.row .meta'];
-
 async function openAiFeatures(page: Page): Promise<void> {
 	await page.goto('/settings');
 	await page.getByRole('button', { name: /^AI features/ }).click();
@@ -102,20 +95,18 @@ const SCREENS: Screen[] = [
 	{ name: 'login', route: '/login', path: '/login', signedOut: true, fullPage: true },
 	{ name: 'kit-light', route: '/dev/kit', path: '/dev/kit', fullPage: true },
 	{ name: 'kit-dark', route: '/dev/kit', path: '/dev/kit', theme: 'dark', fullPage: true },
-	{ name: 'home', route: '/(app)/home', path: '/home', mask: HOME_MASKS, bottom: true },
-	{ name: 'home-dark', route: '/(app)/home', path: '/home', theme: 'dark', mask: HOME_MASKS },
+	{ name: 'home', route: '/(app)/home', path: '/home', bottom: true },
+	{ name: 'home-dark', route: '/(app)/home', path: '/home', theme: 'dark' },
 	{ name: 'shopping', route: '/(app)/shopping', path: '/shopping', bottom: true },
 	{ name: 'shopping-dark', route: '/(app)/shopping', path: '/shopping', theme: 'dark' },
-	// `.footer` is the overdue row's "reminded yesterday & this morning" line.
-	{
-		name: 'tasks',
-		route: '/(app)/tasks',
-		path: '/tasks',
-		mask: ['.task .meta', '.task .footer', '.summary'],
-		bottom: true
-	},
-	// A card's "30 min · added Sep 11".
-	{ name: 'recipes', route: '/(app)/cooking/recipes', path: '/cooking/recipes', mask: ['.meta'] },
+	{ name: 'tasks', route: '/(app)/tasks', path: '/tasks', bottom: true },
+	// The calendar screens, which the real clock kept out of here until the
+	// fixed one (→ DECISIONS #184).
+	{ name: 'tasks-history', route: '/(app)/tasks/history', path: '/tasks/history' },
+	{ name: 'tasks-history-all', route: '/(app)/tasks/history/all', path: '/tasks/history/all' },
+	{ name: 'week', route: '/(app)/cooking', path: '/cooking', bottom: true },
+	{ name: 'expenses-history', route: '/(app)/expenses/history', path: '/expenses/history' },
+	{ name: 'recipes', route: '/(app)/cooking/recipes', path: '/cooking/recipes' },
 	{
 		name: 'recipe',
 		route: '/(app)/cooking/recipes/[id]',
@@ -146,22 +137,8 @@ const SCREENS: Screen[] = [
 			await page.getByText(/^Step 1 of/).waitFor();
 		}
 	},
-	// Day heads and a payment's clock time follow the calendar; every amount is
-	// the seed's, so the numbers themselves stay unmasked.
-	{
-		name: 'expenses',
-		route: '/(app)/expenses',
-		path: '/expenses',
-		mask: EXPENSE_MASKS,
-		bottom: true
-	},
-	{
-		name: 'expenses-dark',
-		route: '/(app)/expenses',
-		path: '/expenses',
-		theme: 'dark',
-		mask: EXPENSE_MASKS
-	},
+	{ name: 'expenses', route: '/(app)/expenses', path: '/expenses', bottom: true },
+	{ name: 'expenses-dark', route: '/(app)/expenses', path: '/expenses', theme: 'dark' },
 	{ name: 'expenses-add', route: '/(app)/expenses', path: '', navigate: openAddExpense },
 	{
 		name: 'expenses-split',
@@ -197,15 +174,15 @@ const SCREENS: Screen[] = [
 			await page.getByRole('link', { name: /Strom · Wien Energie/ }).click();
 			await page.getByRole('heading', { name: 'Strom · Wien Energie' }).waitFor();
 		},
-		mask: ['.meta', '.stamps']
+		// "Added … at 14:00": the minute the seed ran, which is however long
+		// the server took to start after the run's clock began.
+		mask: ['.stamps']
 	},
-	// Recurring [9h] and one series [9h-stop]: the seed's monthly Strom. Its
-	// next date follows the calendar, so the schedule line is masked.
+	// Recurring [9h] and one series [9h-stop]: the seed's monthly Strom.
 	{
 		name: 'expenses-recurring',
 		route: '/(app)/expenses/recurring',
-		path: '/expenses/recurring',
-		mask: ['.row .meta']
+		path: '/expenses/recurring'
 	},
 	{
 		name: 'expenses-series',
@@ -215,8 +192,7 @@ const SCREENS: Screen[] = [
 			await page.goto('/expenses/recurring');
 			await page.getByTestId('series-row').first().click();
 			await page.getByRole('dialog', { name: 'Strom · Wien Energie' }).waitFor();
-		},
-		mask: ['.row .meta', '.next-date', '.subtitle']
+		}
 	},
 	{ name: 'settings', route: '/(app)/settings', path: '/settings', bottom: true },
 	{
@@ -251,12 +227,12 @@ const SCREENS: Screen[] = [
 			await page.locator('.save').scrollIntoViewIfNeeded();
 		}
 	},
-	// "Owner · joined Sep 11", and the pending invite's code, random per seed.
+	// The pending invite's code, random per seed.
 	{
 		name: 'members',
 		route: '/(app)/settings/members',
 		path: '/settings/members',
-		mask: ['.member .meta', '.invite .pending']
+		mask: ['.invite .pending']
 	},
 	// The add-a-recipe screens [3d]: import by link (AI off for this household, so
 	// the plain link field), and the empty editor.
@@ -359,8 +335,8 @@ async function settle(page: Page): Promise<void> {
 
 /**
  * A mask that matches nothing masks nothing — and Playwright says nothing. So a
- * renamed class would quietly un-mask the calendar, pass until the month rolls,
- * and then fail on every PR for a reason nobody caused.
+ * renamed class would quietly un-mask a random code and fail on every PR for a
+ * reason nobody caused.
  */
 async function masksFor(page: Page, selectors: string[]) {
 	const masks = selectors.map((selector) => page.locator(selector));

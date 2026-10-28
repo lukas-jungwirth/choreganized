@@ -252,18 +252,34 @@ whenever the flag is on, and `scripts/smoke.ts` asserts it is **off** on every d
 ### Visual
 
 `tests/visual/screens.spec.ts` is a table: one full-page screenshot per screen at 390px,
-light and dark where the theme matters, with masks over what follows the calendar (the greeting
-follows the hour, standings the month, due labels the day). A screen whose whole body is the
-calendar — the week plan, history — is not in it. Add a screen by adding a row, with the
-`route` it shows: **every page must be in the table or excused** —
-`tests/conventions/visual-coverage.test.ts` fails `npm test` for a page in `src/routes` that is
-neither, and an excuse there carries its reason (→ DECISIONS #156). The onboarding screens sign
-up a fresh account per test, since both seeded accounts already own a household. **A mask must
-cover a box that doesn't follow the text** — Home masks its whole `header`, not the `h1`, whose
-width changed with the greeting — and a sample page fixes its own clock: `/dev/kit` renders
-2026-09-11 for ever (→ DECISIONS #144). Something that **appears** with the calendar can't be
-masked, because it moves everything below it: the shop-closure banner on Home and Shopping is
-answered "Got it" for the `visual` account by the setup project instead (→ DECISIONS #153).
+light and dark where the theme matters. Add a screen by adding a row, with the `route` it
+shows: **every page must be in the table or excused** — `tests/conventions/visual-coverage.test.ts`
+fails `npm test` for a page in `src/routes` that is neither, and an excuse there carries its
+reason (→ DECISIONS #156). The onboarding screens sign up a fresh account per test, since both
+seeded accounts already own a household. The calendar is part of the picture, since every run
+happens on the same afternoon (next section). Masks are only for what is **random** (an invite
+code) or stamped at **the minute the seed ran**, and **a mask must cover a box that doesn't
+follow the text**: a box as wide as a weekday diffs on every other day (→ DECISIONS #144).
+
+#### The fixed clock
+
+Every Playwright run — e2e and visual — happens on **Wednesday 18 June 2036, from 14:00 in
+Vienna** (→ DECISIONS #184). `playwright.config.ts` sets `FIXED_CLOCK` (the instant),
+`FIXED_CLOCK_ANCHOR` (the real time the run began) and a `NODE_OPTIONS` preload of
+`scripts/fixed-clock.ts`, so the workers, `scripts/e2e-server.ts`, the build it starts and the
+seed all start their `Date` at that instant and share one clock that still ticks. The server
+hands the same shift to the browser: in E2E mode with `FIXED_CLOCK` set, `hooks.server.ts`
+puts `$lib/fixed-clock`'s `installFixedClock` first in `<head>`. `tests/e2e/clock.spec.ts`
+checks that all of them agree.
+
+- A test that needs "today" reads `new Date()` like the app does. It gets the run's
+  afternoon.
+- The year is far ahead on purpose. The browser's cookie jar runs on the real clock, and a
+  session cookie stamped with an expiry in the past would be dropped.
+- `PLAYWRIGHT_BASE_URL` (your own server) turns it off, because that server keeps the real
+  clock and the tests must share their server's clock.
+- `npm run dev` and every deploy never see it: the hook checks E2E mode, and nothing else
+  sets the variables.
 
 **Baselines are Linux-only** (→ DECISIONS #140): a macOS Chromium rasterises text differently
 enough to fail every comparison, so `tests/visual/__screenshots__/*.png` are made in the
