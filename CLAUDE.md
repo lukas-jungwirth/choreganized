@@ -80,6 +80,7 @@ npm run check:migrations  # schema.ts edited without a migration? (also run by `
 npm run db:generate    # new migration after editing schema.ts
 npm run db:seed -- you@example.com   # demo data for a signed-in user (idempotent)
 npm run db:seed -- you@example.com --full-house   # …plus stub members up to the max (5)
+npm run db:seed -- you@example.com --history      # …plus ~14 months of older expenses
 npm run db:studio      # inspect the DB
 npm run import:probe -- <url> [--save <name>]  # what the recipe importer reads on a page
 npm run format         # prettier

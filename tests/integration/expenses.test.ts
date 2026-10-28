@@ -347,7 +347,7 @@ describe('settling up', () => {
 });
 
 describe('history and suggestions', () => {
-	it('filters by text inside words, category, person, mine and payments, a month at a time', () => {
+	it('filters by text, who paid and category, a month at a time', () => {
 		const { householdId, owner, members, ids } = household(['Elisabeth', 'Marco']);
 		const [me, elisabeth, marco] = ids;
 		const log = (input: Partial<ExpenseInput>) =>
@@ -372,40 +372,103 @@ describe('history and suggestions', () => {
 		const ledger = listLedger(householdId);
 		const none: HistoryFilters = {
 			query: '',
-			category: null,
-			personId: null,
-			mine: false,
-			payments: false
+			range: 'all',
+			start: null,
+			end: null,
+			payerId: null,
+			category: null
 		};
 		const run = (filters: Partial<HistoryFilters>, from?: string) =>
-			filterHistory(ledger, { ...none, ...filters }, me, TODAY, from);
+			filterHistory(ledger, { ...none, ...filters }, TODAY, from);
+		const kinds = (result: ReturnType<typeof run>) =>
+			result.groups.flatMap((group) => group.items.map((item) => item.description ?? item.kind));
 
 		const november = run({});
-		assert.equal(november.months.length, 1);
-		assert.equal(november.months[0].items.length, 3);
-		assert.equal(november.months[0].spentMinor, 4210 * 2);
+		assert.equal(november.byDay, false);
+		assert.deepEqual(
+			november.groups.map((group) => group.key),
+			['2026-11-01']
+		);
+		assert.equal(november.groups[0].items.length, 3);
+		// Settle-ups are listed, never spent; the total and the count span every page.
+		assert.equal(november.groups[0].spentMinor, 4210 * 2);
+		assert.equal(november.count, 4);
+		assert.equal(november.spentMinor, 4210 * 2 + 90000);
 		assert.equal(november.older, '2026-09-01');
 
-		assert.deepEqual(
-			run({ query: 'BILLA' }).months[0].items.map((item) => item.description),
-			['Wocheneinkauf · Billa']
-		);
-		assert.equal(run({ category: 'leisure' }).months[0].items.length, 1);
-		assert.equal(run({ mine: true }).months[0].items.length, 2);
-		assert.equal(run({ personId: marco }).months[0].items.length, 2);
-		assert.deepEqual(
-			run({ payments: true }).months[0].items.map((item) => item.kind),
-			['payment']
-		);
-		// Nothing older matches "Kino", so there is no "Show September" for it.
+		assert.deepEqual(kinds(run({ query: 'BILLA' })), ['Wocheneinkauf · Billa']);
+		assert.deepEqual(kinds(run({ category: 'leisure' })), ['Kino']);
+		assert.deepEqual(kinds(run({ category: 'payments' })), ['payment']);
+		// Paid by: who paid, not who is in it — Marco shares Kino but paid nothing.
+		assert.deepEqual(kinds(run({ payerId: elisabeth })), ['payment', 'Kino']);
+		assert.deepEqual(kinds(run({ payerId: marco })), []);
+		assert.equal(run({ payerId: me }).count, 2);
+		// Nothing older matches "Kino", so there is no "Load September" for it.
 		assert.equal(run({ query: 'kino' }).older, null);
 
 		const paged = run({}, '2026-09-15');
 		assert.deepEqual(
-			paged.months.map((month) => month.month),
+			paged.groups.map((group) => group.key),
 			['2026-11-01', '2026-09-01']
 		);
 		assert.equal(paged.older, null);
+	});
+
+	it('shows a bounded period whole, by day up to a month and by month past it', () => {
+		const { householdId, owner, ids } = household();
+		const log = (date: string, description: string) =>
+			createExpense(householdId, owner.id, { ...groceries(ids[0], ids), description, date }, TODAY);
+		log('2026-11-20', 'Billa');
+		log('2026-11-20', 'Hofer');
+		log('2026-11-03', 'Spar');
+		log('2026-10-12', 'Merkur');
+		log('2025-12-30', 'Last year');
+
+		const ledger = listLedger(householdId);
+		const run = (filters: Partial<HistoryFilters>) =>
+			filterHistory(
+				ledger,
+				{
+					query: '',
+					range: 'all',
+					start: null,
+					end: null,
+					payerId: null,
+					category: null,
+					...filters
+				},
+				TODAY,
+				null
+			);
+
+		const month = run({ range: 'thisMonth' });
+		assert.equal(month.byDay, true);
+		assert.deepEqual(
+			month.groups.map((group) => [group.key, group.items.length]),
+			[
+				['2026-11-20', 2],
+				['2026-11-03', 1]
+			]
+		);
+		assert.equal(month.older, null);
+
+		assert.deepEqual(
+			run({ range: 'lastMonth' }).groups.map((group) => group.key),
+			['2026-10-12']
+		);
+		const year = run({ range: 'thisYear' });
+		assert.equal(year.byDay, false);
+		assert.deepEqual(
+			year.groups.map((group) => group.key),
+			['2026-11-01', '2026-10-01']
+		);
+		assert.equal(year.count, 4);
+		assert.deepEqual(
+			run({ range: 'custom', start: '2026-10-31', end: '2025-12-01' }).groups.map(
+				(group) => group.key
+			),
+			['2026-10-01', '2025-12-01']
+		);
 	});
 
 	it('suggests each wording once, with the category it was last logged under', () => {

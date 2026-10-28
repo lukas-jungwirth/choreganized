@@ -140,3 +140,53 @@ test('a monthly expense logged late catches up, then edits and stops as a series
 	await expect(page.getByTestId('series-row').filter({ hasText: name })).toHaveCount(0);
 	expect(await rows()).toBe(2);
 });
+
+// All activity's filters [9f] (→ SPEC §11.12): each chip opens its own sheet
+// and a pick applies at once; the sliders open all three, and stay open.
+test('narrow All activity by time, payer and category, then clear it', async ({ page }) => {
+	await page.goto('/expenses/history');
+
+	// Time: "This month" names the month and groups the list by day.
+	await page.getByRole('button', { name: 'All time' }).click();
+	const time = page.getByRole('dialog', { name: 'Time' });
+	await time.getByRole('radio', { name: /^This month/ }).click();
+	await expect(time).toBeHidden();
+	await expect(page).toHaveURL(/\?time=thisMonth$/);
+	await expect(page.getByRole('button', { name: 'June', exact: true })).toBeVisible();
+	await expect(page.getByRole('heading', { name: /^Today/ })).toBeVisible();
+
+	// Paid by: who paid — the seeded pizza was Elisabeth's.
+	await page.getByRole('button', { name: 'Any payer' }).click();
+	await page.getByRole('dialog', { name: 'Paid by' }).getByRole('radio', { name: 'You' }).click();
+	await expect(page.getByRole('button', { name: 'Paid by you' })).toBeVisible();
+	await expect(page.getByRole('link', { name: /Pizza at Riva/ })).toHaveCount(0);
+	await expect(page.getByRole('link', { name: /Weekly shop · Billa/ }).first()).toBeVisible();
+
+	await page.getByRole('button', { name: 'All categories' }).click();
+	await page
+		.getByRole('dialog', { name: 'Category' })
+		.getByRole('radio', { name: 'Groceries' })
+		.click();
+	await expect(page.getByRole('link', { name: /Dish soap/ })).toHaveCount(0);
+	await expect(page.getByText(/^\d+ expenses? · €/)).toBeVisible();
+
+	// A set chip's × clears that filter alone.
+	await page.getByRole('link', { name: 'Clear Paid by you' }).click();
+	await expect(page).toHaveURL(/\?time=thisMonth&category=groceries$/);
+	await expect(page.getByRole('button', { name: 'Any payer' })).toBeVisible();
+
+	await page.getByRole('link', { name: 'Clear all' }).click();
+	await expect(page.getByRole('button', { name: 'All time' })).toBeVisible();
+	await expect(page.getByRole('button', { name: 'All categories' })).toBeVisible();
+
+	// All filters: a pick applies and the sheet stays for the next one.
+	await page.getByRole('button', { name: 'All filters' }).click();
+	const all = page.getByRole('dialog', { name: 'All filters' });
+	await all.getByRole('button', { name: 'Payments only' }).click();
+	await expect(page).toHaveURL(/\?category=payments$/);
+	const show = all.getByRole('button', { name: /^Show \d+ payments?$/ });
+	await expect(show).toBeVisible();
+	await show.click();
+	await expect(all).toBeHidden();
+	await expect(page.getByRole('button', { name: 'Payments only' })).toBeVisible();
+});

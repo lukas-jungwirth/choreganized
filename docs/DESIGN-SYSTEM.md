@@ -104,7 +104,7 @@ cook-mode sheets [7b], and the cook screen's own parts are feature components in
 [7h], **`CookTimerBar`** (the compact chip on other steps), **`IngredientsPeekSheet`** [7b] and
 **`SetTimerSheet`** — driven by the `CookTimer` state machine in `lib/cook-timer.svelte.ts`.
 Extend these rather than forking a variant; look at them side by side at **`/dev/kit`** (dev-only
-gallery, → [DECISIONS #39](DECISIONS.md)) and add to it when you add a component.
+gallery, → [DECISIONS #39](DECISIONS.md)) and add to it when you add a component. `BottomSheet` gained `action` (a header control in place of the ×, All activity's "Clear all" [9f]).
 
 Work after the twelve plans added three more feature components in `components/cooking/`, none of
 them `ui/` primitives, so `/dev/kit` is unchanged. **`TimerDock`** — no props; it reads the

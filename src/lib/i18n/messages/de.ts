@@ -1175,13 +1175,42 @@ export const de: Messages = {
 			title: 'Alle Einträge',
 			back: 'Zurück zu den Ausgaben',
 			search: 'Beschreibungen durchsuchen',
-			category: 'Kategorie',
-			anyCategory: 'Alle Kategorien',
-			person: 'Person',
-			anyone: 'Alle',
-			mine: 'Nur meine',
-			payments: 'Zahlungen',
 			filters: 'Filter',
+			allFilters: 'Alle Filter',
+			clearAll: 'Zurücksetzen',
+			clear: (filter: string) => `${filter} entfernen`,
+			time: 'Zeitraum',
+			ranges: {
+				all: 'Gesamter Zeitraum',
+				thisMonth: 'Dieser Monat',
+				lastMonth: 'Letzter Monat',
+				last3Months: 'Letzte 3 Monate',
+				thisYear: 'Dieses Jahr',
+				custom: 'Daten wählen …'
+			},
+			rangeHint: (covers: string | null, byDay: boolean) =>
+				covers
+					? `${covers} · ${byDay ? 'nach Tag gruppiert' : 'nach Monat gruppiert'}`
+					: byDay
+						? 'Nach Tag gruppiert'
+						: 'Nach Monat gruppiert',
+			customRange: (from: string | null, to: string | null) =>
+				from && to ? `${from} – ${to}` : from ? `Ab ${from}` : `Bis ${to}`,
+			from: 'Von',
+			to: 'Bis',
+			apply: 'Übernehmen',
+			paidBy: 'Bezahlt von',
+			paidByHint: 'Wer es bezahlt hat.',
+			anyPayer: 'Alle Personen',
+			you: 'Du',
+			paidByChip: (name: string | null) => (name ? `Von ${name} bezahlt` : 'Von dir bezahlt'),
+			category: 'Kategorie',
+			allCategories: 'Alle Kategorien',
+			paymentsOnly: 'Nur Zahlungen',
+			entries: (count: number) => (count === 1 ? '1 Eintrag' : `${count} Einträge`),
+			expenses: (count: number) => (count === 1 ? '1 Ausgabe' : `${count} Ausgaben`),
+			payments: (count: number) => (count === 1 ? '1 Zahlung' : `${count} Zahlungen`),
+			show: (counted: string) => `${counted} anzeigen`,
 			spent: (amount: string) => `${amount} ausgegeben`,
 			load: (month: string) => `${month} laden`,
 			empty: 'Nichts gefunden',

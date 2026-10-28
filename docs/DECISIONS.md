@@ -2703,3 +2703,24 @@ units | null, name}`, written back as editor lines in the reader's unit spelling
      widest. Off by default because every e2e journey and screenshot is taken of the two-person
      household; turning it on there would move every baseline. The seed's ledger people now take
      each member's own colour instead of a hardcoded sage/terracotta pair.
+
+187. **All activity filters by who paid, not who is involved; time is a filter, grouping
+     follows it** (SPEC §11.12, `utils/expense-history.ts`, `filterHistory`). "Only mine" and
+     "Person" both meant "paid by or in the split", which in a two-person household is nearly
+     every row — neither changed anything. One **Paid by** filter (Any · You · each member)
+     replaces both; "who's in the split" was dropped rather than hidden. **Payments** moved into
+     the category list as "Payments only": a settle-up has no category, so the two never
+     combined. A **Time** filter (presets plus picked dates) replaces a week/month grouping
+     toggle: a month or less groups by day, longer by month, and only "All time" pages. Chips
+     name their value and **wrap** instead of scrolling — the scroller clipped the focus ring
+     and only the `<select>`'s text opened the picker. Each chip's sheet **applies on tap**
+     (no "Show N" step, which would have needed a count per option before applying); All
+     filters applies each pick too and stays open, so its "Show N" is just the new count. The
+     sheets need JavaScript; the search stays a plain GET form carrying the other filters.
+     `BottomSheet` gained an `action` snippet that replaces the × ("Clear all").
+
+188. **`db:seed --history` adds fourteen months of older spending, opt-in** (`scripts/seed.ts`).
+     Weekly shops, the first-of-the-month rent and internet, Strom mid-month, evenings out, two
+     trips and a settle-up on the 28th, from both people, with amounts varied by a fixed rule so
+     a re-run writes nothing new. Off by default for the same reason as `--full-house` (#186):
+     every e2e journey and screenshot reads the one-week ledger.

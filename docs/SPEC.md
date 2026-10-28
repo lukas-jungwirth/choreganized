@@ -1086,10 +1086,33 @@ No digest and no "you owe money" nagging. The balance card is the reminder.
 
 ### 11.12 All activity & search [9f]
 
-`/expenses/history`: a search field (description, case-insensitive) and filter chips:
-**Category** · **Person** (paid by or in it) · **Only mine** (involves you) · **Payments**
-(only settle-ups). Results grouped by month with a month total of expenses. Paged one month
-at a time, like the task history (→ DECISIONS #76). Filters live in the URL, so back works.
+`/expenses/history`: a search field (description, case-insensitive), a sliders button, and
+three filter chips under it that **name their current value** and start at "all":
+
+- **Time** — All time · This month · Last month · Last 3 months · This year · Pick dates…
+  (from, to; either may be left open). The Time sheet says under each preset what it covers
+  and how the list will be grouped ("November · grouped by day"). A set chip names the period:
+  "November", "Last 3 months", "2026", "Oct 3 – Oct 20".
+- **Paid by** — Any payer · You · each member. Who paid for an expense, or who sent a
+  settle-up. "You" is what "Only mine" used to stand for (→ [DECISIONS #187](DECISIONS.md)).
+- **Category** — All categories · the eight categories · **Payments only**. Settle-ups have no
+  category, so they show as entries until a category is picked, and "Payments only" is the
+  one way to see just them.
+
+Tapping a chip opens that filter's sheet; a pick applies and closes it. The sliders button
+opens **All filters**: the same three as chip groups, where each pick applies at once and the
+sheet stays open, its button counting what it will show ("Show 4 expenses"), "Clear all" in
+its header. A set chip turns sage and gets a × of its own that clears just that filter. The
+chips wrap onto a second line rather than scroll.
+
+Under the chips: the number of matches ("142 entries", "4 expenses", "3 payments") and, once
+anything is filtered or searched, what they add up to — settle-ups never count as spending —
+with **Clear all** beside it.
+
+**Grouping follows the period**: a month or less is grouped by day (Today · Yesterday · Mon 14
+Jul, each with its total), anything longer by month with the month's total. A bounded period
+shows all of itself; **All time** pages one month at a time, like the task history (→
+DECISIONS #76). Filters live in the URL, so a refresh keeps them.
 
 ### 11.13 Home and the rest of the app
 

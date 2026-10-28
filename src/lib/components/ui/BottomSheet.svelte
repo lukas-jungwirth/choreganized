@@ -29,6 +29,8 @@
 		 * flash a white panel at someone standing over a hob.
 		 */
 		tone?: 'light' | 'dark';
+		/** Replaces the × in the header — "Clear all" in All filters [9f]. Escape and the scrim still close. */
+		action?: Snippet;
 		children: Snippet;
 	};
 
@@ -39,6 +41,7 @@
 		subtitle,
 		lead,
 		tone = 'light',
+		action,
 		children
 	}: Props = $props();
 
@@ -139,9 +142,18 @@
 					<h2>{title}</h2>
 					{#if subtitle}<p class="subtitle">{subtitle}</p>{/if}
 				</div>
-				<button type="button" class="close" aria-label={m.ui.close} onclick={() => (open = false)}>
-					<X size={13} strokeWidth={2.4} />
-				</button>
+				{#if action}
+					{@render action()}
+				{:else}
+					<button
+						type="button"
+						class="close"
+						aria-label={m.ui.close}
+						onclick={() => (open = false)}
+					>
+						<X size={13} strokeWidth={2.4} />
+					</button>
+				{/if}
 			</header>
 			{@render children()}
 		</div>
