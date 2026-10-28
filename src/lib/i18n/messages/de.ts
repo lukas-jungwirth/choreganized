@@ -1210,7 +1210,7 @@ export const de: Messages = {
 				lastMonth: 'Letzter Monat',
 				last3Months: 'Letzte 3 Monate',
 				thisYear: 'Dieses Jahr',
-				custom: 'Daten wählen …'
+				custom: 'Zeitraum wählen'
 			},
 			rangeHint: (covers: string | null, byDay: boolean) =>
 				covers
@@ -1224,19 +1224,19 @@ export const de: Messages = {
 			to: 'Bis',
 			apply: 'Übernehmen',
 			paidBy: 'Bezahlt von',
-			paidByHint: 'Wer es bezahlt hat.',
 			anyPayer: 'Alle Personen',
 			you: 'Du',
 			paidByChip: (name: string | null) => (name ? `Von ${name} bezahlt` : 'Von dir bezahlt'),
 			category: 'Kategorie',
 			allCategories: 'Alle Kategorien',
-			paymentsOnly: 'Nur Zahlungen',
+			paymentsCategory: 'Zahlungen',
+			categoryChip: (first: string, more: number) => (more > 0 ? `${first} +${more}` : first),
 			entries: (count: number) => (count === 1 ? '1 Eintrag' : `${count} Einträge`),
 			expenses: (count: number) => (count === 1 ? '1 Ausgabe' : `${count} Ausgaben`),
 			payments: (count: number) => (count === 1 ? '1 Zahlung' : `${count} Zahlungen`),
 			show: (counted: string) => `${counted} anzeigen`,
 			spent: (amount: string) => `${amount} ausgegeben`,
-			load: (month: string) => `${month} laden`,
+			loadMore: (count: number) => `${count} weitere anzeigen`,
 			empty: 'Nichts gefunden',
 			emptyCopy: 'Versuch ein anderes Wort oder weniger Filter.'
 		},

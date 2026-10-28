@@ -1,18 +1,18 @@
 <!--
 	All activity [9f] (→ SPEC §11.12): search what it was for, then narrow by
-	time, by who paid and by category — three chips that each name their value.
-	A chip opens its own sheet and a pick applies at once; the sliders button
-	opens all three together. A set chip turns sage, and its × clears it.
+	time, by who paid and by categories — three chips that each name their value.
+	A chip opens its own sheet and a pick applies at once: Time and Paid by
+	close on it, Category stays open for the next tick. The sliders button opens
+	all three together. A set chip turns sage, and its × clears it.
 
 	Every filter is in the URL. The search is a GET form carrying the others as
 	hidden fields, so it works before JavaScript has loaded; the sheets need it.
-	A month or less is grouped by day, anything longer by month, and "All time"
-	pages a month at a time.
+	A month or less is grouped by day; anything longer by month, paged by rows.
 -->
 <script lang="ts">
 	import Calendar from '@lucide/svelte/icons/calendar';
 	import ChevronDown from '@lucide/svelte/icons/chevron-down';
-	import ChevronRight from '@lucide/svelte/icons/chevron-right';
+	import Check from '@lucide/svelte/icons/check';
 	import SlidersHorizontal from '@lucide/svelte/icons/sliders-horizontal';
 	import Users from '@lucide/svelte/icons/users';
 	import X from '@lucide/svelte/icons/x';
@@ -29,12 +29,13 @@
 	import SearchField from '$lib/components/ui/SearchField.svelte';
 	import { messages } from '$lib/i18n';
 	import {
+		HISTORY_CATEGORIES,
 		HISTORY_RANGES,
 		historyPeriod,
 		PAYMENTS_ONLY,
+		type HistoryCategory,
 		type HistoryRange
 	} from '$lib/utils/expense-history';
-	import { EXPENSE_CATEGORIES } from '$lib/utils/expenses';
 	import { untrack, type Snippet } from 'svelte';
 	import type { PageProps } from './$types';
 
@@ -71,7 +72,7 @@
 		start: string | null;
 		end: string | null;
 		payer: string | null;
-		category: string | null;
+		categories: HistoryCategory[];
 	};
 
 	const current: Filters = $derived({
@@ -79,7 +80,7 @@
 		start: data.filters.start,
 		end: data.filters.end,
 		payer: data.filters.payerId,
-		category: data.filters.category
+		categories: data.filters.categories
 	});
 
 	/** The URL for the filters as they are with `patch` applied — back on the first page. */
@@ -91,7 +92,7 @@
 		if (next.time === 'custom' && next.start) params.set('start', next.start);
 		if (next.time === 'custom' && next.end) params.set('end', next.end);
 		if (next.payer) params.set('payer', next.payer);
-		if (next.category) params.set('category', next.category);
+		for (const key of next.categories) params.append('category', key);
 		for (const [key, value] of Object.entries(extra)) params.set(key, value);
 		return `?${params}`;
 	}
@@ -105,7 +106,7 @@
 		start: null,
 		end: null,
 		payer: null,
-		category: null
+		categories: []
 	};
 
 	/* ── What each chip says ──────────────────────────────────────────────── */
@@ -148,27 +149,38 @@
 			: h.paidByChip(current.payer === data.me ? null : (names[current.payer] ?? null))
 	);
 
+	const categoryName = (key: HistoryCategory) =>
+		key === PAYMENTS_ONLY ? h.paymentsCategory : m.expenses.categories[key];
+
 	const categoryLabel = $derived(
-		!current.category
+		current.categories.length === 0
 			? h.allCategories
-			: current.category === PAYMENTS_ONLY
-				? h.paymentsOnly
-				: m.expenses.categories[current.category as keyof typeof m.expenses.categories]
+			: h.categoryChip(categoryName(current.categories[0]), current.categories.length - 1)
 	);
+
+	/** Ticks or unticks one, keeping the sheet's order. */
+	function toggleCategory(key: HistoryCategory) {
+		const picked = new Set(current.categories);
+		if (!picked.delete(key)) picked.add(key);
+		return apply({ categories: HISTORY_CATEGORIES.filter((each) => picked.has(each)) });
+	}
 
 	const filtered = $derived(
 		Boolean(data.filters.query) ||
 			current.time !== 'all' ||
 			current.payer !== null ||
-			current.category !== null
+			current.categories.length > 0
 	);
 
+	// Settle-ups alone are payments; categories without them are expenses.
 	const counted = $derived(
-		current.category === PAYMENTS_ONLY
-			? h.payments(data.count)
-			: current.category
-				? h.expenses(data.count)
-				: h.entries(data.count)
+		current.categories.length === 0
+			? h.entries(data.count)
+			: current.categories.every((key) => key === PAYMENTS_ONLY)
+				? h.payments(data.count)
+				: current.categories.includes(PAYMENTS_ONLY)
+					? h.entries(data.count)
+					: h.expenses(data.count)
 	);
 
 	/* ── Sheets ───────────────────────────────────────────────────────────── */
@@ -178,12 +190,14 @@
 	let categoryOpen = $state(false);
 	let allOpen = $state(false);
 
-	// "Pick dates…" opens two fields in the Time sheet, filled with what's set.
+	// "Pick dates" is an option like the presets: choosing it moves the radio
+	// there and opens two fields under it, filled with what's set. Time and All
+	// filters both show it, so opening either starts from the URL again.
 	let picking = $state(false);
 	let start = $state('');
 	let end = $state('');
 	$effect(() => {
-		if (!timeOpen) return;
+		if (!timeOpen && !allOpen) return;
 		untrack(() => {
 			picking = current.time === 'custom';
 			start = current.start ?? '';
@@ -194,6 +208,10 @@
 	async function pick(patch: Partial<Filters>, close: () => void) {
 		close();
 		await apply(patch);
+	}
+
+	function applyDates() {
+		if (start || end) apply({ time: 'custom', start: start || null, end: end || null });
 	}
 
 	const olderHref = $derived(data.older ? hrefFor({}, { from: data.older }) : null);
@@ -227,7 +245,7 @@
 	{#if current.start}<input type="hidden" name="start" value={current.start} />{/if}
 	{#if current.end}<input type="hidden" name="end" value={current.end} />{/if}
 	{#if current.payer}<input type="hidden" name="payer" value={current.payer} />{/if}
-	{#if current.category}<input type="hidden" name="category" value={current.category} />{/if}
+	{#each current.categories as key (key)}<input type="hidden" name="category" value={key} />{/each}
 	<button
 		type="button"
 		class="sliders"
@@ -269,8 +287,8 @@
 	{@render filterChip(payerLabel, current.payer !== null, () => (payerOpen = true), {
 		payer: null
 	})}
-	{@render filterChip(categoryLabel, current.category !== null, () => (categoryOpen = true), {
-		category: null
+	{@render filterChip(categoryLabel, current.categories.length > 0, () => (categoryOpen = true), {
+		categories: []
 	})}
 </div>
 
@@ -324,58 +342,39 @@
 {/each}
 
 {#if olderHref && data.older}
-	<a class="older" href={olderHref} data-sveltekit-noscroll>
-		{h.load(m.date.monthName(data.older, data.today))}
+	<a class="older" href={olderHref} data-sveltekit-noscroll data-sveltekit-replacestate>
+		{h.loadMore(data.olderCount)}
 	</a>
 {/if}
 
-<!-- ── One filter at a time: a pick applies and closes ──────────────────── -->
+<!-- ── One filter at a time ─────────────────────────────────────────────── -->
 
 {#snippet option(
 	selected: boolean,
 	label: string,
 	onpick: () => void,
 	hint?: string,
-	lead?: Snippet
+	lead?: Snippet,
+	role: 'radio' | 'checkbox' = 'radio'
 )}
-	<button type="button" role="radio" aria-checked={selected} class="option" onclick={onpick}>
+	<button type="button" {role} aria-checked={selected} class="option" onclick={onpick}>
 		{#if lead}{@render lead()}{/if}
 		<span class="option-text">
 			<span class="option-label">{label}</span>
 			{#if hint}<span class="option-hint">{hint}</span>{/if}
 		</span>
-		<span class="radio" class:on={selected} aria-hidden="true"></span>
+		<span class={role} class:on={selected} aria-hidden="true">
+			{#if role === 'checkbox' && selected}<Check size={15} strokeWidth={3} />{/if}
+		</span>
 	</button>
 {/snippet}
 
-<BottomSheet bind:open={timeOpen} title={h.time}>
-	<div class="options" role="radiogroup" aria-label={h.time}>
-		{#each HISTORY_RANGES.filter((range) => range !== 'custom') as range (range)}
-			{@render option(
-				current.time === range,
-				h.ranges[range],
-				() => pick({ time: range, start: null, end: null }, () => (timeOpen = false)),
-				h.rangeHint(covers(range), historyPeriod(range, data.today).byDay)
-			)}
-		{/each}
-		<button
-			type="button"
-			class="option"
-			aria-expanded={picking}
-			onclick={() => (picking = !picking)}
-		>
-			<span class="option-icon" aria-hidden="true"><Calendar size={18} strokeWidth={1.9} /></span>
-			<span class="option-text">
-				<span class="option-label">{h.ranges.custom}</span>
-				{#if current.time === 'custom'}<span class="option-hint">{customLabel}</span>{/if}
-			</span>
-			<ChevronRight size={16} strokeWidth={2.2} aria-hidden="true" />
-		</button>
-	</div>
-	{#if picking}
-		<div class="dates">
-			<DateField label={h.from} bind:value={start} />
-			<DateField label={h.to} bind:value={end} />
+<!-- The Time sheet applies them with a button and closes; All filters as each is set. -->
+{#snippet dateFields(live: boolean)}
+	<div class="dates">
+		<DateField label={h.from} bind:value={start} onchange={live ? applyDates : undefined} />
+		<DateField label={h.to} bind:value={end} onchange={live ? applyDates : undefined} />
+		{#if !live}
 			<Button
 				disabled={!start && !end}
 				onclick={() =>
@@ -386,11 +385,31 @@
 			>
 				{h.apply}
 			</Button>
-		</div>
-	{/if}
+		{/if}
+	</div>
+{/snippet}
+
+<BottomSheet bind:open={timeOpen} title={h.time}>
+	<div class="options" role="radiogroup" aria-label={h.time}>
+		{#each HISTORY_RANGES.filter((range) => range !== 'custom') as range (range)}
+			{@render option(
+				!picking && current.time === range,
+				h.ranges[range],
+				() => pick({ time: range, start: null, end: null }, () => (timeOpen = false)),
+				h.rangeHint(covers(range), historyPeriod(range, data.today).byDay)
+			)}
+		{/each}
+		{@render option(
+			picking,
+			h.ranges.custom,
+			() => (picking = true),
+			current.time === 'custom' ? customLabel : undefined
+		)}
+	</div>
+	{#if picking}{@render dateFields(false)}{/if}
 </BottomSheet>
 
-<BottomSheet bind:open={payerOpen} title={h.paidBy} subtitle={h.paidByHint}>
+<BottomSheet bind:open={payerOpen} title={h.paidBy}>
 	<div class="options" role="radiogroup" aria-label={h.paidBy}>
 		{#snippet anyIcon()}
 			<span class="option-icon" aria-hidden="true"><Users size={16} strokeWidth={2} /></span>
@@ -423,19 +442,30 @@
 	</div>
 </BottomSheet>
 
+<!-- Several can be ticked, so each tick applies and the sheet stays open. -->
 <BottomSheet bind:open={categoryOpen} title={h.category}>
-	<div class="options" role="radiogroup" aria-label={h.category}>
-		{@render option(current.category === null, h.allCategories, () =>
-			pick({ category: null }, () => (categoryOpen = false))
+	<div class="options" role="group" aria-label={h.category}>
+		{@render option(
+			current.categories.length === 0,
+			h.allCategories,
+			() => apply({ categories: [] }),
+			undefined,
+			undefined,
+			'checkbox'
 		)}
-		{#each EXPENSE_CATEGORIES as key (key)}
-			{@render option(current.category === key, m.expenses.categories[key], () =>
-				pick({ category: key }, () => (categoryOpen = false))
+		{#each HISTORY_CATEGORIES as key (key)}
+			{@render option(
+				current.categories.includes(key),
+				categoryName(key),
+				() => toggleCategory(key),
+				undefined,
+				undefined,
+				'checkbox'
 			)}
 		{/each}
-		{@render option(current.category === PAYMENTS_ONLY, h.paymentsOnly, () =>
-			pick({ category: PAYMENTS_ONLY }, () => (categoryOpen = false))
-		)}
+	</div>
+	<div class="show">
+		<Button onclick={() => (categoryOpen = false)}>{h.show(counted)}</Button>
 	</div>
 </BottomSheet>
 
@@ -449,23 +479,21 @@
 	<div class="pills">
 		{#each HISTORY_RANGES.filter((range) => range !== 'custom') as range (range)}
 			<Chip
-				selected={current.time === range}
-				onclick={() => apply({ time: range, start: null, end: null })}
+				selected={!picking && current.time === range}
+				onclick={() => {
+					picking = false;
+					apply({ time: range, start: null, end: null });
+				}}
 			>
 				{h.ranges[range]}
 			</Chip>
 		{/each}
-		<Chip
-			class="dashed"
-			selected={current.time === 'custom'}
-			onclick={() => {
-				allOpen = false;
-				timeOpen = true;
-			}}
-		>
+		<Chip class="dashed" selected={picking} onclick={() => (picking = true)}>
 			{current.time === 'custom' ? customLabel : h.ranges.custom}
 		</Chip>
 	</div>
+	<!-- In place, so the other filters stay in view. -->
+	{#if picking}<div class="all-dates">{@render dateFields(true)}</div>{/if}
 
 	<h3 class="group">{h.paidBy}</h3>
 	<div class="pills">
@@ -494,21 +522,18 @@
 
 	<h3 class="group">{h.category}</h3>
 	<div class="pills">
-		<Chip selected={current.category === null} onclick={() => apply({ category: null })}>
+		<Chip selected={current.categories.length === 0} onclick={() => apply({ categories: [] })}>
 			{h.allCategories}
 		</Chip>
-		{#each EXPENSE_CATEGORIES as key (key)}
-			<Chip selected={current.category === key} onclick={() => apply({ category: key })}>
-				{m.expenses.categories[key]}
+		{#each HISTORY_CATEGORIES as key (key)}
+			<Chip
+				class={key === PAYMENTS_ONLY ? 'dashed' : undefined}
+				selected={current.categories.includes(key)}
+				onclick={() => toggleCategory(key)}
+			>
+				{categoryName(key)}
 			</Chip>
 		{/each}
-		<Chip
-			class="dashed"
-			selected={current.category === PAYMENTS_ONLY}
-			onclick={() => apply({ category: PAYMENTS_ONLY })}
-		>
-			{h.paymentsOnly}
-		</Chip>
 	</div>
 
 	<div class="show">
@@ -744,11 +769,36 @@
 		background: radial-gradient(circle, var(--sage) 0 5px, transparent 5.5px);
 	}
 
+	.checkbox {
+		display: flex;
+		align-items: center;
+		justify-content: center;
+		flex: none;
+		width: 22px;
+		height: 22px;
+		border: 1.5px solid var(--border);
+		border-radius: 6px;
+	}
+
+	.checkbox.on {
+		border-color: var(--sage);
+		background: var(--sage);
+		color: var(--on-sage);
+	}
+
 	.dates {
 		display: flex;
 		flex-direction: column;
 		gap: 12px;
 		margin-top: 14px;
+	}
+
+	.all-dates {
+		margin: -6px 0 20px;
+	}
+
+	.all-dates .dates {
+		margin-top: 0;
 	}
 
 	.group {

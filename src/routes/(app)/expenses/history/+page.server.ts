@@ -1,12 +1,12 @@
 /**
  * All activity [9f] (→ SPEC §11.12): the whole ledger, searched and filtered
- * by time, payer and category, grouped by day or by month with what the
+ * by time, payer and categories, grouped by day or by month with what the
  * household spent.
  *
  * Every filter lives in the URL — `?q=`, `?time=` (+ `?start=`/`?end=` for
- * picked dates), `?payer=`, `?category=` (a category or `payments`), and
- * `?from=YYYY-MM-01` to page "All time" — so a refresh keeps it and a filter
- * can be linked to (→ DECISIONS #76).
+ * picked dates), `?payer=`, `?category=` (repeated: categories and/or
+ * `payments`), and `?from=YYYY-MM-01` for the oldest month "Show more" has
+ * reached — so a refresh keeps it and a filter can be linked to (→ DECISIONS #76).
  */
 import { requireMember } from '$lib/server/guards';
 import {
@@ -18,8 +18,7 @@ import {
 	type HistoryFilters
 } from '$lib/server/services/expenses';
 import { isCalendarDate } from '$lib/utils/dates';
-import { isHistoryRange, PAYMENTS_ONLY } from '$lib/utils/expense-history';
-import { isExpenseCategory } from '$lib/utils/expenses';
+import { isHistoryRange, parseHistoryCategories } from '$lib/utils/expense-history';
 import type { PageServerLoad } from './$types';
 
 export const load: PageServerLoad = async (event) => {
@@ -39,7 +38,6 @@ export const load: PageServerLoad = async (event) => {
 		picked[0] && picked[1] && picked[0] > picked[1] ? [picked[1], picked[0]] : picked;
 	const range = isHistoryRange(time) && (time !== 'custom' || start || end) ? time : 'all';
 	const payer = params.get('payer');
-	const category = params.get('category');
 
 	const filters: HistoryFilters = {
 		query: (params.get('q') ?? '').slice(0, 80),
@@ -48,8 +46,7 @@ export const load: PageServerLoad = async (event) => {
 		end: range === 'custom' ? end : null,
 		// Someone who isn't in this household's ledger is ignored, like any unknown value.
 		payerId: payer && people.some((row) => row.id === payer) ? payer : null,
-		category:
-			category === PAYMENTS_ONLY ? PAYMENTS_ONLY : isExpenseCategory(category) ? category : null
+		categories: parseHistoryCategories(params.getAll('category'))
 	};
 
 	return {

@@ -1100,30 +1100,39 @@ No digest and no "you owe money" nagging. The balance card is the reminder.
 `/expenses/history`: a search field (description, case-insensitive), a sliders button, and
 three filter chips under it that **name their current value** and start at "all":
 
-- **Time** — All time · This month · Last month · Last 3 months · This year · Pick dates…
+- **Time** — All time · This month · Last month · Last 3 months · This year · Pick dates
   (from, to; either may be left open). The Time sheet says under each preset what it covers
-  and how the list will be grouped ("November · grouped by day"). A set chip names the period:
-  "November", "Last 3 months", "2026", "Oct 3 – Oct 20".
+  and how the list will be grouped ("November · grouped by day"). "Pick dates" is a radio like
+  the presets: choosing it moves the selection there and opens the two date fields under it,
+  with Apply. A set chip names the period: "November", "Last 3 months", "2026", "Oct 3 –
+  Oct 20".
 - **Paid by** — Any payer · You · each member. Who paid for an expense, or who sent a
   settle-up. "You" is what "Only mine" used to stand for (→ [DECISIONS #187](DECISIONS.md)).
-- **Category** — All categories · the eight categories · **Payments only**. Settle-ups have no
-  category, so they show as entries until a category is picked, and "Payments only" is the
-  one way to see just them.
+- **Category** — All categories · the eight categories · **Payments**, ticked **any number at
+  once** (→ [DECISIONS #191](DECISIONS.md)): the list shows rows in any ticked category, and
+  settle-ups when Payments is ticked. Settle-ups have no category, so "Payments" stands in for
+  one. The chip names the first ticked and counts the rest: "Groceries +2".
 
-Tapping a chip opens that filter's sheet; a pick applies and closes it. The sliders button
-opens **All filters**: the same three as chip groups, where each pick applies at once and the
-sheet stays open, its button counting what it will show ("Show 4 expenses"), "Clear all" in
-its header. A set chip turns sage and gets a × of its own that clears just that filter. The
+Tapping Time or Paid by opens that filter's sheet; a pick applies and closes it. Category's
+sheet is checkboxes: each tick applies and the sheet stays open, with "Show 9 expenses" to
+close it. The Paid by sheet has no subtitle — its title says it. The sliders button opens **All
+filters**: the same three as chip groups, where each pick applies at once and the sheet stays
+open, its button counting what it will show ("Show 4 expenses"), "Clear all" in its header.
+"Pick dates" there opens the two date fields in place, under the time chips, and each date
+applies as it is set — the sheet never hands over to the Time sheet. A set chip turns sage and gets a × of its own that clears just that filter. The
 chips wrap onto a second line rather than scroll.
 
-Under the chips: the number of matches ("142 entries", "4 expenses", "3 payments") and, once
+Under the chips: the number of matches ("142 entries", "4 expenses", "3 payments" — entries
+when settle-ups and expenses are mixed) and, once
 anything is filtered or searched, what they add up to — settle-ups never count as spending —
 with **Clear all** beside it.
 
 **Grouping follows the period**: a month or less is grouped by day (Today · Yesterday · Mon 14
-Jul, each with its total), anything longer by month with the month's total. A bounded period
-shows all of itself; **All time** pages one month at a time, like the task history (→
-DECISIONS #76). Filters live in the URL, so a refresh keeps them.
+Jul, each with its total), anything longer by month with the month's total. A month or less
+shows all of itself. Anything grouped by month is **paged by rows, not by month**: whole months
+until at least 50 rows are showing, so fifteen payments across a year show at once, and
+"Show 52 more" under the list adds the next 50-odd, again ending on a whole month (→
+[DECISIONS #192](DECISIONS.md)). Filters live in the URL, so a refresh keeps them.
 
 ### 11.13 Home and the rest of the app
 

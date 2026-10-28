@@ -2744,3 +2744,27 @@ units | null, name}`, written back as editor lines in the reader's unit spelling
      post to the shared `save` action, so a series still starts as its first expense. The tab
      gets no bottom "Recurring" row beside All activity: [9a-owe] keeps Recurring in the •••
      menu with its count, and the bottom row continues the Recent list it sits under.
+
+191. **All activity's categories are ticked, any number at once; Payments is one of them**
+     (SPEC §11.12, `utils/expense-history` `HISTORY_CATEGORIES`). "Groceries and eating out" is
+     a real question about food spending, and one category at a time made it two visits. The
+     filter is a set: a row shows when its category is ticked, a settle-up when **Payments** is
+     — so "Payments only" (#187) became an ordinary row, and "Rent & bills + Payments" works
+     too. `?category=` repeats in the URL. Category's sheet is checkboxes and stays open with
+     "Show N" (a tick can't close it, there may be another); Time and Paid by stay single-pick
+     and close on tap — Paid by is one person, and two payers in a household of two is "Any".
+     The chip says "Groceries +2" rather than a count, so the one most likely meant stays
+     readable. Ticking every category is kept as ticked, not folded into "All", so the last
+     tick doesn't visibly undo itself.
+
+192. **History pages by rows, not by month; picked dates stay in the sheet they're picked in**
+     (`filterHistory`, `HISTORY_PAGE`). Paging "All time" a month at a time (#187, copied from
+     the task history #76) made a filtered list — fifteen payments over a year — one row a
+     page. Now anything grouped by month shows whole months until at least 50 rows are on
+     screen; "Show N more" adds the next 50, also ending on a whole month, so a month's total is
+     never of half a month. `?from=` still names the oldest month shown, so a reload or a link
+     keeps the page. A month or less (grouped by day) is never paged; a month is short enough.
+     And "Pick dates" is now a radio in the Time sheet (the old row was a toggle that left the
+     previous preset looking selected), and opens its fields in place in All filters instead of
+     closing it for the Time sheet — the other two filters stay in view, and each date applies
+     as it is set, like every other pick there.

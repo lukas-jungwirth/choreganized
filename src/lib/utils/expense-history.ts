@@ -5,6 +5,7 @@
  * so the two can't disagree.
  */
 import { addDays, addInterval, daysBetween, startOfMonth, type CalendarDate } from './dates';
+import { EXPENSE_CATEGORIES, type ExpenseCategory } from './expenses';
 
 /** In the order the Time sheet lists them; `custom` is "Pick dates…". */
 export const HISTORY_RANGES = [
@@ -22,8 +23,25 @@ export function isHistoryRange(value: unknown): value is HistoryRange {
 	return HISTORY_RANGES.includes(value as HistoryRange);
 }
 
-/** "Payments only" sits at the end of the category list, as if it were one. */
+/** Settle-ups sit at the end of the category list, as if they were one. */
 export const PAYMENTS_ONLY = 'payments';
+
+/** What the category filter can hold: any of the categories, and settle-ups. */
+export type HistoryCategory = ExpenseCategory | typeof PAYMENTS_ONLY;
+
+/** In the order the Category sheet lists them. */
+export const HISTORY_CATEGORIES: readonly HistoryCategory[] = [
+	...EXPENSE_CATEGORIES,
+	PAYMENTS_ONLY
+];
+
+/**
+ * `?category=` as it arrives — repeated, in any order, with strays — as the
+ * known ones in list order, once each.
+ */
+export function parseHistoryCategories(values: readonly string[]): HistoryCategory[] {
+	return HISTORY_CATEGORIES.filter((key) => values.includes(key));
+}
 
 export type HistoryPeriod = {
 	/** Inclusive; null is open-ended. */

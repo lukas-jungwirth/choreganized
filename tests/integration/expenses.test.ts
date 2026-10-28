@@ -376,42 +376,81 @@ describe('history and suggestions', () => {
 			start: null,
 			end: null,
 			payerId: null,
-			category: null
+			categories: []
 		};
 		const run = (filters: Partial<HistoryFilters>, from?: string) =>
 			filterHistory(ledger, { ...none, ...filters }, TODAY, from);
 		const kinds = (result: ReturnType<typeof run>) =>
 			result.groups.flatMap((group) => group.items.map((item) => item.description ?? item.kind));
 
-		const november = run({});
-		assert.equal(november.byDay, false);
+		// Four rows fit one page, so every month shows at once.
+		const all = run({});
+		assert.equal(all.byDay, false);
 		assert.deepEqual(
-			november.groups.map((group) => group.key),
-			['2026-11-01']
+			all.groups.map((group) => [group.key, group.items.length]),
+			[
+				['2026-11-01', 3],
+				['2026-09-01', 1]
+			]
 		);
-		assert.equal(november.groups[0].items.length, 3);
-		// Settle-ups are listed, never spent; the total and the count span every page.
-		assert.equal(november.groups[0].spentMinor, 4210 * 2);
-		assert.equal(november.count, 4);
-		assert.equal(november.spentMinor, 4210 * 2 + 90000);
-		assert.equal(november.older, '2026-09-01');
+		// Settle-ups are listed, never spent.
+		assert.equal(all.groups[0].spentMinor, 4210 * 2);
+		assert.equal(all.count, 4);
+		assert.equal(all.spentMinor, 4210 * 2 + 90000);
+		assert.equal(all.older, null);
 
 		assert.deepEqual(kinds(run({ query: 'BILLA' })), ['Wocheneinkauf · Billa']);
-		assert.deepEqual(kinds(run({ category: 'leisure' })), ['Kino']);
-		assert.deepEqual(kinds(run({ category: 'payments' })), ['payment']);
+		assert.deepEqual(kinds(run({ categories: ['leisure'] })), ['Kino']);
+		assert.deepEqual(kinds(run({ categories: ['payments'] })), ['payment']);
+		// Several categories are any of them, settle-ups included when ticked.
+		assert.deepEqual(kinds(run({ categories: ['leisure', 'bills'] })), ['Kino', 'Rent']);
+		assert.deepEqual(kinds(run({ categories: ['bills', 'payments'] })), ['payment', 'Rent']);
 		// Paid by: who paid, not who is in it — Marco shares Kino but paid nothing.
 		assert.deepEqual(kinds(run({ payerId: elisabeth })), ['payment', 'Kino']);
 		assert.deepEqual(kinds(run({ payerId: marco })), []);
 		assert.equal(run({ payerId: me }).count, 2);
-		// Nothing older matches "Kino", so there is no "Load September" for it.
-		assert.equal(run({ query: 'kino' }).older, null);
+	});
 
-		const paged = run({}, '2026-09-15');
-		assert.deepEqual(
-			paged.groups.map((group) => group.key),
-			['2026-11-01', '2026-09-01']
-		);
-		assert.equal(paged.older, null);
+	it('pages a long list by rows, a whole month at a time', () => {
+		const { householdId, owner, ids } = household();
+		// 30 in October, 30 in September, 30 in August.
+		for (const month of ['10', '09', '08']) {
+			for (let day = 1; day <= 30; day++) {
+				const date = `2026-${month}-${String(day).padStart(2, '0')}`;
+				createExpense(householdId, owner.id, { ...groceries(ids[0], ids), date }, TODAY);
+			}
+		}
+		const ledger = listLedger(householdId);
+		const none: HistoryFilters = {
+			query: '',
+			range: 'all',
+			start: null,
+			end: null,
+			payerId: null,
+			categories: []
+		};
+		const months = (result: ReturnType<typeof filterHistory>) =>
+			result.groups.map((group) => [group.key, group.items.length]);
+
+		// 50 rows reach into September, and September is never cut in half.
+		const first = filterHistory(ledger, none, TODAY, null);
+		assert.deepEqual(months(first), [
+			['2026-10-01', 30],
+			['2026-09-01', 30]
+		]);
+		assert.equal(first.count, 90);
+		assert.equal(first.older, '2026-08-01');
+		assert.equal(first.olderCount, 30);
+
+		const more = filterHistory(ledger, none, TODAY, first.older);
+		assert.equal(more.groups.length, 3);
+		assert.equal(more.older, null);
+		assert.equal(more.olderCount, 0);
+
+		// A month or less is grouped by day and never paged.
+		const october = filterHistory(ledger, { ...none, range: 'lastMonth' }, TODAY, null);
+		assert.equal(october.groups.length, 30);
+		assert.equal(october.older, null);
 	});
 
 	it('shows a bounded period whole, by day up to a month and by month past it', () => {
@@ -434,7 +473,7 @@ describe('history and suggestions', () => {
 					start: null,
 					end: null,
 					payerId: null,
-					category: null,
+					categories: [],
 					...filters
 				},
 				TODAY,
