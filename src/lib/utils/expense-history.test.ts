@@ -4,7 +4,7 @@
  */
 import assert from 'node:assert/strict';
 import { describe, it } from 'vitest';
-import { historyPeriod } from './expense-history';
+import { historyPeriod, parseHistoryCategories } from './expense-history';
 
 describe('historyPeriod', () => {
 	const today = '2026-03-10';
@@ -55,5 +55,15 @@ describe('historyPeriod', () => {
 			to: null,
 			byDay: false
 		});
+	});
+});
+
+describe('parseHistoryCategories', () => {
+	it('keeps the known ones once each, in the sheet’s order', () => {
+		assert.deepEqual(parseHistoryCategories(['payments', 'bogus', 'groceries', 'groceries']), [
+			'groceries',
+			'payments'
+		]);
+		assert.deepEqual(parseHistoryCategories([]), []);
 	});
 });

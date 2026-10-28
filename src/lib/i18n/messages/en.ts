@@ -1565,7 +1565,7 @@ export const en = {
 				lastMonth: 'Last month',
 				last3Months: 'Last 3 months',
 				thisYear: 'This year',
-				custom: 'Pick dates…'
+				custom: 'Pick dates'
 			},
 			/** Under each preset in the Time sheet: what it covers, then how it groups. */
 			rangeHint: (covers: string | null, byDay: boolean) =>
@@ -1581,21 +1581,24 @@ export const en = {
 			to: 'To',
 			apply: 'Apply',
 			paidBy: 'Paid by',
-			paidByHint: 'Who paid for it.',
 			anyPayer: 'Any payer',
 			you: 'You',
 			/** A set payer chip: "Paid by you", "Paid by Elisabeth". */
 			paidByChip: (name: string | null) => `Paid by ${name ?? 'you'}`,
 			category: 'Category',
 			allCategories: 'All categories',
-			paymentsOnly: 'Payments only',
+			/** Settle-ups, the last row of the Category sheet. */
+			paymentsCategory: 'Payments',
+			/** The chip with more than one picked: "Groceries +2". */
+			categoryChip: (first: string, more: number) => (more > 0 ? `${first} +${more}` : first),
 			/** "142 entries" — a mix of expenses and settle-ups. */
 			entries: (count: number) => (count === 1 ? '1 entry' : `${count} entries`),
 			expenses: (count: number) => (count === 1 ? '1 expense' : `${count} expenses`),
 			payments: (count: number) => (count === 1 ? '1 payment' : `${count} payments`),
 			show: (counted: string) => `Show ${counted}`,
 			spent: (amount: string) => `${amount} spent`,
-			load: (month: string) => `Load ${month}`,
+			/** Under a long list: "Show 52 more". */
+			loadMore: (count: number) => `Show ${count} more`,
 			empty: 'Nothing matches',
 			emptyCopy: 'Try another word, or fewer filters.'
 		},

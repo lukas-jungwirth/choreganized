@@ -20,7 +20,12 @@
  */
 import { and, asc, desc, eq, inArray, isNotNull, isNull, lt } from 'drizzle-orm';
 import { addRepeat, isCalendarDate, startOfMonth, type CalendarDate } from '$lib/utils/dates';
-import { historyPeriod, PAYMENTS_ONLY, type HistoryRange } from '$lib/utils/expense-history';
+import {
+	historyPeriod,
+	PAYMENTS_ONLY,
+	type HistoryCategory,
+	type HistoryRange
+} from '$lib/utils/expense-history';
 import {
 	AMOUNT_MAX_MAJOR,
 	EXPENSE_DESCRIPTION_MAX,
@@ -370,8 +375,11 @@ export type HistoryFilters = {
 	end: CalendarDate | null;
 	/** Who paid: the person who paid for an expense, or who sent a settle-up. */
 	payerId: string | null;
-	/** A category, or "Payments only"; null shows both kinds. */
-	category: ExpenseCategory | typeof PAYMENTS_ONLY | null;
+	/**
+	 * Any of these categories, and settle-ups when `payments` is among them;
+	 * empty shows everything (→ DECISIONS #191).
+	 */
+	categories: HistoryCategory[];
 };
 
 export type HistoryGroup = {
@@ -381,13 +389,18 @@ export type HistoryGroup = {
 	items: ExpenseItem[];
 };
 
+/** Roughly how many rows a page of History shows before "Show more". */
+export const HISTORY_PAGE = 50;
+
 /**
- * What History shows for these filters. A bounded period shows all of itself,
- * by day when it is a month or less; "All time" shows the matching rows from the
- * start of `from`'s month to today, by month, plus the next older month that
- * has a match — so "Load September" always reveals something (→ DECISIONS #76,
- * the task history's paging, which this copies). `count` and `spentMinor` cover
- * every match, not just the page; settle-ups never count as spending.
+ * What History shows for these filters. A month or less shows all of itself,
+ * by day. Anything longer is grouped by month and paged by rows, not months:
+ * whole months until at least `HISTORY_PAGE` rows are on screen, so fifteen
+ * matches across a year all show at once and a busy month is never cut in
+ * half (→ DECISIONS #192). `from` is the oldest month already shown; `older`
+ * is where "Show more" would reach, `olderCount` how many rows that adds.
+ * `count` and `spentMinor` cover every match, not just the page; settle-ups
+ * never count as spending.
  */
 export function filterHistory(
 	ledger: ExpenseItem[],
@@ -400,16 +413,19 @@ export function filterHistory(
 	count: number;
 	spentMinor: number;
 	older: CalendarDate | null;
+	olderCount: number;
 } {
 	const period = historyPeriod(filters.range, today, filters.start, filters.end);
 	const query = filters.query.trim().toLocaleLowerCase();
+	const categories = new Set<string>(filters.categories);
 
 	const matching = ledger.filter((item) => {
 		if (period.from && item.date < period.from) return false;
 		if (period.to && item.date > period.to) return false;
-		if (filters.category === PAYMENTS_ONLY) {
-			if (item.kind !== 'payment') return false;
-		} else if (filters.category && item.category !== filters.category) return false;
+		if (categories.size > 0) {
+			const key = item.kind === 'payment' ? PAYMENTS_ONLY : item.category;
+			if (!key || !categories.has(key)) return false;
+		}
 		if (filters.payerId && item.paidById !== filters.payerId) return false;
 		if (query && !(item.description ?? '').toLocaleLowerCase().includes(query)) return false;
 		return true;
@@ -418,17 +434,25 @@ export function filterHistory(
 	const spent = (items: ExpenseItem[]) =>
 		items.reduce((sum, item) => sum + (item.kind === 'expense' ? item.amountMinor : 0), 0);
 
-	const thisMonth = startOfMonth(today);
-	const requested =
-		filters.range !== 'all'
-			? null
-			: isCalendarDate(from) && from < thisMonth
-				? startOfMonth(from)
-				: thisMonth;
+	/** Where a page that starts at row `index` ends: a page's worth, then the rest of that month. */
+	const pageEnd = (index: number) => {
+		let end = Math.min(index + HISTORY_PAGE, matching.length);
+		const month = end > 0 ? startOfMonth(matching[end - 1].date) : null;
+		while (month && end < matching.length && matching[end].date >= month) end++;
+		return end;
+	};
+
+	let shown = matching.length;
+	if (!period.byDay) {
+		shown = pageEnd(0);
+		if (isCalendarDate(from)) {
+			const month = startOfMonth(from);
+			while (shown < matching.length && matching[shown].date >= month) shown++;
+		}
+	}
 
 	const groups: HistoryGroup[] = [];
-	for (const item of matching) {
-		if (requested && item.date < requested) break;
+	for (const item of matching.slice(0, shown)) {
 		const key = period.byDay ? item.date : startOfMonth(item.date);
 		let group = groups.at(-1);
 		if (!group || group.key !== key) {
@@ -439,13 +463,14 @@ export function filterHistory(
 	}
 	for (const group of groups) group.spentMinor = spent(group.items);
 
-	const next = requested ? matching.find((item) => item.date < requested) : undefined;
+	const next = shown < matching.length ? pageEnd(shown) : shown;
 	return {
 		groups,
 		byDay: period.byDay,
 		count: matching.length,
 		spentMinor: spent(matching),
-		older: next ? startOfMonth(next.date) : null
+		older: next > shown ? startOfMonth(matching[next - 1].date) : null,
+		olderCount: next - shown
 	};
 }
 
