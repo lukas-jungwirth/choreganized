@@ -283,6 +283,8 @@ const SCREENS: Screen[] = [
 			await page.goto('/onboarding');
 			await page.getByRole('heading', { name: 'Welcome, Fresh' }).waitFor();
 		},
+		// The fresh account's address is random; "Signed in as" names it.
+		mask: ['.account span'],
 		fullPage: true
 	},
 	{

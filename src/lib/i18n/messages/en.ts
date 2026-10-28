@@ -1953,7 +1953,12 @@ export const en = {
 			createCopy: 'Start fresh and invite the people you live with.',
 			joinTitle: 'Join a household',
 			joinCopy: 'Got an invite link or code? Enter it here.',
-			continue: 'Continue'
+			continue: 'Continue',
+			/** Under Continue — the way back for whoever signed in with the wrong account. */
+			signedInAs: (email: string) => `Signed in as ${email}`,
+			switchAccount: 'Use another account',
+			switchingAccount: 'Signing out…',
+			switchFailed: 'Couldn’t sign out — check your connection and try again.'
 		},
 
 		/** Set up your home [5c]. */

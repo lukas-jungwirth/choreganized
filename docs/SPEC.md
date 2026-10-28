@@ -43,6 +43,10 @@ household's shared tally, came after v1 (§11, → plans 29–30, [DECISIONS #16
   has no name until [5c] asks for one). Two selectable cards: **Create a household**
   ("Start fresh and invite the people you live with.") / **Join a household** ("Got an invite
   link or code? Enter it here."). Continue button.
+- Under Continue: "Signed in as {email}" and **Use another account**, which signs out to the
+  login screen. Members never see this step, so someone who already lives in a household and
+  lands here is signed in with another account (usually another email) — the way back is
+  signing out, not joining (→ [DECISIONS #181](DECISIONS.md)).
 
 ### 1.3 Create → set up your home [5c] (step 1 of 2)
 

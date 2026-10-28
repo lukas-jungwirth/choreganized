@@ -2629,3 +2629,11 @@ units | null, name}`, written back as editor lines in the reader's unit spelling
      up, and an `equal` one quietly raising everyone else's share is a change nobody agreed to.
      The household restarts a series with the right people in one save. Rejoining doesn't restart
      them.
+181. **Full-screen pages fill the viewport with `min-height: 100%`, not `100dvh`**
+     (`shell/Screen.svelte`, `html, body { height: 100% }` in `app.css`). In the installed PWA on
+     a Pixel 9a, `100dvh` counted the status bar the page doesn't get, so the onboarding chooser
+     ran a status bar too tall and Continue sat half below the screen. A percentage of the real
+     page height can't disagree with it. The chooser also gained **"Signed in as {email} · Use
+     another account"** under Continue (SPEC §1.2): a member never reaches it, so whoever lives
+     in a household and lands there signed in with the wrong account, and the way back is signing
+     out, not "Join".

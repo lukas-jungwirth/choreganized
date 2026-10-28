@@ -309,6 +309,15 @@ html {
 	background: var(--bg);
 }
 
+/* A definite height down to the page, so the `Screen` shell can fill the
+   viewport with `min-height: 100%` instead of `100dvh` — which an installed
+   Android PWA measures with the status bar in, pushing the bottom button off
+   the screen (→ Screen.svelte, DECISIONS #181). */
+html,
+body {
+	height: 100%;
+}
+
 body {
 	margin: 0;
 	font-family: var(--font-body);
