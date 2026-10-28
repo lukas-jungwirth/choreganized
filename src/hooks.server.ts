@@ -18,7 +18,9 @@ import { auth } from '$lib/server/auth';
 import { registerCronJobs, stopCronJobs } from '$lib/server/cron';
 import { db, runMigrations } from '$lib/server/db';
 import { members } from '$lib/server/db/schema';
-import { assertE2EModeAllowed } from '$lib/server/e2e-mode';
+import { env } from '$env/dynamic/private';
+import { installFixedClock } from '$lib/fixed-clock';
+import { assertE2EModeAllowed, e2eMode } from '$lib/server/e2e-mode';
 import { isTheme, THEME_COOKIE, type Theme } from '$lib/theme';
 
 /** Runs once before the first request — safe with a single instance. */
@@ -88,6 +90,7 @@ export const handle: Handle = async ({ event, resolve }) => {
 				// `lang`, so an empty expansion just leaves a harmless one inside the
 				// tag rather than gluing two attributes together.
 				.replace('%theme%', event.locals.theme ? `data-theme="${event.locals.theme}"` : '')
+				.replace('<head>', `<head>${fixedClockScript()}`)
 	});
 
 	// Ask for the device's colour preference on *subsequent* requests to this
@@ -141,4 +144,15 @@ function resolveLocale(event: RequestEvent): Locale {
 	if (isLocale(cookie)) return cookie;
 
 	return negotiateLocale(event.request.headers.get('accept-language')) ?? DEFAULT_LOCALE;
+}
+
+/**
+ * A test run's browser on the server's clock: the shift that makes `Date` read
+ * this server's (already shifted) time, run before any of the app's scripts.
+ * Only under E2E mode with `FIXED_CLOCK` set — `scripts/e2e-server.ts` — and
+ * nothing on any other server (→ `$lib/fixed-clock`, docs/TESTING.md).
+ */
+function fixedClockScript(): string {
+	if (!e2eMode() || !env.FIXED_CLOCK) return '';
+	return `<script>(${installFixedClock.toString()})(${Date.now()} - Date.now())</script>`;
 }

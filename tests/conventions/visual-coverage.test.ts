@@ -17,17 +17,7 @@ const SPEC = 'tests/visual/screens.spec.ts';
 /** Pages with no screenshot on purpose. Every addition needs a reason here. */
 const NOT_SCREENSHOTTED: Record<string, string> = {
 	// Its load always redirects (login, onboarding or home); the page never paints.
-	'/': 'always redirects',
-	// The week plan, and the two history lists: their whole body is the calendar
-	// (this week's days, "Tuesday", "3 days ago"), so a baseline would fail every
-	// day. A mask over all of it would compare nothing. Covered by the journeys.
-	'/(app)/cooking': 'the body is the calendar',
-	'/(app)/tasks/history': 'the body is the calendar',
-	'/(app)/tasks/history/all': 'the body is the calendar',
-	// Months of the seed's spending, headed by month names and dates; at the
-	// turn of a month the seed's week splits across two groups. Covered by
-	// tests/e2e/expenses.spec.ts.
-	'/(app)/expenses/history': 'the body is the calendar'
+	'/': 'always redirects'
 };
 
 /** `src/routes/(app)/cooking/+page.svelte` → `/(app)/cooking`, SvelteKit's route id. */

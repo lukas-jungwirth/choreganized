@@ -2672,3 +2672,17 @@ units | null, name}`, written back as editor lines in the reader's unit spelling
      - **No Turnstile yet.** Cloudflare's captcha would stop bots outright, and Better Auth's
        `captcha` plugin supports it. But it puts a third-party script on the login page and adds
        friction for a household of a few people. Add it if the logs ever show real abuse.
+184. **Playwright runs on a fixed clock: Wednesday 18 June 2036, 14:00 Vienna**
+     (`playwright.config.ts`, `scripts/fixed-clock.ts`, `$lib/fixed-clock`, `hooks.server.ts`).
+     The real date kept leaking into the screenshots. First it was a greeting (#144), then a
+     holiday banner (#153), then the bought items (#155). On 2026-10-28 it was a weekday's
+     width under a mask and which of two seeded chores was "done last", which depends on the
+     hour CI runs. Each fix covered one symptom, and every PR failed until the next one landed.
+     So the clock is fixed for the whole run instead: one `Date` shift, preloaded into every
+     Node process and injected into the browser by the server in E2E mode. It still ticks,
+     and one anchor keeps it shared. The calendar masks are gone, and the week plan and the
+     three history screens, excused until now as "the body is the calendar", have
+     screenshots. **A ticking shift, not a frozen clock**: sessions, the sign-in cooldown and
+     cook timers need time to pass. **A preload, not Playwright's `page.clock`**: the server
+     renders most dates, and the seed stamps them. **2036**: the browser's cookie jar keeps
+     the real clock, and a session expiring "in the past" would be dropped.
