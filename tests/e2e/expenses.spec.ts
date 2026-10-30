@@ -69,6 +69,9 @@ test('log a split expense, settle up, find it, delete and undo', async ({ page }
 		/ \(you\)$/
 	);
 	await expect(settle.getByText(/only records it/)).toHaveCount(0);
+	// The same plain date field as the history filter: already on today, no Today shortcut.
+	await expect(settle.getByLabel('Date', { exact: true })).toHaveValue(/^\d{4}-\d{2}-\d{2}$/);
+	await expect(settle.getByRole('button', { name: 'Today' })).toHaveCount(0);
 	await settle.getByRole('button', { name: 'Record payment' }).click();
 	await expect(settle).toBeHidden();
 	await expect(page.getByTestId('balance-card')).toContainText('All settled up');
