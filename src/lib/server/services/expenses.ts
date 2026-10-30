@@ -19,7 +19,13 @@
  * the reader's own idea of upper and lower case (→ DECISIONS #172).
  */
 import { and, asc, desc, eq, inArray, isNotNull, isNull, lt } from 'drizzle-orm';
-import { addRepeat, isCalendarDate, startOfMonth, type CalendarDate } from '$lib/utils/dates';
+import {
+	addInterval,
+	addRepeat,
+	isCalendarDate,
+	startOfMonth,
+	type CalendarDate
+} from '$lib/utils/dates';
 import {
 	historyPeriod,
 	PAYMENTS_ONLY,
@@ -80,7 +86,22 @@ export type ExpenseErrorCode =
 	/** The household already has expenses in its currency (→ DECISIONS #170). */
 	| 'currency-locked'
 	/** A series' next occurrence set before today (→ SPEC §11.9). */
-	| 'next-date';
+	| 'next-date'
+	/** Before `EXPENSE_DATE_MIN`: a typo in the year, not a real expense. */
+	| 'date-too-old'
+	/** A series that would start more than `SERIES_START_MAX_YEARS` back (→ SPEC §11.9). */
+	| 'series-start'
+	/** A former member in a series: they would be charged with nobody there to stop it. */
+	| 'series-person';
+
+/**
+ * The earliest date the ledger takes. Nobody logs a shop from the last
+ * century; "2002" for "2026" is a slip of the thumb, and with Repeats on it
+ * would be twenty-four years of catching up (→ DECISIONS #203).
+ */
+export const EXPENSE_DATE_MIN = '2000-01-01';
+/** How far back a series may start; the sweep catches up the rest (→ DECISIONS #203). */
+export const SERIES_START_MAX_YEARS = 1;
 
 /** Expected, user-facing failures — actions map these to inline messages. */
 export class ExpenseError extends Error {
@@ -529,6 +550,27 @@ function checkAmount(tx: Transaction, householdId: string, amountMinor: number):
 
 function checkDate(date: string, today: CalendarDate): void {
 	if (!isCalendarDate(date) || date > today) throw new ExpenseError('date');
+	if (date < EXPENSE_DATE_MIN) throw new ExpenseError('date-too-old');
+}
+
+/**
+ * Everyone a series charges must be able to stop it: leaving stops the series
+ * a member is in (→ DECISIONS #180), so a former member — still pickable while
+ * they have a balance — can't be put into a new one.
+ */
+export function checkSeriesPeople(tx: Transaction, householdId: string, ids: string[]): void {
+	const former = tx
+		.select({ id: ledgerPeople.id })
+		.from(ledgerPeople)
+		.where(
+			and(
+				eq(ledgerPeople.householdId, householdId),
+				inArray(ledgerPeople.id, ids),
+				isNull(ledgerPeople.memberId)
+			)
+		)
+		.get();
+	if (former) throw new ExpenseError('series-person');
 }
 
 /** The expense row, if it is this household's and not deleted. */
@@ -614,8 +656,13 @@ function startSeries(
 	expenseId: string,
 	input: ExpenseInput,
 	template: ReturnType<typeof validTemplate>,
-	{ unit, interval }: Repeat
+	{ unit, interval }: Repeat,
+	today: CalendarDate
 ): void {
+	if (input.date < addInterval(today, -12 * SERIES_START_MAX_YEARS, 'month')) {
+		throw new ExpenseError('series-start');
+	}
+	checkSeriesPeople(tx, householdId, [input.paidById, ...input.rows.map((row) => row.id)]);
 	const anchorDay = unit === 'week' ? null : Number(input.date.slice(8, 10));
 	const now = new Date();
 
@@ -697,7 +744,7 @@ export function createExpense(
 			.get();
 
 		writeShares(tx, id, shares);
-		if (repeat) startSeries(tx, householdId, actorMemberId, id, input, template, repeat);
+		if (repeat) startSeries(tx, householdId, actorMemberId, id, input, template, repeat, today);
 		return id;
 	});
 
@@ -742,7 +789,7 @@ export function updateExpense(
 
 		writeShares(tx, id, shares);
 		if (repeat && !inRunningSeries(tx, row.recurrenceId)) {
-			startSeries(tx, householdId, actorMemberId, id, input, template, repeat);
+			startSeries(tx, householdId, actorMemberId, id, input, template, repeat, today);
 		}
 		return before;
 	});
@@ -810,10 +857,11 @@ export function updatePayment(
 	input: PaymentInput,
 	today: CalendarDate
 ): void {
-	db.transaction((tx) => {
+	const moved = db.transaction((tx) => {
 		const row = liveExpense(tx, householdId, id);
 		if (row.kind !== 'payment') throw new ExpenseError('not-found');
 		validPayment(tx, householdId, input, today);
+		const before = sharesOf(id);
 
 		tx.update(expenses)
 			.set({
@@ -827,7 +875,16 @@ export function updatePayment(
 			.run();
 
 		writeShares(tx, id, [{ id: input.toId, shareMinor: input.amountMinor, input: null }]);
+		// News to the recipient only when the money changed: who paid, who got
+		// it, or how much — not a corrected date (→ SPEC §11.11).
+		return (
+			row.paidById !== input.fromId ||
+			row.amountMinor !== input.amountMinor ||
+			before[input.toId] === undefined
+		);
 	});
+
+	if (moved) void notifyExpense(householdId, { kind: 'paid', expenseId: id, actorMemberId });
 }
 
 /**
@@ -917,7 +974,14 @@ export function getExpenseSettings(householdId: string): ExpenseSettings {
 	const weights = db
 		.select({ id: ledgerPeople.id, weight: ledgerPeople.defaultWeight })
 		.from(ledgerPeople)
-		.where(and(eq(ledgerPeople.householdId, householdId), isNotNull(ledgerPeople.defaultWeight)))
+		.where(
+			and(
+				eq(ledgerPeople.householdId, householdId),
+				isNotNull(ledgerPeople.defaultWeight),
+				// Someone who left is in none of the expenses to come.
+				isNotNull(ledgerPeople.memberId)
+			)
+		)
 		.all();
 
 	const any = db

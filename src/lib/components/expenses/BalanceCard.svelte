@@ -83,6 +83,8 @@
 	);
 	/** Who the last Remind reached — `everyone` for Remind everyone. */
 	let reminded = $state<{ target: string | null; reached: string[] } | null>(null);
+	/** A nudge on its way: a second tap would send a second push. */
+	let reminding = $state(false);
 	const remindedDone = (target: string | null) =>
 		reminded !== null && reminded.target === target && reminded.reached.length > 0;
 	const remindMissed = $derived(reminded !== null && reminded.reached.length === 0);
@@ -127,8 +129,10 @@
 		method="POST"
 		action="?/remind"
 		class="remind-form"
-		use:enhance={() =>
-			async ({ result }) => {
+		use:enhance={() => {
+			reminding = true;
+			return async ({ result }) => {
+				reminding = false;
 				// A lapsed session redirects to sign-in, an error shows the error page.
 				if (result.type !== 'success') return applyAction(result);
 				// Nobody owes any more: the card was out of date (a payment recorded on
@@ -137,13 +141,14 @@
 				if (result.data?.owing === 0) return invalidateAll();
 				const reached = result.data?.reminded;
 				reminded = { target, reached: Array.isArray(reached) ? reached : [] };
-			}}
+			};
+		}}
 	>
 		{#if target}<input type="hidden" name="personId" value={target} />{/if}
 		<button
 			type="submit"
 			class={className}
-			disabled={remindedDone(target)}
+			disabled={reminding || remindedDone(target)}
 			aria-label={target && !remindedDone(target)
 				? m.expenses.balance.remindLabel(name(target) ?? '')
 				: undefined}

@@ -1051,6 +1051,10 @@ export const de: Messages = {
 		row: {
 			paid: (who: string | null, amount: string) =>
 				who === null ? `Du hast ${amount} bezahlt` : `${who} hat ${amount} bezahlt`,
+			paidOn: (who: string | null, amount: string, day: string) =>
+				who === null
+					? `Du hast ${amount} bezahlt · ${day}`
+					: `${who} hat ${amount} bezahlt · ${day}`,
 			lent: 'ausgelegt',
 			borrowed: 'dein Anteil',
 			notInvolved: 'nicht beteiligt',
@@ -1127,7 +1131,7 @@ export const de: Messages = {
 		summary: {
 			everyone: 'alle',
 			people: (count: number) => (count === 1 ? '1 Person' : `${count} Personen`),
-			equal: (who: string, each: string) => `Gleich · ${who} · je ${each}`,
+			equal: (who: string, each: string) => `Gleich · ${who} · je\u00a0${each}`,
 			amounts: (who: string) => `Beträge · ${who}`,
 			parts: (parts: { name: string; value: string }[]) =>
 				parts.map(({ name, value }) => `${name} ${value}`).join(' · '),
@@ -1249,7 +1253,7 @@ export const de: Messages = {
 		history: {
 			title: 'Alle Einträge',
 			back: 'Zurück zu den Ausgaben',
-			search: 'Beschreibungen durchsuchen',
+			search: 'Beschreibung suchen',
 			filters: 'Filter',
 			allFilters: 'Alle Filter',
 			clearAll: 'Zurücksetzen',
@@ -1358,7 +1362,11 @@ export const de: Messages = {
 			notFound: 'Diese Ausgabe gibt es nicht mehr.',
 			currency: 'Wähl eine der angebotenen Währungen.',
 			currencyLocked: 'Die Währung steht fest, sobald es Ausgaben gibt.',
-			nextDate: 'Das nächste Mal kann nicht vor heute liegen.'
+			nextDate: 'Das nächste Mal kann nicht vor heute liegen.',
+			dateTooOld: 'Das Datum liegt zu weit zurück – schau dir das Jahr an.',
+			seriesStart: 'Eine wiederkehrende Ausgabe kann höchstens vor einem Jahr beginnen.',
+			seriesPerson:
+				'Jemand darin ist nicht mehr im Haushalt, deshalb kann sie sich nicht wiederholen.'
 		}
 	},
 

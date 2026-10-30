@@ -32,10 +32,14 @@ describe('parseAmount', () => {
 	it('reads thousands groups the way they were meant', () => {
 		assert.equal(parseAmount('1.234,50', 'EUR'), 123450);
 		assert.equal(parseAmount('1,234.50', 'EUR'), 123450);
-		assert.equal(parseAmount('1,234', 'EUR'), 123400);
-		// Three digits after the last mark are a thousands group, never three decimals.
-		assert.equal(parseAmount('12.505', 'EUR'), 1250500);
+		assert.equal(parseAmount('1.000.000', 'EUR'), 100000000);
 		assert.equal(parseAmount('1 234,50', 'EUR'), 123450);
+	});
+
+	it('refuses one mark with three digits after it — a thousand, or three decimals?', () => {
+		for (const text of ['1,234', '12.505', '12,345', '0,005', '0,001', '01.234,50']) {
+			assert.equal(parseAmount(text, 'EUR'), null, text);
+		}
 	});
 
 	it('refuses what is not an amount', () => {

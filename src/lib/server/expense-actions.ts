@@ -47,7 +47,10 @@ const MESSAGE: Record<ExpenseErrorCode, keyof Messages['expenses']['errors']> = 
 	'not-found': 'notFound',
 	currency: 'currency',
 	'currency-locked': 'currencyLocked',
-	'next-date': 'nextDate'
+	'next-date': 'nextDate',
+	'date-too-old': 'dateTooOld',
+	'series-start': 'seriesStart',
+	'series-person': 'seriesPerson'
 };
 
 function failWith(event: RequestEvent, error: unknown) {

@@ -26,12 +26,16 @@
 	const m = messages();
 	const id = $props.id();
 
+	// A cleared field (desktop Backspace, some pickers' "Clear") is '' until a
+	// day is picked again: the chip says nothing rather than formatting no date.
 	const chip = $derived(
-		upcoming
-			? m.date.dateLabel(value, today)
-			: value === today
-				? m.expenses.form.today
-				: m.date.shortAuto(value, today)
+		!value
+			? ''
+			: upcoming
+				? m.date.dateLabel(value, today)
+				: value === today
+					? m.expenses.form.today
+					: m.date.shortAuto(value, today)
 	);
 </script>
 

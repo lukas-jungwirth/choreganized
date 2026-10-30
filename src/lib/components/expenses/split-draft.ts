@@ -26,9 +26,46 @@ export type SplitDraft = {
 	mode: SplitMode;
 	/** Who is in, in roster order. */
 	inIds: string[];
-	/** Person id → what is typed in their field, per mode that has fields. */
+	/** Person id → what is typed in their field, in this mode's unit. */
 	inputs: Record<string, string>;
 };
+
+/** What each mode had typed in it, kept while the sheet is open. */
+export type ModeInputs = Partial<Record<SplitMode, Record<string, string>>>;
+
+/**
+ * Switching mode [9c]. Each mode keeps its own fields — "50" means 50% in one
+ * and €50 in another, so carrying text across would invent a split nobody
+ * typed. A mode opened for the first time starts on what the split already
+ * comes to: Amounts on the money each row shows, % evenly, Shares on 1 each.
+ */
+export function switchDraftMode(
+	draft: SplitDraft,
+	next: SplitMode,
+	typed: ModeInputs,
+	amountMinor: number,
+	currency: string,
+	decimalComma: boolean
+): { draft: SplitDraft; typed: ModeInputs } {
+	if (next === draft.mode) return { draft, typed };
+	const current = previewSplit(draft, amountMinor, currency).amounts;
+	const kept: ModeInputs = { ...typed, [draft.mode]: draft.inputs };
+	const filled = { ...kept[next] };
+	const count = draft.inIds.length;
+	draft.inIds.forEach((id, index) => {
+		if ((filled[id] ?? '').trim() !== '') return;
+		if (next === 'amounts' && current[id] !== undefined) {
+			filled[id] = formatAmountInput(current[id], currency, decimalComma);
+		} else if (next === 'percent') {
+			const each = Math.floor(PERCENT_TOTAL / count / 10) * 10;
+			const share = index === count - 1 ? PERCENT_TOTAL - each * (count - 1) : each;
+			filled[id] = formatPercent(share, decimalComma);
+		} else if (next === 'shares') {
+			filled[id] = '1';
+		}
+	});
+	return { draft: { ...draft, mode: next, inputs: filled }, typed: kept };
+}
 
 /** People a new expense can name: current members, plus anyone still owed or owing. */
 export function pickablePeople(

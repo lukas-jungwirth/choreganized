@@ -265,3 +265,92 @@ test('narrow All activity by time, payer and categories, then clear it', async (
 	await expect(all).toBeHidden();
 	await expect(page.getByRole('button', { name: 'Payments', exact: true })).toBeVisible();
 });
+
+test('the sheets hold up to a thumb: split modes keep their own numbers, a cleared date, paying yourself', async ({
+	page
+}) => {
+	const errors: string[] = [];
+	page.on('pageerror', (error) => errors.push(error.message));
+	await page.goto('/expenses');
+	await page.getByRole('button', { name: 'Add expense' }).click();
+	const sheet = page.getByRole('dialog', { name: 'Add expense' });
+	await sheet.getByLabel('Amount').fill('30,00');
+	await sheet.getByLabel('What for?').fill('Thumb test');
+
+	// 50 / 50 by percent is €15.00 each in Amounts — not €50 each, "€70.00 too much".
+	await sheet.getByRole('button', { name: /^Split/ }).click();
+	const split = page.getByRole('dialog', { name: 'Split' });
+	await split.getByRole('tab', { name: '%', exact: true }).click();
+	await split.getByRole('tab', { name: 'Amounts', exact: true }).click();
+	const inputs = split.getByRole('textbox');
+	await expect(inputs.first()).toHaveValue('15.00');
+	await expect(split.getByText('Adds up', { exact: true })).toBeVisible();
+	await split.getByRole('button', { name: 'Done' }).click();
+
+	// A cleared date leaves the sheet standing, with Save waiting for a day.
+	const date = sheet.getByRole('textbox', { name: /^Date/ });
+	const today = await date.inputValue();
+	await date.fill('');
+	await expect(sheet.getByRole('button', { name: 'Save', exact: true })).toBeDisabled();
+	expect(errors).toEqual([]);
+	await date.fill(today);
+	await sheet.getByRole('button', { name: 'Save', exact: true }).click();
+	await expect(sheet).toBeHidden();
+
+	// Settling with yourself says why Record waits. (Saved, it put a payment on the card.)
+	await page
+		.getByRole('button', { name: /^Mark as paid|^Settle up/ })
+		.first()
+		.click();
+	const settle = page.getByRole('dialog', { name: 'Settle up' });
+	const to = settle.getByRole('combobox', { name: 'To' });
+	const from = await settle.getByRole('combobox', { name: 'From' }).inputValue();
+	await to.selectOption(from);
+	await expect(settle.getByRole('alert')).toHaveText('Pick two different people.');
+	await expect(settle.getByRole('button', { name: 'Record payment' })).toBeDisabled();
+});
+
+test('a default split over some of the house is kept as theirs, and All activity by month dates each row', async ({
+	page
+}) => {
+	await page.goto('/expenses');
+	const openDefault = async () => {
+		await page.getByRole('button', { name: 'More' }).click();
+		await page.getByRole('menuitem', { name: 'Expense settings' }).click();
+		const settings = page.getByRole('dialog', { name: 'Expenses' });
+		await settings.getByRole('button', { name: /^Default split/ }).click();
+		return { settings, split: page.getByRole('dialog', { name: 'Default split' }) };
+	};
+
+	// Equally, with Elisabeth out, is not "Equally between everyone".
+	let { settings, split } = await openDefault();
+	await split.getByRole('checkbox', { name: 'Elisabeth is in this' }).uncheck();
+	await split.getByRole('button', { name: 'Done' }).click();
+	await expect(split).toBeHidden();
+	await expect(settings.getByRole('button', { name: /^Default split/ })).not.toContainText(
+		'Equally between everyone'
+	);
+	await expect(settings.getByRole('button', { name: /^Default split/ })).not.toContainText(
+		'Elisabeth'
+	);
+
+	// Back to everyone, so the other journeys start where they expect.
+	await settings.getByRole('button', { name: 'Close' }).click();
+	({ settings, split } = await openDefault());
+	await split.getByRole('checkbox', { name: 'Elisabeth is in this' }).check();
+	await split.getByRole('tab', { name: 'Equally', exact: true }).click();
+	await split.getByRole('button', { name: 'Done' }).click();
+	await expect(settings.getByRole('button', { name: /^Default split/ })).toContainText(
+		'Equally between everyone'
+	);
+
+	// All time is grouped by month: the day moves onto each row.
+	await page.goto('/expenses/history');
+	await expect(page.getByRole('heading', { level: 2 }).first()).not.toContainText(/Today/);
+	await expect(
+		page
+			.getByTestId('expense-row')
+			.filter({ hasText: / paid €[\d.,]+ · / })
+			.first()
+	).toBeVisible();
+});

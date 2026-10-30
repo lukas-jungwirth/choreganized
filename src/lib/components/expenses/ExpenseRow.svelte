@@ -22,9 +22,14 @@
 		currency: string;
 		/** The payment's second line: a time on the tab, a date in History; null says just "Payment". */
 		when: string | null;
+		/**
+		 * The day, where no heading names it — History grouped by month [9f]:
+		 * "Lukas paid €42.10 · Oct 28".
+		 */
+		day?: string;
 	};
 
-	let { item, me, names, currency, when }: Props = $props();
+	let { item, me, names, currency, when, day }: Props = $props();
 
 	const m = messages();
 
@@ -34,6 +39,8 @@
 	const who = (id: string) => names[id] ?? '?';
 	const part = $derived(yourPart(item, me));
 	const recipient = $derived(item.shares[0]?.personId ?? '');
+	/** "Jun 18" wraps whole, never as "Jun" on one line and "18" on the next. */
+	const unbroken = (text: string) => text.replace(/ /g, '\u00a0');
 </script>
 
 <li>
@@ -41,7 +48,7 @@
 		<CategoryIcon category={item.category} />
 		<span class="text">
 			{#if item.kind === 'payment'}
-				<span class="title"
+				<span class="title payment"
 					>{m.expenses.row.payment(
 						who(item.paidById),
 						who(recipient),
@@ -60,7 +67,11 @@
 						</span>
 					{/if}
 				</span>
-				<span class="meta">{m.expenses.row.paid(who(item.paidById), money(item.amountMinor))}</span>
+				<span class="meta"
+					>{day
+						? m.expenses.row.paidOn(who(item.paidById), money(item.amountMinor), unbroken(day))
+						: m.expenses.row.paid(who(item.paidById), money(item.amountMinor))}</span
+				>
 			{/if}
 		</span>
 		{#if item.kind === 'expense'}
@@ -118,6 +129,13 @@
 		text-overflow: ellipsis;
 		white-space: nowrap;
 		font-variant-numeric: tabular-nums;
+	}
+
+	/* A payment's title is the whole sentence, amount included: it wraps onto a
+	   second line rather than cut "€18.00" off ("Elisabeth hat Lukas € 18,00 geza…"). */
+	.title.payment {
+		white-space: normal;
+		overflow-wrap: anywhere;
 	}
 
 	/* The repeat badge sits right after the words, and the words give way to it. */

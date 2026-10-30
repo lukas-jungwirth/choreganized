@@ -1425,6 +1425,9 @@ export const en = {
 		/** A row in Recent and All activity [9a] [9f]. */
 		row: {
 			paid: (who: string | null, amount: string) => `${who ?? 'You'} paid ${amount}`,
+			/** History by month [9f], where no heading names the day: "Lukas paid €42.10 · Oct 28". */
+			paidOn: (who: string | null, amount: string, day: string) =>
+				`${who ?? 'You'} paid ${amount} · ${day}`,
 			lent: 'you lent',
 			borrowed: 'you borrowed',
 			notInvolved: 'not involved',
@@ -1506,7 +1509,7 @@ export const en = {
 		summary: {
 			everyone: 'everyone',
 			people: (count: number) => (count === 1 ? '1 person' : `${count} people`),
-			equal: (who: string, each: string) => `Equally · ${who} · ${each} each`,
+			equal: (who: string, each: string) => `Equally · ${who} · ${each}\u00a0each`,
 			amounts: (who: string) => `Amounts · ${who}`,
 			/** "Lukas 30 · Elisabeth 70". */
 			parts: (parts: { name: string; value: string }[]) =>
@@ -1763,7 +1766,10 @@ export const en = {
 			notFound: 'That expense isn’t there any more.',
 			currency: 'Pick one of the listed currencies.',
 			currencyLocked: 'The currency is fixed once there are expenses.',
-			nextDate: 'The next one can’t be before today.'
+			nextDate: 'The next one can’t be before today.',
+			dateTooOld: 'That date is too long ago — check the year.',
+			seriesStart: 'A repeating expense can start at most a year ago.',
+			seriesPerson: 'Someone in it has left the household, so it can’t repeat.'
 		}
 	},
 

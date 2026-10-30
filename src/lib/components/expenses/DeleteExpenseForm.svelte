@@ -9,6 +9,7 @@
 <script lang="ts">
 	import { enhance } from '$app/forms';
 	import Trash from '@lucide/svelte/icons/trash-2';
+	import { messages } from '$lib/i18n';
 
 	type Props = {
 		id: string;
@@ -20,22 +21,33 @@
 	};
 
 	let { id, label, ondeleted, ondone }: Props = $props();
+
+	const m = messages();
+	let deleting = $state(false);
+	let error = $state<string | undefined>();
 </script>
 
 <form
 	method="POST"
 	action="?/delete"
-	use:enhance={() =>
-		async ({ result, update }) => {
+	use:enhance={() => {
+		deleting = true;
+		error = undefined;
+		return async ({ result, update }) => {
 			const gone = result.type === 'success' && Boolean(result.data?.deleted);
 			if (!gone || !ondeleted) await update({ reset: false });
+			deleting = false;
+			// Answered, but nothing went: someone else deleted it in the meantime.
+			if (result.type === 'success' && !gone) error = m.expenses.errors.notFound;
 			if (!gone) return;
 			ondeleted?.(id);
 			ondone();
-		}}
+		};
+	}}
 >
 	<input type="hidden" name="id" value={id} />
-	<button type="submit">
+	{#if error}<p class="error" role="alert">{error}</p>{/if}
+	<button type="submit" disabled={deleting}>
 		<Trash size={15} strokeWidth={2} aria-hidden="true" />
 		{label}
 	</button>
@@ -52,6 +64,13 @@
 		padding: 12px;
 		font-size: var(--fs-16);
 		font-weight: 600;
+		color: var(--danger);
+	}
+
+	.error {
+		margin-top: 12px;
+		font-size: var(--fs-14);
+		text-align: center;
 		color: var(--danger);
 	}
 </style>
