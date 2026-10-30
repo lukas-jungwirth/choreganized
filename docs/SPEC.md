@@ -1062,7 +1062,7 @@ by the catalog (§9).
 
 ### 11.8 Settle up [9d]
 
-A sheet (→ [DECISIONS #198](DECISIONS.md)):
+A sheet (→ [DECISIONS #198, #202](DECISIONS.md)):
 
 - **From → To**: two boxes, one above the other so a long name keeps the width, each a
   micro-label, the avatar and the name, with a dotted sage arrow down their left from one to
@@ -1071,8 +1071,8 @@ A sheet (→ [DECISIONS #198](DECISIONS.md)):
   You appear by your own name, marked: "Lukas (you)" / "Lukas (du)", the one form that reads
   right in both slots (German would need "mir" after Von and "mich" after An).
 - **Amount**: centred, sized like the add sheet's sentence, not a hero.
-- **Date**: the app's ordinary date field (like a task's [3b]), today at most, with a **Today**
-  shortcut under it, on the right.
+- **Date**: the app's ordinary date field, the same plain one as the history filter's From /
+  To — no caption, no Today shortcut — starting on today, today at most (→ DECISIONS #202).
 
 Opened from a balance line it comes prefilled with that payment, and the amount can be
 lowered for a partial payment ("Elisabeth owes you €24.50 · lower it for a partial payment").

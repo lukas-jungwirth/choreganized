@@ -2895,3 +2895,11 @@ units | null, name}`, written back as editor lines in the reader's unit spelling
        shipped anywhere we could confirm, and Chrome's own guidance warns it double-scales
        alongside the meta tag. **Not literal rem in each component** (`0.875rem`): the named
        steps are the same thing with the rounding done once and the caps attached.
+
+202. **One date field look: the settle sheet's date is the history filter's** (`SettleSheet`;
+     amends #198, Lukas 2026-10-30). Both already used `DateField`, but settle up added the
+     caption ("Today · Oct 30") and a Today chip under it, so the two read as different
+     controls. Kept the plainer one: the field shows the date itself, so the caption only said
+     it twice, and the sheet already opens on today (an edit opens on the payment's own date),
+     so the shortcut had nothing to do. The task sheet's [3b] caption stays — "Tomorrow" says
+     something a due date's digits don't.

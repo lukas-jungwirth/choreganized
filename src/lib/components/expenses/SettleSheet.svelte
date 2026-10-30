@@ -9,8 +9,8 @@
 	picker changes it (→ DECISIONS #198). The amount can be lowered for a partial payment. Editing a recorded
 	payment opens the same sheet.
 
-	The date is the app's ordinary date field, with a Today shortcut under it as
-	in the task sheet [3b] (→ SPEC §11.8, DECISIONS #198).
+	The date is the app's ordinary date field, the same plain one as the history
+	filter's From / To, starting on today (→ SPEC §11.8, DECISIONS #202).
 -->
 <script lang="ts">
 	import { enhance } from '$app/forms';
@@ -164,17 +164,7 @@
 		</div>
 
 		<div class="date">
-			<DateField
-				label={m.expenses.form.date}
-				name="date"
-				bind:value={date}
-				max={today}
-				caption={date ? m.date.dateLabel(date, today) : undefined}
-				required
-			/>
-			<button type="button" class="shortcut" onclick={() => (date = today)}>
-				{m.expenses.form.today}
-			</button>
+			<DateField label={m.expenses.form.date} name="date" bind:value={date} max={today} required />
 		</div>
 
 		{#if error}<p class="error" role="alert">{error}</p>{/if}
@@ -294,25 +284,7 @@
 	}
 
 	.date {
-		display: flex;
-		flex-direction: column;
-		align-items: flex-start;
 		margin: 18px 0 20px;
-	}
-
-	.date > :global(:first-child) {
-		align-self: stretch;
-	}
-
-	.shortcut {
-		align-self: flex-end;
-		margin-top: 10px;
-		padding: 7px 13px;
-		border-radius: var(--r-chip);
-		background: var(--sage-tint);
-		font-size: var(--fs-14);
-		font-weight: 600;
-		color: var(--sage-deep);
 	}
 
 	.error {
