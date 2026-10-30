@@ -60,6 +60,15 @@ test('log a split expense, settle up, find it, delete and undo', async ({ page }
 	// Settle the whole house: one payment, and the card says so.
 	await card.getByRole('button', { name: /^Mark as paid/ }).click();
 	const settle = page.getByRole('dialog', { name: 'Settle up' });
+	// Arrives as just the two names, picked from the card's line [9d].
+	await expect(settle.getByRole('combobox', { name: 'From' }).locator('option:checked')).toHaveText(
+		'Elisabeth'
+	);
+	// The reader by their own name, marked: one form that fits From and To alike.
+	await expect(settle.getByRole('combobox', { name: 'To' }).locator('option:checked')).toHaveText(
+		/ \(you\)$/
+	);
+	await expect(settle.getByText(/only records it/)).toHaveCount(0);
 	await settle.getByRole('button', { name: 'Record payment' }).click();
 	await expect(settle).toBeHidden();
 	await expect(page.getByTestId('balance-card')).toContainText('All settled up');

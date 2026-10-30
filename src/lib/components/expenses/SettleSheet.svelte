@@ -1,25 +1,30 @@
 <!--
-	Settle up [9d]: from → to, how much, when. Opened from a line on the balance
-	card it arrives filled in, and the amount can be lowered for a partial
-	payment. Editing a recorded payment opens the same sheet.
+	Settle up [9d]: who → whom, how much, when. Opened from the balance card it
+	arrives filled in with that payment — the two people are the answer, so they
+	show as two names, each in its own box, one above the other, with a dotted
+	arrow down the left from one to the other rather than a wall of chips.
+	Stacked so a long name keeps the whole width. Either name is a picker (a
+	real <select>: the platform's own list on a phone) for the rarer payment the
+	card didn't suggest. No swap: the pair always arrives filled in, and either
+	picker changes it (→ DECISIONS #198). The amount can be lowered for a partial payment. Editing a recorded
+	payment opens the same sheet.
 
-	It only records the payment: no money moves through the app, and the note
-	under the button says so (→ SPEC §11.8).
+	The date is the app's ordinary date field, with a Today shortcut under it as
+	in the task sheet [3b] (→ SPEC §11.8, DECISIONS #198).
 -->
 <script lang="ts">
 	import { enhance } from '$app/forms';
-	import ArrowDown from '@lucide/svelte/icons/arrow-down';
+	import ChevronDown from '@lucide/svelte/icons/chevron-down';
 	import Avatar from '$lib/components/ui/Avatar.svelte';
 	import BottomSheet from '$lib/components/ui/BottomSheet.svelte';
 	import Button from '$lib/components/ui/Button.svelte';
-	import Chip from '$lib/components/ui/Chip.svelte';
+	import DateField from '$lib/components/ui/DateField.svelte';
 	import { messages } from '$lib/i18n';
 	import type { ExpenseItem, ExpensePerson } from '$lib/server/services/expenses';
 	import type { CalendarDate } from '$lib/utils/dates';
 	import { formatAmountInput, parseAmount, type Payment } from '$lib/utils/money';
 	import { untrack } from 'svelte';
 	import AmountField from './AmountField.svelte';
-	import DateRow from './DateRow.svelte';
 	import DeleteExpenseForm from './DeleteExpenseForm.svelte';
 
 	type Props = {
@@ -72,9 +77,9 @@
 	});
 
 	const amountMinor = $derived(parseAmount(amount, currency));
-	const valid = $derived(amountMinor !== null && fromId !== toId);
-	const nameOf = (id: string) =>
-		id === me ? null : (people.find((person) => person.id === id)?.name ?? '?');
+	const valid = $derived(amountMinor !== null && fromId !== toId && date !== '');
+	const byId = $derived(new Map(people.map((person) => [person.id, person])));
+	const nameOf = (id: string) => (id === me ? null : (byId.get(id)?.name ?? '?'));
 
 	/** "Elisabeth owes you €24.50 · lower it for a partial payment". */
 	const caption = $derived.by(() => {
@@ -90,16 +95,30 @@
 	const uid = $props.id();
 </script>
 
-{#snippet chooser(label: string, labelId: string, value: string, onpick: (id: string) => void)}
-	<p class="label" id={labelId}>{label}</p>
-	<div class="chips" role="group" aria-labelledby={labelId}>
-		{#each people as person (person.id)}
-			<Chip color={person.color} selected={value === person.id} onclick={() => onpick(person.id)}>
-				<Avatar name={person.name} color={person.color} size={24} />
-				{person.name}
-				{#if person.id === me}<span class="you">{m.expenses.form.you}</span>{/if}
-			</Chip>
-		{/each}
+{#snippet picker(label: string, name: string, side: 'from' | 'to')}
+	{@const value = side === 'from' ? fromId : toId}
+	{@const person = byId.get(value)}
+	<div class="end">
+		<span class="end-label" id="{uid}-{side}-label">{label}</span>
+		<Avatar name={person?.name} color={person?.color} size={36} />
+		<span class="select">
+			<select
+				{name}
+				aria-labelledby="{uid}-{side}-label"
+				{value}
+				onchange={(event) => {
+					if (side === 'from') fromId = event.currentTarget.value;
+					else toId = event.currentTarget.value;
+				}}
+			>
+				{#each people as option (option.id)}
+					<option value={option.id}>
+						{option.id === me ? m.expenses.settle.me(option.name) : option.name}
+					</option>
+				{/each}
+			</select>
+			<ChevronDown size={16} strokeWidth={2.4} aria-hidden="true" />
+		</span>
 	</div>
 {/snippet}
 
@@ -123,18 +142,15 @@
 	>
 		{#if item}<input type="hidden" name="id" value={item.id} />{/if}
 
-		{@render chooser(m.expenses.settle.from, `${uid}-from`, fromId, (id) => (fromId = id))}
-		<button
-			type="button"
-			class="swap"
-			aria-label={m.expenses.settle.swap}
-			onclick={() => ([fromId, toId] = [toId, fromId])}
-		>
-			<ArrowDown size={15} strokeWidth={2.2} />
-		</button>
-		{@render chooser(m.expenses.settle.to, `${uid}-to`, toId, (id) => (toId = id))}
-		<input type="hidden" name="fromId" value={fromId} />
-		<input type="hidden" name="toId" value={toId} />
+		<div class="who">
+			<!-- From the middle of one box to the middle of the other. -->
+			<svg class="flow" viewBox="0 0 24 80" aria-hidden="true">
+				<path class="dots" d="M21 4 C10 4 4 8 4 20 V60 C4 72 10 76 19 76" />
+				<path d="M15 71.5 L19.5 76 L15 80.5" />
+			</svg>
+			{@render picker(m.expenses.settle.from, 'fromId', 'from')}
+			{@render picker(m.expenses.settle.to, 'toId', 'to')}
+		</div>
 
 		<div class="amount">
 			<AmountField
@@ -147,8 +163,18 @@
 			/>
 		</div>
 
-		<div class="group">
-			<DateRow bind:value={date} {today} />
+		<div class="date">
+			<DateField
+				label={m.expenses.form.date}
+				name="date"
+				bind:value={date}
+				max={today}
+				caption={date ? m.date.dateLabel(date, today) : undefined}
+				required
+			/>
+			<button type="button" class="shortcut" onclick={() => (date = today)}>
+				{m.expenses.form.today}
+			</button>
 		</div>
 
 		{#if error}<p class="error" role="alert">{error}</p>{/if}
@@ -156,7 +182,6 @@
 		<Button type="submit" disabled={!valid || submitting}>
 			{item ? m.common.saveChanges : m.expenses.settle.record}
 		</Button>
-		<p class="note">{m.expenses.settle.note}</p>
 	</form>
 
 	{#if item}
@@ -175,8 +200,49 @@
 		flex-direction: column;
 	}
 
-	.label {
-		margin: 6px 0 8px;
+	/* Room on the left for the arrow; the boxes are 64px tall (a 36px avatar in
+	   14px padding) 8px apart, so their middles are 72px apart. */
+	.who {
+		position: relative;
+		display: flex;
+		flex-direction: column;
+		gap: 8px;
+		padding-left: 26px;
+	}
+
+	.flow {
+		position: absolute;
+		top: 28px;
+		left: 0;
+		width: 24px;
+		height: 80px;
+		overflow: visible;
+		fill: none;
+		stroke: var(--sage);
+		stroke-width: 1.8;
+		stroke-linecap: round;
+		stroke-linejoin: round;
+	}
+
+	.dots {
+		stroke-dasharray: 0.1 4.5;
+		stroke-width: 2.2;
+	}
+
+	/* From and To each in their own box. */
+	.end {
+		display: flex;
+		align-items: center;
+		gap: 12px;
+		min-width: 0;
+		padding: 14px 16px;
+		border-radius: var(--r-card);
+		background: var(--field);
+	}
+
+	.end-label {
+		flex: none;
+		width: 3.2em;
 		font-size: calc(11px * var(--fs));
 		font-weight: 700;
 		letter-spacing: 0.12em;
@@ -184,39 +250,69 @@
 		color: var(--text-5);
 	}
 
-	.chips {
+	.select {
+		position: relative;
 		display: flex;
-		flex-wrap: wrap;
-		gap: 8px;
-	}
-
-	.you {
-		font-size: calc(12px * var(--fs));
-		font-weight: 500;
-		color: var(--text-5);
-	}
-
-	.swap {
-		display: flex;
+		flex: 1;
 		align-items: center;
-		justify-content: center;
-		width: 30px;
-		height: 30px;
-		margin: 10px 0 4px 14px;
-		border-radius: 50%;
-		background: var(--sunken);
-		color: var(--text-3);
+		min-width: 0;
+		color: var(--text-4);
+	}
+
+	/* The chevron sits in the select's own padding, so the whole row is the target. */
+	.select :global(svg) {
+		position: absolute;
+		right: 0;
+		pointer-events: none;
+	}
+
+	select {
+		width: 100%;
+		min-width: 0;
+		padding: 2px 24px 2px 0;
+		overflow: hidden;
+		border: none;
+		background: none;
+		font-family: var(--font-display);
+		font-size: calc(20px * var(--fs));
+		font-weight: 600;
+		color: var(--ink);
+		text-overflow: ellipsis;
+		white-space: nowrap;
+		appearance: none;
+		outline: none;
+		cursor: pointer;
+	}
+
+	.end:focus-within select {
+		text-decoration: underline 2px var(--sage);
+		text-underline-offset: 5px;
 	}
 
 	.amount {
-		margin-top: 18px;
+		margin-top: 14px;
 	}
 
-	.group {
-		margin: 14px 0 16px;
-		border: 1px solid var(--border);
-		border-radius: var(--r-block);
-		background: var(--card);
+	.date {
+		display: flex;
+		flex-direction: column;
+		align-items: flex-start;
+		margin: 18px 0 20px;
+	}
+
+	.date > :global(:first-child) {
+		align-self: stretch;
+	}
+
+	.shortcut {
+		align-self: flex-end;
+		margin-top: 10px;
+		padding: 7px 13px;
+		border-radius: var(--r-chip);
+		background: var(--sage-tint);
+		font-size: calc(12.5px * var(--fs));
+		font-weight: 600;
+		color: var(--sage-deep);
 	}
 
 	.error {
@@ -226,13 +322,5 @@
 		background: var(--danger-tint);
 		font-size: calc(13px * var(--fs));
 		color: var(--danger);
-	}
-
-	.note {
-		margin: 12px 8px 0;
-		font-size: calc(12.5px * var(--fs));
-		line-height: 1.45;
-		text-align: center;
-		color: var(--text-4);
 	}
 </style>

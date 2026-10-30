@@ -1397,7 +1397,7 @@ export const en = {
 			remindOff: (name: string | null) =>
 				name
 					? `${name} hasn’t turned on expense notifications.`
-					: 'Nobody here has expense notifications turned on.',
+					: 'Nobody in your household has expense notifications turned on.',
 			remindLabel: (name: string) => `Remind ${name}`,
 			/** One row of several you owe [10a · 3]. */
 			settle: 'Settle',
@@ -1553,12 +1553,12 @@ export const en = {
 			edit: 'Edit payment',
 			from: 'From',
 			to: 'To',
-			swap: 'Swap',
+			/** The reader in the From / To pickers: their own name, marked — one form that fits both slots. */
+			me: (name: string) => `${name} (you)`,
 			owes: (from: string | null, to: string | null, amount: string) =>
 				`${from ?? 'You'} ${from === null ? 'owe' : 'owes'} ${to ?? 'you'} ${amount} · lower it for a partial payment`,
 			record: 'Record payment',
-			delete: 'Delete payment',
-			note: 'This only records it — send the money however you usually do.'
+			delete: 'Delete payment'
 		},
 
 		/** [9e] */

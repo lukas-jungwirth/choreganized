@@ -1,6 +1,6 @@
 <!--
-	The amount as the hero of its sheet [9b] [9d]: big, centred, in the display
-	face, with the currency's mark beside it. A decimal keypad on a phone; either
+	The settle-up amount [9d]: centred, in the display face, with the currency's
+	mark beside it — sized like the add sheet's sentence [10b], not a hero. A decimal keypad on a phone; either
 	separator reads (→ `utils/money` `parseAmount`).
 -->
 <script lang="ts">
@@ -59,7 +59,7 @@
 
 	.symbol {
 		font-family: var(--font-display);
-		font-size: calc(28px * var(--fs));
+		font-size: calc(22px * var(--fs));
 		font-weight: 600;
 		color: var(--text-4);
 	}
@@ -72,7 +72,7 @@
 		border: none;
 		background: none;
 		font-family: var(--font-display);
-		font-size: calc(46px * var(--fs));
+		font-size: calc(32px * var(--fs));
 		font-weight: 600;
 		line-height: 1.1;
 		color: var(--ink);
