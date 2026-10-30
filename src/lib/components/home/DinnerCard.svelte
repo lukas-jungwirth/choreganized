@@ -103,7 +103,7 @@
 	.eyebrow {
 		display: block;
 		margin-bottom: 4px;
-		font-size: calc(10px * var(--fs));
+		font-size: var(--fs-12);
 		font-weight: 700;
 		letter-spacing: 0.12em;
 		text-transform: uppercase;
@@ -113,7 +113,7 @@
 	.name {
 		display: block;
 		font-family: var(--font-display);
-		font-size: calc(18px * var(--fs));
+		font-size: var(--fs-20);
 		font-weight: 600;
 		line-height: 1.15;
 	}
@@ -128,7 +128,7 @@
 		flex-wrap: wrap;
 		gap: 6px;
 		margin-top: 5px;
-		font-size: calc(12px * var(--fs));
+		font-size: var(--fs-14);
 		color: var(--text-4);
 	}
 

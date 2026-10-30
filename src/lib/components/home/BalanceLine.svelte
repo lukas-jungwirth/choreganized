@@ -54,7 +54,7 @@
 		flex: 1;
 		min-width: 0;
 		overflow: hidden;
-		font-size: calc(14.5px * var(--fs));
+		font-size: var(--fs-16);
 		font-weight: 600;
 		color: var(--ink);
 		text-overflow: ellipsis;

@@ -75,20 +75,22 @@
 
 	.name {
 		margin: 0;
-		font-size: calc(15px * var(--fs));
+		font-size: var(--fs-17);
 		font-weight: 600;
 		overflow-wrap: anywhere;
 	}
 
+	/* "(you)" moves to the next line whole, never as "(" and "you)". */
 	.you {
 		margin-left: 5px;
+		white-space: nowrap;
 		font-weight: 500;
 		color: var(--text-5);
 	}
 
 	.meta {
 		margin: 1px 0 0;
-		font-size: calc(12.5px * var(--fs));
+		font-size: var(--fs-14);
 		color: var(--text-4);
 	}
 
@@ -100,7 +102,7 @@
 		padding: 5px 11px;
 		border-radius: var(--r-chip);
 		background: var(--sage-tint);
-		font-size: calc(11px * var(--fs));
+		font-size: var(--fs-13);
 		font-weight: 700;
 		color: var(--sage);
 	}

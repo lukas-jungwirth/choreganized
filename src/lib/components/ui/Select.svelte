@@ -66,7 +66,7 @@
 
 	.label {
 		margin-bottom: 8px;
-		font-size: calc(11px * var(--fs));
+		font-size: var(--fs-13);
 		font-weight: 700;
 		letter-spacing: 0.1em;
 		text-transform: uppercase;
@@ -86,7 +86,7 @@
 		border-radius: var(--r-input);
 		background: var(--input-surface, var(--card));
 		font-family: inherit;
-		font-size: calc(15px * var(--fs));
+		font-size: var(--fs-17);
 		font-weight: 500;
 		color: var(--ink);
 	}
@@ -108,7 +108,7 @@
 
 	.hint {
 		margin: 6px 0 0 2px;
-		font-size: calc(11px * var(--fs));
+		font-size: var(--fs-13);
 		color: var(--text-disabled);
 	}
 </style>

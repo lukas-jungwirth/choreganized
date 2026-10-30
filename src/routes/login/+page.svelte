@@ -283,7 +283,7 @@
 	}
 
 	.wordmark {
-		font-size: calc(28px * var(--fs));
+		font-size: var(--fs-30);
 		letter-spacing: -0.01em;
 	}
 
@@ -303,7 +303,7 @@
 	}
 
 	.tagline .label {
-		font-size: calc(10px * var(--fs));
+		font-size: var(--fs-12);
 		font-weight: 700;
 		letter-spacing: 0.22em;
 		text-transform: uppercase;
@@ -329,7 +329,7 @@
 
 	.sent {
 		margin: 0;
-		font-size: calc(14px * var(--fs));
+		font-size: var(--fs-16);
 		line-height: 1.5;
 		color: var(--text-3);
 	}
@@ -337,7 +337,7 @@
 	/* "Didn't get the code? Send again" — the prompt muted, the action a link. */
 	.resend {
 		margin: 0;
-		font-size: calc(13px * var(--fs));
+		font-size: var(--fs-15);
 		color: var(--text-4);
 	}
 
@@ -349,7 +349,7 @@
 		padding: 4px 0;
 		border: none;
 		background: none;
-		font-size: calc(13px * var(--fs));
+		font-size: var(--fs-15);
 		font-weight: 600;
 		color: var(--sage);
 	}
@@ -364,7 +364,7 @@
 		align-items: center;
 		gap: 12px;
 		margin: 20px 0;
-		font-size: calc(12px * var(--fs));
+		font-size: var(--fs-14);
 		color: var(--text-5);
 	}
 
@@ -385,7 +385,7 @@
 		border-radius: var(--r-button);
 		background: var(--card);
 		box-shadow: var(--shadow-card);
-		font-size: calc(16px * var(--fs));
+		font-size: var(--fs-18);
 		font-weight: 700;
 		color: var(--ink);
 		transition: transform 120ms ease-out;
@@ -406,14 +406,14 @@
 		border: 1px solid var(--danger-border);
 		border-radius: var(--r-input);
 		background: var(--danger-tint);
-		font-size: calc(13.5px * var(--fs));
+		font-size: var(--fs-15);
 		color: var(--danger-deep);
 	}
 
 	.footnote {
 		margin: 20px 0 0;
 		text-align: center;
-		font-size: calc(13.5px * var(--fs));
+		font-size: var(--fs-15);
 		line-height: 1.5;
 		color: var(--text-4);
 	}

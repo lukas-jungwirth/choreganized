@@ -119,13 +119,13 @@
 
 	.next-label {
 		flex: 1;
-		font-size: calc(14px * var(--fs));
+		font-size: var(--fs-16);
 		font-weight: 600;
 		color: var(--ink);
 	}
 
 	.next-date {
-		font-size: calc(14px * var(--fs));
+		font-size: var(--fs-16);
 		font-weight: 700;
 		color: var(--ink);
 		font-variant-numeric: tabular-nums;
@@ -162,13 +162,13 @@
 	}
 
 	.title {
-		font-size: calc(14.5px * var(--fs));
+		font-size: var(--fs-16);
 		font-weight: 600;
 		color: var(--ink);
 	}
 
 	.detail {
-		font-size: calc(12px * var(--fs));
+		font-size: var(--fs-14);
 		color: var(--text-4);
 	}
 

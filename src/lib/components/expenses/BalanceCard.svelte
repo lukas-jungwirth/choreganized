@@ -287,7 +287,7 @@
 	.sentence {
 		margin: 0;
 		font-family: var(--font-display);
-		font-size: calc(27px * var(--fs));
+		font-size: var(--fs-30);
 		font-weight: 600;
 		line-height: 1.2;
 		color: var(--ink);
@@ -305,7 +305,7 @@
 		display: block;
 		margin-top: 6px;
 		padding: 0;
-		font-size: calc(14px * var(--fs));
+		font-size: var(--fs-16);
 		text-align: left;
 		color: var(--text-4);
 	}
@@ -339,7 +339,7 @@
 
 	.actions button {
 		padding: 8px 15px;
-		font-size: calc(14px * var(--fs));
+		font-size: var(--fs-16);
 	}
 
 	.primary {
@@ -379,7 +379,7 @@
 		flex: 1;
 		min-width: 0;
 		overflow: hidden;
-		font-size: calc(15px * var(--fs));
+		font-size: var(--fs-17);
 		font-weight: 500;
 		color: var(--ink);
 		text-overflow: ellipsis;
@@ -388,7 +388,7 @@
 
 	.row-amount {
 		flex: none;
-		font-size: calc(15.5px * var(--fs));
+		font-size: var(--fs-17);
 		font-weight: 700;
 		color: var(--ink);
 		font-variant-numeric: tabular-nums;
@@ -398,7 +398,7 @@
 		flex: none;
 		margin-left: 4px;
 		padding: 6px 13px;
-		font-size: calc(13.5px * var(--fs));
+		font-size: var(--fs-15);
 		font-weight: 600;
 	}
 
@@ -411,7 +411,7 @@
 		width: 100%;
 		padding: 12px 0 2px;
 		border-top: 1px solid var(--divider);
-		font-size: calc(13.5px * var(--fs));
+		font-size: var(--fs-15);
 		font-weight: 600;
 		color: var(--text-4);
 	}
@@ -434,7 +434,7 @@
 		margin-top: 14px;
 		padding: 11px 15px;
 		border-radius: var(--r-chip);
-		font-size: calc(14px * var(--fs));
+		font-size: var(--fs-16);
 		font-weight: 700;
 	}
 
@@ -444,7 +444,7 @@
 
 	.missed {
 		margin: 10px 0 0;
-		font-size: calc(12.5px * var(--fs));
+		font-size: var(--fs-14);
 		color: var(--text-4);
 	}
 
@@ -474,19 +474,19 @@
 	.settled-title {
 		margin: 0;
 		font-family: var(--font-display);
-		font-size: calc(26px * var(--fs));
+		font-size: var(--fs-28);
 		font-weight: 600;
 		line-height: 1.1;
 	}
 
 	.settled-text .between {
 		margin-top: 3px;
-		font-size: calc(13px * var(--fs));
+		font-size: var(--fs-15);
 	}
 
 	.settled-detail {
 		margin: 3px 0 0;
-		font-size: calc(13px * var(--fs));
+		font-size: var(--fs-15);
 		color: var(--text-4);
 	}
 

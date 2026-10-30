@@ -136,7 +136,10 @@ async function networkOrOfflineNotice(request: Request): Promise<Response> {
  * Self-contained because it is served precisely when nothing else can be
  * fetched (→ DECISIONS #56) — so its colours are spelled out rather than taken
  * from `app.css`. They come from `$lib/theme`'s one table, which is what stops
- * them drifting from the metas and the manifest (→ DECISIONS #121).
+ * them drifting from the metas and the manifest (→ DECISIONS #121). Its type is
+ * in `rem` with the same opt-ins as the app, so it follows the reader's text
+ * size too (→ DECISIONS #201) — on an iPhone a shade larger than the app, which
+ * corrects for Dynamic Type's 17px default and this page doesn't need to.
  *
  * This page follows the *device* even when the app itself has a theme pinned:
  * the choice lives in an httpOnly cookie a worker can't read (→ `$lib/theme`),
@@ -150,17 +153,21 @@ function offlineNotice(): Response {
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="text-scale" content="scale">
 <meta name="theme-color" media="(prefers-color-scheme: light)" content="${CHROME.bg[0]}">
 <meta name="theme-color" media="(prefers-color-scheme: dark)" content="${CHROME.bg[1]}">
 <title>Offline · Choreganized</title>
 <style>
 	:root { color-scheme: light dark }
 	html { height: 100% }
+	@supports (font: -apple-system-body) and (-webkit-touch-callout: default) {
+		html { font: -apple-system-body }
+	}
 	body {
 		margin: 0; min-height: 100%; display: flex; align-items: center; justify-content: center;
 		padding: 32px;
 		background: ${chromeLightDark('bg')}; color: ${chromeLightDark('ink')};
-		font: 500 15px/1.5 ui-sans-serif, system-ui, -apple-system, sans-serif;
+		font: 500 1.0625rem/1.5 ui-sans-serif, system-ui, -apple-system, sans-serif;
 	}
 	main { max-width: 320px; text-align: center }
 	.tile {
@@ -169,10 +176,10 @@ function offlineNotice(): Response {
 		display: flex; align-items: center; justify-content: center;
 	}
 	.tile svg { stroke: ${chromeLightDark('faint')} }
-	h1 { margin: 0 0 8px; font: 600 21px/1.2 Georgia, serif }
+	h1 { margin: 0 0 8px; font: 600 1.5rem/1.2 Georgia, serif }
 	p { margin: 0 0 22px; color: ${chromeLightDark('muted')} }
 	button {
-		font: 700 15px/1 inherit;
+		font: 700 1.0625rem/1 ui-sans-serif, system-ui, -apple-system, sans-serif;
 		color: ${chromeLightDark('onSage')}; background: ${chromeLightDark('sage')};
 		border: 0; border-radius: 14px; padding: 14px 22px;
 	}

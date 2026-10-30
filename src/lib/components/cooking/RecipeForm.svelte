@@ -783,18 +783,23 @@
 		padding: 4px 0 14px;
 	}
 
+	/* A navigation bar: Cancel, the title and Save share one line, so like a
+	   native one they stop growing early — the buttons at 22px, the title at
+	   26px (→ DESIGN-SYSTEM "Type scale") — and the title wraps between them. */
 	.cancel {
-		font-size: calc(15px * var(--fs));
+		font-size: min(var(--fs-17), 22px);
 		font-weight: 600;
 		color: var(--text-4);
 	}
 
 	h1 {
-		font-size: calc(17px * var(--fs));
+		min-width: 0;
+		font-size: min(var(--fs-20), 26px);
+		text-align: center;
 	}
 
 	.save {
-		font-size: calc(15px * var(--fs));
+		font-size: min(var(--fs-17), 22px);
 		font-weight: 700;
 		color: var(--sage);
 	}
@@ -809,7 +814,7 @@
 		padding: 10px 13px;
 		border-radius: var(--r-input);
 		background: var(--sunken);
-		font-size: calc(12.5px * var(--fs));
+		font-size: var(--fs-14);
 		line-height: 1.45;
 		color: var(--text-4);
 	}
@@ -865,7 +870,7 @@
 	}
 
 	.hint {
-		font-size: calc(12.5px * var(--fs));
+		font-size: var(--fs-14);
 		font-weight: 600;
 		color: var(--text-4);
 	}
@@ -879,7 +884,7 @@
 		border-radius: var(--r-chip);
 		background: var(--tabbar-bg);
 		backdrop-filter: blur(6px);
-		font-size: calc(12.5px * var(--fs));
+		font-size: var(--fs-14);
 		font-weight: 700;
 		color: var(--ink);
 	}
@@ -896,14 +901,14 @@
 	.photo-error {
 		margin: 0;
 		padding-left: 4px;
-		font-size: calc(13px * var(--fs));
+		font-size: var(--fs-15);
 		color: var(--danger-deep);
 	}
 
 	.drop {
 		margin-left: auto;
 		padding: 4px;
-		font-size: calc(12.5px * var(--fs));
+		font-size: var(--fs-14);
 		font-weight: 600;
 		color: var(--danger);
 	}
@@ -922,7 +927,7 @@
 	.label {
 		margin: 24px 0 8px;
 		font-family: var(--font-body);
-		font-size: calc(11px * var(--fs));
+		font-size: var(--fs-13);
 		font-weight: 700;
 		letter-spacing: 0.1em;
 		text-transform: uppercase;
@@ -955,7 +960,7 @@
 		padding: 12px 0;
 		border: none;
 		background: none;
-		font-size: calc(14.5px * var(--fs));
+		font-size: var(--fs-16);
 		font-weight: 500;
 		color: var(--ink);
 	}
@@ -977,7 +982,7 @@
 		padding: 5px 9px;
 		border-radius: var(--r-chip);
 		background: var(--sunken);
-		font-size: calc(12.5px * var(--fs));
+		font-size: var(--fs-14);
 		font-weight: 600;
 		white-space: nowrap;
 		text-overflow: ellipsis;
@@ -1021,14 +1026,14 @@
 		gap: 8px;
 		margin: 12px 0 0 4px;
 		padding: 4px;
-		font-size: calc(14px * var(--fs));
+		font-size: var(--fs-16);
 		font-weight: 600;
 		color: var(--sage);
 	}
 
 	.units {
 		margin: 10px 4px 0;
-		font-size: calc(12px * var(--fs));
+		font-size: var(--fs-14);
 		line-height: 1.5;
 		color: var(--text-5);
 	}
@@ -1065,7 +1070,7 @@
 		margin-top: 10px;
 		border-radius: 50%;
 		background: var(--sunken);
-		font-size: calc(12px * var(--fs));
+		font-size: var(--fs-14);
 		font-weight: 700;
 		color: var(--text-4);
 	}
@@ -1079,7 +1084,7 @@
 		border: none;
 		border-radius: var(--r-input);
 		background: var(--card);
-		font-size: calc(15px * var(--fs));
+		font-size: var(--fs-17);
 		line-height: 1.4;
 		color: var(--text-2);
 		resize: none;
@@ -1112,7 +1117,7 @@
 		padding: 4px 10px;
 		border-radius: var(--r-chip);
 		background: var(--sunken);
-		font-size: calc(12px * var(--fs));
+		font-size: var(--fs-14);
 		font-weight: 600;
 		color: var(--text-4);
 		overflow-wrap: anywhere;
@@ -1158,7 +1163,7 @@
 	/* Says where the chips came from, quietly. It disappears the moment the list
 	   is the cook's own. */
 	.auto {
-		font-size: calc(10px * var(--fs));
+		font-size: var(--fs-12);
 		font-weight: 700;
 		letter-spacing: 0.1em;
 		text-transform: uppercase;

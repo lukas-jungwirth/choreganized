@@ -152,7 +152,7 @@
 <style>
 	.balance {
 		margin: -6px 0 16px;
-		font-size: calc(14px * var(--fs));
+		font-size: var(--fs-16);
 		font-weight: 600;
 		line-height: 1.45;
 		text-align: center;
@@ -161,7 +161,7 @@
 
 	.series {
 		margin: -6px 0 16px;
-		font-size: calc(13.5px * var(--fs));
+		font-size: var(--fs-15);
 		line-height: 1.45;
 		text-align: center;
 		color: var(--text-3);
@@ -195,14 +195,14 @@
 
 	.title {
 		display: block;
-		font-size: calc(15px * var(--fs));
+		font-size: var(--fs-17);
 		font-weight: 600;
 	}
 
 	.detail {
 		display: block;
 		margin-top: 1px;
-		font-size: calc(12.5px * var(--fs));
+		font-size: var(--fs-14);
 		color: var(--text-4);
 	}
 
@@ -222,7 +222,7 @@
 		padding: 15px;
 		border-radius: var(--r-input);
 		background: var(--field);
-		font-size: calc(15px * var(--fs));
+		font-size: var(--fs-17);
 		font-weight: 700;
 		color: var(--text-2);
 	}
@@ -231,7 +231,7 @@
 	.plain-cancel {
 		width: 100%;
 		padding: 13px;
-		font-size: calc(15px * var(--fs));
+		font-size: var(--fs-17);
 		font-weight: 700;
 		color: var(--text-2);
 	}
@@ -255,20 +255,20 @@
 
 	h3 {
 		margin-bottom: 10px;
-		font-size: calc(22px * var(--fs));
+		font-size: var(--fs-24);
 		overflow-wrap: anywhere;
 	}
 
 	.copy {
 		margin: 0 0 24px;
-		font-size: calc(14px * var(--fs));
+		font-size: var(--fs-16);
 		line-height: 1.5;
 		color: var(--text-4);
 	}
 
 	.error {
 		margin: -14px 0 20px;
-		font-size: calc(13px * var(--fs));
+		font-size: var(--fs-15);
 		color: var(--danger-deep);
 	}
 </style>

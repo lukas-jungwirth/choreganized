@@ -92,7 +92,7 @@
 		border-radius: var(--r-button);
 		background: var(--sage);
 		box-shadow: var(--shadow-button);
-		font-size: calc(16px * var(--fs));
+		font-size: var(--fs-18);
 		font-weight: 700;
 		color: var(--on-sage);
 	}

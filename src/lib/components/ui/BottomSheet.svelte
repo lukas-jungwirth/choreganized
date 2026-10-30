@@ -227,7 +227,7 @@
 
 	.eyebrow {
 		margin: 0 0 3px;
-		font-size: calc(11px * var(--fs));
+		font-size: var(--fs-13);
 		font-weight: 700;
 		letter-spacing: 0.1em;
 		text-transform: uppercase;
@@ -235,13 +235,13 @@
 	}
 
 	h2 {
-		font-size: calc(22px * var(--fs));
+		font-size: var(--fs-24);
 		overflow-wrap: anywhere;
 	}
 
 	.subtitle {
 		margin: 3px 0 0;
-		font-size: calc(13px * var(--fs));
+		font-size: var(--fs-15);
 		color: var(--text-4);
 	}
 

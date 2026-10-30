@@ -4,7 +4,7 @@
  * its look forever and nothing would notice — which is how import, new recipe,
  * stores, the four onboarding steps and the invite landing went unguarded until
  * 2026-10-25. Each entry in
- * `tests/visual/screens.spec.ts` names the route it shows (`route:`), and this
+ * `tests/visual/screens.ts` names the route it shows (`route:`), and this
  * test holds that list against `src/routes`.
  */
 import assert from 'node:assert/strict';
@@ -12,7 +12,7 @@ import { readFileSync } from 'node:fs';
 import { describe, it } from 'vitest';
 import { sourceFiles } from '../helpers/source';
 
-const SPEC = 'tests/visual/screens.spec.ts';
+const SPEC = 'tests/visual/screens.ts';
 
 /** Pages with no screenshot on purpose. Every addition needs a reason here. */
 const NOT_SCREENSHOTTED: Record<string, string> = {

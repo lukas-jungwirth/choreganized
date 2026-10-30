@@ -243,7 +243,7 @@
 	.end-label {
 		flex: none;
 		width: 3.2em;
-		font-size: calc(11px * var(--fs));
+		font-size: var(--fs-13);
 		font-weight: 700;
 		letter-spacing: 0.12em;
 		text-transform: uppercase;
@@ -274,7 +274,7 @@
 		border: none;
 		background: none;
 		font-family: var(--font-display);
-		font-size: calc(20px * var(--fs));
+		font-size: var(--fs-22);
 		font-weight: 600;
 		color: var(--ink);
 		text-overflow: ellipsis;
@@ -310,7 +310,7 @@
 		padding: 7px 13px;
 		border-radius: var(--r-chip);
 		background: var(--sage-tint);
-		font-size: calc(12.5px * var(--fs));
+		font-size: var(--fs-14);
 		font-weight: 600;
 		color: var(--sage-deep);
 	}
@@ -320,7 +320,7 @@
 		padding: 10px 14px;
 		border-radius: var(--r-input);
 		background: var(--danger-tint);
-		font-size: calc(13px * var(--fs));
+		font-size: var(--fs-15);
 		color: var(--danger);
 	}
 </style>

@@ -376,7 +376,7 @@
 
 	h1 {
 		margin-bottom: 12px;
-		font-size: calc(27px * var(--fs));
+		font-size: var(--fs-30);
 		line-height: 1.1;
 		overflow-wrap: anywhere;
 	}
@@ -386,7 +386,7 @@
 		flex-wrap: wrap;
 		gap: 8px 18px;
 		margin: 0 0 22px;
-		font-size: calc(13.5px * var(--fs));
+		font-size: var(--fs-15);
 		color: var(--text-2);
 	}
 
@@ -413,7 +413,7 @@
 		border-radius: var(--r-input);
 		background: var(--sage);
 		box-shadow: var(--shadow-button);
-		font-size: calc(15px * var(--fs));
+		font-size: var(--fs-17);
 		font-weight: 700;
 		color: var(--on-sage);
 	}
@@ -442,11 +442,11 @@
 	}
 
 	h2 {
-		font-size: calc(18px * var(--fs));
+		font-size: var(--fs-20);
 	}
 
 	.link {
-		font-size: calc(12.5px * var(--fs));
+		font-size: var(--fs-14);
 		font-weight: 600;
 		color: var(--sage);
 	}
@@ -479,7 +479,7 @@
 	.ingredient-name {
 		flex: 1;
 		min-width: 0;
-		font-size: calc(14.5px * var(--fs));
+		font-size: var(--fs-16);
 		overflow-wrap: anywhere;
 	}
 
@@ -490,7 +490,7 @@
 
 	.amount {
 		flex: none;
-		font-size: calc(13.5px * var(--fs));
+		font-size: var(--fs-15);
 		color: var(--text-4);
 	}
 
@@ -519,7 +519,7 @@
 		height: 26px;
 		border-radius: 50%;
 		background: var(--sage);
-		font-size: calc(13px * var(--fs));
+		font-size: var(--fs-15);
 		font-weight: 700;
 		color: var(--on-sage);
 	}
@@ -538,7 +538,7 @@
 		padding: 3px 10px;
 		border-radius: var(--r-chip);
 		background: var(--sage-tint);
-		font-size: calc(12px * var(--fs));
+		font-size: var(--fs-14);
 		font-weight: 600;
 		color: var(--sage-deep);
 		font-variant-numeric: tabular-nums;
@@ -562,7 +562,7 @@
 
 	.step-text {
 		display: block;
-		font-size: calc(14.5px * var(--fs));
+		font-size: var(--fs-16);
 		line-height: 1.5;
 		color: var(--ink);
 		white-space: pre-wrap;
@@ -571,7 +571,7 @@
 
 	.no-steps {
 		margin: 26px 0 0;
-		font-size: calc(14px * var(--fs));
+		font-size: var(--fs-16);
 		line-height: 1.5;
 		color: var(--text-4);
 	}

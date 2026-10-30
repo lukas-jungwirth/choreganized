@@ -37,7 +37,7 @@
 		padding: 16px;
 		border: 1.5px solid transparent;
 		border-radius: var(--r-button);
-		font-size: calc(16px * var(--fs));
+		font-size: var(--fs-18);
 		font-weight: 700;
 		text-align: center;
 		transition: transform 120ms ease-out;

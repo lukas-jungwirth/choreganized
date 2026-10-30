@@ -90,7 +90,7 @@ with evidence, and a reviewer who never saw your reasoning reads the diff.
      a test. One you can't answer stops the build the same way — `needs-info` with that question.
 
 5. **Fix it.** Every convention in `CLAUDE.md` is also a test in `tests/conventions/`, so the
-   gate tells you where you slipped: runes only, tokens only, `calc(<px> * var(--fs))`,
+   gate tells you where you slipped: runes only, tokens only, `var(--fs-<px>)` type steps,
    `light-dark()`, `requireMember` first, copy in `en.ts` **and** `de.ts` (a missing key fails
    `npm run check`), services own the logic. A schema edit needs `npm run db:generate`, and the
    PR title then says "migration". Run the reproduction test again and keep the green output.

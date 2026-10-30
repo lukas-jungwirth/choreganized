@@ -353,7 +353,7 @@
 
 	.name {
 		display: block;
-		font-size: calc(14.5px * var(--fs));
+		font-size: var(--fs-16);
 		font-weight: 600;
 		overflow-wrap: anywhere;
 	}
@@ -361,7 +361,7 @@
 	.time {
 		display: block;
 		margin-top: 1px;
-		font-size: calc(12px * var(--fs));
+		font-size: var(--fs-14);
 		color: var(--text-4);
 	}
 
@@ -385,7 +385,7 @@
 	.note {
 		margin: -6px 0 14px;
 		padding: 0 4px;
-		font-size: calc(12.5px * var(--fs));
+		font-size: var(--fs-14);
 		color: var(--text-4);
 	}
 
@@ -395,7 +395,7 @@
 		gap: 8px;
 		padding: 4px;
 		margin: 0 0 4px;
-		font-size: calc(14px * var(--fs));
+		font-size: var(--fs-16);
 		font-weight: 600;
 		color: var(--sage);
 	}
@@ -418,14 +418,14 @@
 	.replaces {
 		margin: -10px 0 16px;
 		padding: 0 4px;
-		font-size: calc(12.5px * var(--fs));
+		font-size: var(--fs-14);
 		color: var(--text-4);
 	}
 
 	/* The uppercase micro-label the other sheets group a chip row under [3b]. */
 	.label {
 		margin: 18px 0 8px;
-		font-size: calc(11px * var(--fs));
+		font-size: var(--fs-13);
 		font-weight: 700;
 		letter-spacing: 0.1em;
 		text-transform: uppercase;
@@ -462,7 +462,7 @@
 
 	.pref-title {
 		display: block;
-		font-size: calc(14px * var(--fs));
+		font-size: var(--fs-16);
 		font-weight: 600;
 		color: var(--text-2);
 	}
@@ -472,14 +472,14 @@
 	.pref-note {
 		display: block;
 		margin-top: 2px;
-		font-size: calc(12px * var(--fs));
+		font-size: var(--fs-14);
 		color: var(--text-5);
 	}
 
 	.error {
 		margin: 0 0 12px;
 		padding: 0 4px;
-		font-size: calc(13px * var(--fs));
+		font-size: var(--fs-15);
 		color: var(--danger-deep);
 	}
 
@@ -487,7 +487,7 @@
 		width: 100%;
 		padding: 14px;
 		margin-top: 12px;
-		font-size: calc(15px * var(--fs));
+		font-size: var(--fs-17);
 		font-weight: 700;
 		color: var(--danger);
 	}

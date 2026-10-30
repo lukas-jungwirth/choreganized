@@ -45,9 +45,11 @@
 		text-align: center;
 	}
 
+	/* Seven columns at 390px: "MON" stops growing at 15px, where it still fits
+	   its column (→ DESIGN-SYSTEM "Type scale"). */
 	.weekday {
 		display: block;
-		font-size: calc(9px * var(--fs));
+		font-size: min(var(--fs-12), 15px);
 		font-weight: 700;
 		color: var(--text-5);
 	}
@@ -55,7 +57,7 @@
 	.date {
 		display: block;
 		margin-top: 2px;
-		font-size: calc(14px * var(--fs));
+		font-size: var(--fs-16);
 		font-weight: 700;
 	}
 

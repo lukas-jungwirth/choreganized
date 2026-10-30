@@ -89,16 +89,20 @@
 		border-top: none;
 	}
 
+	/* At a large text size there is no room for the words *and* the share beside
+	   them, so the share drops under the words (kept to the right) instead of
+	   squeezing "Elisabeth paid" into a column narrower than the name. */
 	.row {
 		display: flex;
+		flex-wrap: wrap;
 		align-items: center;
-		gap: 12px;
+		gap: 4px 12px;
 		padding: 12px 15px;
 		color: var(--ink);
 	}
 
 	.text {
-		flex: 1;
+		flex: 1 1 6em;
 		min-width: 0;
 		display: flex;
 		flex-direction: column;
@@ -107,7 +111,7 @@
 
 	.title {
 		overflow: hidden;
-		font-size: calc(14.5px * var(--fs));
+		font-size: var(--fs-16);
 		font-weight: 600;
 		line-height: 1.25;
 		color: var(--ink);
@@ -131,13 +135,14 @@
 	}
 
 	.meta {
-		font-size: calc(12px * var(--fs));
+		font-size: var(--fs-14);
 		color: var(--text-4);
 		font-variant-numeric: tabular-nums;
 	}
 
 	.part {
 		flex: none;
+		margin-left: auto;
 		display: flex;
 		flex-direction: column;
 		align-items: flex-end;
@@ -146,12 +151,12 @@
 	}
 
 	.part-label {
-		font-size: calc(11.5px * var(--fs));
+		font-size: var(--fs-13);
 		font-weight: 600;
 	}
 
 	.part-amount {
-		font-size: calc(15px * var(--fs));
+		font-size: var(--fs-17);
 		font-weight: 700;
 		font-variant-numeric: tabular-nums;
 	}

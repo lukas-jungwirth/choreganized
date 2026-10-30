@@ -195,7 +195,9 @@
 		max-width: 0;
 		overflow: hidden;
 		opacity: 0;
-		font-size: calc(13.5px * var(--fs));
+		/* Four icons and one label share the bar, so the label stops at 1.5× —
+		   the way a native tab bar doesn't follow the system size at all. */
+		font-size: min(var(--fs-15), 22px);
 		font-weight: 600;
 		line-height: 1;
 		transition: opacity 0.18s ease;
@@ -220,7 +222,9 @@
 		border: 1.5px solid var(--card);
 		border-radius: 8px;
 		background: var(--danger);
-		font-size: calc(10px * var(--fs));
+		/* A count in a 16px dot: it keeps its size, whatever the reader's text
+		   setting (→ DESIGN-SYSTEM "Type scale"). */
+		font-size: min(var(--fs-12), 12px);
 		font-weight: 700;
 		line-height: 1;
 		color: var(--on-sage);

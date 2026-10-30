@@ -64,7 +64,7 @@
 
 	.written {
 		margin: 0 0 7px;
-		font-size: calc(12.5px * var(--fs));
+		font-size: var(--fs-14);
 		text-align: right;
 		color: var(--text-5);
 	}

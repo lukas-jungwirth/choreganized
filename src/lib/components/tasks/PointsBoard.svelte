@@ -89,21 +89,25 @@
 		padding: 20px 22px 22px;
 	}
 
+	/* Wraps when the reader's text size leaves no room beside the heading: the
+	   trailing part drops under it and keeps to the right. */
 	.head {
 		display: flex;
+		flex-wrap: wrap;
 		align-items: baseline;
 		justify-content: space-between;
-		gap: 12px;
+		gap: 4px 12px;
 		margin-bottom: 16px;
 	}
 
 	h2 {
-		font-size: calc(18px * var(--fs));
+		font-size: var(--fs-20);
 	}
 
 	.total {
 		flex: none;
-		font-size: calc(13px * var(--fs));
+		margin-left: auto;
+		font-size: var(--fs-15);
 		font-weight: 600;
 		color: var(--text-4);
 	}
@@ -142,7 +146,7 @@
 	.name {
 		min-width: 0;
 		overflow: hidden;
-		font-size: calc(15px * var(--fs));
+		font-size: var(--fs-17);
 		font-weight: 600;
 		text-overflow: ellipsis;
 		white-space: nowrap;
@@ -150,7 +154,7 @@
 
 	.you {
 		flex: none;
-		font-size: calc(12px * var(--fs));
+		font-size: var(--fs-14);
 		font-weight: 500;
 		color: var(--text-5);
 	}
@@ -159,7 +163,7 @@
 		flex: none;
 		margin-left: auto;
 		font-family: var(--font-display);
-		font-size: calc(20px * var(--fs));
+		font-size: var(--fs-22);
 		font-weight: 600;
 	}
 

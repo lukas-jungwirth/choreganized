@@ -43,7 +43,7 @@
 
 	.task {
 		display: block;
-		font-size: calc(14.5px * var(--fs));
+		font-size: var(--fs-16);
 		font-weight: 600;
 		line-height: 1.2;
 		/* Task names are free text up to 80 characters with no guaranteed space. */
@@ -53,7 +53,7 @@
 	.meta {
 		display: block;
 		margin-top: 1px;
-		font-size: calc(12px * var(--fs));
+		font-size: var(--fs-14);
 		color: var(--text-4);
 	}
 
@@ -64,7 +64,7 @@
 		padding: 4px 9px;
 		border-radius: var(--r-chip);
 		background: color-mix(in srgb, var(--row-color) 12%, var(--card));
-		font-size: calc(12.5px * var(--fs));
+		font-size: var(--fs-14);
 		font-weight: 700;
 		color: var(--row-color);
 	}

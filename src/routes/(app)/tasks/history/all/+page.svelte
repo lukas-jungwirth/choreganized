@@ -83,7 +83,7 @@
 		align-items: center;
 		gap: 4px;
 		margin-bottom: 20px;
-		font-size: calc(13.5px * var(--fs));
+		font-size: var(--fs-15);
 		font-weight: 600;
 		color: var(--text-4);
 	}
@@ -95,7 +95,7 @@
 	h2 {
 		margin: 0 4px 10px;
 		font-family: var(--font-body);
-		font-size: calc(11px * var(--fs));
+		font-size: var(--fs-13);
 		font-weight: 700;
 		letter-spacing: 0.12em;
 		text-transform: uppercase;
@@ -104,7 +104,7 @@
 
 	.quiet {
 		margin: 0 4px 18px;
-		font-size: calc(13.5px * var(--fs));
+		font-size: var(--fs-15);
 		color: var(--text-4);
 	}
 

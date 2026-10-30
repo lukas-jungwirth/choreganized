@@ -123,7 +123,7 @@
 		gap: 13px;
 		width: 100%;
 		padding: 15px 16px;
-		font-size: calc(15px * var(--fs));
+		font-size: var(--fs-17);
 		font-weight: 500;
 		color: var(--text-2);
 		text-align: left;
@@ -152,7 +152,7 @@
 		margin-top: 14px;
 		border-radius: var(--r-input);
 		background: var(--field);
-		font-size: calc(15px * var(--fs));
+		font-size: var(--fs-17);
 		font-weight: 700;
 		color: var(--text-2);
 	}

@@ -92,7 +92,7 @@
 		color: transparent;
 		caret-color: transparent;
 		/* Keeps iOS from zooming on focus while staying invisible. */
-		font-size: calc(16px * var(--fs));
+		font-size: var(--fs-18);
 		text-align: center;
 		z-index: 1;
 	}
@@ -120,7 +120,7 @@
 		border-radius: 12px;
 		background: var(--card);
 		font-family: var(--font-display);
-		font-size: calc(24px * var(--fs));
+		font-size: var(--fs-28);
 		font-weight: 600;
 	}
 

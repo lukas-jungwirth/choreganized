@@ -73,7 +73,7 @@
 <style>
 	.note {
 		margin: 12px 2px 22px;
-		font-size: calc(12.5px * var(--fs));
+		font-size: var(--fs-14);
 		line-height: 1.45;
 		color: var(--text-4);
 	}

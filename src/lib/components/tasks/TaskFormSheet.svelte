@@ -269,7 +269,7 @@
 <style>
 	.label {
 		margin: 18px 0 8px;
-		font-size: calc(11px * var(--fs));
+		font-size: var(--fs-13);
 		font-weight: 700;
 		letter-spacing: 0.1em;
 		text-transform: uppercase;
@@ -308,7 +308,7 @@
 
 	.pref-title {
 		display: block;
-		font-size: calc(14px * var(--fs));
+		font-size: var(--fs-16);
 		font-weight: 600;
 		color: var(--text-2);
 	}
@@ -316,7 +316,7 @@
 	.pref-sub {
 		display: block;
 		margin-top: 2px;
-		font-size: calc(12px * var(--fs));
+		font-size: var(--fs-14);
 		color: var(--text-4);
 		overflow-wrap: anywhere;
 	}
@@ -352,7 +352,7 @@
 		padding: 7px 13px;
 		border-radius: var(--r-chip);
 		background: var(--field);
-		font-size: calc(12.5px * var(--fs));
+		font-size: var(--fs-14);
 		font-weight: 600;
 		color: var(--text-2);
 	}

@@ -61,14 +61,14 @@
 	}
 
 	h1 {
-		font-size: calc(20px * var(--fs));
+		font-size: var(--fs-22);
 		line-height: 1.1;
 		overflow-wrap: anywhere;
 	}
 
 	.subtitle {
 		margin: 2px 0 0;
-		font-size: calc(12px * var(--fs));
+		font-size: var(--fs-14);
 		color: var(--text-4);
 	}
 

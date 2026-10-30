@@ -139,13 +139,13 @@
 	}
 
 	h1 {
-		font-size: calc(28px * var(--fs));
+		font-size: var(--fs-30);
 		line-height: 1.1;
 	}
 
 	.sub {
 		margin: 8px 0 0;
-		font-size: calc(14px * var(--fs));
+		font-size: var(--fs-16);
 		line-height: 1.45;
 		color: var(--text-4);
 	}
@@ -161,7 +161,7 @@
 
 	.code-label {
 		margin: 0 0 10px;
-		font-size: calc(11px * var(--fs));
+		font-size: var(--fs-13);
 		font-weight: 700;
 		letter-spacing: 0.1em;
 		text-transform: uppercase;
@@ -172,7 +172,7 @@
 	.code {
 		margin: 0;
 		font-family: var(--font-display);
-		font-size: calc(38px * var(--fs));
+		font-size: var(--fs-42);
 		font-weight: 600;
 		letter-spacing: 0.18em;
 		/* The letter-spacing pushes the last glyph off-centre otherwise. */
@@ -203,12 +203,12 @@
 		overflow: hidden;
 		text-overflow: ellipsis;
 		white-space: nowrap;
-		font-size: calc(13.5px * var(--fs));
+		font-size: var(--fs-15);
 		color: var(--text-2);
 	}
 
 	.copy {
-		font-size: calc(13px * var(--fs));
+		font-size: var(--fs-15);
 		font-weight: 700;
 		color: var(--sage);
 	}
@@ -223,7 +223,7 @@
 		border: 1.5px solid var(--border);
 		border-radius: var(--r-input);
 		background: var(--card);
-		font-size: calc(15px * var(--fs));
+		font-size: var(--fs-17);
 		font-weight: 700;
 		color: var(--ink);
 	}
@@ -233,14 +233,14 @@
 		padding: 14px 16px;
 		border-radius: var(--r-input);
 		background: var(--sunken);
-		font-size: calc(13.5px * var(--fs));
+		font-size: var(--fs-15);
 		line-height: 1.45;
 		color: var(--text-3);
 	}
 
 	.members-label {
 		margin: 0 0 10px;
-		font-size: calc(11px * var(--fs));
+		font-size: var(--fs-13);
 		font-weight: 700;
 		letter-spacing: 0.1em;
 		text-transform: uppercase;
@@ -267,7 +267,7 @@
 
 	.name {
 		flex: 1;
-		font-size: calc(14.5px * var(--fs));
+		font-size: var(--fs-16);
 		font-weight: 600;
 	}
 
@@ -284,7 +284,7 @@
 		padding: 4px 10px;
 		border-radius: var(--r-chip);
 		background: var(--sage-tint);
-		font-size: calc(11px * var(--fs));
+		font-size: var(--fs-13);
 		font-weight: 700;
 		color: var(--sage);
 	}

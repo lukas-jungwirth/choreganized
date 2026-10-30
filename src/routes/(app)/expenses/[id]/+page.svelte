@@ -228,7 +228,7 @@
 
 	.edit {
 		padding: 8px 4px;
-		font-size: calc(15px * var(--fs));
+		font-size: var(--fs-17);
 		font-weight: 700;
 		color: var(--sage-deep);
 	}
@@ -250,7 +250,7 @@
 	.what {
 		margin: 0;
 		font-family: var(--font-body);
-		font-size: calc(15px * var(--fs));
+		font-size: var(--fs-17);
 		font-weight: 500;
 		color: var(--text-3);
 	}
@@ -258,7 +258,7 @@
 	.amount {
 		margin: 0;
 		font-family: var(--font-display);
-		font-size: calc(44px * var(--fs));
+		font-size: var(--fs-48);
 		font-weight: 600;
 		line-height: 1.1;
 		color: var(--ink);
@@ -267,7 +267,7 @@
 
 	.meta {
 		margin: 2px 0 0;
-		font-size: calc(13px * var(--fs));
+		font-size: var(--fs-15);
 		color: var(--text-4);
 	}
 
@@ -279,7 +279,7 @@
 		padding: 7px 13px 7px 11px;
 		border-radius: var(--r-chip);
 		background: var(--sunken);
-		font-size: calc(12.5px * var(--fs));
+		font-size: var(--fs-14);
 		font-weight: 600;
 		color: var(--text-3);
 	}
@@ -299,7 +299,7 @@
 		border-radius: var(--r-card);
 		background: var(--card);
 		box-shadow: var(--shadow-card);
-		font-size: calc(15px * var(--fs));
+		font-size: var(--fs-17);
 		font-weight: 600;
 		text-align: center;
 	}
@@ -307,7 +307,7 @@
 	.section {
 		margin: 0 4px 8px;
 		font-family: var(--font-body);
-		font-size: calc(11px * var(--fs));
+		font-size: var(--fs-13);
 		font-weight: 700;
 		letter-spacing: 0.12em;
 		text-transform: uppercase;
@@ -345,32 +345,32 @@
 	.name {
 		flex: 1;
 		min-width: 0;
-		font-size: calc(15px * var(--fs));
+		font-size: var(--fs-17);
 		font-weight: 600;
 	}
 
 	.tag {
 		margin-left: 4px;
-		font-size: calc(12px * var(--fs));
+		font-size: var(--fs-14);
 		font-weight: 500;
 		color: var(--text-5);
 	}
 
 	.owes {
-		font-size: calc(12px * var(--fs));
+		font-size: var(--fs-14);
 		color: var(--owe);
 	}
 
 	.value {
 		flex: none;
-		font-size: calc(15px * var(--fs));
+		font-size: var(--fs-17);
 		font-weight: 700;
 		font-variant-numeric: tabular-nums;
 	}
 
 	.stamps {
 		margin: 4px 0 0;
-		font-size: calc(12.5px * var(--fs));
+		font-size: var(--fs-14);
 		line-height: 1.6;
 		text-align: center;
 		color: var(--text-5);

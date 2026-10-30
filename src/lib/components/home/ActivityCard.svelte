@@ -51,7 +51,7 @@
 	}
 
 	.eyebrow {
-		font-size: calc(10px * var(--fs));
+		font-size: var(--fs-12);
 		font-weight: 700;
 		letter-spacing: 0.12em;
 		text-transform: uppercase;
@@ -62,7 +62,7 @@
 		display: flex;
 		align-items: center;
 		gap: 3px;
-		font-size: calc(12px * var(--fs));
+		font-size: var(--fs-14);
 		font-weight: 600;
 		color: var(--text-4);
 	}
@@ -91,20 +91,20 @@
 
 	.task {
 		display: block;
-		font-size: calc(14px * var(--fs));
+		font-size: var(--fs-16);
 		font-weight: 600;
 	}
 
 	.meta {
 		display: block;
 		margin-top: 1px;
-		font-size: calc(11.5px * var(--fs));
+		font-size: var(--fs-13);
 		color: var(--text-4);
 	}
 
 	.points {
 		flex: none;
-		font-size: calc(12px * var(--fs));
+		font-size: var(--fs-14);
 		font-weight: 700;
 	}
 </style>

@@ -110,7 +110,7 @@
 
 	.label {
 		margin-bottom: 8px;
-		font-size: calc(11px * var(--fs));
+		font-size: var(--fs-13);
 		font-weight: 700;
 		letter-spacing: 0.1em;
 		text-transform: uppercase;
@@ -125,7 +125,7 @@
 		/* White on the paper background; the sheet sets --input-surface to --field. */
 		background: var(--input-surface, var(--card));
 		font-family: inherit;
-		font-size: calc(15px * var(--fs));
+		font-size: var(--fs-17);
 		line-height: 1.45;
 		color: var(--ink);
 		resize: none;
@@ -146,13 +146,13 @@
 
 	.error {
 		margin: 8px 0 0;
-		font-size: calc(13px * var(--fs));
+		font-size: var(--fs-15);
 		color: var(--danger-deep);
 	}
 
 	.note {
 		margin: 12px 2px 22px;
-		font-size: calc(12.5px * var(--fs));
+		font-size: var(--fs-14);
 		line-height: 1.45;
 		color: var(--text-4);
 	}

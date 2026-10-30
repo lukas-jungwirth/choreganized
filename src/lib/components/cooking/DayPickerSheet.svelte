@@ -82,7 +82,7 @@
 	/* The uppercase micro-label the sheets group a list under [3b]. */
 	.week {
 		margin: 18px 0 8px;
-		font-size: calc(11px * var(--fs));
+		font-size: var(--fs-13);
 		font-weight: 700;
 		letter-spacing: 0.1em;
 		text-transform: uppercase;
@@ -113,13 +113,13 @@
 
 	.weekday {
 		font-family: var(--font-display);
-		font-size: calc(11px * var(--fs));
+		font-size: var(--fs-13);
 		font-weight: 600;
 		color: var(--text-4);
 	}
 
 	.number {
-		font-size: calc(14px * var(--fs));
+		font-size: var(--fs-16);
 		font-weight: 700;
 		color: var(--ink);
 	}
@@ -132,7 +132,7 @@
 	.meal {
 		flex: 1;
 		min-width: 0;
-		font-size: calc(14px * var(--fs));
+		font-size: var(--fs-16);
 		font-weight: 500;
 		color: var(--ink);
 		overflow-wrap: anywhere;
