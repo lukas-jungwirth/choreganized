@@ -1,12 +1,12 @@
 <!--
 	Settle up [9d]: who → whom, how much, when. Opened from the balance card it
 	arrives filled in with that payment — the two people are the answer, so they
-	show as two names, each in its own box, one above the other with the swap
-	tucked between them, rather than a wall of chips. Stacked so a long name
-	keeps the whole width.
-	Either name is a picker (a real <select>: the platform's own list on a
-	phone) for the rarer payment the card didn't suggest, and the arrow swaps
-	them. The amount can be lowered for a partial payment. Editing a recorded
+	show as two names, each in its own box, one above the other, with a dotted
+	arrow down the left from one to the other rather than a wall of chips.
+	Stacked so a long name keeps the whole width. Either name is a picker (a
+	real <select>: the platform's own list on a phone) for the rarer payment the
+	card didn't suggest. No swap: the pair always arrives filled in, and either
+	picker changes it (→ DECISIONS #198). The amount can be lowered for a partial payment. Editing a recorded
 	payment opens the same sheet.
 
 	The date is the app's ordinary date field, with a Today shortcut under it as
@@ -14,7 +14,6 @@
 -->
 <script lang="ts">
 	import { enhance } from '$app/forms';
-	import ArrowDownUp from '@lucide/svelte/icons/arrow-down-up';
 	import ChevronDown from '@lucide/svelte/icons/chevron-down';
 	import Avatar from '$lib/components/ui/Avatar.svelte';
 	import BottomSheet from '$lib/components/ui/BottomSheet.svelte';
@@ -144,15 +143,12 @@
 		{#if item}<input type="hidden" name="id" value={item.id} />{/if}
 
 		<div class="who">
+			<!-- From the middle of one box to the middle of the other. -->
+			<svg class="flow" viewBox="0 0 24 80" aria-hidden="true">
+				<path class="dots" d="M21 4 C10 4 4 8 4 20 V60 C4 72 10 76 19 76" />
+				<path d="M15 71.5 L19.5 76 L15 80.5" />
+			</svg>
 			{@render picker(m.expenses.settle.from, 'fromId', 'from')}
-			<button
-				type="button"
-				class="swap"
-				aria-label={m.expenses.settle.swap}
-				onclick={() => ([fromId, toId] = [toId, fromId])}
-			>
-				<ArrowDownUp size={20} strokeWidth={2.1} />
-			</button>
 			{@render picker(m.expenses.settle.to, 'toId', 'to')}
 		</div>
 
@@ -204,15 +200,37 @@
 		flex-direction: column;
 	}
 
+	/* Room on the left for the arrow; the boxes are 64px tall (a 36px avatar in
+	   14px padding) 8px apart, so their middles are 72px apart. */
 	.who {
+		position: relative;
 		display: flex;
 		flex-direction: column;
+		gap: 8px;
+		padding-left: 26px;
 	}
 
-	/* From and To each in their own box; the swap sits in the gap, behind them. */
+	.flow {
+		position: absolute;
+		top: 28px;
+		left: 0;
+		width: 24px;
+		height: 80px;
+		overflow: visible;
+		fill: none;
+		stroke: var(--sage);
+		stroke-width: 1.8;
+		stroke-linecap: round;
+		stroke-linejoin: round;
+	}
+
+	.dots {
+		stroke-dasharray: 0.1 4.5;
+		stroke-width: 2.2;
+	}
+
+	/* From and To each in their own box. */
 	.end {
-		position: relative;
-		z-index: 1;
 		display: flex;
 		align-items: center;
 		gap: 12px;
@@ -271,27 +289,6 @@
 		text-underline-offset: 5px;
 	}
 
-	/* White and outlined, so it stands apart from the two boxes and the sheet;
-	   it only just reaches under their edges, enough to read as one pair. */
-	.swap {
-		display: flex;
-		align-self: center;
-		align-items: center;
-		justify-content: center;
-		width: 50px;
-		height: 50px;
-		margin: -5px 0;
-		border: 1.5px solid var(--border);
-		border-radius: 50%;
-		background: var(--card);
-		box-shadow: var(--shadow-card);
-		color: var(--text-2);
-	}
-
-	.swap:active {
-		transform: scale(0.95);
-	}
-
 	.amount {
 		margin-top: 14px;
 	}
@@ -325,11 +322,5 @@
 		background: var(--danger-tint);
 		font-size: calc(13px * var(--fs));
 		color: var(--danger);
-	}
-
-	@media (prefers-reduced-motion: reduce) {
-		.swap:active {
-			transform: none;
-		}
 	}
 </style>

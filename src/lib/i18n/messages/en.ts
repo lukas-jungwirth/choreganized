@@ -1553,7 +1553,6 @@ export const en = {
 			edit: 'Edit payment',
 			from: 'From',
 			to: 'To',
-			swap: 'Swap',
 			/** The reader in the From / To pickers: their own name, marked — one form that fits both slots. */
 			me: (name: string) => `${name} (you)`,
 			owes: (from: string | null, to: string | null, amount: string) =>

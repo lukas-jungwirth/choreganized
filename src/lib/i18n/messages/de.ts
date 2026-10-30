@@ -1173,7 +1173,6 @@ export const de: Messages = {
 			edit: 'Zahlung bearbeiten',
 			from: 'Von',
 			to: 'An',
-			swap: 'Tauschen',
 			me: (name: string) => `${name} (du)`,
 			owes: (from: string | null, to: string | null, amount: string) =>
 				`${from === null ? `Du schuldest ${to}` : `${from} schuldet ${to ?? 'dir'}`} ${amount} · für eine Teilzahlung einfach weniger eintragen`,

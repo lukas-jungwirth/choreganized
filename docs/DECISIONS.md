@@ -2826,7 +2826,9 @@ units | null, name}`, written back as editor lines in the reader's unit spelling
      person twice as chips, a small arrow, a 46px amount and a footnote. Lukas: too much happens.
      Now From → To is two stacked rows (side by side cut long names short), each an avatar and
      a name that is a real `<select>` for the rarer payment the card didn't suggest, in its own box,
-     with the swap tucked behind the gap between them (Lukas picked this from three variants). The reader is "Lukas (du)", not "Du": "Von Du" / "An Du" are wrong,
+     joined by a dotted arrow down their left (Lukas's sketch, after three swap-button
+     variants). The swap button is gone: the sheet always opens with the pair filled in, so
+     swapping had no case the two pickers don't already cover. The reader is "Lukas (du)", not "Du": "Von Du" / "An Du" are wrong,
      the right cases differ per slot (mir / mich), and the name plus marker fits both. The amount shrinks to the add
      sentence's scale (`AmountField` 46 → 32px, now only used here). The date is the ordinary
      `DateField` with a Today shortcut, as in the task sheet, instead of the add sheet's
