@@ -71,8 +71,13 @@ export function formatAmountInput(minor: number, currency: string, decimalComma:
  * keypad offers whichever one its locale has, and people paste. The rule that
  * makes that unambiguous: the **last** separator is the decimal point when one
  * or two digits follow it; every other separator groups thousands. So `12,5`,
- * `12.50`, `1.234,50` and `1,234.50` all read the way they were meant, and
- * `1,234` is a thousand and some, in both languages.
+ * `12.50`, `1.234,50`, `1,234.50` and `1.234.567` all read the way they were
+ * meant.
+ *
+ * A single mark with three digits after it is refused: `12,345` is twelve
+ * thousand in one reading and three decimals in the other, and a typo that
+ * costs a thousandfold is worse than asking again (→ DECISIONS #203). So is a
+ * group that can't open a number, `0,005` or `01.234`.
  *
  * Refuses zero, negatives, more decimals than the currency has, and anything
  * over `AMOUNT_MAX_MAJOR`.
@@ -97,7 +102,11 @@ export function parseAmount(text: string, currency: string): number | null {
 
 	// Thousands groups are three digits; "1.23.4" is a typo, not a number.
 	const groups = whole.split(/[.,]/);
-	if (groups.length > 1 && groups.slice(1).some((group) => group.length !== 3)) return null;
+	if (groups.length > 1) {
+		if (groups.slice(1).some((group) => group.length !== 3)) return null;
+		if (!/^[1-9]\d{0,2}$/.test(groups[0])) return null;
+		if (groups.length === 2 && fraction === '') return null;
+	}
 	whole = groups.join('');
 	if (!/^\d*$/.test(whole) || !/^\d*$/.test(fraction)) return null;
 	if (fraction.length > digits) return null;

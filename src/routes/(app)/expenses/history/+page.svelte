@@ -340,6 +340,7 @@
 					{names}
 					currency={data.currency}
 					when={m.date.shortAuto(item.date, data.today)}
+					day={data.byDay ? undefined : m.date.shortAuto(item.date, data.today)}
 				/>
 			{/each}
 		</ul>

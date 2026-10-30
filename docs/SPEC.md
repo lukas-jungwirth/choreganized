@@ -969,7 +969,8 @@ FAB stands down — the two share the corner, and Undo is the one that can't wai
    paid €42.10" — the payer always by name, the reader included, because the right-hand
    column is where "you" is spoken, and on the right **your part** of it: "you lent €21.05" (sage) / "you borrowed
    €21.05" (terracotta) / "not involved" (muted). A payment row reads "Elisabeth paid Lukas
-   €24.50" with a transfer icon and no category. Tap → detail [9e]. Footer link **All
+   €24.50" with a transfer icon and no category, wrapping onto a second line rather than
+   cutting its amount off. Tap → detail [9e]. Footer link **All
    activity →** [9f].
 3. **FAB "+"** → add expense [9b]. The only way to add; settle up lives on the balance card.
 
@@ -987,7 +988,9 @@ A bottom sheet. Its fields, in this order:
    - **Who paid**: a picker of the household's people, **you** preselected. Picking someone
      else is how you log a spend someone else made ("Elisabeth ⌄ paid …").
    - **Amount**: focused on open, decimal keypad (`inputmode="decimal"`). Accepts `12,50` and
-     `12.50` in either language, at most two decimals, more than 0, at most 1 000 000. In the
+     `12.50` in either language, at most two decimals, more than 0, at most 1 000 000.
+     Thousands may be grouped (`1.234,50`), but one mark with three digits after it
+     (`12,345`) is refused: a thousand, or three decimals? (→ [DECISIONS #203](DECISIONS.md)). In the
      household currency (§11.10). The currency's mark sits on the side the reader's language
      writes it, a space apart: "€ 42,10" in Austrian German and "€42.10" in English, after the
      number only for a locale that writes "42,10 €" (→ [DECISIONS #199](DECISIONS.md)).
@@ -996,7 +999,8 @@ A bottom sheet. Its fields, in this order:
      shopping add field §3.1) [9b-suggest]. Picking a past one also proposes its last category.
 2. **Category**: one chip from the fixed list (§11.7). Defaults to the guess from the
    description, else **Other**. Optional for the user, never empty in the data.
-3. **Date**: "Today" chip. Tapping it opens the date field. A date in the future is refused.
+3. **Date**: "Today" chip. Tapping it opens the date field. A date in the future is refused,
+   and so is one before 2000 — a slip in the year, not an expense. Cleared, Save waits for a day.
 4. **Split**: one summary row, "Split equally · everyone · €21.05 each", or "Split by % ·
    Lukas 30 · Elisabeth 70". Tapping it opens [9c]. New expenses start from the
    **household default split** (§11.5).
@@ -1040,7 +1044,9 @@ The household has one default: _Equally between everyone_ (out of the box), or a
 _%_ / _Shares_ split over a set of people. A new member joins the default as follows. With
 _Equally_ they are simply in. With _%_ or _Shares_ the default is left as it was, and a
 small note on [9c] says "Marco isn't part of the default split", so a percentage nobody
-agreed to is never invented.
+agreed to is never invented. Someone leaving takes their part with them: a _%_ default goes
+back to _Equally_ (it no longer adds up), a _Shares_ one just loses their shares
+(→ [DECISIONS #203](DECISIONS.md)).
 
 ### 11.6 Balances and "who pays whom"
 
@@ -1088,7 +1094,10 @@ card updating. Edit and delete work as they do for expenses.
 - Each time it comes due, a normal expense is created at **06:00 household-local** with
   the template's amount, payer, category and split, and marked with a small repeat icon. The
   people in it get a push (§11.11). A missed day (server down) is caught up, once per
-  occurrence, never twice.
+  occurrence, never twice — with one push per series for the newest of them.
+- A series starts at most a year back, and only current members can pay or share in one: a
+  former member is still pickable for a one-off while they have a balance, but nobody would be
+  left to stop a series charging them (→ [DECISIONS #203](DECISIONS.md)).
 - Editing a created expense changes only that one. Editing the **template** (from [9h], or
   from "Repeats monthly · Edit series" in the detail) changes future ones only. **Stop
   repeating** ends the series and keeps the past.
@@ -1129,7 +1138,8 @@ expense is named by its description, the household's own words:
 - added, to everyone with a share: "🧾 Elisabeth added Weekly shop · €42.10 · your share €21.05"
 - edited, only to those whose share changed (taken out included):
   "🧾 Elisabeth changed Weekly shop · your share is now €18.00"
-- payment to you, named by who paid: "💸 Lukas paid you €24.50"
+- payment to you, named by who paid: "💸 Lukas paid you €24.50" — again when an edit changes
+  who paid, who got it, or how much (not for a corrected date)
 - a recurring expense was added, to everyone with a share, the payer included (nobody did it):
   "🔁 Rent was added · your share €450.00"
 
@@ -1174,7 +1184,8 @@ anything is filtered or searched, what they add up to — settle-ups never count
 with **Clear all** beside it.
 
 **Grouping follows the period**: a month or less is grouped by day (Today · Yesterday · Mon 14
-Jul, each with its total), anything longer by month with the month's total. A month or less
+Jul, each with its total), anything longer by month with the month's total, and then each row
+carries its day ("Lukas paid €42.10 · Oct 28"), since no heading says it. A month or less
 shows all of itself. Anything grouped by month is **paged by rows, not by month**: whole months
 until at least 50 rows are showing, so fifteen payments across a year show at once, and
 "Show 52 more" under the list adds the next 50-odd, again ending on a whole month (→

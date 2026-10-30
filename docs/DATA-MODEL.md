@@ -311,7 +311,9 @@ where personId = p`. Always derived on read, never stored; there is no reset.
   filters it out; the 03:30 cleanup (`cron.ts`) removes rows deleted more than a day ago.
 - **The default split** is `households.splitDefaultMode` (`equal` = everyone) plus each person's
   `ledger_people.defaultWeight` for `percent` / `shares`. A member who joins later has none, so a
-  percentage default never silently includes them (→ SPEC §11.5).
+  percentage default never silently includes them (→ SPEC §11.5). Leaving clears the leaver's
+  weight — and every weight, with the mode back to `equal`, when the default was `percent`
+  (→ DECISIONS #203).
 - `expenses_household_date_idx (household_id, date)` serves the ledger read, which loads a
   household's rows whole (→ #172); `expense_shares_person_idx` serves the person lookups.
 

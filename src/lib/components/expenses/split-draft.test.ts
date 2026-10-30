@@ -5,7 +5,7 @@
 import assert from 'node:assert/strict';
 import { describe, it } from 'vitest';
 import type { ExpenseItem } from '$lib/server/services/expenses';
-import { draftRows, previewSplit, yourPart } from './split-draft';
+import { draftRows, previewSplit, switchDraftMode, yourPart } from './split-draft';
 
 function item(paidById: string, shares: [string, number][]): ExpenseItem {
 	return {
@@ -81,5 +81,28 @@ describe('drafts', () => {
 		const draft = { mode: 'shares' as const, inIds: ['a', 'b'], inputs: { a: '2' } };
 		const preview = previewSplit(draft, 900, 'EUR');
 		assert.deepEqual(preview.amounts, { a: 600, b: 300 });
+	});
+});
+
+describe('switching mode', () => {
+	const equal = { mode: 'equal' as const, inIds: ['a', 'b'], inputs: {} };
+
+	it("does not read one mode's numbers in another's unit: % 50 / 50 → Amounts is the money, not €50 each", () => {
+		const percent = switchDraftMode(equal, 'percent', {}, 3000, 'EUR', true);
+		assert.deepEqual(percent.draft.inputs, { a: '50', b: '50' });
+		const amounts = switchDraftMode(percent.draft, 'amounts', percent.typed, 3000, 'EUR', true);
+		assert.deepEqual(amounts.draft.inputs, { a: '15,00', b: '15,00' });
+		assert.equal(previewSplit(amounts.draft, 3000, 'EUR').result?.ok, true);
+	});
+
+	it('Amounts → % and → Shares start their own way, and coming back keeps what was typed', () => {
+		const amounts = switchDraftMode(equal, 'amounts', {}, 4210, 'EUR', false);
+		const typed = { ...amounts.draft, inputs: { a: '10.00', b: '32.10' } };
+		const percent = switchDraftMode(typed, 'percent', amounts.typed, 4210, 'EUR', false);
+		assert.deepEqual(percent.draft.inputs, { a: '50', b: '50' });
+		const shares = switchDraftMode(percent.draft, 'shares', percent.typed, 4210, 'EUR', false);
+		assert.deepEqual(shares.draft.inputs, { a: '1', b: '1' });
+		const back = switchDraftMode(shares.draft, 'amounts', shares.typed, 4210, 'EUR', false);
+		assert.deepEqual(back.draft.inputs, { a: '10.00', b: '32.10' });
 	});
 });

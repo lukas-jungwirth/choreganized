@@ -116,7 +116,7 @@
 	const amountMinor = $derived(parseAmount(amount, currency));
 	const preview = $derived(previewSplit(draft, amountMinor ?? 0, currency));
 	const splitValid = $derived(amountMinor !== null && preview.result?.ok === true);
-	const valid = $derived(splitValid && description.trim() !== '');
+	const valid = $derived(splitValid && description.trim() !== '' && date !== '');
 	const byId = $derived(new Map(people.map((person) => [person.id, person])));
 
 	/** "Billa" finds "Wocheneinkauf · Billa": matched anywhere in the words [9b-suggest]. */
@@ -406,15 +406,19 @@
 		color: var(--ink);
 	}
 
+	/* Up to two lines, so the amount at its end ("je € 15,00") is never the part
+	   that is cut off; the split sheet has the rest. */
 	.row-value {
 		flex: 1;
 		min-width: 0;
+		display: -webkit-box;
 		overflow: hidden;
+		-webkit-box-orient: vertical;
+		-webkit-line-clamp: 2;
+		line-clamp: 2;
 		font-size: var(--fs-15);
 		text-align: right;
 		color: var(--text-4);
-		text-overflow: ellipsis;
-		white-space: nowrap;
 		font-variant-numeric: tabular-nums;
 	}
 

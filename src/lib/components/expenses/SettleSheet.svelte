@@ -167,7 +167,11 @@
 			<DateField label={m.expenses.form.date} name="date" bind:value={date} max={today} required />
 		</div>
 
-		{#if error}<p class="error" role="alert">{error}</p>{/if}
+		{#if fromId === toId}
+			<p class="error" role="alert">{m.expenses.errors.samePerson}</p>
+		{:else if error}
+			<p class="error" role="alert">{error}</p>
+		{/if}
 
 		<Button type="submit" disabled={!valid || submitting}>
 			{item ? m.common.saveChanges : m.expenses.settle.record}

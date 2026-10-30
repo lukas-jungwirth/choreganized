@@ -516,10 +516,35 @@ function departMember(tx: Transaction, householdId: string, memberId: string): v
 	const member = memberIn(tx, householdId, memberId);
 
 	const person = tx
-		.select({ id: ledgerPeople.id })
+		.select({ id: ledgerPeople.id, defaultWeight: ledgerPeople.defaultWeight })
 		.from(ledgerPeople)
 		.where(and(eq(ledgerPeople.householdId, householdId), eq(ledgerPeople.memberId, memberId)))
 		.get();
+	if (person && person.defaultWeight !== null) {
+		// The default split is about expenses to come, which they won't be in. A
+		// percent default without them no longer adds up, so it goes back to
+		// equal; a shares one just loses their shares (→ SPEC §11.5).
+		const household = tx
+			.select({ mode: households.splitDefaultMode })
+			.from(households)
+			.where(eq(households.id, householdId))
+			.get();
+		if (household?.mode === 'percent') {
+			tx.update(households)
+				.set({ splitDefaultMode: 'equal' })
+				.where(eq(households.id, householdId))
+				.run();
+			tx.update(ledgerPeople)
+				.set({ defaultWeight: null })
+				.where(eq(ledgerPeople.householdId, householdId))
+				.run();
+		} else {
+			tx.update(ledgerPeople)
+				.set({ defaultWeight: null })
+				.where(eq(ledgerPeople.id, person.id))
+				.run();
+		}
+	}
 	if (person) {
 		const now = new Date();
 		tx.update(expenseRecurrences)

@@ -2903,3 +2903,38 @@ units | null, name}`, written back as editor lines in the reader's unit spelling
      it twice, and the sheet already opens on today (an edit opens on the payment's own date),
      so the shortcut had nothing to do. The task sheet's [3b] caption stays — "Tomorrow" says
      something a due date's digits don't.
+
+203. **Expenses review fixes** (Lukas 2026-10-30, after a full review of the tab; PR on
+     `fix/expenses-review`).
+     - **Each split mode keeps its own fields** (`switchDraftMode` in `split-draft.ts`). One
+       record of typed text was shared by all four modes, so 50 / 50 by % became €50 each in
+       Amounts ("€70.00 too much" on €30). A mode now remembers what was typed in it for as long
+       as the sheet is open; one opened for the first time starts as before (Amounts on the
+       money each row shows, % evenly, Shares on 1).
+     - **The default split is saved the way the link saves it.** Settings' Done posted the raw
+       mode, so "Equally" with someone unticked was stored as equal-between-everyone; it now
+       posts the same `shares` default the split sheet's link already did (#173).
+     - **One mark with three digits after it is refused** (`parseAmount`). `12,345` was
+       €12 345 in both languages — a German who types three decimals got a thousandfold amount.
+       It is now ambiguous, so it is refused; `1.234,50`, `1,234.50` and `1.000.000` still read
+       as thousands. A group that can't start a number (`0,005`, `01.234`) is refused too.
+     - **No date before 2000, and no series starting more than a year back**
+       (`EXPENSE_DATE_MIN`, `SERIES_START_MAX_YEARS`). "2002" for "2026" with Repeats on was
+       1 250 expenses and 1 250 pushes at the next 06:00. A year is still enough to log a
+       contract that began last spring; the sweep catches up the rest.
+     - **Catching up announces once per series**: the sweep pushes the newest occurrence it
+       logged, so a week of downtime is one buzz, not seven.
+     - **A former member can't be in a series** (`checkSeriesPeople`, new or edited). They are
+       still pickable while they have a balance, and a series charging them would run with
+       nobody left whose leaving stops it (#180). A one-off expense may still name them.
+     - **Leaving clears the leaver's default weight**: a `percent` default goes back to equal
+       (without them it no longer adds up), a `shares` one just loses their shares. Weights of
+       people who have left are never read as part of the default.
+     - **Editing a settle-up tells its recipient** when the money changed — who paid, who got
+       it, or how much — with the same "paid you" push; a corrected date tells nobody.
+     - **Screens**: a payment row's title wraps instead of cutting off its amount; All activity
+       grouped by month puts the day on each expense row ("Lukas paid €42.10 · Oct 28"); the add
+       sheet's split summary takes two lines before it cuts; German search placeholder shortened
+       to fit 375px; settling with yourself says "Pick two different people."; a cleared date
+       no longer crashes the add sheet (Save waits for a day); a delete that finds the row
+       already gone says so; Remind can't be sent twice while the first is on its way.

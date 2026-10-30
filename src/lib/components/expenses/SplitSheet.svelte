@@ -24,9 +24,15 @@
 		SPLIT_MODES,
 		type SplitMode
 	} from '$lib/utils/expenses';
-	import { formatAmountInput, formatPercent, parsePercent } from '$lib/utils/money';
+	import { formatPercent, parsePercent } from '$lib/utils/money';
 	import { untrack } from 'svelte';
-	import { draftRows, previewSplit, type SplitDraft } from './split-draft';
+	import {
+		draftRows,
+		previewSplit,
+		switchDraftMode,
+		type ModeInputs,
+		type SplitDraft
+	} from './split-draft';
 
 	type Props = {
 		people: ExpensePerson[];
@@ -64,8 +70,11 @@
 	let mode = $state<SplitMode>(untrack(() => initial.mode));
 	let inIds = $state<string[]>(untrack(() => [...initial.inIds]));
 	let inputs = $state<Record<string, string>>(untrack(() => ({ ...initial.inputs })));
-	/** The confirm line under "Make this the household default", once it is saved. */
-	let savedDefault = $state<string | null>(null);
+	/**
+	 * The confirm line under "Make this the household default", once it is
+	 * saved — for as long as the split is still the one that was saved.
+	 */
+	let saved = $state<{ label: string; key: string } | null>(null);
 	let error = $state<string | undefined>();
 
 	$effect(() => {
@@ -77,9 +86,12 @@
 	const money = (minor: number) => m.expenses.money(minor, currency);
 
 	const draft = $derived<SplitDraft>({ mode, inIds, inputs });
+	const draftKey = $derived(JSON.stringify(draft));
+	const savedDefault = $derived(saved?.key === draftKey ? saved.label : null);
 	// Default mode has nothing to split, so its preview runs on a nominal amount
 	// only to answer "does this add up?" — the money column stays hidden.
-	const preview = $derived(previewSplit(draft, forDefault ? 10_000 : amountMinor, currency));
+	const previewMinor = $derived(forDefault ? 10_000 : amountMinor);
+	const preview = $derived(previewSplit(draft, previewMinor, currency));
 	const valid = $derived(preview.result?.ok === true);
 	const rows = $derived(draftRows(draft, currency));
 
@@ -98,36 +110,21 @@
 		inIds = people.map((person) => person.id).filter((personId) => next.has(personId));
 	}
 
-	/**
-	 * Switching mode fills the fields that are still empty with what the split
-	 * already comes to, so "Amounts" opens on numbers that add up rather than
-	 * on blanks.
-	 */
-	function prefill(next: SplitMode) {
-		const filled = { ...inputs };
-		const current = preview.amounts;
-		const count = inIds.length;
-		inIds.forEach((id, index) => {
-			if ((filled[id] ?? '').trim() !== '') return;
-			if (next === 'amounts' && current[id] !== undefined) {
-				filled[id] = formatAmountInput(current[id], currency, comma);
-			} else if (next === 'percent' && count > 0) {
-				const each = Math.floor(PERCENT_TOTAL / count / 10) * 10;
-				const share = index === count - 1 ? PERCENT_TOTAL - each * (count - 1) : each;
-				filled[id] = formatPercent(share, comma);
-			} else if (next === 'shares') {
-				filled[id] = '1';
-			}
-		});
-		inputs = filled;
-	}
+	/** What each mode had typed in it, so leaving one and coming back keeps its numbers. */
+	let typed = $state<ModeInputs>({});
 
-	/** Read before the mode flips, so the fill is what the old mode came to. */
 	function switchMode(next: string) {
-		const target = next as SplitMode;
-		if (target === mode) return;
-		prefill(target);
-		mode = target;
+		const switched = switchDraftMode(
+			draft,
+			next as SplitMode,
+			typed,
+			previewMinor,
+			currency,
+			comma
+		);
+		typed = switched.typed;
+		inputs = switched.draft.inputs;
+		mode = switched.draft.mode;
 	}
 
 	/** With two people in, typing one percentage fills the other [9c-ok]. */
@@ -194,6 +191,9 @@
 	const everyone = $derived(defaultable && memberIds.every((id) => inIds.includes(id)));
 	/** An equal split over a subset is "1 share each" as a default. */
 	const defaultMode = $derived(mode === 'equal' && !everyone ? 'shares' : mode);
+	const defaultJson = $derived(
+		mode === 'equal' ? JSON.stringify(inIds.map((id) => ({ id, input: 1 }))) : splitJson
+	);
 
 	function done() {
 		ondone({ mode, inIds: [...inIds], inputs: { ...inputs } });
@@ -291,8 +291,8 @@
 				};
 			}}
 		>
-			<input type="hidden" name="mode" value={mode} />
-			<input type="hidden" name="split" value={splitJson} />
+			<input type="hidden" name="mode" value={defaultMode} />
+			<input type="hidden" name="split" value={defaultJson} />
 			<Button type="submit" disabled={!valid}>{m.expenses.split.done}</Button>
 		</form>
 	{:else}
@@ -305,6 +305,7 @@
 					action="?/splitDefault"
 					use:enhance={() => {
 						error = undefined;
+						const key = draftKey;
 						const label =
 							mode === 'equal' && everyone
 								? m.expenses.split.defaultEqual
@@ -315,18 +316,12 @@
 								error = typeof result.data?.error === 'string' ? result.data.error : undefined;
 								return;
 							}
-							if (result.type === 'success') savedDefault = label;
+							if (result.type === 'success') saved = { label, key };
 						};
 					}}
 				>
 					<input type="hidden" name="mode" value={defaultMode} />
-					<input
-						type="hidden"
-						name="split"
-						value={mode === 'equal'
-							? JSON.stringify(inIds.map((id) => ({ id, input: 1 })))
-							: splitJson}
-					/>
+					<input type="hidden" name="split" value={defaultJson} />
 					<button type="submit" class="default-link" disabled={!valid}>
 						{m.expenses.split.makeDefault}
 					</button>

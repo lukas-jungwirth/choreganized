@@ -30,6 +30,7 @@ import { db } from '../db';
 import { expenseRecurrenceShares, expenseRecurrences, expenses } from '../db/schema';
 import { notifyExpense } from './expense-notify';
 import {
+	checkSeriesPeople,
 	ExpenseError,
 	listPeople,
 	validTemplate,
@@ -238,6 +239,7 @@ export function updateSeries(
 		}
 
 		const { description, shares } = validTemplate(tx, householdId, input);
+		checkSeriesPeople(tx, householdId, [input.paidById, ...input.rows.map((row) => row.id)]);
 		const moved =
 			input.nextDate !== row.nextDate || input.unit !== row.unit || input.interval !== row.interval;
 		const anchorDay =
@@ -312,6 +314,8 @@ export function materializeDue(householdId: string, today: CalendarDate): string
 		.all();
 
 	const logged: string[] = [];
+	/** Series id → the newest occurrence it logged: catching up announces once. */
+	const latest = new Map<string, string>();
 	const order = due.length > 0 ? rosterOrder(householdId) : new Map<string, number>();
 	for (const { id } of due) {
 		// One occurrence per transaction, until the series is caught up.
@@ -326,11 +330,15 @@ export function materializeDue(householdId: string, today: CalendarDate): string
 			}
 			if (!expenseId) break;
 			logged.push(expenseId);
+			latest.set(id, expenseId);
 		}
 	}
 
-	// After every commit, so a push never announces an expense that rolled back.
-	for (const expenseId of logged) void notifyExpense(householdId, { kind: 'repeated', expenseId });
+	// After every commit, so a push never announces an expense that rolled back —
+	// and one per series: a week of downtime is one buzz, not seven.
+	for (const expenseId of latest.values()) {
+		void notifyExpense(householdId, { kind: 'repeated', expenseId });
+	}
 	return logged;
 }
 
