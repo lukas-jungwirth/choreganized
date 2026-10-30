@@ -2835,3 +2835,27 @@ units | null, name}`, written back as editor lines in the reader's unit spelling
      "Date · Today" row. The "This only records it" note is gone: the tab's whole premise says
      it already. Copy: "Nobody in your household has expense notifications turned on" (was
      "Nobody here").
+
+199. **Expenses polish: one-size menu icons, the series count in brackets, Settle up on every
+     row, the currency mark where the reader writes it** (Lukas, 2026-10-30). The ••• menu's
+     icons were 16px and the settings one shrank further when "Einstellungen für Ausgaben" wrapped
+     (a flex child without `flex-shrink: 0`); all three are 20px and never shrink, and the menu
+     is as wide as its longest label. The series count was a lone grey number at the far edge;
+     it is now part of the label, "Recurring (2)" / "Wiederkehrend (2)" (`menu.recurring(count)`).
+     The rows of a multi-person balance card said **Paid** when owed and **Settle** when owing;
+     both now say **Settle up**, German **Begleichen** (was "Bezahlt" / "Ausgleichen"), so the
+     button names the intent whichever way the money goes. The one-person card keeps **Mark as
+     paid**. Lukas asked whether the euro belongs after the number: in Germany yes ("12,50 €"),
+     but the app formats German as de-AT, where it leads with a space ("€ 12,50") — and every
+     amount in the app already reads that way. So the fields follow the locale
+     (`currencyAfter`, from `Intl` itself) and gain the missing space (0.2em in the sentence).
+
+200. **Nothing you type into renders under 16px** (convention test `input-size`). Below 16px
+     Safari on an iPhone zooms the page when the field takes focus and leaves it zoomed. Search,
+     the recipe textareas, the import paste box, the AI key note and the step-ingredient share
+     field were at 14–14.5 × `--fs` = 15.4–16px; all are 15 (16.5px). The test multiplies by
+     the live `--fs`, so lowering the scale can't sneak a field back under. Asked whether the
+     app should go to 18px: no — body text renders at 16.5px and form rows at 16px, which is
+     where iOS (17pt) and Material (16sp) put body text; the honest lever for "a bit small" is
+     `--fs` itself (#125), not per-screen bumps, which would make one sheet disagree with the
+     next.

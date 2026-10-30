@@ -386,7 +386,7 @@
 		border-radius: var(--r-input);
 		background: var(--card);
 		font-family: inherit;
-		font-size: calc(14px * var(--fs));
+		font-size: calc(15px * var(--fs));
 		line-height: 1.5;
 		color: var(--ink);
 		resize: vertical;

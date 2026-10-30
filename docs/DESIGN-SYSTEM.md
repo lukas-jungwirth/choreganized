@@ -69,6 +69,9 @@ kitchen (→ [DECISIONS #125](DECISIONS.md)). A bare `font-size: 13px` anywhere 
 silently opts out of the scale and is a bug; `grep -rn "font-size" src | grep -v "calc("` finds
 them all. Relative units follow for free — unitless line-heights, `em` letter-spacing — while
 paddings and icon sizes deliberately don't, so type grows _inside_ the layout.
+A field you type into never renders under **16px** (mockup px × `--fs`), or iOS zooms the page
+on focus — `tests/conventions/input-size.test.ts` checks every `input`/`textarea`/`select` rule
+(→ [DECISIONS #200](DECISIONS.md)).
 
 | Style             | Font            | Size/weight                                      | Example                   |
 | ----------------- | --------------- | ------------------------------------------------ | ------------------------- |

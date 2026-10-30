@@ -10,13 +10,13 @@
 	  Mark as paid (owed) or Settle up (owe) — and a gentle Remind when the
 	  money is coming to you;
 	- several [10a · 2] [10a · 3]: one sentence for the total, then a row per
-	  person with Paid / Settle, and Remind everyone under them;
+	  person with Settle up either way, and Remind everyone under them;
 	- four or more [10a · 4]: the sentence counts instead of naming, and only the
 	  two largest rows show until expanded.
 	Payments between the others follow the sentence as a quiet line each
 	("Elisabeth also owes Marco €8.40"), still a tap away from being recorded.
 
-	Every Paid / Settle opens the settle-up sheet [9d] filled in for that
+	Every Mark as paid / Settle up opens the settle-up sheet [9d] filled in for that
 	payment, so a partial payment stays one edit away.
 -->
 <script lang="ts">
@@ -219,12 +219,12 @@
 							type="button"
 							class="chip"
 							aria-label={m.expenses.balance.settleLabel(
-								tone === 'owed' ? m.expenses.balance.paid : m.expenses.balance.settle,
+								m.expenses.balance.settleUp,
 								lineLabel(payment)
 							)}
 							onclick={() => onsettle(payment)}
 						>
-							{tone === 'owed' ? m.expenses.balance.paid : m.expenses.balance.settle}
+							{m.expenses.balance.settleUp}
 						</button>
 					</li>
 				{/each}

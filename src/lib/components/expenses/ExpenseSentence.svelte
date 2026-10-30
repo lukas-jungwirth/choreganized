@@ -71,7 +71,9 @@
 				</label>
 			{:else if part.field === 'amount'}
 				<label class="field amount" for="{id}-amount">
-					<span class="symbol" aria-hidden="true">{m.expenses.symbol(currency)}</span>
+					<span class="symbol" class:after={m.expenses.symbolAfter(currency)} aria-hidden="true"
+						>{m.expenses.symbol(currency)}</span
+					>
 					<!-- The sheet opens to type the amount: the focus is the point (→ SPEC §11.3). -->
 					<!-- svelte-ignore a11y_autofocus -->
 					<input
@@ -144,8 +146,18 @@
 		border-bottom-color: var(--sage);
 	}
 
+	/* A space's width between the mark and the number, on whichever side the
+	   reader's language puts it ("€ 12,50", "12,50 €"). */
+	.amount {
+		gap: 0.2em;
+	}
+
 	.symbol {
 		color: var(--ink);
+	}
+
+	.symbol.after {
+		order: 1;
 	}
 
 	.payer {

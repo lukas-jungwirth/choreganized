@@ -34,7 +34,7 @@ import { INTL_LOCALE } from '$lib/i18n/locale';
 import type { RepeatUnit } from '$lib/utils/expenses';
 import type { HolidayKey } from '$lib/utils/holidays';
 import { formatAmount, formatIngredient } from '$lib/utils/ingredients';
-import { currencySymbol, formatMoney } from '$lib/utils/money';
+import { currencyAfter, currencySymbol, formatMoney } from '$lib/utils/money';
 import type { MealSlot } from '$lib/utils/meals';
 import { formatQuantity, type UnitLabels } from '$lib/utils/shopping';
 import type { RecurUnit } from '$lib/utils/tasks';
@@ -1347,13 +1347,15 @@ export const en = {
 			label: 'More',
 			allActivity: 'All activity',
 			settings: 'Expense settings',
-			/** The series [9h], with how many are running beside it. */
-			recurring: 'Recurring'
+			/** The series [9h], with how many are running in brackets after it. */
+			recurring: (count: number) => (count > 0 ? `Recurring (${count})` : 'Recurring')
 		},
 		/** Amounts are the household currency, written the reader's way: "€24.50". */
 		money: (minor: number, currency: string) => formatMoney(minor, currency, INTL_LOCALE[L]),
 		/** The currency's mark beside the amount field [9b]. */
 		symbol: (currency: string) => currencySymbol(currency, INTL_LOCALE[L]),
+		/** …and which side of it: after for "12,50 €", before for "€ 12,50". */
+		symbolAfter: (currency: string) => currencyAfter(currency, INTL_LOCALE[L]),
 		/** Whether amounts are typed back as "24,50" rather than "24.50". */
 		decimalComma: false,
 
@@ -1385,8 +1387,6 @@ export const en = {
 			settledDetail: 'Nobody owes anybody anything.',
 			/** One person owes you: they paid you outside the app [10a]. */
 			markPaid: 'Mark as paid',
-			/** The same, on one row of several [10a · 2]. */
-			paid: 'Paid',
 			remind: 'Remind',
 			remindEveryone: 'Remind everyone',
 			reminded: 'Reminded',
@@ -1399,8 +1399,10 @@ export const en = {
 					? `${name} hasn’t turned on expense notifications.`
 					: 'Nobody in your household has expense notifications turned on.',
 			remindLabel: (name: string) => `Remind ${name}`,
-			/** One row of several you owe [10a · 3]. */
-			settle: 'Settle',
+			/**
+			 * You owe one person; and every row of several, owed or owing
+			 * [10a · 2] [10a · 3] — one verb for "this payment happened".
+			 */
 			settleUp: 'Settle up',
 			/** Four or more rows: the two largest show until this [10a · 4]. */
 			showMore: (count: number) => `Show ${count} more`,
