@@ -6,6 +6,7 @@
 import assert from 'node:assert/strict';
 import { describe, it } from 'vitest';
 import {
+	currencyAfter,
 	formatAmountInput,
 	formatMoney,
 	formatPercent,
@@ -57,6 +58,13 @@ describe('formatting', () => {
 		assert.equal(formatMoney(2450, 'EUR', 'en-GB'), '€24.50');
 		assert.equal(formatMoney(2450, 'EUR', 'de-AT').replace(/\s/g, ' '), '€ 24,50');
 		assert.equal(formatMoney(500, 'JPY', 'en-GB'), 'JP¥500');
+	});
+
+	it('puts the currency mark where the reader writes it', () => {
+		assert.equal(currencyAfter('EUR', 'en-US'), false);
+		assert.equal(currencyAfter('EUR', 'de-AT'), false);
+		assert.equal(currencyAfter('EUR', 'de-DE'), true);
+		assert.equal(currencyAfter('CHF', 'de-AT'), false);
 	});
 
 	it('gives an amount back to its field in the shape parseAmount reads', () => {

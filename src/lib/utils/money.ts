@@ -39,6 +39,18 @@ export function currencySymbol(currency: string, intlLocale: string): string {
 }
 
 /**
+ * Whether the mark follows the number: "12,50 €" (de-DE) rather than "€12.50"
+ * (en-US) or "€ 12,50" (de-AT). The amount field puts it where the reader's own
+ * formatting does, so the field reads like every amount around it.
+ */
+export function currencyAfter(currency: string, intlLocale: string): boolean {
+	const types = new Intl.NumberFormat(intlLocale, { style: 'currency', currency })
+		.formatToParts(1)
+		.map((part) => part.type);
+	return types.indexOf('currency') > types.indexOf('integer');
+}
+
+/**
  * The amount as a person types it back into a field: "24.50" or "24,50", no
  * symbol, no thousands separator. The inverse of `parseAmount`.
  */

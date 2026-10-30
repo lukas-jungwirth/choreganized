@@ -343,7 +343,7 @@
 		border-radius: var(--r-input);
 		background: var(--input-surface, var(--card));
 		font: inherit;
-		font-size: calc(14.5px * var(--fs));
+		font-size: calc(15px * var(--fs));
 		line-height: 1.45;
 		color: var(--ink);
 		resize: vertical;

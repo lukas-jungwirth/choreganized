@@ -236,7 +236,10 @@
 				{:else}
 					{#if mode !== 'equal'}
 						<label class="input">
-							{#if mode === 'amounts'}<span class="unit">{m.expenses.symbol(currency)}</span>{/if}
+							{#if mode === 'amounts'}<span
+									class="unit"
+									class:after={m.expenses.symbolAfter(currency)}>{m.expenses.symbol(currency)}</span
+								>{/if}
 							<input
 								value={inputs[person.id] ?? ''}
 								inputmode={mode === 'shares' ? 'numeric' : 'decimal'}
@@ -430,6 +433,10 @@
 	.unit {
 		font-size: calc(14px * var(--fs));
 		color: var(--text-5);
+	}
+
+	.unit.after {
+		order: 1;
 	}
 
 	.money {

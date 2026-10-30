@@ -241,7 +241,7 @@
 		border: 1px solid var(--border);
 		border-radius: var(--r-input);
 		background: var(--field);
-		font-size: calc(14px * var(--fs));
+		font-size: calc(15px * var(--fs));
 		font-weight: 600;
 		text-align: right;
 		/* The digits must not jitter while a thumb is on the key. */

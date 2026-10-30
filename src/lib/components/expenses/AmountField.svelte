@@ -23,7 +23,9 @@
 
 <div class="box">
 	<label class="field" for={id}>
-		<span class="symbol" aria-hidden="true">{m.expenses.symbol(currency)}</span>
+		<span class="symbol" class:after={m.expenses.symbolAfter(currency)} aria-hidden="true"
+			>{m.expenses.symbol(currency)}</span
+		>
 		<input
 			{id}
 			bind:value
@@ -62,6 +64,10 @@
 		font-size: calc(22px * var(--fs));
 		font-weight: 600;
 		color: var(--text-4);
+	}
+
+	.symbol.after {
+		order: 1;
 	}
 
 	input {

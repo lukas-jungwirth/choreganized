@@ -34,7 +34,7 @@ import { INTL_LOCALE } from '$lib/i18n/locale';
 import type { RepeatUnit } from '$lib/utils/expenses';
 import type { HolidayKey } from '$lib/utils/holidays';
 import { formatAmount, formatIngredient } from '$lib/utils/ingredients';
-import { currencySymbol, formatMoney } from '$lib/utils/money';
+import { currencyAfter, currencySymbol, formatMoney } from '$lib/utils/money';
 import type { MealSlot } from '$lib/utils/meals';
 import { formatQuantity, type UnitLabels } from '$lib/utils/shopping';
 import type { RecurUnit } from '$lib/utils/tasks';
@@ -997,11 +997,13 @@ export const de: Messages = {
 			label: 'Mehr',
 			allActivity: 'Alle Einträge',
 			settings: 'Einstellungen für Ausgaben',
-			recurring: 'Wiederkehrend'
+			recurring: (count: number) => (count > 0 ? `Wiederkehrend (${count})` : 'Wiederkehrend')
 		},
 		money: (minor: number, currency: string) => formatMoney(minor, currency, INTL_LOCALE[L]),
 		/** The currency's mark beside the amount field [9b]. */
 		symbol: (currency: string) => currencySymbol(currency, INTL_LOCALE[L]),
+		/** …and which side of it: after for "12,50 €", before for "€ 12,50". */
+		symbolAfter: (currency: string) => currencyAfter(currency, INTL_LOCALE[L]),
 		/** Whether amounts are typed back as "24,50" rather than "24.50". */
 		decimalComma: true,
 
@@ -1021,7 +1023,6 @@ export const de: Messages = {
 			settled: 'Alles ausgeglichen',
 			settledDetail: 'Niemand schuldet jemandem etwas.',
 			markPaid: 'Als bezahlt markieren',
-			paid: 'Bezahlt',
 			remind: 'Erinnern',
 			remindEveryone: 'Alle erinnern',
 			reminded: 'Erinnert',
@@ -1030,8 +1031,7 @@ export const de: Messages = {
 					? `${name} hat Benachrichtigungen zu Ausgaben nicht eingeschaltet.`
 					: 'Niemand in deinem Haushalt hat Benachrichtigungen zu Ausgaben eingeschaltet.',
 			remindLabel: (name: string) => `${name} erinnern`,
-			settle: 'Ausgleichen',
-			settleUp: 'Ausgleichen',
+			settleUp: 'Begleichen',
 			showMore: (count: number) => `${count} weitere anzeigen`,
 			showLess: 'Weniger anzeigen',
 			/** The button, read out with the line it settles. */

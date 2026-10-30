@@ -129,7 +129,8 @@ test('a monthly expense logged late catches up, then edits and stops as a series
 	// Recurring [9h]: edit the series — the logged two keep their amount.
 	await page.goto('/expenses');
 	await page.getByRole('button', { name: 'More' }).click();
-	await page.getByRole('menuitem', { name: /Recurring/ }).click();
+	// The count reads as part of the label [9a-owe] (→ DECISIONS #199).
+	await page.getByRole('menuitem', { name: /^Recurring \(\d+\)$/ }).click();
 	await page.getByTestId('series-row').filter({ hasText: name }).click();
 	const series = page.getByRole('dialog', { name });
 	await series.getByRole('button', { name: /Edit series/ }).click();

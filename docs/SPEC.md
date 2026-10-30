@@ -933,7 +933,8 @@ Tab bar order: **Home · Shopping · Cooking · Tasks · Expenses** ("Expenses" 
 Only the active tab carries its label, in a sage pill; the others are icons — the bar's
 own treatment since [01/1d], which is what lets five fit at 390px in both languages
 [9a-tabbar] (→ [DECISIONS #171](DECISIONS.md)). The header's **•••** menu holds **All activity** · **Expense settings** (→ §11.10), and
-**Recurring** (with how many series are running), first, then the other two. While the undo bar is up after a delete, the
+**Recurring** (with how many series are running in brackets, "Recurring (2)"), first, then the other two
+— each with a 20px icon (→ [DECISIONS #199](DECISIONS.md)). While the undo bar is up after a delete, the
 FAB stands down — the two share the corner, and Undo is the one that can't wait.
 
 1. **Balance card** [10a]: the one thing you read, **as a sentence**, the way you would say it,
@@ -944,7 +945,8 @@ FAB stands down — the two share the corner, and Undo is the one that can't wai
      **Remind** · "You owe Marco **€12.00**" with **Settle up**.
    - **Two or three** [10a · 2] [10a · 3]: their avatars stacked above one sentence for the
      total, "Elisabeth and Marco owe you **€41.30**" / "You owe Elisabeth and Marco **€32.40**",
-     then a row per person with their own amount and **Paid** / **Settle**. Owed adds
+     then a row per person with their own amount and **Settle up** ("Begleichen") whichever way
+     the money goes. Owed adds
      **Remind everyone** under the rows.
    - **Four or more** [10a · 4]: the sentence counts instead of naming ("Four people owe you
      **€81.30**", "Vier Personen schulden dir …"), and only the two largest rows show until
@@ -952,7 +954,7 @@ FAB stands down — the two share the corner, and Undo is the one that can't wai
    - **Payments between the others** follow the sentence as one quiet line each: "Elisabeth also
      owes Marco **€8.40**" ("also" only when you have a payment of your own). Tapping one opens
      [9d] for it, so a payment between two others can still be recorded.
-   - Every Mark as paid / Paid / Settle up / Settle opens [9d] prefilled with that payment; the
+   - Every Mark as paid / Settle up opens [9d] prefilled with that payment; the
      amount can still be lowered there.
    - **Remind** sends the person who owes you a push, "👋 A nudge from Lukas · you owe €24.50"
      (§11.11). The button then reads **Reminded ✓** — only for someone who will hear it:
@@ -986,7 +988,9 @@ A bottom sheet. Its fields, in this order:
      else is how you log a spend someone else made ("Elisabeth ⌄ paid …").
    - **Amount**: focused on open, decimal keypad (`inputmode="decimal"`). Accepts `12,50` and
      `12.50` in either language, at most two decimals, more than 0, at most 1 000 000. In the
-     household currency (§11.10).
+     household currency (§11.10). The currency's mark sits on the side the reader's language
+     writes it, a space apart: "€ 42,10" in Austrian German and "€42.10" in English, after the
+     number only for a locale that writes "42,10 €" (→ [DECISIONS #199](DECISIONS.md)).
    - **What for?**: description, required, up to 80 characters. Suggests past descriptions as
      you type, matched anywhere inside the words (the household's own vocabulary, like the
      shopping add field §3.1) [9b-suggest]. Picking a past one also proposes its last category.

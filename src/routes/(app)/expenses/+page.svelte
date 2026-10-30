@@ -102,12 +102,11 @@
 			{#if menuOpen}
 				<div class="menu" role="menu">
 					<a role="menuitem" href="/expenses/recurring" onclick={() => (menuOpen = false)}>
-						<RepeatIcon size={16} />
-						<span class="menu-label">{m.expenses.menu.recurring}</span>
-						{#if data.seriesCount > 0}<span class="count">{data.seriesCount}</span>{/if}
+						<RepeatIcon size={20} />
+						{m.expenses.menu.recurring(data.seriesCount)}
 					</a>
 					<a role="menuitem" href="/expenses/history" onclick={() => (menuOpen = false)}>
-						<Search size={16} strokeWidth={2} aria-hidden="true" />
+						<Search size={20} strokeWidth={2} aria-hidden="true" />
 						{m.expenses.menu.allActivity}
 					</a>
 					<button
@@ -118,7 +117,7 @@
 							sheet = { kind: 'settings' };
 						}}
 					>
-						<Settings size={16} strokeWidth={2} aria-hidden="true" />
+						<Settings size={20} strokeWidth={2} aria-hidden="true" />
 						{m.expenses.menu.settings}
 					</button>
 				</div>
@@ -252,6 +251,8 @@
 		right: 0;
 		z-index: 5;
 		min-width: 220px;
+		width: max-content;
+		max-width: calc(100vw - 32px);
 		padding: 6px;
 		border-radius: var(--r-block);
 		background: var(--card);
@@ -272,19 +273,11 @@
 		color: var(--ink);
 	}
 
+	/* One size for every icon, and never squeezed: a label that runs long
+	   ("Einstellungen für Ausgaben") used to shrink its icon instead. */
 	.menu :global(svg) {
+		flex-shrink: 0;
 		color: var(--text-4);
-	}
-
-	.menu-label {
-		flex: 1;
-	}
-
-	.count {
-		font-size: calc(12px * var(--fs));
-		font-weight: 700;
-		color: var(--text-5);
-		font-variant-numeric: tabular-nums;
 	}
 
 	.menu a:hover,
