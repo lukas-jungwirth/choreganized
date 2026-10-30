@@ -115,7 +115,7 @@
 	.name {
 		flex: 1;
 		min-width: 0;
-		font-size: calc(15px * var(--fs));
+		font-size: var(--fs-17);
 		color: var(--cook-text-2);
 		overflow-wrap: anywhere;
 	}
@@ -132,7 +132,7 @@
 
 	.amount {
 		flex: none;
-		font-size: calc(14px * var(--fs));
+		font-size: var(--fs-16);
 		color: var(--cook-muted);
 	}
 
@@ -150,7 +150,7 @@
 
 	.empty {
 		margin: 0;
-		font-size: calc(14px * var(--fs));
+		font-size: var(--fs-16);
 		line-height: 1.5;
 		color: var(--cook-muted);
 	}

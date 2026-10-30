@@ -164,7 +164,7 @@
 		border: none;
 		background: none;
 		font-family: inherit;
-		font-size: calc(15px * var(--fs));
+		font-size: var(--fs-17);
 		font-weight: 600;
 		color: var(--ink);
 	}
@@ -186,20 +186,20 @@
 		border-radius: var(--r-chip);
 		background: var(--sage);
 		color: var(--on-sage);
-		font-size: calc(13px * var(--fs));
+		font-size: var(--fs-15);
 		font-weight: 700;
 	}
 
 	.error {
 		margin: -14px 0 18px;
-		font-size: calc(13px * var(--fs));
+		font-size: var(--fs-15);
 		color: var(--danger-deep);
 	}
 
 	.help {
 		margin: 0;
 		padding: 0 6px;
-		font-size: calc(12.5px * var(--fs));
+		font-size: var(--fs-14);
 		line-height: 1.5;
 		color: var(--text-5);
 	}
@@ -218,13 +218,13 @@
 
 	h2 {
 		margin-bottom: 10px;
-		font-size: calc(22px * var(--fs));
+		font-size: var(--fs-24);
 		overflow-wrap: anywhere;
 	}
 
 	.copy {
 		margin: 0 0 24px;
-		font-size: calc(14px * var(--fs));
+		font-size: var(--fs-16);
 		line-height: 1.5;
 		color: var(--text-4);
 	}
@@ -232,7 +232,7 @@
 	.cancel {
 		width: 100%;
 		padding: 13px;
-		font-size: calc(15px * var(--fs));
+		font-size: var(--fs-17);
 		font-weight: 700;
 		color: var(--text-2);
 	}

@@ -98,10 +98,11 @@ lands).
 - **Design tokens only** — every color/radius/shadow is a `var(--…)` from `src/app.css`. A
   hardcoded hex outside `app.css` is wrong. Component inventory: DESIGN-SYSTEM.md — extend
   `lib/components/ui`, don't fork one-off variants.
-- **Type goes through the scale** — every `font-size` is `calc(<the mockup's px> * var(--fs))`,
-  never a bare px. The design's number stays visible, one token in `app.css` moves the whole app
-  (→ DESIGN-SYSTEM "Type scale", DECISIONS #125). Audit:
-  `grep -rn "font-size" src | grep -v "calc("`.
+- **Type goes through the scale** — every `font-size` is a step, `var(--fs-<px>)`, never a
+  bare px: the steps are `rem`, so they follow the reader's phone text size (Android, iOS Dynamic
+  Type), capped at 2× and 48px. A design px × 1.1 → the step at or just above it. Text in a box
+  that can't grow stops lower with `min(var(--fs-N), <px>)`; everything else must survive 200%
+  (`tests/visual/text-size.spec.ts`) → DESIGN-SYSTEM "Type scale", DECISIONS #201.
 - **Both themes, one line** — a colour token that differs by theme is
   `light-dark(<light>, <dark>)`; splitting one across two `:root` blocks is how they drift.
   A bare value is correct **only** when the colour is deliberately theme-independent — the

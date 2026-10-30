@@ -154,7 +154,7 @@
 		border-radius: 9px;
 		background: none;
 		font-family: inherit;
-		font-size: calc(15px * var(--fs));
+		font-size: var(--fs-17);
 		font-weight: 600;
 		color: var(--ink);
 		text-overflow: ellipsis;
@@ -168,7 +168,7 @@
 
 	.count {
 		margin-left: -1px;
-		font-size: calc(12px * var(--fs));
+		font-size: var(--fs-14);
 		color: var(--text-4);
 	}
 

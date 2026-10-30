@@ -72,7 +72,7 @@
 	   display face turns cramped and the card stops reading as a list item. */
 	.name {
 		display: block;
-		font-size: calc(13.5px * var(--fs));
+		font-size: var(--fs-15);
 		font-weight: 600;
 		line-height: 1.2;
 		overflow-wrap: anywhere;
@@ -81,7 +81,7 @@
 	.meta {
 		display: block;
 		margin-top: 3px;
-		font-size: calc(11.5px * var(--fs));
+		font-size: var(--fs-13);
 		color: var(--text-4);
 	}
 </style>

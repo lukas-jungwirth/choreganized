@@ -373,7 +373,7 @@
 		flex: 1;
 		min-width: 0;
 		overflow: hidden;
-		font-size: calc(15px * var(--fs));
+		font-size: var(--fs-17);
 		font-weight: 600;
 		color: var(--ink);
 		text-overflow: ellipsis;
@@ -390,13 +390,13 @@
 
 	.tag {
 		margin-left: 4px;
-		font-size: calc(12px * var(--fs));
+		font-size: var(--fs-14);
 		font-weight: 500;
 		color: var(--text-5);
 	}
 
 	.not-in {
-		font-size: calc(13px * var(--fs));
+		font-size: var(--fs-15);
 		color: var(--text-5);
 	}
 
@@ -422,7 +422,7 @@
 		padding: 0;
 		border: none;
 		background: none;
-		font-size: calc(15.5px * var(--fs));
+		font-size: var(--fs-17);
 		font-weight: 700;
 		text-align: right;
 		color: var(--ink);
@@ -431,7 +431,7 @@
 	}
 
 	.unit {
-		font-size: calc(14px * var(--fs));
+		font-size: var(--fs-16);
 		color: var(--text-5);
 	}
 
@@ -442,7 +442,7 @@
 	.money {
 		flex: none;
 		min-width: 64px;
-		font-size: calc(15px * var(--fs));
+		font-size: var(--fs-17);
 		font-weight: 700;
 		text-align: right;
 		color: var(--ink);
@@ -451,7 +451,7 @@
 
 	.hint {
 		margin: -6px 0 12px;
-		font-size: calc(12.5px * var(--fs));
+		font-size: var(--fs-14);
 		color: var(--text-4);
 	}
 
@@ -462,7 +462,7 @@
 		margin: 0 0 12px;
 		padding: 12px 14px;
 		border-radius: var(--r-input);
-		font-size: calc(13.5px * var(--fs));
+		font-size: var(--fs-15);
 		font-weight: 600;
 	}
 
@@ -471,7 +471,7 @@
 	}
 
 	.aside {
-		font-size: calc(12px * var(--fs));
+		font-size: var(--fs-14);
 		font-weight: 500;
 		font-variant-numeric: tabular-nums;
 	}
@@ -490,7 +490,7 @@
 		margin: 0 0 12px;
 		padding: 10px 14px;
 		border-radius: var(--r-input);
-		font-size: calc(13px * var(--fs));
+		font-size: var(--fs-15);
 	}
 
 	.info {
@@ -504,7 +504,7 @@
 		width: 100%;
 		margin: 0 0 12px;
 		padding: 6px;
-		font-size: calc(13.5px * var(--fs));
+		font-size: var(--fs-15);
 		font-weight: 600;
 		text-align: center;
 		color: var(--sage-deep);

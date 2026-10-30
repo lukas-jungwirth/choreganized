@@ -235,7 +235,7 @@
 	.step {
 		margin: 0;
 		font-family: var(--font-display);
-		font-size: calc(33px * var(--fs));
+		font-size: var(--fs-36);
 		font-weight: 600;
 		line-height: 1.22;
 		color: var(--cook-text);
@@ -330,14 +330,14 @@
 
 	.amount {
 		flex: none;
-		font-size: calc(15px * var(--fs));
+		font-size: var(--fs-17);
 		font-weight: 600;
 		color: var(--cook-amber);
 	}
 
 	.name {
 		min-width: 0;
-		font-size: calc(14px * var(--fs));
+		font-size: var(--fs-16);
 		color: var(--cook-text-2);
 		overflow-wrap: anywhere;
 	}
@@ -350,7 +350,7 @@
 	/* The row's total, behind the step's share — quiet, and never bold with it. */
 	.of {
 		flex: none;
-		font-size: calc(14px * var(--fs));
+		font-size: var(--fs-16);
 		color: var(--cook-muted);
 	}
 </style>

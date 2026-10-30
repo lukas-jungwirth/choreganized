@@ -123,7 +123,7 @@
 		gap: 10px 10px;
 		margin: 0;
 		font-family: var(--font-display);
-		font-size: calc(26px * var(--fs));
+		font-size: var(--fs-28);
 		font-weight: 600;
 		line-height: 1.25;
 		color: var(--ink);

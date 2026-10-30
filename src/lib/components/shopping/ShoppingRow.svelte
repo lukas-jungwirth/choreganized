@@ -153,7 +153,7 @@
 	.name {
 		flex: 1;
 		min-width: 0;
-		font-size: calc(15px * var(--fs));
+		font-size: var(--fs-17);
 		font-weight: 500;
 		/* "Sonnenblumenkerne (geschält)" has nowhere to break. */
 		overflow-wrap: anywhere;
@@ -228,7 +228,7 @@
 
 	.qty {
 		flex: none;
-		font-size: calc(13px * var(--fs));
+		font-size: var(--fs-15);
 		color: var(--text-4);
 	}
 

@@ -1211,7 +1211,7 @@ that actually adapts there; this wants checking on a real device.
        answers 1 for that case, so every caller degrades to "as written" on its own.
 
 125. **One type scale token, `--fs`, rather than a bigger stylesheet** (→ `src/app.css`,
-     DESIGN-SYSTEM "Type scale"). The mockups were drawn a shade tighter than a phone propped
+     DESIGN-SYSTEM "Type scale"; **superseded by #201**, which moved the scale to `rem` steps). The mockups were drawn a shade tighter than a phone propped
      against a kitchen shelf wants, so every size in the app is now written
      `font-size: calc(<the mockup's px> * var(--fs))` with `--fs: 1.1`. The design's numbers
      stay in the source — a 14px row is still a 14 you can find in `design/Hearth.dc.html` —
@@ -2859,3 +2859,39 @@ units | null, name}`, written back as editor lines in the reader's unit spelling
      where iOS (17pt) and Material (16sp) put body text; the honest lever for "a bit small" is
      `--fs` itself (#125), not per-screen bumps, which would make one sheet disagree with the
      next.
+201. **Type follows the reader's text size: a rem scale of named steps, `--fs-12` … `--fs-56`**
+     (→ `src/app.css` "The type scale", DESIGN-SYSTEM "Type scale"; replaces #125's
+     `calc(<mockup px> * var(--fs))`). Everything was px, so a phone set to large text — or to
+     Dynamic Type — changed nothing in the app, installed or not. Every `font-size` is now a
+     step whose name is its size in px at the default setting and whose value is built on `rem`:
+     `--fs-17: clamp(16px, calc(17 * var(--fs-px)), 34px)`, with `--fs-px: calc(1rem / 16)`.
+
+     - **The mockup numbers go.** They were the reason #125 kept px; in practice nobody looked
+       them up, and 30 distinct sizes (12.5, 13.5, 14.5 …) had piled up. Each became the next whole step at or above what it rendered at under `--fs: 1.1` (13 × 1.1 = 14.3 → 15; titles and display numbers the nearest step, 30 × 1.1 = 33 → 32), so
+       at the default setting the app looks as it did, a hair larger at the small end — body
+       text 17px, meta 14–15, micro-labels 13. A new screen maps the design's px to the nearest
+       step up; the 1.1 is baked in, there is no global multiplier until one is needed (an
+       in-app text-size setting would be one variable here).
+     - **Opting in, per platform.** Chrome and Edge on Android (146+) scale `rem` with the
+       system setting once `<meta name="text-scale" content="scale">` is in the head (it had been
+       in `app.html` since scaffolding, inert while everything was px) and nothing sets a
+       `font-size` on `html`. Safari on iPhone/iPad only does it through
+       `html { font: -apple-system-body }`, which is 17px at the default Dynamic Type size, not
+       16 — so inside `@supports (font: -apple-system-body) and (-webkit-touch-callout: default)`
+       (iOS, not a Mac) `--fs-px` divides by 17 and a default iPhone draws what every other
+       browser draws. Firefox on Android already scaled px. Not verified on a real iPhone or
+       Android phone, installed or not — the walk was Chromium with the root set to 200%.
+     - **Limits.** A step grows to twice itself (WCAG 1.4.4) but never past 48px unless it
+       starts there, so the cook timer (56) stays put and a page title stops at 48 instead of 64. Steps from 16 up never render under 16px for a reader who chose smaller text — the
+       size iOS zooms the page under when a field takes focus, which is what lets
+       `input-size` (#200) just ask for a step ≥ 16. Text in a box that can't grow — the tab bar's badge (16px dot), the tab label, a four-way segmented control, the week strip's seven columns, the podium's numerals, the recipe editor's Cancel · title · Save bar — stops lower with `min(var(--fs-N), <px>)`, the
+       way native tab bars and segmented controls don't follow the system size at all.
+     - **Paddings and icons stay px** (as #125): text grows inside the layout. What broke at 200% and was fixed rather than capped: the page header and the two section heads beside a count or link (now wrap), an
+       expense row (the share drops under the words), the week plan's weekday column (width in
+       `em`), the date field and settings rows (value drops under the label, chevron with it),
+       "(you)" splitting at its bracket, and the recipe grid (one column once a column would be
+       under 7em). Headings take `overflow-wrap: anywhere`, so one German word wider than the line ("Rezeptsammlung" at 44px) breaks instead of running off the screen. `tests/visual/text-size.spec.ts` opens every screen at 200% — the ones a URL reaches in German too, which found three of these — and fails on a body that didn't double, a sideways scroll, or one-line text cut off without an ellipsis.
+     - **Not `env(preferred-text-scale)`**, which would have let the px stay: an explainer, not
+       shipped anywhere we could confirm, and Chrome's own guidance warns it double-scales
+       alongside the meta tag. **Not literal rem in each component** (`0.875rem`): the named
+       steps are the same thing with the rounding done once and the caps attached.

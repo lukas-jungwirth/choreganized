@@ -198,7 +198,7 @@
 
 	.name {
 		display: block;
-		font-size: calc(14.5px * var(--fs));
+		font-size: var(--fs-16);
 		font-weight: 600;
 		color: var(--text-disabled);
 		overflow-wrap: anywhere;
@@ -216,7 +216,7 @@
 	.note {
 		display: block;
 		margin-top: 2px;
-		font-size: calc(12px * var(--fs));
+		font-size: var(--fs-14);
 		line-height: 1.35;
 		color: var(--text-5);
 	}
@@ -224,7 +224,7 @@
 	.total {
 		flex: none;
 		padding-right: 6px;
-		font-size: calc(13.5px * var(--fs));
+		font-size: var(--fs-15);
 		color: var(--text-disabled);
 	}
 
@@ -241,7 +241,7 @@
 		border: 1px solid var(--border);
 		border-radius: var(--r-input);
 		background: var(--field);
-		font-size: calc(15px * var(--fs));
+		font-size: var(--fs-17);
 		font-weight: 600;
 		text-align: right;
 		/* The digits must not jitter while a thumb is on the key. */
@@ -262,7 +262,7 @@
 	.unit {
 		flex: none;
 		min-width: 24px;
-		font-size: calc(13px * var(--fs));
+		font-size: var(--fs-15);
 		color: var(--text-4);
 	}
 
@@ -272,7 +272,7 @@
 		width: 100%;
 		margin-top: 14px;
 		padding: 4px;
-		font-size: calc(13px * var(--fs));
+		font-size: var(--fs-15);
 		font-weight: 600;
 		color: var(--text-4);
 	}
@@ -280,7 +280,7 @@
 	.empty {
 		margin: 0 0 18px;
 		padding: 0 2px;
-		font-size: calc(13.5px * var(--fs));
+		font-size: var(--fs-15);
 		line-height: 1.5;
 		color: var(--text-4);
 	}

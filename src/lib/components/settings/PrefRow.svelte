@@ -91,13 +91,13 @@
 
 	.label {
 		display: block;
-		font-size: calc(15px * var(--fs));
+		font-size: var(--fs-17);
 	}
 
 	.detail {
 		display: block;
 		margin-top: 2px;
-		font-size: calc(12.5px * var(--fs));
+		font-size: var(--fs-14);
 		line-height: 1.4;
 		color: var(--text-4);
 	}

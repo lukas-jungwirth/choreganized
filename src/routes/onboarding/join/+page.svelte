@@ -148,7 +148,7 @@
 	}
 
 	h1 {
-		font-size: calc(26px * var(--fs));
+		font-size: var(--fs-28);
 	}
 
 	h1.title {
@@ -166,7 +166,7 @@
 
 	.label {
 		margin: 0 0 10px;
-		font-size: calc(11px * var(--fs));
+		font-size: var(--fs-13);
 		font-weight: 700;
 		letter-spacing: 0.1em;
 		text-transform: uppercase;
@@ -181,7 +181,7 @@
 
 	.error {
 		margin: -8px 0 0;
-		font-size: calc(13.5px * var(--fs));
+		font-size: var(--fs-15);
 		line-height: 1.45;
 		color: var(--danger-deep);
 	}

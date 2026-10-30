@@ -94,7 +94,7 @@
 <style>
 	h1 {
 		margin: 14px 0 26px;
-		font-size: calc(28px * var(--fs));
+		font-size: var(--fs-30);
 		line-height: 1.1;
 	}
 
@@ -113,7 +113,7 @@
 
 	.label {
 		margin: 0 0 12px;
-		font-size: calc(11px * var(--fs));
+		font-size: var(--fs-13);
 		font-weight: 700;
 		letter-spacing: 0.1em;
 		text-transform: uppercase;
@@ -122,7 +122,7 @@
 
 	.error {
 		margin: 8px 0 0;
-		font-size: calc(13px * var(--fs));
+		font-size: var(--fs-15);
 		color: var(--danger-deep);
 	}
 

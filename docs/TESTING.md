@@ -251,15 +251,25 @@ whenever the flag is on, and `scripts/smoke.ts` asserts it is **off** on every d
 
 ### Visual
 
-`tests/visual/screens.spec.ts` is a table: one full-page screenshot per screen at 390px,
-light and dark where the theme matters. Add a screen by adding a row, with the `route` it
-shows: **every page must be in the table or excused** — `tests/conventions/visual-coverage.test.ts`
+`tests/visual/screens.ts` is a table of every screen and how to reach it, and
+`screens.spec.ts` takes one screenshot per row at 390px, light and dark where the theme matters.
+Add a screen by adding a row, with the `route` it shows: **every page must be in the table or excused** — `tests/conventions/visual-coverage.test.ts`
 fails `npm test` for a page in `src/routes` that is neither, and an excuse there carries its
 reason (→ DECISIONS #156). The onboarding screens sign up a fresh account per test, since both
 seeded accounts already own a household. The calendar is part of the picture, since every run
 happens on the same afternoon (next section). Masks are only for what is **random** (an invite
 code) or stamped at **the minute the seed ran**, and **a mask must cover a box that doesn't
 follow the text**: a box as wide as a weekday diffs on every other day (→ DECISIONS #144).
+
+#### Twice the text size
+
+`tests/visual/text-size.spec.ts` walks the same table with the root font size at 200% — what a
+phone set to large text does once the app opts in (→ DECISIONS #201) — and takes no
+screenshots, so it runs on a Mac too. The screens a URL reaches run again in German, whose
+words are the longest. Each screen must double its body text (17 → 34px), not
+scroll sideways, and not cut one-line text off without an ellipsis (visually hidden text is
+skipped). A failure names the screen and the clipped element; the fix is a layout that wraps,
+or — for a box that genuinely can't grow — a capped step (DESIGN-SYSTEM "Type scale").
 
 #### The fixed clock
 

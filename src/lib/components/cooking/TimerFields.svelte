@@ -96,7 +96,7 @@
 		border: 1px solid transparent;
 		border-radius: var(--r-chip);
 		background: var(--sunken);
-		font-size: calc(14px * var(--fs));
+		font-size: var(--fs-16);
 		font-weight: 600;
 		color: var(--text-2);
 	}

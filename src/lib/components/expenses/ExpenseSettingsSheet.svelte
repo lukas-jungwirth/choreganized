@@ -141,27 +141,27 @@
 	}
 
 	.fixed-label {
-		font-size: calc(14.5px * var(--fs));
+		font-size: var(--fs-16);
 		font-weight: 600;
 		color: var(--ink);
 	}
 
 	.fixed-value {
-		font-size: calc(14.5px * var(--fs));
+		font-size: var(--fs-16);
 		font-weight: 700;
 		color: var(--text-3);
 	}
 
 	.caption {
 		margin: 8px 4px 0;
-		font-size: calc(12.5px * var(--fs));
+		font-size: var(--fs-14);
 		line-height: 1.45;
 		color: var(--text-4);
 	}
 
 	.error {
 		margin: 10px 0 0;
-		font-size: calc(13px * var(--fs));
+		font-size: var(--fs-15);
 		color: var(--danger);
 	}
 
@@ -186,13 +186,13 @@
 	}
 
 	.row-label {
-		font-size: calc(14.5px * var(--fs));
+		font-size: var(--fs-16);
 		font-weight: 600;
 		color: var(--ink);
 	}
 
 	.row-value {
-		font-size: calc(13px * var(--fs));
+		font-size: var(--fs-15);
 		color: var(--text-4);
 	}
 </style>

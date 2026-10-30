@@ -267,7 +267,7 @@
 		width: 100%;
 		padding: 11px 12px;
 		border-radius: 12px;
-		font-size: calc(14.5px * var(--fs));
+		font-size: var(--fs-16);
 		font-weight: 600;
 		text-align: left;
 		color: var(--ink);
@@ -294,7 +294,7 @@
 
 	.recent {
 		margin: 0 4px 12px;
-		font-size: calc(12px * var(--fs));
+		font-size: var(--fs-14);
 		font-weight: 700;
 		letter-spacing: 0.1em;
 		text-transform: uppercase;
@@ -303,7 +303,7 @@
 
 	.day-label {
 		margin: 0 4px 8px;
-		font-size: calc(11px * var(--fs));
+		font-size: var(--fs-13);
 		font-weight: 700;
 		letter-spacing: 0.12em;
 		text-transform: uppercase;
@@ -328,7 +328,7 @@
 		padding: 13px;
 		border-radius: var(--r-block);
 		background: var(--sunken-2);
-		font-size: calc(13.5px * var(--fs));
+		font-size: var(--fs-15);
 		font-weight: 600;
 		color: var(--sage-deep);
 	}

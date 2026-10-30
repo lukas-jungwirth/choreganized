@@ -84,7 +84,7 @@
 	/* Same micro-label as TextField. */
 	.label {
 		margin-bottom: 8px;
-		font-size: calc(11px * var(--fs));
+		font-size: var(--fs-13);
 		font-weight: 700;
 		letter-spacing: 0.1em;
 		text-transform: uppercase;
@@ -105,7 +105,7 @@
 		border: 1.5px solid var(--border);
 		border-radius: var(--r-input);
 		background: var(--input-surface, var(--card));
-		font-size: calc(22px * var(--fs));
+		font-size: var(--fs-24);
 		font-weight: 700;
 		font-variant-numeric: tabular-nums;
 		color: var(--ink);
@@ -136,7 +136,7 @@
 		padding: 0;
 		border: none;
 		background: transparent;
-		font-size: calc(16px * var(--fs));
+		font-size: var(--fs-18);
 		color: transparent;
 		caret-color: transparent;
 		outline: none;

@@ -86,7 +86,7 @@
 <style>
 	.label {
 		margin: 22px 0 12px;
-		font-size: calc(11px * var(--fs));
+		font-size: var(--fs-13);
 		font-weight: 700;
 		letter-spacing: 0.1em;
 		text-transform: uppercase;

@@ -59,7 +59,7 @@
 		width: 100%;
 		min-height: 52px;
 		padding: 12px 16px;
-		font-size: calc(15px * var(--fs));
+		font-size: var(--fs-17);
 		text-align: left;
 		color: var(--ink);
 	}
@@ -76,7 +76,7 @@
 	.detail {
 		display: block;
 		margin-top: 2px;
-		font-size: calc(12.5px * var(--fs));
+		font-size: var(--fs-14);
 		line-height: 1.4;
 		color: var(--text-4);
 	}

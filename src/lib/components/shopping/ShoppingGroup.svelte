@@ -140,7 +140,7 @@
 		gap: 6px;
 		margin: 0 4px 8px;
 		font-family: var(--font-body);
-		font-size: calc(11px * var(--fs));
+		font-size: var(--fs-13);
 		font-weight: 700;
 		letter-spacing: 0.12em;
 		text-transform: uppercase;

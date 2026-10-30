@@ -180,18 +180,18 @@
 
 	.label {
 		flex: 1;
-		font-size: calc(15px * var(--fs));
+		font-size: var(--fs-17);
 	}
 
 	.status {
-		font-size: calc(14px * var(--fs));
+		font-size: var(--fs-16);
 		color: var(--text-4);
 	}
 
 	.note {
 		margin: 0;
 		padding: 0 16px 14px;
-		font-size: calc(12.5px * var(--fs));
+		font-size: var(--fs-14);
 		line-height: 1.45;
 		color: var(--text-4);
 	}

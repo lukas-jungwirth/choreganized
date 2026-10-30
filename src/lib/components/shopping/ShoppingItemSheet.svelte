@@ -267,7 +267,7 @@
 
 	.label {
 		margin: 0 0 8px;
-		font-size: calc(11px * var(--fs));
+		font-size: var(--fs-13);
 		font-weight: 700;
 		letter-spacing: 0.1em;
 		text-transform: uppercase;
@@ -294,7 +294,7 @@
 		gap: 13px;
 		width: 100%;
 		padding: 15px 16px;
-		font-size: calc(15px * var(--fs));
+		font-size: var(--fs-17);
 		font-weight: 500;
 		color: var(--danger);
 	}

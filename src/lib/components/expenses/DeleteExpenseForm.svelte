@@ -50,7 +50,7 @@
 		width: 100%;
 		margin-top: 8px;
 		padding: 12px;
-		font-size: calc(14px * var(--fs));
+		font-size: var(--fs-16);
 		font-weight: 600;
 		color: var(--danger);
 	}

@@ -61,7 +61,7 @@
 
 	.symbol {
 		font-family: var(--font-display);
-		font-size: calc(22px * var(--fs));
+		font-size: var(--fs-24);
 		font-weight: 600;
 		color: var(--text-4);
 	}
@@ -78,7 +78,7 @@
 		border: none;
 		background: none;
 		font-family: var(--font-display);
-		font-size: calc(32px * var(--fs));
+		font-size: var(--fs-36);
 		font-weight: 600;
 		line-height: 1.1;
 		color: var(--ink);
@@ -93,7 +93,7 @@
 
 	.caption {
 		margin: 6px 0 0;
-		font-size: calc(12px * var(--fs));
+		font-size: var(--fs-14);
 		text-align: center;
 		color: var(--text-4);
 	}

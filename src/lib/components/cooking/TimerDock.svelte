@@ -126,7 +126,7 @@
 		border-radius: var(--r-button);
 		background: var(--card);
 		box-shadow: var(--shadow-card);
-		font-size: calc(14px * var(--fs));
+		font-size: var(--fs-16);
 		color: var(--text-2);
 	}
 
@@ -151,7 +151,7 @@
 		padding: 3px 8px;
 		border-radius: var(--r-chip);
 		background: var(--sunken);
-		font-size: calc(12px * var(--fs));
+		font-size: var(--fs-14);
 		font-weight: 700;
 		color: var(--text-4);
 	}

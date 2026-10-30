@@ -60,30 +60,46 @@ it on their panel and every field inside adapts (→ [DECISIONS #37](DECISIONS.m
 surfaces (feed check circles, selected member chips) are `color-mix`ed from the member's colour
 because only sage and terracotta have tint tokens (→ [#35](DECISIONS.md)).
 
-## Type scale (from the mockups)
+## Type scale
 
-Every size below is what `design/Hearth.dc.html` draws, and every `font-size` in the app is
-written **`calc(<that number>px * var(--fs))`** — one token in `app.css` (currently `1.1`)
-scales all of them at once, because the mockups read a shade small on a phone across the
-kitchen (→ [DECISIONS #125](DECISIONS.md)). A bare `font-size: 13px` anywhere in `src/`
-silently opts out of the scale and is a bug; `grep -rn "font-size" src | grep -v "calc("` finds
-them all. Relative units follow for free — unitless line-heights, `em` letter-spacing — while
-paddings and icon sizes deliberately don't, so type grows _inside_ the layout.
-A field you type into never renders under **16px** (mockup px × `--fs`), or iOS zooms the page
-on focus — `tests/conventions/input-size.test.ts` checks every `input`/`textarea`/`select` rule
-(→ [DECISIONS #200](DECISIONS.md)).
+Every `font-size` in the app is **`var(--fs-N)`**, a step from `src/app.css`: `N` is its size in
+px at the phone's default text setting, and the value is built on `rem`, so it follows the
+reader's own setting — Android's font size through `<meta name="text-scale">`, iOS Dynamic Type
+through `-apple-system-body` (→ [DECISIONS #201](DECISIONS.md)). A bare `font-size: 13px`
+anywhere in `src/` ignores the reader and fails `npm test` with its `path:line`.
 
-| Style             | Font            | Size/weight                                      | Example                   |
-| ----------------- | --------------- | ------------------------------------------------ | ------------------------- |
-| Page title        | Fraunces 600    | 30px                                             | "Shopping", "Tasks"       |
-| Greeting          | Fraunces 600    | 27px / 1.05                                      | "Good morning, Lukas"     |
-| Sheet title       | Fraunces 600    | 22px                                             | "Add item", "New task"    |
-| Card/recipe title | Fraunces 600    | 17–19px                                          | dinner card, recipe cards |
-| Display numbers   | Fraunces 600    | 24px (stats) · 38px (invite code) · 52px (timer) |                           |
-| Body              | Figtree 500–600 | 15px                                             | list rows                 |
-| Meta              | Figtree 400–600 | 12–13px, `--text-4`                              | "Weekly · due today"      |
-| Micro-label       | Figtree 700     | 11px, uppercase, ls .1–.12em, `--text-5`         | "GROCERY", "INVITE CODE"  |
-| Cook step         | Fraunces 600    | 33px / 1.22                                      | step text                 |
+The steps: **12 · 13 · 14 · 15 · 16 · 17 · 18 · 20 · 22 · 24 · 28 · 30 · 32 · 36 · 42 · 48 · 56**.
+Each grows up to twice itself, but no step grows past 48px unless it starts there (the cook
+timer, 56, stays put). From 16 up a step never renders under 16px, which is also why a field
+you type into uses one of those: under 16px iOS zooms the page when the field takes focus
+(`tests/conventions/input-size.test.ts`, [DECISIONS #200](DECISIONS.md)). The mockups were
+drawn smaller than the app renders — **a design px × 1.1 maps to the step at or just above
+it**, titles and display numbers to the nearest one (the design's 14px row → `--fs-16`, its
+11px micro-label → `--fs-13`, its 30px page title → `--fs-32`).
+
+- **Type grows inside the layout.** Unitless line-heights and `em` letter-spacing follow the
+  text; paddings and icon sizes stay px on purpose. So a layout has to survive 200%: let a row
+  wrap (the trailing part drops under, `margin-left: auto` keeps it right) instead of setting
+  `nowrap` on words that matter, size a column that holds a word in `em`, and never fix the
+  height of a box with text in it. Headings break a word wider than their line (`overflow-wrap:
+anywhere` in app.css). `tests/visual/text-size.spec.ts` opens every screen at 200%, in English
+  and German.
+- **A box that can't grow** — a 16px badge, the tab bar, a four-way segmented control, the
+  week strip's seven columns — stops its text lower: `min(var(--fs-N), <px>)`, the cap never
+  under the step's own default. Native tab bars and segmented controls don't follow the
+  system size either. Use it for a box, not to dodge a wrap.
+
+| Style             | Font            | Step / weight                                       | Example                   |
+| ----------------- | --------------- | --------------------------------------------------- | ------------------------- |
+| Page title        | Fraunces 600    | `--fs-32`                                           | "Shopping", "Tasks"       |
+| Greeting          | Fraunces 600    | `--fs-30` / 1.05                                    | "Good morning, Lukas"     |
+| Sheet title       | Fraunces 600    | `--fs-24`                                           | "Add item", "New task"    |
+| Card/recipe title | Fraunces 600    | `--fs-20`–`22`                                      | dinner card, recipe cards |
+| Display numbers   | Fraunces 600    | `--fs-28` (stats) · `42` (invite code) · `56` timer |                           |
+| Body              | Figtree 500–600 | `--fs-17`                                           | list rows                 |
+| Meta              | Figtree 400–600 | `--fs-14`–`15`, `--text-4`                          | "Weekly · due today"      |
+| Micro-label       | Figtree 700     | `--fs-13`, uppercase, ls .1–.12em, `--text-5`       | "GROCERY", "INVITE CODE"  |
+| Cook step         | Fraunces 600    | `--fs-36` / 1.22                                    | step text                 |
 
 ## Recurring components (build once in `lib/components/ui`, reuse everywhere)
 

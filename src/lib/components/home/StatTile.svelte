@@ -39,7 +39,7 @@
 	.value {
 		display: block;
 		font-family: var(--font-display);
-		font-size: calc(24px * var(--fs));
+		font-size: var(--fs-28);
 		font-weight: 600;
 		line-height: 1;
 	}
@@ -47,7 +47,7 @@
 	.label {
 		display: block;
 		margin-top: 3px;
-		font-size: calc(12.5px * var(--fs));
+		font-size: var(--fs-14);
 		color: var(--text-4);
 	}
 </style>

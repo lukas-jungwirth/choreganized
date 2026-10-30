@@ -64,7 +64,7 @@
 
 	.label {
 		flex: 1;
-		font-size: calc(14.5px * var(--fs));
+		font-size: var(--fs-16);
 		font-weight: 600;
 		color: var(--ink);
 	}
@@ -73,7 +73,7 @@
 		padding: 5px 12px;
 		border-radius: var(--r-chip);
 		background: var(--sage-tint);
-		font-size: calc(13px * var(--fs));
+		font-size: var(--fs-15);
 		font-weight: 700;
 		color: var(--sage-deep);
 	}

@@ -215,27 +215,31 @@
 		margin-top: 22px;
 	}
 
+	/* Wraps when the reader's text size leaves no room beside the heading: the
+	   trailing part drops under it and keeps to the right. */
 	.head {
 		display: flex;
+		flex-wrap: wrap;
 		align-items: baseline;
 		justify-content: space-between;
-		gap: 12px;
+		gap: 4px 12px;
 		margin: 0 2px 12px;
 	}
 
 	h2 {
-		font-size: calc(19px * var(--fs));
+		font-size: var(--fs-22);
 	}
 
 	.head a {
 		flex: none;
-		font-size: calc(13px * var(--fs));
+		margin-left: auto;
+		font-size: var(--fs-15);
 		font-weight: 600;
 	}
 
 	.micro {
 		margin: 0 4px 10px;
-		font-size: calc(11px * var(--fs));
+		font-size: var(--fs-13);
 		font-weight: 700;
 		letter-spacing: 0.12em;
 		text-transform: uppercase;
@@ -278,14 +282,14 @@
 	.first-title {
 		display: block;
 		font-family: var(--font-display);
-		font-size: calc(16px * var(--fs));
+		font-size: var(--fs-18);
 		font-weight: 600;
 	}
 
 	.first-sub {
 		display: block;
 		margin-top: 2px;
-		font-size: calc(12.5px * var(--fs));
+		font-size: var(--fs-14);
 		line-height: 1.4;
 		color: var(--text-4);
 	}

@@ -377,6 +377,6 @@
 		margin: 0 auto;
 		padding: 13px 22px;
 		border-radius: var(--r-input);
-		font-size: calc(15px * var(--fs));
+		font-size: var(--fs-17);
 	}
 </style>

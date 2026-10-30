@@ -27,8 +27,12 @@
 	const HEIGHTS = [104, 78, 60, 48, 40];
 	const LEVEL = 60;
 
-	/** The rank numeral shrinks with the plinth it sits on. */
-	const NUMERALS = [24, 20, 18, 18, 18];
+	/**
+	 * The rank numeral shrinks with the plinth it sits on — a `--fs-*` step each,
+	 * pinned at its default size: the plinth is a fixed height, and the numeral is
+	 * decoration (`aria-hidden`); the name and points above it carry the rank.
+	 */
+	const NUMERALS = [28, 22, 20, 20, 20];
 
 	/** Ranks past the fifth keep the smallest column — SPEC tops out at five. */
 	function step(sizes: number[], rank: number): number {
@@ -51,6 +55,7 @@
 		<ol aria-label={m.tasks.podium.standings}>
 			{#each podium.entries as entry (entry.memberId)}
 				{@const winning = entry.rank === 1 && !podium.leaderless}
+				{@const numeral = step(NUMERALS, entry.rank)}
 				<li style:order={entry.position} style:--column-color={entry.color}>
 					{#if entry.crowned}
 						<span class="crown"><CrownIcon size={26} /></span>
@@ -73,7 +78,7 @@
 						class="plinth"
 						class:winning
 						style:height="{podium.leaderless ? LEVEL : step(HEIGHTS, entry.rank)}px"
-						style:font-size="calc({step(NUMERALS, entry.rank)}px * var(--fs))"
+						style:font-size="min(var(--fs-{numeral}), {numeral}px)"
 						aria-hidden="true"
 					>
 						<!-- A rank nobody earned would be a lie about a scoreless month. -->
@@ -100,13 +105,13 @@
 
 	h2 {
 		font-family: var(--font-body);
-		font-size: calc(15px * var(--fs));
+		font-size: var(--fs-17);
 		font-weight: 700;
 	}
 
 	.resets {
 		flex: none;
-		font-size: calc(11px * var(--fs));
+		font-size: var(--fs-13);
 		font-weight: 600;
 		color: var(--text-5);
 	}
@@ -162,7 +167,7 @@
 		max-width: 100%;
 		overflow: hidden;
 		margin-bottom: 1px;
-		font-size: calc(12.5px * var(--fs));
+		font-size: var(--fs-14);
 		font-weight: 600;
 		text-overflow: ellipsis;
 		white-space: nowrap;
@@ -174,13 +179,13 @@
 
 	.points {
 		font-family: var(--font-display);
-		font-size: calc(17px * var(--fs));
+		font-size: var(--fs-20);
 		font-weight: 600;
 		color: var(--column-color);
 	}
 
 	.points.winning {
-		font-size: calc(19px * var(--fs));
+		font-size: var(--fs-22);
 	}
 
 	.plinth {

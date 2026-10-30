@@ -110,7 +110,7 @@
 
 	.label {
 		flex: none;
-		font-size: calc(14.5px * var(--fs));
+		font-size: var(--fs-16);
 		font-weight: 600;
 		color: var(--ink);
 	}
@@ -118,7 +118,7 @@
 	.value {
 		flex: 1;
 		min-width: 0;
-		font-size: calc(13px * var(--fs));
+		font-size: var(--fs-15);
 		text-align: right;
 		color: var(--text-4);
 	}

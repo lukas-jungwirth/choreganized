@@ -126,14 +126,15 @@
 		outline-offset: -2px;
 	}
 
-	/* Wide enough for "WED" once the type scale is on it (→ app.css `--fs`, and
-	   DECISIONS #125), and empty on a day's second and third meal. */
+	/* Wide enough for "WED", measured in its own `em` so the column grows with
+	   the reader's text size (→ DECISIONS #201), and empty on a day's second and
+	   third meal. */
 	.weekday {
 		flex: none;
-		width: 38px;
+		width: calc(14px + 2.4em);
 		padding-left: 14px;
 		font-family: var(--font-display);
-		font-size: calc(11px * var(--fs));
+		font-size: var(--fs-13);
 		font-weight: 600;
 		color: var(--text-4);
 	}
@@ -157,7 +158,7 @@
 	}
 
 	.name {
-		font-size: calc(14px * var(--fs));
+		font-size: var(--fs-16);
 		font-weight: 600;
 		line-height: 1.2;
 		overflow-wrap: anywhere;
@@ -168,7 +169,7 @@
 		padding: 3px 8px;
 		border-radius: 8px;
 		background: var(--sunken);
-		font-size: calc(11.5px * var(--fs));
+		font-size: var(--fs-13);
 		font-weight: 500;
 		line-height: 1.2;
 		color: var(--text-4);
@@ -176,7 +177,7 @@
 
 	.nothing {
 		flex: 1;
-		font-size: calc(14px * var(--fs));
+		font-size: var(--fs-16);
 		font-weight: 500;
 		color: var(--text-disabled);
 	}

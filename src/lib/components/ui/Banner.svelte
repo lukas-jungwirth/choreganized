@@ -143,7 +143,7 @@
 		padding: 7px 13px;
 		border-radius: var(--r-chip);
 		background: var(--card);
-		font-size: calc(13px * var(--fs));
+		font-size: var(--fs-15);
 		font-weight: 700;
 	}
 
@@ -197,12 +197,12 @@
 	}
 
 	.danger .title {
-		font-size: calc(14px * var(--fs));
+		font-size: var(--fs-16);
 		color: var(--danger-deep);
 	}
 
 	.danger .detail {
-		font-size: calc(12.5px * var(--fs));
+		font-size: var(--fs-14);
 		color: var(--danger-soft);
 	}
 
@@ -229,12 +229,12 @@
 	}
 
 	.info .title {
-		font-size: calc(13.5px * var(--fs));
+		font-size: var(--fs-15);
 		color: var(--sage-deep);
 	}
 
 	.info .detail {
-		font-size: calc(12px * var(--fs));
+		font-size: var(--fs-14);
 		color: var(--info-soft);
 	}
 

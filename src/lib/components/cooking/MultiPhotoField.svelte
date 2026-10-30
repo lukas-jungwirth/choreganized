@@ -186,7 +186,7 @@
 	}
 
 	.add-label {
-		font-size: calc(11.5px * var(--fs));
+		font-size: var(--fs-13);
 		font-weight: 600;
 		color: var(--text-4);
 	}

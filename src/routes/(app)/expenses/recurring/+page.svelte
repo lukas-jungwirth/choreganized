@@ -139,7 +139,7 @@
 <style>
 	.intro {
 		margin: 0 4px 16px;
-		font-size: calc(13px * var(--fs));
+		font-size: var(--fs-15);
 		line-height: 1.5;
 		color: var(--text-4);
 	}
@@ -179,14 +179,14 @@
 
 	.title {
 		overflow: hidden;
-		font-size: calc(14.5px * var(--fs));
+		font-size: var(--fs-16);
 		font-weight: 600;
 		text-overflow: ellipsis;
 		white-space: nowrap;
 	}
 
 	.meta {
-		font-size: calc(12px * var(--fs));
+		font-size: var(--fs-14);
 		color: var(--text-4);
 	}
 

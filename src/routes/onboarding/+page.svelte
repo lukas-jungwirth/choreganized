@@ -89,13 +89,13 @@
 	}
 
 	h1 {
-		font-size: calc(30px * var(--fs));
+		font-size: var(--fs-32);
 		line-height: 1.1;
 	}
 
 	.sub {
 		margin: 8px 0 0;
-		font-size: calc(15px * var(--fs));
+		font-size: var(--fs-17);
 		color: var(--text-4);
 	}
 
@@ -171,13 +171,13 @@
 
 	.title {
 		font-family: var(--font-display);
-		font-size: calc(19px * var(--fs));
+		font-size: var(--fs-22);
 		font-weight: 600;
 	}
 
 	.copy {
 		margin-top: 5px;
-		font-size: calc(13.5px * var(--fs));
+		font-size: var(--fs-15);
 		line-height: 1.45;
 		color: var(--text-4);
 	}
@@ -193,7 +193,7 @@
 		justify-content: center;
 		gap: 2px 6px;
 		margin: 16px 0 0;
-		font-size: calc(13px * var(--fs));
+		font-size: var(--fs-15);
 		color: var(--text-4);
 		text-align: center;
 	}
@@ -216,7 +216,7 @@
 
 	.error {
 		margin: 8px 0 0;
-		font-size: calc(13px * var(--fs));
+		font-size: var(--fs-15);
 		color: var(--danger);
 		text-align: center;
 	}

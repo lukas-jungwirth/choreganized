@@ -591,7 +591,7 @@
 		border-radius: var(--r-chip);
 		background: var(--card);
 		color: var(--text-2);
-		font-size: calc(13px * var(--fs));
+		font-size: var(--fs-15);
 		font-weight: 600;
 		white-space: nowrap;
 	}
@@ -640,7 +640,7 @@
 		align-items: baseline;
 		gap: 12px;
 		margin: 12px 4px 18px;
-		font-size: calc(12.5px * var(--fs));
+		font-size: var(--fs-14);
 		color: var(--text-4);
 		font-variant-numeric: tabular-nums;
 	}
@@ -664,14 +664,14 @@
 
 	.month-name {
 		font-family: var(--font-display);
-		font-size: calc(20px * var(--fs));
+		font-size: var(--fs-22);
 		font-weight: 600;
 		color: var(--ink);
 	}
 
 	.spent {
 		font-family: var(--font-body);
-		font-size: calc(12.5px * var(--fs));
+		font-size: var(--fs-14);
 		font-weight: 500;
 		color: var(--text-4);
 		font-variant-numeric: tabular-nums;
@@ -682,7 +682,7 @@
 		justify-content: space-between;
 		margin: 6px 4px 8px;
 		font-family: var(--font-body);
-		font-size: calc(11.5px * var(--fs));
+		font-size: var(--fs-13);
 		font-weight: 700;
 		letter-spacing: 0.08em;
 		text-transform: uppercase;
@@ -708,7 +708,7 @@
 	.older {
 		display: block;
 		padding: 12px;
-		font-size: calc(14px * var(--fs));
+		font-size: var(--fs-16);
 		font-weight: 600;
 		text-align: center;
 		color: var(--sage-deep);
@@ -746,12 +746,12 @@
 	}
 
 	.option-label {
-		font-size: calc(15px * var(--fs));
+		font-size: var(--fs-17);
 		font-weight: 600;
 	}
 
 	.option-hint {
-		font-size: calc(12px * var(--fs));
+		font-size: var(--fs-14);
 		color: var(--text-4);
 	}
 
@@ -815,7 +815,7 @@
 	.group {
 		margin: 0 0 10px;
 		font-family: var(--font-body);
-		font-size: calc(11px * var(--fs));
+		font-size: var(--fs-13);
 		font-weight: 700;
 		letter-spacing: 0.1em;
 		text-transform: uppercase;
@@ -835,7 +835,7 @@
 
 	.sheet-clear {
 		padding: 6px 0;
-		font-size: calc(14px * var(--fs));
+		font-size: var(--fs-16);
 		font-weight: 600;
 		color: var(--sage-deep);
 	}

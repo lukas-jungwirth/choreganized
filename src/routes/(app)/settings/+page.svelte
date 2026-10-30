@@ -182,27 +182,35 @@
 <RowGroup>
 	<button type="button" class="row" onclick={() => (editingProfile = true)}>
 		<span class="label">{m.settings.displayName}</span>
-		<span class="value">{me.displayName}</span>
-		<ChevronRight size={15} strokeWidth={2} class="chevron" />
+		<span class="end">
+			<span class="value">{me.displayName}</span>
+			<ChevronRight size={15} strokeWidth={2} class="chevron" />
+		</span>
 	</button>
 	<button type="button" class="row" onclick={() => (editingProfile = true)}>
 		<span class="label">{m.ui.yourColour}</span>
-		<span class="swatch" style:background={me.color} aria-hidden="true"></span>
-		<ChevronRight size={15} strokeWidth={2} class="chevron" />
+		<span class="end">
+			<span class="swatch" style:background={me.color} aria-hidden="true"></span>
+			<ChevronRight size={15} strokeWidth={2} class="chevron" />
+		</span>
 	</button>
 	<!-- Language sits under Account rather than Household: it is about the person
 		 reading, not about the house (→ SPEC §6). -->
 	<button type="button" class="row" onclick={() => (choosingLanguage = true)}>
 		<span class="label">{m.settings.language.row}</span>
-		<span class="value">{languageValue}</span>
-		<ChevronRight size={15} strokeWidth={2} class="chevron" />
+		<span class="end">
+			<span class="value">{languageValue}</span>
+			<ChevronRight size={15} strokeWidth={2} class="chevron" />
+		</span>
 	</button>
 	<!-- Appearance sits beside it for the same reason: it is about the person
 		 reading and the screen they read on, not about the house (→ SPEC §6). -->
 	<button type="button" class="row" onclick={() => (choosingTheme = true)}>
 		<span class="label">{m.settings.theme.row}</span>
-		<span class="value">{themeValue}</span>
-		<ChevronRight size={15} strokeWidth={2} class="chevron" />
+		<span class="end">
+			<span class="value">{themeValue}</span>
+			<ChevronRight size={15} strokeWidth={2} class="chevron" />
+		</span>
 	</button>
 </RowGroup>
 
@@ -300,8 +308,10 @@
 	<a class="row" href="/settings/members">
 		<span class="tile" aria-hidden="true"><UsersRound size={18} strokeWidth={1.9} /></span>
 		<span class="label">{m.settings.members}</span>
-		<span class="value">{data.members.length}</span>
-		<ChevronRight size={15} strokeWidth={2} class="chevron" />
+		<span class="end">
+			<span class="value">{data.members.length}</span>
+			<ChevronRight size={15} strokeWidth={2} class="chevron" />
+		</span>
 	</a>
 
 	<!-- AI features [plan 20] — the owner sets the providers, everyone else sees
@@ -328,8 +338,10 @@
 		<button type="button" class="row" onclick={() => (choosingWording = true)}>
 			<span class="tile" aria-hidden="true"><Languages size={18} strokeWidth={1.9} /></span>
 			<span class="label">{m.settings.wording.row}</span>
-			<span class="value">{wordingValue}</span>
-			<ChevronRight size={15} strokeWidth={2} class="chevron" />
+			<span class="end">
+				<span class="value">{wordingValue}</span>
+				<ChevronRight size={15} strokeWidth={2} class="chevron" />
+			</span>
 		</button>
 	{:else}
 		<div class="row">
@@ -344,8 +356,10 @@
 	<button type="button" class="row" onclick={() => (expenseSettings = true)}>
 		<span class="tile" aria-hidden="true"><ReceiptIcon size={18} strokeWidth={1.9} /></span>
 		<span class="label">{m.expenses.settings.row}</span>
-		<span class="value">{data.expenses.currency}</span>
-		<ChevronRight size={15} strokeWidth={2} class="chevron" />
+		<span class="end">
+			<span class="value">{data.expenses.currency}</span>
+			<ChevronRight size={15} strokeWidth={2} class="chevron" />
+		</span>
 	</button>
 </RowGroup>
 
@@ -475,14 +489,14 @@
 	.name {
 		margin: 0;
 		font-family: var(--font-display);
-		font-size: calc(19px * var(--fs));
+		font-size: var(--fs-22);
 		font-weight: 600;
 		overflow-wrap: anywhere;
 	}
 
 	.email {
 		margin: 2px 0 0;
-		font-size: calc(13px * var(--fs));
+		font-size: var(--fs-15);
 		color: var(--text-4);
 		overflow-wrap: anywhere;
 	}
@@ -491,7 +505,7 @@
 		flex: none;
 		align-self: center;
 		padding: 6px 4px;
-		font-size: calc(13px * var(--fs));
+		font-size: var(--fs-15);
 		font-weight: 700;
 		color: var(--sage);
 	}
@@ -499,7 +513,7 @@
 	.section {
 		margin: 22px 4px 8px;
 		font-family: var(--font-body);
-		font-size: calc(11px * var(--fs));
+		font-size: var(--fs-13);
 		font-weight: 700;
 		letter-spacing: 0.12em;
 		text-transform: uppercase;
@@ -514,7 +528,7 @@
 		width: 100%;
 		min-height: 52px;
 		padding: 12px 16px;
-		font-size: calc(15px * var(--fs));
+		font-size: var(--fs-17);
 		text-align: left;
 		color: var(--ink);
 	}
@@ -527,8 +541,29 @@
 
 	.value {
 		flex: none;
-		font-size: calc(14px * var(--fs));
+		font-size: var(--fs-16);
 		color: var(--text-4);
+	}
+
+	/* At a large text size "Appearance" and "System" don't fit one line: the
+	   value and its chevron drop under the label together, kept to the right,
+	   instead of the label breaking mid-word. The label is sized by its text
+	   for that to happen. (A `.long` value ellipsizes instead, below.) */
+	.row:has(.end) {
+		flex-wrap: wrap;
+		row-gap: 2px;
+	}
+
+	.row:has(.end) .label {
+		flex-basis: auto;
+	}
+
+	.end {
+		display: flex;
+		flex: none;
+		align-items: center;
+		gap: 13px;
+		margin-left: auto;
 	}
 
 	/* A provider and a model id can outrun a 390px row ("OpenRouter ·
@@ -592,7 +627,7 @@
 
 	.result {
 		margin: 10px 4px 0;
-		font-size: calc(13px * var(--fs));
+		font-size: var(--fs-15);
 		line-height: 1.45;
 		color: var(--text-4);
 	}
@@ -601,7 +636,7 @@
 	   takes the gap the next section heading would otherwise open alone. */
 	.note {
 		margin: 9px 4px 0;
-		font-size: calc(12.5px * var(--fs));
+		font-size: var(--fs-14);
 		line-height: 1.45;
 		color: var(--text-4);
 	}

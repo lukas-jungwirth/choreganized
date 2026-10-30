@@ -63,11 +63,16 @@
 		background: var(--sunken-2);
 	}
 
+	/* Up to four segments share one line, so a label can't grow as far as body
+	   text: it stops at 18px (→ DESIGN-SYSTEM "Type scale"), and a word that
+	   still won't fit breaks rather than spilling into its neighbour. */
 	.segment {
 		flex: 1;
-		padding: 8px 0;
+		min-width: 0;
+		padding: 8px 4px;
 		border-radius: 10px;
-		font-size: calc(13.5px * var(--fs));
+		font-size: min(var(--fs-15), 18px);
+		overflow-wrap: anywhere;
 		font-weight: 600;
 		text-align: center;
 		color: var(--text-4);

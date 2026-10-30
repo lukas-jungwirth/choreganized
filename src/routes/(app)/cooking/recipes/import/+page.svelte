@@ -365,7 +365,7 @@
 <style>
 	.intro {
 		margin: 0 4px 20px;
-		font-size: calc(14px * var(--fs));
+		font-size: var(--fs-16);
 		line-height: 1.5;
 		color: var(--text-4);
 	}
@@ -386,7 +386,7 @@
 		border-radius: var(--r-input);
 		background: var(--card);
 		font-family: inherit;
-		font-size: calc(15px * var(--fs));
+		font-size: var(--fs-17);
 		line-height: 1.5;
 		color: var(--ink);
 		resize: vertical;
@@ -406,7 +406,7 @@
 
 	.hint {
 		margin: 12px 2px 0;
-		font-size: calc(12.5px * var(--fs));
+		font-size: var(--fs-14);
 		line-height: 1.5;
 		color: var(--text-5);
 	}
@@ -435,7 +435,7 @@
 		display: inline-flex;
 		align-items: center;
 		gap: 7px;
-		font-size: calc(14.5px * var(--fs));
+		font-size: var(--fs-16);
 		font-weight: 600;
 		color: var(--ink);
 	}
@@ -445,7 +445,7 @@
 	}
 
 	.improve-hint {
-		font-size: calc(12.5px * var(--fs));
+		font-size: var(--fs-14);
 		line-height: 1.45;
 		color: var(--text-4);
 	}
@@ -457,7 +457,7 @@
 	.instructions-label {
 		display: block;
 		margin: 0 2px 8px;
-		font-size: calc(11px * var(--fs));
+		font-size: var(--fs-13);
 		font-weight: 700;
 		letter-spacing: 0.1em;
 		text-transform: uppercase;
@@ -466,7 +466,7 @@
 
 	.instructions-toggle {
 		padding: 2px;
-		font-size: calc(13.5px * var(--fs));
+		font-size: var(--fs-15);
 		font-weight: 600;
 		color: var(--sage);
 	}
@@ -481,7 +481,7 @@
 
 	.ai-lead {
 		margin: 0 0 12px;
-		font-size: calc(13px * var(--fs));
+		font-size: var(--fs-15);
 		line-height: 1.5;
 		color: var(--text-4);
 	}
@@ -490,7 +490,7 @@
 		display: flex;
 		gap: 20px;
 		margin: 14px 2px 0;
-		font-size: calc(13px * var(--fs));
+		font-size: var(--fs-15);
 	}
 
 	.ai-alt a {
@@ -503,7 +503,7 @@
 
 	.ai-hint-line {
 		margin: 20px 4px 0;
-		font-size: calc(13.5px * var(--fs));
+		font-size: var(--fs-15);
 		line-height: 1.5;
 		color: var(--text-4);
 	}
@@ -523,14 +523,14 @@
 
 	.ai-setup p {
 		margin: 0 0 16px;
-		font-size: calc(13.5px * var(--fs));
+		font-size: var(--fs-15);
 		line-height: 1.5;
 		color: var(--text-4);
 	}
 
 	.manual {
 		margin: 22px 4px 0;
-		font-size: calc(13.5px * var(--fs));
+		font-size: var(--fs-15);
 		line-height: 1.5;
 		color: var(--text-4);
 		text-align: center;
