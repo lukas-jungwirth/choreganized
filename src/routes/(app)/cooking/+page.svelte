@@ -24,9 +24,11 @@
 	import PageHeader from '$lib/components/shell/PageHeader.svelte';
 	import Card from '$lib/components/ui/Card.svelte';
 	import SegmentedControl from '$lib/components/ui/SegmentedControl.svelte';
+	import { goto } from '$app/navigation';
 	import { messages } from '$lib/i18n';
 	import type { PlannedMeal, WeekDay } from '$lib/server/services/meals';
 	import type { IngredientPick } from '$lib/server/services/recipe-shopping';
+	import { swipe, type SwipeDirection } from '$lib/swipe';
 	import type { CalendarDate } from '$lib/utils/dates';
 	import { nextFreeSlot, type MealSlot } from '$lib/utils/meals';
 	import Plus from '@lucide/svelte/icons/plus';
@@ -82,6 +84,18 @@
 		}))
 	);
 
+	/**
+	 * A sideways swipe over the week presses the switch for you (→ SPEC §4.1,
+	 * DECISIONS #206): leftwards moves on to next week, rightwards comes back.
+	 * Swiping past either end does nothing — there are only the two weeks.
+	 */
+	function swipeWeek(direction: SwipeDirection) {
+		const target = weeks.find(
+			(candidate) => Number(candidate.value) === week.offset + (direction === 'left' ? 1 : -1)
+		);
+		if (target) goto(target.href, { noScroll: true });
+	}
+
 	// A date belongs to one week, so paging away closes the sheet on its own.
 	const day = $derived(week.days.find((entry) => entry.date === planning?.date) ?? null);
 	const actingDay = $derived(week.days.find((entry) => entry.date === acting?.date) ?? null);
@@ -118,32 +132,36 @@
 
 <PageHeader title={m.cooking.title} meta={week.monthLabel} />
 
-<!-- `noscroll` keeps the switch under your thumb, the way /tasks/history's
+<!-- The whole week pages under a sideways swipe — the switch, the strip and the
+	 meals — but not the library below it, which is about recipes, not weeks. -->
+<div use:swipe={swipeWeek}>
+	<!-- `noscroll` keeps the switch under your thumb, the way /tasks/history's
 	 "Show June" does. SegmentedControl has no attribute passthrough, but
 	 `data-sveltekit-*` is inherited from any ancestor. -->
-<div class="weeks" data-sveltekit-noscroll>
-	<SegmentedControl
-		label={m.cooking.weekSwitch.label}
-		value={String(week.offset)}
-		options={weeks}
-	/>
+	<div class="weeks" data-sveltekit-noscroll>
+		<SegmentedControl
+			label={m.cooking.weekSwitch.label}
+			value={String(week.offset)}
+			options={weeks}
+		/>
+	</div>
+
+	<WeekStrip days={week.days} />
+
+	<ShoppingResultBanner result={shopping} />
+
+	<Card>
+		<ul class="days">
+			{#each week.days as entry (entry.date)}
+				<MealRow
+					day={entry}
+					onmeal={(meal) => (acting = { date: entry.date, mealId: meal.id })}
+					onadd={() => plan(entry, null)}
+				/>
+			{/each}
+		</ul>
+	</Card>
 </div>
-
-<WeekStrip days={week.days} />
-
-<ShoppingResultBanner result={shopping} />
-
-<Card>
-	<ul class="days">
-		{#each week.days as entry (entry.date)}
-			<MealRow
-				day={entry}
-				onmeal={(meal) => (acting = { date: entry.date, mealId: meal.id })}
-				onadd={() => plan(entry, null)}
-			/>
-		{/each}
-	</ul>
-</Card>
 
 <section class="library">
 	<div class="head">

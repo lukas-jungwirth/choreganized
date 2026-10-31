@@ -2,7 +2,7 @@
  * Library → recipe → cook mode (→ SPEC §4.3, §4.5, §4.6): the deep-linkable
  * routes, stepped through the way a phone on the counter does.
  */
-import { expect, test } from '@playwright/test';
+import { expect, test, type Locator } from '@playwright/test';
 import { SEED } from './accounts';
 
 test('open a recipe and step through cook mode', async ({ page }) => {
@@ -33,6 +33,58 @@ test('the week shows this week and next', async ({ page }) => {
 	await page.goto('/cooking');
 	await expect(page.getByRole('heading', { name: 'Cooking', level: 1 })).toBeVisible();
 	await expect(page.getByRole('link', { name: /Browse all/ })).toBeVisible();
+});
+
+/**
+ * A finger travelling across the week, as touch pointer events — what a phone
+ * sends. `dx`/`dy` are the travel from the middle of `target`.
+ */
+async function swipeAcross(target: Locator, dx: number, dy = 0, startX?: number) {
+	const box = (await target.boundingBox())!;
+	const x = startX ?? box.x + box.width / 2;
+	const y = box.y + box.height / 2;
+	const at = (clientX: number, clientY: number) => ({
+		pointerId: 7,
+		pointerType: 'touch',
+		isPrimary: true,
+		bubbles: true,
+		clientX,
+		clientY
+	});
+	await target.dispatchEvent('pointerdown', at(x, y));
+	await target.dispatchEvent('pointermove', at(x + dx / 2, y + dy / 2));
+	await target.dispatchEvent('pointerup', at(x + dx, y + dy));
+}
+
+test('swiping the week sideways switches between this week and next (#84)', async ({ page }) => {
+	await page.goto('/cooking');
+	const weeks = page.getByRole('navigation', { name: 'Which week' });
+	const current = weeks.getByRole('link', { name: /^This week/ });
+	const next = weeks.getByRole('link', { name: /^Next week/ });
+	await expect(current).toHaveAttribute('aria-current', 'page');
+	const meals = page.locator('ul.days');
+
+	// A scroll that drifts sideways, and a swipe from the screen's edge (the
+	// system's back gesture), leave the week where it is.
+	await swipeAcross(meals, -90, 240);
+	await swipeAcross(meals, -150, 0, 380);
+	await expect(page).toHaveURL(/\/cooking$/);
+	await expect(page.getByRole('dialog')).toHaveCount(0);
+
+	// Leftwards: on to next week.
+	await swipeAcross(meals, -150);
+	await expect(page).toHaveURL(/\/cooking\?week=\d{4}-\d{2}-\d{2}$/);
+	await expect(next).toHaveAttribute('aria-current', 'page');
+	await expect(page.getByRole('dialog')).toHaveCount(0);
+
+	// Leftwards again: there is no week after next to go to.
+	await swipeAcross(meals, -150);
+	await expect(next).toHaveAttribute('aria-current', 'page');
+
+	// Rightwards: back to this week, on the tab's one address.
+	await swipeAcross(meals, 150);
+	await expect(page).toHaveURL(/\/cooking$/);
+	await expect(current).toHaveAttribute('aria-current', 'page');
 });
 
 test('a step’s own timer, set in the form, is the one cook mode offers by name', async ({
