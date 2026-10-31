@@ -2954,3 +2954,15 @@ units | null, name}`, written back as editor lines in the reader's unit spelling
        and scores keep their `–`. Empty-value marks (Stepper, an ingredient without an amount)
        are a short `-`. Comments, server logs, the AI prompt and the dev kit keep theirs: nobody
        in the household reads them. A convention test fails on a new one in the catalogs.
+205. **The sheet handle drags** (Lukas 2026-10-31: "the handle says I can swipe it"). A handle
+     that does nothing promises a gesture it doesn't keep; removing it would leave sheets that
+     don't read as sheets (and break the design). So `BottomSheet`'s handle and title row are
+     a grip: the panel follows the finger down and the scrim fades with it; letting go past a
+     third of the panel's height, or after a downward flick (>0.5 px/ms over the last 100 ms,
+     past 24px), slides it out and closes. Anything shorter springs back with a small
+     overshoot. Pulling up stretches the panel from the bottom with growing resistance (at most
+     28px) and bounces back: sheets are already as tall as their content, so there is no
+     bigger detent to open to. Only the grip starts a drag, never the body, so scrolling a long
+     sheet, selecting text or swiping chips stays what it was; buttons in the header stay
+     buttons. A drag-close discards a half-filled form exactly like the scrim and the × already
+     do. Reduced motion: no stretch, no slide or bounce, the close is immediate.

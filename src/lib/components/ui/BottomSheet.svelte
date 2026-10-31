@@ -3,6 +3,12 @@
 	[3d], snooze [4c]. Sheets are state, not routes (→ DECISIONS #17), so this is
 	driven by `bind:open`.
 
+	The handle means what it looks like: drag the handle or the title row down
+	and the sheet follows, past a third of its height (or on a flick) it
+	closes; pull it up and it stretches a little and bounces back. Only there,
+	never the body, so scrolling a long sheet or selecting text in a field is
+	never a drag.
+
 	Built on a native <dialog>, which brings the focus trap, Esc, inert
 	background and top-layer stacking with it — none of which is worth
 	hand-rolling. Content is only rendered while open, so each opening starts
@@ -48,6 +54,7 @@
 	const m = messages();
 
 	let dialog: HTMLDialogElement | undefined = $state();
+	let panel: HTMLDivElement | undefined = $state();
 
 	$effect(() => {
 		if (!dialog) return;
@@ -99,6 +106,93 @@
 			sheet.style.removeProperty('--viewport-height');
 		};
 	});
+
+	/**
+	 * Dragging by the handle (→ DECISIONS #205). `drag` is the finger's travel
+	 * since it went down: positive moves the panel down, negative stretches it.
+	 * `settling` springs back with a little overshoot; `leaving` slides the
+	 * panel out before `open` flips, so the close looks like the drag's end.
+	 */
+	const CLOSE_FLICK = 0.5; // px per ms, downwards
+	const STRETCH_MAX = 28;
+
+	let drag = $state(0);
+	let phase = $state<'idle' | 'dragging' | 'settling' | 'leaving'>('idle');
+	let pointer: number | null = null;
+	let startY = 0;
+	let samples: { y: number; t: number }[] = [];
+
+	const reducedMotion = () => window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+	const down = $derived(phase === 'leaving' ? 0 : Math.max(drag, 0));
+	/** Resistance grows with the pull: a long pull still only gives ~28px. */
+	const stretch = $derived(
+		drag < 0 && phase === 'dragging' && !reducedMotion()
+			? STRETCH_MAX * (1 - Math.exp(drag / 90))
+			: 0
+	);
+	const fade = $derived(
+		phase === 'leaving' ? 0 : panel ? Math.max(0, 1 - down / panel.offsetHeight) : 1
+	);
+
+	// Every opening starts from rest.
+	$effect(() => {
+		if (open) return;
+		drag = 0;
+		phase = 'idle';
+		pointer = null;
+	});
+
+	function onGripDown(event: PointerEvent) {
+		if (event.button !== 0 || phase === 'leaving') return;
+		// The × and a header action stay plain buttons.
+		if ((event.target as Element).closest('button, a, input, select, textarea')) return;
+		pointer = event.pointerId;
+		startY = event.clientY;
+		samples = [{ y: event.clientY, t: event.timeStamp }];
+		(event.currentTarget as Element).setPointerCapture(event.pointerId);
+		drag = 0;
+		phase = 'dragging';
+	}
+
+	function onGripMove(event: PointerEvent) {
+		if (event.pointerId !== pointer) return;
+		drag = event.clientY - startY;
+		samples.push({ y: event.clientY, t: event.timeStamp });
+		// Velocity is read over the last 100 ms, not the whole drag.
+		while (samples.length > 2 && event.timeStamp - samples[0].t > 100) samples.shift();
+	}
+
+	function onGripUp(event: PointerEvent) {
+		if (event.pointerId !== pointer) return;
+		pointer = null;
+		const first = samples[0];
+		const velocity = (event.clientY - first.y) / Math.max(1, event.timeStamp - first.t);
+		const height = panel?.offsetHeight ?? Infinity;
+		if (drag > height / 3 || (drag > 24 && velocity > CLOSE_FLICK)) leave();
+		else settle();
+	}
+
+	function onGripCancel(event: PointerEvent) {
+		if (event.pointerId !== pointer) return;
+		pointer = null;
+		settle();
+	}
+
+	function settle() {
+		drag = 0;
+		phase = 'settling';
+	}
+
+	function leave() {
+		if (reducedMotion()) {
+			open = false;
+			return;
+		}
+		phase = 'leaving';
+		// The slide-out is 200 ms; `open` flips once it is over.
+		setTimeout(() => (open = false), 200);
+	}
 
 	/**
 	 * Dismiss only when the press *started* on the scrim too. A plain
@@ -170,30 +264,47 @@
 	onmousedown={onPointerDown}
 	onclick={onScrimClick}
 	aria-label={title}
+	class:dragging={phase === 'dragging'}
+	style:--sheet-fade={fade}
 >
 	{#if open}
-		<div class="panel" class:dark={tone === 'dark'}>
-			<div class="handle"></div>
-			<header class:with-lead={lead}>
-				{#if lead}{@render lead()}{/if}
-				<div class="titles">
-					{#if eyebrow}<p class="eyebrow">{eyebrow}</p>{/if}
-					<h2>{title}</h2>
-					{#if subtitle}<p class="subtitle">{subtitle}</p>{/if}
-				</div>
-				{#if action}
-					{@render action()}
-				{:else}
-					<button
-						type="button"
-						class="close"
-						aria-label={m.ui.close}
-						onclick={() => (open = false)}
-					>
-						<X size={13} strokeWidth={2.4} />
-					</button>
-				{/if}
-			</header>
+		<div
+			class="panel {phase}"
+			class:dark={tone === 'dark'}
+			bind:this={panel}
+			style:transform={down ? `translateY(${down}px)` : undefined}
+			style:--stretch="{stretch}px"
+		>
+			<!-- svelte-ignore a11y_no_static_element_interactions (a pointer shortcut: the × and Escape close it from a keyboard) -->
+			<div
+				class="grip"
+				onpointerdown={onGripDown}
+				onpointermove={onGripMove}
+				onpointerup={onGripUp}
+				onpointercancel={onGripCancel}
+			>
+				<div class="handle"></div>
+				<header class:with-lead={lead}>
+					{#if lead}{@render lead()}{/if}
+					<div class="titles">
+						{#if eyebrow}<p class="eyebrow">{eyebrow}</p>{/if}
+						<h2>{title}</h2>
+						{#if subtitle}<p class="subtitle">{subtitle}</p>{/if}
+					</div>
+					{#if action}
+						{@render action()}
+					{:else}
+						<button
+							type="button"
+							class="close"
+							aria-label={m.ui.close}
+							onclick={() => (open = false)}
+						>
+							<X size={13} strokeWidth={2.4} />
+						</button>
+					{/if}
+				</header>
+			</div>
 			{@render children()}
 		</div>
 	{/if}
@@ -222,6 +333,9 @@
 
 	.sheet::backdrop {
 		background: var(--scrim);
+		/* Fades with the panel as it is dragged down. */
+		opacity: var(--sheet-fade, 1);
+		transition: opacity 200ms ease-out;
 	}
 
 	.panel {
@@ -229,13 +343,41 @@
 		max-width: 480px;
 		max-height: 92%;
 		overflow-y: auto;
-		padding: 16px 22px calc(28px + env(safe-area-inset-bottom));
+		/* `--stretch` is the upward pull: the panel grows from the bottom. */
+		padding: 16px 22px calc(28px + env(safe-area-inset-bottom) + var(--stretch, 0px));
 		border-radius: var(--r-sheet) var(--r-sheet) 0 0;
 		background: var(--card);
 		box-shadow: var(--shadow-sheet);
 		color: var(--ink);
 		/* Inputs are white on the paper background but sunken on a white sheet. */
 		--input-surface: var(--field);
+	}
+
+	/* Where a drag starts. `touch-action` keeps the browser from scrolling it. */
+	.grip {
+		touch-action: none;
+		user-select: none;
+		-webkit-user-select: none;
+	}
+
+	.grip:active {
+		cursor: grabbing;
+	}
+
+	.sheet.dragging::backdrop {
+		transition: none;
+	}
+
+	/* Follows the finger 1:1 while dragging; springs back with an overshoot. */
+	.panel.settling {
+		transition:
+			transform 360ms cubic-bezier(0.34, 1.56, 0.64, 1),
+			padding-bottom 360ms cubic-bezier(0.34, 1.56, 0.64, 1);
+	}
+
+	.panel.leaving {
+		transform: translateY(100%);
+		transition: transform 200ms ease-in;
 	}
 
 	.handle {
@@ -343,6 +485,11 @@
 		.sheet[open] .panel,
 		.sheet[open]::backdrop {
 			animation: none;
+		}
+
+		.panel.settling,
+		.sheet::backdrop {
+			transition: none;
 		}
 	}
 </style>
