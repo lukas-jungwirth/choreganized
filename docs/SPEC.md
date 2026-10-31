@@ -287,6 +287,9 @@ where it can still be acted on (→ [DECISIONS #131](DECISIONS.md)).
   **This week · {n} / Next week · {n}**, where {n} is how many of the seven days have a dinner.
   The week shown lives in the URL (`?week=YYYY-MM-DD`, a Monday); anything else it names falls
   back to this week, and `/cooking` with no query is always this week (→ DECISIONS #99).
+  A sideways swipe over the week (switch, strip and meals, not the library) presses the switch:
+  leftwards to next week, rightwards back, nothing past either end; a plain switch, no slide.
+  Touches starting at the screen's edge stay the system's back gesture (→ DECISIONS #206).
   Planning reaches one week ahead; further out is not plannable. 7-day strip Mon–Sun with dates;
   today highlighted in sage — next week has no today, so no highlight. The strip stays a visual
   anchor, not a control: the day rows below are the control (→ DECISIONS #129).

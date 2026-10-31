@@ -43,6 +43,7 @@ plus your session date). Note deviations in the plan file and in DECISIONS.md.
 | 29  | [Expenses: log, split, settle up](29-expenses.md)                                                | done (2026-10-26) | 09, 10                   |
 | 30  | [Expenses: recurring series and notifications](30-expenses-recurring-push.md)                    | done (2026-10-27) | 29, 05, 06               |
 | 31  | [Sign in with an email code](31-email-sign-in.md)                                                | done (2026-10-27) | 00                       |
+| 32  | [Swipe between the two weeks on the Cooking tab](32-swipe-weeks.md)                              | done (2026-10-31) | 07                       |
 
 Work done after the twelve plans, tracked here so the queue stays the whole story:
 
