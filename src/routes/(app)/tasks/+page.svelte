@@ -10,6 +10,7 @@
 -->
 <script lang="ts">
 	import { enhance } from '$app/forms';
+	import { goto } from '$app/navigation';
 	import ChecklistIcon from '$lib/components/icons/ChecklistIcon.svelte';
 	import PageHeader from '$lib/components/shell/PageHeader.svelte';
 	import SnoozeSheet from '$lib/components/tasks/SnoozeSheet.svelte';
@@ -25,6 +26,7 @@
 	import SegmentedControl from '$lib/components/ui/SegmentedControl.svelte';
 	import { messages } from '$lib/i18n';
 	import type { CompletionResult, Standing, TaskListItem } from '$lib/server/services/tasks';
+	import { swipe, type SwipeDirection } from '$lib/swipe';
 	import { STARTERS } from '$lib/utils/tasks';
 	import type { SubmitFunction } from '@sveltejs/kit';
 	import Check from '@lucide/svelte/icons/check';
@@ -64,6 +66,16 @@
 		{ value: 'todo', label: m.tasks.view.todo, href: '/tasks' },
 		{ value: 'history', label: m.tasks.view.history, href: '/tasks/history' }
 	]);
+
+	/**
+	 * A sideways swipe presses the switch for you, as on Cooking (→ SPEC §5.1,
+	 * DECISIONS #207): leftwards on to History; rightwards there is nothing
+	 * before To do. Without the switch — a household with nothing done yet —
+	 * there is no History to swipe to either.
+	 */
+	function swipeView(direction: SwipeDirection) {
+		if (direction === 'left' && furnished) goto(view[1].href);
+	}
 
 	/** The summary link's line: how much got done this week, and the way through. */
 	const summaryLabel = $derived(
@@ -111,102 +123,106 @@
 
 <PageHeader title={m.tasks.title} />
 
-{#if furnished}
-	<div class="view">
-		<SegmentedControl label={m.tasks.view.label} value="todo" options={view} />
-	</div>
-{/if}
+<!-- Everything between the header and the FAB pages under a sideways swipe;
+	 the sheets and the FAB sit outside it. -->
+<div use:swipe={swipeView}>
+	{#if furnished}
+		<div class="view">
+			<SegmentedControl label={m.tasks.view.label} value="todo" options={view} />
+		</div>
+	{/if}
 
-{#each away as member (member.id)}
-	{@const mine = member.id === data.currentMember.id}
-	{@const until = m.date.short(member.awayUntil ?? data.today)}
-	<div class="banner">
-		<Banner
-			variant="info"
-			title={mine
-				? m.tasks.awayBanner.mine(until)
-				: m.tasks.awayBanner.other(member.displayName, until)}
-			detail={mine ? m.tasks.awayBanner.detailMine : m.tasks.awayBanner.detailOther}
-		>
-			{#snippet icon()}<Send size={18} strokeWidth={1.8} />{/snippet}
-		</Banner>
-	</div>
-{/each}
+	{#each away as member (member.id)}
+		{@const mine = member.id === data.currentMember.id}
+		{@const until = m.date.short(member.awayUntil ?? data.today)}
+		<div class="banner">
+			<Banner
+				variant="info"
+				title={mine
+					? m.tasks.awayBanner.mine(until)
+					: m.tasks.awayBanner.other(member.displayName, until)}
+				detail={mine ? m.tasks.awayBanner.detailMine : m.tasks.awayBanner.detailOther}
+			>
+				{#snippet icon()}<Send size={18} strokeWidth={1.8} />{/snippet}
+			</Banner>
+		</div>
+	{/each}
 
-{#if empty}
-	<EmptyState title={m.tasks.empty.title}>
-		{#snippet icon()}<ChecklistIcon size={38} strokeWidth={1.6} />{/snippet}
-		{m.tasks.empty.copy}
-		{#snippet action()}
-			<div class="starters">
-				<p class="label">{m.tasks.empty.starters}</p>
-				{#each STARTERS as starter (starter.key)}
-					{@const name = m.task.starters[starter.key]}
-					<form method="POST" action="?/create" use:enhance={afterStarter}>
-						<!-- The chore is written into the database in the language it
+	{#if empty}
+		<EmptyState title={m.tasks.empty.title}>
+			{#snippet icon()}<ChecklistIcon size={38} strokeWidth={1.6} />{/snippet}
+			{m.tasks.empty.copy}
+			{#snippet action()}
+				<div class="starters">
+					<p class="label">{m.tasks.empty.starters}</p>
+					{#each STARTERS as starter (starter.key)}
+						{@const name = m.task.starters[starter.key]}
+						<form method="POST" action="?/create" use:enhance={afterStarter}>
+							<!-- The chore is written into the database in the language it
 							 was tapped in; from then on it is the household's text. -->
-						<input type="hidden" name="name" value={name} />
-						<input type="hidden" name="points" value={starter.points} />
-						<input type="hidden" name="recurUnit" value={starter.unit} />
-						<input type="hidden" name="recurInterval" value={starter.interval} />
-						<!-- Assignee "Anyone", first due today (→ DECISIONS #22). -->
-						<input type="hidden" name="dueDate" value={data.today} />
-						<button type="submit" class="starter">
-							<span class="starter-name">{name}</span>
-							<span class="starter-repeat">{m.task.repeat(starter.unit, starter.interval)}</span>
-							<span class="starter-add" aria-hidden="true"
-								><Plus size={15} strokeWidth={2.4} /></span
-							>
-						</button>
-					</form>
-				{/each}
-			</div>
-			<Button onclick={() => (sheet = { kind: 'form', task: null })}>
-				{m.tasks.empty.custom}
-			</Button>
-		{/snippet}
-	</EmptyState>
-{:else}
-	{#each data.list.sections as section (section.key)}
-		{@const label = m.tasks.sections[section.key]}
-		<section>
-			<h2 class="section" class:overdue={section.key === 'overdue'}>
-				{#if section.key === 'overdue'}
-					<span class="dot" aria-hidden="true"></span>
-					<!-- One expression rather than markup around a "·": the separator
+							<input type="hidden" name="name" value={name} />
+							<input type="hidden" name="points" value={starter.points} />
+							<input type="hidden" name="recurUnit" value={starter.unit} />
+							<input type="hidden" name="recurInterval" value={starter.interval} />
+							<!-- Assignee "Anyone", first due today (→ DECISIONS #22). -->
+							<input type="hidden" name="dueDate" value={data.today} />
+							<button type="submit" class="starter">
+								<span class="starter-name">{name}</span>
+								<span class="starter-repeat">{m.task.repeat(starter.unit, starter.interval)}</span>
+								<span class="starter-add" aria-hidden="true"
+									><Plus size={15} strokeWidth={2.4} /></span
+								>
+							</button>
+						</form>
+					{/each}
+				</div>
+				<Button onclick={() => (sheet = { kind: 'form', task: null })}>
+					{m.tasks.empty.custom}
+				</Button>
+			{/snippet}
+		</EmptyState>
+	{:else}
+		{#each data.list.sections as section (section.key)}
+			{@const label = m.tasks.sections[section.key]}
+			<section>
+				<h2 class="section" class:overdue={section.key === 'overdue'}>
+					{#if section.key === 'overdue'}
+						<span class="dot" aria-hidden="true"></span>
+						<!-- One expression rather than markup around a "·": the separator
 						 sits between two values, and Svelte collapses the whitespace
 						 either side of a block boundary. -->
-					<span>{label} · {section.tasks.length}</span>
-				{:else}
-					<span>{label}</span>
-				{/if}
-			</h2>
-			<ul class="rows">
-				{#each section.tasks as task (task.id)}
-					<TaskRow
-						{task}
-						today={data.today}
-						currentMemberId={data.currentMember.id}
-						pending={pending.has(task.id)}
-						complete={complete(task)}
-						onchoose={() => (choice = task)}
-						onopen={() => (sheet = { kind: 'detail', task })}
-					/>
-				{/each}
-			</ul>
-		</section>
-	{/each}
-{/if}
+						<span>{label} · {section.tasks.length}</span>
+					{:else}
+						<span>{label}</span>
+					{/if}
+				</h2>
+				<ul class="rows">
+					{#each section.tasks as task (task.id)}
+						<TaskRow
+							{task}
+							today={data.today}
+							currentMemberId={data.currentMember.id}
+							pending={pending.has(task.id)}
+							complete={complete(task)}
+							onchoose={() => (choice = task)}
+							onopen={() => (sheet = { kind: 'detail', task })}
+						/>
+					{/each}
+				</ul>
+			</section>
+		{/each}
+	{/if}
 
-{#if furnished}
-	<!-- Replaces the recent-history preview [05]: how much got done lately, and the
+	{#if furnished}
+		<!-- Replaces the recent-history preview [05]: how much got done lately, and the
 		 way through to the full History screen. -->
-	<a class="summary" href="/tasks/history">
-		<Check size={17} strokeWidth={2.4} aria-hidden="true" />
-		<span class="summary-text">{summaryLabel}</span>
-		<ChevronRight size={16} strokeWidth={2} aria-hidden="true" />
-	</a>
-{/if}
+		<a class="summary" href="/tasks/history">
+			<Check size={17} strokeWidth={2.4} aria-hidden="true" />
+			<span class="summary-text">{summaryLabel}</span>
+			<ChevronRight size={16} strokeWidth={2} aria-hidden="true" />
+		</a>
+	{/if}
+</div>
 
 {#if !empty}
 	<FAB label={m.tasks.newTask} onclick={() => (sheet = { kind: 'form', task: null })}>

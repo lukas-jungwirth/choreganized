@@ -1,6 +1,7 @@
 /**
  * A horizontal swipe as a shortcut for something a control already does — the
- * Cooking tab's two weeks (→ SPEC §4.1, DECISIONS #206). Never the only way:
+ * Cooking tab's two weeks and the Tasks tab's To do / History (→ SPEC §4.1,
+ * §5.1, DECISIONS #206, #207). Never the only way:
  * the control stays, and the swipe just presses it.
  *
  * Touch and pen only. A mouse drag over the same area is selecting text, and
