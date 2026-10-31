@@ -2966,3 +2966,28 @@ units | null, name}`, written back as editor lines in the reader's unit spelling
      sheet, selecting text or swiping chips stays what it was; buttons in the header stay
      buttons. A drag-close discards a half-filled form exactly like the scrim and the × already
      do. Reduced motion: no stretch, no slide or bounce, the close is immediate.
+206. **Swipe the week on the Cooking tab** (issue #84, plan 32). A sideways swipe over the week
+     (the switch, the strip and the meal card) pages between this week and next, the same
+     navigation the switch's links make, URL and all (→ #99); the switch stays. Leftwards
+     goes on to next week, rightwards comes back, past either end nothing happens. The
+     calls, made by the build agent: **a plain switch, no slide-in** (the page swaps as a tap
+     on the switch does; an animated carousel would need both weeks rendered at once); **the
+     week only, not the library** below it, which is about recipes; a touch starting within
+     24px of either screen edge is left to the system's back gesture; touch and pen only, so a
+     mouse drag still selects text; 60px sideways and at least twice the vertical travel, so a
+     drifting scroll never pages; the area gets `touch-action: pan-y pinch-zoom` so the
+     browser keeps scrolling and zoom and hands sideways travel over; a swipe that lifts over
+     a meal row eats the click so paging never also opens a sheet. **Only Cooking for now**:
+     `lib/swipe.ts` is generic, but Tasks and the others get it when someone asks.
+207. **Swipe the view on the Tasks tab** (issue #87, plan 33). Tasks gets the gesture #206
+     gave Cooking, because the report asked for "the same behaviour" on both tabs: a sideways
+     swipe presses the To do / History switch, leftwards to History, rightwards back, nothing
+     past either end, with every threshold of `lib/swipe.ts` unchanged. The calls, made by the
+     build agent: **still a plain switch, no slide** — the report says "swipe animation", but
+     Cooking has none (#206), and matching it is what was asked; a slide on both tabs would be
+     its own change. **The swipe area is the switch and everything under it** on both views
+     (banners, list, summary link; the two History cards), not the FAB or the sheets, which
+     float above the page. **No History without the switch**: a brand-new household sees
+     [7f] with no switch, so swiping left there does nothing. The All-completed feed one level
+     down (`/tasks/history/all`) keeps its month paging and gets no swipe. The touch helper
+     the e2e tests drive moves to `tests/e2e/touch.ts`, shared by both tabs.
