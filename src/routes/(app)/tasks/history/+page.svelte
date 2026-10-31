@@ -5,11 +5,13 @@
 	feed is one level down, behind "All completed chores".
 -->
 <script lang="ts">
+	import { goto } from '$app/navigation';
 	import PageHeader from '$lib/components/shell/PageHeader.svelte';
 	import ChoreSplit from '$lib/components/tasks/ChoreSplit.svelte';
 	import PointsBoard from '$lib/components/tasks/PointsBoard.svelte';
 	import SegmentedControl from '$lib/components/ui/SegmentedControl.svelte';
 	import { messages } from '$lib/i18n';
+	import { swipe, type SwipeDirection } from '$lib/swipe';
 	import ChevronRight from '@lucide/svelte/icons/chevron-right';
 	import type { PageProps } from './$types';
 
@@ -21,6 +23,15 @@
 		{ value: 'todo', label: m.tasks.view.todo, href: '/tasks' },
 		{ value: 'history', label: m.tasks.view.history, href: '/tasks/history' }
 	]);
+
+	/**
+	 * A sideways swipe presses the switch for you, as on Cooking (→ SPEC §5.8,
+	 * DECISIONS #207): rightwards back to To do; History is the last view, so
+	 * leftwards does nothing.
+	 */
+	function swipeView(direction: SwipeDirection) {
+		if (direction === 'right') goto(view[0].href);
+	}
 </script>
 
 <svelte:head>
@@ -29,24 +40,27 @@
 
 <PageHeader title={m.tasks.title} />
 
-<div class="view">
-	<SegmentedControl label={m.tasks.view.label} value="history" options={view} />
-</div>
+<!-- The switch and both cards page under a sideways swipe. -->
+<div use:swipe={swipeView}>
+	<div class="view">
+		<SegmentedControl label={m.tasks.view.label} value="history" options={view} />
+	</div>
 
-<div class="cards">
-	<ChoreSplit shares={data.split} />
+	<div class="cards">
+		<ChoreSplit shares={data.split} />
 
-	<PointsBoard
-		members={data.members}
-		points={data.points}
-		currentMemberId={data.currentMember.id}
-		range={data.range}
-	/>
+		<PointsBoard
+			members={data.members}
+			points={data.points}
+			currentMemberId={data.currentMember.id}
+			range={data.range}
+		/>
 
-	<a class="all" href="/tasks/history/all">
-		<span>{m.tasks.allCompleted}</span>
-		<ChevronRight size={16} strokeWidth={2} aria-hidden="true" />
-	</a>
+		<a class="all" href="/tasks/history/all">
+			<span>{m.tasks.allCompleted}</span>
+			<ChevronRight size={16} strokeWidth={2} aria-hidden="true" />
+		</a>
+	</div>
 </div>
 
 <style>

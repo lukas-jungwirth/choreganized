@@ -2979,3 +2979,15 @@ units | null, name}`, written back as editor lines in the reader's unit spelling
      browser keeps scrolling and zoom and hands sideways travel over; a swipe that lifts over
      a meal row eats the click so paging never also opens a sheet. **Only Cooking for now**:
      `lib/swipe.ts` is generic, but Tasks and the others get it when someone asks.
+207. **Swipe the view on the Tasks tab** (issue #87, plan 33). Tasks gets the gesture #206
+     gave Cooking, because the report asked for "the same behaviour" on both tabs: a sideways
+     swipe presses the To do / History switch, leftwards to History, rightwards back, nothing
+     past either end, with every threshold of `lib/swipe.ts` unchanged. The calls, made by the
+     build agent: **still a plain switch, no slide** — the report says "swipe animation", but
+     Cooking has none (#206), and matching it is what was asked; a slide on both tabs would be
+     its own change. **The swipe area is the switch and everything under it** on both views
+     (banners, list, summary link; the two History cards), not the FAB or the sheets, which
+     float above the page. **No History without the switch**: a brand-new household sees
+     [7f] with no switch, so swiping left there does nothing. The All-completed feed one level
+     down (`/tasks/history/all`) keeps its month paging and gets no swipe. The touch helper
+     the e2e tests drive moves to `tests/e2e/touch.ts`, shared by both tabs.
