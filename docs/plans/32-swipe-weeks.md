@@ -30,5 +30,5 @@ URL.
 ## Tests
 
 - Unit: `src/lib/swipe.test.ts` (direction, threshold, ratio, edges).
-- E2E: `tests/e2e/cooking.spec.ts` "swiping the week sideways switches between this week and
+- E2E (real touch input over CDP): `tests/e2e/cooking.spec.ts` "swiping the week sideways switches between this week and
   next (#84)".

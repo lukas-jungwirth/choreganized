@@ -56,6 +56,8 @@ export function swipe(node: HTMLElement, onswipe: (direction: SwipeDirection) =>
 	node.style.touchAction = 'pan-y pinch-zoom';
 
 	function down(event: PointerEvent) {
+		// A fresh touch is a fresh tap: whatever the last swipe armed is spent.
+		disarm();
 		if (event.pointerType === 'mouse') return;
 		// A second finger is a pinch, not a swipe.
 		if (pointer !== null) {
@@ -81,14 +83,30 @@ export function swipe(node: HTMLElement, onswipe: (direction: SwipeDirection) =>
 		if (event.pointerId === pointer) pointer = null;
 	}
 
-	/** The click a lifted finger may still fire on the row it ended over. */
+	/**
+	 * The click a lifted finger may still fire on the row it ended over. Armed
+	 * until it eats that click, the next touch begins, or 400 ms pass — a moved
+	 * touch often fires no click at all, and a tap after the swipe must land.
+	 */
+	let armed: { eat: (event: MouseEvent) => void; timer: ReturnType<typeof setTimeout> } | null =
+		null;
+
 	function swallowClick() {
+		disarm();
 		const eat = (event: MouseEvent) => {
 			event.preventDefault();
 			event.stopPropagation();
+			disarm();
 		};
-		node.addEventListener('click', eat, { capture: true, once: true });
-		setTimeout(() => node.removeEventListener('click', eat, { capture: true }), 400);
+		node.addEventListener('click', eat, { capture: true });
+		armed = { eat, timer: setTimeout(disarm, 400) };
+	}
+
+	function disarm() {
+		if (!armed) return;
+		node.removeEventListener('click', armed.eat, { capture: true });
+		clearTimeout(armed.timer);
+		armed = null;
 	}
 
 	node.addEventListener('pointerdown', down);
@@ -100,6 +118,7 @@ export function swipe(node: HTMLElement, onswipe: (direction: SwipeDirection) =>
 			handler = next;
 		},
 		destroy() {
+			disarm();
 			node.removeEventListener('pointerdown', down);
 			node.removeEventListener('pointerup', up);
 			node.removeEventListener('pointercancel', cancel);
