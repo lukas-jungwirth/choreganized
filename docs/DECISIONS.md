@@ -2938,3 +2938,19 @@ units | null, name}`, written back as editor lines in the reader's unit spelling
        to fit 375px; settling with yourself says "Pick two different people."; a cleared date
        no longer crashes the add sheet (Save waits for a day); a delete that finds the row
        already gone says so; Remind can't be sent twice while the first is on its way.
+204. **Sheets ride above the keyboard; the currency lock is one short line; copy has no em
+     dashes** (Lukas 2026-10-31, from a phone screenshot of the add-expense sheet).
+     - **BottomSheet follows `visualViewport`.** Android Chrome and iOS Safari both open the
+       keyboard over the page and only shrink the visual viewport, so a bottom-pinned sheet
+       put its own fields under the keys. While a sheet is open its `<dialog>` takes the visual
+       viewport's top and height (`--viewport-top`, `--viewport-height`), the panel's cap went
+       from `92dvh` to 92% of that, and a focused field is scrolled back into view when it
+       shrinks. Not `interactive-widget=resizes-content` in the viewport meta: Safari ignores
+       it, and it would lift the tab bar over the keyboard on every screen.
+     - **Currency lock**: "Can't be changed once expenses are added." The why stays in SPEC
+       §11.10 and #170; the settings row only needs the fact.
+     - **No em dashes in what a reader sees.** Every `—` in `en.ts`/`de.ts` became a full
+       stop, comma, colon or brackets, and so did the prose en dashes in German; number ranges
+       and scores keep their `–`. Empty-value marks (Stepper, an ingredient without an amount)
+       are a short `-`. Comments, server logs, the AI prompt and the dev kit keep theirs: nobody
+       in the household reads them. A convention test fails on a new one in the catalogs.

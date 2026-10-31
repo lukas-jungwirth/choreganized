@@ -38,7 +38,7 @@
 		min = 1,
 		max = 999,
 		clearable = false,
-		placeholder = '—',
+		placeholder = '-',
 		tone = 'light'
 	}: Props = $props();
 

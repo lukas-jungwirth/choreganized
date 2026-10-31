@@ -1124,8 +1124,9 @@ card updating. Edit and delete work as they do for expenses.
 
 - **Household → Expenses**, also the tab's "Expense settings":
   - **Currency**: ISO list, EUR by default. Changeable **only while the household has no
-    expenses**. After that the row says why it is locked, since relabelling stored amounts
-    would make them wrong (→ [DECISIONS #170](DECISIONS.md)).
+    expenses**. After that the row says so in one short line ("Can't be changed once expenses
+    are added."), since relabelling stored amounts would make them wrong
+    (→ [DECISIONS #170](DECISIONS.md), [#204](DECISIONS.md)).
   - **Default split**: opens [9c] in default mode (§11.5). Anyone may set it, here or from
     [9c]'s link: it only pre-fills a form everyone can change (→ [DECISIONS #173](DECISIONS.md)).
 - **Notifications → Expenses**: per member, default **on** (§11.11).
