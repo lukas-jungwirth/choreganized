@@ -48,16 +48,19 @@
 
 	.label {
 		margin-bottom: 8px;
-		font-size: calc(11px * var(--fs));
+		font-size: var(--fs-13);
 		font-weight: 700;
 		letter-spacing: 0.1em;
 		text-transform: uppercase;
 		color: var(--text-5);
 	}
 
+	/* The caption drops under the date when the reader's text size leaves no
+	   room for both on one line, rather than clipping the date. */
 	.row {
 		position: relative;
 		display: flex;
+		flex-wrap: wrap;
 		align-items: center;
 		gap: 9px;
 		padding: 13px 14px;
@@ -77,13 +80,13 @@
 	}
 
 	.date {
-		flex: 1;
+		flex: 1 1 7em;
 		min-width: 0;
 		padding: 0;
 		border: none;
 		background: none;
 		font-family: inherit;
-		font-size: calc(14px * var(--fs));
+		font-size: var(--fs-16);
 		font-weight: 500;
 		color: var(--ink);
 	}
@@ -107,7 +110,8 @@
 
 	.caption {
 		flex: none;
-		font-size: calc(13px * var(--fs));
+		margin-left: auto;
+		font-size: var(--fs-15);
 		color: var(--text-4);
 	}
 </style>

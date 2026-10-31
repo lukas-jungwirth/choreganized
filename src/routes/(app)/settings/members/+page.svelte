@@ -21,6 +21,24 @@
 
 	const m = messages();
 
+	/** "Elisabeth still owes €12.00 — settle up first?" for a housemate who isn't square. */
+	function balanceNote(memberId: string): string | null {
+		const balance = data.balances[memberId] ?? 0;
+		if (balance === 0) return null;
+		const name = data.roster.find((row) => row.id === memberId)?.displayName ?? '';
+		return m.expenses.leaveBalance(
+			name,
+			balance < 0,
+			m.expenses.money(Math.abs(balance), data.currency)
+		);
+	}
+
+	/** "Rent and Netflix will stop repeating." for a housemate in a recurring expense. */
+	function seriesNote(memberId: string): string | null {
+		const names = data.series[memberId] ?? [];
+		return names.length > 0 ? m.expenses.leaveSeries(names) : null;
+	}
+
 	let managing = $state<MemberProfile | null>(null);
 	let working = $state(false);
 
@@ -107,6 +125,8 @@
 		{member}
 		points={data.points[member.id] ?? 0}
 		today={data.today}
+		balanceNote={balanceNote(member.id)}
+		seriesNote={seriesNote(member.id)}
 		onclose={() => (managing = null)}
 	/>
 {/if}
@@ -130,14 +150,14 @@
 
 	.title {
 		margin: 0;
-		font-size: calc(15px * var(--fs));
+		font-size: var(--fs-17);
 		font-weight: 600;
 		color: var(--text-4);
 	}
 
 	.detail {
 		margin: 1px 0 0;
-		font-size: calc(12.5px * var(--fs));
+		font-size: var(--fs-14);
 		color: var(--text-disabled);
 		/* The code is the point of this row — keep it readable at 390px. */
 		letter-spacing: 0.02em;
@@ -146,7 +166,7 @@
 	.link {
 		flex: none;
 		padding: 6px 2px;
-		font-size: calc(12.5px * var(--fs));
+		font-size: var(--fs-14);
 		font-weight: 700;
 		color: var(--sage);
 	}
@@ -162,14 +182,14 @@
 
 	.error {
 		margin: 0 4px 16px;
-		font-size: calc(13px * var(--fs));
+		font-size: var(--fs-15);
 		color: var(--danger-deep);
 	}
 
 	.help {
 		margin: 16px 0 0;
 		padding: 0 6px;
-		font-size: calc(12.5px * var(--fs));
+		font-size: var(--fs-14);
 		line-height: 1.5;
 		color: var(--text-5);
 	}

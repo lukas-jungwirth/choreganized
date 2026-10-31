@@ -204,7 +204,7 @@
 <style>
 	.lead {
 		margin: 0 2px 12px;
-		font-size: calc(13.5px * var(--fs));
+		font-size: var(--fs-15);
 		line-height: 1.5;
 		color: var(--text-2);
 	}
@@ -219,7 +219,7 @@
 		border: 1px solid var(--info-border);
 		border-radius: var(--r-input);
 		background: var(--info-tint);
-		font-size: calc(12.5px * var(--fs));
+		font-size: var(--fs-14);
 		line-height: 1.5;
 		color: var(--text-2);
 	}
@@ -240,7 +240,7 @@
 	.slot-label {
 		font-family: var(--font-body);
 		margin: 0 0 6px;
-		font-size: calc(11px * var(--fs));
+		font-size: var(--fs-13);
 		font-weight: 700;
 		letter-spacing: 0.1em;
 		text-transform: uppercase;
@@ -255,19 +255,19 @@
 	}
 
 	.name {
-		font-size: calc(15px * var(--fs));
+		font-size: var(--fs-17);
 		font-weight: 600;
 		color: var(--ink);
 	}
 
 	.model {
-		font-size: calc(13px * var(--fs));
+		font-size: var(--fs-15);
 		color: var(--text-2);
 		overflow-wrap: anywhere;
 	}
 
 	.key {
-		font-size: calc(12px * var(--fs));
+		font-size: var(--fs-14);
 		color: var(--text-4);
 		font-variant-numeric: tabular-nums;
 	}
@@ -284,7 +284,7 @@
 		padding: 7px 13px;
 		border-radius: var(--r-chip);
 		background: var(--card);
-		font-size: calc(13px * var(--fs));
+		font-size: var(--fs-15);
 		font-weight: 600;
 		color: var(--sage);
 	}
@@ -300,7 +300,7 @@
 
 	.empty {
 		margin: 0 0 10px;
-		font-size: calc(12.5px * var(--fs));
+		font-size: var(--fs-14);
 		line-height: 1.45;
 		color: var(--text-4);
 	}
@@ -314,7 +314,7 @@
 		align-items: flex-start;
 		gap: 6px;
 		margin: 10px 2px 0;
-		font-size: calc(12.5px * var(--fs));
+		font-size: var(--fs-14);
 		line-height: 1.45;
 		color: var(--danger-deep);
 	}
@@ -343,7 +343,7 @@
 		border-radius: var(--r-input);
 		background: var(--input-surface, var(--card));
 		font: inherit;
-		font-size: calc(14.5px * var(--fs));
+		font-size: var(--fs-17);
 		line-height: 1.45;
 		color: var(--ink);
 		resize: vertical;
@@ -374,7 +374,7 @@
 		gap: 2px;
 		margin: -4px 0 14px -4px;
 		padding: 4px;
-		font-size: calc(13px * var(--fs));
+		font-size: var(--fs-15);
 		font-weight: 600;
 		color: var(--sage);
 	}

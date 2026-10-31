@@ -9,5 +9,5 @@ import type { LayoutServerLoad } from './$types';
  */
 export const load: LayoutServerLoad = (event) => {
 	const user = requireUser(event);
-	return { firstName: user.name.split(' ')[0] || user.name };
+	return { firstName: user.name.split(' ')[0] || user.name, email: user.email };
 };

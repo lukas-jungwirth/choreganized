@@ -10,7 +10,7 @@ comment. You are here because a person added `agent:build`, or because triage's 
 on a small bug whose cause it found in the source — usually without having seen it happen, so
 your reproduction in step 4 is the first proof the report is real. Your output is a pull request
 against `dev` that passes the gate and merges itself. The house rules are in `CLAUDE.md`; the
-behaviour ground truth is `docs/SPEC.md`; the design is `design/Hearth.dc.html`; how a change
+behaviour ground truth is `docs/SPEC.md`; the design is `design/*.dc.html` (Hearth, plus Expenses for SPEC §11); how a change
 proves itself is `docs/TESTING.md`.
 
 **A fix proves it fixes _the report_.** Issue #31 passed every gate with the wrong fix: its test
@@ -36,7 +36,7 @@ with evidence, and a reviewer who never saw your reasoning reads the diff.
 
 1. **Read it.** `gh issue view $1 --json number,title,body,labels,comments`. Stop — with the one
    comment — if `agent:build` is not among the labels; if it carries `size:l` (a screen or a
-   navigation surface with no frame in `design/Hearth.dc.html`: a desk session's job, not yours);
+   navigation surface with no frame in `design/*.dc.html`: a desk session's job, not yours);
    or if it carries `needs-info`, `duplicate` or `fixed-on-dev`. Triage's comment is your plan
    draft: check its `path:line` claims against the source before you build on them. Its
    **"Open questions"** section lists what the fix depends on that triage could not answer —
@@ -59,7 +59,7 @@ with evidence, and a reviewer who never saw your reasoning reads the diff.
      `in progress`, and set it `done` with today's date before you open the PR. An idea skips
      step 4: its test is written with the change, in step 5.
    - **Design.** `size:s` and `size:m` are built from what exists: `src/lib/components/ui`,
-     `docs/DESIGN-SYSTEM.md`, and the frames in `design/Hearth.dc.html` — the `[3a]`-style
+     `docs/DESIGN-SYSTEM.md`, and the frames in `design/*.dc.html` — the `[3a]`-style
      anchors SPEC cites are element ids in that file, so `Grep` for them and read the markup.
      Use the same row, sheet, chip or button the neighbouring screen uses, make the small calls
      yourself, and list them in the PR. Only something with **no frame at all** is `size:l`:
@@ -90,7 +90,7 @@ with evidence, and a reviewer who never saw your reasoning reads the diff.
      a test. One you can't answer stops the build the same way — `needs-info` with that question.
 
 5. **Fix it.** Every convention in `CLAUDE.md` is also a test in `tests/conventions/`, so the
-   gate tells you where you slipped: runes only, tokens only, `calc(<px> * var(--fs))`,
+   gate tells you where you slipped: runes only, tokens only, `var(--fs-<px>)` type steps,
    `light-dark()`, `requireMember` first, copy in `en.ts` **and** `de.ts` (a missing key fails
    `npm run check`), services own the logic. A schema edit needs `npm run db:generate`, and the
    PR title then says "migration". Run the reproduction test again and keep the green output.

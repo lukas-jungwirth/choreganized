@@ -9,6 +9,8 @@ Agents: when you make a judgment call that isn't in SPEC/ARCHITECTURE, **append 
 1. **Auth is Google-only in v1** — design [5a] shows email+password and an Apple button; the
    stack decision (Better Auth, Google OAuth only, email later) wins. Login renders a single
    Google button; Settings has no Password row. Revisit when adding email or passkeys.
+   _Revisited by plan 31 (→ #178): the design's email field now takes an address and signs in
+   with a code sent to it. Still no password and no Apple button._
 2. **Effort presets are the canonical points**: 5 / 10 / 20 / 40 (Small/Medium/Large/Very
    large) per [3b] and the brief. The stray +15/+25 values in some mockups are design
    artifacts. `points` is stored as an int, so custom values are possible later without
@@ -1036,7 +1038,7 @@ theme is…"). It looks like a typo and it is, but breaking it makes Prettier re
 1 as one ordered list and renumber 119+ — every `DECISIONS #N` citation in `src/` and `docs/`
 would silently point at the wrong entry. Fix it only together with those citations. -->
 
-~~SSE live updates~~ — resolved 2026-09-10 (→ #135) · passkeys · email auth ·
+~~SSE live updates~~ — resolved 2026-09-10 (→ #135) · passkeys · ~~email auth~~ — resolved 2026-10-27 (→ #178) ·
 Apple sign-in · multi-household · meal slots beyond dinner · offline mutations ·
 iOS polish pass. 119. **The theme is a per-device cookie, not a column on the membership** (→ SPEC §10). Language
 is stored on `members.locale` because the server genuinely needs it — the cron sweep has to
@@ -1209,7 +1211,7 @@ that actually adapts there; this wants checking on a real device.
        answers 1 for that case, so every caller degrades to "as written" on its own.
 
 125. **One type scale token, `--fs`, rather than a bigger stylesheet** (→ `src/app.css`,
-     DESIGN-SYSTEM "Type scale"). The mockups were drawn a shade tighter than a phone propped
+     DESIGN-SYSTEM "Type scale"; **superseded by #201**, which moved the scale to `rem` steps). The mockups were drawn a shade tighter than a phone propped
      against a kitchen shelf wants, so every size in the app is now written
      `font-size: calc(<the mockup's px> * var(--fs))` with `--fs: 1.1`. The design's numbers
      stay in the source — a 14px row is still a 14 you can find in `design/Hearth.dc.html` —
@@ -2420,3 +2422,547 @@ units | null, name}`, written back as editor lines in the reader's unit spelling
      `size:m` still waits. The human gate is unchanged: agent PRs merge into `dev` on green CI,
      and `main` moves only when Lukas merges the release PR. The costs are more build runs (some
      end in "couldn't reproduce") and more agent PRs in each release.
+
+166. **A settings row with a long value keeps its label whole and cuts the value instead** (#56,
+     `settings/+page.svelte` `.label.whole`). The AI row's label had `flex: 1`, a basis of 0, so
+     it only got what `Gemini · gemini-flash-latest` left over. At 390px in German that broke
+     "KI-Funktionen" into three lines, and with "Nicht eingerichtet" it broke at 360px. Its label
+     is now sized by its own text (`flex: 1 0 auto`), and the value gets the ellipsis, down to
+     "Gemini · …" at 320px. The row is still the way in to the sheet, which names the full model.
+     The other rows keep `flex: 1` and `overflow-wrap: anywhere`, because their labels are short
+     and their values are, too.
+167. **Expenses join the app as a fifth tab, and the house is one pot** (SPEC §11, plans 29–30).
+     The spec said "No finances", which was a v1 scope cut, not a principle. Lukas asked for a
+     Splitwise-style tally (2026-10-26), and it lives where the household already is.
+     - **A tab, not a Home card.** Logging a spend right after the shop has to be quick. Home
+       gets one line, not a new tile.
+     - **Always simplified, no pairwise view, no switch.** Each person has one net balance
+       and the app suggests the fewest payments (greedy, ≤ n − 1). Pairwise debts are a
+       group-of-strangers feature. In a household they only add explaining, and for two
+       people both views are the same anyway.
+     - **No groups.** The household is the group. A subset is chosen per expense, which covers
+       "just the two of us" without a concept to manage.
+     - **A payment is an expense row of `kind='payment'`** whose one share is the recipient's.
+       One balance formula, one history list, one edit/delete path.
+     - **V1 = plan 29 (log, split, settle, search, categories) + plan 30 (recurring, push).**
+       Receipt photos, the shopping-trip "log this?" hook, guests, several currencies and
+       charts wait (SPEC §11.14).
+168. **Splits point at `ledger_people`, not at `members`** (plan 29). Two reasons, one
+     table. A member who leaves owing money must keep that balance, but `task_completions`'
+     snapshot + `SET NULL` trick loses the identity that a balance has to add up against.
+     And guests (people outside the household) need to pay and share without being members. A
+     `ledger_people` row is created with every membership, follows its name and colour, and
+     outlives it with `memberId` NULL. Guests will be `kind='guest'` rows with no member and
+     no migration of old data. Linking people across households stays out (multi-household is
+     deferred, #Later).
+169. **Money is integer cents, split by largest remainder** (`utils/money.ts`, plan 29). No
+     float ever holds an amount. Equal, % and shares compute each share's exact fraction,
+     floor it to cents, and give the leftover cents one each to the largest remainders, ties
+     in list order. The server recomputes every split from what was typed (`input`) and never
+     stores client-computed shares, so `Σ shares = amount` holds for every row.
+170. **One currency per household, locked once there are expenses** (SPEC §11.10). Amounts
+     carry no currency of their own. Changing the setting later would relabel every stored
+     number (€42 becoming 42 CHF), so the owner can pick it only while the tally is empty.
+     Several currencies with conversion is out of scope.
+171. **The expenses design lives in its own page, and five tabs show one label**
+     (`design/Expenses.dc.html`, SPEC §11.2). Claude Design drew the frames into a new page
+     rather than the July canvas. It reads the same `support.js`. Copying them into
+     `Hearth.dc.html` would mean rewriting an exported canvas by hand, for no gain. Anchors
+     stay `9a`–`9h`, with suffixed state variants (`9a-owe`, `9c-ok`). Five labelled tabs
+     wouldn't fit 390px in German, and they don't have to: the bar has been **icons, with only
+     the active tab labelled** in a sage pill, since [01/1d]. The design just shows that it
+     holds with five. _Corrected by plan 29_: this entry first said the bar would change
+     app-wide; the build found it already worked that way and only added the fifth tab. Every
+     screen's baseline still moves, because the icons are spaced out for five.
+172. **The expenses ledger is read whole, and History filters in memory** (`services/expenses.ts`,
+     plan 29). The balance needs every row anyway, and a household logs a few hundred
+     expenses a year. So one read serves the balance card, the Recent list, the description
+     suggestions and History. A second, filtered SQL path would duplicate the scoping and the
+     share loading for no measurable gain. Filtering in JavaScript is also what makes the search
+     match inside words with the reader's own idea of case (`toLocaleLowerCase`, so "BILLA"
+     finds "Billa" and umlauts behave). SQLite's `LIKE` folds ASCII only. Revisit if a
+     household's ledger ever reaches tens of thousands of rows.
+173. **Plan 29's smaller calls.**
+     - **Recent is the 20 latest rows, not "this month".** On the 1st, "this month" would show
+       an empty list under a balance that isn't empty. History has the months.
+     - **The default split is anyone's; the currency is the owner's.** The default only
+       pre-fills a form everyone can change. The currency rewrites the meaning of every stored
+       amount (→ #170). An equal split over a subset, saved as a default, is stored as one share
+       each, because the `equal` default means everyone.
+     - **One set of form actions** (`lib/server/expense-actions.ts`), mounted by the tab, the
+       detail and Settings, so a form means the same thing wherever it is posted from.
+     - **Delete is soft, undo is exact.** The undo restores the row as it was (shares, who
+       logged it, when) rather than re-creating it from what the page had. The 03:30 cleanup
+       makes deletions older than a day final.
+     - **The undo toast is one component** (`ui/UndoToast`), lifted out of shopping's
+       `UndoBar`, which now wraps it. While it is up on the Expenses tab, the FAB stands down:
+       both sit in the bottom-right corner, and the e2e journey caught the FAB covering Undo.
+     - **Rows name the payer even when it is you** ("Lukas paid €42.10"), as the design does.
+       The right-hand column is where "you lent / you borrowed" speaks to the reader.
+     - **German rows say "ausgelegt" / "dein Anteil"**, not "du bekommst" / "du schuldest". A
+       row is your part of one expense, not what is owed today; the balance card says that.
+     - **No new dependency.** Amounts and currencies are `Intl.NumberFormat`.
+174. **A member who leaves and joins again gets their old ledger person back** (`ledger_people.user_id`,
+     migration 0018, `services/household.ts` `insertMember`). Without it, a housemate who left owing
+     €12 and later rejoined would be two people with one name: the debt stuck on the "Former
+     member", new expenses on the new one, and the two balances never netting. So the person keeps
+     the user behind the membership, and a join looks for that user's former person in the same
+     household before creating one. `user_id` is deliberately **not** a foreign key. SQLite's
+     `ALTER TABLE` can't add one with `ON DELETE SET NULL`, and a plain reference would block
+     deleting an account. The person, and what they owe, outlives even the account anyway. Also
+     from the second review of plan 29:
+     - **The household default names current members only.** The service refuses a former
+       person. The split sheet hides "Make this the household default" while one is ticked, and
+       "everyone" means every current member ticked, not the same count.
+     - **A picked suggestion settles the category** like a tapped chip, so editing its text keeps
+       it.
+     - **A payment row's clock time shows only when it was logged that day.** Otherwise it
+       reads just "Payment" under its day heading.
+     - **The undo bar after a detail-screen delete is checked by the load.**
+       `?deleted=` raises it only for a row of this household that is still waiting for its
+       undo. The label comes from the row, not the URL.
+     - **History's search field follows back/forward, but not while it has the focus.** Otherwise
+       the reply to a search sent mid-word overwrote what was typed since.
+175. **A recurring expense's next date is its whole memory** (`expense_recurrences.next_date`,
+     `services/expense-recurrences.ts`, plan 30). The sweep logs one occurrence and moves
+     `next_date` on in the same transaction, and the move only goes through while `next_date`
+     still reads what the sweep read. So a server that was down for three months logs three on its
+     first tick back, a second sweep logs none, and the cron job keeps no ledger of its own — the
+     task reminders' shape (→ DATA-MODEL "Reminder time-sweep"), not the cleanup's. Gated "at or
+     after 06:00 household-local", like the other time-of-day jobs. Around it:
+     - **Only the inputs are stored.** `expense_recurrence_shares` keeps what was typed per
+       person; every occurrence splits the template's amount again (→ #169), in roster order, so
+       its leftover cent lands where the expense it started from put it.
+     - **A month keeps its anchor day.** `addRepeat` clamps the 31st to a short month's end without
+       forgetting it: 31 Jan → 28 Feb → 31 Mar, and 29 Feb yearly comes back in the next leap
+       year. Editing the series re-anchors only when the next date or the unit moves.
+     - **A series starts from an expense**, logged with Repeats, or an existing one edited to
+       repeat; the first occurrence is that expense. A date in the past is allowed, and the sweep
+       catches up the rest.
+     - **Each occurrence is an ordinary expense.** Editing one changes only it. Editing the series
+       changes only those to come; its next date can be moved to today or later, and one the sweep
+       hasn't reached yet can be kept. Stopping sets
+       `stopped_at` and keeps the series row and every occurrence; the repeat badge and the
+       detail's "Repeats monthly · Edit series" show only while the series runs.
+     - **An occurrence is "Added by" whoever set up the series**, at the time it was logged.
+     - **A template that no longer splits stops** with a log line rather than failing every
+       minute. The service never writes one; this is the belt for a hand-edited database.
+     - **`ALTER TABLE ADD COLUMN … REFERENCES … ON DELETE SET NULL` does work in SQLite** when the
+       column defaults to NULL. drizzle-kit drops the `ON DELETE` clause from the generated
+       statement, so migration 0019 adds it by hand (checked with `pragma_foreign_key_list`).
+176. **Expense notices name the household's own description, and say "your share"**
+     (`services/expense-notify.ts`, SPEC §11.11). The SPEC's examples read "added Groceries", but a
+     category is the wrong handle: "Weekly shop · Billa" is how the household knows the row. Who
+     hears what:
+     - **added**: everyone with a share above zero, minus whoever logged it.
+     - **changed**: only people whose own share moved, including one taken out of it ("is now
+       €0.00") or newly put in it. A new wording alone sends nothing.
+     - **paid**: the recipient, minus whoever recorded it, named by who paid. Recording someone
+       else's payment still tells the recipient.
+     - **repeated**: everyone with a share, **the payer included**, because nobody did this one.
+     - Current members only, with `members.notify_expenses` on (default on, Settings →
+       Notifications). Each in their own language through `push.ts`, with one emoji like the
+       other pushes (🧾 · 💸 · 🔁, → #55). Edits and payment edits other than those above, and
+       deletes, send nothing.
+     - The deciding half (`expenseNotices`) is synchronous and reads the committed rows, so the
+       integration suite asserts the exact sentences without a push service. The services call
+       `notifyExpense` after their transaction commits, fire-and-forget.
+177. **Plan 30's smaller calls.**
+     - **The Repeats row and the series' unit are a native `<select>` over the row**, like
+       DateRow's date input: the device's own picker and nothing to keep in sync. Editing a series
+       offers no "Never"; stopping is its own action in [9h-stop].
+     - **"Edit series" reuses the add sheet** in a series mode: the template's fields, "Next one"
+       instead of the date (today or later), the unit, no delete, posted to `?/saveSeries`.
+     - **An occurrence of a running series shows no Repeats row** when edited. Its detail links
+       to the series instead, so "edit this one" and "edit all to come" are never one form.
+     - **The sweep can be run on demand only in E2E mode** (`POST /api/e2e/recurring-expenses`,
+       404 otherwise), so the Playwright journey doesn't wait for a household clock to pass 06:00.
+     - **The seed makes Strom a monthly series** started from its expense, next due a month
+       later, so Recurring [9h] and the repeat badge have something to show.
+178. **Email sign-in is a six-digit code, not a magic link and not a password** (plan 31,
+     `lib/server/auth.ts`, SPEC §1.1). Some members won't use Google, so the login page now takes
+     an email address and mails a code to it. Better Auth's `emailOTP` plugin does the work. The
+     code lives hashed in the existing `verification` table, so there are no new tables and no
+     migration. It works for 10 minutes (5 until #182), three wrong tries kill it, and the plugin allows three
+     sends and three sign-ins per minute per IP. A first code for a new address creates the
+     account, as a first Google sign-in does. A code for a Google user's address signs into that
+     same account. Why a code:
+     - **An installed iOS PWA keeps its own cookies, apart from Safari.** A magic link tapped in
+       Mail opens Safari, signs Safari in, and leaves the app on the home screen signed out. A code
+       is typed into the app, so the session lands where the person is.
+     - **Mail scanners open links.** Outlook "safe links" and company filters fetch every link in
+       a new mail, which spends a one-time link before its owner taps it. Nothing can spend a
+       code by reading it.
+     - **No passwords.** They would bring hashing, resets, breach checks and a reset mail anyway,
+       and a password can be phished or reused. `emailAndPassword` stays the E2E-only test door
+       (→ #139).
+     - **Passkeys are the next step, not this one.** `@better-auth/passkey` (a new `passkey`
+       table) fits best as "add a passkey" in Settings, for someone who is already signed in.
+     - **The code mail is awaited**, against the plugin's timing advice: sign-up is open, so
+       every address gets a code and the timing says nothing. A mail that failed must say so on
+       the login page, not vanish.
+     - **A failed send answers 503 `MAIL_SEND_FAILED`, through an after-hook** (corrected
+       2026-10-27, found on the test environment's first send). Awaiting was not enough: Better
+       Auth runs the callback through `runInBackgroundOrAwait`, which logs a thrown error and
+       answers 200, so the page said "We sent a code" for a mail mailbox.org had refused (535).
+       The callback now catches the error, logs it, and marks the request's context (a
+       per-request object the after-hook sees too) in a `WeakSet`. The hook turns that into the
+       503, and the page says "The email couldn't be sent, so no code is on its way" and stays on
+       the email step.
+     - **The rate limit keys on `X-Forwarded-For`, and only when it holds one address.**
+       Coolify's Traefik replaces the client's header, so it does. If a proxy chain in front
+       (Cloudflare, say) ever adds a second address, Better Auth logs "Rate limiting could not
+       determine a client IP" and every client shares one bucket. That fails safe against
+       guessing, but anyone could use up the bucket for everyone. The fix then is
+       `advanced.ipAddress.trustedProxies` in `auth.ts`.
+     - **The sixth digit signs in**, with no button press, so iOS's code autofill is one tap. A new
+       account has no name yet; onboarding says "Welcome" and asks for one.
+179. **Mail goes out over SMTP through nodemailer, as plain text** (`lib/server/mail.ts`, new
+     dependency `nodemailer`). SMTP works with any provider (Brevo, Postmark, Resend, Scaleway,
+     an own server), so changing provider means changing env variables, not code. Port 465 is TLS
+     from the start; any other port must upgrade with STARTTLS (`requireTLS`) or nothing is sent.
+     The mail is plain text: a code needs no layout, spam filters trust text most, and HTML mail
+     would need colours that the design tokens can't reach. Without `SMTP_HOST` + `MAIL_FROM` a
+     deploy shows Google alone, so email sign-in arrives on a server only once its mail is set
+     up. Dev prints the mail to the terminal. E2E mode (and dev, if asked) appends it to a
+     `MAIL_OUTBOX` file, which Playwright reads the code from. That outbox wins over SMTP, so a
+     test never mails anyone, and a deploy ignores it, so sign-in codes are never written to disk.
+180. **Recurring expenses stop when someone in them leaves** (`services/household.ts`
+     `departMember`, SPEC §11.13). A series stores ledger people, not memberships, so before this
+     it kept logging a leaver's share, or their payments, every month. The balance grew for
+     someone who wasn't there to see it or settle it, and nobody was told. Leaving or removal now
+     stops every running series the member pays or shares in, in the departure's own transaction,
+     and both confirms name them ("Rent and Netflix will stop repeating."; up to three by name, past
+     that two and a count). **Stop, not re-split**: a `%` or `amounts` template can't drop a person and still add
+     up, and an `equal` one quietly raising everyone else's share is a change nobody agreed to.
+     The household restarts a series with the right people in one save. Rejoining doesn't restart
+     them.
+181. **The sign-in code is six boxes over one input, and the button asks for a "sign-in code"**
+     (`ui/CodeInput`, `routes/login`, asked for by Lukas 2026-10-27). Boxes make clear how many
+     digits are coming and where the next one goes. One real input under them, not six inputs:
+     six fields break iOS's "from Mail" code autofill (it fills only the first) and pasting the
+     whole code, and a screen reader would announce six unlabelled fields. The input has no
+     `maxlength`, because that would cut a pasted "123 456" to "123 45" before the component
+     strips the space. "Email me a code" became **"Get a sign-in code"** / **"Anmeldecode
+     anfordern"**. The old label didn't say what the code was for. "Anmelde-" matches the app's
+     "Anmelden" over "Login-". The resend link reads "Didn't get the code? Send again", as in the
+     reference Lukas sent, and a resend says the old code no longer works.
+182. **A sign-in code works for 10 minutes, not 5** (`SIGN_IN_CODE_MINUTES`, `lib/server/mail.ts`,
+     asked for by Lukas 2026-10-27). Five was Better Auth's default; ten is what most apps give,
+     and it leaves room for a mail that arrives late or a phone that was in a pocket. Guessing
+     gets no easier: three wrong tries kill a code, so a code allows three guesses whether it
+     lives five minutes or ten, and asking for a new one replaces it.
+183. **One sign-in code per address per minute, five per hour, and "Send again" counts down**
+     (`lib/server/send-limit.ts`, the before-hook in `auth.ts`, `routes/login`, asked for by Lukas
+     2026-10-27). The plugin's limit counts per IP, so someone with many IPs could fill one inbox
+     with codes. Each one goes out through the household's own mail account (mailbox.org), which
+     may throttle or block an account that suddenly sends hundreds. The limit counts per
+     recipient, so it holds whoever asks. Smaller calls:
+     - **In memory, not a table.** One process, a one-hour window. A restart forgets it, which at
+       worst allows one extra hour's worth.
+     - **Refused before the plugin runs**, as 429 `CODE_COOLDOWN` or `CODE_HOURLY_LIMIT` with
+       `retryAfter` seconds. A refused request creates no code and replaces none, so it can't
+       spend the code someone is about to type. The answer doesn't depend on whether the address
+       has an account.
+     - **A mail that never left doesn't count** (the after-hook forgets it). Otherwise a wrong
+       SMTP password would also lock the address for a minute.
+     - **The countdown starts from the server's own number** (`codeCooldownSeconds` in the page
+       data, `retryAfter` on a refusal), so the page and the server can't disagree. E2E mode may
+       shorten it (`SIGN_IN_CODE_COOLDOWN_SECONDS`); a deploy can't.
+     - **No Turnstile yet.** Cloudflare's captcha would stop bots outright, and Better Auth's
+       `captcha` plugin supports it. But it puts a third-party script on the login page and adds
+       friction for a household of a few people. Add it if the logs ever show real abuse.
+184. **Playwright runs on a fixed clock: Wednesday 18 June 2036, 14:00 Vienna**
+     (`playwright.config.ts`, `scripts/fixed-clock.ts`, `$lib/fixed-clock`, `hooks.server.ts`).
+     The real date kept leaking into the screenshots. First it was a greeting (#144), then a
+     holiday banner (#153), then the bought items (#155). On 2026-10-28 it was a weekday's
+     width under a mask and which of two seeded chores was "done last", which depends on the
+     hour CI runs. Each fix covered one symptom, and every PR failed until the next one landed.
+     So the clock is fixed for the whole run instead: one `Date` shift, preloaded into every
+     Node process and injected into the browser by the server in E2E mode. It still ticks,
+     and one anchor keeps it shared. The calendar masks are gone, and the week plan and the
+     three history screens, excused until now as "the body is the calendar", have
+     screenshots. **A ticking shift, not a frozen clock**: sessions, the sign-in cooldown and
+     cook timers need time to pass. **A preload, not Playwright's `page.clock`**: the server
+     renders most dates, and the seed stamps them. **2036**: the browser's cookie jar keeps
+     the real clock, and a session expiring "in the past" would be dropped.
+185. **Full-screen pages fill the viewport with `min-height: 100%`, not `100dvh`**
+     (`shell/Screen.svelte`, `html, body { height: 100% }` in `app.css`). In the installed PWA on
+     a Pixel 9a, `100dvh` counted the status bar the page doesn't get, so the onboarding chooser
+     ran a status bar too tall and Continue sat half below the screen. A percentage of the real
+     page height can't disagree with it. The chooser also gained **"Signed in as {email} · Use
+     another account"** under Continue (SPEC §1.2): a member never reaches it, so whoever lives
+     in a household and lands there signed in with the wrong account, and the way back is signing
+     out, not "Join".
+
+186. **`db:seed --full-house` fills the household to five members, opt-in** (`scripts/seed.ts`).
+     The household's real ceiling is the member palette: joining refuses a colour someone has
+     (`color-taken`), and there are five. The flag adds a stub member per free colour (Jakob,
+     Mira, Theo after Elisabeth), each with a ledger person and one task done at different
+     points, so avatar stacks, the leaderboard and the expense split can be looked at at their
+     widest. Off by default because every e2e journey and screenshot is taken of the two-person
+     household; turning it on there would move every baseline. The seed's ledger people now take
+     each member's own colour instead of a hardcoded sage/terracotta pair.
+
+187. **All activity filters by who paid, not who is involved; time is a filter, grouping
+     follows it** (SPEC §11.12, `utils/expense-history.ts`, `filterHistory`). "Only mine" and
+     "Person" both meant "paid by or in the split", which in a two-person household is nearly
+     every row — neither changed anything. One **Paid by** filter (Any · You · each member)
+     replaces both; "who's in the split" was dropped rather than hidden. **Payments** moved into
+     the category list as "Payments only": a settle-up has no category, so the two never
+     combined. A **Time** filter (presets plus picked dates) replaces a week/month grouping
+     toggle: a month or less groups by day, longer by month, and only "All time" pages. Chips
+     name their value and **wrap** instead of scrolling — the scroller clipped the focus ring
+     and only the `<select>`'s text opened the picker. Each chip's sheet **applies on tap**
+     (no "Show N" step, which would have needed a count per option before applying); All
+     filters applies each pick too and stays open, so its "Show N" is just the new count. The
+     sheets need JavaScript; the search stays a plain GET form carrying the other filters.
+     `BottomSheet` gained an `action` snippet that replaces the × ("Clear all").
+
+188. **`db:seed --history` adds fourteen months of older spending, opt-in** (`scripts/seed.ts`).
+     Weekly shops, the first-of-the-month rent and internet, Strom mid-month, evenings out, two
+     trips and a settle-up on the 28th, from both people, with amounts varied by a fixed rule so
+     a re-run writes nothing new. Off by default for the same reason as `--full-house` (#186):
+     every e2e journey and screenshot reads the one-week ledger.
+
+189. **A recurring expense repeats every N weeks, months or years**
+     (`expense_recurrences.interval`, migration 0020, SPEC §11.9). Weekly/monthly/yearly were the
+     only choices, so quarterly bills and every-second-month ones couldn't be a series. Modelled
+     on a chore's repeat (`tasks.recurInterval`): quick choices — Weekly, Monthly, **Quarterly**
+     (3 months, the common bill cadence), Yearly — plus **Custom…**, which opens the same
+     stepper + unit pair as the task sheet, capped at 99 like chores. No day unit: nothing in a
+     household's bills repeats daily. Existing rows default to 1. The interval is part of what
+     "moves" a series, so changing it re-anchors on the next date. Labels count ("Every 2
+     months") except the every-one cadences and the quarter, which get their own word. The row
+     posts `repeat`/`unit` plus `interval`; `utils/expenses` `readRepeat` validates both.
+
+190. **Recurring adds with a FAB and the empty state's button, not a header button**
+     (`/expenses/recurring`). The screen was empty with no way to start a series. Every other
+     "add" in the app — the Expenses tab, Recipes — is the empty state's button, then a FAB once
+     there is a list; a header button here would be the one exception. Both open the existing
+     add sheet [9b] with Repeats on Monthly (the bills this screen is for are mostly monthly) and
+     post to the shared `save` action, so a series still starts as its first expense. The tab
+     gets no bottom "Recurring" row beside All activity: [9a-owe] keeps Recurring in the •••
+     menu with its count, and the bottom row continues the Recent list it sits under.
+
+191. **All activity's categories are ticked, any number at once; Payments is one of them**
+     (SPEC §11.12, `utils/expense-history` `HISTORY_CATEGORIES`). "Groceries and eating out" is
+     a real question about food spending, and one category at a time made it two visits. The
+     filter is a set: a row shows when its category is ticked, a settle-up when **Payments** is
+     — so "Payments only" (#187) became an ordinary row, and "Rent & bills + Payments" works
+     too. `?category=` repeats in the URL. Category's sheet is checkboxes and stays open with
+     "Show N" (a tick can't close it, there may be another); Time and Paid by stay single-pick
+     and close on tap — Paid by is one person, and two payers in a household of two is "Any".
+     The chip says "Groceries +2" rather than a count, so the one most likely meant stays
+     readable. Ticking every category is kept as ticked, not folded into "All", so the last
+     tick doesn't visibly undo itself.
+
+192. **History pages by rows, not by month; picked dates stay in the sheet they're picked in**
+     (`filterHistory`, `HISTORY_PAGE`). Paging "All time" a month at a time (#187, copied from
+     the task history #76) made a filtered list — fifteen payments over a year — one row a
+     page. Now anything grouped by month shows whole months until at least 50 rows are on
+     screen; "Show N more" adds the next 50, also ending on a whole month, so a month's total is
+     never of half a month. `?from=` still names the oldest month shown, so a reload or a link
+     keeps the page. A month or less (grouped by day) is never paged; a month is short enough.
+     And "Pick dates" is now a radio in the Time sheet (the old row was a toggle that left the
+     previous preset looking selected), and opens its fields in place in All filters instead of
+     closing it for the Time sheet — the other two filters stay in view, and each date applies
+     as it is set, like every other pick there.
+
+193. **The category filter shows each category's list icon; Payments gets the arrows**
+     (`/expenses/history`, `CategoryIcon`). As a plain word among the categories, "Payments"
+     read as a ninth category nobody had used. Giving only it an icon would single it out, so
+     every row and chip wears the glyph its entries have in the list: the category's well in the
+     Category sheet (32, beside the Paid by sheet's 32 avatars) and the bare glyph on All
+     filters' chips, like the add sheet's category chips [9b]. Payments gets the sage arrows
+     disc, and "All categories" a neutral grid, matching "Any payer"'s people icon.
+
+194. **Recurring's add is the tab's own, Repeats on "Never"** (`/expenses/recurring`; amends
+     #190). #190 opened the add sheet with Repeats preset to Monthly under "New recurring
+     expense". Lukas: a preset someone doesn't notice makes a series nobody asked for, and
+     every month adds another expense until someone finds it. A forgotten repeat is far worse
+     than a repeat picked by hand, so the screen offers the same "Add expense" as the tab, with
+     the same sheet and no preset; the empty state's copy says to pick how often it repeats.
+     The FAB and empty-state button stay where #190 put them. `ExpenseSheet` lost its
+     `repeating` prop, which had no other caller.
+
+195. **The balance card says it as a sentence, and can send a nudge** (`BalanceCard`,
+     `reminderNotices`, `?/remind`; amends #167, #176) [10a]. "You're owed €24.50" above a list
+     of "Elisabeth → you" arrows was two readings of one answer. Now the card says it once —
+     "Elisabeth owes you €24.50", "Elisabeth and Marco owe you €41.30", from four on "Four
+     people owe you €81.30" (naming five people doesn't read) — with one row per person once
+     there are several, the two largest only from four. The card is plain; the amount carries
+     the colour. Mark as paid / Paid open the settle-up sheet prefilled rather than recording
+     at once: the same road as Settle, and a partial payment stays one edit away. Payments
+     between the others are a quiet line under the sentence, still tappable, since this card
+     is the only door to recording a payment. **Remind** is new, and goes against #176's "no
+     nagging" only in letter: the app still never nudges on its own; a person taps it. It is
+     kept gentle by construction — one push tag per sender, so a second tap replaces the first
+     nudge on a lock screen without buzzing, the debtor's own notification setting is
+     respected, and the amount is recounted on the server, not taken from the card. There is
+     no rate limit stored: the tag already keeps it to one notification. "Reminded" is only
+     said of someone with the setting on **and** a subscribed device; anyone else gets "hasn't
+     turned on expense notifications" rather than a claim nobody can keep. When nobody owes
+     the sender any more (paid on another phone), the server says so and the card redraws
+     instead of blaming anyone's settings.
+
+196. **The add sheet opens on a sentence: "You ⌄ paid €42.10 for what?"** (`ExpenseSentence`)
+     [10b]. The big centred amount and a separate "What for?" field read as a form; the sentence
+     reads as what happened. Who paid moved into it as a picker (a real `<select>`, so a phone
+     opens its own list), which replaces the Paid by chips — two places to pick one person
+     would disagree. The words are a list of parts with the fields between them per language,
+     because German puts the verb last ("Du hast € 42,10 für was? bezahlt"). Each field keeps
+     its plain accessible name (Paid by, Amount, What for?). `AmountField` stays for the
+     settle-up sheet [9d].
+
+197. **Remind is a button with a bell; "Show N more" a quiet grey link** (`BalanceCard`; amends
+     #195) [10a · 4]. In the frame both were centred sage text one under the other, and on a
+     phone they read as one control. Lukas: separate them. "Show N more" stays a text toggle,
+     in `--text-4`; Remind everyone is a full-width soft-sage pill with a bell, 14px below it,
+     and the single Remind wears the same bell.
+
+198. **Settle up shows two names, not two walls of chips** (`SettleSheet`; amends the [9d]
+     frame). Opened from the card, the sheet already knows the answer, but it showed every
+     person twice as chips, a small arrow, a 46px amount and a footnote. Lukas: too much happens.
+     Now From → To is two stacked rows (side by side cut long names short), each an avatar and
+     a name that is a real `<select>` for the rarer payment the card didn't suggest, in its own box,
+     joined by a dotted arrow down their left (Lukas's sketch, after three swap-button
+     variants). The swap button is gone: the sheet always opens with the pair filled in, so
+     swapping had no case the two pickers don't already cover. The reader is "Lukas (du)", not "Du": "Von Du" / "An Du" are wrong,
+     the right cases differ per slot (mir / mich), and the name plus marker fits both. The amount shrinks to the add
+     sentence's scale (`AmountField` 46 → 32px, now only used here). The date is the ordinary
+     `DateField` with a Today shortcut, as in the task sheet, instead of the add sheet's
+     "Date · Today" row. The "This only records it" note is gone: the tab's whole premise says
+     it already. Copy: "Nobody in your household has expense notifications turned on" (was
+     "Nobody here").
+
+199. **Expenses polish: one-size menu icons, the series count in brackets, Settle up on every
+     row, the currency mark where the reader writes it** (Lukas, 2026-10-30). The ••• menu's
+     icons were 16px and the settings one shrank further when "Einstellungen für Ausgaben" wrapped
+     (a flex child without `flex-shrink: 0`); all three are 20px and never shrink, and the menu
+     is as wide as its longest label. The series count was a lone grey number at the far edge;
+     it is now part of the label, "Recurring (2)" / "Wiederkehrend (2)" (`menu.recurring(count)`).
+     The rows of a multi-person balance card said **Paid** when owed and **Settle** when owing;
+     both now say **Settle up**, German **Begleichen** (was "Bezahlt" / "Ausgleichen"), so the
+     button names the intent whichever way the money goes. The one-person card keeps **Mark as
+     paid**. Lukas asked whether the euro belongs after the number: in Germany yes ("12,50 €"),
+     but the app formats German as de-AT, where it leads with a space ("€ 12,50") — and every
+     amount in the app already reads that way. So the fields follow the locale
+     (`currencyAfter`, from `Intl` itself) and gain the missing space (0.2em in the sentence).
+
+200. **Nothing you type into renders under 16px** (convention test `input-size`). Below 16px
+     Safari on an iPhone zooms the page when the field takes focus and leaves it zoomed. Search,
+     the recipe textareas, the import paste box, the AI key note and the step-ingredient share
+     field were at 14–14.5 × `--fs` = 15.4–16px; all are 15 (16.5px). The test multiplies by
+     the live `--fs`, so lowering the scale can't sneak a field back under. Asked whether the
+     app should go to 18px: no — body text renders at 16.5px and form rows at 16px, which is
+     where iOS (17pt) and Material (16sp) put body text; the honest lever for "a bit small" is
+     `--fs` itself (#125), not per-screen bumps, which would make one sheet disagree with the
+     next.
+201. **Type follows the reader's text size: a rem scale of named steps, `--fs-12` … `--fs-56`**
+     (→ `src/app.css` "The type scale", DESIGN-SYSTEM "Type scale"; replaces #125's
+     `calc(<mockup px> * var(--fs))`). Everything was px, so a phone set to large text — or to
+     Dynamic Type — changed nothing in the app, installed or not. Every `font-size` is now a
+     step whose name is its size in px at the default setting and whose value is built on `rem`:
+     `--fs-17: clamp(16px, calc(17 * var(--fs-px)), 34px)`, with `--fs-px: calc(1rem / 16)`.
+
+     - **The mockup numbers go.** They were the reason #125 kept px; in practice nobody looked
+       them up, and 30 distinct sizes (12.5, 13.5, 14.5 …) had piled up. Each became the next whole step at or above what it rendered at under `--fs: 1.1` (13 × 1.1 = 14.3 → 15; titles and display numbers the nearest step, 30 × 1.1 = 33 → 32), so
+       at the default setting the app looks as it did, a hair larger at the small end — body
+       text 17px, meta 14–15, micro-labels 13. A new screen maps the design's px to the nearest
+       step up; the 1.1 is baked in, there is no global multiplier until one is needed (an
+       in-app text-size setting would be one variable here).
+     - **Opting in, per platform.** Chrome and Edge on Android (146+) scale `rem` with the
+       system setting once `<meta name="text-scale" content="scale">` is in the head (it had been
+       in `app.html` since scaffolding, inert while everything was px) and nothing sets a
+       `font-size` on `html`. Safari on iPhone/iPad only does it through
+       `html { font: -apple-system-body }`, which is 17px at the default Dynamic Type size, not
+       16 — so inside `@supports (font: -apple-system-body) and (-webkit-touch-callout: default)`
+       (iOS, not a Mac) `--fs-px` divides by 17 and a default iPhone draws what every other
+       browser draws. Firefox on Android already scaled px. Not verified on a real iPhone or
+       Android phone, installed or not — the walk was Chromium with the root set to 200%.
+     - **Limits.** A step grows to twice itself (WCAG 1.4.4) but never past 48px unless it
+       starts there, so the cook timer (56) stays put and a page title stops at 48 instead of 64. Steps from 16 up never render under 16px for a reader who chose smaller text — the
+       size iOS zooms the page under when a field takes focus, which is what lets
+       `input-size` (#200) just ask for a step ≥ 16. Text in a box that can't grow — the tab bar's badge (16px dot), the tab label, a four-way segmented control, the week strip's seven columns, the podium's numerals, the recipe editor's Cancel · title · Save bar — stops lower with `min(var(--fs-N), <px>)`, the
+       way native tab bars and segmented controls don't follow the system size at all.
+     - **Paddings and icons stay px** (as #125): text grows inside the layout. What broke at 200% and was fixed rather than capped: the page header and the two section heads beside a count or link (now wrap), an
+       expense row (the share drops under the words), the week plan's weekday column (width in
+       `em`), the date field and settings rows (value drops under the label, chevron with it),
+       "(you)" splitting at its bracket, and the recipe grid (one column once a column would be
+       under 7em). Headings take `overflow-wrap: anywhere`, so one German word wider than the line ("Rezeptsammlung" at 44px) breaks instead of running off the screen. `tests/visual/text-size.spec.ts` opens every screen at 200% — the ones a URL reaches in German too, which found three of these — and fails on a body that didn't double, a sideways scroll, or one-line text cut off without an ellipsis.
+     - **Not `env(preferred-text-scale)`**, which would have let the px stay: an explainer, not
+       shipped anywhere we could confirm, and Chrome's own guidance warns it double-scales
+       alongside the meta tag. **Not literal rem in each component** (`0.875rem`): the named
+       steps are the same thing with the rounding done once and the caps attached.
+
+202. **One date field look: the settle sheet's date is the history filter's** (`SettleSheet`;
+     amends #198, Lukas 2026-10-30). Both already used `DateField`, but settle up added the
+     caption ("Today · Oct 30") and a Today chip under it, so the two read as different
+     controls. Kept the plainer one: the field shows the date itself, so the caption only said
+     it twice, and the sheet already opens on today (an edit opens on the payment's own date),
+     so the shortcut had nothing to do. The task sheet's [3b] caption stays — "Tomorrow" says
+     something a due date's digits don't.
+
+203. **Expenses review fixes** (Lukas 2026-10-30, after a full review of the tab; PR on
+     `fix/expenses-review`).
+     - **Each split mode keeps its own fields** (`switchDraftMode` in `split-draft.ts`). One
+       record of typed text was shared by all four modes, so 50 / 50 by % became €50 each in
+       Amounts ("€70.00 too much" on €30). A mode now remembers what was typed in it for as long
+       as the sheet is open; one opened for the first time starts as before (Amounts on the
+       money each row shows, % evenly, Shares on 1).
+     - **The default split is saved the way the link saves it.** Settings' Done posted the raw
+       mode, so "Equally" with someone unticked was stored as equal-between-everyone; it now
+       posts the same `shares` default the split sheet's link already did (#173).
+     - **One mark with three digits after it is refused** (`parseAmount`). `12,345` was
+       €12 345 in both languages — a German who types three decimals got a thousandfold amount.
+       It is now ambiguous, so it is refused; `1.234,50`, `1,234.50` and `1.000.000` still read
+       as thousands. A group that can't start a number (`0,005`, `01.234`) is refused too.
+     - **No date before 2000, and no series starting more than a year back**
+       (`EXPENSE_DATE_MIN`, `SERIES_START_MAX_YEARS`). "2002" for "2026" with Repeats on was
+       1 250 expenses and 1 250 pushes at the next 06:00. A year is still enough to log a
+       contract that began last spring; the sweep catches up the rest.
+     - **Catching up announces once per series**: the sweep pushes the newest occurrence it
+       logged, so a week of downtime is one buzz, not seven.
+     - **A former member can't be in a series** (`checkSeriesPeople`, new or edited). They are
+       still pickable while they have a balance, and a series charging them would run with
+       nobody left whose leaving stops it (#180). A one-off expense may still name them.
+     - **Leaving clears the leaver's default weight**: a `percent` default goes back to equal
+       (without them it no longer adds up), a `shares` one just loses their shares. Weights of
+       people who have left are never read as part of the default.
+     - **Editing a settle-up tells its recipient** when the money changed — who paid, who got
+       it, or how much — with the same "paid you" push; a corrected date tells nobody.
+     - **Screens**: a payment row's title wraps instead of cutting off its amount; All activity
+       grouped by month puts the day on each expense row ("Lukas paid €42.10 · Oct 28"); the add
+       sheet's split summary takes two lines before it cuts; German search placeholder shortened
+       to fit 375px; settling with yourself says "Pick two different people."; a cleared date
+       no longer crashes the add sheet (Save waits for a day); a delete that finds the row
+       already gone says so; Remind can't be sent twice while the first is on its way.
+204. **Sheets ride above the keyboard; the currency lock is one short line; copy has no em
+     dashes** (Lukas 2026-10-31, from a phone screenshot of the add-expense sheet).
+     - **BottomSheet follows `visualViewport`.** Android Chrome and iOS Safari both open the
+       keyboard over the page and only shrink the visual viewport, so a bottom-pinned sheet
+       put its own fields under the keys. While a sheet is open its `<dialog>` takes the visual
+       viewport's top and height (`--viewport-top`, `--viewport-height`), the panel's cap went
+       from `92dvh` to 92% of that, and a focused field is scrolled back into view when it
+       shrinks. Not `interactive-widget=resizes-content` in the viewport meta: Safari ignores
+       it, and it would lift the tab bar over the keyboard on every screen.
+     - **Currency lock**: "Can't be changed once expenses are added." The why stays in SPEC
+       §11.10 and #170; the settings row only needs the fact.
+     - **No em dashes in what a reader sees.** Every `—` in `en.ts`/`de.ts` became a full
+       stop, comma, colon or brackets, and so did the prose en dashes in German; number ranges
+       and scores keep their `–`. Empty-value marks (Stepper, an ingredient without an amount)
+       are a short `-`. Comments, server logs, the AI prompt and the dev kit keep theirs: nobody
+       in the household reads them. A convention test fails on a new one in the catalogs.
+205. **The sheet handle drags** (Lukas 2026-10-31: "the handle says I can swipe it"). A handle
+     that does nothing promises a gesture it doesn't keep; removing it would leave sheets that
+     don't read as sheets (and break the design). So `BottomSheet`'s handle and title row are
+     a grip: the panel follows the finger down and the scrim fades with it; letting go past a
+     third of the panel's height, or after a downward flick (>0.5 px/ms over the last 100 ms,
+     past 24px), slides it out and closes. Anything shorter springs back with a small
+     overshoot. Pulling up stretches the panel from the bottom with growing resistance (at most
+     28px) and bounces back: sheets are already as tall as their content, so there is no
+     bigger detent to open to. Only the grip starts a drag, never the body, so scrolling a long
+     sheet, selecting text or swiping chips stays what it was; buttons in the header stay
+     buttons. A drag-close discards a half-filled form exactly like the scrim and the × already
+     do. Reduced motion: no stretch, no slide or bounce, the close is immediate.

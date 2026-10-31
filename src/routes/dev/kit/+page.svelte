@@ -42,6 +42,7 @@
 	import Select from '$lib/components/ui/Select.svelte';
 	import Stepper from '$lib/components/ui/Stepper.svelte';
 	import TextField from '$lib/components/ui/TextField.svelte';
+	import CodeInput from '$lib/components/ui/CodeInput.svelte';
 	import Toggle from '$lib/components/ui/Toggle.svelte';
 	import CookStepText from '$lib/components/cooking/CookStepText.svelte';
 	import type { NextChore } from '$lib/server/services/home';
@@ -239,6 +240,12 @@
 		<h2>TextField</h2>
 		<TextField label="Household name" name="demo-name" value="Sonnengasse 12" />
 		<TextField label="Display name" name="demo-error" value="" error="Enter a name" />
+	</section>
+
+	<section>
+		<h2>CodeInput</h2>
+		<CodeInput label="Code" name="demo-code" value="482" />
+		<CodeInput label="Wrong code" name="demo-code-wrong" value="000000" invalid />
 	</section>
 
 	<section>
@@ -692,7 +699,7 @@
 	h2 {
 		margin-bottom: 12px;
 		font-family: var(--font-body);
-		font-size: calc(11px * var(--fs));
+		font-size: var(--fs-13);
 		font-weight: 700;
 		letter-spacing: 0.12em;
 		text-transform: uppercase;
@@ -732,14 +739,19 @@
 
 	.note {
 		margin: 12px 0;
-		font-size: calc(12.5px * var(--fs));
+		font-size: var(--fs-14);
 		line-height: 1.5;
 		color: var(--text-5);
 	}
 
+	/* A path has no spaces to wrap at; at a large text size it breaks anywhere. */
+	.note code {
+		overflow-wrap: anywhere;
+	}
+
 	.pad {
 		padding: 16px;
-		font-size: calc(14px * var(--fs));
+		font-size: var(--fs-16);
 	}
 
 	/* A sheet's own padding, so the demo sits the way it really would. */
@@ -759,14 +771,14 @@
 	}
 
 	.pref-title {
-		font-size: calc(14px * var(--fs));
+		font-size: var(--fs-16);
 		font-weight: 600;
 		color: var(--text-2);
 	}
 
 	.pref-sub {
 		margin-top: 2px;
-		font-size: calc(12px * var(--fs));
+		font-size: var(--fs-14);
 		color: var(--text-4);
 	}
 
@@ -775,7 +787,7 @@
 	}
 
 	.foot {
-		font-size: calc(12px * var(--fs));
+		font-size: var(--fs-14);
 		color: var(--text-5);
 	}
 
@@ -793,7 +805,7 @@
 
 	.cook-uses {
 		margin: 14px 0 0;
-		font-size: calc(12.5px * var(--fs));
+		font-size: var(--fs-14);
 		color: var(--cook-faint);
 	}
 
@@ -817,12 +829,12 @@
 
 	h3 {
 		margin-bottom: 6px;
-		font-size: calc(24px * var(--fs));
+		font-size: var(--fs-28);
 	}
 
 	.pop-sub {
 		margin: 0 0 20px;
-		font-size: calc(14px * var(--fs));
+		font-size: var(--fs-16);
 		color: var(--text-4);
 	}
 </style>

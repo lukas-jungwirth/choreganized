@@ -21,6 +21,8 @@
 	import HouseholdNameSheet from '$lib/components/settings/HouseholdNameSheet.svelte';
 	import LanguageSheet from '$lib/components/settings/LanguageSheet.svelte';
 	import LeaveModal from '$lib/components/settings/LeaveModal.svelte';
+	import ExpenseSettingsSheet from '$lib/components/expenses/ExpenseSettingsSheet.svelte';
+	import ReceiptIcon from '$lib/components/icons/ReceiptIcon.svelte';
 	import PrefRow from '$lib/components/settings/PrefRow.svelte';
 	import ProfileSheet from '$lib/components/settings/ProfileSheet.svelte';
 	import ThemeSheet from '$lib/components/settings/ThemeSheet.svelte';
@@ -50,6 +52,7 @@
 	let renamingHousehold = $state(false);
 	let editingAi = $state(false);
 	let choosingWording = $state(false);
+	let expenseSettings = $state(false);
 	let sendingFeedback = $state(false);
 	let leaving = $state(false);
 	let sending = $state(false);
@@ -179,31 +182,39 @@
 <RowGroup>
 	<button type="button" class="row" onclick={() => (editingProfile = true)}>
 		<span class="label">{m.settings.displayName}</span>
-		<span class="value">{me.displayName}</span>
-		<ChevronRight size={15} strokeWidth={2} class="chevron" />
+		<span class="end">
+			<span class="value">{me.displayName}</span>
+			<ChevronRight size={15} strokeWidth={2} class="chevron" />
+		</span>
 	</button>
 	<button type="button" class="row" onclick={() => (editingProfile = true)}>
 		<span class="label">{m.ui.yourColour}</span>
-		<span class="swatch" style:background={me.color} aria-hidden="true"></span>
-		<ChevronRight size={15} strokeWidth={2} class="chevron" />
+		<span class="end">
+			<span class="swatch" style:background={me.color} aria-hidden="true"></span>
+			<ChevronRight size={15} strokeWidth={2} class="chevron" />
+		</span>
 	</button>
 	<!-- Language sits under Account rather than Household: it is about the person
 		 reading, not about the house (→ SPEC §6). -->
 	<button type="button" class="row" onclick={() => (choosingLanguage = true)}>
 		<span class="label">{m.settings.language.row}</span>
-		<span class="value">{languageValue}</span>
-		<ChevronRight size={15} strokeWidth={2} class="chevron" />
+		<span class="end">
+			<span class="value">{languageValue}</span>
+			<ChevronRight size={15} strokeWidth={2} class="chevron" />
+		</span>
 	</button>
 	<!-- Appearance sits beside it for the same reason: it is about the person
 		 reading and the screen they read on, not about the house (→ SPEC §6). -->
 	<button type="button" class="row" onclick={() => (choosingTheme = true)}>
 		<span class="label">{m.settings.theme.row}</span>
-		<span class="value">{themeValue}</span>
-		<ChevronRight size={15} strokeWidth={2} class="chevron" />
+		<span class="end">
+			<span class="value">{themeValue}</span>
+			<ChevronRight size={15} strokeWidth={2} class="chevron" />
+		</span>
 	</button>
 </RowGroup>
 
-<!-- Two groups, not one list of four (→ DECISIONS #130). What you want to hear
+<!-- Two groups, not one list (→ DECISIONS #130). What you want to hear
 	 about is one answer for the account and follows you between devices; whether
 	 push can reach *this* browser is a separate, per-device fact the browser
 	 owns. Stacked in one `RowGroup` the first row read as a master switch over
@@ -234,6 +245,12 @@
 		label={m.settings.prefs.shopClosures}
 		detail={m.settings.prefs.shopClosuresDetail}
 		checked={data.prefs.notifyShopClosures}
+	/>
+	<PrefRow
+		pref="notifyExpenses"
+		label={m.settings.prefs.expenses}
+		detail={m.settings.prefs.expensesDetail}
+		checked={data.prefs.notifyExpenses}
 	/>
 </RowGroup>
 
@@ -291,8 +308,10 @@
 	<a class="row" href="/settings/members">
 		<span class="tile" aria-hidden="true"><UsersRound size={18} strokeWidth={1.9} /></span>
 		<span class="label">{m.settings.members}</span>
-		<span class="value">{data.members.length}</span>
-		<ChevronRight size={15} strokeWidth={2} class="chevron" />
+		<span class="end">
+			<span class="value">{data.members.length}</span>
+			<ChevronRight size={15} strokeWidth={2} class="chevron" />
+		</span>
 	</a>
 
 	<!-- AI features [plan 20] — the owner sets the providers, everyone else sees
@@ -301,14 +320,14 @@
 	{#if owner}
 		<button type="button" class="row" onclick={() => (editingAi = true)}>
 			<span class="tile" aria-hidden="true"><Sparkles size={18} strokeWidth={1.9} /></span>
-			<span class="label">{m.settings.ai.row}</span>
+			<span class="label whole">{m.settings.ai.row}</span>
 			<span class="value long">{aiValue}</span>
 			<ChevronRight size={15} strokeWidth={2} class="chevron" />
 		</button>
 	{:else}
 		<div class="row">
 			<span class="tile" aria-hidden="true"><Sparkles size={18} strokeWidth={1.9} /></span>
-			<span class="label">{m.settings.ai.row}</span>
+			<span class="label whole">{m.settings.ai.row}</span>
 			<span class="value long">{aiValue}</span>
 		</div>
 	{/if}
@@ -319,8 +338,10 @@
 		<button type="button" class="row" onclick={() => (choosingWording = true)}>
 			<span class="tile" aria-hidden="true"><Languages size={18} strokeWidth={1.9} /></span>
 			<span class="label">{m.settings.wording.row}</span>
-			<span class="value">{wordingValue}</span>
-			<ChevronRight size={15} strokeWidth={2} class="chevron" />
+			<span class="end">
+				<span class="value">{wordingValue}</span>
+				<ChevronRight size={15} strokeWidth={2} class="chevron" />
+			</span>
 		</button>
 	{:else}
 		<div class="row">
@@ -329,6 +350,17 @@
 			<span class="value">{wordingValue}</span>
 		</div>
 	{/if}
+
+	<!-- The currency (owner, before the first expense) and the default split
+		 (anyone) — one sheet, shared with the Expenses tab (→ SPEC §11.10). -->
+	<button type="button" class="row" onclick={() => (expenseSettings = true)}>
+		<span class="tile" aria-hidden="true"><ReceiptIcon size={18} strokeWidth={1.9} /></span>
+		<span class="label">{m.expenses.settings.row}</span>
+		<span class="end">
+			<span class="value">{data.expenses.currency}</span>
+			<ChevronRight size={15} strokeWidth={2} class="chevron" />
+		</span>
+	</button>
 </RowGroup>
 
 <!-- The app itself, under the house: reporting a bug is not a household
@@ -408,6 +440,17 @@
 	<WordingSheet chosen={data.recipeWording} onclose={() => (choosingWording = false)} />
 {/if}
 
+{#if expenseSettings}
+	<ExpenseSettingsSheet
+		people={data.expenses.people}
+		currency={data.expenses.currency}
+		currencyLocked={data.expenses.currencyLocked}
+		isOwner={owner}
+		splitDefault={data.expenses.splitDefault}
+		onclose={() => (expenseSettings = false)}
+	/>
+{/if}
+
 {#if sendingFeedback}
 	<FeedbackSheet versionLabel={data.appVersion} onclose={() => (sendingFeedback = false)} />
 {/if}
@@ -416,6 +459,16 @@
 	<LeaveModal
 		householdName={data.household.name}
 		mode={leaveMode}
+		balanceNote={data.expenses.myBalance === 0
+			? null
+			: m.expenses.leaveBalance(
+					null,
+					data.expenses.myBalance < 0,
+					m.expenses.money(Math.abs(data.expenses.myBalance), data.expenses.currency)
+				)}
+		seriesNote={data.expenses.mySeries.length > 0
+			? m.expenses.leaveSeries(data.expenses.mySeries)
+			: null}
 		onclose={() => (leaving = false)}
 	/>
 {/if}
@@ -436,14 +489,14 @@
 	.name {
 		margin: 0;
 		font-family: var(--font-display);
-		font-size: calc(19px * var(--fs));
+		font-size: var(--fs-22);
 		font-weight: 600;
 		overflow-wrap: anywhere;
 	}
 
 	.email {
 		margin: 2px 0 0;
-		font-size: calc(13px * var(--fs));
+		font-size: var(--fs-15);
 		color: var(--text-4);
 		overflow-wrap: anywhere;
 	}
@@ -452,7 +505,7 @@
 		flex: none;
 		align-self: center;
 		padding: 6px 4px;
-		font-size: calc(13px * var(--fs));
+		font-size: var(--fs-15);
 		font-weight: 700;
 		color: var(--sage);
 	}
@@ -460,7 +513,7 @@
 	.section {
 		margin: 22px 4px 8px;
 		font-family: var(--font-body);
-		font-size: calc(11px * var(--fs));
+		font-size: var(--fs-13);
 		font-weight: 700;
 		letter-spacing: 0.12em;
 		text-transform: uppercase;
@@ -475,7 +528,7 @@
 		width: 100%;
 		min-height: 52px;
 		padding: 12px 16px;
-		font-size: calc(15px * var(--fs));
+		font-size: var(--fs-17);
 		text-align: left;
 		color: var(--ink);
 	}
@@ -488,12 +541,40 @@
 
 	.value {
 		flex: none;
-		font-size: calc(14px * var(--fs));
+		font-size: var(--fs-16);
 		color: var(--text-4);
 	}
 
+	/* At a large text size "Appearance" and "System" don't fit one line: the
+	   value and its chevron drop under the label together, kept to the right,
+	   instead of the label breaking mid-word. The label is sized by its text
+	   for that to happen. (A `.long` value ellipsizes instead, below.) */
+	.row:has(.end) {
+		flex-wrap: wrap;
+		row-gap: 2px;
+	}
+
+	.row:has(.end) .label {
+		flex-basis: auto;
+	}
+
+	.end {
+		display: flex;
+		flex: none;
+		align-items: center;
+		gap: 13px;
+		margin-left: auto;
+	}
+
 	/* A provider and a model id can outrun a 390px row ("OpenRouter ·
-	   meta-llama/llama-4-scout:free"): the value gives way, the label doesn't. */
+	   meta-llama/llama-4-scout:free"): the value gives way, the label doesn't.
+	   The label has to be sized by its text for that: with `flex: 1` its basis
+	   is 0, it gets only what the value leaves, and "KI-Funktionen" broke into
+	   "KI-" / "Funktione" / "n" (#56). */
+	.label.whole {
+		flex: 1 0 auto;
+	}
+
 	.value.long {
 		flex: 0 1 auto;
 		min-width: 0;
@@ -546,7 +627,7 @@
 
 	.result {
 		margin: 10px 4px 0;
-		font-size: calc(13px * var(--fs));
+		font-size: var(--fs-15);
 		line-height: 1.45;
 		color: var(--text-4);
 	}
@@ -555,7 +636,7 @@
 	   takes the gap the next section heading would otherwise open alone. */
 	.note {
 		margin: 9px 4px 0;
-		font-size: calc(12.5px * var(--fs));
+		font-size: var(--fs-14);
 		line-height: 1.45;
 		color: var(--text-4);
 	}

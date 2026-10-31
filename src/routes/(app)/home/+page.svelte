@@ -16,6 +16,7 @@
 	import NextChoreCard from '$lib/components/home/NextChoreCard.svelte';
 	import StandingsStrip from '$lib/components/home/StandingsStrip.svelte';
 	import StatTile from '$lib/components/home/StatTile.svelte';
+	import BalanceLine from '$lib/components/home/BalanceLine.svelte';
 	import BasketIcon from '$lib/components/icons/BasketIcon.svelte';
 	import ChecklistIcon from '$lib/components/icons/ChecklistIcon.svelte';
 	import SnoozeSheet from '$lib/components/tasks/SnoozeSheet.svelte';
@@ -154,6 +155,10 @@
 		</StatTile>
 	</div>
 
+	{#if data.balance}
+		<BalanceLine balance={data.balance} />
+	{/if}
+
 	{#if data.standings}
 		<StandingsStrip standings={data.standings} members={data.members} />
 	{/if}
@@ -210,7 +215,7 @@
 
 	.household {
 		margin: 0 0 6px;
-		font-size: calc(11px * var(--fs));
+		font-size: var(--fs-13);
 		font-weight: 700;
 		letter-spacing: 0.14em;
 		text-transform: uppercase;
@@ -218,7 +223,7 @@
 	}
 
 	h1 {
-		font-size: calc(27px * var(--fs));
+		font-size: var(--fs-30);
 		line-height: 1.05;
 	}
 

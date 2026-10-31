@@ -52,7 +52,7 @@ you have and return the verdict rather than running out mid-investigation.
    - areas: `shopping` `tasks` `cooking` `home` `settings` `auth` `push` `i18n` `design`
    - sizes: `s` — one module, one row, one service, following a pattern that already exists;
      `m` — several files, perhaps a migration, still built from the existing kit
-     (`src/lib/components/ui`, `docs/DESIGN-SYSTEM.md`) and the frames in `design/Hearth.dc.html`;
+     (`src/lib/components/ui`, `docs/DESIGN-SYSTEM.md`) and the frames in `design/*.dc.html`;
      `l` — **only** a new screen, a new tab or a navigation surface that has no frame in that
      file. Almost nothing is `l`: match the request to the conventions that exist, and leave the
      small design calls to whoever builds it.

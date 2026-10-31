@@ -209,10 +209,26 @@ fake adapters (`run.test.ts`).
 provider needs a real key in the running app, and only Lukas has those. A handoff says plainly
 whether that happened.
 
+### Mail outbox
+
+No test sends a real mail. `scripts/e2e-server.ts` gives the server
+`MAIL_OUTBOX=data/e2e/outbox.jsonl`. Every mail is appended there as one JSON line
+(`to`, `subject`, `text`), and `tests/e2e/email-sign-in.spec.ts` reads the code from it. The
+`verify` launch entry writes to `data/verify-outbox.jsonl`. With no outbox, `npm run dev`
+prints the mail to the terminal. The outbox works only in E2E mode or dev (→ DECISIONS #179). A
+mail to an address at `mail-fails.test` throws instead of landing in the outbox, so a journey
+can check what the login page says when the mail server refuses (→ DECISIONS #178). The e2e
+server also sets `SIGN_IN_CODE_COOLDOWN_SECONDS=3` (honoured in E2E mode only), so a journey can
+watch "Send again" count down and come back without waiting the real minute (→ DECISIONS #183).
+The
+integration test mocks `sendMail` and drives Better Auth's own endpoints
+(`tests/integration/email-sign-in.test.ts`).
+
 ### E2E mode — and verifying by hand
 
-The server has one door for tests: `E2E_MODE=true` enables password sign-in and `/dev/kit`
-(→ `src/lib/server/e2e-mode.ts`, DECISIONS #139). It is refused outright on any `ORIGIN` that
+The server has one door for tests: `E2E_MODE=true` enables password sign-in, `/dev/kit` and
+`POST /api/e2e/recurring-expenses`, which runs the 06:00 recurring-expense sweep for the
+caller's household now (→ `src/lib/server/e2e-mode.ts`, DECISIONS #139, #177). It is refused outright on any `ORIGIN` that
 is not localhost, so it cannot be left on a deploy by accident. `scripts/e2e-server.ts` sets it
 for the production build the tests drive; the `verify` entry in `.claude/launch.json` (checked
 in) sets it for a **dev server** on port 5180 with its own, initially empty database at
@@ -235,19 +251,45 @@ whenever the flag is on, and `scripts/smoke.ts` asserts it is **off** on every d
 
 ### Visual
 
-`tests/visual/screens.spec.ts` is a table: one full-page screenshot per screen at 390px,
-light and dark where the theme matters, with masks over what follows the calendar (the greeting
-follows the hour, standings the month, due labels the day). A screen whose whole body is the
-calendar — the week plan, history — is not in it. Add a screen by adding a row, with the
-`route` it shows: **every page must be in the table or excused** —
-`tests/conventions/visual-coverage.test.ts` fails `npm test` for a page in `src/routes` that is
-neither, and an excuse there carries its reason (→ DECISIONS #156). The onboarding screens sign
-up a fresh account per test, since both seeded accounts already own a household. **A mask must
-cover a box that doesn't follow the text** — Home masks its whole `header`, not the `h1`, whose
-width changed with the greeting — and a sample page fixes its own clock: `/dev/kit` renders
-2026-09-11 for ever (→ DECISIONS #144). Something that **appears** with the calendar can't be
-masked, because it moves everything below it: the shop-closure banner on Home and Shopping is
-answered "Got it" for the `visual` account by the setup project instead (→ DECISIONS #153).
+`tests/visual/screens.ts` is a table of every screen and how to reach it, and
+`screens.spec.ts` takes one screenshot per row at 390px, light and dark where the theme matters.
+Add a screen by adding a row, with the `route` it shows: **every page must be in the table or excused** — `tests/conventions/visual-coverage.test.ts`
+fails `npm test` for a page in `src/routes` that is neither, and an excuse there carries its
+reason (→ DECISIONS #156). The onboarding screens sign up a fresh account per test, since both
+seeded accounts already own a household. The calendar is part of the picture, since every run
+happens on the same afternoon (next section). Masks are only for what is **random** (an invite
+code) or stamped at **the minute the seed ran**, and **a mask must cover a box that doesn't
+follow the text**: a box as wide as a weekday diffs on every other day (→ DECISIONS #144).
+
+#### Twice the text size
+
+`tests/visual/text-size.spec.ts` walks the same table with the root font size at 200% — what a
+phone set to large text does once the app opts in (→ DECISIONS #201) — and takes no
+screenshots, so it runs on a Mac too. The screens a URL reaches run again in German, whose
+words are the longest. Each screen must double its body text (17 → 34px), not
+scroll sideways, and not cut one-line text off without an ellipsis (visually hidden text is
+skipped). A failure names the screen and the clipped element; the fix is a layout that wraps,
+or — for a box that genuinely can't grow — a capped step (DESIGN-SYSTEM "Type scale").
+
+#### The fixed clock
+
+Every Playwright run — e2e and visual — happens on **Wednesday 18 June 2036, from 14:00 in
+Vienna** (→ DECISIONS #184). `playwright.config.ts` sets `FIXED_CLOCK` (the instant),
+`FIXED_CLOCK_ANCHOR` (the real time the run began) and a `NODE_OPTIONS` preload of
+`scripts/fixed-clock.ts`, so the workers, `scripts/e2e-server.ts`, the build it starts and the
+seed all start their `Date` at that instant and share one clock that still ticks. The server
+hands the same shift to the browser: in E2E mode with `FIXED_CLOCK` set, `hooks.server.ts`
+puts `$lib/fixed-clock`'s `installFixedClock` first in `<head>`. `tests/e2e/clock.spec.ts`
+checks that all of them agree.
+
+- A test that needs "today" reads `new Date()` like the app does. It gets the run's
+  afternoon.
+- The year is far ahead on purpose. The browser's cookie jar runs on the real clock, and a
+  session cookie stamped with an expiry in the past would be dropped.
+- `PLAYWRIGHT_BASE_URL` (your own server) turns it off, because that server keeps the real
+  clock and the tests must share their server's clock.
+- `npm run dev` and every deploy never see it: the hook checks E2E mode, and nothing else
+  sets the variables.
 
 **Baselines are Linux-only** (→ DECISIONS #140): a macOS Chromium rasterises text differently
 enough to fail every comparison, so `tests/visual/__screenshots__/*.png` are made in the

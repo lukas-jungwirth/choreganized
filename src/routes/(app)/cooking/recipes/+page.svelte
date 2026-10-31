@@ -116,9 +116,11 @@
 		margin-bottom: 18px;
 	}
 
+	/* Two columns, or one once a column would be narrower than 7em — a reader
+	   at a large text size gets whole recipe names instead of "mushroo-m". */
 	.grid {
 		display: grid;
-		grid-template-columns: 1fr 1fr;
+		grid-template-columns: repeat(auto-fill, minmax(max(7em, calc((100% - 12px) / 2)), 1fr));
 		gap: 12px;
 		margin: 0;
 		padding: 0;
@@ -133,7 +135,7 @@
 
 	.none {
 		margin: 30px 4px;
-		font-size: calc(14px * var(--fs));
+		font-size: var(--fs-16);
 		color: var(--text-4);
 		text-align: center;
 	}
@@ -149,7 +151,7 @@
 		margin: 0 auto;
 		padding: 13px 22px;
 		border-radius: var(--r-input);
-		font-size: calc(15px * var(--fs));
+		font-size: var(--fs-17);
 	}
 
 	.sr-only {

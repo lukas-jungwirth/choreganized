@@ -13,7 +13,7 @@
  * is enforced next to the write — an action that forgot to ask cannot make the
  * write happen anyway.
  */
-import { and, asc, eq, ne, sql } from 'drizzle-orm';
+import { and, asc, eq, inArray, isNull, ne, or, sql } from 'drizzle-orm';
 import type { Locale } from '$lib/i18n';
 import { isMemberColor } from '$lib/member-colors';
 import { toCalendarDate, type CalendarDate } from '$lib/utils/dates';
@@ -24,7 +24,17 @@ import {
 	normalizeInviteCode
 } from '$lib/utils/invite-code';
 import { db } from '../db';
-import { households, members, stores, tasks, type Household, type Member } from '../db/schema';
+import {
+	expenseRecurrenceShares,
+	expenseRecurrences,
+	households,
+	ledgerPeople,
+	members,
+	stores,
+	tasks,
+	type Household,
+	type Member
+} from '../db/schema';
 import type { NotificationPref } from '../push';
 
 export type HouseholdErrorCode =
@@ -71,6 +81,50 @@ function unusedInviteCode(tx: Transaction): string {
 
 function membershipOf(tx: Transaction, userId: string): Member | undefined {
 	return tx.select().from(members).where(eq(members.userId, userId)).get();
+}
+
+/**
+ * Every membership comes with the person the expenses ledger knows it by
+ * (→ DECISIONS #168), written in the same transaction so there is never a
+ * member who can't pay for anything.
+ *
+ * Someone who left this household and is joining it again gets their old
+ * person back — whatever they still owed or were owed included — rather than
+ * a second person under the same name whose balance never meets the first
+ * (→ DECISIONS #174).
+ */
+function insertMember(tx: Transaction, values: typeof members.$inferInsert): Member {
+	const member = tx.insert(members).values(values).returning().get();
+
+	const former = tx
+		.select({ id: ledgerPeople.id })
+		.from(ledgerPeople)
+		.where(
+			and(
+				eq(ledgerPeople.householdId, member.householdId),
+				eq(ledgerPeople.userId, member.userId),
+				isNull(ledgerPeople.memberId)
+			)
+		)
+		.get();
+
+	if (former) {
+		tx.update(ledgerPeople)
+			.set({ memberId: member.id, name: member.displayName, color: member.color })
+			.where(eq(ledgerPeople.id, former.id))
+			.run();
+	} else {
+		tx.insert(ledgerPeople)
+			.values({
+				householdId: member.householdId,
+				memberId: member.id,
+				userId: member.userId,
+				name: member.displayName,
+				color: member.color
+			})
+			.run();
+	}
+	return member;
 }
 
 function colorsTakenIn(tx: Transaction, householdId: string): string[] {
@@ -143,17 +197,13 @@ export function createHousehold(userId: string, input: CreateHouseholdInput): Me
 			.values(input.storeNames.map((name, sortOrder) => ({ householdId, name, sortOrder })))
 			.run();
 
-		return tx
-			.insert(members)
-			.values({
-				householdId,
-				userId,
-				displayName: input.displayName,
-				color: input.color,
-				role: 'owner'
-			})
-			.returning()
-			.get();
+		return insertMember(tx, {
+			householdId,
+			userId,
+			displayName: input.displayName,
+			color: input.color,
+			role: 'owner'
+		});
 	});
 }
 
@@ -176,17 +226,13 @@ export function joinHousehold(
 			throw new HouseholdError('color-taken');
 		}
 
-		return tx
-			.insert(members)
-			.values({
-				householdId: household.id,
-				userId,
-				displayName: profile.displayName,
-				color: profile.color,
-				role: 'member'
-			})
-			.returning()
-			.get();
+		return insertMember(tx, {
+			householdId: household.id,
+			userId,
+			displayName: profile.displayName,
+			color: profile.color,
+			role: 'member'
+		});
 	});
 }
 
@@ -456,8 +502,10 @@ export function transferOwnership(
 /**
  * The half of leaving that is the same whether you went or were shown the door
  * (→ DECISIONS #12): the membership row goes, their tasks become **Anyone**,
- * and their completions keep the name snapshot — the points stay with the
- * house.
+ * their completions keep the name snapshot — the points stay with the house —
+ * and their ledger person stays behind with whatever they still owe or are owed.
+ * Every recurring expense they pay or share in stops (→ DECISIONS #180): left
+ * running, it would keep adding to a balance nobody is there to settle.
  *
  * Assignment is cleared here rather than left to the FK's `ON DELETE SET NULL`
  * because `rotate` has to go with it: "alternate each time" has nobody to
@@ -465,6 +513,69 @@ export function transferOwnership(
  * makes when it hands one to Anyone.
  */
 function departMember(tx: Transaction, householdId: string, memberId: string): void {
+	const member = memberIn(tx, householdId, memberId);
+
+	const person = tx
+		.select({ id: ledgerPeople.id, defaultWeight: ledgerPeople.defaultWeight })
+		.from(ledgerPeople)
+		.where(and(eq(ledgerPeople.householdId, householdId), eq(ledgerPeople.memberId, memberId)))
+		.get();
+	if (person && person.defaultWeight !== null) {
+		// The default split is about expenses to come, which they won't be in. A
+		// percent default without them no longer adds up, so it goes back to
+		// equal; a shares one just loses their shares (→ SPEC §11.5).
+		const household = tx
+			.select({ mode: households.splitDefaultMode })
+			.from(households)
+			.where(eq(households.id, householdId))
+			.get();
+		if (household?.mode === 'percent') {
+			tx.update(households)
+				.set({ splitDefaultMode: 'equal' })
+				.where(eq(households.id, householdId))
+				.run();
+			tx.update(ledgerPeople)
+				.set({ defaultWeight: null })
+				.where(eq(ledgerPeople.householdId, householdId))
+				.run();
+		} else {
+			tx.update(ledgerPeople)
+				.set({ defaultWeight: null })
+				.where(eq(ledgerPeople.id, person.id))
+				.run();
+		}
+	}
+	if (person) {
+		const now = new Date();
+		tx.update(expenseRecurrences)
+			.set({ stoppedAt: now, updatedAt: now })
+			.where(
+				and(
+					eq(expenseRecurrences.householdId, householdId),
+					isNull(expenseRecurrences.stoppedAt),
+					or(
+						eq(expenseRecurrences.paidById, person.id),
+						inArray(
+							expenseRecurrences.id,
+							tx
+								.select({ id: expenseRecurrenceShares.recurrenceId })
+								.from(expenseRecurrenceShares)
+								.where(eq(expenseRecurrenceShares.personId, person.id))
+						)
+					)
+				)
+			)
+			.run();
+	}
+
+	// Their ledger person outlives them, frozen as they were (→ DECISIONS #168):
+	// a balance they still owe has to stay readable under a name. The FK would
+	// clear `memberId` by itself; the snapshot is what it can't do.
+	tx.update(ledgerPeople)
+		.set({ memberId: null, name: member.displayName, color: member.color })
+		.where(and(eq(ledgerPeople.householdId, householdId), eq(ledgerPeople.memberId, memberId)))
+		.run();
+
 	tx.update(tasks)
 		.set({ assigneeMemberId: null, rotate: false, updatedAt: new Date() })
 		.where(and(eq(tasks.householdId, householdId), eq(tasks.assigneeMemberId, memberId)))

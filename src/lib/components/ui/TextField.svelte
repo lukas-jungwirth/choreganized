@@ -43,7 +43,7 @@
 
 	.label {
 		margin-bottom: 8px;
-		font-size: calc(11px * var(--fs));
+		font-size: var(--fs-13);
 		font-weight: 700;
 		letter-spacing: 0.1em;
 		text-transform: uppercase;
@@ -57,7 +57,7 @@
 		border-radius: var(--r-input);
 		/* White on the paper background; sheets set --input-surface to --field. */
 		background: var(--input-surface, var(--card));
-		font-size: calc(15px * var(--fs));
+		font-size: var(--fs-17);
 		color: var(--ink);
 	}
 
@@ -76,7 +76,7 @@
 
 	.error {
 		margin: 8px 0 0;
-		font-size: calc(13px * var(--fs));
+		font-size: var(--fs-15);
 		color: var(--danger-deep);
 	}
 

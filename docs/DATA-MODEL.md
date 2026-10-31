@@ -15,7 +15,11 @@ user ─┬─ session / account / verification        (Better Auth)
                   │      ├─ tasks ──→ task_completions (snapshots)
                   │      ├─ cook_timers
                   │      ├─ ai_connections          (primary + backup provider keys)
-                  │      └─ feedback                (mirrored to a GitHub issue)
+                  │      ├─ feedback                (mirrored to a GitHub issue)
+                  │      └─ ledger_people ─→ expenses ──→ expense_shares
+                  │           │  (one per membership,  └─→ expense_recurrences (series it came from)
+                  │           │   outlives it)                └─ expense_recurrence_shares
+                  │           └─ (payer and people of a series)
                   └─ holiday_notices             (per member × shop closure)
 ```
 
@@ -279,13 +283,75 @@ and are deleted by the morning sweep, so the table stays at a couple of dozen ro
 - `feedback_pending_idx (issue_number, next_attempt_at)` is the sweep's range scan; a row that
   succeeds drops out of it. `feedback_household_idx (household_id, created_at)` is the read.
 
-### Better Auth tables (`user`, `session`, `account`, `verification`)
+### `ledger_people` / `expenses` / `expense_shares` (→ plan 29, SPEC §11)
+
+- **Money is an integer of the currency's minor unit** (`amountMinor`, `shareMinor`), never a
+  float (→ [DECISIONS #169](DECISIONS.md)). The household has one currency
+  (`households.currency`, default `EUR`), which the owner can change only while the household
+  has no expense rows at all — deleted ones included (→ #170).
+- **`ledger_people` is "anyone who can pay or share"** (→ #168). One row is written in the same
+  transaction as every membership (`services/household.ts` `insertMember`; migration `0017`
+  backfilled the existing ones), and **outlives it**: leaving or removal writes the member's
+  name and colour into the row and sets `memberId` NULL, so a balance a former member still owes
+  stays readable. While the membership lasts, the `members` row is the truth for name and colour
+  (`listPeople` joins it). `userId` (plain text, not a foreign key) remembers the user behind the
+  membership, so someone who leaves and joins again gets the same person back, debts included
+  (→ #174). `kind = 'guest'` is reserved for people outside the household; nothing
+  writes it yet. A person is never deleted except with the household, so the references to it
+  cascade rather than restrict (a RESTRICT would make deleting a household fail).
+- **An expense and a payment are the same row** (→ #167): `kind = 'payment'` is paid by the
+  sender, has no description or category, and one share — the recipient's, the whole amount.
+  So the balance is one formula over every row: `Σ amountMinor where paidById = p − Σ shareMinor
+where personId = p`. Always derived on read, never stored; there is no reset.
+- **`Σ shareMinor = amountMinor` for every expense.** The service splits on the server from what
+  was typed (`expense_shares.input`: cents for `amounts`, a percentage ×100 for `percent`, a count
+  for `shares`, NULL for `equal`) with `utils/money` `splitAmount` — largest remainder, ties to
+  the earlier person — and writes the shares in the transaction that writes the expense.
+- **Delete is soft.** `deletedAt` is set by Delete and cleared by its undo bar; every read
+  filters it out; the 03:30 cleanup (`cron.ts`) removes rows deleted more than a day ago.
+- **The default split** is `households.splitDefaultMode` (`equal` = everyone) plus each person's
+  `ledger_people.defaultWeight` for `percent` / `shares`. A member who joins later has none, so a
+  percentage default never silently includes them (→ SPEC §11.5). Leaving clears the leaver's
+  weight — and every weight, with the mode back to `equal`, when the default was `percent`
+  (→ DECISIONS #203).
+- `expenses_household_date_idx (household_id, date)` serves the ledger read, which loads a
+  household's rows whole (→ #172); `expense_shares_person_idx` serves the person lookups.
+
+### `expense_recurrences` / `expense_recurrence_shares` (→ plan 30, SPEC §11.9)
+
+- **A series is a template and a date.** `expense_recurrences` holds what each occurrence copies
+  (description, category, `amountMinor`, payer, `splitMode`) plus `unit` (`week` · `month` ·
+  `year`) and `interval` (every N units, 1–99, default 1 — quarterly is 3 months; → #189),
+  `anchorDay` (1–31 for months and years, NULL for weeks) and `nextDate`, the
+  household-local date the next occurrence is due. `expense_recurrence_shares` keeps only what was
+  typed per person (`input`, as in `expense_shares`); the shares are split again from it, at the
+  template's amount, for every occurrence, in roster order (→ #169, #175).
+- **`nextDate` is the sweep's only memory** (→ #175). From 06:00 household-local, every minute,
+  `materializeDue` logs each due occurrence as an ordinary expense dated `nextDate`, with
+  `expenses.recurrenceId` pointing back, and moves `nextDate` on with `utils/dates` `addRepeat`
+  in the same transaction — guarded by `nextDate` still reading what was read. Catch-up after
+  downtime is the loop; running twice logs nothing twice. `expense_recurrences_due_idx
+(household_id, next_date)` makes the every-minute "anything due?" one index probe.
+- **The anchor stops drift**: a month clamps to its last day without forgetting the 31st.
+  Editing the series keeps the anchor unless the next date, the unit or the interval changes.
+  `addRepeat(date, unit, anchorDay, interval)` steps N months as one jump from the anchor, so
+  every-N-months clamps exactly as monthly does.
+- **Stopping sets `stoppedAt`**; the row stays and so do its occurrences. Leaving or removal
+  stops every running series the member's ledger person pays or shares in, in the departure's
+  own transaction (`services/household.ts` `departMember`, → #180).
+  `expenses.recurrenceId` is `ON DELETE SET NULL` (added by hand to migration 0019, → #175), so
+  even deleting a series would leave the expenses it logged.
+- `members.notifyExpenses` (default on) silences the expense notices for one member (→ #176).
+
+(`user`, `session`, `account`, `verification`)
 
 Hand-written to Better Auth 1.6 core schema (drizzle adapter maps on property names) and
 verified field-by-field against 1.6.23's generated reference in plan 00 — all timestamps are
 `timestamp_ms`, `verification.created_at/updated_at` are NOT NULL and `identifier` is indexed
 (migration 0001). `verification` also holds the OAuth state during the Google round-trip, so
-it's live from the first sign-in. After a Better Auth upgrade, re-run the diff:
+it's live from the first sign-in. Since plan 31 it also holds the email sign-in codes
+(identifier `sign-in-otp-<email>`, value the **hashed** code plus its attempt count, 10-minute
+expiry → DECISIONS #178). No table of its own. After a Better Auth upgrade, re-run the diff:
 `npx @better-auth/cli generate` cannot read `auth.ts` (SvelteKit's `$app`/`$env` modules don't
 resolve outside Vite) — point it at a throwaway config with the same options minus those
 imports, and compare its output to `schema.ts`.

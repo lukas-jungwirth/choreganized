@@ -95,7 +95,7 @@
 		width: 100%;
 		margin-top: 14px;
 		padding: 10px;
-		font-size: calc(13.5px * var(--fs));
+		font-size: var(--fs-15);
 		font-weight: 600;
 		color: var(--danger);
 		text-align: center;

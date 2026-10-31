@@ -1,0 +1,437 @@
+<!--
+	Add / edit an expense [9b] [9b-suggest] [9b-edit], in the order you think:
+	who paid, how much, what for, then the split. The first three are one
+	sentence, "You ⌄ paid €42.10 for what?" [10b] (→ `ExpenseSentence`), whose
+	amount takes the focus; with the household default and "paid by you"
+	already chosen, amount → what for → Save is the whole job (→ plan 29
+	acceptance).
+
+	The split is edited on its own sheet [9c], mounted over this one while open.
+	It sits outside this form on purpose: its "make this the default" link is a
+	form of its own, and forms don't nest.
+
+	The same sheet edits a recurring series [9h-stop] (→ SPEC §11.9): the
+	template's fields, "Next one" in place of the date, and the repeat — posted
+	to `?/saveSeries`, and touching none of the expenses already logged.
+	The repeat is the RepeatRow's own state; it posts its two fields itself.
+-->
+<script lang="ts">
+	import { enhance } from '$app/forms';
+	import ChevronRight from '@lucide/svelte/icons/chevron-right';
+	import Percent from '@lucide/svelte/icons/percent';
+	import BottomSheet from '$lib/components/ui/BottomSheet.svelte';
+	import Button from '$lib/components/ui/Button.svelte';
+	import Chip from '$lib/components/ui/Chip.svelte';
+	import { messages } from '$lib/i18n';
+	import type { SeriesItem } from '$lib/server/services/expense-recurrences';
+	import type { ExpenseItem, ExpensePerson, SplitDefault } from '$lib/server/services/expenses';
+	import type { CalendarDate } from '$lib/utils/dates';
+	import { EXPENSE_CATEGORIES, type ExpenseCategory } from '$lib/utils/expenses';
+	import { formatAmountInput, parseAmount } from '$lib/utils/money';
+	import { untrack } from 'svelte';
+	import CategoryIcon from './CategoryIcon.svelte';
+	import DateRow from './DateRow.svelte';
+	import DeleteExpenseForm from './DeleteExpenseForm.svelte';
+	import ExpenseSentence from './ExpenseSentence.svelte';
+	import RepeatRow from './RepeatRow.svelte';
+	import SplitSheet from './SplitSheet.svelte';
+	import {
+		draftFromDefault,
+		draftFromItem,
+		draftRows,
+		previewSplit,
+		type SplitDraft
+	} from './split-draft';
+
+	type Props = {
+		/** The expense being edited; null when adding (or editing a series). */
+		item: ExpenseItem | null;
+		/** The series being edited instead of an expense [9h-stop]. */
+		series?: SeriesItem | null;
+		/** Who can pay or share — members, plus anyone still owed or owing. */
+		people: ExpensePerson[];
+		me: string;
+		currency: string;
+		today: CalendarDate;
+		splitDefault: SplitDefault;
+		suggestions: { description: string; category: ExpenseCategory }[];
+		onclose: () => void;
+		/** After a delete went through, with the deleted id — the page offers the undo. */
+		ondeleted?: (id: string) => void;
+	};
+
+	let {
+		item,
+		series = null,
+		people,
+		me,
+		currency,
+		today,
+		splitDefault,
+		suggestions,
+		onclose,
+		ondeleted
+	}: Props = $props();
+
+	const m = messages();
+	const comma = m.expenses.decimalComma;
+
+	/** What the fields start from: the expense, the series' template, or nothing yet. */
+	const source = untrack(() => item ?? series);
+
+	let open = $state(true);
+	let amount = $state(
+		untrack(() => (source ? formatAmountInput(source.amountMinor, currency, comma) : ''))
+	);
+	let description = $state(source?.description ?? '');
+	let category = $state<ExpenseCategory | null>(source?.category ?? null);
+	/** Set once a chip is tapped; until then the description's history may choose. */
+	let categoryChosen = $state(source !== null);
+	let paidById = $state(untrack(() => source?.paidById ?? me));
+	let date = $state(untrack(() => series?.nextDate ?? item?.date ?? today));
+	const repeat = untrack(() => (series ? { unit: series.unit, interval: series.interval } : null));
+	/**
+	 * Adding, editing a series, or editing an expense that doesn't repeat yet —
+	 * which can start a series from itself. An occurrence of a running series
+	 * has nothing to choose here: its detail links to the series [9e].
+	 */
+	const repeatable = untrack(() => series !== null || item === null || item.repeats === null);
+	let draft = $state<SplitDraft>(
+		untrack(() =>
+			source
+				? draftFromItem(source, currency, comma)
+				: draftFromDefault(people, splitDefault, comma)
+		)
+	);
+	let splitting = $state(false);
+	let describing = $state(false);
+	let submitting = $state(false);
+	let error = $state<string | undefined>();
+
+	$effect(() => {
+		if (!open) onclose();
+	});
+
+	const money = (minor: number) => m.expenses.money(minor, currency);
+	const amountMinor = $derived(parseAmount(amount, currency));
+	const preview = $derived(previewSplit(draft, amountMinor ?? 0, currency));
+	const splitValid = $derived(amountMinor !== null && preview.result?.ok === true);
+	const valid = $derived(splitValid && description.trim() !== '' && date !== '');
+	const byId = $derived(new Map(people.map((person) => [person.id, person])));
+
+	/** "Billa" finds "Wocheneinkauf · Billa": matched anywhere in the words [9b-suggest]. */
+	const matches = $derived.by(() => {
+		const query = description.trim().toLocaleLowerCase();
+		if (!describing || query.length < 1) return [];
+		return suggestions
+			.filter(
+				(suggestion) =>
+					suggestion.description.toLocaleLowerCase().includes(query) &&
+					suggestion.description !== description
+			)
+			.slice(0, 4);
+	});
+
+	/** The description's history proposes a category until you pick one yourself. */
+	$effect(() => {
+		const text = description.trim().toLocaleLowerCase();
+		if (untrack(() => categoryChosen)) return;
+		const known = suggestions.find(
+			(suggestion) => suggestion.description.toLocaleLowerCase() === text
+		);
+		category = known?.category ?? null;
+	});
+
+	const summary = $derived.by(() => {
+		if (!splitValid && amountMinor !== null) return m.expenses.summary.invalid;
+		const members = people.filter((person) => person.memberId !== null);
+		const everyone =
+			draft.inIds.length === members.length &&
+			members.every((person) => draft.inIds.includes(person.id));
+		const who = everyone
+			? m.expenses.summary.everyone
+			: m.expenses.summary.people(draft.inIds.length);
+		if (draft.mode === 'equal') {
+			const each = preview.result?.ok ? (preview.result.shares[0]?.shareMinor ?? 0) : 0;
+			return m.expenses.summary.equal(who, money(each));
+		}
+		if (draft.mode === 'amounts') return m.expenses.summary.amounts(who);
+		const parts = m.expenses.summary.parts(
+			draft.inIds.map((id) => ({
+				name: byId.get(id)?.name ?? '?',
+				value: (draft.inputs[id] ?? '').trim() || '1'
+			}))
+		);
+		return draft.mode === 'percent'
+			? m.expenses.summary.percent(parts)
+			: m.expenses.summary.shares(parts);
+	});
+
+	const splitJson = $derived(JSON.stringify(draftRows(draft, currency) ?? []));
+
+	/**
+	 * A picked suggestion settles the category the way a tapped chip does, so
+	 * adding " + drinks" to "Weekly shop · Billa" keeps it under Groceries.
+	 */
+	function pick(suggestion: { description: string; category: ExpenseCategory }) {
+		description = suggestion.description;
+		if (!categoryChosen) {
+			category = suggestion.category;
+			categoryChosen = true;
+		}
+		describing = false;
+	}
+
+	const uid = $props.id();
+</script>
+
+<BottomSheet
+	bind:open
+	title={series ? m.expenses.form.editSeries : item ? m.expenses.form.edit : m.expenses.form.new}
+>
+	<form
+		method="POST"
+		action={series ? '?/saveSeries' : '?/save'}
+		use:enhance={() => {
+			submitting = true;
+			error = undefined;
+			return async ({ result, update }) => {
+				await update({ reset: false });
+				submitting = false;
+				if (result.type === 'failure') {
+					error = typeof result.data?.error === 'string' ? result.data.error : undefined;
+					return;
+				}
+				if (result.type === 'success') open = false;
+			};
+		}}
+	>
+		{#if source}<input type="hidden" name="id" value={source.id} />{/if}
+
+		<div class="what">
+			<ExpenseSentence
+				bind:amount
+				bind:description
+				bind:paidById
+				{people}
+				{me}
+				{currency}
+				autofocus={!source}
+				describe={{
+					onfocus: () => (describing = true),
+					oninput: () => (describing = true),
+					onblur: () => setTimeout(() => (describing = false), 150)
+				}}
+			/>
+			{#if matches.length > 0}
+				<ul class="suggestions" aria-label={m.expenses.form.suggestions}>
+					{#each matches as suggestion (suggestion.description)}
+						<li>
+							<button
+								type="button"
+								onmousedown={(event) => event.preventDefault()}
+								onclick={() => pick(suggestion)}
+							>
+								<CategoryIcon category={suggestion.category} size={28} />
+								<span>{suggestion.description}</span>
+							</button>
+						</li>
+					{/each}
+				</ul>
+			{/if}
+		</div>
+
+		<p class="label" id="{uid}-category">{m.expenses.form.category}</p>
+		<div class="chips scroll" role="group" aria-labelledby="{uid}-category">
+			{#each EXPENSE_CATEGORIES as key (key)}
+				<Chip
+					selected={(category ?? 'other') === key}
+					onclick={() => {
+						category = key;
+						categoryChosen = true;
+					}}
+				>
+					<CategoryIcon category={key} size={15} bare />
+					{m.expenses.categories[key]}
+				</Chip>
+			{/each}
+		</div>
+		<input type="hidden" name="category" value={category ?? 'other'} />
+
+		<div class="group">
+			<button type="button" class="row" onclick={() => (splitting = true)}>
+				<Percent size={17} strokeWidth={1.8} aria-hidden="true" />
+				<span class="row-label">{m.expenses.form.split}</span>
+				<span class="row-value" class:invalid={!splitValid && amountMinor !== null}>{summary}</span>
+				<ChevronRight size={16} strokeWidth={2} aria-hidden="true" />
+			</button>
+			<DateRow
+				bind:value={date}
+				{today}
+				name={series ? 'nextDate' : 'date'}
+				upcoming={series !== null}
+				min={series && series.nextDate < today ? series.nextDate : today}
+			/>
+			{#if repeatable}
+				<RepeatRow initial={repeat} name={series ? 'unit' : 'repeat'} never={!series} />
+			{/if}
+		</div>
+		<input type="hidden" name="splitMode" value={draft.mode} />
+		<input type="hidden" name="split" value={splitJson} />
+
+		{#if error}<p class="error" role="alert">{error}</p>{/if}
+
+		<Button type="submit" disabled={!valid || submitting}>
+			{source ? m.common.saveChanges : m.expenses.form.save}
+		</Button>
+	</form>
+
+	{#if item}
+		<DeleteExpenseForm
+			id={item.id}
+			label={m.expenses.form.delete}
+			{ondeleted}
+			ondone={() => (open = false)}
+		/>
+	{/if}
+</BottomSheet>
+
+{#if splitting}
+	<SplitSheet
+		{people}
+		payerId={paidById}
+		amountMinor={amountMinor ?? 0}
+		{currency}
+		{draft}
+		subtitle={m.expenses.split.subtitle(money(amountMinor ?? 0), description.trim())}
+		ondone={(next) => (draft = next)}
+		onclose={() => (splitting = false)}
+	/>
+{/if}
+
+<style>
+	form {
+		display: flex;
+		flex-direction: column;
+	}
+
+	.label {
+		margin: 18px 0 8px;
+		font-size: var(--fs-13);
+		font-weight: 700;
+		letter-spacing: 0.12em;
+		text-transform: uppercase;
+		color: var(--text-5);
+	}
+
+	.what {
+		position: relative;
+	}
+
+	.suggestions {
+		margin: 6px 0 0;
+		padding: 4px;
+		list-style: none;
+		border: 1px solid var(--border);
+		border-radius: var(--r-input);
+		background: var(--card);
+	}
+
+	.suggestions button {
+		display: flex;
+		align-items: center;
+		gap: 10px;
+		width: 100%;
+		padding: 8px;
+		border-radius: 10px;
+		font-size: var(--fs-16);
+		font-weight: 600;
+		text-align: left;
+		color: var(--ink);
+	}
+
+	.suggestions button:hover,
+	.suggestions button:focus-visible {
+		background: var(--sunken);
+	}
+
+	.chips {
+		display: flex;
+		flex-wrap: wrap;
+		gap: 8px;
+	}
+
+	/* The categories scroll sideways so the sheet never has to [9b]. */
+	.scroll {
+		flex-wrap: nowrap;
+		margin: 0 calc(-1 * var(--page-pad));
+		padding: 0 var(--page-pad) 2px;
+		overflow-x: auto;
+		scrollbar-width: none;
+	}
+
+	.scroll::-webkit-scrollbar {
+		display: none;
+	}
+
+	.scroll :global(button) {
+		flex: none;
+	}
+
+	.group {
+		margin: 20px 0 16px;
+		border: 1px solid var(--border);
+		border-radius: var(--r-block);
+		background: var(--card);
+	}
+
+	.group > :global(* + *) {
+		border-top: 1px solid var(--divider-sheet);
+	}
+
+	.row {
+		display: flex;
+		align-items: center;
+		gap: 12px;
+		width: 100%;
+		padding: 13px 16px;
+		color: var(--text-3);
+		text-align: left;
+	}
+
+	.row-label {
+		flex: none;
+		font-size: var(--fs-16);
+		font-weight: 600;
+		color: var(--ink);
+	}
+
+	/* Up to two lines, so the amount at its end ("je € 15,00") is never the part
+	   that is cut off; the split sheet has the rest. */
+	.row-value {
+		flex: 1;
+		min-width: 0;
+		display: -webkit-box;
+		overflow: hidden;
+		-webkit-box-orient: vertical;
+		-webkit-line-clamp: 2;
+		line-clamp: 2;
+		font-size: var(--fs-15);
+		text-align: right;
+		color: var(--text-4);
+		font-variant-numeric: tabular-nums;
+	}
+
+	.row-value.invalid {
+		color: var(--danger);
+	}
+
+	.error {
+		margin: 0 0 12px;
+		padding: 10px 14px;
+		border-radius: var(--r-input);
+		background: var(--danger-tint);
+		font-size: var(--fs-15);
+		color: var(--danger);
+	}
+</style>

@@ -31,8 +31,10 @@ import {
 	type CalendarDate
 } from '$lib/utils/dates';
 import { INTL_LOCALE } from '$lib/i18n/locale';
+import type { RepeatUnit } from '$lib/utils/expenses';
 import type { HolidayKey } from '$lib/utils/holidays';
 import { formatAmount, formatIngredient } from '$lib/utils/ingredients';
+import { currencyAfter, currencySymbol, formatMoney } from '$lib/utils/money';
 import type { MealSlot } from '$lib/utils/meals';
 import { formatQuantity, type UnitLabels } from '$lib/utils/shopping';
 import type { RecurUnit } from '$lib/utils/tasks';
@@ -46,8 +48,38 @@ import type { RecurUnit } from '$lib/utils/tasks';
  */
 export type RichText = readonly { text: string; strong?: boolean }[];
 
+/**
+ * A sentence with form fields inside it [10b]: the words, in the language's
+ * order, and where each field sits between them.
+ */
+export type SentencePart = string | { field: 'payer' | 'amount' | 'what' };
+
 /** Bound into every date wrapper below, so a screen never passes a language. */
 const L = 'en';
+
+const COUNTS = [
+	'zero',
+	'one',
+	'two',
+	'three',
+	'four',
+	'five',
+	'six',
+	'seven',
+	'eight',
+	'nine',
+	'ten'
+];
+
+/**
+ * Who a balance sentence is about [10a]: named up to three ("Elisabeth and
+ * Marco"), counted from four ("Four people"), capitalised when it opens one.
+ */
+function people(names: string[], start: boolean): string {
+	if (names.length < 4) return list(names);
+	const count = COUNTS[names.length] ?? String(names.length);
+	return `${start ? count[0].toUpperCase() + count.slice(1) : count} people`;
+}
 
 /**
  * Units are stored canonically ('pcs', 'tbsp') and shown per language, so
@@ -99,6 +131,13 @@ function list(items: string[]): string {
  * there is still time today, "tomorrow", else the weekday. Never a bare date —
  * the notice never runs more than three days, so a weekday can't be ambiguous.
  */
+/** "1st", "2nd", "3rd", "11th", "22nd" — a day of the month said the English way. */
+function ordinal(day: number): string {
+	const teen = day % 100 >= 11 && day % 100 <= 13;
+	const suffix = teen ? 'th' : (['th', 'st', 'nd', 'rd'][day % 10] ?? 'th');
+	return `${day}${suffix}`;
+}
+
 function shoppingDay(lastOpenDay: CalendarDate, today: CalendarDate): string {
 	const days = daysBetween(today, lastOpenDay);
 	if (days <= 0) return 'today';
@@ -152,7 +191,7 @@ export const en = {
 			amber: 'Amber',
 			plum: 'Plum'
 		},
-		colourTaken: (colour: string) => `${colour} — already taken`
+		colourTaken: (colour: string) => `${colour}, already taken`
 	},
 
 	/* ── The tab bar [02] ──────────────────────────────────────────────────── */
@@ -161,6 +200,7 @@ export const en = {
 		shopping: 'Shopping',
 		tasks: 'Tasks',
 		cooking: 'Cooking',
+		expenses: 'Expenses',
 		/** The tab bar itself, for a screen reader's landmark list. */
 		sections: 'Sections',
 		/** The Tasks tab's overdue badge, read out rather than seen. */
@@ -373,7 +413,7 @@ export const en = {
 
 		empty: {
 			title: 'Nothing to buy yet',
-			copy: "Add items as you run out — they'll be grouped by store for whoever does the shopping.",
+			copy: "Add items as you run out. They'll be grouped by store for whoever does the shopping.",
 			cta: 'Add first item'
 		},
 
@@ -474,13 +514,13 @@ export const en = {
 			moveUp: (store: string) => `Move ${store} up`,
 			moveDown: (store: string) => `Move ${store} down`,
 			remove: (store: string) => `Delete ${store}`,
-			help: 'Use the arrows to reorder — your list follows this order, so arrange it the way you walk through town. Quick-added items land in the first store; items without a store go under “Other”.',
+			help: 'Use the arrows to reorder. Your list follows this order, so arrange it the way you walk through town. Quick-added items land in the first store; items without a store go under “Other”.',
 			deleteLabel: 'Delete store',
 			deleteConfirm: (store: string) => `Delete ${store}?`,
 			deleteMoves: (count: number) =>
 				count === 1
-					? 'Its 1 item moves to “Other” — nothing falls off the list.'
-					: `Its ${count} items move to “Other” — nothing falls off the list.`,
+					? 'Its 1 item moves to “Other”, so nothing falls off the list.'
+					: `Its ${count} items move to “Other”, so nothing falls off the list.`,
 			deleteEmpty: 'Nothing is filed under it, so nothing else changes.',
 			/**
 			 * The three stores a new household starts with (→ SPEC §3.4). Written
@@ -623,14 +663,14 @@ export const en = {
 		awayBanner: {
 			mine: (until: string) => `You're away until ${until}`,
 			other: (name: string, until: string) => `${name} is away until ${until}`,
-			detailMine: 'Your tasks are paused — nothing counts as overdue',
-			detailOther: 'Their tasks are paused — nothing counts as overdue'
+			detailMine: 'Your tasks are paused, nothing counts as overdue',
+			detailOther: 'Their tasks are paused, nothing counts as overdue'
 		},
 
 		/** The brand-new household [7f]. */
 		empty: {
 			title: 'No tasks yet',
-			copy: 'Add the chores you both forget — earn points when you tick them off. Start with a few?',
+			copy: 'Add the chores you both forget and earn points when you tick them off. Start with a few?',
 			starters: 'Popular starters',
 			custom: 'Create a custom task'
 		},
@@ -643,7 +683,7 @@ export const en = {
 			addedBy: (name: string) => `added by ${name}`,
 			/** The tick's label — it says what it will do, and to whose chore. */
 			markDone: (task: string) => `Mark ${task} done`,
-			markDoneFor: (task: string, assignee: string) => `Mark ${task} done — it's ${assignee}'s`,
+			markDoneFor: (task: string, assignee: string) => `Mark ${task} done (it's ${assignee}'s)`,
 			/** The rest of the card opens the detail sheet [4b]. */
 			open: (task: string) => `Open ${task}`
 		},
@@ -653,7 +693,7 @@ export const en = {
 			wasDue: (date: string) => `was due ${date}`,
 			pts: (points: number) => `${points} pts`,
 			pausedNote: (name: string, until: string) =>
-				`${name} is away until ${until} — this one is paused, not overdue.`,
+				`${name} is away until ${until}, so this one is paused, not overdue.`,
 			markAsDone: (points: number) => `Mark as done · +${points}`,
 			snooze: 'Snooze / reschedule',
 			/** The roster, minus whoever has it (→ SPEC §5.3). */
@@ -667,7 +707,7 @@ export const en = {
 			delete: 'Delete task',
 			deleteConfirm: (task: string) => `Delete ${task}?`,
 			deleteCopy:
-				'It stops coming round. Everything already ticked off stays in history — the points stay with the house.'
+				'It stops coming round. Everything already ticked off stays in history, and the points stay with the house.'
 		},
 
 		/** The celebration [4d]. */
@@ -757,7 +797,7 @@ export const en = {
 		historyScreen: {
 			emptyTitle: 'Nothing done yet',
 			emptyCopy:
-				'Tick a task off and it lands here — what it was, who did it, and what it was worth.',
+				'Tick a task off and it lands here: what it was, who did it, and what it was worth.',
 			backToHistory: 'Back to history',
 			/** A month somebody paged into that turned out to hold nothing. */
 			emptyStretch: 'Nothing was completed in this stretch.',
@@ -874,8 +914,8 @@ export const en = {
 			title: 'Which day?',
 			eyebrow: 'Add to plan',
 			free: 'Free',
-			/** The row read out: "Thursday 17 — free". */
-			day: (weekday: string, day: string, meal: string) => `${weekday} ${day} — ${meal}`,
+			/** The row read out: "Thursday 17: free". */
+			day: (weekday: string, day: string, meal: string) => `${weekday} ${day}: ${meal}`,
 			freeQuiet: 'free',
 			/** What a day already holds, on one line: "Pancakes · Pizza". */
 			mealList: (names: string[]) => names.join(' · ')
@@ -887,9 +927,9 @@ export const en = {
 			searchRecipes: 'Search your recipes',
 			/** The radio group of recipes, named for a screen reader. */
 			recipeGroup: 'Recipe',
-			noMatch: 'No recipe by that name — cook something not saved instead?',
-			moreMatches: (count: number) => `${count} more match — keep typing to narrow it down.`,
-			mostRecent: (rest: number) => `Your most recent — search to reach the other ${rest}.`,
+			noMatch: 'No recipe by that name. Cook something not saved instead?',
+			moreMatches: (count: number) => `${count} more match. Keep typing to narrow it down.`,
+			mostRecent: (rest: number) => `Your most recent. Search to reach the other ${rest}.`,
 			notSaved: 'Cook something not saved',
 			notSavedPlaceholder: 'Pizza night',
 			/** The chips above: which meal of that day this one is (→ #126). */
@@ -954,8 +994,8 @@ export const en = {
 			steps: 'Steps',
 			startCookMode: 'Start cook mode',
 			/** Split so the middle run can be the link to the edit screen. */
-			noStepsLead: 'No steps written down yet — ',
-			noStepsLink: 'add them',
+			noStepsLead: 'No steps written down yet. ',
+			noStepsLink: 'Add them',
 			noStepsRest: ' and cook mode can walk you through it.'
 		},
 
@@ -995,12 +1035,12 @@ export const en = {
 			 * and points at the sheet for the times it reads a line wrong.
 			 */
 			ingredientsNote: (units: string) =>
-				`Write them however you like — “400 g pasta”, “2 eggs”, “salt”. Units we know: ${units}. Tap an amount to set the number and unit yourself.`,
+				`Write them however you like: “400 g pasta”, “2 eggs”, “salt”. Units we know: ${units}. Tap an amount to set the number and unit yourself.`,
 			/**
 			 * The chip beside each row. No row number: the input beside it already
 			 * announces "Ingredient 3", and this is its description.
 			 */
-			amountLabel: (amount: string) => (amount ? `${amount} — edit` : 'No amount — add one'),
+			amountLabel: (amount: string) => (amount ? `${amount}, edit` : 'No amount, add one'),
 			/** The row taken apart [3c], with [3a]'s unit list. */
 			ingredientNamePlaceholder: 'pasta',
 			quantity: 'Amount',
@@ -1041,7 +1081,7 @@ export const en = {
 			/** The amount field left empty means the row's whole amount. */
 			usesAll: 'all',
 			usesBackToAuto: 'Read the step text instead',
-			usesEmpty: 'Add the ingredients first — then you can say which ones this step needs.',
+			usesEmpty: 'Add the ingredients first, then you can say which ones this step needs.',
 
 			/**
 			 * A step's own timer [3c] (→ plan 21, DECISIONS #147). The chip under a
@@ -1085,7 +1125,7 @@ export const en = {
 			have: (amount: string) =>
 				amount ? `Already on the list · ${amount}` : 'Already on the list',
 			/** Under a row whose amount will be added to one already there. */
-			merge: (amount: string) => `On the list already — becomes ${amount}`,
+			merge: (amount: string) => `On the list already, becomes ${amount}`,
 			/** Why a row opens unticked (→ `services/pantry`). */
 			staple: 'You usually have this',
 			submit: (count: number) => (count === 1 ? 'Add 1 to the list' : `Add ${count} to the list`),
@@ -1127,7 +1167,7 @@ export const en = {
 			finish: 'Finish',
 			eyebrow: 'Cook mode',
 			noSteps:
-				'This recipe has no steps written down yet — add them and cook mode can walk you through it.',
+				'This recipe has no steps written down yet. Add them and cook mode can walk you through it.',
 			addSteps: 'Add the steps',
 
 			/** The ingredients peek [7b]. */
@@ -1168,7 +1208,7 @@ export const en = {
 			paused: '(paused)',
 			barDone: (label: string) => `${label} is done`,
 			barRunning: (label: string, remaining: string) => `${label}, ${remaining} left`,
-			barBackTo: (step: number) => ` — back to step ${step}`,
+			barBackTo: (step: number) => `, back to step ${step}`,
 			/** The default label a timer with no step at all gets. */
 			defaultTimer: 'Timer',
 			/**
@@ -1183,9 +1223,9 @@ export const en = {
 			timerCancelOne: (label: string) => `Cancel ${label}`,
 			/** At the cap the Start chip stands down and says why (→ DECISIONS #102). */
 			timerCapped: (max: number) =>
-				`${max} timers at once is the limit — stop one before you start another.`,
+				`${max} timers at once is the limit. Stop one before you start another.`,
 			/** No service worker, so the alarm can only fire while this tab lives. */
-			offline: 'Offline — this one will only ring while the app is open.',
+			offline: 'Offline: this one will only ring while the app is open.',
 			timerFailed: "That timer wouldn't start."
 		},
 
@@ -1198,7 +1238,7 @@ export const en = {
 			running: (label: string, remaining: string) => `${label}, ${remaining} left`,
 			done: (label: string) => `${label} is done`,
 			/** Always said, so it is clear the row goes somewhere. */
-			backTo: ' — back to cooking',
+			backTo: ', back to cooking',
 			/** "+2" beside the soonest, when more than one is running. */
 			more: (count: number) => `+${count}`,
 			/** The same count, spelled out for the row's label. */
@@ -1226,13 +1266,13 @@ export const en = {
 
 			/** The typed fetch failures — one message each (→ server/recipe-import.ts). */
 			error: {
-				invalidUrl: 'That doesn’t look like a web address — paste the recipe’s link.',
+				invalidUrl: 'That doesn’t look like a web address. Paste the recipe’s link.',
 				blocked: 'That link can’t be opened from here. Try the recipe’s public web address.',
-				unreachable: 'Couldn’t reach that page — check the link and your connection.',
+				unreachable: 'Couldn’t reach that page. Check the link and your connection.',
 				refused:
 					'That site doesn’t let apps read its recipes. Open it in your browser and copy the recipe from there.',
 				notHtml: 'That link isn’t a web page. Paste the recipe’s page, not a file or an image.',
-				tooLarge: 'That page is too big to read — try a direct link to the recipe.',
+				tooLarge: 'That page is too big to read. Try a direct link to the recipe.',
 				noRecipe: 'No recipe data on that page.'
 			},
 
@@ -1240,16 +1280,16 @@ export const en = {
 			 *  or photos, and improve a page's own recipe card. Only offered when the
 			 *  household has an AI provider set up (→ SPEC §4.7). */
 			ai: {
-				note: 'Made with AI — check it over before saving.',
+				note: 'Made with AI. Check it over before saving.',
 				/** The line typed for this import, quoted back on the draft it shaped. */
 				adapted: (instructions: string) => `Adapted: “${instructions}”.`,
 				/** A recipe card the model couldn't improve still opens, as the site wrote it. */
-				withoutAi: (reason: string) => `Imported as the site wrote it — ${reason}`,
+				withoutAi: (reason: string) => `Imported as the site wrote it: ${reason}`,
 
 				/** The link screen's toggle (→ plan 22) and the line under it. */
 				improve: 'Improve with AI',
 				improveHint:
-					'Sorts out amounts, links ingredients to their steps and sets timers — and reads pages without recipe data. Uses your AI provider.',
+					'Sorts out amounts, links ingredients to their steps and sets timers. It also reads pages without recipe data. Uses your AI provider.',
 				instructionsToggle: 'Add instructions for the AI',
 				instructionsLabel: 'Instructions for the AI',
 				instructionsPlaceholder: 'e.g. with tofu instead of meat, for 2 people',
@@ -1268,7 +1308,7 @@ export const en = {
 				],
 				pasteToggle: 'Paste the recipe text instead',
 				pasteLabel: 'Recipe text',
-				pastePlaceholder: 'Paste the whole recipe — ingredients and steps.',
+				pastePlaceholder: 'Paste the whole recipe, ingredients and steps.',
 				pasteSubmit: 'Extract recipe',
 				photoToggle: 'Import from a photo',
 				photoLabel: 'Photos of the recipe',
@@ -1287,10 +1327,448 @@ export const en = {
 					`${main} couldn’t answer, so your backup (${backup}) did.`,
 				/** Provider failures are `ai.error.*`; these two are the import's own. */
 				error: {
-					noRecipe: 'Couldn’t find a recipe in that — try clearer photos or more complete text.',
+					noRecipe: 'Couldn’t find a recipe in that. Try clearer photos or more complete text.',
 					noPhotos: 'Add at least one photo of the recipe.'
 				}
 			}
+		}
+	},
+
+	/* ── Expenses [9a]–[9g] (→ SPEC §11) ───────────────────────────────────── */
+	/*
+	 * A person is passed as their name, or as `null` when it is the reader —
+	 * "Elisabeth → you", "You owe Marco" — because who "you" is changes the
+	 * sentence, not just a word in it, and German changes it differently.
+	 */
+	expenses: {
+		title: 'Expenses',
+		/** The header's ••• [9a-owe]. */
+		menu: {
+			label: 'More',
+			allActivity: 'All activity',
+			settings: 'Expense settings',
+			/** The series [9h], with how many are running in brackets after it. */
+			recurring: (count: number) => (count > 0 ? `Recurring (${count})` : 'Recurring')
+		},
+		/** Amounts are the household currency, written the reader's way: "€24.50". */
+		money: (minor: number, currency: string) => formatMoney(minor, currency, INTL_LOCALE[L]),
+		/** The currency's mark beside the amount field [9b]. */
+		symbol: (currency: string) => currencySymbol(currency, INTL_LOCALE[L]),
+		/** …and which side of it: after for "12,50 €", before for "€ 12,50". */
+		symbolAfter: (currency: string) => currencyAfter(currency, INTL_LOCALE[L]),
+		/** Whether amounts are typed back as "24,50" rather than "24.50". */
+		decimalComma: false,
+
+		/** The balance card [9a]. */
+		balance: {
+			/**
+			 * The card's sentence [10a]: "Elisabeth owes you €24.50", "Elisabeth and
+			 * Marco owe you €41.30" — and from four people on it counts, "Four
+			 * people owe you €81.30". The amount is the emphasised run.
+			 */
+			owedBy: (names: string[], amount: string): RichText => [
+				{ text: `${people(names, true)} ${names.length === 1 ? 'owes' : 'owe'} you ` },
+				{ text: amount, strong: true }
+			],
+			/** "You owe Marco €12.00" · "You owe Elisabeth and Marco €32.40" · "You owe four people …". */
+			youOwe: (names: string[], amount: string): RichText => [
+				{ text: `You owe ${people(names, false)} ` },
+				{ text: amount, strong: true }
+			],
+			/**
+			 * A payment between two others, under the sentence: "Elisabeth also owes
+			 * Marco €8.40" — no "also" when the reader is square themselves.
+			 */
+			between: (from: string, to: string, amount: string, also: boolean): RichText => [
+				{ text: `${from} ${also ? 'also ' : ''}owes ${to} ` },
+				{ text: amount, strong: true }
+			],
+			settled: 'All settled up',
+			settledDetail: 'Nobody owes anybody anything.',
+			/** One person owes you: they paid you outside the app [10a]. */
+			markPaid: 'Mark as paid',
+			remind: 'Remind',
+			remindEveryone: 'Remind everyone',
+			reminded: 'Reminded',
+			/**
+			 * Nobody it was meant for will hear the nudge (→ SPEC §11.11): expense
+			 * notifications switched off, or never set up on a device.
+			 */
+			remindOff: (name: string | null) =>
+				name
+					? `${name} hasn’t turned on expense notifications.`
+					: 'Nobody in your household has expense notifications turned on.',
+			remindLabel: (name: string) => `Remind ${name}`,
+			/**
+			 * You owe one person; and every row of several, owed or owing
+			 * [10a · 2] [10a · 3] — one verb for "this payment happened".
+			 */
+			settleUp: 'Settle up',
+			/** Four or more rows: the two largest show until this [10a · 4]. */
+			showMore: (count: number) => `Show ${count} more`,
+			showLess: 'Show less',
+			/** The button, read out with the line it settles. */
+			settleLabel: (action: string, line: string) => `${action}: ${line}`,
+			/** The line, read out whole. */
+			lineLabel: (from: string | null, to: string | null, amount: string) =>
+				from === null
+					? `You pay ${to} ${amount}`
+					: to === null
+						? `${from} pays you ${amount}`
+						: `${from} pays ${to} ${amount}`
+		},
+
+		recent: 'Recent',
+		allActivity: 'All activity',
+		add: 'Add expense',
+
+		/** A row in Recent and All activity [9a] [9f]. */
+		row: {
+			paid: (who: string | null, amount: string) => `${who ?? 'You'} paid ${amount}`,
+			/** History by month [9f], where no heading names the day: "Lukas paid €42.10 · Oct 28". */
+			paidOn: (who: string | null, amount: string, day: string) =>
+				`${who ?? 'You'} paid ${amount} · ${day}`,
+			lent: 'you lent',
+			borrowed: 'you borrowed',
+			notInvolved: 'not involved',
+			/** Paid by you, for you alone. */
+			justYou: 'just you',
+			/** A payment's title: "Elisabeth paid Lukas €18.00". */
+			payment: (from: string | null, to: string | null, amount: string) =>
+				`${from ?? 'You'} paid ${to ?? 'you'} ${amount}`,
+			paymentMeta: (when: string) => `Payment · ${when}`,
+			paymentPlain: 'Payment',
+			repeats: 'Repeats'
+		},
+
+		/** [9g] */
+		empty: {
+			title: 'Nothing to split yet',
+			copy: 'Log the weekly shop, the rent, the pizza. Choreganized keeps the tally.',
+			add: 'Add an expense'
+		},
+
+		/** Add / edit [9b]. */
+		form: {
+			new: 'Add expense',
+			edit: 'Edit expense',
+			amount: 'Amount',
+			whatFor: 'What for?',
+			whatForPlaceholder: 'Weekly shop, rent, pizza…',
+			/**
+			 * Who paid, the amount and the description as one sentence [10b]: "You ⌄
+			 * paid €42.10 for what?". Words between the fields; the language decides
+			 * where they sit (German puts the verb last). `you` is whether the payer
+			 * picked is the reader, for the verb's agreement.
+			 */
+			sentence: (you: boolean): SentencePart[] => [
+				{ field: 'payer' },
+				'paid',
+				{ field: 'amount' },
+				'for',
+				{ field: 'what' }
+			],
+			/** The reader among the payer picker's names. */
+			payerYou: 'You',
+			/** The description's placeholder inside the sentence. */
+			whatPlaceholder: 'what?',
+			suggestions: 'Past expenses',
+			category: 'Category',
+			paidBy: 'Paid by',
+			you: 'you',
+			split: 'Split',
+			date: 'Date',
+			today: 'Today',
+			save: 'Save',
+			delete: 'Delete expense',
+			/** The Repeats row [9b] (→ SPEC §11.9), and its choices. */
+			repeats: 'Repeats',
+			never: 'Never',
+			/**
+			 * A series' cadence: "Weekly", "Quarterly", "Every 2 months". The
+			 * every-one cadences and the quarter get their own word; the rest count.
+			 */
+			repeat: (unit: RepeatUnit, interval: number) => {
+				if (interval === 1)
+					return unit === 'week' ? 'Weekly' : unit === 'month' ? 'Monthly' : 'Yearly';
+				if (unit === 'month' && interval === 3) return 'Quarterly';
+				return `Every ${interval} ${unit}s`;
+			},
+			/** The choice that reveals the count + unit pair, as a chore's repeat does. */
+			repeatCustom: 'Custom…',
+			every: 'Every',
+			unit: 'Unit',
+			/** The custom row's unit dropdown, agreeing with the count before it. */
+			units: (unit: RepeatUnit, count: number) => (count === 1 ? unit : `${unit}s`),
+			/** The sheet when it edits a series [9h-stop]: the date row names the next one. */
+			editSeries: 'Edit series',
+			nextOne: 'Next one'
+		},
+
+		/** The split row's summary in [9b]: "Equally · everyone · €21.05 each". */
+		summary: {
+			everyone: 'everyone',
+			people: (count: number) => (count === 1 ? '1 person' : `${count} people`),
+			equal: (who: string, each: string) => `Equally · ${who} · ${each}\u00a0each`,
+			amounts: (who: string) => `Amounts · ${who}`,
+			/** "Lukas 30 · Elisabeth 70". */
+			parts: (parts: { name: string; value: string }[]) =>
+				parts.map(({ name, value }) => `${name} ${value}`).join(' · '),
+			percent: (parts: string) => `By % · ${parts}`,
+			shares: (parts: string) => `By shares · ${parts}`,
+			invalid: 'Doesn’t add up yet'
+		},
+
+		/** [9c] */
+		split: {
+			title: 'Split',
+			defaultTitle: 'Default split',
+			subtitle: (amount: string, what: string) => (what ? `${amount} · ${what}` : amount),
+			mode: 'How to split',
+			modes: {
+				equal: 'Equally',
+				amounts: 'Amounts',
+				percent: '%',
+				shares: 'Shares'
+			},
+			paid: 'paid',
+			notIn: 'not in',
+			include: (name: string) => `${name} is in this`,
+			input: (name: string) => `${name}’s part`,
+			left: (amount: string) => `${amount} left to assign`,
+			over: (amount: string) => `${amount} too much`,
+			ofTotal: (sum: string, total: string) => `${sum} of ${total}`,
+			addsUp: 'Adds up',
+			percentOk: 'Adds up to 100%',
+			percentLeft: (percent: string) => `${percent}% left`,
+			percentOver: (percent: string) => `${percent}% too much`,
+			sharesTotal: (count: number) => (count === 1 ? '1 share in all' : `${count} shares in all`),
+			nobody: 'Pick at least one person.',
+			done: 'Done',
+			makeDefault: 'Make this the household default',
+			defaultSaved: (parts: string) => `New expenses will start split ${parts}.`,
+			defaultEqual: 'New expenses will start split equally between everyone.',
+			/** A member who joined after a % or shares default was set (→ SPEC §11.5). */
+			notInDefault: (name: string) => `${name} isn’t part of the default split.`
+		},
+
+		/** [9d] */
+		settle: {
+			title: 'Settle up',
+			edit: 'Edit payment',
+			from: 'From',
+			to: 'To',
+			/** The reader in the From / To pickers: their own name, marked — one form that fits both slots. */
+			me: (name: string) => `${name} (you)`,
+			owes: (from: string | null, to: string | null, amount: string) =>
+				`${from ?? 'You'} ${from === null ? 'owe' : 'owes'} ${to ?? 'you'} ${amount} · lower it for a partial payment`,
+			record: 'Record payment',
+			delete: 'Delete payment'
+		},
+
+		/** [9e] */
+		detail: {
+			back: 'Back to expenses',
+			edit: 'Edit',
+			payment: 'Payment',
+			meta: (category: string, date: string) => `${category} · ${date}`,
+			/** "Monday, Oct 26" — the weekday and the date, joined the language's way. */
+			dateLine: (weekday: string, date: string) => `${weekday}, ${date}`,
+			/** "Added by Lukas · Oct 26, 19:00" — a day and a clock time. */
+			stamp: (day: string, time: string) => `${day}, ${time}`,
+			paidBy: 'Paid by',
+			shares: (how: string) => `Shares · ${how}`,
+			how: {
+				equal: 'split equally',
+				amounts: 'split by amounts',
+				percent: 'split by %',
+				shares: 'split by shares'
+			},
+			you: 'you',
+			formerMember: 'Former member',
+			/** Under a share that isn't the payer's own. */
+			owesFor: (who: string | null, payer: string | null, amount: string) =>
+				who === null
+					? `you owe ${payer} ${amount} for this`
+					: `owes ${payer ?? 'you'} ${amount} for this`,
+			added: (who: string, when: string) => `Added by ${who} · ${when}`,
+			edited: (who: string, when: string) => `Edited by ${who} · ${when}`,
+			someone: 'someone',
+			/** The pill under the date of an expense whose series is running [9e]: "Repeats quarterly". */
+			repeats: (cadence: string) => `Repeats ${cadence.charAt(0).toLowerCase()}${cadence.slice(1)}`,
+			editSeries: 'Edit series'
+		},
+
+		/** Recurring [9h] [9h-stop] (→ SPEC §11.9). */
+		recurring: {
+			title: 'Recurring',
+			back: 'Back to expenses',
+			intro:
+				'Each one is added as a normal expense on its day, at 06:00. Changes here apply to future ones only.',
+			/** A row's second line: "Monthly · next Dec 1", "Every 2 months · next Dec 1". */
+			schedule: (cadence: string, next: string) => `${cadence} · next ${next}`,
+			/** The sheet's subtitle: "€900.00 · Monthly on the 1st · Lukas pays". */
+			summary: (amount: string, rule: string, pays: string) => `${amount} · ${rule} · ${pays}`,
+			rule: {
+				week: (weekday: string, interval: number) =>
+					interval === 1 ? `Every ${weekday}` : `Every ${interval} weeks on ${weekday}`,
+				month: (day: number, interval: number) =>
+					interval === 1
+						? `Monthly on the ${ordinal(day)}`
+						: interval === 3
+							? `Quarterly on the ${ordinal(day)}`
+							: `Every ${interval} months on the ${ordinal(day)}`,
+				year: (date: string, interval: number) =>
+					interval === 1 ? `Yearly on ${date}` : `Every ${interval} years on ${date}`
+			},
+			pays: (who: string | null) => (who === null ? 'you pay' : `${who} pays`),
+			nextOne: 'Next one',
+			editSeries: 'Edit series',
+			editSeriesDetail: 'Only the ones still to come',
+			stop: 'Stop repeating',
+			stopDetail: (count: number) =>
+				count === 0
+					? 'Nothing has been added from it yet'
+					: count === 1
+						? 'The one already added stays as it is'
+						: `The ${count} already added stay as they are`,
+			empty: 'Nothing repeats yet',
+			emptyCopy:
+				'Rent, subscriptions, the internet bill: add an expense and pick how often it “Repeats”, and it logs itself.'
+		},
+
+		/** [9f] */
+		history: {
+			title: 'All activity',
+			back: 'Back to expenses',
+			search: 'Search descriptions',
+			filters: 'Filters',
+			allFilters: 'All filters',
+			clearAll: 'Clear all',
+			/** The × on a set chip. */
+			clear: (filter: string) => `Clear ${filter}`,
+			time: 'Time',
+			ranges: {
+				all: 'All time',
+				thisMonth: 'This month',
+				lastMonth: 'Last month',
+				last3Months: 'Last 3 months',
+				thisYear: 'This year',
+				custom: 'Pick dates'
+			},
+			/** Under each preset in the Time sheet: what it covers, then how it groups. */
+			rangeHint: (covers: string | null, byDay: boolean) =>
+				covers
+					? `${covers} · ${byDay ? 'grouped by day' : 'grouped by month'}`
+					: byDay
+						? 'Grouped by day'
+						: 'Grouped by month',
+			/** The chip once dates are picked: "Oct 3 – Oct 20", "From Oct 3", "Until Oct 20". */
+			customRange: (from: string | null, to: string | null) =>
+				from && to ? `${from} – ${to}` : from ? `From ${from}` : `Until ${to}`,
+			from: 'From',
+			to: 'To',
+			apply: 'Apply',
+			paidBy: 'Paid by',
+			anyPayer: 'Any payer',
+			you: 'You',
+			/** A set payer chip: "Paid by you", "Paid by Elisabeth". */
+			paidByChip: (name: string | null) => `Paid by ${name ?? 'you'}`,
+			category: 'Category',
+			allCategories: 'All categories',
+			/** Settle-ups, the last row of the Category sheet. */
+			paymentsCategory: 'Payments',
+			/** The chip with more than one picked: "Groceries +2". */
+			categoryChip: (first: string, more: number) => (more > 0 ? `${first} +${more}` : first),
+			/** "142 entries" — a mix of expenses and settle-ups. */
+			entries: (count: number) => (count === 1 ? '1 entry' : `${count} entries`),
+			expenses: (count: number) => (count === 1 ? '1 expense' : `${count} expenses`),
+			payments: (count: number) => (count === 1 ? '1 payment' : `${count} payments`),
+			show: (counted: string) => `Show ${counted}`,
+			spent: (amount: string) => `${amount} spent`,
+			/** Under a long list: "Show 52 more". */
+			loadMore: (count: number) => `Show ${count} more`,
+			empty: 'Nothing matches',
+			emptyCopy: 'Try another word, or fewer filters.'
+		},
+
+		/** The fixed list [9b], keyed by `utils/expenses` `EXPENSE_CATEGORIES`. */
+		categories: {
+			groceries: 'Groceries',
+			household: 'Household',
+			bills: 'Rent & bills',
+			eatingOut: 'Eating out',
+			transport: 'Transport',
+			leisure: 'Leisure',
+			travel: 'Travel',
+			other: 'Other'
+		},
+
+		/** The undo bar after a delete (→ SPEC §11.3). */
+		undo: {
+			deleted: (what: string): RichText => [{ text: what, strong: true }, { text: ' deleted' }],
+			payment: 'Payment',
+			action: 'Undo'
+		},
+
+		/** Settings → Expenses, and the tab's "Expense settings" (→ SPEC §11.10). */
+		settings: {
+			row: 'Expenses',
+			title: 'Expenses',
+			currency: 'Currency',
+			currencyLocked: 'Can’t be changed once expenses are added.',
+			ownerOnly: 'Only the owner can change the currency.',
+			defaultSplit: 'Default split',
+			equalEveryone: 'Equally between everyone',
+			saved: 'Saved'
+		},
+
+		/** Home's one line (→ SPEC §11.13). */
+		home: {
+			owed: (amount: string, from: string): RichText => [
+				{ text: 'You’re owed ' },
+				{ text: amount, strong: true },
+				{ text: ` · ${from}` }
+			],
+			owe: (to: string, amount: string): RichText => [
+				{ text: `You owe ${to} ` },
+				{ text: amount, strong: true }
+			]
+		},
+
+		/**
+		 * Leaving or removing someone who is in a recurring expense: those series
+		 * stop (→ SPEC §11.13). Up to three by name; past that, two and a count.
+		 */
+		leaveSeries: (names: string[]) => {
+			const shown = names.length > 3 ? [...names.slice(0, 2), `${names.length - 2} more`] : names;
+			return `${list(shown)} will stop repeating.`;
+		},
+
+		/** Leaving or removing someone who isn't square (→ SPEC §11.13). */
+		leaveBalance: (who: string | null, owes: boolean, amount: string) =>
+			who === null
+				? owes
+					? `You still owe ${amount}. Settle up first?`
+					: `You’re still owed ${amount}. Settle up first?`
+				: owes
+					? `${who} still owes ${amount}. Settle up first?`
+					: `${who} is still owed ${amount}. Settle up first?`,
+
+		errors: {
+			amount: 'Enter an amount above 0.',
+			description: 'Say what it was for.',
+			date: 'The date can’t be in the future.',
+			person: 'Someone here isn’t part of the household.',
+			split: 'The split doesn’t add up.',
+			samePerson: 'Pick two different people.',
+			notFound: 'That expense isn’t there any more.',
+			currency: 'Pick one of the listed currencies.',
+			currencyLocked: 'The currency is fixed once there are expenses.',
+			nextDate: 'The next one can’t be before today.',
+			dateTooOld: 'That date is too long ago. Check the year.',
+			seriesStart: 'A repeating expense can start at most a year ago.',
+			seriesPerson: 'Someone in it has left the household, so it can’t repeat.'
 		}
 	},
 
@@ -1326,7 +1804,7 @@ export const en = {
 			row: 'Language',
 			title: 'Language',
 			system: 'System',
-			systemDetail: (detected: string) => `Follow this device — currently ${detected}`,
+			systemDetail: (detected: string) => `Follow this device, currently ${detected}`,
 			/** The whole document reloads, which is worth saying before it happens. */
 			note: 'Changing the language reloads the app.'
 		},
@@ -1340,7 +1818,7 @@ export const en = {
 			title: 'Appearance',
 			system: 'System',
 			/** Named, so the row isn't asking you to guess what your phone is set to. */
-			systemDetail: (detected: string) => `Follow this device — currently ${detected}`,
+			systemDetail: (detected: string) => `Follow this device, currently ${detected}`,
 			light: 'Light',
 			dark: 'Dark',
 			note: 'This is remembered on this device, so your phone and your laptop can differ.'
@@ -1356,6 +1834,8 @@ export const en = {
 			shoppingUpdatesDetail: 'When a housemate adds to the list',
 			shopClosures: 'Shop closing days',
 			shopClosuresDetail: 'A few days before a holiday shuts the shops',
+			expenses: 'Expenses',
+			expensesDetail: 'When an expense involves you',
 			/** Says the half the switches can't: these are the account, not the phone. */
 			note: 'This applies on every device you switch on below.'
 		},
@@ -1365,14 +1845,14 @@ export const en = {
 			send: 'Send test notification',
 			sending: 'Sending…',
 			notConfigured: 'Push isn’t configured on the server yet.',
-			noDevice: 'No device is subscribed yet — switch it on above.',
-			sentOne: 'Sent to this device — it should arrive in a moment.',
-			sentMany: (count: number) => `Sent to ${count} devices — they should arrive in a moment.`
+			noDevice: 'No device is subscribed yet. Switch it on above.',
+			sentOne: 'Sent to this device. It should arrive in a moment.',
+			sentMany: (count: number) => `Sent to ${count} devices. They should arrive in a moment.`
 		},
 
 		signOut: 'Sign out',
 		signingOut: 'Signing out…',
-		signOutFailed: 'Couldn’t sign out — check your connection and try again.',
+		signOutFailed: 'Couldn’t sign out. Check your connection and try again.',
 
 		/** Your profile [6a]. */
 		profile: {
@@ -1399,7 +1879,7 @@ export const en = {
 			eyebrow: 'Household',
 			what: 'Bring a key from an AI provider to import recipes from photos, pasted text and pages without recipe data.',
 			freeNote:
-				'A free tier (Gemini, or OpenRouter’s free models) is plenty for a household — but free tiers have limits and sometimes stop answering for a while. A backup keeps imports working when that happens.',
+				'A free tier (Gemini, or OpenRouter’s free models) is plenty for a household, but free tiers have limits and sometimes stop answering for a while. A backup keeps imports working when that happens.',
 			primary: 'Main',
 			backup: 'Backup',
 			backupEmpty: 'Answers when the main provider is at its limit or down.',
@@ -1419,7 +1899,7 @@ export const en = {
 				keyLabel: 'API key',
 				keyPlaceholder: 'Paste the key',
 				keyKeep: (hint: string) => `Leave empty to keep ${hint}.`,
-				invalidKey: 'That doesn’t look like an API key — paste the whole key.',
+				invalidKey: 'That doesn’t look like an API key. Paste the whole key.',
 				loadModels: 'Load models',
 				loadingModels: 'Loading models…',
 				modelLabel: 'Model',
@@ -1461,7 +1941,7 @@ export const en = {
 			asWrittenDetail: 'Imported recipes keep the words the site used.',
 			austrian: 'Austrian German',
 			austrianDetail:
-				'Sahne becomes Obers, Quark Topfen, Kartoffeln Erdäpfel — in imported German recipes.',
+				'Sahne becomes Obers, Quark Topfen, Kartoffeln Erdäpfel, in imported German recipes.',
 			note: 'Applies to recipes you import from now on; saved recipes stay as they are. With AI it rewrites the whole recipe; without, the ingredient names.'
 		},
 
@@ -1495,11 +1975,11 @@ export const en = {
 			sending: 'Sending…',
 			/** Said before it is sent, because it goes whether it is read or not. */
 			attached: (version: string) =>
-				`Your words go on a public list on GitHub, along with the app version (${version}), your language and your appearance. Your name and your browser stay in the app — they aren’t published. Write in whichever language you like.`,
+				`Your words go on a public list on GitHub, along with the app version (${version}), your language and your appearance. Your name and your browser stay in the app. They aren’t published. Write in whichever language you like.`,
 			pickKind: 'Pick a bug or an idea.',
 			empty: 'Write a line or two first.',
 			/** Says *saved* first: that is true even when GitHub is unreachable. */
-			thanks: 'Thanks — that’s saved, and on its way to Lukas.'
+			thanks: 'Thanks! That’s saved, and on its way to Lukas.'
 		},
 
 		/** Leave household [6d] — three things to say, one confirm (→ SPEC §7). */
@@ -1511,7 +1991,7 @@ export const en = {
 			goToMembers: 'Go to members',
 			title: (household: string) => `Leave ${household}?`,
 			lastCopy: (household: string) =>
-				`You're the only one here, so leaving deletes ${household} for good — the shopping list, the meal plan, every task and all the points logged so far. This can't be undone.`,
+				`You're the only one here, so leaving deletes ${household} for good: the shopping list, the meal plan, every task and all the points logged so far. This can't be undone.`,
 			copy: "You'll lose access to the shared shopping list, tasks and meal plan. Your points stay with the household.",
 			deleteAndLeave: 'Delete household & leave',
 			failed: "That didn't work. Try again."
@@ -1553,7 +2033,7 @@ export const en = {
 				'They lose access to the shopping list, tasks and meal plan straight away. Anything assigned to them becomes Anyone’s, and every point they’ve scored stays with the house.',
 			ownerConfirm: (name: string) => `Make ${name} the owner?`,
 			ownerCopy:
-				'They’ll be able to rename the household, manage the invite and remove members — including you. You stay a member of the house.',
+				'They’ll be able to rename the household, manage the invite and remove members, including you. You stay a member of the house.',
 			failed: "That didn't work."
 		}
 	},
@@ -1569,8 +2049,51 @@ export const en = {
 		openingGoogle: 'Opening Google…',
 		failed: 'Sign-in didn’t complete. Please try again.',
 		footnote: 'New here? Signing in with Google creates your account.',
+		/** The footnote when email codes are on too (plan 31). */
+		footnoteEmail: 'New here? Signing in creates your account.',
 		/** `/` while the redirect is in flight — a no-JS fallback nobody reads. */
-		redirecting: 'Taking you to Choreganized…'
+		redirecting: 'Taking you to Choreganized…',
+
+		/** Sign in with an emailed code [5a] (plan 31). */
+		email: 'Email',
+		emailPlaceholder: 'you@example.com',
+		sendCode: 'Get a sign-in code',
+		sendingCode: 'Sending…',
+		codeSent: (email: string, minutes: number) =>
+			`We sent a 6-digit code to ${email}. It works for ${minutes} minutes.`,
+		code: 'Code',
+		verifyCode: 'Sign in',
+		verifyingCode: 'Signing in…',
+		/** "Didn't get the code? Send again" under the boxes. */
+		noCode: 'Didn’t get the code?',
+		resendCode: 'Send again',
+		/** The same link while it counts down: "Send again in 0:42" (→ DECISIONS #183). */
+		resendIn: (seconds: number) =>
+			`Send again in ${Math.floor(seconds / 60)}:${String(seconds % 60).padStart(2, '0')}`,
+		codeCooldown: (seconds: number) =>
+			`Wait ${seconds} ${seconds === 1 ? 'second' : 'seconds'} before asking for another code.`,
+		codeHourlyLimit: (minutes: number) =>
+			`That’s enough codes for this address for now. Try again in ${minutes} ${minutes === 1 ? 'minute' : 'minutes'}, or continue with Google.`,
+		codeResent: (email: string, minutes: number) =>
+			`We sent a new code to ${email}. It works for ${minutes} minutes; the old one no longer does.`,
+		changeEmail: 'Use a different email',
+		/** Between the email form and the Google button, as in the design. */
+		or: 'or',
+		invalidEmail: 'Enter a valid email address.',
+		wrongCode: 'That code isn’t right. Check the email and try again.',
+		codeExpired: 'That code has expired. Send yourself a new one.',
+		tooManyAttempts: 'Too many tries with that code. Send yourself a new one.',
+		tooManyRequests: 'Too many tries. Wait a minute, then try again.',
+		/** The mail server refused or was unreachable (plan 31 → DECISIONS #178). */
+		sendFailed:
+			'The email couldn’t be sent, so no code is on its way. Try again in a moment, or continue with Google.',
+
+		/** The sign-in mail itself — plain text (→ `lib/server/mail.ts`). */
+		mail: {
+			subject: (code: string) => `${code} is your Choreganized code`,
+			body: (code: string, minutes: number) =>
+				`Your sign-in code for Choreganized:\n\n${code}\n\nIt works for ${minutes} minutes. If you didn’t ask for it, you can ignore this email. Nobody can sign in without the code.`
+		}
 	},
 
 	onboarding: {
@@ -1581,13 +2104,19 @@ export const en = {
 		/** Create or join [5b]. */
 		start: {
 			title: 'Get started',
-			welcome: (name: string) => `Welcome, ${name}`,
+			/** `name` is empty for an email-code account, which has none yet (plan 31). */
+			welcome: (name: string) => (name ? `Welcome, ${name}` : 'Welcome'),
 			question: 'How would you like to start?',
 			createTitle: 'Create a household',
 			createCopy: 'Start fresh and invite the people you live with.',
 			joinTitle: 'Join a household',
 			joinCopy: 'Got an invite link or code? Enter it here.',
-			continue: 'Continue'
+			continue: 'Continue',
+			/** Under Continue — the way back for whoever signed in with the wrong account. */
+			signedInAs: (email: string) => `Signed in as ${email}`,
+			switchAccount: 'Use another account',
+			switchingAccount: 'Signing out…',
+			switchFailed: 'Couldn’t sign out. Check your connection and try again.'
 		},
 
 		/** Set up your home [5c]. */
@@ -1636,7 +2165,7 @@ export const en = {
 			invited: 'You’re invited',
 			notFound: 'Invite not found',
 			copy: 'You’ll share the shopping list, meal plan and tasks with them. Sign in with Google to join.',
-			gone: 'This invite link isn’t valid any more — the code may have been replaced or revoked. Ask your housemate for a fresh one.',
+			gone: 'This invite link isn’t valid any more. The code may have been replaced or revoked. Ask your housemate for a fresh one.',
 			accept: 'Accept invitation',
 			goToSignIn: 'Go to sign in',
 			/** The preview card [5e]. */
@@ -1748,9 +2277,9 @@ export const en = {
 
 		/** The two task nudges [4e] (→ SPEC §5.6). */
 		taskDue: (emoji: string, task: string, assigned: boolean) =>
-			`${emoji} ${task} is due today — ${assigned ? 'your turn' : 'anyone can pick this up'}`,
+			`${emoji} ${task} is due today: ${assigned ? 'your turn' : 'anyone can pick this up'}`,
 		taskOverdue: (emoji: string, task: string, assigned: boolean) =>
-			`${emoji} ${task} is overdue — ${assigned ? "it's your turn" : 'anyone can pick this up'}`,
+			`${emoji} ${task} is overdue: ${assigned ? "it's your turn" : 'anyone can pick this up'}`,
 
 		/**
 		 * The holiday heads-up (→ SPEC §3.6), sent once on the first morning of the
@@ -1759,8 +2288,8 @@ export const en = {
 		 */
 		shopsClosed: (holidays: string, closedDays: number) =>
 			closedDays === 1
-				? `🛍️ ${holidays} — the shops are closed`
-				: `🛍️ ${holidays} — the shops are closed for ${closedDays} days`,
+				? `🛍️ ${holidays}: the shops are closed`
+				: `🛍️ ${holidays}: the shops are closed for ${closedDays} days`,
 		shopsClosedBody: (lastOpenDay: CalendarDate, today: CalendarDate) =>
 			`Last shopping day is ${shoppingDay(lastOpenDay, today)}.`,
 
@@ -1769,7 +2298,21 @@ export const en = {
 		testBody: 'This is what a nudge from Choreganized looks like.',
 
 		/** A cook timer that rang while the phone was locked (→ SPEC §4.6). */
-		timerDone: (label: string) => `⏲️ ${label} is done`
+		timerDone: (label: string) => `⏲️ ${label} is done`,
+
+		/**
+		 * The expense notices (→ SPEC §11.11), to the people in one and never to
+		 * whoever did it. `what` is the household's own description, untranslated.
+		 */
+		expenseAdded: (who: string, what: string, amount: string, share: string) =>
+			`🧾 ${who} added ${what} · ${amount} · your share ${share}`,
+		expenseChanged: (who: string, what: string, share: string) =>
+			`🧾 ${who} changed ${what} · your share is now ${share}`,
+		paidYou: (who: string, amount: string) => `💸 ${who} paid you ${amount}`,
+		/** An occurrence the 06:00 sweep logged — nobody did it, so nobody is named. */
+		expenseRepeated: (what: string, share: string) => `🔁 ${what} was added · your share ${share}`,
+		/** Remind on the balance card [10a]: sent by hand, never by the app. */
+		reminder: (who: string, amount: string) => `👋 A nudge from ${who} · you owe ${amount}`
 	},
 
 	/* ── Refusals ──────────────────────────────────────────────────────────── */
@@ -1797,24 +2340,24 @@ export const en = {
 		/** Every provider failure, naming the provider — never the raw API error. */
 		error: {
 			noKey: 'Set up AI features in Settings first.',
-			badKey: (provider: string) => `${provider} refused the key — check it in Settings.`,
+			badKey: (provider: string) => `${provider} refused the key. Check it in Settings.`,
 			rateLimited: (provider: string) =>
-				`${provider} is at its limit right now — wait a minute and try again, or add a backup in Settings.`,
+				`${provider} is at its limit right now. Wait a minute and try again, or add a backup in Settings.`,
 			quota: (provider: string) =>
-				`${provider} says the quota or credit is used up — try again later, or add a backup in Settings.`,
+				`${provider} says the quota or credit is used up. Try again later, or add a backup in Settings.`,
 			modelUnavailable: (provider: string) =>
-				`${provider} doesn’t offer that model (any more) — pick another one in Settings.`,
+				`${provider} doesn’t offer that model (any more). Pick another one in Settings.`,
 			modelUnsupported: (provider: string) =>
-				`That ${provider} model can’t do this — it may not read photos. Pick another one in Settings.`,
+				`That ${provider} model can’t do this. It may not read photos. Pick another one in Settings.`,
 			unavailable: (provider: string) =>
-				`${provider} isn’t answering right now — try again shortly.`,
-			timeout: (provider: string) => `${provider} took too long to answer — try again.`,
+				`${provider} isn’t answering right now. Try again shortly.`,
+			timeout: (provider: string) => `${provider} took too long to answer. Try again.`,
 			badOutput: (provider: string) =>
-				`${provider} answered, but not in a shape the app can use — try again, or another model.`,
+				`${provider} answered, but not in a shape the app can use. Try again, or another model.`,
 			failed: (provider: string) =>
 				provider
-					? `${provider} didn’t work this time — try again.`
-					: 'The AI didn’t work this time — try again.',
+					? `${provider} didn’t work this time. Try again.`
+					: 'The AI didn’t work this time. Try again.',
 			backupFailed: (provider: string) => `The backup (${provider}) didn’t work either.`
 		}
 	},
@@ -1866,11 +2409,11 @@ export const en = {
 		/** Photo upload (→ `server/uploads.ts`), all shown on the recipe form. */
 		photo: {
 			notSaved: 'That photo couldn’t be saved.',
-			tooLarge: (megabytes: number) => `That photo is too large — pick one under ${megabytes} MB.`,
+			tooLarge: (megabytes: number) => `That photo is too large. Pick one under ${megabytes} MB.`,
 			notAnImage: 'That file isn’t an image.',
-			unreadable: 'That image couldn’t be read — try a JPEG or PNG.',
+			unreadable: 'That image couldn’t be read. Try a JPEG or PNG.',
 			storeFailed: 'Could not store that photo.',
-			diskFailed: 'Could not store that photo — the server’s disk rejected it.'
+			diskFailed: 'Could not store that photo. The server’s disk rejected it.'
 		},
 
 		/** `HouseholdError`, keyed by its own codes (→ `services/household.ts`). */
@@ -1878,7 +2421,7 @@ export const en = {
 			'color-taken': 'A housemate already has that colour.',
 			'not-owner': 'Only the owner can do that.',
 			'not-member': 'You’re not a member of this household any more.',
-			'transfer-first': 'Make someone else the owner first — a household needs one.',
+			'transfer-first': 'Make someone else the owner first. A household needs one.',
 			'remove-self': 'To leave yourself, use Leave household in Settings.',
 			'stale-roster':
 				'You’re the only one here now, so leaving would delete the household. Reload and confirm again.'
@@ -1900,7 +2443,7 @@ export const en = {
 			{ text: 'Pause ' },
 			{ text: 'all your tasks', strong: true },
 			{
-				text: " while you're on holiday — nothing counts as overdue and no reminders are sent."
+				text: " while you're on holiday. Nothing counts as overdue and no reminders are sent."
 			}
 		] as RichText,
 		/** The switch itself, named for a screen reader. */

@@ -1,6 +1,8 @@
 <!-- Create or join a household [5b] — the first screen after signing in. -->
 <script lang="ts">
 	import { enhance } from '$app/forms';
+	import { goto } from '$app/navigation';
+	import { signOut } from '$lib/auth-client';
 	import Screen from '$lib/components/shell/Screen.svelte';
 	import Button from '$lib/components/ui/Button.svelte';
 	import { messages } from '$lib/i18n';
@@ -14,6 +16,30 @@
 	const m = messages();
 
 	let choice = $state<'create' | 'join'>('create');
+
+	let switching = $state(false);
+	let switchFailed = $state(false);
+
+	/**
+	 * Members never see this screen (the load sends them home), so someone who
+	 * already lives in a household and lands here signed in with an account that
+	 * isn't in it — usually a different email than the one they joined with. The
+	 * way out is signing out, not "join": same failure handling as Settings'
+	 * sign-out, since `/login` bounces a still-live session straight back here.
+	 */
+	async function switchAccount() {
+		switching = true;
+		switchFailed = false;
+		try {
+			const { error } = await signOut();
+			if (error) throw new Error(error.message);
+		} catch {
+			switchFailed = true;
+			switching = false;
+			return;
+		}
+		await goto('/login', { invalidateAll: true });
+	}
 </script>
 
 <svelte:head>
@@ -45,6 +71,16 @@
 
 		<div class="cta"><Button type="submit">{m.onboarding.start.continue}</Button></div>
 	</form>
+
+	<p class="account">
+		<span>{m.onboarding.start.signedInAs(data.email)}</span>
+		<button type="button" onclick={switchAccount} disabled={switching}>
+			{switching ? m.onboarding.start.switchingAccount : m.onboarding.start.switchAccount}
+		</button>
+	</p>
+	{#if switchFailed}
+		<p class="error" role="alert">{m.onboarding.start.switchFailed}</p>
+	{/if}
 </Screen>
 
 <style>
@@ -53,13 +89,13 @@
 	}
 
 	h1 {
-		font-size: calc(30px * var(--fs));
+		font-size: var(--fs-32);
 		line-height: 1.1;
 	}
 
 	.sub {
 		margin: 8px 0 0;
-		font-size: calc(15px * var(--fs));
+		font-size: var(--fs-17);
 		color: var(--text-4);
 	}
 
@@ -135,13 +171,13 @@
 
 	.title {
 		font-family: var(--font-display);
-		font-size: calc(19px * var(--fs));
+		font-size: var(--fs-22);
 		font-weight: 600;
 	}
 
 	.copy {
 		margin-top: 5px;
-		font-size: calc(13.5px * var(--fs));
+		font-size: var(--fs-15);
 		line-height: 1.45;
 		color: var(--text-4);
 	}
@@ -149,5 +185,39 @@
 	.cta {
 		margin-top: auto;
 		padding-top: 18px;
+	}
+
+	.account {
+		display: flex;
+		flex-wrap: wrap;
+		justify-content: center;
+		gap: 2px 6px;
+		margin: 16px 0 0;
+		font-size: var(--fs-15);
+		color: var(--text-4);
+		text-align: center;
+	}
+
+	.account span {
+		overflow-wrap: anywhere;
+	}
+
+	.account button {
+		padding: 0;
+		font-weight: 600;
+		color: var(--sage);
+		cursor: pointer;
+	}
+
+	.account button:disabled {
+		cursor: default;
+		opacity: 0.6;
+	}
+
+	.error {
+		margin: 8px 0 0;
+		font-size: var(--fs-15);
+		color: var(--danger);
+		text-align: center;
 	}
 </style>

@@ -32,6 +32,9 @@ import {
 	setAiInstructions,
 	testAiConnection
 } from '$lib/server/services/ai';
+import { currencyAction, splitDefaultAction } from '$lib/server/expense-actions';
+import { seriesByMember } from '$lib/server/services/expense-recurrences';
+import { balancesByMember, getExpenseSettings, listPeople } from '$lib/server/services/expenses';
 import { FeedbackError, submitFeedback, syncFeedback } from '$lib/server/services/feedback';
 import {
 	getHousehold,
@@ -59,7 +62,8 @@ const PREFS: NotificationPref[] = [
 	'notifyTaskReminders',
 	'notifyOverdueNudges',
 	'notifyShoppingUpdates',
-	'notifyShopClosures'
+	'notifyShopClosures',
+	'notifyExpenses'
 ];
 
 function isPref(value: unknown): value is NotificationPref {
@@ -107,11 +111,28 @@ export const load: PageServerLoad = (event) => {
 		ai: getAiStatus(householdId),
 		// How imported German recipes are worded (→ plan 24); null = as written.
 		recipeWording: getRecipeWording(householdId),
+		/**
+		 * Settings → Expenses (→ SPEC §11.10), and the reader's own balance for the
+		 * leave confirm, which says what leaving would leave behind (→ §11.13).
+		 */
+		expenses: (() => {
+			const settings = getExpenseSettings(householdId);
+			return {
+				people: listPeople(householdId),
+				currency: settings.currency,
+				currencyLocked: settings.hasExpenses,
+				splitDefault: settings.splitDefault,
+				myBalance: balancesByMember(householdId)[member.id] ?? 0,
+				/** The series leaving would stop (→ SPEC §11.13). */
+				mySeries: seriesByMember(householdId)[member.id] ?? []
+			};
+		})(),
 		prefs: {
 			notifyTaskReminders: member.notifyTaskReminders,
 			notifyOverdueNudges: member.notifyOverdueNudges,
 			notifyShoppingUpdates: member.notifyShoppingUpdates,
-			notifyShopClosures: member.notifyShopClosures
+			notifyShopClosures: member.notifyShopClosures,
+			notifyExpenses: member.notifyExpenses
 		},
 		/** The stored choice, not the resolved language: null is "System" [6a]. */
 		chosenLocale: member.locale,
@@ -138,6 +159,10 @@ export const load: PageServerLoad = (event) => {
 };
 
 export const actions: Actions = {
+	/** Settings → Expenses: the currency (owner) and the default split (→ SPEC §11.10). */
+	currency: currencyAction,
+	splitDefault: splitDefaultAction,
+
 	/** Name and colour [6a] — always your own membership (→ SPEC §6 "Account"). */
 	profile: async (event) => {
 		const { householdId, member } = requireMember(event);

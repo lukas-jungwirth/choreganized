@@ -84,7 +84,7 @@
 		box-shadow:
 			inset 0 0 0 1px var(--toast-border),
 			var(--shadow-toast);
-		font-size: calc(15px * var(--fs));
+		font-size: var(--fs-17);
 		color: var(--toast-muted);
 	}
 

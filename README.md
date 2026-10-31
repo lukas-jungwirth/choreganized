@@ -20,6 +20,7 @@ Sign in with Google once, then fill the app with demo data (safe to re-run):
 
 ```bash
 npm run db:seed -- you@example.com   # the Google address you signed in with
+npm run db:seed -- you@example.com --full-house   # …and fill the household to 5 members
 ```
 
 ## Tests

@@ -87,13 +87,13 @@
 <style>
 	h2 {
 		margin-bottom: 8px;
-		font-size: calc(22px * var(--fs));
+		font-size: var(--fs-24);
 		overflow-wrap: anywhere;
 	}
 
 	.copy {
 		margin: 0 0 22px;
-		font-size: calc(14px * var(--fs));
+		font-size: var(--fs-16);
 		line-height: 1.5;
 		color: var(--text-4);
 		overflow-wrap: anywhere;
@@ -109,7 +109,7 @@
 		width: 100%;
 		margin-top: 14px;
 		padding: 8px;
-		font-size: calc(14px * var(--fs));
+		font-size: var(--fs-16);
 		font-weight: 600;
 		color: var(--text-4);
 	}

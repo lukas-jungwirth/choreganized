@@ -22,7 +22,7 @@
 		},
 		"size": {
 			"enum": ["s", "m", "l"],
-			"description": "l only for a new screen, tab or navigation surface with no frame in design/Hearth.dc.html."
+			"description": "l only for a new screen, tab or navigation surface with no frame in design/*.dc.html."
 		},
 		"confidence": {
 			"enum": ["found", "plausible", "cannot-tell", "not-a-bug"],

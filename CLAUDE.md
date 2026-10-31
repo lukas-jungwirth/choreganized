@@ -1,6 +1,7 @@
 # Choreganized — Agent Guide
 
-Household PWA for two (shopping list, meal plan + cook mode, recurring chores with points).
+Household PWA for two (shopping list, meal plan + cook mode, recurring chores with points,
+shared expenses).
 SvelteKit + SQLite, single process, single container. Tagline: _Every chore, organized._
 
 ## This is an agent-built repo, and you own the git history
@@ -52,8 +53,9 @@ left.
    into `dev` (→ TESTING.md "The flow", plan 18). A desk session takes `size:l` — a screen
    with no frame in the design — and the `WIP:` drafts the agent left red.
 2. **[docs/SPEC.md](docs/SPEC.md)** — behavior ground truth, screen by screen.
-3. **`design/Hearth.dc.html`** — visual ground truth. _Open it in a browser_ and build to the
-   pixels. Anchors like [3a] in docs are element ids in this file.
+3. **`design/Hearth.dc.html`** (+ `design/Expenses.dc.html` for SPEC §11) — visual ground
+   truth. _Open it in a browser_ and build to the pixels. Anchors like [3a] in docs are
+   element ids in these files.
 4. [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md) · [docs/DATA-MODEL.md](docs/DATA-MODEL.md) ·
    [docs/DESIGN-SYSTEM.md](docs/DESIGN-SYSTEM.md) · [docs/DECISIONS.md](docs/DECISIONS.md) ·
    [docs/TESTING.md](docs/TESTING.md) — the layers, the fixtures, the flow to `main`.
@@ -77,6 +79,8 @@ npm run build          # production build — must pass before finishing
 npm run check:migrations  # schema.ts edited without a migration? (also run by `npm test`)
 npm run db:generate    # new migration after editing schema.ts
 npm run db:seed -- you@example.com   # demo data for a signed-in user (idempotent)
+npm run db:seed -- you@example.com --full-house   # …plus stub members up to the max (5)
+npm run db:seed -- you@example.com --history      # …plus ~14 months of older expenses
 npm run db:studio      # inspect the DB
 npm run import:probe -- <url> [--save <name>]  # what the recipe importer reads on a page
 npm run format         # prettier
@@ -94,10 +98,11 @@ lands).
 - **Design tokens only** — every color/radius/shadow is a `var(--…)` from `src/app.css`. A
   hardcoded hex outside `app.css` is wrong. Component inventory: DESIGN-SYSTEM.md — extend
   `lib/components/ui`, don't fork one-off variants.
-- **Type goes through the scale** — every `font-size` is `calc(<the mockup's px> * var(--fs))`,
-  never a bare px. The design's number stays visible, one token in `app.css` moves the whole app
-  (→ DESIGN-SYSTEM "Type scale", DECISIONS #125). Audit:
-  `grep -rn "font-size" src | grep -v "calc("`.
+- **Type goes through the scale** — every `font-size` is a step, `var(--fs-<px>)`, never a
+  bare px: the steps are `rem`, so they follow the reader's phone text size (Android, iOS Dynamic
+  Type), capped at 2× and 48px. A design px × 1.1 → the step at or just above it. Text in a box
+  that can't grow stops lower with `min(var(--fs-N), <px>)`; everything else must survive 200%
+  (`tests/visual/text-size.spec.ts`) → DESIGN-SYSTEM "Type scale", DECISIONS #201.
 - **Both themes, one line** — a colour token that differs by theme is
   `light-dark(<light>, <dark>)`; splitting one across two `:root` blocks is how they drift.
   A bare value is correct **only** when the colour is deliberately theme-independent — the

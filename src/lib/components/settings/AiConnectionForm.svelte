@@ -278,7 +278,7 @@
 	.label {
 		font-family: var(--font-body);
 		margin: 0 2px 8px;
-		font-size: calc(11px * var(--fs));
+		font-size: var(--fs-13);
 		font-weight: 700;
 		letter-spacing: 0.1em;
 		text-transform: uppercase;
@@ -287,7 +287,7 @@
 
 	.get {
 		margin: 12px 2px 16px;
-		font-size: calc(12.5px * var(--fs));
+		font-size: var(--fs-14);
 	}
 
 	.get a {
@@ -300,7 +300,7 @@
 
 	.hint {
 		margin: 8px 2px 0;
-		font-size: calc(12.5px * var(--fs));
+		font-size: var(--fs-14);
 		color: var(--text-4);
 		font-variant-numeric: tabular-nums;
 	}
@@ -315,7 +315,7 @@
 		padding: 9px 14px;
 		border-radius: var(--r-chip);
 		background: var(--sunken);
-		font-size: calc(13px * var(--fs));
+		font-size: var(--fs-15);
 		font-weight: 600;
 		color: var(--sage);
 	}
@@ -334,7 +334,7 @@
 		align-items: flex-start;
 		gap: 6px;
 		margin: 10px 2px 0;
-		font-size: calc(12.5px * var(--fs));
+		font-size: var(--fs-14);
 		line-height: 1.45;
 		color: var(--danger-deep);
 	}

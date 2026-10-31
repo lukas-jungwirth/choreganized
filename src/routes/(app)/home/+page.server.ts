@@ -1,6 +1,7 @@
 import { error, fail, type RequestEvent } from '@sveltejs/kit';
 import { catalog } from '$lib/i18n';
 import { requireMember } from '$lib/server/guards';
+import { homeBalance } from '$lib/server/services/expenses';
 import { getHousehold, listMembers } from '$lib/server/services/household';
 import { answerHolidayNotice, readHolidayAnswer } from '$lib/server/services/holidays';
 import { getHomeSummary } from '$lib/server/services/home';
@@ -32,13 +33,17 @@ export const load: PageServerLoad = async (event) => {
 	const { member, householdId } = requireMember(event);
 	const { household, today, members, overdue } = await event.parent();
 
-	return getHomeSummary(householdId, {
-		member,
-		timezone: household.timezone,
-		today,
-		members,
-		overdue
-	});
+	return {
+		...getHomeSummary(householdId, {
+			member,
+			timezone: household.timezone,
+			today,
+			members,
+			overdue
+		}),
+		/** The expenses line under the stat tiles; null when square (→ SPEC §11.13). */
+		balance: homeBalance(householdId, member.id)
+	};
 };
 
 /**

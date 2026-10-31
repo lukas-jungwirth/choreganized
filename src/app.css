@@ -89,6 +89,13 @@
 	--terracotta-deep: light-dark(#8a4b29, #e8b592);
 
 	/* ── Danger (overdue, destructive) ────────────────────────── */
+	/* Money [9a] (→ SPEC §11): sage when you are owed, terracotta when you owe —
+	   both deepened for text in light, lifted on the dark (→ DECISIONS #171). */
+	--owed: light-dark(#3f6b52, #93c2a2);
+	--owed-tint: light-dark(rgba(95, 141, 114, 0.1), rgba(116, 165, 133, 0.14));
+	--owe: light-dark(#a35a33, #e6aa78);
+	--owe-tint: light-dark(rgba(198, 124, 81, 0.11), rgba(230, 170, 120, 0.14));
+
 	--danger: light-dark(#c0473a, #dc6152);
 	--danger-tint: light-dark(#f7e9e6, #2e1b17);
 	--danger-border: light-dark(#e8cfc9, #452520);
@@ -201,24 +208,42 @@
 	--font-display: 'Fraunces Variable', serif; /* headings, numbers, wordmark */
 	--font-body: 'Figtree Variable', system-ui, sans-serif;
 	/*
-		The one knob the whole type scale hangs from. Every `font-size` in the app
-		is written `calc(<the mockup's px> * var(--fs))`, so the design's numbers
-		stay legible in the source — [04]'s 14px row is still a 14 you can find in
-		`design/Hearth.dc.html` — while one value here moves all 310 of them
-		together (→ DECISIONS #125).
+		The type scale. Every `font-size` in the app is one of these — never a
+		bare length (→ DESIGN-SYSTEM "Type scale", DECISIONS #201). The name is
+		the size in px at the phone's default text setting; the value follows the
+		reader's own setting, because it is built on `rem`, which the browser
+		scales once we opt in (`<meta name="text-scale">` in app.html for Chrome
+		and Edge on Android; the iOS block below for Safari). Outside that block
+		nothing sets a `font-size` on `html` — it would switch Chrome's scaling off.
 
-		1.1 is the "read it at arm's length, on the counter, while cooking" pass
-		over the mockups, which were drawn a shade tighter than a kitchen wants:
-		14px → 15.4, 12.5 → 13.75, the 11px micro-labels → 12.1. Relative units
-		follow for free (unitless line-heights, `em` letter-spacing); paddings and
-		icon sizes do not, which is deliberate — the type grows inside the layout
-		rather than zooming the whole screen. The flip side is that a box sized to
-		fit one word has to be checked: [04]'s weekday column is the one that had
-		to grow with it.
+		Each size grows with the reader's setting up to twice itself, but no
+		size grows past 48px unless it already starts there: 200% is what WCAG
+		asks of text, and past it a 390px phone holds two words a line. Display
+		numbers already at 48+ stay put. Body size and up never drops under 16px
+		for a reader who picked smaller text — nothing needs to, and it is the
+		size under which iOS zooms the page into a field you tap.
 
-		Unitless on purpose: a length here couldn't multiply a px value.
+		Paddings and icon sizes stay in px on purpose: the type grows inside the
+		layout instead of zooming the whole screen.
 	*/
-	--fs: 1.1;
+	--fs-px: calc(1rem / 16); /* one px of type at the reader's text size */
+	--fs-12: min(calc(12 * var(--fs-px)), 24px); /* badges, the week strip's day names */
+	--fs-13: min(calc(13 * var(--fs-px)), 26px); /* micro-labels, "GROCERY" */
+	--fs-14: min(calc(14 * var(--fs-px)), 28px); /* meta, "Weekly · due today" */
+	--fs-15: min(calc(15 * var(--fs-px)), 30px); /* secondary row text, buttons */
+	--fs-16: clamp(16px, calc(16 * var(--fs-px)), 32px);
+	--fs-17: clamp(16px, calc(17 * var(--fs-px)), 34px); /* body: list rows, fields */
+	--fs-18: clamp(16px, calc(18 * var(--fs-px)), 36px);
+	--fs-20: clamp(16px, calc(20 * var(--fs-px)), 40px); /* card titles */
+	--fs-22: clamp(16px, calc(22 * var(--fs-px)), 44px);
+	--fs-24: clamp(16px, calc(24 * var(--fs-px)), 48px); /* sheet titles */
+	--fs-28: clamp(16px, calc(28 * var(--fs-px)), 48px); /* stat numbers */
+	--fs-30: clamp(16px, calc(30 * var(--fs-px)), 48px); /* the greeting */
+	--fs-32: clamp(16px, calc(32 * var(--fs-px)), 48px); /* page titles */
+	--fs-36: clamp(16px, calc(36 * var(--fs-px)), 48px); /* a cook step */
+	--fs-42: clamp(16px, calc(42 * var(--fs-px)), 48px); /* the invite code */
+	--fs-48: clamp(16px, calc(48 * var(--fs-px)), 48px); /* an expense's amount */
+	--fs-56: clamp(16px, calc(56 * var(--fs-px)), 56px); /* the cook timer */
 
 	/* ── Radii ────────────────────────────────────────────────── */
 	--r-input: 14px;
@@ -294,6 +319,24 @@
 	--shadow-toast: 0 16px 38px -8px rgba(0, 0, 0, 0.85);
 }
 
+/*
+	Dynamic Type. Safari on iPhone and iPad ignores the system text size unless
+	the root takes it from the system's own body style, which is 17px at the
+	default setting rather than the web's 16 — so `--fs-px` divides by 17, and an
+	iPhone at its default draws exactly what every other browser does.
+	`-webkit-touch-callout` is what tells iOS apart from Safari on a Mac, whose
+	system body style is 13px. (→ DECISIONS #201)
+*/
+@supports (font: -apple-system-body) and (-webkit-touch-callout: default) {
+	html {
+		font: -apple-system-body;
+	}
+
+	:root {
+		--fs-px: calc(1rem / 17);
+	}
+}
+
 * {
 	box-sizing: border-box;
 }
@@ -302,17 +345,30 @@ html {
 	background: var(--bg);
 }
 
+/* A definite height down to the page, so the `Screen` shell can fill the
+   viewport with `min-height: 100%` instead of `100dvh` — which an installed
+   Android PWA measures with the status bar in, pushing the bottom button off
+   the screen (→ Screen.svelte, DECISIONS #185). */
+html,
+body {
+	height: 100%;
+}
+
 body {
 	margin: 0;
 	font-family: var(--font-body);
-	/* The browser's own 16px, put through the scale, so the handful of elements
-	   that never name a size grow with everything that does. */
-	font-size: calc(16px * var(--fs));
+	/* Body size, so the handful of elements that never name one match the rows
+	   that do — and follow the reader's text setting with them. */
+	font-size: var(--fs-17);
 	color: var(--ink);
 	-webkit-font-smoothing: antialiased;
 	-webkit-tap-highlight-color: transparent;
 }
 
+/* A heading breaks inside a word only when the word alone is wider than the
+   line — "Rezeptsammlung" at twice the text size, a long recipe name — rather
+   than running off the screen. `anywhere`, not `break-word`, because most
+   headings sit in a flex row, where only `anywhere` lets them shrink. */
 h1,
 h2,
 h3,
@@ -320,6 +376,7 @@ h4 {
 	font-family: var(--font-display);
 	font-weight: 600;
 	margin: 0;
+	overflow-wrap: anywhere;
 }
 
 a {

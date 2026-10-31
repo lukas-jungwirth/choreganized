@@ -59,10 +59,12 @@ src/
       ai/                      # provider adapters (plain fetch), run.ts (primary → backup),
                                # schema.ts (strict JSON Schema + Gemini dialect)  [plan 20]
       backup.ts                # nightly SQLite online-backup + 14-day rotation [plan 11]
-      cron.ts                  # registerCronJobs(): reminders, timers, cleanup, backup [plan 05+]
+      cron.ts                  # registerCronJobs(): reminders, timers, cleanup, backup,
+                               # recurring expenses [plan 05+, 30]
       services/                # domain logic: household.ts, home.ts, shopping.ts, tasks.ts,
                                # history.ts, reminders.ts, holidays.ts, recipes.ts, meals.ts,
-                               # timers.ts, feedback.ts, ai.ts (connections), ai-import.ts
+                               # timers.ts, feedback.ts, ai.ts (connections), ai-import.ts,
+                               # expenses.ts, expense-recurrences.ts, expense-notify.ts
     utils/                     # dates.ts (household-local helpers), holidays.ts (Austrian
                                # shop closures), ingredients.ts, invite-code.ts, timer-parse.ts,
                                # recipe-jsonld.ts (the import's page reader)
@@ -95,6 +97,10 @@ docs/                          # this documentation + plans/
   cooking/recipes/[id]/cook     [7b/7h] cook mode (hides tab bar)
   tasks                         [05/4a] sheets: new/edit [3b], detail [4b], snooze [4c], done [4d]
   tasks/history                 [8a]
+  expenses                      [9a]   sheets: add/edit [9b], split [9c], settle up [9d], settings  [plan 29]
+  expenses/[id]                 [9e]   edit opens [9b] / [9d]; delete returns to the tab's undo bar
+  expenses/history              [9f]   ?q= ?category= ?person= ?mine=1 ?payments=1 ?from=YYYY-MM-01
+  expenses/recurring            [9h]   sheets: one series [9h-stop], edit series (the [9b] sheet)  [plan 30]
   settings                      [6a]
   settings/members              [6b]   sheet: manage member [6c]
 dev/kit                         component gallery — 404 unless `dev` or E2E_MODE [plan 02, 17]
@@ -105,9 +111,13 @@ api/
   timers                        POST create · DELETE cancel         [plan 08]
   live                          GET SSE stream, ?topics=shopping     [plan 15]
   uploads/[...path]             authed recipe images                [plan 07]
+  e2e/recurring-expenses        POST run the 06:00 expense sweep now — 404 unless E2E_MODE [plan 30]
 ```
 
-`[5a]`-style anchors reference `design/Hearth.dc.html`.
+`[5a]`-style anchors reference `design/Hearth.dc.html`; `[9a]`–`[9h]` reference
+`design/Expenses.dc.html`. The expense form actions live once in
+`lib/server/expense-actions.ts` and are mounted by the tab, the detail and Settings, so the
+same form means the same thing wherever it is posted from.
 
 ## Server patterns
 
@@ -191,7 +201,8 @@ Two delivery paths, one send module (`lib/server/push.ts`):
 1. **Event-driven** (someone did something): called fire-and-forget from the action/service —
    `void sendToMembers(...)` — never awaited in the request path, errors logged, 404/410 prunes
    the subscription row.
-2. **Time-driven** (reminders, shop closures, timers, cleanup): `node-cron` minute tick scanning
+2. **Time-driven** (reminders, shop closures, recurring expenses, timers, cleanup): `node-cron`
+   minute tick scanning
    the DB with idempotency flags and an effective lookback (see DATA-MODEL.md → "Reminder
    time-sweep"). Cook timers additionally get a precise in-process `setTimeout` at creation; the
    cron sweep is the restart-safe fallback. The shop-closure notice (→ SPEC §3.6) is the one
@@ -334,6 +345,20 @@ needs `http://localhost:3000/api/auth/callback/google` added to the OAuth client
 - **VAPID keypair: generate once for production and never change it.** Push subscriptions are
   bound to the public key; replacing it invalidates every stored subscription and each device
   must re-subscribe. Dev may use its own throwaway pair.
+
+- **SMTP** (`SMTP_HOST`, `SMTP_PORT`, `SMTP_USER`, `SMTP_PASS`, `MAIL_FROM`): the sign-in code
+  mail (→ `lib/server/mail.ts`, DECISIONS #179). Optional. Without it the login page offers
+  Google only. Set SPF/DKIM/DMARC for `MAIL_FROM`'s domain at the provider, or the codes land in
+  spam. Test and production may share a provider but should send from their own address.
+
+## Email
+
+One message: the sign-in code (→ `auth.ts`'s `emailOTP` plugin, DECISIONS #178).
+`lib/server/mail.ts` picks a route per send: the `MAIL_OUTBOX` file (E2E/dev only), SMTP, the
+terminal (dev), or off. `mailEnabled()` is how the login page knows whether to show the email
+form. The message text is in the catalog (`auth.mail`), in the language of the login page that
+asked for it. `lib/server/send-limit.ts` limits how often one address is mailed a code (one a
+minute, five an hour, in memory); `auth.ts` checks it in a before-hook (→ DECISIONS #183).
 
 ## Conventions that keep the codebase coherent
 

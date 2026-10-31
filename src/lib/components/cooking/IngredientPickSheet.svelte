@@ -213,7 +213,7 @@
 	/* The uppercase micro-label the sheets group a list under [3b]. */
 	.count {
 		margin: 0;
-		font-size: calc(11px * var(--fs));
+		font-size: var(--fs-13);
 		font-weight: 700;
 		letter-spacing: 0.1em;
 		text-transform: uppercase;
@@ -222,7 +222,7 @@
 
 	.link {
 		flex: none;
-		font-size: calc(12.5px * var(--fs));
+		font-size: var(--fs-14);
 		font-weight: 600;
 		color: var(--sage);
 	}
@@ -281,7 +281,7 @@
 
 	.name {
 		display: block;
-		font-size: calc(14.5px * var(--fs));
+		font-size: var(--fs-16);
 		font-weight: 600;
 		color: var(--text-disabled);
 		overflow-wrap: anywhere;
@@ -299,21 +299,21 @@
 	.note {
 		display: block;
 		margin-top: 2px;
-		font-size: calc(12px * var(--fs));
+		font-size: var(--fs-14);
 		line-height: 1.35;
 		color: var(--text-5);
 	}
 
 	.amount {
 		flex: none;
-		font-size: calc(13.5px * var(--fs));
+		font-size: var(--fs-15);
 		color: var(--text-disabled);
 	}
 
 	.error {
 		margin: 0 0 12px;
 		padding: 0 4px;
-		font-size: calc(13px * var(--fs));
+		font-size: var(--fs-15);
 		color: var(--danger-deep);
 	}
 

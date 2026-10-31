@@ -111,7 +111,7 @@
 		margin-bottom: 12px;
 		border-radius: var(--r-input);
 		background: var(--cook-surface);
-		font-size: calc(14px * var(--fs));
+		font-size: var(--fs-16);
 		font-weight: 500;
 		color: var(--cook-text);
 	}

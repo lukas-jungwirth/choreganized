@@ -30,11 +30,14 @@
 </header>
 
 <style>
+	/* Wraps when the reader's text size leaves no room beside the title: the
+	   trailing group drops under it and keeps to the right. */
 	header {
 		display: flex;
+		flex-wrap: wrap;
 		align-items: baseline;
 		justify-content: space-between;
-		gap: 12px;
+		gap: 4px 12px;
 		padding: 8px 0 16px;
 	}
 
@@ -43,14 +46,15 @@
 		align-items: baseline;
 		flex: none;
 		gap: 12px;
+		margin-left: auto;
 	}
 
 	h1 {
-		font-size: calc(30px * var(--fs));
+		font-size: var(--fs-32);
 	}
 
 	.meta {
-		font-size: calc(13px * var(--fs));
+		font-size: var(--fs-15);
 		font-weight: 600;
 		color: var(--text-4);
 	}

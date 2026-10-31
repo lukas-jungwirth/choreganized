@@ -8,6 +8,8 @@ export const SEED_HOUSEHOLD_NAME = 'Sonnengasse 12';
 /** Where the demo household keeps time; the visual setup reads the date in it. */
 export const SEED_TIMEZONE = 'Europe/Vienna';
 export const SEED_HOUSEMATE_NAME = 'Elisabeth';
+/** The stub housemates `--full-house` adds, one per member colour still free. */
+export const SEED_EXTRA_MEMBER_NAMES = ['Jakob', 'Mira', 'Theo'] as const;
 export const SEED_STORE_NAMES = ['Grocery', 'Drugstore', 'Hardware store'] as const;
 export const SEED_ITEM_NAMES = [
 	'Tomatoes',

@@ -20,8 +20,32 @@
  * server is launched; the setup project still signs up against it and seeds
  * `E2E_DATABASE_PATH`, so that server must run in E2E mode on that same file.
  */
+import { resolve } from 'node:path';
 import { defineConfig, devices } from '@playwright/test';
 import { DATABASE_PATH } from './tests/e2e/accounts';
+
+/**
+ * Every run happens on the same Wednesday afternoon in Vienna (→ docs/TESTING.md
+ * "The fixed clock", DECISIONS #184). The real date leaked into the screenshots
+ * one way after another — a greeting, a weekday, which chore was done last —
+ * and each fix covered one symptom. With one clock, "today" is a constant.
+ *
+ * Set here, before any worker forks, so they all inherit it: `NODE_OPTIONS`
+ * preloads the shift into the workers, the e2e server, the build it starts and
+ * the seed; the anchor makes them one clock, however late each one starts; the
+ * server hands the same shift to the browser. Years ahead on purpose: the
+ * browser's cookie jar runs on the real clock, and a session cookie that
+ * expired in the past would be dropped before the first request.
+ */
+const FIXED_CLOCK = '2036-06-18T12:00:00Z';
+// A server you started yourself (`PLAYWRIGHT_BASE_URL`, below) runs on the real
+// clock, and the tests have to share whichever clock their server keeps.
+if (!process.env.PLAYWRIGHT_BASE_URL && !process.env.NODE_OPTIONS?.includes('fixed-clock')) {
+	process.env.FIXED_CLOCK ??= FIXED_CLOCK;
+	process.env.FIXED_CLOCK_ANCHOR ??= String(Date.now());
+	const preload = `--import ${resolve('scripts/fixed-clock.ts')}`;
+	process.env.NODE_OPTIONS = [process.env.NODE_OPTIONS, preload].filter(Boolean).join(' ');
+}
 
 const PORT = 4173;
 const externalServer = process.env.PLAYWRIGHT_BASE_URL;

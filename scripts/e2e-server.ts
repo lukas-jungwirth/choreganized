@@ -42,7 +42,17 @@ mkdirSync(dataDir, { recursive: true });
 // A fixed port, so a test can read `/__requests` off it (→ tests/e2e/ai.spec.ts).
 const fakeAi = await startFakeAi(Number(process.env.FAKE_AI_PORT ?? 4174));
 
-const child = spawn(process.execPath, ['build/index.js'], {
+// The run's fixed clock (→ playwright.config.ts): the env below is built from
+// scratch, so it is handed on explicitly — the preload and the two variables.
+const fixedClock = process.env.FIXED_CLOCK
+	? {
+			FIXED_CLOCK: process.env.FIXED_CLOCK,
+			FIXED_CLOCK_ANCHOR: process.env.FIXED_CLOCK_ANCHOR ?? ''
+		}
+	: {};
+const preload = process.env.FIXED_CLOCK ? ['--import', './scripts/fixed-clock.ts'] : [];
+
+const child = spawn(process.execPath, [...preload, 'build/index.js'], {
 	stdio: 'inherit',
 	env: {
 		PATH: process.env.PATH ?? '',
@@ -66,7 +76,13 @@ const child = spawn(process.execPath, ['build/index.js'], {
 		APP_VERSION: 'e2e',
 		APP_COMMIT: '',
 		E2E_MODE: 'true',
-		...fakeAiEnv(fakeAi.url)
+		// Sign-in codes land here, not in a mailbox (→ tests/e2e/email-sign-in.spec.ts).
+		MAIL_OUTBOX: `${dataDir}/outbox.jsonl`,
+		// A journey watches "Send again" count down and come back; a minute is too
+		// long to wait (→ lib/server/send-limit.ts, honoured in E2E mode only).
+		SIGN_IN_CODE_COOLDOWN_SECONDS: '3',
+		...fakeAiEnv(fakeAi.url),
+		...fixedClock
 	}
 });
 

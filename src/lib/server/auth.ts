@@ -1,5 +1,6 @@
 /**
- * Better Auth instance — Google OAuth only in v1 (→ docs/DECISIONS.md #1).
+ * Better Auth instance — Google OAuth, and a code sent by email (plan 31).
+ * Passwords stay off outside E2E mode (→ docs/DECISIONS.md #1, plan 31's entry).
  *
  * The four auth tables live in `db/schema.ts` and are handed to the drizzle
  * adapter explicitly; the adapter maps Better Auth's field names onto the
@@ -8,13 +9,18 @@
  */
 import { betterAuth } from 'better-auth';
 import { drizzleAdapter } from 'better-auth/adapters/drizzle';
+import { APIError, createAuthMiddleware } from 'better-auth/api';
+import { emailOTP } from 'better-auth/plugins';
 import { sveltekitCookies } from 'better-auth/svelte-kit';
 import { building } from '$app/environment';
 import { getRequestEvent } from '$app/server';
 import { env } from '$env/dynamic/private';
+import { DEFAULT_LOCALE, type Locale } from '$lib/i18n';
 import { db } from './db';
 import { account, session, user, verification } from './db/schema';
 import { e2eMode } from './e2e-mode';
+import { SIGN_IN_CODE_MINUTES, sendMail, signInCodeMail } from './mail';
+import { activeSendLimits, createSendLimiter } from './send-limit';
 
 /**
  * `vite build` imports server modules just to read their route options, so a
@@ -30,6 +36,39 @@ function requireEnv(name: string): string {
 	if (building) return `build-time-placeholder-${name}`;
 	throw new Error(`Missing required environment variable ${name} — see .env.example.`);
 }
+
+/** The language of the login page that asked for the code, so the mail matches it. */
+function requestLocale(): Locale {
+	try {
+		return getRequestEvent().locals.locale ?? DEFAULT_LOCALE;
+	} catch {
+		// `auth.api.*` called outside a request (the integration tests).
+		return DEFAULT_LOCALE;
+	}
+}
+
+/**
+ * Requests whose code mail could not be sent, keyed by Better Auth's
+ * per-request context: the send callback and the after-hook below see the same
+ * object. Better Auth runs the callback through `runInBackgroundOrAwait`, which
+ * logs a thrown error and answers 200 anyway, so without this the login page
+ * said "We sent a code" for a mail that never left (→ DECISIONS #178).
+ */
+const failedSends = new WeakSet<object>();
+
+/** The code the login page maps to "couldn't send" (→ `routes/login`, which spells it out). */
+const MAIL_SEND_FAILED = 'MAIL_SEND_FAILED';
+
+const SEND_CODE_PATH = '/email-otp/send-verification-otp';
+
+/**
+ * One code a minute and five an hour per address (→ `send-limit.ts`,
+ * DECISIONS #183) — on top of the plugin's per-IP limit, which can't stop
+ * someone with many IPs filling one inbox through our mail account. Made on
+ * first use: the environment is empty while the app builds.
+ */
+let sendLimiter: ReturnType<typeof createSendLimiter> | undefined;
+const limiter = () => (sendLimiter ??= createSendLimiter(activeSendLimits()));
 
 export const auth = betterAuth({
 	appName: 'Choreganized',
@@ -60,7 +99,69 @@ export const auth = betterAuth({
 			clientSecret: requireEnv('GOOGLE_CLIENT_SECRET')
 		}
 	},
-	// Must stay last: writes cookies from server-side `auth.api.*` calls (the
-	// session refresh in hooks.server.ts) onto the SvelteKit response.
-	plugins: [sveltekitCookies(getRequestEvent)]
+	hooks: {
+		before: createAuthMiddleware(async (ctx) => {
+			if (ctx.path !== SEND_CODE_PATH) return;
+			const email = (ctx.body as { email?: unknown } | undefined)?.email;
+			if (typeof email !== 'string') return; // the plugin's own validation answers
+			const check = limiter().check(email);
+			if (!check.ok) {
+				// The same answer whether or not the address has an account.
+				throw new APIError('TOO_MANY_REQUESTS', {
+					code: check.reason === 'cooldown' ? 'CODE_COOLDOWN' : 'CODE_HOURLY_LIMIT',
+					message: 'Too many sign-in codes for this address.',
+					retryAfter: check.retryAfterSeconds
+				});
+			}
+			limiter().record(email);
+		}),
+		after: createAuthMiddleware(async (ctx) => {
+			if (ctx.path === SEND_CODE_PATH && failedSends.has(ctx.context)) {
+				// A mail that never left shouldn't hold the address back.
+				const email = (ctx.body as { email?: unknown } | undefined)?.email;
+				if (typeof email === 'string') limiter().forget(email);
+				throw new APIError('SERVICE_UNAVAILABLE', {
+					code: MAIL_SEND_FAILED,
+					message: 'The sign-in code could not be sent.'
+				});
+			}
+		})
+	},
+	plugins: [
+		/**
+		 * Sign in with a six-digit code sent by email (plan 31, SPEC §1.1). A
+		 * code rather than a magic link: an installed iOS PWA keeps its own
+		 * cookies, so a link tapped in Mail would sign Safari in and leave the
+		 * app signed out, and mail scanners that open links would burn it. The
+		 * codes live hashed in `verification`; three wrong tries kill one, and
+		 * the plugin's own rate limit allows three sends and three sign-ins per
+		 * minute per IP. A first code for a new address creates the account,
+		 * exactly as a first Google sign-in does.
+		 */
+		emailOTP({
+			otpLength: 6,
+			expiresIn: SIGN_IN_CODE_MINUTES * 60,
+			allowedAttempts: 3,
+			storeOTP: 'hashed',
+			async sendVerificationOTP({ email, otp, type }, ctx) {
+				// Only sign-in exists: no passwords to reset, and no address
+				// changes. The plugin's other endpoints mail nothing.
+				if (type !== 'sign-in') return;
+				// Awaited, against the plugin's timing advice: sign-up is open, so
+				// every address gets a code and the timing reveals nothing — and a
+				// mail that couldn't be sent must say so on the login page.
+				try {
+					await sendMail(signInCodeMail(email, otp, requestLocale()));
+				} catch (error) {
+					// The plugin would swallow this; the hook below turns it into a 503.
+					console.error('[mail] the sign-in code could not be sent:', error);
+					if (!ctx) throw error;
+					failedSends.add(ctx.context);
+				}
+			}
+		}),
+		// Must stay last: writes cookies from server-side `auth.api.*` calls (the
+		// session refresh in hooks.server.ts) onto the SvelteKit response.
+		sveltekitCookies(getRequestEvent)
+	]
 });

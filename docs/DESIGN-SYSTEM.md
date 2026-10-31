@@ -39,6 +39,7 @@ Dark is not an inversion. Three rules decide a value:
 | Text       | `--ink` `--text-2…5` `--text-disabled`                                                                                   | 6-step ramp; `--text-5` for uppercase labels; `--text-disabled` for placeholders & struck items                                                                                  |
 | Sage       | `--sage` `--sage-strong` `--sage-hover` `--sage-tint` `--sage-tint-2` `--sage-row` `--sage-deep` `--on-sage`             | primary buttons, active tab, checked circles, selected chips, highlight rows                                                                                                     |
 | Terracotta | `--terracotta` `--terracotta-tint(-2)` `--terracotta-deep`                                                               | points (`+10`), second member, "due today" meta                                                                                                                                  |
+| Money      | `--owed` `--owed-tint` `--owe` `--owe-tint`                                                                              | the expenses balance [9a]: sage = you are owed, terracotta = you owe — deepened for text in light, lifted in dark, each on a tint of itself                                      |
 | Danger     | `--danger` `--danger-tint` `--danger-border` `--danger-deep` `--danger-soft`                                             | overdue, destructive actions, badges; `-soft` = subtitle copy on a danger tint                                                                                                   |
 | Info       | `--info-tint` `--info-border` `--info-soft`                                                                              | the holiday banner [4a]; its title uses `--sage-deep`                                                                                                                            |
 | Accents    | `--gold` `--gold-tint`                                                                                                   | crown / 1st place                                                                                                                                                                |
@@ -59,27 +60,46 @@ it on their panel and every field inside adapts (→ [DECISIONS #37](DECISIONS.m
 surfaces (feed check circles, selected member chips) are `color-mix`ed from the member's colour
 because only sage and terracotta have tint tokens (→ [#35](DECISIONS.md)).
 
-## Type scale (from the mockups)
+## Type scale
 
-Every size below is what `design/Hearth.dc.html` draws, and every `font-size` in the app is
-written **`calc(<that number>px * var(--fs))`** — one token in `app.css` (currently `1.1`)
-scales all of them at once, because the mockups read a shade small on a phone across the
-kitchen (→ [DECISIONS #125](DECISIONS.md)). A bare `font-size: 13px` anywhere in `src/`
-silently opts out of the scale and is a bug; `grep -rn "font-size" src | grep -v "calc("` finds
-them all. Relative units follow for free — unitless line-heights, `em` letter-spacing — while
-paddings and icon sizes deliberately don't, so type grows _inside_ the layout.
+Every `font-size` in the app is **`var(--fs-N)`**, a step from `src/app.css`: `N` is its size in
+px at the phone's default text setting, and the value is built on `rem`, so it follows the
+reader's own setting — Android's font size through `<meta name="text-scale">`, iOS Dynamic Type
+through `-apple-system-body` (→ [DECISIONS #201](DECISIONS.md)). A bare `font-size: 13px`
+anywhere in `src/` ignores the reader and fails `npm test` with its `path:line`.
 
-| Style             | Font            | Size/weight                                      | Example                   |
-| ----------------- | --------------- | ------------------------------------------------ | ------------------------- |
-| Page title        | Fraunces 600    | 30px                                             | "Shopping", "Tasks"       |
-| Greeting          | Fraunces 600    | 27px / 1.05                                      | "Good morning, Lukas"     |
-| Sheet title       | Fraunces 600    | 22px                                             | "Add item", "New task"    |
-| Card/recipe title | Fraunces 600    | 17–19px                                          | dinner card, recipe cards |
-| Display numbers   | Fraunces 600    | 24px (stats) · 38px (invite code) · 52px (timer) |                           |
-| Body              | Figtree 500–600 | 15px                                             | list rows                 |
-| Meta              | Figtree 400–600 | 12–13px, `--text-4`                              | "Weekly · due today"      |
-| Micro-label       | Figtree 700     | 11px, uppercase, ls .1–.12em, `--text-5`         | "GROCERY", "INVITE CODE"  |
-| Cook step         | Fraunces 600    | 33px / 1.22                                      | step text                 |
+The steps: **12 · 13 · 14 · 15 · 16 · 17 · 18 · 20 · 22 · 24 · 28 · 30 · 32 · 36 · 42 · 48 · 56**.
+Each grows up to twice itself, but no step grows past 48px unless it starts there (the cook
+timer, 56, stays put). From 16 up a step never renders under 16px, which is also why a field
+you type into uses one of those: under 16px iOS zooms the page when the field takes focus
+(`tests/conventions/input-size.test.ts`, [DECISIONS #200](DECISIONS.md)). The mockups were
+drawn smaller than the app renders — **a design px × 1.1 maps to the step at or just above
+it**, titles and display numbers to the nearest one (the design's 14px row → `--fs-16`, its
+11px micro-label → `--fs-13`, its 30px page title → `--fs-32`).
+
+- **Type grows inside the layout.** Unitless line-heights and `em` letter-spacing follow the
+  text; paddings and icon sizes stay px on purpose. So a layout has to survive 200%: let a row
+  wrap (the trailing part drops under, `margin-left: auto` keeps it right) instead of setting
+  `nowrap` on words that matter, size a column that holds a word in `em`, and never fix the
+  height of a box with text in it. Headings break a word wider than their line (`overflow-wrap:
+anywhere` in app.css). `tests/visual/text-size.spec.ts` opens every screen at 200%, in English
+  and German.
+- **A box that can't grow** — a 16px badge, the tab bar, a four-way segmented control, the
+  week strip's seven columns — stops its text lower: `min(var(--fs-N), <px>)`, the cap never
+  under the step's own default. Native tab bars and segmented controls don't follow the
+  system size either. Use it for a box, not to dodge a wrap.
+
+| Style             | Font            | Step / weight                                       | Example                   |
+| ----------------- | --------------- | --------------------------------------------------- | ------------------------- |
+| Page title        | Fraunces 600    | `--fs-32`                                           | "Shopping", "Tasks"       |
+| Greeting          | Fraunces 600    | `--fs-30` / 1.05                                    | "Good morning, Lukas"     |
+| Sheet title       | Fraunces 600    | `--fs-24`                                           | "Add item", "New task"    |
+| Card/recipe title | Fraunces 600    | `--fs-20`–`22`                                      | dinner card, recipe cards |
+| Display numbers   | Fraunces 600    | `--fs-28` (stats) · `42` (invite code) · `56` timer |                           |
+| Body              | Figtree 500–600 | `--fs-17`                                           | list rows                 |
+| Meta              | Figtree 400–600 | `--fs-14`–`15`, `--text-4`                          | "Weekly · due today"      |
+| Micro-label       | Figtree 700     | `--fs-13`, uppercase, ls .1–.12em, `--text-5`       | "GROCERY", "INVITE CODE"  |
+| Cook step         | Fraunces 600    | `--fs-36` / 1.22                                    | step text                 |
 
 ## Recurring components (build once in `lib/components/ui`, reuse everywhere)
 
@@ -87,7 +107,7 @@ Built so far — plan 01: **Button · TextField · Avatar · ColorPicker** + `sh
 480px page shell for onboarding/login). Plan 02: **Card · AvatarStack · CheckCircle · Chip ·
 SegmentedControl · Toggle · ProgressBar · Banner · EmptyState · FAB · BottomSheet ·
 CenterModal**, plus `shell/TabBar` · `shell/PageHeader` and the bespoke icons in
-`components/icons/`. Plan 03: **Select · Stepper** + `shell/SubHeader`. Plan 04: **DateField**.
+`components/icons/`. Plan 03: **Select · Stepper** + `shell/SubHeader`. Plan 04: **DateField**. Plan 31: **CodeInput**.
 Plan 05: **RowGroup**, `Banner` gained an acting/dismissable form, plus the feature component
 **`components/EnablePush`** (the push permission state machine, in a Settings row or as Home's
 one-time prompt card). Plan 07: **SearchField**, and `RowGroup` gained the `surface="sunken"`
@@ -103,7 +123,7 @@ cook-mode sheets [7b], and the cook screen's own parts are feature components in
 [7h], **`CookTimerBar`** (the compact chip on other steps), **`IngredientsPeekSheet`** [7b] and
 **`SetTimerSheet`** — driven by the `CookTimer` state machine in `lib/cook-timer.svelte.ts`.
 Extend these rather than forking a variant; look at them side by side at **`/dev/kit`** (dev-only
-gallery, → [DECISIONS #39](DECISIONS.md)) and add to it when you add a component.
+gallery, → [DECISIONS #39](DECISIONS.md)) and add to it when you add a component. `BottomSheet` gained `action` (a header control in place of the ×, All activity's "Clear all" [9f]).
 
 Work after the twelve plans added three more feature components in `components/cooking/`, none of
 them `ui/` primitives, so `/dev/kit` is unchanged. **`TimerDock`** — no props; it reads the
@@ -118,6 +138,18 @@ carries no `name` on any field and is mounted outside the `<form>`, because the 
 still the only thing that posts (→ [DECISIONS #100](DECISIONS.md)). The store shape it all rests
 on — one singleton, N dumb readers — is what any future state that outlives a single screen
 should copy.
+
+Plan 29 lifted the undo bar's shell into **`ui/UndoToast`** (message as `RichText`, its own form
+action and fields, an optional icon), so shopping's tick and an expense's delete raise the same
+toast; `shopping/UndoBar` is now a thin wrapper. The expenses screens added
+`components/expenses/` — `BalanceCard`, `ExpenseRow`, `CategoryIcon`, `AmountField` (the hero
+amount, in the display face), `DateRow`, `ExpenseSheet`, `SplitSheet`, `SettleSheet`,
+`ExpenseSettingsSheet` — plus `icons/ReceiptIcon` for the fifth tab, drawn in
+`design/Expenses.dc.html`. Every amount uses `font-variant-numeric: tabular-nums`, so columns of
+money line up. Plan 30 added `RepeatRow` (the Repeats row, a native select over the row like
+`DateRow`'s date input; `DateRow` gained `upcoming` for a series' "Next one"), `SeriesSheet`
+[9h-stop], `series.ts` (how a series' rule is said) and `icons/RepeatIcon`, the two-arrow mark on
+a repeating row, in the detail's pill and in the ••• menu.
 
 Shopping later gained three more feature components in `components/shopping/`, again no `ui/`
 primitives. **`UndoBar`** — "**Tomatoes** checked off · Undo" for five seconds after a tick
@@ -147,6 +179,10 @@ background at all when there is nothing to measure.
   mode"). Full-width by default; renders an `<a>` when given `href`.
 - **TextField** — uppercase micro-label + white field, `--r-input`, sage border on focus,
   `error` prop for the message a failed form action sends back.
+- **CodeInput** — a one-time code as a row of boxes, one digit each, with TextField's micro-label
+  (the sign-in code [5a]). One real input laid invisibly over the boxes, so iOS code autofill,
+  pasting "123 456" and screen readers all see one field; digits only; `oncomplete` fires on the
+  last digit; `invalid` outlines every box (→ DECISIONS #184).
 - **ColorPicker** — the member palette (`$lib/member-colors`) as a radio group; `taken`
   colours render disabled. Pair it with a 52px Avatar preview [5c].
 - **RowGroup** — the white block a settings-style list sits in: `--r-card`, `--shadow-card`, a
@@ -169,7 +205,11 @@ background at all when there is nothing to measure.
   (under the title) and a `lead` snippet (an avatar beside it, [6c]); white, top radius
   `--r-sheet`, drag handle (38×5 pill `--border`), `--shadow-sheet`, `--scrim`. Native
   `<dialog>`: focus trap and Escape included, closes on scrim tap. Content is only mounted
-  while open, so each opening starts from a clean form.
+  while open, so each opening starts from a clean form. While open it is sized to the
+  `visualViewport`, so the panel rides above a phone's on-screen keyboard and scrolls in
+  what is left (→ [DECISIONS #204](DECISIONS.md)). The handle and title row drag: down past a
+  third of the panel (or a flick) closes, a short drag or an upward pull (stretches ≤28px)
+  springs back with an overshoot; the body never starts a drag (→ [DECISIONS #205](DECISIONS.md)).
 - **CenterModal** — completion celebration & confirms; same mechanics, `--r-sheet`,
   `--shadow-modal`, `dismissible={false}` for confirms.
 - **Avatar** — circle, member colour bg, white initial, sizes 20/26/32/36/44/52; `ring` +
@@ -231,7 +271,9 @@ none` — the knob's `transform` otherwise paints it over the input and swallows
   itself (BottomSheet's ×, SearchField's placeholder, Stepper's ± , ColorPicker's palette
   names). A component that takes a label as a prop keeps taking it; the _default_ is a catalog
   lookup, so nothing here is bilingual by accident. German is ~15–30% longer than English:
-  rows wrap rather than truncate, and nothing in the kit assumes a label's width
+  rows wrap rather than truncate, and nothing in the kit assumes a label's width. Copy has no
+  em dashes: a full stop, comma or colon, and a short "-" only where nothing else reads right
+  (convention test in `i18n.test.ts`, → [DECISIONS #204](DECISIONS.md))
   (→ [DECISIONS #93](DECISIONS.md), [SPEC §9](SPEC.md)).
 - **ProgressRing** — cook timer, 220px, 10px stroke, sage on `rgba(255,255,255,.08)`.
 

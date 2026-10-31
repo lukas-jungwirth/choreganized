@@ -2,6 +2,19 @@
  * Dev seed — demo household data so the later plans have something to render.
  *
  *   npm run db:seed -- you@example.com
+ *   npm run db:seed -- you@example.com --full-house
+ *   npm run db:seed -- you@example.com --history
+ *
+ * `--full-house` fills the household to as many members as the app allows —
+ * one per colour in the member palette, since two members can't share one —
+ * with stub housemates who each have a task done, so the avatar stacks, the
+ * leaderboard and the expense split are seen at their widest. Off by default:
+ * the browser tests and screenshots are taken of the two-person household.
+ *
+ * `--history` adds about fourteen months of older spending behind that week —
+ * the weekly shop, the monthly bills, evenings out, a trip, a settle-up a
+ * month — so All activity [9f] has months and a last year to page and filter
+ * through. Off by default for the same reason.
  *
  * The email is the Google account you signed in with: the seed binds the demo
  * household to that existing user, so **sign in once before running it**. If you
@@ -24,7 +37,12 @@ import { migrate } from 'drizzle-orm/better-sqlite3/migrator';
 import { mkdirSync } from 'node:fs';
 import { dirname } from 'node:path';
 import {
+	expenseRecurrenceShares,
+	expenseRecurrences,
+	expenseShares,
+	expenses,
 	households,
+	ledgerPeople,
 	meals,
 	members,
 	recipeIngredients,
@@ -41,7 +59,10 @@ import {
 // Relative and extensioned for the same reason the schema import is, and worth
 // importing rather than retyping: it is the key the unique index is built on.
 import { suggestionKey } from '../src/lib/utils/shopping.ts';
+import { addRepeat } from '../src/lib/utils/dates.ts';
+import { MEMBER_COLORS } from '../src/lib/member-colors.ts';
 import {
+	SEED_EXTRA_MEMBER_NAMES,
 	SEED_HOUSEHOLD_NAME,
 	SEED_HOUSEMATE_NAME,
 	SEED_RECIPE_NAMES,
@@ -87,10 +108,13 @@ const JUST_BOUGHT = new Date(Date.now() - 90 * 60_000);
 
 /* ── Connect ─────────────────────────────────────────────────────────────── */
 
-const email = process.argv[2];
+const args = process.argv.slice(2);
+const fullHouse = args.includes('--full-house');
+const history = args.includes('--history');
+const email = args.find((arg) => !arg.startsWith('--'));
 
 if (!email) {
-	console.error('Usage: npm run db:seed -- you@example.com');
+	console.error('Usage: npm run db:seed -- you@example.com [--full-house] [--history]');
 	process.exit(1);
 }
 
@@ -230,12 +254,53 @@ const seeded = db.transaction((tx) => {
 			.run();
 	}
 
+	// --full-house: a stub member per colour nobody has taken yet, up to the
+	// palette's size. Keyed by colour, so a re-run (or a real housemate who
+	// took one of them meanwhile) never adds a sixth.
+	if (fullHouse) {
+		const taken = tx
+			.select({ color: members.color })
+			.from(members)
+			.where(eq(members.householdId, householdId))
+			.all()
+			.map(({ color }) => color);
+		const free = MEMBER_COLORS.filter((color) => !taken.includes(color.value));
+
+		free.forEach((color, index) => {
+			const userId = sid('user', color.key);
+			const displayName = SEED_EXTRA_MEMBER_NAMES[index % SEED_EXTRA_MEMBER_NAMES.length];
+
+			tx.insert(user)
+				.values({
+					id: userId,
+					name: displayName,
+					email: `${userId}@seed.choreganized.local`,
+					emailVerified: false
+				})
+				.onConflictDoNothing()
+				.run();
+
+			tx.insert(members)
+				.values({
+					id: sid('member', color.key),
+					householdId,
+					userId,
+					displayName,
+					color: color.value,
+					role: 'member',
+					joinedAt: new Date(seededAt.getTime() + (index + 2) * 60_000)
+				})
+				.onConflictDoNothing()
+				.run();
+		});
+	}
+
 	// Resolve the two members the demo data hangs off *after* the inserts: the
 	// housemate may be a real person who joined (stub skipped), or the stub
 	// insert may have been a no-op. Everything below references these ids, so
 	// they have to be ids that exist.
 	const householdMembers = tx
-		.select({ id: members.id, displayName: members.displayName })
+		.select({ id: members.id, displayName: members.displayName, color: members.color })
 		.from(members)
 		.where(eq(members.householdId, householdId))
 		.orderBy(asc(members.joinedAt))
@@ -734,12 +799,225 @@ const seeded = db.transaction((tx) => {
 		.onConflictDoNothing()
 		.run();
 
+	// A task each for the --full-house stubs, at different points, so every
+	// member stands somewhere on the leaderboard rather than tying at zero.
+	const stubs = householdMembers.filter((member) =>
+		MEMBER_COLORS.some((color) => member.id === sid('member', color.key))
+	);
+	if (stubs.length > 0) {
+		tx.insert(taskCompletions)
+			.values(
+				stubs.map((member, index) => ({
+					id: sid('done', `stub-${member.id}`),
+					householdId,
+					taskId: sid('task', 'plants'),
+					taskName: 'Water the plants',
+					points: 15 - index * 5,
+					memberId: member.id,
+					memberName: member.displayName,
+					completedAt: daysAgo(index + 1, 9 + index)
+				}))
+			)
+			.onConflictDoNothing()
+			.run();
+	}
+
+	/* ── Expenses (→ plan 29) ─────────────────────────────────────────────
+	 * Every membership needs its ledger person; the app makes one with the
+	 * membership, but the stub housemate above was inserted by hand. Then a
+	 * week of ordinary spending, split equally, and one settle-up — enough to
+	 * put a balance on the card and every kind of row in the list.
+	 */
+	// Every member, not just the two below: a --full-house stub needs one as
+	// much as the housemate does, and a real member's existing person makes
+	// the insert a no-op.
+	for (const member of householdMembers) {
+		tx.insert(ledgerPeople)
+			.values({
+				id: sid('person', member.id),
+				householdId,
+				memberId: member.id,
+				userId: tx
+					.select({ userId: members.userId })
+					.from(members)
+					.where(eq(members.id, member.id))
+					.get()?.userId,
+				name: member.displayName,
+				color: member.color
+			})
+			.onConflictDoNothing()
+			.run();
+	}
+
+	const personOf = (memberId: string) =>
+		tx
+			.select({ id: ledgerPeople.id })
+			.from(ledgerPeople)
+			.where(eq(ledgerPeople.memberId, memberId))
+			.get()?.id ?? '';
+	const ownerPerson = personOf(ownerMemberId);
+	const housematePerson = personOf(housemateMemberId);
+	const both = [...new Set([ownerPerson, housematePerson])];
+
+	const spend = (
+		key: string,
+		days: number,
+		description: string | null,
+		category: (typeof expenses.$inferInsert)['category'],
+		amountMinor: number,
+		paidById: string,
+		to?: string
+	) => {
+		const id = sid('expense', key);
+		const created = tx
+			.insert(expenses)
+			.values({
+				id,
+				householdId,
+				kind: to ? 'payment' : 'expense',
+				description,
+				category,
+				amountMinor,
+				date: addDays(today, -days),
+				paidById,
+				splitMode: to ? 'amounts' : 'equal',
+				createdByMemberId: ownerMemberId,
+				updatedByMemberId: ownerMemberId,
+				createdAt: daysAgo(days, 19),
+				updatedAt: daysAgo(days, 19)
+			})
+			.onConflictDoNothing()
+			.run().changes;
+		if (!created) return;
+
+		// Equal halves; the odd cent goes to the first person, as the app does it.
+		const owers = to ? [to] : both;
+		const each = Math.floor(amountMinor / owers.length);
+		tx.insert(expenseShares)
+			.values(
+				owers.map((personId, index) => ({
+					expenseId: id,
+					personId,
+					shareMinor: each + (index < amountMinor - each * owers.length ? 1 : 0),
+					input: null
+				}))
+			)
+			.run();
+	};
+
+	spend('billa', 0, 'Weekly shop · Billa', 'groceries', 4210, ownerPerson);
+	spend('pizza', 0, 'Pizza at Riva', 'eatingOut', 3180, housematePerson);
+	spend('soap', 2, 'Dish soap & sponges', 'household', 870, ownerPerson);
+	if (housematePerson !== ownerPerson) {
+		spend('payment', 2, null, null, 1800, housematePerson, ownerPerson);
+	}
+	spend('strom', 4, 'Strom · Wien Energie', 'bills', 8640, ownerPerson);
+	spend('tickets', 5, 'Wiener Linien · 2 tickets', 'transport', 680, housematePerson);
+
+	// The electricity bill repeats monthly (→ plan 30): a series started from
+	// the expense above, next due a month after it, so Recurring [9h] has a row
+	// and Strom carries the repeat badge. The sweep logs nothing until then.
+	const stromDate = addDays(today, -4);
+	const anchorDay = Number(stromDate.slice(8, 10));
+	const series = sid('series', 'strom');
+	const started = tx
+		.insert(expenseRecurrences)
+		.values({
+			id: series,
+			householdId,
+			description: 'Strom · Wien Energie',
+			category: 'bills',
+			amountMinor: 8640,
+			paidById: ownerPerson,
+			splitMode: 'equal',
+			unit: 'month',
+			anchorDay,
+			nextDate: addRepeat(stromDate, 'month', anchorDay),
+			createdByMemberId: ownerMemberId,
+			createdAt: daysAgo(4, 19),
+			updatedAt: daysAgo(4, 19)
+		})
+		.onConflictDoNothing()
+		.run().changes;
+	if (started) {
+		tx.insert(expenseRecurrenceShares)
+			.values(both.map((personId) => ({ recurrenceId: series, personId, input: null })))
+			.run();
+		tx.update(expenses)
+			.set({ recurrenceId: series })
+			.where(eq(expenses.id, sid('expense', 'strom')))
+			.run();
+	}
+
+	// --history: older spending, a day at a time back to fourteen months ago.
+	// Amounts vary by a fixed rule rather than at random, so a re-run writes the
+	// same rows; the payer alternates so "Paid by" has something to split.
+	if (history) {
+		const other = housematePerson;
+		const vary = (base: number, day: number) => base + ((day * 37) % 23) * 50 - 500;
+		for (let day = 7; day <= 430; day++) {
+			const payer = day % 2 ? ownerPerson : other;
+			const date = addDays(today, -day);
+			const dom = Number(date.slice(8, 10));
+			if (day % 7 === 0) {
+				spend(`h:billa:${day}`, day, 'Weekly shop · Billa', 'groceries', vary(6400, day), payer);
+			}
+			if (day % 7 === 3) {
+				spend(`h:hofer:${day}`, day, 'Hofer', 'groceries', vary(2800, day), payer);
+			}
+			if (dom === 1) {
+				spend(`h:rent:${day}`, day, 'Miete', 'bills', 98000, ownerPerson);
+				spend(`h:internet:${day}`, day, 'Internet · Magenta', 'bills', 3990, other);
+			}
+			if (dom === 15)
+				spend(`h:strom:${day}`, day, 'Strom · Wien Energie', 'bills', vary(8600, day), ownerPerson);
+			if (day % 11 === 5) {
+				const places = ['Pizza at Riva', 'Figlmüller', 'Ramen · Mochi', 'Heuriger'];
+				spend(
+					`h:out:${day}`,
+					day,
+					places[day % places.length],
+					'eatingOut',
+					vary(4800, day),
+					payer
+				);
+			}
+			if (day % 13 === 4)
+				spend(`h:dm:${day}`, day, 'dm · Drogerie', 'household', vary(1900, day), payer);
+			if (day % 17 === 9)
+				spend(`h:tickets:${day}`, day, 'Wiener Linien · 2 tickets', 'transport', 680, payer);
+			if (day % 23 === 6) spend(`h:kino:${day}`, day, 'Kino · Votiv', 'leisure', 2400, payer);
+			if (day === 120 || day === 300) {
+				spend(
+					`h:trip:${day}`,
+					day,
+					day === 120 ? 'Hotel · Salzburg' : 'Ferienwohnung · Grado',
+					'travel',
+					42000,
+					other
+				);
+			}
+			if (dom === 28 && other !== ownerPerson) {
+				spend(
+					`h:payment:${day}`,
+					day,
+					null,
+					null,
+					vary(6000, day),
+					day % 2 ? other : ownerPerson,
+					day % 2 ? ownerPerson : other
+				);
+			}
+		}
+	}
+
 	return {
 		householdName: household?.name ?? 'your household',
-		members:
-			housemate.id === ownerMemberId
-				? `${ownerName} (owner)`
-				: `${ownerName} (owner) + ${housemateName}`
+		members: householdMembers
+			.map((member) =>
+				member.id === ownerMemberId ? `${member.displayName} (owner)` : member.displayName
+			)
+			.join(' + ')
 	};
 });
 
@@ -748,6 +1026,8 @@ console.log(`  household  ${seeded.householdName} — ${seeded.members}`);
 console.log('  shopping   3 stores · 10 items (2 already checked off)');
 console.log('  cooking    2 recipes · meals planned for today, tomorrow and the day after');
 console.log('  tasks      7 tasks (overdue · today · upcoming · undated) · 8 history entries');
+console.log('  expenses   5 expenses · 1 settle-up · 1 monthly series');
+if (history) console.log('  history    ~14 months of older expenses and monthly settle-ups');
 console.log(`  → ${rowsWritten() - before} rows written; anything already there was left alone.`);
 
 sqlite.close();

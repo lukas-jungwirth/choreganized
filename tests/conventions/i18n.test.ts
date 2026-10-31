@@ -6,7 +6,7 @@
  */
 import assert from 'node:assert/strict';
 import { describe, it } from 'vitest';
-import { linesMatching, sourceFiles } from '../helpers/source';
+import { linesMatching, sourceFiles, stripCss } from '../helpers/source';
 
 describe('i18n', () => {
 	it('dates are rendered through m.date.*, never formatShortDate directly', () => {
@@ -27,5 +27,15 @@ describe('i18n', () => {
 			).sort();
 
 		assert.deepEqual(sections('de.ts'), sections('en.ts'));
+	});
+
+	it('copy uses no em dashes', () => {
+		// Comments may use them; what a reader sees says it with a full stop, a
+		// comma or a colon, and a short "-" only where nothing else reads right.
+		const offenders = sourceFiles('src/lib/i18n/messages', ['.ts'])
+			.map((file) => ({ ...file, text: stripCss(file.text) }))
+			.flatMap((file) => linesMatching(file, /^(?!\s*\/\/).*—/));
+
+		assert.deepEqual(offenders, [], 'Copy uses no em dashes (→ DECISIONS #204).');
 	});
 });

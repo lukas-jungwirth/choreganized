@@ -52,9 +52,13 @@ export type PushPayload = {
 	requireInteraction?: boolean;
 };
 
-/** The `members` columns that gate a category of notification (→ SPEC §3.5, §3.6, §5.6). */
+/** The `members` columns that gate a category of notification (→ SPEC §3.5, §3.6, §5.6, §11.11). */
 export type NotificationPref =
-	'notifyTaskReminders' | 'notifyOverdueNudges' | 'notifyShoppingUpdates' | 'notifyShopClosures';
+	| 'notifyTaskReminders'
+	| 'notifyOverdueNudges'
+	| 'notifyShoppingUpdates'
+	| 'notifyShopClosures'
+	| 'notifyExpenses';
 
 /**
  * A notification, written in the recipient's language.
@@ -125,6 +129,21 @@ function configureVapid(): boolean {
 /** Whether the server can send at all; the UI uses it to explain itself. */
 export function pushConfigured(): boolean {
 	return vapidConfigured;
+}
+
+/**
+ * Whether this user has any device a push could reach — a Remind [10a] only
+ * says "Reminded" to someone who will actually hear it.
+ */
+export function hasDevice(userId: string): boolean {
+	return (
+		db
+			.select({ id: pushSubscriptions.id })
+			.from(pushSubscriptions)
+			.where(eq(pushSubscriptions.userId, userId))
+			.limit(1)
+			.get() !== undefined
+	);
 }
 
 /* ── Sending ──────────────────────────────────────────────────────────────── */
