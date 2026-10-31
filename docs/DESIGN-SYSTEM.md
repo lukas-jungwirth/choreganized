@@ -207,7 +207,9 @@ background at all when there is nothing to measure.
   `<dialog>`: focus trap and Escape included, closes on scrim tap. Content is only mounted
   while open, so each opening starts from a clean form. While open it is sized to the
   `visualViewport`, so the panel rides above a phone's on-screen keyboard and scrolls in
-  what is left (→ [DECISIONS #204](DECISIONS.md)).
+  what is left (→ [DECISIONS #204](DECISIONS.md)). The handle and title row drag: down past a
+  third of the panel (or a flick) closes, a short drag or an upward pull (stretches ≤28px)
+  springs back with an overshoot; the body never starts a drag (→ [DECISIONS #205](DECISIONS.md)).
 - **CenterModal** — completion celebration & confirms; same mechanics, `--r-sheet`,
   `--shadow-modal`, `dismissible={false}` for confirms.
 - **Avatar** — circle, member colour bg, white initial, sizes 20/26/32/36/44/52; `ring` +
