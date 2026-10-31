@@ -546,7 +546,7 @@
 						onclick={() => (editing = item.key)}
 					>
 						<!-- The em dash a Stepper shows for "no quantity", same reason. -->
-						{amount || '—'}
+						{amount || '-'}
 					</button>
 				{/if}
 				{@render controls(index, ingredients.length, 'ingredient', (direction) => {

@@ -44,7 +44,7 @@ test('feedback is saved even though no GitHub token is configured', async ({ pag
 	await sheet.getByRole('textbox').fill('E2E: the list jumped back to the top.');
 	await sheet.getByRole('button', { name: 'Send' }).click();
 
-	await expect(page.getByText(/Thanks — that’s saved/)).toBeVisible();
+	await expect(page.getByText(/Thanks! That’s saved/)).toBeVisible();
 });
 
 test('the About row names the build the tests run against', async ({ page }) => {

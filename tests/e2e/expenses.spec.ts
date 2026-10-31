@@ -354,3 +354,28 @@ test('a default split over some of the house is kept as theirs, and All activity
 			.first()
 	).toBeVisible();
 });
+
+test('the add sheet rises above the on-screen keyboard', async ({ page }) => {
+	await page.goto('/expenses');
+	await page.getByRole('button', { name: 'Add expense' }).click();
+	const sheet = page.getByRole('dialog', { name: 'Add expense' });
+	const amount = sheet.getByLabel('Amount');
+	await amount.focus();
+
+	// A phone keyboard only shrinks the visual viewport; play one 300px tall.
+	const visibleBottom = await page.evaluate(() => {
+		const viewport = window.visualViewport!;
+		const height = window.innerHeight - 300;
+		Object.defineProperty(viewport, 'height', { configurable: true, get: () => height });
+		viewport.dispatchEvent(new Event('resize'));
+		return height;
+	});
+
+	const panel = sheet.locator('.panel');
+	await expect
+		.poll(async () => (await panel.boundingBox())!.y + (await panel.boundingBox())!.height)
+		.toBeLessThanOrEqual(visibleBottom + 1);
+	const field = (await amount.boundingBox())!;
+	expect(field.y + field.height).toBeLessThanOrEqual(visibleBottom);
+	await expect(amount).toBeFocused();
+});

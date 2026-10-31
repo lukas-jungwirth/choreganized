@@ -205,7 +205,9 @@ background at all when there is nothing to measure.
   (under the title) and a `lead` snippet (an avatar beside it, [6c]); white, top radius
   `--r-sheet`, drag handle (38×5 pill `--border`), `--shadow-sheet`, `--scrim`. Native
   `<dialog>`: focus trap and Escape included, closes on scrim tap. Content is only mounted
-  while open, so each opening starts from a clean form.
+  while open, so each opening starts from a clean form. While open it is sized to the
+  `visualViewport`, so the panel rides above a phone's on-screen keyboard and scrolls in
+  what is left (→ [DECISIONS #204](DECISIONS.md)).
 - **CenterModal** — completion celebration & confirms; same mechanics, `--r-sheet`,
   `--shadow-modal`, `dismissible={false}` for confirms.
 - **Avatar** — circle, member colour bg, white initial, sizes 20/26/32/36/44/52; `ring` +
@@ -267,7 +269,9 @@ none` — the knob's `transform` otherwise paints it over the input and swallows
   itself (BottomSheet's ×, SearchField's placeholder, Stepper's ± , ColorPicker's palette
   names). A component that takes a label as a prop keeps taking it; the _default_ is a catalog
   lookup, so nothing here is bilingual by accident. German is ~15–30% longer than English:
-  rows wrap rather than truncate, and nothing in the kit assumes a label's width
+  rows wrap rather than truncate, and nothing in the kit assumes a label's width. Copy has no
+  em dashes: a full stop, comma or colon, and a short "-" only where nothing else reads right
+  (convention test in `i18n.test.ts`, → [DECISIONS #204](DECISIONS.md))
   (→ [DECISIONS #93](DECISIONS.md), [SPEC §9](SPEC.md)).
 - **ProgressRing** — cook timer, 220px, 10px stroke, sage on `rgba(255,255,255,.08)`.
 

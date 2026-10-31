@@ -191,7 +191,7 @@ export const en = {
 			amber: 'Amber',
 			plum: 'Plum'
 		},
-		colourTaken: (colour: string) => `${colour} — already taken`
+		colourTaken: (colour: string) => `${colour}, already taken`
 	},
 
 	/* ── The tab bar [02] ──────────────────────────────────────────────────── */
@@ -413,7 +413,7 @@ export const en = {
 
 		empty: {
 			title: 'Nothing to buy yet',
-			copy: "Add items as you run out — they'll be grouped by store for whoever does the shopping.",
+			copy: "Add items as you run out. They'll be grouped by store for whoever does the shopping.",
 			cta: 'Add first item'
 		},
 
@@ -514,13 +514,13 @@ export const en = {
 			moveUp: (store: string) => `Move ${store} up`,
 			moveDown: (store: string) => `Move ${store} down`,
 			remove: (store: string) => `Delete ${store}`,
-			help: 'Use the arrows to reorder — your list follows this order, so arrange it the way you walk through town. Quick-added items land in the first store; items without a store go under “Other”.',
+			help: 'Use the arrows to reorder. Your list follows this order, so arrange it the way you walk through town. Quick-added items land in the first store; items without a store go under “Other”.',
 			deleteLabel: 'Delete store',
 			deleteConfirm: (store: string) => `Delete ${store}?`,
 			deleteMoves: (count: number) =>
 				count === 1
-					? 'Its 1 item moves to “Other” — nothing falls off the list.'
-					: `Its ${count} items move to “Other” — nothing falls off the list.`,
+					? 'Its 1 item moves to “Other”, so nothing falls off the list.'
+					: `Its ${count} items move to “Other”, so nothing falls off the list.`,
 			deleteEmpty: 'Nothing is filed under it, so nothing else changes.',
 			/**
 			 * The three stores a new household starts with (→ SPEC §3.4). Written
@@ -663,14 +663,14 @@ export const en = {
 		awayBanner: {
 			mine: (until: string) => `You're away until ${until}`,
 			other: (name: string, until: string) => `${name} is away until ${until}`,
-			detailMine: 'Your tasks are paused — nothing counts as overdue',
-			detailOther: 'Their tasks are paused — nothing counts as overdue'
+			detailMine: 'Your tasks are paused, nothing counts as overdue',
+			detailOther: 'Their tasks are paused, nothing counts as overdue'
 		},
 
 		/** The brand-new household [7f]. */
 		empty: {
 			title: 'No tasks yet',
-			copy: 'Add the chores you both forget — earn points when you tick them off. Start with a few?',
+			copy: 'Add the chores you both forget and earn points when you tick them off. Start with a few?',
 			starters: 'Popular starters',
 			custom: 'Create a custom task'
 		},
@@ -683,7 +683,7 @@ export const en = {
 			addedBy: (name: string) => `added by ${name}`,
 			/** The tick's label — it says what it will do, and to whose chore. */
 			markDone: (task: string) => `Mark ${task} done`,
-			markDoneFor: (task: string, assignee: string) => `Mark ${task} done — it's ${assignee}'s`,
+			markDoneFor: (task: string, assignee: string) => `Mark ${task} done (it's ${assignee}'s)`,
 			/** The rest of the card opens the detail sheet [4b]. */
 			open: (task: string) => `Open ${task}`
 		},
@@ -693,7 +693,7 @@ export const en = {
 			wasDue: (date: string) => `was due ${date}`,
 			pts: (points: number) => `${points} pts`,
 			pausedNote: (name: string, until: string) =>
-				`${name} is away until ${until} — this one is paused, not overdue.`,
+				`${name} is away until ${until}, so this one is paused, not overdue.`,
 			markAsDone: (points: number) => `Mark as done · +${points}`,
 			snooze: 'Snooze / reschedule',
 			/** The roster, minus whoever has it (→ SPEC §5.3). */
@@ -707,7 +707,7 @@ export const en = {
 			delete: 'Delete task',
 			deleteConfirm: (task: string) => `Delete ${task}?`,
 			deleteCopy:
-				'It stops coming round. Everything already ticked off stays in history — the points stay with the house.'
+				'It stops coming round. Everything already ticked off stays in history, and the points stay with the house.'
 		},
 
 		/** The celebration [4d]. */
@@ -797,7 +797,7 @@ export const en = {
 		historyScreen: {
 			emptyTitle: 'Nothing done yet',
 			emptyCopy:
-				'Tick a task off and it lands here — what it was, who did it, and what it was worth.',
+				'Tick a task off and it lands here: what it was, who did it, and what it was worth.',
 			backToHistory: 'Back to history',
 			/** A month somebody paged into that turned out to hold nothing. */
 			emptyStretch: 'Nothing was completed in this stretch.',
@@ -914,8 +914,8 @@ export const en = {
 			title: 'Which day?',
 			eyebrow: 'Add to plan',
 			free: 'Free',
-			/** The row read out: "Thursday 17 — free". */
-			day: (weekday: string, day: string, meal: string) => `${weekday} ${day} — ${meal}`,
+			/** The row read out: "Thursday 17: free". */
+			day: (weekday: string, day: string, meal: string) => `${weekday} ${day}: ${meal}`,
 			freeQuiet: 'free',
 			/** What a day already holds, on one line: "Pancakes · Pizza". */
 			mealList: (names: string[]) => names.join(' · ')
@@ -927,9 +927,9 @@ export const en = {
 			searchRecipes: 'Search your recipes',
 			/** The radio group of recipes, named for a screen reader. */
 			recipeGroup: 'Recipe',
-			noMatch: 'No recipe by that name — cook something not saved instead?',
-			moreMatches: (count: number) => `${count} more match — keep typing to narrow it down.`,
-			mostRecent: (rest: number) => `Your most recent — search to reach the other ${rest}.`,
+			noMatch: 'No recipe by that name. Cook something not saved instead?',
+			moreMatches: (count: number) => `${count} more match. Keep typing to narrow it down.`,
+			mostRecent: (rest: number) => `Your most recent. Search to reach the other ${rest}.`,
 			notSaved: 'Cook something not saved',
 			notSavedPlaceholder: 'Pizza night',
 			/** The chips above: which meal of that day this one is (→ #126). */
@@ -994,8 +994,8 @@ export const en = {
 			steps: 'Steps',
 			startCookMode: 'Start cook mode',
 			/** Split so the middle run can be the link to the edit screen. */
-			noStepsLead: 'No steps written down yet — ',
-			noStepsLink: 'add them',
+			noStepsLead: 'No steps written down yet. ',
+			noStepsLink: 'Add them',
 			noStepsRest: ' and cook mode can walk you through it.'
 		},
 
@@ -1035,12 +1035,12 @@ export const en = {
 			 * and points at the sheet for the times it reads a line wrong.
 			 */
 			ingredientsNote: (units: string) =>
-				`Write them however you like — “400 g pasta”, “2 eggs”, “salt”. Units we know: ${units}. Tap an amount to set the number and unit yourself.`,
+				`Write them however you like: “400 g pasta”, “2 eggs”, “salt”. Units we know: ${units}. Tap an amount to set the number and unit yourself.`,
 			/**
 			 * The chip beside each row. No row number: the input beside it already
 			 * announces "Ingredient 3", and this is its description.
 			 */
-			amountLabel: (amount: string) => (amount ? `${amount} — edit` : 'No amount — add one'),
+			amountLabel: (amount: string) => (amount ? `${amount}, edit` : 'No amount, add one'),
 			/** The row taken apart [3c], with [3a]'s unit list. */
 			ingredientNamePlaceholder: 'pasta',
 			quantity: 'Amount',
@@ -1081,7 +1081,7 @@ export const en = {
 			/** The amount field left empty means the row's whole amount. */
 			usesAll: 'all',
 			usesBackToAuto: 'Read the step text instead',
-			usesEmpty: 'Add the ingredients first — then you can say which ones this step needs.',
+			usesEmpty: 'Add the ingredients first, then you can say which ones this step needs.',
 
 			/**
 			 * A step's own timer [3c] (→ plan 21, DECISIONS #147). The chip under a
@@ -1125,7 +1125,7 @@ export const en = {
 			have: (amount: string) =>
 				amount ? `Already on the list · ${amount}` : 'Already on the list',
 			/** Under a row whose amount will be added to one already there. */
-			merge: (amount: string) => `On the list already — becomes ${amount}`,
+			merge: (amount: string) => `On the list already, becomes ${amount}`,
 			/** Why a row opens unticked (→ `services/pantry`). */
 			staple: 'You usually have this',
 			submit: (count: number) => (count === 1 ? 'Add 1 to the list' : `Add ${count} to the list`),
@@ -1167,7 +1167,7 @@ export const en = {
 			finish: 'Finish',
 			eyebrow: 'Cook mode',
 			noSteps:
-				'This recipe has no steps written down yet — add them and cook mode can walk you through it.',
+				'This recipe has no steps written down yet. Add them and cook mode can walk you through it.',
 			addSteps: 'Add the steps',
 
 			/** The ingredients peek [7b]. */
@@ -1208,7 +1208,7 @@ export const en = {
 			paused: '(paused)',
 			barDone: (label: string) => `${label} is done`,
 			barRunning: (label: string, remaining: string) => `${label}, ${remaining} left`,
-			barBackTo: (step: number) => ` — back to step ${step}`,
+			barBackTo: (step: number) => `, back to step ${step}`,
 			/** The default label a timer with no step at all gets. */
 			defaultTimer: 'Timer',
 			/**
@@ -1223,9 +1223,9 @@ export const en = {
 			timerCancelOne: (label: string) => `Cancel ${label}`,
 			/** At the cap the Start chip stands down and says why (→ DECISIONS #102). */
 			timerCapped: (max: number) =>
-				`${max} timers at once is the limit — stop one before you start another.`,
+				`${max} timers at once is the limit. Stop one before you start another.`,
 			/** No service worker, so the alarm can only fire while this tab lives. */
-			offline: 'Offline — this one will only ring while the app is open.',
+			offline: 'Offline: this one will only ring while the app is open.',
 			timerFailed: "That timer wouldn't start."
 		},
 
@@ -1238,7 +1238,7 @@ export const en = {
 			running: (label: string, remaining: string) => `${label}, ${remaining} left`,
 			done: (label: string) => `${label} is done`,
 			/** Always said, so it is clear the row goes somewhere. */
-			backTo: ' — back to cooking',
+			backTo: ', back to cooking',
 			/** "+2" beside the soonest, when more than one is running. */
 			more: (count: number) => `+${count}`,
 			/** The same count, spelled out for the row's label. */
@@ -1266,13 +1266,13 @@ export const en = {
 
 			/** The typed fetch failures — one message each (→ server/recipe-import.ts). */
 			error: {
-				invalidUrl: 'That doesn’t look like a web address — paste the recipe’s link.',
+				invalidUrl: 'That doesn’t look like a web address. Paste the recipe’s link.',
 				blocked: 'That link can’t be opened from here. Try the recipe’s public web address.',
-				unreachable: 'Couldn’t reach that page — check the link and your connection.',
+				unreachable: 'Couldn’t reach that page. Check the link and your connection.',
 				refused:
 					'That site doesn’t let apps read its recipes. Open it in your browser and copy the recipe from there.',
 				notHtml: 'That link isn’t a web page. Paste the recipe’s page, not a file or an image.',
-				tooLarge: 'That page is too big to read — try a direct link to the recipe.',
+				tooLarge: 'That page is too big to read. Try a direct link to the recipe.',
 				noRecipe: 'No recipe data on that page.'
 			},
 
@@ -1280,16 +1280,16 @@ export const en = {
 			 *  or photos, and improve a page's own recipe card. Only offered when the
 			 *  household has an AI provider set up (→ SPEC §4.7). */
 			ai: {
-				note: 'Made with AI — check it over before saving.',
+				note: 'Made with AI. Check it over before saving.',
 				/** The line typed for this import, quoted back on the draft it shaped. */
 				adapted: (instructions: string) => `Adapted: “${instructions}”.`,
 				/** A recipe card the model couldn't improve still opens, as the site wrote it. */
-				withoutAi: (reason: string) => `Imported as the site wrote it — ${reason}`,
+				withoutAi: (reason: string) => `Imported as the site wrote it: ${reason}`,
 
 				/** The link screen's toggle (→ plan 22) and the line under it. */
 				improve: 'Improve with AI',
 				improveHint:
-					'Sorts out amounts, links ingredients to their steps and sets timers — and reads pages without recipe data. Uses your AI provider.',
+					'Sorts out amounts, links ingredients to their steps and sets timers. It also reads pages without recipe data. Uses your AI provider.',
 				instructionsToggle: 'Add instructions for the AI',
 				instructionsLabel: 'Instructions for the AI',
 				instructionsPlaceholder: 'e.g. with tofu instead of meat, for 2 people',
@@ -1308,7 +1308,7 @@ export const en = {
 				],
 				pasteToggle: 'Paste the recipe text instead',
 				pasteLabel: 'Recipe text',
-				pastePlaceholder: 'Paste the whole recipe — ingredients and steps.',
+				pastePlaceholder: 'Paste the whole recipe, ingredients and steps.',
 				pasteSubmit: 'Extract recipe',
 				photoToggle: 'Import from a photo',
 				photoLabel: 'Photos of the recipe',
@@ -1327,7 +1327,7 @@ export const en = {
 					`${main} couldn’t answer, so your backup (${backup}) did.`,
 				/** Provider failures are `ai.error.*`; these two are the import's own. */
 				error: {
-					noRecipe: 'Couldn’t find a recipe in that — try clearer photos or more complete text.',
+					noRecipe: 'Couldn’t find a recipe in that. Try clearer photos or more complete text.',
 					noPhotos: 'Add at least one photo of the recipe.'
 				}
 			}
@@ -1716,8 +1716,7 @@ export const en = {
 			row: 'Expenses',
 			title: 'Expenses',
 			currency: 'Currency',
-			currencyLocked:
-				'Set once, before the first expense — changing it later would relabel every amount.',
+			currencyLocked: 'Can’t be changed once expenses are added.',
 			ownerOnly: 'Only the owner can change the currency.',
 			defaultSplit: 'Default split',
 			equalEveryone: 'Equally between everyone',
@@ -1750,11 +1749,11 @@ export const en = {
 		leaveBalance: (who: string | null, owes: boolean, amount: string) =>
 			who === null
 				? owes
-					? `You still owe ${amount} — settle up first?`
-					: `You’re still owed ${amount} — settle up first?`
+					? `You still owe ${amount}. Settle up first?`
+					: `You’re still owed ${amount}. Settle up first?`
 				: owes
-					? `${who} still owes ${amount} — settle up first?`
-					: `${who} is still owed ${amount} — settle up first?`,
+					? `${who} still owes ${amount}. Settle up first?`
+					: `${who} is still owed ${amount}. Settle up first?`,
 
 		errors: {
 			amount: 'Enter an amount above 0.',
@@ -1767,7 +1766,7 @@ export const en = {
 			currency: 'Pick one of the listed currencies.',
 			currencyLocked: 'The currency is fixed once there are expenses.',
 			nextDate: 'The next one can’t be before today.',
-			dateTooOld: 'That date is too long ago — check the year.',
+			dateTooOld: 'That date is too long ago. Check the year.',
 			seriesStart: 'A repeating expense can start at most a year ago.',
 			seriesPerson: 'Someone in it has left the household, so it can’t repeat.'
 		}
@@ -1805,7 +1804,7 @@ export const en = {
 			row: 'Language',
 			title: 'Language',
 			system: 'System',
-			systemDetail: (detected: string) => `Follow this device — currently ${detected}`,
+			systemDetail: (detected: string) => `Follow this device, currently ${detected}`,
 			/** The whole document reloads, which is worth saying before it happens. */
 			note: 'Changing the language reloads the app.'
 		},
@@ -1819,7 +1818,7 @@ export const en = {
 			title: 'Appearance',
 			system: 'System',
 			/** Named, so the row isn't asking you to guess what your phone is set to. */
-			systemDetail: (detected: string) => `Follow this device — currently ${detected}`,
+			systemDetail: (detected: string) => `Follow this device, currently ${detected}`,
 			light: 'Light',
 			dark: 'Dark',
 			note: 'This is remembered on this device, so your phone and your laptop can differ.'
@@ -1846,14 +1845,14 @@ export const en = {
 			send: 'Send test notification',
 			sending: 'Sending…',
 			notConfigured: 'Push isn’t configured on the server yet.',
-			noDevice: 'No device is subscribed yet — switch it on above.',
-			sentOne: 'Sent to this device — it should arrive in a moment.',
-			sentMany: (count: number) => `Sent to ${count} devices — they should arrive in a moment.`
+			noDevice: 'No device is subscribed yet. Switch it on above.',
+			sentOne: 'Sent to this device. It should arrive in a moment.',
+			sentMany: (count: number) => `Sent to ${count} devices. They should arrive in a moment.`
 		},
 
 		signOut: 'Sign out',
 		signingOut: 'Signing out…',
-		signOutFailed: 'Couldn’t sign out — check your connection and try again.',
+		signOutFailed: 'Couldn’t sign out. Check your connection and try again.',
 
 		/** Your profile [6a]. */
 		profile: {
@@ -1880,7 +1879,7 @@ export const en = {
 			eyebrow: 'Household',
 			what: 'Bring a key from an AI provider to import recipes from photos, pasted text and pages without recipe data.',
 			freeNote:
-				'A free tier (Gemini, or OpenRouter’s free models) is plenty for a household — but free tiers have limits and sometimes stop answering for a while. A backup keeps imports working when that happens.',
+				'A free tier (Gemini, or OpenRouter’s free models) is plenty for a household, but free tiers have limits and sometimes stop answering for a while. A backup keeps imports working when that happens.',
 			primary: 'Main',
 			backup: 'Backup',
 			backupEmpty: 'Answers when the main provider is at its limit or down.',
@@ -1900,7 +1899,7 @@ export const en = {
 				keyLabel: 'API key',
 				keyPlaceholder: 'Paste the key',
 				keyKeep: (hint: string) => `Leave empty to keep ${hint}.`,
-				invalidKey: 'That doesn’t look like an API key — paste the whole key.',
+				invalidKey: 'That doesn’t look like an API key. Paste the whole key.',
 				loadModels: 'Load models',
 				loadingModels: 'Loading models…',
 				modelLabel: 'Model',
@@ -1942,7 +1941,7 @@ export const en = {
 			asWrittenDetail: 'Imported recipes keep the words the site used.',
 			austrian: 'Austrian German',
 			austrianDetail:
-				'Sahne becomes Obers, Quark Topfen, Kartoffeln Erdäpfel — in imported German recipes.',
+				'Sahne becomes Obers, Quark Topfen, Kartoffeln Erdäpfel, in imported German recipes.',
 			note: 'Applies to recipes you import from now on; saved recipes stay as they are. With AI it rewrites the whole recipe; without, the ingredient names.'
 		},
 
@@ -1976,11 +1975,11 @@ export const en = {
 			sending: 'Sending…',
 			/** Said before it is sent, because it goes whether it is read or not. */
 			attached: (version: string) =>
-				`Your words go on a public list on GitHub, along with the app version (${version}), your language and your appearance. Your name and your browser stay in the app — they aren’t published. Write in whichever language you like.`,
+				`Your words go on a public list on GitHub, along with the app version (${version}), your language and your appearance. Your name and your browser stay in the app. They aren’t published. Write in whichever language you like.`,
 			pickKind: 'Pick a bug or an idea.',
 			empty: 'Write a line or two first.',
 			/** Says *saved* first: that is true even when GitHub is unreachable. */
-			thanks: 'Thanks — that’s saved, and on its way to Lukas.'
+			thanks: 'Thanks! That’s saved, and on its way to Lukas.'
 		},
 
 		/** Leave household [6d] — three things to say, one confirm (→ SPEC §7). */
@@ -1992,7 +1991,7 @@ export const en = {
 			goToMembers: 'Go to members',
 			title: (household: string) => `Leave ${household}?`,
 			lastCopy: (household: string) =>
-				`You're the only one here, so leaving deletes ${household} for good — the shopping list, the meal plan, every task and all the points logged so far. This can't be undone.`,
+				`You're the only one here, so leaving deletes ${household} for good: the shopping list, the meal plan, every task and all the points logged so far. This can't be undone.`,
 			copy: "You'll lose access to the shared shopping list, tasks and meal plan. Your points stay with the household.",
 			deleteAndLeave: 'Delete household & leave',
 			failed: "That didn't work. Try again."
@@ -2034,7 +2033,7 @@ export const en = {
 				'They lose access to the shopping list, tasks and meal plan straight away. Anything assigned to them becomes Anyone’s, and every point they’ve scored stays with the house.',
 			ownerConfirm: (name: string) => `Make ${name} the owner?`,
 			ownerCopy:
-				'They’ll be able to rename the household, manage the invite and remove members — including you. You stay a member of the house.',
+				'They’ll be able to rename the household, manage the invite and remove members, including you. You stay a member of the house.',
 			failed: "That didn't work."
 		}
 	},
@@ -2093,7 +2092,7 @@ export const en = {
 		mail: {
 			subject: (code: string) => `${code} is your Choreganized code`,
 			body: (code: string, minutes: number) =>
-				`Your sign-in code for Choreganized:\n\n${code}\n\nIt works for ${minutes} minutes. If you didn’t ask for it, you can ignore this email — nobody can sign in without the code.`
+				`Your sign-in code for Choreganized:\n\n${code}\n\nIt works for ${minutes} minutes. If you didn’t ask for it, you can ignore this email. Nobody can sign in without the code.`
 		}
 	},
 
@@ -2117,7 +2116,7 @@ export const en = {
 			signedInAs: (email: string) => `Signed in as ${email}`,
 			switchAccount: 'Use another account',
 			switchingAccount: 'Signing out…',
-			switchFailed: 'Couldn’t sign out — check your connection and try again.'
+			switchFailed: 'Couldn’t sign out. Check your connection and try again.'
 		},
 
 		/** Set up your home [5c]. */
@@ -2166,7 +2165,7 @@ export const en = {
 			invited: 'You’re invited',
 			notFound: 'Invite not found',
 			copy: 'You’ll share the shopping list, meal plan and tasks with them. Sign in with Google to join.',
-			gone: 'This invite link isn’t valid any more — the code may have been replaced or revoked. Ask your housemate for a fresh one.',
+			gone: 'This invite link isn’t valid any more. The code may have been replaced or revoked. Ask your housemate for a fresh one.',
 			accept: 'Accept invitation',
 			goToSignIn: 'Go to sign in',
 			/** The preview card [5e]. */
@@ -2278,9 +2277,9 @@ export const en = {
 
 		/** The two task nudges [4e] (→ SPEC §5.6). */
 		taskDue: (emoji: string, task: string, assigned: boolean) =>
-			`${emoji} ${task} is due today — ${assigned ? 'your turn' : 'anyone can pick this up'}`,
+			`${emoji} ${task} is due today: ${assigned ? 'your turn' : 'anyone can pick this up'}`,
 		taskOverdue: (emoji: string, task: string, assigned: boolean) =>
-			`${emoji} ${task} is overdue — ${assigned ? "it's your turn" : 'anyone can pick this up'}`,
+			`${emoji} ${task} is overdue: ${assigned ? "it's your turn" : 'anyone can pick this up'}`,
 
 		/**
 		 * The holiday heads-up (→ SPEC §3.6), sent once on the first morning of the
@@ -2289,8 +2288,8 @@ export const en = {
 		 */
 		shopsClosed: (holidays: string, closedDays: number) =>
 			closedDays === 1
-				? `🛍️ ${holidays} — the shops are closed`
-				: `🛍️ ${holidays} — the shops are closed for ${closedDays} days`,
+				? `🛍️ ${holidays}: the shops are closed`
+				: `🛍️ ${holidays}: the shops are closed for ${closedDays} days`,
 		shopsClosedBody: (lastOpenDay: CalendarDate, today: CalendarDate) =>
 			`Last shopping day is ${shoppingDay(lastOpenDay, today)}.`,
 
@@ -2341,24 +2340,24 @@ export const en = {
 		/** Every provider failure, naming the provider — never the raw API error. */
 		error: {
 			noKey: 'Set up AI features in Settings first.',
-			badKey: (provider: string) => `${provider} refused the key — check it in Settings.`,
+			badKey: (provider: string) => `${provider} refused the key. Check it in Settings.`,
 			rateLimited: (provider: string) =>
-				`${provider} is at its limit right now — wait a minute and try again, or add a backup in Settings.`,
+				`${provider} is at its limit right now. Wait a minute and try again, or add a backup in Settings.`,
 			quota: (provider: string) =>
-				`${provider} says the quota or credit is used up — try again later, or add a backup in Settings.`,
+				`${provider} says the quota or credit is used up. Try again later, or add a backup in Settings.`,
 			modelUnavailable: (provider: string) =>
-				`${provider} doesn’t offer that model (any more) — pick another one in Settings.`,
+				`${provider} doesn’t offer that model (any more). Pick another one in Settings.`,
 			modelUnsupported: (provider: string) =>
-				`That ${provider} model can’t do this — it may not read photos. Pick another one in Settings.`,
+				`That ${provider} model can’t do this. It may not read photos. Pick another one in Settings.`,
 			unavailable: (provider: string) =>
-				`${provider} isn’t answering right now — try again shortly.`,
-			timeout: (provider: string) => `${provider} took too long to answer — try again.`,
+				`${provider} isn’t answering right now. Try again shortly.`,
+			timeout: (provider: string) => `${provider} took too long to answer. Try again.`,
 			badOutput: (provider: string) =>
-				`${provider} answered, but not in a shape the app can use — try again, or another model.`,
+				`${provider} answered, but not in a shape the app can use. Try again, or another model.`,
 			failed: (provider: string) =>
 				provider
-					? `${provider} didn’t work this time — try again.`
-					: 'The AI didn’t work this time — try again.',
+					? `${provider} didn’t work this time. Try again.`
+					: 'The AI didn’t work this time. Try again.',
 			backupFailed: (provider: string) => `The backup (${provider}) didn’t work either.`
 		}
 	},
@@ -2410,11 +2409,11 @@ export const en = {
 		/** Photo upload (→ `server/uploads.ts`), all shown on the recipe form. */
 		photo: {
 			notSaved: 'That photo couldn’t be saved.',
-			tooLarge: (megabytes: number) => `That photo is too large — pick one under ${megabytes} MB.`,
+			tooLarge: (megabytes: number) => `That photo is too large. Pick one under ${megabytes} MB.`,
 			notAnImage: 'That file isn’t an image.',
-			unreadable: 'That image couldn’t be read — try a JPEG or PNG.',
+			unreadable: 'That image couldn’t be read. Try a JPEG or PNG.',
 			storeFailed: 'Could not store that photo.',
-			diskFailed: 'Could not store that photo — the server’s disk rejected it.'
+			diskFailed: 'Could not store that photo. The server’s disk rejected it.'
 		},
 
 		/** `HouseholdError`, keyed by its own codes (→ `services/household.ts`). */
@@ -2422,7 +2421,7 @@ export const en = {
 			'color-taken': 'A housemate already has that colour.',
 			'not-owner': 'Only the owner can do that.',
 			'not-member': 'You’re not a member of this household any more.',
-			'transfer-first': 'Make someone else the owner first — a household needs one.',
+			'transfer-first': 'Make someone else the owner first. A household needs one.',
 			'remove-self': 'To leave yourself, use Leave household in Settings.',
 			'stale-roster':
 				'You’re the only one here now, so leaving would delete the household. Reload and confirm again.'
@@ -2444,7 +2443,7 @@ export const en = {
 			{ text: 'Pause ' },
 			{ text: 'all your tasks', strong: true },
 			{
-				text: " while you're on holiday — nothing counts as overdue and no reminders are sent."
+				text: " while you're on holiday. Nothing counts as overdue and no reminders are sent."
 			}
 		] as RichText,
 		/** The switch itself, named for a screen reader. */

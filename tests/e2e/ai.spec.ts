@@ -160,7 +160,7 @@ test('an AI import arrives pinned and timed, adapted as asked, and saves into co
 	await page.getByRole('button', { name: 'Extract recipe' }).click();
 
 	// The draft says what made it, and what it was asked.
-	await expect(page.getByText(/Made with AI — check it over before saving\./)).toBeVisible();
+	await expect(page.getByText(/Made with AI. Check it over before saving\./)).toBeVisible();
 	await expect(page.getByText(/Adapted: “mit Tofu statt Ei”\./)).toBeVisible();
 
 	// Step 1 arrives with its ingredients pinned (no "auto" marker), step 2 with a named timer.

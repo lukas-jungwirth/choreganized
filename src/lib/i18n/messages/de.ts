@@ -144,7 +144,7 @@ export const de: Messages = {
 			amber: 'Bernstein',
 			plum: 'Pflaume'
 		},
-		colourTaken: (colour: string) => `${colour} — schon vergeben`
+		colourTaken: (colour: string) => `${colour}, schon vergeben`
 	},
 
 	/* ── The tab bar [02] ──────────────────────────────────────────────────── */
@@ -313,7 +313,7 @@ export const de: Messages = {
 
 		empty: {
 			title: 'Noch nichts zu kaufen',
-			copy: 'Trag ein, was ausgeht — nach Geschäft sortiert für alle, die einkaufen gehen.',
+			copy: 'Trag ein, was ausgeht. Nach Geschäft sortiert für alle, die einkaufen gehen.',
 			cta: 'Erstes Ding eintragen'
 		},
 
@@ -392,13 +392,13 @@ export const de: Messages = {
 			moveUp: (store: string) => `${store} nach oben`,
 			moveDown: (store: string) => `${store} nach unten`,
 			remove: (store: string) => `${store} löschen`,
-			help: 'Mit den Pfeilen umsortieren — die Liste folgt dieser Reihenfolge, also ordne sie so, wie du durch die Stadt gehst. Schnell eingetragene Sachen landen im ersten Geschäft; alles ohne Geschäft steht unter „Sonstiges“.',
+			help: 'Mit den Pfeilen umsortieren. Die Liste folgt dieser Reihenfolge, also ordne sie so, wie du durch die Stadt gehst. Schnell eingetragene Sachen landen im ersten Geschäft; alles ohne Geschäft steht unter „Sonstiges“.',
 			deleteLabel: 'Geschäft löschen',
 			deleteConfirm: (store: string) => `${store} löschen?`,
 			deleteMoves: (count: number) =>
 				count === 1
-					? 'Der eine Eintrag wandert zu „Sonstiges“ — nichts geht verloren.'
-					: `Die ${count} Einträge wandern zu „Sonstiges“ — nichts geht verloren.`,
+					? 'Der eine Eintrag wandert zu „Sonstiges“, nichts geht verloren.'
+					: `Die ${count} Einträge wandern zu „Sonstiges“, nichts geht verloren.`,
 			deleteEmpty: 'Es ist nichts eingetragen, also ändert sich sonst nichts.',
 			defaults: {
 				grocery: 'Supermarkt',
@@ -496,13 +496,13 @@ export const de: Messages = {
 		awayBanner: {
 			mine: (until: string) => `Du bist bis ${until} weg`,
 			other: (name: string, until: string) => `${name} ist bis ${until} weg`,
-			detailMine: 'Deine Aufgaben sind pausiert — nichts gilt als überfällig',
-			detailOther: 'Die Aufgaben sind pausiert — nichts gilt als überfällig'
+			detailMine: 'Deine Aufgaben sind pausiert, nichts gilt als überfällig',
+			detailOther: 'Die Aufgaben sind pausiert, nichts gilt als überfällig'
 		},
 
 		empty: {
 			title: 'Noch keine Aufgaben',
-			copy: 'Trag die Sachen ein, die ihr beide vergesst — abhaken bringt Punkte. Mit ein paar starten?',
+			copy: 'Trag die Sachen ein, die ihr beide vergesst. Abhaken bringt Punkte. Mit ein paar starten?',
 			starters: 'Beliebte Klassiker',
 			custom: 'Eigene Aufgabe anlegen'
 		},
@@ -512,7 +512,7 @@ export const de: Messages = {
 			addedBy: (name: string) => `angelegt von ${name}`,
 			markDone: (task: string) => `${task} als erledigt markieren`,
 			markDoneFor: (task: string, assignee: string) =>
-				`${task} als erledigt markieren — ${assignee} ist dran`,
+				`${task} als erledigt markieren (${assignee} ist dran)`,
 			open: (task: string) => `${task} öffnen`
 		},
 
@@ -520,7 +520,7 @@ export const de: Messages = {
 			wasDue: (date: string) => `fällig war ${date}`,
 			pts: (points: number) => `${points} Pkt.`,
 			pausedNote: (name: string, until: string) =>
-				`${name} ist bis ${until} weg — die hier ist pausiert, nicht überfällig.`,
+				`${name} ist bis ${until} weg, die hier ist pausiert, nicht überfällig.`,
 			markAsDone: (points: number) => `Als erledigt markieren · +${points}`,
 			snooze: 'Verschieben',
 			// Beide dativ, damit `me` ("mir") in beiden passt — "an mir" wäre falsch.
@@ -533,7 +533,7 @@ export const de: Messages = {
 			delete: 'Aufgabe löschen',
 			deleteConfirm: (task: string) => `${task} löschen?`,
 			deleteCopy:
-				'Sie kommt dann nicht mehr wieder. Alles schon Erledigte bleibt in der Historie — die Punkte bleiben im Haus.'
+				'Sie kommt dann nicht mehr wieder. Alles schon Erledigte bleibt in der Historie, die Punkte bleiben im Haus.'
 		},
 
 		done: {
@@ -601,7 +601,7 @@ export const de: Messages = {
 		historyScreen: {
 			emptyTitle: 'Noch nichts erledigt',
 			emptyCopy:
-				'Hak eine Aufgabe ab und sie landet hier — was es war, wer es gemacht hat und was es wert war.',
+				'Hak eine Aufgabe ab und sie landet hier: was es war, wer es gemacht hat und was es wert war.',
 			backToHistory: 'Zurück zur Historie',
 			emptyStretch: 'In diesem Zeitraum wurde nichts erledigt.',
 			showMonth: (month: string) => `${month} anzeigen`
@@ -679,7 +679,7 @@ export const de: Messages = {
 			title: 'Welcher Tag?',
 			eyebrow: 'In den Plan',
 			free: 'Frei',
-			day: (weekday: string, day: string, meal: string) => `${weekday}, ${day}. — ${meal}`,
+			day: (weekday: string, day: string, meal: string) => `${weekday}, ${day}., ${meal}`,
 			freeQuiet: 'frei',
 			mealList: (names: string[]) => names.join(' · ')
 		},
@@ -688,9 +688,9 @@ export const de: Messages = {
 			eyebrow: 'Essen planen',
 			searchRecipes: 'Rezepte durchsuchen',
 			recipeGroup: 'Rezept',
-			noMatch: 'Kein Rezept mit dem Namen — lieber etwas Ungespeichertes kochen?',
-			moreMatches: (count: number) => `${count} weitere Treffer — tipp weiter, um einzugrenzen.`,
-			mostRecent: (rest: number) => `Deine neuesten — such nach den anderen ${rest}.`,
+			noMatch: 'Kein Rezept mit dem Namen. Lieber etwas Ungespeichertes kochen?',
+			moreMatches: (count: number) => `${count} weitere Treffer. Tipp weiter, um einzugrenzen.`,
+			mostRecent: (rest: number) => `Deine neuesten. Such nach den anderen ${rest}.`,
 			notSaved: 'Etwas kochen, das nicht gespeichert ist',
 			notSavedPlaceholder: 'Pizzaabend',
 			whichMeal: 'Welche Mahlzeit?',
@@ -744,8 +744,8 @@ export const de: Messages = {
 			writtenFor: (count: number) => `notiert für ${count}`,
 			steps: 'Schritte',
 			startCookMode: 'Kochmodus starten',
-			noStepsLead: 'Noch keine Schritte notiert — ',
-			noStepsLink: 'trag sie ein',
+			noStepsLead: 'Noch keine Schritte notiert. ',
+			noStepsLink: 'Trag sie ein',
 			noStepsRest: ', dann führt dich der Kochmodus durch.'
 		},
 
@@ -779,9 +779,9 @@ export const de: Messages = {
 			ingredientLabel: (index: number) => `Zutat ${index}`,
 			addIngredient: 'Zutat hinzufügen',
 			ingredientsNote: (units: string) =>
-				`Schreib sie, wie du magst — „400 g Nudeln“, „2 Eier“, „Salz“. Bekannte Einheiten: ${units}. Tipp auf eine Menge, um Zahl und Einheit selbst zu wählen.`,
+				`Schreib sie, wie du magst: „400 g Nudeln“, „2 Eier“, „Salz“. Bekannte Einheiten: ${units}. Tipp auf eine Menge, um Zahl und Einheit selbst zu wählen.`,
 			amountLabel: (amount: string) =>
-				amount ? `${amount} — bearbeiten` : 'Keine Menge — eintragen',
+				amount ? `${amount}, bearbeiten` : 'Keine Menge, eintragen',
 			ingredientNamePlaceholder: 'Nudeln',
 			quantity: 'Menge',
 			quantityPlaceholder: '400',
@@ -806,7 +806,7 @@ export const de: Messages = {
 			usesAmount: (name: string) => `Menge von ${name} für diesen Schritt`,
 			usesAll: 'alles',
 			usesBackToAuto: 'Lieber aus dem Text lesen',
-			usesEmpty: 'Trag zuerst die Zutaten ein — dann kannst du sie den Schritten zuordnen.',
+			usesEmpty: 'Trag zuerst die Zutaten ein, dann kannst du sie den Schritten zuordnen.',
 
 			timerAdd: 'Timer hinzufügen',
 			timerLabel: (index: number) => `Timer für Schritt ${index}`,
@@ -835,7 +835,7 @@ export const de: Messages = {
 			all: 'Alle auswählen',
 			none: 'Keine auswählen',
 			have: (amount: string) => (amount ? `Steht schon drauf · ${amount}` : 'Steht schon drauf'),
-			merge: (amount: string) => `Steht schon drauf — wird ${amount}`,
+			merge: (amount: string) => `Steht schon drauf, wird ${amount}`,
 			staple: 'Habt ihr sonst immer da',
 			submit: (count: number) =>
 				count === 1 ? '1 auf die Liste' : `${count} auf die Liste setzen`,
@@ -869,7 +869,7 @@ export const de: Messages = {
 			finish: 'Fertig',
 			eyebrow: 'Kochmodus',
 			noSteps:
-				'Für dieses Rezept sind noch keine Schritte notiert — trag sie ein, dann führt dich der Kochmodus durch.',
+				'Für dieses Rezept sind noch keine Schritte notiert. Trag sie ein, dann führt dich der Kochmodus durch.',
 			addSteps: 'Schritte eintragen',
 
 			peekTitle: 'Zutaten',
@@ -880,7 +880,7 @@ export const de: Messages = {
 			scaledFrom: (written: string) => ` (im Rezept: ${written})`,
 
 			timerTitle: 'Timer stellen',
-			timerSubtitle: 'Er klingelt, bis du ihn stoppst — auch bei gesperrtem Handy.',
+			timerSubtitle: 'Er klingelt, bis du ihn stoppst, auch bei gesperrtem Handy.',
 			minutes: 'Minuten',
 			startMinutes: (minutes: number) => `${minutes}-Minuten-Timer starten`,
 
@@ -897,21 +897,21 @@ export const de: Messages = {
 			paused: '(pausiert)',
 			barDone: (label: string) => `${label} ist fertig`,
 			barRunning: (label: string, remaining: string) => `${label}, noch ${remaining}`,
-			barBackTo: (step: number) => ` — zurück zu Schritt ${step}`,
+			barBackTo: (step: number) => `, zurück zu Schritt ${step}`,
 			defaultTimer: 'Timer',
 			timerForStep: (step: number) => `Schritt ${step}`,
 			timerName: 'Wofür?',
 			timerCancelOne: (label: string) => `${label} abbrechen`,
 			timerCapped: (max: number) =>
-				`${max} Timer gleichzeitig sind das Maximum — stopp zuerst einen.`,
-			offline: 'Offline — der klingelt nur, solange die App offen ist.',
+				`${max} Timer gleichzeitig sind das Maximum. Stopp zuerst einen.`,
+			offline: 'Offline: der klingelt nur, solange die App offen ist.',
 			timerFailed: 'Der Timer ließ sich nicht starten.'
 		},
 
 		dock: {
 			running: (label: string, remaining: string) => `${label}, noch ${remaining}`,
 			done: (label: string) => `${label} ist fertig`,
-			backTo: ' — zurück zum Kochen',
+			backTo: ', zurück zum Kochen',
 			more: (count: number) => `+${count}`,
 			/** „weiterer“/„weitere“: im Deutschen entscheidet die Zahl über die Endung. */
 			andMore: (count: number) =>
@@ -924,7 +924,7 @@ export const de: Messages = {
 			subtitle: 'Aus einem Link',
 			back: 'Zurück zu den Rezepten',
 			intro:
-				'Füg einen Link zu einem Rezept ein — wir tragen Name, Foto, Zutaten und Schritte zum Prüfen ein.',
+				'Füg einen Link zu einem Rezept ein. Wir tragen Name, Foto, Zutaten und Schritte zum Prüfen ein.',
 			urlLabel: 'Rezept-Link',
 			urlPlaceholder: 'https://…',
 			fetch: 'Rezept holen',
@@ -934,24 +934,24 @@ export const de: Messages = {
 			manualRest: '.',
 
 			error: {
-				invalidUrl: 'Das sieht nicht nach einer Web-Adresse aus — füg den Link zum Rezept ein.',
+				invalidUrl: 'Das sieht nicht nach einer Web-Adresse aus. Füg den Link zum Rezept ein.',
 				blocked: 'Dieser Link lässt sich von hier nicht öffnen. Nimm die öffentliche Web-Adresse.',
-				unreachable: 'Die Seite war nicht erreichbar — prüf den Link und deine Verbindung.',
+				unreachable: 'Die Seite war nicht erreichbar. Prüf den Link und deine Verbindung.',
 				refused:
 					'Diese Seite lässt Apps ihre Rezepte nicht lesen. Öffne sie im Browser und kopier das Rezept von dort.',
 				notHtml:
 					'Dieser Link ist keine Webseite. Füg die Rezeptseite ein, keine Datei und kein Bild.',
-				tooLarge: 'Die Seite ist zu groß zum Einlesen — versuch einen direkten Link zum Rezept.',
+				tooLarge: 'Die Seite ist zu groß zum Einlesen. Versuch einen direkten Link zum Rezept.',
 				noRecipe: 'Auf der Seite wurde kein Rezept gefunden.'
 			},
 
 			ai: {
-				note: 'Mit KI erstellt — vor dem Speichern kurz prüfen.',
+				note: 'Mit KI erstellt. Vor dem Speichern kurz prüfen.',
 				adapted: (instructions: string) => `Angepasst: „${instructions}“.`,
-				withoutAi: (reason: string) => `So übernommen, wie die Seite es schreibt — ${reason}`,
+				withoutAi: (reason: string) => `So übernommen, wie die Seite es schreibt: ${reason}`,
 				improve: 'Mit KI verbessern',
 				improveHint:
-					'Ordnet Mengen, verknüpft Zutaten mit ihren Schritten und stellt Timer — und liest auch Seiten ohne Rezeptdaten. Nutzt deinen KI-Anbieter.',
+					'Ordnet Mengen, verknüpft Zutaten mit ihren Schritten und stellt Timer. Liest auch Seiten ohne Rezeptdaten. Nutzt deinen KI-Anbieter.',
 				instructionsToggle: 'Anweisungen für die KI hinzufügen',
 				instructionsLabel: 'Anweisungen für die KI',
 				instructionsPlaceholder: 'z. B. mit Tofu statt Fleisch, für 2 Personen',
@@ -967,7 +967,7 @@ export const de: Messages = {
 				],
 				pasteToggle: 'Stattdessen den Rezepttext einfügen',
 				pasteLabel: 'Rezepttext',
-				pastePlaceholder: 'Füg das ganze Rezept ein — Zutaten und Schritte.',
+				pastePlaceholder: 'Füg das ganze Rezept ein, Zutaten und Schritte.',
 				pasteSubmit: 'Rezept auslesen',
 				photoToggle: 'Aus einem Foto importieren',
 				photoLabel: 'Fotos des Rezepts',
@@ -983,7 +983,7 @@ export const de: Messages = {
 					`${main} konnte nicht antworten, darum hat dein Ersatz (${backup}) übernommen.`,
 				error: {
 					noRecipe:
-						'Darin war kein Rezept zu finden — versuch klarere Fotos oder vollständigeren Text.',
+						'Darin war kein Rezept zu finden. Versuch klarere Fotos oder vollständigeren Text.',
 					noPhotos: 'Füg mindestens ein Foto des Rezepts hinzu.'
 				}
 			}
@@ -1247,7 +1247,7 @@ export const de: Messages = {
 						: `Die ${count} schon eingetragenen bleiben, wie sie sind`,
 			empty: 'Noch nichts Wiederkehrendes',
 			emptyCopy:
-				'Miete, Abos, Internet: Leg eine Ausgabe an und wähl bei „Wiederholen“, wie oft – dann trägt sie sich von selbst ein.'
+				'Miete, Abos, Internet: Leg eine Ausgabe an und wähl bei „Wiederholen“, wie oft. Dann trägt sie sich von selbst ein.'
 		},
 
 		history: {
@@ -1317,8 +1317,7 @@ export const de: Messages = {
 			row: 'Ausgaben',
 			title: 'Ausgaben',
 			currency: 'Währung',
-			currencyLocked:
-				'Wird einmal festgelegt, vor der ersten Ausgabe — später würde sie jeden Betrag umbenennen.',
+			currencyLocked: 'Lässt sich nicht mehr ändern, sobald es Ausgaben gibt.',
 			ownerOnly: 'Nur der Eigentümer kann die Währung ändern.',
 			defaultSplit: 'Standard-Aufteilung',
 			equalEveryone: 'Gleich auf alle',
@@ -1346,11 +1345,11 @@ export const de: Messages = {
 		leaveBalance: (who: string | null, owes: boolean, amount: string) =>
 			who === null
 				? owes
-					? `Du schuldest noch ${amount} — vorher ausgleichen?`
-					: `Du bekommst noch ${amount} — vorher ausgleichen?`
+					? `Du schuldest noch ${amount}. Vorher ausgleichen?`
+					: `Du bekommst noch ${amount}. Vorher ausgleichen?`
 				: owes
-					? `${who} schuldet noch ${amount} — vorher ausgleichen?`
-					: `${who} bekommt noch ${amount} — vorher ausgleichen?`,
+					? `${who} schuldet noch ${amount}. Vorher ausgleichen?`
+					: `${who} bekommt noch ${amount}. Vorher ausgleichen?`,
 
 		errors: {
 			amount: 'Gib einen Betrag über 0 ein.',
@@ -1363,7 +1362,7 @@ export const de: Messages = {
 			currency: 'Wähl eine der angebotenen Währungen.',
 			currencyLocked: 'Die Währung steht fest, sobald es Ausgaben gibt.',
 			nextDate: 'Das nächste Mal kann nicht vor heute liegen.',
-			dateTooOld: 'Das Datum liegt zu weit zurück – schau dir das Jahr an.',
+			dateTooOld: 'Das Datum liegt zu weit zurück. Schau dir das Jahr an.',
 			seriesStart: 'Eine wiederkehrende Ausgabe kann höchstens vor einem Jahr beginnen.',
 			seriesPerson:
 				'Jemand darin ist nicht mehr im Haushalt, deshalb kann sie sich nicht wiederholen.'
@@ -1387,7 +1386,7 @@ export const de: Messages = {
 			row: 'Sprache',
 			title: 'Sprache',
 			system: 'System',
-			systemDetail: (detected: string) => `Diesem Gerät folgen — zurzeit ${detected}`,
+			systemDetail: (detected: string) => `Diesem Gerät folgen, zurzeit ${detected}`,
 			note: 'Beim Sprachwechsel lädt die App neu.'
 		},
 
@@ -1395,10 +1394,10 @@ export const de: Messages = {
 			row: 'Erscheinungsbild',
 			title: 'Erscheinungsbild',
 			system: 'System',
-			systemDetail: (detected: string) => `Diesem Gerät folgen — zurzeit ${detected}`,
+			systemDetail: (detected: string) => `Diesem Gerät folgen, zurzeit ${detected}`,
 			light: 'Hell',
 			dark: 'Dunkel',
-			note: 'Das merkt sich dieses Gerät — Handy und Laptop dürfen sich unterscheiden.'
+			note: 'Das merkt sich dieses Gerät. Handy und Laptop dürfen sich unterscheiden.'
 		},
 
 		prefs: {
@@ -1419,14 +1418,14 @@ export const de: Messages = {
 			send: 'Testbenachrichtigung senden',
 			sending: 'Wird gesendet…',
 			notConfigured: 'Push ist auf dem Server noch nicht eingerichtet.',
-			noDevice: 'Noch kein Gerät angemeldet — schalte es oben ein.',
-			sentOne: 'An dieses Gerät geschickt — sollte gleich ankommen.',
-			sentMany: (count: number) => `An ${count} Geräte geschickt — sollten gleich ankommen.`
+			noDevice: 'Noch kein Gerät angemeldet. Schalte es oben ein.',
+			sentOne: 'An dieses Gerät geschickt. Sollte gleich ankommen.',
+			sentMany: (count: number) => `An ${count} Geräte geschickt. Sollten gleich ankommen.`
 		},
 
 		signOut: 'Abmelden',
 		signingOut: 'Wird abgemeldet…',
-		signOutFailed: 'Abmelden hat nicht geklappt — prüf die Verbindung und versuch es nochmal.',
+		signOutFailed: 'Abmelden hat nicht geklappt. Prüf die Verbindung und versuch es nochmal.',
 
 		profile: {
 			title: 'Dein Profil',
@@ -1448,7 +1447,7 @@ export const de: Messages = {
 			eyebrow: 'Haushalt',
 			what: 'Bring einen Schlüssel eines KI-Anbieters mit, um Rezepte aus Fotos, eingefügtem Text und Seiten ohne Rezeptdaten zu importieren.',
 			freeNote:
-				'Ein Gratis-Kontingent (Gemini oder die Gratis-Modelle von OpenRouter) reicht für einen Haushalt — aber Gratis-Kontingente sind begrenzt und antworten manchmal eine Zeit lang nicht. Ein Ersatz hält die Importe dann am Laufen.',
+				'Ein Gratis-Kontingent (Gemini oder die Gratis-Modelle von OpenRouter) reicht für einen Haushalt, aber Gratis-Kontingente sind begrenzt und antworten manchmal eine Zeit lang nicht. Ein Ersatz hält die Importe dann am Laufen.',
 			primary: 'Haupt-Anbieter',
 			backup: 'Ersatz',
 			backupEmpty: 'Springt ein, wenn der Haupt-Anbieter am Limit oder nicht erreichbar ist.',
@@ -1467,12 +1466,12 @@ export const de: Messages = {
 				keyLabel: 'API-Schlüssel',
 				keyPlaceholder: 'Schlüssel einfügen',
 				keyKeep: (hint: string) => `Leer lassen, um ${hint} zu behalten.`,
-				invalidKey: 'Das sieht nicht nach einem API-Schlüssel aus — füg den ganzen Schlüssel ein.',
+				invalidKey: 'Das sieht nicht nach einem API-Schlüssel aus. Füg den ganzen Schlüssel ein.',
 				loadModels: 'Modelle laden',
 				loadingModels: 'Modelle werden geladen…',
 				modelLabel: 'Modell',
 				modelsHint:
-					'Direkt aus der Liste des Anbieters — neue Modelle tauchen auf, sobald es sie gibt.',
+					'Direkt aus der Liste des Anbieters. Neue Modelle tauchen auf, sobald es sie gibt.',
 				recommended: (label: string) => `${label} (empfohlen)`,
 				free: (label: string) => `${label} · gratis`,
 				otherModel: 'Anderes Modell…',
@@ -1506,7 +1505,7 @@ export const de: Messages = {
 			asWrittenDetail: 'Importierte Rezepte behalten die Wörter der Seite.',
 			austrian: 'Österreichisch',
 			austrianDetail:
-				'Aus Sahne wird Obers, aus Quark Topfen, aus Kartoffeln Erdäpfel — in importierten deutschen Rezepten.',
+				'Aus Sahne wird Obers, aus Quark Topfen, aus Kartoffeln Erdäpfel, in importierten deutschen Rezepten.',
 			note: 'Gilt für Rezepte, die du ab jetzt importierst; gespeicherte bleiben, wie sie sind. Mit KI wird das ganze Rezept umgeschrieben, ohne die Namen der Zutaten.'
 		},
 
@@ -1529,10 +1528,10 @@ export const de: Messages = {
 			send: 'Senden',
 			sending: 'Wird gesendet…',
 			attached: (version: string) =>
-				`Deine Worte landen auf einer öffentlichen Liste auf GitHub, dazu die App-Version (${version}), deine Sprache und das Erscheinungsbild. Dein Name und dein Browser bleiben in der App — sie werden nicht veröffentlicht. Schreib in der Sprache, die dir liegt.`,
+				`Deine Worte landen auf einer öffentlichen Liste auf GitHub, dazu die App-Version (${version}), deine Sprache und das Erscheinungsbild. Dein Name und dein Browser bleiben in der App. Sie werden nicht veröffentlicht. Schreib in der Sprache, die dir liegt.`,
 			pickKind: 'Wähl einen Fehler oder eine Idee.',
 			empty: 'Schreib erst ein, zwei Zeilen.',
-			thanks: 'Danke — gespeichert und auf dem Weg zu Lukas.'
+			thanks: 'Danke! Gespeichert und auf dem Weg zu Lukas.'
 		},
 
 		leave: {
@@ -1543,7 +1542,7 @@ export const de: Messages = {
 			goToMembers: 'Zu den Mitgliedern',
 			title: (household: string) => `${household} verlassen?`,
 			lastCopy: (household: string) =>
-				`Du bist die einzige Person hier — wenn du gehst, wird ${household} endgültig gelöscht: Einkaufsliste, Essensplan, alle Aufgaben und sämtliche Punkte. Das lässt sich nicht rückgängig machen.`,
+				`Du bist die einzige Person hier. Wenn du gehst, wird ${household} endgültig gelöscht: Einkaufsliste, Essensplan, alle Aufgaben und sämtliche Punkte. Das lässt sich nicht rückgängig machen.`,
 			copy: 'Du verlierst den Zugriff auf Einkaufsliste, Aufgaben und Essensplan. Deine Punkte bleiben beim Haushalt.',
 			deleteAndLeave: 'Haushalt löschen & gehen',
 			failed: 'Das hat nicht geklappt. Versuch es nochmal.'
@@ -1583,7 +1582,7 @@ export const de: Messages = {
 				'Der Zugriff auf Einkaufsliste, Aufgaben und Essensplan ist sofort weg. Zugewiesene Aufgaben sind danach für alle offen, und alle Punkte bleiben im Haus.',
 			ownerConfirm: (name: string) => `${name} zur Besitzer:in machen?`,
 			ownerCopy:
-				'Die Person kann dann den Haushalt umbenennen, die Einladung verwalten und Mitglieder entfernen — auch dich. Du bleibst Mitglied im Haus.',
+				'Die Person kann dann den Haushalt umbenennen, die Einladung verwalten und Mitglieder entfernen, auch dich. Du bleibst Mitglied im Haus.',
 			failed: 'Das hat nicht geklappt.'
 		}
 	},
@@ -1634,7 +1633,7 @@ export const de: Messages = {
 		mail: {
 			subject: (code: string) => `${code} ist dein Choreganized-Code`,
 			body: (code: string, minutes: number) =>
-				`Dein Anmeldecode für Choreganized:\n\n${code}\n\nEr gilt ${minutes} Minuten. Wenn du ihn nicht angefordert hast, kannst du diese E-Mail ignorieren – ohne den Code kann sich niemand anmelden.`
+				`Dein Anmeldecode für Choreganized:\n\n${code}\n\nEr gilt ${minutes} Minuten. Wenn du ihn nicht angefordert hast, kannst du diese E-Mail ignorieren. Ohne den Code kann sich niemand anmelden.`
 		}
 	},
 
@@ -1654,7 +1653,7 @@ export const de: Messages = {
 			signedInAs: (email) => `Angemeldet als ${email}`,
 			switchAccount: 'Anderes Konto verwenden',
 			switchingAccount: 'Wird abgemeldet…',
-			switchFailed: 'Abmelden hat nicht geklappt — prüf die Verbindung und versuch es nochmal.'
+			switchFailed: 'Abmelden hat nicht geklappt. Prüf die Verbindung und versuch es nochmal.'
 		},
 
 		create: {
@@ -1697,7 +1696,7 @@ export const de: Messages = {
 			invited: 'Du bist eingeladen',
 			notFound: 'Einladung nicht gefunden',
 			copy: 'Ihr teilt dann Einkaufsliste, Essensplan und Aufgaben. Melde dich mit Google an, um beizutreten.',
-			gone: 'Dieser Einladungslink gilt nicht mehr — der Code wurde vielleicht ersetzt oder zurückgezogen. Frag nach einem neuen.',
+			gone: 'Dieser Einladungslink gilt nicht mehr. Der Code wurde vielleicht ersetzt oder zurückgezogen. Frag nach einem neuen.',
 			accept: 'Einladung annehmen',
 			goToSignIn: 'Zur Anmeldung',
 			invitedBy: 'lädt dich ein zu',
@@ -1769,14 +1768,14 @@ export const de: Messages = {
 				: `🛒 ${member} braucht mehr von ${count} Sachen auf der Liste`,
 
 		taskDue: (emoji: string, task: string, assigned: boolean) =>
-			`${emoji} ${task} ist heute fällig — ${assigned ? 'du bist dran' : 'kann jemand übernehmen'}`,
+			`${emoji} ${task} ist heute fällig: ${assigned ? 'du bist dran' : 'kann jemand übernehmen'}`,
 		taskOverdue: (emoji: string, task: string, assigned: boolean) =>
-			`${emoji} ${task} ist überfällig — ${assigned ? 'du bist dran' : 'kann jemand übernehmen'}`,
+			`${emoji} ${task} ist überfällig: ${assigned ? 'du bist dran' : 'kann jemand übernehmen'}`,
 
 		shopsClosed: (holidays: string, closedDays: number) =>
 			closedDays === 1
-				? `🛍️ ${holidays} — die Geschäfte haben zu`
-				: `🛍️ ${holidays} — die Geschäfte haben ${closedDays} Tage zu`,
+				? `🛍️ ${holidays}: die Geschäfte haben zu`
+				: `🛍️ ${holidays}: die Geschäfte haben ${closedDays} Tage zu`,
 		shopsClosedBody: (lastOpenDay: CalendarDate, today: CalendarDate) =>
 			`Letzter Einkaufstag ist ${shoppingDay(lastOpenDay, today)}.`,
 
@@ -1816,25 +1815,25 @@ export const de: Messages = {
 		error: {
 			noKey: 'Richte zuerst die KI-Funktionen in den Einstellungen ein.',
 			badKey: (provider: string) =>
-				`${provider} hat den Schlüssel abgelehnt — prüf ihn in den Einstellungen.`,
+				`${provider} hat den Schlüssel abgelehnt. Prüf ihn in den Einstellungen.`,
 			rateLimited: (provider: string) =>
-				`${provider} ist gerade am Limit — kurz warten und nochmal versuchen, oder in den Einstellungen einen Ersatz hinzufügen.`,
+				`${provider} ist gerade am Limit. Kurz warten und nochmal versuchen, oder in den Einstellungen einen Ersatz hinzufügen.`,
 			quota: (provider: string) =>
-				`Bei ${provider} ist das Kontingent oder Guthaben aufgebraucht — später nochmal versuchen, oder in den Einstellungen einen Ersatz hinzufügen.`,
+				`Bei ${provider} ist das Kontingent oder Guthaben aufgebraucht. Später nochmal versuchen, oder in den Einstellungen einen Ersatz hinzufügen.`,
 			modelUnavailable: (provider: string) =>
-				`${provider} bietet dieses Modell (nicht mehr) an — wähl in den Einstellungen ein anderes.`,
+				`${provider} bietet dieses Modell (nicht mehr) an. Wähl in den Einstellungen ein anderes.`,
 			modelUnsupported: (provider: string) =>
-				`Dieses ${provider}-Modell kann das nicht — vielleicht liest es keine Fotos. Wähl in den Einstellungen ein anderes.`,
+				`Dieses ${provider}-Modell kann das nicht. Vielleicht liest es keine Fotos. Wähl in den Einstellungen ein anderes.`,
 			unavailable: (provider: string) =>
-				`${provider} antwortet gerade nicht — versuch es gleich nochmal.`,
+				`${provider} antwortet gerade nicht. Versuch es gleich nochmal.`,
 			timeout: (provider: string) =>
-				`${provider} hat zu lange für die Antwort gebraucht — versuch es nochmal.`,
+				`${provider} hat zu lange für die Antwort gebraucht. Versuch es nochmal.`,
 			badOutput: (provider: string) =>
-				`${provider} hat geantwortet, aber nicht in einer Form, mit der die App etwas anfangen kann — nochmal versuchen, oder ein anderes Modell.`,
+				`${provider} hat geantwortet, aber nicht in einer Form, mit der die App etwas anfangen kann. Nochmal versuchen, oder ein anderes Modell.`,
 			failed: (provider: string) =>
 				provider
-					? `${provider} hat diesmal nicht geklappt — versuch es nochmal.`
-					: 'Die KI hat diesmal nicht geklappt — versuch es nochmal.',
+					? `${provider} hat diesmal nicht geklappt. Versuch es nochmal.`
+					: 'Die KI hat diesmal nicht geklappt. Versuch es nochmal.',
 			backupFailed: (provider: string) => `Der Ersatz (${provider}) hat auch nicht geklappt.`
 		}
 	},
@@ -1880,21 +1879,21 @@ export const de: Messages = {
 
 		photo: {
 			notSaved: 'Das Foto konnte nicht gespeichert werden.',
-			tooLarge: (megabytes: number) => `Das Foto ist zu groß — nimm eines unter ${megabytes} MB.`,
+			tooLarge: (megabytes: number) => `Das Foto ist zu groß. Nimm eines unter ${megabytes} MB.`,
 			notAnImage: 'Diese Datei ist kein Bild.',
-			unreadable: 'Das Bild ließ sich nicht lesen — versuch es mit JPEG oder PNG.',
+			unreadable: 'Das Bild ließ sich nicht lesen. Versuch es mit JPEG oder PNG.',
 			storeFailed: 'Das Foto konnte nicht abgelegt werden.',
-			diskFailed: 'Das Foto konnte nicht abgelegt werden — die Festplatte hat abgelehnt.'
+			diskFailed: 'Das Foto konnte nicht abgelegt werden. Die Festplatte hat abgelehnt.'
 		},
 
 		household: {
 			'color-taken': 'Die Farbe hat schon jemand im Haus.',
 			'not-owner': 'Das kann nur die Besitzer:in.',
 			'not-member': 'Du bist nicht mehr Mitglied dieses Haushalts.',
-			'transfer-first': 'Mach zuerst jemand anderen zur Besitzer:in — ein Haushalt braucht eine.',
+			'transfer-first': 'Mach zuerst jemand anderen zur Besitzer:in. Ein Haushalt braucht eine.',
 			'remove-self': 'Zum Selbst-Gehen nutze „Haushalt verlassen“ in den Einstellungen.',
 			'stale-roster':
-				'Du bist jetzt die einzige Person hier — gehen würde den Haushalt löschen. Lade neu und bestätige nochmal.'
+				'Du bist jetzt die einzige Person hier. Gehen würde den Haushalt löschen. Lade neu und bestätige nochmal.'
 		},
 
 		displayName: 'Sag uns, wie wir dich nennen sollen.',
@@ -1912,7 +1911,7 @@ export const de: Messages = {
 			{ text: 'Pausiere ' },
 			{ text: 'alle deine Aufgaben', strong: true },
 			{
-				text: ', solange du im Urlaub bist — nichts gilt als überfällig und es kommen keine Erinnerungen.'
+				text: ', solange du im Urlaub bist. Nichts gilt als überfällig und es kommen keine Erinnerungen.'
 			}
 		] as RichText,
 		toggle: 'Verreist',

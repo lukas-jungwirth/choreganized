@@ -62,6 +62,45 @@
 	});
 
 	/**
+	 * Stay above the on-screen keyboard. Both phone browsers lay the page out
+	 * as if the keyboard weren't there and only shrink the *visual* viewport,
+	 * so a sheet pinned to the bottom of the screen ends up behind the keys
+	 * with the field you are typing in. Sizing the dialog to the visual
+	 * viewport puts the panel's bottom edge on top of the keyboard, and the
+	 * panel scrolls inside what is left.
+	 */
+	$effect(() => {
+		const viewport = window.visualViewport;
+		if (!open || !dialog || !viewport) return;
+		const sheet = dialog;
+
+		function follow() {
+			if (!viewport) return;
+			sheet.style.setProperty('--viewport-top', `${viewport.offsetTop}px`);
+			sheet.style.setProperty('--viewport-height', `${viewport.height}px`);
+		}
+
+		function resize() {
+			follow();
+			// The field had focus before the panel got shorter: keep it in view.
+			const field = document.activeElement;
+			if (field instanceof HTMLElement && field !== sheet && sheet.contains(field)) {
+				field.scrollIntoView({ block: 'nearest' });
+			}
+		}
+
+		follow();
+		viewport.addEventListener('resize', resize);
+		viewport.addEventListener('scroll', follow);
+		return () => {
+			viewport.removeEventListener('resize', resize);
+			viewport.removeEventListener('scroll', follow);
+			sheet.style.removeProperty('--viewport-top');
+			sheet.style.removeProperty('--viewport-height');
+		};
+	});
+
+	/**
 	 * Dismiss only when the press *started* on the scrim too. A plain
 	 * `target === dialog` check on the click also fires when a drag begins inside
 	 * the panel and ends outside it — selecting text in a field, or dragging the
@@ -161,11 +200,12 @@
 </dialog>
 
 <style>
+	/* The visible part of the screen, so the keyboard never covers the panel. */
 	.sheet {
-		inset: 0;
+		inset: var(--viewport-top, 0px) 0 auto;
 		width: 100%;
 		max-width: none;
-		height: 100%;
+		height: var(--viewport-height, 100%);
 		max-height: none;
 		margin: 0;
 		padding: 0;
@@ -187,7 +227,7 @@
 	.panel {
 		width: 100%;
 		max-width: 480px;
-		max-height: 92dvh;
+		max-height: 92%;
 		overflow-y: auto;
 		padding: 16px 22px calc(28px + env(safe-area-inset-bottom));
 		border-radius: var(--r-sheet) var(--r-sheet) 0 0;
