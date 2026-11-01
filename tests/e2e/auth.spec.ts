@@ -45,7 +45,7 @@ test('this build has the E2E door open — which the smoke test asserts is shut 
 test('the production build serves the PWA plumbing', async ({ request }) => {
 	const manifest = await request.get('/manifest.webmanifest');
 	expect(manifest.ok()).toBe(true);
-	expect(await manifest.json()).toMatchObject({ name: 'Choreganized', display: 'standalone' });
+	expect(await manifest.json()).toMatchObject({ name: 'Haushaltsheld', display: 'standalone' });
 
 	const worker = await request.get('/service-worker.js');
 	expect(worker.ok()).toBe(true);

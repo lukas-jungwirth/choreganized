@@ -61,7 +61,7 @@ type Listener = (event: LiveEvent) => void;
  * `services/cook-timers.ts`. A restart drops the connections, `EventSource`
  * reconnects, and the reconnect refetches.
  */
-const HUB: unique symbol = Symbol.for('choreganized.live.hub');
+const HUB: unique symbol = Symbol.for('haushaltsheld.live.hub');
 
 type LiveGlobal = typeof globalThis & { [HUB]?: Map<string, Set<Listener>> };
 

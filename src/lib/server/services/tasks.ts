@@ -211,6 +211,21 @@ function sectionFor(task: TaskListItem, today: CalendarDate): TaskSectionKey {
 	return task.dueDate > today ? 'upcoming' : task.dueDate < today ? 'overdue' : 'today';
 }
 
+/**
+ * How much is overdue and due today — the line under the Tasks title, on the
+ * list and on History alike (→ SPEC §5.1). The list's own sections, counted, so
+ * the line and the "Overdue · {n}" header can never disagree.
+ */
+export function countDue(
+	householdId: string,
+	context: TaskContext
+): { overdue: number; today: number } {
+	const { sections } = getTaskList(householdId, context);
+	const count = (key: TaskSectionKey) =>
+		sections.find((section) => section.key === key)?.tasks.length ?? 0;
+	return { overdue: count('overdue'), today: count('today') };
+}
+
 export function getTaskList(householdId: string, context: TaskContext): TaskList {
 	const assignee = alias(members, 'assignee');
 	const creator = alias(members, 'creator');

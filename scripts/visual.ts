@@ -46,7 +46,7 @@ const result = spawnSync(
 		'-v',
 		`${process.cwd()}:/work`,
 		'-v',
-		`choreganized-visual-node_modules-${platform.replace('/', '-')}:/work/node_modules`,
+		`haushaltsheld-visual-node_modules-${platform.replace('/', '-')}:/work/node_modules`,
 		'-w',
 		'/work',
 		'-e',

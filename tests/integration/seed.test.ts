@@ -30,7 +30,7 @@ function lateEveningZone(now = new Date()): string {
 // Each case spawns real seed processes that migrate a fresh database; under the
 // whole suite's load that outgrows Vitest's 5 s default.
 describe('scripts/seed.ts', { timeout: 30_000 }, () => {
-	const dir = mkdtempSync(join(tmpdir(), 'choreganized-seed-'));
+	const dir = mkdtempSync(join(tmpdir(), 'haushaltsheld-seed-'));
 	const databasePath = join(dir, 'seed.db');
 	afterAll(() => rmSync(dir, { recursive: true, force: true }));
 

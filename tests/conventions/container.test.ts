@@ -50,7 +50,7 @@ type StartOptions = {
  * in a temp dir. Paths in what comes back read `/data/…`, as they would in the image.
  */
 function start(env: Record<string, string>, options: StartOptions = {}) {
-	const root = mkdtempSync(join(tmpdir(), 'choreganized-start-'));
+	const root = mkdtempSync(join(tmpdir(), 'haushaltsheld-start-'));
 	const bin = join(root, 'bin');
 	const data = join(root, 'data');
 	const database = join(data, 'choreganized.db');

@@ -389,7 +389,7 @@ function bodyFor(row: Feedback): string {
 	const fence = codeFenceFor(row.body);
 
 	return [
-		'Sent from inside Choreganized.',
+		'Sent from inside Haushaltsheld.',
 		'',
 		`${fence}text`,
 		row.body,

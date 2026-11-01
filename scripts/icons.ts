@@ -1,145 +1,196 @@
 /**
- * PWA / favicon generator — the logo mark is the single source (→ plan 11).
+ * PWA icons + mascot art — generated from the raccoon masters (→ DECISIONS #211, #215).
  *
  *   npm run icons
  *
- * Everything the app wears in a launcher, a browser tab or a lock screen is
- * produced here from one file, `src/lib/assets/logo-mark.svg` (the design's
- * mark 13b: a white house + two peach sparkles). The identity therefore lives
- * in exactly one place; re-run this after editing the mark and commit the
- * outputs.
+ * Everything the app wears in a launcher, a browser tab or a lock screen, and
+ * every raccoon a screen shows, is produced here from the PNG masters in
+ * `artwork/raccoon/` — the only artwork the app uses, never shipped itself.
+ * Re-run this after a master changes and commit the outputs.
  *
  * Outputs (committed):
- *   static/icons/icon-192.png  · icon-512.png            app icon, full-bleed sage   (purpose: any)
- *   static/icons/icon-192-maskable.png · -512-maskable   extra safe-zone padding     (purpose: maskable)
+ *   static/icons/icon-192.png · icon-512.png             app icon, full-bleed green (purpose: any)
+ *   static/icons/icon-192-maskable.png · -512-maskable   head pulled into the safe circle (purpose: maskable)
  *   static/icons/apple-touch-icon.png (180)              iOS home screen, no alpha
- *   static/icons/favicon-96.png                          PNG tab-icon fallback
+ *   static/icons/favicon-32.png · favicon-96.png         browser tab
  *   static/icons/badge-72.png                            Android status-bar silhouette (alpha-only)
- *   static/favicon.svg                                   the browser-tab mark (rounded tile)
+ *   src/lib/assets/mascot/*.avif                         the raccoon art the screens show
+ *   src/lib/assets/mascot/index.ts                       their pixel sizes, for `ui/Mascot`
  *
  * Standalone by design (like scripts/seed.ts): no $lib/$env virtual modules, so
  * it runs under Node's native TypeScript support without Vite.
  */
 import sharp from 'sharp';
-import { mkdirSync, readFileSync, writeFileSync } from 'node:fs';
+import { mkdirSync, readdirSync, rmSync, writeFileSync } from 'node:fs';
 import { join, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
 const root = resolve(fileURLToPath(new URL('..', import.meta.url)));
-const MARK_SVG = join(root, 'src/lib/assets/logo-mark.svg');
+const ARTWORK = join(root, 'artwork/raccoon');
+const APP_ICON = join(ARTWORK, 'app-icon.png');
+const FOREGROUND = join(ARTWORK, 'app-icon-foreground.png');
 const ICONS_DIR = join(root, 'static/icons');
-const FAVICON_SVG = join(root, 'static/favicon.svg');
+const MASCOT_DIR = join(root, 'src/lib/assets/mascot');
 
 /**
- * The logo's own colours — these belong to the mark, not the design-token
- * palette (a token is a var(); a rasterised PNG can hold no such thing).
- * `--sage` #5F8D72 is the tile; the white house and peach sparkles live in the
- * SVG itself.
+ * The icon's own background — it belongs to the artwork, not the design-token
+ * palette (a token is a var(); a rasterised PNG can hold no such thing). The
+ * artwork fixes it at exactly #74A585 (→ artwork/raccoon/README.md).
  */
-const SAGE = { r: 0x5f, g: 0x8d, b: 0x72, alpha: 1 };
-
-const markSource = readFileSync(MARK_SVG, 'utf8');
+const GREEN = { r: 0x74, g: 0xa5, b: 0x85, alpha: 1 };
 
 /**
- * The mark, rasterised transparent at an exact pixel size. Giving the SVG root
- * px dimensions (it declares 60×60 with a matching viewBox) makes librsvg
- * render the vector *at* that resolution rather than at 96dpi and scaling —
- * i.e. crisp edges on the white house stroke at every size.
+ * A 256-colour palette PNG: the icons are flat green plus soft watercolour, and
+ * at launcher size nobody can tell, but it is a third of the bytes — and the
+ * service worker precaches every one of them on install.
  */
-function markAt(px: number): Promise<Buffer> {
-	const svg = markSource.replace('width="60" height="60"', `width="${px}" height="${px}"`);
-	return sharp(Buffer.from(svg)).png().toBuffer();
+const ICON_PNG = { palette: true, quality: 90, effort: 10, compressionLevel: 9 } as const;
+
+/** The square, opaque store icon at a launcher size. */
+function appIcon(size: number): Promise<Buffer> {
+	return sharp(APP_ICON).resize(size, size).flatten({ background: GREEN }).png(ICON_PNG).toBuffer();
 }
 
 /**
- * A sage tile with the mark centred on it, flattened to fully opaque (no alpha
- * channel — iOS fills a transparent app icon with black, and there is nothing
- * to be transparent *to* anyway). `ratio` is the mark's share of the canvas.
+ * The transparent head centred on green at `ratio` of its own canvas, flattened
+ * opaque. At 1 the head spans ~75% of the width, so its ears poke out of the
+ * 80%-diameter circle a launcher may crop a maskable icon to; 0.8 brings every
+ * corner inside it. Above 1 it fills a small tab icon more boldly.
  */
-async function tile(size: number, ratio: number): Promise<Buffer> {
-	const mark = await markAt(Math.round(size * ratio));
-	return sharp({ create: { width: size, height: size, channels: 4, background: SAGE } })
-		.composite([{ input: mark, gravity: 'center' }])
-		.flatten({ background: SAGE })
-		.png({ compressionLevel: 9 })
+async function head(size: number, ratio: number): Promise<Buffer> {
+	const px = Math.round(size * ratio);
+	let art = sharp(FOREGROUND).resize(px, px);
+	if (px > size) {
+		const offset = Math.round((px - size) / 2);
+		art = sharp(await art.toBuffer()).extract({
+			left: offset,
+			top: offset,
+			width: size,
+			height: size
+		});
+	}
+	return sharp({ create: { width: size, height: size, channels: 4, background: GREEN } })
+		.composite([{ input: await art.png().toBuffer(), gravity: 'center' }])
+		.flatten({ background: GREEN })
+		.png(ICON_PNG)
 		.toBuffer();
 }
 
 /**
- * The Android notification badge: a solid white house on transparent, tightly
- * framed. Android keeps only the alpha channel and tints the silhouette itself,
- * so the sparkles (noise at 24dp) are dropped and the colour is irrelevant.
+ * The Android notification badge: the head's outline in white on transparent.
+ * Android keeps only the alpha channel and tints the silhouette itself, so the
+ * face is noise at 24dp and the colour is irrelevant.
  */
 async function badge(size: number): Promise<Buffer> {
-	const px = Math.round(size * 0.66);
-	// A viewBox cropped to the house (x 12–42, y 19–49) so it sits centred,
-	// rather than low-left where it lives inside the full 60-box beside the
-	// sparkles.
-	const house = `<svg xmlns="http://www.w3.org/2000/svg" width="${px}" height="${px}" viewBox="9 16 36 36"><path d="M12 33 L27 19 L42 33 V46 a3 3 0 0 1 -3 3 H15 a3 3 0 0 1 -3 -3 Z" fill="#fff"/></svg>`;
-	const shape = await sharp(Buffer.from(house)).png().toBuffer();
+	const alpha = await sharp(FOREGROUND)
+		.trim()
+		.resize(Math.round(size * 0.86), Math.round(size * 0.86), { fit: 'inside' })
+		.extractChannel('alpha')
+		.toBuffer();
+	const { width, height } = await sharp(alpha).metadata();
+	const white = await sharp({
+		create: { width: width!, height: height!, channels: 3, background: '#ffffff' }
+	})
+		.joinChannel(alpha)
+		.png()
+		.toBuffer();
 	return sharp({
 		create: { width: size, height: size, channels: 4, background: { r: 0, g: 0, b: 0, alpha: 0 } }
 	})
-		.composite([{ input: shape, gravity: 'center' }])
+		.composite([{ input: white, gravity: 'center' }])
 		.png({ compressionLevel: 9 })
 		.toBuffer();
 }
 
-/** The mark's paths, lifted out of the source svg wrapper for re-use in the favicon. */
-function markInner(): string {
-	const match = markSource.match(/<svg[^>]*>([\s\S]*?)<\/svg>/);
-	if (!match) throw new Error(`could not read the mark out of ${MARK_SVG}`);
-	return match[1].trim();
+/**
+ * The screen mascots — `artwork/raccoon/<name>.png` — and the height to store
+ * each at: 3× the tallest it is shown (PageHeader's 88px, Home's 136px, the
+ * login head's 90px), so it is sharp on a 3× phone and no bigger.
+ *
+ * AVIF at quality 60: half the bytes of WebP with no difference you can see at
+ * that size, and every browser the app supports reads it (Safari 16+). One
+ * format, not a <picture> with a fallback, because the service worker precaches
+ * every built asset — a second format would be downloaded too, never shown.
+ */
+const MASCOTS: Array<[name: string, height: number]> = [
+	['shopping', 264],
+	['cooking', 264],
+	['tasks', 264],
+	['expenses', 264],
+	['head', 270],
+	['welcome-a', 408],
+	['welcome-b', 408],
+	['reminder-upcoming', 408],
+	['reminder-overdue', 408]
+];
+
+async function mascot(name: string, height: number) {
+	return sharp(join(ARTWORK, `${name}.png`))
+		.trim()
+		.resize({ height })
+		.avif({ quality: 60, effort: 7 })
+		.toBuffer({ resolveWithObject: true });
 }
 
-/**
- * A rounded sage tile with the mark scaled up slightly to read at 16px. Kept as
- * SVG (crisp at any tab size, and a modern favicon should be one) with a PNG
- * fallback beside it for the browsers that still want raster.
- */
-function faviconSvg(): string {
-	const inner = markInner()
-		.split('\n')
-		.map((line) => `\t\t${line.trim()}`)
-		.join('\n');
-	return `<!-- Choreganized favicon — generated by scripts/icons.ts from logo-mark.svg. Do not edit by hand. -->
-<svg xmlns="http://www.w3.org/2000/svg" width="60" height="60" viewBox="0 0 60 60" fill="none">
-	<rect width="60" height="60" rx="13" fill="#5F8D72" />
-	<g transform="translate(30 30) scale(1.1) translate(-30 -30)">
-${inner}
-	</g>
-</svg>
-`;
-}
+/** `welcome-a` → `welcomeA`, for the generated imports. */
+const camel = (name: string) => name.replace(/-(\w)/g, (_, letter: string) => letter.toUpperCase());
 
 async function main() {
 	mkdirSync(ICONS_DIR, { recursive: true });
+	mkdirSync(MASCOT_DIR, { recursive: true });
 
-	const outputs: Array<[string, Buffer]> = [
-		// App icon (purpose: any) — full-bleed sage, mark at the design's ~60% share.
-		['icon-192.png', await tile(192, 0.6)],
-		['icon-512.png', await tile(512, 0.6)],
-		// Maskable — the mark pulled in so it clears the 80%-diameter safe circle
-		// under any launcher's mask; the sage bleeds to the edge and is safe to clip.
-		['icon-192-maskable.png', await tile(192, 0.52)],
-		['icon-512-maskable.png', await tile(512, 0.52)],
-		// iOS home screen — square, opaque; iOS applies its own rounding.
-		['apple-touch-icon.png', await tile(180, 0.58)],
-		// A fuller tile for the raster favicon fallback (reads better small).
-		['favicon-96.png', await tile(96, 0.66)],
-		// Notification status-bar glyph.
+	const icons: Array<[string, Buffer]> = [
+		['icon-192.png', await appIcon(192)],
+		['icon-512.png', await appIcon(512)],
+		['icon-192-maskable.png', await head(192, 0.8)],
+		['icon-512-maskable.png', await head(512, 0.8)],
+		// iOS applies its own rounding; the store icon is already square and opaque.
+		['apple-touch-icon.png', await appIcon(180)],
+		// A fuller crop reads better at tab size.
+		['favicon-32.png', await head(32, 1.2)],
+		['favicon-96.png', await head(96, 1.2)],
 		['badge-72.png', await badge(72)]
 	];
-
-	for (const [name, buffer] of outputs) {
+	for (const [name, buffer] of icons) {
 		writeFileSync(join(ICONS_DIR, name), buffer);
 		console.log(`  static/icons/${name}  (${(buffer.length / 1024).toFixed(1)} KB)`);
 	}
 
-	writeFileSync(FAVICON_SVG, faviconSvg());
-	console.log('  static/favicon.svg');
+	// Whatever an earlier run left that isn't in the list any more goes, so the
+	// build never carries (and the service worker never precaches) a stray.
+	for (const file of readdirSync(MASCOT_DIR)) rmSync(join(MASCOT_DIR, file));
 
-	console.log(`\nGenerated ${outputs.length + 1} icon file(s) from src/lib/assets/logo-mark.svg`);
+	const sizes: string[] = [];
+	for (const [name, height] of MASCOTS) {
+		const { data, info } = await mascot(name, height);
+		writeFileSync(join(MASCOT_DIR, `${name}.avif`), data);
+		sizes.push(`${name}|${info.width}|${info.height}`);
+		console.log(`  src/lib/assets/mascot/${name}.avif  (${(data.length / 1024).toFixed(1)} KB)`);
+	}
+
+	const entries = sizes.map((row) => row.split('|'));
+	writeFileSync(
+		join(MASCOT_DIR, 'index.ts'),
+		[
+			'// Generated by scripts/icons.ts from artwork/raccoon/ — do not edit by hand.',
+			...entries.map(([name]) => `import ${camel(name)} from './${name}.avif';`),
+			'',
+			'/** Each raccoon and its pixel size, so `ui/Mascot` can reserve its box before it loads. */',
+			'export const MASCOTS = {',
+			...entries.map(([name, width, height], index) => {
+				const key = name.includes('-') ? `'${name}'` : name;
+				const comma = index < entries.length - 1 ? ',' : '';
+				return `\t${key}: { src: ${camel(name)}, width: ${width}, height: ${height} }${comma}`;
+			}),
+			'} as const;',
+			'',
+			'export type MascotName = keyof typeof MASCOTS;',
+			''
+		].join('\n')
+	);
+	console.log('  src/lib/assets/mascot/index.ts');
+
+	console.log(`\nGenerated ${icons.length + MASCOTS.length + 1} file(s) from artwork/raccoon/`);
 }
 
 main().catch((error) => {

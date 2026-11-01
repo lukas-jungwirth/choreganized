@@ -96,7 +96,7 @@ let lastImportSweep: string | null = null;
  * which would otherwise stack a new set of timers on each edit. A `Symbol.for`
  * key survives module re-evaluation because it lives in the global registry.
  */
-const REGISTERED: unique symbol = Symbol.for('choreganized.cron.registered');
+const REGISTERED: unique symbol = Symbol.for('haushaltsheld.cron.registered');
 
 type CronGlobal = typeof globalThis & { [REGISTERED]?: true };
 

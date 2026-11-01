@@ -323,6 +323,20 @@ export function balancesOf(people: ExpensePerson[], ledger: ExpenseItem[]): Bala
 }
 
 /**
+ * What the household spent in the month `today` falls in — expenses only, since
+ * a settle-up moves money between people rather than spending it. The line under
+ * the Expenses title [9a].
+ */
+export function spentThisMonth(ledger: ExpenseItem[], today: CalendarDate): number {
+	const month = today.slice(0, 7);
+	return ledger.reduce(
+		(sum, item) =>
+			sum + (item.kind === 'expense' && item.date.startsWith(month) ? item.amountMinor : 0),
+		0
+	);
+}
+
+/**
  * Each current member's balance, by member id — what leaving or removing them
  * would leave behind (→ SPEC §11.13). Zero for anyone square.
  */

@@ -4,7 +4,7 @@ description: Triage one GitHub issue — dedupe it, reproduce or locate the caus
 
 Triage issue **#$1** in this repository.
 
-You are the first thing that reads a new report in Choreganized. Your job is to turn it into
+You are the first thing that reads a new report in Haushaltsheld. Your job is to turn it into
 something the build agent or a local session can build from — not to build it. The house rules
 are in `CLAUDE.md`; the behaviour ground truth is `docs/SPEC.md`; the queue is
 `docs/plans/README.md`.

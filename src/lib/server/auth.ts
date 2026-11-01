@@ -71,7 +71,7 @@ let sendLimiter: ReturnType<typeof createSendLimiter> | undefined;
 const limiter = () => (sendLimiter ??= createSendLimiter(activeSendLimits()));
 
 export const auth = betterAuth({
-	appName: 'Choreganized',
+	appName: 'Haushaltsheld',
 	secret: requireEnv('BETTER_AUTH_SECRET'),
 	// Falls back to the request origin when unset; set it so the Google redirect
 	// URI stays stable behind a proxy.

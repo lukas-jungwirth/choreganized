@@ -1,4 +1,4 @@
-# Choreganized — Product Spec
+# Haushaltsheld — Product Spec
 
 > Household app for two (Lukas & Elisabeth, works for N members). Warm/minimal design
 > (sage + terracotta, Fraunces + Figtree). Tagline: **Every chore, organized.**
@@ -11,6 +11,14 @@
 The app is an installable PWA (Android-first) with five tabs — **Home, Shopping, Cooking,
 Tasks, Expenses** — plus onboarding and settings. No message board. Expenses, the
 household's shared tally, came after v1 (§11, → plans 29–30, [DECISIONS #167](DECISIONS.md)).
+
+The mascot is a raccoon in a green apron. Each tab's title line has its own pose beside the title
+— Shopping holds a grocery bag, Cooking a bowl, Tasks a checklist (History too), Expenses a
+calculator — and the login and join screens show its head where the logo was. Decorative only:
+no alt text, no tap target ([DECISIONS #211](DECISIONS.md); Home's comes separately).
+Under every one of those titles sits one short live line — what that tab has for you right now —
+and the title, the line and the header's buttons all stand on the raccoon's feet
+([DECISIONS #212](DECISIONS.md)). Short, no emoji, one line (a long recipe name ends in "…").
 
 ---
 
@@ -42,7 +50,7 @@ household's shared tally, came after v1 (§11, → plans 29–30, [DECISIONS #16
   exists only as a test door behind `E2E_MODE`, never on a deploy
   (→ [DECISIONS #139](DECISIONS.md), TESTING.md).
 - **The code mail** is plain text in the login page's language. Subject: "{code} is your
-  Choreganized code". The body has the code, how long it works, and "if you didn't ask for it,
+  Haushaltsheld code". The body has the code, how long it works, and "if you didn't ask for it,
   ignore this".
 - Signed-in users with a household land on Home; without one, on the create-or-join step.
 
@@ -94,8 +102,16 @@ household's shared tally, came after v1 (§11, → plans 29–30, [DECISIONS #16
 
 ## 2. Home tab [8b is the canonical variant]
 
-Top: household name (small caps), "Good {morning|afternoon|evening}, {name}", stacked member
-avatars. Then, in order:
+Top: household name (small caps), "Good {morning|afternoon|evening}, {name}", and under the
+greeting the stacked member avatars in a pill with a chevron — the way into Settings
+([DECISIONS #214](DECISIONS.md)). Then, in order:
+
+**The raccoon** ([DECISIONS #213](DECISIONS.md)) sits on the first card's top edge, right of
+the greeting — its upper body, so it reads as peeking over the card. With a next-chore card it is
+the reminder pose on that card: ringing a bell while the chore is coming up or due today,
+holding an alarm clock once it's overdue. Without one it greets you: waving (pose A) or winking
+with a thumbs-up (pose B) — the pose changes with the household's date (A on even days), so it
+is the same all day and different tomorrow.
 
 1. **Next chore card** — the one chore that's on the current user next: the soonest task
    assigned to them or to Anyone (never a housemate's) that is already overdue or due within
@@ -133,7 +149,7 @@ a danger badge with the current user's overdue count [4e].
 
 ### 3.1 List [03 main]
 
-- Header "Shopping" + "{checked} of {total} done" (hidden when list empty).
+- Header "Shopping" + "{checked} of {total} done" under it; "Nothing on the list" when empty.
 - **Add an item…** inline field pinned above the list; typing + Enter (or the + button) adds
   instantly to the default store (topmost). Opening the field's expand affordance opens the full
   sheet [3a].
@@ -283,7 +299,9 @@ where it can still be acted on (→ [DECISIONS #131](DECISIONS.md)).
 
 ### 4.1 This week [04 main]
 
-- Header "Cooking" + the month label of the week on screen, and a two-way switch under it:
+- Header "Cooking" + today's meals under it, whichever week is on screen: "Today: {name}" for
+  one, "{n} meals today" for more, "Nothing planned today" for none (DE "Heute: …" ·
+  "Heute {n} Mahlzeiten" · "Heute nichts geplant"). Then a two-way switch:
   **This week · {n} / Next week · {n}**, where {n} is how many of the seven days have a dinner.
   The week shown lives in the URL (`?week=YYYY-MM-DD`, a Monday); anything else it names falls
   back to this week, and `/cooking` with no query is always this week (→ DECISIONS #99).
@@ -636,7 +654,8 @@ actually need is the chore this replaces (→ [DECISIONS #123](DECISIONS.md)).
 
 ### 5.1 List [05 main, 4a]
 
-- Header "Tasks".
+- Header "Tasks" + what is due under it, the same line on History: "{n} overdue · {n} today",
+  "{n} overdue", "{n} due today" or "Nothing due today" — the list's own sections, counted.
 - Segmented control: **To do** / **History** (no count on the tab — → DECISIONS #117).
   A sideways swipe presses it, as on Cooking (§4.1): leftwards from To do to History,
   rightwards back, nothing past either end; a plain switch, no slide. The swipe covers the
@@ -940,7 +959,9 @@ balance card as a sentence (one person · `10a · 2` two owe you · `10a · 3` y
 Tab bar order: **Home · Shopping · Cooking · Tasks · Expenses** ("Expenses" / "Ausgaben").
 Only the active tab carries its label, in a sage pill; the others are icons — the bar's
 own treatment since [01/1d], which is what lets five fit at 390px in both languages
-[9a-tabbar] (→ [DECISIONS #171](DECISIONS.md)). The header's **•••** menu holds **All activity** · **Expense settings** (→ §11.10), and
+[9a-tabbar] (→ [DECISIONS #171](DECISIONS.md)). Under the title: "{amount} this month", what
+the household spent in the calendar month (settle-ups don't count), or "Nothing yet this month".
+The header's **•••** menu holds **All activity** · **Expense settings** (→ §11.10), and
 **Recurring** (with how many series are running in brackets, "Recurring (2)"), first, then the other two
 — each with a 20px icon (→ [DECISIONS #199](DECISIONS.md)). While the undo bar is up after a delete, the
 FAB stands down — the two share the corner, and Undo is the one that can't wait.
@@ -983,7 +1004,7 @@ FAB stands down — the two share the corner, and Undo is the one that can't wai
 3. **FAB "+"** → add expense [9b]. The only way to add; settle up lives on the balance card.
 
 Empty state [9g] (no expense ever): a friendly illustration, "Nothing to split yet", "Log the
-weekly shop, the rent, the pizza. Choreganized keeps the tally.", button **Add an expense**.
+weekly shop, the rent, the pizza. Haushaltsheld keeps the tally.", button **Add an expense**.
 
 ### 11.3 Add / edit an expense [9b]
 
@@ -1220,5 +1241,5 @@ until at least 50 rows are showing, so fifteen payments across a year show at on
 ### 11.14 Not in v1 (on purpose)
 
 Guests and people outside the household (the model is ready, → #168) · linking with other
-Choreganized households · receipt photos · "log what this shop cost?" after a shopping trip ·
+Haushaltsheld households · receipt photos · "log what this shop cost?" after a shopping trip ·
 several currencies · statistics and charts · groups or trips inside a household · export.

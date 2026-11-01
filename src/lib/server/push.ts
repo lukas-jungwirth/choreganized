@@ -108,7 +108,7 @@ function configureVapid(): boolean {
 
 	const publicKey = publicEnv.PUBLIC_VAPID_PUBLIC_KEY;
 	const privateKey = env.VAPID_PRIVATE_KEY;
-	const subject = env.VAPID_SUBJECT || 'mailto:hello@choreganized.app';
+	const subject = env.VAPID_SUBJECT || 'mailto:hello@haushaltsheld.app';
 
 	if (!publicKey || !privateKey) {
 		console.warn(

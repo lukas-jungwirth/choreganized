@@ -110,7 +110,11 @@
 	<title>{m.common.pageTitle(m.tasks.title)}</title>
 </svelte:head>
 
-<PageHeader title={m.tasks.title} />
+<PageHeader
+	mascot="tasks"
+	title={m.tasks.title}
+	meta={m.tasks.due(data.due.overdue, data.due.today)}
+/>
 
 <!-- Everything between the header and the tab bar pages under a sideways swipe
 	 (→ SPEC §5.1, DECISIONS #207, #208); the sheets and the FAB sit outside it.
