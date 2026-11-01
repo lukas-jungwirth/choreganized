@@ -17,6 +17,7 @@ import {
 } from '$lib/server/services/feedback';
 import { FEEDBACK_BODY_MAX } from '$lib/utils/feedback';
 import { eq } from 'drizzle-orm';
+import pkg from '../../package.json' with { type: 'json' };
 import { db, makeHousehold, tables } from '../helpers/db';
 
 const REPORT = {
@@ -38,7 +39,7 @@ describe('submitFeedback', () => {
 		assert.equal(row.memberName, 'Owner');
 		assert.equal(row.locale, 'de');
 		assert.equal(row.theme, 'dark');
-		assert.equal(row.appVersion, 'dev');
+		assert.equal(row.appVersion, `${pkg.version}-dev`);
 		assert.equal(row.attempts, 0);
 		assert.equal(row.issueNumber, null);
 		assert.equal(row.nextAttemptAt?.getTime(), now.getTime());

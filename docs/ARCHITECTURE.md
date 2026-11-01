@@ -53,7 +53,7 @@ src/
       guards.ts                # requireUser / requireMember helpers           [plan 00]
       push.ts                  # sendToUser/sendToMembers, prune, payload types [plan 05]
       github.ts                # the one module that talks to api.github.com     [plan 16]
-      version.ts               # appVersion(): the build id a report names       [plan 16]
+      version.ts               # appVersion(): package.json's version + the commit [plan 16]
       uploads.ts               # recipe photos: sharp → WebP, store/copy/read  [plan 07]
       recipe-import.ts         # SSRF-guarded fetch of a recipe page + its photo [plan 12]
       ai/                      # provider adapters (plain fetch), run.ts (primary → backup),
@@ -298,10 +298,9 @@ prompt / subscribed).
   one prefix per instance (→ [BACKUP.md](BACKUP.md)).
   `GITHUB_FEEDBACK_REPO` only redirects them. AI keys are **not** env: each household brings
   its own in Settings (→ [DECISIONS #146](DECISIONS.md)); `AI_<PROVIDER>_BASE_URL` points a
-  provider at `scripts/fake-ai.ts` and is honoured only under `E2E_MODE`. **Build-time**: `APP_VERSION` (a Coolify _Build
-  Variable_ — a plain env var is runtime-only and never reaches `--build-arg`) and Coolify's
-  `SOURCE_COMMIT`, baked by the Dockerfile into `APP_VERSION` / `APP_COMMIT` so a report can name
-  its build (→ [DECISIONS #137](DECISIONS.md)).
+  provider at `scripts/fake-ai.ts` and is honoured only under `E2E_MODE`. **Build-time**: Coolify's `SOURCE_COMMIT`, baked by the
+  Dockerfile into `APP_COMMIT` so a report can name its build; the version is `package.json`'s,
+  bundled by the build (→ [DECISIONS #137, #209](DECISIONS.md)). No build variable to set.
 - **`BODY_SIZE_LIMIT` is not optional once recipe photos exist.** adapter-node caps a request
   body at **512K** by default and answers 413 before the form action runs; a phone photo is
   several MB. The Vite dev server applies no limit at all, so this is invisible until the

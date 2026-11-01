@@ -50,13 +50,41 @@ issue ──probe·Triage·apply──▶ dispatch / `agent:build` ──Build�
    the test environment; the **Smoke** workflow waits for `/api/health` to report the merged
    commit and checks the doors.
 5. **The release PR** (DECISIONS #161). No agent opens a PR against `main`. Every push to `dev`
-   runs `.github/workflows/release.yml`, which opens the one `Release: dev → main` PR when `dev`
-   is ahead, or rewrites the open one's description (`scripts/release-pr.ts`): every PR merged
+   runs `.github/workflows/release.yml`, which opens the one `Release vX.Y.Z: dev → main` PR when
+   `dev` is ahead, or rewrites the open one's description (`scripts/release-pr.ts`): every PR merged
    since the last release, and one `Closes #N` line per `fixed-on-dev` issue — closing keywords
    only act on the default branch, so that line is what closes them. The code needs no updating:
    the PR's head _is_ `dev`, and its checks are the ones CI ran on the push. Lukas tries the
    test environment and merges it; the household's instance follows, and the issues close with
-   it. Actions → Release PR → Run workflow rewrites it by hand.
+   it. Actions → Release PR → Run workflow rewrites it by hand. The merge into `main` runs
+   `.github/workflows/tag-release.yml`, which tags the version and publishes its GitHub Release
+   (→ "Versions" below).
+
+**Versions** (DECISIONS #209). [SemVer](https://semver.org), kept in **`package.json`** alone:
+the app reads it there (`server/version.ts`), and Settings, feedback reports and `/api/health`
+show it. While the app is in pre-production it stays `0.MINOR.PATCH`; **`1.0.0` is Lukas's call**,
+made by hand when the MVP is done.
+
+| The change                                                                    | Bump      | Example         |
+| ----------------------------------------------------------------------------- | --------- | --------------- |
+| A new feature, a visible change in behaviour, a schema migration              | **minor** | `0.3.0 → 0.4.0` |
+| A bug fix, polish, a copy change                                              | **patch** | `0.3.0 → 0.3.1` |
+| Docs, tests, CI, tooling, a refactor nobody can see                           | none      | —               |
+| After 1.0: something the household relied on breaks (data, a removed feature) | **major** | `1.4.2 → 2.0.0` |
+
+`dev` always carries the version of the **next** release, so a PR measures against the newest
+`v*` tag (the last release), not against `dev`: the first feature after `v0.3.0` sets `0.4.0`; a
+fix after it sees `0.4.0` already covers it and changes nothing; a feature after a fix raises
+`0.3.1` to `0.4.0`. Two PRs making the same bump make the same edit and merge cleanly. To bump:
+`npm version <x.y.z> --no-git-tag-version` (edits `package.json` and `package-lock.json`
+together), and `git fetch --tags` first so the check below can see the last release.
+
+`npm run check:version` (in `verify`, and CI's static job) holds the floor: plain `X.Y.Z`, the
+lockfile agreeing, and — when `src/` (not its tests) or `static/` changed since the tag — a
+version exactly one step above it. Patch or minor is the author's judgement; the release PR's
+title shows the result before Lukas merges. A merge to `main` whose version already has a tag
+(docs only) tags nothing. The test environment shows the upcoming number (`0.4.0+abc1234`)
+before it is released; the dev server says `0.4.0-dev`.
 
 **The agent lane** (→ [plan 18](plans/18-agent-build.md), DECISIONS #143,
 [plan 26](plans/26-agent-reproduce-review.md), DECISIONS #164). Triage runs as three jobs, and
