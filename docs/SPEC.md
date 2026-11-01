@@ -640,8 +640,9 @@ actually need is the chore this replaces (→ [DECISIONS #123](DECISIONS.md)).
 - Segmented control: **To do** / **History** (no count on the tab — → DECISIONS #117).
   A sideways swipe presses it, as on Cooking (§4.1): leftwards from To do to History,
   rightwards back, nothing past either end; a plain switch, no slide. The swipe covers the
-  switch and everything under it on both views (not the FAB or the sheets); touches starting
-  at the screen's edge stay the system's back gesture (→ DECISIONS #207).
+  switch and everything under it on both views, down to the tab bar even where the page is
+  shorter than the screen (not the FAB or the sheets); touches starting at the screen's edge
+  stay the system's back gesture (→ DECISIONS #207, #208).
 - To-do sections in order: **Overdue · {n}** (red dot header), **Today**, **Upcoming**, then
   undated one-offs. Rows: check circle, name, meta line, assignee avatar, `+{points}`.
   - Meta examples: "Every 2 weeks · due tomorrow", "Weekly · due today" (terracotta),

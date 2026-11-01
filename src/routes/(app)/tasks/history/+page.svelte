@@ -5,13 +5,12 @@
 	feed is one level down, behind "All completed chores".
 -->
 <script lang="ts">
-	import { goto } from '$app/navigation';
 	import PageHeader from '$lib/components/shell/PageHeader.svelte';
 	import ChoreSplit from '$lib/components/tasks/ChoreSplit.svelte';
 	import PointsBoard from '$lib/components/tasks/PointsBoard.svelte';
 	import SegmentedControl from '$lib/components/ui/SegmentedControl.svelte';
+	import SwipeViews from '$lib/components/ui/SwipeViews.svelte';
 	import { messages } from '$lib/i18n';
-	import { swipe, type SwipeDirection } from '$lib/swipe';
 	import ChevronRight from '@lucide/svelte/icons/chevron-right';
 	import type { PageProps } from './$types';
 
@@ -23,15 +22,6 @@
 		{ value: 'todo', label: m.tasks.view.todo, href: '/tasks' },
 		{ value: 'history', label: m.tasks.view.history, href: '/tasks/history' }
 	]);
-
-	/**
-	 * A sideways swipe presses the switch for you, as on Cooking (→ SPEC §5.8,
-	 * DECISIONS #207): rightwards back to To do; History is the last view, so
-	 * leftwards does nothing.
-	 */
-	function swipeView(direction: SwipeDirection) {
-		if (direction === 'right') goto(view[0].href);
-	}
 </script>
 
 <svelte:head>
@@ -40,8 +30,9 @@
 
 <PageHeader title={m.tasks.title} />
 
-<!-- The switch and both cards page under a sideways swipe. -->
-<div use:swipe={swipeView}>
+<!-- The switch, both cards and the space below them, down to the tab bar, page
+	 under a sideways swipe (→ SPEC §5.8, DECISIONS #207, #208). -->
+<SwipeViews options={view} value="history" fill>
 	<div class="view">
 		<SegmentedControl label={m.tasks.view.label} value="history" options={view} />
 	</div>
@@ -61,7 +52,7 @@
 			<ChevronRight size={16} strokeWidth={2} aria-hidden="true" />
 		</a>
 	</div>
-</div>
+</SwipeViews>
 
 <style>
 	.view {
