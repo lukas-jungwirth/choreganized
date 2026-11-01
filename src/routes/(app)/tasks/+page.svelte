@@ -10,7 +10,6 @@
 -->
 <script lang="ts">
 	import { enhance } from '$app/forms';
-	import { goto } from '$app/navigation';
 	import ChecklistIcon from '$lib/components/icons/ChecklistIcon.svelte';
 	import PageHeader from '$lib/components/shell/PageHeader.svelte';
 	import SnoozeSheet from '$lib/components/tasks/SnoozeSheet.svelte';
@@ -24,9 +23,9 @@
 	import EmptyState from '$lib/components/ui/EmptyState.svelte';
 	import FAB from '$lib/components/ui/FAB.svelte';
 	import SegmentedControl from '$lib/components/ui/SegmentedControl.svelte';
+	import SwipeViews from '$lib/components/ui/SwipeViews.svelte';
 	import { messages } from '$lib/i18n';
 	import type { CompletionResult, Standing, TaskListItem } from '$lib/server/services/tasks';
-	import { swipe, type SwipeDirection } from '$lib/swipe';
 	import { STARTERS } from '$lib/utils/tasks';
 	import type { SubmitFunction } from '@sveltejs/kit';
 	import Check from '@lucide/svelte/icons/check';
@@ -66,16 +65,6 @@
 		{ value: 'todo', label: m.tasks.view.todo, href: '/tasks' },
 		{ value: 'history', label: m.tasks.view.history, href: '/tasks/history' }
 	]);
-
-	/**
-	 * A sideways swipe presses the switch for you, as on Cooking (→ SPEC §5.1,
-	 * DECISIONS #207): leftwards on to History; rightwards there is nothing
-	 * before To do. Without the switch — a household with nothing done yet —
-	 * there is no History to swipe to either.
-	 */
-	function swipeView(direction: SwipeDirection) {
-		if (direction === 'left' && furnished) goto(view[1].href);
-	}
 
 	/** The summary link's line: how much got done this week, and the way through. */
 	const summaryLabel = $derived(
@@ -123,9 +112,11 @@
 
 <PageHeader title={m.tasks.title} />
 
-<!-- Everything between the header and the FAB pages under a sideways swipe;
-	 the sheets and the FAB sit outside it. -->
-<div use:swipe={swipeView}>
+<!-- Everything between the header and the tab bar pages under a sideways swipe
+	 (→ SPEC §5.1, DECISIONS #207, #208); the sheets and the FAB sit outside it.
+	 Without the switch (a household with nothing done yet) there is no History
+	 to swipe to, so no options either. -->
+<SwipeViews options={furnished ? view : []} value="todo" fill>
 	{#if furnished}
 		<div class="view">
 			<SegmentedControl label={m.tasks.view.label} value="todo" options={view} />
@@ -222,7 +213,7 @@
 			<ChevronRight size={16} strokeWidth={2} aria-hidden="true" />
 		</a>
 	{/if}
-</div>
+</SwipeViews>
 
 {#if !empty}
 	<FAB label={m.tasks.newTask} onclick={() => (sheet = { kind: 'form', task: null })}>

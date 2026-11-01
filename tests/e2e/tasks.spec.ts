@@ -72,3 +72,16 @@ test('swiping sideways switches the Tasks tab between To do and History (#87)', 
 	await expect(page).toHaveURL(/\/tasks$/);
 	await expect(todo).toHaveAttribute('aria-current', 'page');
 });
+
+test('the Tasks swipe reaches below a short page, down to the tab bar (#87)', async ({ page }) => {
+	// History is two cards; on a phone the screen goes on below them, and a
+	// thumb lands there as often as on a card.
+	await page.goto('/tasks/history');
+	const below = (await page.locator('.cards').boundingBox())!;
+	const tabBar = (await page.getByRole('navigation', { name: 'Sections' }).boundingBox())!;
+	const y = below.y + below.height + 40;
+	expect(y).toBeLessThan(tabBar.y - 10);
+
+	await finger(page)({ x: 195, y }, 150);
+	await expect(page).toHaveURL(/\/tasks$/);
+});

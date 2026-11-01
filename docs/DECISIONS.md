@@ -2991,3 +2991,13 @@ units | null, name}`, written back as editor lines in the reader's unit spelling
      [7f] with no switch, so swiping left there does nothing. The All-completed feed one level
      down (`/tasks/history/all`) keeps its month paging and gets no swipe. The touch helper
      the e2e tests drive moves to `tests/e2e/touch.ts`, shared by both tabs.
+208. **One swipe component, and the Tasks swipe reaches the tab bar** (follow-up to #206/#207).
+     The three pages each worked out their neighbour in their own way (Cooking compared week
+     offsets, To do and History hard-coded `view[1]` and `view[0]`), so the paging moved into
+     **`ui/SwipeViews`**: it takes the switch's own options and value and follows the next or
+     previous option's link (`neighbour` in `lib/swipe.ts`). And on a phone the swipe area
+     ended where the content did: History's two cards stop about three quarters down the
+     screen, a short to-do list sooner, and a swipe below them did nothing. `fill` stretches
+     the area to the tab bar; the app shell becomes a flex column only on a page that asks
+     (`:has([data-swipe-fill])`), so no other screen's flow changes. Cooking stays unfilled,
+     its library below isn't about weeks.

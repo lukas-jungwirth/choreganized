@@ -36,14 +36,30 @@ export function swipeDirection(dx: number, dy: number): SwipeDirection | null {
 	return dx < 0 ? 'left' : 'right';
 }
 
+/**
+ * The view a swipe moves to among a switch's options, in their order: `left`
+ * the one after `value`, `right` the one before; `null` past either end. Every
+ * paging switch is a row of options, so no page works out its own neighbour.
+ */
+export function neighbour<T extends { value: string }>(
+	options: readonly T[],
+	value: string,
+	direction: SwipeDirection
+): T | null {
+	const at = options.findIndex((option) => option.value === value);
+	if (at === -1) return null;
+	return options[at + (direction === 'left' ? 1 : -1)] ?? null;
+}
+
 /** Whether a touch starting at `x` on a screen `width` wide is the system's. */
 export function fromEdge(x: number, width: number): boolean {
 	return x < EDGE || x > width - EDGE;
 }
 
 /**
- * `use:swipe={(direction) => …}` on the area that pages. It sets
- * `touch-action: pan-y pinch-zoom` there, so the browser keeps vertical
+ * `use:swipe={(direction) => …}` on the area that pages; pages reach it
+ * through `ui/SwipeViews`, which turns a direction into the neighbour's link.
+ * It sets `touch-action: pan-y pinch-zoom` there, so the browser keeps vertical
  * scrolling and zoom but hands sideways travel to us instead of cancelling
  * the pointer. A swipe that ends on a row eats the click that would follow,
  * so paging never also opens a sheet.

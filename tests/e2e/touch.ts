@@ -7,15 +7,21 @@
 import type { Locator, Page } from '@playwright/test';
 
 /**
- * `dx`/`dy` are the travel from the middle of `target`, or from `startX`
- * across its middle. One CDP session for the whole test: a session per
- * gesture loses the later swipes.
+ * `dx`/`dy` are the travel from the middle of `target` (or from a point on
+ * screen), or from `startX` across its middle. One CDP session for the whole
+ * test: a session per gesture loses the later swipes.
  */
 export function finger(page: Page) {
 	const session = page.context().newCDPSession(page);
-	return async (target: Locator, dx: number, dy = 0, startX?: number) => {
+	return async (
+		target: Locator | { x: number; y: number },
+		dx: number,
+		dy = 0,
+		startX?: number
+	) => {
 		const cdp = await session;
-		const box = (await target.boundingBox())!;
+		const box =
+			'boundingBox' in target ? (await target.boundingBox())! : { ...target, width: 0, height: 0 };
 		const x = startX ?? box.x + box.width / 2;
 		const y = box.y + box.height / 2;
 		const touch = (type: 'touchStart' | 'touchMove' | 'touchEnd', px: number, py: number) =>
