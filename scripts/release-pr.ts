@@ -5,6 +5,7 @@
  *   node scripts/release-pr.ts
  *
  * No agent opens a PR against `main`. Sessions and the build lane merge into `dev`;
+ * the title names the version `dev` carries, which the merge tags (→ tag-release.yml);
  * this opens the one release PR when `dev` is ahead of `main`, or rewrites the body
  * of the one already open, so it always lists every PR since the last release and
  * carries a `Closes #N` per `fixed-on-dev` issue — closing keywords act only on the
@@ -13,9 +14,13 @@
  * the body is what a session used to forget.
  */
 import { execFileSync } from 'node:child_process';
-import { writeFileSync } from 'node:fs';
+import { readFileSync, writeFileSync } from 'node:fs';
+import { formatVersion, latestRelease } from './check-version';
 
-export const TITLE = 'Release: dev → main';
+/** `Release v0.4.0: dev → main` — the version `dev` carries is the one this merge tags. */
+export function releaseTitle(version: string): string {
+	return `Release v${version}: dev → main`;
+}
 
 export type MergedPr = { number: number; title: string; author: string };
 export type Issue = { number: number; title: string };
@@ -33,10 +38,16 @@ export function prNumbers(log: string): number[] {
 }
 
 export function releaseBody({
+	version,
+	lastRelease,
 	prs,
 	issues,
 	otherCommits
 }: {
+	/** package.json's on `dev`. */
+	version: string;
+	/** The newest `v*` tag's version, or null before the first release. */
+	lastRelease: string | null;
 	prs: MergedPr[];
 	issues: Issue[];
 	/** Commits on `dev`'s first-parent line that came in without a PR (an admin push). */
@@ -48,6 +59,12 @@ export function releaseBody({
 		'',
 		'Try it on the test environment, then merge — the household’s deploy follows `main`.',
 		'If it shows `BEHIND`, `gh pr update-branch <this PR>` (→ docs/TESTING.md "The flow").',
+		'',
+		version === lastRelease
+			? `**No new version:** \`dev\` is still at v${version}, so merging tags nothing. ` +
+				'Fine for docs and tooling; app code should have raised it (→ docs/TESTING.md "Versions").'
+			: `Merging tags **v${version}** and publishes its GitHub Release` +
+				(lastRelease ? ` (last release v${lastRelease}).` : ' — the first one.'),
 		'',
 		`## Pull requests (${prs.length})`,
 		'',
@@ -131,13 +148,24 @@ function main() {
 		'number,title'
 	]);
 
+	const version = JSON.parse(readFileSync('package.json', 'utf8')).version as string;
+	const release = latestRelease(run('git', ['tag', '--list', 'v*']));
+	const lastRelease = release ? formatVersion(release) : null;
+	const title = releaseTitle(version);
+
 	const file = 'release-pr-body.md';
 	writeFileSync(
 		file,
-		releaseBody({ prs, issues, otherCommits: firstParent - numbers.length - updates })
+		releaseBody({
+			version,
+			lastRelease,
+			prs,
+			issues,
+			otherCommits: firstParent - numbers.length - updates
+		})
 	);
 	if (open.length) {
-		run('gh', ['pr', 'edit', String(open[0].number), '--title', TITLE, '--body-file', file]);
+		run('gh', ['pr', 'edit', String(open[0].number), '--title', title, '--body-file', file]);
 		console.log(
 			`Updated release PR #${open[0].number}: ${prs.length} PRs, ${issues.length} issues.`
 		);
@@ -151,7 +179,7 @@ function main() {
 				'--head',
 				'dev',
 				'--title',
-				TITLE,
+				title,
 				'--body-file',
 				file
 			])

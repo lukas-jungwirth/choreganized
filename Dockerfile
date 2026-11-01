@@ -9,11 +9,10 @@
 FROM litestream/litestream:0.5.17@sha256:4b02b9859a6b6b4087d8b8944e15f7e984bd7957cba322bbeee38b0e27b9656a AS litestream
 
 FROM node:22-bookworm-slim AS build
-# Which build this is, for feedback reports (→ src/lib/server/version.ts,
-# DECISIONS #137). Coolify supplies SOURCE_COMMIT on a git deployment; APP_VERSION
-# comes from a Build Variable in its UI — a plain env var is runtime-only and never
-# reaches --build-arg. An ARG does not cross a FROM, so both stages declare them.
-ARG APP_VERSION
+# Which commit this is, for feedback reports (→ src/lib/server/version.ts,
+# DECISIONS #137, #209). Coolify supplies SOURCE_COMMIT on a git deployment. The
+# version itself is package.json's, bundled by the build. An ARG does not cross a
+# FROM, so both stages declare it.
 ARG SOURCE_COMMIT
 WORKDIR /app
 COPY package.json package-lock.json ./
@@ -22,7 +21,6 @@ COPY . .
 RUN npm run build && npm prune --omit=dev
 
 FROM node:22-bookworm-slim
-ARG APP_VERSION
 ARG SOURCE_COMMIT
 WORKDIR /app
 # BODY_SIZE_LIMIT: adapter-node rejects a request body over 512K by default, and
@@ -31,8 +29,8 @@ WORKDIR /app
 # it only breaks in production). Sits above the app's own 15 MB gate, so an
 # oversized photo still gets our sentence rather than an error page.
 #
-# APP_VERSION / APP_COMMIT: baked into the image because there is nothing else to
-# read them from — .dockerignore excludes .git, and the built server loads no .env.
+# APP_COMMIT: baked into the image because there is nothing else to read it from —
+# .dockerignore excludes .git, and the built server loads no .env.
 #
 # SHUTDOWN_TIMEOUT: on SIGTERM adapter-node waits this long for open connections, and the
 # live list's event stream never closes on its own. Its default of 30 s is more than
@@ -45,7 +43,6 @@ ENV NODE_ENV=production \
     UPLOADS_DIR=/data/uploads \
     BODY_SIZE_LIMIT=20M \
     SHUTDOWN_TIMEOUT=3 \
-    APP_VERSION=${APP_VERSION:-0.0.1} \
     APP_COMMIT=${SOURCE_COMMIT}
 
 COPY --from=build /app/build ./build

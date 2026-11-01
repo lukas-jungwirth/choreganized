@@ -3001,3 +3001,22 @@ units | null, name}`, written back as editor lines in the reader's unit spelling
      the area to the tab bar; the app shell becomes a flex column only on a page that asks
      (`:has([data-swipe-fill])`), so no other screen's flow changes. Cooking stays unfilled,
      its library below isn't about weeks.
+
+209. **Versions: SemVer in `package.json`, raised by each PR, tagged by the merge into `main`**
+     (→ `scripts/check-version.ts`, `.github/workflows/tag-release.yml`, TESTING.md "Versions").
+     The version used to be a Coolify build variable nobody set, so every deploy said the
+     Dockerfile's fallback `0.0.1`. Now `package.json` is the one source: the app bundles it
+     (`server/version.ts`; #137's commit half is unchanged, its `APP_VERSION` survives only as
+     the test suites' override so the Settings screenshot doesn't change with every release).
+     **`0.x` while in pre-production, `1.0.0` by hand when the MVP is done.** Considered and
+     not taken: _release-please_ and _semantic-release_ derive the bump from Conventional Commit
+     prefixes, which this repo doesn't write; _changesets_ and release-please both have a bot
+     open a "Version PR", and a PR opened with `GITHUB_TOKEN` starts no CI, which branch
+     protection then never lets merge — it would need a PAT or a GitHub App of our own. So the
+     agent that made the change, who knows whether it was a fix or a feature, writes the bump
+     into its own PR, measured against the last tag so concurrent PRs agree; CI holds the floor
+     (app code changed ⇒ exactly one step above the tag). The merge into `main` tags it and
+     publishes a GitHub Release with GitHub's generated PR list, a pre-release below 1.0; no
+     bot ever commits. The release PR's title names the version, so a wrong judgement shows
+     before it ships. The first release under this is `v0.1.0`; until a tag exists the check
+     only verifies the shape.

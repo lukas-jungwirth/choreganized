@@ -18,6 +18,9 @@ You are also in charge of the repository. A piece of work is not finished when t
    **a test that fails without the change**, in the layer [docs/TESTING.md](docs/TESTING.md)
    prescribes (unit beside the module · integration for a service · convention for a rule ·
    Playwright for a screen).
+   **Raise the version** if the app changed: a fix → next patch, a feature → next minor,
+   measured against the last `v*` tag, not `dev` (`npm version <x.y.z> --no-git-tag-version`;
+   already high enough → leave it). `1.0.0` is Lukas's call → TESTING.md "Versions".
 2. **Verify it**: `npm run verify` (lint, types, migration drift, every Vitest suite, the build,
    the Playwright journeys) and `npm run test:visual` when a screen changed — then walk the
    acceptance criteria in the running app (see "Definition of done"). If the environment truly
@@ -30,10 +33,10 @@ You are also in charge of the repository. A piece of work is not finished when t
    release PR.** Branch protection requires the three CI checks on both branches, so the PR is
    the only road; a direct push is refused.
    **No agent opens, edits or merges a PR against `main`** — not a session, not the build lane.
-   `.github/workflows/release.yml` keeps the one `Release: dev → main` PR open and its
+   `.github/workflows/release.yml` keeps the one `Release vX.Y.Z: dev → main` PR open and its
    description current on every push to `dev` (every PR since the last release, a `Closes #N`
    per `fixed-on-dev` issue). Lukas tries the test environment and merges it; the household's
-   deploy follows `main`. In the handoff, say "merged into `dev`, in the release PR".
+   deploy follows `main`, and `tag-release.yml` tags and publishes the version. In the handoff, say "merged into `dev`, in the release PR".
 5. **Leave the checkout clean**: GitHub deletes the merged branch, but nothing deletes your local
    copy. After the merge, `git switch dev && git pull`, delete the branch (`git branch -d`), and
    `git worktree remove` the worktree if you worked in one. Anything older:
@@ -69,7 +72,7 @@ migration generated. Read DATA-MODEL.md before touching it; schema changes requi
 
 ```bash
 npm run dev            # dev server (http://localhost:5173)
-npm run verify         # lint · check · check:migrations · test · build · test:e2e — the gate
+npm run verify         # lint · check · check:version · test (incl. migrations) · build · test:e2e — the gate
 npm test               # Vitest: unit · integration (in-memory SQLite) · conventions — seconds
 npm run test:e2e       # Playwright journeys against the production build (builds first;
                        #   once per machine: npx playwright install chromium)
@@ -77,6 +80,7 @@ npm run test:visual    # screenshots vs the Linux baselines, in Docker; -- --upd
 npm run check          # svelte-check — must be clean before finishing
 npm run build          # production build — must pass before finishing
 npm run check:migrations  # schema.ts edited without a migration? (also run by `npm test`)
+npm run check:version  # version raised since the last release tag? (in verify and CI)
 npm run db:generate    # new migration after editing schema.ts
 npm run db:seed -- you@example.com   # demo data for a signed-in user (idempotent)
 npm run db:seed -- you@example.com --full-house   # …plus stub members up to the max (5)
@@ -150,7 +154,7 @@ environment, say so explicitly in the handoff — never claim untested things wo
 
 `src/lib/server/` db + auth + services + push + cron · `src/lib/components/` ui / shell /
 feature · `src/routes/` see ARCHITECTURE.md routing map · `tests/` integration · conventions ·
-e2e · visual (+ `helpers/`) · `scripts/` seed, e2e server, visual runner, smoke, migration check, import probe, agent run summary, release PR, triage verdict/apply/issue probe, fixed-on-dev ·
-`.github/workflows/` ci · smoke · update-snapshots · triage · build · merged · release · `design/` mockups · `docs/` specs
+e2e · visual (+ `helpers/`) · `scripts/` seed, e2e server, visual runner, smoke, migration check, import probe, agent run summary, release PR, triage verdict/apply/issue probe, fixed-on-dev, version check ·
+`.github/workflows/` ci · smoke · update-snapshots · triage · build · merged · release · tag-release · `design/` mockups · `docs/` specs
 & plans · `static/` manifest + icons · `Dockerfile` single-container deploy (SQLite volume
 at `/data`, started by `scripts/docker-entrypoint.sh`, replicated by `litestream.yml`).
