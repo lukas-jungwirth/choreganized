@@ -4,11 +4,11 @@
 -->
 <script lang="ts">
 	import { enhance } from '$app/forms';
-	import logoMark from '$lib/assets/logo-mark.svg';
 	import CodeInput from '$lib/components/onboarding/CodeInput.svelte';
 	import InvitePreviewCard from '$lib/components/onboarding/InvitePreviewCard.svelte';
 	import StepHeader from '$lib/components/onboarding/StepHeader.svelte';
 	import Screen from '$lib/components/shell/Screen.svelte';
+	import Mascot from '$lib/components/ui/Mascot.svelte';
 	import Avatar from '$lib/components/ui/Avatar.svelte';
 	import Button from '$lib/components/ui/Button.svelte';
 	import ColorPicker from '$lib/components/ui/ColorPicker.svelte';
@@ -104,7 +104,7 @@
 		<StepHeader step={1} back="/onboarding" backLabel={m.onboarding.backToStart} />
 
 		<header class="centered">
-			<span class="mark"><img src={logoMark} alt="" width="34" height="34" /></span>
+			<Mascot name="head" height={70} class="mark" />
 			<h1>{m.onboarding.join.title}</h1>
 		</header>
 
@@ -132,19 +132,8 @@
 		margin: 14px 0 26px;
 	}
 
-	.mark {
-		display: grid;
-		place-items: center;
-		width: 56px;
-		height: 56px;
-		margin: 0 auto 14px;
-		border-radius: var(--r-input);
-		background: var(--sage);
-		box-shadow: var(--shadow-button);
-	}
-
-	.mark img {
-		display: block;
+	header :global(.mark) {
+		margin: 0 auto 12px;
 	}
 
 	h1 {

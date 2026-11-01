@@ -58,8 +58,6 @@ export type WeekOffset = 0 | 1;
 export type MealWeek = {
 	/** Monday → Sunday (→ SPEC §8). */
 	days: WeekDay[];
-	/** "July", or "Jun – Jul" when the week straddles the turn of the month. */
-	monthLabel: string;
 	/** The Monday it starts on — the date `?week=` carries. */
 	start: CalendarDate;
 	offset: WeekOffset;
@@ -134,7 +132,6 @@ export function getPlan(
 
 		return {
 			days,
-			monthLabel: m.date.monthRange(start, addDays(start, 6)),
 			start,
 			offset: index as WeekOffset,
 			plannedCount: days.filter((day) => day.meals.length > 0).length

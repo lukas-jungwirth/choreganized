@@ -9,9 +9,9 @@
 <script lang="ts">
 	import { goto } from '$app/navigation';
 	import googleG from '$lib/assets/google-g.svg';
-	import logoMark from '$lib/assets/logo-mark.svg';
 	import { emailOtp, signIn } from '$lib/auth-client';
 	import Screen from '$lib/components/shell/Screen.svelte';
+	import Mascot from '$lib/components/ui/Mascot.svelte';
 	import Button from '$lib/components/ui/Button.svelte';
 	import CodeInput from '$lib/components/ui/CodeInput.svelte';
 	import TextField from '$lib/components/ui/TextField.svelte';
@@ -155,7 +155,7 @@
 
 <Screen>
 	<div class="brand">
-		<span class="tile"><img src={logoMark} alt="" width="40" height="40" /></span>
+		<Mascot name="head" height={90} class="art" />
 		<h1 class="wordmark">
 			{m.auth.wordmarkLead}<span class="accent">{m.auth.wordmarkAccent}</span><span class="dot"
 				>.</span
@@ -267,19 +267,8 @@
 		margin: 26px 0 30px;
 	}
 
-	.tile {
-		display: grid;
-		place-items: center;
-		width: 64px;
-		height: 64px;
-		margin-bottom: 16px;
-		border-radius: var(--r-card);
-		background: var(--sage);
-		box-shadow: var(--shadow-button);
-	}
-
-	.tile img {
-		display: block;
+	.brand :global(.art) {
+		margin-bottom: 12px;
 	}
 
 	.wordmark {

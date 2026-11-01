@@ -271,8 +271,9 @@
 </svelte:head>
 
 <PageHeader
+	mascot="shopping"
 	title={m.shopping.title}
-	meta={items.length > 0 ? m.shopping.progress(doneCount, items.length) : undefined}
+	meta={items.length > 0 ? m.shopping.progress(doneCount, items.length) : m.shopping.nothingListed}
 >
 	{#snippet actions()}
 		<a class="stores" href="/shopping/stores" aria-label={m.shopping.manageStores}>

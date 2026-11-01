@@ -168,7 +168,7 @@ async function call(path: string, init: RequestInit): Promise<Response> {
 				accept: 'application/vnd.github+json',
 				'x-github-api-version': '2022-11-28',
 				'content-type': 'application/json',
-				'user-agent': `choreganized/${appVersion().label}`
+				'user-agent': `haushaltsheld/${appVersion().label}`
 			},
 			signal: AbortSignal.timeout(REQUEST_TIMEOUT_MS)
 		});

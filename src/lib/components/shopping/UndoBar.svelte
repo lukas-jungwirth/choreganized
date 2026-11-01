@@ -16,7 +16,7 @@
 	the sheets. Inverted `--ink` (warmed to `--toast`, so it doesn't go cold next
 	to the paper) is the only surface on the palette that says "message, not list"
 	at a glance (→ DECISIONS #107). The sage dot and the sage "Undo" keep it
-	Choreganized's rather than a system snackbar's.
+	Haushaltsheld's rather than a system snackbar's.
 
 	Furniture-wise it borrows the timer dock's framing — the 480px column, the
 	`rise` — and sits *above* the dock when one is up, the way the FAB does

@@ -77,9 +77,12 @@ test('the Tasks swipe reaches below a short page, down to the tab bar (#87)', as
 	// History is two cards; on a phone the screen goes on below them, and a
 	// thumb lands there as often as on a card.
 	await page.goto('/tasks/history');
-	const below = (await page.locator('.cards').boundingBox())!;
+	// Halfway between the last thing on the page and the tab bar, so the
+	// header's height (the mascot, DECISIONS #211) can't move it onto a link.
+	const last = (await page.getByRole('link', { name: 'All completed chores' }).boundingBox())!;
 	const tabBar = (await page.getByRole('navigation', { name: 'Sections' }).boundingBox())!;
-	const y = below.y + below.height + 40;
+	const y = (last.y + last.height + tabBar.y) / 2;
+	expect(y).toBeGreaterThan(last.y + last.height + 10);
 	expect(y).toBeLessThan(tabBar.y - 10);
 
 	await finger(page)({ x: 195, y }, 150);

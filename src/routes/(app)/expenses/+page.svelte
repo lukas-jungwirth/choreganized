@@ -86,7 +86,11 @@
 
 <svelte:window onclick={menuOpen ? closeMenu : undefined} />
 
-<PageHeader title={m.expenses.title}>
+<PageHeader
+	mascot="expenses"
+	title={m.expenses.title}
+	meta={m.expenses.thisMonth(data.spentThisMonth, data.currency)}
+>
 	{#snippet actions()}
 		<div class="menu-wrap">
 			<button

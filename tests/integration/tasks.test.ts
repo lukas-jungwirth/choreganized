@@ -11,6 +11,7 @@ import assert from 'node:assert/strict';
 import { describe, it } from 'vitest';
 import {
 	completeTask,
+	countDue,
 	createTask,
 	deleteTask,
 	getTaskList,
@@ -83,6 +84,26 @@ describe('getTaskList', () => {
 
 		assert.equal(getTaskList(b.householdId, context(b)).total, 0);
 		assert.equal(getTaskList(a.householdId, context(a)).total, 1);
+	});
+});
+
+describe('countDue', () => {
+	it('counts what is overdue and due today — the line under the Tasks title', () => {
+		const fixture = makeHousehold();
+		const { householdId, owner } = fixture;
+		assert.deepEqual(countDue(householdId, context(fixture)), { overdue: 0, today: 0 });
+
+		createTask(householdId, owner.id, weekly({ name: 'Late', dueDate: addDays(TODAY, -2) }), TODAY);
+		createTask(
+			householdId,
+			owner.id,
+			weekly({ name: 'Later', dueDate: addDays(TODAY, -1) }),
+			TODAY
+		);
+		createTask(householdId, owner.id, weekly({ name: 'Due' }), TODAY);
+		createTask(householdId, owner.id, weekly({ name: 'Soon', dueDate: addDays(TODAY, 3) }), TODAY);
+
+		assert.deepEqual(countDue(householdId, context(fixture)), { overdue: 2, today: 1 });
 	});
 });
 

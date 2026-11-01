@@ -28,7 +28,11 @@
 	<title>{m.common.pageTitle(m.tasks.view.history)}</title>
 </svelte:head>
 
-<PageHeader title={m.tasks.title} />
+<PageHeader
+	mascot="tasks"
+	title={m.tasks.title}
+	meta={m.tasks.due(data.due.overdue, data.due.today)}
+/>
 
 <!-- The switch, both cards and the space below them, down to the tab bar, page
 	 under a sideways swipe (→ SPEC §5.8, DECISIONS #207, #208). -->

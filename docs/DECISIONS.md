@@ -3029,3 +3029,74 @@ units | null, name}`, written back as editor lines in the reader's unit spelling
      and small ones arrive as proposal PRs. An idea that has to be tried rather than read goes
      through `dev` and the test environment like any other change and is reverted if rejected.
      `E2E_MODE` stays off every deployed instance.
+
+211. **Rebrand to Haushaltsheld, with a raccoon mascot** (Lukas's call 2026-11-01). Every
+     user-facing "Choreganized" — copy in both catalogs, the manifest, `app.html`, the service
+     worker's notifications and offline page, mail, issue templates, docs — now says
+     Haushaltsheld; the login wordmark splits "Haushalts" + accent "held". Kept on purpose,
+     because changing them breaks something that exists: the database file `choreganized.db`
+     (the Docker volume, Litestream's replica path `choreganized/…` and every restore runbook
+     point at it), the `<!-- choreganized:{id} -->` feedback marker (retries search existing
+     issues for it), the `choreganized.*` localStorage keys (renaming re-shows dismissed
+     prompts), the seed's `seed.choreganized.local` emails (re-seeding an existing DB would
+     duplicate members) and the GitHub repo slug, until the repo itself is renamed. The house
+     logo mark is gone: `scripts/icons.ts` now builds every icon from the raccoon pack in
+     `design/Haushaltsheld_Mascot_Assets/` (maskable icon = the transparent head at 80% so its
+     ears clear the safe circle; badge = the head's silhouette; PNG favicons instead of an SVG
+     one, since the art is raster) and writes the screen mascots as trimmed WebP (~25 KB each,
+     3× their 88px display height) to `src/lib/assets/mascot/`. Each tab's `PageHeader` shows
+     its raccoon left of the title — 88px, big enough to read at arm's length — and moves the
+     caption under the title so the line still fits at 390px and at 200% text. Home gets its
+     own mascot treatment separately. The tagline "Every chore, organized" stays for now.
+
+212. **A live line under every mascot header, bottom-aligned** (Lukas's call 2026-11-01). Bottom
+     alignment only looked right with a caption, and only Shopping and Cooking had one, so every
+     tab now gets one short status line — data when there is some, a plain sentence when there
+     isn't, no emoji: Shopping keeps "{x} of {y} done" ("Nothing on the list" when empty);
+     Cooking shows today's meals ("Today: Lasagne" · "2 meals today" · "Nothing planned today"),
+     replacing the month label the date strip already made redundant (`MealWeek.monthLabel` is
+     gone); Tasks shows what's due ("3 overdue · 2 today"), counted from `getTaskList`'s own
+     sections via `countDue`, read once in `tasks/+layout.server.ts` so History's header says the
+     same; Expenses shows this month's spending (`spentThisMonth`, settle-ups excluded) rather
+     than the balance, which the card right below already shows. Fixed taglines were rejected
+     (read once, then noise, and Shopping would lose its count), and so were rotating or
+     time-of-day lines (only Cooking has a natural time hook, and both languages would need a
+     pool of quips). The mascot's warmth lives in the empty-state sentences instead.
+
+213. **Home's raccoon sits on the first card, and follows the next chore** (Lukas's call
+     2026-11-01). One raccoon, always in the same place: its upper body right of the greeting, the
+     flat-cut waist tucked 2px behind the first card so it reads as sitting on it; the header
+     grows to 180px for it and the greeting stands on the same line. With a next-chore card
+     (always the first card when there is one) it is the reminder pose made for that edge
+     (`design/Haushaltsheld_2_TopCard_Reminder_Raccoons/`): a bell while the chore is coming up
+     or due today, an alarm clock once it's overdue. Without one it is greeting pose A or B,
+     chosen by the household's date (A on even days), not at random: the same all day, no
+     hydration mismatch, and deterministic screenshots. The next-chore card itself is
+     unchanged. Tried and dropped on the way: a standing raccoon floated inside the card, then
+     standing beside a narrowed card (which needed a rearranged card and had to hide at 125%
+     text); the full-height reminder poses in `design/Haushaltsheld_4_Reminder_Raccoons/` stay
+     there unused.
+
+214. **Home's avatars move under the greeting, in a pill** (Lukas's mock 2026-11-01). The
+     top-right corner held the avatar stack and left the raccoon squeezed beneath it; now the
+     greeting, then the household's faces (28px, rings cut from `--card`) in a card-surface
+     pill with a chevron, all on the left, and the raccoon (136px) has the whole right side
+     down to the first card. The pill reads as the button it always was (→ #57: the faces are
+     the door to Settings); its accessible name is unchanged.
+
+215. **Raccoon masters live in `artwork/raccoon/`, only the ones used, and ship as AVIF**
+     (Lukas's call 2026-11-01). `design/` is mockups; the asset packs that were dropped there
+     (three folders, ~21 MB, most of it poses and references the app doesn't show) moved out of
+     the repo, and the eleven masters the app does use went to `artwork/raccoon/`, renamed after
+     what they are, trimmed and losslessly recompressed (8.7 → 3.4 MB of git history). Never
+     shipped: `.dockerignore` keeps them out of the image, and `npm run icons` is the only thing
+     that reads them. Outputs: the mascots as AVIF at quality 60 (10–25 KB each, half of WebP,
+     no visible difference at 3× display size) — one format rather than a `<picture>` with a
+     WebP fallback, since the service worker precaches every built asset and would download
+     both; AVIF needs Safari 16+, and the art is decorative, so an older browser loses nothing
+     it needs. The icons became 256-colour palette PNGs (the 512px pair from 324 KB to ~100
+     KB), again because the service worker precaches them. The script writes
+     `src/lib/assets/mascot/index.ts` with every file's pixel size, and `ui/Mascot` renders
+     from it with both `width` and `height` set, so a title beside a raccoon no longer jumps
+     sideways when the image arrives; it also clears files that left the list, so a stray
+     never ships.

@@ -174,7 +174,7 @@
 </script>
 
 <svelte:head>
-	<title>{recipe.name} · Choreganized</title>
+	<title>{recipe.name} · Haushaltsheld</title>
 </svelte:head>
 
 <div class="hero">

@@ -6,7 +6,7 @@ import assert from 'node:assert/strict';
 import { describe, it } from 'vitest';
 import { mailRoute, signInCodeMail } from './mail';
 
-const SMTP = { SMTP_HOST: 'smtp.example.test', MAIL_FROM: 'Choreganized <a@example.test>' };
+const SMTP = { SMTP_HOST: 'smtp.example.test', MAIL_FROM: 'Haushaltsheld <a@example.test>' };
 const DEPLOY = { dev: false, e2e: false };
 
 describe('mailRoute', () => {
@@ -23,7 +23,7 @@ describe('mailRoute', () => {
 			port: 587,
 			user: 'u',
 			pass: 'p',
-			from: 'Choreganized <a@example.test>'
+			from: 'Haushaltsheld <a@example.test>'
 		});
 		assert.equal(mailRoute({ ...SMTP, SMTP_PORT: '465' }, DEPLOY).kind, 'smtp');
 	});

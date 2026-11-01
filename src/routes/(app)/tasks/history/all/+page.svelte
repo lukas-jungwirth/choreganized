@@ -27,7 +27,11 @@
 	<title>{m.common.pageTitle(m.tasks.allCompleted)}</title>
 </svelte:head>
 
-<PageHeader title={m.tasks.title} />
+<PageHeader
+	mascot="tasks"
+	title={m.tasks.title}
+	meta={m.tasks.due(data.due.overdue, data.due.today)}
+/>
 
 <a class="back" href="/tasks/history">
 	<ChevronLeft size={16} strokeWidth={2.2} aria-hidden="true" />

@@ -123,8 +123,8 @@ export const de: Messages = {
 		backToHome: 'Zurück zur Startseite',
 		anyone: 'Alle',
 		name: 'Name',
-		appName: 'Choreganized',
-		pageTitle: (screen: string) => `${screen} · Choreganized`
+		appName: 'Haushaltsheld',
+		pageTitle: (screen: string) => `${screen} · Haushaltsheld`
 	},
 
 	/* ── The kit's own words ───────────────────────────────────────────────── */
@@ -308,6 +308,7 @@ export const de: Messages = {
 	shopping: {
 		title: 'Einkauf',
 		progress: (checked: number, total: number) => `${checked} von ${total} erledigt`,
+		nothingListed: 'Nichts auf der Liste',
 		manageStores: 'Geschäfte verwalten',
 		other: 'Sonstiges',
 
@@ -472,6 +473,14 @@ export const de: Messages = {
 	/* ── Tasks [4a] [4b] [4c] [4d] ─────────────────────────────────────────── */
 	tasks: {
 		title: 'Aufgaben',
+		due: (overdue: number, today: number) =>
+			overdue > 0 && today > 0
+				? `${overdue} überfällig · ${today} heute`
+				: overdue > 0
+					? `${overdue} überfällig`
+					: today > 0
+						? `${today} heute fällig`
+						: 'Heute nichts fällig',
 		newTask: 'Neue Aufgabe',
 
 		sections: {
@@ -632,6 +641,12 @@ export const de: Messages = {
 	/* ── Cooking [04] [3d] [7a] ────────────────────────────────────────────── */
 	cooking: {
 		title: 'Kochen',
+		today: (meals: string[]) =>
+			meals.length === 0
+				? 'Heute nichts geplant'
+				: meals.length === 1
+					? `Heute: ${meals[0]}`
+					: `Heute ${meals.length} Mahlzeiten`,
 		cookTime: (minutes: number) => `${minutes} Min.`,
 		serves: (servings: number) => `Für ${servings}`,
 
@@ -993,6 +1008,10 @@ export const de: Messages = {
 	/* ── Expenses [9a]–[9g] (→ SPEC §11) ───────────────────────────────────── */
 	expenses: {
 		title: 'Ausgaben',
+		thisMonth: (minor: number, currency: string) =>
+			minor > 0
+				? `${formatMoney(minor, currency, INTL_LOCALE[L])} diesen Monat`
+				: 'Diesen Monat noch nichts',
 		menu: {
 			label: 'Mehr',
 			allActivity: 'Alle Einträge',
@@ -1070,7 +1089,7 @@ export const de: Messages = {
 
 		empty: {
 			title: 'Noch nichts zu teilen',
-			copy: 'Trag den Wocheneinkauf ein, die Miete, die Pizza. Choreganized rechnet mit.',
+			copy: 'Trag den Wocheneinkauf ein, die Miete, die Pizza. Haushaltsheld rechnet mit.',
 			add: 'Ausgabe eintragen'
 		},
 
@@ -1518,7 +1537,7 @@ export const de: Messages = {
 		feedback: {
 			row: 'Feedback senden',
 			title: 'Feedback senden',
-			eyebrow: 'Choreganized',
+			eyebrow: 'Haushaltsheld',
 			kindLabel: 'Art des Feedbacks',
 			bug: 'Etwas ist kaputt',
 			idea: 'Eine Idee',
@@ -1591,15 +1610,15 @@ export const de: Messages = {
 	auth: {
 		signIn: 'Anmelden',
 		/** Der Wortmarke bleibt englisch — sie ist der Produktname. */
-		wordmarkLead: 'Chore',
-		wordmarkAccent: 'ganized',
+		wordmarkLead: 'Haushalts',
+		wordmarkAccent: 'held',
 		tagline: 'Every chore, organized',
 		continueWithGoogle: 'Weiter mit Google',
 		openingGoogle: 'Google wird geöffnet…',
 		failed: 'Die Anmeldung ist nicht durchgegangen. Versuch es nochmal.',
 		footnote: 'Neu hier? Mit der Google-Anmeldung wird dein Konto angelegt.',
 		footnoteEmail: 'Neu hier? Mit der Anmeldung wird dein Konto angelegt.',
-		redirecting: 'Weiter zu Choreganized…',
+		redirecting: 'Weiter zu Haushaltsheld…',
 
 		email: 'E-Mail',
 		emailPlaceholder: 'du@beispiel.at',
@@ -1631,9 +1650,9 @@ export const de: Messages = {
 			'Die E-Mail konnte nicht gesendet werden, es ist also kein Code unterwegs. Versuch es gleich nochmal oder melde dich mit Google an.',
 
 		mail: {
-			subject: (code: string) => `${code} ist dein Choreganized-Code`,
+			subject: (code: string) => `${code} ist dein Haushaltsheld-Code`,
 			body: (code: string, minutes: number) =>
-				`Dein Anmeldecode für Choreganized:\n\n${code}\n\nEr gilt ${minutes} Minuten. Wenn du ihn nicht angefordert hast, kannst du diese E-Mail ignorieren. Ohne den Code kann sich niemand anmelden.`
+				`Dein Anmeldecode für Haushaltsheld:\n\n${code}\n\nEr gilt ${minutes} Minuten. Wenn du ihn nicht angefordert hast, kannst du diese E-Mail ignorieren. Ohne den Code kann sich niemand anmelden.`
 		}
 	},
 
@@ -1673,7 +1692,7 @@ export const de: Messages = {
 			copy: 'Kopieren',
 			copied: 'Kopiert',
 			share: 'Einladung teilen',
-			shareText: (household: string) => `Komm zu ${household} auf Choreganized`,
+			shareText: (household: string) => `Komm zu ${household} auf Haushaltsheld`,
 			revoked:
 				'Dieser Haushalt hat gerade keinen aktiven Einladungscode. Die Besitzer:in kann unter Einstellungen → Mitglieder einen neuen anlegen.',
 			members: 'Mitglieder',
@@ -1715,10 +1734,10 @@ export const de: Messages = {
 		enabling: 'Wird eingeschaltet…',
 		notNow: 'Jetzt nicht',
 		unsupported:
-			'Dieser Browser kann keine Benachrichtigungen zeigen. Auf dem iPhone: leg Choreganized zuerst auf den Home-Bildschirm.',
+			'Dieser Browser kann keine Benachrichtigungen zeigen. Auf dem iPhone: leg Haushaltsheld zuerst auf den Home-Bildschirm.',
 		unconfigured: 'Push ist auf dem Server noch nicht eingerichtet.',
 		denied:
-			'Benachrichtigungen sind für Choreganized blockiert. Schalte sie in den Website-Einstellungen des Browsers wieder ein.',
+			'Benachrichtigungen sind für Haushaltsheld blockiert. Schalte sie in den Website-Einstellungen des Browsers wieder ein.',
 		perDevice: 'Jedes Handy und jeder Laptop muss einzeln eingeschaltet werden.',
 		subscribed:
 			'Aufgaben-Erinnerungen und Einkaufs-Updates kommen hier an, auch wenn die App zu ist.',
@@ -1727,7 +1746,7 @@ export const de: Messages = {
 
 	install: {
 		title: 'Zum Home-Bildschirm hinzufügen',
-		detail: 'Installiere Choreganized für Vollbild mit einem Tipp.',
+		detail: 'Installiere Haushaltsheld für Vollbild mit einem Tipp.',
 		add: 'Hinzufügen',
 		opening: 'Wird geöffnet…',
 		notNow: 'Jetzt nicht'
@@ -1780,7 +1799,7 @@ export const de: Messages = {
 			`Letzter Einkaufstag ist ${shoppingDay(lastOpenDay, today)}.`,
 
 		testTitle: '🔔 Benachrichtigungen sind an',
-		testBody: 'So sieht ein Hinweis von Choreganized aus.',
+		testBody: 'So sieht ein Hinweis von Haushaltsheld aus.',
 
 		timerDone: (label: string) => `⏲️ ${label} ist fertig`,
 

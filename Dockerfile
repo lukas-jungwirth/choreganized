@@ -1,4 +1,4 @@
-# Choreganized — single-container deploy (Coolify).
+# Haushaltsheld — single-container deploy (Coolify).
 # SQLite is embedded; no separate DB image. Persist /data as a volume.
 
 # Litestream copies the database to S3-compatible storage while the app runs and restores

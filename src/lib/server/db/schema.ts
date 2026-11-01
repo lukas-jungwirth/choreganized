@@ -1,5 +1,5 @@
 /**
- * Choreganized — full database schema (SQLite via Drizzle).
+ * Haushaltsheld — full database schema (SQLite via Drizzle).
  *
  * Conventions:
  * - Text UUID primary keys (crypto.randomUUID).

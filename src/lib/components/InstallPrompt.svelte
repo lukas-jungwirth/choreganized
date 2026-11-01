@@ -1,5 +1,5 @@
 <!--
-	"Add Choreganized to your home screen" — the one-time install nudge on Home
+	"Add Haushaltsheld to your home screen" — the one-time install nudge on Home
 	(→ plan 11). Modelled on EnablePush's prompt: it renders *nothing* until the
 	browser says the app is actually installable, and it can be waved away for
 	good.

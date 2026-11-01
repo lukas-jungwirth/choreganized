@@ -28,6 +28,7 @@ import {
 	restoreExpense,
 	setCurrency,
 	setSplitDefault,
+	spentThisMonth,
 	updateExpense,
 	type ExpenseInput,
 	type HistoryFilters
@@ -345,6 +346,33 @@ describe('settling up', () => {
 			byPerson: { [a]: 0, [b]: 0, [c]: 0 },
 			payments: []
 		});
+	});
+});
+
+describe('spent this month', () => {
+	it('counts this month’s expenses, not last month’s and not settle-ups', () => {
+		const { householdId, owner, members, ids } = household();
+		createExpense(householdId, owner.id, groceries(ids[0], ids, 4900), TODAY);
+		createExpense(
+			householdId,
+			owner.id,
+			{ ...groceries(ids[1], ids, 1250), date: '2026-11-01' },
+			TODAY
+		);
+		createExpense(
+			householdId,
+			owner.id,
+			{ ...groceries(ids[0], ids, 9999), date: '2026-10-31' },
+			TODAY
+		);
+		createPayment(
+			householdId,
+			members[1].id,
+			{ fromId: ids[1], toId: ids[0], amountMinor: 1000, date: TODAY },
+			TODAY
+		);
+
+		assert.equal(spentThisMonth(listLedger(householdId), TODAY), 6150);
 	});
 });
 
