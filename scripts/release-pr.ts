@@ -15,7 +15,7 @@
  */
 import { execFileSync } from 'node:child_process';
 import { readFileSync, writeFileSync } from 'node:fs';
-import { formatVersion, latestRelease } from './check-version';
+import { formatVersion, latestRelease } from './check-version.ts';
 
 /** `Release v0.4.0: dev → main` — the version `dev` carries is the one this merge tags. */
 export function releaseTitle(version: string): string {
