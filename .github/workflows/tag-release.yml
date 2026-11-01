@@ -1,0 +1,46 @@
+# Tag the release and publish it, when the release PR merges into `main`
+# (→ docs/TESTING.md "Versions", DECISIONS #209).
+#
+# `dev` carries the version of the next release in package.json (every PR raises it;
+# scripts/check-version.ts holds the floor), so `main` after a merge *is* that release.
+# This tags it `v<version>` and opens its GitHub Release — the page that says what
+# shipped, with GitHub's generated list of every PR since the previous tag. Below 1.0
+# it is marked a pre-release. A push that brings no new version (docs only) tags nothing.
+#
+# The tag is made by the release itself (`gh release create --target`), with this
+# run's GITHUB_TOKEN: branch protection guards branches, not tags, and nothing needs
+# to start from the tag.
+name: Tag release
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+concurrency:
+  group: tag-release
+
+permissions:
+  contents: write
+
+jobs:
+  tag:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          fetch-depth: 0
+      - name: Tag and publish v<package.json version>
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          version=$(node -p "require('./package.json').version")
+          if git rev-parse --verify --quiet "refs/tags/v$version" >/dev/null; then
+            echo "v$version is already released — nothing to tag."
+            exit 0
+          fi
+          prerelease=()
+          [[ "$version" == 0.* ]] && prerelease=(--prerelease)
+          gh release create "v$version" --target "$GITHUB_SHA" --title "v$version" \
+            --generate-notes "${prerelease[@]}"

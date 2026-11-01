@@ -9,6 +9,7 @@
 	import ChoreSplit from '$lib/components/tasks/ChoreSplit.svelte';
 	import PointsBoard from '$lib/components/tasks/PointsBoard.svelte';
 	import SegmentedControl from '$lib/components/ui/SegmentedControl.svelte';
+	import SwipeViews from '$lib/components/ui/SwipeViews.svelte';
 	import { messages } from '$lib/i18n';
 	import ChevronRight from '@lucide/svelte/icons/chevron-right';
 	import type { PageProps } from './$types';
@@ -29,25 +30,29 @@
 
 <PageHeader title={m.tasks.title} />
 
-<div class="view">
-	<SegmentedControl label={m.tasks.view.label} value="history" options={view} />
-</div>
+<!-- The switch, both cards and the space below them, down to the tab bar, page
+	 under a sideways swipe (→ SPEC §5.8, DECISIONS #207, #208). -->
+<SwipeViews options={view} value="history" fill>
+	<div class="view">
+		<SegmentedControl label={m.tasks.view.label} value="history" options={view} />
+	</div>
 
-<div class="cards">
-	<ChoreSplit shares={data.split} />
+	<div class="cards">
+		<ChoreSplit shares={data.split} />
 
-	<PointsBoard
-		members={data.members}
-		points={data.points}
-		currentMemberId={data.currentMember.id}
-		range={data.range}
-	/>
+		<PointsBoard
+			members={data.members}
+			points={data.points}
+			currentMemberId={data.currentMember.id}
+			range={data.range}
+		/>
 
-	<a class="all" href="/tasks/history/all">
-		<span>{m.tasks.allCompleted}</span>
-		<ChevronRight size={16} strokeWidth={2} aria-hidden="true" />
-	</a>
-</div>
+		<a class="all" href="/tasks/history/all">
+			<span>{m.tasks.allCompleted}</span>
+			<ChevronRight size={16} strokeWidth={2} aria-hidden="true" />
+		</a>
+	</div>
+</SwipeViews>
 
 <style>
 	.view {

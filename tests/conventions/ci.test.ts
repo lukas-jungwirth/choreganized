@@ -91,7 +91,13 @@ describe('the CI workflows', () => {
 
 	it('the gate runs every layer', () => {
 		const ci = workflow('ci.yml');
-		for (const step of ['npm run lint', 'npm run check', 'npm test', 'npx playwright test']) {
+		for (const step of [
+			'npm run lint',
+			'npm run check',
+			'npm run check:version',
+			'npm test',
+			'npx playwright test'
+		]) {
 			assert.ok(ci.includes(step), `ci.yml runs \`${step}\``);
 		}
 	});

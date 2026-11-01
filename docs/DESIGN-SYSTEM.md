@@ -151,6 +151,12 @@ money line up. Plan 30 added `RepeatRow` (the Repeats row, a native select over 
 [9h-stop], `series.ts` (how a series' rule is said) and `icons/RepeatIcon`, the two-arrow mark on
 a repeating row, in the detail's pill and in the ••• menu.
 
+**`ui/SwipeViews`** (DECISIONS #208) is the one way a screen pages under a sideways swipe: wrap
+the area under a navigating `SegmentedControl`, hand it the switch's own `options` and `value`,
+and it follows the neighbouring option's link (`lib/swipe.ts` holds the gesture and `neighbour`).
+`fill` stretches it down to the tab bar for a page shorter than the screen (Tasks' two views);
+Cooking leaves it off because its library below doesn't page. It draws nothing.
+
 Shopping later gained three more feature components in `components/shopping/`, again no `ui/`
 primitives. **`UndoBar`** — "**Tomatoes** checked off · Undo" for five seconds after a tick
 (→ [DECISIONS #107](DECISIONS.md)): `TimerDock`'s framing (the 480px column, the `rise` keyframe),

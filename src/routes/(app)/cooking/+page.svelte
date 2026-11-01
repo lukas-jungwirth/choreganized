@@ -24,6 +24,7 @@
 	import PageHeader from '$lib/components/shell/PageHeader.svelte';
 	import Card from '$lib/components/ui/Card.svelte';
 	import SegmentedControl from '$lib/components/ui/SegmentedControl.svelte';
+	import SwipeViews from '$lib/components/ui/SwipeViews.svelte';
 	import { messages } from '$lib/i18n';
 	import type { PlannedMeal, WeekDay } from '$lib/server/services/meals';
 	import type { IngredientPick } from '$lib/server/services/recipe-shopping';
@@ -118,32 +119,37 @@
 
 <PageHeader title={m.cooking.title} meta={week.monthLabel} />
 
-<!-- `noscroll` keeps the switch under your thumb, the way /tasks/history's
+<!-- The whole week pages under a sideways swipe (→ SPEC §4.1, DECISIONS #206) —
+	 the switch, the strip and the meals — but not the library below it, which is
+	 about recipes, not weeks; so no `fill`. -->
+<SwipeViews options={weeks} value={String(week.offset)} noScroll>
+	<!-- `noscroll` keeps the switch under your thumb, the way /tasks/history's
 	 "Show June" does. SegmentedControl has no attribute passthrough, but
 	 `data-sveltekit-*` is inherited from any ancestor. -->
-<div class="weeks" data-sveltekit-noscroll>
-	<SegmentedControl
-		label={m.cooking.weekSwitch.label}
-		value={String(week.offset)}
-		options={weeks}
-	/>
-</div>
+	<div class="weeks" data-sveltekit-noscroll>
+		<SegmentedControl
+			label={m.cooking.weekSwitch.label}
+			value={String(week.offset)}
+			options={weeks}
+		/>
+	</div>
 
-<WeekStrip days={week.days} />
+	<WeekStrip days={week.days} />
 
-<ShoppingResultBanner result={shopping} />
+	<ShoppingResultBanner result={shopping} />
 
-<Card>
-	<ul class="days">
-		{#each week.days as entry (entry.date)}
-			<MealRow
-				day={entry}
-				onmeal={(meal) => (acting = { date: entry.date, mealId: meal.id })}
-				onadd={() => plan(entry, null)}
-			/>
-		{/each}
-	</ul>
-</Card>
+	<Card>
+		<ul class="days">
+			{#each week.days as entry (entry.date)}
+				<MealRow
+					day={entry}
+					onmeal={(meal) => (acting = { date: entry.date, mealId: meal.id })}
+					onadd={() => plan(entry, null)}
+				/>
+			{/each}
+		</ul>
+	</Card>
+</SwipeViews>
 
 <section class="library">
 	<div class="head">

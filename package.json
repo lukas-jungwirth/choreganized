@@ -1,7 +1,7 @@
 {
 	"name": "choreganized",
 	"private": true,
-	"version": "0.0.1",
+	"version": "0.1.0",
 	"type": "module",
 	"scripts": {
 		"dev": "vite dev",
@@ -14,7 +14,8 @@
 		"test:e2e": "npm run build && playwright test --project=e2e",
 		"test:visual": "node scripts/visual.ts",
 		"check:migrations": "node scripts/check-migrations.ts",
-		"verify": "npm run lint && npm run check && npm run test && npm run test:e2e",
+		"check:version": "node scripts/check-version.ts",
+		"verify": "npm run lint && npm run check && npm run check:version && npm run test && npm run test:e2e",
 		"smoke": "node scripts/smoke.ts",
 		"import:probe": "node scripts/import-probe.ts",
 		"check:watch": "svelte-kit sync && svelte-check --tsconfig ./tsconfig.json --watch",

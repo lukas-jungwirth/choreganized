@@ -67,4 +67,11 @@
 		padding: calc(8px + env(safe-area-inset-top)) var(--page-pad)
 			calc(var(--tabbar-h) + var(--timer-dock-h) + 24px + env(safe-area-inset-bottom));
 	}
+
+	/* A page whose swipe area should reach the tab bar (`SwipeViews fill`) gets a
+	   column to grow in; every other page keeps plain block flow. */
+	.app-shell:has(> :global([data-swipe-fill])) {
+		display: flex;
+		flex-direction: column;
+	}
 </style>

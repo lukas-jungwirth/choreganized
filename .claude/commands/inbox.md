@@ -15,7 +15,7 @@ Since plan 18 the build agent works the inbox too, so show what it is doing as w
 4. Anything labelled `fixed-on-dev` — built and merged into `dev` (`merged.yml` adds the label
    when the PR merges), waiting on the promotion.
    `Closes #N` only acts on the default branch, so these stay open until the release PR
-   (`Release: dev → main`, whose body `release.yml` keeps listing them) merges.
+   (`Release vX.Y.Z: dev → main`, whose body `release.yml` keeps listing them) merges.
 5. **The agent's pull requests** —
    `gh pr list --state open --json number,title,isDraft,headRefName,mergeStateStatus,autoMergeRequest`,
    the ones whose `headRefName` starts with `agent/`, in three groups:

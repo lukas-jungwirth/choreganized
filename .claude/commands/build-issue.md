@@ -96,6 +96,12 @@ with evidence, and a reviewer who never saw your reasoning reads the diff.
    PR title then says "migration". Run the reproduction test again and keep the green output.
    An idea gets **a test that fails without the change**, in the same layers.
 
+   **Raise the version** (→ `docs/TESTING.md` "Versions"): `git fetch --tags`, then compare
+   `package.json` with the newest tag (`git tag --list 'v*' --sort=-v:refname | head -1`). A bug
+   fix needs the next **patch**, an idea the next **minor**; if `package.json` is already that
+   high, leave it. Otherwise `npm version <x.y.z> --no-git-tag-version`. Never `1.0.0` — that is
+   Lukas's call. `npm run check:version` must pass.
+
 6. **Verify.** `set -o pipefail && npm run verify 2>&1 | tail -60` — lint, types, migration
    drift, every Vitest suite, the build, the Playwright journeys. Run it exactly like that:
    `pipefail` keeps verify's own exit code, and the run summary on this workflow run lists every
@@ -108,7 +114,7 @@ with evidence, and a reviewer who never saw your reasoning reads the diff.
 
 7. **Docs in the same pass.** A judgment call gets a numbered entry **appended to the end** of
    `docs/DECISIONS.md`; after `npm run format`, confirm the number survived with
-   `grep -n '^1[0-9][0-9]\. ' docs/DECISIONS.md | tail -1`, and never "repair" the run-on line
+   `grep -nE '^[0-9]+\. ' docs/DECISIONS.md | tail -1`, and never "repair" the run-on line
    above `## Later` — the comment there says why. `docs/SPEC.md` when behaviour changed,
    `docs/DATA-MODEL.md` for a table, the plan's acceptance boxes ticked — only where true.
 
