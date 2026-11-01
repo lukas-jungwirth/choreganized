@@ -3020,3 +3020,12 @@ units | null, name}`, written back as editor lines in the reader's unit spelling
      bot ever commits. The release PR's title names the version, so a wrong judgement shows
      before it ships. The first release under this is `v0.1.0`; until a tag exists the check
      only verifies the shape.
+
+210. **No per-PR preview deployments for prototypes** (plan 27, Lukas's call 2026-11-01). Coolify
+     could deploy each prototype PR to its own host, but Google sign-in doesn't accept per-PR
+     hosts, so every preview would have needed `E2E_MODE` password sign-in on a deployed host —
+     the one thing #139 says never to do, held back only by a host-pattern boot guard. Not worth
+     it for how rarely it would be used: larger ideas Lukas works out himself in a desk session,
+     and small ones arrive as proposal PRs. An idea that has to be tried rather than read goes
+     through `dev` and the test environment like any other change and is reverted if rejected.
+     `E2E_MODE` stays off every deployed instance.
