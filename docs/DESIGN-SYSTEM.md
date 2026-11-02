@@ -313,7 +313,9 @@ day-dependent `birthday` · `christmas` · `new-year` · `easter` · `halloween`
 profile card) and `move-out` (on the sign-out / leave group; → DECISIONS #217). All of these are
 upper bodies cut flat at the waist, made to sit on a card's top edge: the raccoon is positioned
 absolutely 2px below its box's bottom, and the card after it is lifted (`position: relative;
-z-index: 1`) so the cut never shows. Show one with
+z-index: 1`) so the cut never shows. A master that comes rounded at the bottom is cut
+straight before `npm run icons`; `tests/conventions/mascot-perch.test.ts` refuses a perched pose
+that isn't (→ DECISIONS #218). Show one with
 **`ui/Mascot`** — `<Mascot name="tasks" height={88} class="art" />` — never a bare `<img>`: it
 sets `alt=""`, both dimensions (the width from the file's aspect ratio, so nothing shifts while
 it loads) and async decoding; place it with `:global(.art)` under a selector of your own. The

@@ -9,7 +9,7 @@
 	a notification preference — is `PrefRow`.
 
 	Two raccoons, each perched on a card's top edge on the right the way Home's
-	sits on its first card (→ DECISIONS #217): one with a wrench on your profile,
+	sits on its first card (→ DECISIONS #217, #218): one with a wrench on your profile,
 	one with a bundle on its stick over the two ways out.
 -->
 <script lang="ts">
@@ -681,7 +681,7 @@
 	}
 
 	.top :global(header) {
-		padding-right: 104px;
+		padding-right: 116px;
 	}
 
 	.perch {
