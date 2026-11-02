@@ -50,6 +50,7 @@ import {
 import { setAway } from '$lib/server/services/tasks';
 import { appVersion } from '$lib/server/version';
 import { isTheme, THEME_COOKIE, THEME_COOKIE_MAX_AGE } from '$lib/theme';
+import { birthdayFrom } from '$lib/utils/birthday';
 import { isCalendarDate, todayIn } from '$lib/utils/dates';
 import { FEEDBACK_BODY_MAX, isFeedbackKind } from '$lib/utils/feedback';
 import { isAiProvider, isAiSlot, looksLikeApiKey, looksLikeModelId } from '$lib/ai';
@@ -163,7 +164,7 @@ export const actions: Actions = {
 	currency: currencyAction,
 	splitDefault: splitDefaultAction,
 
-	/** Name and colour [6a] — always your own membership (→ SPEC §6 "Account"). */
+	/** Name, colour and birthday [6a] — always your own membership (→ SPEC §6 "Account"). */
 	profile: async (event) => {
 		const { householdId, member } = requireMember(event);
 		const form = await event.request.formData();
@@ -178,8 +179,15 @@ export const actions: Actions = {
 		}
 		if (!isMemberColor(color)) return fail(400, { error: m.errors.pickColour });
 
+		const birthday = birthdayFrom(
+			String(form.get('birthdayDay') ?? ''),
+			String(form.get('birthdayMonth') ?? '')
+		);
+		// Named, so the sheet puts the reason under the birthday, not the name.
+		if (birthday === undefined) return fail(400, { error: m.errors.birthday, field: 'birthday' });
+
 		try {
-			updateProfile(householdId, member.id, { displayName, color });
+			updateProfile(householdId, member.id, { displayName, color, birthday });
 		} catch (cause) {
 			return refuse(cause, m);
 		}

@@ -1,9 +1,9 @@
 <!-- Public invite landing: "{inviter} invited you to {household}" → sign in → join. -->
 <script lang="ts">
 	import { enhance } from '$app/forms';
-	import logoMark from '$lib/assets/logo-mark.svg';
 	import InvitePreviewCard from '$lib/components/onboarding/InvitePreviewCard.svelte';
 	import Screen from '$lib/components/shell/Screen.svelte';
+	import Mascot from '$lib/components/ui/Mascot.svelte';
 	import Button from '$lib/components/ui/Button.svelte';
 	import { messages } from '$lib/i18n';
 	import type { PageProps } from './$types';
@@ -23,7 +23,7 @@
 
 <Screen>
 	<header>
-		<span class="mark"><img src={logoMark} alt="" width="34" height="34" /></span>
+		<Mascot name="head" height={70} class="mark" />
 		<h1>{heading}</h1>
 	</header>
 
@@ -50,19 +50,8 @@
 		text-align: center;
 	}
 
-	.mark {
-		display: grid;
-		place-items: center;
-		width: 56px;
-		height: 56px;
-		margin: 0 auto 14px;
-		border-radius: var(--r-input);
-		background: var(--sage);
-		box-shadow: var(--shadow-button);
-	}
-
-	.mark img {
-		display: block;
+	header :global(.mark) {
+		margin: 0 auto 12px;
 	}
 
 	h1 {

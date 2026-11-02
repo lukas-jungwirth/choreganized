@@ -7,6 +7,10 @@
 	component because their shapes differ (a chevron, a value, a switch, a
 	centred action) and each is a handful of elements. The one row that repeats —
 	a notification preference — is `PrefRow`.
+
+	Two raccoons, each perched on a card's top edge on the right the way Home's
+	sits on its first card (→ DECISIONS #217, #218): one with a wrench on your profile,
+	one with a bundle on its stick over the two ways out.
 -->
 <script lang="ts">
 	import { enhance } from '$app/forms';
@@ -30,6 +34,7 @@
 	import SubHeader from '$lib/components/shell/SubHeader.svelte';
 	import Avatar from '$lib/components/ui/Avatar.svelte';
 	import Card from '$lib/components/ui/Card.svelte';
+	import Mascot from '$lib/components/ui/Mascot.svelte';
 	import RowGroup from '$lib/components/ui/RowGroup.svelte';
 	import { LOCALE_NAMES, isLocale, messages } from '$lib/i18n';
 	import ChevronRight from '@lucide/svelte/icons/chevron-right';
@@ -162,7 +167,11 @@
 	<title>{m.common.pageTitle(m.settings.title)}</title>
 </svelte:head>
 
-<SubHeader title={m.settings.title} back="/home" backLabel={m.common.backToHome} />
+<!-- The title keeps clear of the raccoon by wrapping, never by sliding under it. -->
+<div class="top">
+	<SubHeader title={m.settings.title} back="/home" backLabel={m.common.backToHome} />
+	<Mascot name="settings" height={120} class="perched" />
+</div>
 
 <Card radius="md">
 	<div class="profile">
@@ -191,6 +200,15 @@
 		<span class="label">{m.ui.yourColour}</span>
 		<span class="end">
 			<span class="swatch" style:background={me.color} aria-hidden="true"></span>
+			<ChevronRight size={15} strokeWidth={2} class="chevron" />
+		</span>
+	</button>
+	<button type="button" class="row" onclick={() => (editingProfile = true)}>
+		<span class="label">{m.settings.birthday}</span>
+		<span class="end">
+			<span class="value">
+				{me.birthday ? m.date.birthday(me.birthday) : m.settings.birthdayNotSet}
+			</span>
 			<ChevronRight size={15} strokeWidth={2} class="chevron" />
 		</span>
 	</button>
@@ -388,6 +406,9 @@
 
 <!-- No section label, like [6a]: the two ways out sit on their own. -->
 <div class="exits">
+	<div class="perch">
+		<Mascot name="move-out" height={104} class="perched" />
+	</div>
 	<RowGroup>
 		<button type="button" class="row action quiet" onclick={endSession} disabled={signingOut}>
 			<LogOut size={17} strokeWidth={1.9} />
@@ -408,6 +429,7 @@
 	<ProfileSheet
 		displayName={me.displayName}
 		color={me.color}
+		birthday={me.birthday}
 		{takenColors}
 		onclose={() => (editingProfile = false)}
 	/>
@@ -646,6 +668,39 @@
 	}
 
 	/* The only block with no label above it, so it brings its own gap. */
+	/* Each raccoon stands in a box as tall as it is, its flat-cut waist 2px
+	   behind the card that follows — which is lifted above it so the cut never
+	   shows. Right-aligned, like Home's. */
+	.top,
+	.perch {
+		position: relative;
+	}
+
+	.top {
+		min-height: 120px;
+	}
+
+	.top :global(header) {
+		padding-right: 116px;
+	}
+
+	.perch {
+		height: 104px;
+	}
+
+	.top :global(.perched),
+	.perch :global(.perched) {
+		position: absolute;
+		right: 6px;
+		bottom: -2px;
+	}
+
+	.top + :global(.card),
+	.perch + :global(*) {
+		position: relative;
+		z-index: 1;
+	}
+
 	.exits {
 		margin-top: 22px;
 	}

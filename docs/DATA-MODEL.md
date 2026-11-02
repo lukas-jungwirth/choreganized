@@ -83,6 +83,9 @@ user ─┬─ session / account / verification        (Better Auth)
   Affects: overdue rendering, due/overdue reminders (skipped entirely — flags stay unset so
   nudges fire only if it becomes due again after return; simpler: reminders check away at send
   time), Home banner.
+- `birthday`: optional `MM-DD` — day and month, never a year, so no age is kept. Set in the
+  profile sheet; its only reader is Home's raccoon (`lib/utils/raccoon.ts`). Your own only:
+  `listMembers` doesn't select it, so housemates never receive it.
 - Notification prefs live here (not on `user`) because they're household-app concerns.
   `notifyShopClosures` (→ `holiday_notices`, SPEC §3.6) defaults **on**, unlike
   `notifyShoppingUpdates` beside it: it fires around a dozen times a year rather than a dozen

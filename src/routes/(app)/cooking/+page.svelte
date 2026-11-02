@@ -65,6 +65,10 @@
 
 	const recent = $derived(data.recipes.slice(0, RECENT));
 	const week = $derived(data.plan.weeks[data.plan.offset]);
+	// Today is always in the first week, whichever week is on screen.
+	const todaysMeals = $derived(
+		(data.plan.weeks[0].days.find((day) => day.isToday)?.meals ?? []).map((meal) => meal.name)
+	);
 
 	/**
 	 * Real links, not a switch: the week lives in the URL, so this survives a
@@ -117,7 +121,7 @@
 	<title>{m.common.pageTitle(m.cooking.title)}</title>
 </svelte:head>
 
-<PageHeader title={m.cooking.title} meta={week.monthLabel} />
+<PageHeader mascot="cooking" title={m.cooking.title} meta={m.cooking.today(todaysMeals)} />
 
 <!-- The whole week pages under a sideways swipe (→ SPEC §4.1, DECISIONS #206) —
 	 the switch, the strip and the meals — but not the library below it, which is

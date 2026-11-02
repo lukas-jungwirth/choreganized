@@ -21,7 +21,9 @@ import {
 	dayOfMonth,
 	daysBetween,
 	formatDayStamp,
+	formatBirthday,
 	formatMonthName,
+	formatMonthOfYear,
 	formatMonthRange,
 	formatShortDate,
 	formatWeekday,
@@ -161,9 +163,9 @@ export const en = {
 		backToHome: 'Back to home',
 		anyone: 'Anyone',
 		name: 'Name',
-		appName: 'Choreganized',
-		/** Browser tab: "Tasks · Choreganized". */
-		pageTitle: (screen: string) => `${screen} · Choreganized`
+		appName: 'Haushaltsheld',
+		/** Browser tab: "Tasks · Haushaltsheld". */
+		pageTitle: (screen: string) => `${screen} · Haushaltsheld`
 	},
 
 	/* ── The kit's own words ───────────────────────────────────────────────── */
@@ -236,6 +238,10 @@ export const en = {
 		monthRange: (from: CalendarDate, to: CalendarDate) => formatMonthRange(from, to, L),
 		/** "June" / "June 2025" — what "load more" would reveal [8a]. */
 		monthName: (date: CalendarDate, today: CalendarDate) => formatMonthName(date, today, L),
+		/** "March 14" — a birthday, which has no year (→ `utils/birthday`). */
+		birthday: (birthday: string) => formatBirthday(birthday, L),
+		/** "March" — a month on its own, for the birthday picker. */
+		monthOfYear: (month: number) => formatMonthOfYear(month, L),
 
 		/** How the history feed heads a day: "Today", "Yesterday", "Mon 14 Jul" [8a]. */
 		dayLabel: (date: CalendarDate, today: CalendarDate) => {
@@ -407,6 +413,8 @@ export const en = {
 	shopping: {
 		title: 'Shopping',
 		progress: (checked: number, total: number) => `${checked} of ${total} done`,
+		/** Under the title when the list is empty — where `progress` would be. */
+		nothingListed: 'Nothing on the list',
 		manageStores: 'Manage stores',
 		/** The group items with no store fall into — also the fallback in copy. */
 		other: 'Other',
@@ -628,6 +636,15 @@ export const en = {
 	/* ── Tasks [4a] [4b] [4c] [4d] ─────────────────────────────────────────── */
 	tasks: {
 		title: 'Tasks',
+		/** Under the title [4a]: what is due — overdue first, since that's what to do first. */
+		due: (overdue: number, today: number) =>
+			overdue > 0 && today > 0
+				? `${overdue} overdue · ${today} today`
+				: overdue > 0
+					? `${overdue} overdue`
+					: today > 0
+						? `${today} due today`
+						: 'Nothing due today',
 		/** The FAB [4a]; the sheet it opens titles itself. */
 		newTask: 'New task',
 
@@ -835,6 +852,13 @@ export const en = {
 	/* ── Cooking [04] [3d] [7a] ────────────────────────────────────────────── */
 	cooking: {
 		title: 'Cooking',
+		/** Under the title [7a]: today's meals, by name when there is just the one. */
+		today: (meals: string[]) =>
+			meals.length === 0
+				? 'Nothing planned today'
+				: meals.length === 1
+					? `Today: ${meals[0]}`
+					: `${meals.length} meals today`,
 		/** "35 min", or nothing when a recipe never said how long it takes. */
 		cookTime: (minutes: number) => `${minutes} min`,
 		/** "Serves 4" — the recipe header and the share text. */
@@ -1342,6 +1366,11 @@ export const en = {
 	 */
 	expenses: {
 		title: 'Expenses',
+		/** Under the title [9a]: what the household spent this month, settle-ups not counted. */
+		thisMonth: (minor: number, currency: string) =>
+			minor > 0
+				? `${formatMoney(minor, currency, INTL_LOCALE[L])} this month`
+				: 'Nothing yet this month',
 		/** The header's ••• [9a-owe]. */
 		menu: {
 			label: 'More',
@@ -1444,7 +1473,7 @@ export const en = {
 		/** [9g] */
 		empty: {
 			title: 'Nothing to split yet',
-			copy: 'Log the weekly shop, the rent, the pizza. Choreganized keeps the tally.',
+			copy: 'Log the weekly shop, the rent, the pizza. Haushaltsheld keeps the tally.',
 			add: 'Add an expense'
 		},
 
@@ -1791,6 +1820,9 @@ export const en = {
 
 		displayName: 'Display name',
 		members: 'Members',
+		/** Optional, day and month (→ `members.birthday`); Home's raccoon is its reader. */
+		birthday: 'Birthday',
+		birthdayNotSet: 'Not set',
 
 		/**
 		 * The language row and the sheet behind it (→ SPEC §6).
@@ -1857,7 +1889,13 @@ export const en = {
 		/** Your profile [6a]. */
 		profile: {
 			title: 'Your profile',
-			eyebrow: 'Account'
+			eyebrow: 'Account',
+			birthdayDay: 'Day',
+			birthdayMonth: 'Month',
+			/** The empty choice in both selects: no birthday. */
+			birthdayNone: '–',
+			birthdayNote:
+				'Optional. Day and month only, no year. On the day, a raccoon with a cake waits on Home.'
 		},
 
 		/** Rename the household [6a] — owner only (→ DECISIONS #10). */
@@ -1963,7 +2001,7 @@ export const en = {
 		feedback: {
 			row: 'Send feedback',
 			title: 'Send feedback',
-			eyebrow: 'Choreganized',
+			eyebrow: 'Haushaltsheld',
 			/** Names the switch for a screen reader; the two options are its segments. */
 			kindLabel: 'Kind of feedback',
 			bug: 'Something’s broken',
@@ -2041,9 +2079,9 @@ export const en = {
 	/* ── Sign in [5a] and onboarding [5b]–[5e] ─────────────────────────────── */
 	auth: {
 		signIn: 'Sign in',
-		/** The wordmark is split so "ganized" can take the accent colour. */
-		wordmarkLead: 'Chore',
-		wordmarkAccent: 'ganized',
+		/** The wordmark is split so "held" can take the accent colour. */
+		wordmarkLead: 'Haushalts',
+		wordmarkAccent: 'held',
 		tagline: 'Every chore, organized',
 		continueWithGoogle: 'Continue with Google',
 		openingGoogle: 'Opening Google…',
@@ -2052,7 +2090,7 @@ export const en = {
 		/** The footnote when email codes are on too (plan 31). */
 		footnoteEmail: 'New here? Signing in creates your account.',
 		/** `/` while the redirect is in flight — a no-JS fallback nobody reads. */
-		redirecting: 'Taking you to Choreganized…',
+		redirecting: 'Taking you to Haushaltsheld…',
 
 		/** Sign in with an emailed code [5a] (plan 31). */
 		email: 'Email',
@@ -2090,9 +2128,9 @@ export const en = {
 
 		/** The sign-in mail itself — plain text (→ `lib/server/mail.ts`). */
 		mail: {
-			subject: (code: string) => `${code} is your Choreganized code`,
+			subject: (code: string) => `${code} is your Haushaltsheld code`,
 			body: (code: string, minutes: number) =>
-				`Your sign-in code for Choreganized:\n\n${code}\n\nIt works for ${minutes} minutes. If you didn’t ask for it, you can ignore this email. Nobody can sign in without the code.`
+				`Your sign-in code for Haushaltsheld:\n\n${code}\n\nIt works for ${minutes} minutes. If you didn’t ask for it, you can ignore this email. Nobody can sign in without the code.`
 		}
 	},
 
@@ -2140,7 +2178,7 @@ export const en = {
 			copied: 'Copied',
 			share: 'Share invite',
 			/** The OS share sheet's own text. */
-			shareText: (household: string) => `Join ${household} on Choreganized`,
+			shareText: (household: string) => `Join ${household} on Haushaltsheld`,
 			revoked:
 				'This household has no active invite code. The owner can make a new one under Settings → Members.',
 			members: 'Members',
@@ -2188,10 +2226,10 @@ export const en = {
 		notNow: 'Not now',
 		/** Why the switch isn't the answer, when there's something to say. */
 		unsupported:
-			'This browser can’t show notifications. On iPhone, add Choreganized to your home screen first.',
+			'This browser can’t show notifications. On iPhone, add Haushaltsheld to your home screen first.',
 		unconfigured: 'Push isn’t configured on the server yet.',
 		denied:
-			'Notifications are blocked for Choreganized. Turn them back on in your browser’s site settings.',
+			'Notifications are blocked for Haushaltsheld. Turn them back on in your browser’s site settings.',
 		/**
 		 * The state that used to say nothing: the switch is offered, so there's no
 		 * problem to report — but "on this device" is the whole point of the row
@@ -2204,7 +2242,7 @@ export const en = {
 
 	install: {
 		title: 'Add to your home screen',
-		detail: 'Install Choreganized for one-tap, full-screen access.',
+		detail: 'Install Haushaltsheld for one-tap, full-screen access.',
 		add: 'Add',
 		opening: 'Opening…',
 		notNow: 'Not now'
@@ -2295,7 +2333,7 @@ export const en = {
 
 		/** "Does this actually work?", answered on the device that asks (→ SPEC §6). */
 		testTitle: '🔔 Notifications are on',
-		testBody: 'This is what a nudge from Choreganized looks like.',
+		testBody: 'This is what a nudge from Haushaltsheld looks like.',
 
 		/** A cook timer that rang while the phone was locked (→ SPEC §4.6). */
 		timerDone: (label: string) => `⏲️ ${label} is done`,
@@ -2430,6 +2468,7 @@ export const en = {
 		/** The two profile fields, wherever they're written. */
 		displayName: 'Tell us what to call you.',
 		pickColour: 'Pick one of the colours.',
+		birthday: 'Pick a day and a month that go together, or neither.',
 		householdName: 'Give your home a name.',
 		colourTakenJoin: 'Someone in the household already has that colour. Pick another.',
 		ownerOnlyMembers: 'Only the owner can manage members.',

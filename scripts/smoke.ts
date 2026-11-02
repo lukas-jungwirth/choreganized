@@ -72,7 +72,7 @@ const checks: [string, () => Promise<void>][] = [
 			const response = await fetch(`${base}/login`, { redirect: 'manual' });
 			if (response.status !== 200) throw new Error(`status ${response.status}`);
 			const html = await response.text();
-			if (!/Choreganized/i.test(html)) throw new Error('page does not mention Choreganized');
+			if (!/Haushaltsheld/i.test(html)) throw new Error('page does not mention Haushaltsheld');
 		}
 	],
 	[

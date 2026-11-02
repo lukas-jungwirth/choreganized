@@ -83,3 +83,31 @@ test('recipe wording is chosen in a sheet and named on its row', async ({ page }
 		.click();
 	await expect(row).toContainText('As written');
 });
+
+test('a birthday is day and month, shown on its row, and cleared again', async ({ page }) => {
+	await page.goto('/settings');
+	const row = page.getByRole('button', { name: /^Birthday/ });
+	await expect(row).toContainText('Not set');
+
+	await row.click();
+	const sheet = page.getByRole('dialog');
+	await sheet.getByLabel('Month').selectOption('3');
+	await sheet.getByLabel('Day').selectOption('14');
+	await sheet.getByRole('button', { name: 'Save changes' }).click();
+	await expect(sheet).toBeHidden();
+	await expect(row).toContainText('March 14');
+
+	await page.reload();
+	await expect(row).toContainText('March 14');
+
+	// Half a birthday is refused, with the reason under the birthday.
+	await row.click();
+	await sheet.getByLabel('Day').selectOption('');
+	await sheet.getByRole('button', { name: 'Save changes' }).click();
+	await expect(sheet.getByRole('alert')).toContainText('Pick a day and a month');
+
+	await sheet.getByLabel('Month').selectOption('');
+	await sheet.getByRole('button', { name: 'Save changes' }).click();
+	await expect(sheet).toBeHidden();
+	await expect(row).toContainText('Not set');
+});

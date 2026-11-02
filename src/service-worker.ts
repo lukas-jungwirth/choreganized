@@ -20,7 +20,7 @@ import { CHROME, chromeLightDark } from '$lib/theme';
 const sw = self as unknown as ServiceWorkerGlobalScope;
 
 /** New build ⇒ new cache ⇒ the old one is deleted on activate. */
-const CACHE = `choreganized-${version}`;
+const CACHE = `haushaltsheld-${version}`;
 
 /** Hashed build assets + everything in `static/`. Immutable, so cache-first. */
 const PRECACHE = [...build, ...files];
@@ -52,9 +52,9 @@ type PushPayload = {
 
 /** A push that arrives unreadable still has to show *something* — see `toPayload`. */
 const FALLBACK_PAYLOAD: PushPayload = {
-	title: 'Choreganized',
+	title: 'Haushaltsheld',
 	body: 'Something at home needs you.',
-	tag: 'choreganized',
+	tag: 'haushaltsheld',
 	url: `${base}/home`
 };
 
@@ -156,7 +156,7 @@ function offlineNotice(): Response {
 <meta name="text-scale" content="scale">
 <meta name="theme-color" media="(prefers-color-scheme: light)" content="${CHROME.bg[0]}">
 <meta name="theme-color" media="(prefers-color-scheme: dark)" content="${CHROME.bg[1]}">
-<title>Offline · Choreganized</title>
+<title>Offline · Haushaltsheld</title>
 <style>
 	:root { color-scheme: light dark }
 	html { height: 100% }
@@ -194,7 +194,7 @@ function offlineNotice(): Response {
 			</svg>
 		</div>
 		<h1>You’re offline</h1>
-		<p>Choreganized needs the household server to show your list. It’ll be right here when you’re back.</p>
+		<p>Haushaltsheld needs the household server to show your list. It’ll be right here when you’re back.</p>
 		<button onclick="location.reload()">Try again</button>
 	</main>
 </body>

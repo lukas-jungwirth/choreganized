@@ -6,6 +6,13 @@
 
 	Reading order is urgency: what you can do something about right now first,
 	the summaries after it, and what the house has already done last.
+
+	One raccoon, sitting on the first card's top edge right of the greeting
+	(→ DECISIONS #213, #216, #219). The server picks it (`utils/raccoon`): your
+	birthday, then a special day, then the reminder pose for a chore on you (a
+	bell while it's coming up, an alarm clock once it's late), then asleep after
+	22:00, and otherwise an everyday pose that fits the month, a new one each
+	morning, afternoon and evening.
 -->
 <script lang="ts">
 	import EnablePush from '$lib/components/EnablePush.svelte';
@@ -23,11 +30,13 @@
 	import TaskDoneModal from '$lib/components/tasks/TaskDoneModal.svelte';
 	import AvatarStack from '$lib/components/ui/AvatarStack.svelte';
 	import Banner from '$lib/components/ui/Banner.svelte';
+	import Mascot from '$lib/components/ui/Mascot.svelte';
 	import { messages } from '$lib/i18n';
 	import type { NextChore } from '$lib/server/services/home';
 	import type { CompletionResult, Standing } from '$lib/server/services/tasks';
 	import type { SubmitFunction } from '@sveltejs/kit';
 	import Bell from '@lucide/svelte/icons/bell';
+	import ChevronRight from '@lucide/svelte/icons/chevron-right';
 	import type { PageProps } from './$types';
 
 	let { data }: PageProps = $props();
@@ -89,14 +98,17 @@
 	<div class="who">
 		<p class="household">{data.household.name}</p>
 		<h1>{m.home.greeting(data.greeting)},<br />{data.currentMember.displayName}</h1>
+		<!-- The household's faces are the way into the household's settings; the back
+			 chevron [6a] opens with has to come from somewhere (→ DECISIONS #57). Under
+			 the greeting in a pill with a chevron, so it reads as the button it is and
+			 the raccoon gets the right-hand side (→ DECISIONS #214). The link names
+			 the housemates itself — Home is still the only screen that does. -->
+		<a class="settings" href="/settings" aria-label={m.home.settingsLink(names)}>
+			<AvatarStack members={stack} size={28} ringColor="var(--card)" />
+			<ChevronRight size={18} strokeWidth={2.2} aria-hidden="true" />
+		</a>
 	</div>
-	<!-- The household's faces are the way into the household's settings; the back
-		 chevron [6a] opens with has to come from somewhere, and plan 10 can move
-		 it if it finds a better door (→ DECISIONS #57). The link names the
-		 housemates itself — Home is still the only screen that does. -->
-	<a class="settings" href="/settings" aria-label={m.home.settingsLink(names)}>
-		<AvatarStack members={stack} />
-	</a>
+	<Mascot name={data.raccoon} height={136} class="raccoon" />
 </header>
 
 <div class="stack">
@@ -187,24 +199,54 @@
 {/if}
 
 <style>
+	/* Greeting and the household pill on the left; the raccoon owns the right,
+	   its flat-cut waist on the first card's top edge so it reads as sitting on
+	   it. */
 	header {
-		display: flex;
-		align-items: flex-start;
-		justify-content: space-between;
-		gap: 16px;
+		position: relative;
+		min-height: 170px;
 		padding: 8px 0 20px;
 	}
 
-	/* Display names are free text up to 40 characters and the avatars can't
-	   shrink, so without this a long one pushes the whole page sideways. */
+	/* Display names are free text up to 40 characters, so without min-width a
+	   long one pushes the whole page sideways; the max keeps the greeting clear
+	   of the raccoon. */
 	.who {
 		min-width: 0;
+		max-width: calc(100% - 150px);
 	}
 
-	/* The avatars are the whole target; the link adds nothing of its own. */
+	header :global(.raccoon) {
+		position: absolute;
+		right: 0;
+		bottom: -2px;
+	}
+
+	/* The whole pill is the target: faces + chevron, on the card surface. */
 	.settings {
 		display: inline-flex;
-		flex: none;
+		align-items: center;
+		gap: 8px;
+		margin-top: 14px;
+		padding: 5px 8px 5px 5px;
+		border-radius: var(--r-chip);
+		background: var(--card);
+		box-shadow: var(--shadow-card);
+		color: var(--text-4);
+		transition: transform 120ms ease-out;
+	}
+
+	.settings:active {
+		transform: scale(0.97);
+	}
+
+	@media (prefers-reduced-motion: reduce) {
+		.settings {
+			transition: none;
+		}
+		.settings:active {
+			transform: none;
+		}
 	}
 
 	.household,
@@ -227,7 +269,10 @@
 		line-height: 1.05;
 	}
 
+	/* Above the greeting raccoon, which tucks in behind the first card. */
 	.stack {
+		position: relative;
+		z-index: 1;
 		display: flex;
 		flex-direction: column;
 		gap: 14px;

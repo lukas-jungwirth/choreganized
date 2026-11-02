@@ -242,14 +242,18 @@ prompt / subscribed).
 
 ## PWA
 
-- `static/manifest.webmanifest` (linked from `app.html`): name/short_name Choreganized,
+- `static/manifest.webmanifest` (linked from `app.html`): name/short_name Haushaltsheld,
   `display standalone`, portrait, `theme/background_color #F5F3EE`, start_url `/home`, 192/512
   `any` + maskable icons.
-- **Icons are scripted from one source.** `npm run icons` (`scripts/icons.ts`) renders every
-  launcher / tab / lock-screen asset from `src/lib/assets/logo-mark.svg` (design mark 13b) onto
-  the sage tile: `any`, maskable (mark pulled inside the 80% safe circle), apple-touch, a favicon
-  PNG + `static/favicon.svg`, and the monochrome notification badge. Re-run after editing the
-  mark; outputs are committed to `static/`.
+- **Icons and mascots are scripted from one source.** `npm run icons` (`scripts/icons.ts`)
+  renders every launcher / tab / lock-screen asset and every raccoon a screen shows from the PNG
+  masters in `artwork/raccoon/` (→ DECISIONS #211, #215), which are never shipped (`.dockerignore`):
+  `any` + apple-touch from the opaque store icon on #74A585, maskable from the transparent head
+  pulled inside the 80% safe circle, 32/96px favicons and the notification badge (the head's
+  silhouette) — all 256-colour palette PNGs — and the mascots as AVIF at 3× their display height
+  in `src/lib/assets/mascot/`, with a generated `index.ts` of their pixel sizes that
+  `ui/Mascot` reads to reserve each image's box. Re-run after a master changes; outputs are
+  committed.
 - `app.html` carries the static head (manifest, apple-touch, favicons, apple/mobile web-app
   metas, and `viewport-fit=cover` — which is what makes the app's `env(safe-area-inset-*)`
   padding resolve at all). `theme-color` is the one dynamic head tag and lives in the root layout
@@ -315,11 +319,11 @@ npm run build
 node --env-file=.env build/index.js     # → http://localhost:3000
 
 # B) Docker — mirrors what Coolify does
-docker build -t choreganized .
-docker run --rm -p 3000:3000 -v choreganized-data:/data \
+docker build -t haushaltsheld .
+docker run --rm -p 3000:3000 -v haushaltsheld-data:/data \
   -e ORIGIN=http://localhost:3000 -e BETTER_AUTH_URL=http://localhost:3000 \
   -e BETTER_AUTH_SECRET=… -e GOOGLE_CLIENT_ID=… -e GOOGLE_CLIENT_SECRET=… \
-  choreganized
+  haushaltsheld
 ```
 
 Two gotchas, both hit in practice:

@@ -30,20 +30,16 @@ the audit: [Choreganized — Agentic Workflow Audit](https://claude.ai/artifact/
   answer a question, cut scope. Rejecting it means closing the PR and the issue with a reason.
   There is nothing to revert, because nothing reached `dev`.
 - **README statuses** gain `proposed`.
-- **Previews for prototypes**: optional, waiting on a decision (below).
-  - Some ideas can't be judged on paper, like a gesture or a new view. A `prototype` label builds
-    the idea on `agent/prototype-N` as a **draft** PR that never auto-merges. Coolify deploys it
-    to `{{pr_id}}.<domain>`.
-  - Coolify needs a GitHub App source with Preview Deployments on, a wildcard DNS record, and its
-    own environment group with no production secrets. "Repository members only" must be on.
-    Each preview starts with its own empty SQLite volume.
-  - Approve: the PR's spec becomes the proposal. Reject: close it.
-  - **Decision needed.** Google sign-in does not accept per-PR hosts, so a preview needs another
-    way in. Option (a): allow `E2E_MODE` password sign-in on preview hosts only, with seeded demo
-    data, and a boot guard that refuses `E2E_MODE` unless the host matches the preview pattern.
-    That is a deliberate exception to "never set it on a deployed instance", recorded in
-    DECISIONS. Option (b): no previews; prototypes go through `dev` and the test environment as
-    today, and are reverted if rejected.
+- **Previews for prototypes: not doing** (Lukas's call 2026-11-01, DECISIONS #210).
+  - Per-PR Coolify previews were considered: a `prototype` label building the idea as a draft PR
+    deployed to `{{pr_id}}.<domain>`. Google sign-in does not accept per-PR hosts, so they would
+    have needed `E2E_MODE` password sign-in on deployed preview hosts, an exception to "never set
+    it on a deployed instance".
+  - Instead, an idea that can't be judged on paper (a gesture, a new view) goes through `dev` and
+    the test environment like any other change, and is reverted if rejected. Larger ideas are
+    worked out by Lukas in a desk session, so prototypes are expected to be rare.
+  - Nothing to build here: no `prototype` label, no Coolify preview setup, `E2E_MODE` stays off
+    every deployed host.
 - **Egress firewall on agent jobs.**
   - `step-security/harden-runner` is the first step of the triage and build jobs, not of CI. It
     is free for public repositories on GitHub-hosted runners.
@@ -63,7 +59,7 @@ the audit: [Choreganized — Agentic Workflow Audit](https://claude.ai/artifact/
   - the proposal guard step exists;
   - `merged.yml` dispatches a build only for a merged proposal.
 - **Docs**: TESTING.md "The flow" (the idea road); SPEC §8 if the feedback screen should say what
-  happens to an idea; and DECISIONS: the proposal gate, the preview decision, and the firewall.
+  happens to an idea; and DECISIONS: the proposal gate and the firewall (previews: #210).
 
 ## Acceptance
 
@@ -74,5 +70,4 @@ the audit: [Choreganized — Agentic Workflow Audit](https://claude.ai/artifact/
 - [ ] Harden-runner runs in `block` mode on both agent jobs, and a build still goes green. A
       deliberate `curl` to an unlisted host from the agent is blocked, as seen in the run.
 - [ ] Every action is pinned to a SHA, and Dependabot opens its first bump PR.
-- [ ] Previews: built and walked per the decision, or marked "not doing" with the reason.
 - [ ] `ci.test.ts` bites on each rule above. `npm run verify` clean.

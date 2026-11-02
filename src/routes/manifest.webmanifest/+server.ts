@@ -33,8 +33,8 @@ import type { RequestHandler } from './$types';
 /** Everything about the app that has nothing to do with the theme. */
 const MANIFEST = {
 	id: '/',
-	name: 'Choreganized',
-	short_name: 'Choreganized',
+	name: 'Haushaltsheld',
+	short_name: 'Haushaltsheld',
 	description: 'Every chore, organized. Shopping, meal plan and chores for your household.',
 	start_url: '/home',
 	scope: '/',

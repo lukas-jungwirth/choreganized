@@ -3020,3 +3020,136 @@ units | null, name}`, written back as editor lines in the reader's unit spelling
      bot ever commits. The release PR's title names the version, so a wrong judgement shows
      before it ships. The first release under this is `v0.1.0`; until a tag exists the check
      only verifies the shape.
+
+210. **No per-PR preview deployments for prototypes** (plan 27, Lukas's call 2026-11-01). Coolify
+     could deploy each prototype PR to its own host, but Google sign-in doesn't accept per-PR
+     hosts, so every preview would have needed `E2E_MODE` password sign-in on a deployed host —
+     the one thing #139 says never to do, held back only by a host-pattern boot guard. Not worth
+     it for how rarely it would be used: larger ideas Lukas works out himself in a desk session,
+     and small ones arrive as proposal PRs. An idea that has to be tried rather than read goes
+     through `dev` and the test environment like any other change and is reverted if rejected.
+     `E2E_MODE` stays off every deployed instance.
+
+211. **Rebrand to Haushaltsheld, with a raccoon mascot** (Lukas's call 2026-11-01). Every
+     user-facing "Choreganized" — copy in both catalogs, the manifest, `app.html`, the service
+     worker's notifications and offline page, mail, issue templates, docs — now says
+     Haushaltsheld; the login wordmark splits "Haushalts" + accent "held". Kept on purpose,
+     because changing them breaks something that exists: the database file `choreganized.db`
+     (the Docker volume, Litestream's replica path `choreganized/…` and every restore runbook
+     point at it), the `<!-- choreganized:{id} -->` feedback marker (retries search existing
+     issues for it), the `choreganized.*` localStorage keys (renaming re-shows dismissed
+     prompts), the seed's `seed.choreganized.local` emails (re-seeding an existing DB would
+     duplicate members) and the GitHub repo slug, until the repo itself is renamed. The house
+     logo mark is gone: `scripts/icons.ts` now builds every icon from the raccoon pack in
+     `design/Haushaltsheld_Mascot_Assets/` (maskable icon = the transparent head at 80% so its
+     ears clear the safe circle; badge = the head's silhouette; PNG favicons instead of an SVG
+     one, since the art is raster) and writes the screen mascots as trimmed WebP (~25 KB each,
+     3× their 88px display height) to `src/lib/assets/mascot/`. Each tab's `PageHeader` shows
+     its raccoon left of the title — 88px, big enough to read at arm's length — and moves the
+     caption under the title so the line still fits at 390px and at 200% text. Home gets its
+     own mascot treatment separately. The tagline "Every chore, organized" stays for now.
+
+212. **A live line under every mascot header, bottom-aligned** (Lukas's call 2026-11-01). Bottom
+     alignment only looked right with a caption, and only Shopping and Cooking had one, so every
+     tab now gets one short status line — data when there is some, a plain sentence when there
+     isn't, no emoji: Shopping keeps "{x} of {y} done" ("Nothing on the list" when empty);
+     Cooking shows today's meals ("Today: Lasagne" · "2 meals today" · "Nothing planned today"),
+     replacing the month label the date strip already made redundant (`MealWeek.monthLabel` is
+     gone); Tasks shows what's due ("3 overdue · 2 today"), counted from `getTaskList`'s own
+     sections via `countDue`, read once in `tasks/+layout.server.ts` so History's header says the
+     same; Expenses shows this month's spending (`spentThisMonth`, settle-ups excluded) rather
+     than the balance, which the card right below already shows. Fixed taglines were rejected
+     (read once, then noise, and Shopping would lose its count), and so were rotating or
+     time-of-day lines (only Cooking has a natural time hook, and both languages would need a
+     pool of quips). The mascot's warmth lives in the empty-state sentences instead.
+
+213. **Home's raccoon sits on the first card, and follows the next chore** (Lukas's call
+     2026-11-01). One raccoon, always in the same place: its upper body right of the greeting, the
+     flat-cut waist tucked 2px behind the first card so it reads as sitting on it; the header
+     grows to 180px for it and the greeting stands on the same line. With a next-chore card
+     (always the first card when there is one) it is the reminder pose made for that edge
+     (`design/Haushaltsheld_2_TopCard_Reminder_Raccoons/`): a bell while the chore is coming up
+     or due today, an alarm clock once it's overdue. Without one it is greeting pose A or B,
+     chosen by the household's date (A on even days), not at random: the same all day, no
+     hydration mismatch, and deterministic screenshots. The next-chore card itself is
+     unchanged. Tried and dropped on the way: a standing raccoon floated inside the card, then
+     standing beside a narrowed card (which needed a rearranged card and had to hide at 125%
+     text); the full-height reminder poses in `design/Haushaltsheld_4_Reminder_Raccoons/` stay
+     there unused.
+
+214. **Home's avatars move under the greeting, in a pill** (Lukas's mock 2026-11-01). The
+     top-right corner held the avatar stack and left the raccoon squeezed beneath it; now the
+     greeting, then the household's faces (28px, rings cut from `--card`) in a card-surface
+     pill with a chevron, all on the left, and the raccoon (136px) has the whole right side
+     down to the first card. The pill reads as the button it always was (→ #57: the faces are
+     the door to Settings); its accessible name is unchanged.
+
+215. **Raccoon masters live in `artwork/raccoon/`, only the ones used, and ship as AVIF**
+     (Lukas's call 2026-11-01). `design/` is mockups; the asset packs that were dropped there
+     (three folders, ~21 MB, most of it poses and references the app doesn't show) moved out of
+     the repo, and the eleven masters the app does use went to `artwork/raccoon/`, renamed after
+     what they are, trimmed and losslessly recompressed (8.7 → 3.4 MB of git history). Never
+     shipped: `.dockerignore` keeps them out of the image, and `npm run icons` is the only thing
+     that reads them. Outputs: the mascots as AVIF at quality 60 (10–25 KB each, half of WebP,
+     no visible difference at 3× display size) — one format rather than a `<picture>` with a
+     WebP fallback, since the service worker precaches every built asset and would download
+     both; AVIF needs Safari 16+, and the art is decorative, so an older browser loses nothing
+     it needs. The icons became 256-colour palette PNGs (the 512px pair from 324 KB to ~100
+     KB), again because the service worker precaches them. The script writes
+     `src/lib/assets/mascot/index.ts` with every file's pixel size, and `ui/Mascot` renders
+     from it with both `width` and `height` set, so a title beside a raccoon no longer jumps
+     sideways when the image arrives; it also clears files that left the list, so a stray
+     never ships.
+
+216. **Home's raccoon knows the day** (Lukas's call 2026-11-02). Seven more poses
+     (`design/More_Racoons/`, moved to `artwork/raccoon/` and the folder removed, like #215 — trimmed and stored as
+     256-colour palette PNGs like the masters already there, 2 MB → ~0.5 MB each):
+     birthday, Christmas, New Year, Easter, Halloween, Valentine's Day, sleeping. One pure
+     function, `lib/utils/raccoon.ts`, picks the pose; first match wins: **your birthday →
+     special day → the reminder pose → asleep 22:00–05:00 → welcome A/B**. A special day beats
+     the reminder (Lukas's pick) because the card under the raccoon still names the chore, and
+     the raccoon is the only thing on the screen that can say what day it is; the reminder
+     beats bedtime because a late chore is still late at 23:00. Days: Christmas is the 24th
+     and 25th as Lukas named them (not Stefanitag); New Year is the 31st and the 1st; Easter is
+     Sunday and Monday, from `utils/holidays.ts`'s `easterSunday`. The server picks it in
+     `services/home.ts` from the same `hourIn` reading the greeting uses, so "Good evening" and
+     the sleeping pose can't disagree at 22:00 and the browser renders what the server did.
+     Your **birthday** is a new optional `members.birthday`, `MM-DD`: day and month only
+     (Lukas's pick), so no age is stored. It is edited in the profile sheet as two selects
+     (days follow the month; "–" in both clears it; one without the other is refused, with the
+     reason under the field), shown as a row under Account, and never sent to housemates
+     (`listMembers` doesn't select it). 29 February counts on the 28th in other years. The
+     poses are AVIF at 3× 136px (20–26 KB each). The service worker precaches all of them
+     (~150 KB more on install). Leaving the seasonal ones out of the precache would save that,
+     but then they'd be missing offline on exactly the day they show.
+
+217. **Settings has two raccoons, perched like Home's** (Lukas's call 2026-11-02). A raccoon
+     with a wrench sits on the profile card's top edge at the right (120px); one with a bundle
+     on a stick sits on the sign-out / leave group (104px) — the way out. Both stand in a box
+     as tall as they are, positioned 2px past its bottom, and the card after them is lifted
+     above so the flat-cut waist reads as sitting on the card (the technique of #213). The
+     SubHeader gets right padding as wide as the raccoon, so at 200% text "Einstellungen"
+     wraps beside it instead of running under it.
+218. **Perched raccoons are cut flat, and a test says so** (Lukas's report 2026-11-02). The
+     nine poses of #216/#217 came with round bellies, so on a card's straight edge they looked
+     propped on a curve instead of sitting. Each master was cut straight 90–130px (7–11%) above
+     its bottom, where the curve starts, rather than regenerated: same art, no new prompt, and
+     the raccoon comes out about 10% wider at the same height (Settings' header padding went
+     104 → 116px to match). `tests/conventions/mascot-perch.test.ts` reads every perched AVIF
+     and compares the width just above the cut with the width 3% higher: rounded measured
+     0.43–0.68, flat 0.87 and up, the bar is 0.8. Title raccoons and `head` stand beside text,
+     not on a card, and are left out — `tasks`' clipboard hangs below its cut on purpose.
+219. **Home's everyday raccoon follows the season and the time of day** (Lukas's call
+     2026-11-02). Nine more poses replace "welcome A on even days, B on odd" when no birthday,
+     special day, chore or bedtime applies. Each pose has its own months rather than a hard
+     warm/cold split: the beach and the snow only in the three hottest (Jun–Aug) and coldest
+     (Dec–Feb), gardening (Apr–Oct, the sun-hat one May–Aug), fishing (May–Sep), the scarf and
+     mug (Nov–Mar) and tea (Oct–Apr) reaching into the mild months, and reading, sports and both
+     greetings all year — mixed in everywhere, so April and October still have six poses and the
+     greeting stays familiar. Three slots a day (05:00, 11:00, 17:00) take the month's poses in
+     turn from a count of days since 2000-01-01: deterministic, the same for every member and
+     on server and browser, no repeat within a month. The one allowed repeat is across the night
+     into a new month, with the sleeping raccoon in between; ruling it out would make every
+     month depend on the one before. Pure rotation, no "tea in the evening" fitting (Lukas's
+     pick). The masters came "card-ready" but still rounded; trimmed 1–4% to pass #218's test.
+     ~210 KB more precache (about 23 KB a pose).

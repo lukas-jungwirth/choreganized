@@ -22,15 +22,17 @@ import {
 	getExpenseSettings,
 	listLedger,
 	listPeople,
-	personIdFor
+	personIdFor,
+	spentThisMonth
 } from '$lib/server/services/expenses';
 import type { Actions, PageServerLoad } from './$types';
 
 /** How much of the ledger the tab shows before "All activity" [9a]. */
 const RECENT = 20;
 
-export const load: PageServerLoad = (event) => {
+export const load: PageServerLoad = async (event) => {
 	const { householdId, member } = requireMember(event);
+	const { today } = await event.parent();
 
 	const people = listPeople(householdId);
 	const ledger = listLedger(householdId, people);
@@ -40,6 +42,7 @@ export const load: PageServerLoad = (event) => {
 		people,
 		me: personIdFor(householdId, member.id),
 		balances: balancesOf(people, ledger),
+		spentThisMonth: spentThisMonth(ledger, today),
 		recent: ledger.slice(0, RECENT),
 		more: ledger.length > RECENT,
 		currency: settings.currency,

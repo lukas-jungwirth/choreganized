@@ -18,7 +18,7 @@ import config from '../drizzle.config.ts';
 const MIGRATIONS = config.out!;
 const SCHEMA = config.schema as string;
 
-const scratch = mkdtempSync(join(tmpdir(), 'choreganized-migrations-'));
+const scratch = mkdtempSync(join(tmpdir(), 'haushaltsheld-migrations-'));
 const out = join(scratch, 'migrations');
 cpSync(MIGRATIONS, out, { recursive: true });
 

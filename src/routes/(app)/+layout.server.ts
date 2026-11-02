@@ -37,7 +37,9 @@ export const load: LayoutServerLoad = (event) => {
 			displayName: member.displayName,
 			color: member.color,
 			role: member.role,
-			awayUntil: member.awayUntil
+			awayUntil: member.awayUntil,
+			/** Your own only — the profile sheet's, never a housemate's. */
+			birthday: member.birthday
 		},
 		today,
 		/** Drives the Tasks tab badge [4e]; Home reads the same rows for its banner. */
