@@ -14,7 +14,7 @@ sizes). Change a master, re-run, commit both (→ DECISIONS #211, #215).
 | `tasks.png`               | Tasks + History titles                                         |
 | `expenses.png`            | Expenses title                                                 |
 | `head.png`                | login, join, invite link                                       |
-| `welcome-a.png` / `-b`    | Home greeting, A on even days, B on odd (→ `utils/raccoon`)    |
+| `welcome-a.png` / `-b`    | Home, everyday, all year (→ `utils/raccoon`)                   |
 | `reminder-upcoming.png`   | Home, on the next-chore card while it's coming up              |
 | `reminder-overdue.png`    | Home, on the next-chore card once it's overdue                 |
 | `birthday.png`            | Home, on your birthday (set in your profile)                   |
@@ -24,6 +24,15 @@ sizes). Change a master, re-run, commit both (→ DECISIONS #211, #215).
 | `halloween.png`           | Home, 31 October                                               |
 | `valentines.png`          | Home, 14 February                                              |
 | `sleeping.png`            | Home, 22:00–05:00 on an ordinary day without a chore on you    |
+| `beach.png`               | Home, everyday, Jun–Aug                                        |
+| `summer-garden.png`       | Home, everyday, May–Aug                                        |
+| `garden.png`              | Home, everyday, Apr–Oct                                        |
+| `fishing.png`             | Home, everyday, May–Sep                                        |
+| `snow.png`                | Home, everyday, Dec–Feb                                        |
+| `cold.png`                | Home, everyday, Nov–Mar                                        |
+| `tea.png`                 | Home, everyday, Oct–Apr                                        |
+| `reading.png`             | Home, everyday, all year                                       |
+| `sports.png`              | Home, everyday, all year                                       |
 | `settings.png`            | Settings, on the profile card                                  |
 | `move-out.png`            | Settings, on the sign-out / leave group                        |
 
