@@ -106,12 +106,19 @@ Top: household name (small caps), "Good {morning|afternoon|evening}, {name}", an
 greeting the stacked member avatars in a pill with a chevron — the way into Settings
 ([DECISIONS #214](DECISIONS.md)). Then, in order:
 
-**The raccoon** ([DECISIONS #213](DECISIONS.md)) sits on the first card's top edge, right of
-the greeting — its upper body, so it reads as peeking over the card. With a next-chore card it is
-the reminder pose on that card: ringing a bell while the chore is coming up or due today,
-holding an alarm clock once it's overdue. Without one it greets you: waving (pose A) or winking
-with a thumbs-up (pose B) — the pose changes with the household's date (A on even days), so it
-is the same all day and different tomorrow.
+**The raccoon** ([DECISIONS #213](DECISIONS.md), [#216](DECISIONS.md)) sits on the first card's
+top edge, right of the greeting — its upper body, so it reads as peeking over the card. Which
+pose, first match wins, top to bottom (`lib/utils/raccoon.ts`, by the household's date and hour):
+
+- **Your birthday** (if you gave one, → §6): party hat and cupcake. A 29 February birthday
+  shows on the 28th in other years.
+- **A special day**: Christmas (24–25 Dec), New Year (31 Dec – 1 Jan), Easter (Sunday and
+  Monday), Halloween (31 Oct), Valentine's Day (14 Feb).
+- **A next-chore card**: the reminder pose on that card — ringing a bell while the chore is
+  coming up or due today, holding an alarm clock once it's overdue.
+- **22:00–05:00**: asleep, under a starry blanket.
+- Otherwise it greets you: waving (pose A) or winking with a thumbs-up (pose B) — A on even
+  days of the month, so it is the same all day and different tomorrow.
 
 1. **Next chore card** — the one chore that's on the current user next: the soonest task
    assigned to them or to Anyone (never a housemate's) that is already overdue or due within
@@ -776,8 +783,12 @@ The **History** tab is a stats landing; the full feed sits one level below it (�
 
 ## 6. Settings [6a]
 
-- Profile card: avatar, display name, email + **Edit**.
-- **Account**: Display name, Your colour (palette picker; taken colours disabled), **Language**
+- Profile card: avatar, display name, email + **Edit**. A raccoon with a wrench sits on its top
+  edge at the right, the way Home's sits on its first card; the title wraps rather than run
+  under it ([DECISIONS #217](DECISIONS.md)).
+- **Account**: Display name, Your colour (palette picker; taken colours disabled), **Birthday**
+  (optional; day and month, no year — two selects in the profile sheet, "–" in both clears it,
+  one without the other is refused; its only use is Home's birthday raccoon), **Language**
   (→ §9), **Appearance** (→ §10). (No password row in v1 — Google only.)
 - **Notifications**: Task reminders · Overdue nudges · Shopping list updates · Shop closing days
   (→ §3.6) — toggles per member, so they follow the person between devices, under a caption
@@ -831,7 +842,8 @@ The **History** tab is a stats landing; the full feed sits one level below it (�
   — the build a report will name, `dev` outside a container
   (→ [DECISIONS #137](DECISIONS.md)); tap it to copy, confirmed by the value swapping to "Copied"
   for two seconds (→ [DECISIONS #145](DECISIONS.md)).
-- **Sign out** · **Leave household** (danger, confirm [6d]: "You'll lose access to the shared
+- **Sign out** · **Leave household**, with a raccoon carrying its bundle on a stick perched on
+  the group's top edge at the right (DECISIONS #217) (danger, confirm [6d]: "You'll lose access to the shared
   shopping list, tasks and meal plan. Your points stay with the household.").
 
 ## 7. Members [6b, 6c]

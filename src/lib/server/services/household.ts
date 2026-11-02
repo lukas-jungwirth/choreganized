@@ -16,6 +16,7 @@
 import { and, asc, eq, inArray, isNull, ne, or, sql } from 'drizzle-orm';
 import type { Locale } from '$lib/i18n';
 import { isMemberColor } from '$lib/member-colors';
+import { isBirthday } from '$lib/utils/birthday';
 import { toCalendarDate, type CalendarDate } from '$lib/utils/dates';
 import type { RecipeWording } from '$lib/utils/wording';
 import {
@@ -368,10 +369,15 @@ export function listMemberProfiles(householdId: string, timezone: string): Membe
 		.map(({ joinedAt, ...member }) => ({ ...member, joined: toCalendarDate(joinedAt, timezone) }));
 }
 
-export type ProfileInput = { displayName: string; color: string };
+export type ProfileInput = {
+	displayName: string;
+	color: string;
+	/** `MM-DD`, `null` to clear; left out, it stays as it was. */
+	birthday?: string | null;
+};
 
 /**
- * Name and colour [6a] — always your own membership, never someone else's, so
+ * Name, colour and birthday [6a] — always your own membership, never someone else's, so
  * there is no role check to make: the caller passes the id `requireMember` gave
  * it. Colours are the household's scarce resource, so a clash is rejected the
  * same way onboarding rejects it (SPEC §1.5).
@@ -392,9 +398,15 @@ export function updateProfile(householdId: string, memberId: string, input: Prof
 
 		if (taken.includes(color)) throw new HouseholdError('color-taken');
 
+		// Anything that isn't a real day of the year keeps what was there.
+		const birthday =
+			input.birthday === undefined || (input.birthday !== null && !isBirthday(input.birthday))
+				? member.birthday
+				: input.birthday;
+
 		return tx
 			.update(members)
-			.set({ displayName, color })
+			.set({ displayName, color, birthday })
 			.where(and(eq(members.id, memberId), eq(members.householdId, householdId)))
 			.returning()
 			.get();

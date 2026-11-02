@@ -8,6 +8,15 @@ import welcomeA from './welcome-a.avif';
 import welcomeB from './welcome-b.avif';
 import reminderUpcoming from './reminder-upcoming.avif';
 import reminderOverdue from './reminder-overdue.avif';
+import birthday from './birthday.avif';
+import christmas from './christmas.avif';
+import newYear from './new-year.avif';
+import easter from './easter.avif';
+import halloween from './halloween.avif';
+import valentines from './valentines.avif';
+import sleeping from './sleeping.avif';
+import settings from './settings.avif';
+import moveOut from './move-out.avif';
 
 /** Each raccoon and its pixel size, so `ui/Mascot` can reserve its box before it loads. */
 export const MASCOTS = {
@@ -19,7 +28,16 @@ export const MASCOTS = {
 	'welcome-a': { src: welcomeA, width: 488, height: 408 },
 	'welcome-b': { src: welcomeB, width: 438, height: 408 },
 	'reminder-upcoming': { src: reminderUpcoming, width: 413, height: 408 },
-	'reminder-overdue': { src: reminderOverdue, width: 467, height: 408 }
+	'reminder-overdue': { src: reminderOverdue, width: 467, height: 408 },
+	birthday: { src: birthday, width: 314, height: 408 },
+	christmas: { src: christmas, width: 381, height: 408 },
+	'new-year': { src: newYear, width: 388, height: 408 },
+	easter: { src: easter, width: 340, height: 408 },
+	halloween: { src: halloween, width: 360, height: 408 },
+	valentines: { src: valentines, width: 347, height: 408 },
+	sleeping: { src: sleeping, width: 392, height: 408 },
+	settings: { src: settings, width: 288, height: 360 },
+	'move-out': { src: moveOut, width: 289, height: 312 }
 } as const;
 
 export type MascotName = keyof typeof MASCOTS;

@@ -250,6 +250,26 @@ export function formatMonthName(date: CalendarDate, today: CalendarDate, locale:
 }
 
 /**
+ * A birthday (`MM-DD`, no year) by name — "March 14" / "14. März". Laid on
+ * 2000, a leap year, so 29 February has a day to stand on.
+ */
+export function formatBirthday(birthday: string, locale: Locale): string {
+	return formatter(`birthday|${locale}`, INTL_LOCALE[locale], {
+		timeZone: 'UTC',
+		month: 'long',
+		day: 'numeric'
+	}).format(atUtcMidnight(`2000-${birthday}`));
+}
+
+/** A month of the year (1–12) by name — "March" / "März", the birthday picker's. */
+export function formatMonthOfYear(month: number, locale: Locale): string {
+	return formatter(`month-of-year|${locale}`, INTL_LOCALE[locale], {
+		timeZone: 'UTC',
+		month: 'long'
+	}).format(atUtcMidnight(`2000-${String(month).padStart(2, '0')}-01`));
+}
+
+/**
  * Whether a date carries its year when written out: it doesn't while it's in
  * the year we're living in, and does the moment it isn't. "Jul 14" a year out
  * would be a lie by omission; "Jul 14 2026" all summer would be noise.

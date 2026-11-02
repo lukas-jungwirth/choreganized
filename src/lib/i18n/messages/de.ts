@@ -21,7 +21,9 @@ import {
 	dayOfMonth,
 	daysBetween,
 	formatDayStamp,
+	formatBirthday,
 	formatMonthName,
+	formatMonthOfYear,
 	formatMonthRange,
 	formatShortDate,
 	formatWeekday,
@@ -174,6 +176,9 @@ export const de: Messages = {
 		dayOfMonth: (date: CalendarDate) => dayOfMonth(date),
 		monthRange: (from: CalendarDate, to: CalendarDate) => formatMonthRange(from, to, L),
 		monthName: (date: CalendarDate, today: CalendarDate) => formatMonthName(date, today, L),
+		/** "14. März". */
+		birthday: (birthday: string) => formatBirthday(birthday, L),
+		monthOfYear: (month: number) => formatMonthOfYear(month, L),
 
 		dayLabel: (date: CalendarDate, today: CalendarDate) => {
 			const days = daysBetween(today, date);
@@ -1400,6 +1405,8 @@ export const de: Messages = {
 
 		displayName: 'Anzeigename',
 		members: 'Mitglieder',
+		birthday: 'Geburtstag',
+		birthdayNotSet: 'Nicht angegeben',
 
 		language: {
 			row: 'Sprache',
@@ -1448,7 +1455,12 @@ export const de: Messages = {
 
 		profile: {
 			title: 'Dein Profil',
-			eyebrow: 'Konto'
+			eyebrow: 'Konto',
+			birthdayDay: 'Tag',
+			birthdayMonth: 'Monat',
+			birthdayNone: '–',
+			birthdayNote:
+				'Freiwillig. Nur Tag und Monat, kein Jahr. An dem Tag wartet auf der Startseite ein Waschbär mit Torte.'
 		},
 
 		householdName: {
@@ -1917,6 +1929,7 @@ export const de: Messages = {
 
 		displayName: 'Sag uns, wie wir dich nennen sollen.',
 		pickColour: 'Wähl eine der Farben.',
+		birthday: 'Wähl einen Tag und einen Monat, die zusammenpassen, oder keins von beiden.',
 		householdName: 'Gib deinem Zuhause einen Namen.',
 		colourTakenJoin: 'Die Farbe hat schon jemand im Haushalt. Nimm eine andere.',
 		ownerOnlyMembers: 'Nur die Besitzer:in kann Mitglieder verwalten.',

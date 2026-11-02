@@ -21,7 +21,8 @@ import {
 	removeMember,
 	renameHousehold,
 	revokeInviteCode,
-	transferOwnership
+	transferOwnership,
+	updateProfile
 } from '$lib/server/services/household';
 import { insertUser, makeHousehold } from '../helpers/db';
 
@@ -197,5 +198,36 @@ describe('leaveHousehold', () => {
 		);
 		assert.deepEqual(leaveHousehold(householdId, owner.id, true), { householdDeleted: true });
 		assert.equal(getHousehold(householdId), undefined);
+	});
+});
+
+describe('updateProfile', () => {
+	it('sets, keeps and clears the birthday, and never takes an impossible one', () => {
+		const { householdId, owner } = makeHousehold();
+		const profile = { displayName: owner.displayName, color: owner.color };
+
+		assert.equal(
+			updateProfile(householdId, owner.id, { ...profile, birthday: '02-29' }).birthday,
+			'02-29'
+		);
+		// Left out — a name-only save from an older tab — it stays.
+		assert.equal(updateProfile(householdId, owner.id, profile).birthday, '02-29');
+		assert.equal(
+			updateProfile(householdId, owner.id, { ...profile, birthday: '02-30' }).birthday,
+			'02-29'
+		);
+		assert.equal(
+			updateProfile(householdId, owner.id, { ...profile, birthday: null }).birthday,
+			null
+		);
+	});
+
+	it('only ever writes your own membership in your own household', () => {
+		const home = makeHousehold();
+		const other = makeHousehold();
+		const profile = { displayName: 'X', color: home.owner.color, birthday: '01-01' };
+
+		assert.throws(() => updateProfile(other.householdId, home.owner.id, profile));
+		assert.equal(listMembers(home.householdId)[0].displayName, 'Owner');
 	});
 });

@@ -34,6 +34,10 @@ test('the sign-in page shows the raccoon where the logo was', async ({ browser }
 
 test('Home shows one raccoon: pointing at your next chore, or greeting you', async ({ page }) => {
 	await page.goto('/home');
+	// Any pose counts towards "one" — a stray seasonal raccoon beside the
+	// greeting would be two. The fixed clock's ordinary June afternoon is never
+	// a special day nor bedtime (→ `utils/raccoon.test.ts` covers those).
+	await expect(page.locator('header img.mascot')).toHaveCount(1);
 	const raccoons = page.locator('img[src*="/welcome-"], img[src*="/reminder-"]');
 	await expect(raccoons).toHaveCount(1);
 
@@ -44,4 +48,15 @@ test('Home shows one raccoon: pointing at your next chore, or greeting you', asy
 		await expect(raccoons).toHaveAttribute('src', /\/welcome-[ab]/);
 	}
 	await expect(raccoons).toHaveAttribute('alt', '');
+});
+
+test('Settings has a raccoon on the profile and one over the ways out', async ({ page }) => {
+	await page.goto('/settings');
+	for (const pose of ['settings', 'move-out']) {
+		const raccoon = page.locator(`img[src*="/${pose}"]`);
+		await expect(raccoon).toHaveCount(1);
+		await raccoon.scrollIntoViewIfNeeded();
+		await expect(raccoon).toBeVisible();
+		await expect(raccoon).toHaveAttribute('alt', '');
+	}
 });
