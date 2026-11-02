@@ -229,6 +229,12 @@ export const members = sqliteTable(
 		 */
 		awayUntil: text('away_until'),
 		/**
+		 * Optional birthday, `MM-DD` — day and month, never a year, so no age is
+		 * kept. Its only reader is Home's raccoon, which brings a cake that day
+		 * (→ `$lib/utils/raccoon`). `02-29` is shown on 28 February otherwise.
+		 */
+		birthday: text('birthday'),
+		/**
 		 * Chosen UI language. NULL — the default — means "whatever this device
 		 * asks for", i.e. fall through to the browser's `Accept-Language`
 		 * (→ `$lib/i18n`, SPEC §6). Stored on the membership rather than in the

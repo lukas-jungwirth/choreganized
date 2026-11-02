@@ -105,7 +105,8 @@ async function badge(size: number): Promise<Buffer> {
 /**
  * The screen mascots — `artwork/raccoon/<name>.png` — and the height to store
  * each at: 3× the tallest it is shown (PageHeader's 88px, Home's 136px, the
- * login head's 90px), so it is sharp on a 3× phone and no bigger.
+ * login head's 90px, Settings' 120px and its exits' 104px), so it is sharp on
+ * a 3× phone and no bigger.
  *
  * AVIF at quality 60: half the bytes of WebP with no difference you can see at
  * that size, and every browser the app supports reads it (Safari 16+). One
@@ -121,7 +122,17 @@ const MASCOTS: Array<[name: string, height: number]> = [
 	['welcome-a', 408],
 	['welcome-b', 408],
 	['reminder-upcoming', 408],
-	['reminder-overdue', 408]
+	['reminder-overdue', 408],
+	// Home's day-dependent poses (→ `$lib/utils/raccoon`), the same 136px.
+	['birthday', 408],
+	['christmas', 408],
+	['new-year', 408],
+	['easter', 408],
+	['halloween', 408],
+	['valentines', 408],
+	['sleeping', 408],
+	['settings', 360],
+	['move-out', 312]
 ];
 
 async function mascot(name: string, height: number) {

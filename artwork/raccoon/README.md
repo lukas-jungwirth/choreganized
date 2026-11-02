@@ -14,9 +14,18 @@ sizes). Change a master, re-run, commit both (→ DECISIONS #211, #215).
 | `tasks.png`               | Tasks + History titles                                         |
 | `expenses.png`            | Expenses title                                                 |
 | `head.png`                | login, join, invite link                                       |
-| `welcome-a.png` / `-b`    | Home greeting, A on even days, B on odd                        |
+| `welcome-a.png` / `-b`    | Home greeting, A on even days, B on odd (→ `utils/raccoon`)    |
 | `reminder-upcoming.png`   | Home, on the next-chore card while it's coming up              |
 | `reminder-overdue.png`    | Home, on the next-chore card once it's overdue                 |
+| `birthday.png`            | Home, on your birthday (set in your profile)                   |
+| `christmas.png`           | Home, 24–25 December                                           |
+| `new-year.png`            | Home, 31 December – 1 January                                  |
+| `easter.png`              | Home, Easter Sunday and Monday                                 |
+| `halloween.png`           | Home, 31 October                                               |
+| `valentines.png`          | Home, 14 February                                              |
+| `sleeping.png`            | Home, 22:00–05:00 on an ordinary day without a chore on you    |
+| `settings.png`            | Settings, on the profile card                                  |
+| `move-out.png`            | Settings, on the sign-out / leave group                        |
 
 Masters are trimmed to the artwork (the app icons keep their 1024² canvas) and losslessly
 recompressed. Poses the app doesn't use don't live in the repo.

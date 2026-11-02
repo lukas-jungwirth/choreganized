@@ -13,8 +13,10 @@
  * way), and `isAway` / `assigneeNotAway`, the two halves of the holiday pause.
  */
 import { and, asc, count, desc, eq, isNull, lte, sql } from 'drizzle-orm';
+import type { MascotName } from '$lib/assets/mascot';
 import { DEFAULT_LOCALE } from '$lib/i18n';
 import { addDays, formatTimeIn, hourIn, type CalendarDate } from '$lib/utils/dates';
+import { homeRaccoon } from '$lib/utils/raccoon';
 import { mealSlotOrder, type MealSlot } from '$lib/utils/meals';
 import type { RecurUnit } from '$lib/utils/tasks';
 import { db } from '../db';
@@ -96,6 +98,8 @@ export type OverdueSummary = {
 
 export type HomeSummary = {
 	greeting: TimeOfDay;
+	/** The raccoon on the first card — the day, the chore, the hour (→ `utils/raccoon`). */
+	raccoon: MascotName;
 	/** Null when this member has nothing of their own coming up (or is away). */
 	nextChore: NextChore | null;
 	dinner: TonightsDinner | null;
@@ -126,10 +130,20 @@ export type HomeContext = {
 
 export function getHomeSummary(householdId: string, context: HomeContext): HomeSummary {
 	const { member, timezone, today } = context;
+	// One reading of the clock for the greeting and the raccoon, so "Good
+	// evening" and the sleeping pose can't straddle 22:00 and disagree.
+	const hour = hourIn(timezone);
+	const next = nextChore(householdId, member, today);
 
 	return {
-		greeting: greetingFor(hourIn(timezone)),
-		nextChore: nextChore(householdId, member, today),
+		greeting: greetingFor(hour),
+		raccoon: homeRaccoon({
+			today,
+			hour,
+			birthday: member.birthday,
+			nextChoreDue: next?.dueDate ?? null
+		}),
+		nextChore: next,
 		dinner: tonightsDinner(householdId, today),
 		shoppingCount: countUnchecked(householdId),
 		tasksDueCount: countDueOrOverdue(householdId, today),

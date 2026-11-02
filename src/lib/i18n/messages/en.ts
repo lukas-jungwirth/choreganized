@@ -21,7 +21,9 @@ import {
 	dayOfMonth,
 	daysBetween,
 	formatDayStamp,
+	formatBirthday,
 	formatMonthName,
+	formatMonthOfYear,
 	formatMonthRange,
 	formatShortDate,
 	formatWeekday,
@@ -236,6 +238,10 @@ export const en = {
 		monthRange: (from: CalendarDate, to: CalendarDate) => formatMonthRange(from, to, L),
 		/** "June" / "June 2025" — what "load more" would reveal [8a]. */
 		monthName: (date: CalendarDate, today: CalendarDate) => formatMonthName(date, today, L),
+		/** "March 14" — a birthday, which has no year (→ `utils/birthday`). */
+		birthday: (birthday: string) => formatBirthday(birthday, L),
+		/** "March" — a month on its own, for the birthday picker. */
+		monthOfYear: (month: number) => formatMonthOfYear(month, L),
 
 		/** How the history feed heads a day: "Today", "Yesterday", "Mon 14 Jul" [8a]. */
 		dayLabel: (date: CalendarDate, today: CalendarDate) => {
@@ -1814,6 +1820,9 @@ export const en = {
 
 		displayName: 'Display name',
 		members: 'Members',
+		/** Optional, day and month (→ `members.birthday`); Home's raccoon is its reader. */
+		birthday: 'Birthday',
+		birthdayNotSet: 'Not set',
 
 		/**
 		 * The language row and the sheet behind it (→ SPEC §6).
@@ -1880,7 +1889,13 @@ export const en = {
 		/** Your profile [6a]. */
 		profile: {
 			title: 'Your profile',
-			eyebrow: 'Account'
+			eyebrow: 'Account',
+			birthdayDay: 'Day',
+			birthdayMonth: 'Month',
+			/** The empty choice in both selects: no birthday. */
+			birthdayNone: '–',
+			birthdayNote:
+				'Optional. Day and month only, no year. On the day, a raccoon with a cake waits on Home.'
 		},
 
 		/** Rename the household [6a] — owner only (→ DECISIONS #10). */
@@ -2453,6 +2468,7 @@ export const en = {
 		/** The two profile fields, wherever they're written. */
 		displayName: 'Tell us what to call you.',
 		pickColour: 'Pick one of the colours.',
+		birthday: 'Pick a day and a month that go together, or neither.',
 		householdName: 'Give your home a name.',
 		colourTakenJoin: 'Someone in the household already has that colour. Pick another.',
 		ownerOnlyMembers: 'Only the owner can manage members.',

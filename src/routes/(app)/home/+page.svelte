@@ -8,9 +8,10 @@
 	the summaries after it, and what the house has already done last.
 
 	One raccoon, sitting on the first card's top edge right of the greeting
-	(→ DECISIONS #213): with a chore on you it is the reminder pose on that
-	card — a bell while it's coming up, an alarm clock once it's late; without
-	one it greets you, pose A or B, a different one each day.
+	(→ DECISIONS #213, #216). The server picks it (`utils/raccoon`): your
+	birthday, then a special day, then the reminder pose for a chore on you (a
+	bell while it's coming up, an alarm clock once it's late), then asleep after
+	22:00, and otherwise a greeting, pose A or B, a different one each day.
 -->
 <script lang="ts">
 	import EnablePush from '$lib/components/EnablePush.svelte';
@@ -30,7 +31,6 @@
 	import Banner from '$lib/components/ui/Banner.svelte';
 	import Mascot from '$lib/components/ui/Mascot.svelte';
 	import { messages } from '$lib/i18n';
-	import { daysBetween } from '$lib/utils/dates';
 	import type { NextChore } from '$lib/server/services/home';
 	import type { CompletionResult, Standing } from '$lib/server/services/tasks';
 	import type { SubmitFunction } from '@sveltejs/kit';
@@ -49,18 +49,6 @@
 	]);
 
 	const names = $derived(stack.map((member) => member.displayName).join(', '));
-
-	// By the household's date, not at random: the same pose all day, and the
-	// page renders the same on the server and in the browser.
-	const raccoon = $derived(
-		data.nextChore
-			? daysBetween(data.today, data.nextChore.dueDate) < 0
-				? 'reminder-overdue'
-				: 'reminder-upcoming'
-			: Number(data.today.slice(8)) % 2 === 0
-				? 'welcome-a'
-				: 'welcome-b'
-	);
 
 	const tasksLabel = $derived(m.home.stats.tasksDue(data.tasksDueCount));
 
@@ -119,7 +107,7 @@
 			<ChevronRight size={18} strokeWidth={2.2} aria-hidden="true" />
 		</a>
 	</div>
-	<Mascot name={raccoon} height={136} class="raccoon" />
+	<Mascot name={data.raccoon} height={136} class="raccoon" />
 </header>
 
 <div class="stack">

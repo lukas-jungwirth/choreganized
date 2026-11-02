@@ -3100,3 +3100,33 @@ units | null, name}`, written back as editor lines in the reader's unit spelling
      from it with both `width` and `height` set, so a title beside a raccoon no longer jumps
      sideways when the image arrives; it also clears files that left the list, so a stray
      never ships.
+
+216. **Home's raccoon knows the day** (Lukas's call 2026-11-02). Seven more poses
+     (`design/More_Racoons/`, moved to `artwork/raccoon/` and the folder removed, like #215 — trimmed and stored as
+     256-colour palette PNGs like the masters already there, 2 MB → ~0.5 MB each):
+     birthday, Christmas, New Year, Easter, Halloween, Valentine's Day, sleeping. One pure
+     function, `lib/utils/raccoon.ts`, picks the pose; first match wins: **your birthday →
+     special day → the reminder pose → asleep 22:00–05:00 → welcome A/B**. A special day beats
+     the reminder (Lukas's pick) because the card under the raccoon still names the chore, and
+     the raccoon is the only thing on the screen that can say what day it is; the reminder
+     beats bedtime because a late chore is still late at 23:00. Days: Christmas is the 24th
+     and 25th as Lukas named them (not Stefanitag); New Year is the 31st and the 1st; Easter is
+     Sunday and Monday, from `utils/holidays.ts`'s `easterSunday`. The server picks it in
+     `services/home.ts` from the same `hourIn` reading the greeting uses, so "Good evening" and
+     the sleeping pose can't disagree at 22:00 and the browser renders what the server did.
+     Your **birthday** is a new optional `members.birthday`, `MM-DD`: day and month only
+     (Lukas's pick), so no age is stored. It is edited in the profile sheet as two selects
+     (days follow the month; "–" in both clears it; one without the other is refused, with the
+     reason under the field), shown as a row under Account, and never sent to housemates
+     (`listMembers` doesn't select it). 29 February counts on the 28th in other years. The
+     poses are AVIF at 3× 136px (20–26 KB each). The service worker precaches all of them
+     (~150 KB more on install). Leaving the seasonal ones out of the precache would save that,
+     but then they'd be missing offline on exactly the day they show.
+
+217. **Settings has two raccoons, perched like Home's** (Lukas's call 2026-11-02). A raccoon
+     with a wrench sits on the profile card's top edge at the right (120px); one with a bundle
+     on a stick sits on the sign-out / leave group (104px) — the way out. Both stand in a box
+     as tall as they are, positioned 2px past its bottom, and the card after them is lifted
+     above so the flat-cut waist reads as sitting on the card (the technique of #213). The
+     SubHeader gets right padding as wide as the raccoon, so at 200% text "Einstellungen"
+     wraps beside it instead of running under it.
