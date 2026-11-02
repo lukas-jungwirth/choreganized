@@ -28,4 +28,6 @@ sizes). Change a master, re-run, commit both (→ DECISIONS #211, #215).
 | `move-out.png`            | Settings, on the sign-out / leave group                        |
 
 Masters are trimmed to the artwork (the app icons keep their 1024² canvas) and losslessly
-recompressed. Poses the app doesn't use don't live in the repo.
+recompressed. A raccoon that sits on a card (Home's poses, Settings') must end in a straight cut
+at the waist: if a new one comes rounded at the bottom, crop it flat where the curve starts —
+`tests/conventions/mascot-perch.test.ts` fails until you do (→ DECISIONS #218). Poses the app doesn't use don't live in the repo.

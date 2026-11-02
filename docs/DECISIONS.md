@@ -3130,3 +3130,12 @@ units | null, name}`, written back as editor lines in the reader's unit spelling
      above so the flat-cut waist reads as sitting on the card (the technique of #213). The
      SubHeader gets right padding as wide as the raccoon, so at 200% text "Einstellungen"
      wraps beside it instead of running under it.
+218. **Perched raccoons are cut flat, and a test says so** (Lukas's report 2026-11-02). The
+     nine poses of #216/#217 came with round bellies, so on a card's straight edge they looked
+     propped on a curve instead of sitting. Each master was cut straight 90–130px (7–11%) above
+     its bottom, where the curve starts, rather than regenerated: same art, no new prompt, and
+     the raccoon comes out about 10% wider at the same height (Settings' header padding went
+     104 → 116px to match). `tests/conventions/mascot-perch.test.ts` reads every perched AVIF
+     and compares the width just above the cut with the width 3% higher: rounded measured
+     0.43–0.68, flat 0.87 and up, the bar is 0.8. Title raccoons and `head` stand beside text,
+     not on a card, and are left out — `tasks`' clipboard hangs below its cut on purpose.

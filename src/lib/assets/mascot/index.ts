@@ -29,15 +29,15 @@ export const MASCOTS = {
 	'welcome-b': { src: welcomeB, width: 438, height: 408 },
 	'reminder-upcoming': { src: reminderUpcoming, width: 413, height: 408 },
 	'reminder-overdue': { src: reminderOverdue, width: 467, height: 408 },
-	birthday: { src: birthday, width: 314, height: 408 },
-	christmas: { src: christmas, width: 381, height: 408 },
-	'new-year': { src: newYear, width: 388, height: 408 },
-	easter: { src: easter, width: 340, height: 408 },
-	halloween: { src: halloween, width: 360, height: 408 },
-	valentines: { src: valentines, width: 347, height: 408 },
-	sleeping: { src: sleeping, width: 392, height: 408 },
-	settings: { src: settings, width: 288, height: 360 },
-	'move-out': { src: moveOut, width: 289, height: 312 }
+	birthday: { src: birthday, width: 348, height: 408 },
+	christmas: { src: christmas, width: 418, height: 408 },
+	'new-year': { src: newYear, width: 425, height: 408 },
+	easter: { src: easter, width: 370, height: 408 },
+	halloween: { src: halloween, width: 388, height: 408 },
+	valentines: { src: valentines, width: 384, height: 408 },
+	sleeping: { src: sleeping, width: 426, height: 408 },
+	settings: { src: settings, width: 320, height: 360 },
+	'move-out': { src: moveOut, width: 320, height: 312 }
 } as const;
 
 export type MascotName = keyof typeof MASCOTS;
