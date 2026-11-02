@@ -8,10 +8,11 @@
 	the summaries after it, and what the house has already done last.
 
 	One raccoon, sitting on the first card's top edge right of the greeting
-	(→ DECISIONS #213, #216). The server picks it (`utils/raccoon`): your
+	(→ DECISIONS #213, #216, #219). The server picks it (`utils/raccoon`): your
 	birthday, then a special day, then the reminder pose for a chore on you (a
 	bell while it's coming up, an alarm clock once it's late), then asleep after
-	22:00, and otherwise a greeting, pose A or B, a different one each day.
+	22:00, and otherwise an everyday pose that fits the month, a new one each
+	morning, afternoon and evening.
 -->
 <script lang="ts">
 	import EnablePush from '$lib/components/EnablePush.svelte';

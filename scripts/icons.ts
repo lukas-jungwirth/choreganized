@@ -131,6 +131,16 @@ const MASCOTS: Array<[name: string, height: number]> = [
 	['halloween', 408],
 	['valentines', 408],
 	['sleeping', 408],
+	// …and the everyday ones it rotates through, by month and time of day.
+	['beach', 408],
+	['summer-garden', 408],
+	['garden', 408],
+	['fishing', 408],
+	['snow', 408],
+	['cold', 408],
+	['tea', 408],
+	['reading', 408],
+	['sports', 408],
 	['settings', 360],
 	['move-out', 312]
 ];

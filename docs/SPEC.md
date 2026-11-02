@@ -106,7 +106,7 @@ Top: household name (small caps), "Good {morning|afternoon|evening}, {name}", an
 greeting the stacked member avatars in a pill with a chevron — the way into Settings
 ([DECISIONS #214](DECISIONS.md)). Then, in order:
 
-**The raccoon** ([DECISIONS #213](DECISIONS.md), [#216](DECISIONS.md)) sits on the first card's
+**The raccoon** ([DECISIONS #213](DECISIONS.md), [#216](DECISIONS.md), [#219](DECISIONS.md)) sits on the first card's
 top edge, right of the greeting — its upper body, so it reads as peeking over the card. Which
 pose, first match wins, top to bottom (`lib/utils/raccoon.ts`, by the household's date and hour):
 
@@ -117,8 +117,13 @@ pose, first match wins, top to bottom (`lib/utils/raccoon.ts`, by the household'
 - **A next-chore card**: the reminder pose on that card — ringing a bell while the chore is
   coming up or due today, holding an alarm clock once it's overdue.
 - **22:00–05:00**: asleep, under a starry blanket.
-- Otherwise it greets you: waving (pose A) or winking with a thumbs-up (pose B) — A on even
-  days of the month, so it is the same all day and different tomorrow.
+- Otherwise an **everyday pose** ([DECISIONS #219](DECISIONS.md)), from the ones that fit the
+  month: at the beach (Jun–Aug), gardening in a sun hat (May–Aug), gardening (Apr–Oct),
+  fishing (May–Sep), in the snow (Dec–Feb), wrapped up with a hot drink (Nov–Mar), with a cup
+  of tea (Oct–Apr), and all year reading, with a dumbbell, waving (welcome A) or winking with a
+  thumbs-up (welcome B). The day has three slots — from 05:00, 11:00 and 17:00 — and each
+  takes the next pose in turn, so it holds still within a slot, never repeats back to back
+  within a month, and every pose comes round within three days. Every member sees the same one.
 
 1. **Next chore card** — the one chore that's on the current user next: the soonest task
    assigned to them or to Anyone (never a housemate's) that is already overdue or due within

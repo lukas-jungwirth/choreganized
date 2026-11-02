@@ -3139,3 +3139,17 @@ units | null, name}`, written back as editor lines in the reader's unit spelling
      and compares the width just above the cut with the width 3% higher: rounded measured
      0.43–0.68, flat 0.87 and up, the bar is 0.8. Title raccoons and `head` stand beside text,
      not on a card, and are left out — `tasks`' clipboard hangs below its cut on purpose.
+219. **Home's everyday raccoon follows the season and the time of day** (Lukas's call
+     2026-11-02). Nine more poses replace "welcome A on even days, B on odd" when no birthday,
+     special day, chore or bedtime applies. Each pose has its own months rather than a hard
+     warm/cold split: the beach and the snow only in the three hottest (Jun–Aug) and coldest
+     (Dec–Feb), gardening (Apr–Oct, the sun-hat one May–Aug), fishing (May–Sep), the scarf and
+     mug (Nov–Mar) and tea (Oct–Apr) reaching into the mild months, and reading, sports and both
+     greetings all year — mixed in everywhere, so April and October still have six poses and the
+     greeting stays familiar. Three slots a day (05:00, 11:00, 17:00) take the month's poses in
+     turn from a count of days since 2000-01-01: deterministic, the same for every member and
+     on server and browser, no repeat within a month. The one allowed repeat is across the night
+     into a new month, with the sleeping raccoon in between; ruling it out would make every
+     month depend on the one before. Pure rotation, no "tea in the evening" fitting (Lukas's
+     pick). The masters came "card-ready" but still rounded; trimmed 1–4% to pass #218's test.
+     ~210 KB more precache (about 23 KB a pose).

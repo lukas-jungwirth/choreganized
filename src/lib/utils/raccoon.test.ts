@@ -7,7 +7,8 @@
 import assert from 'node:assert/strict';
 import { describe, it } from 'vitest';
 import { birthdayFrom, isBirthday, isBirthdayOn } from './birthday.ts';
-import { homeRaccoon, specialDay } from './raccoon.ts';
+import { addDays } from './dates.ts';
+import { everydayRaccoon, homeRaccoon, specialDay } from './raccoon.ts';
 
 /** An ordinary afternoon with nothing on: the baseline every case varies. */
 const plain = { today: '2036-06-18', hour: 14, birthday: null, nextChoreDue: null };
@@ -94,9 +95,8 @@ describe('specialDay', () => {
 });
 
 describe('homeRaccoon', () => {
-	it('greets with A on even days and B on odd ones', () => {
-		assert.equal(homeRaccoon(plain), 'welcome-a');
-		assert.equal(homeRaccoon({ ...plain, today: '2036-06-19' }), 'welcome-b');
+	it('on an ordinary afternoon, shows an everyday pose', () => {
+		assert.equal(homeRaccoon(plain), everydayRaccoon(plain.today, plain.hour));
 	});
 
 	it('follows the next chore: a bell before it is due, the alarm once late', () => {
@@ -106,12 +106,12 @@ describe('homeRaccoon', () => {
 	});
 
 	it('sleeps from 22:00 until 05:00', () => {
-		assert.equal(homeRaccoon({ ...plain, hour: 21 }), 'welcome-a');
+		assert.notEqual(homeRaccoon({ ...plain, hour: 21 }), 'sleeping');
 		assert.equal(homeRaccoon({ ...plain, hour: 22 }), 'sleeping');
 		assert.equal(homeRaccoon({ ...plain, hour: 23 }), 'sleeping');
 		assert.equal(homeRaccoon({ ...plain, hour: 0 }), 'sleeping');
 		assert.equal(homeRaccoon({ ...plain, hour: 4 }), 'sleeping');
-		assert.equal(homeRaccoon({ ...plain, hour: 5 }), 'welcome-a');
+		assert.notEqual(homeRaccoon({ ...plain, hour: 5 }), 'sleeping');
 	});
 
 	it('stays awake for a chore on you, even at night', () => {
@@ -136,6 +136,102 @@ describe('homeRaccoon', () => {
 			'birthday'
 		);
 		// Someone else's day is just a day.
-		assert.equal(homeRaccoon({ ...plain, birthday: '06-19' }), 'welcome-a');
+		assert.notEqual(homeRaccoon({ ...plain, birthday: '06-19' }), 'birthday');
+	});
+});
+
+/** Every pose `everydayRaccoon` shows on `today`'s month: three slots a day for a week covers it. */
+function posesIn(month: string): Set<string> {
+	const seen = new Set<string>();
+	for (let day = 0; day < 7; day++) {
+		for (const hour of [8, 14, 20])
+			seen.add(everydayRaccoon(addDays(`2036-${month}-01`, day), hour));
+	}
+	return seen;
+}
+
+describe('everydayRaccoon', () => {
+	it('keeps the beach to summer and the snow to winter', () => {
+		assert.deepEqual([...posesIn('07')].sort(), [
+			'beach',
+			'fishing',
+			'garden',
+			'reading',
+			'sports',
+			'summer-garden',
+			'welcome-a',
+			'welcome-b'
+		]);
+		assert.deepEqual([...posesIn('01')].sort(), [
+			'cold',
+			'reading',
+			'snow',
+			'sports',
+			'tea',
+			'welcome-a',
+			'welcome-b'
+		]);
+	});
+
+	it('gives the months between seasons the mild poses and the all-year ones', () => {
+		assert.deepEqual([...posesIn('04')].sort(), [
+			'garden',
+			'reading',
+			'sports',
+			'tea',
+			'welcome-a',
+			'welcome-b'
+		]);
+		assert.deepEqual([...posesIn('10')].sort(), [
+			'garden',
+			'reading',
+			'sports',
+			'tea',
+			'welcome-a',
+			'welcome-b'
+		]);
+	});
+
+	it('changes at 11:00 and 17:00, and holds still in between', () => {
+		const day = '2036-06-18';
+		assert.equal(everydayRaccoon(day, 5), everydayRaccoon(day, 10));
+		assert.notEqual(everydayRaccoon(day, 10), everydayRaccoon(day, 11));
+		assert.equal(everydayRaccoon(day, 11), everydayRaccoon(day, 16));
+		assert.notEqual(everydayRaccoon(day, 16), everydayRaccoon(day, 17));
+		assert.equal(everydayRaccoon(day, 17), everydayRaccoon(day, 21));
+	});
+
+	it('never shows the same pose twice in a row, all year', () => {
+		let previous = '';
+		let date = '2036-01-01';
+		for (let day = 0; day < 366 * 2; day++, date = addDays(date, 1)) {
+			for (const hour of [8, 14, 20]) {
+				const pose = everydayRaccoon(date, hour);
+				// The one exception: a new month's pool can bring back last
+				// night's pose on the 1st, with the sleeping raccoon in between.
+				const newMonth = date.endsWith('-01') && hour === 8;
+				if (!newMonth) assert.notEqual(pose, previous, `${date} ${hour}:00`);
+				previous = pose;
+			}
+		}
+	});
+
+	it('never puts look-alikes next to each other, in any month', () => {
+		const lookAlikes = [
+			['welcome-a', 'welcome-b'],
+			['garden', 'summer-garden'],
+			['cold', 'tea']
+		];
+		let previous = '';
+		let date = '2036-01-01';
+		for (let day = 0; day < 366; day++, date = addDays(date, 1)) {
+			for (const hour of [8, 14, 20]) {
+				const pose = everydayRaccoon(date, hour);
+				const newMonth = date.endsWith('-01') && hour === 8;
+				const pair = lookAlikes.find((p) => p.includes(pose) && p.includes(previous));
+				if (!newMonth) assert.equal(pair, undefined, `${date} ${hour}:00: ${previous} → ${pose}`);
+				previous = pose;
+			}
+		}
 	});
 });

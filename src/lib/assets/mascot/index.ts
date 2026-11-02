@@ -15,6 +15,15 @@ import easter from './easter.avif';
 import halloween from './halloween.avif';
 import valentines from './valentines.avif';
 import sleeping from './sleeping.avif';
+import beach from './beach.avif';
+import summerGarden from './summer-garden.avif';
+import garden from './garden.avif';
+import fishing from './fishing.avif';
+import snow from './snow.avif';
+import cold from './cold.avif';
+import tea from './tea.avif';
+import reading from './reading.avif';
+import sports from './sports.avif';
 import settings from './settings.avif';
 import moveOut from './move-out.avif';
 
@@ -36,6 +45,15 @@ export const MASCOTS = {
 	halloween: { src: halloween, width: 388, height: 408 },
 	valentines: { src: valentines, width: 384, height: 408 },
 	sleeping: { src: sleeping, width: 426, height: 408 },
+	beach: { src: beach, width: 370, height: 408 },
+	'summer-garden': { src: summerGarden, width: 359, height: 408 },
+	garden: { src: garden, width: 371, height: 408 },
+	fishing: { src: fishing, width: 395, height: 408 },
+	snow: { src: snow, width: 384, height: 408 },
+	cold: { src: cold, width: 336, height: 408 },
+	tea: { src: tea, width: 314, height: 408 },
+	reading: { src: reading, width: 343, height: 408 },
+	sports: { src: sports, width: 387, height: 408 },
 	settings: { src: settings, width: 320, height: 360 },
 	'move-out': { src: moveOut, width: 320, height: 312 }
 } as const;

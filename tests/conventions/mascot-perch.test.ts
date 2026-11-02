@@ -30,6 +30,15 @@ const PERCHED: MascotName[] = [
 	'halloween',
 	'valentines',
 	'sleeping',
+	'beach',
+	'summer-garden',
+	'garden',
+	'fishing',
+	'snow',
+	'cold',
+	'tea',
+	'reading',
+	'sports',
 	// Settings
 	'settings',
 	'move-out'
