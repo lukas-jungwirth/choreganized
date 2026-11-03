@@ -10,7 +10,13 @@ import { birthdayFrom, isBirthday, isBirthdayOn } from './birthday.ts';
 import { addDays } from './dates.ts';
 import type { MascotName } from '$lib/assets/mascot';
 import { EVERYDAY } from '$lib/assets/mascot/everyday';
-import { everydayRaccoon, homeRaccoon, specialDay } from './raccoon.ts';
+import {
+	everydayRaccoon,
+	HOME_RACCOONS,
+	homeRaccoon,
+	isHomeRaccoon,
+	specialDay
+} from './raccoon.ts';
 
 /** An ordinary afternoon with nothing on: the baseline every case varies. */
 const plain = { today: '2036-06-18', hour: 14, birthday: null, nextChoreDue: null };
@@ -208,5 +214,40 @@ describe('everydayRaccoon', () => {
 				previous = pose;
 			}
 		}
+	});
+});
+
+describe('HOME_RACCOONS', () => {
+	/** Drawn for the tabs, Settings and the login screen; never Home's (→ plan 34). */
+	const SECTIONS = ['shopping', 'cooking', 'tasks', 'expenses', 'head', 'settings', 'move-out'];
+
+	it('holds everything homeRaccoon can return, in any year, at any hour', () => {
+		const seen = new Set<MascotName>();
+		for (let day = 0; day < 366 * 2; day += 1) {
+			const today = addDays('2035-01-01', day);
+			for (let hour = 0; hour < 24; hour += 1) {
+				for (const extra of [
+					{},
+					{ birthday: today.slice(5) },
+					{ nextChoreDue: addDays(today, -1) },
+					{ nextChoreDue: addDays(today, 1) }
+				]) {
+					seen.add(homeRaccoon({ ...plain, today, hour, ...extra }));
+				}
+			}
+		}
+		const missing = [...seen].filter((name) => !HOME_RACCOONS.includes(name));
+		assert.deepEqual(missing, []);
+		// And nothing extra: every listed raccoon really turns up on some day.
+		assert.deepEqual([...HOME_RACCOONS].sort(), [...seen].sort());
+	});
+
+	it('leaves out the section raccoons, so the picker and ?raccoon= never offer them', () => {
+		for (const name of SECTIONS) {
+			assert.equal(HOME_RACCOONS.includes(name as MascotName), false, name);
+			assert.equal(isHomeRaccoon(name), false, name);
+		}
+		assert.equal(isHomeRaccoon('not-a-raccoon'), false);
+		assert.equal(isHomeRaccoon('christmas'), true);
 	});
 });

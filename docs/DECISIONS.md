@@ -3265,3 +3265,14 @@ units | null, name}`, written back as editor lines in the reader's unit spelling
      `SubHeader` [6b], `Card` tiles, a CSS bar per week (sage households over terracotta
      accounts, no chart library for twelve bars), and the households as a `RowGroup` list.
      Only Lukas sees it, so it follows the house style rather than waiting for a frame.
+229. **The admin raccoon picker offers Home's raccoons only, kept apart by code, not by folder**
+     (Lukas 2026-11-03). The section raccoons (shopping, cooking, tasks, expenses, head,
+     settings, move-out) are drawn for their screens, at another quality, and never sit on
+     Home's card, but the picker listed every entry of `MASCOTS`. `HOME_RACCOONS` in
+     `utils/raccoon.ts` is now the list: the situations, the special days and the everyday
+     poses, built from the same constants `homeRaccoon` reads. The picker shows it, and the
+     server takes no other `?raccoon=`. A test runs `homeRaccoon` over every hour of two years
+     and asserts it returns exactly that set. Splitting the art into two folders was weighed
+     and not done: it would be a second record of the same split, one that could drift from
+     the code that really picks, and it would mean changing `scripts/icons.ts`, `/raccoons`, the
+     generated imports and every asset path for no behaviour.

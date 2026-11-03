@@ -1,6 +1,7 @@
 <!--
-	The raccoon picker (→ plan 34, SPEC §12): admin mode only. Every pose the
-	app has, by name, so each one can be checked where Home really puts it.
+	The raccoon picker (→ plan 34, SPEC §12): admin mode only. Every pose Home
+	can show (`HOME_RACCOONS`), by name, so each one can be checked where Home
+	really puts it. The section raccoons aren't Home's and aren't offered.
 
 	Picking is navigation, not state: `?raccoon=<name>` goes back to the server,
 	which applies it only in admin mode (→ `home/+page.server.ts`), so what shows
@@ -9,10 +10,11 @@
 -->
 <script lang="ts">
 	import { goto } from '$app/navigation';
-	import { MASCOTS, type MascotName } from '$lib/assets/mascot';
+	import type { MascotName } from '$lib/assets/mascot';
 	import BottomSheet from '$lib/components/ui/BottomSheet.svelte';
 	import Mascot from '$lib/components/ui/Mascot.svelte';
 	import { messages } from '$lib/i18n';
+	import { HOME_RACCOONS } from '$lib/utils/raccoon';
 
 	type Props = {
 		/** On screen now. */
@@ -27,8 +29,6 @@
 	const m = messages();
 
 	let open = $state(true);
-
-	const names = Object.keys(MASCOTS) as MascotName[];
 
 	$effect(() => {
 		if (!open) onclose();
@@ -51,7 +51,7 @@
 	{/if}
 
 	<ul class="grid">
-		{#each names as name (name)}
+		{#each HOME_RACCOONS as name (name)}
 			<li>
 				<button
 					type="button"
