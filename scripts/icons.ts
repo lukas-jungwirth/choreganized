@@ -16,12 +16,13 @@
  *   static/icons/badge-72.png                            Android status-bar silhouette (alpha-only)
  *   src/lib/assets/mascot/*.avif                         the raccoon art the screens show
  *   src/lib/assets/mascot/index.ts                       their pixel sizes, for `ui/Mascot`
+ *   src/lib/assets/mascot/everyday.ts                    Home's everyday poses + which are perched
  *
  * Standalone by design (like scripts/seed.ts): no $lib/$env virtual modules, so
  * it runs under Node's native TypeScript support without Vite.
  */
 import sharp from 'sharp';
-import { mkdirSync, readdirSync, rmSync, writeFileSync } from 'node:fs';
+import { existsSync, mkdirSync, readFileSync, readdirSync, rmSync, writeFileSync } from 'node:fs';
 import { join, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
@@ -103,47 +104,57 @@ async function badge(size: number): Promise<Buffer> {
 }
 
 /**
- * The screen mascots — `artwork/raccoon/<name>.png` — and the height to store
- * each at: 3× the tallest it is shown (PageHeader's 88px, Home's 136px, the
- * login head's 90px, Settings' 120px and its exits' 104px), so it is sharp on
- * a 3× phone and no bigger.
+ * The screen mascots — `artwork/raccoon/<name>.png` — listed in
+ * `artwork/raccoon/mascots.json` (→ DECISIONS #220), each with the height to
+ * store it at: 3× the tallest it is shown (PageHeader's 88px, Home's 136px,
+ * the login head's 90px, Settings' 120px and its exits' 104px), so it is sharp
+ * on a 3× phone and no bigger. `perched` marks the ones that sit on a card's
+ * top edge (cut flat at the waist, → `tests/conventions/mascot-perch.test.ts`);
+ * `seasons` makes one an everyday pose on Home, in the list's order, and
+ * `lookAlike` names the poses that must never follow each other.
  *
  * AVIF at quality 60: half the bytes of WebP with no difference you can see at
  * that size, and every browser the app supports reads it (Safari 16+). One
  * format, not a <picture> with a fallback, because the service worker precaches
  * every built asset — a second format would be downloaded too, never shown.
  */
-const MASCOTS: Array<[name: string, height: number]> = [
-	['shopping', 264],
-	['cooking', 264],
-	['tasks', 264],
-	['expenses', 264],
-	['head', 270],
-	['welcome-a', 408],
-	['welcome-b', 408],
-	['reminder-upcoming', 408],
-	['reminder-overdue', 408],
-	// Home's day-dependent poses (→ `$lib/utils/raccoon`), the same 136px.
-	['birthday', 408],
-	['christmas', 408],
-	['new-year', 408],
-	['easter', 408],
-	['halloween', 408],
-	['valentines', 408],
-	['sleeping', 408],
-	// …and the everyday ones it rotates through, by month and time of day.
-	['beach', 408],
-	['summer-garden', 408],
-	['garden', 408],
-	['fishing', 408],
-	['snow', 408],
-	['cold', 408],
-	['tea', 408],
-	['reading', 408],
-	['sports', 408],
-	['settings', 360],
-	['move-out', 312]
-];
+type Entry = {
+	name: string;
+	height: number;
+	perched?: boolean;
+	seasons?: string[];
+	lookAlike?: string;
+};
+
+const SEASONS = ['winter', 'spring', 'summer', 'autumn'];
+
+function readMascots(): Entry[] {
+	const { mascots } = JSON.parse(readFileSync(join(ARTWORK, 'mascots.json'), 'utf8')) as {
+		mascots: Entry[];
+	};
+	const seen = new Set<string>();
+	for (const entry of mascots) {
+		const where = `mascots.json: ${entry.name}`;
+		if (!/^[a-z0-9]+(-[a-z0-9]+)*$/.test(entry.name))
+			throw new Error(`${where}: name must be kebab-case`);
+		if (seen.has(entry.name)) throw new Error(`${where}: listed twice`);
+		seen.add(entry.name);
+		if (!existsSync(join(ARTWORK, `${entry.name}.png`)))
+			throw new Error(`${where}: no ${entry.name}.png`);
+		if (!Number.isInteger(entry.height) || entry.height <= 0) throw new Error(`${where}: height`);
+		if (entry.seasons) {
+			if (!entry.perched)
+				throw new Error(`${where}: an everyday pose sits on Home's card, so it is perched`);
+			if (entry.seasons.length === 0 || entry.seasons.some((season) => !SEASONS.includes(season)))
+				throw new Error(`${where}: seasons are ${SEASONS.join(', ')}`);
+		}
+		if (entry.lookAlike && !entry.seasons)
+			throw new Error(`${where}: lookAlike only means something for an everyday pose`);
+	}
+	return mascots;
+}
+
+const MASCOTS = readMascots();
 
 async function mascot(name: string, height: number) {
 	return sharp(join(ARTWORK, `${name}.png`))
@@ -182,7 +193,7 @@ async function main() {
 	for (const file of readdirSync(MASCOT_DIR)) rmSync(join(MASCOT_DIR, file));
 
 	const sizes: string[] = [];
-	for (const [name, height] of MASCOTS) {
+	for (const { name, height } of MASCOTS) {
 		const { data, info } = await mascot(name, height);
 		writeFileSync(join(MASCOT_DIR, `${name}.avif`), data);
 		sizes.push(`${name}|${info.width}|${info.height}`);
@@ -211,7 +222,44 @@ async function main() {
 	);
 	console.log('  src/lib/assets/mascot/index.ts');
 
-	console.log(`\nGenerated ${icons.length + MASCOTS.length + 1} file(s) from artwork/raccoon/`);
+	// The rest of the list, without the images, for code that only needs names:
+	// Home's picker and the tests import this without pulling in every AVIF.
+	const quote = (value: string) => `'${value}'`;
+	const everyday = MASCOTS.filter((entry) => entry.seasons);
+	writeFileSync(
+		join(MASCOT_DIR, 'everyday.ts'),
+		[
+			'// Generated by scripts/icons.ts from artwork/raccoon/mascots.json — do not edit by hand.',
+			"import type { MascotName } from './index';",
+			'',
+			`export type Season = ${SEASONS.map(quote).join(' | ')};`,
+			'',
+			"/** Home's everyday poses, in the order it takes them (→ `utils/raccoon`). */",
+			'export const EVERYDAY: ReadonlyArray<{',
+			'\tname: MascotName;',
+			'\tseasons: readonly Season[];',
+			'\tlookAlike: string | null;',
+			'}> = [',
+			...everyday.map((entry, index) => {
+				const comma = index < everyday.length - 1 ? ',' : '';
+				const seasons = entry.seasons!.map(quote).join(', ');
+				const lookAlike = entry.lookAlike ? quote(entry.lookAlike) : 'null';
+				return `\t{ name: ${quote(entry.name)}, seasons: [${seasons}], lookAlike: ${lookAlike} }${comma}`;
+			}),
+			'];',
+			'',
+			"/** The raccoons that sit on a card's top edge, so must be cut flat at the waist. */",
+			'export const PERCHED: readonly MascotName[] = [',
+			...MASCOTS.filter((entry) => entry.perched).map(
+				(entry, index, all) => `\t${quote(entry.name)}${index < all.length - 1 ? ',' : ''}`
+			),
+			'];',
+			''
+		].join('\n')
+	);
+	console.log('  src/lib/assets/mascot/everyday.ts');
+
+	console.log(`\nGenerated ${icons.length + MASCOTS.length + 2} file(s) from artwork/raccoon/`);
 }
 
 main().catch((error) => {

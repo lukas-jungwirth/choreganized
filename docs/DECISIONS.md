@@ -3153,3 +3153,22 @@ units | null, name}`, written back as editor lines in the reader's unit spelling
      month depend on the one before. Pure rotation, no "tea in the evening" fitting (Lukas's
      pick). The masters came "card-ready" but still rounded; trimmed 1–4% to pass #218's test.
      ~210 KB more precache (about 23 KB a pose).
+220. **New raccoons come in through `/raccoons`, one list, four seasons** (Lukas's call
+     2026-11-03). Each batch so far meant hand-written image scripts and edits in three places,
+     so: `artwork/raccoon/mascots.json` lists every screen raccoon (height, `perched`, and for
+     Home's everyday poses `seasons` and `lookAlike`), and `npm run icons` generates the AVIFs,
+     `index.ts` and an image-free `everyday.ts` from it, which `utils/raccoon` and the tests read.
+     `npm run raccoons -- <folder>` checks a batch (transparent, not cut off, ≥408px tall,
+     bottom flat or cuttable within a fifth — the measure in `scripts/raccoon-art.ts`, shared with
+     the perch test), cuts and saves the masters and draws a contact sheet; it writes nothing if
+     any file fails. `/raccoons` (`.claude/commands/raccoons.md`) does the judgment around it:
+     names, seasons, look-alikes, a look at the sheet — it **decides, shows Lukas, and waits for
+     his OK**, then lists, tests, documents and ships to `dev`. A saved script rather than one
+     written per run, because the per-run ones broke in new ways each time (#219's crop) and the
+     cut must match the test exactly. Everyday months became the four meteorological seasons
+     (winter Dec–Feb … autumn Sep–Nov), multiple allowed — easier to judge than per-pose month
+     windows. Shifts from #219: summer gardening and fishing lose May → fishing is now spring to
+     autumn (Lukas: you fish in spring too), gardening gains March and November, snow and the
+     scarf end in February, tea runs autumn and winter. The one allowed repeat moves to a
+     season's first morning. A new special day or another screen still needs code; the command
+     says so instead of guessing.

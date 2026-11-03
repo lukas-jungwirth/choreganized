@@ -3,7 +3,29 @@
 The original artwork for every raccoon the app shows and for its icons — and only the pieces the
 app uses. Nothing here is shipped: `npm run icons` (`scripts/icons.ts`) turns these into
 `static/icons/*.png` and `src/lib/assets/mascot/*.avif` (+ the generated `index.ts` with their
-sizes). Change a master, re-run, commit both (→ DECISIONS #211, #215).
+sizes, and `everyday.ts` with Home's everyday poses). Change a master, re-run, commit both
+(→ DECISIONS #211, #215).
+
+**New raccoons:** drop the PNGs in `design/new-raccoons/` and run `/raccoons` — it checks and cuts
+them (`npm run raccoons`), proposes where each goes, asks, and ships them (→ DECISIONS #220).
+
+## `mascots.json`
+
+Every screen raccoon, one entry each, read by `npm run icons`:
+
+- `name` — the file, `artwork/raccoon/<name>.png`, and the name in code (`<Mascot name=…>`);
+- `height` — what to store it at: 3× the tallest it is shown (Home's 136px → 408);
+- `perched` — it sits on a card's top edge, so it must be cut flat at the waist
+  (`tests/conventions/mascot-perch.test.ts`);
+- `seasons` — makes it an **everyday pose** on Home: `winter` (Dec–Feb), `spring` (Mar–May),
+  `summer` (Jun–Aug), `autumn` (Sep–Nov), all four for all year;
+- `lookAlike` — a group name for everyday poses that look nearly the same (`greeting`,
+  `gardening`, `hot-drink`): the rotation never shows two of a group back to back.
+
+The everyday poses' **order is the rotation's**: each slot of the day takes the next one that's
+in season, wrapping round at the end, so neighbours should differ in every season they share.
+`src/lib/utils/raccoon.test.ts` walks two years and fails, naming the date, if two look-alikes or
+the same pose ever meet. The app icons aren't listed — they have their own steps in the script.
 
 | File                      | Where it shows up                                              |
 | ------------------------- | -------------------------------------------------------------- |
@@ -14,7 +36,7 @@ sizes). Change a master, re-run, commit both (→ DECISIONS #211, #215).
 | `tasks.png`               | Tasks + History titles                                         |
 | `expenses.png`            | Expenses title                                                 |
 | `head.png`                | login, join, invite link                                       |
-| `welcome-a.png` / `-b`    | Home, everyday, all year (→ `utils/raccoon`)                   |
+| `welcome-a.png` / `-b`    | Home, everyday, all year                                       |
 | `reminder-upcoming.png`   | Home, on the next-chore card while it's coming up              |
 | `reminder-overdue.png`    | Home, on the next-chore card once it's overdue                 |
 | `birthday.png`            | Home, on your birthday (set in your profile)                   |
@@ -24,13 +46,13 @@ sizes). Change a master, re-run, commit both (→ DECISIONS #211, #215).
 | `halloween.png`           | Home, 31 October                                               |
 | `valentines.png`          | Home, 14 February                                              |
 | `sleeping.png`            | Home, 22:00–05:00 on an ordinary day without a chore on you    |
-| `beach.png`               | Home, everyday, Jun–Aug                                        |
-| `summer-garden.png`       | Home, everyday, May–Aug                                        |
-| `garden.png`              | Home, everyday, Apr–Oct                                        |
-| `fishing.png`             | Home, everyday, May–Sep                                        |
-| `snow.png`                | Home, everyday, Dec–Feb                                        |
-| `cold.png`                | Home, everyday, Nov–Mar                                        |
-| `tea.png`                 | Home, everyday, Oct–Apr                                        |
+| `beach.png`               | Home, everyday, summer                                         |
+| `summer-garden.png`       | Home, everyday, summer                                         |
+| `garden.png`              | Home, everyday, spring, summer, autumn                         |
+| `fishing.png`             | Home, everyday, spring, summer, autumn                         |
+| `snow.png`                | Home, everyday, winter                                         |
+| `cold.png`                | Home, everyday, winter                                         |
+| `tea.png`                 | Home, everyday, autumn, winter                                 |
 | `reading.png`             | Home, everyday, all year                                       |
 | `sports.png`              | Home, everyday, all year                                       |
 | `settings.png`            | Settings, on the profile card                                  |
@@ -38,5 +60,6 @@ sizes). Change a master, re-run, commit both (→ DECISIONS #211, #215).
 
 Masters are trimmed to the artwork (the app icons keep their 1024² canvas) and losslessly
 recompressed. A raccoon that sits on a card (Home's poses, Settings') must end in a straight cut
-at the waist: if a new one comes rounded at the bottom, crop it flat where the curve starts —
-`tests/conventions/mascot-perch.test.ts` fails until you do (→ DECISIONS #218). Poses the app doesn't use don't live in the repo.
+at the waist: `npm run raccoons` cuts a new one flat where the curve starts, and
+`tests/conventions/mascot-perch.test.ts` fails on any that isn't (→ DECISIONS #218). Poses the
+app doesn't use don't live in the repo.
