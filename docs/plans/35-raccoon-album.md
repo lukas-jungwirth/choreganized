@@ -3,7 +3,7 @@
 **Status: todo.** Depends on: 02 (Home), 10 (Settings), and Home's raccoon (DECISIONS #216,
 #219, #220).
 SPEC: §2 (the raccoon), §6 (Settings) — both gain a paragraph when this is built. Decisions:
-#229.
+#229, #230 (`HOME_RACCOONS`).
 Design: no frame in `design/Hearth.dc.html` (→ `size:l`). The sketch Lukas approved on
 2026-11-03 is `design/sketches/raccoon-album.html` — open it from the repo so the art loads.
 Build to it, then copy its season colours into `app.css` as tokens.
@@ -27,9 +27,12 @@ Today that is **39**:
 - sleeping (22:00–05:00);
 - the two reminder poses (bell, alarm clock).
 
-A new Home raccoon joins the album by being added to `mascots.json` and the rules, with
-nothing else to remember: a convention test fails if Home can show a raccoon the album doesn't
-list, or the other way round.
+**The list already exists:** `HOME_RACCOONS` in `lib/utils/raccoon.ts` (PR #107, DECISIONS
+#230), with `isHomeRaccoon()`. It is derived from the same sources `homeRaccoon()` reads, and its
+test walks every hour of two years to check the two agree. The admin picker uses it too. The
+album builds on it: no second list, no folder split (the art stays in one folder). A new
+everyday pose from `/raccoons` joins the album by itself; only its `album` number, `stats` and
+catalog copy are new.
 
 ## Rarity: three steps, worked out, never typed in
 
@@ -132,7 +135,7 @@ new.
 ### Copy
 
 - `en.ts` / `de.ts`: `album.*` for the screen, the filters, the chips, the toast, stat names;
-  `raccoons.<name>.{ name, title, fact }` for all 39, typed by the album's list so a missing
+  `raccoons.<name>.{ name, title, fact }` for all 39, typed by `HOME_RACCOONS` so a missing
   one is a `check` failure. German may be Austrian and punny; household content rules don't
   apply, these are the app's words. No em dashes (DECISIONS #205).
 - Lukas writes or approves the 39 names and facts; the builder drafts them in both languages.
@@ -159,8 +162,8 @@ new.
 
 - Unit: `lib/utils/raccoon-album.test.ts` — tier from seasons, the window chip for every kind,
   the season blend's order, numbering.
-- Convention: `tests/conventions/raccoon-album.test.ts` — the album lists exactly what
-  `homeRaccoon()` can return (walk two years of slots, plus a birthday); `album` numbers are
+- Convention: `tests/conventions/raccoon-album.test.ts` — the album lists exactly
+  `HOME_RACCOONS` (whose own test already ties it to `homeRaccoon()`); `album` numbers are
   unique and contiguous; every album raccoon has `stats` with four values 1–5.
 - Integration: `tests/integration/raccoon-sightings.test.ts` — first sighting is new, the same
   slot doesn't count twice, the next slot does, scoping by household and member, cascade on
