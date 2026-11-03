@@ -142,10 +142,15 @@ describe('homeRaccoon', () => {
 	});
 });
 
-/** Every pose `everydayRaccoon` shows in the week from `date`: three slots a day covers a season. */
+/** Every pose `everydayRaccoon` shows in one round from `date`: three slots a day, as many days
+ * as the longest season needs (23 winter poses → 8 days), so a batch of new poses doesn't have
+ * to edit this. */
 function posesFrom(date: string): string[] {
+	const longest = Math.max(
+		...['winter', 'spring', 'summer', 'autumn'].map((season) => listedFor(season).length)
+	);
 	const seen = new Set<string>();
-	for (let day = 0; day < 7; day++) {
+	for (let day = 0; day < Math.ceil(longest / 3); day++) {
 		for (const hour of [8, 14, 20]) seen.add(everydayRaccoon(addDays(date, day), hour));
 	}
 	return [...seen].sort();
@@ -161,7 +166,7 @@ const listedFor = (season: string) =>
 const seasonStarts = (date: string) => /-(03|06|09|12)-01$/.test(date);
 
 describe('everydayRaccoon', () => {
-	it('shows each season exactly the poses listed for it, all of them within a week', () => {
+	it('shows each season exactly the poses listed for it, all of them within one round', () => {
 		assert.deepEqual(posesFrom('2036-01-10'), listedFor('winter'));
 		assert.deepEqual(posesFrom('2036-04-10'), listedFor('spring'));
 		assert.deepEqual(posesFrom('2036-07-10'), listedFor('summer'));

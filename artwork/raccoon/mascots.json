@@ -80,6 +80,12 @@
 			"seasons": ["summer"]
 		},
 		{
+			"name": "flower",
+			"height": 408,
+			"perched": true,
+			"seasons": ["spring", "summer"]
+		},
+		{
 			"name": "tennis",
 			"height": 408,
 			"perched": true,
@@ -97,7 +103,8 @@
 			"name": "snow",
 			"height": 408,
 			"perched": true,
-			"seasons": ["winter"]
+			"seasons": ["winter"],
+			"lookAlike": "snow-gear"
 		},
 		{
 			"name": "reading",
@@ -107,6 +114,18 @@
 		},
 		{
 			"name": "music",
+			"height": 408,
+			"perched": true,
+			"seasons": ["winter", "spring", "summer", "autumn"]
+		},
+		{
+			"name": "snowflake",
+			"height": 408,
+			"perched": true,
+			"seasons": ["winter"]
+		},
+		{
+			"name": "camera",
 			"height": 408,
 			"perched": true,
 			"seasons": ["winter", "spring", "summer", "autumn"]
@@ -140,6 +159,20 @@
 			"lookAlike": "ball-sport"
 		},
 		{
+			"name": "cards",
+			"height": 408,
+			"perched": true,
+			"seasons": ["winter", "spring", "summer", "autumn"],
+			"body": 0.5
+		},
+		{
+			"name": "snowman",
+			"height": 408,
+			"perched": true,
+			"seasons": ["winter"],
+			"body": 0.45
+		},
+		{
 			"name": "welcome-b",
 			"height": 408,
 			"perched": true,
@@ -152,6 +185,14 @@
 			"perched": true,
 			"seasons": ["winter", "spring", "summer", "autumn"],
 			"lookAlike": "talking"
+		},
+		{
+			"name": "watering",
+			"height": 408,
+			"perched": true,
+			"seasons": ["winter", "spring", "summer", "autumn"],
+			"lookAlike": "gardening",
+			"body": 0.52
 		},
 		{
 			"name": "fishing",
@@ -185,16 +226,35 @@
 			"seasons": ["winter", "spring", "summer", "autumn"]
 		},
 		{
+			"name": "water-pistol",
+			"height": 408,
+			"perched": true,
+			"seasons": ["summer"]
+		},
+		{
 			"name": "writing",
 			"height": 408,
 			"perched": true,
 			"seasons": ["winter", "spring", "summer", "autumn"]
 		},
 		{
+			"name": "knitting",
+			"height": 408,
+			"perched": true,
+			"seasons": ["autumn", "winter"],
+			"lookAlike": "snow-gear"
+		},
+		{
 			"name": "phone",
 			"height": 408,
 			"perched": true,
 			"seasons": ["winter", "spring", "summer", "autumn"]
+		},
+		{
+			"name": "skates",
+			"height": 408,
+			"perched": true,
+			"seasons": ["winter"]
 		},
 		{
 			"name": "summer-garden",
