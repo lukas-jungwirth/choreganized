@@ -138,7 +138,9 @@ new.
   `raccoons.<name>.{ name, title, fact }` for all 39, typed by `HOME_RACCOONS` so a missing
   one is a `check` failure. German may be Austrian and punny; household content rules don't
   apply, these are the app's words. No em dashes (DECISIONS #205).
-- Lukas writes or approves the 39 names and facts; the builder drafts them in both languages.
+- The builder writes the 39 names, titles, facts and stats in both languages and **ships them as
+  drafts**: don't wait for Lukas, he reviews them later. List them all in the PR description so
+  the review is one read, and add a "raccoon copy reviewed" follow-up to the handoff.
 
 ## Acceptance
 
