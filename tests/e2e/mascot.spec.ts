@@ -60,3 +60,26 @@ test('Settings has a raccoon on the profile and one over the ways out', async ({
 		await expect(raccoon).toHaveAttribute('alt', '');
 	}
 });
+
+test('poking the Home raccoon six times sends it away for a while, then the same one is back', async ({
+	page
+}) => {
+	await page.goto('/home');
+	const raccoon = page.getByRole('button', { name: 'Poke the raccoon' });
+	const pose = raccoon.locator('img');
+	const before = await pose.getAttribute('src');
+
+	// Five pokes: a wobble, a hit, a sulk — but it stays.
+	for (let poke = 0; poke < 5; poke++) await raccoon.click();
+	await expect(raccoon).toHaveClass(/annoyed/);
+
+	// The sixth: it ducks behind the card and is gone…
+	await raccoon.click();
+	await expect(raccoon).toBeHidden();
+
+	// …for a few seconds, then it comes back up, calm — the same raccoon, never
+	// another: which one you get is the date's, not the poker's.
+	await expect(raccoon).toBeVisible({ timeout: 8000 });
+	await expect(raccoon).not.toHaveClass(/annoyed/);
+	await expect(pose).toHaveAttribute('src', before!);
+});

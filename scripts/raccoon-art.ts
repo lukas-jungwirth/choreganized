@@ -99,3 +99,81 @@ export function problems(raw: Raw): string[] {
 	if (touches(column(width - 1))) found.push('it is cut off on the right');
 	return found;
 }
+
+/**
+ * Where the raccoon's body is, across its width (0–1): halfway between the
+ * two gold buttons on its overalls, which every pose wears and no prop
+ * mimics in pairs. Home sets each pose by this rather than by its picture's
+ * edge, so a slim pose and one holding a racket out sit in the same place
+ * (→ DECISIONS #224). `null` when the buttons can't both be seen (under a
+ * blanket, behind a mug) — then `mascots.json` says it by hand (`body`).
+ */
+export function bodyCentre(raw: Raw): number | null {
+	const { data, width, height } = raw;
+	const gold = new Uint8Array(width * height);
+	for (let i = 0; i < width * height; i++) {
+		const [r, g, b, a] = [data[i * 4], data[i * 4 + 1], data[i * 4 + 2], data[i * 4 + 3]];
+		if (a > 200 && r > 170 && g > 120 && b < 120 && r - g < 90 && g - b > 50) gold[i] = 1;
+	}
+
+	/** Round, solid, button-sized blobs of gold — a lemon slice, a bell or a candle flame is not one. */
+	const buttons: Array<{ x: number; y: number; area: number }> = [];
+	const minArea = (height * 0.025) ** 2;
+	const seen = new Uint8Array(width * height);
+	for (let start = 0; start < gold.length; start++) {
+		if (!gold[start] || seen[start]) continue;
+		const stack = [start];
+		seen[start] = 1;
+		let area = 0;
+		let sumX = 0;
+		let sumY = 0;
+		let [left, right, top, bottom] = [width, 0, height, 0];
+		while (stack.length) {
+			const at = stack.pop()!;
+			const x = at % width;
+			const y = (at - x) / width;
+			area++;
+			sumX += x;
+			sumY += y;
+			[left, right, top, bottom] = [
+				Math.min(left, x),
+				Math.max(right, x),
+				Math.min(top, y),
+				Math.max(bottom, y)
+			];
+			for (const next of [at - 1, at + 1, at - width, at + width]) {
+				if (next >= 0 && next < gold.length && gold[next] && !seen[next]) {
+					seen[next] = 1;
+					stack.push(next);
+				}
+			}
+		}
+		const boxWidth = right - left + 1;
+		const boxHeight = bottom - top + 1;
+		const round = boxWidth / boxHeight > 0.6 && boxWidth / boxHeight < 1.6;
+		// A button is a filled disc (a circle fills ~0.79 of its box); a flame
+		// or a star is ragged, about half.
+		const solid = area / (boxWidth * boxHeight) > 0.55;
+		// …and sits on the bib, below the face: candles held up high don't count.
+		const low = sumY / area > height * 0.45;
+		if (area > minArea && round && solid && low && boxWidth < width * 0.12) {
+			buttons.push({ x: sumX / area, y: sumY / area, area });
+		}
+	}
+
+	/** Two of them side by side: level, alike in size, a bib's width apart. */
+	let best: { centre: number; score: number } | null = null;
+	for (let i = 0; i < buttons.length; i++) {
+		for (let j = i + 1; j < buttons.length; j++) {
+			const [a, b] = [buttons[i], buttons[j]];
+			const level = Math.abs(a.y - b.y) / height;
+			const apart = Math.abs(a.x - b.x) / width;
+			const alike = Math.min(a.area, b.area) / Math.max(a.area, b.area);
+			if (level < 0.05 && apart > 0.08 && apart < 0.45 && alike > 0.5) {
+				const score = alike - level * 5;
+				if (!best || score > best.score) best = { centre: (a.x + b.x) / 2 / width, score };
+			}
+		}
+	}
+	return best ? Math.round(best.centre * 100) / 100 : null;
+}

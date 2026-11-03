@@ -63,7 +63,8 @@
 		{
 			"name": "sleeping",
 			"height": 408,
-			"perched": true
+			"perched": true,
+			"body": 0.56
 		},
 		{
 			"name": "welcome-a",
@@ -128,7 +129,8 @@
 			"height": 408,
 			"perched": true,
 			"seasons": ["winter"],
-			"lookAlike": "hot-drink"
+			"lookAlike": "hot-drink",
+			"body": 0.48
 		},
 		{
 			"name": "handball",

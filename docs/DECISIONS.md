@@ -3188,7 +3188,34 @@ units | null, name}`, written back as editor lines in the reader's unit spelling
      It was dashed on transparent, and in a fresh household it is Home's first card, so the
      raccoon perched on it showed its waist through. `background: var(--bg)` keeps the dashed,
      not-yet-a-card look and covers the cut like any other first card (#213).
-223. **Five indoor pastimes for the everyday raccoon** (Lukas's batch 2026-11-03, through
+223. **Home's raccoon can be poked away — for a moment** (Lukas's idea 2026-11-03). A hidden
+     game: tap it and it squashes, the third tap is a hit (shake, red flush), it sulks slightly
+     red after, and the sixth sends it down behind the card for four seconds before the same
+     raccoon comes back up. A first version swapped in the season's next pose instead; Lukas
+     turned that down — raccoons are meant to be discovered by coming back to the app at other
+     times, not picked by tapping — so the pose stays the date's and the hour's. Three seconds of
+     peace and the count resets. Component state only, nothing stored. The red is a CSS filter
+     on the art (sepia + hue-rotate), not a colour token — it shifts the raccoon's own palette,
+     like the art is theme-independent everywhere, and stays faint while sulking because red is
+     "overdue" elsewhere in the app. It is a real button with a label, so it is reachable and
+     announced, not a click on a decorative image. The pose gallery Lukas also wanted belongs to
+     a developer area tied to his account, later. The drop folder for new art,
+     `design/new-raccoons/`, now stays in the repo with its contents git-ignored; `/raccoons`
+     empties it after an import instead of deleting it.
+224. **Home places its raccoon by its body, not its picture's edge** (Lukas's report 2026-11-03).
+     Right-aligned pictures put a slim pose (phone) with its body against the edge and one
+     holding a prop out (tennis) well inside, so the rotation looked uneven. Now every perched
+     pose carries `body` — where its body is across its width — and Home lands that point 76px in
+     from the right; props reach out either side. `npm run icons` finds it: halfway between the
+     two gold overall buttons (`bodyCentre` in `scripts/raccoon-art.ts`: round, solid, in the
+     lower half, a level pair — candle flames and lemons don't qualify), checked by eye on all
+     27 poses. Where the buttons are hidden (the sleeping raccoon's blanket, the cold one's mug)
+     `mascots.json` gives `body` by hand, and the script refuses rather than guesses for a new
+     one. Two limits keep it sane: a prop may run 14px into the gutter, no further, and no pose
+     reaches further left than the widest always has (163px), so a pose with both arms out
+     (welcome A) shifts right a little instead of squeezing the greeting. Settings' two raccoons
+     are fixed poses and stay as they are.
+225. **Five indoor pastimes for the everyday raccoon** (Lukas's batch 2026-11-03, through
      `/raccoons`). `call` (an old corded phone), `music` (headphones, eyes closed), `singing`
      (a microphone), `arcade` (an arcade machine) and `writing` (quill and ink pot), all year —
      none of them belongs to a season. Singing and the corded phone strike the same pose (one paw
@@ -3199,4 +3226,6 @@ units | null, name}`, written back as editor lines in the reader's unit spelling
      placed. Each season now has 15–16 poses, so a pose comes round within six days (SPEC §2 said
      three, already stale since #221). Three came in flat; music lost 10px and arcade 15px at the
      bottom, through the overalls and the cabinet's foot. Arcade is wide (141px at Home's 136px),
-     the cabinet filling its right half, but narrower than tennis. +92 KB of AVIFs.
+     the cabinet filling its right half, but narrower than tennis; `npm run icons` found all five
+     bodies by their overall buttons (#224), arcade's at 0.38, so the cabinet reaches out to the
+     right. +92 KB of AVIFs.

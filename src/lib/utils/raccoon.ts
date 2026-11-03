@@ -105,9 +105,14 @@ export function homeRaccoon({ today, hour, birthday, nextChoreDue }: Input): Mas
  * whole household sees the same raccoon and it holds still until the slot ends.
  */
 export function everydayRaccoon(today: CalendarDate, hour: number): MascotName {
-	const season = SEASON_OF_MONTH[Number(today.slice(5, 7)) - 1];
-	const pool = EVERYDAY.filter((pose) => pose.seasons.includes(season)).map((pose) => pose.name);
+	const pool = seasonPool(today);
 	const slot = SLOT_STARTS.findLastIndex((start) => hour >= start);
 	const turn = daysBetween(EPOCH, today) * SLOT_STARTS.length + Math.max(slot, 0);
 	return pool[turn % pool.length];
+}
+
+/** The season's everyday poses, in the order `mascots.json` lists them. */
+function seasonPool(today: CalendarDate): MascotName[] {
+	const season = SEASON_OF_MONTH[Number(today.slice(5, 7)) - 1];
+	return EVERYDAY.filter((pose) => pose.seasons.includes(season)).map((pose) => pose.name);
 }

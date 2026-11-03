@@ -150,6 +150,13 @@ pose, first match wins, top to bottom (`lib/utils/raccoon.ts`, by the household'
   comes round within six days. Every member sees the same one. The list and its order live in
   `artwork/raccoon/mascots.json`.
 
+  **Poke it** ([DECISIONS #223](DECISIONS.md)): the raccoon is a button ("Poke the raccoon").
+  Each tap squashes it; the third is a hit — it shakes and flushes red — and it stays slightly
+  red after that; the sixth it ducks behind the card and stays away for four seconds, then the
+  same raccoon comes back up, calm. It never swaps the pose: which raccoon you get is the date's
+  and the hour's, something to discover by coming back. Three seconds without a tap and the count
+  starts over. With reduced motion it doesn't move: the tint still shows, the hiding is a fade.
+
 1. **Next chore card** — the one chore that's on the current user next: the soonest task
    assigned to them or to Anyone (never a housemate's) that is already overdue or due within
    the next 3 days. Eyebrow "Your next chore", the task name large, "Due today · weekly ·

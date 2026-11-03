@@ -1,8 +1,9 @@
 /**
  * A batch of new raccoon art → masters in `artwork/raccoon/` (→ DECISIONS #220).
  *
- *   npm run raccoons -- design/new-raccoons            check, cut, save, contact sheet
- *   npm run raccoons -- design/new-raccoons --replace  …overwriting masters of the same name
+ *   npm run raccoons                       check, cut, save, contact sheet (design/new-raccoons)
+ *   npm run raccoons -- <folder>           …from another folder
+ *   npm run raccoons -- --replace          …overwriting masters of the same name
  *
  * Every `*.png` in the folder, named as it should be called (`kite.png` →
  * `kite`, kebab-case; files starting with `_` are skipped — the contact sheet
@@ -32,6 +33,9 @@ import { flatCut, flatness, problems, rowSpans, type Raw } from './raccoon-art.t
 
 const root = resolve(fileURLToPath(new URL('..', import.meta.url)));
 const ARTWORK = join(root, 'artwork/raccoon');
+
+/** Where new art is dropped: kept in the repo, its contents ignored (→ .gitignore). */
+const DROP_FOLDER = join(root, 'design/new-raccoons');
 
 /** 3× Home's 136px: anything shorter is soft on a 3× phone. */
 const MIN_HEIGHT = 408;
@@ -164,14 +168,16 @@ async function contactSheet(items: Array<{ name: string; png: Buffer }>, out: st
 async function main() {
 	const args = process.argv.slice(2);
 	const replace = args.includes('--replace');
-	const folder = args.find((arg) => !arg.startsWith('--'));
+	const folder = args.find((arg) => !arg.startsWith('--')) ?? DROP_FOLDER;
 	if (!folder || !existsSync(folder) || !statSync(folder).isDirectory()) {
-		console.error('Usage: npm run raccoons -- <folder of PNGs> [--replace]');
+		console.error(
+			'Usage: npm run raccoons [-- <folder of PNGs, default design/new-raccoons>] [--replace]'
+		);
 		process.exit(2);
 	}
 
 	const files = readdirSync(folder)
-		.filter((file) => file.toLowerCase().endsWith('.png') && !file.startsWith('_'))
+		.filter((file) => file.toLowerCase().endsWith('.png') && !/^[_.]/.test(file))
 		.sort()
 		.map((file) => join(folder, file));
 	if (files.length === 0) {

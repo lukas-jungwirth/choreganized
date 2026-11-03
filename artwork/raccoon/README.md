@@ -6,7 +6,8 @@ app uses. Nothing here is shipped: `npm run icons` (`scripts/icons.ts`) turns th
 sizes, and `everyday.ts` with Home's everyday poses). Change a master, re-run, commit both
 (→ DECISIONS #211, #215).
 
-**New raccoons:** drop the PNGs in `design/new-raccoons/` and run `/raccoons` — it checks and cuts
+**New raccoons:** drop the PNGs in `design/new-raccoons/` (always there; git ignores what's in it)
+and run `/raccoons` — it checks and cuts
 them (`npm run raccoons`), proposes where each goes, asks, and ships them (→ DECISIONS #220).
 
 ## `mascots.json`
@@ -19,6 +20,9 @@ Every screen raccoon, one entry each, read by `npm run icons`:
   (`tests/conventions/mascot-perch.test.ts`);
 - `seasons` — makes it an **everyday pose** on Home: `winter` (Dec–Feb), `spring` (Mar–May),
   `summer` (Jun–Aug), `autumn` (Sep–Nov), all four for all year;
+- `body` — where the body is across the width, 0–1. Normally left out: `npm run icons` finds it
+  between the two overall buttons, and Home places the raccoon by it. Give it by hand only for a
+  pose whose buttons are hidden (the script says so);
 - `lookAlike` — a group name for everyday poses that look nearly the same (`greeting`,
   `gardening`, `hot-drink`, `ball-sport`, `talking`): the rotation never shows two of a group back to back.
 

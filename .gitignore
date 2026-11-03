@@ -44,3 +44,8 @@ vite.config.ts.timestamp-*
 # …and the subagents: `reviewer.md` is the fresh-context reviewer the build agent
 # runs before its PR (→ plan 26).
 !/.claude/agents/
+
+# Drop folder for new raccoon art (`/raccoons`, → artwork/raccoon/README.md): the folder
+# stays, what's dropped in it never gets committed — the masters land in artwork/raccoon/.
+/design/new-raccoons/*
+!/design/new-raccoons/.gitkeep
