@@ -20,7 +20,7 @@ Every screen raccoon, one entry each, read by `npm run icons`:
 - `seasons` — makes it an **everyday pose** on Home: `winter` (Dec–Feb), `spring` (Mar–May),
   `summer` (Jun–Aug), `autumn` (Sep–Nov), all four for all year;
 - `lookAlike` — a group name for everyday poses that look nearly the same (`greeting`,
-  `gardening`, `hot-drink`, `ball-sport`): the rotation never shows two of a group back to back.
+  `gardening`, `hot-drink`, `ball-sport`, `talking`): the rotation never shows two of a group back to back.
 
 The everyday poses' **order is the rotation's**: each slot of the day takes the next one that's
 in season, wrapping round at the end, so neighbours should differ in every season they share.
@@ -60,6 +60,11 @@ the same pose ever meet. The app icons aren't listed — they have their own ste
 | `handball.png`            | Home, everyday, autumn, winter, spring                         |
 | `painting.png`            | Home, everyday, all year                                       |
 | `phone.png`               | Home, everyday, all year                                       |
+| `call.png`                | Home, everyday, all year                                       |
+| `music.png`               | Home, everyday, all year                                       |
+| `singing.png`             | Home, everyday, all year                                       |
+| `arcade.png`              | Home, everyday, all year                                       |
+| `writing.png`             | Home, everyday, all year                                       |
 | `settings.png`            | Settings, on the profile card                                  |
 | `move-out.png`            | Settings, on the sign-out / leave group                        |
 

@@ -3188,3 +3188,15 @@ units | null, name}`, written back as editor lines in the reader's unit spelling
      It was dashed on transparent, and in a fresh household it is Home's first card, so the
      raccoon perched on it showed its waist through. `background: var(--bg)` keeps the dashed,
      not-yet-a-card look and covers the cut like any other first card (#213).
+223. **Five indoor pastimes for the everyday raccoon** (Lukas's batch 2026-11-03, through
+     `/raccoons`). `call` (an old corded phone), `music` (headphones, eyes closed), `singing`
+     (a microphone), `arcade` (an arcade machine) and `writing` (quill and ink pot), all year —
+     none of them belongs to a season. Singing and the corded phone strike the same pose (one paw
+     at the face, the other held out palm up, mouth open), so they share a new look-alike group,
+     `talking`; the corded phone looks nothing like the smartphone `phone`, but sits well away
+     from it anyway. Writing was judged unlike painting. Placed after tennis, reading, welcome B,
+     skiing and dumbbell, so no neighbour is alike in any season; the rotation test passed as
+     placed. Each season now has 15–16 poses, so a pose comes round within six days (SPEC §2 said
+     three, already stale since #221). Three came in flat; music lost 10px and arcade 15px at the
+     bottom, through the overalls and the cabinet's foot. Arcade is wide (141px at Home's 136px),
+     the cabinet filling its right half, but narrower than tennis. +92 KB of AVIFs.
