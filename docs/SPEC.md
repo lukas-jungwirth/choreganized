@@ -143,11 +143,21 @@ pose, first match wins, top to bottom (`lib/utils/raccoon.ts`, by the household'
   | singing into a microphone   | all year               |
   | playing an arcade machine   | all year               |
   | writing with a quill        | all year               |
+  | taking a photo              | all year               |
+  | a hand of playing cards     | all year               |
+  | watering a houseplant       | all year               |
+  | smelling a flower           | spring, summer         |
+  | with a water pistol         | summer                 |
+  | knitting                    | autumn, winter         |
+  | building a snowman          | winter                 |
+  | catching a snowflake        | winter                 |
+  | carrying ice skates         | winter                 |
 
   The day has three slots — from 05:00, 11:00 and 17:00 — and each takes the next pose in turn,
   so it holds still within a slot, never repeats back to back within a season (nor do two that
-  look alike: the greetings, the gardening poses, the hot drinks, tennis and handball, the corded phone and the singer), and every pose
-  comes round within six days. Every member sees the same one. The list and its order live in
+  look alike: the greetings, the gardening and watering poses, the hot drinks, tennis and
+  handball, the corded phone and the singer, the snowball and the knitter in the same hat and
+  scarf), and every pose comes round within eight days. Every member sees the same one. The list and its order live in
   `artwork/raccoon/mascots.json`.
 
   **Poke it** ([DECISIONS #223](DECISIONS.md)): the raccoon is a button ("Poke the raccoon").

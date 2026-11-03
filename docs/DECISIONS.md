@@ -3229,3 +3229,19 @@ units | null, name}`, written back as editor lines in the reader's unit spelling
      the cabinet filling its right half, but narrower than tennis; `npm run icons` found all five
      bodies by their overall buttons (#224), arcade's at 0.38, so the cabinet reaches out to the
      right. +92 KB of AVIFs.
+226. **Nine more everyday raccoons, four of them for winter** (Lukas's batch 2026-11-03, through
+     `/raccoons`). All year: `camera`, `cards`, and `watering` (a potted houseplant: it needs
+     water in winter too). `flower` spring and summer (Lukas's pick over spring alone),
+     `water-pistol` summer, `knitting` autumn and winter (Lukas's pick over winter alone),
+     `snowman`, `snowflake` and `skates` winter. Two look-alikes: `watering` holds the garden
+     raccoon's terracotta pot, so it joins `gardening`; `knitting` wears exactly the snowball
+     raccoon's blue beanie and red snowflake scarf, so the two make a new group, `snow-gear`.
+     Placed so the winter outfits (snow, snowflake, cold, snowman, skiing, tea, knitting,
+     skates) never come two in a row, and watering sits far from both gardening poses. Seasons
+     now hold 18–23 poses, so a pose comes round within eight days, and the season test's
+     one-week window became one round of the longest season, read from `mascots.json`, so the
+     next batch doesn't have to touch it. `npm run icons` couldn't find three bodies: cards (the
+     fanned cards hide the right button), snowman (the snowman pushes it out of level) and
+     watering (the plant's leaves crowd it). Their `body` is set by hand from the button
+     positions in the art: 0.50, 0.45 and 0.52. Cut: skates 50px (only the blades), cards 10px;
+     the other seven came in flat. +176 KB of AVIFs.
