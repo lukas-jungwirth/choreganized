@@ -169,9 +169,9 @@ new.
 - Visual: `raccoon-album`, `raccoon-album-dark`, `raccoon-card`, `raccoon-card-locked`, and a
   `home-new-raccoon` toast shot.
 
-## Open question for Lukas (not in this plan)
+## Settled: the reminder raccoon stays first
 
 Home shows the reminder raccoon whenever a chore is on you, ahead of every everyday pose
-(SPEC §2, rule 3). In a busy household that can hide most of the 30 everyday raccoons for weeks,
-which makes the ★ tier the hardest to fill. Options: the reminder pose only once the chore is
-due today or late, or alternating slots. Decide before or with this plan; it is its own change.
+(SPEC §2, rule 3), which in a busy household can hide the everyday raccoons for days. Lukas
+kept it that way (2026-11-03): Home's order doesn't change for the album, and a ★ card that
+takes a while to find is part of the challenge. Don't change `homeRaccoon()` in this plan.
