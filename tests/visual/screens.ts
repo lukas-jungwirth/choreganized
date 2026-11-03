@@ -73,6 +73,17 @@ export async function openAiFeatures(page: Page): Promise<void> {
 		.waitFor();
 }
 
+/**
+ * Admin mode on for the `visual` account (→ plan 34): seven taps on the
+ * version, as a person would. The e2e server lists it in `ADMIN_EMAILS`.
+ */
+async function enterAdmin(page: Page): Promise<void> {
+	await page.goto('/settings');
+	const version = page.getByRole('button', { name: /^Version/ });
+	for (let tap = 0; tap < 7; tap += 1) await version.click();
+	await page.getByRole('link', { name: 'Admin' }).waitFor();
+}
+
 export const SCREENS: Screen[] = [
 	{ name: 'login', route: '/login', path: '/login', signedOut: true, fullPage: true },
 	{ name: 'kit-light', route: '/dev/kit', path: '/dev/kit', fullPage: true },
@@ -187,6 +198,42 @@ export const SCREENS: Screen[] = [
 		}
 	},
 	{ name: 'settings', route: '/(app)/settings', path: '/settings', bottom: true },
+	// Every count and household on the page depends on which other specs ran
+	// first (each fresh sign-up adds one), so the numbers and the list rows are
+	// masked; what's guarded is the layout around them.
+	{
+		name: 'admin',
+		route: '/(app)/admin',
+		path: '',
+		navigate: async (page) => {
+			await enterAdmin(page);
+			await page.goto('/admin');
+		},
+		mask: ['.tiles .value', '.bars', '.household'],
+		bottom: true
+	},
+	{
+		name: 'admin-dark',
+		route: '/(app)/admin',
+		path: '',
+		navigate: async (page) => {
+			await enterAdmin(page);
+			await page.goto('/admin');
+		},
+		theme: 'dark',
+		mask: ['.tiles .value', '.bars', '.household']
+	},
+	{
+		name: 'home-raccoon-picker',
+		route: '/(app)/home',
+		path: '',
+		navigate: async (page) => {
+			await enterAdmin(page);
+			await page.goto('/home');
+			await page.getByRole('button', { name: 'Pick a raccoon' }).click();
+			await page.getByRole('dialog', { name: 'Pick a raccoon' }).waitFor();
+		}
+	},
 	{
 		name: 'settings-dark',
 		route: '/(app)/settings',

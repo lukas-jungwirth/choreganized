@@ -565,6 +565,13 @@ export const en = {
 		settingsLink: (names: string) => `Settings · Household: ${names}`,
 		/** The raccoon is a button: six taps and it ducks away for another (→ DECISIONS #223). */
 		pokeRaccoon: 'Poke the raccoon',
+		/** Admin mode only (→ plan 34): tapping the raccoon picks any pose. */
+		raccoonPicker: {
+			open: 'Pick a raccoon',
+			title: 'Pick a raccoon',
+			today: 'Today',
+			backToToday: 'Back to today’s raccoon'
+		},
 
 		/**
 		 * The card at the very top of Home: the one chore that's on this member
@@ -2475,6 +2482,33 @@ export const en = {
 		colourTakenJoin: 'Someone in the household already has that colour. Pick another.',
 		ownerOnlyMembers: 'Only the owner can manage members.',
 		alreadyLeft: 'They already left the household.'
+	},
+
+	/** Admin mode (→ plan 34, SPEC §12). Only an admin ever reads these. */
+	admin: {
+		row: 'Admin',
+		entered: 'Admin mode on',
+		leave: 'Leave admin mode',
+		title: 'Admin',
+		subtitle: 'Every household on this server',
+		back: 'Back to Settings',
+		active7: 'Active in 7 days',
+		active30: 'Active in 30 days',
+		totals: {
+			households: 'Households',
+			users: 'Accounts',
+			members: 'Members',
+			pushDevices: 'Devices with push'
+		},
+		signups: 'New per week',
+		thisWeek: 'This week',
+		weekLabel: (start: string, households: number, users: number) =>
+			`Week of ${start}: ${households} ${households === 1 ? 'household' : 'households'}, ${users} ${users === 1 ? 'account' : 'accounts'}`,
+		list: 'Households',
+		members: (count: number) => (count === 1 ? '1 member' : `${count} members`),
+		since: (date: string) => `since ${date}`,
+		lastActive: (day: string) => `Last active: ${day}`,
+		neverActive: 'Never active'
 	},
 
 	/* ── The holiday pause (→ SPEC §5.5), in [4c] and [6a] ─────────────────── */

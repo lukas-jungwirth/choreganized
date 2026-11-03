@@ -20,6 +20,7 @@ import {
 	type Messages
 } from '$lib/i18n';
 import { isMemberColor } from '$lib/member-colors';
+import { enterAdminMode, isAdmin, leaveAdminMode } from '$lib/server/admin';
 import { requireMember } from '$lib/server/guards';
 import { pushConfigured, sendTestNotification, type NotificationPref } from '$lib/server/push';
 import {
@@ -558,5 +559,25 @@ export const actions: Actions = {
 		const { user } = requireMember(event);
 
 		return { sent: await sendTestNotification(user.id), configured: pushConfigured() };
+	},
+
+	/**
+	 * Seven taps on the version (→ plan 34). For anyone the deploy doesn't list
+	 * in `ADMIN_EMAILS` this is a 404, the same answer `/admin` gives them: the
+	 * taps do nothing they could tell from a missing action.
+	 */
+	enterAdmin: async (event) => {
+		const { user } = requireMember(event);
+		if (!isAdmin(user)) error(404, catalog(event.locals.locale).errors.notFound);
+
+		enterAdminMode(event);
+		return { adminEntered: true };
+	},
+
+	/** "Leave admin mode" at the bottom of Settings. Harmless for anyone, so unguarded beyond membership. */
+	leaveAdmin: async (event) => {
+		requireMember(event);
+		leaveAdminMode(event);
+		return { adminLeft: true };
 	}
 };

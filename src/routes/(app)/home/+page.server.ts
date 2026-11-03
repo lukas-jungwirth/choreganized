@@ -1,4 +1,5 @@
 import { error, fail, type RequestEvent } from '@sveltejs/kit';
+import { MASCOTS, type MascotName } from '$lib/assets/mascot';
 import { catalog } from '$lib/i18n';
 import { requireMember } from '$lib/server/guards';
 import { homeBalance } from '$lib/server/services/expenses';
@@ -31,16 +32,27 @@ import type { Actions, PageServerLoad } from './$types';
  */
 export const load: PageServerLoad = async (event) => {
 	const { member, householdId } = requireMember(event);
-	const { household, today, members, overdue } = await event.parent();
+	const { household, today, members, overdue, adminMode } = await event.parent();
+
+	const summary = getHomeSummary(householdId, {
+		member,
+		timezone: household.timezone,
+		today,
+		members,
+		overdue
+	});
+
+	// The raccoon picker (→ plan 34): `?raccoon=` swaps the pose, but only in
+	// admin mode and only for a name that exists. Anyone else can type the
+	// parameter; the server just doesn't listen.
+	const asked = event.url.searchParams.get('raccoon');
+	const picked = asked && adminMode && Object.hasOwn(MASCOTS, asked) ? (asked as MascotName) : null;
 
 	return {
-		...getHomeSummary(householdId, {
-			member,
-			timezone: household.timezone,
-			today,
-			members,
-			overdue
-		}),
+		...summary,
+		raccoon: picked ?? summary.raccoon,
+		/** The pose the date and hour chose — the picker's "back to today's raccoon". */
+		todaysRaccoon: summary.raccoon,
 		/** The expenses line under the stat tiles; null when square (→ SPEC §11.13). */
 		balance: homeBalance(householdId, member.id)
 	};

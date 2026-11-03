@@ -13,7 +13,8 @@
 	bell while it's coming up, an alarm clock once it's late), then asleep after
 	22:00, and otherwise an everyday pose that fits the month, a new one each
 	morning, afternoon and evening. Poke it six times and it ducks away for a
-	few seconds (→ `RaccoonPoke`, DECISIONS #223).
+	few seconds (→ `RaccoonPoke`, DECISIONS #223). In admin mode a tap opens
+	the raccoon picker instead (→ `RaccoonPicker`, plan 34).
 -->
 <script lang="ts">
 	import EnablePush from '$lib/components/EnablePush.svelte';
@@ -60,6 +61,18 @@
 	const RACCOON_HEIGHT = 136;
 	/** Placed by its body, not its edge (→ `raccoon-placement`, DECISIONS #224). */
 	const placement = $derived(raccoonPlacement(MASCOTS[data.raccoon], RACCOON_HEIGHT));
+
+	/**
+	 * Admin mode's raccoon picker, fetched on the first tap: nobody else's Home
+	 * carries it (→ plan 34). The server still decides whether a pick applies.
+	 */
+	let Picker = $state<typeof import('$lib/components/home/RaccoonPicker.svelte').default | null>(
+		null
+	);
+
+	async function openPicker() {
+		Picker = (await import('$lib/components/home/RaccoonPicker.svelte')).default;
+	}
 
 	/** Ticked but not yet confirmed — the card goes quiet before the server agrees. */
 	let pending = $state(false);
@@ -116,8 +129,17 @@
 			<ChevronRight size={18} strokeWidth={2.2} aria-hidden="true" />
 		</a>
 	</div>
-	<RaccoonPoke name={data.raccoon} height={RACCOON_HEIGHT} class="raccoon" />
+	<RaccoonPoke
+		name={data.raccoon}
+		height={RACCOON_HEIGHT}
+		class="raccoon"
+		onpick={data.adminMode ? openPicker : undefined}
+	/>
 </header>
+
+{#if Picker}
+	<Picker current={data.raccoon} today={data.todaysRaccoon} onclose={() => (Picker = null)} />
+{/if}
 
 <div class="stack">
 	<!-- The one thing on this screen you can finish from this screen. -->

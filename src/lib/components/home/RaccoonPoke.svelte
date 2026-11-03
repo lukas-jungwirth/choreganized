@@ -11,6 +11,8 @@
 	It never swaps the pose: which raccoon you get is the date's and the hour's
 	(`utils/raccoon`), something to discover by coming back, not to pick.
 	Leave it alone for a few seconds and it calms down: the count starts over.
+	In admin mode Home passes `onpick`, and a tap opens the raccoon picker
+	instead (→ plan 34).
 	With reduced motion it doesn't move at all: the tint still shows, and the
 	hiding is a fade.
 -->
@@ -23,9 +25,11 @@
 		name: MascotName;
 		height: number;
 		class?: string;
+		/** Admin mode: a tap opens the picker rather than poking (→ plan 34). */
+		onpick?: () => void;
 	};
 
-	let { name, height, class: className }: Props = $props();
+	let { name, height, class: className, onpick }: Props = $props();
 
 	const m = messages();
 
@@ -130,8 +134,9 @@
 	bind:this={button}
 	type="button"
 	class={['poke', className, { annoyed, away }]}
-	aria-label={m.home.pokeRaccoon}
-	onclick={poke}
+	aria-label={onpick ? m.home.raccoonPicker.open : m.home.pokeRaccoon}
+	aria-haspopup={onpick ? 'dialog' : undefined}
+	onclick={onpick ?? poke}
 >
 	<Mascot {name} {height} />
 </button>
