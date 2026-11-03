@@ -16,7 +16,7 @@ import { and, asc, count, desc, eq, isNull, lte, sql } from 'drizzle-orm';
 import type { MascotName } from '$lib/assets/mascot';
 import { DEFAULT_LOCALE } from '$lib/i18n';
 import { addDays, formatTimeIn, hourIn, type CalendarDate } from '$lib/utils/dates';
-import { homeRaccoon } from '$lib/utils/raccoon';
+import { homeRaccoon, homeSlot } from '$lib/utils/raccoon';
 import { mealSlotOrder, type MealSlot } from '$lib/utils/meals';
 import type { RecurUnit } from '$lib/utils/tasks';
 import { db } from '../db';
@@ -100,6 +100,8 @@ export type HomeSummary = {
 	greeting: TimeOfDay;
 	/** The raccoon on the first card — the day, the chore, the hour (→ `utils/raccoon`). */
 	raccoon: MascotName;
+	/** The stretch of the day it holds still for — what the raccoon album counts by (→ plan 35). */
+	slot: string;
 	/** Null when this member has nothing of their own coming up (or is away). */
 	nextChore: NextChore | null;
 	dinner: TonightsDinner | null;
@@ -143,6 +145,7 @@ export function getHomeSummary(householdId: string, context: HomeContext): HomeS
 			birthday: member.birthday,
 			nextChoreDue: next?.dueDate ?? null
 		}),
+		slot: homeSlot(today, hour),
 		nextChore: next,
 		dinner: tonightsDinner(householdId, today),
 		shoppingCount: countUnchecked(householdId),

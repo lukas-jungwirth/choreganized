@@ -20,11 +20,13 @@
 import {
 	dayOfMonth,
 	daysBetween,
+	formatDayRange,
 	formatDayStamp,
 	formatBirthday,
 	formatMonthName,
 	formatMonthOfYear,
 	formatMonthRange,
+	formatMonthSpan,
 	formatShortDate,
 	formatWeekday,
 	formatWeekdayLong,
@@ -32,6 +34,7 @@ import {
 	needsYear,
 	type CalendarDate
 } from '$lib/utils/dates';
+import type { AlbumName } from '$lib/assets/mascot/album';
 import { INTL_LOCALE } from '$lib/i18n/locale';
 import type { RepeatUnit } from '$lib/utils/expenses';
 import type { HolidayKey } from '$lib/utils/holidays';
@@ -242,6 +245,10 @@ export const en = {
 		birthday: (birthday: string) => formatBirthday(birthday, L),
 		/** "March" — a month on its own, for the birthday picker. */
 		monthOfYear: (month: number) => formatMonthOfYear(month, L),
+		/** "Dec 24 – 25" — days of any year, `MM-DD` (the raccoon album). */
+		dayRange: (from: string, to: string) => formatDayRange(from, to, L),
+		/** "Dec – Feb" — months of any year, 1–12, going round it (the raccoon album). */
+		monthSpan: (from: number, to: number) => formatMonthSpan(from, to, L),
 
 		/** How the history feed heads a day: "Today", "Yesterday", "Mon 14 Jul" [8a]. */
 		dayLabel: (date: CalendarDate, today: CalendarDate) => {
@@ -2510,6 +2517,276 @@ export const en = {
 		lastActive: (day: string) => `Last active: ${day}`,
 		neverActive: 'Never active'
 	},
+
+	/* ── The raccoon album (→ plan 35, SPEC §6) ───────────────────────────── */
+	album: {
+		title: 'Raccoon album',
+		subtitle: 'Every raccoon you’ve met on Home.',
+		back: 'Back to Settings',
+		/** The Settings row's value and the progress card: "17 of 39". */
+		count: (found: number, total: number) => `${found} of ${total}`,
+		found: (found: number, total: number) => `${found} of ${total} found`,
+		/** Under it: what is still out there, by tier. Empty once there's nothing. */
+		missing: (seasonal: number, special: number) => {
+			const parts = [
+				seasonal > 0 ? `${seasonal} seasonal` : null,
+				special > 0 ? `${special} ${special === 1 ? 'special day' : 'special days'}` : null
+			].filter((part) => part !== null);
+			return parts.length > 0 ? `${parts.join(' · ')} still to find` : null;
+		},
+		complete: 'You’ve met every raccoon!',
+		progress: (found: number, total: number) => `${found} of ${total} raccoons found`,
+		filters: {
+			label: 'Show',
+			all: 'All',
+			missing: 'Missing'
+		},
+		/** The three tiers, by their stars. */
+		tiers: { 1: 'All year', 2: 'Seasonal', 3: 'Special days' } as Record<1 | 2 | 3, string>,
+		stars: (stars: number) => (stars === 1 ? '1 star' : `${stars} stars`),
+		/** "No. 009". */
+		number: (number: string) => `No. ${number}`,
+		newBadge: 'New',
+		/** The card's fun fact, in this language's quotation marks. */
+		quoted: (text: string) => `“${text}”`,
+		empty: 'No raccoons here.',
+		/** A tile, named for a screen reader. */
+		tile: (number: string, name: string | null, isNew = false) =>
+			name ? `No. ${number}, ${name}${isNew ? ', new' : ''}` : `No. ${number}, not met yet`,
+		/** The card's chip: when you can meet it. */
+		window: {
+			allYear: 'All year',
+			easter: 'Easter',
+			birthday: 'Your birthday'
+		},
+		stats: {
+			cosiness: 'Cosiness',
+			mischief: 'Mischief',
+			snacks: 'Snack drive',
+			helpfulness: 'Helpfulness'
+		},
+		statValue: (name: string, value: number) => `${name}: ${value} of 5`,
+		firstMet: (date: string) => [{ text: 'First met ' }, { text: date, strong: true }] as RichText,
+		seen: (times: number) => [{ text: 'Seen ' }, { text: `${times}×`, strong: true }] as RichText,
+		locked: {
+			name: '? ? ? ? ?',
+			title: 'Not met yet',
+			hint: 'Keep an eye on Home'
+		},
+		previous: 'Previous raccoon',
+		next: 'Next raccoon',
+		close: 'Close',
+		/** Home's toast when a raccoon joins the album. */
+		toast: {
+			title: 'New raccoon!',
+			detail: (name: string, found: number, total: number) =>
+				`${name} is in your album · ${found} of ${total}`,
+			view: 'View'
+		}
+	},
+
+	/**
+	 * Every raccoon in the album: a name, a short title and a fun fact. The
+	 * app's own words, not household content, so German writes its own (and may
+	 * pun). Drafts, shipped for Lukas to review (→ plan 35).
+	 */
+	raccoons: {
+		'welcome-a': {
+			name: 'Wendelin Wave',
+			title: 'The welcome committee',
+			fact: 'Waves at the postman, the neighbours and, on slow days, the fridge.'
+		},
+		'welcome-b': {
+			name: 'Toni Thumbs',
+			title: 'The one who says it’ll be fine',
+			fact: 'Has never once checked whether it will be fine. It usually is.'
+		},
+		reading: {
+			name: 'Bookish Berta',
+			title: 'The bedtime reader',
+			fact: 'Has read every recipe in the cookbook twice. Has cooked one of them, once.'
+		},
+		call: {
+			name: 'Chatty Charlie',
+			title: 'The one on the phone',
+			fact: 'Calls to say he’s running late. Calls again to say how late.'
+		},
+		phone: {
+			name: 'Rotary Rosi',
+			title: 'Keeper of the landline',
+			fact: 'Still knows every number by heart. Refuses to explain how.'
+		},
+		music: {
+			name: 'Headphone Hannes',
+			title: 'The quiet listener',
+			fact: 'Hums along to everything, always slightly ahead of the beat.'
+		},
+		singing: {
+			name: 'Mic-Drop Mitzi',
+			title: 'The kitchen karaoke star',
+			fact: 'Sings in the shower, in the kitchen and, once, at the pharmacy.'
+		},
+		camera: {
+			name: 'Snapshot Sepp',
+			title: 'The household photographer',
+			fact: 'Has 400 photos of dinner and not one of the people who ate it.'
+		},
+		painting: {
+			name: 'Paintbrush Paula',
+			title: 'The artist in residence',
+			fact: 'Has painted the fruit bowl so often that the fruit has started to pose.'
+		},
+		writing: {
+			name: 'Quill Quirin',
+			title: 'The list writer',
+			fact: 'Writes the shopping list by hand first, for the feeling of it.'
+		},
+		cards: {
+			name: 'Poker-Face Paul',
+			title: 'The card shark',
+			fact: 'Says he’s bad at cards. Has won every game night since spring.'
+		},
+		arcade: {
+			name: 'Joystick Jo',
+			title: 'The high-score holder',
+			fact: 'Holds the high score on every machine, and the record for “one more go”.'
+		},
+		sports: {
+			name: 'Muscle Max',
+			title: 'The morning workout',
+			fact: 'Lifts weights every morning, then the biscuit tin, for balance.'
+		},
+		watering: {
+			name: 'Watering-Can Wally',
+			title: 'The plant whisperer',
+			fact: 'Talks to the houseplants every day. Two of them have started answering.'
+		},
+		sleeping: {
+			name: 'Snoozy Susi',
+			title: 'The night shift',
+			fact: 'Sleeps from ten till five and dreams, mostly, of breakfast.'
+		},
+		'reminder-upcoming': {
+			name: 'Ding-Dong Dora',
+			title: 'The friendly reminder',
+			fact: 'Rings the bell once, politely. Then once more, just as politely.'
+		},
+		'reminder-overdue': {
+			name: 'Alarm-Clock Alois',
+			title: 'The last reminder',
+			fact: 'Has never been late in his life and would like that on the record.'
+		},
+		snow: {
+			name: 'Snowball Sigi',
+			title: 'The snowball thrower',
+			fact: 'Aims for the tree. Hits whoever is standing next to it.'
+		},
+		snowflake: {
+			name: 'Flake-Catcher Flora',
+			title: 'The snowflake collector',
+			fact: 'Has caught 2,000 snowflakes on her tongue. Says no two tasted alike.'
+		},
+		snowman: {
+			name: 'Frosty Fritz',
+			title: 'The snowman builder',
+			fact: 'Always gives the snowman his own carrot. Keeps the second one for later, just in case.'
+		},
+		skiing: {
+			name: 'Slalom Stefan',
+			title: 'First on the slope',
+			fact: 'Skis down in four minutes. Takes the gondola back up for the view, and the strudel.'
+		},
+		skates: {
+			name: 'Pirouette Pia',
+			title: 'The ice skater',
+			fact: 'Can do a perfect pirouette. Stopping is still a work in progress.'
+		},
+		cold: {
+			name: 'Cocoa Kurt',
+			title: 'Wrapped up warm',
+			fact: 'Wears three scarves and holds his cocoa with both paws. Still calls it fresh out.'
+		},
+		flower: {
+			name: 'Blossom Bella',
+			title: 'The flower sniffer',
+			fact: 'Stops to smell every flower on the way to the shop. The shop is shut by the time she gets there.'
+		},
+		tennis: {
+			name: 'Topspin Tom',
+			title: 'The tennis ace',
+			fact: 'Calls every ball out, his own included.'
+		},
+		garden: {
+			name: 'Green-Paw Gerti',
+			title: 'The gardener',
+			fact: 'Grows tomatoes, courgettes and, by accident, a pumpkin the size of the shed.'
+		},
+		fishing: {
+			name: 'Fisherman Ferdl',
+			title: 'The patient angler',
+			fact: 'Has been waiting for a bite since Tuesday. Brought enough sandwiches for the week.'
+		},
+		beach: {
+			name: 'Beach-Towel Bianca',
+			title: 'The sunbather',
+			fact: 'Puts her towel down at seven in the morning. Has not moved since.'
+		},
+		'water-pistol': {
+			name: 'Squirt-Gun Gustl',
+			title: 'The water-fight starter',
+			fact: 'Swears he only fills it up to water the plants.'
+		},
+		'summer-garden': {
+			name: 'Straw-Hat Heidi',
+			title: 'The summer gardener',
+			fact: 'Waters the garden at dawn and herself at noon.'
+		},
+		tea: {
+			name: 'Teacup Theo',
+			title: 'The tea brewer',
+			fact: 'Has a tea for every mood and a mood for every tea.'
+		},
+		knitting: {
+			name: 'Knit-One Klara',
+			title: 'The scarf maker',
+			fact: 'Started a scarf in October. It is four metres long now and still going.'
+		},
+		handball: {
+			name: 'Handball Hias',
+			title: 'The team captain',
+			fact: 'Plays in every weather. Has never once admitted it was raining.'
+		},
+		valentines: {
+			name: 'Sweetheart Hansi',
+			title: 'The Valentine',
+			fact: 'Leaves little hearts on the fridge. Also leaves the fridge open.'
+		},
+		easter: {
+			name: 'Egg-Hunt Elfi',
+			title: 'The Easter egg hider',
+			fact: 'Hides the eggs so well that one from last year is still out there.'
+		},
+		halloween: {
+			name: 'Spooky Schurli',
+			title: 'The pumpkin carver',
+			fact: 'Carves the scariest pumpkin on the street, then is a little scared of it.'
+		},
+		christmas: {
+			name: 'Cookie Christl',
+			title: 'The Christmas baker',
+			fact: 'Bakes eleven kinds of Christmas biscuits and tests every tray. Thoroughly.'
+		},
+		'new-year': {
+			name: 'Midnight Manni',
+			title: 'The countdown keeper',
+			fact: 'Starts the countdown at eleven, just to be on the safe side.'
+		},
+		birthday: {
+			name: 'Party-Hat Pepi',
+			title: 'Your birthday raccoon',
+			fact: 'Only comes out once a year, and only for you. Brought cake.'
+		}
+	} satisfies Record<AlbumName, { name: string; title: string; fact: string }>,
 
 	/* ── The holiday pause (→ SPEC §5.5), in [4c] and [6a] ─────────────────── */
 	away: {

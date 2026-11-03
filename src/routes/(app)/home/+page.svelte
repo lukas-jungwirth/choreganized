@@ -14,7 +14,8 @@
 	22:00, and otherwise an everyday pose that fits the month, a new one each
 	morning, afternoon and evening. Poke it six times and it ducks away for a
 	few seconds (→ `RaccoonPoke`, DECISIONS #223). In admin mode a tap opens
-	the raccoon picker instead (→ `RaccoonPicker`, plan 34).
+	the raccoon picker instead (→ `RaccoonPicker`, plan 34). The first time you
+	meet one, a toast says it is in your raccoon album (→ plan 35).
 -->
 <script lang="ts">
 	import EnablePush from '$lib/components/EnablePush.svelte';
@@ -34,6 +35,9 @@
 	import TaskDoneModal from '$lib/components/tasks/TaskDoneModal.svelte';
 	import AvatarStack from '$lib/components/ui/AvatarStack.svelte';
 	import Banner from '$lib/components/ui/Banner.svelte';
+	import Mascot from '$lib/components/ui/Mascot.svelte';
+	import UndoToast from '$lib/components/ui/UndoToast.svelte';
+	import { albumEntry, frameFill } from '$lib/utils/raccoon-album';
 	import { MASCOTS } from '$lib/assets/mascot';
 	import { messages } from '$lib/i18n';
 	import type { NextChore } from '$lib/server/services/home';
@@ -73,6 +77,17 @@
 	async function openPicker() {
 		Picker = (await import('$lib/components/home/RaccoonPicker.svelte')).default;
 	}
+
+	/**
+	 * A raccoon met for the first time (→ plan 35). Held here rather than read
+	 * off `data`, because the next load in the same slot says it isn't new any
+	 * more, and the toast should still finish its few seconds.
+	 */
+	let meeting = $state<NonNullable<typeof data.newRaccoon> | null>(null);
+
+	$effect(() => {
+		if (data.newRaccoon) meeting = data.newRaccoon;
+	});
 
 	/** Ticked but not yet confirmed — the card goes quiet before the server agrees. */
 	let pending = $state(false);
@@ -220,6 +235,27 @@
 	/>
 {/if}
 
+{#if meeting}
+	{@const name = meeting.name}
+	{#key name}
+		<UndoToast
+			message={[{ text: m.album.toast.title, strong: true }]}
+			detail={m.album.toast.detail(m.raccoons[name].name, meeting.found, meeting.total)}
+			href="/settings/raccoons?card={name}"
+			label={m.album.toast.view}
+			key={name}
+			duration={6000}
+			onclose={() => (meeting = null)}
+		>
+			{#snippet icon()}
+				<span class="met" style:background={frameFill(albumEntry(name).frame)}>
+					<Mascot {name} height={40} class="met-art" />
+				</span>
+			{/snippet}
+		</UndoToast>
+	{/key}
+{/if}
+
 {#if done}
 	<TaskDoneModal
 		completion={done.completion}
@@ -307,6 +343,26 @@
 		display: flex;
 		flex-direction: column;
 		gap: 14px;
+	}
+
+	/* The new raccoon on its album frame, at the toast's left. */
+	.met {
+		display: grid;
+		place-items: center;
+		flex: none;
+		width: 44px;
+		height: 44px;
+		margin: -4px 0 -4px -6px;
+		border-radius: 12px;
+		overflow: hidden;
+	}
+
+	.met :global(.met-art) {
+		width: auto;
+		max-width: 40px;
+		height: auto;
+		max-height: 40px;
+		object-fit: contain;
 	}
 
 	.stats {

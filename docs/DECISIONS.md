@@ -3289,3 +3289,35 @@ units | null, name}`, written back as editor lines in the reader's unit spelling
      the code that really picks, and it would mean changing `scripts/icons.ts`, `/raccoons`, the
      generated imports and every asset path for no behaviour.
      Plan 35's album (#229) counts the same set, so it can take `HOME_RACCOONS` as its list.
+231. **The raccoon album, as built (plan 35).** Judgment calls the plan left open or that
+     changed on the way:
+     - **Home's `load` writes the sighting.** A deliberate exception to loads being reads: the
+       server decides the pose, and a second request from the browser to report it is one Home
+       could lose (a closed tab, a flaky train). A link preload of `/home` would count as meeting it,
+       which would spend the toast on a hover that never became a visit, so links to the two
+       loads that write (Home, the album) preload on tap, not hover (`$lib/preload`). Admin
+       mode's `?raccoon=` pick is never recorded, and a pose the album doesn't number yet is
+       skipped rather than failing Home. The album's own `load` stamps `noticedAt` after reading, the same exception,
+       so its "New" badges show on this visit and not the next.
+     - **`noticedAt` is a column the plan didn't list**: "met since you last opened the album"
+       needs to know when that was, per raccoon, and a null stamp is the badge.
+     - **The card is a centred modal** (`ui/CenterModal` with a new `bare` panel), not a
+       sheet: a trading card is held up to look at, and a sheet's handle and flat top fight its
+       frame. ‹ / › and a sideways swipe (`$lib/swipe`) page through every number; Close and
+       the scrim shut it.
+     - **The toast is `ui/UndoToast`'s pill with a link**: it gained `href` instead of the
+       form and a `detail` line, rather than a second toast component.
+     - **Silhouettes are a CSS mask** filled with `--silhouette`, not `filter: brightness(0)`
+       plus an opacity as the sketch drew it: `light-dark()` paints colours only, so a
+       theme-aware opacity isn't expressible.
+     - **The catalog is typed by `AlbumName`**, a union `npm run icons` generates from
+       `mascots.json` (`assets/mascot/album.ts`), and the convention test ties the album to
+       `HOME_RACCOONS`, so a missing translation is a `check` failure and a new Home pose
+       without a number is a test failure naming the fix.
+     - **Numbers**: ★ first (the all-season poses, sleeping, the reminders), then ★★ by the
+       season the run starts in, winter to autumn, then ★★★ in calendar order with the
+       birthday last. Names, titles, facts and stats are drafts, shipped for Lukas to review.
+     - **E2E reaches the next slot by moving the household's timezone** (Vienna afternoon →
+       Tokyo evening) rather than the clock, which is fixed for the whole run. Setup opens Home
+       and the album once for both seeded accounts so no journey or screenshot depends on being
+       first.

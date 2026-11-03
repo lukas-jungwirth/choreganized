@@ -54,6 +54,22 @@ export async function freshAccount(page: Page): Promise<void> {
 	expect(signUp.ok()).toBe(true);
 }
 
+/**
+ * Home the first time a raccoon is met (→ plan 35): a new household of its
+ * own, because the `visual` one has met today's raccoon already (setup.ts).
+ * The fixed clock makes it the same raccoon every run.
+ */
+export async function newRaccoonToast(page: Page): Promise<void> {
+	await freshAccount(page);
+	await page.goto('/onboarding/create');
+	await page.getByLabel('Household name').fill('Sonnengasse 12');
+	await page.getByLabel('Your display name').fill('Fresh');
+	await page.getByRole('button', { name: 'Continue' }).click();
+	await page.waitForURL(/\/onboarding\/invite$/);
+	await page.goto('/home');
+	await page.getByRole('status').filter({ hasText: 'New raccoon!' }).waitFor();
+}
+
 /** [9b] with an amount and a description typed, as it looks just before Save. */
 export async function openAddExpense(page: Page): Promise<void> {
 	await page.goto('/expenses');
@@ -212,6 +228,37 @@ export const SCREENS: Screen[] = [
 		}
 	},
 	{ name: 'settings', route: '/(app)/settings', path: '/settings', bottom: true },
+	{
+		name: 'raccoon-album',
+		route: '/(app)/settings/raccoons',
+		path: '/settings/raccoons',
+		bottom: true
+	},
+	{
+		name: 'raccoon-album-dark',
+		route: '/(app)/settings/raccoons',
+		path: '/settings/raccoons',
+		theme: 'dark'
+	},
+	{
+		name: 'raccoon-card',
+		route: '/(app)/settings/raccoons',
+		path: '',
+		navigate: async (page) => {
+			await page.goto('/settings/raccoons?card=tea');
+			await page.getByRole('dialog', { name: 'Raccoon album' }).getByText('Seen 5×').waitFor();
+		}
+	},
+	{
+		name: 'raccoon-card-locked',
+		route: '/(app)/settings/raccoons',
+		path: '',
+		navigate: async (page) => {
+			await page.goto('/settings/raccoons?card=skiing');
+			await page.getByRole('dialog', { name: 'Raccoon album' }).getByText('Not met yet').waitFor();
+		}
+	},
+	{ name: 'home-new-raccoon', route: '/(app)/home', path: '', navigate: newRaccoonToast },
 	// Every count on the page depends on which other specs ran first, so the
 	// numbers and the one row left (→ `openAdmin`) are masked; what's guarded
 	// is the layout around them.

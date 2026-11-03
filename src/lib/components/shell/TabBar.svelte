@@ -9,6 +9,7 @@
 	the current member's overdue count [4e].
 -->
 <script lang="ts">
+	import { preloadData } from '$lib/preload';
 	import { page } from '$app/state';
 	import BasketIcon from '$lib/components/icons/BasketIcon.svelte';
 	import ChecklistIcon from '$lib/components/icons/ChecklistIcon.svelte';
@@ -101,6 +102,7 @@
 			class="tab"
 			class:active
 			href={tab.href}
+			data-sveltekit-preload-data={preloadData(tab.href)}
 			aria-current={active ? 'page' : undefined}
 			aria-label={tab.badge && overdueCount > 0
 				? `${tab.label}, ${m.nav.overdueBadge(overdueCount)}`

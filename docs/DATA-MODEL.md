@@ -20,7 +20,8 @@ user ─┬─ session / account / verification        (Better Auth)
                   │           │  (one per membership,  └─→ expense_recurrences (series it came from)
                   │           │   outlives it)                └─ expense_recurrence_shares
                   │           └─ (payer and people of a series)
-                  └─ holiday_notices             (per member × shop closure)
+                  ├─ holiday_notices             (per member × shop closure)
+                  └─ raccoon_sightings           (per member × Home raccoon, the album)
 ```
 
 ## Core principles
@@ -236,6 +237,25 @@ hiddenUntil IS NULL`) in the same statement that inserts it, which is what makes
 Per member, not per household: one person tapping dismiss must not silence the housemate who is
 actually doing the shopping. Rows for closures already under way are unreadable by definition
 and are deleted by the morning sweep, so the table stays at a couple of dozen rows a year.
+
+### `raccoon_sightings` (→ plan 35, SPEC §6)
+
+The raccoon album: one row per **member × raccoon** they have met on Home (unique on
+`(memberId, raccoon)`), written by Home's `load` once it has worked out the pose
+(→ `services/raccoons.ts`, [DECISIONS #231](DECISIONS.md)). The list of raccoons has no table:
+it is the code's (`HOME_RACCOONS`, the album numbers and stats in `mascots.json`), so a row only
+records the meeting.
+
+- `raccoon` — the mascot name. Only album raccoons are accepted; a section raccoon is refused.
+- `firstSeenOn` — household-local `YYYY-MM-DD`, the card's "First met".
+- `seenCount` / `lastSlot` — sightings count Home's **slots**, not page loads. `lastSlot` is
+  `YYYY-MM-DD#0|1|2` (morning, afternoon, evening) or `#n` for the night, dated by the evening it
+  began (`utils/raccoon` `homeSlot`); a sighting in the slot already recorded changes nothing.
+- `noticedAt` — when the album first showed it to them; null is the tile's "New" badge. The
+  album's load reads the rows, then stamps them.
+
+Per member, with `householdId` for scoping like every table. Both FKs cascade: leaving the
+household (or the household going) takes the album with it.
 
 ### `push_subscriptions`
 
