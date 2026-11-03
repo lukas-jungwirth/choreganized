@@ -1,5 +1,4 @@
 import { error, fail, type RequestEvent } from '@sveltejs/kit';
-import { MASCOTS, type MascotName } from '$lib/assets/mascot';
 import { catalog } from '$lib/i18n';
 import { requireMember } from '$lib/server/guards';
 import { homeBalance } from '$lib/server/services/expenses';
@@ -17,6 +16,7 @@ import {
 	type TaskContext
 } from '$lib/server/services/tasks';
 import { isCalendarDate, todayIn } from '$lib/utils/dates';
+import { isHomeRaccoon } from '$lib/utils/raccoon';
 import type { Actions, PageServerLoad } from './$types';
 
 /**
@@ -43,10 +43,10 @@ export const load: PageServerLoad = async (event) => {
 	});
 
 	// The raccoon picker (→ plan 34): `?raccoon=` swaps the pose, but only in
-	// admin mode and only for a name that exists. Anyone else can type the
-	// parameter; the server just doesn't listen.
+	// admin mode and only for one of Home's own raccoons, never a section's.
+	// Anyone else can type the parameter; the server just doesn't listen.
 	const asked = event.url.searchParams.get('raccoon');
-	const picked = asked && adminMode && Object.hasOwn(MASCOTS, asked) ? (asked as MascotName) : null;
+	const picked = asked && adminMode && isHomeRaccoon(asked) ? asked : null;
 
 	return {
 		...summary,

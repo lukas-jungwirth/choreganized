@@ -1,7 +1,7 @@
 # 34 · Admin mode: stats and the raccoon picker
 
 **Status: done (2026-11-03).** Depends on: 00 (auth), 10 (Settings).
-SPEC: §12. Decisions: #227, #228.
+SPEC: §12. Decisions: #227, #228, #230 (the picker offers Home's raccoons only).
 Design: no frame (#228). Built from the settings subpage's parts.
 
 **Goal:** Lukas, and only Lukas, can look deeper into the running app: how many households use

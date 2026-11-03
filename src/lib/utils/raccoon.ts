@@ -43,6 +43,36 @@ const SPECIAL_DAYS: Record<string, MascotName> = {
 	'02-14': 'valentines'
 };
 
+/** Who Home shows when the day or the chore list says so, rather than the season. */
+const SITUATIONS = [
+	'birthday',
+	'reminder-upcoming',
+	'reminder-overdue',
+	'sleeping'
+] as const satisfies readonly MascotName[];
+
+/**
+ * Every raccoon Home can show, and only those: the situations, the special
+ * days, then the everyday poses in their order. The section raccoons (shopping,
+ * cooking, tasks, expenses, head, settings, move-out) are drawn for another
+ * job and never sit on Home's card, so they are not here. Derived from the same
+ * sources `homeRaccoon` reads, so a new everyday pose from `mascots.json` joins
+ * by itself. The admin picker lists exactly these, and the server takes no
+ * other `?raccoon=` (→ plan 34).
+ */
+export const HOME_RACCOONS: readonly MascotName[] = [
+	...new Set<MascotName>([
+		...SITUATIONS,
+		...Object.values(SPECIAL_DAYS),
+		'easter',
+		...EVERYDAY.map((pose) => pose.name)
+	])
+];
+
+export function isHomeRaccoon(value: string): value is MascotName {
+	return (HOME_RACCOONS as readonly string[]).includes(value);
+}
+
 /** The hours the raccoon is asleep: from 22:00, until 05:00. */
 const BEDTIME = 22;
 const WAKE_UP = 5;

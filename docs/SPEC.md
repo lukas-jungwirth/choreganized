@@ -1322,6 +1322,7 @@ For whoever runs the server, never for a household. No design frame (DECISIONS #
   planned a dinner, added a recipe or an expense, or had the app open (a session refresh). No
   household content is shown. Outside admin mode `/admin` is a 404, for admins too.
 - **Raccoon picker:** in admin mode a tap on Home's raccoon opens a sheet with every raccoon
-  by name, today's marked; picking one shows it on Home, placed as it would be for real
+  Home can show (situations, special days, everyday poses), by name, today's marked; never the
+  section raccoons (shopping, cooking, tasks, expenses, head, settings, move-out); picking one shows it on Home, placed as it would be for real
   (`/home?raccoon=<name>`), and "Back to today's raccoon" clears it. Poking is off in admin
-  mode. Anyone else's `?raccoon=` is ignored by the server.
+  mode. Anyone else's `?raccoon=`, and a section raccoon's for anyone, is ignored by the server.

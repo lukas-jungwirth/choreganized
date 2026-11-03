@@ -31,10 +31,18 @@ test('an admin turns admin mode on with seven taps, and off again', async ({ pag
 	await page.goto('/home');
 	await page.getByRole('button', { name: 'Pick a raccoon' }).click();
 	const picker = page.getByRole('dialog', { name: 'Pick a raccoon' });
+	// Only Home's own raccoons: a tab's or Settings' raccoon is drawn for that job.
+	await expect(picker.getByRole('button', { name: /^shopping/ })).toHaveCount(0);
+	await expect(picker.getByRole('button', { name: /^move-out/ })).toHaveCount(0);
 	await picker.getByRole('button', { name: /christmas/ }).click();
 	await expect(page).toHaveURL(/raccoon=christmas/);
 	await expect(page.locator('header img.mascot')).toHaveAttribute('src', /\/christmas/);
 
+	// Typed by hand, a section raccoon is ignored even in admin mode.
+	await page.goto('/home?raccoon=shopping');
+	await expect(page.locator('header img.mascot')).not.toHaveAttribute('src', /\/shopping/);
+
+	await page.goto('/home?raccoon=christmas');
 	await page.getByRole('button', { name: 'Pick a raccoon' }).click();
 	await page.getByRole('button', { name: 'Back to today’s raccoon' }).click();
 	await expect(page).not.toHaveURL(/raccoon=/);
