@@ -215,6 +215,29 @@ export function formatMonthRange(from: CalendarDate, to: CalendarDate, locale: L
 }
 
 /**
+ * "Dec 24 – 25" / "24.–25. Dez." — days of the year with no year to them
+ * (`MM-DD`), for the raccoon album's special days (→ plan 35). One day is just
+ * that day; a span over the turn of the year names both months, "Dec 31 – Jan 1".
+ */
+export function formatDayRange(from: string, to: string, locale: Locale): string {
+	const format = formatter(`day-range|${locale}`, INTL_LOCALE[locale], {
+		timeZone: 'UTC',
+		month: 'short',
+		day: 'numeric'
+	});
+	const start = atUtcMidnight(`2001-${from}`);
+	if (from === to) return format.format(start);
+	if (from > to) return `${format.format(start)} – ${format.format(atUtcMidnight(`2002-${to}`))}`;
+	return format.formatRange(start, atUtcMidnight(`2001-${to}`));
+}
+
+/** "Dec – Feb" / "Sep – May": months of the year (1–12), going round it, for the raccoon album. */
+export function formatMonthSpan(from: number, to: number, locale: Locale): string {
+	const month = (year: number, number: number) => `${year}-${String(number).padStart(2, '0')}-01`;
+	return formatMonthRange(month(2001, from), month(from > to ? 2002 : 2001, to), locale);
+}
+
+/**
  * "Mon 14 Jul" / "Mo., 14. Juli" — the history feed's day stamp [05] [8a].
  *
  * Day-first: English reads the shorthand American-style in the design ("Jul

@@ -1,6 +1,6 @@
 # 35 · The raccoon album: collect every raccoon Home shows you
 
-**Status: todo.** Depends on: 02 (Home), 10 (Settings), and Home's raccoon (DECISIONS #216,
+**Status: done.** Depends on: 02 (Home), 10 (Settings), and Home's raccoon (DECISIONS #216,
 #219, #220).
 SPEC: §2 (the raccoon), §6 (Settings) — both gain a paragraph when this is built. Decisions:
 #229, #230 (`HOME_RACCOONS`).

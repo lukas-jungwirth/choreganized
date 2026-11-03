@@ -167,6 +167,14 @@ pose, first match wins, top to bottom (`lib/utils/raccoon.ts`, by the household'
   and the hour's, something to discover by coming back. Three seconds without a tap and the count
   starts over. With reduced motion it doesn't move: the tint still shows, the hiding is a fade.
 
+  **The raccoon album** (plan 35, [DECISIONS #229](DECISIONS.md), [#231](DECISIONS.md)): the
+  first time you meet a raccoon here, a toast in the undo bar's style says so — its thumbnail on
+  its album frame, "New raccoon!", "Frosty Fritz is in your album · 18 of 39" — with **View**,
+  which opens the album at its card (`/settings/raccoons?card=<name>`). It goes by itself after
+  six seconds and shows once: Home counts a sighting once per slot (morning, afternoon, evening,
+  or the night, dated by its evening), so a reload in the same slot is not new. A pose from admin
+  mode's picker is never a sighting (→ §12).
+
 1. **Next chore card** — the one chore that's on the current user next: the soonest task
    assigned to them or to Anyone (never a housemate's) that is already overdue or due within
    the next 3 days. Eyebrow "Your next chore", the task name large, "Due today · weekly ·
@@ -833,6 +841,30 @@ The **History** tab is a stats landing; the full feed sits one level below it (�
 - Profile card: avatar, display name, email + **Edit**. A raccoon with a wrench sits on its top
   edge at the right, the way Home's sits on its first card; the title wraps rather than run
   under it ([DECISIONS #217](DECISIONS.md)).
+- **Raccoon album** (plan 35), a row right under the profile card with "17 of 39": every raccoon
+  Home can show (exactly `HOME_RACCOONS`: the 30 everyday poses, the 6 special days, sleeping
+  and the two reminders; never a tab's, the sign-in head, Settings' or the leaving raccoon), and
+  which of them **you** have met. Per member: a housemate's album is their own.
+  - `SubHeader` "Raccoon album" / "Every raccoon you've met on Home." A progress card: a ring,
+    "17 of 39 found", "5 seasonal · 4 special days still to find", a plain sage bar.
+  - Filters, sideways at 390px: All · ★ All year · ★★ Seasonal · ★★★ Special days · Missing.
+    A tier chip picks one; Missing toggles on top of any of them.
+  - A grid of four, tiles 3:4, in album order: a met raccoon on its frame colour with its number
+    (`009`) and a "New" badge if met since you last opened the album; an unmet one is its
+    silhouette and a "?", with no hint and no stars.
+  - **Tiers**, worked out from the pose: ★ all year (an everyday pose in all four seasons,
+    sleeping, the reminders), ★★ seasonal (one to three seasons), ★★★ special days (the holidays
+    and your birthday). **Frames**: sage for ★, the season's colour for one season (winter ice,
+    spring blossom pink, summer sand, autumn rust), a blend first to last for several (tea:
+    autumn → winter), holo foil for ★★★; the theme changes only the shade.
+  - A tap opens the **card**, centred over the album: "No. 009" and the stars (★★☆) on top, the
+    raccoon on a stage in its frame colour, its name and a title, one chip for when you can meet
+    it ("All year", "Dec – Feb", "Dec 24 – 25", "Easter", "Your birthday"), a fun fact, four
+    stats as 1–5 dots (Cosiness, Mischief, Snack drive, Helpfulness), and "First met Jun 18" ·
+    "Seen 7×". ‹ / › (or a sideways swipe) go to the neighbouring number, met or not; an unmet
+    one is the locked card: the number, the silhouette under a big "?", "? ? ? ? ?", "Not met
+    yet". Names, titles, facts and stats are the app's words (`raccoons.*` in the catalog,
+    `stats` in `mascots.json`), drafts for Lukas to review.
 - **Account**: Display name, Your colour (palette picker; taken colours disabled), **Birthday**
   (optional; day and month, no year — two selects in the profile sheet, "–" in both clears it,
   one without the other is refused; its only use is Home's birthday raccoon), **Language**

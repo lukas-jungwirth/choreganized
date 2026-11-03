@@ -27,6 +27,10 @@ test('an admin turns admin mode on with seven taps, and off again', async ({ pag
 	await expect(page.getByText('Active in 7 days')).toBeVisible();
 	await expect(page.getByRole('heading', { name: 'Households' })).toBeVisible();
 
+	// What the album holds before the picker (→ plan 35): a pick unlocks nothing.
+	await page.goto('/settings');
+	const albumBefore = await page.getByRole('link', { name: /Raccoon album/ }).textContent();
+
 	// Home: a tap opens the picker, and a pick is what the server renders.
 	await page.goto('/home');
 	await page.getByRole('button', { name: 'Pick a raccoon' }).click();
@@ -37,6 +41,9 @@ test('an admin turns admin mode on with seven taps, and off again', async ({ pag
 	await picker.getByRole('button', { name: /christmas/ }).click();
 	await expect(page).toHaveURL(/raccoon=christmas/);
 	await expect(page.locator('header img.mascot')).toHaveAttribute('src', /\/christmas/);
+
+	await page.goto('/settings');
+	await expect(page.getByRole('link', { name: /Raccoon album/ })).toHaveText(albumBefore!);
 
 	// Typed by hand, a section raccoon is ignored even in admin mode.
 	await page.goto('/home?raccoon=shopping');

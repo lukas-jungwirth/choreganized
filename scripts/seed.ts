@@ -45,6 +45,7 @@ import {
 	ledgerPeople,
 	meals,
 	members,
+	raccoonSightings,
 	recipeIngredients,
 	recipeStepIngredients,
 	recipeSteps,
@@ -796,6 +797,42 @@ const seeded = db.transaction((tx) => {
 			{ id: sid('done', '7'), householdId, taskId: sid('task', 'bedsheets'), taskName: 'Change the bedsheets', points: 10, memberId: ownerMemberId, memberName: ownerName, completedAt: daysAgo(6, 12) }, // prettier-ignore
 			{ id: sid('skip', '1'), householdId, taskId: sid('task', 'towels'), taskName: 'Wash the towels', points: 0, action: 'skipped', memberId: housemateMemberId, memberName: housemateName, completedAt: daysAgo(7, 9) } // prettier-ignore
 		])
+		.onConflictDoNothing()
+		.run();
+
+	/* ── The raccoon album (→ plan 35) ───────────────────────────────────────
+	 * The owner has met a handful, one of each frame: all year, one season, a
+	 * blend of seasons, a special day. The snowman is still "New", so the badge
+	 * shows too. Everyone else starts with an empty album, as a real member does.
+	 */
+
+	const met: Array<[raccoon: string, daysAgo: number, seen: number, noticed: boolean]> = [
+		['welcome-a', 60, 14, true],
+		['reading', 58, 9, true],
+		['sports', 41, 6, true],
+		['phone', 33, 4, true],
+		['cards', 20, 3, true],
+		['sleeping', 55, 22, true],
+		['reminder-upcoming', 50, 11, true],
+		['tea', 30, 5, true],
+		['handball', 12, 2, true],
+		['beach', 45, 3, true],
+		['halloween', 3, 1, true],
+		['snowman', 1, 1, false]
+	];
+	tx.insert(raccoonSightings)
+		.values(
+			met.map(([raccoon, ago, seenCount, noticed]) => ({
+				id: sid('raccoon', raccoon),
+				householdId,
+				memberId: ownerMemberId,
+				raccoon,
+				firstSeenOn: addDays(today, -ago),
+				seenCount,
+				lastSlot: `${addDays(today, -ago)}#1`,
+				noticedAt: noticed ? daysAgo(0, 7) : null
+			}))
+		)
 		.onConflictDoNothing()
 		.run();
 

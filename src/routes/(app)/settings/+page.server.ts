@@ -48,11 +48,13 @@ import {
 	setRecipeWording,
 	updateProfile
 } from '$lib/server/services/household';
+import { countSightings } from '$lib/server/services/raccoons';
 import { setAway } from '$lib/server/services/tasks';
 import { appVersion } from '$lib/server/version';
 import { isTheme, THEME_COOKIE, THEME_COOKIE_MAX_AGE } from '$lib/theme';
 import { birthdayFrom } from '$lib/utils/birthday';
 import { isCalendarDate, todayIn } from '$lib/utils/dates';
+import { ALBUM_SIZE } from '$lib/utils/raccoon-album';
 import { FEEDBACK_BODY_MAX, isFeedbackKind } from '$lib/utils/feedback';
 import { isAiProvider, isAiSlot, looksLikeApiKey, looksLikeModelId } from '$lib/ai';
 import { DISPLAY_NAME_MAX, HOUSEHOLD_NAME_MAX } from '$lib/utils/household';
@@ -106,6 +108,8 @@ export const load: PageServerLoad = (event) => {
 	// load only adds what is nobody else's business: the sign-in identity and
 	// this member's own preferences.
 	return {
+		/** The raccoon album row under the profile card: "17 of 39" (→ plan 35). */
+		album: { found: countSightings(householdId, member.id), total: ALBUM_SIZE },
 		email: user.email,
 		// Which provider and model each AI slot uses, and a masked hint — never the
 		// key itself (→ SPEC §6, plan 20). Members see it read-only; only the owner

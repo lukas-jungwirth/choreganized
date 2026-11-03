@@ -34,7 +34,7 @@ type Input = {
 };
 
 /** Fixed special days, `MM-DD`. Easter moves, so it is worked out per year. */
-const SPECIAL_DAYS: Record<string, MascotName> = {
+export const SPECIAL_DAYS: Readonly<Record<string, MascotName>> = {
 	'12-24': 'christmas',
 	'12-25': 'christmas',
 	'12-31': 'new-year',
@@ -81,7 +81,7 @@ const WAKE_UP = 5;
 const SLOT_STARTS = [WAKE_UP, 11, 17];
 
 /** Which season each month (1–12) belongs to: meteorological, three months each. */
-const SEASON_OF_MONTH: Season[] = [
+export const SEASON_OF_MONTH: readonly Season[] = [
 	'winter',
 	'winter',
 	'spring',
@@ -98,6 +98,18 @@ const SEASON_OF_MONTH: Season[] = [
 
 /** Any fixed day works; the count from it is what turns the wheel. */
 const EPOCH = '2000-01-01';
+
+/**
+ * Which stretch of Home's day this is, as `YYYY-MM-DD#0|1|2` (morning,
+ * afternoon, evening) or `YYYY-MM-DD#n` for the night, dated by the evening it
+ * began, so 23:00 and 02:00 are one night. The raccoon album counts a sighting
+ * once per slot (→ plan 35), because within one the raccoon holds still.
+ */
+export function homeSlot(today: CalendarDate, hour: number): string {
+	if (hour >= BEDTIME) return `${today}#n`;
+	if (hour < WAKE_UP) return `${addDays(today, -1)}#n`;
+	return `${today}#${SLOT_STARTS.findLastIndex((start) => hour >= start)}`;
+}
 
 export function specialDay(today: CalendarDate): MascotName | null {
 	const fixed = SPECIAL_DAYS[today.slice(5)];

@@ -204,6 +204,41 @@
 	--toast-accent: #93c2a2; /* the "Undo" — sage lifted to clear AA on the dark */
 	--toast-press: rgba(255, 255, 255, 0.08); /* the "Undo" pressed, lit from within */
 
+	/* ── Raccoon album frames (→ plan 35) ─────────────────────── */
+	/* A card's frame says when you can meet that raccoon: the season picks the
+	   hue, the theme only its shade. Several seasons blend first to last. Spring
+	   is pink, not green, so it can't pass for all year's sage. Each `-ink` is
+	   the number, the chip and the stat dots on that frame. */
+	--season-any: light-dark(#e6efe8, #1e2a22); /* ★ all year: the app's sage */
+	--season-any-ink: light-dark(#3e5d49, #a9cfb6);
+	--season-winter: light-dark(#dde7ef, #1d252c); /* ★★ ice blue */
+	--season-winter-ink: light-dark(#4d6a82, #a8c3d8);
+	--season-spring: light-dark(#f5e2e6, #2d1f23); /* ★★ blossom pink */
+	--season-spring-ink: light-dark(#94506a, #e8b3c4);
+	--season-summer: light-dark(#f6ead0, #2a2417); /* ★★ sun sand */
+	--season-summer-ink: light-dark(#8a6a24, #e6c983);
+	--season-autumn: light-dark(#f3dfd2, #2e2018); /* ★★ rust */
+	--season-autumn-ink: light-dark(#8f4a26, #e9ac85);
+	/* ★★★ special days: holo foil, peach → butter → mint → sky → lilac, deeper at night */
+	--holo-1: light-dark(#f7d9c4, #3a2a20);
+	--holo-2: light-dark(#f3ecc2, #37321c);
+	--holo-3: light-dark(#cfe7d6, #1f3328);
+	--holo-4: light-dark(#cfdcef, #1f2a3a);
+	--holo-5: light-dark(#e7d3ea, #33233a);
+	--holo-ink: light-dark(#6b5a3a, #e6d3a8);
+	--holo: linear-gradient(
+		115deg,
+		var(--holo-1) 0%,
+		var(--holo-2) 22%,
+		var(--holo-3) 44%,
+		var(--holo-4) 66%,
+		var(--holo-5) 88%
+	);
+	--new-badge: var(--terracotta); /* the "New" on an album tile */
+	--on-new-badge: light-dark(#ffffff, #12100d);
+	/* A raccoon you haven't met: its shape only, a shadow on the sunken tile. */
+	--silhouette: light-dark(rgba(34, 32, 28, 0.1), rgba(0, 0, 0, 0.45));
+
 	/* ── Typography ───────────────────────────────────────────── */
 	--font-display: 'Fraunces Variable', serif; /* headings, numbers, wordmark */
 	--font-body: 'Figtree Variable', system-ui, sans-serif;

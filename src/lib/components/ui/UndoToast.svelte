@@ -6,21 +6,24 @@
 
 	Gone after `duration`, unless a keyboard is on the button — then it is the
 	only way back, and it waits.
+
+	The same pill also carries news with a way to it rather than an undo: give
+	`href` instead of the form, and a `detail` line under the message. Home's
+	"New raccoon!" is that (→ plan 35).
 -->
 <script lang="ts">
 	import { enhance } from '$app/forms';
+	import { preloadData } from '$lib/preload';
 	import type { RichText } from '$lib/i18n/messages/en';
 	import type { SubmitFunction } from '@sveltejs/kit';
 	import type { Snippet } from 'svelte';
 
-	type Props = {
+	type Common = {
 		/** What just happened, the name bold: "**Milk** checked off". */
 		message: RichText;
-		/** The undo's form action and fields. */
-		action: string;
-		fields: Record<string, string>;
+		/** A second, quieter line under it. */
+		detail?: string;
 		label: string;
-		undo: SubmitFunction;
 		/** Its few seconds are up, or the undo is away. */
 		onclose: () => void;
 		/** Re-arms the timer when it changes — a second tick gets its own few seconds. */
@@ -29,12 +32,26 @@
 		duration?: number;
 	};
 
+	type Props = Common &
+		(
+			| {
+					/** The undo's form action and fields. */
+					action: string;
+					fields: Record<string, string>;
+					undo: SubmitFunction;
+					href?: never;
+			  }
+			| { href: string; action?: never; fields?: never; undo?: never }
+		);
+
 	let {
 		message,
+		detail,
 		action,
 		fields,
 		label,
 		undo,
+		href,
 		onclose,
 		key,
 		icon,
@@ -59,15 +76,22 @@
 	<div class="row" role="status">
 		{@render icon?.()}
 		<span class="text">
-			{#each message as part}{#if part.strong}<b>{part.text}</b>{:else}{part.text}{/if}{/each}
+			<span class="message">
+				{#each message as part}{#if part.strong}<b>{part.text}</b>{:else}{part.text}{/if}{/each}
+			</span>
+			{#if detail}<span class="detail">{detail}</span>{/if}
 		</span>
 
-		<form method="POST" {action} use:enhance={undo}>
-			{#each Object.entries(fields) as [name, value] (name)}
-				<input type="hidden" {name} {value} />
-			{/each}
-			<button type="submit">{label}</button>
-		</form>
+		{#if href !== undefined}
+			<a class="button" {href} data-sveltekit-preload-data={preloadData(href)}>{label}</a>
+		{:else}
+			<form method="POST" {action} use:enhance={undo}>
+				{#each Object.entries(fields ?? {}) as [name, value] (name)}
+					<input type="hidden" {name} {value} />
+				{/each}
+				<button class="button" type="submit">{label}</button>
+			</form>
+		{/if}
 	</div>
 </div>
 
@@ -116,9 +140,21 @@
 	.text {
 		flex: 1;
 		min-width: 0;
+	}
+
+	.message,
+	.detail {
+		display: block;
 		overflow: hidden;
 		white-space: nowrap;
 		text-overflow: ellipsis;
+	}
+
+	/* The detail may take two lines: it is the news ("… is in your album · 18
+	   of 39"), and an ellipsis would cut off the part that matters. */
+	.detail {
+		font-size: var(--fs-14);
+		white-space: normal;
 	}
 
 	/* The name is the bright, bold run; "checked off" trails it in the muted
@@ -135,7 +171,8 @@
 	/* 44px of target inside the pill: the padding does the work, and this is
 	   tapped in a hurry, one-handed, while holding something else. The sage is
 	   lifted for the dark surface (→ `--toast-accent`). */
-	button {
+	.button {
+		flex: none;
 		padding: 12px 16px;
 		margin: -4px 0;
 		border-radius: var(--r-chip);
@@ -144,7 +181,7 @@
 		color: var(--toast-accent);
 	}
 
-	button:active {
+	.button:active {
 		background: var(--toast-press);
 	}
 

@@ -20,11 +20,13 @@
 import {
 	dayOfMonth,
 	daysBetween,
+	formatDayRange,
 	formatDayStamp,
 	formatBirthday,
 	formatMonthName,
 	formatMonthOfYear,
 	formatMonthRange,
+	formatMonthSpan,
 	formatShortDate,
 	formatWeekday,
 	formatWeekdayLong,
@@ -179,6 +181,8 @@ export const de: Messages = {
 		/** "14. März". */
 		birthday: (birthday: string) => formatBirthday(birthday, L),
 		monthOfYear: (month: number) => formatMonthOfYear(month, L),
+		dayRange: (from: string, to: string) => formatDayRange(from, to, L),
+		monthSpan: (from: number, to: number) => formatMonthSpan(from, to, L),
 
 		dayLabel: (date: CalendarDate, today: CalendarDate) => {
 			const days = daysBetween(today, date);
@@ -1968,6 +1972,268 @@ export const de: Messages = {
 		since: (date: string) => `seit ${date}`,
 		lastActive: (day: string) => `Zuletzt aktiv: ${day}`,
 		neverActive: 'Nie aktiv'
+	},
+
+	/* ── The raccoon album (→ plan 35, SPEC §6) ───────────────────────────── */
+	album: {
+		title: 'Waschbär-Album',
+		subtitle: 'Jeder Waschbär, den du auf Home getroffen hast.',
+		back: 'Zurück zu den Einstellungen',
+		count: (found: number, total: number) => `${found} von ${total}`,
+		found: (found: number, total: number) => `${found} von ${total} gefunden`,
+		missing: (seasonal: number, special: number) => {
+			const parts = [
+				seasonal > 0 ? `${seasonal} saisonale` : null,
+				special > 0 ? `${special} ${special === 1 ? 'Feiertag' : 'Feiertage'}` : null
+			].filter((part) => part !== null);
+			return parts.length > 0 ? `Noch zu finden: ${parts.join(' · ')}` : null;
+		},
+		complete: 'Du hast alle Waschbären getroffen!',
+		progress: (found: number, total: number) => `${found} von ${total} Waschbären gefunden`,
+		filters: {
+			label: 'Anzeigen',
+			all: 'Alle',
+			missing: 'Fehlen noch'
+		},
+		tiers: { 1: 'Ganzjährig', 2: 'Saisonal', 3: 'Feiertage' } as Record<1 | 2 | 3, string>,
+		stars: (stars: number) => (stars === 1 ? '1 Stern' : `${stars} Sterne`),
+		number: (number: string) => `Nr. ${number}`,
+		newBadge: 'Neu',
+		quoted: (text: string) => `„${text}“`,
+		empty: 'Hier sind keine Waschbären.',
+		tile: (number: string, name: string | null, isNew = false) =>
+			name
+				? `Nr. ${number}, ${name}${isNew ? ', neu' : ''}`
+				: `Nr. ${number}, noch nicht getroffen`,
+		window: {
+			allYear: 'Ganzjährig',
+			easter: 'Ostern',
+			birthday: 'Dein Geburtstag'
+		},
+		stats: {
+			cosiness: 'Gemütlichkeit',
+			mischief: 'Schabernack',
+			snacks: 'Jausenlust',
+			helpfulness: 'Hilfsbereitschaft'
+		},
+		statValue: (name: string, value: number) => `${name}: ${value} von 5`,
+		firstMet: (date: string) =>
+			[{ text: 'Zuerst getroffen am ' }, { text: date, strong: true }] as RichText,
+		seen: (times: number) =>
+			[{ text: 'Gesehen: ' }, { text: `${times}×`, strong: true }] as RichText,
+		locked: {
+			name: '? ? ? ? ?',
+			title: 'Noch nicht getroffen',
+			hint: 'Schau öfter auf Home vorbei'
+		},
+		previous: 'Voriger Waschbär',
+		next: 'Nächster Waschbär',
+		close: 'Schließen',
+		toast: {
+			title: 'Neuer Waschbär!',
+			detail: (name: string, found: number, total: number) =>
+				`${name} ist in deinem Album · ${found} von ${total}`,
+			view: 'Ansehen'
+		}
+	},
+
+	/** Entwürfe, zum Gegenlesen (→ plan 35). Wortspiele erlaubt. */
+	raccoons: {
+		'welcome-a': {
+			name: 'Winke-Wendelin',
+			title: 'Das Begrüßungskomitee',
+			fact: 'Winkt dem Briefträger, den Nachbarn und an ruhigen Tagen auch dem Kühlschrank.'
+		},
+		'welcome-b': {
+			name: 'Daumen-Toni',
+			title: 'Der, der sagt: Wird schon',
+			fact: 'Hat nie nachgeschaut, ob es wirklich wird. Meistens wird es.'
+		},
+		reading: {
+			name: 'Bücher-Berta',
+			title: 'Die Gute-Nacht-Leserin',
+			fact: 'Hat jedes Rezept im Kochbuch zweimal gelesen. Gekocht hat sie eins, einmal.'
+		},
+		call: {
+			name: 'Quassel-Karli',
+			title: 'Der am Telefon',
+			fact: 'Ruft an, um zu sagen, dass er später kommt. Ruft nochmal an, um zu sagen, wie viel später.'
+		},
+		phone: {
+			name: 'Wählscheiben-Rosi',
+			title: 'Die Hüterin des Festnetzes',
+			fact: 'Kann noch jede Nummer auswendig. Wie, verrät sie nicht.'
+		},
+		music: {
+			name: 'Kopfhörer-Hannes',
+			title: 'Der stille Zuhörer',
+			fact: 'Summt bei allem mit, immer einen Tick vor dem Takt.'
+		},
+		singing: {
+			name: 'Mikro-Mitzi',
+			title: 'Der Küchen-Karaoke-Star',
+			fact: 'Singt unter der Dusche, in der Küche und einmal sogar in der Apotheke.'
+		},
+		camera: {
+			name: 'Schnappschuss-Sepp',
+			title: 'Der Haushaltsfotograf',
+			fact: 'Hat 400 Fotos vom Abendessen und kein einziges von denen, die es gegessen haben.'
+		},
+		painting: {
+			name: 'Pinsel-Paula',
+			title: 'Die Hauskünstlerin',
+			fact: 'Hat die Obstschale so oft gemalt, dass das Obst schon posiert.'
+		},
+		writing: {
+			name: 'Feder-Quirin',
+			title: 'Der Listenschreiber',
+			fact: 'Schreibt die Einkaufsliste zuerst mit der Hand. Wegen dem Gefühl.'
+		},
+		cards: {
+			name: 'Pokerface-Paul',
+			title: 'Der Kartenhai',
+			fact: 'Sagt, er kann nicht Karten spielen. Gewinnt seit dem Frühling jeden Spieleabend.'
+		},
+		arcade: {
+			name: 'Joystick-Jo',
+			title: 'Die Rekordhalterin',
+			fact: 'Hält den Rekord auf jedem Automaten, und den für „nur noch eine Runde“.'
+		},
+		sports: {
+			name: 'Muskel-Max',
+			title: 'Das Morgentraining',
+			fact: 'Stemmt jeden Morgen Gewichte und danach die Keksdose, fürs Gleichgewicht.'
+		},
+		watering: {
+			name: 'Gießkannen-Wally',
+			title: 'Der Pflanzenflüsterer',
+			fact: 'Redet jeden Tag mit den Zimmerpflanzen. Zwei antworten schon.'
+		},
+		sleeping: {
+			name: 'Schlummer-Susi',
+			title: 'Die Nachtschicht',
+			fact: 'Schläft von zehn bis fünf und träumt, meistens, vom Frühstück.'
+		},
+		'reminder-upcoming': {
+			name: 'Bimmel-Dora',
+			title: 'Die freundliche Erinnerung',
+			fact: 'Läutet einmal, ganz höflich. Und dann nochmal, genauso höflich.'
+		},
+		'reminder-overdue': {
+			name: 'Wecker-Alois',
+			title: 'Die letzte Erinnerung',
+			fact: 'War noch nie im Leben zu spät und hätte das gern schriftlich.'
+		},
+		snow: {
+			name: 'Schneeball-Sigi',
+			title: 'Der Schneeballwerfer',
+			fact: 'Zielt auf den Baum. Trifft den, der daneben steht.'
+		},
+		snowflake: {
+			name: 'Flocken-Flora',
+			title: 'Die Schneeflockensammlerin',
+			fact: 'Hat 2.000 Schneeflocken mit der Zunge gefangen. Keine hat gleich geschmeckt, sagt sie.'
+		},
+		snowman: {
+			name: 'Frosti-Fritz',
+			title: 'Der Schneemannbauer',
+			fact: 'Gibt dem Schneemann immer eine eigene Karotte. Die zweite hebt er sich auf, man weiß ja nie.'
+		},
+		skiing: {
+			name: 'Slalom-Stefan',
+			title: 'Der Erste auf der Piste',
+			fact: 'Ist in vier Minuten im Tal. Mit der Gondel geht’s zurück, wegen der Aussicht und dem Strudel.'
+		},
+		skates: {
+			name: 'Pirouetten-Pia',
+			title: 'Die Eisläuferin',
+			fact: 'Kann eine perfekte Pirouette. Am Bremsen arbeitet sie noch.'
+		},
+		cold: {
+			name: 'Kakao-Kurt',
+			title: 'Warm eingepackt',
+			fact: 'Trägt drei Schals und hält den Kakao mit beiden Pfoten. Sagt trotzdem, es ist frisch draußen.'
+		},
+		flower: {
+			name: 'Blüten-Bella',
+			title: 'Die Blumenschnupperin',
+			fact: 'Riecht auf dem Weg zum Geschäft an jeder Blume. Wenn sie ankommt, hat es schon zu.'
+		},
+		tennis: {
+			name: 'Topspin-Tom',
+			title: 'Das Tennis-Ass',
+			fact: 'Ruft bei jedem Ball „Out“, auch bei seinen eigenen.'
+		},
+		garden: {
+			name: 'Grünpfoten-Gerti',
+			title: 'Die Gärtnerin',
+			fact: 'Zieht Paradeiser, Zucchini und, aus Versehen, einen Kürbis so groß wie die Gartenhütte.'
+		},
+		fishing: {
+			name: 'Fischer-Ferdl',
+			title: 'Der geduldige Angler',
+			fact: 'Wartet seit Dienstag auf einen Biss. Hat Jausenbrote für die ganze Woche mit.'
+		},
+		beach: {
+			name: 'Badetuch-Bianca',
+			title: 'Die Sonnenanbeterin',
+			fact: 'Legt um sieben in der Früh ihr Handtuch hin. Seitdem hat sie sich nicht bewegt.'
+		},
+		'water-pistol': {
+			name: 'Spritzpistolen-Gustl',
+			title: 'Der Wasserschlacht-Anstifter',
+			fact: 'Schwört, dass er sie nur zum Blumengießen anfüllt.'
+		},
+		'summer-garden': {
+			name: 'Strohhut-Heidi',
+			title: 'Die Sommergärtnerin',
+			fact: 'Gießt in der Früh den Garten und zu Mittag sich selbst.'
+		},
+		tea: {
+			name: 'Teehäferl-Theo',
+			title: 'Der Teekocher',
+			fact: 'Hat einen Tee für jede Laune und eine Laune für jeden Tee.'
+		},
+		knitting: {
+			name: 'Strick-Klara',
+			title: 'Die Schalstrickerin',
+			fact: 'Hat im Oktober mit einem Schal angefangen. Jetzt ist er vier Meter lang und wird noch länger.'
+		},
+		handball: {
+			name: 'Handball-Hias',
+			title: 'Der Mannschaftskapitän',
+			fact: 'Spielt bei jedem Wetter. Hat noch nie zugegeben, dass es geregnet hat.'
+		},
+		valentines: {
+			name: 'Herzerl-Hansi',
+			title: 'Der Valentin',
+			fact: 'Klebt kleine Herzerl auf den Kühlschrank. Lässt den Kühlschrank auch gern offen.'
+		},
+		easter: {
+			name: 'Osternest-Elfi',
+			title: 'Die Eierversteckerin',
+			fact: 'Versteckt die Eier so gut, dass eins vom letzten Jahr noch immer irgendwo liegt.'
+		},
+		halloween: {
+			name: 'Grusel-Schurli',
+			title: 'Der Kürbisschnitzer',
+			fact: 'Schnitzt den gruseligsten Kürbis der Gasse und fürchtet sich dann selber ein bisserl.'
+		},
+		christmas: {
+			name: 'Kekserl-Christl',
+			title: 'Die Weihnachtsbäckerin',
+			fact: 'Bäckt elf Sorten Weihnachtskekse und kostet jedes Blech. Gründlich.'
+		},
+		'new-year': {
+			name: 'Mitternachts-Manni',
+			title: 'Der Countdown-Zähler',
+			fact: 'Fängt um elf mit dem Countdown an, damit nur ja nichts schiefgeht.'
+		},
+		birthday: {
+			name: 'Partyhut-Pepi',
+			title: 'Dein Geburtstags-Waschbär',
+			fact: 'Kommt nur einmal im Jahr, und nur für dich. Hat Kuchen mit.'
+		}
 	},
 
 	/* ── The holiday pause (→ SPEC §5.5), in [4c] and [6a] ─────────────────── */

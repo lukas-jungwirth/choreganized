@@ -37,9 +37,11 @@
 	import Mascot from '$lib/components/ui/Mascot.svelte';
 	import RowGroup from '$lib/components/ui/RowGroup.svelte';
 	import { LOCALE_NAMES, isLocale, messages } from '$lib/i18n';
+	import { preloadData } from '$lib/preload';
 	import ChevronRight from '@lucide/svelte/icons/chevron-right';
 	import Info from '@lucide/svelte/icons/info';
 	import Languages from '@lucide/svelte/icons/languages';
+	import PawPrint from '@lucide/svelte/icons/paw-print';
 	import LogOut from '@lucide/svelte/icons/log-out';
 	import MessageSquareText from '@lucide/svelte/icons/message-square-text';
 	import Send from '@lucide/svelte/icons/send';
@@ -220,6 +222,24 @@
 		</button>
 	</div>
 </Card>
+
+<!-- The raccoon album (→ plan 35): under the profile, because it is yours. -->
+<div class="album-row">
+	<RowGroup>
+		<a
+			class="row album"
+			href="/settings/raccoons"
+			data-sveltekit-preload-data={preloadData('/settings/raccoons')}
+		>
+			<span class="tile" aria-hidden="true"><PawPrint size={18} strokeWidth={1.9} /></span>
+			<span class="label">{m.album.title}</span>
+			<span class="end">
+				<span class="value">{m.album.count(data.album.found, data.album.total)}</span>
+				<ChevronRight size={15} strokeWidth={2} class="chevron" />
+			</span>
+		</a>
+	</RowGroup>
+</div>
 
 <h2 class="section">{m.settings.account}</h2>
 
@@ -572,6 +592,10 @@
 		align-items: center;
 		gap: 14px;
 		padding: 18px;
+	}
+
+	.album-row {
+		margin-top: 12px;
 	}
 
 	.who {

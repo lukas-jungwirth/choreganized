@@ -7,6 +7,7 @@
 <script lang="ts">
 	import ChevronLeft from '@lucide/svelte/icons/chevron-left';
 	import { messages } from '$lib/i18n';
+	import { preloadData } from '$lib/preload';
 	import type { Snippet } from 'svelte';
 
 	type Props = {
@@ -25,7 +26,12 @@
 </script>
 
 <header>
-	<a class="back" href={back} aria-label={backLabel ?? m.nav.back}>
+	<a
+		class="back"
+		href={back}
+		data-sveltekit-preload-data={preloadData(back)}
+		aria-label={backLabel ?? m.nav.back}
+	>
 		<ChevronLeft size={20} strokeWidth={2.4} />
 	</a>
 	<div class="titles">
