@@ -3215,3 +3215,17 @@ units | null, name}`, written back as editor lines in the reader's unit spelling
      reaches further left than the widest always has (163px), so a pose with both arms out
      (welcome A) shifts right a little instead of squeezing the greeting. Settings' two raccoons
      are fixed poses and stay as they are.
+225. **Five indoor pastimes for the everyday raccoon** (Lukas's batch 2026-11-03, through
+     `/raccoons`). `call` (an old corded phone), `music` (headphones, eyes closed), `singing`
+     (a microphone), `arcade` (an arcade machine) and `writing` (quill and ink pot), all year —
+     none of them belongs to a season. Singing and the corded phone strike the same pose (one paw
+     at the face, the other held out palm up, mouth open), so they share a new look-alike group,
+     `talking`; the corded phone looks nothing like the smartphone `phone`, but sits well away
+     from it anyway. Writing was judged unlike painting. Placed after tennis, reading, welcome B,
+     skiing and dumbbell, so no neighbour is alike in any season; the rotation test passed as
+     placed. Each season now has 15–16 poses, so a pose comes round within six days (SPEC §2 said
+     three, already stale since #221). Three came in flat; music lost 10px and arcade 15px at the
+     bottom, through the overalls and the cabinet's foot. Arcade is wide (141px at Home's 136px),
+     the cabinet filling its right half, but narrower than tennis; `npm run icons` found all five
+     bodies by their overall buttons (#224), arcade's at 0.38, so the cabinet reaches out to the
+     right. +92 KB of AVIFs.

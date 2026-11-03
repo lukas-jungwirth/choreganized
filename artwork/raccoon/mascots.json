@@ -87,6 +87,13 @@
 			"lookAlike": "ball-sport"
 		},
 		{
+			"name": "call",
+			"height": 408,
+			"perched": true,
+			"seasons": ["winter", "spring", "summer", "autumn"],
+			"lookAlike": "talking"
+		},
+		{
 			"name": "snow",
 			"height": 408,
 			"perched": true,
@@ -94,6 +101,12 @@
 		},
 		{
 			"name": "reading",
+			"height": 408,
+			"perched": true,
+			"seasons": ["winter", "spring", "summer", "autumn"]
+		},
+		{
+			"name": "music",
 			"height": 408,
 			"perched": true,
 			"seasons": ["winter", "spring", "summer", "autumn"]
@@ -134,6 +147,13 @@
 			"lookAlike": "greeting"
 		},
 		{
+			"name": "singing",
+			"height": 408,
+			"perched": true,
+			"seasons": ["winter", "spring", "summer", "autumn"],
+			"lookAlike": "talking"
+		},
+		{
 			"name": "fishing",
 			"height": 408,
 			"perched": true,
@@ -146,6 +166,12 @@
 			"seasons": ["winter"]
 		},
 		{
+			"name": "arcade",
+			"height": 408,
+			"perched": true,
+			"seasons": ["winter", "spring", "summer", "autumn"]
+		},
+		{
 			"name": "tea",
 			"height": 408,
 			"perched": true,
@@ -154,6 +180,12 @@
 		},
 		{
 			"name": "sports",
+			"height": 408,
+			"perched": true,
+			"seasons": ["winter", "spring", "summer", "autumn"]
+		},
+		{
+			"name": "writing",
 			"height": 408,
 			"perched": true,
 			"seasons": ["winter", "spring", "summer", "autumn"]
