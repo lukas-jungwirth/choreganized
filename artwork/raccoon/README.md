@@ -24,12 +24,12 @@ Every screen raccoon, one entry each, read by `npm run icons`:
   between the two overall buttons, and Home places the raccoon by it. Give it by hand only for a
   pose whose buttons are hidden (the script says so);
 - `lookAlike` — a group name for everyday poses that look nearly the same (`greeting`,
-  `gardening`, `hot-drink`, `ball-sport`, `talking`, `snow-gear`): the rotation never shows two of a group back to back.
+  `gardening`, `hot-drink`, `ball-sport`, `talking`, `snow-gear`): a member's day never draws two of a group.
 
-The everyday poses' **order is the rotation's**: each slot of the day takes the next one that's
-in season, wrapping round at the end, so neighbours should differ in every season they share.
-`src/lib/utils/raccoon.test.ts` walks two years and fails, naming the date, if two look-alikes or
-the same pose ever meet. The app icons aren't listed — they have their own steps in the script.
+The everyday poses' order doesn't matter to Home: each member draws three of the season's poses
+a day, seeded by member and date (→ DECISIONS #232). `src/lib/utils/raccoon.test.ts` walks two
+years and fails, naming the date, if a day's three repeat a pose or hold two look-alikes, and
+checks that simulated members meet every pose of every season. The app icons aren't listed — they have their own steps in the script.
 
 | File                      | Where it shows up                                              |
 | ------------------------- | -------------------------------------------------------------- |

@@ -3322,3 +3322,19 @@ units | null, name}`, written back as editor lines in the reader's unit spelling
        Tokyo evening) rather than the clock, which is fixed for the whole run. Setup opens Home
        and the album once for both seeded accounts so no journey or screenshot depends on being
        first.
+232. **Home's everyday raccoon is a daily draw per member** (Lukas 2026-11-03, for the raccoon
+     album). It used to be one fixed rotation keyed by date and slot, so every member of every
+     household saw the same pose and housemates filled identical albums. Worse for collecting:
+     summer's 21 poses divide by the 3 slots, so someone who only looks in the evening met 7 of
+     them, and a visitor in every slot had the whole season within a week. Now each member gets
+     three of the season's poses a day, drawn from a seed of member id and date (FNV-1a into
+     mulberry32 in `utils/raccoon`): computed, never stored, steady for the slot on every
+     device. The one rule is within the day (three different, no two look-alikes), because the
+     sleeping raccoon separates one day's evening from the next morning. No hard guarantee of
+     meeting every pose in a season, on purpose: the last few taking luck is the fun. The tests
+     hold the draw to it statistically instead: 200 simulated members meet every pose of every
+     season looking in every slot, and evening-only visitors meet over 95% on average. Weighed
+     and dropped: a per-member offset into the fixed rotation (kept the evening trap and the
+     one-week set), a shuffled deck per member (a full set in a week again), and an
+     end-of-season catch-up that guarantees the set (more code for less suspense). Special
+     days, the birthday, the reminders and sleeping are unchanged.

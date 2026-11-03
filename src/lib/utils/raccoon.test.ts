@@ -148,72 +148,104 @@ describe('homeRaccoon', () => {
 	});
 });
 
-/** Every pose `everydayRaccoon` shows in one round from `date`: three slots a day, as many days
- * as the longest season needs (23 winter poses → 8 days), so a batch of new poses doesn't have
- * to edit this. */
-function posesFrom(date: string): string[] {
-	const longest = Math.max(
-		...['winter', 'spring', 'summer', 'autumn'].map((season) => listedFor(season).length)
-	);
-	const seen = new Set<string>();
-	for (let day = 0; day < Math.ceil(longest / 3); day++) {
-		for (const hour of [8, 14, 20]) seen.add(everydayRaccoon(addDays(date, day), hour));
-	}
-	return [...seen].sort();
-}
-
-/** What mascots.json says a season's poses are — what the rotation must show, no more, no less. */
+/** What mascots.json says a season's poses are — what the draw may show, no more, no less. */
 const listedFor = (season: string) =>
 	EVERYDAY.filter((pose) => (pose.seasons as readonly string[]).includes(season))
 		.map((pose) => pose.name as string)
 		.sort();
 
-/** The first morning of a season, when its poses take over from the last's. */
-const seasonStarts = (date: string) => /-(03|06|09|12)-01$/.test(date);
+/** A season's days in 2036: winter is the one that starts in December 2035. */
+const SEASON_DAYS = {
+	winter: ['2035-12-01', 91],
+	spring: ['2036-03-01', 92],
+	summer: ['2036-06-01', 92],
+	autumn: ['2036-09-01', 91]
+} as const;
+
+/** Every pose `seed` meets in a season, looking in every slot (or only at `hours`). */
+function metIn(season: keyof typeof SEASON_DAYS, seed: string, hours = [8, 14, 20]): string[] {
+	const [first, days] = SEASON_DAYS[season];
+	const seen = new Set<string>();
+	for (let day = 0; day < days; day++) {
+		for (const hour of hours) seen.add(everydayRaccoon(addDays(first, day), hour, seed));
+	}
+	return [...seen].sort();
+}
+
+/** Stand-ins for member ids: what the seed is in the app. */
+const MEMBERS = Array.from({ length: 200 }, (_, index) => `member-${index}`);
 
 describe('everydayRaccoon', () => {
-	it('shows each season exactly the poses listed for it, all of them within one round', () => {
-		assert.deepEqual(posesFrom('2036-01-10'), listedFor('winter'));
-		assert.deepEqual(posesFrom('2036-04-10'), listedFor('spring'));
-		assert.deepEqual(posesFrom('2036-07-10'), listedFor('summer'));
-		assert.deepEqual(posesFrom('2036-10-10'), listedFor('autumn'));
+	it('draws only the poses listed for the season', () => {
+		for (const season of ['winter', 'spring', 'summer', 'autumn'] as const) {
+			for (const seed of MEMBERS.slice(0, 20)) {
+				const met = metIn(season, seed);
+				const listed = listedFor(season);
+				assert.deepEqual(
+					met.filter((name) => !listed.includes(name)),
+					[],
+					`${season}, ${seed}`
+				);
+			}
+		}
 	});
 
-	it('goes by the meteorological seasons: December is winter, March spring', () => {
-		assert.ok(posesFrom('2036-12-01').includes('snow'));
-		assert.ok(!posesFrom('2036-11-23').includes('snow'));
-		assert.ok(posesFrom('2036-02-22').includes('snow'));
-		assert.ok(!posesFrom('2036-03-01').includes('snow'));
-		assert.ok(posesFrom('2036-06-01').includes('beach'));
-		assert.ok(!posesFrom('2036-09-01').includes('beach'));
+	it('meets every pose of a season within it, for anyone looking in every slot', () => {
+		// No hard guarantee by design (→ DECISIONS #232), but three a day for a
+		// season must be plenty: a draw that leaves gaps here is a broken draw.
+		for (const season of ['winter', 'spring', 'summer', 'autumn'] as const) {
+			for (const seed of MEMBERS) {
+				assert.deepEqual(metIn(season, seed), listedFor(season), `${season}, ${seed}`);
+			}
+		}
+	});
+
+	it('meets nearly every pose even for someone who only ever looks in the evening', () => {
+		// The fixed rotation's trap: an evening-only visitor saw a third of summer.
+		for (const season of ['winter', 'spring', 'summer', 'autumn'] as const) {
+			const shares = MEMBERS.map(
+				(seed) => metIn(season, seed, [20]).length / listedFor(season).length
+			);
+			const mean = shares.reduce((sum, share) => sum + share, 0) / shares.length;
+			assert.ok(mean > 0.95, `${season}: an evening-only visitor meets ${mean.toFixed(2)}`);
+			assert.ok(Math.min(...shares) > 0.75, `${season}: worst ${Math.min(...shares).toFixed(2)}`);
+		}
 	});
 
 	it('changes at 11:00 and 17:00, and holds still in between', () => {
 		const day = '2036-06-18';
-		assert.equal(everydayRaccoon(day, 5), everydayRaccoon(day, 10));
-		assert.notEqual(everydayRaccoon(day, 10), everydayRaccoon(day, 11));
-		assert.equal(everydayRaccoon(day, 11), everydayRaccoon(day, 16));
-		assert.notEqual(everydayRaccoon(day, 16), everydayRaccoon(day, 17));
-		assert.equal(everydayRaccoon(day, 17), everydayRaccoon(day, 21));
+		assert.equal(everydayRaccoon(day, 5, 'm'), everydayRaccoon(day, 10, 'm'));
+		assert.notEqual(everydayRaccoon(day, 10, 'm'), everydayRaccoon(day, 11, 'm'));
+		assert.equal(everydayRaccoon(day, 11, 'm'), everydayRaccoon(day, 16, 'm'));
+		assert.notEqual(everydayRaccoon(day, 16, 'm'), everydayRaccoon(day, 17, 'm'));
+		assert.equal(everydayRaccoon(day, 17, 'm'), everydayRaccoon(day, 21, 'm'));
 	});
 
-	it('never shows the same pose, or two look-alikes, twice in a row', () => {
+	it('never shows the same pose, or two look-alikes, twice in one day', () => {
 		// The groups come from mascots.json, so a pose added there is held to this too.
-		const group = new Map(EVERYDAY.map((pose) => [pose.name, pose.lookAlike]));
-		let previous = '';
-		let date = '2036-01-01';
-		for (let day = 0; day < 366 * 2; day++, date = addDays(date, 1)) {
-			for (const hour of [8, 14, 20]) {
-				const pose = everydayRaccoon(date, hour);
-				if (!(seasonStarts(date) && hour === 8)) {
-					const at = `${date} ${hour}:00: ${previous} → ${pose}`;
-					assert.notEqual(pose, previous, at);
-					const shared = group.get(pose);
-					assert.ok(!shared || shared !== group.get(previous as MascotName), at);
-				}
-				previous = pose;
+		const group = new Map(EVERYDAY.map((pose) => [pose.name as string, pose.lookAlike]));
+		for (const seed of MEMBERS.slice(0, 20)) {
+			let date = '2036-01-01';
+			for (let day = 0; day < 366 * 2; day++, date = addDays(date, 1)) {
+				const three = [8, 14, 20].map((hour) => everydayRaccoon(date, hour, seed));
+				const at = `${seed} ${date}: ${three.join(', ')}`;
+				assert.equal(new Set(three).size, 3, at);
+				const groups = three.map((name) => group.get(name)).filter(Boolean);
+				assert.equal(new Set(groups).size, groups.length, at);
 			}
 		}
+	});
+
+	it('is the same draw for the same member and day, and its own for each member', () => {
+		const day = '2036-06-18';
+		assert.equal(everydayRaccoon(day, 14, 'alice'), everydayRaccoon(day, 14, 'alice'));
+		// Over a season two members' days are mostly different.
+		let same = 0;
+		for (let offset = 0; offset < 92; offset++) {
+			const date = addDays('2036-06-01', offset);
+			if (everydayRaccoon(date, 14, 'alice') === everydayRaccoon(date, 14, 'bob')) same++;
+		}
+		assert.ok(same < 20, `alice and bob shared ${same} of 92 afternoons`);
 	});
 });
 

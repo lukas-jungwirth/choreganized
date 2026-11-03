@@ -143,7 +143,8 @@ export function getHomeSummary(householdId: string, context: HomeContext): HomeS
 			today,
 			hour,
 			birthday: member.birthday,
-			nextChoreDue: next?.dueDate ?? null
+			nextChoreDue: next?.dueDate ?? null,
+			seed: member.id
 		}),
 		slot: homeSlot(today, hour),
 		nextChore: next,
