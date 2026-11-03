@@ -87,6 +87,8 @@ npm run db:seed -- you@example.com --full-house   # …plus stub members up to t
 npm run db:seed -- you@example.com --history      # …plus ~14 months of older expenses
 npm run db:studio      # inspect the DB
 npm run import:probe -- <url> [--save <name>]  # what the recipe importer reads on a page
+npm run icons          # app icons + raccoon AVIFs from artwork/raccoon/ (+ mascots.json)
+npm run raccoons -- <folder>  # check + cut a batch of new raccoon art (`/raccoons` wraps it)
 npm run format         # prettier
 ```
 
@@ -154,7 +156,7 @@ environment, say so explicitly in the handoff — never claim untested things wo
 
 `src/lib/server/` db + auth + services + push + cron · `src/lib/components/` ui / shell /
 feature · `src/routes/` see ARCHITECTURE.md routing map · `tests/` integration · conventions ·
-e2e · visual (+ `helpers/`) · `scripts/` seed, e2e server, visual runner, smoke, migration check, import probe, agent run summary, release PR, triage verdict/apply/issue probe, fixed-on-dev, version check ·
+e2e · visual (+ `helpers/`) · `scripts/` seed, e2e server, visual runner, smoke, migration check, import probe, icons + raccoon intake, agent run summary, release PR, triage verdict/apply/issue probe, fixed-on-dev, version check ·
 `.github/workflows/` ci · smoke · update-snapshots · triage · build · merged · release · tag-release · `design/` mockups · `artwork/raccoon/` mascot + icon masters (`npm run icons`) · `docs/` specs
 & plans · `static/` manifest + icons · `Dockerfile` single-container deploy (SQLite volume
 at `/data`, started by `scripts/docker-entrypoint.sh`, replicated by `litestream.yml`).

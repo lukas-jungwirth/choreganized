@@ -1,7 +1,7 @@
 {
 	"name": "haushaltsheld",
 	"private": true,
-	"version": "0.2.0",
+	"version": "0.3.0",
 	"type": "module",
 	"scripts": {
 		"dev": "vite dev",
@@ -26,6 +26,7 @@
 		"db:seed": "node --env-file-if-exists=.env scripts/seed.ts",
 		"db:studio": "drizzle-kit studio",
 		"icons": "node scripts/icons.ts",
+		"raccoons": "node scripts/raccoons.ts",
 		"start": "node build/index.js"
 	},
 	"devDependencies": {

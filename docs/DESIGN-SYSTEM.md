@@ -311,7 +311,8 @@ beside each tab's title, `head` on the login and join screens, Home's `welcome-a
 day-dependent `birthday` · `christmas` · `new-year` · `easter` · `halloween` · `valentines` ·
 `sleeping` (picked by `lib/utils/raccoon.ts`; → DECISIONS #216) and the everyday `beach` ·
 `summer-garden` · `garden` · `fishing` · `snow` · `cold` · `tea` · `reading` · `sports` it
-rotates through by month and time of day (→ DECISIONS #219), and Settings' `settings` (on the
+rotates through by season and time of day (→ DECISIONS #219, #220; the list is
+`artwork/raccoon/mascots.json`, new ones come in through `/raccoons`), and Settings' `settings` (on the
 profile card) and `move-out` (on the sign-out / leave group; → DECISIONS #217). All of these are
 upper bodies cut flat at the waist, made to sit on a card's top edge: the raccoon is positioned
 absolutely 2px below its box's bottom, and the card after it is lifted (`position: relative;
