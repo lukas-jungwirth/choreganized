@@ -10,7 +10,7 @@ import { birthdayFrom, isBirthday, isBirthdayOn } from './birthday.ts';
 import { addDays } from './dates.ts';
 import type { MascotName } from '$lib/assets/mascot';
 import { EVERYDAY } from '$lib/assets/mascot/everyday';
-import { everydayRaccoon, homeRaccoon, specialDay } from './raccoon.ts';
+import { everydayRaccoon, homeRaccoon, nextEverydayRaccoon, specialDay } from './raccoon.ts';
 
 /** An ordinary afternoon with nothing on: the baseline every case varies. */
 const plain = { today: '2036-06-18', hour: 14, birthday: null, nextChoreDue: null };
@@ -202,6 +202,40 @@ describe('everydayRaccoon', () => {
 				}
 				previous = pose;
 			}
+		}
+	});
+});
+
+describe('nextEverydayRaccoon', () => {
+	it('walks the whole season, one poke at a time, and comes back round', () => {
+		const day = '2036-07-10';
+		const start = everydayRaccoon(day, 14);
+		const seen = [start];
+		let pose = start;
+		for (let poke = 1; poke < listedFor('summer').length; poke++) {
+			pose = nextEverydayRaccoon(day, pose);
+			seen.push(pose);
+		}
+		assert.deepEqual([...seen].sort(), listedFor('summer'));
+		assert.equal(nextEverydayRaccoon(day, pose), start);
+	});
+
+	it('never hands over to a look-alike', () => {
+		const group = new Map(EVERYDAY.map((pose) => [pose.name, pose.lookAlike]));
+		for (const day of ['2036-01-10', '2036-04-10', '2036-07-10', '2036-10-10']) {
+			for (const pose of EVERYDAY.map((entry) => entry.name)) {
+				const next = nextEverydayRaccoon(day, pose);
+				const shared = group.get(next);
+				assert.ok(!shared || shared !== group.get(pose), `${day}: ${pose} → ${next}`);
+			}
+		}
+	});
+
+	it("hands a pose that isn't the season's own over to the season's first", () => {
+		const day = '2036-07-10';
+		const first = EVERYDAY.find((pose) => pose.seasons.includes('summer'))?.name;
+		for (const pose of ['reminder-overdue', 'christmas', 'sleeping'] as const) {
+			assert.equal(nextEverydayRaccoon(day, pose), first, pose);
 		}
 	});
 });

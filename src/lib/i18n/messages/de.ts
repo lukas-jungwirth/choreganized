@@ -420,6 +420,7 @@ export const de: Messages = {
 		greeting: (time: 'morning' | 'afternoon' | 'evening'): string =>
 			time === 'morning' ? 'Guten Morgen' : time === 'afternoon' ? 'Guten Tag' : 'Guten Abend',
 		settingsLink: (names: string) => `Einstellungen · Haushalt: ${names}`,
+		pokeRaccoon: 'Waschbär anstupsen',
 
 		/** "Heute fällig · wöchentlich · 10 Pkt. wert" — Kadenz klein, wie im Satz. */
 		nextChore: {

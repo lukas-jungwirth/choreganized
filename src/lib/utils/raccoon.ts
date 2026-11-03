@@ -105,9 +105,25 @@ export function homeRaccoon({ today, hour, birthday, nextChoreDue }: Input): Mas
  * whole household sees the same raccoon and it holds still until the slot ends.
  */
 export function everydayRaccoon(today: CalendarDate, hour: number): MascotName {
-	const season = SEASON_OF_MONTH[Number(today.slice(5, 7)) - 1];
-	const pool = EVERYDAY.filter((pose) => pose.seasons.includes(season)).map((pose) => pose.name);
+	const pool = seasonPool(today);
 	const slot = SLOT_STARTS.findLastIndex((start) => hour >= start);
 	const turn = daysBetween(EPOCH, today) * SLOT_STARTS.length + Math.max(slot, 0);
 	return pool[turn % pool.length];
+}
+
+/**
+ * Who takes over when you poke the raccoon away (→ DECISIONS #223): the pose
+ * after `current` in the season's turn, so the look-alike rule still holds and
+ * poking again walks the whole season. A pose that isn't one of the season's
+ * (a holiday, the reminder, asleep) hands over to the season's first.
+ */
+export function nextEverydayRaccoon(today: CalendarDate, current: MascotName): MascotName {
+	const pool = seasonPool(today);
+	return pool[(pool.indexOf(current) + 1) % pool.length];
+}
+
+/** The season's everyday poses, in the order `mascots.json` lists them. */
+function seasonPool(today: CalendarDate): MascotName[] {
+	const season = SEASON_OF_MONTH[Number(today.slice(5, 7)) - 1];
+	return EVERYDAY.filter((pose) => pose.seasons.includes(season)).map((pose) => pose.name);
 }

@@ -60,3 +60,21 @@ test('Settings has a raccoon on the profile and one over the ways out', async ({
 		await expect(raccoon).toHaveAttribute('alt', '');
 	}
 });
+
+test('poking the Home raccoon six times sends it away for another', async ({ page }) => {
+	await page.goto('/home');
+	const raccoon = page.getByRole('button', { name: 'Poke the raccoon' });
+	const pose = raccoon.locator('img');
+	const before = await pose.getAttribute('src');
+
+	// Five pokes: a wobble, a hit, a sulk — but it stays.
+	for (let poke = 0; poke < 5; poke++) await raccoon.click();
+	await expect(raccoon).toHaveClass(/annoyed/);
+	expect(await pose.getAttribute('src')).toBe(before);
+
+	// The sixth: it ducks behind the card and someone else comes up, calm.
+	await raccoon.click();
+	await expect(pose).not.toHaveAttribute('src', before!);
+	await expect(raccoon).not.toHaveClass(/annoyed/);
+	await expect(pose).toHaveAttribute('alt', '');
+});
