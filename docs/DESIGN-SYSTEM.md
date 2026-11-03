@@ -316,7 +316,8 @@ rotates through by season and time of day (→ DECISIONS #219, #220; the list is
 profile card) and `move-out` (on the sign-out / leave group; → DECISIONS #217). All of these are
 upper bodies cut flat at the waist, made to sit on a card's top edge: the raccoon is positioned
 absolutely 2px below its box's bottom, and the card after it is lifted (`position: relative;
-z-index: 1`) so the cut never shows. A master that comes rounded at the bottom is cut
+z-index: 1`) so the cut never shows. Home's rotating raccoon is placed by its **body**, not
+its picture's edge (`MASCOTS[name].body`, → DECISIONS #224), so every pose sits in the same spot. A master that comes rounded at the bottom is cut
 straight before `npm run icons`; `tests/conventions/mascot-perch.test.ts` refuses a perched pose
 that isn't (→ DECISIONS #218). Show one with
 **`ui/Mascot`** — `<Mascot name="tasks" height={88} class="art" />` — never a bare `<img>`: it

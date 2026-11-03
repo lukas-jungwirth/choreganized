@@ -563,6 +563,8 @@ export const en = {
 		/** The avatar stack is the door to Settings — and the only place the
 		 *  household is named out loud. */
 		settingsLink: (names: string) => `Settings · Household: ${names}`,
+		/** The raccoon is a button: six taps and it ducks away for another (→ DECISIONS #223). */
+		pokeRaccoon: 'Poke the raccoon',
 
 		/**
 		 * The card at the very top of Home: the one chore that's on this member

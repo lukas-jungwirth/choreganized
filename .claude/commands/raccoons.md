@@ -44,7 +44,7 @@ pose (only with Lukas's explicit say-so, then `--replace`).
      existing poses (`npm run icons` doesn't show you those — look at
      `artwork/raccoon/<name>.png` of any you suspect).
 3. **Rename the files in the folder** to `<name>.png` (`mv`), then run
-   `npm run raccoons -- <folder>`. If it refuses a file (painted background, art running off the
+   `npm run raccoons -- <folder>` (`npm run raccoons` alone for `design/new-raccoons/`). If it refuses a file (painted background, art running off the
    canvas, too small, too round to cut), nothing was written: tell Lukas which file and why, in
    his words ("regenerate with a transparent background", "the ears are cut off"), and go on with
    the others only if he says so (move the refused file out first).
@@ -60,7 +60,8 @@ pose (only with Lukas's explicit say-so, then `--replace`).
    Then **wait**. His answers are the spec.
 6. **List them** in `mascots.json` with `"height": 408, "perched": true` plus `seasons` and
    `lookAlike`, each at the place you chose; then `npm run icons` (it validates the list) and
-   `npm test`. The rotation test fails if two look-alikes or the same pose meet back to back
+   `npm test`. If `icons` can't find a pose's body (both overall buttons hidden by a prop), look
+   at the picture and add `"body"` — where the middle of the body is across its width, 0–1. The rotation test fails if two look-alikes or the same pose meet back to back
    anywhere in the year, naming the date — move entries and run again until it passes.
 7. **Update the docs**:
    - SPEC §2, the everyday raccoon table — one row per new pose;
@@ -75,8 +76,9 @@ pose (only with Lukas's explicit say-so, then `--replace`).
    Then look at one new pose on Home in the running app (`verify` in `.claude/launch.json`).
 9. **Ship** (`CLAUDE.md`, step 4): commit (masters, AVIFs, `index.ts`, `everyday.ts`,
    `mascots.json`, docs), push, PR against `dev` with the table of new poses in the body,
-   `gh pr merge --auto --merge`. Then delete the source folder — the masters are in
-   `artwork/raccoon/` — and, after the merge, clean up the branch (`CLAUDE.md`, step 5).
+   `gh pr merge --auto --merge`. Then **empty** the drop folder — delete the PNGs you imported
+   and `_sheet.png`, keep the folder and its `.gitkeep` (the masters are in `artwork/raccoon/`) —
+   and, after the merge, clean up the branch (`CLAUDE.md`, step 5).
 
 Report back with the table (name · seasons · look-alike · cut), the PR link, and anything you
 had to refuse or couldn't verify.

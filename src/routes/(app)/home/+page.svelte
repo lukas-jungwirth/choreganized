@@ -12,7 +12,8 @@
 	birthday, then a special day, then the reminder pose for a chore on you (a
 	bell while it's coming up, an alarm clock once it's late), then asleep after
 	22:00, and otherwise an everyday pose that fits the month, a new one each
-	morning, afternoon and evening.
+	morning, afternoon and evening. Poke it six times and it ducks away for a
+	few seconds (→ `RaccoonPoke`, DECISIONS #223).
 -->
 <script lang="ts">
 	import EnablePush from '$lib/components/EnablePush.svelte';
@@ -21,6 +22,8 @@
 	import ActivityCard from '$lib/components/home/ActivityCard.svelte';
 	import DinnerCard from '$lib/components/home/DinnerCard.svelte';
 	import NextChoreCard from '$lib/components/home/NextChoreCard.svelte';
+	import RaccoonPoke from '$lib/components/home/RaccoonPoke.svelte';
+	import { raccoonPlacement } from '$lib/components/home/raccoon-placement';
 	import StandingsStrip from '$lib/components/home/StandingsStrip.svelte';
 	import StatTile from '$lib/components/home/StatTile.svelte';
 	import BalanceLine from '$lib/components/home/BalanceLine.svelte';
@@ -30,7 +33,6 @@
 	import TaskDoneModal from '$lib/components/tasks/TaskDoneModal.svelte';
 	import AvatarStack from '$lib/components/ui/AvatarStack.svelte';
 	import Banner from '$lib/components/ui/Banner.svelte';
-	import Mascot from '$lib/components/ui/Mascot.svelte';
 	import { MASCOTS } from '$lib/assets/mascot';
 	import { messages } from '$lib/i18n';
 	import type { NextChore } from '$lib/server/services/home';
@@ -54,11 +56,10 @@
 
 	const tasksLabel = $derived(m.home.stats.tasksDue(data.tasksDueCount));
 
-	/** Home shows its raccoon 136px tall; the greeting keeps clear of however wide that makes it. */
+	/** Home shows its raccoon 136px tall. */
 	const RACCOON_HEIGHT = 136;
-	const raccoonWidth = $derived(
-		Math.round((RACCOON_HEIGHT * MASCOTS[data.raccoon].width) / MASCOTS[data.raccoon].height)
-	);
+	/** Placed by its body, not its edge (→ `raccoon-placement`, DECISIONS #224). */
+	const placement = $derived(raccoonPlacement(MASCOTS[data.raccoon], RACCOON_HEIGHT));
 
 	/** Ticked but not yet confirmed — the card goes quiet before the server agrees. */
 	let pending = $state(false);
@@ -101,7 +102,7 @@
 	<title>{m.common.pageTitle(m.home.title)}</title>
 </svelte:head>
 
-<header style:--raccoon-width="{raccoonWidth}px">
+<header style:--raccoon-right="{placement.right}px" style:--raccoon-reach="{placement.reach}px">
 	<div class="who">
 		<p class="household">{data.household.name}</p>
 		<h1>{m.home.greeting(data.greeting)},<br />{data.currentMember.displayName}</h1>
@@ -115,7 +116,7 @@
 			<ChevronRight size={18} strokeWidth={2.2} aria-hidden="true" />
 		</a>
 	</div>
-	<Mascot name={data.raccoon} height={RACCOON_HEIGHT} class="raccoon" />
+	<RaccoonPoke name={data.raccoon} height={RACCOON_HEIGHT} class="raccoon" />
 </header>
 
 <div class="stack">
@@ -217,16 +218,16 @@
 
 	/* Display names are free text up to 40 characters, so without min-width a
 	   long one pushes the whole page sideways; the max keeps the greeting clear
-	   of the raccoon — 150px, or more for a wider pose like tennis (its width
-	   comes from the file, → DECISIONS #221). */
+	   of the raccoon — 150px, or as far as this pose reaches (→ DECISIONS #221,
+	   #224). */
 	.who {
 		min-width: 0;
-		max-width: calc(100% - max(150px, var(--raccoon-width) + 6px));
+		max-width: calc(100% - max(150px, var(--raccoon-reach) + 6px));
 	}
 
 	header :global(.raccoon) {
 		position: absolute;
-		right: 0;
+		right: var(--raccoon-right);
 		bottom: -2px;
 	}
 
