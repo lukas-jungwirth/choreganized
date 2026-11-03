@@ -3184,3 +3184,7 @@ units | null, name}`, written back as editor lines in the reader's unit spelling
      look-alike group does, which it didn't the first time. Tennis is the widest pose yet (158px
      at Home's 136px), so the greeting now keeps clear of the raccoon's actual width
      (`--raccoon-width` from the file, at least the old 150px) instead of a fixed 150px.
+222. **The empty "add dinner" card is filled with the page colour** (Lukas's report 2026-11-03).
+     It was dashed on transparent, and in a fresh household it is Home's first card, so the
+     raccoon perched on it showed its waist through. `background: var(--bg)` keeps the dashed,
+     not-yet-a-card look and covers the cut like any other first card (#213).
