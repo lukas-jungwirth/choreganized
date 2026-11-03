@@ -421,6 +421,13 @@ export const de: Messages = {
 			time === 'morning' ? 'Guten Morgen' : time === 'afternoon' ? 'Guten Tag' : 'Guten Abend',
 		settingsLink: (names: string) => `Einstellungen · Haushalt: ${names}`,
 		pokeRaccoon: 'Waschbär anstupsen',
+		/** Admin mode only (→ plan 34): tapping the raccoon picks any pose. */
+		raccoonPicker: {
+			open: 'Waschbär auswählen',
+			title: 'Waschbär auswählen',
+			today: 'Heute',
+			backToToday: 'Zurück zum Waschbären von heute'
+		},
 
 		/** "Heute fällig · wöchentlich · 10 Pkt. wert" — Kadenz klein, wie im Satz. */
 		nextChore: {
@@ -1935,6 +1942,32 @@ export const de: Messages = {
 		colourTakenJoin: 'Die Farbe hat schon jemand im Haushalt. Nimm eine andere.',
 		ownerOnlyMembers: 'Nur die Besitzer:in kann Mitglieder verwalten.',
 		alreadyLeft: 'Die Person hat den Haushalt schon verlassen.'
+	},
+
+	admin: {
+		row: 'Admin',
+		entered: 'Admin-Modus an',
+		leave: 'Admin-Modus verlassen',
+		title: 'Admin',
+		subtitle: 'Alle Haushalte auf diesem Server',
+		back: 'Zurück zu den Einstellungen',
+		active7: 'Aktiv in 7 Tagen',
+		active30: 'Aktiv in 30 Tagen',
+		totals: {
+			households: 'Haushalte',
+			users: 'Konten',
+			members: 'Mitglieder',
+			pushDevices: 'Geräte mit Push'
+		},
+		signups: 'Neu pro Woche',
+		thisWeek: 'Diese Woche',
+		weekLabel: (start: string, households: number, users: number) =>
+			`Woche ab ${start}: ${households} ${households === 1 ? 'Haushalt' : 'Haushalte'}, ${users} ${users === 1 ? 'Konto' : 'Konten'}`,
+		list: 'Haushalte',
+		members: (count: number) => (count === 1 ? '1 Mitglied' : `${count} Mitglieder`),
+		since: (date: string) => `seit ${date}`,
+		lastActive: (day: string) => `Zuletzt aktiv: ${day}`,
+		neverActive: 'Nie aktiv'
 	},
 
 	/* ── The holiday pause (→ SPEC §5.5), in [4c] and [6a] ─────────────────── */

@@ -73,6 +73,31 @@ export async function openAiFeatures(page: Page): Promise<void> {
 		.waitFor();
 }
 
+/**
+ * Admin mode on for the `visual` account (→ plan 34): seven taps on the
+ * version, as a person would. The e2e server lists it in `ADMIN_EMAILS`.
+ */
+async function enterAdmin(page: Page): Promise<void> {
+	await page.goto('/settings');
+	const version = page.getByRole('button', { name: /^Version/ });
+	for (let tap = 0; tap < 7; tap += 1) await version.click();
+	await page.getByRole('link', { name: 'Admin' }).waitFor();
+}
+
+/**
+ * The admin page with one household row: how many there are depends on which
+ * specs ran first (each fresh sign-up adds one), and a longer list's mask is
+ * painted over the tab bar. The rest stay out of the picture, not just masked.
+ */
+async function openAdmin(page: Page): Promise<void> {
+	await enterAdmin(page);
+	await page.goto('/admin');
+	await page.locator('.household').first().waitFor();
+	await page.evaluate(() =>
+		document.querySelectorAll('.household').forEach((row, index) => index > 0 && row.remove())
+	);
+}
+
 export const SCREENS: Screen[] = [
 	{ name: 'login', route: '/login', path: '/login', signedOut: true, fullPage: true },
 	{ name: 'kit-light', route: '/dev/kit', path: '/dev/kit', fullPage: true },
@@ -187,6 +212,35 @@ export const SCREENS: Screen[] = [
 		}
 	},
 	{ name: 'settings', route: '/(app)/settings', path: '/settings', bottom: true },
+	// Every count on the page depends on which other specs ran first, so the
+	// numbers and the one row left (→ `openAdmin`) are masked; what's guarded
+	// is the layout around them.
+	{
+		name: 'admin',
+		route: '/(app)/admin',
+		path: '',
+		navigate: openAdmin,
+		mask: ['.tiles .value', '.bars', '.household']
+	},
+	{
+		name: 'admin-dark',
+		route: '/(app)/admin',
+		path: '',
+		navigate: openAdmin,
+		theme: 'dark',
+		mask: ['.tiles .value', '.bars', '.household']
+	},
+	{
+		name: 'home-raccoon-picker',
+		route: '/(app)/home',
+		path: '',
+		navigate: async (page) => {
+			await enterAdmin(page);
+			await page.goto('/home');
+			await page.getByRole('button', { name: 'Pick a raccoon' }).click();
+			await page.getByRole('dialog', { name: 'Pick a raccoon' }).waitFor();
+		}
+	},
 	{
 		name: 'settings-dark',
 		route: '/(app)/settings',

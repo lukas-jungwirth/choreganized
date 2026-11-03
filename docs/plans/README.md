@@ -45,6 +45,7 @@ plus your session date). Note deviations in the plan file and in DECISIONS.md.
 | 31  | [Sign in with an email code](31-email-sign-in.md)                                                | done (2026-10-27) | 00                       |
 | 32  | [Swipe between the two weeks on the Cooking tab](32-swipe-weeks.md)                              | done (2026-10-31) | 07                       |
 | 33  | [Swipe between To do and History on the Tasks tab](33-swipe-tasks-view.md)                       | done (2026-10-31) | 32                       |
+| 34  | [Admin mode: stats and the raccoon picker](34-admin-mode.md)                                     | done (2026-11-03) | 00, 10                   |
 
 Work done after the twelve plans, tracked here so the queue stays the whole story:
 

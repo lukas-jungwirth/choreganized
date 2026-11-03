@@ -3245,3 +3245,23 @@ units | null, name}`, written back as editor lines in the reader's unit spelling
      watering (the plant's leaves crowd it). Their `body` is set by hand from the button
      positions in the art: 0.50, 0.45 and 0.52. Cut: skates 50px (only the blades), cards 10px;
      the other seven came in flat. +176 KB of AVIFs.
+227. **Admin mode: a verified email on a server list, switched on by seven taps** (plan 34,
+     Lukas's pick 2026-11-03). Who is an admin is the deploy's (`ADMIN_EMAILS`), never a
+     column a bug or a migration could set; the address must be verified (Google and the email
+     code verify it; E2E mode's password sign-up doesn't, so that is trusted only in E2E mode,
+     which refuses to start off localhost). A password behind the seven taps was the other idea:
+     rejected because it is one shared secret anyone can guess at, where the list ties admin to
+     an account Lukas already proves he owns. The taps only set a cookie (`admin_mode`,
+     httpOnly, 30 days); it grants nothing alone, because every read also asks `isAdmin`, so
+     a forged cookie on another account is ignored. Anyone not in admin mode, admins included, gets a **404, not a 403**, from `/admin`, and a non-admin gets one from `?/enterAdmin` too: the page and the action don't exist for anyone else, and the taps fail silently. "Leave admin mode" at
+     the bottom of Settings is how out (Lukas's pick over tapping again). `services/admin.ts`
+     is the one service that reads across households, scoped by its only caller's guard
+     (`requireAdmin`, held by `tests/conventions/guards.test.ts`) instead of a `householdId`;
+     it returns counts, dates and household names, never content. The raccoon picker
+     overrides Home's pose through `?raccoon=`, which the server applies only in admin mode,
+     so placement is tested exactly as it renders; the sheet is a dynamic import, fetched on an
+     admin's first tap and never by anyone else.
+228. **The admin page has no design frame.** Built from the settings subpage's parts: the
+     `SubHeader` [6b], `Card` tiles, a CSS bar per week (sage households over terracotta
+     accounts, no chart library for twelve bars), and the households as a `RowGroup` list.
+     Only Lukas sees it, so it follows the house style rather than waiting for a frame.

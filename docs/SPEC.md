@@ -1302,3 +1302,26 @@ until at least 50 rows are showing, so fifteen payments across a year show at on
 Guests and people outside the household (the model is ready, → #168) · linking with other
 Haushaltsheld households · receipt photos · "log what this shop cost?" after a shopping trip ·
 several currencies · statistics and charts · groups or trips inside a household · export.
+
+## 12. Admin mode (→ plan 34)
+
+For whoever runs the server, never for a household. No design frame (DECISIONS #228).
+
+- **Who:** an account whose **verified** email is in the server variable `ADMIN_EMAILS`
+  (comma-separated). Unset means nobody. The list never reaches the browser.
+- **Turning it on:** tap Settings → About → Version **seven times**, none more than two seconds
+  apart. Each tap still copies the version. For an admin the row then reads "Admin mode on"
+  and an **Admin** row appears under it. For anyone else nothing at all happens.
+- **Turning it off:** **Leave admin mode**, the last row of Settings, under sign out and leave.
+  The mode is per device (a cookie) and lasts 30 days otherwise.
+- **Admin page** (`/admin`, from that row): tiles for households active in the last 7 and 30
+  days, households, accounts, members and devices with push; a bar per week for new households
+  and accounts over the last 12 weeks; and every household by name with its member count, the
+  day it was created and the day it was last active (or "Never active"), most recent first.
+  Active means a person did something: ticked or skipped a chore, added or checked an item,
+  planned a dinner, added a recipe or an expense, or had the app open (a session refresh). No
+  household content is shown. Outside admin mode `/admin` is a 404, for admins too.
+- **Raccoon picker:** in admin mode a tap on Home's raccoon opens a sheet with every raccoon
+  by name, today's marked; picking one shows it on Home, placed as it would be for real
+  (`/home?raccoon=<name>`), and "Back to today's raccoon" clears it. Poking is off in admin
+  mode. Anyone else's `?raccoon=` is ignored by the server.

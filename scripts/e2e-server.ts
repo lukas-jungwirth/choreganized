@@ -69,6 +69,9 @@ const child = spawn(process.execPath, [...preload, 'build/index.js'], {
 		UPLOADS_DIR: `${dataDir}/uploads`,
 		BACKUPS_DIR: `${dataDir}/backups`,
 		BODY_SIZE_LIMIT: '20M',
+		// Both seeded accounts may enter admin mode (→ plan 34); a fresh sign-up
+		// is the non-admin. Nothing changes until the seven taps set the cookie.
+		ADMIN_EMAILS: 'owner@e2e.test,visual@e2e.test',
 		// Push and the GitHub mirror stay off: no keys, no token.
 		GITHUB_FEEDBACK_TOKEN: '',
 		// A constant label, on purpose: the Settings screenshot shows it, and a

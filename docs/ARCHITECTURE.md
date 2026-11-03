@@ -103,6 +103,7 @@ docs/                          # this documentation + plans/
   expenses/recurring            [9h]   sheets: one series [9h-stop], edit series (the [9b] sheet)  [plan 30]
   settings                      [6a]
   settings/members              [6b]   sheet: manage member [6c]
+  admin                         —      stats + households; 404 unless admin mode (`requireAdmin`) [plan 34]
 dev/kit                         component gallery — 404 unless `dev` or E2E_MODE [plan 02, 17]
 api/
   auth/[...all]                 Better Auth handler (GET/POST)

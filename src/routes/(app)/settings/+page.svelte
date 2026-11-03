@@ -43,6 +43,8 @@
 	import LogOut from '@lucide/svelte/icons/log-out';
 	import MessageSquareText from '@lucide/svelte/icons/message-square-text';
 	import Send from '@lucide/svelte/icons/send';
+	import ShieldCheck from '@lucide/svelte/icons/shield-check';
+	import ShieldOff from '@lucide/svelte/icons/shield-off';
 	import Sparkles from '@lucide/svelte/icons/sparkles';
 	import UsersRound from '@lucide/svelte/icons/users-round';
 	import type { PageProps } from './$types';
@@ -147,18 +149,51 @@
 		await goto('/login', { invalidateAll: true });
 	}
 
-	/** Tap the version to copy it — the same shape as `copyLink` in the invite screen. */
-	let versionCopied = $state(false);
-	let versionCopyTimer: ReturnType<typeof setTimeout>;
+	/**
+	 * What the version row says for ~2s instead of the number: "Copied" after a
+	 * tap, "Admin mode on" after the seventh.
+	 */
+	let versionNote = $state<string | null>(null);
+	let versionNoteTimer: ReturnType<typeof setTimeout>;
 
+	function noteOnVersion(note: string) {
+		versionNote = note;
+		clearTimeout(versionNoteTimer);
+		versionNoteTimer = setTimeout(() => (versionNote = null), 2000);
+	}
+
+	/** Tap the version to copy it — the same shape as `copyLink` in the invite screen. */
 	async function copyVersion() {
 		try {
 			await navigator.clipboard.writeText(data.appVersion);
-			versionCopied = true;
-			clearTimeout(versionCopyTimer);
-			versionCopyTimer = setTimeout(() => (versionCopied = false), 2000);
+			noteOnVersion(m.settings.version.copied);
 		} catch {
 			// Clipboard blocked (insecure context, permission) — nothing to confirm.
+		}
+	}
+
+	/**
+	 * Seven taps in a row, none more than two seconds apart, ask the server for
+	 * admin mode (→ plan 34). The server decides: for anyone it doesn't list the
+	 * answer is a 404, and this side then does nothing at all, so the taps look
+	 * like what they are for everyone else — copying the version.
+	 */
+	const ADMIN_TAPS = 7;
+	let versionTaps = 0;
+	let versionTapTimer: ReturnType<typeof setTimeout>;
+	let adminForm: HTMLFormElement;
+
+	function tapVersion() {
+		copyVersion();
+		if (data.adminMode) return;
+
+		clearTimeout(versionTapTimer);
+		versionTaps += 1;
+		versionTapTimer = setTimeout(() => (versionTaps = 0), 2000);
+
+		if (versionTaps >= ADMIN_TAPS) {
+			versionTaps = 0;
+			adminForm.requestSubmit();
 		}
 	}
 </script>
@@ -395,12 +430,35 @@
 
 	<!-- Tappable — copies the build a report would otherwise have to be read off
 		 the screen to name (→ #7). -->
-	<button type="button" class="row" onclick={copyVersion}>
+	<button type="button" class="row" onclick={tapVersion}>
 		<span class="tile" aria-hidden="true"><Info size={18} strokeWidth={1.9} /></span>
 		<span class="label">{m.settings.version.row}</span>
-		<span class="value">{versionCopied ? m.settings.version.copied : data.appVersion}</span>
+		<span class="value">{versionNote ?? data.appVersion}</span>
 	</button>
+
+	{#if data.adminMode}
+		<a class="row" href="/admin">
+			<span class="tile" aria-hidden="true"><ShieldCheck size={18} strokeWidth={1.9} /></span>
+			<span class="label">{m.admin.row}</span>
+			<ChevronRight size={15} strokeWidth={2} class="chevron" />
+		</a>
+	{/if}
 </RowGroup>
+
+<!-- The seventh tap's request. Only success is acted on: a 404 (not an admin)
+	 is swallowed rather than rendered as the error page. -->
+<form
+	bind:this={adminForm}
+	method="POST"
+	action="?/enterAdmin"
+	hidden
+	use:enhance={() =>
+		async ({ result, update }) => {
+			if (result.type !== 'success') return;
+			noteOnVersion(m.admin.entered);
+			await update();
+		}}
+></form>
 
 {#if feedbackSent}<p class="result">{m.settings.feedback.thanks}</p>{/if}
 
@@ -422,6 +480,19 @@
 
 	{#if signOutFailed}
 		<p class="result error">{m.settings.signOutFailed}</p>
+	{/if}
+
+	<!-- At the very bottom, under the ways out: leaving admin mode is the one
+		 thing here that only Lukas ever sees (→ plan 34). -->
+	{#if data.adminMode}
+		<form method="POST" action="?/leaveAdmin" use:enhance class="leave-admin">
+			<RowGroup>
+				<button type="submit" class="row action quiet">
+					<ShieldOff size={17} strokeWidth={1.9} />
+					{m.admin.leave}
+				</button>
+			</RowGroup>
+		</form>
 	{/if}
 </div>
 
@@ -703,5 +774,9 @@
 
 	.exits {
 		margin-top: 22px;
+	}
+
+	.leave-admin {
+		margin-top: 12px;
 	}
 </style>
