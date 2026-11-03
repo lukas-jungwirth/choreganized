@@ -12,8 +12,8 @@
 	birthday, then a special day, then the reminder pose for a chore on you (a
 	bell while it's coming up, an alarm clock once it's late), then asleep after
 	22:00, and otherwise an everyday pose that fits the month, a new one each
-	morning, afternoon and evening. Poke it six times and it ducks away for the
-	next one (→ `RaccoonPoke`, DECISIONS #223).
+	morning, afternoon and evening. Poke it six times and it ducks away for a
+	few seconds (→ `RaccoonPoke`, DECISIONS #223).
 -->
 <script lang="ts">
 	import EnablePush from '$lib/components/EnablePush.svelte';
@@ -33,8 +33,7 @@
 	import TaskDoneModal from '$lib/components/tasks/TaskDoneModal.svelte';
 	import AvatarStack from '$lib/components/ui/AvatarStack.svelte';
 	import Banner from '$lib/components/ui/Banner.svelte';
-	import { MASCOTS, type MascotName } from '$lib/assets/mascot';
-	import { nextEverydayRaccoon } from '$lib/utils/raccoon';
+	import { MASCOTS } from '$lib/assets/mascot';
 	import { messages } from '$lib/i18n';
 	import type { NextChore } from '$lib/server/services/home';
 	import type { CompletionResult, Standing } from '$lib/server/services/tasks';
@@ -57,14 +56,10 @@
 
 	const tasksLabel = $derived(m.home.stats.tasksDue(data.tasksDueCount));
 
-	/** Whoever took over after a poke (→ `RaccoonPoke`); until then, the server's pick. */
-	let poked = $state<MascotName | null>(null);
-	const raccoon = $derived(poked ?? data.raccoon);
-
 	/** Home shows its raccoon 136px tall. */
 	const RACCOON_HEIGHT = 136;
 	/** Placed by its body, not its edge (→ `raccoon-placement`, DECISIONS #224). */
-	const placement = $derived(raccoonPlacement(MASCOTS[raccoon], RACCOON_HEIGHT));
+	const placement = $derived(raccoonPlacement(MASCOTS[data.raccoon], RACCOON_HEIGHT));
 
 	/** Ticked but not yet confirmed — the card goes quiet before the server agrees. */
 	let pending = $state(false);
@@ -121,12 +116,7 @@
 			<ChevronRight size={18} strokeWidth={2.2} aria-hidden="true" />
 		</a>
 	</div>
-	<RaccoonPoke
-		name={raccoon}
-		height={RACCOON_HEIGHT}
-		class="raccoon"
-		onpoked={() => (poked = nextEverydayRaccoon(data.today, raccoon))}
-	/>
+	<RaccoonPoke name={data.raccoon} height={RACCOON_HEIGHT} class="raccoon" />
 </header>
 
 <div class="stack">

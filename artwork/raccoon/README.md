@@ -6,7 +6,8 @@ app uses. Nothing here is shipped: `npm run icons` (`scripts/icons.ts`) turns th
 sizes, and `everyday.ts` with Home's everyday poses). Change a master, re-run, commit both
 (→ DECISIONS #211, #215).
 
-**New raccoons:** drop the PNGs in `design/new-raccoons/` and run `/raccoons` — it checks and cuts
+**New raccoons:** drop the PNGs in `design/new-raccoons/` (always there; git ignores what's in it)
+and run `/raccoons` — it checks and cuts
 them (`npm run raccoons`), proposes where each goes, asks, and ships them (→ DECISIONS #220).
 
 ## `mascots.json`

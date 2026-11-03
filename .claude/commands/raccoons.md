@@ -44,7 +44,7 @@ pose (only with Lukas's explicit say-so, then `--replace`).
      existing poses (`npm run icons` doesn't show you those — look at
      `artwork/raccoon/<name>.png` of any you suspect).
 3. **Rename the files in the folder** to `<name>.png` (`mv`), then run
-   `npm run raccoons -- <folder>`. If it refuses a file (painted background, art running off the
+   `npm run raccoons -- <folder>` (`npm run raccoons` alone for `design/new-raccoons/`). If it refuses a file (painted background, art running off the
    canvas, too small, too round to cut), nothing was written: tell Lukas which file and why, in
    his words ("regenerate with a transparent background", "the ears are cut off"), and go on with
    the others only if he says so (move the refused file out first).
@@ -76,8 +76,9 @@ pose (only with Lukas's explicit say-so, then `--replace`).
    Then look at one new pose on Home in the running app (`verify` in `.claude/launch.json`).
 9. **Ship** (`CLAUDE.md`, step 4): commit (masters, AVIFs, `index.ts`, `everyday.ts`,
    `mascots.json`, docs), push, PR against `dev` with the table of new poses in the body,
-   `gh pr merge --auto --merge`. Then delete the source folder — the masters are in
-   `artwork/raccoon/` — and, after the merge, clean up the branch (`CLAUDE.md`, step 5).
+   `gh pr merge --auto --merge`. Then **empty** the drop folder — delete the PNGs you imported
+   and `_sheet.png`, keep the folder and its `.gitkeep` (the masters are in `artwork/raccoon/`) —
+   and, after the merge, clean up the branch (`CLAUDE.md`, step 5).
 
 Report back with the table (name · seasons · look-alike · cut), the PR link, and anything you
 had to refuse or couldn't verify.

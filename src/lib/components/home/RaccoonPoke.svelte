@@ -5,13 +5,14 @@
 	- every tap squashes it, a little wobble from its seat on the card;
 	- the third is a hit — it shakes and flushes red for a moment;
 	- the fourth and fifth it stays a little red, clearly annoyed;
-	- the sixth it has had enough: it ducks behind the card and the next pose
-	  of the season pops up in its place (the caller decides which, `onpoked`).
+	- the sixth it has had enough: it ducks behind the card and stays away for
+	  a few seconds, then the same raccoon comes back up, calm again.
 
+	It never swaps the pose: which raccoon you get is the date's and the hour's
+	(`utils/raccoon`), something to discover by coming back, not to pick.
 	Leave it alone for a few seconds and it calms down: the count starts over.
-	Only on this phone and only until you leave Home — the household's raccoon
-	is still the server's (`utils/raccoon`). With reduced motion it doesn't
-	move at all: the tint still shows, and the swap is a fade.
+	With reduced motion it doesn't move at all: the tint still shows, and the
+	hiding is a fade.
 -->
 <script lang="ts">
 	import type { MascotName } from '$lib/assets/mascot';
@@ -21,12 +22,10 @@
 	type Props = {
 		name: MascotName;
 		height: number;
-		/** The sixth tap, while the raccoon is out of sight: change `name` now. */
-		onpoked: () => void;
 		class?: string;
 	};
 
-	let { name, height, onpoked, class: className }: Props = $props();
+	let { name, height, class: className }: Props = $props();
 
 	const m = messages();
 
@@ -35,6 +34,8 @@
 	const GONE = 6;
 	/** How long it stays cross once you stop poking. */
 	const CALM_DOWN = 3000;
+	/** How long it stays away once it has had enough. */
+	const AWAY = 4000;
 
 	/*
 	 * Red without a colour: the art keeps its own palette, like the member
@@ -46,6 +47,8 @@
 
 	let taps = $state(0);
 	let busy = $state(false);
+	/** Gone behind the card: hidden for real, not just at the end of an animation. */
+	let away = $state(false);
 	let button: HTMLButtonElement;
 	let calm: ReturnType<typeof setTimeout> | undefined;
 
@@ -76,8 +79,10 @@
 				still ? 160 : 240,
 				'ease-in'
 			);
-			onpoked();
+			away = true;
 			taps = 0;
+			await new Promise((resolve) => setTimeout(resolve, AWAY));
+			away = false;
 			await play(
 				still
 					? [{ opacity: 0 }, { opacity: 1 }]
@@ -124,7 +129,7 @@
 <button
 	bind:this={button}
 	type="button"
-	class={['poke', className, { annoyed }]}
+	class={['poke', className, { annoyed, away }]}
 	aria-label={m.home.pokeRaccoon}
 	onclick={poke}
 >
@@ -143,6 +148,10 @@
 		user-select: none;
 		/* Calming down is slow; the flush itself is the animation's. */
 		transition: filter 600ms ease-out;
+	}
+
+	.away {
+		visibility: hidden;
 	}
 
 	/* `ANNOYED`, held while the count is past the hit. */

@@ -147,10 +147,10 @@ pose, first match wins, top to bottom (`lib/utils/raccoon.ts`, by the household'
 
   **Poke it** ([DECISIONS #223](DECISIONS.md)): the raccoon is a button ("Poke the raccoon").
   Each tap squashes it; the third is a hit — it shakes and flushes red — and it stays slightly
-  red after that; the sixth it ducks behind the card and the next everyday pose of the season
-  comes up in its place (from a holiday, reminder or sleeping pose: the season's first). Three
-  seconds without a tap and the count starts over. Only on your phone, only until you leave
-  Home. With reduced motion it doesn't move: the tint still shows, the swap is a fade.
+  red after that; the sixth it ducks behind the card and stays away for four seconds, then the
+  same raccoon comes back up, calm. It never swaps the pose: which raccoon you get is the date's
+  and the hour's, something to discover by coming back. Three seconds without a tap and the count
+  starts over. With reduced motion it doesn't move: the tint still shows, the hiding is a fade.
 
 1. **Next chore card** — the one chore that's on the current user next: the soonest task
    assigned to them or to Anyone (never a housemate's) that is already overdue or due within
