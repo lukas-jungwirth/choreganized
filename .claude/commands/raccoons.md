@@ -60,7 +60,8 @@ pose (only with Lukas's explicit say-so, then `--replace`).
    Then **wait**. His answers are the spec.
 6. **List them** in `mascots.json` with `"height": 408, "perched": true` plus `seasons` and
    `lookAlike`, each at the place you chose; then `npm run icons` (it validates the list) and
-   `npm test`. The rotation test fails if two look-alikes or the same pose meet back to back
+   `npm test`. If `icons` can't find a pose's body (both overall buttons hidden by a prop), look
+   at the picture and add `"body"` — where the middle of the body is across its width, 0–1. The rotation test fails if two look-alikes or the same pose meet back to back
    anywhere in the year, naming the date — move entries and run again until it passes.
 7. **Update the docs**:
    - SPEC §2, the everyday raccoon table — one row per new pose;

@@ -3199,3 +3199,16 @@ units | null, name}`, written back as editor lines in the reader's unit spelling
      "overdue" elsewhere in the app. It is a real button with a label, so it is reachable and
      announced, not a click on a decorative image. The pose gallery Lukas also wanted belongs to
      a developer area tied to his account, later.
+224. **Home places its raccoon by its body, not its picture's edge** (Lukas's report 2026-11-03).
+     Right-aligned pictures put a slim pose (phone) with its body against the edge and one
+     holding a prop out (tennis) well inside, so the rotation looked uneven. Now every perched
+     pose carries `body` — where its body is across its width — and Home lands that point 76px in
+     from the right; props reach out either side. `npm run icons` finds it: halfway between the
+     two gold overall buttons (`bodyCentre` in `scripts/raccoon-art.ts`: round, solid, in the
+     lower half, a level pair — candle flames and lemons don't qualify), checked by eye on all
+     27 poses. Where the buttons are hidden (the sleeping raccoon's blanket, the cold one's mug)
+     `mascots.json` gives `body` by hand, and the script refuses rather than guesses for a new
+     one. Two limits keep it sane: a prop may run 14px into the gutter, no further, and no pose
+     reaches further left than the widest always has (163px), so a pose with both arms out
+     (welcome A) shifts right a little instead of squeezing the greeting. Settings' two raccoons
+     are fixed poses and stay as they are.

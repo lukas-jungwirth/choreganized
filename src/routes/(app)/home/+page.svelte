@@ -23,6 +23,7 @@
 	import DinnerCard from '$lib/components/home/DinnerCard.svelte';
 	import NextChoreCard from '$lib/components/home/NextChoreCard.svelte';
 	import RaccoonPoke from '$lib/components/home/RaccoonPoke.svelte';
+	import { raccoonPlacement } from '$lib/components/home/raccoon-placement';
 	import StandingsStrip from '$lib/components/home/StandingsStrip.svelte';
 	import StatTile from '$lib/components/home/StatTile.svelte';
 	import BalanceLine from '$lib/components/home/BalanceLine.svelte';
@@ -60,11 +61,10 @@
 	let poked = $state<MascotName | null>(null);
 	const raccoon = $derived(poked ?? data.raccoon);
 
-	/** Home shows its raccoon 136px tall; the greeting keeps clear of however wide that makes it. */
+	/** Home shows its raccoon 136px tall. */
 	const RACCOON_HEIGHT = 136;
-	const raccoonWidth = $derived(
-		Math.round((RACCOON_HEIGHT * MASCOTS[raccoon].width) / MASCOTS[raccoon].height)
-	);
+	/** Placed by its body, not its edge (→ `raccoon-placement`, DECISIONS #224). */
+	const placement = $derived(raccoonPlacement(MASCOTS[raccoon], RACCOON_HEIGHT));
 
 	/** Ticked but not yet confirmed — the card goes quiet before the server agrees. */
 	let pending = $state(false);
@@ -107,7 +107,7 @@
 	<title>{m.common.pageTitle(m.home.title)}</title>
 </svelte:head>
 
-<header style:--raccoon-width="{raccoonWidth}px">
+<header style:--raccoon-right="{placement.right}px" style:--raccoon-reach="{placement.reach}px">
 	<div class="who">
 		<p class="household">{data.household.name}</p>
 		<h1>{m.home.greeting(data.greeting)},<br />{data.currentMember.displayName}</h1>
@@ -228,16 +228,16 @@
 
 	/* Display names are free text up to 40 characters, so without min-width a
 	   long one pushes the whole page sideways; the max keeps the greeting clear
-	   of the raccoon — 150px, or more for a wider pose like tennis (its width
-	   comes from the file, → DECISIONS #221). */
+	   of the raccoon — 150px, or as far as this pose reaches (→ DECISIONS #221,
+	   #224). */
 	.who {
 		min-width: 0;
-		max-width: calc(100% - max(150px, var(--raccoon-width) + 6px));
+		max-width: calc(100% - max(150px, var(--raccoon-reach) + 6px));
 	}
 
 	header :global(.raccoon) {
 		position: absolute;
-		right: 0;
+		right: var(--raccoon-right);
 		bottom: -2px;
 	}
 

@@ -6,7 +6,7 @@
  */
 import assert from 'node:assert/strict';
 import { describe, it } from 'vitest';
-import { flatCut, flatness, problems, rowSpans, type Raw } from './raccoon-art.ts';
+import { bodyCentre, flatCut, flatness, problems, rowSpans, type Raw } from './raccoon-art.ts';
 
 /** A transparent canvas with the pixels `inside(x, y)` says are art. */
 function draw(width: number, height: number, inside: (x: number, y: number) => boolean): Raw {
@@ -75,5 +75,81 @@ describe('problems', () => {
 		assert.deepEqual(problems(draw(100, 100, (x, y) => x > 60 && y > 20 && y < 80)), [
 			'it is cut off on the right'
 		]);
+	});
+});
+
+/** A shape with gold discs at the given centres (fractions of a 400×400 canvas). */
+function withButtons(discs: Array<[x: number, y: number, radius: number]>): Raw {
+	const raw = draw(400, 400, (x, y) => x >= 60 && x < 340 && y >= 20);
+	for (let y = 0; y < 400; y++) {
+		for (let x = 0; x < 400; x++) {
+			if (discs.some(([cx, cy, r]) => (x - cx * 400) ** 2 + (y - cy * 400) ** 2 < r * r)) {
+				raw.data.set([235, 185, 40, 255], (y * 400 + x) * 4);
+			}
+		}
+	}
+	return raw;
+}
+
+describe('bodyCentre', () => {
+	it('is halfway between the two overall buttons', () => {
+		assert.equal(
+			bodyCentre(
+				withButtons([
+					[0.4, 0.75, 14],
+					[0.6, 0.75, 14]
+				])
+			),
+			0.5
+		);
+		assert.equal(
+			bodyCentre(
+				withButtons([
+					[0.3, 0.7, 14],
+					[0.5, 0.71, 14]
+				])
+			),
+			0.4
+		);
+	});
+
+	it('ignores a lone gold prop, and a big one', () => {
+		assert.equal(bodyCentre(withButtons([[0.5, 0.75, 14]])), null);
+		assert.equal(
+			bodyCentre(
+				withButtons([
+					[0.3, 0.5, 60],
+					[0.7, 0.5, 60]
+				])
+			),
+			null
+		);
+	});
+
+	it('ignores a level pair of gold held up by the face, like candle flames', () => {
+		assert.equal(
+			bodyCentre(
+				withButtons([
+					[0.15, 0.35, 14],
+					[0.3, 0.35, 14],
+					[0.45, 0.8, 14],
+					[0.65, 0.8, 14]
+				])
+			),
+			0.55
+		);
+	});
+
+	it('picks the level pair over a stray gold dot higher up', () => {
+		assert.equal(
+			bodyCentre(
+				withButtons([
+					[0.45, 0.8, 14],
+					[0.65, 0.8, 14],
+					[0.2, 0.3, 14]
+				])
+			),
+			0.55
+		);
 	});
 });
