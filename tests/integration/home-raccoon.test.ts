@@ -1,7 +1,7 @@
 /**
- * Home's everyday raccoon is the reader's own (→ DECISIONS #232): housemates
- * sit at different places in the rotation, so the same afternoon shows each of
- * them a different pose, and the raccoon album is worth filling one each.
+ * Home's everyday raccoon is the reader's own draw (→ DECISIONS #232): seeded
+ * by the member and the date, so housemates meet their own raccoons and fill
+ * their own raccoon albums.
  */
 import assert from 'node:assert/strict';
 import { afterEach, beforeEach, describe, it, vi } from 'vitest';
@@ -18,16 +18,21 @@ describe("Home's everyday raccoon", () => {
 	});
 	afterEach(() => vi.useRealTimers());
 
-	it('is a different one for each housemate, and the first to join keeps the old one', () => {
+	it('is drawn for each member by their own id', () => {
 		const { householdId, timezone, members } = makeHousehold({ housemates: ['Mia', 'Jo'] });
-		const roster = listMembers(householdId);
-		const context = { timezone, today: '2036-06-18', members: roster, overdue: [] };
+		const context = {
+			timezone,
+			today: '2036-06-18',
+			members: listMembers(householdId),
+			overdue: []
+		};
 
-		const raccoons = members.map(
-			(member) => getHomeSummary(householdId, { ...context, member }).raccoon
-		);
-
-		assert.equal(new Set(raccoons).size, 3, raccoons.join(', '));
-		assert.equal(raccoons[0], everydayRaccoon('2036-06-18', 14));
+		for (const member of members) {
+			assert.equal(
+				getHomeSummary(householdId, { ...context, member }).raccoon,
+				everydayRaccoon('2036-06-18', 14, member.id),
+				member.displayName
+			);
+		}
 	});
 });

@@ -153,12 +153,16 @@ pose, first match wins, top to bottom (`lib/utils/raccoon.ts`, by the household'
   | catching a snowflake        | winter                 |
   | carrying ice skates         | winter                 |
 
-  The day has three slots — from 05:00, 11:00 and 17:00 — and each takes the next pose in turn,
-  so it holds still within a slot, never repeats back to back within a season (nor do two that
-  look alike: the greetings, the gardening and watering poses, the hot drinks, tennis and
-  handball, the corded phone and the singer, the snowball and the knitter in the same hat and
-  scarf), and every pose comes round within eight days. Each member has their own place in the turn, an even share of the season apart in join order, so housemates never see the same everyday pose in the same slot and each fills their own raccoon album ([DECISIONS #232](DECISIONS.md)); someone living alone, and the first to join, see what everyone used to. The list and its order live in
-  `artwork/raccoon/mascots.json`.
+  The day has three slots — from 05:00, 11:00 and 17:00 — and each member draws their own three
+  of the season's poses for the day, one per slot ([DECISIONS #232](DECISIONS.md)): at random,
+  from a seed made of the member and the date, so nothing is stored and the raccoon holds still
+  all slot, on every device. A day's three are all different, and never two that look alike (the
+  greetings, the gardening and watering poses, the hot drinks, tennis and handball, the corded
+  phone and the singer, the snowball and the knitter in the same hat and scarf); the night's
+  sleeping raccoon sits between one day's evening and the next morning. Housemates meet different
+  raccoons and fill their own raccoon albums (→ §6). There is no hard guarantee of meeting every
+  pose in a season, on purpose: the last few take some luck, though looking in every slot you
+  practically always do. The poses and their seasons live in `artwork/raccoon/mascots.json`.
 
   **Poke it** ([DECISIONS #223](DECISIONS.md)): the raccoon is a button ("Poke the raccoon").
   Each tap squashes it; the third is a hit — it shakes and flushes red — and it stays slightly

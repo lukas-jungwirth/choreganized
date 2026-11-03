@@ -9,9 +9,8 @@
  * 3. the next chore on you — a bell while it's coming up, an alarm clock once
  *    it's late;
  * 4. asleep from 22:00 to 05:00, household time;
- * 5. an everyday pose (→ `everydayRaccoon`): the ones that fit the season,
- *    taken in turn, a new one each morning, afternoon and evening, each
- *    member at their own place in the turn.
+ * 5. an everyday pose (→ `everydayRaccoon`): three of the season's poses
+ *    drawn for each member each day, one each morning, afternoon and evening.
  *
  * A special day beats the reminder because the card under the raccoon still
  * names the chore; the raccoon is the only thing that can say what day it is.
@@ -32,18 +31,9 @@ type Input = {
 	birthday: string | null;
 	/** Due date of the chore Home's card shows, if there is one. */
 	nextChoreDue: CalendarDate | null;
-	/** Where the reader sits in the household, for their own everyday pose. */
-	seat?: Seat;
+	/** Whose draw it is: the member id, so each member meets their own (→ DECISIONS #232). */
+	seed?: string;
 };
-
-/**
- * A member's place in the household: `index` in join order, of `of` members.
- * The everyday rotation starts each member that far round, so housemates
- * meet different raccoons in the same slot (→ DECISIONS #232).
- */
-export type Seat = { index: number; of: number };
-
-const ALONE: Seat = { index: 0, of: 1 };
 
 /** Fixed special days, `MM-DD`. Easter moves, so it is worked out per year. */
 export const SPECIAL_DAYS: Readonly<Record<string, MascotName>> = {
@@ -108,9 +98,6 @@ export const SEASON_OF_MONTH: readonly Season[] = [
 	'winter'
 ];
 
-/** Any fixed day works; the count from it is what turns the wheel. */
-const EPOCH = '2000-01-01';
-
 /**
  * Which stretch of Home's day this is, as `YYYY-MM-DD#0|1|2` (morning,
  * afternoon, evening) or `YYYY-MM-DD#n` for the night, dated by the evening it
@@ -133,13 +120,7 @@ export function specialDay(today: CalendarDate): MascotName | null {
 	return null;
 }
 
-export function homeRaccoon({
-	today,
-	hour,
-	birthday,
-	nextChoreDue,
-	seat = ALONE
-}: Input): MascotName {
+export function homeRaccoon({ today, hour, birthday, nextChoreDue, seed = '' }: Input): MascotName {
 	if (isBirthdayOn(birthday, today)) return 'birthday';
 
 	const special = specialDay(today);
@@ -151,35 +132,63 @@ export function homeRaccoon({
 
 	if (hour >= BEDTIME || hour < WAKE_UP) return 'sleeping';
 
-	return everydayRaccoon(today, hour, seat);
+	return everydayRaccoon(today, hour, seed);
 }
 
 /**
- * The season's poses taken in turn, one per slot: three a day, the next day
- * carrying on where the evening left off, so within a season the same one
- * never shows twice in a row and every one comes round within three days. (A
- * new season's poses can bring back the previous evening's one on its first
- * morning, with a night of the sleeping raccoon in between, which is fine.)
- * The poses, their seasons and their order are `artwork/raccoon/mascots.json`
- * (→ DECISIONS #219, #220). It depends only on the date, the slot and the
- * reader's seat, so it holds still until the slot ends.
+ * Three of the season's poses for each member each day, one per slot
+ * (→ DECISIONS #219, #220, #232): drawn at random, but from a seed made of the
+ * member and the date, so nothing is stored and the same raccoon holds still all
+ * slot, on every device, while a housemate draws their own.
  *
- * Each member starts an even share of the season round from the last
- * (→ DECISIONS #232): two housemates are half the season apart, so they never
- * meet the same pose in the same slot, and each still walks the whole season in
- * order, with the no-repeat and look-alike rules intact. That is what makes the
- * raccoon album (plan 35) one each, rather than one per household.
+ * Random rather than in turn, for the raccoon album: a fixed order meets only
+ * every third pose for someone who always looks in the evening, and hands a
+ * whole season's set to a daily visitor within a week. Drawn, new ones keep
+ * turning up for weeks, the last few take some luck, and there is no hard
+ * guarantee of meeting every pose in a season, on purpose (Lukas 2026-11-03).
+ *
+ * The one rule: a day's three are all different and never two look-alikes. The
+ * night's sleeping raccoon sits between one day's evening and the next
+ * morning, so that is every pair that would ever show back to back. The poses,
+ * their seasons and their look-alike groups are `artwork/raccoon/mascots.json`.
  */
-export function everydayRaccoon(today: CalendarDate, hour: number, seat: Seat = ALONE): MascotName {
-	const pool = seasonPool(today);
+export function everydayRaccoon(today: CalendarDate, hour: number, seed = ''): MascotName {
 	const slot = SLOT_STARTS.findLastIndex((start) => hour >= start);
-	const turn = daysBetween(EPOCH, today) * SLOT_STARTS.length + Math.max(slot, 0);
-	const start = Math.floor((pool.length * seat.index) / Math.max(seat.of, 1));
-	return pool[(turn + start) % pool.length];
+	return dayDraw(today, seed)[Math.max(slot, 0)];
 }
 
-/** The season's everyday poses, in the order `mascots.json` lists them. */
-function seasonPool(today: CalendarDate): MascotName[] {
+/** The day's three, in slot order. */
+function dayDraw(today: CalendarDate, seed: string): MascotName[] {
+	const random = seededRandom(`${seed}|${today}`);
+	const drawn: (typeof EVERYDAY)[number][] = [];
 	const season = SEASON_OF_MONTH[Number(today.slice(5, 7)) - 1];
-	return EVERYDAY.filter((pose) => pose.seasons.includes(season)).map((pose) => pose.name);
+	const pool = EVERYDAY.filter((pose) => pose.seasons.includes(season));
+
+	for (let slot = 0; slot < SLOT_STARTS.length; slot++) {
+		const open = pool.filter(
+			(pose) =>
+				!drawn.includes(pose) &&
+				!(pose.lookAlike && drawn.some((each) => each.lookAlike === pose.lookAlike))
+		);
+		drawn.push(open[Math.floor(random() * open.length)]);
+	}
+	return drawn.map((pose) => pose.name);
+}
+
+/**
+ * A small seeded generator: a string hashed to 32 bits (FNV-1a), then
+ * mulberry32. Not for anything secret, only so the same seed gives the same
+ * draw everywhere and nearby seeds don't give nearby draws.
+ */
+function seededRandom(text: string): () => number {
+	let state = 0x811c9dc5;
+	for (let index = 0; index < text.length; index++) {
+		state = Math.imul(state ^ text.charCodeAt(index), 0x01000193) >>> 0;
+	}
+	return () => {
+		state = (state + 0x6d2b79f5) >>> 0;
+		let mixed = Math.imul(state ^ (state >>> 15), 1 | state);
+		mixed = (mixed + Math.imul(mixed ^ (mixed >>> 7), 61 | mixed)) ^ mixed;
+		return ((mixed ^ (mixed >>> 14)) >>> 0) / 4294967296;
+	};
 }
