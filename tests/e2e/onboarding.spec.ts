@@ -39,6 +39,16 @@ test('create a household: chooser → set up → invite → home', async ({ brow
 	await expect(page).toHaveURL(/\/home$/);
 	await expect(page.getByText('Testgasse 1')).toBeVisible();
 
+	// Nothing planned, nothing due: the dashed "add dinner" card is the first
+	// card, the raccoon sits on it, and its waist must not show through.
+	const addDinner = page.locator('a.empty[href="/cooking"]');
+	await expect(addDinner).toBeVisible();
+	const [card, screen] = await Promise.all([
+		addDinner.evaluate((element) => getComputedStyle(element).backgroundColor),
+		page.evaluate(() => getComputedStyle(document.documentElement).backgroundColor)
+	]);
+	expect(card).toBe(screen);
+
 	await context.close();
 });
 
