@@ -143,7 +143,15 @@ export function getHomeSummary(householdId: string, context: HomeContext): HomeS
 			today,
 			hour,
 			birthday: member.birthday,
-			nextChoreDue: next?.dueDate ?? null
+			nextChoreDue: next?.dueDate ?? null,
+			// Join order: the roster comes sorted by it (→ `listMembers`).
+			seat: {
+				index: Math.max(
+					context.members.findIndex((each) => each.id === member.id),
+					0
+				),
+				of: context.members.length
+			}
 		}),
 		slot: homeSlot(today, hour),
 		nextChore: next,

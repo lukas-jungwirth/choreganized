@@ -157,7 +157,7 @@ pose, first match wins, top to bottom (`lib/utils/raccoon.ts`, by the household'
   so it holds still within a slot, never repeats back to back within a season (nor do two that
   look alike: the greetings, the gardening and watering poses, the hot drinks, tennis and
   handball, the corded phone and the singer, the snowball and the knitter in the same hat and
-  scarf), and every pose comes round within eight days. Every member sees the same one. The list and its order live in
+  scarf), and every pose comes round within eight days. Each member has their own place in the turn, an even share of the season apart in join order, so housemates never see the same everyday pose in the same slot and each fills their own raccoon album ([DECISIONS #232](DECISIONS.md)); someone living alone, and the first to join, see what everyone used to. The list and its order live in
   `artwork/raccoon/mascots.json`.
 
   **Poke it** ([DECISIONS #223](DECISIONS.md)): the raccoon is a button ("Poke the raccoon").

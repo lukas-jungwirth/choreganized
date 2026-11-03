@@ -3322,3 +3322,15 @@ units | null, name}`, written back as editor lines in the reader's unit spelling
        Tokyo evening) rather than the clock, which is fixed for the whole run. Setup opens Home
        and the album once for both seeded accounts so no journey or screenshot depends on being
        first.
+232. **Home's everyday raccoon is per member, not per household** (Lukas 2026-11-03, for the
+     raccoon album). It used to depend only on the date and the slot, so a whole household (and
+     every household) saw the same pose, and housemates filled identical albums. Now each member
+     starts `floor(poolSize × index / members)` turns further round the season, `index` in join
+     order (`listMembers`, by `joinedAt` then id): evenly spread, so housemates never meet the
+     same pose in the same slot, and each still walks the season in order, so the no-repeat and
+     look-alike rules hold per member. An offset from a hash of the member id was weighed: it
+     never moves when someone joins or leaves, but two housemates would share a whole season's
+     sequence about one time in twenty. Join order can shift everyone after a new member on the
+     day they join, which is rare and harmless. The first to join keeps the old rotation, so
+     nobody living alone sees a change. The special days, the birthday, the reminders and
+     sleeping are unchanged: those are about the date or about you, not the rotation.

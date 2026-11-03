@@ -10,7 +10,8 @@
  *    it's late;
  * 4. asleep from 22:00 to 05:00, household time;
  * 5. an everyday pose (→ `everydayRaccoon`): the ones that fit the season,
- *    taken in turn, a new one each morning, afternoon and evening.
+ *    taken in turn, a new one each morning, afternoon and evening, each
+ *    member at their own place in the turn.
  *
  * A special day beats the reminder because the card under the raccoon still
  * names the chore; the raccoon is the only thing that can say what day it is.
@@ -31,7 +32,18 @@ type Input = {
 	birthday: string | null;
 	/** Due date of the chore Home's card shows, if there is one. */
 	nextChoreDue: CalendarDate | null;
+	/** Where the reader sits in the household, for their own everyday pose. */
+	seat?: Seat;
 };
+
+/**
+ * A member's place in the household: `index` in join order, of `of` members.
+ * The everyday rotation starts each member that far round, so housemates
+ * meet different raccoons in the same slot (→ DECISIONS #232).
+ */
+export type Seat = { index: number; of: number };
+
+const ALONE: Seat = { index: 0, of: 1 };
 
 /** Fixed special days, `MM-DD`. Easter moves, so it is worked out per year. */
 export const SPECIAL_DAYS: Readonly<Record<string, MascotName>> = {
@@ -121,7 +133,13 @@ export function specialDay(today: CalendarDate): MascotName | null {
 	return null;
 }
 
-export function homeRaccoon({ today, hour, birthday, nextChoreDue }: Input): MascotName {
+export function homeRaccoon({
+	today,
+	hour,
+	birthday,
+	nextChoreDue,
+	seat = ALONE
+}: Input): MascotName {
 	if (isBirthdayOn(birthday, today)) return 'birthday';
 
 	const special = specialDay(today);
@@ -133,7 +151,7 @@ export function homeRaccoon({ today, hour, birthday, nextChoreDue }: Input): Mas
 
 	if (hour >= BEDTIME || hour < WAKE_UP) return 'sleeping';
 
-	return everydayRaccoon(today, hour);
+	return everydayRaccoon(today, hour, seat);
 }
 
 /**
@@ -143,14 +161,21 @@ export function homeRaccoon({ today, hour, birthday, nextChoreDue }: Input): Mas
  * new season's poses can bring back the previous evening's one on its first
  * morning, with a night of the sleeping raccoon in between, which is fine.)
  * The poses, their seasons and their order are `artwork/raccoon/mascots.json`
- * (→ DECISIONS #219, #220). It depends only on the date and the slot, so the
- * whole household sees the same raccoon and it holds still until the slot ends.
+ * (→ DECISIONS #219, #220). It depends only on the date, the slot and the
+ * reader's seat, so it holds still until the slot ends.
+ *
+ * Each member starts an even share of the season round from the last
+ * (→ DECISIONS #232): two housemates are half the season apart, so they never
+ * meet the same pose in the same slot, and each still walks the whole season in
+ * order, with the no-repeat and look-alike rules intact. That is what makes the
+ * raccoon album (plan 35) one each, rather than one per household.
  */
-export function everydayRaccoon(today: CalendarDate, hour: number): MascotName {
+export function everydayRaccoon(today: CalendarDate, hour: number, seat: Seat = ALONE): MascotName {
 	const pool = seasonPool(today);
 	const slot = SLOT_STARTS.findLastIndex((start) => hour >= start);
 	const turn = daysBetween(EPOCH, today) * SLOT_STARTS.length + Math.max(slot, 0);
-	return pool[turn % pool.length];
+	const start = Math.floor((pool.length * seat.index) / Math.max(seat.of, 1));
+	return pool[(turn + start) % pool.length];
 }
 
 /** The season's everyday poses, in the order `mascots.json` lists them. */

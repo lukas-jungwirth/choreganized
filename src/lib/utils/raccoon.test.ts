@@ -217,6 +217,55 @@ describe('everydayRaccoon', () => {
 	});
 });
 
+describe('each member their own raccoon (→ DECISIONS #232)', () => {
+	/** Every slot of two years, for one seat. */
+	function walk(seat: { index: number; of: number }): string[] {
+		const poses: string[] = [];
+		let date = '2036-01-01';
+		for (let day = 0; day < 366 * 2; day++, date = addDays(date, 1)) {
+			for (const hour of [8, 14, 20]) poses.push(everydayRaccoon(date, hour, seat));
+		}
+		return poses;
+	}
+
+	it('never shows two housemates the same pose in the same slot', () => {
+		for (const of of [2, 3, 4, 5]) {
+			const seats = Array.from({ length: of }, (_, index) => walk({ index, of }));
+			for (let slot = 0; slot < seats[0].length; slot++) {
+				const here = seats.map((poses) => poses[slot]);
+				assert.equal(new Set(here).size, of, `${of} members, slot ${slot}: ${here.join(', ')}`);
+			}
+		}
+	});
+
+	it('keeps every seat to the no-repeat and look-alike rules', () => {
+		const group = new Map(EVERYDAY.map((pose) => [pose.name as string, pose.lookAlike]));
+		for (const seat of [
+			{ index: 1, of: 2 },
+			{ index: 2, of: 3 },
+			{ index: 4, of: 5 }
+		]) {
+			const poses = walk(seat);
+			let date = '2036-01-01';
+			for (let slot = 1; slot < poses.length; slot++) {
+				if (slot % 3 === 0) date = addDays(date, 1);
+				if (seasonStarts(date) && slot % 3 === 0) continue;
+				const at = `seat ${seat.index}/${seat.of}, slot ${slot}: ${poses[slot - 1]} → ${poses[slot]}`;
+				assert.notEqual(poses[slot], poses[slot - 1], at);
+				const shared = group.get(poses[slot]);
+				assert.ok(!shared || shared !== group.get(poses[slot - 1]), at);
+			}
+		}
+	});
+
+	it('leaves someone living alone, and the first to join, where everyone was', () => {
+		const day = '2036-06-18';
+		assert.equal(everydayRaccoon(day, 14, { index: 0, of: 3 }), everydayRaccoon(day, 14));
+		assert.equal(homeRaccoon({ ...plain, seat: { index: 0, of: 1 } }), homeRaccoon(plain));
+		assert.notEqual(homeRaccoon({ ...plain, seat: { index: 1, of: 2 } }), homeRaccoon(plain));
+	});
+});
+
 describe('HOME_RACCOONS', () => {
 	/** Drawn for the tabs, Settings and the login screen; never Home's (→ plan 34). */
 	const SECTIONS = ['shopping', 'cooking', 'tasks', 'expenses', 'head', 'settings', 'move-out'];
