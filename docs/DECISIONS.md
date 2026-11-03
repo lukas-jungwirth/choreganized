@@ -3276,7 +3276,8 @@ units | null, name}`, written back as editor lines in the reader's unit spelling
      header carries only the number and the stars; one chip says when you can meet it (months,
      a date or "All year"), so no fact is shown twice. The season sets the frame's hue and the
      theme only its shade; several seasons blend first to last, and spring is pink so it can't
-     pass for all year's sage.
+     pass for all year's sage. Home's order stays as it is for the album: the reminder raccoon still
+     comes before the everyday poses when a chore is on you (Lukas, asked the same day).
 230. **The admin raccoon picker offers Home's raccoons only, kept apart by code, not by folder**
      (Lukas 2026-11-03). The section raccoons (shopping, cooking, tasks, expenses, head,
      settings, move-out) are drawn for their screens, at another quality, and never sit on
