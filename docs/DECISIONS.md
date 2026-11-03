@@ -3265,3 +3265,15 @@ units | null, name}`, written back as editor lines in the reader's unit spelling
      `SubHeader` [6b], `Card` tiles, a CSS bar per week (sage households over terracotta
      accounts, no chart library for twelve bars), and the households as a `RowGroup` list.
      Only Lukas sees it, so it follows the house style rather than waiting for a frame.
+229. **The raccoon album collects Home's raccoons only, in three tiers worked out from the pose**
+     (plan 35, Lukas's picks 2026-11-03). Collectable is exactly what `homeRaccoon()` can
+     return (39 today): the title, sign-in and Settings raccoons are left out because the Home
+     art is the better art. Rarity is never typed in: ★ all year (every season, plus sleeping
+     and the reminders), ★★ seasonal (one to three seasons), ★★★ special days (holidays and your
+     birthday). A fourth "legendary" tier for raccoons earned by household feats was considered
+     and dropped. The album is per member, a sighting counts once per slot, and an unmet raccoon
+     is only a silhouette and a "?", with no hint (clues were too hard to write well). The card's
+     header carries only the number and the stars; one chip says when you can meet it (months,
+     a date or "All year"), so no fact is shown twice. The season sets the frame's hue and the
+     theme only its shade; several seasons blend first to last, and spring is pink so it can't
+     pass for all year's sage.
