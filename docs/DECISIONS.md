@@ -3172,3 +3172,15 @@ units | null, name}`, written back as editor lines in the reader's unit spelling
      scarf end in February, tea runs autumn and winter. The one allowed repeat moves to a
      season's first morning. A new special day or another screen still needs code; the command
      says so instead of guessing.
+221. **Five more everyday raccoons** (Lukas's batch 2026-11-03, the first through `/raccoons`).
+     `skiing` (winter), `tennis` (spring–autumn, Lukas's pick over spring–summer), `handball`
+     (autumn–spring, the indoor season), `painting` and `phone` (all year). Tennis and handball
+     strike the same pose — one arm up with racket or ball, the other paw out — so they share a
+     new look-alike group, `ball-sport`, and never follow each other. Placed so neighbours differ
+     in every season (skiing well away from the snow raccoon); each season now has 10–11 poses,
+     so every one comes round within four days. Four came in flat, skiing lost 5px of ski tips.
+     ~100 KB more precache. The season test now takes its expected poses from `mascots.json`, so a
+     batch doesn't have to edit it; and the command's approval question now says what a
+     look-alike group does, which it didn't the first time. Tennis is the widest pose yet (158px
+     at Home's 136px), so the greeting now keeps clear of the raccoon's actual width
+     (`--raccoon-width` from the file, at least the old 150px) instead of a fixed 150px.

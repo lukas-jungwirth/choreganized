@@ -133,10 +133,15 @@ pose, first match wins, top to bottom (`lib/utils/raccoon.ts`, by the household'
   | with a dumbbell             | all year               |
   | waving (welcome A)          | all year               |
   | winking, thumbs-up (B)      | all year               |
+  | skiing                      | winter                 |
+  | tennis                      | spring, summer, autumn |
+  | handball                    | autumn, winter, spring |
+  | painting                    | all year               |
+  | on the phone                | all year               |
 
   The day has three slots — from 05:00, 11:00 and 17:00 — and each takes the next pose in turn,
   so it holds still within a slot, never repeats back to back within a season (nor do two that
-  look alike: the greetings, the gardening poses, the hot drinks), and every pose comes round
+  look alike: the greetings, the gardening poses, the hot drinks, tennis and handball), and every pose comes round
   within three days. Every member sees the same one. The list and its order live in
   `artwork/raccoon/mascots.json`.
 

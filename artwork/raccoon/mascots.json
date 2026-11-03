@@ -1,19 +1,70 @@
 {
 	"mascots": [
-		{ "name": "shopping", "height": 264 },
-		{ "name": "cooking", "height": 264 },
-		{ "name": "tasks", "height": 264 },
-		{ "name": "expenses", "height": 264 },
-		{ "name": "head", "height": 270 },
-		{ "name": "reminder-upcoming", "height": 408, "perched": true },
-		{ "name": "reminder-overdue", "height": 408, "perched": true },
-		{ "name": "birthday", "height": 408, "perched": true },
-		{ "name": "christmas", "height": 408, "perched": true },
-		{ "name": "new-year", "height": 408, "perched": true },
-		{ "name": "easter", "height": 408, "perched": true },
-		{ "name": "halloween", "height": 408, "perched": true },
-		{ "name": "valentines", "height": 408, "perched": true },
-		{ "name": "sleeping", "height": 408, "perched": true },
+		{
+			"name": "shopping",
+			"height": 264
+		},
+		{
+			"name": "cooking",
+			"height": 264
+		},
+		{
+			"name": "tasks",
+			"height": 264
+		},
+		{
+			"name": "expenses",
+			"height": 264
+		},
+		{
+			"name": "head",
+			"height": 270
+		},
+		{
+			"name": "reminder-upcoming",
+			"height": 408,
+			"perched": true
+		},
+		{
+			"name": "reminder-overdue",
+			"height": 408,
+			"perched": true
+		},
+		{
+			"name": "birthday",
+			"height": 408,
+			"perched": true
+		},
+		{
+			"name": "christmas",
+			"height": 408,
+			"perched": true
+		},
+		{
+			"name": "new-year",
+			"height": 408,
+			"perched": true
+		},
+		{
+			"name": "easter",
+			"height": 408,
+			"perched": true
+		},
+		{
+			"name": "halloween",
+			"height": 408,
+			"perched": true
+		},
+		{
+			"name": "valentines",
+			"height": 408,
+			"perched": true
+		},
+		{
+			"name": "sleeping",
+			"height": 408,
+			"perched": true
+		},
 		{
 			"name": "welcome-a",
 			"height": 408,
@@ -21,8 +72,25 @@
 			"seasons": ["winter", "spring", "summer", "autumn"],
 			"lookAlike": "greeting"
 		},
-		{ "name": "beach", "height": 408, "perched": true, "seasons": ["summer"] },
-		{ "name": "snow", "height": 408, "perched": true, "seasons": ["winter"] },
+		{
+			"name": "beach",
+			"height": 408,
+			"perched": true,
+			"seasons": ["summer"]
+		},
+		{
+			"name": "tennis",
+			"height": 408,
+			"perched": true,
+			"seasons": ["spring", "summer", "autumn"],
+			"lookAlike": "ball-sport"
+		},
+		{
+			"name": "snow",
+			"height": 408,
+			"perched": true,
+			"seasons": ["winter"]
+		},
 		{
 			"name": "reading",
 			"height": 408,
@@ -37,11 +105,24 @@
 			"lookAlike": "gardening"
 		},
 		{
+			"name": "painting",
+			"height": 408,
+			"perched": true,
+			"seasons": ["winter", "spring", "summer", "autumn"]
+		},
+		{
 			"name": "cold",
 			"height": 408,
 			"perched": true,
 			"seasons": ["winter"],
 			"lookAlike": "hot-drink"
+		},
+		{
+			"name": "handball",
+			"height": 408,
+			"perched": true,
+			"seasons": ["autumn", "winter", "spring"],
+			"lookAlike": "ball-sport"
 		},
 		{
 			"name": "welcome-b",
@@ -57,6 +138,12 @@
 			"seasons": ["spring", "summer", "autumn"]
 		},
 		{
+			"name": "skiing",
+			"height": 408,
+			"perched": true,
+			"seasons": ["winter"]
+		},
+		{
 			"name": "tea",
 			"height": 408,
 			"perched": true,
@@ -70,13 +157,27 @@
 			"seasons": ["winter", "spring", "summer", "autumn"]
 		},
 		{
+			"name": "phone",
+			"height": 408,
+			"perched": true,
+			"seasons": ["winter", "spring", "summer", "autumn"]
+		},
+		{
 			"name": "summer-garden",
 			"height": 408,
 			"perched": true,
 			"seasons": ["summer"],
 			"lookAlike": "gardening"
 		},
-		{ "name": "settings", "height": 360, "perched": true },
-		{ "name": "move-out", "height": 312, "perched": true }
+		{
+			"name": "settings",
+			"height": 360,
+			"perched": true
+		},
+		{
+			"name": "move-out",
+			"height": 312,
+			"perched": true
+		}
 	]
 }

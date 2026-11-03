@@ -55,7 +55,9 @@ pose (only with Lukas's explicit say-so, then `--replace`).
    several calls), your pick first with "(Recommended)":
    "**painting**: all year, no look-alike?" with your pick and one or two realistic
    alternatives (other seasons). In the question text, add what the script reported (cut or
-   already flat) and anything you noticed. Then **wait**. His answers are the spec.
+   already flat) and anything you noticed. Say "look-alike" only with what it means, in plain
+   words — "never right after tennis, they strike the same pose" — never as a bare group name.
+   Then **wait**. His answers are the spec.
 6. **List them** in `mascots.json` with `"height": 408, "perched": true` plus `seasons` and
    `lookAlike`, each at the place you chose; then `npm run icons` (it validates the list) and
    `npm test`. The rotation test fails if two look-alikes or the same pose meet back to back
