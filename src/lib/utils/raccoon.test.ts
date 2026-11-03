@@ -151,21 +151,21 @@ function posesFrom(date: string): string[] {
 	return [...seen].sort();
 }
 
-const ALL_YEAR = ['reading', 'sports', 'welcome-a', 'welcome-b'];
+/** What mascots.json says a season's poses are — what the rotation must show, no more, no less. */
+const listedFor = (season: string) =>
+	EVERYDAY.filter((pose) => (pose.seasons as readonly string[]).includes(season))
+		.map((pose) => pose.name as string)
+		.sort();
 
 /** The first morning of a season, when its poses take over from the last's. */
 const seasonStarts = (date: string) => /-(03|06|09|12)-01$/.test(date);
 
 describe('everydayRaccoon', () => {
-	it('shows each season its own poses, and the all-year ones in every season', () => {
-		const sorted = (extra: string[]) => [...ALL_YEAR, ...extra].sort();
-		assert.deepEqual(posesFrom('2036-01-10'), sorted(['cold', 'snow', 'tea']));
-		assert.deepEqual(posesFrom('2036-04-10'), sorted(['fishing', 'garden']));
-		assert.deepEqual(
-			posesFrom('2036-07-10'),
-			sorted(['beach', 'fishing', 'garden', 'summer-garden'])
-		);
-		assert.deepEqual(posesFrom('2036-10-10'), sorted(['fishing', 'garden', 'tea']));
+	it('shows each season exactly the poses listed for it, all of them within a week', () => {
+		assert.deepEqual(posesFrom('2036-01-10'), listedFor('winter'));
+		assert.deepEqual(posesFrom('2036-04-10'), listedFor('spring'));
+		assert.deepEqual(posesFrom('2036-07-10'), listedFor('summer'));
+		assert.deepEqual(posesFrom('2036-10-10'), listedFor('autumn'));
 	});
 
 	it('goes by the meteorological seasons: December is winter, March spring', () => {

@@ -31,6 +31,7 @@
 	import AvatarStack from '$lib/components/ui/AvatarStack.svelte';
 	import Banner from '$lib/components/ui/Banner.svelte';
 	import Mascot from '$lib/components/ui/Mascot.svelte';
+	import { MASCOTS } from '$lib/assets/mascot';
 	import { messages } from '$lib/i18n';
 	import type { NextChore } from '$lib/server/services/home';
 	import type { CompletionResult, Standing } from '$lib/server/services/tasks';
@@ -52,6 +53,12 @@
 	const names = $derived(stack.map((member) => member.displayName).join(', '));
 
 	const tasksLabel = $derived(m.home.stats.tasksDue(data.tasksDueCount));
+
+	/** Home shows its raccoon 136px tall; the greeting keeps clear of however wide that makes it. */
+	const RACCOON_HEIGHT = 136;
+	const raccoonWidth = $derived(
+		Math.round((RACCOON_HEIGHT * MASCOTS[data.raccoon].width) / MASCOTS[data.raccoon].height)
+	);
 
 	/** Ticked but not yet confirmed — the card goes quiet before the server agrees. */
 	let pending = $state(false);
@@ -94,7 +101,7 @@
 	<title>{m.common.pageTitle(m.home.title)}</title>
 </svelte:head>
 
-<header>
+<header style:--raccoon-width="{raccoonWidth}px">
 	<div class="who">
 		<p class="household">{data.household.name}</p>
 		<h1>{m.home.greeting(data.greeting)},<br />{data.currentMember.displayName}</h1>
@@ -108,7 +115,7 @@
 			<ChevronRight size={18} strokeWidth={2.2} aria-hidden="true" />
 		</a>
 	</div>
-	<Mascot name={data.raccoon} height={136} class="raccoon" />
+	<Mascot name={data.raccoon} height={RACCOON_HEIGHT} class="raccoon" />
 </header>
 
 <div class="stack">
@@ -210,10 +217,11 @@
 
 	/* Display names are free text up to 40 characters, so without min-width a
 	   long one pushes the whole page sideways; the max keeps the greeting clear
-	   of the raccoon. */
+	   of the raccoon — 150px, or more for a wider pose like tennis (its width
+	   comes from the file, → DECISIONS #221). */
 	.who {
 		min-width: 0;
-		max-width: calc(100% - 150px);
+		max-width: calc(100% - max(150px, var(--raccoon-width) + 6px));
 	}
 
 	header :global(.raccoon) {

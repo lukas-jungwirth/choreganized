@@ -15,14 +15,19 @@ import valentines from './valentines.avif';
 import sleeping from './sleeping.avif';
 import welcomeA from './welcome-a.avif';
 import beach from './beach.avif';
+import tennis from './tennis.avif';
 import snow from './snow.avif';
 import reading from './reading.avif';
 import garden from './garden.avif';
+import painting from './painting.avif';
 import cold from './cold.avif';
+import handball from './handball.avif';
 import welcomeB from './welcome-b.avif';
 import fishing from './fishing.avif';
+import skiing from './skiing.avif';
 import tea from './tea.avif';
 import sports from './sports.avif';
+import phone from './phone.avif';
 import summerGarden from './summer-garden.avif';
 import settings from './settings.avif';
 import moveOut from './move-out.avif';
@@ -45,14 +50,19 @@ export const MASCOTS = {
 	sleeping: { src: sleeping, width: 426, height: 408 },
 	'welcome-a': { src: welcomeA, width: 488, height: 408 },
 	beach: { src: beach, width: 370, height: 408 },
+	tennis: { src: tennis, width: 475, height: 408 },
 	snow: { src: snow, width: 384, height: 408 },
 	reading: { src: reading, width: 343, height: 408 },
 	garden: { src: garden, width: 371, height: 408 },
+	painting: { src: painting, width: 322, height: 408 },
 	cold: { src: cold, width: 336, height: 408 },
+	handball: { src: handball, width: 431, height: 408 },
 	'welcome-b': { src: welcomeB, width: 438, height: 408 },
 	fishing: { src: fishing, width: 395, height: 408 },
+	skiing: { src: skiing, width: 350, height: 408 },
 	tea: { src: tea, width: 314, height: 408 },
 	sports: { src: sports, width: 387, height: 408 },
+	phone: { src: phone, width: 311, height: 408 },
 	'summer-garden': { src: summerGarden, width: 359, height: 408 },
 	settings: { src: settings, width: 320, height: 360 },
 	'move-out': { src: moveOut, width: 320, height: 312 }
