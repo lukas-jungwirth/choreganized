@@ -19,9 +19,9 @@
  * the same pose renders on the server and in the browser, all day.
  */
 import type { MascotName } from '$lib/assets/mascot';
-import { EVERYDAY, type Season } from '$lib/assets/mascot/everyday';
+import { EVERYDAY, type DaySlot, type Season, type Weekday } from '$lib/assets/mascot/everyday';
 import { isBirthdayOn } from './birthday.ts';
-import { addDays, daysBetween, type CalendarDate } from './dates.ts';
+import { addDays, daysBetween, weekdayIndex, type CalendarDate } from './dates.ts';
 import { easterSunday } from './holidays.ts';
 
 type Input = {
@@ -83,6 +83,24 @@ const WAKE_UP = 5;
 
 /** The awake day in three: morning from 05:00, afternoon from 11:00, evening from 17:00. */
 const SLOT_STARTS = [WAKE_UP, 11, 17];
+
+/** Home's three awake slots, in order, by the names `mascots.json` gives a pose's `slots`. */
+export const DAY_SLOTS: readonly DaySlot[] = ['morning', 'afternoon', 'evening'];
+
+/** The week, Monday first, by the names `mascots.json` gives a pose's `days`. */
+export const WEEKDAYS: readonly Weekday[] = ['mon', 'tue', 'wed', 'thu', 'fri', 'sat', 'sun'];
+
+/**
+ * How long each of Home's stretches lasts, in hours: the three awake slots and
+ * the night. The raccoon album weighs a raccoon's rarity by them (→
+ * `utils/raccoon-album`).
+ */
+export const SLOT_HOURS: Readonly<Record<DaySlot | 'night', number>> = {
+	morning: SLOT_STARTS[1] - SLOT_STARTS[0],
+	afternoon: SLOT_STARTS[2] - SLOT_STARTS[1],
+	evening: BEDTIME - SLOT_STARTS[2],
+	night: 24 - BEDTIME + WAKE_UP
+};
 
 /** Which season each month (1–12) belongs to: meteorological, three months each. */
 export const SEASON_OF_MONTH: readonly Season[] = [
@@ -159,6 +177,10 @@ export function homeRaccoon({ today, hour, birthday, nextChoreDue, seed = '' }: 
  * turning up for weeks, the last few take some luck, and there is no hard
  * guarantee of meeting every pose in a season, on purpose (Lukas 2026-11-03).
  *
+ * A pose with `days` or `slots` in `mascots.json` is only in the draw on those
+ * days or for those slots: coffee in the morning, the laptop on workdays
+ * (→ DECISIONS #237). It still has to be drawn, so it isn't there every time.
+ *
  * The one rule: a day's three are all different and never two look-alikes. The
  * night's sleeping raccoon sits between one day's evening and the next
  * morning, so that is every pair that would ever show back to back. The poses,
@@ -174,11 +196,15 @@ function dayDraw(today: CalendarDate, seed: string): MascotName[] {
 	const random = seededRandom(`${seed}|${today}`);
 	const drawn: (typeof EVERYDAY)[number][] = [];
 	const season = SEASON_OF_MONTH[Number(today.slice(5, 7)) - 1];
-	const pool = EVERYDAY.filter((pose) => pose.seasons.includes(season));
+	const weekday = WEEKDAYS[weekdayIndex(today)];
+	const pool = EVERYDAY.filter(
+		(pose) => pose.seasons.includes(season) && (!pose.days || pose.days.includes(weekday))
+	);
 
 	for (let slot = 0; slot < SLOT_STARTS.length; slot++) {
 		const open = pool.filter(
 			(pose) =>
+				(!pose.slots || pose.slots.includes(DAY_SLOTS[slot])) &&
 				!drawn.includes(pose) &&
 				!(pose.lookAlike && drawn.some((each) => each.lookAlike === pose.lookAlike))
 		);

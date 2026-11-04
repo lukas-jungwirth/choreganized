@@ -2,12 +2,18 @@
 import type { MascotName } from './index';
 
 export type Season = 'winter' | 'spring' | 'summer' | 'autumn';
+export type Weekday = 'mon' | 'tue' | 'wed' | 'thu' | 'fri' | 'sat' | 'sun';
+export type DaySlot = 'morning' | 'afternoon' | 'evening';
 
 /** Home's everyday poses, in the order it takes them (→ `utils/raccoon`). */
 export const EVERYDAY: ReadonlyArray<{
 	name: MascotName;
 	seasons: readonly Season[];
 	lookAlike: string | null;
+	/** Only on these days, in the week's order; every day when left out. */
+	days?: readonly Weekday[];
+	/** Only in these of Home's slots; all three when left out. */
+	slots?: readonly DaySlot[];
 }> = [
 	{ name: 'welcome-a', seasons: ['winter', 'spring', 'summer', 'autumn'], lookAlike: 'greeting' },
 	{ name: 'beach', seasons: ['summer'], lookAlike: null },
@@ -42,7 +48,23 @@ export const EVERYDAY: ReadonlyArray<{
 	{ name: 'phone', seasons: ['winter', 'spring', 'summer', 'autumn'], lookAlike: null },
 	{ name: 'skates', seasons: ['winter'], lookAlike: null },
 	{ name: 'summer-garden', seasons: ['summer'], lookAlike: 'gardening' },
-	{ name: 'lemonade', seasons: ['summer'], lookAlike: null }
+	{ name: 'lemonade', seasons: ['summer'], lookAlike: null },
+	{
+		name: 'coffee',
+		seasons: ['winter', 'spring', 'summer', 'autumn'],
+		lookAlike: 'hot-drink',
+		slots: ['morning']
+	},
+	{
+		name: 'laptop',
+		seasons: ['winter', 'spring', 'summer', 'autumn'],
+		lookAlike: null,
+		days: ['mon', 'tue', 'wed', 'thu', 'fri']
+	},
+	{ name: 'fruit', seasons: ['winter', 'spring', 'summer', 'autumn'], lookAlike: null },
+	{ name: 'juggling', seasons: ['winter', 'spring', 'summer', 'autumn'], lookAlike: null },
+	{ name: 'bath', seasons: ['winter', 'spring', 'summer', 'autumn'], lookAlike: null },
+	{ name: 'mushrooms', seasons: ['autumn'], lookAlike: null }
 ];
 
 /** The raccoons that sit on a card's top edge, so must be cut flat at the waist. */
@@ -91,6 +113,12 @@ export const PERCHED: readonly MascotName[] = [
 	'skates',
 	'summer-garden',
 	'lemonade',
+	'coffee',
+	'laptop',
+	'fruit',
+	'juggling',
+	'bath',
+	'mushrooms',
 	'settings',
 	'move-out'
 ];

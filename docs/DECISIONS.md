@@ -3399,3 +3399,43 @@ units | null, name}`, written back as editor lines in the reader's unit spelling
      download it. The name is a brand, not copy, so it isn't in the message catalog.
      Installed apps read the name and the icon only at install: reinstall the test app once
      the variable is set.
+237. **The raccoon album sorts by rarity, and a pose can keep to some days or slots** (Lukas
+     2026-11-04, with six new raccoons from `/raccoons`). The tiers said _when_ (All year,
+     Seasonal, Special days), which has no place for a workday or a morning raccoon. They now
+     say **how rare**: ★ Common, ★★ Rare, ★★★ Legendary (Häufig, Selten, Legendär), **worked
+     out** in `utils/raccoon-album` (never typed in per raccoon) from the share of the year's
+     hours it can be on Home: months/12 × weekdays/7 × hours/24, where a drawn pose has Home's 17
+     awake hours (or the hours of its slots: morning 6, afternoon 6, evening 5), sleeping the 7
+     night hours, the reminders every hour (they come with a chore, any time) and a special day
+     its days/365. **Common from 40%, Legendary under 3%**, Rare in between. So three-season
+     poses (tennis, garden, fishing, handball) move from ★★ to ★ Common at 53%, sleeping from ★
+     to ★★ Rare at 29%, and one or two seasons stay Rare (18%, 35%). The lines were drawn so
+     a workday pose (51%) is Common and a two-hour night slot on two nights a week (2.4%),
+     should one ever come, is Legendary. The numbers ignore that a drawn pose shares its slot with
+     the rest of the season's pool: that is the same for every drawn pose, so it doesn't change
+     the order, and "how often could it be there" is what a player can reason about.
+     **Time rules** are data: `days` (`mon`–`sun`) and `slots` (`morning`, `afternoon`,
+     `evening`) on an everyday pose in `mascots.json`. They narrow the **draw**, they don't
+     pin the pose: coffee is only in the morning's pool, the laptop only in a workday's, and
+     either still has to be drawn. A pose that shows _every_ time its slot comes round would be
+     a situation in `homeRaccoon`, like sleeping, which is code, not data. Hours finer than
+     the slots are left out: Home holds one raccoon per slot and the album counts sightings per
+     slot, so a two-hour window would need both to change. The card's chip says the rule after
+     the window: "All year · Mornings", "All year · Mon – Fri", "All year · Nights" (sleeping);
+     days read as a run ("Mon – Fri"), the weekend, every one of a day ("Fridays", "Freitags")
+     or a list. **Frames still follow the window** (sage, a season, holo), not the rarity, so a
+     card's colour keeps saying when. The **Missing filter is gone** (Lukas: odd to use, not
+     needed; the silhouettes already show what's missing): All plus one chip per rarity. Album
+     numbers never move, so the grid no longer runs ★ to ★★★ in order; the test that held it
+     to that went too. The "still to find" line counts the Rare and Legendary ones.
+     **The batch**, all as recommended: `coffee` (No. 045, all year, mornings, a hot drink like tea
+     and the cold raccoon, so never on the same day as them), `laptop` (046, all year,
+     Mon–Fri), `fruit` (047), `juggling` (048) and `bath` (049, a Schaffel bubble bath, eyes
+     shut), all year, and `mushrooms` (050, autumn, Schwammerl season; the basket hides a button,
+     so `"body": 0.52` by hand). None needed mirroring: each looks in, at its own prop, or has
+     its eyes shut. Only `bath` was cut (10px off the tub). +111 KB of AVIFs. `scripts/icons.ts`
+     now runs `everyday.ts` through Prettier, since an entry with a rule is longer than a line.
+     The draw tests: "meets every pose of a season" holds the unruled poses to a season and
+     the ruled ones to a year (coffee is one slot's pool in 3, so one simulated member in 200
+     missed it in a winter), and a new test walks a year per member to check that no ruled pose
+     ever shows outside its days or slots.

@@ -31,6 +31,7 @@ import {
 	formatWeekday,
 	formatWeekdayLong,
 	formatWeekdayShort,
+	formatWeekdays,
 	needsYear,
 	type CalendarDate
 } from '$lib/utils/dates';
@@ -42,6 +43,7 @@ import { currencyAfter, currencySymbol, formatMoney } from '$lib/utils/money';
 import type { MealSlot } from '$lib/utils/meals';
 import { formatQuantity, type UnitLabels } from '$lib/utils/shopping';
 import type { RecurUnit } from '$lib/utils/tasks';
+import type { DaySlot, Weekday } from '$lib/assets/mascot/everyday';
 import type { Messages, RichText, SentencePart } from './en';
 
 const L = 'de';
@@ -1981,10 +1983,10 @@ export const de: Messages = {
 		back: 'Zurück zu den Einstellungen',
 		count: (found: number, total: number) => `${found} von ${total}`,
 		found: (found: number, total: number) => `${found} von ${total} gefunden`,
-		missing: (seasonal: number, special: number) => {
+		missing: (rare: number, legendary: number) => {
 			const parts = [
-				seasonal > 0 ? `${seasonal} saisonale` : null,
-				special > 0 ? `${special} ${special === 1 ? 'Feiertag' : 'Feiertage'}` : null
+				rare > 0 ? `${rare} ${rare === 1 ? 'seltener' : 'seltene'}` : null,
+				legendary > 0 ? `${legendary} ${legendary === 1 ? 'legendärer' : 'legendäre'}` : null
 			].filter((part) => part !== null);
 			return parts.length > 0 ? `Noch zu finden: ${parts.join(' · ')}` : null;
 		},
@@ -1992,10 +1994,9 @@ export const de: Messages = {
 		progress: (found: number, total: number) => `${found} von ${total} Waschbären gefunden`,
 		filters: {
 			label: 'Anzeigen',
-			all: 'Alle',
-			missing: 'Fehlen noch'
+			all: 'Alle'
 		},
-		tiers: { 1: 'Ganzjährig', 2: 'Saisonal', 3: 'Feiertage' } as Record<1 | 2 | 3, string>,
+		tiers: { 1: 'Häufig', 2: 'Selten', 3: 'Legendär' } as Record<1 | 2 | 3, string>,
 		stars: (stars: number) => (stars === 1 ? '1 Stern' : `${stars} Sterne`),
 		number: (number: string) => `Nr. ${number}`,
 		newBadge: 'Neu',
@@ -2010,6 +2011,24 @@ export const de: Messages = {
 			easter: 'Ostern',
 			fasching: 'Faschingsdienstag',
 			birthday: 'Dein Geburtstag'
+		},
+		/** „Mo – Fr“, „Am Wochenende“, „Freitags“, „Morgens“, „Mo – Fr, morgens“. */
+		rule: (days: readonly Weekday[] | null, slots: readonly (DaySlot | 'night')[] | null) => {
+			const SLOTS = {
+				morning: 'morgens',
+				afternoon: 'nachmittags',
+				evening: 'abends',
+				night: 'nachts'
+			};
+			const when = slots ? list(slots.map((slot) => SLOTS[slot])) : null;
+			const on = days
+				? formatWeekdays(days, L, {
+						weekend: 'am Wochenende',
+						every: (day) => `${day.toLocaleLowerCase('de')}s`
+					})
+				: null;
+			const text = on && when ? `${on}, ${when}` : (on ?? when ?? '');
+			return text.charAt(0).toLocaleUpperCase(INTL_LOCALE[L]) + text.slice(1);
 		},
 		stats: {
 			cosiness: 'Gemütlichkeit',
@@ -2209,6 +2228,36 @@ export const de: Messages = {
 			name: 'Limo-Leni',
 			title: 'Die Limonadenmacherin',
 			fact: 'Presst die Zitronen selber aus und gibt den Zucker händeweise dazu.'
+		},
+		coffee: {
+			name: 'Espresso-Ernst',
+			title: 'Der Frühaufsteher',
+			fact: 'Ist kein Morgenwaschbär. Nach der ersten Tasse schon.'
+		},
+		laptop: {
+			name: 'Laptop-Lotte',
+			title: 'Die Homeoffice-Heldin',
+			fact: 'War das ganze Meeting lang stummgeschaltet. Bemerkt hat es noch niemand.'
+		},
+		fruit: {
+			name: 'Obst-Franzi',
+			title: 'Die Vitaminfreundin',
+			fact: 'Isst jeden Tag einen Apfel, dazu die Birne und die Trauben, sicherheitshalber.'
+		},
+		juggling: {
+			name: 'Jonglier-Jakob',
+			title: 'Der Jongleur',
+			fact: 'Hält drei Bälle in der Luft. An guten Tagen vier, neben der Vase nur zwei.'
+		},
+		bath: {
+			name: 'Blubber-Burgi',
+			title: 'Die Badenixe',
+			fact: 'Füllt das Schaffel bis zum Rand und gibt dann noch Schaum dazu. Die Ente beschwert sich nicht mehr.'
+		},
+		mushrooms: {
+			name: 'Schwammerl-Sepp',
+			title: 'Der Schwammerlsucher',
+			fact: 'Kennt jedes Schwammerl im Wald. Das rote mit den Punkten kommt wieder zurück, versprochen.'
 		},
 		tea: {
 			name: 'Teehäferl-Theo',

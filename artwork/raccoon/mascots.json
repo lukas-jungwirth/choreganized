@@ -381,6 +381,58 @@
 			"stats": { "cosiness": 4, "mischief": 1, "snacks": 4, "helpfulness": 2 }
 		},
 		{
+			"name": "coffee",
+			"height": 408,
+			"perched": true,
+			"seasons": ["winter", "spring", "summer", "autumn"],
+			"slots": ["morning"],
+			"lookAlike": "hot-drink",
+			"album": 45,
+			"stats": { "cosiness": 4, "mischief": 1, "snacks": 3, "helpfulness": 3 }
+		},
+		{
+			"name": "laptop",
+			"height": 408,
+			"perched": true,
+			"seasons": ["winter", "spring", "summer", "autumn"],
+			"days": ["mon", "tue", "wed", "thu", "fri"],
+			"album": 46,
+			"stats": { "cosiness": 2, "mischief": 2, "snacks": 3, "helpfulness": 5 }
+		},
+		{
+			"name": "fruit",
+			"height": 408,
+			"perched": true,
+			"seasons": ["winter", "spring", "summer", "autumn"],
+			"album": 47,
+			"stats": { "cosiness": 3, "mischief": 2, "snacks": 5, "helpfulness": 2 }
+		},
+		{
+			"name": "juggling",
+			"height": 408,
+			"perched": true,
+			"seasons": ["winter", "spring", "summer", "autumn"],
+			"album": 48,
+			"stats": { "cosiness": 2, "mischief": 5, "snacks": 2, "helpfulness": 2 }
+		},
+		{
+			"name": "bath",
+			"height": 408,
+			"perched": true,
+			"seasons": ["winter", "spring", "summer", "autumn"],
+			"album": 49,
+			"stats": { "cosiness": 5, "mischief": 3, "snacks": 1, "helpfulness": 1 }
+		},
+		{
+			"name": "mushrooms",
+			"height": 408,
+			"perched": true,
+			"body": 0.52,
+			"seasons": ["autumn"],
+			"album": 50,
+			"stats": { "cosiness": 3, "mischief": 2, "snacks": 5, "helpfulness": 3 }
+		},
+		{
 			"name": "settings",
 			"height": 360,
 			"perched": true

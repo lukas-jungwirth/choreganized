@@ -121,8 +121,8 @@ pose, first match wins, top to bottom (`lib/utils/raccoon.ts`, by the household'
 - Otherwise an **everyday pose** ([DECISIONS #219](DECISIONS.md), [#220](DECISIONS.md)), from
   the ones in season — winter Dec–Feb, spring Mar–May, summer Jun–Aug, autumn Sep–Nov:
 
-  | Pose                        | Seasons                |
-  | --------------------------- | ---------------------- |
+  | Pose                        | Seasons                | Only      |
+  | --------------------------- | ---------------------- | --------- |
   | at the beach                | summer                 |
   | gardening in a sun hat      | summer                 |
   | gardening                   | spring, summer, autumn |
@@ -157,17 +157,27 @@ pose, first match wins, top to bottom (`lib/utils/raccoon.ts`, by the household'
   | raiding a bin               | all year               |
   | chasing a butterfly         | spring, summer         |
   | sipping iced lemonade       | summer                 |
+  | a morning coffee            | all year               | mornings  |
+  | typing on a laptop          | all year               | Mon – Fri |
+  | eating fruit                | all year               |           |
+  | juggling three balls        | all year               |           |
+  | a bubble bath in a Schaffel | all year               |           |
+  | a basket of mushrooms       | autumn                 |           |
 
   The day has three slots — from 05:00, 11:00 and 17:00 — and each member draws their own three
   of the season's poses for the day, one per slot ([DECISIONS #232](DECISIONS.md)): at random,
   from a seed made of the member and the date, so nothing is stored and the raccoon holds still
-  all slot, on every device. A day's three are all different, and never two that look alike (the
+  all slot, on every device. A pose can keep to **some days or slots** ("Only";
+  [DECISIONS #237](DECISIONS.md)): coffee is only in the morning's draw, the laptop only on
+  workdays. It still has to be drawn, so it isn't there every time. A day's three are all different, and never two that look alike (the
   greetings, the gardening and watering poses, the hot drinks, tennis and handball, the corded
-  phone and the singer, the snowball and the knitter in the same hat and scarf); the night's
+  phone and the singer, the snowball and the knitter in the same hat and scarf; coffee joins the
+  hot drinks); the night's
   sleeping raccoon sits between one day's evening and the next morning. Housemates meet different
   raccoons and fill their own raccoon albums (→ §6). There is no hard guarantee of meeting every
   pose in a season, on purpose: the last few take some luck, though looking in every slot you
-  practically always do. The poses and their seasons live in `artwork/raccoon/mascots.json`.
+  practically always do. The poses, their seasons and their days and slots live in
+  `artwork/raccoon/mascots.json`.
 
   **Poke it** ([DECISIONS #223](DECISIONS.md)): the raccoon is a button ("Poke the raccoon").
   Each tap squashes it; the third is a hit — it shakes and flushes red — and it stays slightly
@@ -850,25 +860,31 @@ The **History** tab is a stats landing; the full feed sits one level below it (�
 - Profile card: avatar, display name, email + **Edit**. A raccoon with a wrench sits on its top
   edge at the right, the way Home's sits on its first card; the title wraps rather than run
   under it ([DECISIONS #217](DECISIONS.md)).
-- **Raccoon album** (plan 35), a row right under the profile card with "17 of 44": every raccoon
-  Home can show (exactly `HOME_RACCOONS`: the 30 everyday poses, the 6 special days, sleeping
+- **Raccoon album** (plan 35), a row right under the profile card with "17 of 50": every raccoon
+  Home can show (exactly `HOME_RACCOONS`: the 40 everyday poses, the 6 special days, your birthday, sleeping
   and the two reminders; never a tab's, the sign-in head, Settings' or the leaving raccoon), and
   which of them **you** have met. Per member: a housemate's album is their own.
   - `SubHeader` "Raccoon album" / "Every raccoon you've met on Home." A progress card: a ring,
-    "17 of 44 found", "5 seasonal · 4 special days still to find", a plain sage bar.
-  - Filters, sideways at 390px: All · ★ All year · ★★ Seasonal · ★★★ Special days · Missing.
-    A tier chip picks one; Missing toggles on top of any of them.
+    "17 of 50 found", "5 rare · 4 legendary still to find", a plain sage bar.
+  - Filters, sideways at 390px: All · ★ Common · ★★ Rare · ★★★ Legendary; a chip picks one
+    rarity. (No Missing filter: dropped in [DECISIONS #237](DECISIONS.md).)
   - A grid of four, tiles 3:4, in album order: a met raccoon on its frame colour with its number
     (`009`) and a "New" badge if met since you last opened the album; an unmet one is its
     silhouette and a "?", with no hint and no stars.
-  - **Tiers**, worked out from the pose: ★ all year (an everyday pose in all four seasons,
-    sleeping, the reminders), ★★ seasonal (one to three seasons), ★★★ special days (the holidays
-    and your birthday). **Frames**: sage for ★, the season's colour for one season (winter ice,
-    spring blossom pink, summer sand, autumn rust), a blend first to last for several (tea:
-    autumn → winter), holo foil for ★★★; the theme changes only the shade.
+  - **Rarity** ([DECISIONS #237](DECISIONS.md)), worked out from how much of the year a raccoon
+    can be on Home: its months × its weekdays × its hours (the 17 awake hours for a drawn pose, the
+    7 night hours for sleeping, every hour for the reminders, which come with a chore). **★
+    Common** at 40% or more (an all-year pose, three seasons, the laptop), **★★ Rare** in between
+    (one or two seasons, coffee, sleeping), **★★★ Legendary** under 3% (the special days and your
+    birthday). **Frames** follow the window, not the rarity: sage all year, the season's colour
+    for one season (winter ice, spring blossom pink, summer sand, autumn rust), a blend first to
+    last for several (tea: autumn → winter), holo foil for a special day; the theme changes only
+    the shade.
   - A tap opens the **card**, centred over the album: "No. 009" and the stars (★★☆) on top, the
     raccoon on a stage in its frame colour, its name and a title, one chip for when you can meet
-    it ("All year", "Dec – Feb", "Dec 24 – 25", "Easter", "Shrove Tuesday", "Your birthday"), a fun fact, four
+    it ("All year", "Dec – Feb", "Dec 24 – 25", "Easter", "Shrove Tuesday", "Your birthday"),
+    with its rule after a dot when it keeps to some days or hours ("All year · Mornings", "All
+    year · Mon – Fri", "All year · Nights"), a fun fact, four
     stats as 1–5 dots (Cosiness, Mischief, Snack drive, Helpfulness), and "First met Jun 18" ·
     "Seen 7×". ‹ / › (or a sideways swipe) go to the neighbouring number, met or not; an unmet
     one is the locked card: the number, the silhouette under a big "?", "? ? ? ? ?", "Not met
