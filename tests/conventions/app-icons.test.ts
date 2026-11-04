@@ -11,6 +11,9 @@
  *   the top half, where the ears are; the bottom half is the body, which the
  *   mask is welcome to cut.
  * - **headroom**: the tab icon's top row is green, so the ears aren't cropped.
+ * - **the test label inside the mask**: the test deploy's maskable icons
+ *   (`static/icons/test/`, → DECISIONS #236) differ from the live ones only
+ *   inside the safe circle, so no launcher crops the TEST label.
  */
 import assert from 'node:assert/strict';
 import sharp from 'sharp';
@@ -71,6 +74,30 @@ describe('app icons', () => {
 		it(`${file}: the ears aren't cropped`, async () => {
 			const { size, isGreen } = await pixels(file);
 			assert.equal(artShare(size, isGreen, 0), 0, `${file}: the top row cuts through the raccoon`);
+		});
+	}
+
+	for (const size of [192, 512]) {
+		it(`test/icon-${size}-maskable.png: the TEST label stays inside the safe circle`, async () => {
+			const read = (dir: string) =>
+				sharp(`static/icons/${dir}icon-${size}-maskable.png`).removeAlpha().raw().toBuffer();
+			const [live, test] = await Promise.all([read(''), read('test/')]);
+			let changed = 0;
+			let outside = 0;
+			for (let y = 0; y < size; y++) {
+				for (let x = 0; x < size; x++) {
+					const i = (y * size + x) * 3;
+					const diff =
+						Math.abs(live[i] - test[i]) +
+						Math.abs(live[i + 1] - test[i + 1]) +
+						Math.abs(live[i + 2] - test[i + 2]);
+					if (diff <= 60) continue;
+					changed++;
+					if (Math.hypot(x + 0.5 - size / 2, y + 0.5 - size / 2) > size * 0.4) outside++;
+				}
+			}
+			assert.ok(changed > 0, 'the test icon has no label');
+			assert.equal(outside, 0, `${outside} label pixels outside the circle`);
 		});
 	}
 });

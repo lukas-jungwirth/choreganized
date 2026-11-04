@@ -21,6 +21,7 @@ import { members } from '$lib/server/db/schema';
 import { env } from '$env/dynamic/private';
 import { installFixedClock } from '$lib/fixed-clock';
 import { assertE2EModeAllowed, e2eMode } from '$lib/server/e2e-mode';
+import { branding } from '$lib/server/stage';
 import { isTheme, THEME_COOKIE, type Theme } from '$lib/theme';
 
 /** Runs once before the first request — safe with a single instance. */
@@ -82,6 +83,7 @@ export const handle: Handle = async ({ event, resolve }) => {
 	// value: the absence of the attribute is what leaves `color-scheme:
 	// light dark` in charge, so the device's own setting wins with no
 	// client-side script and no flash (→ app.css).
+	const brand = branding();
 	const response = await resolve(event, {
 		transformPageChunk: ({ html }) =>
 			html
@@ -90,6 +92,11 @@ export const handle: Handle = async ({ event, resolve }) => {
 				// `lang`, so an empty expansion just leaves a harmless one inside the
 				// tag rather than gluing two attributes together.
 				.replace('%theme%', event.locals.theme ? `data-theme="${event.locals.theme}"` : '')
+				// The deploy's name and icon set (→ $lib/server/stage): the test
+				// environment's installed app must not look like the household's.
+				.replaceAll('%icons%', brand.icons)
+				.replace('%app_name%', brand.name)
+				.replace('%app_short_name%', brand.shortName)
 				.replace('<head>', `<head>${fixedClockScript()}`)
 	});
 

@@ -14,6 +14,7 @@
  *   static/icons/apple-touch-icon.png (180)              iOS home screen, no alpha
  *   static/icons/favicon-32.png · favicon-96.png         browser tab
  *   static/icons/badge-72.png                            Android status-bar silhouette (alpha-only)
+ *   static/icons/test/*.png                              the same minus the badge, labelled TEST (APP_STAGE=test)
  *   src/lib/assets/mascot/*.avif                         the raccoon art the screens show
  *   src/lib/assets/mascot/index.ts                       their pixel sizes, for `ui/Mascot`
  *   src/lib/assets/mascot/everyday.ts                    Home's everyday poses + which are perched
@@ -33,6 +34,8 @@ const ARTWORK = join(root, 'artwork/raccoon');
 const APP_ICON = join(ARTWORK, 'app-icon.png');
 const FOREGROUND = join(ARTWORK, 'app-icon-foreground.png');
 const ICONS_DIR = join(root, 'static/icons');
+/** The test deploy's labelled set, same names (→ `lib/server/stage.ts`). */
+const TEST_ICONS_DIR = join(ICONS_DIR, 'test');
 const MASCOT_DIR = join(root, 'src/lib/assets/mascot');
 
 /**
@@ -151,6 +154,92 @@ async function badge(size: number): Promise<Buffer> {
 }
 
 /**
+ * The test deploy's mark (→ DECISIONS #236): a yellow label reading TEST over
+ * the same icon, so the test app and the household's app can't be mixed up on
+ * one phone. The letters are drawn as blocks, not set in a font, so the output
+ * doesn't depend on the fonts of whoever runs this.
+ */
+const LABEL = { fill: '#F2B200', ink: '#2B1F1A' };
+
+/** TEST on a 3×5 grid per letter, one blank column between letters. */
+const TEST_GLYPHS = [
+	['###', '.#.', '.#.', '.#.', '.#.'],
+	['###', '#..', '###', '#..', '###'],
+	['###', '#..', '###', '..#', '###'],
+	['###', '.#.', '.#.', '.#.', '.#.']
+];
+const TEST_COLUMNS = TEST_GLYPHS.length * 4 - 1;
+
+/** The lettering as SVG rects, `unit` px per grid cell, top-left at (x, y). */
+function testLetters(x: number, y: number, unit: number): string {
+	const rects: string[] = [];
+	TEST_GLYPHS.forEach((glyph, letter) => {
+		glyph.forEach((row, line) => {
+			[...row].forEach((cell, column) => {
+				if (cell !== '#') return;
+				const left = x + (letter * 4 + column) * unit;
+				rects.push(`<rect x="${left}" y="${y + line * unit}" width="${unit}" height="${unit}"/>`);
+			});
+		});
+	});
+	return `<g fill="${LABEL.ink}" shape-rendering="crispEdges">${rects.join('')}</g>`;
+}
+
+/** The lettering's size: `unit` px per grid cell. */
+const testSize = (unit: number) => ({ width: TEST_COLUMNS * unit, height: 5 * unit });
+
+/**
+ * A launcher icon with the TEST pill on it: `centre` is the pill's vertical
+ * centre and `height` the lettering's, both as shares of the side. Narrow
+ * enough to stay clear of any launcher's mask (on the maskable icon, inside the
+ * 80% safe circle), and below the face.
+ */
+async function testPill(icon: Buffer, size: number, centre: number, height: number) {
+	const unit = Math.max(1, Math.round((size * height) / 5));
+	const text = testSize(unit);
+	const width = text.width + 6 * unit;
+	const pill = text.height + 4 * unit;
+	const left = Math.round((size - width) / 2);
+	const top = Math.round(size * centre - pill / 2);
+	const svg = `<rect x="${left}" y="${top}" width="${width}" height="${pill}" rx="${pill / 2}" fill="${LABEL.fill}"/>${testLetters(left + 3 * unit, top + 2 * unit, unit)}`;
+	return sharp(icon)
+		.composite([
+			{
+				input: Buffer.from(
+					`<svg xmlns="http://www.w3.org/2000/svg" width="${size}" height="${size}">${svg}</svg>`
+				)
+			}
+		])
+		.png(ICON_PNG)
+		.toBuffer();
+}
+
+/**
+ * The test tab icon: a full-width TEST band along the bottom, and the head
+ * standing on it, smaller, rather than under it, since the face is at the
+ * bottom of the head. `unit` is the letters' cell, 2px at the least to stay letters.
+ */
+async function testFavicon(size: number, unit: number) {
+	const text = testSize(unit);
+	const band = text.height + 2 * unit;
+	const side = size - band;
+	const head = await standing(await foregroundArt(true), side, 0.96);
+	const svg = `<rect x="0" y="${side}" width="${size}" height="${band}" fill="${LABEL.fill}"/>${testLetters(Math.round((size - text.width) / 2), side + unit, unit)}`;
+	return sharp({ create: { width: size, height: size, channels: 4, background: GREEN } })
+		.composite([
+			{ input: head, left: Math.round((size - side) / 2), top: 0 },
+			{
+				input: Buffer.from(
+					`<svg xmlns="http://www.w3.org/2000/svg" width="${size}" height="${size}">${svg}</svg>`
+				)
+			}
+		])
+		.flatten({ background: GREEN })
+		.png(ICON_PNG)
+		.toBuffer();
+}
+
+/**
  * The screen mascots — `artwork/raccoon/<name>.png` — listed in
  * `artwork/raccoon/mascots.json` (→ DECISIONS #220), each with the height to
  * store it at: 3× the tallest it is shown (PageHeader's 88px, Home's 136px,
@@ -254,6 +343,27 @@ async function main() {
 	for (const [name, buffer] of icons) {
 		writeFileSync(join(ICONS_DIR, name), buffer);
 		console.log(`  static/icons/${name}  (${(buffer.length / 1024).toFixed(1)} KB)`);
+	}
+
+	// The test deploy's set: the same icons, labelled (→ DECISIONS #236). The
+	// badge has none: Android draws it as a 24dp silhouette, where no label reads.
+	const byName = new Map(icons);
+	const pill = (name: string, size: number, centre: number, height: number) =>
+		testPill(byName.get(name)!, size, centre, height);
+	const testIcons: Array<[string, Buffer]> = [
+		['icon-192.png', await pill('icon-192.png', 192, 0.8, 0.1)],
+		['icon-512.png', await pill('icon-512.png', 512, 0.8, 0.1)],
+		['icon-192-maskable.png', await pill('icon-192-maskable.png', 192, 0.81, 0.07)],
+		['icon-512-maskable.png', await pill('icon-512-maskable.png', 512, 0.81, 0.07)],
+		['apple-touch-icon.png', await pill('apple-touch-icon.png', 180, 0.8, 0.1)],
+		['favicon-32.png', await testFavicon(32, 2)],
+		['favicon-96.png', await testFavicon(96, 4)]
+	];
+	mkdirSync(TEST_ICONS_DIR, { recursive: true });
+	for (const file of readdirSync(TEST_ICONS_DIR)) rmSync(join(TEST_ICONS_DIR, file));
+	for (const [name, buffer] of testIcons) {
+		writeFileSync(join(TEST_ICONS_DIR, name), buffer);
+		console.log(`  static/icons/test/${name}  (${(buffer.length / 1024).toFixed(1)} KB)`);
 	}
 
 	// Whatever an earlier run left that isn't in the list any more goes, so the
