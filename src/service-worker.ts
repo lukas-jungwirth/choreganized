@@ -22,8 +22,13 @@ const sw = self as unknown as ServiceWorkerGlobalScope;
 /** New build ⇒ new cache ⇒ the old one is deleted on activate. */
 const CACHE = `haushaltsheld-${version}`;
 
-/** Hashed build assets + everything in `static/`. Immutable, so cache-first. */
-const PRECACHE = [...build, ...files];
+/**
+ * Hashed build assets + everything in `static/`. Immutable, so cache-first.
+ * Except the test deploy's icon set (→ $lib/server/stage): only the launcher
+ * and the tab read it, never a page, so precaching it would be dead weight on
+ * every device of the household's deploy.
+ */
+const PRECACHE = [...build, ...files.filter((file) => !file.startsWith(`${base}/icons/test/`))];
 const PRECACHED = new Set(PRECACHE);
 
 /** Android haptics for anything that doesn't ask for its own pattern. */

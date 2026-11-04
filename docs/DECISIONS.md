@@ -3381,3 +3381,21 @@ units | null, name}`, written back as editor lines in the reader's unit spelling
      edge, nothing but green outside the safe circle above the middle, the favicon's top row is
      green. Weighed and dropped: re-cutting the masters so the art sits right on their canvas
      (the next generated icon would need the same hand step).
+236. **The test deploy wears its own name and a TEST-labelled icon** (Lukas 2026-11-04). With
+     the test environment and the household's app both installed on one phone, they looked
+     identical. `APP_STAGE=test`, set on the test environment in Coolify, now gives it the name
+     "Haushaltsheld Test" and the short name **"HH Test"** (a home screen prints about 12
+     characters, so "Haushaltsheld Test" would show as "Haushaltsh…"), and an icon set in
+     `static/icons/test/` that `npm run icons` builds from the live one: a yellow **TEST pill**
+     below the face on the launcher icons (inside the 80% safe circle on the maskable ones),
+     and on the favicons a full-width band with the head standing on it, smaller, since a band
+     over the head would hide the face. The letters are drawn as blocks, not set in a font, so
+     the output doesn't depend on the machine's fonts. Anything but `test`, unset included, is
+     live, so a missing or mistyped variable can only leave the test app looking like the
+     household's, never the reverse. No test badge: Android draws it as a 24dp silhouette,
+     where no label reads. The notification icon stays the live one (the service worker
+     can't know the deploy; Android names the site under each notification anyway). The
+     service worker skips the test set when precaching, so the household's devices don't
+     download it. The name is a brand, not copy, so it isn't in the message catalog.
+     Installed apps read the name and the icon only at install: reinstall the test app once
+     the variable is set.
