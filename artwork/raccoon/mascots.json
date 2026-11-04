@@ -241,7 +241,7 @@
 			"height": 408,
 			"perched": true,
 			"seasons": ["winter"],
-			"body": 0.45,
+			"body": 0.55,
 			"album": 22,
 			"stats": { "cosiness": 4, "mischief": 2, "snacks": 5, "helpfulness": 3 }
 		},

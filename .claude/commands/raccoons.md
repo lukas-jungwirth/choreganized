@@ -42,7 +42,13 @@ pose (only with Lukas's explicit say-so, then `--replace`).
      `phone`) — not taken in `mascots.json`;
    - **everyday or not** (above); for everyday, its **seasons** and **look-alikes** among the
      existing poses (`npm run icons` doesn't show you those — look at
-     `artwork/raccoon/<name>.png` of any you suspect).
+     `artwork/raccoon/<name>.png` of any you suspect);
+   - **which way it looks**: Home sits the raccoon at the card's right edge, so it should look
+     left or straight out, toward the greeting, never off the screen to the right (→ DECISIONS
+     #234). If it looks right, mirror the PNG before step 3
+     (`python3 -c "from PIL import Image, ImageOps; p='<file>'; ImageOps.mirror(Image.open(p)).save(p)"`),
+     unless it carries writing that would read backwards, and say so in step 5. A raccoon looking
+     at its own prop, or with its eyes shut, is fine either way.
 3. **Rename the files in the folder** to `<name>.png` (`mv`), then run
    `npm run raccoons -- <folder>` (`npm run raccoons` alone for `design/new-raccoons/`). If it refuses a file (painted background, art running off the
    canvas, too small, too round to cut), nothing was written: tell Lukas which file and why, in
