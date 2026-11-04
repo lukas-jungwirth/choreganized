@@ -48,7 +48,7 @@ test('a raccoon met on Home lands in the album, once per slot', async ({ browser
 	await page.goto('/home');
 	const toast = page.getByRole('status').filter({ hasText: 'New raccoon!' });
 	await expect(toast).toBeVisible();
-	await expect(toast).toContainText('is in your album · 1 of 39');
+	await expect(toast).toContainText('is in your album · 1 of 44');
 	await toast.getByRole('link', { name: 'View' }).click();
 	await expect(page).toHaveURL(/\/settings\/raccoons\?card=[a-z-]+$/);
 	const card = page.getByRole('dialog', { name: 'Raccoon album' });
@@ -63,24 +63,24 @@ test('a raccoon met on Home lands in the album, once per slot', async ({ browser
 	await expect(page.getByText('New raccoon!')).toHaveCount(0);
 
 	await page.goto('/settings');
-	await expect(page.getByRole('link', { name: /Raccoon album/ })).toContainText('1 of 39');
+	await expect(page.getByRole('link', { name: /Raccoon album/ })).toContainText('1 of 44');
 
 	// Evening: the next slot's raccoon is a second one.
 	moveHousehold(name, 'Asia/Tokyo');
 	await page.goto('/home');
 	await expect(page.getByRole('status').filter({ hasText: 'New raccoon!' })).toContainText(
-		'2 of 39'
+		'2 of 44'
 	);
 
 	await page.goto('/settings/raccoons');
-	await expect(page.getByText('2 of 39 found')).toBeVisible();
+	await expect(page.getByText('2 of 44 found')).toBeVisible();
 	// Met ones are named; the rest stay "not met yet", with no hint.
 	await expect(
 		page.getByRole('button', { name: /^No\. \d{3}, (?!not met yet)[^,]+(, new)?$/ })
 	).toHaveCount(2);
 	// The first was on screen when View opened the album; only the evening one is new.
 	await expect(page.getByRole('button', { name: /, new$/ })).toHaveCount(1);
-	await expect(page.getByRole('button', { name: /not met yet$/ })).toHaveCount(37);
+	await expect(page.getByRole('button', { name: /not met yet$/ })).toHaveCount(42);
 
 	// Missing on top of a tier: the seasonal ones still to find.
 	await page.getByRole('button', { name: /Seasonal/ }).click();

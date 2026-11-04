@@ -113,7 +113,8 @@ pose, first match wins, top to bottom (`lib/utils/raccoon.ts`, by the household'
 - **Your birthday** (if you gave one, → §6): party hat and cupcake. A 29 February birthday
   shows on the 28th in other years.
 - **A special day**: Christmas (24–25 Dec), New Year (31 Dec – 1 Jan), Easter (Sunday and
-  Monday), Halloween (31 Oct), Valentine's Day (14 Feb).
+  Monday), Faschingsdienstag (a pirate with a treasure map, 47 days before Easter Sunday, so it
+  moves with Easter), Halloween (31 Oct), Valentine's Day (14 Feb).
 - **A next-chore card**: the reminder pose on that card — ringing a bell while the chore is
   coming up or due today, holding an alarm clock once it's overdue.
 - **22:00–05:00**: asleep, under a starry blanket.
@@ -152,6 +153,10 @@ pose, first match wins, top to bottom (`lib/utils/raccoon.ts`, by the household'
   | building a snowman          | winter                 |
   | catching a snowflake        | winter                 |
   | carrying ice skates         | winter                 |
+  | nibbling sweets             | all year               |
+  | raiding a bin               | all year               |
+  | chasing a butterfly         | spring, summer         |
+  | sipping iced lemonade       | summer                 |
 
   The day has three slots — from 05:00, 11:00 and 17:00 — and each member draws their own three
   of the season's poses for the day, one per slot ([DECISIONS #232](DECISIONS.md)): at random,
@@ -173,7 +178,7 @@ pose, first match wins, top to bottom (`lib/utils/raccoon.ts`, by the household'
 
   **The raccoon album** (plan 35, [DECISIONS #229](DECISIONS.md), [#231](DECISIONS.md)): the
   first time you meet a raccoon here, a toast in the undo bar's style says so — its thumbnail on
-  its album frame, "New raccoon!", "Frosty Fritz is in your album · 18 of 39" — with **View**,
+  its album frame, "New raccoon!", "Frosty Fritz is in your album · 18 of 44" — with **View**,
   which opens the album at its card (`/settings/raccoons?card=<name>`). It goes by itself after
   six seconds and shows once: Home counts a sighting once per slot (morning, afternoon, evening,
   or the night, dated by its evening), so a reload in the same slot is not new. A pose from admin
@@ -845,12 +850,12 @@ The **History** tab is a stats landing; the full feed sits one level below it (�
 - Profile card: avatar, display name, email + **Edit**. A raccoon with a wrench sits on its top
   edge at the right, the way Home's sits on its first card; the title wraps rather than run
   under it ([DECISIONS #217](DECISIONS.md)).
-- **Raccoon album** (plan 35), a row right under the profile card with "17 of 39": every raccoon
+- **Raccoon album** (plan 35), a row right under the profile card with "17 of 44": every raccoon
   Home can show (exactly `HOME_RACCOONS`: the 30 everyday poses, the 6 special days, sleeping
   and the two reminders; never a tab's, the sign-in head, Settings' or the leaving raccoon), and
   which of them **you** have met. Per member: a housemate's album is their own.
   - `SubHeader` "Raccoon album" / "Every raccoon you've met on Home." A progress card: a ring,
-    "17 of 39 found", "5 seasonal · 4 special days still to find", a plain sage bar.
+    "17 of 44 found", "5 seasonal · 4 special days still to find", a plain sage bar.
   - Filters, sideways at 390px: All · ★ All year · ★★ Seasonal · ★★★ Special days · Missing.
     A tier chip picks one; Missing toggles on top of any of them.
   - A grid of four, tiles 3:4, in album order: a met raccoon on its frame colour with its number
@@ -863,7 +868,7 @@ The **History** tab is a stats landing; the full feed sits one level below it (�
     autumn → winter), holo foil for ★★★; the theme changes only the shade.
   - A tap opens the **card**, centred over the album: "No. 009" and the stars (★★☆) on top, the
     raccoon on a stage in its frame colour, its name and a title, one chip for when you can meet
-    it ("All year", "Dec – Feb", "Dec 24 – 25", "Easter", "Your birthday"), a fun fact, four
+    it ("All year", "Dec – Feb", "Dec 24 – 25", "Easter", "Shrove Tuesday", "Your birthday"), a fun fact, four
     stats as 1–5 dots (Cosiness, Mischief, Snack drive, Helpfulness), and "First met Jun 18" ·
     "Seen 7×". ‹ / › (or a sideways swipe) go to the neighbouring number, met or not; an unmet
     one is the locked card: the number, the silhouette under a big "?", "? ? ? ? ?", "Not met

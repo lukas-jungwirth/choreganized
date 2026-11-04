@@ -5,7 +5,8 @@
  *
  * 1. your birthday — personal beats public;
  * 2. a special day: Christmas (24–25 Dec), New Year (31 Dec – 1 Jan), Easter
- *    (Sunday and Monday), Halloween (31 Oct), Valentine's Day (14 Feb);
+ *    (Sunday and Monday), Faschingsdienstag (47 days before Easter),
+ *    Halloween (31 Oct), Valentine's Day (14 Feb);
  * 3. the next chore on you — a bell while it's coming up, an alarm clock once
  *    it's late;
  * 4. asleep from 22:00 to 05:00, household time;
@@ -35,7 +36,7 @@ type Input = {
 	seed?: string;
 };
 
-/** Fixed special days, `MM-DD`. Easter moves, so it is worked out per year. */
+/** Fixed special days, `MM-DD`. Easter and Fasching move, so they are worked out per year. */
 export const SPECIAL_DAYS: Readonly<Record<string, MascotName>> = {
 	'12-24': 'christmas',
 	'12-25': 'christmas',
@@ -66,6 +67,7 @@ export const HOME_RACCOONS: readonly MascotName[] = [
 	...new Set<MascotName>([
 		...SITUATIONS,
 		...Object.values(SPECIAL_DAYS),
+		'fasching',
 		'easter',
 		...EVERYDAY.map((pose) => pose.name)
 	])
@@ -116,8 +118,18 @@ export function specialDay(today: CalendarDate): MascotName | null {
 
 	const easter = easterSunday(Number(today.slice(0, 4)));
 	if (today === easter || today === addDays(easter, 1)) return 'easter';
+	if (today === faschingsdienstag(easter)) return 'fasching';
 
 	return null;
+}
+
+/**
+ * Faschingsdienstag (Shrove Tuesday), the last day of Fasching: 47 days before
+ * Easter Sunday, the day before Ash Wednesday. Only the Tuesday, the day Austria
+ * dresses up (Lukas 2026-11-04).
+ */
+export function faschingsdienstag(easter: CalendarDate): CalendarDate {
+	return addDays(easter, -47);
 }
 
 export function homeRaccoon({ today, hour, birthday, nextChoreDue, seed = '' }: Input): MascotName {

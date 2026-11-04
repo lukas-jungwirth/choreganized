@@ -100,6 +100,17 @@ describe('specialDay', () => {
 		assert.equal(specialDay('2027-03-29'), 'easter');
 		assert.equal(specialDay('2026-03-29'), null);
 	});
+
+	it('moves Fasching with Easter: Faschingsdienstag only, 47 days before', () => {
+		// 2026: Easter 5 April, so Faschingsdienstag is 17 February.
+		assert.equal(specialDay('2026-02-16'), null);
+		assert.equal(specialDay('2026-02-17'), 'fasching');
+		assert.equal(specialDay('2026-02-18'), null);
+		// 2027: Easter 28 March → 9 February; 2029: Easter 1 April → 13 February.
+		assert.equal(specialDay('2027-02-09'), 'fasching');
+		assert.equal(specialDay('2029-02-13'), 'fasching');
+		assert.equal(specialDay('2027-02-17'), null);
+	});
 });
 
 describe('homeRaccoon', () => {

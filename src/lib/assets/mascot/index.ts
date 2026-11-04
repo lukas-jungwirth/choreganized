@@ -10,12 +10,14 @@ import birthday from './birthday.avif';
 import christmas from './christmas.avif';
 import newYear from './new-year.avif';
 import easter from './easter.avif';
+import fasching from './fasching.avif';
 import halloween from './halloween.avif';
 import valentines from './valentines.avif';
 import sleeping from './sleeping.avif';
 import welcomeA from './welcome-a.avif';
 import beach from './beach.avif';
 import flower from './flower.avif';
+import butterfly from './butterfly.avif';
 import tennis from './tennis.avif';
 import call from './call.avif';
 import snow from './snow.avif';
@@ -28,6 +30,7 @@ import painting from './painting.avif';
 import cold from './cold.avif';
 import handball from './handball.avif';
 import cards from './cards.avif';
+import sweets from './sweets.avif';
 import snowman from './snowman.avif';
 import welcomeB from './welcome-b.avif';
 import singing from './singing.avif';
@@ -35,6 +38,7 @@ import watering from './watering.avif';
 import fishing from './fishing.avif';
 import skiing from './skiing.avif';
 import arcade from './arcade.avif';
+import trash from './trash.avif';
 import tea from './tea.avif';
 import sports from './sports.avif';
 import waterPistol from './water-pistol.avif';
@@ -43,6 +47,7 @@ import knitting from './knitting.avif';
 import phone from './phone.avif';
 import skates from './skates.avif';
 import summerGarden from './summer-garden.avif';
+import lemonade from './lemonade.avif';
 import settings from './settings.avif';
 import moveOut from './move-out.avif';
 
@@ -62,12 +67,14 @@ export const MASCOTS = {
 	christmas: { src: christmas, width: 418, height: 408, body: 0.59 },
 	'new-year': { src: newYear, width: 425, height: 408, body: 0.55 },
 	easter: { src: easter, width: 370, height: 408, body: 0.56 },
+	fasching: { src: fasching, width: 314, height: 408, body: 0.52 },
 	halloween: { src: halloween, width: 388, height: 408, body: 0.53 },
 	valentines: { src: valentines, width: 384, height: 408, body: 0.5 },
 	sleeping: { src: sleeping, width: 426, height: 408, body: 0.56 },
 	'welcome-a': { src: welcomeA, width: 488, height: 408, body: 0.6 },
 	beach: { src: beach, width: 370, height: 408, body: 0.53 },
 	flower: { src: flower, width: 315, height: 408, body: 0.53 },
+	butterfly: { src: butterfly, width: 431, height: 408, body: 0.43 },
 	tennis: { src: tennis, width: 475, height: 408, body: 0.46 },
 	call: { src: call, width: 359, height: 408, body: 0.5 },
 	snow: { src: snow, width: 384, height: 408, body: 0.49 },
@@ -80,6 +87,7 @@ export const MASCOTS = {
 	cold: { src: cold, width: 336, height: 408, body: 0.48 },
 	handball: { src: handball, width: 431, height: 408, body: 0.4 },
 	cards: { src: cards, width: 326, height: 408, body: 0.5 },
+	sweets: { src: sweets, width: 315, height: 408, body: 0.54 },
 	snowman: { src: snowman, width: 341, height: 408, body: 0.45 },
 	'welcome-b': { src: welcomeB, width: 438, height: 408, body: 0.59 },
 	singing: { src: singing, width: 337, height: 408, body: 0.56 },
@@ -87,6 +95,7 @@ export const MASCOTS = {
 	fishing: { src: fishing, width: 395, height: 408, body: 0.49 },
 	skiing: { src: skiing, width: 350, height: 408, body: 0.52 },
 	arcade: { src: arcade, width: 422, height: 408, body: 0.38 },
+	trash: { src: trash, width: 347, height: 408, body: 0.46 },
 	tea: { src: tea, width: 314, height: 408, body: 0.52 },
 	sports: { src: sports, width: 387, height: 408, body: 0.49 },
 	'water-pistol': { src: waterPistol, width: 408, height: 408, body: 0.4 },
@@ -95,6 +104,7 @@ export const MASCOTS = {
 	phone: { src: phone, width: 311, height: 408, body: 0.54 },
 	skates: { src: skates, width: 367, height: 408, body: 0.48 },
 	'summer-garden': { src: summerGarden, width: 359, height: 408, body: 0.57 },
+	lemonade: { src: lemonade, width: 313, height: 408, body: 0.51 },
 	settings: { src: settings, width: 320, height: 360, body: 0.53 },
 	'move-out': { src: moveOut, width: 320, height: 312, body: 0.6 }
 } as const;

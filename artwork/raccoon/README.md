@@ -47,6 +47,7 @@ checks that simulated members meet every pose of every season. The app icons are
 | `christmas.png`           | Home, 24–25 December                                           |
 | `new-year.png`            | Home, 31 December – 1 January                                  |
 | `easter.png`              | Home, Easter Sunday and Monday                                 |
+| `fasching.png`            | Home, Faschingsdienstag (47 days before Easter)                |
 | `halloween.png`           | Home, 31 October                                               |
 | `valentines.png`          | Home, 14 February                                              |
 | `sleeping.png`            | Home, 22:00–05:00 on an ordinary day without a chore on you    |
@@ -78,6 +79,10 @@ checks that simulated members meet every pose of every season. The app icons are
 | `snowman.png`             | Home, everyday, winter                                         |
 | `snowflake.png`           | Home, everyday, winter                                         |
 | `skates.png`              | Home, everyday, winter                                         |
+| `sweets.png`              | Home, everyday, all year                                       |
+| `trash.png`               | Home, everyday, all year                                       |
+| `butterfly.png`           | Home, everyday, spring, summer                                 |
+| `lemonade.png`            | Home, everyday, summer                                         |
 | `settings.png`            | Settings, on the profile card                                  |
 | `move-out.png`            | Settings, on the sign-out / leave group                        |
 

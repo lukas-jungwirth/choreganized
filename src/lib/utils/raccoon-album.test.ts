@@ -8,6 +8,7 @@ import { describe, it } from 'vitest';
 import { formatDayRange, formatMonthSpan } from './dates.ts';
 import {
 	ALBUM_ENTRIES,
+	ALBUM_SIZE,
 	albumEntry,
 	albumNumber,
 	filterAlbum,
@@ -33,6 +34,7 @@ describe('tier', () => {
 			'christmas',
 			'new-year',
 			'easter',
+			'fasching',
 			'halloween',
 			'valentines',
 			'birthday'
@@ -85,6 +87,7 @@ describe('window', () => {
 
 	it('says Easter and your birthday rather than a date', () => {
 		assert.equal(albumEntry('easter').window.kind, 'easter');
+		assert.equal(albumEntry('fasching').window.kind, 'fasching');
 		assert.equal(albumEntry('birthday').window.kind, 'birthday');
 		assert.equal(albumEntry('sleeping').window.kind, 'all-year');
 	});
@@ -148,8 +151,14 @@ describe('filterAlbum', () => {
 	});
 
 	it('shows everything unfiltered, and everything unmet with Missing alone', () => {
-		assert.equal(filterAlbum(ALBUM_ENTRIES, met, { tier: null, missing: false }).length, 39);
-		assert.equal(filterAlbum(ALBUM_ENTRIES, met, { tier: null, missing: true }).length, 37);
+		assert.equal(
+			filterAlbum(ALBUM_ENTRIES, met, { tier: null, missing: false }).length,
+			ALBUM_SIZE
+		);
+		assert.equal(
+			filterAlbum(ALBUM_ENTRIES, met, { tier: null, missing: true }).length,
+			ALBUM_SIZE - met.size
+		);
 	});
 });
 

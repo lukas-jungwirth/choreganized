@@ -51,6 +51,8 @@
 				return m.date.dayRange(window.from, window.to);
 			case 'easter':
 				return m.album.window.easter;
+			case 'fasching':
+				return m.album.window.fasching;
 			case 'birthday':
 				return m.album.window.birthday;
 		}

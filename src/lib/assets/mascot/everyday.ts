@@ -12,6 +12,7 @@ export const EVERYDAY: ReadonlyArray<{
 	{ name: 'welcome-a', seasons: ['winter', 'spring', 'summer', 'autumn'], lookAlike: 'greeting' },
 	{ name: 'beach', seasons: ['summer'], lookAlike: null },
 	{ name: 'flower', seasons: ['spring', 'summer'], lookAlike: null },
+	{ name: 'butterfly', seasons: ['spring', 'summer'], lookAlike: null },
 	{ name: 'tennis', seasons: ['spring', 'summer', 'autumn'], lookAlike: 'ball-sport' },
 	{ name: 'call', seasons: ['winter', 'spring', 'summer', 'autumn'], lookAlike: 'talking' },
 	{ name: 'snow', seasons: ['winter'], lookAlike: 'snow-gear' },
@@ -24,6 +25,7 @@ export const EVERYDAY: ReadonlyArray<{
 	{ name: 'cold', seasons: ['winter'], lookAlike: 'hot-drink' },
 	{ name: 'handball', seasons: ['autumn', 'winter', 'spring'], lookAlike: 'ball-sport' },
 	{ name: 'cards', seasons: ['winter', 'spring', 'summer', 'autumn'], lookAlike: null },
+	{ name: 'sweets', seasons: ['winter', 'spring', 'summer', 'autumn'], lookAlike: null },
 	{ name: 'snowman', seasons: ['winter'], lookAlike: null },
 	{ name: 'welcome-b', seasons: ['winter', 'spring', 'summer', 'autumn'], lookAlike: 'greeting' },
 	{ name: 'singing', seasons: ['winter', 'spring', 'summer', 'autumn'], lookAlike: 'talking' },
@@ -31,6 +33,7 @@ export const EVERYDAY: ReadonlyArray<{
 	{ name: 'fishing', seasons: ['spring', 'summer', 'autumn'], lookAlike: null },
 	{ name: 'skiing', seasons: ['winter'], lookAlike: null },
 	{ name: 'arcade', seasons: ['winter', 'spring', 'summer', 'autumn'], lookAlike: null },
+	{ name: 'trash', seasons: ['winter', 'spring', 'summer', 'autumn'], lookAlike: null },
 	{ name: 'tea', seasons: ['autumn', 'winter'], lookAlike: 'hot-drink' },
 	{ name: 'sports', seasons: ['winter', 'spring', 'summer', 'autumn'], lookAlike: null },
 	{ name: 'water-pistol', seasons: ['summer'], lookAlike: null },
@@ -38,7 +41,8 @@ export const EVERYDAY: ReadonlyArray<{
 	{ name: 'knitting', seasons: ['autumn', 'winter'], lookAlike: 'snow-gear' },
 	{ name: 'phone', seasons: ['winter', 'spring', 'summer', 'autumn'], lookAlike: null },
 	{ name: 'skates', seasons: ['winter'], lookAlike: null },
-	{ name: 'summer-garden', seasons: ['summer'], lookAlike: 'gardening' }
+	{ name: 'summer-garden', seasons: ['summer'], lookAlike: 'gardening' },
+	{ name: 'lemonade', seasons: ['summer'], lookAlike: null }
 ];
 
 /** The raccoons that sit on a card's top edge, so must be cut flat at the waist. */
@@ -49,12 +53,14 @@ export const PERCHED: readonly MascotName[] = [
 	'christmas',
 	'new-year',
 	'easter',
+	'fasching',
 	'halloween',
 	'valentines',
 	'sleeping',
 	'welcome-a',
 	'beach',
 	'flower',
+	'butterfly',
 	'tennis',
 	'call',
 	'snow',
@@ -67,6 +73,7 @@ export const PERCHED: readonly MascotName[] = [
 	'cold',
 	'handball',
 	'cards',
+	'sweets',
 	'snowman',
 	'welcome-b',
 	'singing',
@@ -74,6 +81,7 @@ export const PERCHED: readonly MascotName[] = [
 	'fishing',
 	'skiing',
 	'arcade',
+	'trash',
 	'tea',
 	'sports',
 	'water-pistol',
@@ -82,6 +90,7 @@ export const PERCHED: readonly MascotName[] = [
 	'phone',
 	'skates',
 	'summer-garden',
+	'lemonade',
 	'settings',
 	'move-out'
 ];
