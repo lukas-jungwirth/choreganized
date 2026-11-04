@@ -30,6 +30,7 @@ import {
 	type Member
 } from '../db/schema';
 import type { HouseholdMember } from './household';
+import { isFirstVisit } from './raccoons';
 import {
 	assigneeNotAway,
 	isAway,
@@ -136,6 +137,7 @@ export function getHomeSummary(householdId: string, context: HomeContext): HomeS
 	// evening" and the sleeping pose can't straddle 22:00 and disagree.
 	const hour = hourIn(timezone);
 	const next = nextChore(householdId, member, today);
+	const slot = homeSlot(today, hour);
 
 	return {
 		greeting: greetingFor(hour),
@@ -144,9 +146,10 @@ export function getHomeSummary(householdId: string, context: HomeContext): HomeS
 			hour,
 			birthday: member.birthday,
 			nextChoreDue: next?.dueDate ?? null,
-			seed: member.id
+			seed: member.id,
+			firstVisit: isFirstVisit(householdId, member.id, slot)
 		}),
-		slot: homeSlot(today, hour),
+		slot,
 		nextChore: next,
 		dinner: tonightsDinner(householdId, today),
 		shoppingCount: countUnchecked(householdId),

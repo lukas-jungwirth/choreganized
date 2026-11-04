@@ -115,6 +115,9 @@ pose, first match wins, top to bottom (`lib/utils/raccoon.ts`, by the household'
 - **A special day**: Christmas (24–25 Dec), New Year (31 Dec – 1 Jan), Easter (Sunday and
   Monday), Faschingsdienstag (a pirate with a treasure map, 47 days before Easter Sunday, so it
   moves with Easter), Halloween (31 Oct), Valentine's Day (14 Feb).
+- **Your first visit** ([DECISIONS #238](DECISIONS.md)): the waving welcome raccoon, for the
+  rest of the slot you first opened Home in (so a reload doesn't swap it), then the draw. Per
+  member: a housemate who joins later is welcomed too.
 - **A next-chore card**: the reminder pose on that card — ringing a bell while the chore is
   coming up or due today, holding an alarm clock once it's overdue.
 - **22:00–05:00**: asleep, under a starry blanket.

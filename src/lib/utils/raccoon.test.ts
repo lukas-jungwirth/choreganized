@@ -17,7 +17,8 @@ import {
 	HOME_RACCOONS,
 	homeRaccoon,
 	isHomeRaccoon,
-	specialDay
+	specialDay,
+	WELCOME_RACCOON
 } from './raccoon.ts';
 
 /** An ordinary afternoon with nothing on: the baseline every case varies. */
@@ -147,6 +148,15 @@ describe('homeRaccoon', () => {
 		assert.equal(homeRaccoon({ ...christmasEve, nextChoreDue: '2036-12-20' }), 'christmas');
 		assert.equal(homeRaccoon({ ...christmasEve, hour: 23 }), 'christmas');
 		assert.equal(homeRaccoon({ ...plain, today: '2036-10-31', hour: 22 }), 'halloween');
+	});
+
+	it('waves at a first visit, over a chore and bedtime, under a birthday and a special day', () => {
+		const first = { ...plain, firstVisit: true };
+		assert.equal(homeRaccoon(first), WELCOME_RACCOON);
+		assert.equal(homeRaccoon({ ...first, nextChoreDue: '2036-06-10' }), WELCOME_RACCOON);
+		assert.equal(homeRaccoon({ ...first, hour: 23 }), WELCOME_RACCOON);
+		assert.equal(homeRaccoon({ ...first, birthday: '06-18' }), 'birthday');
+		assert.equal(homeRaccoon({ ...first, today: '2036-12-24' }), 'christmas');
 	});
 
 	it('puts your birthday above everything, Christmas included', () => {

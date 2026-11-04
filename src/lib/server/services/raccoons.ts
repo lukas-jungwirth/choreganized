@@ -8,6 +8,7 @@
  */
 import { and, count, eq, inArray, isNull } from 'drizzle-orm';
 import type { CalendarDate } from '$lib/utils/dates';
+import { WELCOME_RACCOON } from '$lib/utils/raccoon';
 import { ALBUM_ENTRIES, ALBUM_SIZE, isAlbumName } from '$lib/utils/raccoon-album';
 import { db } from '../db';
 import { raccoonSightings, type RaccoonSighting } from '../db/schema';
@@ -88,6 +89,26 @@ export function listSightings(householdId: string, memberId: string): RaccoonSig
 			)
 		)
 		.all();
+}
+
+/**
+ * Is this the member's first visit to Home (→ DECISIONS #238)? True while they
+ * have met no raccoon at all, and for the rest of the slot in which the only one
+ * they have met is the welcome raccoon, so a reload right after the first
+ * look doesn't swap the greeting for the day's draw. From the next slot on,
+ * Home draws as usual.
+ */
+export function isFirstVisit(householdId: string, memberId: string, slot: string): boolean {
+	const met = db
+		.select({ raccoon: raccoonSightings.raccoon, lastSlot: raccoonSightings.lastSlot })
+		.from(raccoonSightings)
+		.where(
+			and(eq(raccoonSightings.householdId, householdId), eq(raccoonSightings.memberId, memberId))
+		)
+		.limit(2)
+		.all();
+	if (met.length === 0) return true;
+	return met.length === 1 && met[0].raccoon === WELCOME_RACCOON && met[0].lastSlot === slot;
 }
 
 /** How many they have met — the Settings row's "17 of 39". */
