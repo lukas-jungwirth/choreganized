@@ -24,7 +24,11 @@ Every screen raccoon, one entry each, read by `npm run icons`:
   between the two overall buttons, and Home places the raccoon by it. Give it by hand only for a
   pose whose buttons are hidden (the script says so);
 - `lookAlike` — a group name for everyday poses that look nearly the same (`greeting`,
-  `gardening`, `hot-drink`, `ball-sport`, `talking`, `snow-gear`): a member's day never draws two of a group.
+  `gardening`, `hot-drink`, `ball-sport`, `talking`, `snow-gear`): a member's day never draws two of a group;
+- `days` / `slots` — keep an everyday pose to some weekdays (`mon`–`sun`) or some of Home's slots
+  (`morning` 05–11, `afternoon` 11–17, `evening` 17–22); left out, it's every day and every
+  slot. It's still drawn, just only then (coffee: `["morning"]`, laptop: Mon–Fri). The album
+  works out its rarity from it (→ DECISIONS #237).
 
 The everyday poses' order doesn't matter to Home: each member draws three of the season's poses
 a day, seeded by member and date (→ DECISIONS #232). `src/lib/utils/raccoon.test.ts` walks two
@@ -78,6 +82,12 @@ checks that simulated members meet every pose of every season. The app icons are
 | `knitting.png`            | Home, everyday, autumn, winter                                 |
 | `snowman.png`             | Home, everyday, winter                                         |
 | `snowflake.png`           | Home, everyday, winter                                         |
+| `coffee.png`              | Home, everyday, all year, mornings only                        |
+| `laptop.png`              | Home, everyday, all year, Mon–Fri only                         |
+| `fruit.png`               | Home, everyday, all year                                       |
+| `juggling.png`            | Home, everyday, all year                                       |
+| `bath.png`                | Home, everyday, all year                                       |
+| `mushrooms.png`           | Home, everyday, autumn                                         |
 | `skates.png`              | Home, everyday, winter                                         |
 | `sweets.png`              | Home, everyday, all year                                       |
 | `trash.png`               | Home, everyday, all year                                       |

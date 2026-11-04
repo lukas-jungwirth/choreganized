@@ -1,6 +1,6 @@
 /**
  * `npm test` — what the raccoon album works out from each pose (→ plan 35):
- * its tier, when you can meet it, its frame, and the order a blend of seasons
+ * its rarity, when you can meet it, its frame, and the order a blend of seasons
  * runs in. Nothing here is typed in per raccoon, so these are the rules.
  */
 import assert from 'node:assert/strict';
@@ -14,22 +14,29 @@ import {
 	filterAlbum,
 	frameFill,
 	frameInk,
-	seasonRun
+	seasonRun,
+	tierOf
 } from './raccoon-album.ts';
 import { homeSlot } from './raccoon.ts';
 
 describe('tier', () => {
-	it('is ★ for every season, sleeping and the reminders', () => {
-		for (const name of ['reading', 'sleeping', 'reminder-upcoming', 'reminder-overdue'] as const)
+	it('is Common for 40% of the year or more: every season, the laptop, the reminders', () => {
+		for (const name of [
+			'reading',
+			'garden',
+			'laptop',
+			'reminder-upcoming',
+			'reminder-overdue'
+		] as const)
 			assert.equal(albumEntry(name).tier, 1, name);
 	});
 
-	it('is ★★ for one to three seasons', () => {
-		for (const name of ['snowman', 'tea', 'garden'] as const)
-			assert.equal(albumEntry(name).tier, 2);
+	it('is Rare in between: a season or two, coffee in the mornings, sleeping at night', () => {
+		for (const name of ['snowman', 'tea', 'mushrooms', 'coffee', 'sleeping'] as const)
+			assert.equal(albumEntry(name).tier, 2, name);
 	});
 
-	it('is ★★★ for the special days and your birthday', () => {
+	it('is Legendary under 3%: the special days and your birthday', () => {
 		for (const name of [
 			'christmas',
 			'new-year',
@@ -40,6 +47,59 @@ describe('tier', () => {
 			'birthday'
 		] as const)
 			assert.equal(albumEntry(name).tier, 3, name);
+	});
+
+	it('works out the share from the months, the weekdays and the hours', () => {
+		const close = (actual: number, expected: number) =>
+			assert.ok(Math.abs(actual - expected) < 1e-9, `${actual} ≠ ${expected}`);
+		// Awake 17 hours a day: 05:00 to 22:00.
+		close(albumEntry('reading').availability, 17 / 24);
+		close(albumEntry('snowman').availability, (1 / 4) * (17 / 24));
+		close(albumEntry('laptop').availability, (5 / 7) * (17 / 24));
+		close(albumEntry('coffee').availability, 6 / 24);
+		close(albumEntry('sleeping').availability, 7 / 24);
+		close(albumEntry('christmas').availability, 2 / 365);
+		close(albumEntry('reminder-overdue').availability, 1);
+	});
+
+	it('draws the lines at 40% and 3%', () => {
+		assert.equal(tierOf(0.4), 1);
+		assert.equal(tierOf(0.399), 2);
+		assert.equal(tierOf(0.03), 2);
+		assert.equal(tierOf(0.029), 3);
+	});
+});
+
+describe('rule', () => {
+	it('carries the days and slots a pose keeps to, and the night for sleeping', () => {
+		assert.deepEqual(albumEntry('coffee').rule, { days: null, slots: ['morning'] });
+		assert.deepEqual(albumEntry('laptop').rule, {
+			days: ['mon', 'tue', 'wed', 'thu', 'fri'],
+			slots: null
+		});
+		assert.deepEqual(albumEntry('sleeping').rule, { days: null, slots: ['night'] });
+		assert.equal(albumEntry('reading').rule, null);
+		assert.equal(albumEntry('christmas').rule, null);
+	});
+
+	it('reads as days and times of day in both languages', async () => {
+		const { en } = await import('$lib/i18n/messages/en');
+		const { de } = await import('$lib/i18n/messages/de');
+		const workdays = ['mon', 'tue', 'wed', 'thu', 'fri'] as const;
+		assert.equal(en.album.rule(workdays, null), 'Mon – Fri');
+		assert.equal(de.album.rule(workdays, null), 'Mo – Fr');
+		assert.equal(en.album.rule(['sat', 'sun'], null), 'Weekends');
+		assert.equal(de.album.rule(['sat', 'sun'], null), 'Am Wochenende');
+		assert.equal(en.album.rule(['fri'], null), 'Fridays');
+		assert.equal(de.album.rule(['fri'], null), 'Freitags');
+		assert.equal(en.album.rule(['mon', 'wed'], null), 'Mon and Wed');
+		assert.equal(en.album.rule(null, ['morning']), 'Mornings');
+		assert.equal(de.album.rule(null, ['night']), 'Nachts');
+		assert.equal(
+			en.album.rule(workdays, ['morning', 'evening']),
+			'Mon – Fri, mornings and evenings'
+		);
+		assert.equal(de.album.rule(['fri'], ['evening']), 'Freitags, abends');
 	});
 });
 
@@ -130,35 +190,17 @@ describe('numbering', () => {
 		assert.equal(albumNumber(9), '009');
 		assert.equal(albumNumber(39), '039');
 	});
-
-	it('puts ★ first, then ★★, then ★★★', () => {
-		const tiers = ALBUM_ENTRIES.map((entry) => entry.tier);
-		assert.deepEqual(tiers, [...tiers].sort());
-	});
 });
 
 describe('filterAlbum', () => {
-	const met = new Set(['reading', 'snowman']);
-
-	it('picks one tier, and Missing on top of it', () => {
-		const seasonal = filterAlbum(ALBUM_ENTRIES, met, { tier: 2, missing: false });
-		assert.ok(seasonal.every((entry) => entry.tier === 2));
-		assert.ok(seasonal.some((entry) => entry.name === 'snowman'));
-
-		const missing = filterAlbum(ALBUM_ENTRIES, met, { tier: 2, missing: true });
-		assert.equal(missing.length, seasonal.length - 1);
-		assert.ok(!missing.some((entry) => entry.name === 'snowman'));
+	it('picks one rarity', () => {
+		const rare = filterAlbum(ALBUM_ENTRIES, 2);
+		assert.ok(rare.length > 0 && rare.every((entry) => entry.tier === 2));
+		assert.ok(rare.some((entry) => entry.name === 'snowman'));
 	});
 
-	it('shows everything unfiltered, and everything unmet with Missing alone', () => {
-		assert.equal(
-			filterAlbum(ALBUM_ENTRIES, met, { tier: null, missing: false }).length,
-			ALBUM_SIZE
-		);
-		assert.equal(
-			filterAlbum(ALBUM_ENTRIES, met, { tier: null, missing: true }).length,
-			ALBUM_SIZE - met.size
-		);
+	it('shows everything unfiltered', () => {
+		assert.equal(filterAlbum(ALBUM_ENTRIES, null).length, ALBUM_SIZE);
 	});
 });
 

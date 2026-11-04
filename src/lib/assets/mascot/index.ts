@@ -48,6 +48,12 @@ import phone from './phone.avif';
 import skates from './skates.avif';
 import summerGarden from './summer-garden.avif';
 import lemonade from './lemonade.avif';
+import coffee from './coffee.avif';
+import laptop from './laptop.avif';
+import fruit from './fruit.avif';
+import juggling from './juggling.avif';
+import bath from './bath.avif';
+import mushrooms from './mushrooms.avif';
 import settings from './settings.avif';
 import moveOut from './move-out.avif';
 
@@ -105,6 +111,12 @@ export const MASCOTS = {
 	skates: { src: skates, width: 367, height: 408, body: 0.48 },
 	'summer-garden': { src: summerGarden, width: 359, height: 408, body: 0.57 },
 	lemonade: { src: lemonade, width: 313, height: 408, body: 0.51 },
+	coffee: { src: coffee, width: 313, height: 408, body: 0.5 },
+	laptop: { src: laptop, width: 396, height: 408, body: 0.52 },
+	fruit: { src: fruit, width: 288, height: 408, body: 0.51 },
+	juggling: { src: juggling, width: 362, height: 408, body: 0.5 },
+	bath: { src: bath, width: 389, height: 408, body: 0.52 },
+	mushrooms: { src: mushrooms, width: 311, height: 408, body: 0.52 },
 	settings: { src: settings, width: 320, height: 360, body: 0.53 },
 	'move-out': { src: moveOut, width: 320, height: 312, body: 0.6 }
 } as const;

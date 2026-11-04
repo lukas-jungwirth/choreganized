@@ -191,6 +191,33 @@ export function formatWeekdayLong(date: CalendarDate, locale: Locale): string {
 	}).format(atUtcMidnight(date));
 }
 
+/**
+ * Some days of the week, said the short way, for the raccoon album's chip
+ * (→ DECISIONS #237): a run of three or more as "Mon – Fri" / "Mo – Fr",
+ * Saturday and Sunday as the weekend, one day as every one of it ("Fridays",
+ * "Freitags"), anything else as a list ("Mon and Wed"). The two phrases are
+ * each language's own words, so the catalog passes them in. Days are
+ * `mon`–`sun`, as `mascots.json` names them; 2001-01-01 was a Monday.
+ */
+export function formatWeekdays(
+	days: readonly string[],
+	locale: Locale,
+	words: { weekend: string; every: (longName: string) => string }
+): string {
+	const at = days.map((day) => WEEK.indexOf(day)).sort((a, b) => a - b);
+	const date = (index: number) => `2001-01-0${index + 1}`;
+	const short = (index: number) => formatWeekday(date(index), locale).replace('.', '');
+	if (at.length === 2 && at[0] === 5 && at[1] === 6) return words.weekend;
+	if (at.length === 1) return words.every(formatWeekdayLong(date(at[0]), locale));
+	const run = at.every((index, step) => step === 0 || index === at[step - 1] + 1);
+	if (run && at.length >= 3) return `${short(at[0])} – ${short(at[at.length - 1])}`;
+	return new Intl.ListFormat(INTL_LOCALE[locale], { style: 'long', type: 'conjunction' }).format(
+		at.map(short)
+	);
+}
+
+const WEEK = ['mon', 'tue', 'wed', 'thu', 'fri', 'sat', 'sun'];
+
 /** The day of the month without its leading zero — "14", the strip's number [04]. */
 export function dayOfMonth(date: CalendarDate): string {
 	return String(Number(date.slice(8)));

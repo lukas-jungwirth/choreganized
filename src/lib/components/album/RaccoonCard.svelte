@@ -1,7 +1,8 @@
 <!--
 	A raccoon's trading card (→ plan 35, the sketch's frames 2–4). Met: the
 	number and the stars on top, the raccoon on a stage in its frame colour, its
-	name and title, one chip saying when you can meet it, a fun fact, four fun
+	name and title, one chip saying when you can meet it (the season or the days,
+	then its rule: "All year · Mon – Fri"), a fun fact, four fun
 	stats, and when you first met it and how often. Locked: the same frame shape
 	in `--sunken-2`, the silhouette under one big "?", and nothing that would
 	give it away.
@@ -58,6 +59,13 @@
 		}
 	}
 
+	/** "All year", or "All year · Mornings" when it keeps to some days or hours. */
+	const chip = $derived(
+		entry.rule
+			? `${windowLabel(entry.window)} · ${m.album.rule(entry.rule.days, entry.rule.slots)}`
+			: windowLabel(entry.window)
+	);
+
 	const season = $derived<Season | null>(
 		entry.window.kind === 'months' ? entry.window.season : null
 	);
@@ -92,7 +100,7 @@
 			<p class="window">
 				<span class="chip">
 					{#if SeasonIcon}<SeasonIcon size={13} strokeWidth={2.4} aria-hidden="true" />{/if}
-					{windowLabel(entry.window)}
+					{chip}
 				</span>
 			</p>
 

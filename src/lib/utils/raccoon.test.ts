@@ -7,11 +7,13 @@
 import assert from 'node:assert/strict';
 import { describe, it } from 'vitest';
 import { birthdayFrom, isBirthday, isBirthdayOn } from './birthday.ts';
-import { addDays } from './dates.ts';
+import { addDays, weekdayIndex } from './dates.ts';
 import type { MascotName } from '$lib/assets/mascot';
-import { EVERYDAY } from '$lib/assets/mascot/everyday';
+import { EVERYDAY, type DaySlot } from '$lib/assets/mascot/everyday';
 import {
+	DAY_SLOTS,
 	everydayRaccoon,
+	WEEKDAYS,
 	HOME_RACCOONS,
 	homeRaccoon,
 	isHomeRaccoon,
@@ -159,9 +161,16 @@ describe('homeRaccoon', () => {
 	});
 });
 
-/** What mascots.json says a season's poses are — what the draw may show, no more, no less. */
-const listedFor = (season: string) =>
-	EVERYDAY.filter((pose) => (pose.seasons as readonly string[]).includes(season))
+/**
+ * What mascots.json says a season's poses are — what the draw may show, no more,
+ * no less — or only those allowed in one slot (coffee is never an evening's).
+ */
+const listedFor = (season: string, slot?: DaySlot) =>
+	EVERYDAY.filter(
+		(pose) =>
+			(pose.seasons as readonly string[]).includes(season) &&
+			(!slot || !pose.slots || pose.slots.includes(slot))
+	)
 		.map((pose) => pose.name as string)
 		.sort();
 
@@ -204,9 +213,18 @@ describe('everydayRaccoon', () => {
 	it('meets every pose of a season within it, for anyone looking in every slot', () => {
 		// No hard guarantee by design (→ DECISIONS #232), but three a day for a
 		// season must be plenty: a draw that leaves gaps here is a broken draw.
+		// A pose with a time rule is rarer on purpose (one slot of three, or some
+		// days), so it is held to a year instead, in the next test.
+		const ruled = new Set<string>(
+			EVERYDAY.filter((pose) => pose.days || pose.slots).map((pose) => pose.name)
+		);
 		for (const season of ['winter', 'spring', 'summer', 'autumn'] as const) {
 			for (const seed of MEMBERS) {
-				assert.deepEqual(metIn(season, seed), listedFor(season), `${season}, ${seed}`);
+				assert.deepEqual(
+					metIn(season, seed).filter((name) => !ruled.has(name)),
+					listedFor(season).filter((name) => !ruled.has(name)),
+					`${season}, ${seed}`
+				);
 			}
 		}
 	});
@@ -215,11 +233,36 @@ describe('everydayRaccoon', () => {
 		// The fixed rotation's trap: an evening-only visitor saw a third of summer.
 		for (const season of ['winter', 'spring', 'summer', 'autumn'] as const) {
 			const shares = MEMBERS.map(
-				(seed) => metIn(season, seed, [20]).length / listedFor(season).length
+				(seed) => metIn(season, seed, [20]).length / listedFor(season, 'evening').length
 			);
 			const mean = shares.reduce((sum, share) => sum + share, 0) / shares.length;
 			assert.ok(mean > 0.95, `${season}: an evening-only visitor meets ${mean.toFixed(2)}`);
 			assert.ok(Math.min(...shares) > 0.75, `${season}: worst ${Math.min(...shares).toFixed(2)}`);
+		}
+	});
+
+	it('keeps a pose to its days and slots, and still meets it there', () => {
+		// The rules come from mascots.json (coffee mornings, the laptop on
+		// workdays, → DECISIONS #237), so a rule added there is held to this too.
+		const ruled = EVERYDAY.filter((pose) => pose.days || pose.slots);
+		assert.ok(ruled.length > 0, 'some pose has a time rule');
+		for (const seed of MEMBERS) {
+			const met = new Set<string>();
+			let date = '2036-01-01';
+			for (let day = 0; day < 366; day++, date = addDays(date, 1)) {
+				const weekday = WEEKDAYS[weekdayIndex(date)];
+				[8, 14, 20].forEach((hour, slot) => {
+					const name = everydayRaccoon(date, hour, seed);
+					const pose = ruled.find((each) => each.name === name);
+					if (!pose) return;
+					met.add(name);
+					const at = `${name} on ${weekday} ${date} at ${hour}:00`;
+					assert.ok(!pose.days || pose.days.includes(weekday), at);
+					assert.ok(!pose.slots || pose.slots.includes(DAY_SLOTS[slot]), at);
+				});
+			}
+			// Within a year, everyone looking in every slot meets each of them.
+			assert.deepEqual([...met].sort(), ruled.map((pose) => pose.name as string).sort(), seed);
 		}
 	});
 

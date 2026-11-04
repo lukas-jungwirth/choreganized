@@ -37,9 +37,8 @@
 		ALBUM_ENTRIES.filter((entry) => entry.tier === tier && !met.has(entry.name)).length;
 
 	let tier = $state<Tier | null>(null);
-	let missing = $state(false);
 
-	const shown = $derived(filterAlbum(ALBUM_ENTRIES, met, { tier, missing }));
+	const shown = $derived(filterAlbum(ALBUM_ENTRIES, tier));
 
 	const TIERS: Tier[] = [1, 2, 3];
 
@@ -82,7 +81,7 @@
 	backLabel={m.album.back}
 />
 
-<AlbumProgress found={met.size} total={ALBUM_SIZE} seasonal={missingOf(2)} special={missingOf(3)} />
+<AlbumProgress found={met.size} total={ALBUM_SIZE} rare={missingOf(2)} legendary={missingOf(3)} />
 
 <div class="filters" role="group" aria-label={m.album.filters.label}>
 	<Chip selected={tier === null} onclick={() => (tier = null)}>{m.album.filters.all}</Chip>
@@ -92,7 +91,6 @@
 			{m.album.tiers[each]}
 		</Chip>
 	{/each}
-	<Chip selected={missing} onclick={() => (missing = !missing)}>{m.album.filters.missing}</Chip>
 </div>
 
 {#if shown.length > 0}
@@ -125,8 +123,9 @@
 {/if}
 
 <style>
-	/* Sideways at 390px: five chips don't fit a phone's width, and wrapping
-	   would push the grid down for a control you set once. */
+	/* Sideways at 390px: the four chips run just past a phone's width (more so
+	   at 200% text), and wrapping would push the grid down for a control you
+	   set once. */
 	.filters {
 		display: flex;
 		gap: 8px;

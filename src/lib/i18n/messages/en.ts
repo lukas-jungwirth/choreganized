@@ -31,10 +31,12 @@ import {
 	formatWeekday,
 	formatWeekdayLong,
 	formatWeekdayShort,
+	formatWeekdays,
 	needsYear,
 	type CalendarDate
 } from '$lib/utils/dates';
 import type { AlbumName } from '$lib/assets/mascot/album';
+import type { DaySlot, Weekday } from '$lib/assets/mascot/everyday';
 import { INTL_LOCALE } from '$lib/i18n/locale';
 import type { RepeatUnit } from '$lib/utils/expenses';
 import type { HolidayKey } from '$lib/utils/holidays';
@@ -2526,11 +2528,11 @@ export const en = {
 		/** The Settings row's value and the progress card: "17 of 39". */
 		count: (found: number, total: number) => `${found} of ${total}`,
 		found: (found: number, total: number) => `${found} of ${total} found`,
-		/** Under it: what is still out there, by tier. Empty once there's nothing. */
-		missing: (seasonal: number, special: number) => {
+		/** Under it: the rare and legendary ones still out there. Empty once there are none. */
+		missing: (rare: number, legendary: number) => {
 			const parts = [
-				seasonal > 0 ? `${seasonal} seasonal` : null,
-				special > 0 ? `${special} ${special === 1 ? 'special day' : 'special days'}` : null
+				rare > 0 ? `${rare} rare` : null,
+				legendary > 0 ? `${legendary} legendary` : null
 			].filter((part) => part !== null);
 			return parts.length > 0 ? `${parts.join(' · ')} still to find` : null;
 		},
@@ -2538,11 +2540,10 @@ export const en = {
 		progress: (found: number, total: number) => `${found} of ${total} raccoons found`,
 		filters: {
 			label: 'Show',
-			all: 'All',
-			missing: 'Missing'
+			all: 'All'
 		},
-		/** The three tiers, by their stars. */
-		tiers: { 1: 'All year', 2: 'Seasonal', 3: 'Special days' } as Record<1 | 2 | 3, string>,
+		/** The three rarities, by their stars (→ `utils/raccoon-album` `tierOf`). */
+		tiers: { 1: 'Common', 2: 'Rare', 3: 'Legendary' } as Record<1 | 2 | 3, string>,
 		stars: (stars: number) => (stars === 1 ? '1 star' : `${stars} stars`),
 		/** "No. 009". */
 		number: (number: string) => `No. ${number}`,
@@ -2559,6 +2560,24 @@ export const en = {
 			easter: 'Easter',
 			fasching: 'Shrove Tuesday',
 			birthday: 'Your birthday'
+		},
+		/**
+		 * After the window, when a raccoon keeps to some days or hours: "Mon – Fri",
+		 * "Weekends", "Fridays", "Mornings", "Mon – Fri, mornings".
+		 */
+		rule: (days: readonly Weekday[] | null, slots: readonly (DaySlot | 'night')[] | null) => {
+			const SLOTS = {
+				morning: 'mornings',
+				afternoon: 'afternoons',
+				evening: 'evenings',
+				night: 'nights'
+			};
+			const when = slots ? list(slots.map((slot) => SLOTS[slot])) : null;
+			const on = days
+				? formatWeekdays(days, L, { weekend: 'Weekends', every: (day) => `${day}s` })
+				: null;
+			const text = on && when ? `${on}, ${when}` : (on ?? when ?? '');
+			return text.charAt(0).toLocaleUpperCase(INTL_LOCALE[L]) + text.slice(1);
 		},
 		stats: {
 			cosiness: 'Cosiness',
@@ -2761,6 +2780,36 @@ export const en = {
 			name: 'Lemonade Leni',
 			title: 'The lemonade maker',
 			fact: 'Squeezes the lemons herself and the sugar in by the handful.'
+		},
+		coffee: {
+			name: 'Espresso Ernst',
+			title: 'The early riser',
+			fact: 'Not a morning raccoon. Is one after the first cup.'
+		},
+		laptop: {
+			name: 'Laptop Lotte',
+			title: 'The home-office hero',
+			fact: 'Was on mute for the whole meeting. Nobody has noticed yet.'
+		},
+		fruit: {
+			name: 'Fruity Franzi',
+			title: 'The vitamin fan',
+			fact: 'Eats an apple a day, plus the pear, plus the grapes, just in case.'
+		},
+		juggling: {
+			name: 'Juggling Jakob',
+			title: 'The juggler',
+			fact: 'Keeps three balls in the air. Four on a good day, two near the vase.'
+		},
+		bath: {
+			name: 'Bubbles Burgi',
+			title: 'The bubble bather',
+			fact: 'Fills the Schaffel to the top, then adds more bubbles. The duck has stopped complaining.'
+		},
+		mushrooms: {
+			name: 'Schwammerl Sepp',
+			title: 'The mushroom picker',
+			fact: 'Knows every mushroom in the forest. The red one with the dots goes back, he promises.'
 		},
 		tea: {
 			name: 'Teacup Theo',

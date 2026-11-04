@@ -1,6 +1,7 @@
 <!--
 	The raccoon album's progress card (→ plan 35): a ring with the share found,
-	"17 of 39 found", what is still out there by tier, and a plain sage bar.
+	"17 of 39 found", the rare and legendary ones still out there, and a plain
+	sage bar.
 -->
 <script lang="ts">
 	import Card from '$lib/components/ui/Card.svelte';
@@ -10,19 +11,19 @@
 	type Props = {
 		found: number;
 		total: number;
-		/** Unmet ★★ and ★★★ raccoons. */
-		seasonal: number;
-		special: number;
+		/** Unmet ★★ Rare and ★★★ Legendary raccoons. */
+		rare: number;
+		legendary: number;
 	};
 
-	let { found, total, seasonal, special }: Props = $props();
+	let { found, total, rare, legendary }: Props = $props();
 
 	const m = messages();
 
 	const share = $derived(total > 0 ? found / total : 0);
 	/** The ring's circumference at r = 23. */
 	const RING = 2 * Math.PI * 23;
-	const missing = $derived(m.album.missing(seasonal, special));
+	const missing = $derived(m.album.missing(rare, legendary));
 </script>
 
 <Card radius="md">
