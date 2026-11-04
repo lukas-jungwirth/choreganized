@@ -3439,3 +3439,19 @@ units | null, name}`, written back as editor lines in the reader's unit spelling
      the ruled ones to a year (coffee is one slot's pool in 3, so one simulated member in 200
      missed it in a winter), and a new test walks a year per member to check that no ruled pose
      ever shows outside its days or slots.
+238. **A member's first look at Home is the welcome raccoon** (Lukas 2026-11-04). Someone
+     opening the app for the first time met whichever pose the day's draw gave them, a raccoon
+     mid-tennis-match, which reads as confusing rather than as a hello. Now `homeRaccoon` takes
+     `firstVisit` and shows `welcome-a` (Wendelin Wave, No. 001), after your birthday and the
+     special days (meeting the Christmas raccoon on day one is a nice surprise, not a
+     confusing one) and ahead of the chore reminder and bedtime (a housemate joining a
+     household with chores, or at 23:00, still gets the hello first). **First visit** is
+     worked out from the album, nothing new is stored: `isFirstVisit` is true while the member
+     has met no raccoon, and for the rest of the slot in which the only one they have met is
+     `welcome-a`, so a reload doesn't swap the greeting out. The next slot draws as usual.
+     Existing members have sightings, so nothing changes for them. Tests: the e2e setup takes
+     each seeded account's first look at the household's midnight (Auckland), a slot of its
+     own, so every journey and screenshot keeps the ordinary afternoon; the album journey now
+     expects Wendelin first and steps to midnight for the sleeping raccoon rather than to an
+     evening draw that might have been Wendelin again; the visual `home-new-raccoon` shot no
+     longer moves its household to Nouméa, since a first visit is the same every run.

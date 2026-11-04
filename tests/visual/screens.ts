@@ -5,9 +5,8 @@
  * names its `route`, which tests/conventions/visual-coverage.test.ts holds
  * against `src/routes`.
  */
-import Database from 'better-sqlite3';
 import { expect, type Page } from '@playwright/test';
-import { DATABASE_PATH, SEED } from '../e2e/accounts';
+import { SEED } from '../e2e/accounts';
 
 export type Screen = {
 	name: string;
@@ -58,9 +57,8 @@ export async function freshAccount(page: Page): Promise<void> {
 /**
  * Home the first time a raccoon is met (→ plan 35): a new household of its
  * own, because the `visual` one has met today's raccoon already (setup.ts).
- * A new member draws a different everyday raccoon every run (→ DECISIONS
- * #232), so the household moves to Nouméa, where the run's afternoon is 23:00:
- * the sleeping raccoon, whoever is looking.
+ * A new member's first look is always the welcome raccoon (→ DECISIONS #238),
+ * so the shot is the same every run.
  */
 export async function newRaccoonToast(page: Page): Promise<void> {
 	await freshAccount(page);
@@ -69,16 +67,8 @@ export async function newRaccoonToast(page: Page): Promise<void> {
 	await page.getByLabel('Your display name').fill('Fresh');
 	await page.getByRole('button', { name: 'Continue' }).click();
 	await page.waitForURL(/\/onboarding\/invite$/);
-	const db = new Database(DATABASE_PATH);
-	try {
-		db.prepare("update households set timezone = 'Pacific/Noumea' where name = ?").run(
-			'Waschbärweg 1'
-		);
-	} finally {
-		db.close();
-	}
 	await page.goto('/home');
-	await page.getByRole('status').filter({ hasText: 'Snoozy Susi' }).waitFor();
+	await page.getByRole('status').filter({ hasText: 'Wendelin Wave' }).waitFor();
 }
 
 /** [9b] with an amount and a description typed, as it looks just before Save. */

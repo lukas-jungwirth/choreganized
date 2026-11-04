@@ -8,6 +8,7 @@
  * developer looks at, idempotent, bound to the user by email.
  */
 import { spawnSync } from 'node:child_process';
+import Database from 'better-sqlite3';
 import { expect, request, test as setup, type APIRequestContext } from '@playwright/test';
 import { SEED_TIMEZONE } from '../../scripts/seed-data';
 import { todayIn } from '../../src/lib/utils/dates';
@@ -38,6 +39,12 @@ setup('sign up the test accounts and seed their households', async ({ baseURL })
 		expect(seed.status, `seed for ${account.email}:\n${seed.stdout}${seed.stderr}`).toBe(0);
 
 		if (account.key === 'visual') await answerClosureNotice(api, baseURL!);
+		// The very first look at Home is the welcome raccoon for that whole slot
+		// (→ DECISIONS #238). Take it at the household's midnight, a slot of its
+		// own, so the afternoon every journey and screenshot sees is an ordinary one.
+		withTimezone(account.email, 'Pacific/Auckland');
+		expect((await api.get('/home')).ok()).toBe(true);
+		withTimezone(account.email, SEED_TIMEZONE);
 		// Meet today's Home raccoon once and open the album once (→ plan 35), so
 		// the "New raccoon!" toast and the "New" badges are behind both accounts
 		// before any journey or screenshot: the first look is the only one that
@@ -47,6 +54,20 @@ setup('sign up the test accounts and seed their households', async ({ baseURL })
 		await api.dispose();
 	}
 });
+
+/** Moves the household `email` belongs to into `timezone` — its clock, not its data. */
+function withTimezone(email: string, timezone: string): void {
+	const db = new Database(DATABASE_PATH);
+	try {
+		db.prepare(
+			`update households set timezone = ? where id in (
+				select m.household_id from members m join user u on u.id = m.user_id where u.email = ?
+			)`
+		).run(timezone, email);
+	} finally {
+		db.close();
+	}
+}
 
 /**
  * The shop-closure banner (→ SPEC §3.6) sits on Home and Shopping for the three

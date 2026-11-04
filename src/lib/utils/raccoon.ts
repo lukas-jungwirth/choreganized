@@ -7,10 +7,12 @@
  * 2. a special day: Christmas (24–25 Dec), New Year (31 Dec – 1 Jan), Easter
  *    (Sunday and Monday), Faschingsdienstag (47 days before Easter),
  *    Halloween (31 Oct), Valentine's Day (14 Feb);
- * 3. the next chore on you — a bell while it's coming up, an alarm clock once
+ * 3. your first visit: the waving welcome raccoon, so someone new meets a
+ *    raccoon saying hello rather than one mid-tennis-match (→ DECISIONS #238);
+ * 4. the next chore on you — a bell while it's coming up, an alarm clock once
  *    it's late;
- * 4. asleep from 22:00 to 05:00, household time;
- * 5. an everyday pose (→ `everydayRaccoon`): three of the season's poses
+ * 5. asleep from 22:00 to 05:00, household time;
+ * 6. an everyday pose (→ `everydayRaccoon`): three of the season's poses
  *    drawn for each member each day, one each morning, afternoon and evening.
  *
  * A special day beats the reminder because the card under the raccoon still
@@ -34,7 +36,12 @@ type Input = {
 	nextChoreDue: CalendarDate | null;
 	/** Whose draw it is: the member id, so each member meets their own (→ DECISIONS #232). */
 	seed?: string;
+	/** The reader hasn't met a raccoon before this slot (→ `services/raccoons` `isFirstVisit`). */
+	firstVisit?: boolean;
 };
+
+/** Who greets someone opening Home for the first time. */
+export const WELCOME_RACCOON: MascotName = 'welcome-a';
 
 /** Fixed special days, `MM-DD`. Easter and Fasching move, so they are worked out per year. */
 export const SPECIAL_DAYS: Readonly<Record<string, MascotName>> = {
@@ -150,11 +157,20 @@ export function faschingsdienstag(easter: CalendarDate): CalendarDate {
 	return addDays(easter, -47);
 }
 
-export function homeRaccoon({ today, hour, birthday, nextChoreDue, seed = '' }: Input): MascotName {
+export function homeRaccoon({
+	today,
+	hour,
+	birthday,
+	nextChoreDue,
+	seed = '',
+	firstVisit = false
+}: Input): MascotName {
 	if (isBirthdayOn(birthday, today)) return 'birthday';
 
 	const special = specialDay(today);
 	if (special) return special;
+
+	if (firstVisit) return WELCOME_RACCOON;
 
 	if (nextChoreDue) {
 		return daysBetween(today, nextChoreDue) < 0 ? 'reminder-overdue' : 'reminder-upcoming';

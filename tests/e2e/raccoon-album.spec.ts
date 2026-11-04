@@ -3,9 +3,10 @@
  * album, once per slot of the day. A brand-new household, so the album starts
  * empty and Home shows an everyday pose (no chores are on anyone yet).
  *
- * The next slot comes from the household's timezone rather than the clock:
- * every run is the same Vienna afternoon (→ TESTING.md "The fixed clock"), and
- * Tokyo is seven hours ahead of it, which is the same day's evening there.
+ * The first look is always the welcome raccoon (→ DECISIONS #238). The next
+ * slot comes from the household's timezone rather than the clock: every run is
+ * the same Vienna afternoon (→ TESTING.md "The fixed clock"), and Auckland is
+ * ten hours ahead of it, which is midnight there: the sleeping raccoon.
  */
 import Database from 'better-sqlite3';
 import { expect, request, test, type Page } from '@playwright/test';
@@ -44,20 +45,20 @@ test('a raccoon met on Home lands in the album, once per slot', async ({ browser
 	const name = `Album ${Date.now()}`;
 	await freshHousehold(page, name);
 
-	// First visit: the toast, and View opens that raccoon's card.
+	// First visit: the welcome raccoon's toast, and View opens its card.
 	await page.goto('/home');
 	const toast = page.getByRole('status').filter({ hasText: 'New raccoon!' });
 	await expect(toast).toBeVisible();
-	await expect(toast).toContainText('is in your album · 1 of 50');
+	await expect(toast).toContainText('Wendelin Wave is in your album · 1 of 50');
 	await toast.getByRole('link', { name: 'View' }).click();
-	await expect(page).toHaveURL(/\/settings\/raccoons\?card=[a-z-]+$/);
+	await expect(page).toHaveURL(/\/settings\/raccoons\?card=welcome-a$/);
 	const card = page.getByRole('dialog', { name: 'Raccoon album' });
 	await expect(card.getByText('Seen 1×')).toBeVisible();
 	await expect(card.getByText(/^No\. \d{3}$/)).toBeVisible();
 	await expect(card.getByText('Cosiness')).toBeVisible();
 	await card.getByRole('button', { name: 'Close' }).click();
 
-	// The same slot again: no toast, and still seen once.
+	// The same slot again: still the welcome, no toast, and still seen once.
 	await page.goto('/home');
 	await expect(page.getByRole('heading', { level: 1 })).toBeVisible();
 	await expect(page.getByText('New raccoon!')).toHaveCount(0);
@@ -65,8 +66,8 @@ test('a raccoon met on Home lands in the album, once per slot', async ({ browser
 	await page.goto('/settings');
 	await expect(page.getByRole('link', { name: /Raccoon album/ })).toContainText('1 of 50');
 
-	// Evening: the next slot's raccoon is a second one.
-	moveHousehold(name, 'Asia/Tokyo');
+	// Midnight: the next slot's raccoon is the sleeping one, a second.
+	moveHousehold(name, 'Pacific/Auckland');
 	await page.goto('/home');
 	await expect(page.getByRole('status').filter({ hasText: 'New raccoon!' })).toContainText(
 		'2 of 50'
@@ -78,7 +79,7 @@ test('a raccoon met on Home lands in the album, once per slot', async ({ browser
 	await expect(
 		page.getByRole('button', { name: /^No\. \d{3}, (?!not met yet)[^,]+(, new)?$/ })
 	).toHaveCount(2);
-	// The first was on screen when View opened the album; only the evening one is new.
+	// The first was on screen when View opened the album; only the sleeping one is new.
 	await expect(page.getByRole('button', { name: /, new$/ })).toHaveCount(1);
 	await expect(page.getByRole('button', { name: /not met yet$/ })).toHaveCount(48);
 
