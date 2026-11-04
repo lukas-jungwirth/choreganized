@@ -22,6 +22,8 @@ export type AlbumName =
 	| 'arcade'
 	| 'sports'
 	| 'watering'
+	| 'sweets'
+	| 'trash'
 	| 'sleeping'
 	| 'reminder-upcoming'
 	| 'reminder-overdue'
@@ -32,16 +34,19 @@ export type AlbumName =
 	| 'skates'
 	| 'cold'
 	| 'flower'
+	| 'butterfly'
 	| 'tennis'
 	| 'garden'
 	| 'fishing'
 	| 'beach'
 	| 'water-pistol'
 	| 'summer-garden'
+	| 'lemonade'
 	| 'tea'
 	| 'knitting'
 	| 'handball'
 	| 'valentines'
+	| 'fasching'
 	| 'easter'
 	| 'halloween'
 	| 'christmas'
@@ -64,51 +69,56 @@ export const ALBUM = [
 	{ name: 'arcade', number: 12, stats: { cosiness: 2, mischief: 4, snacks: 4, helpfulness: 1 } },
 	{ name: 'sports', number: 13, stats: { cosiness: 2, mischief: 2, snacks: 4, helpfulness: 4 } },
 	{ name: 'watering', number: 14, stats: { cosiness: 4, mischief: 1, snacks: 2, helpfulness: 5 } },
-	{ name: 'sleeping', number: 15, stats: { cosiness: 5, mischief: 1, snacks: 4, helpfulness: 1 } },
+	{ name: 'sweets', number: 15, stats: { cosiness: 4, mischief: 3, snacks: 5, helpfulness: 1 } },
+	{ name: 'trash', number: 16, stats: { cosiness: 1, mischief: 5, snacks: 5, helpfulness: 2 } },
+	{ name: 'sleeping', number: 17, stats: { cosiness: 5, mischief: 1, snacks: 4, helpfulness: 1 } },
 	{
 		name: 'reminder-upcoming',
-		number: 16,
+		number: 18,
 		stats: { cosiness: 3, mischief: 2, snacks: 2, helpfulness: 5 }
 	},
 	{
 		name: 'reminder-overdue',
-		number: 17,
+		number: 19,
 		stats: { cosiness: 1, mischief: 3, snacks: 2, helpfulness: 5 }
 	},
-	{ name: 'snow', number: 18, stats: { cosiness: 2, mischief: 5, snacks: 3, helpfulness: 1 } },
-	{ name: 'snowflake', number: 19, stats: { cosiness: 4, mischief: 2, snacks: 2, helpfulness: 2 } },
-	{ name: 'snowman', number: 20, stats: { cosiness: 4, mischief: 2, snacks: 5, helpfulness: 3 } },
-	{ name: 'skiing', number: 21, stats: { cosiness: 2, mischief: 3, snacks: 4, helpfulness: 2 } },
-	{ name: 'skates', number: 22, stats: { cosiness: 3, mischief: 3, snacks: 3, helpfulness: 2 } },
-	{ name: 'cold', number: 23, stats: { cosiness: 5, mischief: 1, snacks: 4, helpfulness: 2 } },
-	{ name: 'flower', number: 24, stats: { cosiness: 4, mischief: 1, snacks: 2, helpfulness: 2 } },
-	{ name: 'tennis', number: 25, stats: { cosiness: 2, mischief: 4, snacks: 3, helpfulness: 2 } },
-	{ name: 'garden', number: 26, stats: { cosiness: 4, mischief: 2, snacks: 3, helpfulness: 5 } },
-	{ name: 'fishing', number: 27, stats: { cosiness: 4, mischief: 1, snacks: 5, helpfulness: 2 } },
-	{ name: 'beach', number: 28, stats: { cosiness: 5, mischief: 2, snacks: 4, helpfulness: 1 } },
+	{ name: 'snow', number: 20, stats: { cosiness: 2, mischief: 5, snacks: 3, helpfulness: 1 } },
+	{ name: 'snowflake', number: 21, stats: { cosiness: 4, mischief: 2, snacks: 2, helpfulness: 2 } },
+	{ name: 'snowman', number: 22, stats: { cosiness: 4, mischief: 2, snacks: 5, helpfulness: 3 } },
+	{ name: 'skiing', number: 23, stats: { cosiness: 2, mischief: 3, snacks: 4, helpfulness: 2 } },
+	{ name: 'skates', number: 24, stats: { cosiness: 3, mischief: 3, snacks: 3, helpfulness: 2 } },
+	{ name: 'cold', number: 25, stats: { cosiness: 5, mischief: 1, snacks: 4, helpfulness: 2 } },
+	{ name: 'flower', number: 26, stats: { cosiness: 4, mischief: 1, snacks: 2, helpfulness: 2 } },
+	{ name: 'butterfly', number: 27, stats: { cosiness: 2, mischief: 3, snacks: 2, helpfulness: 1 } },
+	{ name: 'tennis', number: 28, stats: { cosiness: 2, mischief: 4, snacks: 3, helpfulness: 2 } },
+	{ name: 'garden', number: 29, stats: { cosiness: 4, mischief: 2, snacks: 3, helpfulness: 5 } },
+	{ name: 'fishing', number: 30, stats: { cosiness: 4, mischief: 1, snacks: 5, helpfulness: 2 } },
+	{ name: 'beach', number: 31, stats: { cosiness: 5, mischief: 2, snacks: 4, helpfulness: 1 } },
 	{
 		name: 'water-pistol',
-		number: 29,
+		number: 32,
 		stats: { cosiness: 1, mischief: 5, snacks: 3, helpfulness: 1 }
 	},
 	{
 		name: 'summer-garden',
-		number: 30,
+		number: 33,
 		stats: { cosiness: 4, mischief: 2, snacks: 3, helpfulness: 4 }
 	},
-	{ name: 'tea', number: 31, stats: { cosiness: 5, mischief: 1, snacks: 3, helpfulness: 3 } },
-	{ name: 'knitting', number: 32, stats: { cosiness: 5, mischief: 1, snacks: 3, helpfulness: 4 } },
-	{ name: 'handball', number: 33, stats: { cosiness: 2, mischief: 3, snacks: 4, helpfulness: 3 } },
+	{ name: 'lemonade', number: 34, stats: { cosiness: 4, mischief: 1, snacks: 4, helpfulness: 2 } },
+	{ name: 'tea', number: 35, stats: { cosiness: 5, mischief: 1, snacks: 3, helpfulness: 3 } },
+	{ name: 'knitting', number: 36, stats: { cosiness: 5, mischief: 1, snacks: 3, helpfulness: 4 } },
+	{ name: 'handball', number: 37, stats: { cosiness: 2, mischief: 3, snacks: 4, helpfulness: 3 } },
 	{
 		name: 'valentines',
-		number: 34,
+		number: 38,
 		stats: { cosiness: 5, mischief: 2, snacks: 4, helpfulness: 3 }
 	},
-	{ name: 'easter', number: 35, stats: { cosiness: 4, mischief: 4, snacks: 4, helpfulness: 3 } },
-	{ name: 'halloween', number: 36, stats: { cosiness: 3, mischief: 5, snacks: 5, helpfulness: 1 } },
-	{ name: 'christmas', number: 37, stats: { cosiness: 5, mischief: 2, snacks: 5, helpfulness: 4 } },
-	{ name: 'new-year', number: 38, stats: { cosiness: 3, mischief: 4, snacks: 4, helpfulness: 2 } },
-	{ name: 'birthday', number: 39, stats: { cosiness: 4, mischief: 3, snacks: 5, helpfulness: 3 } }
+	{ name: 'fasching', number: 39, stats: { cosiness: 2, mischief: 5, snacks: 3, helpfulness: 2 } },
+	{ name: 'easter', number: 40, stats: { cosiness: 4, mischief: 4, snacks: 4, helpfulness: 3 } },
+	{ name: 'halloween', number: 41, stats: { cosiness: 3, mischief: 5, snacks: 5, helpfulness: 1 } },
+	{ name: 'christmas', number: 42, stats: { cosiness: 5, mischief: 2, snacks: 5, helpfulness: 4 } },
+	{ name: 'new-year', number: 43, stats: { cosiness: 3, mischief: 4, snacks: 4, helpfulness: 2 } },
+	{ name: 'birthday', number: 44, stats: { cosiness: 4, mischief: 3, snacks: 5, helpfulness: 3 } }
 ] as const satisfies ReadonlyArray<{
 	name: AlbumName & MascotName;
 	number: number;

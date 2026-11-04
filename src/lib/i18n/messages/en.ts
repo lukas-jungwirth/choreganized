@@ -2557,6 +2557,7 @@ export const en = {
 		window: {
 			allYear: 'All year',
 			easter: 'Easter',
+			fasching: 'Shrove Tuesday',
 			birthday: 'Your birthday'
 		},
 		stats: {
@@ -2721,10 +2722,25 @@ export const en = {
 			title: 'The gardener',
 			fact: 'Grows tomatoes, courgettes and, by accident, a pumpkin the size of the shed.'
 		},
+		butterfly: {
+			name: 'Butterfly-Net Burgi',
+			title: 'The butterfly chaser',
+			fact: 'Has chased butterflies for three summers. The butterflies are winning.'
+		},
 		fishing: {
 			name: 'Fisherman Ferdl',
 			title: 'The patient angler',
 			fact: 'Has been waiting for a bite since Tuesday. Brought enough sandwiches for the week.'
+		},
+		sweets: {
+			name: 'Sweet-Tooth Susi',
+			title: 'The sweet tooth',
+			fact: 'Keeps an emergency chocolate in every pocket. Has never once had an emergency.'
+		},
+		trash: {
+			name: 'Bin-Diver Bertl',
+			title: 'The bin inspector',
+			fact: 'Checks every bin on the street, purely for quality control.'
 		},
 		beach: {
 			name: 'Beach-Towel Bianca',
@@ -2740,6 +2756,11 @@ export const en = {
 			name: 'Straw-Hat Heidi',
 			title: 'The summer gardener',
 			fact: 'Waters the garden at dawn and herself at noon.'
+		},
+		lemonade: {
+			name: 'Lemonade Leni',
+			title: 'The lemonade maker',
+			fact: 'Squeezes the lemons herself and the sugar in by the handful.'
 		},
 		tea: {
 			name: 'Teacup Theo',
@@ -2760,6 +2781,11 @@ export const en = {
 			name: 'Sweetheart Hansi',
 			title: 'The Valentine',
 			fact: 'Leaves little hearts on the fridge. Also leaves the fridge open.'
+		},
+		fasching: {
+			name: 'Pirate Poldi',
+			title: 'The Fasching pirate',
+			fact: 'Comes as a pirate every year. Is still looking for the treasure from last time.'
 		},
 		easter: {
 			name: 'Egg-Hunt Elfi',

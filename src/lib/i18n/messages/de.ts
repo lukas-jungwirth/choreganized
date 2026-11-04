@@ -2008,6 +2008,7 @@ export const de: Messages = {
 		window: {
 			allYear: 'Ganzjährig',
 			easter: 'Ostern',
+			fasching: 'Faschingsdienstag',
 			birthday: 'Dein Geburtstag'
 		},
 		stats: {
@@ -2169,10 +2170,25 @@ export const de: Messages = {
 			title: 'Die Gärtnerin',
 			fact: 'Zieht Paradeiser, Zucchini und, aus Versehen, einen Kürbis so groß wie die Gartenhütte.'
 		},
+		butterfly: {
+			name: 'Schmetterlings-Burgi',
+			title: 'Die Schmetterlingsjägerin',
+			fact: 'Jagt seit drei Sommern Schmetterlinge. Die Schmetterlinge führen.'
+		},
 		fishing: {
 			name: 'Fischer-Ferdl',
 			title: 'Der geduldige Angler',
 			fact: 'Wartet seit Dienstag auf einen Biss. Hat Jausenbrote für die ganze Woche mit.'
+		},
+		sweets: {
+			name: 'Naschkatzen-Susi',
+			title: 'Die Naschkatze',
+			fact: 'Hat in jeder Tasche eine Notfall-Schokolade. Einen Notfall gab es noch nie.'
+		},
+		trash: {
+			name: 'Mistkübel-Bertl',
+			title: 'Der Mistkübel-Inspektor',
+			fact: 'Schaut in jeden Mistkübel der Gasse, rein zur Qualitätskontrolle.'
 		},
 		beach: {
 			name: 'Badetuch-Bianca',
@@ -2188,6 +2204,11 @@ export const de: Messages = {
 			name: 'Strohhut-Heidi',
 			title: 'Die Sommergärtnerin',
 			fact: 'Gießt in der Früh den Garten und zu Mittag sich selbst.'
+		},
+		lemonade: {
+			name: 'Limo-Leni',
+			title: 'Die Limonadenmacherin',
+			fact: 'Presst die Zitronen selber aus und gibt den Zucker händeweise dazu.'
 		},
 		tea: {
 			name: 'Teehäferl-Theo',
@@ -2208,6 +2229,11 @@ export const de: Messages = {
 			name: 'Herzerl-Hansi',
 			title: 'Der Valentin',
 			fact: 'Klebt kleine Herzerl auf den Kühlschrank. Lässt den Kühlschrank auch gern offen.'
+		},
+		fasching: {
+			name: 'Piraten-Poldi',
+			title: 'Der Faschingspirat',
+			fact: 'Geht jedes Jahr als Pirat. Sucht noch immer den Schatz vom letzten Mal.'
 		},
 		easter: {
 			name: 'Osternest-Elfi',

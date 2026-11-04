@@ -29,6 +29,7 @@ export type Window =
 	| { kind: 'months'; from: number; to: number; season: Season | null }
 	| { kind: 'days'; from: string; to: string }
 	| { kind: 'easter' }
+	| { kind: 'fasching' }
 	| { kind: 'birthday' };
 
 export type Frame = { kind: 'any' } | { kind: 'seasons'; seasons: Season[] } | { kind: 'holo' };
@@ -111,6 +112,9 @@ function describe({ name, number, stats }: (typeof ALBUM)[number]): AlbumEntry {
 	}
 	if (name === 'easter') {
 		return { ...entry, tier: 3, window: { kind: 'easter' }, frame: { kind: 'holo' } };
+	}
+	if (name === 'fasching') {
+		return { ...entry, tier: 3, window: { kind: 'fasching' }, frame: { kind: 'holo' } };
 	}
 	const days = daysOf(name);
 	if (days)

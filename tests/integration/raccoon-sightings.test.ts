@@ -13,6 +13,7 @@ import {
 	markSightingsNoticed,
 	recordSighting
 } from '$lib/server/services/raccoons';
+import { ALBUM_SIZE } from '$lib/utils/raccoon-album';
 import { db, makeHousehold, tables } from '../helpers/db';
 
 const TODAY = '2036-06-18';
@@ -22,7 +23,7 @@ describe('recordSighting', () => {
 		const { householdId, owner } = makeHousehold();
 
 		const first = recordSighting(householdId, owner.id, 'beach', TODAY, `${TODAY}#1`);
-		assert.deepEqual(first, { isNew: true, found: 1, total: 39 });
+		assert.deepEqual(first, { isNew: true, found: 1, total: ALBUM_SIZE });
 
 		const [row] = listSightings(householdId, owner.id);
 		assert.equal(row.raccoon, 'beach');
@@ -36,7 +37,7 @@ describe('recordSighting', () => {
 		recordSighting(householdId, owner.id, 'beach', TODAY, `${TODAY}#1`);
 
 		const again = recordSighting(householdId, owner.id, 'beach', TODAY, `${TODAY}#1`);
-		assert.deepEqual(again, { isNew: false, found: 1, total: 39 });
+		assert.deepEqual(again, { isNew: false, found: 1, total: ALBUM_SIZE });
 		assert.equal(listSightings(householdId, owner.id)[0].seenCount, 1);
 	});
 
@@ -58,7 +59,7 @@ describe('recordSighting', () => {
 		recordSighting(householdId, owner.id, 'beach', TODAY, `${TODAY}#1`);
 
 		const second = recordSighting(householdId, owner.id, 'fishing', TODAY, `${TODAY}#2`);
-		assert.deepEqual(second, { isNew: true, found: 2, total: 39 });
+		assert.deepEqual(second, { isNew: true, found: 2, total: ALBUM_SIZE });
 		assert.equal(countSightings(householdId, owner.id), 2);
 	});
 

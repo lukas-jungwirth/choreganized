@@ -3338,3 +3338,20 @@ units | null, name}`, written back as editor lines in the reader's unit spelling
      one-week set), a shuffled deck per member (a full set in a week again), and an
      end-of-season catch-up that guarantees the set (more code for less suspense). Special
      days, the birthday, the reminders and sleeping are unchanged.
+233. **Five new raccoons, one of them for a new special day** (`/raccoons`, Lukas 2026-11-04).
+     Four everyday poses, none looking like another: **sweets** (nibbling chocolate) and
+     **trash** (raiding a bin) all year, **butterfly** (net and butterfly) spring and summer,
+     **lemonade** (iced, with a straw) summer only; lemonade holds its glass the way tea holds a
+     cup, but the two never share a season, so no look-alike group. **fasching** (a pirate with
+     a treasure map) is Home's raccoon on **Faschingsdienstag** only, worked out as Easter
+     Sunday minus 47 days (`faschingsdienstag` in `utils/raccoon`), since the day moves with
+     Easter. Just the Tuesday, not Rosenmontag too: that's the day Austria dresses up. Its album
+     card is ★★★ with its own chip ("Shrove Tuesday" / "Faschingsdienstag"), like Easter's,
+     rather than a date that would be wrong next year. The album grows from 39 to 44, renumbered by
+     #231's order: sweets and trash are 15–16 after the all-year poses, butterfly follows flower,
+     lemonade follows summer-garden, fasching sits between Valentine's and Easter. Sightings are
+     stored by name, so renumbering moves nobody's album. Names, facts and stats are drafts for
+     Lukas to review, like #231's. The tests that counted 39 now read `ALBUM_SIZE` (the e2e
+     journey keeps the literal "of 44", as a reader sees it). Butterfly was cut 20 px flat at
+     the waist; the other four were already flat. Extra download: 91 KB of AVIF (butterfly 22,
+     fasching 18, sweets 17, lemonade 17, trash 17).
