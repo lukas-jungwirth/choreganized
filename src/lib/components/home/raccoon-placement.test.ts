@@ -27,8 +27,17 @@ describe('raccoonPlacement', () => {
 		for (const art of Object.values(MASCOTS)) {
 			assert.ok(raccoonPlacement(art, HEIGHT).reach <= MAX_REACH);
 		}
-		// Arms out on both sides: it gives up a little of its spot instead.
-		assert.ok(bodyFromRight('welcome-a') < BODY_INSET);
+		// Arms out on both sides, reaching far left: it shifts right, giving up a little of its spot.
+		const wide = { width: 500, height: 408, body: 0.6 };
+		const placed = raccoonPlacement(wide, HEIGHT);
+		assert.equal(placed.reach, MAX_REACH);
+		assert.ok(placed.right + (1 - wide.body) * ((HEIGHT * wide.width) / wide.height) < BODY_INSET);
+	});
+
+	it('holds an arm out to the right at the gutter, body a little left of its spot', () => {
+		// welcome-a, mirrored to face in (→ DECISIONS #234), waves out past the right edge.
+		assert.equal(raccoonPlacement(MASCOTS['welcome-a'], HEIGHT).right, -MAX_BLEED);
+		assert.ok(bodyFromRight('welcome-a') > BODY_INSET);
 	});
 
 	it('lets a prop into the gutter, not past it', () => {
