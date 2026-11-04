@@ -3355,3 +3355,17 @@ units | null, name}`, written back as editor lines in the reader's unit spelling
      journey keeps the literal "of 44", as a reader sees it). Butterfly was cut 20 px flat at
      the waist; the other four were already flat. Extra download: 91 KB of AVIF (butterfly 22,
      fasching 18, sweets 17, lemonade 17, trash 17).
+234. **New app icon: the raccoon as a bust, laid out from the art** (Lukas 2026-11-04). The icon
+     masters were a floating head; the new ones are head and shoulders in the cape and overalls,
+     ending in a flat cut. Centred on the canvas as before, that cut floats with green below it,
+     and the favicon's 120% centre crop cut off the ears. So `scripts/icons.ts` now trims the art
+     and **stands the bust on the bottom edge** of every icon: the store/apple-touch icon at 86%
+     of the side, the maskable one at 72% so the ears clear the 80% safe circle (the mask
+     cutting the body is what a portrait in a circle looks like), and the favicons and the badge
+     take only the **head**, the top 72% of the bust, since a whole bust is a smudge at 32px and
+     the cape blurs the badge's silhouette. The masters went in as delivered (the green is
+     exactly #74A585, the foreground's alpha is hard-edged, which only the badge reads).
+     `tests/conventions/app-icons.test.ts` reads the shipped PNGs: the bust touches the bottom
+     edge, nothing but green outside the safe circle above the middle, the favicon's top row is
+     green. Weighed and dropped: re-cutting the masters so the art sits right on their canvas
+     (the next generated icon would need the same hand step).

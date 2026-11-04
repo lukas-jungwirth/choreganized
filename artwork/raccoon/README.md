@@ -34,7 +34,7 @@ checks that simulated members meet every pose of every season. The app icons are
 | File                      | Where it shows up                                              |
 | ------------------------- | -------------------------------------------------------------- |
 | `app-icon.png`            | launcher icon, apple-touch-icon — opaque, background #74A585   |
-| `app-icon-foreground.png` | maskable icon, favicons, notification badge (transparent head) |
+| `app-icon-foreground.png` | maskable icon, favicons, notification badge (transparent bust) |
 | `shopping.png`            | Shopping title                                                 |
 | `cooking.png`             | Cooking title                                                  |
 | `tasks.png`               | Tasks + History titles                                         |
@@ -85,6 +85,11 @@ checks that simulated members meet every pose of every season. The app icons are
 | `lemonade.png`            | Home, everyday, summer                                         |
 | `settings.png`            | Settings, on the profile card                                  |
 | `move-out.png`            | Settings, on the sign-out / leave group                        |
+
+The two app icon masters are a 1024² **bust** (head and shoulders ending in a flat cut): the
+opaque one on exactly #74A585, the other the same art on transparent. Where the art sits on the
+canvas doesn't matter: `npm run icons` trims it and stands the cut on each icon's bottom edge;
+the favicons and the badge take the top 72% (the head) only (→ DECISIONS #235).
 
 Masters are trimmed to the artwork (the app icons keep their 1024² canvas) and losslessly
 recompressed. A raccoon that sits on a card (Home's poses, Settings') must end in a straight cut
