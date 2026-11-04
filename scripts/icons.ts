@@ -10,7 +10,7 @@
  *
  * Outputs (committed):
  *   static/icons/icon-192.png · icon-512.png             app icon, full-bleed green (purpose: any)
- *   static/icons/icon-192-maskable.png · -512-maskable   head pulled into the safe circle (purpose: maskable)
+ *   static/icons/icon-192-maskable.png · -512-maskable   bust pulled into the safe circle (purpose: maskable)
  *   static/icons/apple-touch-icon.png (180)              iOS home screen, no alpha
  *   static/icons/favicon-32.png · favicon-96.png         browser tab
  *   static/icons/badge-72.png                            Android status-bar silhouette (alpha-only)
@@ -49,44 +49,89 @@ const GREEN = { r: 0x74, g: 0xa5, b: 0x85, alpha: 1 };
  */
 const ICON_PNG = { palette: true, quality: 90, effort: 10, compressionLevel: 9 } as const;
 
-/** The square, opaque store icon at a launcher size. */
-function appIcon(size: number): Promise<Buffer> {
-	return sharp(APP_ICON).resize(size, size).flatten({ background: GREEN }).png(ICON_PNG).toBuffer();
+/**
+ * The raccoon is a bust: head and shoulders, ending in a flat cut below the
+ * overalls' bib. That cut must sit on the icon's bottom edge, or the body ends
+ * in mid-air, so every icon is laid out from the artwork itself (trimmed to it)
+ * rather than from the master's canvas (→ DECISIONS #235).
+ *
+ * `HEAD` is how much of the bust, from the top of the ears, is head: the chin
+ * and collar sit just above 72%. The tab icon and the badge show only that part,
+ * as a whole bust is a smudge at 32px.
+ */
+const HEAD = 0.72;
+
+/** The opaque master's artwork, cut free of its green. */
+async function appIconArt(): Promise<Buffer> {
+	return sharp(APP_ICON).trim({ background: GREEN, threshold: 20 }).png().toBuffer();
+}
+
+/** The transparent master's artwork, trimmed; `head` keeps only the top `HEAD` of it. */
+async function foregroundArt(head = false): Promise<Buffer> {
+	const bust = await sharp(FOREGROUND).trim().png().toBuffer();
+	if (!head) return bust;
+	const { width, height } = await sharp(bust).metadata();
+	return sharp(bust)
+		.extract({ left: 0, top: 0, width: width!, height: Math.round(height! * HEAD) })
+		.trim()
+		.png()
+		.toBuffer();
 }
 
 /**
- * The transparent head centred on green at `ratio` of its own canvas, flattened
- * opaque. At 1 the head spans ~75% of the width, so its ears poke out of the
- * 80%-diameter circle a launcher may crop a maskable icon to; 0.8 brings every
- * corner inside it. Above 1 it fills a small tab icon more boldly.
+ * `art` on a square of green, `fill` of the side tall (or wide, if that is the
+ * tighter fit), centred across and standing on the bottom edge.
  */
-async function head(size: number, ratio: number): Promise<Buffer> {
-	const px = Math.round(size * ratio);
-	let art = sharp(FOREGROUND).resize(px, px);
-	if (px > size) {
-		const offset = Math.round((px - size) / 2);
-		art = sharp(await art.toBuffer()).extract({
-			left: offset,
-			top: offset,
-			width: size,
-			height: size
-		});
-	}
+async function standing(art: Buffer, size: number, fill: number): Promise<Buffer> {
+	const box = Math.round(size * fill);
+	const fitted = await sharp(art)
+		.resize(box, box, { fit: 'inside' })
+		.png()
+		.toBuffer({ resolveWithObject: true });
 	return sharp({ create: { width: size, height: size, channels: 4, background: GREEN } })
-		.composite([{ input: await art.png().toBuffer(), gravity: 'center' }])
+		.composite([
+			{
+				input: fitted.data,
+				left: Math.round((size - fitted.info.width) / 2),
+				top: size - fitted.info.height
+			}
+		])
 		.flatten({ background: GREEN })
 		.png(ICON_PNG)
 		.toBuffer();
 }
 
 /**
+ * The store icon (purpose: any, and iOS's): the bust at 86%, standing on the
+ * edge. iOS and Android round the corners themselves; the square stays opaque.
+ */
+async function appIcon(size: number): Promise<Buffer> {
+	return standing(await appIconArt(), size, 0.86);
+}
+
+/**
+ * The maskable icon: a launcher may crop it to the 80%-diameter circle, so the
+ * bust is smaller (72%) and every ear stays inside that circle; the bottom of
+ * the body running into the mask is how a portrait in a circle looks anyway
+ * (`tests/conventions/app-icons.test.ts` checks the ears).
+ */
+async function maskable(size: number): Promise<Buffer> {
+	return standing(await foregroundArt(), size, 0.72);
+}
+
+/** The tab icon: the head alone, filling the square, cut at the neck on the bottom edge. */
+async function favicon(size: number): Promise<Buffer> {
+	return standing(await foregroundArt(true), size, 0.96);
+}
+
+/**
  * The Android notification badge: the head's outline in white on transparent.
  * Android keeps only the alpha channel and tints the silhouette itself, so the
- * face is noise at 24dp and the colour is irrelevant.
+ * face is noise at 24dp and the colour is irrelevant. The head alone: the ears
+ * are what make the shape a raccoon, and the cape would only blur it.
  */
 async function badge(size: number): Promise<Buffer> {
-	const alpha = await sharp(FOREGROUND)
-		.trim()
+	const alpha = await sharp(await foregroundArt(true))
 		.resize(Math.round(size * 0.86), Math.round(size * 0.86), { fit: 'inside' })
 		.extractChannel('alpha')
 		.toBuffer();
@@ -198,13 +243,12 @@ async function main() {
 	const icons: Array<[string, Buffer]> = [
 		['icon-192.png', await appIcon(192)],
 		['icon-512.png', await appIcon(512)],
-		['icon-192-maskable.png', await head(192, 0.8)],
-		['icon-512-maskable.png', await head(512, 0.8)],
+		['icon-192-maskable.png', await maskable(192)],
+		['icon-512-maskable.png', await maskable(512)],
 		// iOS applies its own rounding; the store icon is already square and opaque.
 		['apple-touch-icon.png', await appIcon(180)],
-		// A fuller crop reads better at tab size.
-		['favicon-32.png', await head(32, 1.2)],
-		['favicon-96.png', await head(96, 1.2)],
+		['favicon-32.png', await favicon(32)],
+		['favicon-96.png', await favicon(96)],
 		['badge-72.png', await badge(72)]
 	];
 	for (const [name, buffer] of icons) {

@@ -249,9 +249,10 @@ prompt / subscribed).
 - **Icons and mascots are scripted from one source.** `npm run icons` (`scripts/icons.ts`)
   renders every launcher / tab / lock-screen asset and every raccoon a screen shows from the PNG
   masters in `artwork/raccoon/` (→ DECISIONS #211, #215), which are never shipped (`.dockerignore`):
-  `any` + apple-touch from the opaque store icon on #74A585, maskable from the transparent head
-  pulled inside the 80% safe circle, 32/96px favicons and the notification badge (the head's
-  silhouette) — all 256-colour palette PNGs — and the mascots as AVIF at 3× their display height
+  `any` + apple-touch from the opaque store icon on #74A585, maskable from the transparent bust
+  pulled inside the 80% safe circle, 32/96px favicons and the notification badge (the bust's head
+  only, and its silhouette); every icon is laid out from the trimmed art so the bust stands on the
+  bottom edge (→ DECISIONS #235, `tests/conventions/app-icons.test.ts`) — all 256-colour palette PNGs — and the mascots as AVIF at 3× their display height
   in `src/lib/assets/mascot/`, with a generated `index.ts` of their pixel sizes that
   `ui/Mascot` reads to reserve each image's box. Re-run after a master changes; outputs are
   committed.
