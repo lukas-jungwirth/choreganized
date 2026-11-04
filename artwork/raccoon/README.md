@@ -86,6 +86,10 @@ checks that simulated members meet every pose of every season. The app icons are
 | `settings.png`            | Settings, on the profile card                                  |
 | `move-out.png`            | Settings, on the sign-out / leave group                        |
 
+**Home's raccoons look left or straight out**, toward the greeting and the card: they sit at the
+right edge, and one looking right looks off the screen. A master that looked right was mirrored
+in place, not flagged (→ DECISIONS #234); the original is in git history.
+
 Masters are trimmed to the artwork (the app icons keep their 1024² canvas) and losslessly
 recompressed. A raccoon that sits on a card (Home's poses, Settings') must end in a straight cut
 at the waist: `npm run raccoons` cuts a new one flat where the curve starts, and

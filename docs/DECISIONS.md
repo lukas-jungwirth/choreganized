@@ -3355,3 +3355,15 @@ units | null, name}`, written back as editor lines in the reader's unit spelling
      journey keeps the literal "of 44", as a reader sees it). Butterfly was cut 20 px flat at
      the waist; the other four were already flat. Extra download: 91 KB of AVIF (butterfly 22,
      fasching 18, sweets 17, lemonade 17, trash 17).
+234. **Home's raccoons face into the screen** (Lukas 2026-11-04). The raccoon sits at the
+     card's right edge, right of the greeting, and many poses looked right, off the screen,
+     pulling the eye away from the card. Fifteen masters are mirrored: fasching, trash,
+     butterfly, both reminders, welcome-a, flower, reading, snowflake, painting, handball,
+     snowman, water-pistol, music, call. They now look toward the greeting. The masters
+     themselves are mirrored rather than given a `flip` flag in `mascots.json`: one source of
+     truth, and the picture you open is the picture Home shows, with nothing new in
+     `scripts/icons.ts`. The originals are in git history. `npm run icons` found every body
+     again by its buttons. Snowman's hand-set `body` went from 0.45 to 0.55. One detail now
+     reads backwards: the "12" on reminder-overdue's clock face, too small at 136px to
+     matter. Butterfly's net now reaches left toward the greeting but clears it (checked at
+     390px). `/raccoons` now checks which way a new pose looks and mirrors it before the cut.
