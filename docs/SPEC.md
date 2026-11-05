@@ -1387,3 +1387,9 @@ For whoever runs the server, never for a household. No design frame (DECISIONS #
   section raccoons (shopping, cooking, tasks, expenses, head, settings, move-out); picking one shows it on Home, placed as it would be for real
   (`/home?raccoon=<name>`), and "Back to today's raccoon" clears it. Poking is off in admin
   mode. Anyone else's `?raccoon=`, and a section raccoon's for anyone, is ignored by the server.
+- **The whole album** ([DECISIONS #240](DECISIONS.md)): in admin mode the raccoon album (→ §6)
+  shows every raccoon in colour and opens every card, to check the art and the words. A line
+  under the progress card says so ("Admin mode: every raccoon is shown, met or not. Your count
+  stays your own."), and an unmet card's footer reads "Not met yet · shown in admin mode"
+  where "First met" would be. Nothing is recorded: the count, the "New" badges and the
+  sightings stay the admin's real ones, and leaving admin mode locks the unmet ones again.

@@ -22,12 +22,14 @@
 		/** Which card is up, by its place in `entries`. */
 		index: number;
 		sightings: ReadonlyMap<string, Sighting>;
+		/** Admin mode: an unmet raccoon's card is shown open too (→ DECISIONS #240). */
+		reveal?: boolean;
 		today: CalendarDate;
 		onmove: (index: number) => void;
 		onclose: () => void;
 	};
 
-	let { entries, index, sightings, today, onmove, onclose }: Props = $props();
+	let { entries, index, sightings, reveal = false, today, onmove, onclose }: Props = $props();
 
 	const m = messages();
 
@@ -51,7 +53,7 @@
 		}}
 	>
 		{#key entry.name}
-			<RaccoonCard {entry} sighting={sightings.get(entry.name) ?? null} {today} />
+			<RaccoonCard {entry} sighting={sightings.get(entry.name) ?? null} {reveal} {today} />
 		{/key}
 	</div>
 
