@@ -49,7 +49,7 @@ test('a raccoon met on Home lands in the album, once per slot', async ({ browser
 	await page.goto('/home');
 	const toast = page.getByRole('status').filter({ hasText: 'New raccoon!' });
 	await expect(toast).toBeVisible();
-	await expect(toast).toContainText('Wendelin Wave is in your album · 1 of 50');
+	await expect(toast).toContainText('Welcome Committee is in your album · 1 of 50');
 	await toast.getByRole('link', { name: 'View' }).click();
 	await expect(page).toHaveURL(/\/settings\/raccoons\?card=welcome-a$/);
 	const card = page.getByRole('dialog', { name: 'Raccoon album' });

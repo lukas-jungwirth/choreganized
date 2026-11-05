@@ -1,7 +1,7 @@
 <!--
 	A raccoon's trading card (→ plan 35, the sketch's frames 2–4). Met: the
 	number and the stars on top, the raccoon on a stage in its frame colour, its
-	name and title, one chip saying when you can meet it (the season or the days,
+	name (what it is: "Tennis Ace"), one chip saying when you can meet it (the season or the days,
 	then its rule: "All year · Mon – Fri"), a fun fact, four fun
 	stats, and when you first met it and how often. Locked: the same frame shape
 	in `--sunken-2`, the silhouette under one big "?", and nothing that would
@@ -95,7 +95,6 @@
 			</div>
 
 			<h2 class="name">{copy.name}</h2>
-			<p class="title">{copy.title}</p>
 
 			<p class="window">
 				<span class="chip">
@@ -267,6 +266,7 @@
 		color: var(--text-4);
 	}
 
+	/* The locked card's "Not met yet" under the "? ? ? ? ?". */
 	.title {
 		margin: 3px 14px 0;
 		font-size: var(--fs-15);

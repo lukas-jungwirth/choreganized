@@ -3455,3 +3455,17 @@ units | null, name}`, written back as editor lines in the reader's unit spelling
      expects Wendelin first and steps to midnight for the sleeping raccoon rather than to an
      evening draw that might have been Wendelin again; the visual `home-new-raccoon` shot no
      longer moves its household to Nouméa, since a first visit is the same every run.
+239. **A raccoon's name says what it is; the invented first names are gone** (Lukas
+     2026-11-05). Fifty alliterative names ("Topspin Tom", "Teacup Theo") read as a pun
+     quota, more cringe than charm, and each new raccoon would need another. The card's
+     subline already said what each one is, so it **became the name**, without its article
+     ("The tennis ace" → **Tennis Ace**, „Das Tennis-Ass“ → **Tennis-Ass**), and the card lost
+     its subline: number and stars, the raccoon, the name, the when-chip, the fun fact, the
+     stats. A subline that only described a moment got a plain noun instead: Optimist, Skier
+     (Skifahrer), Cocoa Sipper (Kakaotrinker), Morgensportler for „Das Morgentraining“, Phone
+     Chatter (Dauertelefonierer). German keeps each subline's gender (Schalstrickerin,
+     Homeoffice-Heldin), so the facts' pronouns still agree; no fact named its raccoon, so none
+     changed. The catalog's `raccoons.*` entries are `{ name, fact }`; the locked card's "Not
+     met yet" line is interface copy and stays. The toast reads "Tennis Ace is in your album".
+     Lukas reviews the German names and facts in the "Waschbär-Texte" editor artifact; English
+     follows from his German.

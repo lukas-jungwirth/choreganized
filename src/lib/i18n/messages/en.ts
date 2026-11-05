@@ -2606,262 +2606,213 @@ export const en = {
 	},
 
 	/**
-	 * Every raccoon in the album: a name, a short title and a fun fact. The
-	 * app's own words, not household content, so German writes its own (and may
-	 * pun). Drafts, shipped for Lukas to review (→ plan 35).
+	 * Every raccoon in the album: a name and a fun fact. The name says what the
+	 * raccoon is ("Tennis Ace"), not an invented first name (Lukas 2026-11-05,
+	 * DECISIONS #239). The app's own words, not household content, so German
+	 * writes its own. Drafts, shipped for Lukas to review (→ plan 35).
 	 */
 	raccoons: {
 		'welcome-a': {
-			name: 'Wendelin Wave',
-			title: 'The welcome committee',
+			name: 'Welcome Committee',
 			fact: 'Waves at the postman, the neighbours and, on slow days, the fridge.'
 		},
 		'welcome-b': {
-			name: 'Toni Thumbs',
-			title: 'The one who says it’ll be fine',
+			name: 'Optimist',
 			fact: 'Has never once checked whether it will be fine. It usually is.'
 		},
 		reading: {
-			name: 'Bookish Berta',
-			title: 'The bedtime reader',
+			name: 'Bedtime Reader',
 			fact: 'Has read every recipe in the cookbook twice. Has cooked one of them, once.'
 		},
 		call: {
-			name: 'Chatty Charlie',
-			title: 'The one on the phone',
+			name: 'Phone Chatter',
 			fact: 'Calls to say he’s running late. Calls again to say how late.'
 		},
 		phone: {
-			name: 'Rotary Rosi',
-			title: 'Keeper of the landline',
+			name: 'Landline Keeper',
 			fact: 'Still knows every number by heart. Refuses to explain how.'
 		},
 		music: {
-			name: 'Headphone Hannes',
-			title: 'The quiet listener',
+			name: 'Quiet Listener',
 			fact: 'Hums along to everything, always slightly ahead of the beat.'
 		},
 		singing: {
-			name: 'Mic-Drop Mitzi',
-			title: 'The kitchen karaoke star',
+			name: 'Kitchen Karaoke Star',
 			fact: 'Sings in the shower, in the kitchen and, once, at the pharmacy.'
 		},
 		camera: {
-			name: 'Snapshot Sepp',
-			title: 'The household photographer',
+			name: 'Household Photographer',
 			fact: 'Has 400 photos of dinner and not one of the people who ate it.'
 		},
 		painting: {
-			name: 'Paintbrush Paula',
-			title: 'The artist in residence',
+			name: 'Artist in Residence',
 			fact: 'Has painted the fruit bowl so often that the fruit has started to pose.'
 		},
 		writing: {
-			name: 'Quill Quirin',
-			title: 'The list writer',
+			name: 'List Writer',
 			fact: 'Writes the shopping list by hand first, for the feeling of it.'
 		},
 		cards: {
-			name: 'Poker-Face Paul',
-			title: 'The card shark',
+			name: 'Card Shark',
 			fact: 'Says he’s bad at cards. Has won every game night since spring.'
 		},
 		arcade: {
-			name: 'Joystick Jo',
-			title: 'The high-score holder',
+			name: 'High-Score Holder',
 			fact: 'Holds the high score on every machine, and the record for “one more go”.'
 		},
 		sports: {
-			name: 'Muscle Max',
-			title: 'The morning workout',
+			name: 'Morning Workout',
 			fact: 'Lifts weights every morning, then the biscuit tin, for balance.'
 		},
 		watering: {
-			name: 'Watering-Can Wally',
-			title: 'The plant whisperer',
+			name: 'Plant Whisperer',
 			fact: 'Talks to the houseplants every day. Two of them have started answering.'
 		},
 		sleeping: {
-			name: 'Snoozy Susi',
-			title: 'The night shift',
+			name: 'Night Shift',
 			fact: 'Sleeps from ten till five and dreams, mostly, of breakfast.'
 		},
 		'reminder-upcoming': {
-			name: 'Ding-Dong Dora',
-			title: 'The friendly reminder',
+			name: 'Friendly Reminder',
 			fact: 'Rings the bell once, politely. Then once more, just as politely.'
 		},
 		'reminder-overdue': {
-			name: 'Alarm-Clock Alois',
-			title: 'The last reminder',
+			name: 'Last Reminder',
 			fact: 'Has never been late in his life and would like that on the record.'
 		},
 		snow: {
-			name: 'Snowball Sigi',
-			title: 'The snowball thrower',
+			name: 'Snowball Thrower',
 			fact: 'Aims for the tree. Hits whoever is standing next to it.'
 		},
 		snowflake: {
-			name: 'Flake-Catcher Flora',
-			title: 'The snowflake collector',
+			name: 'Snowflake Collector',
 			fact: 'Has caught 2,000 snowflakes on her tongue. Says no two tasted alike.'
 		},
 		snowman: {
-			name: 'Frosty Fritz',
-			title: 'The snowman builder',
+			name: 'Snowman Builder',
 			fact: 'Always gives the snowman his own carrot. Keeps the second one for later, just in case.'
 		},
 		skiing: {
-			name: 'Slalom Stefan',
-			title: 'First on the slope',
+			name: 'Skier',
 			fact: 'Skis down in four minutes. Takes the gondola back up for the view, and the strudel.'
 		},
 		skates: {
-			name: 'Pirouette Pia',
-			title: 'The ice skater',
+			name: 'Ice Skater',
 			fact: 'Can do a perfect pirouette. Stopping is still a work in progress.'
 		},
 		cold: {
-			name: 'Cocoa Kurt',
-			title: 'Wrapped up warm',
+			name: 'Cocoa Sipper',
 			fact: 'Wears three scarves and holds his cocoa with both paws. Still calls it fresh out.'
 		},
 		flower: {
-			name: 'Blossom Bella',
-			title: 'The flower sniffer',
+			name: 'Flower Sniffer',
 			fact: 'Stops to smell every flower on the way to the shop. The shop is shut by the time she gets there.'
 		},
 		tennis: {
-			name: 'Topspin Tom',
-			title: 'The tennis ace',
+			name: 'Tennis Ace',
 			fact: 'Calls every ball out, his own included.'
 		},
 		garden: {
-			name: 'Green-Paw Gerti',
-			title: 'The gardener',
+			name: 'Gardener',
 			fact: 'Grows tomatoes, courgettes and, by accident, a pumpkin the size of the shed.'
 		},
 		butterfly: {
-			name: 'Butterfly-Net Burgi',
-			title: 'The butterfly chaser',
+			name: 'Butterfly Chaser',
 			fact: 'Has chased butterflies for three summers. The butterflies are winning.'
 		},
 		fishing: {
-			name: 'Fisherman Ferdl',
-			title: 'The patient angler',
+			name: 'Patient Angler',
 			fact: 'Has been waiting for a bite since Tuesday. Brought enough sandwiches for the week.'
 		},
 		sweets: {
-			name: 'Sweet-Tooth Susi',
-			title: 'The sweet tooth',
+			name: 'Sweet Tooth',
 			fact: 'Keeps an emergency chocolate in every pocket. Has never once had an emergency.'
 		},
 		trash: {
-			name: 'Bin-Diver Bertl',
-			title: 'The bin inspector',
+			name: 'Bin Inspector',
 			fact: 'Checks every bin on the street, purely for quality control.'
 		},
 		beach: {
-			name: 'Beach-Towel Bianca',
-			title: 'The sunbather',
+			name: 'Sunbather',
 			fact: 'Puts her towel down at seven in the morning. Has not moved since.'
 		},
 		'water-pistol': {
-			name: 'Squirt-Gun Gustl',
-			title: 'The water-fight starter',
+			name: 'Water-Fight Starter',
 			fact: 'Swears he only fills it up to water the plants.'
 		},
 		'summer-garden': {
-			name: 'Straw-Hat Heidi',
-			title: 'The summer gardener',
+			name: 'Summer Gardener',
 			fact: 'Waters the garden at dawn and herself at noon.'
 		},
 		lemonade: {
-			name: 'Lemonade Leni',
-			title: 'The lemonade maker',
+			name: 'Lemonade Maker',
 			fact: 'Squeezes the lemons herself and the sugar in by the handful.'
 		},
 		coffee: {
-			name: 'Espresso Ernst',
-			title: 'The early riser',
+			name: 'Early Riser',
 			fact: 'Not a morning raccoon. Is one after the first cup.'
 		},
 		laptop: {
-			name: 'Laptop Lotte',
-			title: 'The home-office hero',
+			name: 'Home-Office Hero',
 			fact: 'Was on mute for the whole meeting. Nobody has noticed yet.'
 		},
 		fruit: {
-			name: 'Fruity Franzi',
-			title: 'The vitamin fan',
+			name: 'Vitamin Fan',
 			fact: 'Eats an apple a day, plus the pear, plus the grapes, just in case.'
 		},
 		juggling: {
-			name: 'Juggling Jakob',
-			title: 'The juggler',
+			name: 'Juggler',
 			fact: 'Keeps three balls in the air. Four on a good day, two near the vase.'
 		},
 		bath: {
-			name: 'Bubbles Burgi',
-			title: 'The bubble bather',
+			name: 'Bubble Bather',
 			fact: 'Fills the Schaffel to the top, then adds more bubbles. The duck has stopped complaining.'
 		},
 		mushrooms: {
-			name: 'Schwammerl Sepp',
-			title: 'The mushroom picker',
+			name: 'Mushroom Picker',
 			fact: 'Knows every mushroom in the forest. The red one with the dots goes back, he promises.'
 		},
 		tea: {
-			name: 'Teacup Theo',
-			title: 'The tea brewer',
+			name: 'Tea Brewer',
 			fact: 'Has a tea for every mood and a mood for every tea.'
 		},
 		knitting: {
-			name: 'Knit-One Klara',
-			title: 'The scarf maker',
+			name: 'Scarf Maker',
 			fact: 'Started a scarf in October. It is four metres long now and still going.'
 		},
 		handball: {
-			name: 'Handball Hias',
-			title: 'The team captain',
+			name: 'Team Captain',
 			fact: 'Plays in every weather. Has never once admitted it was raining.'
 		},
 		valentines: {
-			name: 'Sweetheart Hansi',
-			title: 'The Valentine',
+			name: 'Valentine',
 			fact: 'Leaves little hearts on the fridge. Also leaves the fridge open.'
 		},
 		fasching: {
-			name: 'Pirate Poldi',
-			title: 'The Fasching pirate',
+			name: 'Fasching Pirate',
 			fact: 'Comes as a pirate every year. Is still looking for the treasure from last time.'
 		},
 		easter: {
-			name: 'Egg-Hunt Elfi',
-			title: 'The Easter egg hider',
+			name: 'Easter Egg Hider',
 			fact: 'Hides the eggs so well that one from last year is still out there.'
 		},
 		halloween: {
-			name: 'Spooky Schurli',
-			title: 'The pumpkin carver',
+			name: 'Pumpkin Carver',
 			fact: 'Carves the scariest pumpkin on the street, then is a little scared of it.'
 		},
 		christmas: {
-			name: 'Cookie Christl',
-			title: 'The Christmas baker',
+			name: 'Christmas Baker',
 			fact: 'Bakes eleven kinds of Christmas biscuits and tests every tray. Thoroughly.'
 		},
 		'new-year': {
-			name: 'Midnight Manni',
-			title: 'The countdown keeper',
+			name: 'Countdown Keeper',
 			fact: 'Starts the countdown at eleven, just to be on the safe side.'
 		},
 		birthday: {
-			name: 'Party-Hat Pepi',
-			title: 'Your birthday raccoon',
+			name: 'Birthday Raccoon',
 			fact: 'Only comes out once a year, and only for you. Brought cake.'
 		}
-	} satisfies Record<AlbumName, { name: string; title: string; fact: string }>,
+	} satisfies Record<AlbumName, { name: string; fact: string }>,
 
 	/* ── The holiday pause (→ SPEC §5.5), in [4c] and [6a] ─────────────────── */
 	away: {
