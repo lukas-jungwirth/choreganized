@@ -8,6 +8,7 @@ import { eq } from 'drizzle-orm';
 import { describe, it } from 'vitest';
 import { leaveHousehold } from '$lib/server/services/household';
 import {
+	albumSummary,
 	countSightings,
 	listSightings,
 	markSightingsNoticed,
@@ -17,6 +18,83 @@ import { ALBUM_SIZE } from '$lib/utils/raccoon-album';
 import { db, makeHousehold, tables } from '../helpers/db';
 
 const TODAY = '2036-06-18';
+
+describe('albumSummary', () => {
+	it('puts the raccoon just met on Home in front, waiting to be looked at', () => {
+		const { householdId, owner } = makeHousehold();
+		recordSighting(householdId, owner.id, 'beach', TODAY, `${TODAY}#1`);
+
+		const album = albumSummary(householdId, owner.id);
+		assert.equal(album.found, 1);
+		assert.equal(album.total, ALBUM_SIZE);
+		assert.equal(album.latest, 'beach');
+		assert.deepEqual(album.unseen, ['beach']);
+	});
+
+	it('lists what is waiting newest first, even within one day', () => {
+		const { householdId, owner } = makeHousehold();
+		recordSighting(householdId, owner.id, 'beach', TODAY, `${TODAY}#0`);
+		recordSighting(householdId, owner.id, 'fishing', TODAY, `${TODAY}#1`);
+		recordSighting(householdId, owner.id, 'tea', TODAY, `${TODAY}#2`);
+
+		const album = albumSummary(householdId, owner.id);
+		assert.deepEqual(album.unseen, ['tea', 'fishing', 'beach']);
+		assert.equal(album.latest, 'tea');
+	});
+
+	it('keeps waiting across later sightings, until the album has been opened', () => {
+		const { householdId, owner } = makeHousehold();
+		recordSighting(householdId, owner.id, 'beach', TODAY, `${TODAY}#1`);
+		recordSighting(householdId, owner.id, 'beach', '2036-06-19', '2036-06-19#1');
+		assert.deepEqual(albumSummary(householdId, owner.id).unseen, ['beach']);
+
+		markSightingsNoticed(householdId, owner.id);
+
+		const album = albumSummary(householdId, owner.id);
+		assert.deepEqual(album.unseen, []);
+		assert.equal(album.latest, 'beach');
+	});
+
+	it("is the member's own", () => {
+		const { householdId, owner, members } = makeHousehold({ housemates: ['Mia'] });
+		recordSighting(householdId, owner.id, 'beach', TODAY, `${TODAY}#1`);
+
+		const theirs = albumSummary(householdId, members[1].id);
+		assert.equal(theirs.found, 0);
+		assert.equal(theirs.latest, null);
+		assert.deepEqual(theirs.unseen, []);
+	});
+
+	it('counts the rare and legendary ones still out there', () => {
+		const { householdId, owner } = makeHousehold();
+		const before = albumSummary(householdId, owner.id);
+		assert.ok(before.legendary > 0);
+
+		recordSighting(householdId, owner.id, 'christmas', TODAY, `${TODAY}#1`);
+
+		const after = albumSummary(householdId, owner.id);
+		assert.equal(after.legendary, before.legendary - 1);
+		assert.equal(after.rare, before.rare);
+	});
+
+	it('leaves a raccoon retired from the album off the card', () => {
+		const { householdId, owner } = makeHousehold();
+		recordSighting(householdId, owner.id, 'beach', TODAY, `${TODAY}#1`);
+		db.insert(tables.raccoonSightings)
+			.values({
+				householdId,
+				memberId: owner.id,
+				raccoon: 'retired-pose',
+				firstSeenOn: TODAY,
+				lastSlot: `${TODAY}#2`
+			})
+			.run();
+
+		const album = albumSummary(householdId, owner.id);
+		assert.equal(album.latest, 'beach');
+		assert.deepEqual(album.unseen, ['beach']);
+	});
+});
 
 describe('recordSighting', () => {
 	it('is new the first time, and counts the slot it fell in', () => {

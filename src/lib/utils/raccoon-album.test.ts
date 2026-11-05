@@ -11,6 +11,7 @@ import {
 	ALBUM_SIZE,
 	albumEntry,
 	albumNumber,
+	behindFront,
 	cardView,
 	filterAlbum,
 	frameFill,
@@ -190,6 +191,34 @@ describe('numbering', () => {
 		);
 		assert.equal(albumNumber(9), '009');
 		assert.equal(albumNumber(39), '039');
+	});
+});
+
+describe('behindFront', () => {
+	const names = ALBUM_ENTRIES.map((entry) => entry.name);
+
+	it('takes the first two still unmet, so they hold still until you meet one', () => {
+		const [first, second, third] = names;
+		assert.deepEqual(behindFront([], null), [first, second]);
+		assert.deepEqual(behindFront([first], first), [second, third]);
+		assert.deepEqual(behindFront([third], third), [first, second]);
+	});
+
+	it('never puts the front card behind itself', () => {
+		const front = names[0];
+		assert.ok(!behindFront(names.slice(0, 5), front).includes(front));
+	});
+
+	it('keeps two when one is left to find, and when the album is full', () => {
+		const last = names[names.length - 1];
+		const allButLast = names.slice(0, -1);
+		const nearly = behindFront(allButLast, names[0]);
+		assert.equal(nearly.length, 2);
+		assert.equal(nearly[0], last);
+
+		const full = behindFront(names, last);
+		assert.equal(full.length, 2);
+		assert.ok(!full.includes(last));
 	});
 });
 

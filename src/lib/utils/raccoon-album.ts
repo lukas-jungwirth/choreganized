@@ -204,6 +204,18 @@ export function albumEntry(name: AlbumName): AlbumEntry {
 }
 
 /** "009" — a number in the album, three places so the grid lines up. */
+/**
+ * The two silhouettes behind Home's front card (→ `home/AlbumCard`): raccoons
+ * still to find, in album order, so they hold still until you meet one. A full
+ * album has none left, and keeps two of its own: the deck looks wrong without.
+ */
+export function behindFront(met: readonly AlbumName[], front: AlbumName | null): AlbumName[] {
+	const names = ALBUM_ENTRIES.map((entry) => entry.name);
+	const unmet = names.filter((name) => !met.includes(name));
+	const rest = names.filter((name) => met.includes(name) && name !== front);
+	return [...unmet, ...rest].filter((name) => name !== front).slice(0, 2);
+}
+
 export function albumNumber(number: number): string {
 	return String(number).padStart(3, '0');
 }

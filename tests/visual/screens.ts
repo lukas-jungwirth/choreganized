@@ -60,7 +60,7 @@ export async function freshAccount(page: Page): Promise<void> {
  * A new member's first look is always the welcome raccoon (→ DECISIONS #238),
  * so the shot is the same every run.
  */
-export async function newRaccoonToast(page: Page): Promise<void> {
+export async function newRaccoonCard(page: Page): Promise<void> {
 	await freshAccount(page);
 	await page.goto('/onboarding/create');
 	await page.getByLabel('Household name').fill('Waschbärweg 1');
@@ -68,7 +68,7 @@ export async function newRaccoonToast(page: Page): Promise<void> {
 	await page.getByRole('button', { name: 'Continue' }).click();
 	await page.waitForURL(/\/onboarding\/invite$/);
 	await page.goto('/home');
-	await page.getByRole('status').filter({ hasText: 'Welcome Committee' }).waitFor();
+	await page.getByRole('link', { name: /New raccoon!/ }).waitFor();
 }
 
 /** [9b] with an amount and a description typed, as it looks just before Save. */
@@ -259,7 +259,7 @@ export const SCREENS: Screen[] = [
 			await page.getByRole('dialog', { name: 'Raccoon album' }).getByText('Not met yet').waitFor();
 		}
 	},
-	{ name: 'home-new-raccoon', route: '/(app)/home', path: '', navigate: newRaccoonToast },
+	{ name: 'home-new-raccoon', route: '/(app)/home', path: '', navigate: newRaccoonCard },
 	// Every count on the page depends on which other specs ran first, so the
 	// numbers and the one row left (→ `openAdmin`) are masked; what's guarded
 	// is the layout around them.

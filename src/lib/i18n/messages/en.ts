@@ -2525,6 +2525,7 @@ export const en = {
 		title: 'Raccoon album',
 		subtitle: 'Every raccoon you’ve met on Home.',
 		back: 'Back to Settings',
+		backHome: 'Back to Home',
 		/** The Settings row's value and the progress card: "17 of 39". */
 		count: (found: number, total: number) => `${found} of ${total}`,
 		found: (found: number, total: number) => `${found} of ${total} found`,
@@ -2602,12 +2603,24 @@ export const en = {
 		previous: 'Previous raccoon',
 		next: 'Next raccoon',
 		close: 'Close',
-		/** Home's toast when a raccoon joins the album. */
-		toast: {
-			title: 'New raccoon!',
-			detail: (name: string, found: number, total: number) =>
-				`${name} is in your album · ${found} of ${total}`,
-			view: 'View'
+		/** Home's album card, while raccoons wait to be looked at. */
+		home: {
+			/** One new one, by its rarity. A common one doesn't say so. */
+			rarity: { 1: 'New raccoon!', 2: 'Rare raccoon!', 3: 'Legendary raccoon!' } as Record<
+				1 | 2 | 3,
+				string
+			>,
+			several: 'New raccoons!',
+			inAlbum: (count: number) => `${count} in your album`,
+			newCount: (count: number) => `${count} new`,
+			names: (names: string[], found: number, total: number) => {
+				const [first, second] = names;
+				const who =
+					names.length === 2
+						? `${first} and ${second}`
+						: `${first}, ${second} and ${names.length - 2} more`;
+				return `${who} · ${found} of ${total}`;
+			}
 		}
 	},
 

@@ -46,7 +46,7 @@ setup('sign up the test accounts and seed their households', async ({ baseURL })
 		expect((await api.get('/home')).ok()).toBe(true);
 		withTimezone(account.email, SEED_TIMEZONE);
 		// Meet today's Home raccoon once and open the album once (→ plan 35), so
-		// the "New raccoon!" toast and the "New" badges are behind both accounts
+		// the album card's "New raccoon!" and the "New" badges are behind both accounts
 		// before any journey or screenshot: the first look is the only one that
 		// differs, and which test got it would depend on the order they ran in.
 		expect((await api.get('/home')).ok()).toBe(true);

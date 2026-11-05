@@ -238,6 +238,8 @@
 	--on-new-badge: light-dark(#ffffff, #12100d);
 	/* A raccoon you haven't met: its shape only, a shadow on the sunken tile. */
 	--silhouette: light-dark(rgba(34, 32, 28, 0.1), rgba(0, 0, 0, 0.45));
+	/* The same on Home's deck, a card on a card: at night a shadow would vanish, so it lifts. */
+	--silhouette-back: light-dark(rgba(34, 32, 28, 0.14), rgba(239, 233, 222, 0.13));
 
 	/* ── Typography ───────────────────────────────────────────── */
 	--font-display: 'Fraunces Variable', serif; /* headings, numbers, wordmark */

@@ -1,8 +1,8 @@
 <!--
 	The raccoon album (→ plan 35, sketch frame 1): every raccoon Home can show,
 	the ones you've met in colour, the rest as silhouettes. A tap opens its card;
-	`?card=<name>` opens one straight away (Home's "New raccoon!" toast links
-	here that way).
+	`?card=<name>` opens one straight away, and `?from=home` makes the back button
+	go to Home (Home's album card links here with both).
 
 	No design frame: built to `design/sketches/raccoon-album.html`, which Lukas
 	approved on 2026-11-03.
@@ -49,6 +49,9 @@
 		open = ALBUM_ENTRIES.indexOf(entry);
 	}
 
+	/** Came from Home's album card, so that's where back leads. */
+	const fromHome = page.url.searchParams.get('from') === 'home';
+
 	/** Opened by `?card=`, which comes off the address once it is shut. */
 	let fromLink = false;
 
@@ -65,7 +68,8 @@
 		open = null;
 		// A card opened from Home's link stays shut on a reload. (A shallow
 		// `replaceState` leaves `page.url` as it was, so it can't be asked.)
-		if (fromLink) replaceState('/settings/raccoons', {});
+		if (fromLink)
+			replaceState(fromHome ? '/settings/raccoons?from=home' : '/settings/raccoons', {});
 		fromLink = false;
 	}
 </script>
@@ -77,8 +81,8 @@
 <SubHeader
 	title={m.album.title}
 	subtitle={m.album.subtitle}
-	back="/settings"
-	backLabel={m.album.back}
+	back={fromHome ? '/home' : '/settings'}
+	backLabel={fromHome ? m.album.backHome : m.album.back}
 />
 
 <AlbumProgress found={met.size} total={ALBUM_SIZE} rare={missingOf(2)} legendary={missingOf(3)} />
