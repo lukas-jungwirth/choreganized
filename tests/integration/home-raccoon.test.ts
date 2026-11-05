@@ -8,8 +8,9 @@ import assert from 'node:assert/strict';
 import { afterEach, beforeEach, describe, it, vi } from 'vitest';
 import { listMembers } from '$lib/server/services/household';
 import { getHomeSummary } from '$lib/server/services/home';
-import { recordSighting } from '$lib/server/services/raccoons';
-import { everydayRaccoon, WELCOME_RACCOON } from '$lib/utils/raccoon';
+import { listSightings, recordSighting } from '$lib/server/services/raccoons';
+import { addDays } from '$lib/utils/dates';
+import { everydayRaccoon, MIDNIGHT_RACCOON, WELCOME_RACCOON } from '$lib/utils/raccoon';
 import { makeHousehold } from '../helpers/db';
 
 const TODAY = '2036-06-18';
@@ -85,5 +86,38 @@ describe("a member's first visit", () => {
 		const [me] = members;
 		recordSighting(householdId, me.id, 'sleeping', '2036-06-17', '2036-06-17#n');
 		assert.equal(home(me).raccoon, everydayRaccoon(TODAY, 14, me.id));
+	});
+});
+
+describe('after midnight', () => {
+	it('is the midnight raccoon on some of a member’s nights, and it goes in their album', () => {
+		const { householdId, members } = household();
+		const [me] = members;
+		recordSighting(householdId, me.id, 'reading', TODAY, `${TODAY}#0`);
+
+		const shown: string[] = [];
+		let first: string | null = null;
+		for (let night = 0; night < 30; night++) {
+			const today = addDays('2036-07-01', night);
+			at(`${addDays(today, -1)}T22:30:00Z`); // 00:30 in Vienna
+			const summary = getHomeSummary(householdId, {
+				timezone: 'Europe/Vienna',
+				today,
+				members: listMembers(householdId),
+				overdue: [],
+				member: me
+			});
+			shown.push(summary.raccoon);
+			if (summary.raccoon === MIDNIGHT_RACCOON && !first) {
+				first = today;
+				recordSighting(householdId, me.id, summary.raccoon, today, summary.slot);
+				assert.ok(
+					listSightings(householdId, me.id).some((seen) => seen.raccoon === MIDNIGHT_RACCOON)
+				);
+			}
+		}
+		assert.ok(first, 'met it within a month of late nights');
+		assert.ok(shown.includes('sleeping'), 'and not every night');
+		assert.deepEqual([...new Set(shown)].sort(), [MIDNIGHT_RACCOON, 'sleeping'].sort());
 	});
 });

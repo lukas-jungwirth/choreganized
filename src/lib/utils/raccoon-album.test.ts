@@ -30,18 +30,28 @@ describe('tier', () => {
 			'reading',
 			'tennis',
 			'laptop',
+			'socks',
 			'reminder-upcoming',
 			'reminder-overdue'
 		] as const)
 			assert.equal(albumEntry(name).tier, 1, name);
 	});
 
-	it('is Rare in between: a season or two, coffee in the mornings, sleeping at night', () => {
-		for (const name of ['snowman', 'tea', 'garden', 'mushrooms', 'coffee', 'sleeping'] as const)
+	it('is Rare in between: a season or two, one slot, one weekday, sleeping at night', () => {
+		for (const name of [
+			'snowman',
+			'tea',
+			'garden',
+			'mushrooms',
+			'coffee',
+			'snooze',
+			'friday',
+			'sleeping'
+		] as const)
 			assert.equal(albumEntry(name).tier, 2, name);
 	});
 
-	it('is Legendary under 3%: the special days and your birthday', () => {
+	it('is Legendary under 3%: the special days, your birthday and the midnight raccoon', () => {
 		for (const name of [
 			'christmas',
 			'new-year',
@@ -49,7 +59,8 @@ describe('tier', () => {
 			'fasching',
 			'halloween',
 			'valentines',
-			'birthday'
+			'birthday',
+			'midnight'
 		] as const)
 			assert.equal(albumEntry(name).tier, 3, name);
 	});
@@ -63,6 +74,10 @@ describe('tier', () => {
 		close(albumEntry('laptop').availability, (5 / 7) * (17 / 24));
 		close(albumEntry('coffee').availability, 6 / 24);
 		close(albumEntry('sleeping').availability, 7 / 24);
+		// Two hours, on one night in three.
+		close(albumEntry('midnight').availability, (2 / 24) * (1 / 3));
+		// A weight is odds, not time: Friday is one day in seven whatever its odds.
+		close(albumEntry('friday').availability, (1 / 7) * (17 / 24));
 		close(albumEntry('christmas').availability, 2 / 365);
 		close(albumEntry('reminder-overdue').availability, 1);
 	});
@@ -83,6 +98,8 @@ describe('rule', () => {
 			slots: null
 		});
 		assert.deepEqual(albumEntry('sleeping').rule, { days: null, slots: ['night'] });
+		assert.deepEqual(albumEntry('midnight').rule, { days: null, slots: ['midnight'] });
+		assert.deepEqual(albumEntry('friday').rule, { days: ['fri'], slots: null });
 		assert.equal(albumEntry('reading').rule, null);
 		assert.equal(albumEntry('christmas').rule, null);
 	});
@@ -100,6 +117,8 @@ describe('rule', () => {
 		assert.equal(en.album.rule(['mon', 'wed'], null), 'Mon and Wed');
 		assert.equal(en.album.rule(null, ['morning']), 'Mornings');
 		assert.equal(de.album.rule(null, ['night']), 'Nachts');
+		assert.equal(en.album.rule(null, ['midnight']), 'After midnight');
+		assert.equal(de.album.rule(null, ['midnight']), 'Nach Mitternacht');
 		assert.equal(
 			en.album.rule(workdays, ['morning', 'evening']),
 			'Mon – Fri, mornings and evenings'

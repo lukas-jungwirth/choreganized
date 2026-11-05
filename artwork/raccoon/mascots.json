@@ -92,6 +92,13 @@
 			"stats": { "cosiness": 5, "mischief": 1, "snacks": 4, "helpfulness": 1 }
 		},
 		{
+			"name": "midnight",
+			"height": 408,
+			"perched": true,
+			"album": 51,
+			"stats": { "cosiness": 4, "mischief": 5, "snacks": 5, "helpfulness": 1 }
+		},
+		{
 			"name": "welcome-a",
 			"height": 408,
 			"perched": true,
@@ -422,6 +429,34 @@
 			"seasons": ["autumn"],
 			"album": 49,
 			"stats": { "cosiness": 3, "mischief": 2, "snacks": 5, "helpfulness": 3 }
+		},
+		{
+			"name": "friday",
+			"height": 408,
+			"perched": true,
+			"seasons": ["winter", "spring", "summer", "autumn"],
+			"days": ["fri"],
+			"weight": 3,
+			"album": 50,
+			"stats": { "cosiness": 3, "mischief": 4, "snacks": 2, "helpfulness": 1 }
+		},
+		{
+			"name": "snooze",
+			"height": 408,
+			"perched": true,
+			"body": 0.52,
+			"seasons": ["winter", "spring", "summer", "autumn"],
+			"slots": ["morning"],
+			"album": 52,
+			"stats": { "cosiness": 5, "mischief": 2, "snacks": 1, "helpfulness": 1 }
+		},
+		{
+			"name": "socks",
+			"height": 408,
+			"perched": true,
+			"seasons": ["winter", "spring", "summer", "autumn"],
+			"album": 53,
+			"stats": { "cosiness": 2, "mischief": 1, "snacks": 1, "helpfulness": 4 }
 		},
 		{
 			"name": "settings",

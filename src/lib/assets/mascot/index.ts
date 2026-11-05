@@ -14,6 +14,7 @@ import fasching from './fasching.avif';
 import halloween from './halloween.avif';
 import valentines from './valentines.avif';
 import sleeping from './sleeping.avif';
+import midnight from './midnight.avif';
 import welcomeA from './welcome-a.avif';
 import beach from './beach.avif';
 import flower from './flower.avif';
@@ -53,6 +54,9 @@ import fruit from './fruit.avif';
 import juggling from './juggling.avif';
 import bath from './bath.avif';
 import mushrooms from './mushrooms.avif';
+import friday from './friday.avif';
+import snooze from './snooze.avif';
+import socks from './socks.avif';
 import settings from './settings.avif';
 import moveOut from './move-out.avif';
 
@@ -76,6 +80,7 @@ export const MASCOTS = {
 	halloween: { src: halloween, width: 388, height: 408, body: 0.53 },
 	valentines: { src: valentines, width: 384, height: 408, body: 0.5 },
 	sleeping: { src: sleeping, width: 426, height: 408, body: 0.56 },
+	midnight: { src: midnight, width: 335, height: 408, body: 0.53 },
 	'welcome-a': { src: welcomeA, width: 488, height: 408, body: 0.39 },
 	beach: { src: beach, width: 370, height: 408, body: 0.53 },
 	flower: { src: flower, width: 315, height: 408, body: 0.47 },
@@ -115,6 +120,9 @@ export const MASCOTS = {
 	juggling: { src: juggling, width: 362, height: 408, body: 0.5 },
 	bath: { src: bath, width: 389, height: 408, body: 0.52 },
 	mushrooms: { src: mushrooms, width: 311, height: 408, body: 0.52 },
+	friday: { src: friday, width: 517, height: 408, body: 0.43 },
+	snooze: { src: snooze, width: 315, height: 408, body: 0.52 },
+	socks: { src: socks, width: 383, height: 408, body: 0.53 },
 	settings: { src: settings, width: 320, height: 360, body: 0.53 },
 	'move-out': { src: moveOut, width: 320, height: 312, body: 0.6 }
 } as const;

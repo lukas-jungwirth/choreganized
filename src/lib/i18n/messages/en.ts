@@ -2568,12 +2568,16 @@ export const en = {
 		 * After the window, when a raccoon keeps to some days or hours: "Mon – Fri",
 		 * "Weekends", "Fridays", "Mornings", "Mon – Fri, mornings".
 		 */
-		rule: (days: readonly Weekday[] | null, slots: readonly (DaySlot | 'night')[] | null) => {
+		rule: (
+			days: readonly Weekday[] | null,
+			slots: readonly (DaySlot | 'night' | 'midnight')[] | null
+		) => {
 			const SLOTS = {
 				morning: 'mornings',
 				afternoon: 'afternoons',
 				evening: 'evenings',
-				night: 'nights'
+				night: 'nights',
+				midnight: 'after midnight'
 			};
 			const when = slots ? list(slots.map((slot) => SLOTS[slot])) : null;
 			const on = days
@@ -2770,6 +2774,22 @@ export const en = {
 		laptop: {
 			name: 'Home-Office Hero',
 			fact: 'Was on mute for the whole meeting. Nobody has noticed yet.'
+		},
+		friday: {
+			name: 'Friday Freedom',
+			fact: 'Filed everything under Monday.'
+		},
+		midnight: {
+			name: 'Midnight Crumb',
+			fact: 'Just one more. That was four cookies ago.'
+		},
+		snooze: {
+			name: 'Snooze Button',
+			fact: 'Treats 07:00 as more of a suggestion.'
+		},
+		socks: {
+			name: 'Sock Detective',
+			fact: 'Never closed a case. The washing machine is still the prime suspect.'
 		},
 		fruit: {
 			name: 'Vitamin Fan',

@@ -14,6 +14,8 @@ export const EVERYDAY: ReadonlyArray<{
 	days?: readonly Weekday[];
 	/** Only in these of Home's slots; all three when left out. */
 	slots?: readonly DaySlot[];
+	/** Its odds in the draw where it is allowed, against 1 for the others. */
+	weight?: number;
 }> = [
 	{ name: 'welcome-a', seasons: ['winter', 'spring', 'summer', 'autumn'], lookAlike: 'greeting' },
 	{ name: 'beach', seasons: ['summer'], lookAlike: null },
@@ -63,7 +65,21 @@ export const EVERYDAY: ReadonlyArray<{
 	{ name: 'fruit', seasons: ['winter', 'spring', 'summer', 'autumn'], lookAlike: null },
 	{ name: 'juggling', seasons: ['winter', 'spring', 'summer', 'autumn'], lookAlike: null },
 	{ name: 'bath', seasons: ['winter', 'spring', 'summer', 'autumn'], lookAlike: null },
-	{ name: 'mushrooms', seasons: ['autumn'], lookAlike: null }
+	{ name: 'mushrooms', seasons: ['autumn'], lookAlike: null },
+	{
+		name: 'friday',
+		seasons: ['winter', 'spring', 'summer', 'autumn'],
+		lookAlike: null,
+		days: ['fri'],
+		weight: 3
+	},
+	{
+		name: 'snooze',
+		seasons: ['winter', 'spring', 'summer', 'autumn'],
+		lookAlike: null,
+		slots: ['morning']
+	},
+	{ name: 'socks', seasons: ['winter', 'spring', 'summer', 'autumn'], lookAlike: null }
 ];
 
 /** The raccoons that sit on a card's top edge, so must be cut flat at the waist. */
@@ -78,6 +94,7 @@ export const PERCHED: readonly MascotName[] = [
 	'halloween',
 	'valentines',
 	'sleeping',
+	'midnight',
 	'welcome-a',
 	'beach',
 	'flower',
@@ -117,6 +134,9 @@ export const PERCHED: readonly MascotName[] = [
 	'juggling',
 	'bath',
 	'mushrooms',
+	'friday',
+	'snooze',
+	'socks',
 	'settings',
 	'move-out'
 ];

@@ -2014,12 +2014,16 @@ export const de: Messages = {
 			birthday: 'Dein Geburtstag'
 		},
 		/** „Mo – Fr“, „Am Wochenende“, „Freitags“, „Morgens“, „Mo – Fr, morgens“. */
-		rule: (days: readonly Weekday[] | null, slots: readonly (DaySlot | 'night')[] | null) => {
+		rule: (
+			days: readonly Weekday[] | null,
+			slots: readonly (DaySlot | 'night' | 'midnight')[] | null
+		) => {
 			const SLOTS = {
 				morning: 'morgens',
 				afternoon: 'nachmittags',
 				evening: 'abends',
-				night: 'nachts'
+				night: 'nachts',
+				midnight: 'nach Mitternacht'
 			};
 			const when = slots ? list(slots.map((slot) => SLOTS[slot])) : null;
 			const on = days
@@ -2214,6 +2218,22 @@ export const de: Messages = {
 		laptop: {
 			name: 'Homeoffice-Heldin',
 			fact: 'War das ganze Meeting lang stummgeschaltet. Bemerkt hat es noch niemand.'
+		},
+		friday: {
+			name: 'Freitags-Feierabend',
+			fact: 'Hat alles unter Montag abgelegt.'
+		},
+		midnight: {
+			name: 'Mitternachts-Krümel',
+			fact: 'Nur noch einer. Das war vor vier Keksen.'
+		},
+		snooze: {
+			name: 'Schlummertaste',
+			fact: 'Sieht 07:00 eher als Vorschlag.'
+		},
+		socks: {
+			name: 'Socken-Detektivin',
+			fact: 'Noch keinen Fall gelöst. Hauptverdächtig bleibt die Waschmaschine.'
 		},
 		fruit: {
 			name: 'Vitaminfreundin',

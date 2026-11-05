@@ -12,7 +12,9 @@
  *   the year or more, Legendary under 3%, Rare in between. So an all-year pose
  *   (17 awake hours a day) and the laptop (workdays) are Common; a pose of one
  *   or two seasons, coffee (mornings) and sleeping (nights) are Rare; a special
- *   day or your birthday is Legendary.
+ *   day, your birthday and the midnight raccoon (two hours, one night in three)
+ *   are Legendary. A pose's `weight` doesn't count: it makes a raccoon easier to
+ *   meet when it is around, not around for longer.
  * - **Window**, the card's chip: when you can meet it, the season or the days
  *   of the year, and its **rule**, if it keeps to some weekdays or hours.
  * - **Frame**, the card's colour: the season's, a blend of several, sage for
@@ -21,7 +23,14 @@
 import { ALBUM, type AlbumName, type Stat } from '$lib/assets/mascot/album';
 import { EVERYDAY, type DaySlot, type Season, type Weekday } from '$lib/assets/mascot/everyday';
 import { addDays } from './dates.ts';
-import { DAY_SLOTS, SEASON_OF_MONTH, SLOT_HOURS, SPECIAL_DAYS, WEEKDAYS } from './raccoon.ts';
+import {
+	DAY_SLOTS,
+	MIDNIGHT_CHANCE,
+	SEASON_OF_MONTH,
+	SLOT_HOURS,
+	SPECIAL_DAYS,
+	WEEKDAYS
+} from './raccoon.ts';
 
 /** ★ Common, ★★ Rare, ★★★ Legendary. */
 export type Tier = 1 | 2 | 3;
@@ -51,11 +60,12 @@ export type Window =
 
 /**
  * When in the week and the day it keeps to, on top of its window: some
- * weekdays, some of Home's slots or the night. Null fields mean all of them.
+ * weekdays, some of Home's slots, the night or the hours after midnight. Null
+ * fields mean all of them.
  */
 export type Rule = {
 	days: readonly Weekday[] | null;
-	slots: readonly (DaySlot | 'night')[] | null;
+	slots: readonly (DaySlot | 'night' | 'midnight')[] | null;
 };
 
 export type Frame = { kind: 'any' } | { kind: 'seasons'; seasons: Season[] } | { kind: 'holo' };
@@ -163,6 +173,13 @@ function describe({ name, number, stats }: (typeof ALBUM)[number]): AlbumEntry {
 	if (name === 'sleeping') {
 		const rule: Rule = { days: null, slots: ['night'] };
 		const availability = SLOT_HOURS.night / 24;
+		return { ...entry, ...allYear, rule, availability, tier: tierOf(availability) };
+	}
+
+	// In the kitchen from 00:00 to 02:00, on one night in three.
+	if (name === 'midnight') {
+		const rule: Rule = { days: null, slots: ['midnight'] };
+		const availability = (SLOT_HOURS.midnight / 24) * MIDNIGHT_CHANCE;
 		return { ...entry, ...allYear, rule, availability, tier: tierOf(availability) };
 	}
 

@@ -3499,7 +3499,25 @@ units | null, name}`, written back as editor lines in the reader's unit spelling
      on the light and the dark card, where it reads as sky, not a smudge. The AVIF grows from
      28 to 36 KB. No test: the picture changes, nothing the app does.
 
-243. **The raccoon album gets a card on Home, and the toast goes** (Lukas 2026-11-05). The album
+243. **Odds for raccoons with a narrow window, and a raccoon after midnight** (Lukas 2026-11-05).
+     A pose kept to one weekday joined the draw with ordinary odds, so it had a seventh of the
+     chances: someone opening Home once a day needed 20 Fridays for an even chance and 15 months
+     for 90%. So an everyday pose can have a **`weight`** in `mascots.json` (a whole number from 2;
+     the rest count 1), which multiplies its odds where it is allowed. One day a week gets 3, which
+     brings that to 7 Fridays and 5 months and keeps it a small surprise. By that rule a weekend
+     pose would get 2, and the laptop's five days get none. Rarity ignores it, since it is odds and
+     not time: `friday` stays ★★ Rare at 10%.
+     **The midnight raccoon** isn't a draw: the night had none. `homeRaccoon` has a new step: from
+     00:00 to 02:00, on one night in three seeded by member and date, it replaces the sleeping
+     raccoon. The chance is generous because looking at that hour is already the hard part. Its
+     share of the year counts the chance (2/24 × 1/3 = 2.8%), which makes it ★★★ Legendary; without
+     it, it would be Rare. It comes **before the chore reminder**, or someone with chores due would
+     never meet it, and the card still names the chore; birthday, special days and a first visit
+     stay above it. Daytime raccoons stay under the reminder, or chore reminders would show less.
+     Both of `raccoon.test.ts`'s season checks had limits tied to the old pool size (nobody misses a
+     pose, an evening visitor meets 95%), which a bigger pool breaks through plain luck: one left
+     over is now allowed, and the evening's floor is worked out from the pool.
+244. **The raccoon album gets a card on Home, and the toast goes** (Lukas 2026-11-05). The album
      was only reachable from Settings, and the one thing pointing at it was a toast gone after six
      seconds. Now a card sits directly under the stat tiles, always in the same place, in the
      design Lukas approved on a canvas (https://claude.ai/artifact/3urZbsREozVKNJC49naGC9); the
@@ -3525,3 +3543,10 @@ units | null, name}`, written back as editor lines in the reader's unit spelling
        is a touchstart, and a finger starting a scroll on a card this big would run the album's
        load and use up its "New".
      - The toast's link variant and `detail` line had no other user, so `ui/UndoToast` lost them.
+245. **Four more raccoons: album 53** (Lukas 2026-11-05). `friday` No. 050 (sunglasses, tossing a
+     folder; Fridays, weight 3), `midnight` No. 051 (the cookie tin; → #243), `snooze` No. 052 (a
+     hand on the 07:00 clock; mornings, `body` set by hand because the clock hides the overall
+     buttons), `socks` No. 053 (two odd socks; all year). All all-year, no look-alikes; the snooze
+     clock resembles `reminder-overdue`'s, but a reminder is never in the draw. `friday` and
+     `socks` look at their props and `snooze` carries writing, so none was mirrored. `midnight`
+     was cut 25px, the others were already flat. Adds 78 KB of AVIFs, split per pose as ever.

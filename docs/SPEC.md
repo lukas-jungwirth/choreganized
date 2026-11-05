@@ -118,6 +118,10 @@ pose, first match wins, top to bottom (`lib/utils/raccoon.ts`, by the household'
 - **Your first visit** ([DECISIONS #238](DECISIONS.md)): the waving welcome raccoon, for the
   rest of the slot you first opened Home in (so a reload doesn't swap it), then the draw. Per
   member: a housemate who joins later is welcomed too.
+- **00:00–02:00, on one night in three**: the midnight raccoon, in the kitchen with the cookie
+  tin ([DECISIONS #243](DECISIONS.md)). Each member's own nights, seeded like the draw below. It
+  comes before the reminder, or someone with chores would never meet it; the card under it still
+  names the chore. On the other nights it's the steps below as usual.
 - **A next-chore card**: the reminder pose on that card — ringing a bell while the chore is
   coming up or due today, holding an alarm clock once it's overdue.
 - **22:00–05:00**: asleep, under a starry blanket.
@@ -165,13 +169,18 @@ pose, first match wins, top to bottom (`lib/utils/raccoon.ts`, by the household'
   | juggling three balls        | all year               |           |
   | a bubble bath in a Schaffel | all year               |           |
   | a basket of mushrooms       | autumn                 |           |
+  | throwing the paperwork away | all year               | Fridays   |
+  | hitting the snooze button   | all year               | mornings  |
+  | a pair of odd socks         | all year               |           |
 
   The day has three slots — from 05:00, 11:00 and 17:00 — and each member draws their own three
   of the season's poses for the day, one per slot ([DECISIONS #232](DECISIONS.md)): at random,
   from a seed made of the member and the date, so nothing is stored and the raccoon holds still
   all slot, on every device. A pose can keep to **some days or slots** ("Only";
   [DECISIONS #237](DECISIONS.md)): coffee is only in the morning's draw, the laptop only on
-  workdays. It still has to be drawn, so it isn't there every time. A day's three are all different, and never two that look alike (the
+  workdays. It still has to be drawn, so it isn't there every time. A pose of one day a week gets
+  3× the odds on that day (`weight`; [DECISIONS #243](DECISIONS.md)), or it would take seven times
+  as long as the rest to meet: once a day, half of people would need 20 Fridays. A day's three are all different, and never two that look alike (the
   greetings, the gardening and watering poses, the hot drinks, tennis and handball, the corded
   phone and the singer, the snowball and the knitter in the same hat and scarf; coffee joins the
   hot drinks); the night's
@@ -877,12 +886,12 @@ The **History** tab is a stats landing; the full feed sits one level below it (�
 - Profile card: avatar, display name, email + **Edit**. A raccoon with a wrench sits on its top
   edge at the right, the way Home's sits on its first card; the title wraps rather than run
   under it ([DECISIONS #217](DECISIONS.md)).
-- **Raccoon album** (plan 35), a row right under the profile card with "17 of 49": every raccoon
-  Home can show (exactly `HOME_RACCOONS`: the 39 everyday poses, the 6 special days, your birthday, sleeping
-  and the two reminders; never a tab's, the sign-in head, Settings' or the leaving raccoon), and
+- **Raccoon album** (plan 35), a row right under the profile card with "17 of 53": every raccoon
+  Home can show (exactly `HOME_RACCOONS`: the 42 everyday poses, the 6 special days, your birthday, sleeping,
+  the midnight raccoon and the two reminders; never a tab's, the sign-in head, Settings' or the leaving raccoon), and
   which of them **you** have met. Per member: a housemate's album is their own.
   - `SubHeader` "Raccoon album" / "Every raccoon you've met on Home." A progress card: a ring,
-    "17 of 49 found", "5 rare · 4 legendary still to find", a plain sage bar.
+    "17 of 53 found", "5 rare · 4 legendary still to find", a plain sage bar.
   - Filters, sideways at 390px: All · ★ Common · ★★ Rare · ★★★ Legendary; a chip picks one
     rarity. (No Missing filter: dropped in [DECISIONS #237](DECISIONS.md).)
   - A grid of four, tiles 3:4, in album order: a met raccoon on its frame colour with its number
@@ -890,10 +899,11 @@ The **History** tab is a stats landing; the full feed sits one level below it (�
     silhouette and a "?", with no hint and no stars.
   - **Rarity** ([DECISIONS #237](DECISIONS.md)), worked out from how much of the year a raccoon
     can be on Home: its months × its weekdays × its hours (the 17 awake hours for a drawn pose, the
-    7 night hours for sleeping, every hour for the reminders, which come with a chore). **★
+    7 night hours for sleeping, every hour for the reminders, which come with a chore; 2 hours × 1/3 of
+    nights for the midnight raccoon). A `weight` doesn't count: it is odds, not time. **★
     Common** at 40% or more (an all-year pose, three seasons, the laptop), **★★ Rare** in between
-    (one or two seasons, coffee, sleeping), **★★★ Legendary** under 3% (the special days and your
-    birthday). **Frames** follow the window, not the rarity: sage all year, the season's colour
+    (one or two seasons, coffee, snooze, the Friday raccoon, sleeping), **★★★ Legendary** under 3%
+    (the special days, your birthday and the midnight raccoon). **Frames** follow the window, not the rarity: sage all year, the season's colour
     for one season (winter ice, spring blossom pink, summer sand, autumn rust), a blend first to
     last for several (tea: autumn → winter), holo foil for a special day; the theme changes only
     the shade.
