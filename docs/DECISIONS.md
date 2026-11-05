@@ -3517,7 +3517,33 @@ units | null, name}`, written back as editor lines in the reader's unit spelling
      Both of `raccoon.test.ts`'s season checks had limits tied to the old pool size (nobody misses a
      pose, an evening visitor meets 95%), which a bigger pool breaks through plain luck: one left
      over is now allowed, and the evening's floor is worked out from the pool.
-244. **Four more raccoons: album 53** (Lukas 2026-11-05). `friday` No. 050 (sunglasses, tossing a
+244. **The raccoon album gets a card on Home, and the toast goes** (Lukas 2026-11-05). The album
+     was only reachable from Settings, and the one thing pointing at it was a toast gone after six
+     seconds. Now a card sits directly under the stat tiles, always in the same place, in the
+     design Lukas approved on a canvas (https://claude.ai/artifact/3urZbsREozVKNJC49naGC9); the
+     Settings row stays as the second way in. Judgment calls:
+     - **Its "new" is the album's own**: `noticedAt` was already there, so a raccoon waits on the
+       card until you open the album, across reloads and days. No schema change. Several waiting
+       say so ("3 new") and open the album rather than one card.
+     - **One coloured card, silhouettes behind.** Three framed raccoons overlapping looked messy
+       (Lukas), so only the newest has colour. The two behind are the first still unmet, in album
+       order, so they hold still until you meet one, and a full album keeps two of its own: plain
+       backs looked worse (Lukas). They use `--silhouette-back`, because the album's dark-theme
+       shadow disappears on `--sunken`.
+     - **Rarity as a word in the eyebrow**, not stars and not a second badge: "Rare raccoon!",
+       "Legendary raccoon!", and plain "New raccoon!" for a common one, which would rather not be
+       told it is common. The stars stay on the album's card.
+     - **A plain sage bar**: no terracotta tail for the newest one (Lukas).
+     - **Under the tiles, not moving up when something's new**: a card that changes place can't
+       be learned. Balance and standings move down by its height, which is its cost. Rejected on
+       the canvas: a one-line strip (no more present than Settings) and a big frame-coloured card
+       (the same raccoon twice at nearly the same size, right under the header one).
+     - **Back goes where you came from**, via `?from=home`, kept when a card closes.
+     - **No data preload on the card**, not even `tap` (#231's rule for loads that write): a tap
+       is a touchstart, and a finger starting a scroll on a card this big would run the album's
+       load and use up its "New".
+     - The toast's link variant and `detail` line had no other user, so `ui/UndoToast` lost them.
+245. **Four more raccoons: album 53** (Lukas 2026-11-05). `friday` No. 050 (sunglasses, tossing a
      folder; Fridays, weight 3), `midnight` No. 051 (the cookie tin; → #243), `snooze` No. 052 (a
      hand on the 07:00 clock; mornings, `body` set by hand because the clock hides the overall
      buttons), `socks` No. 053 (two odd socks; all year). All all-year, no look-alikes; the snooze

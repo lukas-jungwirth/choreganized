@@ -5,7 +5,7 @@ import { homeBalance } from '$lib/server/services/expenses';
 import { getHousehold, listMembers } from '$lib/server/services/household';
 import { answerHolidayNotice, readHolidayAnswer } from '$lib/server/services/holidays';
 import { getHomeSummary } from '$lib/server/services/home';
-import { recordSighting } from '$lib/server/services/raccoons';
+import { albumSummary, recordSighting } from '$lib/server/services/raccoons';
 import {
 	completeTask,
 	memberStanding,
@@ -57,20 +57,17 @@ export const load: PageServerLoad = async (event) => {
 	// album doesn't number yet (the convention test's business) just isn't
 	// recorded: Home still renders.
 	const met = summary.raccoon;
-	const sighting =
-		!picked && isAlbumName(met)
-			? { name: met, ...recordSighting(householdId, member.id, met, today, summary.slot) }
-			: null;
+	if (!picked && isAlbumName(met)) {
+		recordSighting(householdId, member.id, met, today, summary.slot);
+	}
 
 	return {
 		...summary,
 		raccoon: picked ?? summary.raccoon,
 		/** The pose the date and hour chose — the picker's "back to today's raccoon". */
 		todaysRaccoon: summary.raccoon,
-		/** Set the first time this member meets this raccoon: Home's "New raccoon!" toast. */
-		newRaccoon: sighting?.isNew
-			? { name: sighting.name, found: sighting.found, total: sighting.total }
-			: null,
+		/** Home's album card, read after the sighting so a raccoon met just now is on it. */
+		album: albumSummary(householdId, member.id),
 		/** The expenses line under the stat tiles; null when square (→ SPEC §11.13). */
 		balance: homeBalance(householdId, member.id)
 	};

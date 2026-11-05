@@ -8,7 +8,7 @@ import assert from 'node:assert/strict';
 import { afterEach, beforeEach, describe, it, vi } from 'vitest';
 import { listMembers } from '$lib/server/services/household';
 import { getHomeSummary } from '$lib/server/services/home';
-import { recordSighting } from '$lib/server/services/raccoons';
+import { listSightings, recordSighting } from '$lib/server/services/raccoons';
 import { addDays } from '$lib/utils/dates';
 import { everydayRaccoon, MIDNIGHT_RACCOON, WELCOME_RACCOON } from '$lib/utils/raccoon';
 import { makeHousehold } from '../helpers/db';
@@ -110,8 +110,10 @@ describe('after midnight', () => {
 			shown.push(summary.raccoon);
 			if (summary.raccoon === MIDNIGHT_RACCOON && !first) {
 				first = today;
-				const sighting = recordSighting(householdId, me.id, summary.raccoon, today, summary.slot);
-				assert.equal(sighting.isNew, true);
+				recordSighting(householdId, me.id, summary.raccoon, today, summary.slot);
+				assert.ok(
+					listSightings(householdId, me.id).some((seen) => seen.raccoon === MIDNIGHT_RACCOON)
+				);
 			}
 		}
 		assert.ok(first, 'met it within a month of late nights');

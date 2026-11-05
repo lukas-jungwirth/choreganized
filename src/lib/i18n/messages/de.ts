@@ -1981,6 +1981,7 @@ export const de: Messages = {
 		title: 'Waschbär-Album',
 		subtitle: 'Jeder Waschbär, den du auf Home getroffen hast.',
 		back: 'Zurück zu den Einstellungen',
+		backHome: 'Zurück zu Home',
 		count: (found: number, total: number) => `${found} von ${total}`,
 		found: (found: number, total: number) => `${found} von ${total} gefunden`,
 		missing: (rare: number, legendary: number) => {
@@ -2056,11 +2057,23 @@ export const de: Messages = {
 		previous: 'Voriger Waschbär',
 		next: 'Nächster Waschbär',
 		close: 'Schließen',
-		toast: {
-			title: 'Neuer Waschbär!',
-			detail: (name: string, found: number, total: number) =>
-				`${name} ist in deinem Album · ${found} von ${total}`,
-			view: 'Ansehen'
+		home: {
+			rarity: {
+				1: 'Neuer Waschbär!',
+				2: 'Seltener Waschbär!',
+				3: 'Legendärer Waschbär!'
+			} as Record<1 | 2 | 3, string>,
+			several: 'Neue Waschbären!',
+			inAlbum: (count: number) => `${count} in deinem Album`,
+			newCount: (count: number) => `${count} neu`,
+			names: (names: string[], found: number, total: number) => {
+				const [first, second] = names;
+				const who =
+					names.length === 2
+						? `${first} und ${second}`
+						: `${first}, ${second} und ${names.length - 2} weitere`;
+				return `${who} · ${found} von ${total}`;
+			}
 		}
 	},
 

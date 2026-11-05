@@ -6,23 +6,20 @@
 
 	Gone after `duration`, unless a keyboard is on the button — then it is the
 	only way back, and it waits.
-
-	The same pill also carries news with a way to it rather than an undo: give
-	`href` instead of the form, and a `detail` line under the message. Home's
-	"New raccoon!" is that (→ plan 35).
 -->
 <script lang="ts">
 	import { enhance } from '$app/forms';
-	import { preloadData } from '$lib/preload';
 	import type { RichText } from '$lib/i18n/messages/en';
 	import type { SubmitFunction } from '@sveltejs/kit';
 	import type { Snippet } from 'svelte';
 
-	type Common = {
+	type Props = {
 		/** What just happened, the name bold: "**Milk** checked off". */
 		message: RichText;
-		/** A second, quieter line under it. */
-		detail?: string;
+		/** The undo's form action and fields. */
+		action: string;
+		fields: Record<string, string>;
+		undo: SubmitFunction;
 		label: string;
 		/** Its few seconds are up, or the undo is away. */
 		onclose: () => void;
@@ -32,26 +29,12 @@
 		duration?: number;
 	};
 
-	type Props = Common &
-		(
-			| {
-					/** The undo's form action and fields. */
-					action: string;
-					fields: Record<string, string>;
-					undo: SubmitFunction;
-					href?: never;
-			  }
-			| { href: string; action?: never; fields?: never; undo?: never }
-		);
-
 	let {
 		message,
-		detail,
 		action,
 		fields,
 		label,
 		undo,
-		href,
 		onclose,
 		key,
 		icon,
@@ -76,22 +59,15 @@
 	<div class="row" role="status">
 		{@render icon?.()}
 		<span class="text">
-			<span class="message">
-				{#each message as part}{#if part.strong}<b>{part.text}</b>{:else}{part.text}{/if}{/each}
-			</span>
-			{#if detail}<span class="detail">{detail}</span>{/if}
+			{#each message as part}{#if part.strong}<b>{part.text}</b>{:else}{part.text}{/if}{/each}
 		</span>
 
-		{#if href !== undefined}
-			<a class="button" {href} data-sveltekit-preload-data={preloadData(href)}>{label}</a>
-		{:else}
-			<form method="POST" {action} use:enhance={undo}>
-				{#each Object.entries(fields ?? {}) as [name, value] (name)}
-					<input type="hidden" {name} {value} />
-				{/each}
-				<button class="button" type="submit">{label}</button>
-			</form>
-		{/if}
+		<form method="POST" {action} use:enhance={undo}>
+			{#each Object.entries(fields) as [name, value] (name)}
+				<input type="hidden" {name} {value} />
+			{/each}
+			<button class="button" type="submit">{label}</button>
+		</form>
 	</div>
 </div>
 
@@ -140,21 +116,9 @@
 	.text {
 		flex: 1;
 		min-width: 0;
-	}
-
-	.message,
-	.detail {
-		display: block;
 		overflow: hidden;
 		white-space: nowrap;
 		text-overflow: ellipsis;
-	}
-
-	/* The detail may take two lines: it is the news ("… is in your album · 18
-	   of 39"), and an ellipsis would cut off the part that matters. */
-	.detail {
-		font-size: var(--fs-14);
-		white-space: normal;
 	}
 
 	/* The name is the bright, bold run; "checked off" trails it in the muted
