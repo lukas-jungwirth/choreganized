@@ -9,14 +9,17 @@
  *    Halloween (31 Oct), Valentine's Day (14 Feb);
  * 3. your first visit: the waving welcome raccoon, so someone new meets a
  *    raccoon saying hello rather than one mid-tennis-match (→ DECISIONS #238);
- * 4. the next chore on you — a bell while it's coming up, an alarm clock once
+ * 4. the midnight raccoon, on one night in three from 00:00 to 02:00, each
+ *    member's own (→ DECISIONS #243);
+ * 5. the next chore on you — a bell while it's coming up, an alarm clock once
  *    it's late;
- * 5. asleep from 22:00 to 05:00, household time;
- * 6. an everyday pose (→ `everydayRaccoon`): three of the season's poses
+ * 6. asleep from 22:00 to 05:00, household time;
+ * 7. an everyday pose (→ `everydayRaccoon`): three of the season's poses
  *    drawn for each member each day, one each morning, afternoon and evening.
  *
- * A special day beats the reminder because the card under the raccoon still
- * names the chore; the raccoon is the only thing that can say what day it is.
+ * A special day and the midnight raccoon beat the reminder because the card
+ * under the raccoon still names the chore; the raccoon is the only thing that
+ * can say what day it is, and who is in the kitchen at this hour.
  * Everything here is the household's date and hour as the server read them, so
  * the same pose renders on the server and in the browser, all day.
  */
@@ -43,6 +46,16 @@ type Input = {
 /** Who greets someone opening Home for the first time. */
 export const WELCOME_RACCOON: MascotName = 'welcome-a';
 
+/** Who sneaks into the kitchen after midnight, when the night's draw lets it. */
+export const MIDNIGHT_RACCOON: MascotName = 'midnight';
+
+/**
+ * How many of a member's nights it shows on. Generous, because being on Home in
+ * those two hours is already the hard part: anyone who looks then meets it
+ * within a few late nights. Still its own night, not every night.
+ */
+export const MIDNIGHT_CHANCE = 1 / 3;
+
 /** Fixed special days, `MM-DD`. Easter and Fasching move, so they are worked out per year. */
 export const SPECIAL_DAYS: Readonly<Record<string, MascotName>> = {
 	'12-24': 'christmas',
@@ -58,7 +71,8 @@ const SITUATIONS = [
 	'birthday',
 	'reminder-upcoming',
 	'reminder-overdue',
-	'sleeping'
+	'sleeping',
+	'midnight'
 ] as const satisfies readonly MascotName[];
 
 /**
@@ -88,6 +102,9 @@ export function isHomeRaccoon(value: string): value is MascotName {
 const BEDTIME = 22;
 const WAKE_UP = 5;
 
+/** The midnight raccoon's stretch ends at 02:00; it starts at 00:00. */
+const MIDNIGHT_ENDS = 2;
+
 /** The awake day in three: morning from 05:00, afternoon from 11:00, evening from 17:00. */
 const SLOT_STARTS = [WAKE_UP, 11, 17];
 
@@ -98,15 +115,16 @@ export const DAY_SLOTS: readonly DaySlot[] = ['morning', 'afternoon', 'evening']
 export const WEEKDAYS: readonly Weekday[] = ['mon', 'tue', 'wed', 'thu', 'fri', 'sat', 'sun'];
 
 /**
- * How long each of Home's stretches lasts, in hours: the three awake slots and
- * the night. The raccoon album weighs a raccoon's rarity by them (→
+ * How long each of Home's stretches lasts, in hours: the three awake slots, the
+ * night, and the midnight raccoon's part of that night. The raccoon album weighs a raccoon's rarity by them (→
  * `utils/raccoon-album`).
  */
-export const SLOT_HOURS: Readonly<Record<DaySlot | 'night', number>> = {
+export const SLOT_HOURS: Readonly<Record<DaySlot | 'night' | 'midnight', number>> = {
 	morning: SLOT_STARTS[1] - SLOT_STARTS[0],
 	afternoon: SLOT_STARTS[2] - SLOT_STARTS[1],
 	evening: BEDTIME - SLOT_STARTS[2],
-	night: 24 - BEDTIME + WAKE_UP
+	night: 24 - BEDTIME + WAKE_UP,
+	midnight: MIDNIGHT_ENDS
 };
 
 /** Which season each month (1–12) belongs to: meteorological, three months each. */
@@ -172,6 +190,8 @@ export function homeRaccoon({
 
 	if (firstVisit) return WELCOME_RACCOON;
 
+	if (hour < MIDNIGHT_ENDS && midnightVisit(today, seed)) return MIDNIGHT_RACCOON;
+
 	if (nextChoreDue) {
 		return daysBetween(today, nextChoreDue) < 0 ? 'reminder-overdue' : 'reminder-upcoming';
 	}
@@ -179,6 +199,11 @@ export function homeRaccoon({
 	if (hour >= BEDTIME || hour < WAKE_UP) return 'sleeping';
 
 	return everydayRaccoon(today, hour, seed);
+}
+
+/** Whether this night is one of the member's midnight raccoon's, from a seed like the draw's. */
+function midnightVisit(today: CalendarDate, seed: string): boolean {
+	return seededRandom(`${seed}|${today}|midnight`)() < MIDNIGHT_CHANCE;
 }
 
 /**
@@ -196,6 +221,8 @@ export function homeRaccoon({
  * A pose with `days` or `slots` in `mascots.json` is only in the draw on those
  * days or for those slots: coffee in the morning, the laptop on workdays
  * (→ DECISIONS #237). It still has to be drawn, so it isn't there every time.
+ * A `weight` raises its odds where it is allowed, so a raccoon of one day a week
+ * isn't seven times as hard to meet as the rest (→ DECISIONS #243).
  *
  * The one rule: a day's three are all different and never two look-alikes. The
  * night's sleeping raccoon sits between one day's evening and the next
@@ -224,9 +251,23 @@ function dayDraw(today: CalendarDate, seed: string): MascotName[] {
 				!drawn.includes(pose) &&
 				!(pose.lookAlike && drawn.some((each) => each.lookAlike === pose.lookAlike))
 		);
-		drawn.push(open[Math.floor(random() * open.length)]);
+		drawn.push(weightedPick(open, random()));
 	}
 	return drawn.map((pose) => pose.name);
+}
+
+/** The pose `roll` (0–1) lands on, each taking up as much of the range as its weight. */
+function weightedPick<Pose extends { weight?: number }>(
+	poses: readonly Pose[],
+	roll: number
+): Pose {
+	const total = poses.reduce((sum, pose) => sum + (pose.weight ?? 1), 0);
+	let left = roll * total;
+	for (const pose of poses) {
+		left -= pose.weight ?? 1;
+		if (left < 0) return pose;
+	}
+	return poses[poses.length - 1];
 }
 
 /**

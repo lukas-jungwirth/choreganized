@@ -28,7 +28,10 @@ Every screen raccoon, one entry each, read by `npm run icons`:
 - `days` / `slots` — keep an everyday pose to some weekdays (`mon`–`sun`) or some of Home's slots
   (`morning` 05–11, `afternoon` 11–17, `evening` 17–22); left out, it's every day and every
   slot. It's still drawn, just only then (coffee: `["morning"]`, laptop: Mon–Fri). The album
-  works out its rarity from it (→ DECISIONS #237).
+  works out its rarity from it (→ DECISIONS #237);
+- `weight` — a whole number from 2: the pose's odds in the draw where it is allowed, against 1 for
+  the rest, for a pose of one or two days a week that would otherwise take far longer to meet
+  (friday: 3; → DECISIONS #243). The album's rarity ignores it.
 
 The everyday poses' order doesn't matter to Home: each member draws three of the season's poses
 a day, seeded by member and date (→ DECISIONS #232). `src/lib/utils/raccoon.test.ts` walks two
@@ -55,6 +58,7 @@ checks that simulated members meet every pose of every season. The app icons are
 | `halloween.png`           | Home, 31 October                                               |
 | `valentines.png`          | Home, 14 February                                              |
 | `sleeping.png`            | Home, 22:00–05:00 on an ordinary day without a chore on you    |
+| `midnight.png`            | Home, 00:00–02:00, one night in three, each member's own       |
 | `beach.png`               | Home, everyday, summer                                         |
 | `garden.png`              | Home, everyday, spring, summer (in a sun hat)                  |
 | `fishing.png`             | Home, everyday, spring, summer, autumn                         |
@@ -87,6 +91,9 @@ checks that simulated members meet every pose of every season. The app icons are
 | `juggling.png`            | Home, everyday, all year                                       |
 | `bath.png`                | Home, everyday, all year                                       |
 | `mushrooms.png`           | Home, everyday, autumn                                         |
+| `friday.png`              | Home, everyday, all year, Fridays only, 3× odds                |
+| `snooze.png`              | Home, everyday, all year, mornings only                        |
+| `socks.png`               | Home, everyday, all year                                       |
 | `skates.png`              | Home, everyday, winter                                         |
 | `sweets.png`              | Home, everyday, all year                                       |
 | `trash.png`               | Home, everyday, all year                                       |

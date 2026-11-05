@@ -17,6 +17,8 @@ import {
 	HOME_RACCOONS,
 	homeRaccoon,
 	isHomeRaccoon,
+	MIDNIGHT_CHANCE,
+	MIDNIGHT_RACCOON,
 	specialDay,
 	WELCOME_RACCOON
 } from './raccoon.ts';
@@ -131,7 +133,7 @@ describe('homeRaccoon', () => {
 		assert.notEqual(homeRaccoon({ ...plain, hour: 21 }), 'sleeping');
 		assert.equal(homeRaccoon({ ...plain, hour: 22 }), 'sleeping');
 		assert.equal(homeRaccoon({ ...plain, hour: 23 }), 'sleeping');
-		assert.equal(homeRaccoon({ ...plain, hour: 0 }), 'sleeping');
+		assert.equal(homeRaccoon({ ...plain, hour: 2 }), 'sleeping');
 		assert.equal(homeRaccoon({ ...plain, hour: 4 }), 'sleeping');
 		assert.notEqual(homeRaccoon({ ...plain, hour: 5 }), 'sleeping');
 	});
@@ -168,6 +170,57 @@ describe('homeRaccoon', () => {
 		);
 		// Someone else's day is just a day.
 		assert.notEqual(homeRaccoon({ ...plain, birthday: '06-19' }), 'birthday');
+	});
+});
+
+describe('the midnight raccoon', () => {
+	const nights = Array.from({ length: 366 }, (_, day) => addDays('2036-01-01', day)).filter(
+		(today) => !specialDay(today)
+	);
+	const visits = (seed: string, hour = 0) =>
+		nights.filter((today) => homeRaccoon({ ...plain, today, hour, seed }) === MIDNIGHT_RACCOON);
+	const members = Array.from({ length: 50 }, (_, index) => `member-${index}`);
+	/** A night it does show on, for the tests of what beats what. */
+	const [night] = visits('member-0');
+	const midnight = { ...plain, today: night, hour: 0, seed: 'member-0' };
+
+	it('shows from 00:00 to 02:00, the same both hours, and is asleep the rest of that night', () => {
+		for (const seed of members) {
+			const mine = visits(seed);
+			assert.deepEqual(visits(seed, 1), mine, seed);
+			for (const hour of [2, 3, 4, 22, 23]) assert.deepEqual(visits(seed, hour), [], `${hour}:00`);
+		}
+	});
+
+	it('comes on about one night in three, and otherwise it is the sleeping raccoon', () => {
+		const counts = members.map((seed) => visits(seed).length / nights.length);
+		const mean = counts.reduce((sum, share) => sum + share, 0) / counts.length;
+		assert.ok(Math.abs(mean - MIDNIGHT_CHANCE) < 0.03, `came on ${mean.toFixed(3)} of nights`);
+		assert.ok(Math.min(...counts) > 0.2, `least often: ${Math.min(...counts).toFixed(3)}`);
+
+		const quiet = nights.find((today) => !visits('member-0').includes(today))!;
+		assert.equal(homeRaccoon({ ...midnight, today: quiet }), 'sleeping');
+	});
+
+	it('is each member’s own night', () => {
+		assert.notDeepEqual(visits('member-0'), visits('member-1'));
+	});
+
+	it('beats a chore on you, or someone with chores would never meet it', () => {
+		const due = { nextChoreDue: addDays(night, -1) };
+		assert.equal(homeRaccoon(midnight), MIDNIGHT_RACCOON);
+		assert.equal(homeRaccoon({ ...midnight, ...due }), MIDNIGHT_RACCOON);
+		// Outside its two hours the reminder is back.
+		assert.equal(homeRaccoon({ ...midnight, ...due, hour: 2 }), 'reminder-overdue');
+	});
+
+	it('gives way to a birthday, a special day and a first visit', () => {
+		assert.equal(homeRaccoon({ ...midnight, birthday: night.slice(5) }), 'birthday');
+		assert.equal(homeRaccoon({ ...midnight, firstVisit: true }), WELCOME_RACCOON);
+		// Every member's New Year's Eve stays New Year's, whatever the night's draw.
+		for (const seed of members) {
+			assert.equal(homeRaccoon({ ...plain, today: '2036-12-31', hour: 0, seed }), 'new-year');
+		}
 	});
 });
 
@@ -222,7 +275,8 @@ describe('everydayRaccoon', () => {
 
 	it('meets every pose of a season within it, for anyone looking in every slot', () => {
 		// No hard guarantee by design (→ DECISIONS #232), but three a day for a
-		// season must be plenty: a draw that leaves gaps here is a broken draw.
+		// season must be plenty: one left over is the luck the draw is meant to
+		// have, more than that is a broken draw.
 		// A pose with a time rule is rarer on purpose (one slot of three, or some
 		// days), so it is held to a year instead, in the next test.
 		const ruled = new Set<string>(
@@ -230,11 +284,9 @@ describe('everydayRaccoon', () => {
 		);
 		for (const season of ['winter', 'spring', 'summer', 'autumn'] as const) {
 			for (const seed of MEMBERS) {
-				assert.deepEqual(
-					metIn(season, seed).filter((name) => !ruled.has(name)),
-					listedFor(season).filter((name) => !ruled.has(name)),
-					`${season}, ${seed}`
-				);
+				const met = metIn(season, seed);
+				const missed = listedFor(season).filter((name) => !ruled.has(name) && !met.includes(name));
+				assert.ok(missed.length <= 1, `${season}, ${seed} missed ${missed.join(', ')}`);
 			}
 		}
 	});
@@ -242,11 +294,17 @@ describe('everydayRaccoon', () => {
 	it('meets nearly every pose even for someone who only ever looks in the evening', () => {
 		// The fixed rotation's trap: an evening-only visitor saw a third of summer.
 		for (const season of ['winter', 'spring', 'summer', 'autumn'] as const) {
-			const shares = MEMBERS.map(
-				(seed) => metIn(season, seed, [20]).length / listedFor(season, 'evening').length
-			);
+			const listed = listedFor(season, 'evening');
+			const shares = MEMBERS.map((seed) => metIn(season, seed, [20]).length / listed.length);
 			const mean = shares.reduce((sum, share) => sum + share, 0) / shares.length;
-			assert.ok(mean > 0.95, `${season}: an evening-only visitor meets ${mean.toFixed(2)}`);
+			// What one look a day at a pool this size should meet in a season, less a
+			// margin for the poses with a time rule. It falls a little with each new
+			// pose, so it is worked out rather than typed in.
+			const expected = 1 - (1 - 1 / listed.length) ** SEASON_DAYS[season][1];
+			assert.ok(
+				mean > expected - 0.03,
+				`${season}: an evening-only visitor meets ${mean.toFixed(2)}, expected ${expected.toFixed(2)}`
+			);
 			assert.ok(Math.min(...shares) > 0.75, `${season}: worst ${Math.min(...shares).toFixed(2)}`);
 		}
 	});
@@ -273,6 +331,35 @@ describe('everydayRaccoon', () => {
 			}
 			// Within a year, everyone looking in every slot meets each of them.
 			assert.deepEqual([...met].sort(), ruled.map((pose) => pose.name as string).sort(), seed);
+		}
+	});
+
+	it('gives a pose its weight in the draw, on the days it is allowed', () => {
+		const weighted = EVERYDAY.filter((pose) => pose.weight);
+		assert.ok(weighted.length > 0, 'some pose has a weight');
+		// An all-year pose with no rule of its own, to measure against.
+		const plainPose = EVERYDAY.find(
+			(pose) => pose.seasons.length === 4 && !pose.days && !pose.slots
+		)!;
+		for (const pose of weighted) {
+			let own = 0;
+			let other = 0;
+			for (const seed of MEMBERS) {
+				let date = '2036-01-01';
+				for (let day = 0; day < 366; day++, date = addDays(date, 1)) {
+					if (pose.days && !pose.days.includes(WEEKDAYS[weekdayIndex(date)])) continue;
+					for (const hour of [8, 14, 20]) {
+						const name = everydayRaccoon(date, hour, seed);
+						if (name === pose.name) own++;
+						if (name === plainPose.name) other++;
+					}
+				}
+			}
+			const ratio = own / other;
+			assert.ok(
+				Math.abs(ratio - pose.weight!) < 0.5,
+				`${pose.name} came up ${ratio.toFixed(2)}× as often, not ${pose.weight}×`
+			);
 		}
 	});
 

@@ -5,8 +5,9 @@
  *
  * The first look is always the welcome raccoon (→ DECISIONS #238). The next
  * slot comes from the household's timezone rather than the clock: every run is
- * the same Vienna afternoon (→ TESTING.md "The fixed clock"), and Auckland is
- * ten hours ahead of it, which is midnight there: the sleeping raccoon.
+ * the same Vienna afternoon (→ TESTING.md "The fixed clock"), and Noumea is
+ * nine hours ahead of it, which is 23:00 there: the sleeping raccoon. Not
+ * midnight: from 00:00 to 02:00 it might be the midnight raccoon instead.
  */
 import Database from 'better-sqlite3';
 import { expect, request, test, type Page } from '@playwright/test';
@@ -49,7 +50,7 @@ test('a raccoon met on Home lands in the album, once per slot', async ({ browser
 	await page.goto('/home');
 	const toast = page.getByRole('status').filter({ hasText: 'New raccoon!' });
 	await expect(toast).toBeVisible();
-	await expect(toast).toContainText('Welcome Committee is in your album · 1 of 49');
+	await expect(toast).toContainText('Welcome Committee is in your album · 1 of 53');
 	await toast.getByRole('link', { name: 'View' }).click();
 	await expect(page).toHaveURL(/\/settings\/raccoons\?card=welcome-a$/);
 	const card = page.getByRole('dialog', { name: 'Raccoon album' });
@@ -64,31 +65,31 @@ test('a raccoon met on Home lands in the album, once per slot', async ({ browser
 	await expect(page.getByText('New raccoon!')).toHaveCount(0);
 
 	await page.goto('/settings');
-	await expect(page.getByRole('link', { name: /Raccoon album/ })).toContainText('1 of 49');
+	await expect(page.getByRole('link', { name: /Raccoon album/ })).toContainText('1 of 53');
 
-	// Midnight: the next slot's raccoon is the sleeping one, a second.
-	moveHousehold(name, 'Pacific/Auckland');
+	// 23:00: the next slot's raccoon is the sleeping one, a second.
+	moveHousehold(name, 'Pacific/Noumea');
 	await page.goto('/home');
 	await expect(page.getByRole('status').filter({ hasText: 'New raccoon!' })).toContainText(
-		'2 of 49'
+		'2 of 53'
 	);
 
 	await page.goto('/settings/raccoons');
-	await expect(page.getByText('2 of 49 found')).toBeVisible();
+	await expect(page.getByText('2 of 53 found')).toBeVisible();
 	// Met ones are named; the rest stay "not met yet", with no hint.
 	await expect(
 		page.getByRole('button', { name: /^No\. \d{3}, (?!not met yet)[^,]+(, new)?$/ })
 	).toHaveCount(2);
 	// The first was on screen when View opened the album; only the sleeping one is new.
 	await expect(page.getByRole('button', { name: /, new$/ })).toHaveCount(1);
-	await expect(page.getByRole('button', { name: /not met yet$/ })).toHaveCount(47);
+	await expect(page.getByRole('button', { name: /not met yet$/ })).toHaveCount(51);
 
-	// One rarity at a time: Legendary is the special days and the birthday, none
-	// met on an ordinary June afternoon. No Missing filter any more (→ DECISIONS #237).
+	// One rarity at a time: Legendary is the special days, the birthday and the
+	// midnight raccoon, none met on an ordinary June afternoon. No Missing filter any more (→ DECISIONS #237).
 	await expect(page.getByRole('button', { name: 'Missing' })).toHaveCount(0);
 	await page.getByRole('button', { name: /Legendary/ }).click();
-	await expect(page.getByRole('button', { name: /^No\. \d{3}, / })).toHaveCount(7);
-	await expect(page.getByRole('button', { name: /not met yet$/ })).toHaveCount(7);
+	await expect(page.getByRole('button', { name: /^No\. \d{3}, / })).toHaveCount(8);
+	await expect(page.getByRole('button', { name: /not met yet$/ })).toHaveCount(8);
 
 	// A locked card gives nothing away.
 	await page

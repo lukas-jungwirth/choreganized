@@ -250,7 +250,8 @@ async function testFavicon(size: number, unit: number) {
  * `seasons` makes one an everyday pose on Home, in the list's order, and
  * `lookAlike` names the poses that must never follow each other. `days`
  * (`mon`–`sun`) and `slots` (`morning`, `afternoon`, `evening`) narrow an
- * everyday pose to some days or some of Home's slots (→ DECISIONS #237). `album` is a
+ * everyday pose to some days or some of Home's slots (→ DECISIONS #237); `weight`
+ * multiplies its odds in the draw where it is allowed (→ DECISIONS #243). `album` is a
  * Home raccoon's number in the raccoon album and `stats` its four fun scales,
  * 1–5 (→ plan 35); a number, once shipped, never moves.
  *
@@ -267,6 +268,7 @@ type Entry = {
 	lookAlike?: string;
 	days?: string[];
 	slots?: string[];
+	weight?: number;
 	/** Where the body is across the width, 0–1, when the buttons can't be found (→ `bodyCentre`). */
 	body?: number;
 	album?: number;
@@ -317,6 +319,12 @@ function readMascots(): Entry[] {
 				throw new Error(
 					`${where}: ${field} are some of ${allowed.join(', ')}, once each (leave it out for all)`
 				);
+		}
+		if (entry.weight !== undefined) {
+			if (!entry.seasons)
+				throw new Error(`${where}: weight only means something for an everyday pose`);
+			if (!Number.isInteger(entry.weight) || entry.weight < 2)
+				throw new Error(`${where}: weight is a whole number from 2 (leave it out for 1)`);
 		}
 		if (entry.album !== undefined) {
 			if (!Number.isInteger(entry.album) || entry.album <= 0)
@@ -478,6 +486,8 @@ async function main() {
 				'\tdays?: readonly Weekday[];',
 				"\t/** Only in these of Home's slots; all three when left out. */",
 				'\tslots?: readonly DaySlot[];',
+				'\t/** Its odds in the draw where it is allowed, against 1 for the others. */',
+				'\tweight?: number;',
 				'}> = [',
 				...everyday.map((entry, index) => {
 					const comma = index < everyday.length - 1 ? ',' : '';
@@ -492,7 +502,8 @@ async function main() {
 							: '';
 					const days = inOrder('days', entry.days, WEEKDAYS);
 					const slots = inOrder('slots', entry.slots, SLOTS);
-					return `\t{ name: ${quote(entry.name)}, seasons: [${seasons}], lookAlike: ${lookAlike}${days}${slots} }${comma}`;
+					const weight = entry.weight ? `, weight: ${entry.weight}` : '';
+					return `\t{ name: ${quote(entry.name)}, seasons: [${seasons}], lookAlike: ${lookAlike}${days}${slots}${weight} }${comma}`;
 				}),
 				'];',
 				'',
