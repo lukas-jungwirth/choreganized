@@ -38,7 +38,8 @@ test('Home shows one raccoon: pointing at your next chore, or greeting you', asy
 	// greeting would be two. The fixed clock's ordinary June afternoon is never
 	// a special day nor bedtime (→ `utils/raccoon.test.ts` covers those).
 	await expect(page.locator('header img.mascot')).toHaveCount(1);
-	const raccoons = page.locator('img[src*="/welcome-"], img[src*="/reminder-"]');
+	// In the header: the album card further down shows your newest raccoon, on its frame.
+	const raccoons = page.locator('header').locator('img[src*="/welcome-"], img[src*="/reminder-"]');
 	await expect(raccoons).toHaveCount(1);
 
 	const card = page.getByText('Your next chore', { exact: true });

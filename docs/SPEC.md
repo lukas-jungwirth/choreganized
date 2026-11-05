@@ -189,12 +189,9 @@ pose, first match wins, top to bottom (`lib/utils/raccoon.ts`, by the household'
   starts over. With reduced motion it doesn't move: the tint still shows, the hiding is a fade.
 
   **The raccoon album** (plan 35, [DECISIONS #229](DECISIONS.md), [#231](DECISIONS.md)): the
-  first time you meet a raccoon here, a toast in the undo bar's style says so — its thumbnail on
-  its album frame, "New raccoon!", "Snowman Builder is in your album · 18 of 49" — with **View**,
-  which opens the album at its card (`/settings/raccoons?card=<name>`). It goes by itself after
-  six seconds and shows once: Home counts a sighting once per slot (morning, afternoon, evening,
-  or the night, dated by its evening), so a reload in the same slot is not new. A pose from admin
-  mode's picker is never a sighting (→ §12).
+  first time you meet a raccoon here it joins your album, and the album card below says so
+  (→ item 5). Home counts a sighting once per slot (morning, afternoon, evening, or the night,
+  dated by its evening). A pose from admin mode's picker is never a sighting (→ §12).
 
 1. **Next chore card** — the one chore that's on the current user next: the soonest task
    assigned to them or to Anyone (never a housemate's) that is already overdue or due within
@@ -216,9 +213,27 @@ pose, first match wins, top to bottom (`lib/utils/raccoon.ts`, by the household'
    counted beside the cook line ("+1 more today"), never listed; the Cooking tab is the list.
 4. **Stat tiles** (2-up): "{n} on shopping list" (unchecked items) → Shopping;
    "{n} tasks due today" (due today + overdue) → Tasks.
-5. **Standings strip** — "You're 1st this month" / "240 pts · 30 ahead of Elisabeth" + stacked
+5. **Raccoon album card** ([DECISIONS #244](DECISIONS.md)) — always there, directly under the
+   tiles, in the same place every day. On the right a small deck: your newest raccoon on its
+   album frame in front, two silhouettes of raccoons still to find behind it (a full album keeps
+   two silhouettes of its own). Only the front card has colour. The bar is plain sage.
+   - **Nothing new**: "Raccoon album", "18 of 53 found", "6 rare · 3 legendary still to find"
+     ("You've met every raccoon!" once there are none). Tap → the album.
+   - **One new since the album was last opened** (the album's own "New" count, so it stays until
+     you look, across reloads and days): the front card pops over the card's top edge with a
+     "New" badge, a terracotta outline, and the eyebrow says the rarity in words: "New raccoon!",
+     "Rare raccoon!" or "Legendary raccoon!" (gold outline), then its name and "18 of 53 found".
+     A common raccoon doesn't say "Common", and there are no stars here: those stay on the
+     album's card. Tap → the album at its card.
+   - **Several new**: "New raccoons!", "3 in your album", "Tennis Ace, Flower Sniffer and 1 more
+     · 20 of 53", badge "3 new", the newest in front. Tap → the album, wearing its "New" badges.
+
+   Reached from here, the album's back button returns to Home (`?from=home`); from Settings it
+   returns to Settings. With reduced motion the card doesn't pop in, it is just there.
+
+6. **Standings strip** — "You're 1st this month" / "240 pts · 30 ahead of Elisabeth" + stacked
    avatars → Tasks → History. (Ties: "You're tied this month".)
-6. **Recent activity card** — the 2 most recent completed tasks (check circle in the member's
+7. **Recent activity card** — the 2 most recent completed tasks (check circle in the member's
    colour, task name, "{member} · {time}", `+{points}` in the member's colour). Header links
    "All →" to Tasks → History. Hidden when there are no completions yet. Last on the screen:
    pleasant to see, never the reason the app was opened.

@@ -6,10 +6,17 @@
  * reads them back. Everything is per member and filtered by household too, like
  * every table (→ ARCHITECTURE "Household scoping").
  */
-import { and, count, eq, inArray, isNull } from 'drizzle-orm';
+import { and, count, desc, eq, inArray, isNull, sql } from 'drizzle-orm';
+import type { AlbumName } from '$lib/assets/mascot/album';
 import type { CalendarDate } from '$lib/utils/dates';
 import { WELCOME_RACCOON } from '$lib/utils/raccoon';
-import { ALBUM_ENTRIES, ALBUM_SIZE, isAlbumName } from '$lib/utils/raccoon-album';
+import {
+	ALBUM_ENTRIES,
+	ALBUM_SIZE,
+	behindFront,
+	countMissing,
+	isAlbumName
+} from '$lib/utils/raccoon-album';
 import { db } from '../db';
 import { raccoonSightings, type RaccoonSighting } from '../db/schema';
 
@@ -21,14 +28,6 @@ const inAlbum = inArray(
 	raccoonSightings.raccoon,
 	ALBUM_ENTRIES.map((entry) => entry.name)
 );
-
-export type Sighting = {
-	/** The first time this member met it. */
-	isNew: boolean;
-	/** How many album raccoons they have met, this one included. */
-	found: number;
-	total: number;
-};
 
 /**
  * One sighting of `raccoon` in `slot` (→ `utils/raccoon` `homeSlot`). The first
@@ -42,10 +41,10 @@ export function recordSighting(
 	raccoon: string,
 	today: CalendarDate,
 	slot: string
-): Sighting {
+): void {
 	if (!isAlbumName(raccoon)) throw new Error(`${raccoon} is not an album raccoon`);
 
-	return db.transaction((tx) => {
+	db.transaction((tx) => {
 		const mine = and(
 			eq(raccoonSightings.householdId, householdId),
 			eq(raccoonSightings.memberId, memberId)
@@ -66,13 +65,6 @@ export function recordSighting(
 				.where(eq(raccoonSightings.id, existing.id))
 				.run();
 		}
-
-		const found = tx
-			.select({ found: count() })
-			.from(raccoonSightings)
-			.where(and(mine, inAlbum))
-			.get()!.found;
-		return { isNew: !existing, found, total: ALBUM_SIZE };
 	});
 }
 
@@ -109,6 +101,50 @@ export function isFirstVisit(householdId: string, memberId: string, slot: string
 		.all();
 	if (met.length === 0) return true;
 	return met.length === 1 && met[0].raccoon === WELCOME_RACCOON && met[0].lastSlot === slot;
+}
+
+export type AlbumSummary = {
+	found: number;
+	total: number;
+	/** Unmet ★★ Rare and ★★★ Legendary raccoons. */
+	rare: number;
+	legendary: number;
+	/** The newest find: Home's front card. Null only before the first raccoon. */
+	latest: AlbumName | null;
+	/** Met since the album was last opened, newest first. */
+	unseen: AlbumName[];
+	/** The two silhouettes behind the front card. */
+	behind: AlbumName[];
+};
+
+/** What Home's album card shows (→ SPEC §2): call it after the visit's sighting is in. */
+export function albumSummary(householdId: string, memberId: string): AlbumSummary {
+	const rows = db
+		.select({ raccoon: raccoonSightings.raccoon, noticedAt: raccoonSightings.noticedAt })
+		.from(raccoonSightings)
+		.where(
+			and(
+				eq(raccoonSightings.householdId, householdId),
+				eq(raccoonSightings.memberId, memberId),
+				inAlbum
+			)
+		)
+		// The rowid only breaks a tie within one millisecond: VACUUM may renumber it.
+		.orderBy(desc(raccoonSightings.createdAt), desc(sql`rowid`))
+		.all();
+
+	const met = rows.map((row) => row.raccoon as AlbumName);
+	const latest = met[0] ?? null;
+
+	return {
+		found: met.length,
+		total: ALBUM_SIZE,
+		rare: countMissing(2, met),
+		legendary: countMissing(3, met),
+		latest,
+		unseen: rows.filter((row) => row.noticedAt === null).map((row) => row.raccoon as AlbumName),
+		behind: behindFront(met, latest)
+	};
 }
 
 /** How many they have met — the Settings row's "17 of 39". */

@@ -5,12 +5,16 @@
  */
 import assert from 'node:assert/strict';
 import { describe, it } from 'vitest';
+import { de } from '../i18n/messages/de.ts';
+import { en } from '../i18n/messages/en.ts';
 import { formatDayRange, formatMonthSpan } from './dates.ts';
 import {
 	ALBUM_ENTRIES,
 	ALBUM_SIZE,
 	albumEntry,
 	albumNumber,
+	behindFront,
+	countMissing,
 	cardView,
 	filterAlbum,
 	frameFill,
@@ -190,6 +194,52 @@ describe('numbering', () => {
 		);
 		assert.equal(albumNumber(9), '009');
 		assert.equal(albumNumber(39), '039');
+	});
+});
+
+describe("Home's several-new line", () => {
+	it('names two, or two and how many more, in each language', () => {
+		assert.equal(en.album.home.names(['A', 'B'], 20, 53), 'A and B · 20 of 53');
+		assert.equal(en.album.home.names(['A', 'B', 'C', 'D'], 20, 53), 'A, B and 2 more · 20 of 53');
+		assert.equal(de.album.home.names(['A', 'B'], 20, 53), 'A und B · 20 von 53');
+		assert.equal(de.album.home.names(['A', 'B', 'C'], 20, 53), 'A, B und 1 weitere · 20 von 53');
+	});
+});
+
+describe('countMissing', () => {
+	it('counts one rarity, less the ones met', () => {
+		const rare = ALBUM_ENTRIES.filter((entry) => entry.tier === 2);
+		assert.equal(countMissing(2, []), rare.length);
+		assert.equal(countMissing(2, [rare[0].name]), rare.length - 1);
+		assert.equal(countMissing(3, [rare[0].name]), countMissing(3, []));
+	});
+});
+
+describe('behindFront', () => {
+	const names = ALBUM_ENTRIES.map((entry) => entry.name);
+
+	it('takes the first two still unmet, so they hold still until you meet one', () => {
+		const [first, second, third] = names;
+		assert.deepEqual(behindFront([], null), [first, second]);
+		assert.deepEqual(behindFront([first], first), [second, third]);
+		assert.deepEqual(behindFront([third], third), [first, second]);
+	});
+
+	it('never puts the front card behind itself', () => {
+		const front = names[0];
+		assert.ok(!behindFront(names.slice(0, 5), front).includes(front));
+	});
+
+	it('keeps two when one is left to find, and when the album is full', () => {
+		const last = names[names.length - 1];
+		const allButLast = names.slice(0, -1);
+		const nearly = behindFront(allButLast, names[0]);
+		assert.equal(nearly.length, 2);
+		assert.equal(nearly[0], last);
+
+		const full = behindFront(names, last);
+		assert.equal(full.length, 2);
+		assert.ok(!full.includes(last));
 	});
 });
 
