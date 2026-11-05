@@ -3480,3 +3480,14 @@ units | null, name}`, written back as editor lines in the reader's unit spelling
      "not met yet" (review, 2026-11-05), and one rule, `cardView(met, revealAll)` → met ·
      revealed · locked, decides both the tile and its card. Weighed and dropped: recording sightings for everything (it would spoil the admin's
      own album for good), and a separate admin page of cards (the album already is that page).
+241. **One gardener, not two** (Lukas 2026-11-05). `garden` and `summer-garden` were the same
+     picture, one with a sun hat, and read as a duplicate in the album ("Gärtnerin" and
+     "Sommergärtnerin"). They are one raccoon now: **`garden`**, the **sun-hat art**, in
+     **spring and summer** (was spring–autumn and summer alone), so ★★ Rare at 35% (it was
+     ★ Common). It keeps `garden`'s key and No. 029, so anyone who met the gardener still
+     has her, and takes summer-garden's fact, which fits the hat ("Waters the garden at dawn
+     and herself at noon"); the stats stay garden's. `summer-garden` is gone from the list,
+     its master and its AVIF, and the numbers after 33 move down one: the album is 49. That
+     is allowed because the album hasn't been in a release yet (`v0.2.0` predates plan 35);
+     a sighting of `summer-garden` on the test deploy just stops counting (the album reads
+     only names it lists), so no migration.

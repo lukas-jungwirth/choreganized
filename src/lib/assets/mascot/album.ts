@@ -40,7 +40,6 @@ export type AlbumName =
 	| 'fishing'
 	| 'beach'
 	| 'water-pistol'
-	| 'summer-garden'
 	| 'lemonade'
 	| 'tea'
 	| 'knitting'
@@ -105,32 +104,27 @@ export const ALBUM = [
 		number: 32,
 		stats: { cosiness: 1, mischief: 5, snacks: 3, helpfulness: 1 }
 	},
-	{
-		name: 'summer-garden',
-		number: 33,
-		stats: { cosiness: 4, mischief: 2, snacks: 3, helpfulness: 4 }
-	},
-	{ name: 'lemonade', number: 34, stats: { cosiness: 4, mischief: 1, snacks: 4, helpfulness: 2 } },
-	{ name: 'tea', number: 35, stats: { cosiness: 5, mischief: 1, snacks: 3, helpfulness: 3 } },
-	{ name: 'knitting', number: 36, stats: { cosiness: 5, mischief: 1, snacks: 3, helpfulness: 4 } },
-	{ name: 'handball', number: 37, stats: { cosiness: 2, mischief: 3, snacks: 4, helpfulness: 3 } },
+	{ name: 'lemonade', number: 33, stats: { cosiness: 4, mischief: 1, snacks: 4, helpfulness: 2 } },
+	{ name: 'tea', number: 34, stats: { cosiness: 5, mischief: 1, snacks: 3, helpfulness: 3 } },
+	{ name: 'knitting', number: 35, stats: { cosiness: 5, mischief: 1, snacks: 3, helpfulness: 4 } },
+	{ name: 'handball', number: 36, stats: { cosiness: 2, mischief: 3, snacks: 4, helpfulness: 3 } },
 	{
 		name: 'valentines',
-		number: 38,
+		number: 37,
 		stats: { cosiness: 5, mischief: 2, snacks: 4, helpfulness: 3 }
 	},
-	{ name: 'fasching', number: 39, stats: { cosiness: 2, mischief: 5, snacks: 3, helpfulness: 2 } },
-	{ name: 'easter', number: 40, stats: { cosiness: 4, mischief: 4, snacks: 4, helpfulness: 3 } },
-	{ name: 'halloween', number: 41, stats: { cosiness: 3, mischief: 5, snacks: 5, helpfulness: 1 } },
-	{ name: 'christmas', number: 42, stats: { cosiness: 5, mischief: 2, snacks: 5, helpfulness: 4 } },
-	{ name: 'new-year', number: 43, stats: { cosiness: 3, mischief: 4, snacks: 4, helpfulness: 2 } },
-	{ name: 'birthday', number: 44, stats: { cosiness: 4, mischief: 3, snacks: 5, helpfulness: 3 } },
-	{ name: 'coffee', number: 45, stats: { cosiness: 4, mischief: 1, snacks: 3, helpfulness: 3 } },
-	{ name: 'laptop', number: 46, stats: { cosiness: 2, mischief: 2, snacks: 3, helpfulness: 5 } },
-	{ name: 'fruit', number: 47, stats: { cosiness: 3, mischief: 2, snacks: 5, helpfulness: 2 } },
-	{ name: 'juggling', number: 48, stats: { cosiness: 2, mischief: 5, snacks: 2, helpfulness: 2 } },
-	{ name: 'bath', number: 49, stats: { cosiness: 5, mischief: 3, snacks: 1, helpfulness: 1 } },
-	{ name: 'mushrooms', number: 50, stats: { cosiness: 3, mischief: 2, snacks: 5, helpfulness: 3 } }
+	{ name: 'fasching', number: 38, stats: { cosiness: 2, mischief: 5, snacks: 3, helpfulness: 2 } },
+	{ name: 'easter', number: 39, stats: { cosiness: 4, mischief: 4, snacks: 4, helpfulness: 3 } },
+	{ name: 'halloween', number: 40, stats: { cosiness: 3, mischief: 5, snacks: 5, helpfulness: 1 } },
+	{ name: 'christmas', number: 41, stats: { cosiness: 5, mischief: 2, snacks: 5, helpfulness: 4 } },
+	{ name: 'new-year', number: 42, stats: { cosiness: 3, mischief: 4, snacks: 4, helpfulness: 2 } },
+	{ name: 'birthday', number: 43, stats: { cosiness: 4, mischief: 3, snacks: 5, helpfulness: 3 } },
+	{ name: 'coffee', number: 44, stats: { cosiness: 4, mischief: 1, snacks: 3, helpfulness: 3 } },
+	{ name: 'laptop', number: 45, stats: { cosiness: 2, mischief: 2, snacks: 3, helpfulness: 5 } },
+	{ name: 'fruit', number: 46, stats: { cosiness: 3, mischief: 2, snacks: 5, helpfulness: 2 } },
+	{ name: 'juggling', number: 47, stats: { cosiness: 2, mischief: 5, snacks: 2, helpfulness: 2 } },
+	{ name: 'bath', number: 48, stats: { cosiness: 5, mischief: 3, snacks: 1, helpfulness: 1 } },
+	{ name: 'mushrooms', number: 49, stats: { cosiness: 3, mischief: 2, snacks: 5, helpfulness: 3 } }
 ] as const satisfies ReadonlyArray<{
 	name: AlbumName & MascotName;
 	number: number;

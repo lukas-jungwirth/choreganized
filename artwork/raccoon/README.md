@@ -56,8 +56,7 @@ checks that simulated members meet every pose of every season. The app icons are
 | `valentines.png`          | Home, 14 February                                              |
 | `sleeping.png`            | Home, 22:00–05:00 on an ordinary day without a chore on you    |
 | `beach.png`               | Home, everyday, summer                                         |
-| `summer-garden.png`       | Home, everyday, summer                                         |
-| `garden.png`              | Home, everyday, spring, summer, autumn                         |
+| `garden.png`              | Home, everyday, spring, summer (in a sun hat)                  |
 | `fishing.png`             | Home, everyday, spring, summer, autumn                         |
 | `snow.png`                | Home, everyday, winter                                         |
 | `cold.png`                | Home, everyday, winter                                         |

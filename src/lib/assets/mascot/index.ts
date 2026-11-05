@@ -46,7 +46,6 @@ import writing from './writing.avif';
 import knitting from './knitting.avif';
 import phone from './phone.avif';
 import skates from './skates.avif';
-import summerGarden from './summer-garden.avif';
 import lemonade from './lemonade.avif';
 import coffee from './coffee.avif';
 import laptop from './laptop.avif';
@@ -88,7 +87,7 @@ export const MASCOTS = {
 	music: { src: music, width: 360, height: 408, body: 0.45 },
 	snowflake: { src: snowflake, width: 381, height: 408, body: 0.5 },
 	camera: { src: camera, width: 327, height: 408, body: 0.5 },
-	garden: { src: garden, width: 371, height: 408, body: 0.54 },
+	garden: { src: garden, width: 359, height: 408, body: 0.57 },
 	painting: { src: painting, width: 322, height: 408, body: 0.48 },
 	cold: { src: cold, width: 336, height: 408, body: 0.48 },
 	handball: { src: handball, width: 431, height: 408, body: 0.6 },
@@ -109,7 +108,6 @@ export const MASCOTS = {
 	knitting: { src: knitting, width: 327, height: 408, body: 0.47 },
 	phone: { src: phone, width: 311, height: 408, body: 0.54 },
 	skates: { src: skates, width: 367, height: 408, body: 0.48 },
-	'summer-garden': { src: summerGarden, width: 359, height: 408, body: 0.57 },
 	lemonade: { src: lemonade, width: 313, height: 408, body: 0.51 },
 	coffee: { src: coffee, width: 313, height: 408, body: 0.5 },
 	laptop: { src: laptop, width: 396, height: 408, body: 0.52 },

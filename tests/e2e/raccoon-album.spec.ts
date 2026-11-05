@@ -49,7 +49,7 @@ test('a raccoon met on Home lands in the album, once per slot', async ({ browser
 	await page.goto('/home');
 	const toast = page.getByRole('status').filter({ hasText: 'New raccoon!' });
 	await expect(toast).toBeVisible();
-	await expect(toast).toContainText('Welcome Committee is in your album · 1 of 50');
+	await expect(toast).toContainText('Welcome Committee is in your album · 1 of 49');
 	await toast.getByRole('link', { name: 'View' }).click();
 	await expect(page).toHaveURL(/\/settings\/raccoons\?card=welcome-a$/);
 	const card = page.getByRole('dialog', { name: 'Raccoon album' });
@@ -64,24 +64,24 @@ test('a raccoon met on Home lands in the album, once per slot', async ({ browser
 	await expect(page.getByText('New raccoon!')).toHaveCount(0);
 
 	await page.goto('/settings');
-	await expect(page.getByRole('link', { name: /Raccoon album/ })).toContainText('1 of 50');
+	await expect(page.getByRole('link', { name: /Raccoon album/ })).toContainText('1 of 49');
 
 	// Midnight: the next slot's raccoon is the sleeping one, a second.
 	moveHousehold(name, 'Pacific/Auckland');
 	await page.goto('/home');
 	await expect(page.getByRole('status').filter({ hasText: 'New raccoon!' })).toContainText(
-		'2 of 50'
+		'2 of 49'
 	);
 
 	await page.goto('/settings/raccoons');
-	await expect(page.getByText('2 of 50 found')).toBeVisible();
+	await expect(page.getByText('2 of 49 found')).toBeVisible();
 	// Met ones are named; the rest stay "not met yet", with no hint.
 	await expect(
 		page.getByRole('button', { name: /^No\. \d{3}, (?!not met yet)[^,]+(, new)?$/ })
 	).toHaveCount(2);
 	// The first was on screen when View opened the album; only the sleeping one is new.
 	await expect(page.getByRole('button', { name: /, new$/ })).toHaveCount(1);
-	await expect(page.getByRole('button', { name: /not met yet$/ })).toHaveCount(48);
+	await expect(page.getByRole('button', { name: /not met yet$/ })).toHaveCount(47);
 
 	// One rarity at a time: Legendary is the special days and the birthday, none
 	// met on an ordinary June afternoon. No Missing filter any more (→ DECISIONS #237).

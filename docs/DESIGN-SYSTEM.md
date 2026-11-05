@@ -314,7 +314,7 @@ beside each tab's title, `head` on the login and join screens, Home's `welcome-a
 (greeting), `reminder-upcoming`/`-overdue` (on the next-chore card; → DECISIONS #213) and the
 day-dependent `birthday` · `christmas` · `new-year` · `easter` · `halloween` · `valentines` ·
 `sleeping` (picked by `lib/utils/raccoon.ts`; → DECISIONS #216) and the everyday `beach` ·
-`summer-garden` · `garden` · `fishing` · `snow` · `cold` · `tea` · `reading` · `sports` it
+`garden` · `fishing` · `snow` · `cold` · `tea` · `reading` · `sports` it
 draws per member by season and time of day (→ DECISIONS #219, #220, #232; the list is
 `artwork/raccoon/mascots.json`, new ones come in through `/raccoons`), and Settings' `settings` (on the
 profile card) and `move-out` (on the sign-out / leave group; → DECISIONS #217). All of these are

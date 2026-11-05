@@ -38,49 +38,49 @@
 			"name": "birthday",
 			"height": 408,
 			"perched": true,
-			"album": 44,
+			"album": 43,
 			"stats": { "cosiness": 4, "mischief": 3, "snacks": 5, "helpfulness": 3 }
 		},
 		{
 			"name": "christmas",
 			"height": 408,
 			"perched": true,
-			"album": 42,
+			"album": 41,
 			"stats": { "cosiness": 5, "mischief": 2, "snacks": 5, "helpfulness": 4 }
 		},
 		{
 			"name": "new-year",
 			"height": 408,
 			"perched": true,
-			"album": 43,
+			"album": 42,
 			"stats": { "cosiness": 3, "mischief": 4, "snacks": 4, "helpfulness": 2 }
 		},
 		{
 			"name": "easter",
 			"height": 408,
 			"perched": true,
-			"album": 40,
+			"album": 39,
 			"stats": { "cosiness": 4, "mischief": 4, "snacks": 4, "helpfulness": 3 }
 		},
 		{
 			"name": "fasching",
 			"height": 408,
 			"perched": true,
-			"album": 39,
+			"album": 38,
 			"stats": { "cosiness": 2, "mischief": 5, "snacks": 3, "helpfulness": 2 }
 		},
 		{
 			"name": "halloween",
 			"height": 408,
 			"perched": true,
-			"album": 41,
+			"album": 40,
 			"stats": { "cosiness": 3, "mischief": 5, "snacks": 5, "helpfulness": 1 }
 		},
 		{
 			"name": "valentines",
 			"height": 408,
 			"perched": true,
-			"album": 38,
+			"album": 37,
 			"stats": { "cosiness": 5, "mischief": 2, "snacks": 4, "helpfulness": 3 }
 		},
 		{
@@ -187,7 +187,7 @@
 			"name": "garden",
 			"height": 408,
 			"perched": true,
-			"seasons": ["spring", "summer", "autumn"],
+			"seasons": ["spring", "summer"],
 			"lookAlike": "gardening",
 			"album": 29,
 			"stats": { "cosiness": 4, "mischief": 2, "snacks": 3, "helpfulness": 5 }
@@ -216,7 +216,7 @@
 			"perched": true,
 			"seasons": ["autumn", "winter", "spring"],
 			"lookAlike": "ball-sport",
-			"album": 37,
+			"album": 36,
 			"stats": { "cosiness": 2, "mischief": 3, "snacks": 4, "helpfulness": 3 }
 		},
 		{
@@ -311,7 +311,7 @@
 			"perched": true,
 			"seasons": ["autumn", "winter"],
 			"lookAlike": "hot-drink",
-			"album": 35,
+			"album": 34,
 			"stats": { "cosiness": 5, "mischief": 1, "snacks": 3, "helpfulness": 3 }
 		},
 		{
@@ -344,7 +344,7 @@
 			"perched": true,
 			"seasons": ["autumn", "winter"],
 			"lookAlike": "snow-gear",
-			"album": 36,
+			"album": 35,
 			"stats": { "cosiness": 5, "mischief": 1, "snacks": 3, "helpfulness": 4 }
 		},
 		{
@@ -364,20 +364,11 @@
 			"stats": { "cosiness": 3, "mischief": 3, "snacks": 3, "helpfulness": 2 }
 		},
 		{
-			"name": "summer-garden",
-			"height": 408,
-			"perched": true,
-			"seasons": ["summer"],
-			"lookAlike": "gardening",
-			"album": 33,
-			"stats": { "cosiness": 4, "mischief": 2, "snacks": 3, "helpfulness": 4 }
-		},
-		{
 			"name": "lemonade",
 			"height": 408,
 			"perched": true,
 			"seasons": ["summer"],
-			"album": 34,
+			"album": 33,
 			"stats": { "cosiness": 4, "mischief": 1, "snacks": 4, "helpfulness": 2 }
 		},
 		{
@@ -387,7 +378,7 @@
 			"seasons": ["winter", "spring", "summer", "autumn"],
 			"slots": ["morning"],
 			"lookAlike": "hot-drink",
-			"album": 45,
+			"album": 44,
 			"stats": { "cosiness": 4, "mischief": 1, "snacks": 3, "helpfulness": 3 }
 		},
 		{
@@ -396,7 +387,7 @@
 			"perched": true,
 			"seasons": ["winter", "spring", "summer", "autumn"],
 			"days": ["mon", "tue", "wed", "thu", "fri"],
-			"album": 46,
+			"album": 45,
 			"stats": { "cosiness": 2, "mischief": 2, "snacks": 3, "helpfulness": 5 }
 		},
 		{
@@ -404,7 +395,7 @@
 			"height": 408,
 			"perched": true,
 			"seasons": ["winter", "spring", "summer", "autumn"],
-			"album": 47,
+			"album": 46,
 			"stats": { "cosiness": 3, "mischief": 2, "snacks": 5, "helpfulness": 2 }
 		},
 		{
@@ -412,7 +403,7 @@
 			"height": 408,
 			"perched": true,
 			"seasons": ["winter", "spring", "summer", "autumn"],
-			"album": 48,
+			"album": 47,
 			"stats": { "cosiness": 2, "mischief": 5, "snacks": 2, "helpfulness": 2 }
 		},
 		{
@@ -420,7 +411,7 @@
 			"height": 408,
 			"perched": true,
 			"seasons": ["winter", "spring", "summer", "autumn"],
-			"album": 49,
+			"album": 48,
 			"stats": { "cosiness": 5, "mischief": 3, "snacks": 1, "helpfulness": 1 }
 		},
 		{
@@ -429,7 +420,7 @@
 			"perched": true,
 			"body": 0.52,
 			"seasons": ["autumn"],
-			"album": 50,
+			"album": 49,
 			"stats": { "cosiness": 3, "mischief": 2, "snacks": 5, "helpfulness": 3 }
 		},
 		{

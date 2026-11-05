@@ -24,7 +24,7 @@ describe('tier', () => {
 	it('is Common for 40% of the year or more: every season, the laptop, the reminders', () => {
 		for (const name of [
 			'reading',
-			'garden',
+			'tennis',
 			'laptop',
 			'reminder-upcoming',
 			'reminder-overdue'
@@ -33,7 +33,7 @@ describe('tier', () => {
 	});
 
 	it('is Rare in between: a season or two, coffee in the mornings, sleeping at night', () => {
-		for (const name of ['snowman', 'tea', 'mushrooms', 'coffee', 'sleeping'] as const)
+		for (const name of ['snowman', 'tea', 'garden', 'mushrooms', 'coffee', 'sleeping'] as const)
 			assert.equal(albumEntry(name).tier, 2, name);
 	});
 

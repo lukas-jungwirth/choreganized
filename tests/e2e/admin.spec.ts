@@ -61,7 +61,7 @@ test('an admin turns admin mode on with seven taps, and off again', async ({ pag
 	await expect(page.getByText('Admin mode: every raccoon is shown')).toBeVisible();
 	// No locked tile; an unmet one is named and still says it isn't met.
 	await expect(page.getByRole('button', { name: /^No\. \d{3}, not met yet$/ })).toHaveCount(0);
-	await page.getByRole('button', { name: /^No\. 042, Christmas Baker, not met yet$/ }).click();
+	await page.getByRole('button', { name: /^No\. 041, Christmas Baker, not met yet$/ }).click();
 	const card = page.getByRole('dialog', { name: 'Raccoon album' });
 	await expect(card.getByRole('heading', { name: 'Christmas Baker' })).toBeVisible();
 	await expect(card.getByText('Not met yet · shown in admin mode')).toBeVisible();
@@ -76,7 +76,7 @@ test('an admin turns admin mode on with seven taps, and off again', async ({ pag
 	// Out of admin mode, the unmet ones are locked again.
 	await page.goto('/settings/raccoons');
 	await expect(page.getByText('Admin mode: every raccoon is shown')).toHaveCount(0);
-	await expect(page.getByRole('button', { name: /^No\. 042, not met yet$/ })).toBeVisible();
+	await expect(page.getByRole('button', { name: /^No\. 041, not met yet$/ })).toBeVisible();
 });
 
 test.describe('someone not on the list', () => {
@@ -117,7 +117,7 @@ test.describe('someone not on the list', () => {
 		// …nor for the album: the unmet ones stay locked.
 		await page.goto('/settings/raccoons');
 		await expect(page.getByText('Admin mode: every raccoon is shown')).toHaveCount(0);
-		await expect(page.getByRole('button', { name: /^No\. 042, not met yet$/ })).toBeVisible();
+		await expect(page.getByRole('button', { name: /^No\. 041, not met yet$/ })).toBeVisible();
 
 		await page.goto('/home?raccoon=christmas');
 		await expect(page.locator('header img.mascot')).not.toHaveAttribute('src', /\/christmas/);
