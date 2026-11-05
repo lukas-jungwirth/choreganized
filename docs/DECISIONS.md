@@ -3491,3 +3491,10 @@ units | null, name}`, written back as editor lines in the reader's unit spelling
      is allowed because the album hasn't been in a release yet (`v0.2.0` predates plan 35);
      a sighting of `summer-garden` on the test deploy just stops counting (the album reads
      only names it lists), so no migration.
+
+242. **New art for the New Year raccoon** (Lukas 2026-11-05). `new-year` now holds a sparkler
+     and a glass of sekt, with watercolour fireworks behind it, instead of the party popper. The
+     file keeps its name (`npm run raccoons -- --replace`), so its rule (31 December – 1 January),
+     album number 042 and stats stay put. The fireworks are a soft half-transparent glow; checked
+     on the light and the dark card, where it reads as sky, not a smudge. The AVIF grows from
+     28 to 36 KB. No test: the picture changes, nothing the app does.
