@@ -2164,7 +2164,7 @@ export const de: Messages = {
 		},
 		garden: {
 			name: 'Gärtnerin',
-			fact: 'Zieht Paradeiser, Zucchini und, aus Versehen, einen Kürbis so groß wie die Gartenhütte.'
+			fact: 'Gießt in der Früh den Garten und zu Mittag sich selbst.'
 		},
 		butterfly: {
 			name: 'Schmetterlingsjägerin',
@@ -2189,10 +2189,6 @@ export const de: Messages = {
 		'water-pistol': {
 			name: 'Wasserschlacht-Anstifter',
 			fact: 'Schwört, dass er sie nur zum Blumengießen anfüllt.'
-		},
-		'summer-garden': {
-			name: 'Sommergärtnerin',
-			fact: 'Gießt in der Früh den Garten und zu Mittag sich selbst.'
 		},
 		lemonade: {
 			name: 'Limonadenmacherin',

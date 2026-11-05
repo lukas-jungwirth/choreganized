@@ -2720,7 +2720,7 @@ export const en = {
 		},
 		garden: {
 			name: 'Gardener',
-			fact: 'Grows tomatoes, courgettes and, by accident, a pumpkin the size of the shed.'
+			fact: 'Waters the garden at dawn and herself at noon.'
 		},
 		butterfly: {
 			name: 'Butterfly Chaser',
@@ -2745,10 +2745,6 @@ export const en = {
 		'water-pistol': {
 			name: 'Water-Fight Starter',
 			fact: 'Swears he only fills it up to water the plants.'
-		},
-		'summer-garden': {
-			name: 'Summer Gardener',
-			fact: 'Waters the garden at dawn and herself at noon.'
 		},
 		lemonade: {
 			name: 'Lemonade Maker',

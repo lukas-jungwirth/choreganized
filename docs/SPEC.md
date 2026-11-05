@@ -127,8 +127,7 @@ pose, first match wins, top to bottom (`lib/utils/raccoon.ts`, by the household'
   | Pose                        | Seasons                | Only      |
   | --------------------------- | ---------------------- | --------- |
   | at the beach                | summer                 |
-  | gardening in a sun hat      | summer                 |
-  | gardening                   | spring, summer, autumn |
+  | gardening in a sun hat      | spring, summer         |
   | fishing                     | spring, summer, autumn |
   | in the snow                 | winter                 |
   | wrapped up with a hot drink | winter                 |
@@ -191,7 +190,7 @@ pose, first match wins, top to bottom (`lib/utils/raccoon.ts`, by the household'
 
   **The raccoon album** (plan 35, [DECISIONS #229](DECISIONS.md), [#231](DECISIONS.md)): the
   first time you meet a raccoon here, a toast in the undo bar's style says so — its thumbnail on
-  its album frame, "New raccoon!", "Snowman Builder is in your album · 18 of 50" — with **View**,
+  its album frame, "New raccoon!", "Snowman Builder is in your album · 18 of 49" — with **View**,
   which opens the album at its card (`/settings/raccoons?card=<name>`). It goes by itself after
   six seconds and shows once: Home counts a sighting once per slot (morning, afternoon, evening,
   or the night, dated by its evening), so a reload in the same slot is not new. A pose from admin
@@ -863,12 +862,12 @@ The **History** tab is a stats landing; the full feed sits one level below it (�
 - Profile card: avatar, display name, email + **Edit**. A raccoon with a wrench sits on its top
   edge at the right, the way Home's sits on its first card; the title wraps rather than run
   under it ([DECISIONS #217](DECISIONS.md)).
-- **Raccoon album** (plan 35), a row right under the profile card with "17 of 50": every raccoon
-  Home can show (exactly `HOME_RACCOONS`: the 40 everyday poses, the 6 special days, your birthday, sleeping
+- **Raccoon album** (plan 35), a row right under the profile card with "17 of 49": every raccoon
+  Home can show (exactly `HOME_RACCOONS`: the 39 everyday poses, the 6 special days, your birthday, sleeping
   and the two reminders; never a tab's, the sign-in head, Settings' or the leaving raccoon), and
   which of them **you** have met. Per member: a housemate's album is their own.
   - `SubHeader` "Raccoon album" / "Every raccoon you've met on Home." A progress card: a ring,
-    "17 of 50 found", "5 rare · 4 legendary still to find", a plain sage bar.
+    "17 of 49 found", "5 rare · 4 legendary still to find", a plain sage bar.
   - Filters, sideways at 390px: All · ★ Common · ★★ Rare · ★★★ Legendary; a chip picks one
     rarity. (No Missing filter: dropped in [DECISIONS #237](DECISIONS.md).)
   - A grid of four, tiles 3:4, in album order: a met raccoon on its frame colour with its number
