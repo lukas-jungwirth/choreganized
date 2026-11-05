@@ -70,7 +70,7 @@ export const MASCOTS = {
 	'reminder-overdue': { src: reminderOverdue, width: 467, height: 408, body: 0.42 },
 	birthday: { src: birthday, width: 348, height: 408, body: 0.52 },
 	christmas: { src: christmas, width: 418, height: 408, body: 0.59 },
-	'new-year': { src: newYear, width: 425, height: 408, body: 0.55 },
+	'new-year': { src: newYear, width: 401, height: 408, body: 0.55 },
 	easter: { src: easter, width: 370, height: 408, body: 0.56 },
 	fasching: { src: fasching, width: 314, height: 408, body: 0.48 },
 	halloween: { src: halloween, width: 388, height: 408, body: 0.53 },
