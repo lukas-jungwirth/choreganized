@@ -4,9 +4,10 @@
  * The app preloads on hover (`data-sveltekit-preload-data="hover"` in
  * app.html), which runs the target's `load` early. That is free for a load
  * that only reads. These loads also write, on purpose: Home records the
- * raccoon you met, and the raccoon album clears its "New" badges. A hover that never turns into a visit
- * would spend both, so links to them preload on tap instead, a moment before
- * the navigation the press is already starting.
+ * raccoon you met, and the raccoon album clears its "New" badges. A hover that
+ * never turns into a visit would spend both, so links to them preload on tap
+ * instead, a moment before the navigation the press is already starting. A tap
+ * is a touchstart, though, so Home's big album card turns preloading off.
  */
 const WRITES_ON_LOAD = ['/home', '/settings/raccoons'];
 

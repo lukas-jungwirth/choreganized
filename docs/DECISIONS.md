@@ -3521,4 +3521,7 @@ units | null, name}`, written back as editor lines in the reader's unit spelling
        the canvas: a one-line strip (no more present than Settings) and a big frame-coloured card
        (the same raccoon twice at nearly the same size, right under the header one).
      - **Back goes where you came from**, via `?from=home`, kept when a card closes.
+     - **No data preload on the card**, not even `tap` (#231's rule for loads that write): a tap
+       is a touchstart, and a finger starting a scroll on a card this big would run the album's
+       load and use up its "New".
      - The toast's link variant and `detail` line had no other user, so `ui/UndoToast` lost them.

@@ -20,7 +20,6 @@
 	import Mascot from '$lib/components/ui/Mascot.svelte';
 	import ProgressBar from '$lib/components/ui/ProgressBar.svelte';
 	import { messages } from '$lib/i18n';
-	import { preloadData } from '$lib/preload';
 	import type { AlbumSummary } from '$lib/server/services/raccoons';
 	import { albumEntry, frameFill } from '$lib/utils/raccoon-album';
 
@@ -38,12 +37,12 @@
 		count === 1 ? `/settings/raccoons?card=${unseen[0]}&from=home` : '/settings/raccoons?from=home'
 	);
 
-	const legend = $derived(count === 1 && front?.tier === 3);
+	const legend = $derived(count === 1 && albumEntry(unseen[0]).tier === 3);
 
 	const eyebrow = $derived.by(() => {
 		if (count === 0) return m.album.title;
 		if (count > 1) return m.album.home.several;
-		return m.album.home.rarity[front?.tier ?? 1];
+		return m.album.home.rarity[albumEntry(unseen[0]).tier];
 	});
 
 	const title = $derived.by(() => {
@@ -63,7 +62,9 @@
 	});
 </script>
 
-<div data-sveltekit-preload-data={preloadData(href)}>
+<!-- No preload at all, not even on tap: "tap" means touchstart, and a finger starting
+	 a scroll on this big card would run the album's load, which uses up its "New". -->
+<div data-sveltekit-preload-data="off">
 	<Card {href}>
 		<div class="album" class:waiting={count > 0} class:legend>
 			<span class="eyebrow">{eyebrow}</span>
@@ -102,6 +103,7 @@
 		min-height: 114px;
 		padding: 16px 136px 16px 16px;
 		border-radius: var(--r-card-lg);
+		overflow-wrap: anywhere;
 	}
 
 	.waiting {
@@ -132,7 +134,6 @@
 
 	.title {
 		display: block;
-		overflow-wrap: anywhere;
 		font-family: var(--font-display);
 		font-size: var(--fs-20);
 		font-weight: 600;

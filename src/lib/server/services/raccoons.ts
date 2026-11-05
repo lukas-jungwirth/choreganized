@@ -10,7 +10,13 @@ import { and, count, desc, eq, inArray, isNull, sql } from 'drizzle-orm';
 import type { AlbumName } from '$lib/assets/mascot/album';
 import type { CalendarDate } from '$lib/utils/dates';
 import { WELCOME_RACCOON } from '$lib/utils/raccoon';
-import { ALBUM_ENTRIES, ALBUM_SIZE, behindFront, isAlbumName } from '$lib/utils/raccoon-album';
+import {
+	ALBUM_ENTRIES,
+	ALBUM_SIZE,
+	behindFront,
+	countMissing,
+	isAlbumName
+} from '$lib/utils/raccoon-album';
 import { db } from '../db';
 import { raccoonSightings, type RaccoonSighting } from '../db/schema';
 
@@ -22,14 +28,6 @@ const inAlbum = inArray(
 	raccoonSightings.raccoon,
 	ALBUM_ENTRIES.map((entry) => entry.name)
 );
-
-export type Sighting = {
-	/** The first time this member met it. */
-	isNew: boolean;
-	/** How many album raccoons they have met, this one included. */
-	found: number;
-	total: number;
-};
 
 /**
  * One sighting of `raccoon` in `slot` (→ `utils/raccoon` `homeSlot`). The first
@@ -43,10 +41,10 @@ export function recordSighting(
 	raccoon: string,
 	today: CalendarDate,
 	slot: string
-): Sighting {
+): void {
 	if (!isAlbumName(raccoon)) throw new Error(`${raccoon} is not an album raccoon`);
 
-	return db.transaction((tx) => {
+	db.transaction((tx) => {
 		const mine = and(
 			eq(raccoonSightings.householdId, householdId),
 			eq(raccoonSightings.memberId, memberId)
@@ -67,13 +65,6 @@ export function recordSighting(
 				.where(eq(raccoonSightings.id, existing.id))
 				.run();
 		}
-
-		const found = tx
-			.select({ found: count() })
-			.from(raccoonSightings)
-			.where(and(mine, inAlbum))
-			.get()!.found;
-		return { isNew: !existing, found, total: ALBUM_SIZE };
 	});
 }
 
@@ -138,20 +129,18 @@ export function albumSummary(householdId: string, memberId: string): AlbumSummar
 				inAlbum
 			)
 		)
-		// Insertion order: two raccoons can share a day, and even a millisecond in a test.
-		.orderBy(desc(sql`rowid`))
+		// The rowid only breaks a tie within one millisecond: VACUUM may renumber it.
+		.orderBy(desc(raccoonSightings.createdAt), desc(sql`rowid`))
 		.all();
 
 	const met = rows.map((row) => row.raccoon as AlbumName);
 	const latest = met[0] ?? null;
-	const missing = (tier: number) =>
-		ALBUM_ENTRIES.filter((entry) => entry.tier === tier && !met.includes(entry.name)).length;
 
 	return {
 		found: met.length,
 		total: ALBUM_SIZE,
-		rare: missing(2),
-		legendary: missing(3),
+		rare: countMissing(2, met),
+		legendary: countMissing(3, met),
 		latest,
 		unseen: rows.filter((row) => row.noticedAt === null).map((row) => row.raccoon as AlbumName),
 		behind: behindFront(met, latest)

@@ -54,6 +54,16 @@ test('a raccoon met on Home lands in the album, once per slot', async ({ browser
 	await page.reload();
 	await expect(waiting).toBeVisible();
 
+	// A press that turns into a scroll doesn't use it up either: "tap" preloading
+	// would run the album's load, which clears what's new.
+	await waiting.hover();
+	await page.mouse.down();
+	await page.mouse.move(0, 0);
+	await page.mouse.up();
+	await page.waitForTimeout(300);
+	await page.reload();
+	await expect(waiting).toBeVisible();
+
 	// A tap opens its card.
 	await waiting.click();
 	await expect(page).toHaveURL(/\/settings\/raccoons\?card=welcome-a&from=home$/);

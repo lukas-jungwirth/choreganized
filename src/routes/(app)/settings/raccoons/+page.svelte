@@ -19,6 +19,7 @@
 	import {
 		ALBUM_ENTRIES,
 		ALBUM_SIZE,
+		countMissing,
 		filterAlbum,
 		type AlbumEntry,
 		type Tier
@@ -32,9 +33,6 @@
 
 	const sightings = $derived(new Map(data.sightings.map((row) => [row.raccoon, row])));
 	const met = $derived(new Set(sightings.keys()));
-
-	const missingOf = (tier: Tier) =>
-		ALBUM_ENTRIES.filter((entry) => entry.tier === tier && !met.has(entry.name)).length;
 
 	let tier = $state<Tier | null>(null);
 
@@ -85,7 +83,12 @@
 	backLabel={fromHome ? m.album.backHome : m.album.back}
 />
 
-<AlbumProgress found={met.size} total={ALBUM_SIZE} rare={missingOf(2)} legendary={missingOf(3)} />
+<AlbumProgress
+	found={met.size}
+	total={ALBUM_SIZE}
+	rare={countMissing(2, met)}
+	legendary={countMissing(3, met)}
+/>
 
 {#if data.revealAll}<p class="admin-note">{m.album.adminNote}</p>{/if}
 

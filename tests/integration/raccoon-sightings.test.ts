@@ -100,8 +100,8 @@ describe('recordSighting', () => {
 	it('is new the first time, and counts the slot it fell in', () => {
 		const { householdId, owner } = makeHousehold();
 
-		const first = recordSighting(householdId, owner.id, 'beach', TODAY, `${TODAY}#1`);
-		assert.deepEqual(first, { isNew: true, found: 1, total: ALBUM_SIZE });
+		recordSighting(householdId, owner.id, 'beach', TODAY, `${TODAY}#1`);
+		assert.equal(countSightings(householdId, owner.id), 1);
 
 		const [row] = listSightings(householdId, owner.id);
 		assert.equal(row.raccoon, 'beach');
@@ -114,8 +114,8 @@ describe('recordSighting', () => {
 		const { householdId, owner } = makeHousehold();
 		recordSighting(householdId, owner.id, 'beach', TODAY, `${TODAY}#1`);
 
-		const again = recordSighting(householdId, owner.id, 'beach', TODAY, `${TODAY}#1`);
-		assert.deepEqual(again, { isNew: false, found: 1, total: ALBUM_SIZE });
+		recordSighting(householdId, owner.id, 'beach', TODAY, `${TODAY}#1`);
+		assert.equal(countSightings(householdId, owner.id), 1);
 		assert.equal(listSightings(householdId, owner.id)[0].seenCount, 1);
 	});
 
@@ -136,8 +136,7 @@ describe('recordSighting', () => {
 		const { householdId, owner } = makeHousehold();
 		recordSighting(householdId, owner.id, 'beach', TODAY, `${TODAY}#1`);
 
-		const second = recordSighting(householdId, owner.id, 'fishing', TODAY, `${TODAY}#2`);
-		assert.deepEqual(second, { isNew: true, found: 2, total: ALBUM_SIZE });
+		recordSighting(householdId, owner.id, 'fishing', TODAY, `${TODAY}#2`);
 		assert.equal(countSightings(householdId, owner.id), 2);
 	});
 
@@ -159,7 +158,8 @@ describe('recordSighting', () => {
 			listSightings(householdId, owner.id).map((row) => row.raccoon),
 			['beach']
 		);
-		assert.equal(recordSighting(householdId, owner.id, 'fishing', TODAY, `${TODAY}#2`).found, 2);
+		recordSighting(householdId, owner.id, 'fishing', TODAY, `${TODAY}#2`);
+		assert.equal(countSightings(householdId, owner.id), 2);
 	});
 
 	it('refuses a raccoon that is not in the album', () => {
@@ -183,10 +183,8 @@ describe('whose album', () => {
 		assert.equal(countSightings(other.householdId, owner.id), 0);
 
 		// Mia meeting the same raccoon is her own first time.
-		assert.equal(
-			recordSighting(home.householdId, mia.id, 'beach', TODAY, `${TODAY}#1`).isNew,
-			true
-		);
+		recordSighting(home.householdId, mia.id, 'beach', TODAY, `${TODAY}#1`);
+		assert.equal(listSightings(home.householdId, mia.id)[0].seenCount, 1);
 	});
 
 	it('goes with a member who leaves', () => {
