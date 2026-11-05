@@ -11,6 +11,7 @@ import {
 	ALBUM_SIZE,
 	albumEntry,
 	albumNumber,
+	cardView,
 	filterAlbum,
 	frameFill,
 	frameInk,
@@ -201,6 +202,27 @@ describe('filterAlbum', () => {
 
 	it('shows everything unfiltered', () => {
 		assert.equal(filterAlbum(ALBUM_ENTRIES, null).length, ALBUM_SIZE);
+	});
+});
+
+describe('cardView', () => {
+	it('shows a met raccoon, reveals an unmet one only in admin mode, else locks it', async () => {
+		assert.equal(cardView(true, false), 'met');
+		assert.equal(cardView(true, true), 'met');
+		assert.equal(cardView(false, true), 'revealed');
+		assert.equal(cardView(false, false), 'locked');
+		// A revealed tile is named, but still says it isn't met.
+		const { en } = await import('$lib/i18n/messages/en');
+		const { de } = await import('$lib/i18n/messages/de');
+		assert.equal(
+			en.album.tile('042', 'Christmas Baker', false, true),
+			'No. 042, Christmas Baker, not met yet'
+		);
+		assert.equal(
+			de.album.tile('042', 'Weihnachtsbäckerin', false, true),
+			'Nr. 042, Weihnachtsbäckerin, noch nicht getroffen'
+		);
+		assert.equal(en.album.tile('042', 'Christmas Baker', true), 'No. 042, Christmas Baker, new');
 	});
 });
 

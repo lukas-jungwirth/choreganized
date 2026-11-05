@@ -59,8 +59,9 @@ test('an admin turns admin mode on with seven taps, and off again', async ({ pag
 	// tile, and an unmet card open but saying it isn't met. The count stays real.
 	await page.goto('/settings/raccoons');
 	await expect(page.getByText('Admin mode: every raccoon is shown')).toBeVisible();
-	await expect(page.getByRole('button', { name: /not met yet$/ })).toHaveCount(0);
-	await page.getByRole('button', { name: /^No\. 042, Christmas Baker$/ }).click();
+	// No locked tile; an unmet one is named and still says it isn't met.
+	await expect(page.getByRole('button', { name: /^No\. \d{3}, not met yet$/ })).toHaveCount(0);
+	await page.getByRole('button', { name: /^No\. 042, Christmas Baker, not met yet$/ }).click();
 	const card = page.getByRole('dialog', { name: 'Raccoon album' });
 	await expect(card.getByRole('heading', { name: 'Christmas Baker' })).toBeVisible();
 	await expect(card.getByText('Not met yet · shown in admin mode')).toBeVisible();
@@ -112,6 +113,11 @@ test.describe('someone not on the list', () => {
 		// Forging the cookie isn't enough either: the server checks the address.
 		await context.addCookies([{ name: 'admin_mode', value: '1', url: baseURL! }]);
 		expect((await page.goto('/admin'))?.status()).toBe(404);
+
+		// …nor for the album: the unmet ones stay locked.
+		await page.goto('/settings/raccoons');
+		await expect(page.getByText('Admin mode: every raccoon is shown')).toHaveCount(0);
+		await expect(page.getByRole('button', { name: /^No\. 042, not met yet$/ })).toBeVisible();
 
 		await page.goto('/home?raccoon=christmas');
 		await expect(page.locator('header img.mascot')).not.toHaveAttribute('src', /\/christmas/);

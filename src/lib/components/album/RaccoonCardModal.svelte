@@ -3,7 +3,7 @@
 	a trading card is held up to look at, and a sheet's handle and flat top would
 	fight its frame (→ DECISIONS #231). Prev / next, or a sideways swipe, go to
 	the neighbouring card in album order, skipping nothing: a raccoon you haven't
-	met shows as its locked card.
+	met shows as its locked card (open, marked as unmet, in admin mode).
 -->
 <script lang="ts">
 	import CenterModal from '$lib/components/ui/CenterModal.svelte';
