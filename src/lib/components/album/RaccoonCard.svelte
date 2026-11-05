@@ -5,7 +5,8 @@
 	then its rule: "All year · Mon – Fri"), a fun fact, four fun
 	stats, and when you first met it and how often. Locked: the same frame shape
 	in `--sunken-2`, the silhouette under one big "?", and nothing that would
-	give it away.
+	give it away. In admin mode an unmet card is shown open, its footer saying it
+	isn't met (→ `cardView`, DECISIONS #240).
 -->
 <script lang="ts">
 	import { STATS, type AlbumName } from '$lib/assets/mascot/album';
@@ -15,6 +16,7 @@
 	import type { CalendarDate } from '$lib/utils/dates';
 	import {
 		albumNumber,
+		cardView,
 		frameFill,
 		frameInk,
 		type AlbumEntry,
@@ -36,6 +38,8 @@
 	};
 
 	let { entry, sighting, reveal = false, today }: Props = $props();
+
+	const view = $derived(cardView(sighting !== null, reveal));
 
 	const m = messages();
 
@@ -74,7 +78,7 @@
 	const SeasonIcon = $derived(season ? SEASON_ICONS[season] : null);
 </script>
 
-{#if sighting || reveal}
+{#if view !== 'locked'}
 	<article
 		class="card"
 		style:--frame={frameFill(entry.frame)}

@@ -2002,10 +2002,10 @@ export const de: Messages = {
 		newBadge: 'Neu',
 		quoted: (text: string) => `„${text}“`,
 		empty: 'Hier sind keine Waschbären.',
-		tile: (number: string, name: string | null, isNew = false) =>
-			name
-				? `Nr. ${number}, ${name}${isNew ? ', neu' : ''}`
-				: `Nr. ${number}, noch nicht getroffen`,
+		tile: (number: string, name: string | null, isNew = false, revealed = false) =>
+			!name
+				? `Nr. ${number}, noch nicht getroffen`
+				: `Nr. ${number}, ${name}${revealed ? ', noch nicht getroffen' : isNew ? ', neu' : ''}`,
 		window: {
 			allYear: 'Ganzjährig',
 			easter: 'Ostern',

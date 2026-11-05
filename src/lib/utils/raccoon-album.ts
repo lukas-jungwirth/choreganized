@@ -223,6 +223,19 @@ export function frameInk(frame: Frame): string {
 	return `var(--season-${frame.seasons[0]}-ink)`;
 }
 
+/**
+ * How a tile and its card show a raccoon: `met` in colour; `revealed` in colour
+ * but marked as not met, which only admin mode does (→ DECISIONS #240); else
+ * `locked`, the silhouette. One rule for both, so a tile never opens a card
+ * shown the other way.
+ */
+export type CardView = 'met' | 'revealed' | 'locked';
+
+export function cardView(met: boolean, revealAll: boolean): CardView {
+	if (met) return 'met';
+	return revealAll ? 'revealed' : 'locked';
+}
+
 /** The grid's filter: one rarity, or all of them when null (→ DECISIONS #237). */
 export function filterAlbum(entries: readonly AlbumEntry[], tier: Tier | null): AlbumEntry[] {
 	return entries.filter((entry) => tier === null || entry.tier === tier);

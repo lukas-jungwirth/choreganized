@@ -3476,5 +3476,7 @@ units | null, name}`, written back as editor lines in the reader's unit spelling
      so the count, the "New" badges and "First met" / "Seen" stay the admin's real ones. An unmet
      card says so where "First met" would be ("Not met yet · shown in admin mode"), and a line
      under the progress card names the mode, so a revealed album is never mistaken for a full
-     one. Weighed and dropped: recording sightings for everything (it would spoil the admin's
+     one. In the grid too: an unmet tile is faded inside a dashed edge and its label ends
+     "not met yet" (review, 2026-11-05), and one rule, `cardView(met, revealAll)` → met ·
+     revealed · locked, decides both the tile and its card. Weighed and dropped: recording sightings for everything (it would spoil the admin's
      own album for good), and a separate admin page of cards (the album already is that page).

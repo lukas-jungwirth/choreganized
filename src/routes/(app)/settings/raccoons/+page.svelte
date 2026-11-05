@@ -102,7 +102,8 @@
 			<li>
 				<AlbumTile
 					{entry}
-					met={sighting !== undefined || data.revealAll}
+					met={sighting !== undefined}
+					reveal={data.revealAll}
 					isNew={sighting?.isNew ?? false}
 					onopen={() => openCard(entry)}
 				/>

@@ -2552,8 +2552,10 @@ export const en = {
 		quoted: (text: string) => `“${text}”`,
 		empty: 'No raccoons here.',
 		/** A tile, named for a screen reader. */
-		tile: (number: string, name: string | null, isNew = false) =>
-			name ? `No. ${number}, ${name}${isNew ? ', new' : ''}` : `No. ${number}, not met yet`,
+		tile: (number: string, name: string | null, isNew = false, revealed = false) =>
+			!name
+				? `No. ${number}, not met yet`
+				: `No. ${number}, ${name}${revealed ? ', not met yet' : isNew ? ', new' : ''}`,
 		/** The card's chip: when you can meet it. */
 		window: {
 			allYear: 'All year',
