@@ -191,7 +191,7 @@ pose, first match wins, top to bottom (`lib/utils/raccoon.ts`, by the household'
 
   **The raccoon album** (plan 35, [DECISIONS #229](DECISIONS.md), [#231](DECISIONS.md)): the
   first time you meet a raccoon here, a toast in the undo bar's style says so — its thumbnail on
-  its album frame, "New raccoon!", "Frosty Fritz is in your album · 18 of 44" — with **View**,
+  its album frame, "New raccoon!", "Snowman Builder is in your album · 18 of 50" — with **View**,
   which opens the album at its card (`/settings/raccoons?card=<name>`). It goes by itself after
   six seconds and shows once: Home counts a sighting once per slot (morning, afternoon, evening,
   or the night, dated by its evening), so a reload in the same slot is not new. A pose from admin
@@ -884,14 +884,15 @@ The **History** tab is a stats landing; the full feed sits one level below it (�
     last for several (tea: autumn → winter), holo foil for a special day; the theme changes only
     the shade.
   - A tap opens the **card**, centred over the album: "No. 009" and the stars (★★☆) on top, the
-    raccoon on a stage in its frame colour, its name and a title, one chip for when you can meet
+    raccoon on a stage in its frame colour, its name, which says what it is ("Tennis Ace",
+    "Tea Brewer"; no invented first names, [DECISIONS #239](DECISIONS.md)), one chip for when you can meet
     it ("All year", "Dec – Feb", "Dec 24 – 25", "Easter", "Shrove Tuesday", "Your birthday"),
     with its rule after a dot when it keeps to some days or hours ("All year · Mornings", "All
     year · Mon – Fri", "All year · Nights"), a fun fact, four
     stats as 1–5 dots (Cosiness, Mischief, Snack drive, Helpfulness), and "First met Jun 18" ·
     "Seen 7×". ‹ / › (or a sideways swipe) go to the neighbouring number, met or not; an unmet
     one is the locked card: the number, the silhouette under a big "?", "? ? ? ? ?", "Not met
-    yet". Names, titles, facts and stats are the app's words (`raccoons.*` in the catalog,
+    yet". Names, facts and stats are the app's words (`raccoons.*` in the catalog,
     `stats` in `mascots.json`), drafts for Lukas to review.
 - **Account**: Display name, Your colour (palette picker; taken colours disabled), **Birthday**
   (optional; day and month, no year — two selects in the profile sheet, "–" in both clears it,

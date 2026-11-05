@@ -68,7 +68,7 @@ export async function newRaccoonToast(page: Page): Promise<void> {
 	await page.getByRole('button', { name: 'Continue' }).click();
 	await page.waitForURL(/\/onboarding\/invite$/);
 	await page.goto('/home');
-	await page.getByRole('status').filter({ hasText: 'Wendelin Wave' }).waitFor();
+	await page.getByRole('status').filter({ hasText: 'Welcome Committee' }).waitFor();
 }
 
 /** [9b] with an amount and a description typed, as it looks just before Save. */

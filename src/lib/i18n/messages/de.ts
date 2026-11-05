@@ -2060,253 +2060,203 @@ export const de: Messages = {
 	/** Entwürfe, zum Gegenlesen (→ plan 35). Wortspiele erlaubt. */
 	raccoons: {
 		'welcome-a': {
-			name: 'Winke-Wendelin',
-			title: 'Das Begrüßungskomitee',
+			name: 'Begrüßungskomitee',
 			fact: 'Winkt dem Briefträger, den Nachbarn und an ruhigen Tagen auch dem Kühlschrank.'
 		},
 		'welcome-b': {
-			name: 'Daumen-Toni',
-			title: 'Der, der sagt: Wird schon',
+			name: 'Optimist',
 			fact: 'Hat nie nachgeschaut, ob es wirklich wird. Meistens wird es.'
 		},
 		reading: {
-			name: 'Bücher-Berta',
-			title: 'Die Gute-Nacht-Leserin',
+			name: 'Gute-Nacht-Leserin',
 			fact: 'Hat jedes Rezept im Kochbuch zweimal gelesen. Gekocht hat sie eins, einmal.'
 		},
 		call: {
-			name: 'Quassel-Karli',
-			title: 'Der am Telefon',
+			name: 'Dauertelefonierer',
 			fact: 'Ruft an, um zu sagen, dass er später kommt. Ruft nochmal an, um zu sagen, wie viel später.'
 		},
 		phone: {
-			name: 'Wählscheiben-Rosi',
-			title: 'Die Hüterin des Festnetzes',
+			name: 'Festnetz-Hüterin',
 			fact: 'Kann noch jede Nummer auswendig. Wie, verrät sie nicht.'
 		},
 		music: {
-			name: 'Kopfhörer-Hannes',
-			title: 'Der stille Zuhörer',
+			name: 'Stiller Zuhörer',
 			fact: 'Summt bei allem mit, immer einen Tick vor dem Takt.'
 		},
 		singing: {
-			name: 'Mikro-Mitzi',
-			title: 'Der Küchen-Karaoke-Star',
+			name: 'Küchen-Karaoke-Star',
 			fact: 'Singt unter der Dusche, in der Küche und einmal sogar in der Apotheke.'
 		},
 		camera: {
-			name: 'Schnappschuss-Sepp',
-			title: 'Der Haushaltsfotograf',
+			name: 'Haushaltsfotograf',
 			fact: 'Hat 400 Fotos vom Abendessen und kein einziges von denen, die es gegessen haben.'
 		},
 		painting: {
-			name: 'Pinsel-Paula',
-			title: 'Die Hauskünstlerin',
+			name: 'Hauskünstlerin',
 			fact: 'Hat die Obstschale so oft gemalt, dass das Obst schon posiert.'
 		},
 		writing: {
-			name: 'Feder-Quirin',
-			title: 'Der Listenschreiber',
+			name: 'Listenschreiber',
 			fact: 'Schreibt die Einkaufsliste zuerst mit der Hand. Wegen dem Gefühl.'
 		},
 		cards: {
-			name: 'Pokerface-Paul',
-			title: 'Der Kartenhai',
+			name: 'Kartenhai',
 			fact: 'Sagt, er kann nicht Karten spielen. Gewinnt seit dem Frühling jeden Spieleabend.'
 		},
 		arcade: {
-			name: 'Joystick-Jo',
-			title: 'Die Rekordhalterin',
+			name: 'Rekordhalterin',
 			fact: 'Hält den Rekord auf jedem Automaten, und den für „nur noch eine Runde“.'
 		},
 		sports: {
-			name: 'Muskel-Max',
-			title: 'Das Morgentraining',
+			name: 'Morgensportler',
 			fact: 'Stemmt jeden Morgen Gewichte und danach die Keksdose, fürs Gleichgewicht.'
 		},
 		watering: {
-			name: 'Gießkannen-Wally',
-			title: 'Der Pflanzenflüsterer',
+			name: 'Pflanzenflüsterer',
 			fact: 'Redet jeden Tag mit den Zimmerpflanzen. Zwei antworten schon.'
 		},
 		sleeping: {
-			name: 'Schlummer-Susi',
-			title: 'Die Nachtschicht',
+			name: 'Nachtschicht',
 			fact: 'Schläft von zehn bis fünf und träumt, meistens, vom Frühstück.'
 		},
 		'reminder-upcoming': {
-			name: 'Bimmel-Dora',
-			title: 'Die freundliche Erinnerung',
+			name: 'Freundliche Erinnerung',
 			fact: 'Läutet einmal, ganz höflich. Und dann nochmal, genauso höflich.'
 		},
 		'reminder-overdue': {
-			name: 'Wecker-Alois',
-			title: 'Die letzte Erinnerung',
+			name: 'Letzte Erinnerung',
 			fact: 'War noch nie im Leben zu spät und hätte das gern schriftlich.'
 		},
 		snow: {
-			name: 'Schneeball-Sigi',
-			title: 'Der Schneeballwerfer',
+			name: 'Schneeballwerfer',
 			fact: 'Zielt auf den Baum. Trifft den, der daneben steht.'
 		},
 		snowflake: {
-			name: 'Flocken-Flora',
-			title: 'Die Schneeflockensammlerin',
+			name: 'Schneeflockensammlerin',
 			fact: 'Hat 2.000 Schneeflocken mit der Zunge gefangen. Keine hat gleich geschmeckt, sagt sie.'
 		},
 		snowman: {
-			name: 'Frosti-Fritz',
-			title: 'Der Schneemannbauer',
+			name: 'Schneemannbauer',
 			fact: 'Gibt dem Schneemann immer eine eigene Karotte. Die zweite hebt er sich auf, man weiß ja nie.'
 		},
 		skiing: {
-			name: 'Slalom-Stefan',
-			title: 'Der Erste auf der Piste',
+			name: 'Skifahrer',
 			fact: 'Ist in vier Minuten im Tal. Mit der Gondel geht’s zurück, wegen der Aussicht und dem Strudel.'
 		},
 		skates: {
-			name: 'Pirouetten-Pia',
-			title: 'Die Eisläuferin',
+			name: 'Eisläuferin',
 			fact: 'Kann eine perfekte Pirouette. Am Bremsen arbeitet sie noch.'
 		},
 		cold: {
-			name: 'Kakao-Kurt',
-			title: 'Warm eingepackt',
+			name: 'Kakaotrinker',
 			fact: 'Trägt drei Schals und hält den Kakao mit beiden Pfoten. Sagt trotzdem, es ist frisch draußen.'
 		},
 		flower: {
-			name: 'Blüten-Bella',
-			title: 'Die Blumenschnupperin',
+			name: 'Blumenschnupperin',
 			fact: 'Riecht auf dem Weg zum Geschäft an jeder Blume. Wenn sie ankommt, hat es schon zu.'
 		},
 		tennis: {
-			name: 'Topspin-Tom',
-			title: 'Das Tennis-Ass',
+			name: 'Tennis-Ass',
 			fact: 'Ruft bei jedem Ball „Out“, auch bei seinen eigenen.'
 		},
 		garden: {
-			name: 'Grünpfoten-Gerti',
-			title: 'Die Gärtnerin',
+			name: 'Gärtnerin',
 			fact: 'Zieht Paradeiser, Zucchini und, aus Versehen, einen Kürbis so groß wie die Gartenhütte.'
 		},
 		butterfly: {
-			name: 'Schmetterlings-Burgi',
-			title: 'Die Schmetterlingsjägerin',
+			name: 'Schmetterlingsjägerin',
 			fact: 'Jagt seit drei Sommern Schmetterlinge. Die Schmetterlinge führen.'
 		},
 		fishing: {
-			name: 'Fischer-Ferdl',
-			title: 'Der geduldige Angler',
+			name: 'Geduldiger Angler',
 			fact: 'Wartet seit Dienstag auf einen Biss. Hat Jausenbrote für die ganze Woche mit.'
 		},
 		sweets: {
-			name: 'Naschkatzen-Susi',
-			title: 'Die Naschkatze',
+			name: 'Naschkatze',
 			fact: 'Hat in jeder Tasche eine Notfall-Schokolade. Einen Notfall gab es noch nie.'
 		},
 		trash: {
-			name: 'Mistkübel-Bertl',
-			title: 'Der Mistkübel-Inspektor',
+			name: 'Mistkübel-Inspektor',
 			fact: 'Schaut in jeden Mistkübel der Gasse, rein zur Qualitätskontrolle.'
 		},
 		beach: {
-			name: 'Badetuch-Bianca',
-			title: 'Die Sonnenanbeterin',
+			name: 'Sonnenanbeterin',
 			fact: 'Legt um sieben in der Früh ihr Handtuch hin. Seitdem hat sie sich nicht bewegt.'
 		},
 		'water-pistol': {
-			name: 'Spritzpistolen-Gustl',
-			title: 'Der Wasserschlacht-Anstifter',
+			name: 'Wasserschlacht-Anstifter',
 			fact: 'Schwört, dass er sie nur zum Blumengießen anfüllt.'
 		},
 		'summer-garden': {
-			name: 'Strohhut-Heidi',
-			title: 'Die Sommergärtnerin',
+			name: 'Sommergärtnerin',
 			fact: 'Gießt in der Früh den Garten und zu Mittag sich selbst.'
 		},
 		lemonade: {
-			name: 'Limo-Leni',
-			title: 'Die Limonadenmacherin',
+			name: 'Limonadenmacherin',
 			fact: 'Presst die Zitronen selber aus und gibt den Zucker händeweise dazu.'
 		},
 		coffee: {
-			name: 'Espresso-Ernst',
-			title: 'Der Frühaufsteher',
+			name: 'Frühaufsteher',
 			fact: 'Ist kein Morgenwaschbär. Nach der ersten Tasse schon.'
 		},
 		laptop: {
-			name: 'Laptop-Lotte',
-			title: 'Die Homeoffice-Heldin',
+			name: 'Homeoffice-Heldin',
 			fact: 'War das ganze Meeting lang stummgeschaltet. Bemerkt hat es noch niemand.'
 		},
 		fruit: {
-			name: 'Obst-Franzi',
-			title: 'Die Vitaminfreundin',
+			name: 'Vitaminfreundin',
 			fact: 'Isst jeden Tag einen Apfel, dazu die Birne und die Trauben, sicherheitshalber.'
 		},
 		juggling: {
-			name: 'Jonglier-Jakob',
-			title: 'Der Jongleur',
+			name: 'Jongleur',
 			fact: 'Hält drei Bälle in der Luft. An guten Tagen vier, neben der Vase nur zwei.'
 		},
 		bath: {
-			name: 'Blubber-Burgi',
-			title: 'Die Badenixe',
+			name: 'Badenixe',
 			fact: 'Füllt das Schaffel bis zum Rand und gibt dann noch Schaum dazu. Die Ente beschwert sich nicht mehr.'
 		},
 		mushrooms: {
-			name: 'Schwammerl-Sepp',
-			title: 'Der Schwammerlsucher',
+			name: 'Schwammerlsucher',
 			fact: 'Kennt jedes Schwammerl im Wald. Das rote mit den Punkten kommt wieder zurück, versprochen.'
 		},
 		tea: {
-			name: 'Teehäferl-Theo',
-			title: 'Der Teekocher',
+			name: 'Teekocher',
 			fact: 'Hat einen Tee für jede Laune und eine Laune für jeden Tee.'
 		},
 		knitting: {
-			name: 'Strick-Klara',
-			title: 'Die Schalstrickerin',
+			name: 'Schalstrickerin',
 			fact: 'Hat im Oktober mit einem Schal angefangen. Jetzt ist er vier Meter lang und wird noch länger.'
 		},
 		handball: {
-			name: 'Handball-Hias',
-			title: 'Der Mannschaftskapitän',
+			name: 'Mannschaftskapitän',
 			fact: 'Spielt bei jedem Wetter. Hat noch nie zugegeben, dass es geregnet hat.'
 		},
 		valentines: {
-			name: 'Herzerl-Hansi',
-			title: 'Der Valentin',
+			name: 'Valentin',
 			fact: 'Klebt kleine Herzerl auf den Kühlschrank. Lässt den Kühlschrank auch gern offen.'
 		},
 		fasching: {
-			name: 'Piraten-Poldi',
-			title: 'Der Faschingspirat',
+			name: 'Faschingspirat',
 			fact: 'Geht jedes Jahr als Pirat. Sucht noch immer den Schatz vom letzten Mal.'
 		},
 		easter: {
-			name: 'Osternest-Elfi',
-			title: 'Die Eierversteckerin',
+			name: 'Eierversteckerin',
 			fact: 'Versteckt die Eier so gut, dass eins vom letzten Jahr noch immer irgendwo liegt.'
 		},
 		halloween: {
-			name: 'Grusel-Schurli',
-			title: 'Der Kürbisschnitzer',
+			name: 'Kürbisschnitzer',
 			fact: 'Schnitzt den gruseligsten Kürbis der Gasse und fürchtet sich dann selber ein bisserl.'
 		},
 		christmas: {
-			name: 'Kekserl-Christl',
-			title: 'Die Weihnachtsbäckerin',
+			name: 'Weihnachtsbäckerin',
 			fact: 'Bäckt elf Sorten Weihnachtskekse und kostet jedes Blech. Gründlich.'
 		},
 		'new-year': {
-			name: 'Mitternachts-Manni',
-			title: 'Der Countdown-Zähler',
+			name: 'Countdown-Zähler',
 			fact: 'Fängt um elf mit dem Countdown an, damit nur ja nichts schiefgeht.'
 		},
 		birthday: {
-			name: 'Partyhut-Pepi',
-			title: 'Dein Geburtstags-Waschbär',
+			name: 'Geburtstags-Waschbär',
 			fact: 'Kommt nur einmal im Jahr, und nur für dich. Hat Kuchen mit.'
 		}
 	},

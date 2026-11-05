@@ -52,7 +52,7 @@ describe('the raccoon album', () => {
 		for (const pose of EVERYDAY) assert.doesNotThrow(() => seasonRun(pose.seasons), pose.name);
 	});
 
-	it('has a name, a title and a fact for each, in both languages', async () => {
+	it('has a name and a fact for each, in both languages', async () => {
 		const { en } = await import('$lib/i18n/messages/en');
 		const { de } = await import('$lib/i18n/messages/de');
 		for (const entry of ALBUM_ENTRIES) {
@@ -61,9 +61,9 @@ describe('the raccoon album', () => {
 				['de', de]
 			] as const) {
 				const copy = catalog.raccoons[entry.name];
-				assert.ok(copy.name && copy.title && copy.fact, `${language}: ${entry.name}`);
+				assert.ok(copy.name && copy.fact, `${language}: ${entry.name}`);
 				assert.ok(
-					!/—/.test(copy.fact + copy.title + copy.name),
+					!/—/.test(copy.fact + copy.name),
 					`${language}: ${entry.name} has an em dash (DECISIONS #205)`
 				);
 			}
