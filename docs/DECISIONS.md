@@ -3469,3 +3469,12 @@ units | null, name}`, written back as editor lines in the reader's unit spelling
      met yet" line is interface copy and stays. The toast reads "Tennis Ace is in your album".
      Lukas reviews the German names and facts in the "Waschbär-Texte" editor artifact; English
      follows from his German.
+240. **Admin mode shows the whole raccoon album** (Lukas 2026-11-05). To check every
+     raccoon's art, name, fact and stats without meeting them all, the album in admin mode
+     shows every tile in colour and opens every card. It only changes the **view**: the album's
+     `load` passes `revealAll: adminMode`, the tiles and cards read it, and nothing is recorded,
+     so the count, the "New" badges and "First met" / "Seen" stay the admin's real ones. An unmet
+     card says so where "First met" would be ("Not met yet · shown in admin mode"), and a line
+     under the progress card names the mode, so a revealed album is never mistaken for a full
+     one. Weighed and dropped: recording sightings for everything (it would spoil the admin's
+     own album for good), and a separate admin page of cards (the album already is that page).

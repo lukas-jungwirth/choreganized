@@ -2593,6 +2593,10 @@ export const en = {
 			title: 'Not met yet',
 			hint: 'Keep an eye on Home'
 		},
+		/** Admin mode (→ DECISIONS #240): every card is open, the count stays real. */
+		adminNote: 'Admin mode: every raccoon is shown, met or not. Your count stays your own.',
+		/** An unmet card's footer in admin mode, where "First met" would go. */
+		revealed: 'Not met yet · shown in admin mode',
 		previous: 'Previous raccoon',
 		next: 'Next raccoon',
 		close: 'Close',

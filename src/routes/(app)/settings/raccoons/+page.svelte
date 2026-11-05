@@ -83,6 +83,8 @@
 
 <AlbumProgress found={met.size} total={ALBUM_SIZE} rare={missingOf(2)} legendary={missingOf(3)} />
 
+{#if data.revealAll}<p class="admin-note">{m.album.adminNote}</p>{/if}
+
 <div class="filters" role="group" aria-label={m.album.filters.label}>
 	<Chip selected={tier === null} onclick={() => (tier = null)}>{m.album.filters.all}</Chip>
 	{#each TIERS as each (each)}
@@ -100,7 +102,7 @@
 			<li>
 				<AlbumTile
 					{entry}
-					met={sighting !== undefined}
+					met={sighting !== undefined || data.revealAll}
 					isNew={sighting?.isNew ?? false}
 					onopen={() => openCard(entry)}
 				/>
@@ -116,6 +118,7 @@
 		entries={ALBUM_ENTRIES}
 		index={open}
 		{sightings}
+		reveal={data.revealAll}
 		today={data.today}
 		onmove={(index) => (open = index)}
 		onclose={close}
@@ -141,6 +144,12 @@
 
 	.filters :global(.chip) {
 		flex: none;
+	}
+
+	.admin-note {
+		margin: 12px 0 0;
+		font-size: var(--fs-14);
+		color: var(--text-4);
 	}
 
 	.grid {

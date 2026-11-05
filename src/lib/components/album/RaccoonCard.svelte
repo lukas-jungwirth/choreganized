@@ -30,10 +30,12 @@
 		entry: AlbumEntry;
 		/** Null until this member has met it: the locked card. */
 		sighting: { firstSeenOn: CalendarDate; seenCount: number } | null;
+		/** Admin mode: the open card even when it isn't met, saying so (→ DECISIONS #240). */
+		reveal?: boolean;
 		today: CalendarDate;
 	};
 
-	let { entry, sighting, today }: Props = $props();
+	let { entry, sighting, reveal = false, today }: Props = $props();
 
 	const m = messages();
 
@@ -72,7 +74,7 @@
 	const SeasonIcon = $derived(season ? SEASON_ICONS[season] : null);
 </script>
 
-{#if sighting}
+{#if sighting || reveal}
 	<article
 		class="card"
 		style:--frame={frameFill(entry.frame)}
@@ -118,16 +120,20 @@
 			</dl>
 
 			<footer>
-				<span>
-					{#each m.album.firstMet(m.date.shortAuto(sighting.firstSeenOn, today)) as part}
-						{#if part.strong}<b>{part.text}</b>{:else}{part.text}{/if}
-					{/each}
-				</span>
-				<span>
-					{#each m.album.seen(sighting.seenCount) as part}
-						{#if part.strong}<b>{part.text}</b>{:else}{part.text}{/if}
-					{/each}
-				</span>
+				{#if sighting}
+					<span>
+						{#each m.album.firstMet(m.date.shortAuto(sighting.firstSeenOn, today)) as part}
+							{#if part.strong}<b>{part.text}</b>{:else}{part.text}{/if}
+						{/each}
+					</span>
+					<span>
+						{#each m.album.seen(sighting.seenCount) as part}
+							{#if part.strong}<b>{part.text}</b>{:else}{part.text}{/if}
+						{/each}
+					</span>
+				{:else}
+					<span>{m.album.revealed}</span>
+				{/if}
 			</footer>
 		</div>
 	</article>

@@ -9,7 +9,7 @@ import type { PageServerLoad } from './$types';
 
 export const load: PageServerLoad = async (event) => {
 	const { householdId, member } = requireMember(event);
-	const { today } = await event.parent();
+	const { today, adminMode } = await event.parent();
 
 	const sightings = listSightings(householdId, member.id).map((row) => ({
 		raccoon: row.raccoon,
@@ -20,5 +20,7 @@ export const load: PageServerLoad = async (event) => {
 	// Read first, so this visit still wears its "New" badges and the next one doesn't.
 	markSightingsNoticed(householdId, member.id);
 
-	return { today, sightings };
+	// Admin mode shows every raccoon, met or not, to check the art and the
+	// words (→ DECISIONS #240). Only the view changes: nothing is recorded.
+	return { today, sightings, revealAll: adminMode };
 };

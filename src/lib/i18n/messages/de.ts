@@ -2046,6 +2046,9 @@ export const de: Messages = {
 			title: 'Noch nicht getroffen',
 			hint: 'Schau öfter auf Home vorbei'
 		},
+		adminNote:
+			'Admin-Modus: Alle Waschbären sind zu sehen, getroffen oder nicht. Dein Stand bleibt dein eigener.',
+		revealed: 'Noch nicht getroffen · im Admin-Modus sichtbar',
 		previous: 'Voriger Waschbär',
 		next: 'Nächster Waschbär',
 		close: 'Schließen',
