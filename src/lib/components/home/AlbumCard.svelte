@@ -76,7 +76,7 @@
 
 			<span class="deck" aria-hidden="true">
 				{#each behind as name, index (name)}
-					<span class="back back-{index + 1}"><Silhouette {name} height={50} class="shape" /></span>
+					<span class="back back-{index + 1}"><Silhouette {name} height={46} class="shape" /></span>
 				{/each}
 				{#if front}
 					<span class="front" class:pop={count > 0}>
@@ -101,7 +101,7 @@
 	.album {
 		position: relative;
 		min-height: 114px;
-		padding: 16px 136px 16px 16px;
+		padding: 16px 118px 16px 16px;
 		border-radius: var(--r-card-lg);
 		overflow-wrap: anywhere;
 	}
@@ -155,7 +155,7 @@
 	.deck {
 		position: absolute;
 		inset: 0 0 0 auto;
-		width: 136px;
+		width: 118px;
 	}
 
 	/* Over the silhouette's own token: this one sits on `--sunken`, where the
@@ -163,8 +163,8 @@
 	.back {
 		--silhouette: var(--silhouette-back);
 		position: absolute;
-		width: 64px;
-		height: 86px;
+		width: 58px;
+		height: 78px;
 		border-radius: var(--r-deck);
 		overflow: hidden;
 		background: var(--sunken);
@@ -173,23 +173,28 @@
 			var(--shadow-card);
 	}
 
+	/* Different heights and angles, and a shadow between them: level, the two
+	   read as one odd card. */
 	.back-1 {
-		right: 66px;
-		bottom: 14px;
+		right: 48px;
+		bottom: 22px;
 		transform: rotate(-11deg);
 	}
 
 	.back-2 {
-		right: 40px;
-		bottom: 15px;
-		transform: rotate(-4deg);
+		right: 36px;
+		bottom: 12px;
+		transform: rotate(-3deg);
+		box-shadow:
+			inset 0 0 0 1px var(--border-soft),
+			var(--shadow-card-stacked);
 	}
 
 	/* Left in its card, so the head shows past the card in front. */
 	.back :global(.shape) {
 		position: absolute;
-		left: -6px;
-		bottom: 0;
+		left: -9px;
+		bottom: 4px;
 	}
 
 	.front {
