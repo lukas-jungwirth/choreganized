@@ -3582,3 +3582,15 @@ units | null, name}`, written back as editor lines in the reader's unit spelling
      album journey still starts from a real first visit.
      **`--r-deck`** is the deck's 11px, which was raw. The other raw radii in the app (41 files) are
      older and untouched: the rule says tokens and the convention test only checks colours and type.
+248. **The maskable icon's bust grows from 72% to 84%** (Lukas 2026-11-06). On a launcher with a
+     circular mask the raccoon sat low with a wide band of green above the ears: 28% of the icon,
+     about a quarter of the circle on Lukas's phone, which shows roughly the middle 90% of the
+     picture (fitted from a screenshot). #235 chose 72% to clear the safe circle of 80% diameter, but
+     the head only needed a circle of 70%. 84% is the largest size that still stands on the
+     bottom edge with the ears and face inside it (the limit is about 84.5%). That leaves 16% green
+     on the icon and about 12% in that circle. The TEST pill stays where it is, now right
+     under the chin. On a launcher cutting right at 80% the ears would touch the edge without being
+     cut. Weighed and dropped: moving the bust up unscaled (its flat cut would float above the bottom
+     edge on rounded-square launchers), and 88% sunk below the edge (a bigger face, the same
+     headroom, less of the overalls, and new layout code). The opaque store icon stays at 86%. A
+     phone that already has the app may keep the old icon until Android refreshes it.

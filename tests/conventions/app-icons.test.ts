@@ -11,9 +11,13 @@
  *   the top half, where the ears are; the bottom half is the body, which the
  *   mask is welcome to cut.
  * - **headroom**: the tab icon's top row is green, so the ears aren't cropped.
+ * - **filling the mask**: the maskable bust is as large as the safe circle lets
+ *   it be, so a launcher's circle isn't a quarter empty above the ears (#248).
  * - **the test label inside the mask**: the test deploy's maskable icons
  *   (`static/icons/test/`, → DECISIONS #236) differ from the live ones only
- *   inside the safe circle, so no launcher crops the TEST label.
+ *   inside the safe circle, so no launcher crops the TEST label. Each PNG gets
+ *   its own 256-colour palette, so the body past the circle shifts a little
+ *   between them (up to 62 here); the label differs by far more than that.
  */
 import assert from 'node:assert/strict';
 import sharp from 'sharp';
@@ -70,6 +74,17 @@ describe('app icons', () => {
 		);
 	});
 
+	it('icon-512-maskable.png: the bust fills the mask, with no wide band of green on top', async () => {
+		const { size, isGreen } = await pixels('icon-512-maskable.png');
+		const top = Array.from({ length: size }, (_, y) => y).find(
+			(y) => artShare(size, isGreen, y) > 0
+		)!;
+		assert.ok(
+			top / size <= 0.17,
+			`${((top / size) * 100).toFixed(1)}% of the icon is green above the ears`
+		);
+	});
+
 	for (const file of ['favicon-32.png', 'favicon-96.png']) {
 		it(`${file}: the ears aren't cropped`, async () => {
 			const { size, isGreen } = await pixels(file);
@@ -91,7 +106,7 @@ describe('app icons', () => {
 						Math.abs(live[i] - test[i]) +
 						Math.abs(live[i + 1] - test[i + 1]) +
 						Math.abs(live[i + 2] - test[i + 2]);
-					if (diff <= 60) continue;
+					if (diff <= 100) continue;
 					changed++;
 					if (Math.hypot(x + 0.5 - size / 2, y + 0.5 - size / 2) > size * 0.4) outside++;
 				}
