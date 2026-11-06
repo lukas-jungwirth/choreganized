@@ -304,6 +304,8 @@
 	   glow under the button and the FAB goes with it — a coloured halo on a night
 	   screen reads as a bug rather than a lift. */
 	--shadow-card: 0 1px 3px light-dark(rgba(40, 34, 24, 0.05), rgba(0, 0, 0, 0.45));
+	/* One card lying on another: Home's album deck. */
+	--shadow-card-stacked: -1px 1px 3px light-dark(rgba(40, 34, 24, 0.12), rgba(0, 0, 0, 0.5));
 	--shadow-knob: 0 1px 2px light-dark(rgba(0, 0, 0, 0.15), rgba(0, 0, 0, 0.5)); /* toggle knob [4c] */
 	--shadow-button: 0 8px 20px -6px light-dark(rgba(95, 141, 114, 0.5), rgba(0, 0, 0, 0.6));
 	--shadow-fab: 0 8px 20px -4px light-dark(rgba(95, 141, 114, 0.6), rgba(0, 0, 0, 0.7));

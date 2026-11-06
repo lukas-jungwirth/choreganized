@@ -3601,3 +3601,8 @@ units | null, name}`, written back as editor lines in the reader's unit spelling
      launcher cutting right at 80% no longer has the ears touching the edge. The fit is what decided
      it, not the limit: 84% remains the largest size that fits. The headroom test now holds the size
      from both sides (18–22% green). 82% is the next thing to try if this reads too small.
+250. **The album deck's shadow cards read as two, and take less room** (Lukas 2026-11-06). Level and
+     nearly parallel, they looked like one odd card. Now 58×78 instead of 64×86, the back one 10px
+     higher and tilted −11°, the middle −3° with `--shadow-card-stacked` on the card behind it. The
+     deck is 118px instead of 136px, and the text and bar get the difference. Lukas chose this from
+     five sketches; a bolder one with bigger steps was "a little bit too much".
