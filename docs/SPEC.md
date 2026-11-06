@@ -602,19 +602,30 @@ where it can still be acted on (→ [DECISIONS #131](DECISIONS.md)).
   exists only in the tab that paused it and is lost on reload, because pause deletes the row
   (→ DECISIONS #15).
 - Prev / **Next step** buttons pinned at the bottom. Last step → "Finish" closes cook mode.
-- **A timer that goes off rings like an alarm, not like a chime** (→
-  [DECISIONS #134](DECISIONS.md)). Four beeps alternating two tones, a second and a half apart,
-  **repeating until somebody stops it** — the ring's Stop, a bar's ×, the dock's ×, all of which
-  already clear the timer. It gives up on its own after a minute, because an alarm nobody is
-  home for should not still be going when they get back. One sound however many timers are
-  making it, and it only stops when the last of them has been dealt with.
+- **A timer that goes off calls you, without frightening you** (→
+  [DECISIONS #134](DECISIONS.md), [#250](DECISIONS.md)). Three rising wooden notes every 3.2
+  seconds, starting quietly and swelling to full volume over 20 seconds, **repeating until
+  somebody stops it** — the ring's Stop, a bar's ×, the dock's ×, all of which already clear the
+  timer. It gives up on its own after a minute, because an alarm nobody is home for should not
+  still be going when they get back. One sound however many timers are making it, and it only
+  stops when the last of them has been dealt with.
+- **A timer that has gone off keeps counting past zero**, like any kitchen timer: "−3:42" in amber
+  on the ring, the bar and the dock, until somebody stops it (→ [DECISIONS #250](DECISIONS.md)).
+  It survives closing the app, because the row stays listed until it is stopped: a timer that
+  rang on a silent phone is still on screen when you come back, saying how long ago. On another
+  device of the same person it stops too, at that device's next load. One nobody stops ages off
+  the list after 3 hours, and it spends no slot against the cap of three.
 - **Timer completion must fire even when the phone is locked** [7h·2]: the server schedules a
   push at `endsAt` — title "⏲️ {label} is done", body the **recipe name**, so a lock screen says
-  which dish as well as which timer — and asks the platform to keep it up until it is acted on.
-  The open page alerts locally instead when it claimed the alert (sound and vibration). Honest
-  limit: a web push cannot ring like a native alarm — no custom sound, no critical alert — so
-  the locked-phone half is one insistent notification, not a ringing one. Cancelling/pausing the
-  timer cancels the server push. Tapping the notification reopens cook mode at that step.
+  which dish as well as which timer, stamped with when it went off, and it asks the platform to
+  keep it up until it is acted on. The open page alerts locally instead when it claimed the alert
+  (sound and vibration). Stopping the timer in the app takes the notification away too. Honest
+  limit: a web push cannot ring like a native alarm and cannot bring the app forward. It has no
+  custom sound, no critical alert, and follows the phone's silent mode, so **a phone on silent
+  with the app closed makes no sound at all**. What is left then is the clock past zero
+  (→ [DECISIONS #250](DECISIONS.md), which also says what would change this). The Set-timer sheet
+  says so rather than promising otherwise. Cancelling/pausing the timer cancels the server push.
+  Tapping the notification reopens cook mode at that step.
 
 ### 4.7 Recipe import from a link (→ plan 12, reuses the [3c] editor as its preview)
 

@@ -9,6 +9,8 @@
  * turns that into an instant on its own clock — a phone whose clock is a minute
  * off the server's would otherwise render a minute that isn't there.
  */
+import { timerNotificationTag } from './utils/timer-parse';
+
 export type TimerSnapshot = {
 	id: string;
 	label: string;
@@ -16,7 +18,10 @@ export type TimerSnapshot = {
 	/** 0-based; the URL and the copy say `+ 1`. */
 	stepIndex: number | null;
 	totalSeconds: number;
+	/** Negative once it is past zero. */
 	remainingMs: number;
+	/** Its alert has gone out, so this page must not ring it again. */
+	rung: boolean;
 };
 
 export type StartTimerRequest = {
@@ -69,6 +74,21 @@ export async function claimTimerAlert(id: string): Promise<boolean> {
 		return ((await response.json()) as { owned?: boolean }).owned ?? true;
 	} catch {
 		return true;
+	}
+}
+
+/**
+ * Take a stopped timer's notification off the shade. It asks to stay until it is
+ * dealt with (→ DECISIONS #134), and stopping the timer is dealing with it.
+ * Best-effort, like everything a notification does: no worker, nothing to close.
+ */
+export async function closeTimerNotification(id: string): Promise<void> {
+	try {
+		const worker = await navigator.serviceWorker?.getRegistration();
+		const open = await worker?.getNotifications({ tag: timerNotificationTag(id) });
+		for (const notification of open ?? []) notification.close();
+	} catch {
+		// Blocked, or not supported here. The notification stays; nothing else does.
 	}
 }
 

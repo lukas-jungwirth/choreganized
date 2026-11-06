@@ -140,3 +140,70 @@ test('cooking for more people rewrites the amounts a step names, and nothing els
 	await page.getByRole('link', { name: 'Start cook mode' }).click();
 	await expect(page.locator('.scaled').first()).toContainText('4');
 });
+
+test('a timer counts on past zero, and is still there after the app was closed (→ DECISIONS #250)', async ({
+	page
+}) => {
+	await page.goto('/cooking/recipes');
+	await page
+		.getByRole('link', { name: new RegExp(SEED.recipes.curry) })
+		.first()
+		.click();
+	await page.getByRole('link', { name: 'Start cook mode' }).click();
+	await expect(page).toHaveURL(/\/cook$/);
+
+	// The sheet only offers whole minutes, and nobody wants a test that takes one.
+	const recipeId = new URL(page.url()).pathname.split('/')[3];
+	const started = await page.request.post('/api/timers', {
+		data: { seconds: 5, label: 'Rice', recipeId, stepIndex: 0, replaces: null }
+	});
+	expect(started.ok()).toBe(true);
+	await page.reload();
+
+	const ring = page.getByRole('timer');
+	await expect(ring).toContainText(/\b0:0\d/);
+	await expect(ring).toContainText(/−0:0\d/, { timeout: 15_000 });
+	await expect(page.getByRole('button', { name: 'Stop', exact: true })).toBeVisible();
+
+	// Coming back after the alert went out: no machine in memory, and the clock
+	// still knows how long ago it was.
+	await page.reload();
+	await expect(ring).toContainText(/−0:\d\d/);
+	const before = (await ring.locator('.remaining').textContent()) ?? '';
+	await expect(ring.locator('.remaining')).not.toHaveText(before, { timeout: 5000 });
+
+	// Every other screen says the same, and stopping it there stops it for good.
+	await page.goto('/cooking/recipes');
+	const dock = page.getByRole('link', { name: /Rice is done/ });
+	await expect(dock).toContainText(/−0:\d\d · Rice is done/);
+	await page.getByRole('button', { name: 'Stop this timer' }).click();
+	await expect(dock).toHaveCount(0);
+
+	await page.reload();
+	await expect(page.getByRole('heading', { level: 1 })).toBeVisible();
+	await expect(dock).toHaveCount(0);
+});
+
+test('tapping a finished timer’s bar goes to look at it, and doesn’t stop it', async ({ page }) => {
+	await page.goto('/cooking/recipes');
+	await page
+		.getByRole('link', { name: new RegExp(SEED.recipes.curry) })
+		.first()
+		.click();
+	await page.getByRole('link', { name: 'Start cook mode' }).click();
+	await expect(page).toHaveURL(/\/cook$/);
+
+	const recipeId = new URL(page.url()).pathname.split('/')[3];
+	await page.request.post('/api/timers', {
+		data: { seconds: 5, label: 'Rice', recipeId, stepIndex: 1, replaces: null }
+	});
+	await page.reload();
+
+	await page.getByRole('button', { name: /Rice is done/ }).click({ timeout: 15_000 });
+
+	await expect(page.getByText(/^Step 2 of \d+$/)).toBeVisible();
+	await expect(page.getByRole('timer')).toContainText(/−0:\d\d/);
+
+	await page.getByRole('button', { name: 'Stop', exact: true }).click();
+	await expect(page.getByRole('timer')).toHaveCount(0);
+});

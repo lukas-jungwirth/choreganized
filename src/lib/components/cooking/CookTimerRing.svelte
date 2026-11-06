@@ -6,14 +6,16 @@
 	it for* — so "+1:00" lets the ring grow rather than snapping back to full
 	(→ `$lib/cook-timer.svelte.ts`).
 
-	At zero it turns amber and the three controls collapse to one. The alert
-	itself — the buzz, the beep, the push that got through to a locked phone — has
-	already happened by then; this is just the screen agreeing.
+	At zero it turns amber, the three controls collapse to one, and the clock keeps
+	going past zero, the way a kitchen timer does, so coming back to it says how
+	long the pan has been sitting there (→ DECISIONS #250). The alert itself — the
+	buzz, the sound, the push that got through to a locked phone — has already
+	happened by then; this is just the screen agreeing.
 -->
 <script lang="ts">
 	import type { CookTimer } from '$lib/cook-timer.svelte';
 	import { messages } from '$lib/i18n';
-	import { formatDuration } from '$lib/utils/timer-parse';
+	import { formatDuration, formatOvertime } from '$lib/utils/timer-parse';
 	import Pause from '@lucide/svelte/icons/pause';
 	import Play from '@lucide/svelte/icons/play';
 	import X from '@lucide/svelte/icons/x';
@@ -28,6 +30,9 @@
 	const rang = $derived(timer.phase === 'rang');
 	const held = $derived(timer.phase === 'paused');
 	const remaining = $derived(formatDuration(timer.remainingSeconds));
+	const over = $derived(formatOvertime(timer.overMs));
+	/** "−1:02:33" is one character wider than anything a countdown can read. */
+	const hourOver = $derived(timer.overMs >= 3_600_000);
 	const total = $derived(formatDuration(timer.totalSeconds));
 </script>
 
@@ -37,7 +42,9 @@
 		role="timer"
 		aria-label={m.cooking.cook.timerLabel(
 			timer.label,
-			rang ? m.cooking.cook.timerDone : m.cooking.cook.timerLeft(remaining, total)
+			rang
+				? m.cooking.cook.timerOver(formatDuration(Math.floor(timer.overMs / 1000)))
+				: m.cooking.cook.timerLeft(remaining, total)
 		)}
 	>
 		<svg width="220" height="220" viewBox="0 0 220 220" aria-hidden="true">
@@ -52,7 +59,7 @@
 			/>
 		</svg>
 		<div class="readout">
-			<p class="remaining">{remaining}</p>
+			<p class="remaining" class:hourOver>{rang ? over : remaining}</p>
 			<p class="label">{m.cooking.cook.timerMeta(timer.label, total, held)}</p>
 		</div>
 	</div>
@@ -154,6 +161,10 @@
 
 	.rang .remaining {
 		color: var(--cook-amber);
+	}
+
+	.hourOver {
+		font-size: var(--fs-48);
 	}
 
 	.label {

@@ -18,7 +18,7 @@
 <script lang="ts">
 	import { cookTimers } from '$lib/cook-timer.svelte';
 	import { messages } from '$lib/i18n';
-	import { formatDuration } from '$lib/utils/timer-parse';
+	import { formatDuration, formatOvertime } from '$lib/utils/timer-parse';
 	import ChevronRight from '@lucide/svelte/icons/chevron-right';
 	import TimerIcon from '@lucide/svelte/icons/timer';
 	import X from '@lucide/svelte/icons/x';
@@ -58,7 +58,7 @@
 			<TimerIcon size={17} strokeWidth={2} aria-hidden="true" />
 			<span class="text">
 				{#if rang}
-					{m.cooking.dock.done(timer.label)}
+					<b class="time">{formatOvertime(timer.overMs)}</b> · {m.cooking.dock.done(timer.label)}
 				{:else}
 					<b class="time">{formatDuration(timer.remainingSeconds)}</b> · {timer.label}
 				{/if}

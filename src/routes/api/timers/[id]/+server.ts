@@ -1,11 +1,12 @@
 /**
- * Stop a cook timer — the Cancel button [7h], and the first half of both
- * "+1:00" and Pause, which cancel and then start a fresh one (→ DECISIONS #15).
+ * Stop a cook timer — the Cancel button [7h], Stop on one that rang
+ * (→ DECISIONS #250), and the first half of Pause, which cancels and later starts
+ * a fresh one (→ DECISIONS #15).
  *
- * Idempotent on purpose: cancelling a timer that already rang, was already
- * cancelled, or belongs to somebody else all answer 200 with
- * `{ canceled: false }`. The client's question is "is this thing going to buzz
- * me?", and the answer in every one of those cases is no.
+ * Idempotent on purpose: stopping a timer that was already stopped, or that
+ * belongs to somebody else, answers 200 with `{ canceled: false }`. The client's
+ * question is "will this still buzz me or sit on my screen?", and the answer in
+ * both cases is no.
  */
 import { json } from '@sveltejs/kit';
 import { requireMemberApi } from '$lib/server/guards';

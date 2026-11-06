@@ -239,6 +239,23 @@ export function formatDuration(seconds: number): string {
 	return hours > 0 ? `${hours}:${pad(minutes)}:${pad(rest)}` : `${minutes}:${pad(rest)}`;
 }
 
+/**
+ * How long a timer has been over, as its clock keeps reading: "−0:12". Rounded
+ * down, so the first second past zero still reads "−0:00" rather than jumping,
+ * the way the countdown's ceiling lands on "0:00" at the same moment.
+ */
+export function formatOvertime(overMs: number): string {
+	return `−${formatDuration(Math.floor(Math.max(0, overMs) / 1000))}`;
+}
+
+/**
+ * The notification a rung timer shows. The server sets it and the page closes it
+ * when the timer is stopped, so the two have to agree on the name.
+ */
+export function timerNotificationTag(timerId: string): string {
+	return `timer-${timerId}`;
+}
+
 function pad(value: number): string {
 	return String(value).padStart(2, '0');
 }

@@ -780,8 +780,9 @@ export const cookTimers = sqliteTable(
 		recipeId: text('recipe_id').references(() => recipes.id, { onDelete: 'set null' }),
 		stepIndex: integer('step_index'),
 		endsAt: integer('ends_at', { mode: 'timestamp_ms' }).notNull(),
-		/** Set when the push was sent (idempotency). */
+		/** Set when the alert went out, by the push or the open page (idempotency). */
 		notifiedAt: integer('notified_at', { mode: 'timestamp_ms' }),
+		/** Set when somebody stops it, before or after it rang. Until then it stays on screen. */
 		canceledAt: integer('canceled_at', { mode: 'timestamp_ms' }),
 		createdAt: createdAt()
 	},
