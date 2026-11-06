@@ -3653,8 +3653,8 @@ units | null, name}`, written back as editor lines in the reader's unit spelling
        Three players can't confuse anything, because they share one Media Session.
      - **The live alarm stands down while a track plays**, leaving only the vibration, so a visible
        page doesn't ring twice. If the system stopped the track, the live alarm takes over.
-     - **A hidden page with a playing track doesn't claim the alert.** The push has to go out, because
-       it carries the Stop button. This was already a coin flip against the server at zero.
+     - **A playing track never claims the alert** (→ #253). The push has to go out, because it
+       carries the Stop button.
      - **A Stop button on the notification**, handled by the worker: it tells open pages, so the sound
        stops at once, then deletes the row. This is the nearest a web app gets to an alarm's button.
      - **Pause on the player does nothing before the ring**, and means Stop during it. Letting it pause
@@ -3667,3 +3667,15 @@ units | null, name}`, written back as editor lines in the reader's unit spelling
      - **Weighed and dropped:** a native Android shell, the only route to a full-screen alarm, as far
        too much to maintain for this; streaming silence from the server, which needs a network at the
        one moment it can't fail.
+253. **A timer's notification always goes out on a phone playing its track** (Lukas 2026-11-06; →
+     SPEC §4.6, `lib/cook-timer.svelte.ts`, `lib/server/push.ts`). Lukas heard the track ring on his
+     phone but got no notification. No phone can be observed from here, and a probe with an emulated
+     lock showed a hidden page claims nothing, so these close the two gaps that could explain it
+     rather than a proven cause.
+     - **The claim no longer depends on visibility.** #252 skipped it only while hidden, and a visible
+       page still claimed 2 seconds before zero, which cancels the push. A phone that still counted
+       as visible at that moment would ring and get no notification. Now a playing track never claims.
+       The cost is a notification over an open app while it rings, which Stop takes away.
+     - **Timer pushes are `urgency: high`.** They were sent at the default, and Android may hold those
+       on a locked phone lying still. With a 15-minute lifetime, a held one can expire undelivered.
+       Other notifications stay at normal: nothing else has to reach a sleeping phone this minute.

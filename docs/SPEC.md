@@ -619,7 +619,8 @@ where it can still be acted on (→ [DECISIONS #131](DECISIONS.md)).
   push at `endsAt` — title "⏲️ {label} is done", body the **recipe name**, so a lock screen says
   which dish as well as which timer, stamped with when it went off, and it asks the platform to
   keep it up until it is acted on. The open page alerts locally instead when it claimed the alert
-  (sound and vibration). Stopping the timer in the app takes the notification away too. The
+  (sound and vibration), unless a track is playing (below), when the notification always goes out
+  (→ [DECISIONS #253](DECISIONS.md)). Stopping the timer in the app takes the notification away too. The
   notification has a **Stop** button that stops the timer and the sound without opening the app.
   Honest limit: a web push has no custom sound and follows the phone's silent mode, and no web app
   can bring itself forward or show a full-screen alarm. The Set-timer sheet doesn't promise more

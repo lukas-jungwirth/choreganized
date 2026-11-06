@@ -422,7 +422,11 @@ async function ring(row: TimerRow, now: Date): Promise<number | null> {
 	if (!claim(row.id, now)) return null;
 
 	clearAlarm(row.id);
-	return sendToUser(row.userId, payloadFor(row), { ttlSeconds: TIMER_TTL_SECONDS });
+	return sendToUser(row.userId, payloadFor(row), {
+		ttlSeconds: TIMER_TTL_SECONDS,
+		// The pan is done now, and the phone is probably locked on the counter.
+		urgency: 'high'
+	});
 }
 
 /**
