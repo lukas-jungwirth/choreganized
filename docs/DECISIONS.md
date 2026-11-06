@@ -3550,3 +3550,15 @@ units | null, name}`, written back as editor lines in the reader's unit spelling
      clock resembles `reminder-overdue`'s, but a reminder is never in the draw. `friday` and
      `socks` look at their props and `snooze` carries writing, so none was mirrored. `midnight`
      was cut 25px, the others were already flat. Adds 78 KB of AVIFs, split per pose as ever.
+246. **Two visual flakes, one of them a real bug** (2026-11-06). Same commit, one CI run green and
+     one red, on the release PR too. **The album count:** e2e setup took each account's first look
+     at Auckland's midnight (#238), and since #243 that hour can be the midnight raccoon, on one
+     night in three seeded by the member's id, which is new every run. So about one run in three
+     started with an extra raccoon and every screen showing the count differed. Setup now looks at
+     02:00 (Honolulu), still a night slot of its own, and fails if that hour stops being outside
+     the midnight raccoon's window. **The invite code:** at 42px with 0.18em spacing the widest
+     codes didn't fit 390px and broke at the dash into two lines; at 320px every code did. A random
+     code picked the height of the card, in production too. It now stays on one line: spacing
+     0.1em, size `min(--fs-42, 100cqi / 7.6)`, about 39px on a 390px phone instead of 42. A
+     per-code fit would keep 42 for narrow codes, but then codes would differ in size for no reason.
+     The type-scale convention test gains that one form, `min(var(--fs-N), 100cqi / <n>)`.

@@ -11,9 +11,13 @@ import { spawnSync } from 'node:child_process';
 import Database from 'better-sqlite3';
 import { expect, request, test as setup, type APIRequestContext } from '@playwright/test';
 import { SEED_TIMEZONE } from '../../scripts/seed-data';
-import { todayIn } from '../../src/lib/utils/dates';
+import { hourIn, todayIn } from '../../src/lib/utils/dates';
 import { closureAhead } from '../../src/lib/utils/holidays';
+import { MIDNIGHT_ENDS, WAKE_UP } from '../../src/lib/utils/raccoon';
 import { ACCOUNTS, DATABASE_PATH, storageStateFor } from './accounts';
+
+/** 02:00 on the fixed clock's Wednesday (→ playwright.config.ts). */
+const FIRST_LOOK_TIMEZONE = 'Pacific/Honolulu';
 
 setup('sign up the test accounts and seed their households', async ({ baseURL }) => {
 	for (const account of ACCOUNTS) {
@@ -40,9 +44,10 @@ setup('sign up the test accounts and seed their households', async ({ baseURL })
 
 		if (account.key === 'visual') await answerClosureNotice(api, baseURL!);
 		// The very first look at Home is the welcome raccoon for that whole slot
-		// (→ DECISIONS #238). Take it at the household's midnight, a slot of its
-		// own, so the afternoon every journey and screenshot sees is an ordinary one.
-		withTimezone(account.email, 'Pacific/Auckland');
+		// (→ DECISIONS #238). Take it in the night, a slot of its own, so the
+		// afternoon every journey and screenshot sees is an ordinary one.
+		if (process.env.FIXED_CLOCK) expectQuietNight(FIRST_LOOK_TIMEZONE);
+		withTimezone(account.email, FIRST_LOOK_TIMEZONE);
 		expect((await api.get('/home')).ok()).toBe(true);
 		withTimezone(account.email, SEED_TIMEZONE);
 		// Meet today's Home raccoon once and open the album once (→ plan 35), so
@@ -54,6 +59,17 @@ setup('sign up the test accounts and seed their households', async ({ baseURL })
 		await api.dispose();
 	}
 });
+
+/**
+ * Not 00:00 to 02:00: the midnight raccoon shows on one night in three, seeded by
+ * the member's id, which is new every run. It would join the album on a third of
+ * the runs, and every screenshot showing the count would differ (→ DECISIONS #246).
+ */
+function expectQuietNight(timezone: string): void {
+	const hour = hourIn(timezone);
+	expect(hour, `the hour in ${timezone}`).toBeGreaterThanOrEqual(MIDNIGHT_ENDS);
+	expect(hour, `the hour in ${timezone}`).toBeLessThan(WAKE_UP);
+}
 
 /** Moves the household `email` belongs to into `timezone` — its clock, not its data. */
 function withTimezone(email: string, timezone: string): void {
