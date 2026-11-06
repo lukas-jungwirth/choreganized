@@ -76,7 +76,8 @@ and the title, the line and the header's buttons all stand on the raccoon's feet
 
 ### 1.4 Create → invite housemates [5d] (step 2 of 2)
 
-- Big sage card with the **invite code** displayed as `7K4-P2X` (stored without the dash).
+- Big sage card with the **invite code** displayed as `7K4-P2X` (stored without the dash), always
+  on one line: its size follows the card's width so even `WWW-WWW` fits (DECISIONS #246).
 - Invite **link** `{ORIGIN}/j/{code}` with Copy; **Share invite** opens the OS share sheet and is
   shown **only where the Web Share API exists** (phones) — on desktop it would duplicate Copy
   (→ [DECISIONS.md #29](DECISIONS.md)).

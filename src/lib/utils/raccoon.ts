@@ -100,10 +100,10 @@ export function isHomeRaccoon(value: string): value is MascotName {
 
 /** The hours the raccoon is asleep: from 22:00, until 05:00. */
 const BEDTIME = 22;
-const WAKE_UP = 5;
+export const WAKE_UP = 5;
 
 /** The midnight raccoon's stretch ends at 02:00; it starts at 00:00. */
-const MIDNIGHT_ENDS = 2;
+export const MIDNIGHT_ENDS = 2;
 
 /** The awake day in three: morning from 05:00, afternoon from 11:00, evening from 17:00. */
 const SLOT_STARTS = [WAKE_UP, 11, 17];

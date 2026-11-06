@@ -151,6 +151,7 @@
 	}
 
 	.code-card {
+		container-type: inline-size;
 		margin-bottom: 16px;
 		padding: 20px;
 		border-radius: var(--r-card);
@@ -172,11 +173,13 @@
 	.code {
 		margin: 0;
 		font-family: var(--font-display);
-		font-size: var(--fs-42);
+		/* WWW-WWW, the widest code, is 7.6em: every code fits one line on any phone. */
+		font-size: min(var(--fs-42), 100cqi / 7.6);
 		font-weight: 600;
-		letter-spacing: 0.18em;
+		letter-spacing: 0.1em;
 		/* The letter-spacing pushes the last glyph off-centre otherwise. */
-		text-indent: 0.18em;
+		text-indent: 0.1em;
+		white-space: nowrap;
 		color: var(--on-sage);
 	}
 

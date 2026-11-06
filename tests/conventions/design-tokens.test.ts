@@ -30,6 +30,12 @@ const PROPORTIONAL_TYPE = ['src/lib/components/ui/Avatar.svelte'];
  */
 const STEP = /^var\(--fs-(\d+)\)$/;
 const CAPPED_STEP = /^min\(var\(--fs-(\d+)\),\s*(\d+)px\)$/;
+/**
+ * The one exception, the invite code: it must stay on one line on any phone, so
+ * it shrinks with its card, below the step's default if the phone is narrow
+ * (→ DECISIONS #246). Only a container's width may do that, never a bare number.
+ */
+const FITTED_STEP = /^min\(var\(--fs-(\d+)\),\s*100cqi \/ [\d.]+\)$/;
 
 /** `--fs-N` → its definition, from app.css. */
 const scale = new Map(
@@ -67,7 +73,7 @@ describe('design tokens', () => {
 				linesMatching(file, /font-size\s*:/).filter((line) => {
 					const value = line.match(/font-size\s*:\s*([^;]+);?/)?.[1].trim() ?? '';
 					if (value === 'inherit') return false;
-					const step = value.match(STEP) ?? value.match(CAPPED_STEP);
+					const step = value.match(STEP) ?? value.match(CAPPED_STEP) ?? value.match(FITTED_STEP);
 					if (!step || !scale.has(Number(step[1]))) return true;
 					return step[2] !== undefined && Number(step[2]) < Number(step[1]);
 				})
