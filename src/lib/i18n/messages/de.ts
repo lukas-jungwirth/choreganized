@@ -914,12 +914,13 @@ export const de: Messages = {
 			scaledFrom: (written: string) => ` (im Rezept: ${written})`,
 
 			timerTitle: 'Timer stellen',
-			timerSubtitle: 'Er klingelt, bis du ihn stoppst, auch bei gesperrtem Handy.',
+			timerSubtitle:
+				'Er klingelt, solange die App offen ist. Bei gesperrtem Handy kommt eine Benachrichtigung.',
 			minutes: 'Minuten',
 			startMinutes: (minutes: number) => `${minutes}-Minuten-Timer starten`,
 
 			timerLabel: (label: string, state: string) => `${label}: ${state}`,
-			timerDone: 'fertig',
+			timerOver: (over: string) => `seit ${over} fertig`,
 			timerLeft: (remaining: string, total: string) => `${remaining} von ${total} übrig`,
 			timerMeta: (label: string, total: string, paused: boolean) =>
 				paused ? `${label} · ${total} · pausiert` : `${label} · ${total}`,

@@ -50,6 +50,8 @@ export type PushPayload = {
 	 * Android keeps notifications until they are swiped either way.
 	 */
 	requireInteraction?: boolean;
+	/** When the thing happened, in ms since the epoch, if that isn't when this arrives. */
+	timestamp?: number;
 };
 
 /** The `members` columns that gate a category of notification (→ SPEC §3.5, §3.6, §5.6, §11.11). */

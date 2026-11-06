@@ -1231,13 +1231,15 @@ export const en = {
 
 			/** The manual timer sheet (→ DECISIONS #14). */
 			timerTitle: 'Set a timer',
-			timerSubtitle: 'It rings until you stop it, even with the phone locked.',
+			timerSubtitle:
+				'It rings while the app is open. With the phone locked, you get a notification.',
 			minutes: 'Minutes',
 			startMinutes: (minutes: number) => `Start ${minutes}-minute timer`,
 
 			/** The running ring [7h] and the chip it shrinks to. */
 			timerLabel: (label: string, state: string) => `${label}: ${state}`,
-			timerDone: 'done',
+			/** A rung timer read aloud: how long ago it reached zero. */
+			timerOver: (over: string) => `done ${over} ago`,
 			timerLeft: (remaining: string, total: string) => `${remaining} left of ${total}`,
 			timerMeta: (label: string, total: string, paused: boolean) =>
 				paused ? `${label} · ${total} · paused` : `${label} · ${total}`,

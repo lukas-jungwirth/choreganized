@@ -3606,3 +3606,40 @@ units | null, name}`, written back as editor lines in the reader's unit spelling
      higher and tilted −11°, the middle −3° with `--shadow-card-stacked` on the card behind it. The
      deck is 118px instead of 136px, and the text and bar get the difference. Lukas chose this from
      five sketches; a bolder one with bigger steps was "a little bit too much".
+251. **The timer calls instead of alarming, counts past zero, and says what a web app can't do**
+     (Lukas 2026-11-06; → SPEC §4.6, `lib/alarm.ts`, `lib/cook-timer.svelte.ts`,
+     `services/cook-timers.ts`). Three complaints: the sound was frightening, a phone on silent with
+     the app closed gives nothing, and afterwards nobody can tell how long ago it went off.
+     - **The sound.** #134 fixed "too polite" with four square-wave beeps alternating a fifth, at
+       full volume, every 1.5 s. That carried, and it scared people. Now: G5, C6, E6 as struck
+       marimba notes (sines, ratios 1, 4 and 9.2, fading in 0.5 s or less) every 3.2 s, starting at
+       0.3 and swelling to full over 20 s. It peaks at 0.88 when rendered, close to the top on
+       purpose, because the fan complaint in #134 still stands. The vibration shrank to two short
+       buzzes. Nobody can judge a sound from a test, so the choice is Lukas's, on his own phone, and
+       the alarm's constants are all there is to change.
+     - **Past zero.** A rung timer shows "−3:42" on the ring, the bar and the dock. The hard part
+       was closing the app: `notifiedAt` used to drop a row off the list, so a timer that rang while
+       the app was closed simply wasn't there on return. Now only `canceledAt` does that, so Stop
+       reaches the server, and no migration was needed. Reading the two as separate facts also means
+       rung rows from before this change came back once, for at most 3 hours. A rung row spends no
+       slot against the cap, because a pan already done should not refuse the next timer. The 3 hours
+       is a judgment call: long enough for dinner, short enough to be gone the next morning.
+       The page stays silent for a timer more than 10 minutes late, matching the server's catch-up.
+     - **The notification says when, not just what.** `timestamp` is the moment it went off, so a
+       phone on silent can say how long ago from the shade. Stop closes it, since it otherwise asks
+       to stay until dealt with.
+     - **What the web can't do**, checked rather than assumed. `clients.openWindow()` needs a user
+       gesture, so no page or worker can bring the app forward. `showNotification` has no sound
+       option. Notification Triggers never shipped. A worker can't play audio. So the honest line
+       moved into the Set-timer sheet, which used to promise it rings "even with the phone locked".
+       Real alarms need native code: on Android a small shell with its own alarm channel and a
+       full-screen intent; on iOS a Critical Alerts entitlement or AlarmKit. Not built.
+     - **One way past silent mode, proven but not built here.** Media volume ignores silent
+       notifications, and an audio track needs no awake page, so the wait and the alarm can be one
+       track started by the tap. Lukas tried it on his Android phone: locked, with music or a video
+       playing, it paused them and rang. It shows as a media player rather than an alarm. WebKit's
+       bug tracker reports years of trouble with audio in installed apps, so an iPhone may differ.
+     - **Not built: pushing again.** Repeat notifications don't help a phone on silent, which is the
+       case that was reported. iOS's `navigator.audioSession` could beat the ringer switch while the
+       app is open, but nothing here can verify it, and a mistake there breaks the only sound an
+       iPhone gets.
