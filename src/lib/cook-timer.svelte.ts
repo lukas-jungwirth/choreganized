@@ -449,7 +449,7 @@ export class CookTimer {
 
 	/**
 	 * Stop a timer that has rung, clearing it off the screen [7h] — on every device,
-	 * since a rung row stays listed until now (→ DECISIONS #250).
+	 * since a rung row stays listed until now (→ DECISIONS #251).
 	 */
 	dismiss(): void {
 		if (this.phase !== 'rang') return;
@@ -694,7 +694,7 @@ export class CookTimers {
 	 * timer whose POST is still in flight, or one that is paused — pause deletes
 	 * the row (→ DECISIONS #15). What the server knows and this store doesn't runs
 	 * the other way: a cold start with a pan already on, a timer that rang while
-	 * the app was closed (→ DECISIONS #250), or one started on the other phone.
+	 * the app was closed (→ DECISIONS #251), or one started on the other phone.
 	 *
 	 * The one thing a sync may take *away* is a timer that has a confirmed row, is
 	 * running or rung, is no longer listed, **and** whose row the snapshot could

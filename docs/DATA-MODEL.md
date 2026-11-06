@@ -273,7 +273,7 @@ household (or the household going) takes the album with it.
   went out, and idempotency; `canceledAt` = somebody stopped it, before or after it rang (pause
   v1 = cancel + recreate on resume with shifted `endsAt`). A row with `notifiedAt` and no
   `canceledAt` is a rung timer still on screen, counting past zero, listed for 3 hours
-  (→ [DECISIONS #250](DECISIONS.md)). Precision: in-process `setTimeout` scheduled at creation + the minute cron as
+  (→ [DECISIONS #251](DECISIONS.md)). Precision: in-process `setTimeout` scheduled at creation + the minute cron as
   catch-up after restarts (→ ARCHITECTURE.md).
 - Up to `TIMERS_MAX` (3) live rows per `(household_id, user_id)`, counted inside `startTimer`'s
   transaction; a start may name **one** row it replaces, cancelled in the same transaction

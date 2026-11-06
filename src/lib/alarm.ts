@@ -1,11 +1,11 @@
 /**
  * The noise a timer makes on the device you're holding (→ SPEC §4.6, DECISIONS
- * #134, #250).
+ * #134, #251).
  *
  * Three rising wooden notes, every few seconds, until somebody stops it. It has
  * been wrong in both directions. Three polite sine beeps lost every argument
  * with an extractor fan (#134), and the square-wave alarm that replaced them
- * carried fine but was frightening (#250). So the notes are struck and fade like
+ * carried fine but was frightening (#251). So the notes are struck and fade like
  * a marimba, with the overtones that cut through a fan, and it starts quietly
  * and swells to full volume, so the cook is called rather than startled.
  *

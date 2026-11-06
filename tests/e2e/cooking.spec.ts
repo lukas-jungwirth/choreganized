@@ -141,7 +141,7 @@ test('cooking for more people rewrites the amounts a step names, and nothing els
 	await expect(page.locator('.scaled').first()).toContainText('4');
 });
 
-test('a timer counts on past zero, and is still there after the app was closed (→ DECISIONS #250)', async ({
+test('a timer counts on past zero, and is still there after the app was closed (→ DECISIONS #251)', async ({
 	page
 }) => {
 	await page.goto('/cooking/recipes');

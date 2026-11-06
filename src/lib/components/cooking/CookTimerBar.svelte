@@ -49,7 +49,7 @@
 
 	function go() {
 		// Going to look isn't stopping it: its step's ring shows how long it has been
-		// over (→ DECISIONS #250). Only with nowhere to go does a tap have to stop it.
+		// over (→ DECISIONS #251). Only with nowhere to go does a tap have to stop it.
 		// Read first, because the jump is what makes this false.
 		if (rang && !elsewhere) timer.dismiss();
 		if (timer.step !== null) onjump(timer.step);

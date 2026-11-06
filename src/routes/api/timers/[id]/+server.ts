@@ -1,6 +1,6 @@
 /**
  * Stop a cook timer — the Cancel button [7h], Stop on one that rang
- * (→ DECISIONS #250), and the first half of Pause, which cancels and later starts
+ * (→ DECISIONS #251), and the first half of Pause, which cancels and later starts
  * a fresh one (→ DECISIONS #15).
  *
  * Idempotent on purpose: stopping a timer that was already stopped, or that

@@ -1,5 +1,5 @@
 /**
- * What the alarm is made of (→ DECISIONS #250). Nobody can hear a unit test, so
+ * What the alarm is made of (→ DECISIONS #251). Nobody can hear a unit test, so
  * this pins the properties that made the old one frightening: buzzing square
  * waves, at full volume from the first note, every second and a half.
  */

@@ -44,7 +44,7 @@
  * the `alarms` map and every validator. The change is only ever about *how many*
  * rows may be live at once.
  *
- * **A rung timer stays until somebody stops it** (→ DECISIONS #250). Whoever
+ * **A rung timer stays until somebody stops it** (→ DECISIONS #251). Whoever
  * comes back to a phone that was on silent has to be able to see how long the
  * pan has been sitting there, even if the page that started it is long gone. So
  * `notifiedAt` means "the alert went out" and nothing more; `canceledAt` is what

@@ -8,7 +8,7 @@
 
 	At zero it turns amber, the three controls collapse to one, and the clock keeps
 	going past zero, the way a kitchen timer does, so coming back to it says how
-	long the pan has been sitting there (→ DECISIONS #250). The alert itself — the
+	long the pan has been sitting there (→ DECISIONS #251). The alert itself — the
 	buzz, the sound, the push that got through to a locked phone — has already
 	happened by then; this is just the screen agreeing.
 -->

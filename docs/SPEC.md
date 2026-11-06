@@ -603,14 +603,14 @@ where it can still be acted on (→ [DECISIONS #131](DECISIONS.md)).
   (→ DECISIONS #15).
 - Prev / **Next step** buttons pinned at the bottom. Last step → "Finish" closes cook mode.
 - **A timer that goes off calls you, without frightening you** (→
-  [DECISIONS #134](DECISIONS.md), [#250](DECISIONS.md)). Three rising wooden notes every 3.2
+  [DECISIONS #134](DECISIONS.md), [#251](DECISIONS.md)). Three rising wooden notes every 3.2
   seconds, starting quietly and swelling to full volume over 20 seconds, **repeating until
   somebody stops it** — the ring's Stop, a bar's ×, the dock's ×, all of which already clear the
   timer. It gives up on its own after a minute, because an alarm nobody is home for should not
   still be going when they get back. One sound however many timers are making it, and it only
   stops when the last of them has been dealt with.
 - **A timer that has gone off keeps counting past zero**, like any kitchen timer: "−3:42" in amber
-  on the ring, the bar and the dock, until somebody stops it (→ [DECISIONS #250](DECISIONS.md)).
+  on the ring, the bar and the dock, until somebody stops it (→ [DECISIONS #251](DECISIONS.md)).
   It survives closing the app, because the row stays listed until it is stopped: a timer that
   rang on a silent phone is still on screen when you come back, saying how long ago. On another
   device of the same person it stops too, at that device's next load. One nobody stops ages off
@@ -623,7 +623,7 @@ where it can still be acted on (→ [DECISIONS #131](DECISIONS.md)).
   limit: a web push cannot ring like a native alarm and cannot bring the app forward. It has no
   custom sound, no critical alert, and follows the phone's silent mode, so **a phone on silent
   with the app closed makes no sound at all**. What is left then is the clock past zero
-  (→ [DECISIONS #250](DECISIONS.md), which also says what would change this). The Set-timer sheet
+  (→ [DECISIONS #251](DECISIONS.md), which also says what would change this). The Set-timer sheet
   says so rather than promising otherwise. Cancelling/pausing the timer cancels the server push.
   Tapping the notification reopens cook mode at that step.
 

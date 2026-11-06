@@ -3601,7 +3601,12 @@ units | null, name}`, written back as editor lines in the reader's unit spelling
      launcher cutting right at 80% no longer has the ears touching the edge. The fit is what decided
      it, not the limit: 84% remains the largest size that fits. The headroom test now holds the size
      from both sides (18–22% green). 82% is the next thing to try if this reads too small.
-250. **The timer calls instead of alarming, counts past zero, and says what a web app can't do**
+250. **The album deck's shadow cards read as two, and take less room** (Lukas 2026-11-06). Level and
+     nearly parallel, they looked like one odd card. Now 58×78 instead of 64×86, the back one 10px
+     higher and tilted −11°, the middle −3° with `--shadow-card-stacked` on the card behind it. The
+     deck is 118px instead of 136px, and the text and bar get the difference. Lukas chose this from
+     five sketches; a bolder one with bigger steps was "a little bit too much".
+251. **The timer calls instead of alarming, counts past zero, and says what a web app can't do**
      (Lukas 2026-11-06; → SPEC §4.6, `lib/alarm.ts`, `lib/cook-timer.svelte.ts`,
      `services/cook-timers.ts`). Three complaints: the sound was frightening, a phone on silent with
      the app closed gives nothing, and afterwards nobody can tell how long ago it went off.
@@ -3629,12 +3634,11 @@ units | null, name}`, written back as editor lines in the reader's unit spelling
        moved into the Set-timer sheet, which used to promise it rings "even with the phone locked".
        Real alarms need native code: on Android a small shell with its own alarm channel and a
        full-screen intent; on iOS a Critical Alerts entitlement or AlarmKit. Not built.
-     - **The one possible loophole is untested, so it isn't built.** Media volume ignores silent
-       notifications, and Chrome doesn't throttle a page playing audible sound, so the wait and the
-       alarm could be one audio track started by the tap. It would also pause the cook's music and
-       put a player on the lock screen, and WebKit's bug tracker reports years of trouble with audio
-       in installed apps. Nothing here can test a locked phone, so Lukas has a test page for it; the
-       answer decides whether this gets built.
+     - **One way past silent mode, proven but not built here.** Media volume ignores silent
+       notifications, and an audio track needs no awake page, so the wait and the alarm can be one
+       track started by the tap. Lukas tried it on his Android phone: locked, with music or a video
+       playing, it paused them and rang. It shows as a media player rather than an alarm. WebKit's
+       bug tracker reports years of trouble with audio in installed apps, so an iPhone may differ.
      - **Not built: pushing again.** Repeat notifications don't help a phone on silent, which is the
        case that was reported. iOS's `navigator.audioSession` could beat the ringer switch while the
        app is open, but nothing here can verify it, and a mistake there breaks the only sound an

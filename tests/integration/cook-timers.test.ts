@@ -1,5 +1,5 @@
 /**
- * What a timer that went off leaves behind (→ SPEC §4.6, DECISIONS #250). Whoever
+ * What a timer that went off leaves behind (→ SPEC §4.6, DECISIONS #251). Whoever
  * comes back to a silent phone has to find it still on the list, counting past
  * zero, until they stop it, without it being rung a second time or holding up a
  * new timer.
