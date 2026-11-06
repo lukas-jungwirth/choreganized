@@ -2526,18 +2526,21 @@ export const en = {
 		subtitle: 'Every raccoon you’ve met on Home.',
 		back: 'Back to Settings',
 		backHome: 'Back to Home',
-		/** The Settings row's value and the progress card: "17 of 39". */
+		/** The Settings row's value: "17 of 53". */
 		count: (found: number, total: number) => `${found} of ${total}`,
 		found: (found: number, total: number) => `${found} of ${total} found`,
-		/** Under it: the rare and legendary ones still out there. Empty once there are none. */
-		missing: (rare: number, legendary: number) => {
+		/**
+		 * Under it: the rare and legendary ones still out there, or how many are left
+		 * when only common ones are. `left` is all of them, whatever their rarity.
+		 */
+		missing: (left: number, rare: number, legendary: number) => {
+			if (left <= 0) return 'You’ve met every raccoon!';
 			const parts = [
 				rare > 0 ? `${rare} rare` : null,
 				legendary > 0 ? `${legendary} legendary` : null
 			].filter((part) => part !== null);
-			return parts.length > 0 ? `${parts.join(' · ')} still to find` : null;
+			return `${parts.length > 0 ? parts.join(' · ') : left} still to find`;
 		},
-		complete: 'You’ve met every raccoon!',
 		progress: (found: number, total: number) => `${found} of ${total} raccoons found`,
 		filters: {
 			label: 'Show',

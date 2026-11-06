@@ -1984,14 +1984,14 @@ export const de: Messages = {
 		backHome: 'Zurück zu Home',
 		count: (found: number, total: number) => `${found} von ${total}`,
 		found: (found: number, total: number) => `${found} von ${total} gefunden`,
-		missing: (rare: number, legendary: number) => {
+		missing: (left: number, rare: number, legendary: number) => {
+			if (left <= 0) return 'Du hast alle Waschbären getroffen!';
 			const parts = [
 				rare > 0 ? `${rare} ${rare === 1 ? 'seltener' : 'seltene'}` : null,
 				legendary > 0 ? `${legendary} ${legendary === 1 ? 'legendärer' : 'legendäre'}` : null
 			].filter((part) => part !== null);
-			return parts.length > 0 ? `Noch zu finden: ${parts.join(' · ')}` : null;
+			return `Noch zu finden: ${parts.length > 0 ? parts.join(' · ') : left}`;
 		},
-		complete: 'Du hast alle Waschbären getroffen!',
 		progress: (found: number, total: number) => `${found} von ${total} Waschbären gefunden`,
 		filters: {
 			label: 'Anzeigen',
@@ -2071,7 +2071,7 @@ export const de: Messages = {
 				const who =
 					names.length === 2
 						? `${first} und ${second}`
-						: `${first}, ${second} und ${names.length - 2} weitere`;
+						: `${first}, ${second} und ${names.length === 3 ? '1 weiterer' : `${names.length - 2} weitere`}`;
 				return `${who} · ${found} von ${total}`;
 			}
 		}
