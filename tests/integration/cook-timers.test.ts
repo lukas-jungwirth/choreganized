@@ -17,12 +17,18 @@ import { catalog } from '$lib/i18n';
 import { TIMERS_MAX } from '$lib/utils/timer-parse';
 import { makeHousehold } from '../helpers/db';
 
-const sent = vi.hoisted(() => [] as Array<{ userId: string; payload: unknown }>);
+const sent = vi.hoisted(
+	() => [] as Array<{ userId: string; payload: unknown; options?: { urgency?: string } }>
+);
 
 vi.mock('$lib/server/push', async (original) => ({
 	...(await original<typeof import('$lib/server/push')>()),
-	sendToUser: async (userId: string, payload: (m: unknown) => unknown): Promise<number> => {
-		sent.push({ userId, payload });
+	sendToUser: async (
+		userId: string,
+		payload: (m: unknown) => unknown,
+		options?: { urgency?: string }
+	): Promise<number> => {
+		sent.push({ userId, payload, options });
 		return 1;
 	}
 }));
@@ -144,6 +150,8 @@ describe('a timer that has gone off', () => {
 
 		const mine = sent.filter((push) => push.userId === owner.userId);
 		assert.equal(mine.length, 1);
+		// Otherwise Android may hold it back on a locked phone lying still.
+		assert.equal(mine[0].options?.urgency, 'high');
 
 		const payload = (
 			mine[0].payload as (m: unknown) => {

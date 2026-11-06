@@ -579,12 +579,13 @@ export class CookTimer {
 	 * Ask for the alert a couple of seconds early, while there is still time for
 	 * the answer to come back before zero. Only while visible — a hidden page has
 	 * probably been frozen, and claiming an alert it may never deliver would
-	 * silence the push that is the whole point.
+	 * silence the push that is the whole point. Never with a track playing, see
+	 * `#fire`.
 	 */
 	#claimAhead(): void {
 		const id = this.#id;
 		if (this.#claim || this.#owned !== null || !id) return;
-		if (document.visibilityState !== 'visible') return;
+		if (document.visibilityState !== 'visible' || this.#track?.playing) return;
 
 		this.#claim = claimTimerAlert(id).then((owned) => {
 			this.#owned = owned;
@@ -598,12 +599,12 @@ export class CookTimer {
 		this.phase = 'rang';
 		this.#wake();
 
-		const track = this.#track?.playing ?? false;
-
-		// The track is ringing with the phone in somebody's pocket. Claiming would
-		// cancel the push, and the push is what carries the Stop button.
-		if (track && document.visibilityState !== 'visible') {
-			this.#owned ??= false;
+		// A track is already making the noise, and it never claims the alert: the
+		// push has to go out, because it carries the Stop button and it stays on the
+		// phone. Whether a page counts as visible can't be trusted to decide this
+		// on a phone the cook has just locked (→ DECISIONS #253).
+		if (this.#track?.playing) {
+			if (document.visibilityState === 'visible') ringAlarm(false);
 			return;
 		}
 
@@ -617,7 +618,7 @@ export class CookTimer {
 
 		// `#id` stays: Stop still has to tell the server, or the row comes back.
 		// Stopped while the claim was out? Then there is nothing left to ring for.
-		if (owned && this.phase === 'rang' && this.overMs < LATE_RING_MS) ringAlarm(!track);
+		if (owned && this.phase === 'rang' && this.overMs < LATE_RING_MS) ringAlarm();
 	}
 }
 

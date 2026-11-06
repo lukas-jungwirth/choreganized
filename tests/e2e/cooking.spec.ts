@@ -253,4 +253,36 @@ test.describe('on an Android phone', () => {
 		await expect.poll(async () => (await track())?.paused).toBe(true);
 		expect(await page.evaluate(() => navigator.mediaSession.metadata)).toBeNull();
 	});
+
+	test('a playing track leaves the alert to the push, even with the app on screen (→ DECISIONS #253)', async ({
+		page
+	}) => {
+		const claims: string[] = [];
+		page.on('request', (request) => {
+			if (request.url().endsWith('/rang')) claims.push(request.url());
+		});
+
+		await page.goto('/cooking/recipes');
+		await page
+			.getByRole('link', { name: new RegExp(SEED.recipes.curry) })
+			.first()
+			.click();
+		await page.getByRole('link', { name: 'Start cook mode' }).click();
+		await expect(page).toHaveURL(/\/cook$/);
+
+		const recipeId = new URL(page.url()).pathname.split('/')[3];
+		await page.request.post('/api/timers', {
+			data: { seconds: 6, label: 'Rice', recipeId, stepIndex: 0, replaces: null }
+		});
+		await page.reload();
+
+		// A timer that came back with the page gets its track from the next tap.
+		await page.getByText(/^Step 1 of \d+$/).click();
+
+		await expect(page.getByRole('timer')).toContainText(/−0:0\d/, { timeout: 15_000 });
+		expect(claims).toEqual([]);
+
+		await page.getByRole('button', { name: 'Stop', exact: true }).click();
+		await expect(page.getByRole('timer')).toHaveCount(0);
+	});
 });
