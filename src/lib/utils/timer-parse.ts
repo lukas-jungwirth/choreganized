@@ -256,6 +256,12 @@ export function timerNotificationTag(timerId: string): string {
 	return `timer-${timerId}`;
 }
 
+/** The Stop button on a rung timer's notification (→ DECISIONS #252). */
+export const TIMER_STOP_ACTION = 'stop-timer';
+
+/** The worker's word to open pages that this timer was stopped from the notification. */
+export type TimerStoppedMessage = { type: 'timer-stopped'; id: string };
+
 function pad(value: number): string {
 	return String(value).padStart(2, '0');
 }

@@ -37,6 +37,8 @@ let context: AudioContext | null = null;
 let master: GainNode | null = null;
 let roundLoop: ReturnType<typeof setInterval> | null = null;
 let giveUp: ReturnType<typeof setTimeout> | null = null;
+/** Whether this alarm makes its own noise, or only buzzes along with a track. */
+let sounding = true;
 
 type WebAudioWindow = typeof globalThis & {
 	AudioContext?: typeof AudioContext;
@@ -98,16 +100,23 @@ const RISE_SECONDS = 20;
 
 /** How long it keeps going with nobody stopping it (→ the module comment). */
 const MAX_RING_MS = 60_000;
+/** The same, for what `renderRing` writes down. */
+export const RING_SECONDS = MAX_RING_MS / 1000;
 
 /** Android haptics, re-issued per round — one call replaces the last pattern. */
 const VIBRATE = [200, 120, 200];
 
-/** Start ringing, and keep ringing until `stopAlarm` or `MAX_RING_MS`. */
-export function ringAlarm(): void {
+/**
+ * Start ringing, and keep ringing until `stopAlarm` or `MAX_RING_MS`. `sound` is
+ * false when a timer's track is already playing the same ring (→ `alarm-track.ts`),
+ * which leaves the vibration: a page can only buzz while it is awake.
+ */
+export function ringAlarm(sound = true): void {
 	// A second timer reaching zero restarts the window rather than inheriting
 	// what is left of the first one's: it has its own thing to say.
 	stopAlarm();
 
+	sounding = sound;
 	round();
 	roundLoop = setInterval(round, ROUND_MS);
 	giveUp = setTimeout(stopAlarm, MAX_RING_MS);
@@ -154,26 +163,54 @@ export function stopAlarm(): void {
 function round(): void {
 	vibrate();
 
-	if (!context || context.state !== 'running') return;
+	if (!sounding || !context || context.state !== 'running') return;
 
 	try {
 		// The *first* round is what creates the node the whole alarm hangs off, so
 		// `stopAlarm` has one thing to pull, and so the swell runs across all of them.
 		if (!master) {
-			master = context.createGain();
-			master.gain.setValueAtTime(START_LEVEL, context.currentTime);
-			master.gain.linearRampToValueAtTime(1, context.currentTime + RISE_SECONDS);
+			master = swell(context, context.currentTime);
 			master.connect(context.destination);
 		}
 
-		for (const [offset, note] of NOTES) strike(context, master, note, context.currentTime + offset);
+		playRound(context, master, context.currentTime);
 	} catch {
 		// An audio graph that won't build is not a reason to skip the vibration.
 	}
 }
 
+/** The node that makes it start quietly and rise. */
+function swell(audio: BaseAudioContext, at: number): GainNode {
+	const node = audio.createGain();
+	node.gain.setValueAtTime(START_LEVEL, at);
+	node.gain.linearRampToValueAtTime(1, at + RISE_SECONDS);
+	return node;
+}
+
+function playRound(audio: BaseAudioContext, output: AudioNode, at: number): void {
+	for (const [offset, note] of NOTES) strike(audio, output, note, at + offset);
+}
+
+/**
+ * The whole ring written down as samples, for the track that plays it with no
+ * page awake (→ `alarm-track.ts`). The same swell and the same rounds as the live
+ * alarm, so the two can't come to sound different.
+ */
+export async function renderRing(sampleRate: number): Promise<Float32Array> {
+	const audio = new OfflineAudioContext(1, sampleRate * RING_SECONDS, sampleRate);
+	const output = swell(audio, 0);
+	output.connect(audio.destination);
+
+	// The last round has to finish, not be cut off by the end of the file.
+	for (let at = 0.05; at < RING_SECONDS - 1; at += ROUND_MS / 1000) {
+		playRound(audio, output, at);
+	}
+
+	return (await audio.startRendering()).getChannelData(0);
+}
+
 /** One note: every partial jumps up at once, then each fades at its own speed. */
-function strike(audio: AudioContext, output: AudioNode, note: number, at: number): void {
+function strike(audio: BaseAudioContext, output: AudioNode, note: number, at: number): void {
 	for (const [ratio, level, fade] of PARTIALS) {
 		const oscillator = audio.createOscillator();
 		const gain = audio.createGain();

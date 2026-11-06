@@ -3643,3 +3643,27 @@ units | null, name}`, written back as editor lines in the reader's unit spelling
        case that was reported. iOS's `navigator.audioSession` could beat the ringer switch while the
        app is open, but nothing here can verify it, and a mistake there breaks the only sound an
        iPhone gets.
+252. **On Android, the wait and the ring are one audio track, so a locked or silent phone rings**
+     (Lukas 2026-11-06; → SPEC §4.6, `lib/alarm-track.ts`). #251 left this as an untested idea. Lukas
+     tried it from a test page on his Android phone: it rang locked, and music or a podcast kept
+     playing through the silence and only paused when the ring began, which removed the one cost that
+     might have needed a setting. He also accepted that it shows as a media player.
+     - **One track per timer**, started by the tap, built from `renderRing` so it can't sound different
+       from the live alarm. Stopping a timer stops its track, and "+1:00" and resume build a new one.
+       Three players can't confuse anything, because they share one Media Session.
+     - **The live alarm stands down while a track plays**, leaving only the vibration, so a visible
+       page doesn't ring twice. If the system stopped the track, the live alarm takes over.
+     - **A hidden page with a playing track doesn't claim the alert.** The push has to go out, because
+       it carries the Stop button. This was already a coin flip against the server at zero.
+     - **A Stop button on the notification**, handled by the worker: it tells open pages, so the sound
+       stops at once, then deletes the row. This is the nearest a web app gets to an alarm's button.
+     - **Pause on the player does nothing before the ring**, and means Stop during it. Letting it pause
+       the track would leave a timer that looks fine and rings nobody.
+     - **Android only.** It's the only place it has been heard, and Safari takes over the audio when a
+       track starts rather than when it gets loud, so it could silence a podcast for the whole wait.
+     - **2 hours at most.** WAV silence takes 32 KB a second, so 2 hours is 230 MB and 12 would be
+       1.4 GB. A longer timer gets the notification. The lengths and the player's wording are untested
+       on a phone beyond the page Lukas tried, and so is the notification's button.
+     - **Weighed and dropped:** a native Android shell, the only route to a full-screen alarm, as far
+       too much to maintain for this; streaming silence from the server, which needs a network at the
+       one moment it can't fail.

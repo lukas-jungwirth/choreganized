@@ -16,6 +16,7 @@
  */
 import { base, build, files, version } from '$service-worker';
 import { CHROME, chromeLightDark } from '$lib/theme';
+import { TIMER_STOP_ACTION, type TimerStoppedMessage } from '$lib/utils/timer-parse';
 
 const sw = self as unknown as ServiceWorkerGlobalScope;
 
@@ -40,6 +41,7 @@ const DEFAULT_VIBRATE = [90, 60, 90];
  * implements and no browser chokes on.
  */
 type PushNotificationOptions = NotificationOptions & {
+	actions?: { action: string; title: string }[];
 	renotify?: boolean;
 	timestamp?: number;
 	vibrate?: number[];
@@ -55,6 +57,8 @@ type PushPayload = {
 	vibrate?: number[];
 	requireInteraction?: boolean;
 	timestamp?: number;
+	actions?: { action: string; title: string }[];
+	timerId?: string;
 };
 
 /** A push that arrives unreadable still has to show *something* — see `toPayload`. */
@@ -238,7 +242,9 @@ function toPayload(data: PushMessageData | null): PushPayload {
 			renotify: parsed.renotify,
 			vibrate: parsed.vibrate,
 			requireInteraction: parsed.requireInteraction,
-			timestamp: parsed.timestamp
+			timestamp: parsed.timestamp,
+			actions: parsed.actions,
+			timerId: parsed.timerId
 		};
 	} catch {
 		return FALLBACK_PAYLOAD;
@@ -255,10 +261,11 @@ function show(payload: PushPayload): Promise<void> {
 		// somebody is standing in a kitchen waiting for (→ DECISIONS #134).
 		requireInteraction: payload.requireInteraction ?? false,
 		timestamp: payload.timestamp,
+		actions: payload.actions,
 		icon: `${base}/icons/icon-192.png`,
 		// Android's status-bar glyph: a monochrome silhouette it tints itself.
 		badge: `${base}/icons/badge-72.png`,
-		data: { url: payload.url }
+		data: { url: payload.url, timerId: payload.timerId }
 	};
 
 	return sw.registration.showNotification(payload.title, options);
@@ -269,11 +276,34 @@ function show(payload: PushPayload): Promise<void> {
 sw.addEventListener('notificationclick', (event) => {
 	event.notification.close();
 
-	const data = event.notification.data as { url?: unknown } | null;
+	const data = event.notification.data as { url?: unknown; timerId?: unknown } | null;
+
+	if (event.action === TIMER_STOP_ACTION && typeof data?.timerId === 'string') {
+		event.waitUntil(stopTimer(data.timerId));
+		return;
+	}
+
 	const url = typeof data?.url === 'string' ? data.url : FALLBACK_PAYLOAD.url;
 
 	event.waitUntil(open(url));
 });
+
+/**
+ * Stop from the notification, without opening anything. The pages hear first,
+ * because one of them may be playing the ring, and silence shouldn't wait for a
+ * round trip. The row goes next. A page gone or asleep finds it stopped at its next load.
+ */
+async function stopTimer(id: string): Promise<void> {
+	const message: TimerStoppedMessage = { type: 'timer-stopped', id };
+	const windows = await sw.clients.matchAll({ type: 'window', includeUncontrolled: true });
+	for (const client of windows) client.postMessage(message);
+
+	try {
+		await fetch(`${base}/api/timers/${encodeURIComponent(id)}`, { method: 'DELETE' });
+	} catch {
+		// No network. It comes back on the next load, still counting, to stop again.
+	}
+}
 
 /**
  * Reuse the tab that is already open — tapping "the bedsheets are overdue"

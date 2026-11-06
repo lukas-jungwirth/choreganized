@@ -925,6 +925,8 @@ export const de: Messages = {
 			timerMeta: (label: string, total: string, paused: boolean) =>
 				paused ? `${label} · ${total} · pausiert` : `${label} · ${total}`,
 			dismiss: 'Stopp',
+			/** Under the timer's name on the phone's media player (→ DECISIONS #252). */
+			trackRingsAt: (time: string) => `klingelt um ${time}`,
 			resume: 'Weiter',
 			pause: 'Pause',
 			addMinute: '+1:00',

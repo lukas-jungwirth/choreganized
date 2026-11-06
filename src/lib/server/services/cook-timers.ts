@@ -59,6 +59,7 @@ import {
 	MAX_TIMER_SECONDS,
 	MIN_TIMER_SECONDS,
 	TIMER_LABEL_MAX,
+	TIMER_STOP_ACTION,
 	TIMERS_MAX,
 	timerHref,
 	timerNotificationTag
@@ -455,7 +456,12 @@ function payloadFor(row: TimerRow): PayloadFor {
 		requireInteraction: true,
 		// When it went off, not when it arrived, so a phone on silent can still
 		// say how long ago that was without the app being opened.
-		timestamp: row.endsAt.getTime()
+		timestamp: row.endsAt.getTime(),
+		// Stop without unlocking into the app. The ring may be playing as a track
+		// on this very phone, and this is the closest a web app gets to an alarm's
+		// button (→ DECISIONS #252).
+		actions: [{ action: TIMER_STOP_ACTION, title: m.cooking.cook.dismiss }],
+		timerId: row.id
 	});
 }
 
