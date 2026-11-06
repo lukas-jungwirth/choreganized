@@ -11,13 +11,14 @@
  *   the top half, where the ears are; the bottom half is the body, which the
  *   mask is welcome to cut.
  * - **headroom**: the tab icon's top row is green, so the ears aren't cropped.
- * - **filling the mask**: the maskable bust is as large as the safe circle lets
- *   it be, so a launcher's circle isn't a quarter empty above the ears (#248).
+ * - **filling the mask**: the maskable bust leaves about a fifth of the icon green
+ *   above the ears: a launcher's circle isn't a quarter empty, as it was at 72%
+ *   (#248), and the raccoon doesn't crowd it, as it did at 84% (#249).
  * - **the test label inside the mask**: the test deploy's maskable icons
  *   (`static/icons/test/`, → DECISIONS #236) differ from the live ones only
  *   inside the safe circle, so no launcher crops the TEST label. Each PNG gets
  *   its own 256-colour palette, so the body past the circle shifts a little
- *   between them (up to 62 here); the label differs by far more than that.
+ *   between them (about 60 here); the label differs by far more than that.
  */
 import assert from 'node:assert/strict';
 import sharp from 'sharp';
@@ -74,14 +75,15 @@ describe('app icons', () => {
 		);
 	});
 
-	it('icon-512-maskable.png: the bust fills the mask, with no wide band of green on top', async () => {
+	it('icon-512-maskable.png: the bust fills the mask without crowding it', async () => {
 		const { size, isGreen } = await pixels('icon-512-maskable.png');
 		const top = Array.from({ length: size }, (_, y) => y).find(
 			(y) => artShare(size, isGreen, y) > 0
 		)!;
+		const share = top / size;
 		assert.ok(
-			top / size <= 0.17,
-			`${((top / size) * 100).toFixed(1)}% of the icon is green above the ears`
+			share >= 0.18 && share <= 0.22,
+			`${(share * 100).toFixed(1)}% of the icon is green above the ears, not about a fifth`
 		);
 	});
 

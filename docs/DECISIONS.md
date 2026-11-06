@@ -3594,3 +3594,10 @@ units | null, name}`, written back as editor lines in the reader's unit spelling
      edge on rounded-square launchers), and 88% sunk below the edge (a bigger face, the same
      headroom, less of the overalls, and new layout code). The opaque store icon stays at 86%. A
      phone that already has the app may keep the old icon until Android refreshes it.
+249. **The maskable icon's bust settles at 80%** (Lukas 2026-11-06). At 84% (#248) the raccoon looked
+     a little too big to Lukas, so it comes back to 80%, the middle option from that comparison. That
+     leaves 20% green on the icon and about 17% in the circle on his phone, against 16% and 12% at
+     84% and 28% and 25% at the original 72%. It also clears the safe circle with room to spare, so a
+     launcher cutting right at 80% no longer has the ears touching the edge. The fit is what decided
+     it, not the limit: 84% remains the largest size that fits. The headroom test now holds the size
+     from both sides (18–22% green). 82% is the next thing to try if this reads too small.
