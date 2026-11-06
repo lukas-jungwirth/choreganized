@@ -22,12 +22,16 @@ import { raccoonSightings, type RaccoonSighting } from '../db/schema';
 
 /**
  * Only raccoons still in the album count: a pose retired from Home keeps its
- * rows (it was met), but "40 of 39" is not a thing to show.
+ * rows (it was met), but "54 of 53" is not a thing to show.
  */
 const inAlbum = inArray(
 	raccoonSightings.raccoon,
 	ALBUM_ENTRIES.map((entry) => entry.name)
 );
+
+/** One member's rows, within their household like every query here. */
+const mine = (householdId: string, memberId: string) =>
+	and(eq(raccoonSightings.householdId, householdId), eq(raccoonSightings.memberId, memberId));
 
 /**
  * One sighting of `raccoon` in `slot` (→ `utils/raccoon` `homeSlot`). The first
@@ -45,14 +49,10 @@ export function recordSighting(
 	if (!isAlbumName(raccoon)) throw new Error(`${raccoon} is not an album raccoon`);
 
 	db.transaction((tx) => {
-		const mine = and(
-			eq(raccoonSightings.householdId, householdId),
-			eq(raccoonSightings.memberId, memberId)
-		);
 		const existing = tx
 			.select()
 			.from(raccoonSightings)
-			.where(and(mine, eq(raccoonSightings.raccoon, raccoon)))
+			.where(and(mine(householdId, memberId), eq(raccoonSightings.raccoon, raccoon)))
 			.get();
 
 		if (!existing) {
@@ -73,13 +73,7 @@ export function listSightings(householdId: string, memberId: string): RaccoonSig
 	return db
 		.select()
 		.from(raccoonSightings)
-		.where(
-			and(
-				eq(raccoonSightings.householdId, householdId),
-				eq(raccoonSightings.memberId, memberId),
-				inAlbum
-			)
-		)
+		.where(and(mine(householdId, memberId), inAlbum))
 		.all();
 }
 
@@ -94,9 +88,7 @@ export function isFirstVisit(householdId: string, memberId: string, slot: string
 	const met = db
 		.select({ raccoon: raccoonSightings.raccoon, lastSlot: raccoonSightings.lastSlot })
 		.from(raccoonSightings)
-		.where(
-			and(eq(raccoonSightings.householdId, householdId), eq(raccoonSightings.memberId, memberId))
-		)
+		.where(mine(householdId, memberId))
 		.limit(2)
 		.all();
 	if (met.length === 0) return true;
@@ -122,13 +114,7 @@ export function albumSummary(householdId: string, memberId: string): AlbumSummar
 	const rows = db
 		.select({ raccoon: raccoonSightings.raccoon, noticedAt: raccoonSightings.noticedAt })
 		.from(raccoonSightings)
-		.where(
-			and(
-				eq(raccoonSightings.householdId, householdId),
-				eq(raccoonSightings.memberId, memberId),
-				inAlbum
-			)
-		)
+		.where(and(mine(householdId, memberId), inAlbum))
 		// The rowid only breaks a tie within one millisecond: VACUUM may renumber it.
 		.orderBy(desc(raccoonSightings.createdAt), desc(sql`rowid`))
 		.all();
@@ -147,18 +133,12 @@ export function albumSummary(householdId: string, memberId: string): AlbumSummar
 	};
 }
 
-/** How many they have met — the Settings row's "17 of 39". */
+/** How many they have met — the Settings row's "17 of 53". */
 export function countSightings(householdId: string, memberId: string): number {
 	return db
 		.select({ found: count() })
 		.from(raccoonSightings)
-		.where(
-			and(
-				eq(raccoonSightings.householdId, householdId),
-				eq(raccoonSightings.memberId, memberId),
-				inAlbum
-			)
-		)
+		.where(and(mine(householdId, memberId), inAlbum))
 		.get()!.found;
 }
 
@@ -174,12 +154,6 @@ export function markSightingsNoticed(
 ): void {
 	db.update(raccoonSightings)
 		.set({ noticedAt: now })
-		.where(
-			and(
-				eq(raccoonSightings.householdId, householdId),
-				eq(raccoonSightings.memberId, memberId),
-				isNull(raccoonSightings.noticedAt)
-			)
-		)
+		.where(and(mine(householdId, memberId), isNull(raccoonSightings.noticedAt)))
 		.run();
 }

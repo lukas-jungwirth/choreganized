@@ -10,7 +10,7 @@
  * midnight: from 00:00 to 02:00 it might be the midnight raccoon instead.
  */
 import Database from 'better-sqlite3';
-import { expect, request, test, type Page } from '@playwright/test';
+import { expect, request, test, type Browser, type Locator, type Page } from '@playwright/test';
 import { DATABASE_PATH } from './accounts';
 
 test.use({ storageState: { cookies: [], origins: [] } });
@@ -32,7 +32,8 @@ function moveHousehold(name: string, timezone: string) {
 	}
 }
 
-test('a raccoon met on Home lands in the album, once per slot', async ({ browser, baseURL }) => {
+/** Signed up, with no household yet. */
+async function newPerson(browser: Browser, baseURL: string | undefined) {
 	const api = await request.newContext({ baseURL });
 	const email = `album-${Date.now()}@e2e.test`;
 	const signUp = await api.post('/api/auth/sign-up/email', {
@@ -41,7 +42,20 @@ test('a raccoon met on Home lands in the album, once per slot', async ({ browser
 	expect(signUp.ok()).toBe(true);
 	const context = await browser.newContext({ storageState: await api.storageState() });
 	await api.dispose();
-	const page = await context.newPage();
+	return { context, page: await context.newPage() };
+}
+
+/** A press that turns into a scroll: it starts on the link and never opens it. */
+async function pressWithoutOpening(page: Page, link: Locator) {
+	await link.hover();
+	await page.mouse.down();
+	await page.mouse.move(0, 0);
+	await page.mouse.up();
+	await page.waitForTimeout(300);
+}
+
+test('a raccoon met on Home lands in the album, once per slot', async ({ browser, baseURL }) => {
+	const { context, page } = await newPerson(browser, baseURL);
 
 	const name = `Album ${Date.now()}`;
 	await freshHousehold(page, name);
@@ -57,12 +71,15 @@ test('a raccoon met on Home lands in the album, once per slot', async ({ browser
 
 	// A press that turns into a scroll doesn't use it up either: "tap" preloading
 	// would run the album's load, which clears what's new.
-	await waiting.hover();
-	await page.mouse.down();
-	await page.mouse.move(0, 0);
-	await page.mouse.up();
-	await page.waitForTimeout(300);
+	await pressWithoutOpening(page, waiting);
 	await page.reload();
+	await expect(waiting).toBeVisible();
+
+	// The same goes for the way in from Settings (→ DECISIONS #247).
+	await page.goto('/settings');
+	await pressWithoutOpening(page, page.getByRole('link', { name: /Raccoon album/ }));
+	await expect(page).toHaveURL(/\/settings$/);
+	await page.goto('/home');
 	await expect(waiting).toBeVisible();
 
 	// A tap opens its card.
@@ -117,6 +134,37 @@ test('a raccoon met on Home lands in the album, once per slot', async ({ browser
 	const locked = page.getByRole('dialog', { name: 'Raccoon album' });
 	await expect(locked.getByText('Not met yet')).toBeVisible();
 	await expect(locked.getByText('Cosiness')).toHaveCount(0);
+
+	await context.close();
+});
+
+test('several raccoons waiting: Home says how many, and opens the album', async ({
+	browser,
+	baseURL
+}) => {
+	const { context, page } = await newPerson(browser, baseURL);
+	const name = `Several ${Date.now()}`;
+	await freshHousehold(page, name);
+
+	// Two slots, and the album not opened in between: the welcome, then the sleeping one.
+	await page.goto('/home');
+	moveHousehold(name, 'Pacific/Noumea');
+	await page.goto('/home');
+
+	const waiting = page.getByRole('link', { name: /New raccoons!/ });
+	await expect(waiting).toContainText('2 in your album');
+	await expect(waiting).toContainText('Night Shift and Welcome Committee · 2 of 53');
+	await expect(waiting).toContainText('2 new');
+
+	// Not one card, since there are two: the album, wearing both badges.
+	await waiting.click();
+	await expect(page).toHaveURL(/\/settings\/raccoons\?from=home$/);
+	await expect(page.getByRole('dialog')).toHaveCount(0);
+	await expect(page.getByRole('button', { name: /, new$/ })).toHaveCount(2);
+
+	await page.getByRole('link', { name: 'Back to Home' }).click();
+	await expect(page).toHaveURL(/\/home$/);
+	await expect(page.getByRole('link', { name: /Raccoon album/ })).toContainText('2 of 53 found');
 
 	await context.close();
 });

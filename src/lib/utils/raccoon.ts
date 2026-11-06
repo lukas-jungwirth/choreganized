@@ -100,10 +100,10 @@ export function isHomeRaccoon(value: string): value is MascotName {
 
 /** The hours the raccoon is asleep: from 22:00, until 05:00. */
 const BEDTIME = 22;
-export const WAKE_UP = 5;
+const WAKE_UP = 5;
 
 /** The midnight raccoon's stretch ends at 02:00; it starts at 00:00. */
-export const MIDNIGHT_ENDS = 2;
+const MIDNIGHT_ENDS = 2;
 
 /** The awake day in three: morning from 05:00, afternoon from 11:00, evening from 17:00. */
 const SLOT_STARTS = [WAKE_UP, 11, 17];
@@ -147,7 +147,9 @@ export const SEASON_OF_MONTH: readonly Season[] = [
  * Which stretch of Home's day this is, as `YYYY-MM-DD#0|1|2` (morning,
  * afternoon, evening) or `YYYY-MM-DD#n` for the night, dated by the evening it
  * began, so 23:00 and 02:00 are one night. The raccoon album counts a sighting
- * once per slot (→ plan 35), because within one the raccoon holds still.
+ * once per slot (→ plan 35), because within one the raccoon holds still. The
+ * night is the exception: the midnight raccoon can come and go inside it, which
+ * the count survives, because each raccoon keeps its own last slot.
  */
 export function homeSlot(today: CalendarDate, hour: number): string {
 	if (hour >= BEDTIME) return `${today}#n`;

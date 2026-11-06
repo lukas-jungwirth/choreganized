@@ -228,7 +228,7 @@ pose, first match wins, top to bottom (`lib/utils/raccoon.ts`, by the household'
    album frame in front, two silhouettes of raccoons still to find behind it (a full album keeps
    two silhouettes of its own). Only the front card has colour. The bar is plain sage.
    - **Nothing new**: "Raccoon album", "18 of 53 found", "6 rare · 3 legendary still to find"
-     ("You've met every raccoon!" once there are none). Tap → the album.
+     ("2 still to find" when only common ones are left, "You've met every raccoon!" once none are). Tap → the album.
    - **One new since the album was last opened** (the album's own "New" count, so it stays until
      you look, across reloads and days): the front card pops over the card's top edge with a
      "New" badge, a terracotta outline, and the eyebrow says the rarity in words: "New raccoon!",

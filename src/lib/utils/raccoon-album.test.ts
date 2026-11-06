@@ -221,7 +221,28 @@ describe("Home's several-new line", () => {
 		assert.equal(en.album.home.names(['A', 'B'], 20, 53), 'A and B · 20 of 53');
 		assert.equal(en.album.home.names(['A', 'B', 'C', 'D'], 20, 53), 'A, B and 2 more · 20 of 53');
 		assert.equal(de.album.home.names(['A', 'B'], 20, 53), 'A und B · 20 von 53');
-		assert.equal(de.album.home.names(['A', 'B', 'C'], 20, 53), 'A, B und 1 weitere · 20 von 53');
+		assert.equal(de.album.home.names(['A', 'B', 'C'], 20, 53), 'A, B und 1 weiterer · 20 von 53');
+		assert.equal(
+			de.album.home.names(['A', 'B', 'C', 'D'], 20, 53),
+			'A, B und 2 weitere · 20 von 53'
+		);
+	});
+});
+
+describe('the line under the count', () => {
+	it('names the rare and legendary ones still out there', () => {
+		assert.equal(en.album.missing(20, 6, 3), '6 rare · 3 legendary still to find');
+		assert.equal(de.album.missing(20, 1, 3), 'Noch zu finden: 1 seltener · 3 legendäre');
+	});
+
+	it('still counts when only common ones are left, rather than calling it done', () => {
+		assert.equal(en.album.missing(2, 0, 0), '2 still to find');
+		assert.equal(de.album.missing(2, 0, 0), 'Noch zu finden: 2');
+	});
+
+	it('says it is done only when nothing is left', () => {
+		assert.equal(en.album.missing(0, 0, 0), 'You’ve met every raccoon!');
+		assert.equal(de.album.missing(0, 0, 0), 'Du hast alle Waschbären getroffen!');
 	});
 });
 

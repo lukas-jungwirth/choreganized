@@ -1,6 +1,6 @@
 <!--
 	The raccoon album's progress card (→ plan 35): a ring with the share found,
-	"17 of 39 found", the rare and legendary ones still out there, and a plain
+	"17 of 53 found", the rare and legendary ones still out there, and a plain
 	sage bar.
 -->
 <script lang="ts">
@@ -23,7 +23,7 @@
 	const share = $derived(total > 0 ? found / total : 0);
 	/** The ring's circumference at r = 23. */
 	const RING = 2 * Math.PI * 23;
-	const missing = $derived(m.album.missing(rare, legendary));
+	const missing = $derived(m.album.missing(total - found, rare, legendary));
 </script>
 
 <Card radius="md">
@@ -42,7 +42,7 @@
 		</svg>
 		<div class="text">
 			<p class="found">{m.album.found(found, total)}</p>
-			<p class="missing">{missing ?? m.album.complete}</p>
+			<p class="missing">{missing}</p>
 			<ProgressBar value={share} label={m.album.progress(found, total)} />
 		</div>
 	</div>

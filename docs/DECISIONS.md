@@ -3562,3 +3562,23 @@ units | null, name}`, written back as editor lines in the reader's unit spelling
      0.1em, size `min(--fs-42, 100cqi / 7.6)`, about 39px on a 390px phone instead of 42. A
      per-code fit would keep 42 for narrow codes, but then codes would differ in size for no reason.
      The type-scale convention test gains that one form, `min(var(--fs-N), 100cqi / <n>)`.
+247. **The album never preloads, and setup stops travelling** (2026-11-06, from a review of #122–#124).
+     **Preload:** #244 turned preloading off on Home's album card, because a tap is a touchstart and a
+     finger starting a scroll would run the album's load and use up its "New". The Settings row kept
+     `tap`, and pressing it without opening it did exactly that, so Home's card went quiet for a
+     raccoon nobody had looked at. Now `$lib/preload` says `off` for every link to the album and the
+     card asks it too, so there is one rule. Home stays on `tap`: all a stray touch can do there is
+     meet the raccoon that is on your Home anyway. The album opens a moment later on a tap, which
+     nobody will notice on a page this light.
+     **The line under the count** said "You've met every raccoon!" whenever no rare or legendary
+     one was left, under "52 of 53 found" if a common one was missing, which the draw allows
+     (#232). `album.missing` now takes how many are left, says "2 still to find" for common ones and
+     is done only at none.
+     **Setup:** #238 took each account's first look at Home in the night so that its welcome raccoon
+     stayed out of the afternoon, and #246 kept that with another timezone and a guard. But the seed
+     has met raccoons for both accounts, so neither is ever on a first visit and the look only added
+     a sighting. It was also the only thing exposing setup to the midnight raccoon. It is gone, along
+     with the guard, and the visual baselines hold without it. New households are unaffected: the
+     album journey still starts from a real first visit.
+     **`--r-deck`** is the deck's 11px, which was raw. The other raw radii in the app (41 files) are
+     older and untouched: the rule says tokens and the convention test only checks colours and type.
