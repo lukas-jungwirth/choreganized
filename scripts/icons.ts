@@ -115,12 +115,13 @@ async function appIcon(size: number): Promise<Buffer> {
 
 /**
  * The maskable icon: a launcher may crop it to the 80%-diameter circle, so the
- * bust is smaller (72%) and every ear stays inside that circle; the bottom of
- * the body running into the mask is how a portrait in a circle looks anyway
- * (`tests/conventions/app-icons.test.ts` checks the ears).
+ * bust is as large as it can stand on the edge with the head still inside that
+ * circle: 84%, where 85% puts it outside (→ DECISIONS #248). The bottom of the
+ * body running into the mask is how a portrait in a circle looks anyway
+ * (`tests/conventions/app-icons.test.ts` checks the ears and the headroom).
  */
 async function maskable(size: number): Promise<Buffer> {
-	return standing(await foregroundArt(), size, 0.72);
+	return standing(await foregroundArt(), size, 0.84);
 }
 
 /** The tab icon: the head alone, filling the square, cut at the neck on the bottom edge. */
