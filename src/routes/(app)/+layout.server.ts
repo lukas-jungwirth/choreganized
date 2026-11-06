@@ -9,6 +9,7 @@
  */
 import { error } from '@sveltejs/kit';
 import { catalog } from '$lib/i18n';
+import { adminMode } from '$lib/server/admin';
 import { requireMember } from '$lib/server/guards';
 import { listActiveTimers } from '$lib/server/services/cook-timers';
 import { holidayNoticeFor } from '$lib/server/services/holidays';
@@ -68,6 +69,12 @@ export const load: LayoutServerLoad = (event) => {
 		 * other phone" from "this payload is simply older than the row I just
 		 * started" — two loads can be in flight at once (→ `cookTimers.sync`).
 		 */
-		timersFetchedAt: Date.now()
+		timersFetchedAt: Date.now(),
+		/**
+		 * Admin mode (→ plan 34): one boolean, never the list it was checked
+		 * against. It only decides what to *show*; every admin load and action
+		 * asks the server again.
+		 */
+		adminMode: adminMode(event)
 	};
 };

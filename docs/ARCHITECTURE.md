@@ -103,6 +103,7 @@ docs/                          # this documentation + plans/
   expenses/recurring            [9h]   sheets: one series [9h-stop], edit series (the [9b] sheet)  [plan 30]
   settings                      [6a]
   settings/members              [6b]   sheet: manage member [6c]
+  admin                         —      stats + households; 404 unless admin mode (`requireAdmin`) [plan 34]
 dev/kit                         component gallery — 404 unless `dev` or E2E_MODE [plan 02, 17]
 api/
   auth/[...all]                 Better Auth handler (GET/POST)
@@ -248,9 +249,11 @@ prompt / subscribed).
 - **Icons and mascots are scripted from one source.** `npm run icons` (`scripts/icons.ts`)
   renders every launcher / tab / lock-screen asset and every raccoon a screen shows from the PNG
   masters in `artwork/raccoon/` (→ DECISIONS #211, #215), which are never shipped (`.dockerignore`):
-  `any` + apple-touch from the opaque store icon on #74A585, maskable from the transparent head
-  pulled inside the 80% safe circle, 32/96px favicons and the notification badge (the head's
-  silhouette) — all 256-colour palette PNGs — and the mascots as AVIF at 3× their display height
+  `any` + apple-touch from the opaque store icon on #74A585, maskable from the transparent bust
+  pulled inside the 80% safe circle, 32/96px favicons and the notification badge (the bust's head
+  only, and its silhouette); every icon is laid out from the trimmed art so the bust stands on the
+  bottom edge (→ DECISIONS #235, `tests/conventions/app-icons.test.ts`), plus the test deploy's
+  copy of each but the badge with a TEST label in `static/icons/test/` (→ DECISIONS #236) — all 256-colour palette PNGs — and the mascots as AVIF at 3× their display height
   in `src/lib/assets/mascot/`, with a generated `index.ts` of their pixel sizes that
   `ui/Mascot` reads to reserve each image's box. Re-run after a master changes; outputs are
   committed.
@@ -272,6 +275,12 @@ prompt / subscribed).
   both branches; agent-built PRs (`.github/workflows/build.yml`) merge themselves into `dev` on
   green, and `main` is always a human PR (→ [plan 18](plans/18-agent-build.md),
   [DECISIONS #143](DECISIONS.md)).
+- **The test instance looks like one.** `APP_STAGE=test` (set on the test environment only)
+  gives it the name "Haushaltsheld Test" ("HH Test" under the icon) and the TEST-labelled icon set
+  in `static/icons/test/`, so the two installed apps can't be mixed up on one phone. Anything else,
+  unset included, is the household's look. `$lib/server/stage` decides; `hooks.server.ts` fills
+  `app.html`'s icon folder and names, the manifest takes the rest, and the service worker doesn't
+  precache the test set (→ [DECISIONS #236](DECISIONS.md)).
 - **One Dockerfile, one container** (see `Dockerfile`) — SQLite is embedded, so a separate DB
   image would only add failure modes. Answering the open question in the brief: no separate DB
   container.

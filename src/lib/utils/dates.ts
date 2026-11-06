@@ -191,6 +191,33 @@ export function formatWeekdayLong(date: CalendarDate, locale: Locale): string {
 	}).format(atUtcMidnight(date));
 }
 
+/**
+ * Some days of the week, said the short way, for the raccoon album's chip
+ * (→ DECISIONS #237): a run of three or more as "Mon – Fri" / "Mo – Fr",
+ * Saturday and Sunday as the weekend, one day as every one of it ("Fridays",
+ * "Freitags"), anything else as a list ("Mon and Wed"). The two phrases are
+ * each language's own words, so the catalog passes them in. Days are
+ * `mon`–`sun`, as `mascots.json` names them; 2001-01-01 was a Monday.
+ */
+export function formatWeekdays(
+	days: readonly string[],
+	locale: Locale,
+	words: { weekend: string; every: (longName: string) => string }
+): string {
+	const at = days.map((day) => WEEK.indexOf(day)).sort((a, b) => a - b);
+	const date = (index: number) => `2001-01-0${index + 1}`;
+	const short = (index: number) => formatWeekday(date(index), locale).replace('.', '');
+	if (at.length === 2 && at[0] === 5 && at[1] === 6) return words.weekend;
+	if (at.length === 1) return words.every(formatWeekdayLong(date(at[0]), locale));
+	const run = at.every((index, step) => step === 0 || index === at[step - 1] + 1);
+	if (run && at.length >= 3) return `${short(at[0])} – ${short(at[at.length - 1])}`;
+	return new Intl.ListFormat(INTL_LOCALE[locale], { style: 'long', type: 'conjunction' }).format(
+		at.map(short)
+	);
+}
+
+const WEEK = ['mon', 'tue', 'wed', 'thu', 'fri', 'sat', 'sun'];
+
 /** The day of the month without its leading zero — "14", the strip's number [04]. */
 export function dayOfMonth(date: CalendarDate): string {
 	return String(Number(date.slice(8)));
@@ -212,6 +239,29 @@ export function formatMonthRange(from: CalendarDate, to: CalendarDate, locale: L
 		}).format(atUtcMidnight(date));
 
 	return sameMonth ? month(from) : `${month(from)} – ${month(to)}`;
+}
+
+/**
+ * "Dec 24 – 25" / "24.–25. Dez." — days of the year with no year to them
+ * (`MM-DD`), for the raccoon album's special days (→ plan 35). One day is just
+ * that day; a span over the turn of the year names both months, "Dec 31 – Jan 1".
+ */
+export function formatDayRange(from: string, to: string, locale: Locale): string {
+	const format = formatter(`day-range|${locale}`, INTL_LOCALE[locale], {
+		timeZone: 'UTC',
+		month: 'short',
+		day: 'numeric'
+	});
+	const start = atUtcMidnight(`2001-${from}`);
+	if (from === to) return format.format(start);
+	if (from > to) return `${format.format(start)} – ${format.format(atUtcMidnight(`2002-${to}`))}`;
+	return format.formatRange(start, atUtcMidnight(`2001-${to}`));
+}
+
+/** "Dec – Feb" / "Sep – May": months of the year (1–12), going round it, for the raccoon album. */
+export function formatMonthSpan(from: number, to: number, locale: Locale): string {
+	const month = (year: number, number: number) => `${year}-${String(number).padStart(2, '0')}-01`;
+	return formatMonthRange(month(2001, from), month(from > to ? 2002 : 2001, to), locale);
 }
 
 /**

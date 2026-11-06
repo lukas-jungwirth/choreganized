@@ -27,14 +27,17 @@
  * A stale answer is self-correcting: browsers re-fetch the manifest, and the
  * worst case is one launch in the previous theme.
  */
+import { branding, manifestIcons } from '$lib/server/stage';
 import { chrome, hintedTheme, isTheme, THEME_COOKIE, type Theme } from '$lib/theme';
 import type { RequestHandler } from './$types';
 
-/** Everything about the app that has nothing to do with the theme. */
+/**
+ * Everything about the app that has nothing to do with the theme or the deploy.
+ * The name and the icons are the deploy's: the test environment's are its own,
+ * so the two installed apps can be told apart (→ `$lib/server/stage`).
+ */
 const MANIFEST = {
 	id: '/',
-	name: 'Haushaltsheld',
-	short_name: 'Haushaltsheld',
 	description: 'Every chore, organized. Shopping, meal plan and chores for your household.',
 	start_url: '/home',
 	scope: '/',
@@ -47,23 +50,7 @@ const MANIFEST = {
 		action: '/cooking/recipes/import',
 		method: 'GET',
 		params: { url: 'url', text: 'text', title: 'title' }
-	},
-	icons: [
-		{ src: '/icons/icon-192.png', sizes: '192x192', type: 'image/png', purpose: 'any' },
-		{ src: '/icons/icon-512.png', sizes: '512x512', type: 'image/png', purpose: 'any' },
-		{
-			src: '/icons/icon-192-maskable.png',
-			sizes: '192x192',
-			type: 'image/png',
-			purpose: 'maskable'
-		},
-		{
-			src: '/icons/icon-512-maskable.png',
-			sizes: '512x512',
-			type: 'image/png',
-			purpose: 'maskable'
-		}
-	]
+	}
 };
 
 export const GET: RequestHandler = (event) => {
@@ -72,10 +59,14 @@ export const GET: RequestHandler = (event) => {
 		(isTheme(cookie) ? cookie : null) ??
 		hintedTheme(event.request.headers.get('sec-ch-prefers-color-scheme')) ??
 		'light';
+	const brand = branding();
 
 	return new Response(
 		JSON.stringify({
 			...MANIFEST,
+			name: brand.name,
+			short_name: brand.shortName,
+			icons: manifestIcons(brand.icons),
 			background_color: chrome('bg', theme),
 			theme_color: chrome('bg', theme)
 		}),

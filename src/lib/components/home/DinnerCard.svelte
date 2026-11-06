@@ -68,9 +68,13 @@
 		color: inherit;
 	}
 
+	/* Dashed on the page's own colour, not see-through: in a fresh household
+	   this is Home's first card, and the raccoon perched on it tucks its waist
+	   in behind (→ DECISIONS #213, #222). */
 	.empty {
 		border: 1.5px dashed var(--border-dashed);
 		border-radius: var(--r-card-lg);
+		background: var(--bg);
 	}
 
 	.thumb {

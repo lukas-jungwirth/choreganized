@@ -1,0 +1,407 @@
+<!doctype html>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Raccoon Album</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link href="https://fonts.googleapis.com/css2?family=Figtree:wght@400;500;600;700;800&family=Fraunces:opsz,wght@9..144,500;9..144,600;9..144,700&display=swap" rel="stylesheet" />
+<style>
+	/* Sketch only — tokens copied from src/app.css so it reads like the app. */
+	:root {
+		color-scheme: light dark;
+		--bg: light-dark(#f5f3ee, #191510);
+		--card: light-dark(#ffffff, #221e18);
+		--sunken: light-dark(#efebe2, #15110c);
+		--sunken-2: light-dark(#eae6dd, #110e0a);
+		--ink: light-dark(#22201c, #efe9de);
+		--text-2: light-dark(#57534c, #cfc7ba);
+		--text-3: light-dark(#6e6a62, #b3aba0);
+		--text-4: light-dark(#8a867e, #a5a096);
+		--text-5: light-dark(#a7a29a, #857f74);
+		--sage: light-dark(#5f8d72, #74a585);
+		--sage-tint: light-dark(#edf3ee, #1e2a22);
+		--sage-deep: light-dark(#3e5d49, #a9cfb6);
+		--terracotta: light-dark(#c67c51, #d9946b);
+		--terracotta-tint: light-dark(#f7ede6, #2c211a);
+		--terracotta-deep: light-dark(#8a4b29, #e8b592);
+		--gold: light-dark(#e4b23c, #efc25a);
+		--gold-tint: light-dark(#fbf3de, #2b2415);
+		--info-tint: light-dark(#eef1f0, #1e2321);
+		--border: light-dark(#ece9e2, #342e26);
+		--shadow-card: 0 1px 3px light-dark(rgba(40, 34, 24, 0.05), rgba(0, 0, 0, 0.45));
+		--shadow-modal: 0 24px 60px -12px light-dark(rgba(40, 34, 24, 0.4), rgba(0, 0, 0, 0.8));
+		--r-card: 20px;
+		--r-card-lg: 22px;
+		--r-sheet: 28px;
+		--r-chip: 999px;
+		/* Sketch-only season hues for the card frame */
+		/* Card frames. Hue = when you can meet it; the theme only changes the shade. */
+		--season-any: light-dark(#e6efe8, #1e2a22);       /* ★ all year: the app's sage */
+		--season-any-ink: light-dark(#3e5d49, #a9cfb6);
+		--season-winter: light-dark(#dde7ef, #1d252c);    /* ★★ winter: ice blue */
+		--season-winter-ink: light-dark(#4d6a82, #a8c3d8);
+		--season-spring: light-dark(#f5e2e6, #2d1f23);    /* ★★ spring: blossom pink */
+		--season-spring-ink: light-dark(#94506a, #e8b3c4);
+		--season-summer: light-dark(#f6ead0, #2a2417);    /* ★★ summer: sun sand */
+		--season-summer-ink: light-dark(#8a6a24, #e6c983);
+		--season-autumn: light-dark(#f3dfd2, #2e2018);    /* ★★ autumn: rust */
+		--season-autumn-ink: light-dark(#8f4a26, #e9ac85);
+		/* ★★★ special days: holo foil, a darker foil at night */
+		--holo-1: light-dark(#f7d9c4, #3a2a20); --holo-2: light-dark(#f3ecc2, #37321c);
+		--holo-3: light-dark(#cfe7d6, #1f3328); --holo-4: light-dark(#cfdcef, #1f2a3a);
+		--holo-5: light-dark(#e7d3ea, #33233a);
+		--holo-ink: light-dark(#6b5a3a, #e6d3a8);
+		--holo: linear-gradient(115deg, var(--holo-1) 0%, var(--holo-2) 22%, var(--holo-3) 44%, var(--holo-4) 66%, var(--holo-5) 88%);
+	}
+	:root[data-theme='dark'] { color-scheme: dark; }
+	:root[data-theme='light'] { color-scheme: light; }
+
+	* { box-sizing: border-box; margin: 0; }
+	body {
+		background: light-dark(#e4e0d7, #0d0b08);
+		font-family: 'Figtree', system-ui, sans-serif;
+		color: var(--ink);
+		padding-block: 32px 64px;
+		padding-left: max(16px, env(safe-area-inset-left, 0px));
+		padding-right: max(16px, env(safe-area-inset-right, 0px));
+	}
+	.intro { max-width: 1260px; margin: 0 auto 28px; }
+	.intro h1 { font-family: 'Fraunces', serif; font-size: 28px; font-weight: 600; }
+	.intro p { color: var(--text-3); font-size: 15px; margin-top: 6px; max-width: 720px; line-height: 1.45; }
+	.theme { margin-top: 12px; display: flex; gap: 8px; }
+	.theme button { font: inherit; font-size: 13px; font-weight: 600; padding: 6px 12px; border-radius: var(--r-chip); border: 1px solid var(--border); background: var(--card); color: var(--ink); cursor: pointer; }
+
+	.frames { display: flex; flex-wrap: wrap; gap: 32px; justify-content: center; max-width: 1300px; margin: 0 auto; }
+	.frame { width: 390px; max-width: 100%; }
+	.frame > .label { font-size: 12px; font-weight: 700; letter-spacing: 0.08em; text-transform: uppercase; color: var(--text-4); margin: 0 0 10px 4px; }
+	.phone {
+		position: relative; height: 844px; border-radius: 44px; overflow: hidden;
+		background: var(--bg); box-shadow: 0 30px 60px -20px rgba(0,0,0,.35), 0 0 0 10px light-dark(#22201c, #2a251f);
+	}
+
+	/* ── Album screen ─────────────────────────────────── */
+	.screen { padding: 58px 20px 24px; height: 100%; overflow: hidden; }
+	.back { font-size: 15px; color: var(--sage); font-weight: 600; }
+	.title { font-family: 'Fraunces', serif; font-size: 32px; font-weight: 600; margin-top: 8px; }
+	.sub { color: var(--text-3); font-size: 15px; margin-top: 2px; }
+
+	.progress { margin-top: 18px; background: var(--card); border-radius: var(--r-card); padding: 16px; box-shadow: var(--shadow-card); display: flex; gap: 14px; align-items: center; }
+	.progress .ring { width: 56px; height: 56px; flex: none; }
+	.progress b { font-family: 'Fraunces', serif; font-size: 22px; }
+	.progress .meta { font-size: 13px; color: var(--text-4); margin-top: 2px; }
+	.bar { height: 8px; border-radius: 99px; background: var(--sunken); margin-top: 8px; overflow: hidden; }
+	.bar i { display: block; height: 100%; width: 39%; background: var(--sage); border-radius: inherit; }
+
+	.chips { display: flex; gap: 8px; margin: 18px 0 12px; overflow: hidden; }
+	.chip { font-size: 13px; font-weight: 600; padding: 7px 12px; border-radius: var(--r-chip); background: var(--card); color: var(--text-3); white-space: nowrap; box-shadow: var(--shadow-card); }
+	.chip.on { background: var(--sage); color: light-dark(#fff, #12100d); }
+
+	.grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; }
+	.tile { aspect-ratio: 3 / 4; border-radius: 14px; background: var(--card); box-shadow: var(--shadow-card); position: relative; display: flex; flex-direction: column; align-items: center; justify-content: flex-end; padding: 6px 4px 6px; overflow: hidden; }
+	.tile img { width: 88%; height: 70%; object-fit: contain; position: absolute; top: 8px; }
+	.tile .no { font-size: 11px; font-weight: 700; color: var(--text-5); font-variant-numeric: tabular-nums; position: relative; }
+	.tile.winter { background: var(--season-winter); }
+	.tile.summer { background: var(--season-summer); }
+	.tile.rare::after { content: ''; position: absolute; inset: 0; background: var(--holo); opacity: .35; mix-blend-mode: multiply; pointer-events: none; }
+	.tile.new::before { content: 'NEW'; position: absolute; top: 5px; right: 5px; font-size: 9px; font-weight: 800; letter-spacing: .04em; background: var(--terracotta); color: #fff; padding: 2px 5px; border-radius: 99px; z-index: 2; }
+	.tile.locked { background: var(--sunken); box-shadow: none; }
+	.tile.locked img { filter: brightness(0); opacity: light-dark(.09, .35); }
+	.tile.locked .no { color: var(--text-5); }
+	.tile.locked .q { position: absolute; top: 38%; font-family: 'Fraunces', serif; font-size: 22px; font-weight: 600; color: var(--text-5); }
+
+	/* ── Card sheet ───────────────────────────────────── */
+	.dim { position: absolute; inset: 0; background: rgba(20, 16, 10, .55); }
+	.dim-under { position: absolute; inset: 0; filter: blur(1px); }
+	.cardwrap { position: absolute; left: 0; right: 0; top: 70px; display: flex; flex-direction: column; align-items: center; }
+	.tcard {
+		width: 318px; border-radius: 26px; padding: 10px;
+		background: var(--season-frame, var(--season-any)); box-shadow: var(--shadow-modal);
+		transform: rotate(-1.2deg);
+	}
+	.tcard.winter { --season-frame: var(--season-winter); --season-ink: var(--season-winter-ink); }
+	.tcard.summer { --season-frame: var(--season-summer); --season-ink: var(--season-summer-ink); }
+	.tcard.rare { background: var(--holo); --season-ink: var(--holo-ink); }
+	.tcard .inner { background: var(--card); border-radius: 18px; overflow: hidden; }
+	.tcard .head { display: flex; justify-content: space-between; align-items: baseline; padding: 12px 14px 0; }
+	.tcard .num { font-size: 12px; font-weight: 800; letter-spacing: .06em; color: var(--season-ink, var(--sage-deep)); font-variant-numeric: tabular-nums; }
+	.stars { color: var(--gold); font-size: 13px; letter-spacing: 1px; }
+	.stars .off { color: var(--sunken-2); }
+	.art { margin: 8px 12px 0; height: 196px; border-radius: 14px; background:
+		radial-gradient(circle at 50% 110%, color-mix(in srgb, var(--season-frame, var(--season-any)) 100%, transparent) 0 55%, transparent 56%),
+		var(--sunken);
+		display: flex; align-items: flex-end; justify-content: center; position: relative; overflow: hidden; }
+	.art img { height: 180px; object-fit: contain; position: relative; }
+	.art .sparkle { position: absolute; color: var(--gold); font-size: 14px; }
+	.tcard .name { font-family: 'Fraunces', serif; font-size: 24px; font-weight: 600; text-align: center; margin-top: 12px; line-height: 1.1; }
+	.tcard .kind { text-align: center; font-size: 13px; color: var(--text-4); margin-top: 3px; }
+	.tags { display: flex; justify-content: center; gap: 6px; margin-top: 10px; }
+	.tag { font-size: 11px; font-weight: 700; padding: 4px 9px; border-radius: 99px; background: var(--sunken); color: var(--text-3); }
+	.tag.season { background: var(--season-frame, var(--season-any)); color: var(--season-ink, var(--sage-deep)); }
+	.fact { margin: 12px 14px 0; font-size: 14px; line-height: 1.42; color: var(--text-2); font-style: italic; text-align: center; }
+	.stats { margin: 14px 14px 0; display: grid; grid-template-columns: auto 1fr; gap: 7px 12px; align-items: center; }
+	.stats dt { font-size: 12px; font-weight: 700; color: var(--text-3); }
+	.dots { display: flex; gap: 4px; }
+	.dots i { width: 100%; height: 8px; border-radius: 99px; background: var(--sunken); }
+	.dots i.on { background: var(--season-ink, var(--sage)); }
+	.foot { margin-top: 14px; border-top: 1px dashed var(--border); padding: 10px 14px 12px; display: flex; justify-content: space-between; font-size: 12px; color: var(--text-4); }
+	.foot b { color: var(--ink); font-weight: 700; }
+	.hint { color: rgba(255,255,255,.75); font-size: 13px; margin-top: 18px; display: flex; gap: 18px; }
+	.hint span { display: flex; align-items: center; gap: 6px; }
+
+	.tags { align-items: center; }
+	.tags .stars { font-size: 14px; }
+	.bigq { position: absolute; inset: 0; display: grid; place-items: center; font-family: 'Fraunces', serif; font-size: 96px; font-weight: 600; color: var(--text-5); z-index: 1; padding-bottom: 10px; }
+
+	/* Home behind the toast */
+	.home { padding: 58px 20px 0; height: 100%; position: relative; }
+	.home .hello { font-size: 14px; color: var(--text-4); font-weight: 600; }
+	.home h2 { font-family: 'Fraunces', serif; font-size: 30px; font-weight: 600; margin-top: 2px; }
+	.hero { margin-top: 74px; background: var(--card); border-radius: var(--r-card-lg); box-shadow: var(--shadow-card); padding: 18px; position: relative; }
+	.hero img { position: absolute; right: 14px; top: -96px; height: 110px; }
+	.hero small { font-size: 12px; font-weight: 700; letter-spacing: .08em; text-transform: uppercase; color: var(--text-5); }
+	.hero p { font-size: 17px; font-weight: 600; margin-top: 4px; }
+	.hero span { font-size: 14px; color: var(--text-4); }
+	.tiles2 { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-top: 12px; }
+	.tiles2 div { background: var(--card); border-radius: var(--r-card); box-shadow: var(--shadow-card); height: 96px; padding: 14px; font-size: 13px; color: var(--text-4); font-weight: 600; }
+	.tiles2 b { display: block; font-family: 'Fraunces', serif; font-size: 28px; color: var(--ink); margin-top: 6px; }
+	.tabbar { position: absolute; left: 0; right: 0; bottom: 0; height: 86px; background: var(--card); border-top: 1px solid var(--border); display: flex; justify-content: space-around; padding-top: 14px; font-size: 11px; font-weight: 700; color: var(--text-5); }
+	.tabbar span.on { color: var(--sage-deep); }
+	.toast { animation: pop .5s cubic-bezier(.2,1.4,.4,1) both; }
+	@keyframes pop { from { transform: translateY(16px) scale(.96); } }
+	@media (prefers-reduced-motion: reduce) { .toast { animation: none; } }
+
+	/* locked card */
+	.tcard.locked { background: var(--sunken-2); transform: rotate(1deg); }
+	.tcard.locked .art { background: var(--sunken); }
+	.tcard.locked .art img { filter: brightness(0); opacity: light-dark(.12, .4); }
+	.tcard.locked .name { color: var(--text-4); letter-spacing: .2em; }
+	.unused-clue { margin: 14px 14px 0; background: var(--sunken); border-radius: 12px; padding: 12px; font-size: 14px; color: var(--text-3); line-height: 1.4; display: flex; gap: 10px; }
+	.clue b { color: var(--ink); }
+
+	/* unlock toast on Home */
+	.toast { position: absolute; left: 16px; right: 16px; bottom: 102px; z-index: 2; background: var(--card); border-radius: var(--r-card); box-shadow: var(--shadow-modal); padding: 12px 14px; display: flex; gap: 12px; align-items: center; }
+	.toast img { width: 52px; height: 52px; object-fit: contain; background: var(--season-winter); border-radius: 12px; }
+	.toast b { font-size: 15px; }
+	.toast small { display: block; font-size: 13px; color: var(--text-4); margin-top: 1px; }
+	.toast .go { margin-left: auto; font-size: 14px; font-weight: 700; color: var(--sage); }
+
+	.palette { max-width: 1260px; margin: 40px auto 0; }
+	.palette h3 { font-family: 'Fraunces', serif; font-size: 20px; font-weight: 600; }
+	.palette > p { color: var(--text-3); font-size: 14px; margin-top: 4px; }
+	.swatches { display: grid; grid-template-columns: repeat(auto-fill, minmax(140px, 1fr)); gap: 14px; margin-top: 14px; }
+	.sw { border-radius: 18px; padding: 7px; }
+	.sw > div { background: var(--card); border-radius: 12px; padding: 12px; min-height: 92px; display: flex; flex-direction: column; gap: 6px; }
+	.sw b { font-size: 14px; color: var(--ink); }
+	.sw small { font-size: 12px; font-weight: 700; color: var(--ink-s); }
+	.sw span { font-size: 12px; color: var(--text-4); }
+	.sw .st { color: var(--gold); font-size: 12px; }
+	.notes { max-width: 1260px; margin: 40px auto 0; display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 16px; }
+	.note { background: var(--card); border-radius: var(--r-card); padding: 18px; box-shadow: var(--shadow-card); }
+	.note h3 { font-family: 'Fraunces', serif; font-size: 18px; font-weight: 600; }
+	.note ul { margin-top: 8px; padding-left: 18px; color: var(--text-3); font-size: 14px; line-height: 1.5; }
+</style>
+<div class="intro">
+	<h1>Raccoon album sketch</h1>
+	<p>Profile → “Raccoon album”. Every raccoon Home shows you once is yours; the rest are silhouettes with a clue. Tapping one flips up its card. Art is the real masters from <code>artwork/raccoon/</code>; names, facts and stats are placeholders. Tapping View on the Home toast opens the album at the new card.</p>
+	<div class="theme">
+		<button onclick="document.documentElement.dataset.theme='light'">Light</button>
+		<button onclick="document.documentElement.dataset.theme='dark'">Dark</button>
+		<button onclick="delete document.documentElement.dataset.theme">Device</button>
+	</div>
+</div>
+
+<div class="frames">
+	<!-- 1 · Album -->
+	<div class="frame">
+		<p class="label">1 · The album</p>
+		<div class="phone"><div class="screen">
+			<p class="back">‹ Profile</p>
+			<h2 class="title">Raccoon album</h2>
+			<p class="sub">Every raccoon you've met on Home.</p>
+
+			<div class="progress">
+				<svg class="ring" viewBox="0 0 56 56"><circle cx="28" cy="28" r="23" fill="none" stroke="var(--sunken)" stroke-width="7"/><circle cx="28" cy="28" r="23" fill="none" stroke="var(--sage)" stroke-width="7" stroke-linecap="round" stroke-dasharray="56 145" transform="rotate(-90 28 28)"/><text x="28" y="33" text-anchor="middle" font-size="14" font-weight="800" fill="var(--ink)" font-family="Figtree">39%</text></svg>
+				<div style="flex:1">
+					<b>17 of 44 found</b>
+					<p class="meta">5 seasonal · 4 special days still to find</p>
+					<div class="bar"><i></i></div>
+				</div>
+			</div>
+
+			<div class="chips">
+				<span class="chip on">All</span><span class="chip">★ All year</span><span class="chip">★★ Seasonal</span><span class="chip">★★★ Special days</span><span class="chip">Missing</span>
+			</div>
+
+			<div class="grid">
+				<div class="tile"><img src="../../artwork/raccoon/welcome-a.png" alt=""><span class="no">001</span></div>
+				<div class="tile"><img src="../../artwork/raccoon/welcome-b.png" alt=""><span class="no">002</span></div>
+				<div class="tile"><img src="../../artwork/raccoon/reading.png" alt=""><span class="no">003</span></div>
+				<div class="tile"><img src="../../artwork/raccoon/sports.png" alt=""><span class="no">004</span></div>
+				<div class="tile locked"><img src="../../artwork/raccoon/painting.png" alt=""><span class="q">?</span><span class="no">005</span></div>
+				<div class="tile"><img src="../../artwork/raccoon/phone.png" alt=""><span class="no">006</span></div>
+				<div class="tile"><img src="../../artwork/raccoon/tea.png" alt=""><span class="no">007</span></div>
+				<div class="tile locked"><img src="../../artwork/raccoon/music.png" alt=""><span class="q">?</span><span class="no">008</span></div>
+				<div class="tile winter new"><img src="../../artwork/raccoon/snowman.png" alt=""><span class="no">009</span></div>
+				<div class="tile winter"><img src="../../artwork/raccoon/skiing.png" alt=""><span class="no">010</span></div>
+				<div class="tile locked"><img src="../../artwork/raccoon/skates.png" alt=""><span class="q">?</span><span class="no">011</span></div>
+				<div class="tile winter"><img src="../../artwork/raccoon/cold.png" alt=""><span class="no">012</span></div>
+				<div class="tile summer"><img src="../../artwork/raccoon/fishing.png" alt=""><span class="no">013</span></div>
+				<div class="tile summer"><img src="../../artwork/raccoon/beach.png" alt=""><span class="no">014</span></div>
+				<div class="tile locked"><img src="../../artwork/raccoon/water-pistol.png" alt=""><span class="q">?</span><span class="no">015</span></div>
+				<div class="tile rare"><img src="../../artwork/raccoon/halloween.png" alt=""><span class="no">016</span></div>
+				<div class="tile locked"><img src="../../artwork/raccoon/christmas.png" alt=""><span class="q">?</span><span class="no">017</span></div>
+				<div class="tile locked"><img src="../../artwork/raccoon/birthday.png" alt=""><span class="q">?</span><span class="no">018</span></div>
+				<div class="tile"><img src="../../artwork/raccoon/sleeping.png" alt=""><span class="no">019</span></div>
+				<div class="tile locked"><img src="../../artwork/raccoon/arcade.png" alt=""><span class="q">?</span><span class="no">020</span></div>
+			</div>
+		</div></div>
+	</div>
+
+	<!-- 2 · Unlocked card -->
+	<div class="frame">
+		<p class="label">2 · A seasonal card ★★</p>
+		<div class="phone">
+			<div class="dim"></div>
+			<div class="cardwrap">
+				<div class="tcard winter">
+					<div class="inner">
+						<div class="head"><span class="num">No. 009</span><span class="stars" title="Seasonal">★★<span class="off">★</span></span></div>
+						<div class="art">
+							<span class="sparkle" style="left:22px;top:20px">✦</span>
+							<span class="sparkle" style="right:30px;top:44px;font-size:10px">✦</span>
+							<img src="../../artwork/raccoon/snowman.png" alt="">
+						</div>
+						<p class="name">Frosty Fritz</p>
+						<p class="kind">The snowman builder</p>
+						<div class="tags"><span class="tag season">❄ Dec – Feb</span></div>
+						<p class="fact">“Always gives the snowman his own carrot. Keeps the second one for later, just in case.”</p>
+						<dl class="stats">
+							<dt>Cosiness</dt><dd class="dots"><i class="on"></i><i class="on"></i><i class="on"></i><i class="on"></i><i></i></dd>
+							<dt>Mischief</dt><dd class="dots"><i class="on"></i><i class="on"></i><i></i><i></i><i></i></dd>
+							<dt>Snack drive</dt><dd class="dots"><i class="on"></i><i class="on"></i><i class="on"></i><i class="on"></i><i class="on"></i></dd>
+							<dt>Helpfulness</dt><dd class="dots"><i class="on"></i><i class="on"></i><i class="on"></i><i></i><i></i></dd>
+						</dl>
+						<div class="foot"><span>First met <b>2 Dec</b></span><span>Seen <b>7×</b></span></div>
+					</div>
+				</div>
+				<p class="hint"><span>‹ 008</span><span>swipe</span><span>010 ›</span></p>
+			</div>
+		</div>
+	</div>
+
+	<!-- 3 · All-year card -->
+	<div class="frame">
+		<p class="label">3 · An all-year card ★</p>
+		<div class="phone">
+			<div class="dim"></div>
+			<div class="cardwrap">
+				<div class="tcard" style="transform:rotate(1deg)">
+					<div class="inner">
+						<div class="head"><span class="num">No. 003</span><span class="stars" title="All year">★<span class="off">★★</span></span></div>
+						<div class="art">
+							<span class="sparkle" style="right:26px;top:22px">✦</span>
+							<img src="../../artwork/raccoon/reading.png" alt="">
+						</div>
+						<p class="name">Bookish Berta</p>
+						<p class="kind">The bedtime reader</p>
+						<div class="tags"><span class="tag season">All year</span></div>
+						<p class="fact">“Has read every recipe in the cookbook twice. Has cooked one of them, once.”</p>
+						<dl class="stats">
+							<dt>Cosiness</dt><dd class="dots"><i class="on"></i><i class="on"></i><i class="on"></i><i class="on"></i><i class="on"></i></dd>
+							<dt>Mischief</dt><dd class="dots"><i class="on"></i><i></i><i></i><i></i><i></i></dd>
+							<dt>Snack drive</dt><dd class="dots"><i class="on"></i><i class="on"></i><i class="on"></i><i></i><i></i></dd>
+							<dt>Helpfulness</dt><dd class="dots"><i class="on"></i><i class="on"></i><i></i><i></i><i></i></dd>
+						</dl>
+						<div class="foot"><span>First met <b>14 Sep</b></span><span>Seen <b>31×</b></span></div>
+					</div>
+				</div>
+				<p class="hint"><span>‹ 002</span><span>swipe</span><span>004 ›</span></p>
+			</div>
+		</div>
+	</div>
+
+	<!-- 4 · Locked card -->
+	<div class="frame">
+		<p class="label">4 · One you haven't met</p>
+		<div class="phone">
+			<div class="dim"></div>
+			<div class="cardwrap" style="top:90px">
+				<div class="tcard locked">
+					<div class="inner">
+						<div class="head"><span class="num" style="color:var(--text-5)">No. 017</span></div>
+						<div class="art"><span class="bigq">?</span><img src="../../artwork/raccoon/christmas.png" alt=""></div>
+						<p class="name">? ? ? ? ?</p>
+						<p class="kind">Not met yet</p>
+						<div class="foot" style="justify-content:center"><span>Keep an eye on Home</span></div>
+					</div>
+				</div>
+			</div>
+		</div>
+	</div>
+
+	<!-- 4 · New raccoon on Home -->
+	<div class="frame">
+		<p class="label">5 · Meeting a new one on Home</p>
+		<div class="phone"><div class="home">
+			<p class="hello">Wednesday, 2 December</p>
+			<h2>Good evening, Lukas</h2>
+			<div class="hero">
+				<img src="../../artwork/raccoon/snowman.png" alt="">
+				<small>Today</small>
+				<p>Nothing on you</p>
+				<span>Enjoy the evening.</span>
+			</div>
+			<div class="tiles2"><div>Shopping<b>6</b></div><div>This week<b>120 pts</b></div></div>
+			<div class="toast">
+				<img src="../../artwork/raccoon/snowman.png" alt="">
+				<div><b>New raccoon!</b><small>Frosty Fritz is in your album · 18 of 44</small></div>
+				<span class="go">View</span>
+			</div>
+			<div class="tabbar"><span class="on">Home</span><span>Shopping</span><span>Cooking</span><span>Tasks</span><span>Money</span></div>
+		</div></div>
+	</div>
+</div>
+
+<div class="palette">
+	<h3>Frame colours</h3>
+	<p>Each frame takes the colour of when you can meet that raccoon. Several seasons blend from the first to the last; switch the theme above to see the night shades.</p>
+	<div class="swatches">
+		<div class="sw" style="background:var(--season-any);--ink-s:var(--season-any-ink)"><div><span class="st">★</span><b>All year</b><small>SAGE</small><span>Reading, phone, cards…</span></div></div>
+		<div class="sw" style="background:var(--season-winter);--ink-s:var(--season-winter-ink)"><div><span class="st">★★</span><b>Winter</b><small>ICE BLUE</small><span>Snowman, skates, Dec – Feb</span></div></div>
+		<div class="sw" style="background:var(--season-spring);--ink-s:var(--season-spring-ink)"><div><span class="st">★★</span><b>Spring</b><small>BLOSSOM</small><span>Mar – May</span></div></div>
+		<div class="sw" style="background:var(--season-summer);--ink-s:var(--season-summer-ink)"><div><span class="st">★★</span><b>Summer</b><small>SUN SAND</small><span>Beach, water pistol, Jun – Aug</span></div></div>
+		<div class="sw" style="background:var(--season-autumn);--ink-s:var(--season-autumn-ink)"><div><span class="st">★★</span><b>Autumn</b><small>RUST</small><span>Sep – Nov</span></div></div>
+		<div class="sw" style="background:linear-gradient(135deg,var(--season-autumn),var(--season-winter));--ink-s:var(--season-autumn-ink)"><div><span class="st">★★</span><b>Autumn – Winter</b><small>RUST → ICE</small><span>Tea, knitting, Sep – Feb</span></div></div>
+		<div class="sw" style="background:linear-gradient(135deg,var(--season-spring),var(--season-summer));--ink-s:var(--season-spring-ink)"><div><span class="st">★★</span><b>Spring – Summer</b><small>BLOSSOM → SAND</small><span>Flower, Mar – Aug</span></div></div>
+		<div class="sw" style="background:linear-gradient(135deg,var(--season-autumn),var(--season-winter),var(--season-spring));--ink-s:var(--season-autumn-ink)"><div><span class="st">★★</span><b>Autumn – Spring</b><small>RUST → ICE → BLOSSOM</small><span>Handball, Sep – May</span></div></div>
+		<div class="sw" style="background:linear-gradient(135deg,var(--season-spring),var(--season-summer),var(--season-autumn));--ink-s:var(--season-spring-ink)"><div><span class="st">★★</span><b>Spring – Autumn</b><small>BLOSSOM → SAND → RUST</small><span>Garden, fishing, tennis</span></div></div>
+		<div class="sw" style="background:var(--holo);--ink-s:var(--holo-ink)"><div><span class="st">★★★</span><b>Special day</b><small>HOLO FOIL</small><span>Holidays, your birthday</span></div></div>
+	</div>
+</div>
+
+<div class="notes">
+	<div class="note">
+		<h3>What unlocks one</h3>
+		<ul>
+			<li>Home actually rendered it for you (per member, not per household — you each fill your own album).</li>
+			<li>A raccoon you haven't met is only a silhouette and a question mark. No hints.</li>
+			<li>Number order = album order: everyday → winter → summer → holidays.</li>
+		</ul>
+	</div>
+	<div class="note">
+		<h3>Rarity, three steps</h3>
+		<ul>
+			<li>★ All year: the everyday poses that show in every season.</li>
+			<li>★★ Seasonal: everyday poses tied to some seasons. The chip gives the months.</li>
+			<li>★★★ Special days: holidays and your birthday, with the holo frame.</li>
+			<li>Fun stats stay fixed per raccoon (1–5 dots); first met and times seen are live.</li>
+		</ul>
+	</div>
+	<div class="note">
+		<h3>Copy lives in the catalog</h3>
+		<ul>
+			<li>Name, title and fun fact per raccoon in <code>en.ts</code> / <code>de.ts</code> — Austrian puns welcome in German.</li>
+			<li>Stars come from the pose itself (its seasons, or being a special day), so new art needs no extra field. Stats sit next to the pose in <code>mascots.json</code>.</li>
+		</ul>
+	</div>
+</div>

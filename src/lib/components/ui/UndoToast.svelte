@@ -19,8 +19,8 @@
 		/** The undo's form action and fields. */
 		action: string;
 		fields: Record<string, string>;
-		label: string;
 		undo: SubmitFunction;
+		label: string;
 		/** Its few seconds are up, or the undo is away. */
 		onclose: () => void;
 		/** Re-arms the timer when it changes — a second tick gets its own few seconds. */
@@ -66,7 +66,7 @@
 			{#each Object.entries(fields) as [name, value] (name)}
 				<input type="hidden" {name} {value} />
 			{/each}
-			<button type="submit">{label}</button>
+			<button class="button" type="submit">{label}</button>
 		</form>
 	</div>
 </div>
@@ -135,7 +135,8 @@
 	/* 44px of target inside the pill: the padding does the work, and this is
 	   tapped in a hurry, one-handed, while holding something else. The sage is
 	   lifted for the dark surface (→ `--toast-accent`). */
-	button {
+	.button {
+		flex: none;
 		padding: 12px 16px;
 		margin: -4px 0;
 		border-radius: var(--r-chip);
@@ -144,7 +145,7 @@
 		color: var(--toast-accent);
 	}
 
-	button:active {
+	.button:active {
 		background: var(--toast-press);
 	}
 

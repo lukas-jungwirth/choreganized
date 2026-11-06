@@ -20,18 +20,23 @@
 import {
 	dayOfMonth,
 	daysBetween,
+	formatDayRange,
 	formatDayStamp,
 	formatBirthday,
 	formatMonthName,
 	formatMonthOfYear,
 	formatMonthRange,
+	formatMonthSpan,
 	formatShortDate,
 	formatWeekday,
 	formatWeekdayLong,
 	formatWeekdayShort,
+	formatWeekdays,
 	needsYear,
 	type CalendarDate
 } from '$lib/utils/dates';
+import type { AlbumName } from '$lib/assets/mascot/album';
+import type { DaySlot, Weekday } from '$lib/assets/mascot/everyday';
 import { INTL_LOCALE } from '$lib/i18n/locale';
 import type { RepeatUnit } from '$lib/utils/expenses';
 import type { HolidayKey } from '$lib/utils/holidays';
@@ -242,6 +247,10 @@ export const en = {
 		birthday: (birthday: string) => formatBirthday(birthday, L),
 		/** "March" — a month on its own, for the birthday picker. */
 		monthOfYear: (month: number) => formatMonthOfYear(month, L),
+		/** "Dec 24 – 25" — days of any year, `MM-DD` (the raccoon album). */
+		dayRange: (from: string, to: string) => formatDayRange(from, to, L),
+		/** "Dec – Feb" — months of any year, 1–12, going round it (the raccoon album). */
+		monthSpan: (from: number, to: number) => formatMonthSpan(from, to, L),
 
 		/** How the history feed heads a day: "Today", "Yesterday", "Mon 14 Jul" [8a]. */
 		dayLabel: (date: CalendarDate, today: CalendarDate) => {
@@ -563,6 +572,15 @@ export const en = {
 		/** The avatar stack is the door to Settings — and the only place the
 		 *  household is named out loud. */
 		settingsLink: (names: string) => `Settings · Household: ${names}`,
+		/** The raccoon is a button: six taps and it ducks away for another (→ DECISIONS #223). */
+		pokeRaccoon: 'Poke the raccoon',
+		/** Admin mode only (→ plan 34): tapping the raccoon picks any pose. */
+		raccoonPicker: {
+			open: 'Pick a raccoon',
+			title: 'Pick a raccoon',
+			today: 'Today',
+			backToToday: 'Back to today’s raccoon'
+		},
 
 		/**
 		 * The card at the very top of Home: the one chore that's on this member
@@ -1213,18 +1231,22 @@ export const en = {
 
 			/** The manual timer sheet (→ DECISIONS #14). */
 			timerTitle: 'Set a timer',
-			timerSubtitle: 'It rings until you stop it, even with the phone locked.',
+			timerSubtitle:
+				'It rings while the app is open. With the phone locked, you get a notification.',
 			minutes: 'Minutes',
 			startMinutes: (minutes: number) => `Start ${minutes}-minute timer`,
 
 			/** The running ring [7h] and the chip it shrinks to. */
 			timerLabel: (label: string, state: string) => `${label}: ${state}`,
-			timerDone: 'done',
+			/** A rung timer read aloud: how long ago it reached zero. */
+			timerOver: (over: string) => `done ${over} ago`,
 			timerLeft: (remaining: string, total: string) => `${remaining} left of ${total}`,
 			timerMeta: (label: string, total: string, paused: boolean) =>
 				paused ? `${label} · ${total} · paused` : `${label} · ${total}`,
 			/** On a timer that is *ringing* — it silences an alarm, not a banner. */
 			dismiss: 'Stop',
+			/** Under the timer's name on the phone's media player (→ DECISIONS #252). */
+			trackRingsAt: (time: string) => `rings at ${time}`,
 			resume: 'Resume',
 			pause: 'Pause',
 			addMinute: '+1:00',
@@ -2474,6 +2496,365 @@ export const en = {
 		ownerOnlyMembers: 'Only the owner can manage members.',
 		alreadyLeft: 'They already left the household.'
 	},
+
+	/** Admin mode (→ plan 34, SPEC §12). Only an admin ever reads these. */
+	admin: {
+		row: 'Admin',
+		entered: 'Admin mode on',
+		leave: 'Leave admin mode',
+		title: 'Admin',
+		subtitle: 'Every household on this server',
+		back: 'Back to Settings',
+		active7: 'Active in 7 days',
+		active30: 'Active in 30 days',
+		totals: {
+			households: 'Households',
+			users: 'Accounts',
+			members: 'Members',
+			pushDevices: 'Devices with push'
+		},
+		signups: 'New per week',
+		thisWeek: 'This week',
+		weekLabel: (start: string, households: number, users: number) =>
+			`Week of ${start}: ${households} ${households === 1 ? 'household' : 'households'}, ${users} ${users === 1 ? 'account' : 'accounts'}`,
+		list: 'Households',
+		members: (count: number) => (count === 1 ? '1 member' : `${count} members`),
+		since: (date: string) => `since ${date}`,
+		lastActive: (day: string) => `Last active: ${day}`,
+		neverActive: 'Never active'
+	},
+
+	/* ── The raccoon album (→ plan 35, SPEC §6) ───────────────────────────── */
+	album: {
+		title: 'Raccoon album',
+		subtitle: 'Every raccoon you’ve met on Home.',
+		back: 'Back to Settings',
+		backHome: 'Back to Home',
+		/** The Settings row's value: "17 of 53". */
+		count: (found: number, total: number) => `${found} of ${total}`,
+		found: (found: number, total: number) => `${found} of ${total} found`,
+		/**
+		 * Under it: the rare and legendary ones still out there, or how many are left
+		 * when only common ones are. `left` is all of them, whatever their rarity.
+		 */
+		missing: (left: number, rare: number, legendary: number) => {
+			if (left <= 0) return 'You’ve met every raccoon!';
+			const parts = [
+				rare > 0 ? `${rare} rare` : null,
+				legendary > 0 ? `${legendary} legendary` : null
+			].filter((part) => part !== null);
+			return `${parts.length > 0 ? parts.join(' · ') : left} still to find`;
+		},
+		progress: (found: number, total: number) => `${found} of ${total} raccoons found`,
+		filters: {
+			label: 'Show',
+			all: 'All'
+		},
+		/** The three rarities, by their stars (→ `utils/raccoon-album` `tierOf`). */
+		tiers: { 1: 'Common', 2: 'Rare', 3: 'Legendary' } as Record<1 | 2 | 3, string>,
+		stars: (stars: number) => (stars === 1 ? '1 star' : `${stars} stars`),
+		/** "No. 009". */
+		number: (number: string) => `No. ${number}`,
+		newBadge: 'New',
+		/** The card's fun fact, in this language's quotation marks. */
+		quoted: (text: string) => `“${text}”`,
+		empty: 'No raccoons here.',
+		/** A tile, named for a screen reader. */
+		tile: (number: string, name: string | null, isNew = false, revealed = false) =>
+			!name
+				? `No. ${number}, not met yet`
+				: `No. ${number}, ${name}${revealed ? ', not met yet' : isNew ? ', new' : ''}`,
+		/** The card's chip: when you can meet it. */
+		window: {
+			allYear: 'All year',
+			easter: 'Easter',
+			fasching: 'Shrove Tuesday',
+			birthday: 'Your birthday'
+		},
+		/**
+		 * After the window, when a raccoon keeps to some days or hours: "Mon – Fri",
+		 * "Weekends", "Fridays", "Mornings", "Mon – Fri, mornings".
+		 */
+		rule: (
+			days: readonly Weekday[] | null,
+			slots: readonly (DaySlot | 'night' | 'midnight')[] | null
+		) => {
+			const SLOTS = {
+				morning: 'mornings',
+				afternoon: 'afternoons',
+				evening: 'evenings',
+				night: 'nights',
+				midnight: 'after midnight'
+			};
+			const when = slots ? list(slots.map((slot) => SLOTS[slot])) : null;
+			const on = days
+				? formatWeekdays(days, L, { weekend: 'Weekends', every: (day) => `${day}s` })
+				: null;
+			const text = on && when ? `${on}, ${when}` : (on ?? when ?? '');
+			return text.charAt(0).toLocaleUpperCase(INTL_LOCALE[L]) + text.slice(1);
+		},
+		stats: {
+			cosiness: 'Cosiness',
+			mischief: 'Mischief',
+			snacks: 'Snack drive',
+			helpfulness: 'Helpfulness'
+		},
+		statValue: (name: string, value: number) => `${name}: ${value} of 5`,
+		firstMet: (date: string) => [{ text: 'First met ' }, { text: date, strong: true }] as RichText,
+		seen: (times: number) => [{ text: 'Seen ' }, { text: `${times}×`, strong: true }] as RichText,
+		locked: {
+			name: '? ? ? ? ?',
+			title: 'Not met yet',
+			hint: 'Keep an eye on Home'
+		},
+		/** Admin mode (→ DECISIONS #240): every card is open, the count stays real. */
+		adminNote: 'Admin mode: every raccoon is shown, met or not. Your count stays your own.',
+		/** An unmet card's footer in admin mode, where "First met" would go. */
+		revealed: 'Not met yet · shown in admin mode',
+		previous: 'Previous raccoon',
+		next: 'Next raccoon',
+		close: 'Close',
+		/** Home's album card, while raccoons wait to be looked at. */
+		home: {
+			/** One new one, by its rarity. A common one doesn't say so. */
+			rarity: { 1: 'New raccoon!', 2: 'Rare raccoon!', 3: 'Legendary raccoon!' } as Record<
+				1 | 2 | 3,
+				string
+			>,
+			several: 'New raccoons!',
+			inAlbum: (count: number) => `${count} in your album`,
+			newCount: (count: number) => `${count} new`,
+			names: (names: string[], found: number, total: number) => {
+				const [first, second] = names;
+				const who =
+					names.length === 2
+						? `${first} and ${second}`
+						: `${first}, ${second} and ${names.length - 2} more`;
+				return `${who} · ${found} of ${total}`;
+			}
+		}
+	},
+
+	/**
+	 * Every raccoon in the album: a name and a fun fact. The name says what the
+	 * raccoon is ("Tennis Ace"), not an invented first name (Lukas 2026-11-05,
+	 * DECISIONS #239). The app's own words, not household content, so German
+	 * writes its own. Drafts, shipped for Lukas to review (→ plan 35).
+	 */
+	raccoons: {
+		'welcome-a': {
+			name: 'Welcome Committee',
+			fact: 'Waves at the postman, the neighbours and, on slow days, the fridge.'
+		},
+		'welcome-b': {
+			name: 'Optimist',
+			fact: 'Has never once checked whether it will be fine. It usually is.'
+		},
+		reading: {
+			name: 'Bedtime Reader',
+			fact: 'Has read every recipe in the cookbook twice. Has cooked one of them, once.'
+		},
+		call: {
+			name: 'Phone Chatter',
+			fact: 'Calls to say he’s running late. Calls again to say how late.'
+		},
+		phone: {
+			name: 'Landline Keeper',
+			fact: 'Still knows every number by heart. Refuses to explain how.'
+		},
+		music: {
+			name: 'Quiet Listener',
+			fact: 'Hums along to everything, always slightly ahead of the beat.'
+		},
+		singing: {
+			name: 'Kitchen Karaoke Star',
+			fact: 'Sings in the shower, in the kitchen and, once, at the pharmacy.'
+		},
+		camera: {
+			name: 'Household Photographer',
+			fact: 'Has 400 photos of dinner and not one of the people who ate it.'
+		},
+		painting: {
+			name: 'Artist in Residence',
+			fact: 'Has painted the fruit bowl so often that the fruit has started to pose.'
+		},
+		writing: {
+			name: 'List Writer',
+			fact: 'Writes the shopping list by hand first, for the feeling of it.'
+		},
+		cards: {
+			name: 'Card Shark',
+			fact: 'Says he’s bad at cards. Has won every game night since spring.'
+		},
+		arcade: {
+			name: 'High-Score Holder',
+			fact: 'Holds the high score on every machine, and the record for “one more go”.'
+		},
+		sports: {
+			name: 'Morning Workout',
+			fact: 'Lifts weights every morning, then the biscuit tin, for balance.'
+		},
+		watering: {
+			name: 'Plant Whisperer',
+			fact: 'Talks to the houseplants every day. Two of them have started answering.'
+		},
+		sleeping: {
+			name: 'Night Shift',
+			fact: 'Sleeps from ten till five and dreams, mostly, of breakfast.'
+		},
+		'reminder-upcoming': {
+			name: 'Friendly Reminder',
+			fact: 'Rings the bell once, politely. Then once more, just as politely.'
+		},
+		'reminder-overdue': {
+			name: 'Last Reminder',
+			fact: 'Has never been late in his life and would like that on the record.'
+		},
+		snow: {
+			name: 'Snowball Thrower',
+			fact: 'Aims for the tree. Hits whoever is standing next to it.'
+		},
+		snowflake: {
+			name: 'Snowflake Collector',
+			fact: 'Has caught 2,000 snowflakes on her tongue. Says no two tasted alike.'
+		},
+		snowman: {
+			name: 'Snowman Builder',
+			fact: 'Always gives the snowman his own carrot. Keeps the second one for later, just in case.'
+		},
+		skiing: {
+			name: 'Skier',
+			fact: 'Skis down in four minutes. Takes the gondola back up for the view, and the strudel.'
+		},
+		skates: {
+			name: 'Ice Skater',
+			fact: 'Can do a perfect pirouette. Stopping is still a work in progress.'
+		},
+		cold: {
+			name: 'Cocoa Sipper',
+			fact: 'Wears three scarves and holds his cocoa with both paws. Still calls it fresh out.'
+		},
+		flower: {
+			name: 'Flower Sniffer',
+			fact: 'Stops to smell every flower on the way to the shop. The shop is shut by the time she gets there.'
+		},
+		tennis: {
+			name: 'Tennis Ace',
+			fact: 'Calls every ball out, his own included.'
+		},
+		garden: {
+			name: 'Gardener',
+			fact: 'Waters the garden at dawn and herself at noon.'
+		},
+		butterfly: {
+			name: 'Butterfly Chaser',
+			fact: 'Has chased butterflies for three summers. The butterflies are winning.'
+		},
+		fishing: {
+			name: 'Patient Angler',
+			fact: 'Has been waiting for a bite since Tuesday. Brought enough sandwiches for the week.'
+		},
+		sweets: {
+			name: 'Sweet Tooth',
+			fact: 'Keeps an emergency chocolate in every pocket. Has never once had an emergency.'
+		},
+		trash: {
+			name: 'Bin Inspector',
+			fact: 'Checks every bin on the street, purely for quality control.'
+		},
+		beach: {
+			name: 'Sunbather',
+			fact: 'Puts her towel down at seven in the morning. Has not moved since.'
+		},
+		'water-pistol': {
+			name: 'Water-Fight Starter',
+			fact: 'Swears he only fills it up to water the plants.'
+		},
+		lemonade: {
+			name: 'Lemonade Maker',
+			fact: 'Squeezes the lemons herself and the sugar in by the handful.'
+		},
+		coffee: {
+			name: 'Early Riser',
+			fact: 'Not a morning raccoon. Is one after the first cup.'
+		},
+		laptop: {
+			name: 'Home-Office Hero',
+			fact: 'Was on mute for the whole meeting. Nobody has noticed yet.'
+		},
+		friday: {
+			name: 'Friday Freedom',
+			fact: 'Filed everything under Monday.'
+		},
+		midnight: {
+			name: 'Midnight Crumb',
+			fact: 'Just one more. That was four cookies ago.'
+		},
+		snooze: {
+			name: 'Snooze Button',
+			fact: 'Treats 07:00 as more of a suggestion.'
+		},
+		socks: {
+			name: 'Sock Detective',
+			fact: 'Never closed a case. The washing machine is still the prime suspect.'
+		},
+		fruit: {
+			name: 'Vitamin Fan',
+			fact: 'Eats an apple a day, plus the pear, plus the grapes, just in case.'
+		},
+		juggling: {
+			name: 'Juggler',
+			fact: 'Keeps three balls in the air. Four on a good day, two near the vase.'
+		},
+		bath: {
+			name: 'Bubble Bather',
+			fact: 'Fills the Schaffel to the top, then adds more bubbles. The duck has stopped complaining.'
+		},
+		mushrooms: {
+			name: 'Mushroom Picker',
+			fact: 'Knows every mushroom in the forest. The red one with the dots goes back, he promises.'
+		},
+		tea: {
+			name: 'Tea Brewer',
+			fact: 'Has a tea for every mood and a mood for every tea.'
+		},
+		knitting: {
+			name: 'Scarf Maker',
+			fact: 'Started a scarf in October. It is four metres long now and still going.'
+		},
+		handball: {
+			name: 'Team Captain',
+			fact: 'Plays in every weather. Has never once admitted it was raining.'
+		},
+		valentines: {
+			name: 'Valentine',
+			fact: 'Leaves little hearts on the fridge. Also leaves the fridge open.'
+		},
+		fasching: {
+			name: 'Fasching Pirate',
+			fact: 'Comes as a pirate every year. Is still looking for the treasure from last time.'
+		},
+		easter: {
+			name: 'Easter Egg Hider',
+			fact: 'Hides the eggs so well that one from last year is still out there.'
+		},
+		halloween: {
+			name: 'Pumpkin Carver',
+			fact: 'Carves the scariest pumpkin on the street, then is a little scared of it.'
+		},
+		christmas: {
+			name: 'Christmas Baker',
+			fact: 'Bakes eleven kinds of Christmas biscuits and tests every tray. Thoroughly.'
+		},
+		'new-year': {
+			name: 'Countdown Keeper',
+			fact: 'Starts the countdown at eleven, just to be on the safe side.'
+		},
+		birthday: {
+			name: 'Birthday Raccoon',
+			fact: 'Only comes out once a year, and only for you. Brought cake.'
+		}
+	} satisfies Record<AlbumName, { name: string; fact: string }>,
 
 	/* ── The holiday pause (→ SPEC §5.5), in [4c] and [6a] ─────────────────── */
 	away: {

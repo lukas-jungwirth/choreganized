@@ -20,15 +20,18 @@
 import {
 	dayOfMonth,
 	daysBetween,
+	formatDayRange,
 	formatDayStamp,
 	formatBirthday,
 	formatMonthName,
 	formatMonthOfYear,
 	formatMonthRange,
+	formatMonthSpan,
 	formatShortDate,
 	formatWeekday,
 	formatWeekdayLong,
 	formatWeekdayShort,
+	formatWeekdays,
 	needsYear,
 	type CalendarDate
 } from '$lib/utils/dates';
@@ -40,6 +43,7 @@ import { currencyAfter, currencySymbol, formatMoney } from '$lib/utils/money';
 import type { MealSlot } from '$lib/utils/meals';
 import { formatQuantity, type UnitLabels } from '$lib/utils/shopping';
 import type { RecurUnit } from '$lib/utils/tasks';
+import type { DaySlot, Weekday } from '$lib/assets/mascot/everyday';
 import type { Messages, RichText, SentencePart } from './en';
 
 const L = 'de';
@@ -179,6 +183,8 @@ export const de: Messages = {
 		/** "14. März". */
 		birthday: (birthday: string) => formatBirthday(birthday, L),
 		monthOfYear: (month: number) => formatMonthOfYear(month, L),
+		dayRange: (from: string, to: string) => formatDayRange(from, to, L),
+		monthSpan: (from: number, to: number) => formatMonthSpan(from, to, L),
 
 		dayLabel: (date: CalendarDate, today: CalendarDate) => {
 			const days = daysBetween(today, date);
@@ -420,6 +426,14 @@ export const de: Messages = {
 		greeting: (time: 'morning' | 'afternoon' | 'evening'): string =>
 			time === 'morning' ? 'Guten Morgen' : time === 'afternoon' ? 'Guten Tag' : 'Guten Abend',
 		settingsLink: (names: string) => `Einstellungen · Haushalt: ${names}`,
+		pokeRaccoon: 'Waschbär anstupsen',
+		/** Admin mode only (→ plan 34): tapping the raccoon picks any pose. */
+		raccoonPicker: {
+			open: 'Waschbär auswählen',
+			title: 'Waschbär auswählen',
+			today: 'Heute',
+			backToToday: 'Zurück zum Waschbären von heute'
+		},
 
 		/** "Heute fällig · wöchentlich · 10 Pkt. wert" — Kadenz klein, wie im Satz. */
 		nextChore: {
@@ -900,16 +914,19 @@ export const de: Messages = {
 			scaledFrom: (written: string) => ` (im Rezept: ${written})`,
 
 			timerTitle: 'Timer stellen',
-			timerSubtitle: 'Er klingelt, bis du ihn stoppst, auch bei gesperrtem Handy.',
+			timerSubtitle:
+				'Er klingelt, solange die App offen ist. Bei gesperrtem Handy kommt eine Benachrichtigung.',
 			minutes: 'Minuten',
 			startMinutes: (minutes: number) => `${minutes}-Minuten-Timer starten`,
 
 			timerLabel: (label: string, state: string) => `${label}: ${state}`,
-			timerDone: 'fertig',
+			timerOver: (over: string) => `seit ${over} fertig`,
 			timerLeft: (remaining: string, total: string) => `${remaining} von ${total} übrig`,
 			timerMeta: (label: string, total: string, paused: boolean) =>
 				paused ? `${label} · ${total} · pausiert` : `${label} · ${total}`,
 			dismiss: 'Stopp',
+			/** Under the timer's name on the phone's media player (→ DECISIONS #252). */
+			trackRingsAt: (time: string) => `klingelt um ${time}`,
 			resume: 'Weiter',
 			pause: 'Pause',
 			addMinute: '+1:00',
@@ -1934,6 +1951,349 @@ export const de: Messages = {
 		colourTakenJoin: 'Die Farbe hat schon jemand im Haushalt. Nimm eine andere.',
 		ownerOnlyMembers: 'Nur die Besitzer:in kann Mitglieder verwalten.',
 		alreadyLeft: 'Die Person hat den Haushalt schon verlassen.'
+	},
+
+	admin: {
+		row: 'Admin',
+		entered: 'Admin-Modus an',
+		leave: 'Admin-Modus verlassen',
+		title: 'Admin',
+		subtitle: 'Alle Haushalte auf diesem Server',
+		back: 'Zurück zu den Einstellungen',
+		active7: 'Aktiv in 7 Tagen',
+		active30: 'Aktiv in 30 Tagen',
+		totals: {
+			households: 'Haushalte',
+			users: 'Konten',
+			members: 'Mitglieder',
+			pushDevices: 'Geräte mit Push'
+		},
+		signups: 'Neu pro Woche',
+		thisWeek: 'Diese Woche',
+		weekLabel: (start: string, households: number, users: number) =>
+			`Woche ab ${start}: ${households} ${households === 1 ? 'Haushalt' : 'Haushalte'}, ${users} ${users === 1 ? 'Konto' : 'Konten'}`,
+		list: 'Haushalte',
+		members: (count: number) => (count === 1 ? '1 Mitglied' : `${count} Mitglieder`),
+		since: (date: string) => `seit ${date}`,
+		lastActive: (day: string) => `Zuletzt aktiv: ${day}`,
+		neverActive: 'Nie aktiv'
+	},
+
+	/* ── The raccoon album (→ plan 35, SPEC §6) ───────────────────────────── */
+	album: {
+		title: 'Waschbär-Album',
+		subtitle: 'Jeder Waschbär, den du auf Home getroffen hast.',
+		back: 'Zurück zu den Einstellungen',
+		backHome: 'Zurück zu Home',
+		count: (found: number, total: number) => `${found} von ${total}`,
+		found: (found: number, total: number) => `${found} von ${total} gefunden`,
+		missing: (left: number, rare: number, legendary: number) => {
+			if (left <= 0) return 'Du hast alle Waschbären getroffen!';
+			const parts = [
+				rare > 0 ? `${rare} ${rare === 1 ? 'seltener' : 'seltene'}` : null,
+				legendary > 0 ? `${legendary} ${legendary === 1 ? 'legendärer' : 'legendäre'}` : null
+			].filter((part) => part !== null);
+			return `Noch zu finden: ${parts.length > 0 ? parts.join(' · ') : left}`;
+		},
+		progress: (found: number, total: number) => `${found} von ${total} Waschbären gefunden`,
+		filters: {
+			label: 'Anzeigen',
+			all: 'Alle'
+		},
+		tiers: { 1: 'Häufig', 2: 'Selten', 3: 'Legendär' } as Record<1 | 2 | 3, string>,
+		stars: (stars: number) => (stars === 1 ? '1 Stern' : `${stars} Sterne`),
+		number: (number: string) => `Nr. ${number}`,
+		newBadge: 'Neu',
+		quoted: (text: string) => `„${text}“`,
+		empty: 'Hier sind keine Waschbären.',
+		tile: (number: string, name: string | null, isNew = false, revealed = false) =>
+			!name
+				? `Nr. ${number}, noch nicht getroffen`
+				: `Nr. ${number}, ${name}${revealed ? ', noch nicht getroffen' : isNew ? ', neu' : ''}`,
+		window: {
+			allYear: 'Ganzjährig',
+			easter: 'Ostern',
+			fasching: 'Faschingsdienstag',
+			birthday: 'Dein Geburtstag'
+		},
+		/** „Mo – Fr“, „Am Wochenende“, „Freitags“, „Morgens“, „Mo – Fr, morgens“. */
+		rule: (
+			days: readonly Weekday[] | null,
+			slots: readonly (DaySlot | 'night' | 'midnight')[] | null
+		) => {
+			const SLOTS = {
+				morning: 'morgens',
+				afternoon: 'nachmittags',
+				evening: 'abends',
+				night: 'nachts',
+				midnight: 'nach Mitternacht'
+			};
+			const when = slots ? list(slots.map((slot) => SLOTS[slot])) : null;
+			const on = days
+				? formatWeekdays(days, L, {
+						weekend: 'am Wochenende',
+						every: (day) => `${day.toLocaleLowerCase('de')}s`
+					})
+				: null;
+			const text = on && when ? `${on}, ${when}` : (on ?? when ?? '');
+			return text.charAt(0).toLocaleUpperCase(INTL_LOCALE[L]) + text.slice(1);
+		},
+		stats: {
+			cosiness: 'Gemütlichkeit',
+			mischief: 'Schabernack',
+			snacks: 'Jausenlust',
+			helpfulness: 'Hilfsbereitschaft'
+		},
+		statValue: (name: string, value: number) => `${name}: ${value} von 5`,
+		firstMet: (date: string) =>
+			[{ text: 'Zuerst getroffen am ' }, { text: date, strong: true }] as RichText,
+		seen: (times: number) =>
+			[{ text: 'Gesehen: ' }, { text: `${times}×`, strong: true }] as RichText,
+		locked: {
+			name: '? ? ? ? ?',
+			title: 'Noch nicht getroffen',
+			hint: 'Schau öfter auf Home vorbei'
+		},
+		adminNote:
+			'Admin-Modus: Alle Waschbären sind zu sehen, getroffen oder nicht. Dein Stand bleibt dein eigener.',
+		revealed: 'Noch nicht getroffen · im Admin-Modus sichtbar',
+		previous: 'Voriger Waschbär',
+		next: 'Nächster Waschbär',
+		close: 'Schließen',
+		home: {
+			rarity: {
+				1: 'Neuer Waschbär!',
+				2: 'Seltener Waschbär!',
+				3: 'Legendärer Waschbär!'
+			} as Record<1 | 2 | 3, string>,
+			several: 'Neue Waschbären!',
+			inAlbum: (count: number) => `${count} in deinem Album`,
+			newCount: (count: number) => `${count} neu`,
+			names: (names: string[], found: number, total: number) => {
+				const [first, second] = names;
+				const who =
+					names.length === 2
+						? `${first} und ${second}`
+						: `${first}, ${second} und ${names.length === 3 ? '1 weiterer' : `${names.length - 2} weitere`}`;
+				return `${who} · ${found} von ${total}`;
+			}
+		}
+	},
+
+	/** Entwürfe, zum Gegenlesen (→ plan 35). Wortspiele erlaubt. */
+	raccoons: {
+		'welcome-a': {
+			name: 'Begrüßungskomitee',
+			fact: 'Winkt dem Briefträger, den Nachbarn und an ruhigen Tagen auch dem Kühlschrank.'
+		},
+		'welcome-b': {
+			name: 'Optimist',
+			fact: 'Hat nie nachgeschaut, ob es wirklich wird. Meistens wird es.'
+		},
+		reading: {
+			name: 'Gute-Nacht-Leserin',
+			fact: 'Hat jedes Rezept im Kochbuch zweimal gelesen. Gekocht hat sie eins, einmal.'
+		},
+		call: {
+			name: 'Dauertelefonierer',
+			fact: 'Ruft an, um zu sagen, dass er später kommt. Ruft nochmal an, um zu sagen, wie viel später.'
+		},
+		phone: {
+			name: 'Festnetz-Hüterin',
+			fact: 'Kann noch jede Nummer auswendig. Wie, verrät sie nicht.'
+		},
+		music: {
+			name: 'Stiller Zuhörer',
+			fact: 'Summt bei allem mit, immer einen Tick vor dem Takt.'
+		},
+		singing: {
+			name: 'Küchen-Karaoke-Star',
+			fact: 'Singt unter der Dusche, in der Küche und einmal sogar in der Apotheke.'
+		},
+		camera: {
+			name: 'Haushaltsfotograf',
+			fact: 'Hat 400 Fotos vom Abendessen und kein einziges von denen, die es gegessen haben.'
+		},
+		painting: {
+			name: 'Hauskünstlerin',
+			fact: 'Hat die Obstschale so oft gemalt, dass das Obst schon posiert.'
+		},
+		writing: {
+			name: 'Listenschreiber',
+			fact: 'Schreibt die Einkaufsliste zuerst mit der Hand. Wegen dem Gefühl.'
+		},
+		cards: {
+			name: 'Kartenhai',
+			fact: 'Sagt, er kann nicht Karten spielen. Gewinnt seit dem Frühling jeden Spieleabend.'
+		},
+		arcade: {
+			name: 'Rekordhalterin',
+			fact: 'Hält den Rekord auf jedem Automaten, und den für „nur noch eine Runde“.'
+		},
+		sports: {
+			name: 'Morgensportler',
+			fact: 'Stemmt jeden Morgen Gewichte und danach die Keksdose, fürs Gleichgewicht.'
+		},
+		watering: {
+			name: 'Pflanzenflüsterer',
+			fact: 'Redet jeden Tag mit den Zimmerpflanzen. Zwei antworten schon.'
+		},
+		sleeping: {
+			name: 'Nachtschicht',
+			fact: 'Schläft von zehn bis fünf und träumt, meistens, vom Frühstück.'
+		},
+		'reminder-upcoming': {
+			name: 'Freundliche Erinnerung',
+			fact: 'Läutet einmal, ganz höflich. Und dann nochmal, genauso höflich.'
+		},
+		'reminder-overdue': {
+			name: 'Letzte Erinnerung',
+			fact: 'War noch nie im Leben zu spät und hätte das gern schriftlich.'
+		},
+		snow: {
+			name: 'Schneeballwerfer',
+			fact: 'Zielt auf den Baum. Trifft den, der daneben steht.'
+		},
+		snowflake: {
+			name: 'Schneeflockensammlerin',
+			fact: 'Hat 2.000 Schneeflocken mit der Zunge gefangen. Keine hat gleich geschmeckt, sagt sie.'
+		},
+		snowman: {
+			name: 'Schneemannbauer',
+			fact: 'Gibt dem Schneemann immer eine eigene Karotte. Die zweite hebt er sich auf, man weiß ja nie.'
+		},
+		skiing: {
+			name: 'Skifahrer',
+			fact: 'Ist in vier Minuten im Tal. Mit der Gondel geht’s zurück, wegen der Aussicht und dem Strudel.'
+		},
+		skates: {
+			name: 'Eisläuferin',
+			fact: 'Kann eine perfekte Pirouette. Am Bremsen arbeitet sie noch.'
+		},
+		cold: {
+			name: 'Kakaotrinker',
+			fact: 'Trägt drei Schals und hält den Kakao mit beiden Pfoten. Sagt trotzdem, es ist frisch draußen.'
+		},
+		flower: {
+			name: 'Blumenschnupperin',
+			fact: 'Riecht auf dem Weg zum Geschäft an jeder Blume. Wenn sie ankommt, hat es schon zu.'
+		},
+		tennis: {
+			name: 'Tennis-Ass',
+			fact: 'Ruft bei jedem Ball „Out“, auch bei seinen eigenen.'
+		},
+		garden: {
+			name: 'Gärtnerin',
+			fact: 'Gießt in der Früh den Garten und zu Mittag sich selbst.'
+		},
+		butterfly: {
+			name: 'Schmetterlingsjägerin',
+			fact: 'Jagt seit drei Sommern Schmetterlinge. Die Schmetterlinge führen.'
+		},
+		fishing: {
+			name: 'Geduldiger Angler',
+			fact: 'Wartet seit Dienstag auf einen Biss. Hat Jausenbrote für die ganze Woche mit.'
+		},
+		sweets: {
+			name: 'Naschkatze',
+			fact: 'Hat in jeder Tasche eine Notfall-Schokolade. Einen Notfall gab es noch nie.'
+		},
+		trash: {
+			name: 'Mistkübel-Inspektor',
+			fact: 'Schaut in jeden Mistkübel der Gasse, rein zur Qualitätskontrolle.'
+		},
+		beach: {
+			name: 'Sonnenanbeterin',
+			fact: 'Legt um sieben in der Früh ihr Handtuch hin. Seitdem hat sie sich nicht bewegt.'
+		},
+		'water-pistol': {
+			name: 'Wasserschlacht-Anstifter',
+			fact: 'Schwört, dass er sie nur zum Blumengießen anfüllt.'
+		},
+		lemonade: {
+			name: 'Limonadenmacherin',
+			fact: 'Presst die Zitronen selber aus und gibt den Zucker händeweise dazu.'
+		},
+		coffee: {
+			name: 'Frühaufsteher',
+			fact: 'Ist kein Morgenwaschbär. Nach der ersten Tasse schon.'
+		},
+		laptop: {
+			name: 'Homeoffice-Heldin',
+			fact: 'War das ganze Meeting lang stummgeschaltet. Bemerkt hat es noch niemand.'
+		},
+		friday: {
+			name: 'Freitags-Feierabend',
+			fact: 'Hat alles unter Montag abgelegt.'
+		},
+		midnight: {
+			name: 'Mitternachts-Krümel',
+			fact: 'Nur noch einer. Das war vor vier Keksen.'
+		},
+		snooze: {
+			name: 'Schlummertaste',
+			fact: 'Sieht 07:00 eher als Vorschlag.'
+		},
+		socks: {
+			name: 'Socken-Detektivin',
+			fact: 'Noch keinen Fall gelöst. Hauptverdächtig bleibt die Waschmaschine.'
+		},
+		fruit: {
+			name: 'Vitaminfreundin',
+			fact: 'Isst jeden Tag einen Apfel, dazu die Birne und die Trauben, sicherheitshalber.'
+		},
+		juggling: {
+			name: 'Jongleur',
+			fact: 'Hält drei Bälle in der Luft. An guten Tagen vier, neben der Vase nur zwei.'
+		},
+		bath: {
+			name: 'Badenixe',
+			fact: 'Füllt das Schaffel bis zum Rand und gibt dann noch Schaum dazu. Die Ente beschwert sich nicht mehr.'
+		},
+		mushrooms: {
+			name: 'Schwammerlsucher',
+			fact: 'Kennt jedes Schwammerl im Wald. Das rote mit den Punkten kommt wieder zurück, versprochen.'
+		},
+		tea: {
+			name: 'Teekocher',
+			fact: 'Hat einen Tee für jede Laune und eine Laune für jeden Tee.'
+		},
+		knitting: {
+			name: 'Schalstrickerin',
+			fact: 'Hat im Oktober mit einem Schal angefangen. Jetzt ist er vier Meter lang und wird noch länger.'
+		},
+		handball: {
+			name: 'Mannschaftskapitän',
+			fact: 'Spielt bei jedem Wetter. Hat noch nie zugegeben, dass es geregnet hat.'
+		},
+		valentines: {
+			name: 'Valentin',
+			fact: 'Klebt kleine Herzerl auf den Kühlschrank. Lässt den Kühlschrank auch gern offen.'
+		},
+		fasching: {
+			name: 'Faschingspirat',
+			fact: 'Geht jedes Jahr als Pirat. Sucht noch immer den Schatz vom letzten Mal.'
+		},
+		easter: {
+			name: 'Eierversteckerin',
+			fact: 'Versteckt die Eier so gut, dass eins vom letzten Jahr noch immer irgendwo liegt.'
+		},
+		halloween: {
+			name: 'Kürbisschnitzer',
+			fact: 'Schnitzt den gruseligsten Kürbis der Gasse und fürchtet sich dann selber ein bisserl.'
+		},
+		christmas: {
+			name: 'Weihnachtsbäckerin',
+			fact: 'Bäckt elf Sorten Weihnachtskekse und kostet jedes Blech. Gründlich.'
+		},
+		'new-year': {
+			name: 'Countdown-Zähler',
+			fact: 'Fängt um elf mit dem Countdown an, damit nur ja nichts schiefgeht.'
+		},
+		birthday: {
+			name: 'Geburtstags-Waschbär',
+			fact: 'Kommt nur einmal im Jahr, und nur für dich. Hat Kuchen mit.'
+		}
 	},
 
 	/* ── The holiday pause (→ SPEC §5.5), in [4c] and [6a] ─────────────────── */

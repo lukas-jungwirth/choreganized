@@ -54,6 +54,23 @@ export async function freshAccount(page: Page): Promise<void> {
 	expect(signUp.ok()).toBe(true);
 }
 
+/**
+ * Home the first time a raccoon is met (→ plan 35): a new household of its
+ * own, because the `visual` one has met today's raccoon already (setup.ts).
+ * A new member's first look is always the welcome raccoon (→ DECISIONS #238),
+ * so the shot is the same every run.
+ */
+export async function newRaccoonCard(page: Page): Promise<void> {
+	await freshAccount(page);
+	await page.goto('/onboarding/create');
+	await page.getByLabel('Household name').fill('Waschbärweg 1');
+	await page.getByLabel('Your display name').fill('Fresh');
+	await page.getByRole('button', { name: 'Continue' }).click();
+	await page.waitForURL(/\/onboarding\/invite$/);
+	await page.goto('/home');
+	await page.getByRole('link', { name: /New raccoon!/ }).waitFor();
+}
+
 /** [9b] with an amount and a description typed, as it looks just before Save. */
 export async function openAddExpense(page: Page): Promise<void> {
 	await page.goto('/expenses');
@@ -71,6 +88,31 @@ export async function openAiFeatures(page: Page): Promise<void> {
 		.getByRole('dialog')
 		.getByText(/free tiers have limits/)
 		.waitFor();
+}
+
+/**
+ * Admin mode on for the `visual` account (→ plan 34): seven taps on the
+ * version, as a person would. The e2e server lists it in `ADMIN_EMAILS`.
+ */
+async function enterAdmin(page: Page): Promise<void> {
+	await page.goto('/settings');
+	const version = page.getByRole('button', { name: /^Version/ });
+	for (let tap = 0; tap < 7; tap += 1) await version.click();
+	await page.getByRole('link', { name: 'Admin' }).waitFor();
+}
+
+/**
+ * The admin page with one household row: how many there are depends on which
+ * specs ran first (each fresh sign-up adds one), and a longer list's mask is
+ * painted over the tab bar. The rest stay out of the picture, not just masked.
+ */
+async function openAdmin(page: Page): Promise<void> {
+	await enterAdmin(page);
+	await page.goto('/admin');
+	await page.locator('.household').first().waitFor();
+	await page.evaluate(() =>
+		document.querySelectorAll('.household').forEach((row, index) => index > 0 && row.remove())
+	);
 }
 
 export const SCREENS: Screen[] = [
@@ -187,6 +229,66 @@ export const SCREENS: Screen[] = [
 		}
 	},
 	{ name: 'settings', route: '/(app)/settings', path: '/settings', bottom: true },
+	{
+		name: 'raccoon-album',
+		route: '/(app)/settings/raccoons',
+		path: '/settings/raccoons',
+		bottom: true
+	},
+	{
+		name: 'raccoon-album-dark',
+		route: '/(app)/settings/raccoons',
+		path: '/settings/raccoons',
+		theme: 'dark'
+	},
+	{
+		name: 'raccoon-card',
+		route: '/(app)/settings/raccoons',
+		path: '',
+		navigate: async (page) => {
+			await page.goto('/settings/raccoons?card=tea');
+			await page.getByRole('dialog', { name: 'Raccoon album' }).getByText('Seen 5×').waitFor();
+		}
+	},
+	{
+		name: 'raccoon-card-locked',
+		route: '/(app)/settings/raccoons',
+		path: '',
+		navigate: async (page) => {
+			await page.goto('/settings/raccoons?card=skiing');
+			await page.getByRole('dialog', { name: 'Raccoon album' }).getByText('Not met yet').waitFor();
+		}
+	},
+	{ name: 'home-new-raccoon', route: '/(app)/home', path: '', navigate: newRaccoonCard },
+	// Every count on the page depends on which other specs ran first, so the
+	// numbers and the one row left (→ `openAdmin`) are masked; what's guarded
+	// is the layout around them.
+	{
+		name: 'admin',
+		route: '/(app)/admin',
+		path: '',
+		navigate: openAdmin,
+		mask: ['.tiles .value', '.bars', '.household']
+	},
+	{
+		name: 'admin-dark',
+		route: '/(app)/admin',
+		path: '',
+		navigate: openAdmin,
+		theme: 'dark',
+		mask: ['.tiles .value', '.bars', '.household']
+	},
+	{
+		name: 'home-raccoon-picker',
+		route: '/(app)/home',
+		path: '',
+		navigate: async (page) => {
+			await enterAdmin(page);
+			await page.goto('/home');
+			await page.getByRole('button', { name: 'Pick a raccoon' }).click();
+			await page.getByRole('dialog', { name: 'Pick a raccoon' }).waitFor();
+		}
+	},
 	{
 		name: 'settings-dark',
 		route: '/(app)/settings',

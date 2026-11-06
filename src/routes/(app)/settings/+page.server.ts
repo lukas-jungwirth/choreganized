@@ -20,6 +20,7 @@ import {
 	type Messages
 } from '$lib/i18n';
 import { isMemberColor } from '$lib/member-colors';
+import { enterAdminMode, isAdmin, leaveAdminMode } from '$lib/server/admin';
 import { requireMember } from '$lib/server/guards';
 import { pushConfigured, sendTestNotification, type NotificationPref } from '$lib/server/push';
 import {
@@ -47,11 +48,13 @@ import {
 	setRecipeWording,
 	updateProfile
 } from '$lib/server/services/household';
+import { countSightings } from '$lib/server/services/raccoons';
 import { setAway } from '$lib/server/services/tasks';
 import { appVersion } from '$lib/server/version';
 import { isTheme, THEME_COOKIE, THEME_COOKIE_MAX_AGE } from '$lib/theme';
 import { birthdayFrom } from '$lib/utils/birthday';
 import { isCalendarDate, todayIn } from '$lib/utils/dates';
+import { ALBUM_SIZE } from '$lib/utils/raccoon-album';
 import { FEEDBACK_BODY_MAX, isFeedbackKind } from '$lib/utils/feedback';
 import { isAiProvider, isAiSlot, looksLikeApiKey, looksLikeModelId } from '$lib/ai';
 import { DISPLAY_NAME_MAX, HOUSEHOLD_NAME_MAX } from '$lib/utils/household';
@@ -105,6 +108,8 @@ export const load: PageServerLoad = (event) => {
 	// load only adds what is nobody else's business: the sign-in identity and
 	// this member's own preferences.
 	return {
+		/** The raccoon album row under the profile card: "17 of 39" (→ plan 35). */
+		album: { found: countSightings(householdId, member.id), total: ALBUM_SIZE },
 		email: user.email,
 		// Which provider and model each AI slot uses, and a masked hint — never the
 		// key itself (→ SPEC §6, plan 20). Members see it read-only; only the owner
@@ -558,5 +563,25 @@ export const actions: Actions = {
 		const { user } = requireMember(event);
 
 		return { sent: await sendTestNotification(user.id), configured: pushConfigured() };
+	},
+
+	/**
+	 * Seven taps on the version (→ plan 34). For anyone the deploy doesn't list
+	 * in `ADMIN_EMAILS` this is a 404, the same answer `/admin` gives them: the
+	 * taps do nothing they could tell from a missing action.
+	 */
+	enterAdmin: async (event) => {
+		const { user } = requireMember(event);
+		if (!isAdmin(user)) error(404, catalog(event.locals.locale).errors.notFound);
+
+		enterAdminMode(event);
+		return { adminEntered: true };
+	},
+
+	/** "Leave admin mode" at the bottom of Settings. Harmless for anyone, so unguarded beyond membership. */
+	leaveAdmin: async (event) => {
+		requireMember(event);
+		leaveAdminMode(event);
+		return { adminLeft: true };
 	}
 };

@@ -4,7 +4,7 @@
  * `7K4-P2X` (→ docs/DATA-MODEL.md → households).
  */
 
-const ALPHABET = 'ABCDEFGHJKMNPQRSTUVWXYZ23456789';
+export const ALPHABET = 'ABCDEFGHJKMNPQRSTUVWXYZ23456789';
 
 export const INVITE_CODE_LENGTH = 6;
 

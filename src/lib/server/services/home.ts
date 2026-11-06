@@ -16,7 +16,7 @@ import { and, asc, count, desc, eq, isNull, lte, sql } from 'drizzle-orm';
 import type { MascotName } from '$lib/assets/mascot';
 import { DEFAULT_LOCALE } from '$lib/i18n';
 import { addDays, formatTimeIn, hourIn, type CalendarDate } from '$lib/utils/dates';
-import { homeRaccoon } from '$lib/utils/raccoon';
+import { homeRaccoon, homeSlot } from '$lib/utils/raccoon';
 import { mealSlotOrder, type MealSlot } from '$lib/utils/meals';
 import type { RecurUnit } from '$lib/utils/tasks';
 import { db } from '../db';
@@ -30,6 +30,7 @@ import {
 	type Member
 } from '../db/schema';
 import type { HouseholdMember } from './household';
+import { isFirstVisit } from './raccoons';
 import {
 	assigneeNotAway,
 	isAway,
@@ -100,6 +101,8 @@ export type HomeSummary = {
 	greeting: TimeOfDay;
 	/** The raccoon on the first card — the day, the chore, the hour (→ `utils/raccoon`). */
 	raccoon: MascotName;
+	/** The stretch of the day it holds still for — what the raccoon album counts by (→ plan 35). */
+	slot: string;
 	/** Null when this member has nothing of their own coming up (or is away). */
 	nextChore: NextChore | null;
 	dinner: TonightsDinner | null;
@@ -134,6 +137,7 @@ export function getHomeSummary(householdId: string, context: HomeContext): HomeS
 	// evening" and the sleeping pose can't straddle 22:00 and disagree.
 	const hour = hourIn(timezone);
 	const next = nextChore(householdId, member, today);
+	const slot = homeSlot(today, hour);
 
 	return {
 		greeting: greetingFor(hour),
@@ -141,8 +145,11 @@ export function getHomeSummary(householdId: string, context: HomeContext): HomeS
 			today,
 			hour,
 			birthday: member.birthday,
-			nextChoreDue: next?.dueDate ?? null
+			nextChoreDue: next?.dueDate ?? null,
+			seed: member.id,
+			firstVisit: isFirstVisit(householdId, member.id, slot)
 		}),
+		slot,
 		nextChore: next,
 		dinner: tonightsDinner(householdId, today),
 		shoppingCount: countUnchecked(householdId),

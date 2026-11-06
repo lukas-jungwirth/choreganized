@@ -1,11 +1,14 @@
 /**
  * The noise a timer makes on the device you're holding (→ SPEC §4.6, DECISIONS
- * #134).
+ * #134, #251).
  *
- * It is an **alarm, not a notification chime**: two tones alternating four times
- * a second and a half, over and over, until somebody stops it. Three polite
- * beeps was the v1 behaviour and it lost every argument with an extractor fan —
- * a sound you can miss from the next room is a sound that doesn't do this job.
+ * Three rising wooden notes, every few seconds, until somebody stops it. It has
+ * been wrong in both directions. Three polite sine beeps lost every argument
+ * with an extractor fan (#134), and the square-wave alarm that replaced them
+ * carried fine but was frightening (#251). So the notes are struck and fade like
+ * a marimba, with the overtones that cut through a fan, and it starts quietly
+ * and swells to full volume, so the cook is called rather than startled.
+ *
  * The one who stops it is the cook: Stop on the ring, or the × on a bar or the
  * dock (→ `cook-timer.svelte.ts`, which calls `stopAlarm` the moment nothing is
  * ringing any more).
@@ -28,12 +31,14 @@ let context: AudioContext | null = null;
 
 /**
  * Everything the current alarm plays through, so `stopAlarm` can silence the
- * whole thing at once — including the burst already scheduled ahead of the
- * clock, which is otherwise a second of beeping *after* the tap that stopped it.
+ * whole thing at once — including the round already scheduled ahead of the
+ * clock, which is otherwise a second of notes *after* the tap that stopped it.
  */
 let master: GainNode | null = null;
-let burstLoop: ReturnType<typeof setInterval> | null = null;
+let roundLoop: ReturnType<typeof setInterval> | null = null;
 let giveUp: ReturnType<typeof setTimeout> | null = null;
+/** Whether this alarm makes its own noise, or only buzzes along with a track. */
+let sounding = true;
 
 type WebAudioWindow = typeof globalThis & {
 	AudioContext?: typeof AudioContext;
@@ -58,47 +63,70 @@ export function primeAlarm(): void {
 	}
 }
 
-/** The two notes it alternates — a fifth apart, which is what reads as "alarm". */
-const TONES = [880, 1319];
-/** Beeps per burst, and how they're spaced. Four is urgent; six is a fire alarm. */
-const BEEPS = 4;
-const BEEP_SECONDS = 0.14;
-const BEEP_GAP = 0.08;
 /**
- * How often a burst repeats. Long enough to leave a hole you can talk across,
- * short enough that it never sounds like it has finished and given up.
+ * The phrase: seconds into the round, and the note. G5, C6, E6, a major chord
+ * walking upwards, which reads as "ready" where the old alternating fifth read
+ * as "emergency". All high enough for a phone speaker, which has no low end.
  */
-const BURST_MS = 1500;
+const NOTES: ReadonlyArray<readonly [number, number]> = [
+	[0, 784],
+	[0.19, 1047],
+	[0.38, 1319]
+];
 /**
- * Loud enough to carry over a fan, short of the clipping a square wave gets to
- * quickly. The filter below is what keeps it from being shrill at this level.
+ * What one struck note is made of: a multiple of the note, how loud, and how
+ * many seconds it takes to fade. The ratios are a marimba bar's. The quick high
+ * ones are the knock of the mallet, and they are what carries over a fan.
  */
-const VOLUME = 0.5;
-/** Takes the glassy top off the square wave without softening the attack. */
-const FILTER_HZ = 2600;
+const PARTIALS: ReadonlyArray<readonly [number, number, number]> = [
+	[1, 1, 0.5],
+	[4, 0.28, 0.14],
+	[9.2, 0.06, 0.05]
+];
+/**
+ * One note at its loudest. A round of three peaks at 0.88 when rendered, close to
+ * the top without clipping, because a phone speaker and a fan need all of it.
+ */
+const NOTE_LEVEL = 0.7;
+const STRIKE_SECONDS = 0.006;
+/**
+ * How often the phrase repeats. It is over in under a second, so most of this is
+ * room to talk across, and to think "oh, the rice".
+ */
+const ROUND_MS = 3200;
+/** It starts here and reaches full volume after `RISE_SECONDS`. */
+const START_LEVEL = 0.3;
+const RISE_SECONDS = 20;
 
 /** How long it keeps going with nobody stopping it (→ the module comment). */
 const MAX_RING_MS = 60_000;
+/** The same, for what `renderRing` writes down. */
+export const RING_SECONDS = MAX_RING_MS / 1000;
 
-/** Android haptics, re-issued per burst — one call replaces the last pattern. */
-const VIBRATE = [400, 150, 400, 150, 400];
+/** Android haptics, re-issued per round — one call replaces the last pattern. */
+const VIBRATE = [200, 120, 200];
 
-/** Start ringing, and keep ringing until `stopAlarm` or `MAX_RING_MS`. */
-export function ringAlarm(): void {
+/**
+ * Start ringing, and keep ringing until `stopAlarm` or `MAX_RING_MS`. `sound` is
+ * false when a timer's track is already playing the same ring (→ `alarm-track.ts`),
+ * which leaves the vibration: a page can only buzz while it is awake.
+ */
+export function ringAlarm(sound = true): void {
 	// A second timer reaching zero restarts the window rather than inheriting
 	// what is left of the first one's: it has its own thing to say.
 	stopAlarm();
 
-	burst();
-	burstLoop = setInterval(burst, BURST_MS);
+	sounding = sound;
+	round();
+	roundLoop = setInterval(round, ROUND_MS);
 	giveUp = setTimeout(stopAlarm, MAX_RING_MS);
 }
 
 /** Silence it — the cook has seen it, or it has been going long enough. */
 export function stopAlarm(): void {
-	if (burstLoop !== null) {
-		clearInterval(burstLoop);
-		burstLoop = null;
+	if (roundLoop !== null) {
+		clearInterval(roundLoop);
+		roundLoop = null;
 	}
 
 	if (giveUp !== null) {
@@ -114,7 +142,7 @@ export function stopAlarm(): void {
 
 	if (!master || !context) return;
 
-	// Ramped, not cut: a gain that drops to zero mid-beep is a click, and a click
+	// Ramped, not cut: a gain that drops to zero mid-note is a click, and a click
 	// is what a broken app sounds like. Then dropped entirely, so the oscillators
 	// still scheduled against it play into nothing and collect themselves.
 	const node = master;
@@ -131,45 +159,73 @@ export function stopAlarm(): void {
 	}
 }
 
-/** One "beep-beep-beep-beep", plus the buzz that goes with it. */
-function burst(): void {
+/** One round of the phrase, plus the buzz that goes with it. */
+function round(): void {
 	vibrate();
 
-	if (!context || context.state !== 'running') return;
+	if (!sounding || !context || context.state !== 'running') return;
 
 	try {
-		// One chain per burst is enough — but the *first* burst is what creates the
-		// chain the whole alarm hangs off, so `stopAlarm` has one node to pull.
+		// The *first* round is what creates the node the whole alarm hangs off, so
+		// `stopAlarm` has one thing to pull, and so the swell runs across all of them.
 		if (!master) {
-			master = context.createGain();
-			master.gain.value = 1;
-
-			const filter = context.createBiquadFilter();
-			filter.type = 'lowpass';
-			filter.frequency.value = FILTER_HZ;
-			master.connect(filter).connect(context.destination);
+			master = swell(context, context.currentTime);
+			master.connect(context.destination);
 		}
 
-		for (let beep = 0; beep < BEEPS; beep++) {
-			const at = context.currentTime + beep * (BEEP_SECONDS + BEEP_GAP);
-			const oscillator = context.createOscillator();
-			const gain = context.createGain();
-
-			oscillator.type = 'square';
-			oscillator.frequency.value = TONES[beep % TONES.length];
-
-			// Ramped rather than switched, for the same reason `stopAlarm` ramps.
-			gain.gain.setValueAtTime(0, at);
-			gain.gain.linearRampToValueAtTime(VOLUME, at + 0.015);
-			gain.gain.setValueAtTime(VOLUME, at + BEEP_SECONDS - 0.03);
-			gain.gain.linearRampToValueAtTime(0, at + BEEP_SECONDS);
-
-			oscillator.connect(gain).connect(master);
-			oscillator.start(at);
-			oscillator.stop(at + BEEP_SECONDS + 0.02);
-		}
+		playRound(context, master, context.currentTime);
 	} catch {
 		// An audio graph that won't build is not a reason to skip the vibration.
+	}
+}
+
+/** The node that makes it start quietly and rise. */
+function swell(audio: BaseAudioContext, at: number): GainNode {
+	const node = audio.createGain();
+	node.gain.setValueAtTime(START_LEVEL, at);
+	node.gain.linearRampToValueAtTime(1, at + RISE_SECONDS);
+	return node;
+}
+
+function playRound(audio: BaseAudioContext, output: AudioNode, at: number): void {
+	for (const [offset, note] of NOTES) strike(audio, output, note, at + offset);
+}
+
+/**
+ * The whole ring written down as samples, for the track that plays it with no
+ * page awake (→ `alarm-track.ts`). The same swell and the same rounds as the live
+ * alarm, so the two can't come to sound different.
+ */
+export async function renderRing(sampleRate: number): Promise<Float32Array> {
+	const audio = new OfflineAudioContext(1, sampleRate * RING_SECONDS, sampleRate);
+	const output = swell(audio, 0);
+	output.connect(audio.destination);
+
+	// The last round has to finish, not be cut off by the end of the file.
+	for (let at = 0.05; at < RING_SECONDS - 1; at += ROUND_MS / 1000) {
+		playRound(audio, output, at);
+	}
+
+	return (await audio.startRendering()).getChannelData(0);
+}
+
+/** One note: every partial jumps up at once, then each fades at its own speed. */
+function strike(audio: BaseAudioContext, output: AudioNode, note: number, at: number): void {
+	for (const [ratio, level, fade] of PARTIALS) {
+		const oscillator = audio.createOscillator();
+		const gain = audio.createGain();
+
+		oscillator.type = 'sine';
+		oscillator.frequency.value = note * ratio;
+
+		gain.gain.setValueAtTime(0, at);
+		gain.gain.linearRampToValueAtTime(NOTE_LEVEL * level, at + STRIKE_SECONDS);
+		// Exponential is how a struck thing fades, and it can't aim at zero itself.
+		gain.gain.exponentialRampToValueAtTime(0.0001, at + fade);
+
+		oscillator.connect(gain).connect(output);
+		oscillator.start(at);
+		oscillator.stop(at + fade + 0.02);
 	}
 }
 

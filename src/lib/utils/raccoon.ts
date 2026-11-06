@@ -5,21 +5,28 @@
  *
  * 1. your birthday — personal beats public;
  * 2. a special day: Christmas (24–25 Dec), New Year (31 Dec – 1 Jan), Easter
- *    (Sunday and Monday), Halloween (31 Oct), Valentine's Day (14 Feb);
- * 3. the next chore on you — a bell while it's coming up, an alarm clock once
+ *    (Sunday and Monday), Faschingsdienstag (47 days before Easter),
+ *    Halloween (31 Oct), Valentine's Day (14 Feb);
+ * 3. your first visit: the waving welcome raccoon, so someone new meets a
+ *    raccoon saying hello rather than one mid-tennis-match (→ DECISIONS #238);
+ * 4. the midnight raccoon, on one night in three from 00:00 to 02:00, each
+ *    member's own (→ DECISIONS #243);
+ * 5. the next chore on you — a bell while it's coming up, an alarm clock once
  *    it's late;
- * 4. asleep from 22:00 to 05:00, household time;
- * 5. an everyday pose (→ `everydayRaccoon`): the ones that fit the month, taken
- *    in turn, a new one each morning, afternoon and evening.
+ * 6. asleep from 22:00 to 05:00, household time;
+ * 7. an everyday pose (→ `everydayRaccoon`): three of the season's poses
+ *    drawn for each member each day, one each morning, afternoon and evening.
  *
- * A special day beats the reminder because the card under the raccoon still
- * names the chore; the raccoon is the only thing that can say what day it is.
+ * A special day and the midnight raccoon beat the reminder because the card
+ * under the raccoon still names the chore; the raccoon is the only thing that
+ * can say what day it is, and who is in the kitchen at this hour.
  * Everything here is the household's date and hour as the server read them, so
  * the same pose renders on the server and in the browser, all day.
  */
 import type { MascotName } from '$lib/assets/mascot';
+import { EVERYDAY, type DaySlot, type Season, type Weekday } from '$lib/assets/mascot/everyday';
 import { isBirthdayOn } from './birthday.ts';
-import { addDays, daysBetween, type CalendarDate } from './dates.ts';
+import { addDays, daysBetween, weekdayIndex, type CalendarDate } from './dates.ts';
 import { easterSunday } from './holidays.ts';
 
 type Input = {
@@ -30,10 +37,27 @@ type Input = {
 	birthday: string | null;
 	/** Due date of the chore Home's card shows, if there is one. */
 	nextChoreDue: CalendarDate | null;
+	/** Whose draw it is: the member id, so each member meets their own (→ DECISIONS #232). */
+	seed?: string;
+	/** The reader hasn't met a raccoon before this slot (→ `services/raccoons` `isFirstVisit`). */
+	firstVisit?: boolean;
 };
 
-/** Fixed special days, `MM-DD`. Easter moves, so it is worked out per year. */
-const SPECIAL_DAYS: Record<string, MascotName> = {
+/** Who greets someone opening Home for the first time. */
+export const WELCOME_RACCOON: MascotName = 'welcome-a';
+
+/** Who sneaks into the kitchen after midnight, when the night's draw lets it. */
+export const MIDNIGHT_RACCOON: MascotName = 'midnight';
+
+/**
+ * How many of a member's nights it shows on. Generous, because being on Home in
+ * those two hours is already the hard part: anyone who looks then meets it
+ * within a few late nights. Still its own night, not every night.
+ */
+export const MIDNIGHT_CHANCE = 1 / 3;
+
+/** Fixed special days, `MM-DD`. Easter and Fasching move, so they are worked out per year. */
+export const SPECIAL_DAYS: Readonly<Record<string, MascotName>> = {
 	'12-24': 'christmas',
 	'12-25': 'christmas',
 	'12-31': 'new-year',
@@ -42,40 +66,96 @@ const SPECIAL_DAYS: Record<string, MascotName> = {
 	'02-14': 'valentines'
 };
 
+/** Who Home shows when the day or the chore list says so, rather than the season. */
+const SITUATIONS = [
+	'birthday',
+	'reminder-upcoming',
+	'reminder-overdue',
+	'sleeping',
+	'midnight'
+] as const satisfies readonly MascotName[];
+
+/**
+ * Every raccoon Home can show, and only those: the situations, the special
+ * days, then the everyday poses in their order. The section raccoons (shopping,
+ * cooking, tasks, expenses, head, settings, move-out) are drawn for another
+ * job and never sit on Home's card, so they are not here. Derived from the same
+ * sources `homeRaccoon` reads, so a new everyday pose from `mascots.json` joins
+ * by itself. The admin picker lists exactly these, and the server takes no
+ * other `?raccoon=` (→ plan 34).
+ */
+export const HOME_RACCOONS: readonly MascotName[] = [
+	...new Set<MascotName>([
+		...SITUATIONS,
+		...Object.values(SPECIAL_DAYS),
+		'fasching',
+		'easter',
+		...EVERYDAY.map((pose) => pose.name)
+	])
+];
+
+export function isHomeRaccoon(value: string): value is MascotName {
+	return (HOME_RACCOONS as readonly string[]).includes(value);
+}
+
 /** The hours the raccoon is asleep: from 22:00, until 05:00. */
 const BEDTIME = 22;
 const WAKE_UP = 5;
 
+/** The midnight raccoon's stretch ends at 02:00; it starts at 00:00. */
+const MIDNIGHT_ENDS = 2;
+
 /** The awake day in three: morning from 05:00, afternoon from 11:00, evening from 17:00. */
 const SLOT_STARTS = [WAKE_UP, 11, 17];
 
-const ALL_YEAR = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12];
+/** Home's three awake slots, in order, by the names `mascots.json` gives a pose's `slots`. */
+export const DAY_SLOTS: readonly DaySlot[] = ['morning', 'afternoon', 'evening'];
+
+/** The week, Monday first, by the names `mascots.json` gives a pose's `days`. */
+export const WEEKDAYS: readonly Weekday[] = ['mon', 'tue', 'wed', 'thu', 'fri', 'sat', 'sun'];
 
 /**
- * The everyday poses and the months (1–12) each belongs to (DECISIONS #219):
- * the beach and the snow only in the three hottest and coldest, gardening,
- * fishing and tea into the mild months either side, and reading, sports and
- * the two greetings all year, so a month between seasons still has six.
- * Listed so that neighbours differ: taking them in turn, the last wrapping
- * round to the first, never puts the two greetings, the two gardening poses
- * or the two hot drinks back to back in any month.
+ * How long each of Home's stretches lasts, in hours: the three awake slots, the
+ * night, and the midnight raccoon's part of that night. The raccoon album weighs a raccoon's rarity by them (→
+ * `utils/raccoon-album`).
  */
-const EVERYDAY: Array<[MascotName, number[]]> = [
-	['welcome-a', ALL_YEAR],
-	['beach', [6, 7, 8]],
-	['snow', [12, 1, 2]],
-	['reading', ALL_YEAR],
-	['garden', [4, 5, 6, 7, 8, 9, 10]],
-	['cold', [11, 12, 1, 2, 3]],
-	['welcome-b', ALL_YEAR],
-	['fishing', [5, 6, 7, 8, 9]],
-	['tea', [10, 11, 12, 1, 2, 3, 4]],
-	['sports', ALL_YEAR],
-	['summer-garden', [5, 6, 7, 8]]
+export const SLOT_HOURS: Readonly<Record<DaySlot | 'night' | 'midnight', number>> = {
+	morning: SLOT_STARTS[1] - SLOT_STARTS[0],
+	afternoon: SLOT_STARTS[2] - SLOT_STARTS[1],
+	evening: BEDTIME - SLOT_STARTS[2],
+	night: 24 - BEDTIME + WAKE_UP,
+	midnight: MIDNIGHT_ENDS
+};
+
+/** Which season each month (1–12) belongs to: meteorological, three months each. */
+export const SEASON_OF_MONTH: readonly Season[] = [
+	'winter',
+	'winter',
+	'spring',
+	'spring',
+	'spring',
+	'summer',
+	'summer',
+	'summer',
+	'autumn',
+	'autumn',
+	'autumn',
+	'winter'
 ];
 
-/** Any fixed day works; the count from it is what turns the wheel. */
-const EPOCH = '2000-01-01';
+/**
+ * Which stretch of Home's day this is, as `YYYY-MM-DD#0|1|2` (morning,
+ * afternoon, evening) or `YYYY-MM-DD#n` for the night, dated by the evening it
+ * began, so 23:00 and 02:00 are one night. The raccoon album counts a sighting
+ * once per slot (→ plan 35), because within one the raccoon holds still. The
+ * night is the exception: the midnight raccoon can come and go inside it, which
+ * the count survives, because each raccoon keeps its own last slot.
+ */
+export function homeSlot(today: CalendarDate, hour: number): string {
+	if (hour >= BEDTIME) return `${today}#n`;
+	if (hour < WAKE_UP) return `${addDays(today, -1)}#n`;
+	return `${today}#${SLOT_STARTS.findLastIndex((start) => hour >= start)}`;
+}
 
 export function specialDay(today: CalendarDate): MascotName | null {
 	const fixed = SPECIAL_DAYS[today.slice(5)];
@@ -83,15 +163,36 @@ export function specialDay(today: CalendarDate): MascotName | null {
 
 	const easter = easterSunday(Number(today.slice(0, 4)));
 	if (today === easter || today === addDays(easter, 1)) return 'easter';
+	if (today === faschingsdienstag(easter)) return 'fasching';
 
 	return null;
 }
 
-export function homeRaccoon({ today, hour, birthday, nextChoreDue }: Input): MascotName {
+/**
+ * Faschingsdienstag (Shrove Tuesday), the last day of Fasching: 47 days before
+ * Easter Sunday, the day before Ash Wednesday. Only the Tuesday, the day Austria
+ * dresses up (Lukas 2026-11-04).
+ */
+export function faschingsdienstag(easter: CalendarDate): CalendarDate {
+	return addDays(easter, -47);
+}
+
+export function homeRaccoon({
+	today,
+	hour,
+	birthday,
+	nextChoreDue,
+	seed = '',
+	firstVisit = false
+}: Input): MascotName {
 	if (isBirthdayOn(birthday, today)) return 'birthday';
 
 	const special = specialDay(today);
 	if (special) return special;
+
+	if (firstVisit) return WELCOME_RACCOON;
+
+	if (hour < MIDNIGHT_ENDS && midnightVisit(today, seed)) return MIDNIGHT_RACCOON;
 
 	if (nextChoreDue) {
 		return daysBetween(today, nextChoreDue) < 0 ? 'reminder-overdue' : 'reminder-upcoming';
@@ -99,22 +200,92 @@ export function homeRaccoon({ today, hour, birthday, nextChoreDue }: Input): Mas
 
 	if (hour >= BEDTIME || hour < WAKE_UP) return 'sleeping';
 
-	return everydayRaccoon(today, hour);
+	return everydayRaccoon(today, hour, seed);
+}
+
+/** Whether this night is one of the member's midnight raccoon's, from a seed like the draw's. */
+function midnightVisit(today: CalendarDate, seed: string): boolean {
+	return seededRandom(`${seed}|${today}|midnight`)() < MIDNIGHT_CHANCE;
 }
 
 /**
- * The month's poses taken in turn, one per slot: three a day, the next day
- * carrying on where the evening left off, so within a month the same one
- * never shows twice in a row and every one comes round within three days. (A
- * new month's pool can bring back the previous evening's pose on the 1st —
- * with a night of the sleeping raccoon in between, which is fine.) It depends
- * only on the date and the slot, so the whole household sees the same raccoon
- * and it holds still until the slot ends.
+ * Three of the season's poses for each member each day, one per slot
+ * (→ DECISIONS #219, #220, #232): drawn at random, but from a seed made of the
+ * member and the date, so nothing is stored and the same raccoon holds still all
+ * slot, on every device, while a housemate draws their own.
+ *
+ * Random rather than in turn, for the raccoon album: a fixed order meets only
+ * every third pose for someone who always looks in the evening, and hands a
+ * whole season's set to a daily visitor within a week. Drawn, new ones keep
+ * turning up for weeks, the last few take some luck, and there is no hard
+ * guarantee of meeting every pose in a season, on purpose (Lukas 2026-11-03).
+ *
+ * A pose with `days` or `slots` in `mascots.json` is only in the draw on those
+ * days or for those slots: coffee in the morning, the laptop on workdays
+ * (→ DECISIONS #237). It still has to be drawn, so it isn't there every time.
+ * A `weight` raises its odds where it is allowed, so a raccoon of one day a week
+ * isn't seven times as hard to meet as the rest (→ DECISIONS #243).
+ *
+ * The one rule: a day's three are all different and never two look-alikes. The
+ * night's sleeping raccoon sits between one day's evening and the next
+ * morning, so that is every pair that would ever show back to back. The poses,
+ * their seasons and their look-alike groups are `artwork/raccoon/mascots.json`.
  */
-export function everydayRaccoon(today: CalendarDate, hour: number): MascotName {
-	const month = Number(today.slice(5, 7));
-	const pool = EVERYDAY.filter(([, months]) => months.includes(month)).map(([name]) => name);
+export function everydayRaccoon(today: CalendarDate, hour: number, seed = ''): MascotName {
 	const slot = SLOT_STARTS.findLastIndex((start) => hour >= start);
-	const turn = daysBetween(EPOCH, today) * SLOT_STARTS.length + Math.max(slot, 0);
-	return pool[turn % pool.length];
+	return dayDraw(today, seed)[Math.max(slot, 0)];
+}
+
+/** The day's three, in slot order. */
+function dayDraw(today: CalendarDate, seed: string): MascotName[] {
+	const random = seededRandom(`${seed}|${today}`);
+	const drawn: (typeof EVERYDAY)[number][] = [];
+	const season = SEASON_OF_MONTH[Number(today.slice(5, 7)) - 1];
+	const weekday = WEEKDAYS[weekdayIndex(today)];
+	const pool = EVERYDAY.filter(
+		(pose) => pose.seasons.includes(season) && (!pose.days || pose.days.includes(weekday))
+	);
+
+	for (let slot = 0; slot < SLOT_STARTS.length; slot++) {
+		const open = pool.filter(
+			(pose) =>
+				(!pose.slots || pose.slots.includes(DAY_SLOTS[slot])) &&
+				!drawn.includes(pose) &&
+				!(pose.lookAlike && drawn.some((each) => each.lookAlike === pose.lookAlike))
+		);
+		drawn.push(weightedPick(open, random()));
+	}
+	return drawn.map((pose) => pose.name);
+}
+
+/** The pose `roll` (0–1) lands on, each taking up as much of the range as its weight. */
+function weightedPick<Pose extends { weight?: number }>(
+	poses: readonly Pose[],
+	roll: number
+): Pose {
+	const total = poses.reduce((sum, pose) => sum + (pose.weight ?? 1), 0);
+	let left = roll * total;
+	for (const pose of poses) {
+		left -= pose.weight ?? 1;
+		if (left < 0) return pose;
+	}
+	return poses[poses.length - 1];
+}
+
+/**
+ * A small seeded generator: a string hashed to 32 bits (FNV-1a), then
+ * mulberry32. Not for anything secret, only so the same seed gives the same
+ * draw everywhere and nearby seeds don't give nearby draws.
+ */
+function seededRandom(text: string): () => number {
+	let state = 0x811c9dc5;
+	for (let index = 0; index < text.length; index++) {
+		state = Math.imul(state ^ text.charCodeAt(index), 0x01000193) >>> 0;
+	}
+	return () => {
+		state = (state + 0x6d2b79f5) >>> 0;
+		let mixed = Math.imul(state ^ (state >>> 15), 1 | state);
+		mixed = (mixed + Math.imul(mixed ^ (mixed >>> 7), 61 | mixed)) ^ mixed;
+		return ((mixed ^ (mixed >>> 14)) >>> 0) / 4294967296;
+	};
 }
