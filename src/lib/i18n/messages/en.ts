@@ -1245,6 +1245,8 @@ export const en = {
 				paused ? `${label} · ${total} · paused` : `${label} · ${total}`,
 			/** On a timer that is *ringing* — it silences an alarm, not a banner. */
 			dismiss: 'Stop',
+			/** Under the timer's name on the phone's media player (→ DECISIONS #252). */
+			trackRingsAt: (time: string) => `rings at ${time}`,
 			resume: 'Resume',
 			pause: 'Pause',
 			addMinute: '+1:00',

@@ -619,13 +619,21 @@ where it can still be acted on (→ [DECISIONS #131](DECISIONS.md)).
   push at `endsAt` — title "⏲️ {label} is done", body the **recipe name**, so a lock screen says
   which dish as well as which timer, stamped with when it went off, and it asks the platform to
   keep it up until it is acted on. The open page alerts locally instead when it claimed the alert
-  (sound and vibration). Stopping the timer in the app takes the notification away too. Honest
-  limit: a web push cannot ring like a native alarm and cannot bring the app forward. It has no
-  custom sound, no critical alert, and follows the phone's silent mode, so **a phone on silent
-  with the app closed makes no sound at all**. What is left then is the clock past zero
-  (→ [DECISIONS #251](DECISIONS.md), which also says what would change this). The Set-timer sheet
-  says so rather than promising otherwise. Cancelling/pausing the timer cancels the server push.
-  Tapping the notification reopens cook mode at that step.
+  (sound and vibration). Stopping the timer in the app takes the notification away too. The
+  notification has a **Stop** button that stops the timer and the sound without opening the app.
+  Honest limit: a web push has no custom sound and follows the phone's silent mode, and no web app
+  can bring itself forward or show a full-screen alarm. The Set-timer sheet doesn't promise more
+  than a notification. Cancelling/pausing the timer cancels the server push. Tapping the
+  notification reopens cook mode at that step.
+- **On Android, a timer also rings a locked or silent phone** (→ [DECISIONS #252](DECISIONS.md)).
+  Starting one starts an audio track: the whole wait in silence, then the ring, on media volume.
+  It needs the app still running in the background, so swiping the app away leaves only the
+  notification. Music or a podcast keeps playing until the ring begins, then pauses. It shows as a
+  media player, "{label} · rings at 18:42", whose pause button means Stop once it's ringing and
+  does nothing before, so nobody silences a timer by accident. Each running timer has its own
+  track. A timer of more than 2 hours has none, because the file would be too big. Nor does a timer
+  that came back with a reload until the next tap in the app. iPhones and computers keep the live
+  alarm and the notification: it has only been tried on Android.
 
 ### 4.7 Recipe import from a link (→ plan 12, reuses the [3c] editor as its preview)
 

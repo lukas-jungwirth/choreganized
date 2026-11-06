@@ -34,7 +34,8 @@
 import { browser } from '$app/environment';
 import type { Messages } from './i18n';
 import { primeAlarm, ringAlarm, stopAlarm } from './alarm';
-import { TIMERS_MAX, timerHref } from './utils/timer-parse';
+import { type AlarmTrack, clearPlayer, setPlayer, setPlayerStop, startTrack } from './alarm-track';
+import { TIMERS_MAX, timerHref, type TimerStoppedMessage } from './utils/timer-parse';
 import {
 	claimTimerAlert,
 	closeTimerNotification,
@@ -145,6 +146,8 @@ export class CookTimer {
 	 * cannot know about the row, so it must not be read as "cancelled elsewhere".
 	 */
 	#confirmedAt = 0;
+	/** The ring playing with nobody awake, where this phone can (→ `alarm-track.ts`). */
+	#track: AlarmTrack | null = null;
 	/** Local-clock instant it fires at. */
 	#endsAt = $state(0);
 	/** What was left when it was paused. */
@@ -218,6 +221,11 @@ export class CookTimer {
 	/** The row this machine holds, while it holds one. */
 	get rowId(): string | null {
 		return this.#id;
+	}
+
+	/** Local-clock instant it fires at, for the words on the media player. */
+	get endsAt(): number {
+		return this.#endsAt;
 	}
 
 	/** Whether a start is still in flight — see `#pending`. */
@@ -359,6 +367,7 @@ export class CookTimer {
 		// countdown appears. Its reply will find a newer generation and drop
 		// itself, so nothing here is waiting on it any more.
 		this.#pending = false;
+		this.silence();
 		this.#release();
 	}
 
@@ -405,6 +414,7 @@ export class CookTimer {
 					// exactly like a timer that is going to buzz, and never would.
 					this.error = failure.message;
 					this.phase = 'paused';
+					this.silence();
 					return;
 				}
 
@@ -505,10 +515,32 @@ export class CookTimer {
 		this.#endsAt = Date.now() + remainingMs;
 		this.#now = Date.now();
 		this.phase = 'running';
+		this.#startTrack();
 		this.#wake();
 	}
 
+	#startTrack(): void {
+		this.#track?.stop();
+		this.#track = startTrack(this.#endsAt);
+	}
+
+	/**
+	 * Start the track if it isn't playing: a timer adopted on a cold start has had
+	 * no tap to start one with, and the system can stop one along the way. Called
+	 * from any tap in the app, which is what `play()` needs.
+	 */
+	arm(): void {
+		if (this.phase === 'running' && !this.#track?.playing) this.#startTrack();
+	}
+
+	/** Stop the track. Whatever the timer does next, it has nothing left to play. */
+	silence(): void {
+		this.#track?.stop();
+		this.#track = null;
+	}
+
 	#clear(): void {
+		this.silence();
 		this.#id = null;
 		this.phase = 'idle';
 		this.label = '';
@@ -564,6 +596,16 @@ export class CookTimer {
 		const id = this.#id;
 
 		this.phase = 'rang';
+		this.#wake();
+
+		const track = this.#track?.playing ?? false;
+
+		// The track is ringing with the phone in somebody's pocket. Claiming would
+		// cancel the push, and the push is what carries the Stop button.
+		if (track && document.visibilityState !== 'visible') {
+			this.#owned ??= false;
+			return;
+		}
 
 		// Prefer, in order: an answer already in hand, the pre-zero claim still in
 		// flight (never a second request racing it), then a fresh claim for a page
@@ -575,7 +617,7 @@ export class CookTimer {
 
 		// `#id` stays: Stop still has to tell the server, or the row comes back.
 		// Stopped while the claim was out? Then there is nothing left to ring for.
-		if (owned && this.phase === 'rang' && this.overMs < LATE_RING_MS) ringAlarm();
+		if (owned && this.phase === 'rang' && this.overMs < LATE_RING_MS) ringAlarm(!track);
 	}
 }
 
@@ -661,6 +703,23 @@ export class CookTimers {
 		document.addEventListener('visibilitychange', () => {
 			if (document.visibilityState === 'visible' && this.any) primeAlarm();
 		});
+
+		// Any tap can start what a tap has to start: a track, for a timer that came
+		// back with the page (→ `CookTimer.arm`).
+		document.addEventListener('pointerdown', () => {
+			for (const timer of this.#timers) timer.arm();
+		});
+
+		// The media player's button, and the notification's. Both mean Stop.
+		setPlayerStop(() => {
+			for (const timer of this.all) if (timer.phase === 'rang') timer.dismiss();
+		});
+		navigator.serviceWorker?.addEventListener('message', (event: MessageEvent) => {
+			const message = event.data as TimerStoppedMessage | null;
+			if (message?.type !== 'timer-stopped') return;
+
+			this.#timers.find((timer) => timer.rowId === message.id)?.cancel();
+		});
 	}
 
 	/** The ring's timer: this recipe, this step. */
@@ -738,7 +797,10 @@ export class CookTimers {
 			this.#drop(timer);
 		}
 
-		if (this.#timers.length > 0) this.#startTicking();
+		if (this.#timers.length > 0) {
+			this.#startTicking();
+			this.#describePlayer();
+		}
 	}
 
 	/** Whether this tab let go of `rowId` a moment ago — see `#stopped`. */
@@ -764,7 +826,10 @@ export class CookTimers {
 		return new CookTimer(
 			m,
 			(timer, message) => this.#drop(timer, message),
-			() => this.#startTicking()
+			() => {
+				this.#startTicking();
+				this.#describePlayer();
+			}
 		);
 	}
 
@@ -778,6 +843,7 @@ export class CookTimers {
 
 		const released = timer.released;
 		if (released) this.#stopped.set(released.id, released.at);
+		timer.silence();
 
 		this.#timers = this.#timers.filter((candidate) => candidate !== timer);
 		if (this.#timers.length === 0) this.#stopTicking();
@@ -788,6 +854,27 @@ export class CookTimers {
 		// than in `dismiss`. Cancelling a *running* timer while another one rings
 		// must not silence the one you can hear.
 		if (!this.#timers.some((candidate) => candidate.phase === 'rang')) stopAlarm();
+		this.#describePlayer();
+	}
+
+	/**
+	 * What the media player says, set once whenever something changes. A page
+	 * asleep can't update it, so it names a time of day rather than counting down,
+	 * and what it names is whatever comes next.
+	 */
+	#describePlayer(): void {
+		const timer = this.next;
+		if (!timer || !this.#m) {
+			clearPlayer();
+			return;
+		}
+
+		setPlayer(
+			timer.label,
+			timer.phase === 'rang'
+				? this.#m.cooking.dock.done(timer.label)
+				: this.#m.cooking.cook.trackRingsAt(clockTime(timer.endsAt))
+		);
 	}
 
 	/**
@@ -799,6 +886,8 @@ export class CookTimers {
 	reset(): void {
 		this.#stopTicking();
 		stopAlarm();
+		for (const timer of this.#timers) timer.silence();
+		clearPlayer();
 		this.#timers = [];
 		this.#stopped.clear();
 		this.lastError = null;
@@ -830,6 +919,11 @@ export class CookTimers {
 			this.#stopTicking();
 		}
 	}
+}
+
+/** "18:42", the way this phone writes the time. A local instant, so its own locale is right. */
+function clockTime(instant: number): string {
+	return new Date(instant).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
 }
 
 /** The app's timers. A singleton because they outlive cook mode. */

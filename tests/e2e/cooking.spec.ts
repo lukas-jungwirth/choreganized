@@ -207,3 +207,50 @@ test('tapping a finished timer’s bar goes to look at it, and doesn’t stop it
 	await page.getByRole('button', { name: 'Stop', exact: true }).click();
 	await expect(page.getByRole('timer')).toHaveCount(0);
 });
+
+test.describe('on an Android phone', () => {
+	test.use({
+		userAgent: 'Mozilla/5.0 (Linux; Android 14; Pixel 8) Chrome/130.0 Mobile Safari/537.36'
+	});
+
+	test('starting a timer starts the track that rings a locked phone (→ DECISIONS #252)', async ({
+		page
+	}) => {
+		await page.addInitScript(() => {
+			const tracks: HTMLMediaElement[] = [];
+			Object.assign(window, { tracks });
+			const play = HTMLMediaElement.prototype.play;
+			HTMLMediaElement.prototype.play = function () {
+				tracks.push(this);
+				return play.call(this);
+			};
+		});
+		const track = () =>
+			page.evaluate(() => {
+				const [audio] = (window as unknown as { tracks: HTMLMediaElement[] }).tracks;
+				return audio ? { paused: audio.paused, duration: Math.round(audio.duration) } : null;
+			});
+
+		await page.goto('/cooking/recipes');
+		await page
+			.getByRole('link', { name: new RegExp(SEED.recipes.curry) })
+			.first()
+			.click();
+		await page.getByRole('link', { name: 'Start cook mode' }).click();
+		await page.getByRole('button', { name: 'Start 2:00 timer' }).click();
+
+		// Two minutes of silence, and the minute the alarm rings for.
+		await expect.poll(track).toEqual({ paused: false, duration: 180 });
+
+		const player = await page.evaluate(() => ({
+			title: navigator.mediaSession.metadata?.title,
+			artist: navigator.mediaSession.metadata?.artist
+		}));
+		expect(player.title).toBe('Step 1');
+		expect(player.artist).toMatch(/^rings at /);
+
+		await page.getByRole('button', { name: 'Cancel' }).click();
+		await expect.poll(async () => (await track())?.paused).toBe(true);
+		expect(await page.evaluate(() => navigator.mediaSession.metadata)).toBeNull();
+	});
+});

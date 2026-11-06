@@ -52,6 +52,10 @@ export type PushPayload = {
 	requireInteraction?: boolean;
 	/** When the thing happened, in ms since the epoch, if that isn't when this arrives. */
 	timestamp?: number;
+	/** Buttons on the notification, handled by the worker without opening the app. */
+	actions?: { action: string; title: string }[];
+	/** The cook timer this is about, for the Stop button (→ DECISIONS #252). */
+	timerId?: string;
 };
 
 /** The `members` columns that gate a category of notification (→ SPEC §3.5, §3.6, §5.6, §11.11). */

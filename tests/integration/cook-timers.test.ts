@@ -145,11 +145,18 @@ describe('a timer that has gone off', () => {
 		const mine = sent.filter((push) => push.userId === owner.userId);
 		assert.equal(mine.length, 1);
 
-		const payload = (mine[0].payload as (m: unknown) => { tag: string; timestamp: number })(
-			catalog('en')
-		);
+		const payload = (
+			mine[0].payload as (m: unknown) => {
+				tag: string;
+				timestamp: number;
+				timerId: string;
+				actions: { action: string; title: string }[];
+			}
+		)(catalog('en'));
 		assert.equal(payload.timestamp, after(MINUTE).getTime());
 		assert.equal(payload.tag, `timer-${timer.id}`);
+		assert.equal(payload.timerId, timer.id);
+		assert.deepEqual(payload.actions, [{ action: 'stop-timer', title: 'Stop' }]);
 
 		cancelTimer(householdId, owner.userId, timer.id, due);
 	});
