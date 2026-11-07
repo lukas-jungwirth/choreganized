@@ -11,8 +11,9 @@
  *    raccoon saying hello rather than one mid-tennis-match (→ DECISIONS #238);
  * 4. the midnight raccoon, on one night in three from 00:00 to 02:00, each
  *    member's own (→ DECISIONS #243);
- * 5. the next chore on you — a bell while it's coming up, an alarm clock once
- *    it's late;
+ * 5. the next chore on you, once it's due — a bell on the day, an alarm clock
+ *    once it's late. Home's card shows it three days ahead; the raccoon waits for
+ *    the day, so a chore coming up doesn't scold anyone (→ DECISIONS #255);
  * 6. asleep from 22:00 to 05:00, household time;
  * 7. an everyday pose (→ `everydayRaccoon`): three of the season's poses
  *    drawn for each member each day, one each morning, afternoon and evening.
@@ -35,7 +36,7 @@ type Input = {
 	hour: number;
 	/** The reader's own, `MM-DD`, if they gave one. */
 	birthday: string | null;
-	/** Due date of the chore Home's card shows, if there is one. */
+	/** Due date of the chore Home's card shows, if there is one (up to 3 days ahead). */
 	nextChoreDue: CalendarDate | null;
 	/** Whose draw it is: the member id, so each member meets their own (→ DECISIONS #232). */
 	seed?: string;
@@ -195,7 +196,9 @@ export function homeRaccoon({
 	if (hour < MIDNIGHT_ENDS && midnightVisit(today, seed)) return MIDNIGHT_RACCOON;
 
 	if (nextChoreDue) {
-		return daysBetween(today, nextChoreDue) < 0 ? 'reminder-overdue' : 'reminder-upcoming';
+		const days = daysBetween(today, nextChoreDue);
+		if (days < 0) return 'reminder-overdue';
+		if (days === 0) return 'reminder-upcoming';
 	}
 
 	if (hour >= BEDTIME || hour < WAKE_UP) return 'sleeping';

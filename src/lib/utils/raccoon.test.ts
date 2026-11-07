@@ -123,10 +123,20 @@ describe('homeRaccoon', () => {
 		assert.equal(homeRaccoon(plain), everydayRaccoon(plain.today, plain.hour));
 	});
 
-	it('follows the next chore: a bell before it is due, the alarm once late', () => {
+	it('follows the next chore: a bell on the day it is due, the alarm once late', () => {
 		assert.equal(homeRaccoon({ ...plain, nextChoreDue: '2036-06-18' }), 'reminder-upcoming');
-		assert.equal(homeRaccoon({ ...plain, nextChoreDue: '2036-06-20' }), 'reminder-upcoming');
 		assert.equal(homeRaccoon({ ...plain, nextChoreDue: '2036-06-17' }), 'reminder-overdue');
+	});
+
+	it('leaves a chore still coming up to the everyday pose: nobody is late yet', () => {
+		for (const due of ['2036-06-19', '2036-06-20', '2036-06-21']) {
+			assert.equal(
+				homeRaccoon({ ...plain, nextChoreDue: due }),
+				everydayRaccoon(plain.today, plain.hour)
+			);
+		}
+		// …and to bedtime, like any evening.
+		assert.equal(homeRaccoon({ ...plain, hour: 23, nextChoreDue: '2036-06-19' }), 'sleeping');
 	});
 
 	it('sleeps from 22:00 until 05:00', () => {
@@ -413,7 +423,7 @@ describe('HOME_RACCOONS', () => {
 					{},
 					{ birthday: today.slice(5) },
 					{ nextChoreDue: addDays(today, -1) },
-					{ nextChoreDue: addDays(today, 1) }
+					{ nextChoreDue: today }
 				]) {
 					seen.add(homeRaccoon({ ...plain, today, hour, ...extra }));
 				}

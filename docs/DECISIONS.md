@@ -3696,3 +3696,11 @@ units | null, name}`, written back as editor lines in the reader's unit spelling
      - **"Jausenlust" → "Snacklaune"**, and English "Snack drive" → "Snack mood" to match.
      - **English is a fresh translation of the approved German**, not the old drafts; Lukas reviewed
        German only, so the English wording is Claude's.
+255. **The reminder raccoon waits for the due day** (Lukas 2026-11-07; → SPEC §2,
+     `utils/raccoon.ts`). Home's next-chore card looks 3 days ahead, and the bell raccoon came with
+     it, so one weekly chore put the bell on Home 4 days in 7 and a few chores kept it there all the
+     time: the everyday raccoons hardly showed, and the household was scolded for chores no one was
+     late on. Now the bell rings only on the due day and the alarm clock once it's overdue; the
+     days before keep the usual steps (sleeping, the draw), while the card still names the chore.
+     The card's window stays at 3 days: a heads-up is useful, a reproach isn't. Doing today's chore
+     takes the bell away, so the raccoon now rewards ticking it off.

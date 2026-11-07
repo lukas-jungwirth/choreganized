@@ -123,8 +123,11 @@ pose, first match wins, top to bottom (`lib/utils/raccoon.ts`, by the household'
   tin ([DECISIONS #243](DECISIONS.md)). Each member's own nights, seeded like the draw below. It
   comes before the reminder, or someone with chores would never meet it; the card under it still
   names the chore. On the other nights it's the steps below as usual.
-- **A next-chore card**: the reminder pose on that card — ringing a bell while the chore is
-  coming up or due today, holding an alarm clock once it's overdue.
+- **A next-chore card due today or overdue** ([DECISIONS #255](DECISIONS.md)): the reminder
+  pose — ringing a bell on the day the chore is due, holding an alarm clock once it's overdue.
+  The card shows a chore up to 3 days ahead, but the raccoon waits for the day: a chore still
+  coming up is no one's fault, so Home keeps the steps below until then. Ticking off today's
+  chore brings the everyday raccoon back.
 - **22:00–05:00**: asleep, under a starry blanket.
 - Otherwise an **everyday pose** ([DECISIONS #219](DECISIONS.md), [#220](DECISIONS.md)), from
   the ones in season — winter Dec–Feb, spring Mar–May, summer Jun–Aug, autumn Sep–Nov:
