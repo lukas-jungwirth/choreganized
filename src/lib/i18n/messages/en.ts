@@ -596,6 +596,15 @@ export const en = {
 		 */
 		nextChore: {
 			eyebrow: 'Your next chore',
+			/** Every card past the first in Home's stack (→ SPEC §2.1). */
+			alsoEyebrow: 'Also on you',
+			/** The stack's counter, read aloud; the screen shows "2 / 3". */
+			position: (index: number, total: number) => `${index} of ${total}`,
+			/** Past the last card: the window holds more than the stack shows. */
+			more: (count: number) => `+${count} more`,
+			/** The "+N more" link, read aloud. */
+			moreLabel: (count: number) =>
+				count === 1 ? '1 more chore in Tasks' : `${count} more chores in Tasks`,
 			meta: (due: string, repeat: string, points: number) => {
 				const line = `${due.charAt(0).toUpperCase() + due.slice(1)} · ${repeat.charAt(0).toLowerCase() + repeat.slice(1)}`;
 				return points > 0 ? `${line} · worth ${points} pts` : line;

@@ -438,6 +438,13 @@ export const de: Messages = {
 		/** "Heute fällig · wöchentlich · 10 Pkt. wert" — Kadenz klein, wie im Satz. */
 		nextChore: {
 			eyebrow: 'Deine nächste Aufgabe',
+			alsoEyebrow: 'Auch für dich',
+			position: (index: number, total: number) => `${index} von ${total}`,
+			more: (count: number) => `+${count} weitere`,
+			moreLabel: (count: number) =>
+				count === 1
+					? '1 weitere Aufgabe unter Aufgaben'
+					: `${count} weitere Aufgaben unter Aufgaben`,
 			meta: (due: string, repeat: string, points: number) => {
 				const line = `${due.charAt(0).toUpperCase() + due.slice(1)} · ${repeat.charAt(0).toLowerCase() + repeat.slice(1)}`;
 				return points > 0 ? `${line} · ${points} Pkt. wert` : line;

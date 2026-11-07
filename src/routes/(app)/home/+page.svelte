@@ -9,8 +9,8 @@
 
 	One raccoon, sitting on the first card's top edge right of the greeting
 	(→ DECISIONS #213, #216, #219). The server picks it (`utils/raccoon`): your
-	birthday, then a special day, then the reminder pose for a chore on you (a
-	bell while it's coming up, an alarm clock once it's late), then asleep after
+	birthday, then a special day, then the reminder pose for the first chore on
+	you (a bell on the day it's due, an alarm clock once it's late), then asleep after
 	22:00, and otherwise an everyday pose that fits the month, a new one each
 	morning, afternoon and evening. Poke it six times and it ducks away for a
 	few seconds (→ `RaccoonPoke`, DECISIONS #223). In admin mode a tap opens
@@ -25,7 +25,7 @@
 	import ActivityCard from '$lib/components/home/ActivityCard.svelte';
 	import AlbumCard from '$lib/components/home/AlbumCard.svelte';
 	import DinnerCard from '$lib/components/home/DinnerCard.svelte';
-	import NextChoreCard from '$lib/components/home/NextChoreCard.svelte';
+	import NextChoreStack from '$lib/components/home/NextChoreStack.svelte';
 	import RaccoonPoke from '$lib/components/home/RaccoonPoke.svelte';
 	import { raccoonPlacement } from '$lib/components/home/raccoon-placement';
 	import StandingsStrip from '$lib/components/home/StandingsStrip.svelte';
@@ -77,8 +77,8 @@
 		Picker = (await import('$lib/components/home/RaccoonPicker.svelte')).default;
 	}
 
-	/** Ticked but not yet confirmed — the card goes quiet before the server agrees. */
-	let pending = $state(false);
+	/** Ticked but not yet confirmed — that card goes quiet before the server agrees. */
+	let pendingId = $state<string | null>(null);
 	/**
 	 * The chore the snooze sheet is about, not a flag: a successful snooze moves
 	 * the task out of the card's window, and the sheet has to survive its own
@@ -91,27 +91,18 @@
 	 * The same handler shape the to-do list gives every check circle [4a], so
 	 * ticking a chore off here raises the same celebration it does there.
 	 */
-	const complete: SubmitFunction = () => {
-		pending = true;
+	const complete: SubmitFunction = ({ formData }) => {
+		pendingId = String(formData.get('id'));
 
 		return async ({ result, update }) => {
 			await update({ reset: false });
-			pending = false;
+			pendingId = null;
 
 			if (result.type !== 'success') return;
 			const completed = result.data?.completed as typeof done;
 			if (completed) done = completed;
 		};
 	};
-
-	/**
-	 * The banner counts what's already late; the card names the worst of it. With
-	 * exactly one overdue chore they are the same task twice, so the banner stands
-	 * down and lets the card — which can actually do something about it — speak.
-	 */
-	const showOverdueBanner = $derived(
-		data.overdue !== null && !(data.nextChore !== null && data.overdue.count === 1)
-	);
 </script>
 
 <svelte:head>
@@ -145,19 +136,19 @@
 {/if}
 
 <div class="stack">
-	<!-- The one thing on this screen you can finish from this screen. -->
-	{#if data.nextChore}
-		{@const chore = data.nextChore}
-		<NextChoreCard
-			{chore}
-			today={data.today}
-			{pending}
-			{complete}
-			onsnooze={() => (snoozing = chore)}
-		/>
-	{/if}
+	<!-- The one thing on this screen you can finish from this screen: one card,
+		 or a stack to swipe when more than one chore is on you. -->
+	<NextChoreStack
+		chores={data.nextChores}
+		more={data.moreChores}
+		today={data.today}
+		{pendingId}
+		{complete}
+		onsnooze={(chore) => (snoozing = chore)}
+	/>
 
-	{#if data.overdue && showOverdueBanner}
+	<!-- Null when every overdue chore is already a card above (→ `getHomeSummary`). -->
+	{#if data.overdue}
 		{@const overdue = data.overdue}
 		<Banner
 			title={m.home.overdue.count(overdue.count)}

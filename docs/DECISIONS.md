@@ -3704,3 +3704,18 @@ units | null, name}`, written back as editor lines in the reader's unit spelling
      days before keep the usual steps (sleeping, the draw), while the card still names the chore.
      The card's window stays at 3 days: a heads-up is useful, a reproach isn't. Doing today's chore
      takes the bell away, so the raccoon now rewards ticking it off.
+256. **Home's next-chore card swipes when more than one chore is on you** (Lukas 2026-11-07; →
+     SPEC §2.1, `components/home/NextChoreStack.svelte`). The card showed only the soonest chore,
+     so a second one due the same day was invisible on Home. Now every chore in the 3-day window
+     gets a card, soonest first, in a scroll-snap row.
+     - **No peek of the next card** (Lukas chose it over the sketch's 20px peek): the counter
+       ("1 / 3") on the card says there are more, and the dots say where you are. A peek would
+       narrow every card and break its line with the cards below. The gap between cards is both
+       gutters, so the next one starts past the screen's edge and one swipe is one screen.
+     - **At most 5 cards**, then "+N more" to Tasks: enough for a busy week, few enough that
+       the dots still read as a count.
+     - **The overdue banner stands down whenever every overdue chore is a card**, not only when
+       exactly one is; it would otherwise repeat what the cards say. The service sets `overdue`
+       to null then, so the page has no rule of its own.
+     - **The raccoon follows the first card**, not the one in view, so it doesn't change while
+       you swipe.
