@@ -29,7 +29,6 @@ import camera from './camera.avif';
 import garden from './garden.avif';
 import painting from './painting.avif';
 import cold from './cold.avif';
-import handball from './handball.avif';
 import cards from './cards.avif';
 import sweets from './sweets.avif';
 import snowman from './snowman.avif';
@@ -95,7 +94,6 @@ export const MASCOTS = {
 	garden: { src: garden, width: 359, height: 408, body: 0.57 },
 	painting: { src: painting, width: 322, height: 408, body: 0.48 },
 	cold: { src: cold, width: 336, height: 408, body: 0.48 },
-	handball: { src: handball, width: 431, height: 408, body: 0.6 },
 	cards: { src: cards, width: 326, height: 408, body: 0.5 },
 	sweets: { src: sweets, width: 315, height: 408, body: 0.54 },
 	snowman: { src: snowman, width: 341, height: 408, body: 0.55 },

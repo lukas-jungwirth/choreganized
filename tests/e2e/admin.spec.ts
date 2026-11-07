@@ -61,9 +61,9 @@ test('an admin turns admin mode on with seven taps, and off again', async ({ pag
 	await expect(page.getByText('Admin mode: every raccoon is shown')).toBeVisible();
 	// No locked tile; an unmet one is named and still says it isn't met.
 	await expect(page.getByRole('button', { name: /^No\. \d{3}, not met yet$/ })).toHaveCount(0);
-	await page.getByRole('button', { name: /^No\. 041, Christmas Baker, not met yet$/ }).click();
+	await page.getByRole('button', { name: /^No\. 040, Christmas, not met yet$/ }).click();
 	const card = page.getByRole('dialog', { name: 'Raccoon album' });
-	await expect(card.getByRole('heading', { name: 'Christmas Baker' })).toBeVisible();
+	await expect(card.getByRole('heading', { name: 'Christmas' })).toBeVisible();
 	await expect(card.getByText('Not met yet · shown in admin mode')).toBeVisible();
 	await card.getByRole('button', { name: 'Close' }).click();
 	await page.goto('/settings');

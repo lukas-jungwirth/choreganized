@@ -149,10 +149,10 @@ describe('window', () => {
 			season: 'winter'
 		});
 		assert.deepEqual(albumEntry('tea').window, { kind: 'months', from: 9, to: 2, season: null });
-		assert.deepEqual(albumEntry('handball').window, {
+		assert.deepEqual(albumEntry('tennis').window, {
 			kind: 'months',
-			from: 9,
-			to: 5,
+			from: 3,
+			to: 11,
 			season: null
 		});
 		assert.deepEqual(albumEntry('beach').window, {
@@ -193,8 +193,8 @@ describe('frame', () => {
 		assert.equal(frameFill(albumEntry('reading').frame), 'var(--season-any)');
 		assert.equal(frameFill(albumEntry('snowman').frame), 'var(--season-winter)');
 		assert.equal(
-			frameFill(albumEntry('handball').frame),
-			'linear-gradient(135deg, var(--season-autumn), var(--season-winter), var(--season-spring))'
+			frameFill(albumEntry('tennis').frame),
+			'linear-gradient(135deg, var(--season-spring), var(--season-summer), var(--season-autumn))'
 		);
 		assert.equal(frameFill(albumEntry('birthday').frame), 'var(--holo)');
 	});
@@ -218,13 +218,13 @@ describe('numbering', () => {
 
 describe("Home's several-new line", () => {
 	it('names two, or two and how many more, in each language', () => {
-		assert.equal(en.album.home.names(['A', 'B'], 20, 53), 'A and B · 20 of 53');
-		assert.equal(en.album.home.names(['A', 'B', 'C', 'D'], 20, 53), 'A, B and 2 more · 20 of 53');
-		assert.equal(de.album.home.names(['A', 'B'], 20, 53), 'A und B · 20 von 53');
-		assert.equal(de.album.home.names(['A', 'B', 'C'], 20, 53), 'A, B und 1 weiterer · 20 von 53');
+		assert.equal(en.album.home.names(['A', 'B'], 20, 52), 'A and B · 20 of 52');
+		assert.equal(en.album.home.names(['A', 'B', 'C', 'D'], 20, 52), 'A, B and 2 more · 20 of 52');
+		assert.equal(de.album.home.names(['A', 'B'], 20, 52), 'A und B · 20 von 52');
+		assert.equal(de.album.home.names(['A', 'B', 'C'], 20, 52), 'A, B und 1 weiterer · 20 von 52');
 		assert.equal(
-			de.album.home.names(['A', 'B', 'C', 'D'], 20, 53),
-			'A, B und 2 weitere · 20 von 53'
+			de.album.home.names(['A', 'B', 'C', 'D'], 20, 52),
+			'A, B und 2 weitere · 20 von 52'
 		);
 	});
 });
@@ -329,5 +329,23 @@ describe('homeSlot', () => {
 		assert.equal(homeSlot('2036-06-18', 22), '2036-06-18#n');
 		assert.equal(homeSlot('2036-06-19', 2), '2036-06-18#n');
 		assert.equal(homeSlot('2037-01-01', 4), '2036-12-31#n');
+	});
+});
+
+describe('the reviewed album (Lukas 2026-11-07)', () => {
+	it('has 52 raccoons numbered 1 to 52, without the handball one', () => {
+		assert.equal(ALBUM_SIZE, 52);
+		assert.deepEqual(
+			ALBUM_ENTRIES.map((entry) => entry.number).sort((a, b) => a - b),
+			Array.from({ length: 52 }, (_, i) => i + 1)
+		);
+		assert.ok(!ALBUM_ENTRIES.some((entry) => (entry.name as string) === 'handball'));
+		assert.equal(albumEntry('valentines').number, 36);
+	});
+
+	it('calls the snack scale Snacklaune, and gives the holidays situation names', () => {
+		assert.equal(de.album.stats.snacks, 'Snacklaune');
+		assert.equal(de.raccoons.birthday.name, 'Geburtstag');
+		assert.equal(en.raccoons.birthday.name, 'Birthday');
 	});
 });

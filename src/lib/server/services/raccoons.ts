@@ -22,7 +22,7 @@ import { raccoonSightings, type RaccoonSighting } from '../db/schema';
 
 /**
  * Only raccoons still in the album count: a pose retired from Home keeps its
- * rows (it was met), but "54 of 53" is not a thing to show.
+ * rows (it was met), but "53 of 52" is not a thing to show.
  */
 const inAlbum = inArray(
 	raccoonSightings.raccoon,
@@ -133,7 +133,7 @@ export function albumSummary(householdId: string, memberId: string): AlbumSummar
 	};
 }
 
-/** How many they have met — the Settings row's "17 of 53". */
+/** How many they have met — the Settings row's "17 of 52". */
 export function countSightings(householdId: string, memberId: string): number {
 	return db
 		.select({ found: count() })

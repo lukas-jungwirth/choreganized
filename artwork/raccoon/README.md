@@ -69,7 +69,6 @@ checks that simulated members meet every pose of every season. The app icons are
 | `sports.png`              | Home, everyday, all year                                       |
 | `skiing.png`              | Home, everyday, winter                                         |
 | `tennis.png`              | Home, everyday, spring, summer, autumn                         |
-| `handball.png`            | Home, everyday, autumn, winter, spring                         |
 | `painting.png`            | Home, everyday, all year                                       |
 | `phone.png`               | Home, everyday, all year                                       |
 | `call.png`                | Home, everyday, all year                                       |
