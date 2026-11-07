@@ -2530,7 +2530,7 @@ export const en = {
 		subtitle: 'Every raccoon you’ve met on Home.',
 		back: 'Back to Settings',
 		backHome: 'Back to Home',
-		/** The Settings row's value: "17 of 53". */
+		/** The Settings row's value: "17 of 52". */
 		count: (found: number, total: number) => `${found} of ${total}`,
 		found: (found: number, total: number) => `${found} of ${total} found`,
 		/**
@@ -2596,7 +2596,7 @@ export const en = {
 		stats: {
 			cosiness: 'Cosiness',
 			mischief: 'Mischief',
-			snacks: 'Snack drive',
+			snacks: 'Snack mood',
 			helpfulness: 'Helpfulness'
 		},
 		statValue: (name: string, value: number) => `${name}: ${value} of 5`,
@@ -2639,220 +2639,216 @@ export const en = {
 	 * Every raccoon in the album: a name and a fun fact. The name says what the
 	 * raccoon is ("Tennis Ace"), not an invented first name (Lukas 2026-11-05,
 	 * DECISIONS #239). The app's own words, not household content, so German
-	 * writes its own. Drafts, shipped for Lukas to review (→ plan 35).
+	 * writes its own. Reviewed by Lukas 2026-11-07 (→ plan 35, DECISIONS #254).
 	 */
 	raccoons: {
 		'welcome-a': {
 			name: 'Welcome Committee',
-			fact: 'Waves at the postman, the neighbours and, on slow days, the fridge.'
+			fact: 'Saw you coming a mile off. Still acts like it’s a surprise.'
 		},
 		'welcome-b': {
 			name: 'Optimist',
-			fact: 'Has never once checked whether it will be fine. It usually is.'
+			fact: 'Whatever you planned for today, you’ll get it done. Probably.'
 		},
 		reading: {
-			name: 'Bedtime Reader',
-			fact: 'Has read every recipe in the cookbook twice. Has cooked one of them, once.'
+			name: 'Bookworm',
+			fact: 'Has read every recipe in the cookbook twice.'
 		},
 		call: {
-			name: 'Phone Chatter',
-			fact: 'Calls to say he’s running late. Calls again to say how late.'
+			name: 'On Hold',
+			fact: 'Tried to cancel his subscription three years ago. His call is still important to them.'
 		},
 		phone: {
-			name: 'Landline Keeper',
-			fact: 'Still knows every number by heart. Refuses to explain how.'
+			name: 'Doomscrolling',
+			fact: 'Your quick dopamine hit, any time of day.'
 		},
 		music: {
 			name: 'Quiet Listener',
-			fact: 'Hums along to everything, always slightly ahead of the beat.'
+			fact: 'Hears everything except the people around him.'
 		},
 		singing: {
 			name: 'Kitchen Karaoke Star',
-			fact: 'Sings in the shower, in the kitchen and, once, at the pharmacy.'
+			fact: 'Sings in the shower, in the kitchen and pretty much everywhere else.'
 		},
 		camera: {
-			name: 'Household Photographer',
-			fact: 'Has 400 photos of dinner and not one of the people who ate it.'
+			name: 'Hobby Photographer',
+			fact: 'Usually fills the memory card on the first day of the holiday.'
 		},
 		painting: {
-			name: 'Artist in Residence',
-			fact: 'Has painted the fruit bowl so often that the fruit has started to pose.'
+			name: 'Artist',
+			fact: 'Has painted the fruit bowl so often that the fruit now poses.'
 		},
 		writing: {
 			name: 'List Writer',
-			fact: 'Writes the shopping list by hand first, for the feeling of it.'
+			fact: 'Still writes the shopping list by hand. For the feel of it.'
 		},
 		cards: {
-			name: 'Card Shark',
-			fact: 'Says he’s bad at cards. Has won every game night since spring.'
+			name: 'Poker Face',
+			fact: 'Says he can’t play cards. Somehow wins every game night.'
 		},
 		arcade: {
-			name: 'High-Score Holder',
-			fact: 'Holds the high score on every machine, and the record for “one more go”.'
+			name: 'High Scorer',
+			fact: 'Holds the record on every machine, and the one for “just one more round”.'
 		},
 		sports: {
-			name: 'Morning Workout',
-			fact: 'Lifts weights every morning, then the biscuit tin, for balance.'
+			name: 'Fitness Fanatic',
+			fact: 'Three workouts a day are mandatory!'
 		},
 		watering: {
 			name: 'Plant Whisperer',
-			fact: 'Talks to the houseplants every day. Two of them have started answering.'
+			fact: 'His roommate had to move out to make room for more plants.'
 		},
 		sleeping: {
 			name: 'Night Shift',
-			fact: 'Sleeps from ten till five and dreams, mostly, of breakfast.'
+			fact: 'Regularly sleeps through his big moment.'
 		},
 		'reminder-upcoming': {
 			name: 'Friendly Reminder',
-			fact: 'Rings the bell once, politely. Then once more, just as politely.'
+			fact: 'Rings once, very politely. Then again, just as politely. Just don’t make him ring a third time.'
 		},
 		'reminder-overdue': {
-			name: 'Last Reminder',
-			fact: 'Has never been late in his life and would like that on the record.'
+			name: 'Final Reminder',
+			fact: 'Has never been late in their life and would like that in writing. Take note!'
 		},
 		snow: {
-			name: 'Snowball Thrower',
-			fact: 'Aims for the tree. Hits whoever is standing next to it.'
+			name: 'Snowball Fight',
+			fact: 'Never misses. The snow, at least.'
 		},
 		snowflake: {
-			name: 'Snowflake Collector',
-			fact: 'Has caught 2,000 snowflakes on her tongue. Says no two tasted alike.'
+			name: 'First Snow',
+			fact: 'Has caught 2,000 snowflakes on her tongue. No two tasted the same.'
 		},
 		snowman: {
-			name: 'Snowman Builder',
-			fact: 'Always gives the snowman his own carrot. Keeps the second one for later, just in case.'
+			name: 'Snowman',
+			fact: 'Always gives the snowman a carrot of its own. Keeps a second one for himself, just in case.'
 		},
 		skiing: {
-			name: 'Skier',
-			fact: 'Skis down in four minutes. Takes the gondola back up for the view, and the strudel.'
+			name: 'Downhill',
+			fact: 'The mountain is calling. So is the ski hut.'
 		},
 		skates: {
 			name: 'Ice Skater',
-			fact: 'Can do a perfect pirouette. Stopping is still a work in progress.'
+			fact: 'Can do a perfect pirouette. Still working on stopping.'
 		},
 		cold: {
-			name: 'Cocoa Sipper',
-			fact: 'Wears three scarves and holds his cocoa with both paws. Still calls it fresh out.'
+			name: 'Hot Cocoa',
+			fact: 'There’s only one proper way to keep your paws warm.'
 		},
 		flower: {
 			name: 'Flower Sniffer',
-			fact: 'Stops to smell every flower on the way to the shop. The shop is shut by the time she gets there.'
+			fact: 'Some would call her a daydreamer. She calls it focusing on what matters.'
 		},
 		tennis: {
 			name: 'Tennis Ace',
-			fact: 'Calls every ball out, his own included.'
+			fact: 'Calls “Out” on every ball, including his own.'
 		},
 		garden: {
 			name: 'Gardener',
-			fact: 'Waters the garden at dawn and herself at noon.'
+			fact: 'The only raccoon with a green thumb.'
 		},
 		butterfly: {
-			name: 'Butterfly Chaser',
-			fact: 'Has chased butterflies for three summers. The butterflies are winning.'
+			name: 'Butterfly Hunter',
+			fact: 'Is convinced her net must have a hole in it.'
 		},
 		fishing: {
-			name: 'Patient Angler',
-			fact: 'Has been waiting for a bite since Tuesday. Brought enough sandwiches for the week.'
+			name: 'Angler',
+			fact: 'Has been waiting for a bite since Tuesday. Which Tuesday, nobody quite remembers.'
 		},
 		sweets: {
 			name: 'Sweet Tooth',
-			fact: 'Keeps an emergency chocolate in every pocket. Has never once had an emergency.'
+			fact: 'Keeps emergency chocolate in every pocket. Has a lot of emergencies.'
 		},
 		trash: {
 			name: 'Bin Inspector',
-			fact: 'Checks every bin on the street, purely for quality control.'
+			fact: 'Head of quality control.'
 		},
 		beach: {
-			name: 'Sunbather',
-			fact: 'Puts her towel down at seven in the morning. Has not moved since.'
+			name: 'Beach Pro',
+			fact: 'Put her towel down at seven in the morning. Hasn’t moved since.'
 		},
 		'water-pistol': {
-			name: 'Water-Fight Starter',
-			fact: 'Swears he only fills it up to water the plants.'
+			name: 'Water Fight!',
+			fact: 'Swears he only fills it up to water the flowers.'
 		},
 		lemonade: {
-			name: 'Lemonade Maker',
-			fact: 'Squeezes the lemons herself and the sugar in by the handful.'
+			name: 'Freshly Squeezed',
+			fact: 'Has dreamed of her own lemonade stand since she was little.'
 		},
 		coffee: {
-			name: 'Early Riser',
-			fact: 'Not a morning raccoon. Is one after the first cup.'
+			name: 'Coffee First',
+			fact: 'Not a morning raccoon. Approachable from the third cup on.'
 		},
 		laptop: {
-			name: 'Home-Office Hero',
+			name: 'Working from Home',
 			fact: 'Was on mute for the whole meeting. Nobody has noticed yet.'
 		},
 		friday: {
-			name: 'Friday Freedom',
-			fact: 'Filed everything under Monday.'
+			name: 'Clocked Out',
+			fact: 'Hands up, it’s the weekend!'
 		},
 		midnight: {
-			name: 'Midnight Crumb',
-			fact: 'Just one more. That was four cookies ago.'
+			name: 'Midnight Snack',
+			fact: 'You didn’t see anything!'
 		},
 		snooze: {
 			name: 'Snooze Button',
-			fact: 'Treats 07:00 as more of a suggestion.'
+			fact: 'Sees 7:00 as more of a suggestion.'
 		},
 		socks: {
 			name: 'Sock Detective',
-			fact: 'Never closed a case. The washing machine is still the prime suspect.'
+			fact: 'Hasn’t solved a single case. The washing machine remains the prime suspect.'
 		},
 		fruit: {
-			name: 'Vitamin Fan',
-			fact: 'Eats an apple a day, plus the pear, plus the grapes, just in case.'
+			name: 'Vitamin Boost',
+			fact: 'Takes “eat the rainbow every day” very seriously.'
 		},
 		juggling: {
 			name: 'Juggler',
-			fact: 'Keeps three balls in the air. Four on a good day, two near the vase.'
+			fact: 'Keeps three balls in the air. Four on a good day. He has no vases left.'
 		},
 		bath: {
-			name: 'Bubble Bather',
-			fact: 'Fills the Schaffel to the top, then adds more bubbles. The duck has stopped complaining.'
+			name: 'Bubble Bath',
+			fact: 'The more bubbles, the better.'
 		},
 		mushrooms: {
-			name: 'Mushroom Picker',
-			fact: 'Knows every mushroom in the forest. The red one with the dots goes back, he promises.'
+			name: 'Mushroom Hunter',
+			fact: 'Knows every mushroom in the forest. The red one with the spots goes back, promise.'
 		},
 		tea: {
-			name: 'Tea Brewer',
-			fact: 'Has a tea for every mood and a mood for every tea.'
+			name: 'Teatime',
+			fact: 'The teapot makes the tea? Around here, a very passionate raccoon does.'
 		},
 		knitting: {
-			name: 'Scarf Maker',
-			fact: 'Started a scarf in October. It is four metres long now and still going.'
-		},
-		handball: {
-			name: 'Team Captain',
-			fact: 'Plays in every weather. Has never once admitted it was raining.'
+			name: 'Bundled Up',
+			fact: 'Holds the world record for the longest knitted scarf.'
 		},
 		valentines: {
-			name: 'Valentine',
-			fact: 'Leaves little hearts on the fridge. Also leaves the fridge open.'
+			name: 'Valentine’s Day',
+			fact: 'Love is all you need.'
 		},
 		fasching: {
-			name: 'Fasching Pirate',
-			fact: 'Comes as a pirate every year. Is still looking for the treasure from last time.'
+			name: 'Carnival',
+			fact: 'Dresses up as a pirate every year. Still looking for last year’s treasure.'
 		},
 		easter: {
-			name: 'Easter Egg Hider',
-			fact: 'Hides the eggs so well that one from last year is still out there.'
+			name: 'Easter',
+			fact: 'Hides the eggs so well that even she can’t find them.'
 		},
 		halloween: {
-			name: 'Pumpkin Carver',
-			fact: 'Carves the scariest pumpkin on the street, then is a little scared of it.'
+			name: 'Halloween',
+			fact: 'Carves the scariest pumpkin on the street, then gets a little scared of it himself.'
 		},
 		christmas: {
-			name: 'Christmas Baker',
-			fact: 'Bakes eleven kinds of Christmas biscuits and tests every tray. Thoroughly.'
+			name: 'Christmas',
+			fact: 'Bakes 34 kinds of Christmas cookies and naturally tastes every tray. Thoroughly.'
 		},
 		'new-year': {
-			name: 'Countdown Keeper',
-			fact: 'Starts the countdown at eleven, just to be on the safe side.'
+			name: 'New Year’s Eve',
+			fact: 'Starts the countdown at eleven, just to be safe.'
 		},
 		birthday: {
-			name: 'Birthday Raccoon',
-			fact: 'Only comes out once a year, and only for you. Brought cake.'
+			name: 'Birthday',
+			fact: 'Only comes once a year, and only for you. Brought cake.'
 		}
 	} satisfies Record<AlbumName, { name: string; fact: string }>,
 

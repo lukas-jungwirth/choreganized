@@ -2041,7 +2041,7 @@ export const de: Messages = {
 		stats: {
 			cosiness: 'Gemütlichkeit',
 			mischief: 'Schabernack',
-			snacks: 'Jausenlust',
+			snacks: 'Snacklaune',
 			helpfulness: 'Hilfsbereitschaft'
 		},
 		statValue: (name: string, value: number) => `${name}: ${value} von 5`,
@@ -2080,103 +2080,103 @@ export const de: Messages = {
 		}
 	},
 
-	/** Entwürfe, zum Gegenlesen (→ plan 35). Wortspiele erlaubt. */
+	/** Von Lukas geprüft am 2026-11-07 (→ plan 35, DECISIONS #254). Wortspiele erlaubt. */
 	raccoons: {
 		'welcome-a': {
 			name: 'Begrüßungskomitee',
-			fact: 'Winkt dem Briefträger, den Nachbarn und an ruhigen Tagen auch dem Kühlschrank.'
+			fact: 'Hat dich schon kommen sehen. Freut sich trotzdem, als wär’s eine Überraschung.'
 		},
 		'welcome-b': {
 			name: 'Optimist',
-			fact: 'Hat nie nachgeschaut, ob es wirklich wird. Meistens wird es.'
+			fact: 'Was du dir heute vorgenommen hast, wirst du auch erreichen. Wahrscheinlich.'
 		},
 		reading: {
-			name: 'Gute-Nacht-Leserin',
-			fact: 'Hat jedes Rezept im Kochbuch zweimal gelesen. Gekocht hat sie eins, einmal.'
+			name: 'Bücherwurm',
+			fact: 'Hat jedes Rezept im Kochbuch zweimal gelesen.'
 		},
 		call: {
-			name: 'Dauertelefonierer',
-			fact: 'Ruft an, um zu sagen, dass er später kommt. Ruft nochmal an, um zu sagen, wie viel später.'
+			name: 'In der Warteschleife',
+			fact: 'Wollte vor drei Jahren sein Abo kündigen. Sein Anruf ist ihnen weiterhin wichtig.'
 		},
 		phone: {
-			name: 'Festnetz-Hüterin',
-			fact: 'Kann noch jede Nummer auswendig. Wie, verrät sie nicht.'
+			name: 'Doomscrolling',
+			fact: 'Bringt den Dopamin-Kick für zwischendurch.'
 		},
 		music: {
 			name: 'Stiller Zuhörer',
-			fact: 'Summt bei allem mit, immer einen Tick vor dem Takt.'
+			fact: 'Hört alles, nur nicht sein Umfeld.'
 		},
 		singing: {
 			name: 'Küchen-Karaoke-Star',
-			fact: 'Singt unter der Dusche, in der Küche und einmal sogar in der Apotheke.'
+			fact: 'Singt unter der Dusche, in der Küche und eigentlich auch an allen anderen Orten.'
 		},
 		camera: {
-			name: 'Haushaltsfotograf',
-			fact: 'Hat 400 Fotos vom Abendessen und kein einziges von denen, die es gegessen haben.'
+			name: 'Hobbyfotograf',
+			fact: 'Füllt die Speicherkarte in der Regel schon am ersten Urlaubstag.'
 		},
 		painting: {
-			name: 'Hauskünstlerin',
+			name: 'Künstlerin',
 			fact: 'Hat die Obstschale so oft gemalt, dass das Obst schon posiert.'
 		},
 		writing: {
 			name: 'Listenschreiber',
-			fact: 'Schreibt die Einkaufsliste zuerst mit der Hand. Wegen dem Gefühl.'
+			fact: 'Schreibt die Einkaufsliste noch mit der Hand. Wegen dem Gefühl.'
 		},
 		cards: {
-			name: 'Kartenhai',
-			fact: 'Sagt, er kann nicht Karten spielen. Gewinnt seit dem Frühling jeden Spieleabend.'
+			name: 'Pokerface',
+			fact: 'Sagt, er kann nicht Karten spielen. Gewinnt aber jeden Spieleabend.'
 		},
 		arcade: {
 			name: 'Rekordhalterin',
 			fact: 'Hält den Rekord auf jedem Automaten, und den für „nur noch eine Runde“.'
 		},
 		sports: {
-			name: 'Morgensportler',
-			fact: 'Stemmt jeden Morgen Gewichte und danach die Keksdose, fürs Gleichgewicht.'
+			name: 'Sportfanatiker',
+			fact: 'Drei Workouts pro Tag sind Pflicht!'
 		},
 		watering: {
 			name: 'Pflanzenflüsterer',
-			fact: 'Redet jeden Tag mit den Zimmerpflanzen. Zwei antworten schon.'
+			fact: 'Sein Mitbewohner musste gehen, um mehr Platz für Pflanzen zu schaffen.'
 		},
 		sleeping: {
 			name: 'Nachtschicht',
-			fact: 'Schläft von zehn bis fünf und träumt, meistens, vom Frühstück.'
+			fact: 'Verschläft regelmäßig seinen Auftritt.'
 		},
 		'reminder-upcoming': {
 			name: 'Freundliche Erinnerung',
-			fact: 'Läutet einmal, ganz höflich. Und dann nochmal, genauso höflich.'
+			fact: 'Läutet einmal, ganz höflich. Und dann nochmal, genauso höflich. Lass ihn nur nicht dreimal läuten.'
 		},
 		'reminder-overdue': {
 			name: 'Letzte Erinnerung',
-			fact: 'War noch nie im Leben zu spät und hätte das gern schriftlich.'
+			fact: 'War noch nie im Leben zu spät und hätte das gern schriftlich. Nimm dir ein Beispiel!'
 		},
 		snow: {
-			name: 'Schneeballwerfer',
-			fact: 'Zielt auf den Baum. Trifft den, der daneben steht.'
+			name: 'Schneeballschlacht',
+			fact: 'Trifft garantiert immer ins Weiße.'
 		},
 		snowflake: {
-			name: 'Schneeflockensammlerin',
-			fact: 'Hat 2.000 Schneeflocken mit der Zunge gefangen. Keine hat gleich geschmeckt, sagt sie.'
+			name: 'Erster Schnee',
+			fact: 'Hat 2.000 Schneeflocken mit der Zunge gefangen. Keine hat gleich geschmeckt.'
 		},
 		snowman: {
-			name: 'Schneemannbauer',
+			name: 'Schneemann',
 			fact: 'Gibt dem Schneemann immer eine eigene Karotte. Die zweite hebt er sich auf, man weiß ja nie.'
 		},
 		skiing: {
-			name: 'Skifahrer',
-			fact: 'Ist in vier Minuten im Tal. Mit der Gondel geht’s zurück, wegen der Aussicht und dem Strudel.'
+			name: 'Abfahrt',
+			fact: 'Der Berg ruft. Und die Hütte auch.'
 		},
 		skates: {
 			name: 'Eisläuferin',
 			fact: 'Kann eine perfekte Pirouette. Am Bremsen arbeitet sie noch.'
 		},
 		cold: {
-			name: 'Kakaotrinker',
-			fact: 'Trägt drei Schals und hält den Kakao mit beiden Pfoten. Sagt trotzdem, es ist frisch draußen.'
+			name: 'Heißer Kakao',
+			fact: 'Es gibt nur einen richtigen Weg, um die Pfoten warm zu halten.'
 		},
 		flower: {
-			name: 'Blumenschnupperin',
-			fact: 'Riecht auf dem Weg zum Geschäft an jeder Blume. Wenn sie ankommt, hat es schon zu.'
+			name: 'Duftnase',
+			fact: 'Manche würden sie verträumt nennen. Sie nennt es fokussiert aufs Wesentliche.'
 		},
 		tennis: {
 			name: 'Tennis-Ass',
@@ -2184,51 +2184,51 @@ export const de: Messages = {
 		},
 		garden: {
 			name: 'Gärtnerin',
-			fact: 'Gießt in der Früh den Garten und zu Mittag sich selbst.'
+			fact: 'Der einzige Waschbär mit grünem Daumen.'
 		},
 		butterfly: {
 			name: 'Schmetterlingsjägerin',
-			fact: 'Jagt seit drei Sommern Schmetterlinge. Die Schmetterlinge führen.'
+			fact: 'Ist sich sicher, dass ihr Netz ein Loch haben muss.'
 		},
 		fishing: {
-			name: 'Geduldiger Angler',
-			fact: 'Wartet seit Dienstag auf einen Biss. Hat Jausenbrote für die ganze Woche mit.'
+			name: 'Angler',
+			fact: 'Wartet seit Dienstag auf einen Fisch am Haken. Welcher Dienstag, weiß niemand mehr so genau.'
 		},
 		sweets: {
 			name: 'Naschkatze',
-			fact: 'Hat in jeder Tasche eine Notfall-Schokolade. Einen Notfall gab es noch nie.'
+			fact: 'Hat in jeder Tasche eine Notfall-Schokolade. Erlebt viele Notfälle.'
 		},
 		trash: {
 			name: 'Mistkübel-Inspektor',
-			fact: 'Schaut in jeden Mistkübel der Gasse, rein zur Qualitätskontrolle.'
+			fact: 'Leitet die Qualitätskontrolle.'
 		},
 		beach: {
-			name: 'Sonnenanbeterin',
+			name: 'Strandprofi',
 			fact: 'Legt um sieben in der Früh ihr Handtuch hin. Seitdem hat sie sich nicht bewegt.'
 		},
 		'water-pistol': {
-			name: 'Wasserschlacht-Anstifter',
+			name: 'Wasser marsch!',
 			fact: 'Schwört, dass er sie nur zum Blumengießen anfüllt.'
 		},
 		lemonade: {
-			name: 'Limonadenmacherin',
-			fact: 'Presst die Zitronen selber aus und gibt den Zucker händeweise dazu.'
+			name: 'Frisch gepresst',
+			fact: 'Hat schon als kleines Kind vom eigenen Limonadenstand geträumt.'
 		},
 		coffee: {
-			name: 'Frühaufsteher',
-			fact: 'Ist kein Morgenwaschbär. Nach der ersten Tasse schon.'
+			name: 'Erst mal Kaffee',
+			fact: 'Ist kein Morgenwaschbär. Ansprechbar erst ab der dritten Tasse Kaffee.'
 		},
 		laptop: {
-			name: 'Homeoffice-Heldin',
+			name: 'Homeoffice',
 			fact: 'War das ganze Meeting lang stummgeschaltet. Bemerkt hat es noch niemand.'
 		},
 		friday: {
-			name: 'Freitags-Feierabend',
-			fact: 'Hat alles unter Montag abgelegt.'
+			name: 'Feierabend',
+			fact: 'Hoch die Hände, Wochenende!'
 		},
 		midnight: {
-			name: 'Mitternachts-Krümel',
-			fact: 'Nur noch einer. Das war vor vier Keksen.'
+			name: 'Mitternachtssnack',
+			fact: 'Du hast nichts gesehen!'
 		},
 		snooze: {
 			name: 'Schlummertaste',
@@ -2239,59 +2239,55 @@ export const de: Messages = {
 			fact: 'Noch keinen Fall gelöst. Hauptverdächtig bleibt die Waschmaschine.'
 		},
 		fruit: {
-			name: 'Vitaminfreundin',
-			fact: 'Isst jeden Tag einen Apfel, dazu die Birne und die Trauben, sicherheitshalber.'
+			name: 'Vitaminbombe',
+			fact: 'Nimmt „Iss jeden Tag den Regenbogen“ sehr genau.'
 		},
 		juggling: {
 			name: 'Jongleur',
-			fact: 'Hält drei Bälle in der Luft. An guten Tagen vier, neben der Vase nur zwei.'
+			fact: 'Hält drei Bälle in der Luft. An guten Tagen vier. Vasen hat er keine mehr.'
 		},
 		bath: {
 			name: 'Badenixe',
-			fact: 'Füllt das Schaffel bis zum Rand und gibt dann noch Schaum dazu. Die Ente beschwert sich nicht mehr.'
+			fact: 'Je mehr Schaum, desto besser.'
 		},
 		mushrooms: {
 			name: 'Schwammerlsucher',
 			fact: 'Kennt jedes Schwammerl im Wald. Das rote mit den Punkten kommt wieder zurück, versprochen.'
 		},
 		tea: {
-			name: 'Teekocher',
-			fact: 'Hat einen Tee für jede Laune und eine Laune für jeden Tee.'
+			name: 'Teatime',
+			fact: 'Die Teekanne macht den Tee? Hier wohl eher ein leidenschaftlicher Waschbär.'
 		},
 		knitting: {
-			name: 'Schalstrickerin',
-			fact: 'Hat im Oktober mit einem Schal angefangen. Jetzt ist er vier Meter lang und wird noch länger.'
-		},
-		handball: {
-			name: 'Mannschaftskapitän',
-			fact: 'Spielt bei jedem Wetter. Hat noch nie zugegeben, dass es geregnet hat.'
+			name: 'Warm eingepackt',
+			fact: 'Hält den Weltrekord für den längsten gestrickten Schal.'
 		},
 		valentines: {
-			name: 'Valentin',
-			fact: 'Klebt kleine Herzerl auf den Kühlschrank. Lässt den Kühlschrank auch gern offen.'
+			name: 'Valentinstag',
+			fact: 'Love is all you need.'
 		},
 		fasching: {
-			name: 'Faschingspirat',
-			fact: 'Geht jedes Jahr als Pirat. Sucht noch immer den Schatz vom letzten Mal.'
+			name: 'Fasching',
+			fact: 'Geht jedes Jahr als Pirat. Sucht noch immer den Schatz vom letzten Jahr.'
 		},
 		easter: {
-			name: 'Eierversteckerin',
-			fact: 'Versteckt die Eier so gut, dass eins vom letzten Jahr noch immer irgendwo liegt.'
+			name: 'Ostern',
+			fact: 'Versteckt die Eier so gut, dass sie sie selbst nicht mehr finden kann.'
 		},
 		halloween: {
-			name: 'Kürbisschnitzer',
-			fact: 'Schnitzt den gruseligsten Kürbis der Gasse und fürchtet sich dann selber ein bisserl.'
+			name: 'Halloween',
+			fact: 'Schnitzt den gruseligsten Kürbis der Gasse und fürchtet sich dann selber ein bisschen.'
 		},
 		christmas: {
-			name: 'Weihnachtsbäckerin',
-			fact: 'Bäckt elf Sorten Weihnachtskekse und kostet jedes Blech. Gründlich.'
+			name: 'Weihnachten',
+			fact: 'Bäckt 34 Sorten Weihnachtskekse und kostet natürlich von jedem Blech. Gründlich.'
 		},
 		'new-year': {
-			name: 'Countdown-Zähler',
-			fact: 'Fängt um elf mit dem Countdown an, damit nur ja nichts schiefgeht.'
+			name: 'Silvester',
+			fact: 'Fängt um elf mit dem Countdown an, damit ja nichts schiefgeht.'
 		},
 		birthday: {
-			name: 'Geburtstags-Waschbär',
+			name: 'Geburtstag',
 			fact: 'Kommt nur einmal im Jahr, und nur für dich. Hat Kuchen mit.'
 		}
 	},

@@ -815,7 +815,7 @@ const seeded = db.transaction((tx) => {
 		['sleeping', 55, 22, true],
 		['reminder-upcoming', 50, 11, true],
 		['tea', 30, 5, true],
-		['handball', 12, 2, true],
+		['tennis', 12, 2, true],
 		['beach', 45, 3, true],
 		['halloween', 3, 1, true],
 		['snowman', 1, 1, false]

@@ -3679,3 +3679,20 @@ units | null, name}`, written back as editor lines in the reader's unit spelling
      - **Timer pushes are `urgency: high`.** They were sent at the default, and Android may hold those
        on a locked phone lying still. With a 15-minute lifetime, a held one can expire undelivered.
        Other notifications stay at normal: nothing else has to reach a sleeping phone this minute.
+254. **The album's texts, reviewed: 52 raccoons, no handball, "Snacklaune"** (Lukas 2026-11-07; →
+     SPEC §6, plan 35). Lukas went through every raccoon's name, fact and stats on a review page and
+     approved the result; `de.ts`, `en.ts` and the stats in `mascots.json` now carry it, and the
+     drafts are no longer drafts.
+     - **Situation names where a person reads oddly**: the special days are just the day
+       ("Weihnachten", "Ostern", "Geburtstag", "Silvester"…), and others name the moment rather than
+       the raccoon ("Teatime", "In der Warteschleife", "Heißer Kakao", "Erst mal Kaffee"). Characters
+       that read well as one keep that kind of name ("Pokerface", "Socken-Detektivin").
+     - **The handball pose is gone** (Lukas didn't like it): its master, its AVIF, its album entry
+       and its everyday slot. Tennis is left alone in the `ball-sport` look-alike group.
+     - **Numbers 37–53 moved down by one**, to 36–52. #245's "numbers never move once shipped"
+       holds: the album has not reached `main` yet, so nothing shipped moves. A test pins 1–52
+       contiguous. A test deploy's old `handball` sightings stay in the table and stop counting,
+       like any retired pose (`services/raccoons.ts` `inAlbum`).
+     - **"Jausenlust" → "Snacklaune"**, and English "Snack drive" → "Snack mood" to match.
+     - **English is a fresh translation of the approved German**, not the old drafts; Lukas reviewed
+       German only, so the English wording is Claude's.

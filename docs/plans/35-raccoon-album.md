@@ -98,7 +98,7 @@ memberId)` returns the sightings.
   (it moves), `Your birthday`. Built from `seasons` and the special-day list, month names from
   `m.date.*`.
 - **Fun fact**, one or two sentences, in quotes.
-- **Stats**: four fun scales, 1–5 dots each, fixed per raccoon: Cosiness, Mischief, Snack drive,
+- **Stats**: four fun scales, 1–5 dots each, fixed per raccoon: Cosiness, Mischief, Snack mood,
   Helpfulness (names in the catalog, values in `mascots.json` as `stats`).
 - **Footer**: "First met 2 Dec" and "Seen 7×" (live, from the sighting).
 - **Swipe** or prev/next to the neighbouring card, in album order, skipping nothing (an unmet
@@ -120,7 +120,7 @@ The season decides the hue; the theme only decides the shade. The card's inside 
 | `--holo-1…5` (special days) | peach → butter → mint → sky → lilac | the same, deep | `#6B5A3A` / `#E6D3A8`    |
 
 - Several seasons: a gradient from the first season's colour to the last, in season order
-  (tea: autumn → winter; handball: autumn → winter → spring).
+  (tea: autumn → winter; tennis: spring → summer → autumn).
 - Spring is pink, not green, so it can't be mistaken for all year.
 - DESIGN-SYSTEM.md gets the tokens in its table.
 

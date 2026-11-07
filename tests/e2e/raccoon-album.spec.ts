@@ -65,7 +65,7 @@ test('a raccoon met on Home lands in the album, once per slot', async ({ browser
 	await page.goto('/home');
 	const waiting = page.getByRole('link', { name: /New raccoon!/ });
 	await expect(waiting).toContainText('Welcome Committee');
-	await expect(waiting).toContainText('1 of 53 found');
+	await expect(waiting).toContainText('1 of 52 found');
 	await page.reload();
 	await expect(waiting).toBeVisible();
 
@@ -95,29 +95,29 @@ test('a raccoon met on Home lands in the album, once per slot', async ({ browser
 	// the same slot again is still the welcome, seen once.
 	await page.getByRole('link', { name: 'Back to Home' }).click();
 	await expect(page).toHaveURL(/\/home$/);
-	await expect(page.getByRole('link', { name: /Raccoon album/ })).toContainText('1 of 53 found');
+	await expect(page.getByRole('link', { name: /Raccoon album/ })).toContainText('1 of 52 found');
 	await expect(page.getByText('New raccoon!')).toHaveCount(0);
 
 	await page.goto('/settings');
-	await expect(page.getByRole('link', { name: /Raccoon album/ })).toContainText('1 of 53');
+	await expect(page.getByRole('link', { name: /Raccoon album/ })).toContainText('1 of 52');
 
 	// 23:00: the next slot's raccoon is the sleeping one, a second.
 	moveHousehold(name, 'Pacific/Noumea');
 	await page.goto('/home');
 	// It is a rare one, and the card says so in words.
-	await expect(page.getByRole('link', { name: /Rare raccoon!/ })).toContainText('2 of 53 found');
+	await expect(page.getByRole('link', { name: /Rare raccoon!/ })).toContainText('2 of 52 found');
 
 	// From anywhere else, back still means Settings.
 	await page.goto('/settings/raccoons');
 	await expect(page.getByRole('link', { name: 'Back to Settings' })).toBeVisible();
-	await expect(page.getByText('2 of 53 found')).toBeVisible();
+	await expect(page.getByText('2 of 52 found')).toBeVisible();
 	// Met ones are named; the rest stay "not met yet", with no hint.
 	await expect(
 		page.getByRole('button', { name: /^No\. \d{3}, (?!not met yet)[^,]+(, new)?$/ })
 	).toHaveCount(2);
 	// The first was noticed when its card opened; only the sleeping one is new.
 	await expect(page.getByRole('button', { name: /, new$/ })).toHaveCount(1);
-	await expect(page.getByRole('button', { name: /not met yet$/ })).toHaveCount(51);
+	await expect(page.getByRole('button', { name: /not met yet$/ })).toHaveCount(50);
 
 	// One rarity at a time: Legendary is the special days, the birthday and the
 	// midnight raccoon, none met on an ordinary June afternoon. No Missing filter any more (→ DECISIONS #237).
@@ -153,7 +153,7 @@ test('several raccoons waiting: Home says how many, and opens the album', async 
 
 	const waiting = page.getByRole('link', { name: /New raccoons!/ });
 	await expect(waiting).toContainText('2 in your album');
-	await expect(waiting).toContainText('Night Shift and Welcome Committee · 2 of 53');
+	await expect(waiting).toContainText('Night Shift and Welcome Committee · 2 of 52');
 	await expect(waiting).toContainText('2 new');
 
 	// Not one card, since there are two: the album, wearing both badges.
@@ -164,7 +164,7 @@ test('several raccoons waiting: Home says how many, and opens the album', async 
 
 	await page.getByRole('link', { name: 'Back to Home' }).click();
 	await expect(page).toHaveURL(/\/home$/);
-	await expect(page.getByRole('link', { name: /Raccoon album/ })).toContainText('2 of 53 found');
+	await expect(page.getByRole('link', { name: /Raccoon album/ })).toContainText('2 of 52 found');
 
 	await context.close();
 });

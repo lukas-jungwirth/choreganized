@@ -84,7 +84,7 @@ export type AlbumEntry = {
 
 /**
  * A pose's seasons as one run through the year, starting where it begins: tea
- * is autumn → winter, handball autumn → winter → spring. A pose whose seasons
+ * is autumn → winter, tennis spring → summer → autumn. A pose whose seasons
  * aren't one unbroken run has no such order, and is refused (the convention
  * test holds `mascots.json` to that).
  */
