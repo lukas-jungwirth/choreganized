@@ -1,0 +1,178 @@
+<!--
+	The raccoon album (→ plan 35, sketch frame 1): every raccoon Home can show,
+	the ones you've met in colour, the rest as silhouettes. A tap opens its card;
+	`?card=<name>` opens one straight away, and `?from=home` makes the back button
+	go to Home (Home's album card links here with both).
+
+	No design frame: built to `design/sketches/raccoon-album.html`, which Lukas
+	approved on 2026-11-03.
+-->
+<script lang="ts">
+	import { page } from '$app/state';
+	import { replaceState } from '$app/navigation';
+	import AlbumProgress from '$lib/components/album/AlbumProgress.svelte';
+	import AlbumTile from '$lib/components/album/AlbumTile.svelte';
+	import RaccoonCardModal from '$lib/components/album/RaccoonCardModal.svelte';
+	import SubHeader from '$lib/components/shell/SubHeader.svelte';
+	import Chip from '$lib/components/ui/Chip.svelte';
+	import { messages } from '$lib/i18n';
+	import {
+		ALBUM_ENTRIES,
+		ALBUM_SIZE,
+		countMissing,
+		filterAlbum,
+		type AlbumEntry,
+		type Tier
+	} from '$lib/utils/raccoon-album';
+	import { onMount } from 'svelte';
+	import type { PageProps } from './$types';
+
+	let { data }: PageProps = $props();
+
+	const m = messages();
+
+	const sightings = $derived(new Map(data.sightings.map((row) => [row.raccoon, row])));
+	const met = $derived(new Set(sightings.keys()));
+
+	let tier = $state<Tier | null>(null);
+
+	const shown = $derived(filterAlbum(ALBUM_ENTRIES, tier));
+
+	const TIERS: Tier[] = [1, 2, 3];
+
+	/** The card that's up, by its place in the album; null when none is. */
+	let open = $state<number | null>(null);
+
+	function openCard(entry: AlbumEntry) {
+		open = ALBUM_ENTRIES.indexOf(entry);
+	}
+
+	/** Came from Home's album card, so that's where back leads. */
+	const fromHome = page.url.searchParams.get('from') === 'home';
+
+	/** Opened by `?card=`, which comes off the address once it is shut. */
+	let fromLink = false;
+
+	onMount(() => {
+		const asked = page.url.searchParams.get('card');
+		const at = ALBUM_ENTRIES.findIndex((entry) => entry.name === asked);
+		if (at !== -1) {
+			open = at;
+			fromLink = true;
+		}
+	});
+
+	function close() {
+		open = null;
+		// A card opened from Home's link stays shut on a reload. (A shallow
+		// `replaceState` leaves `page.url` as it was, so it can't be asked.)
+		if (fromLink)
+			replaceState(fromHome ? '/settings/raccoons?from=home' : '/settings/raccoons', {});
+		fromLink = false;
+	}
+</script>
+
+<svelte:head>
+	<title>{m.common.pageTitle(m.album.title)}</title>
+</svelte:head>
+
+<SubHeader
+	title={m.album.title}
+	subtitle={m.album.subtitle}
+	back={fromHome ? '/home' : '/settings'}
+	backLabel={fromHome ? m.album.backHome : m.album.back}
+/>
+
+<AlbumProgress
+	found={met.size}
+	total={ALBUM_SIZE}
+	rare={countMissing(2, met)}
+	legendary={countMissing(3, met)}
+/>
+
+{#if data.revealAll}<p class="admin-note">{m.album.adminNote}</p>{/if}
+
+<div class="filters" role="group" aria-label={m.album.filters.label}>
+	<Chip selected={tier === null} onclick={() => (tier = null)}>{m.album.filters.all}</Chip>
+	{#each TIERS as each (each)}
+		<Chip selected={tier === each} onclick={() => (tier = each)}>
+			<span aria-hidden="true">{'★'.repeat(each)}</span>
+			{m.album.tiers[each]}
+		</Chip>
+	{/each}
+</div>
+
+{#if shown.length > 0}
+	<ul class="grid">
+		{#each shown as entry (entry.name)}
+			{@const sighting = sightings.get(entry.name)}
+			<li>
+				<AlbumTile
+					{entry}
+					met={sighting !== undefined}
+					reveal={data.revealAll}
+					isNew={sighting?.isNew ?? false}
+					onopen={() => openCard(entry)}
+				/>
+			</li>
+		{/each}
+	</ul>
+{:else}
+	<p class="empty">{m.album.empty}</p>
+{/if}
+
+{#if open !== null}
+	<RaccoonCardModal
+		entries={ALBUM_ENTRIES}
+		index={open}
+		{sightings}
+		reveal={data.revealAll}
+		today={data.today}
+		onmove={(index) => (open = index)}
+		onclose={close}
+	/>
+{/if}
+
+<style>
+	/* Sideways at 390px: the four chips run just past a phone's width (more so
+	   at 200% text), and wrapping would push the grid down for a control you
+	   set once. */
+	.filters {
+		display: flex;
+		gap: 8px;
+		margin: 18px calc(-1 * var(--page-pad)) 14px;
+		padding: 2px var(--page-pad) 4px;
+		overflow-x: auto;
+		scrollbar-width: none;
+	}
+
+	.filters::-webkit-scrollbar {
+		display: none;
+	}
+
+	.filters :global(.chip) {
+		flex: none;
+	}
+
+	.admin-note {
+		margin: 12px 0 0;
+		font-size: var(--fs-14);
+		color: var(--text-4);
+	}
+
+	.grid {
+		display: grid;
+		grid-template-columns: repeat(4, minmax(0, 1fr));
+		gap: 10px;
+		margin: 0;
+		padding: 0;
+		list-style: none;
+	}
+
+	.empty {
+		margin: 32px 0;
+		text-align: center;
+		font-size: var(--fs-16);
+		color: var(--text-4);
+	}
+</style>

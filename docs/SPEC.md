@@ -76,7 +76,8 @@ and the title, the line and the header's buttons all stand on the raccoon's feet
 
 ### 1.4 Create → invite housemates [5d] (step 2 of 2)
 
-- Big sage card with the **invite code** displayed as `7K4-P2X` (stored without the dash).
+- Big sage card with the **invite code** displayed as `7K4-P2X` (stored without the dash), always
+  on one line: its size follows the card's width so even `WWW-WWW` fits (DECISIONS #246).
 - Invite **link** `{ORIGIN}/j/{code}` with Copy; **Share invite** opens the OS share sheet and is
   shown **only where the Web Share API exists** (phones) — on desktop it would duplicate Copy
   (→ [DECISIONS.md #29](DECISIONS.md)).
@@ -113,29 +114,117 @@ pose, first match wins, top to bottom (`lib/utils/raccoon.ts`, by the household'
 - **Your birthday** (if you gave one, → §6): party hat and cupcake. A 29 February birthday
   shows on the 28th in other years.
 - **A special day**: Christmas (24–25 Dec), New Year (31 Dec – 1 Jan), Easter (Sunday and
-  Monday), Halloween (31 Oct), Valentine's Day (14 Feb).
-- **A next-chore card**: the reminder pose on that card — ringing a bell while the chore is
-  coming up or due today, holding an alarm clock once it's overdue.
+  Monday), Faschingsdienstag (a pirate with a treasure map, 47 days before Easter Sunday, so it
+  moves with Easter), Halloween (31 Oct), Valentine's Day (14 Feb).
+- **Your first visit** ([DECISIONS #238](DECISIONS.md)): the waving welcome raccoon, for the
+  rest of the slot you first opened Home in (so a reload doesn't swap it), then the draw. Per
+  member: a housemate who joins later is welcomed too.
+- **00:00–02:00, on one night in three**: the midnight raccoon, in the kitchen with the cookie
+  tin ([DECISIONS #243](DECISIONS.md)). Each member's own nights, seeded like the draw below. It
+  comes before the reminder, or someone with chores would never meet it; the card under it still
+  names the chore. On the other nights it's the steps below as usual.
+- **A next-chore card due today or overdue** ([DECISIONS #255](DECISIONS.md)): the reminder
+  pose — ringing a bell on the day the chore is due, holding an alarm clock once it's overdue.
+  The card shows a chore up to 3 days ahead, but the raccoon waits for the day: a chore still
+  coming up is no one's fault, so Home keeps the steps below until then. Ticking off today's
+  chore brings the everyday raccoon back.
 - **22:00–05:00**: asleep, under a starry blanket.
-- Otherwise an **everyday pose** ([DECISIONS #219](DECISIONS.md)), from the ones that fit the
-  month: at the beach (Jun–Aug), gardening in a sun hat (May–Aug), gardening (Apr–Oct),
-  fishing (May–Sep), in the snow (Dec–Feb), wrapped up with a hot drink (Nov–Mar), with a cup
-  of tea (Oct–Apr), and all year reading, with a dumbbell, waving (welcome A) or winking with a
-  thumbs-up (welcome B). The day has three slots — from 05:00, 11:00 and 17:00 — and each
-  takes the next pose in turn, so it holds still within a slot, never repeats back to back
-  within a month, and every pose comes round within three days. Every member sees the same one.
+- Otherwise an **everyday pose** ([DECISIONS #219](DECISIONS.md), [#220](DECISIONS.md)), from
+  the ones in season — winter Dec–Feb, spring Mar–May, summer Jun–Aug, autumn Sep–Nov:
 
-1. **Next chore card** — the one chore that's on the current user next: the soonest task
-   assigned to them or to Anyone (never a housemate's) that is already overdue or due within
-   the next 3 days. Eyebrow "Your next chore", the task name large, "Due today · weekly ·
+  | Pose                        | Seasons                | Only      |
+  | --------------------------- | ---------------------- | --------- |
+  | at the beach                | summer                 |
+  | gardening in a sun hat      | spring, summer         |
+  | fishing                     | spring, summer, autumn |
+  | in the snow                 | winter                 |
+  | wrapped up with a hot drink | winter                 |
+  | a cup of tea                | autumn, winter         |
+  | reading                     | all year               |
+  | with a dumbbell             | all year               |
+  | waving (welcome A)          | all year               |
+  | winking, thumbs-up (B)      | all year               |
+  | skiing                      | winter                 |
+  | tennis                      | spring, summer, autumn |
+  | painting                    | all year               |
+  | on the phone                | all year               |
+  | on an old corded phone      | all year               |
+  | listening to music          | all year               |
+  | singing into a microphone   | all year               |
+  | playing an arcade machine   | all year               |
+  | writing with a quill        | all year               |
+  | taking a photo              | all year               |
+  | a hand of playing cards     | all year               |
+  | watering a houseplant       | all year               |
+  | smelling a flower           | spring, summer         |
+  | with a water pistol         | summer                 |
+  | knitting                    | autumn, winter         |
+  | building a snowman          | winter                 |
+  | catching a snowflake        | winter                 |
+  | carrying ice skates         | winter                 |
+  | nibbling sweets             | all year               |
+  | raiding a bin               | all year               |
+  | chasing a butterfly         | spring, summer         |
+  | sipping iced lemonade       | summer                 |
+  | a morning coffee            | all year               | mornings  |
+  | typing on a laptop          | all year               | Mon – Fri |
+  | eating fruit                | all year               |           |
+  | juggling three balls        | all year               |           |
+  | a bubble bath in a Schaffel | all year               |           |
+  | a basket of mushrooms       | autumn                 |           |
+  | throwing the paperwork away | all year               | Fridays   |
+  | hitting the snooze button   | all year               | mornings  |
+  | a pair of odd socks         | all year               |           |
+
+  The day has three slots — from 05:00, 11:00 and 17:00 — and each member draws their own three
+  of the season's poses for the day, one per slot ([DECISIONS #232](DECISIONS.md)): at random,
+  from a seed made of the member and the date, so nothing is stored and the raccoon holds still
+  all slot, on every device. A pose can keep to **some days or slots** ("Only";
+  [DECISIONS #237](DECISIONS.md)): coffee is only in the morning's draw, the laptop only on
+  workdays. It still has to be drawn, so it isn't there every time. A pose of one day a week gets
+  3× the odds on that day (`weight`; [DECISIONS #243](DECISIONS.md)), or it would take seven times
+  as long as the rest to meet: once a day, half of people would need 20 Fridays. A day's three are all different, and never two that look alike (the
+  greetings, the gardening and watering poses, the hot drinks, the corded
+  phone and the singer, the snowball and the knitter in the same hat and scarf; coffee joins the
+  hot drinks); the night's
+  sleeping raccoon sits between one day's evening and the next morning. Housemates meet different
+  raccoons and fill their own raccoon albums (→ §6). There is no hard guarantee of meeting every
+  pose in a season, on purpose: the last few take some luck, though looking in every slot you
+  practically always do. The poses, their seasons and their days and slots live in
+  `artwork/raccoon/mascots.json`.
+
+  **Poke it** ([DECISIONS #223](DECISIONS.md)): the raccoon is a button ("Poke the raccoon").
+  Each tap squashes it; the third is a hit — it shakes and flushes red — and it stays slightly
+  red after that; the sixth it ducks behind the card and stays away for four seconds, then the
+  same raccoon comes back up, calm. It never swaps the pose: which raccoon you get is the date's
+  and the hour's, something to discover by coming back. Three seconds without a tap and the count
+  starts over. With reduced motion it doesn't move: the tint still shows, the hiding is a fade.
+
+  **The raccoon album** (plan 35, [DECISIONS #229](DECISIONS.md), [#231](DECISIONS.md)): the
+  first time you meet a raccoon here it joins your album, and the album card below says so
+  (→ item 5). Home counts a sighting once per slot (morning, afternoon, evening, or the night,
+  dated by its evening). A pose from admin mode's picker is never a sighting (→ §12).
+
+1. **Next chore card** — the chores on the current user: every task assigned to them or to
+   Anyone (never a housemate's) that is already overdue or due within the next 3 days, soonest
+   first, so the oldest overdue one leads. Eyebrow "Your next chore", the task name large, "Due today · weekly ·
    worth 10 pts" under it (the due half turns terracotta today, danger when overdue; a
    0-point chore says nothing about points), then **Mark done** and a snooze button opening
    the same sheet as [4c]. Ticking it off raises the same celebration [4d] as the Tasks tab,
    Undo included. Hidden when there is nothing in the window — and while the user is away,
    like every other nudge (→ §5.5).
+   **More than one** ([DECISIONS #256](DECISIONS.md)): the cards sit side by side, each the
+   full width of the screen with no peek of the next, and swipe (scroll-snap). Each card says
+   where it is, "1 / 3" opposite the eyebrow (read aloud "1 of 3"); every card after the first
+   says "Also on you" instead of "Your next chore". Dots under the stack show which one is in
+   view. At most 5 cards; with more in the window, "+2 more" right of the dots links to Tasks.
+   Ticking one off takes its card out, and the rest close up. Cards share the tallest one's
+   height, so nothing below moves while swiping, and each is reachable by Tab without a swipe.
+   The raccoon goes by the first card, whichever one is in view.
 2. **Overdue banner** [4e] — shown when the current user has overdue tasks (assigned to them or
    Anyone): danger-tinted card "1 task overdue / {task} · your turn" + View → Tasks. Stands
-   down when the next-chore card is already showing that one task (i.e. exactly one overdue).
+   down when every overdue task is already one of the next-chore cards (so it speaks only when
+   there are more overdue than the 5 cards hold).
 3. **Tonight's dinner card** — today's meal from the plan: photo thumb (or placeholder art),
    name, "{member} is cooking" with mini avatar (cook line hidden if no cook set). Tap → recipe
    view (or Cooking tab for custom meals). Hidden if nothing is planned today; show it as an
@@ -145,9 +234,27 @@ pose, first match wins, top to bottom (`lib/utils/raccoon.ts`, by the household'
    counted beside the cook line ("+1 more today"), never listed; the Cooking tab is the list.
 4. **Stat tiles** (2-up): "{n} on shopping list" (unchecked items) → Shopping;
    "{n} tasks due today" (due today + overdue) → Tasks.
-5. **Standings strip** — "You're 1st this month" / "240 pts · 30 ahead of Elisabeth" + stacked
+5. **Raccoon album card** ([DECISIONS #244](DECISIONS.md)) — always there, directly under the
+   tiles, in the same place every day. On the right a small deck: your newest raccoon on its
+   album frame in front, two silhouettes of raccoons still to find behind it (a full album keeps
+   two silhouettes of its own). Only the front card has colour. The bar is plain sage.
+   - **Nothing new**: "Raccoon album", "18 of 52 found", "6 rare · 3 legendary still to find"
+     ("2 still to find" when only common ones are left, "You've met every raccoon!" once none are). Tap → the album.
+   - **One new since the album was last opened** (the album's own "New" count, so it stays until
+     you look, across reloads and days): the front card pops over the card's top edge with a
+     "New" badge, a terracotta outline, and the eyebrow says the rarity in words: "New raccoon!",
+     "Rare raccoon!" or "Legendary raccoon!" (gold outline), then its name and "18 of 52 found".
+     A common raccoon doesn't say "Common", and there are no stars here: those stay on the
+     album's card. Tap → the album at its card.
+   - **Several new**: "New raccoons!", "3 in your album", "Tennis Ace, Flower Sniffer and 1 more
+     · 20 of 52", badge "3 new", the newest in front. Tap → the album, wearing its "New" badges.
+
+   Reached from here, the album's back button returns to Home (`?from=home`); from Settings it
+   returns to Settings. With reduced motion the card doesn't pop in, it is just there.
+
+6. **Standings strip** — "You're 1st this month" / "240 pts · 30 ahead of Elisabeth" + stacked
    avatars → Tasks → History. (Ties: "You're tied this month".)
-6. **Recent activity card** — the 2 most recent completed tasks (check circle in the member's
+7. **Recent activity card** — the 2 most recent completed tasks (check circle in the member's
    colour, task name, "{member} · {time}", `+{points}` in the member's colour). Header links
    "All →" to Tasks → History. Hidden when there are no completions yet. Last on the screen:
    pleasant to see, never the reason the app was opened.
@@ -506,19 +613,39 @@ where it can still be acted on (→ [DECISIONS #131](DECISIONS.md)).
   exists only in the tab that paused it and is lost on reload, because pause deletes the row
   (→ DECISIONS #15).
 - Prev / **Next step** buttons pinned at the bottom. Last step → "Finish" closes cook mode.
-- **A timer that goes off rings like an alarm, not like a chime** (→
-  [DECISIONS #134](DECISIONS.md)). Four beeps alternating two tones, a second and a half apart,
-  **repeating until somebody stops it** — the ring's Stop, a bar's ×, the dock's ×, all of which
-  already clear the timer. It gives up on its own after a minute, because an alarm nobody is
-  home for should not still be going when they get back. One sound however many timers are
-  making it, and it only stops when the last of them has been dealt with.
+- **A timer that goes off calls you, without frightening you** (→
+  [DECISIONS #134](DECISIONS.md), [#251](DECISIONS.md)). Three rising wooden notes every 3.2
+  seconds, starting quietly and swelling to full volume over 20 seconds, **repeating until
+  somebody stops it** — the ring's Stop, a bar's ×, the dock's ×, all of which already clear the
+  timer. It gives up on its own after a minute, because an alarm nobody is home for should not
+  still be going when they get back. One sound however many timers are making it, and it only
+  stops when the last of them has been dealt with.
+- **A timer that has gone off keeps counting past zero**, like any kitchen timer: "−3:42" in amber
+  on the ring, the bar and the dock, until somebody stops it (→ [DECISIONS #251](DECISIONS.md)).
+  It survives closing the app, because the row stays listed until it is stopped: a timer that
+  rang on a silent phone is still on screen when you come back, saying how long ago. On another
+  device of the same person it stops too, at that device's next load. One nobody stops ages off
+  the list after 3 hours, and it spends no slot against the cap of three.
 - **Timer completion must fire even when the phone is locked** [7h·2]: the server schedules a
   push at `endsAt` — title "⏲️ {label} is done", body the **recipe name**, so a lock screen says
-  which dish as well as which timer — and asks the platform to keep it up until it is acted on.
-  The open page alerts locally instead when it claimed the alert (sound and vibration). Honest
-  limit: a web push cannot ring like a native alarm — no custom sound, no critical alert — so
-  the locked-phone half is one insistent notification, not a ringing one. Cancelling/pausing the
-  timer cancels the server push. Tapping the notification reopens cook mode at that step.
+  which dish as well as which timer, stamped with when it went off, and it asks the platform to
+  keep it up until it is acted on. The open page alerts locally instead when it claimed the alert
+  (sound and vibration), unless a track is playing (below), when the notification always goes out
+  (→ [DECISIONS #253](DECISIONS.md)). Stopping the timer in the app takes the notification away too. The
+  notification has a **Stop** button that stops the timer and the sound without opening the app.
+  Honest limit: a web push has no custom sound and follows the phone's silent mode, and no web app
+  can bring itself forward or show a full-screen alarm. The Set-timer sheet doesn't promise more
+  than a notification. Cancelling/pausing the timer cancels the server push. Tapping the
+  notification reopens cook mode at that step.
+- **On Android, a timer also rings a locked or silent phone** (→ [DECISIONS #252](DECISIONS.md)).
+  Starting one starts an audio track: the whole wait in silence, then the ring, on media volume.
+  It needs the app still running in the background, so swiping the app away leaves only the
+  notification. Music or a podcast keeps playing until the ring begins, then pauses. It shows as a
+  media player, "{label} · rings at 18:42", whose pause button means Stop once it's ringing and
+  does nothing before, so nobody silences a timer by accident. Each running timer has its own
+  track. A timer of more than 2 hours has none, because the file would be too big. Nor does a timer
+  that came back with a reload until the next tap in the app. iPhones and computers keep the live
+  alarm and the notification: it has only been tried on Android.
 
 ### 4.7 Recipe import from a link (→ plan 12, reuses the [3c] editor as its preview)
 
@@ -791,6 +918,38 @@ The **History** tab is a stats landing; the full feed sits one level below it (�
 - Profile card: avatar, display name, email + **Edit**. A raccoon with a wrench sits on its top
   edge at the right, the way Home's sits on its first card; the title wraps rather than run
   under it ([DECISIONS #217](DECISIONS.md)).
+- **Raccoon album** (plan 35), a row right under the profile card with "17 of 52": every raccoon
+  Home can show (exactly `HOME_RACCOONS`: the 42 everyday poses, the 6 special days, your birthday, sleeping,
+  the midnight raccoon and the two reminders; never a tab's, the sign-in head, Settings' or the leaving raccoon), and
+  which of them **you** have met. Per member: a housemate's album is their own.
+  - `SubHeader` "Raccoon album" / "Every raccoon you've met on Home." A progress card: a ring,
+    "17 of 52 found", "5 rare · 4 legendary still to find", a plain sage bar.
+  - Filters, sideways at 390px: All · ★ Common · ★★ Rare · ★★★ Legendary; a chip picks one
+    rarity. (No Missing filter: dropped in [DECISIONS #237](DECISIONS.md).)
+  - A grid of four, tiles 3:4, in album order: a met raccoon on its frame colour with its number
+    (`009`) and a "New" badge if met since you last opened the album; an unmet one is its
+    silhouette and a "?", with no hint and no stars.
+  - **Rarity** ([DECISIONS #237](DECISIONS.md)), worked out from how much of the year a raccoon
+    can be on Home: its months × its weekdays × its hours (the 17 awake hours for a drawn pose, the
+    7 night hours for sleeping, every hour for the reminders, which come with a chore; 2 hours × 1/3 of
+    nights for the midnight raccoon). A `weight` doesn't count: it is odds, not time. **★
+    Common** at 40% or more (an all-year pose, three seasons, the laptop), **★★ Rare** in between
+    (one or two seasons, coffee, snooze, the Friday raccoon, sleeping), **★★★ Legendary** under 3%
+    (the special days, your birthday and the midnight raccoon). **Frames** follow the window, not the rarity: sage all year, the season's colour
+    for one season (winter ice, spring blossom pink, summer sand, autumn rust), a blend first to
+    last for several (tea: autumn → winter), holo foil for a special day; the theme changes only
+    the shade.
+  - A tap opens the **card**, centred over the album: "No. 009" and the stars (★★☆) on top, the
+    raccoon on a stage in its frame colour, its name, which says what it is ("Tennis Ace",
+    "Tea Brewer"; no invented first names, [DECISIONS #239](DECISIONS.md)), one chip for when you can meet
+    it ("All year", "Dec – Feb", "Dec 24 – 25", "Easter", "Shrove Tuesday", "Your birthday"),
+    with its rule after a dot when it keeps to some days or hours ("All year · Mornings", "All
+    year · Mon – Fri", "All year · Nights"), a fun fact, four
+    stats as 1–5 dots (Cosiness, Mischief, Snack mood, Helpfulness), and "First met Jun 18" ·
+    "Seen 7×". ‹ / › (or a sideways swipe) go to the neighbouring number, met or not; an unmet
+    one is the locked card: the number, the silhouette under a big "?", "? ? ? ? ?", "Not met
+    yet". Names, facts and stats are the app's words (`raccoons.*` in the catalog,
+    `stats` in `mascots.json`), drafts for Lukas to review.
 - **Account**: Display name, Your colour (palette picker; taken colours disabled), **Birthday**
   (optional; day and month, no year — two selects in the profile sheet, "–" in both clears it,
   one without the other is refused; its only use is Home's birthday raccoon), **Language**
@@ -1260,3 +1419,35 @@ until at least 50 rows are showing, so fifteen payments across a year show at on
 Guests and people outside the household (the model is ready, → #168) · linking with other
 Haushaltsheld households · receipt photos · "log what this shop cost?" after a shopping trip ·
 several currencies · statistics and charts · groups or trips inside a household · export.
+
+## 12. Admin mode (→ plan 34)
+
+For whoever runs the server, never for a household. No design frame (DECISIONS #228).
+
+- **Who:** an account whose **verified** email is in the server variable `ADMIN_EMAILS`
+  (comma-separated). Unset means nobody. The list never reaches the browser.
+- **Turning it on:** tap Settings → About → Version **seven times**, none more than two seconds
+  apart. Each tap still copies the version. For an admin the row then reads "Admin mode on"
+  and an **Admin** row appears under it. For anyone else nothing at all happens.
+- **Turning it off:** **Leave admin mode**, the last row of Settings, under sign out and leave.
+  The mode is per device (a cookie) and lasts 30 days otherwise.
+- **Admin page** (`/admin`, from that row): tiles for households active in the last 7 and 30
+  days, households, accounts, members and devices with push; a bar per week for new households
+  and accounts over the last 12 weeks; and every household by name with its member count, the
+  day it was created and the day it was last active (or "Never active"), most recent first.
+  Active means a person did something: ticked or skipped a chore, added or checked an item,
+  planned a dinner, added a recipe or an expense, or had the app open (a session refresh). No
+  household content is shown. Outside admin mode `/admin` is a 404, for admins too.
+- **Raccoon picker:** in admin mode a tap on Home's raccoon opens a sheet with every raccoon
+  Home can show (situations, special days, everyday poses), by name, today's marked; never the
+  section raccoons (shopping, cooking, tasks, expenses, head, settings, move-out); picking one shows it on Home, placed as it would be for real
+  (`/home?raccoon=<name>`), and "Back to today's raccoon" clears it. Poking is off in admin
+  mode. Anyone else's `?raccoon=`, and a section raccoon's for anyone, is ignored by the server.
+- **The whole album** ([DECISIONS #240](DECISIONS.md)): in admin mode the raccoon album (→ §6)
+  shows every raccoon in colour and opens every card, to check the art and the words. An unmet
+  tile is faded inside a dashed edge (and named "…, not met yet"), so the grid still tells met
+  from shown. A line
+  under the progress card says so ("Admin mode: every raccoon is shown, met or not. Your count
+  stays your own."), and an unmet card's footer reads "Not met yet · shown in admin mode"
+  where "First met" would be. Nothing is recorded: the count, the "New" badges and the
+  sightings stay the admin's real ones, and leaving admin mode locks the unmet ones again.

@@ -4,58 +4,125 @@ import cooking from './cooking.avif';
 import tasks from './tasks.avif';
 import expenses from './expenses.avif';
 import head from './head.avif';
-import welcomeA from './welcome-a.avif';
-import welcomeB from './welcome-b.avif';
 import reminderUpcoming from './reminder-upcoming.avif';
 import reminderOverdue from './reminder-overdue.avif';
 import birthday from './birthday.avif';
 import christmas from './christmas.avif';
 import newYear from './new-year.avif';
 import easter from './easter.avif';
+import fasching from './fasching.avif';
 import halloween from './halloween.avif';
 import valentines from './valentines.avif';
 import sleeping from './sleeping.avif';
+import midnight from './midnight.avif';
+import welcomeA from './welcome-a.avif';
 import beach from './beach.avif';
-import summerGarden from './summer-garden.avif';
-import garden from './garden.avif';
-import fishing from './fishing.avif';
+import flower from './flower.avif';
+import butterfly from './butterfly.avif';
+import tennis from './tennis.avif';
+import call from './call.avif';
 import snow from './snow.avif';
-import cold from './cold.avif';
-import tea from './tea.avif';
 import reading from './reading.avif';
+import music from './music.avif';
+import snowflake from './snowflake.avif';
+import camera from './camera.avif';
+import garden from './garden.avif';
+import painting from './painting.avif';
+import cold from './cold.avif';
+import cards from './cards.avif';
+import sweets from './sweets.avif';
+import snowman from './snowman.avif';
+import welcomeB from './welcome-b.avif';
+import singing from './singing.avif';
+import watering from './watering.avif';
+import fishing from './fishing.avif';
+import skiing from './skiing.avif';
+import arcade from './arcade.avif';
+import trash from './trash.avif';
+import tea from './tea.avif';
 import sports from './sports.avif';
+import waterPistol from './water-pistol.avif';
+import writing from './writing.avif';
+import knitting from './knitting.avif';
+import phone from './phone.avif';
+import skates from './skates.avif';
+import lemonade from './lemonade.avif';
+import coffee from './coffee.avif';
+import laptop from './laptop.avif';
+import fruit from './fruit.avif';
+import juggling from './juggling.avif';
+import bath from './bath.avif';
+import mushrooms from './mushrooms.avif';
+import friday from './friday.avif';
+import snooze from './snooze.avif';
+import socks from './socks.avif';
 import settings from './settings.avif';
 import moveOut from './move-out.avif';
 
-/** Each raccoon and its pixel size, so `ui/Mascot` can reserve its box before it loads. */
+/**
+ * Each raccoon, its pixel size (so `ui/Mascot` can reserve its box before it
+ * loads) and where its body is across that width, 0–1 (→ DECISIONS #224).
+ */
 export const MASCOTS = {
-	shopping: { src: shopping, width: 253, height: 264 },
-	cooking: { src: cooking, width: 224, height: 264 },
-	tasks: { src: tasks, width: 241, height: 264 },
-	expenses: { src: expenses, width: 264, height: 264 },
-	head: { src: head, width: 324, height: 270 },
-	'welcome-a': { src: welcomeA, width: 488, height: 408 },
-	'welcome-b': { src: welcomeB, width: 438, height: 408 },
-	'reminder-upcoming': { src: reminderUpcoming, width: 413, height: 408 },
-	'reminder-overdue': { src: reminderOverdue, width: 467, height: 408 },
-	birthday: { src: birthday, width: 348, height: 408 },
-	christmas: { src: christmas, width: 418, height: 408 },
-	'new-year': { src: newYear, width: 425, height: 408 },
-	easter: { src: easter, width: 370, height: 408 },
-	halloween: { src: halloween, width: 388, height: 408 },
-	valentines: { src: valentines, width: 384, height: 408 },
-	sleeping: { src: sleeping, width: 426, height: 408 },
-	beach: { src: beach, width: 370, height: 408 },
-	'summer-garden': { src: summerGarden, width: 359, height: 408 },
-	garden: { src: garden, width: 371, height: 408 },
-	fishing: { src: fishing, width: 395, height: 408 },
-	snow: { src: snow, width: 384, height: 408 },
-	cold: { src: cold, width: 336, height: 408 },
-	tea: { src: tea, width: 314, height: 408 },
-	reading: { src: reading, width: 343, height: 408 },
-	sports: { src: sports, width: 387, height: 408 },
-	settings: { src: settings, width: 320, height: 360 },
-	'move-out': { src: moveOut, width: 320, height: 312 }
+	shopping: { src: shopping, width: 253, height: 264, body: 0.5 },
+	cooking: { src: cooking, width: 224, height: 264, body: 0.5 },
+	tasks: { src: tasks, width: 241, height: 264, body: 0.5 },
+	expenses: { src: expenses, width: 264, height: 264, body: 0.5 },
+	head: { src: head, width: 324, height: 270, body: 0.5 },
+	'reminder-upcoming': { src: reminderUpcoming, width: 413, height: 408, body: 0.4 },
+	'reminder-overdue': { src: reminderOverdue, width: 467, height: 408, body: 0.42 },
+	birthday: { src: birthday, width: 348, height: 408, body: 0.52 },
+	christmas: { src: christmas, width: 418, height: 408, body: 0.59 },
+	'new-year': { src: newYear, width: 401, height: 408, body: 0.55 },
+	easter: { src: easter, width: 370, height: 408, body: 0.56 },
+	fasching: { src: fasching, width: 314, height: 408, body: 0.48 },
+	halloween: { src: halloween, width: 388, height: 408, body: 0.53 },
+	valentines: { src: valentines, width: 384, height: 408, body: 0.5 },
+	sleeping: { src: sleeping, width: 426, height: 408, body: 0.56 },
+	midnight: { src: midnight, width: 335, height: 408, body: 0.53 },
+	'welcome-a': { src: welcomeA, width: 488, height: 408, body: 0.39 },
+	beach: { src: beach, width: 370, height: 408, body: 0.53 },
+	flower: { src: flower, width: 315, height: 408, body: 0.47 },
+	butterfly: { src: butterfly, width: 431, height: 408, body: 0.57 },
+	tennis: { src: tennis, width: 475, height: 408, body: 0.46 },
+	call: { src: call, width: 359, height: 408, body: 0.5 },
+	snow: { src: snow, width: 384, height: 408, body: 0.49 },
+	reading: { src: reading, width: 343, height: 408, body: 0.48 },
+	music: { src: music, width: 360, height: 408, body: 0.45 },
+	snowflake: { src: snowflake, width: 381, height: 408, body: 0.5 },
+	camera: { src: camera, width: 327, height: 408, body: 0.5 },
+	garden: { src: garden, width: 359, height: 408, body: 0.57 },
+	painting: { src: painting, width: 322, height: 408, body: 0.48 },
+	cold: { src: cold, width: 336, height: 408, body: 0.48 },
+	cards: { src: cards, width: 326, height: 408, body: 0.5 },
+	sweets: { src: sweets, width: 315, height: 408, body: 0.54 },
+	snowman: { src: snowman, width: 341, height: 408, body: 0.55 },
+	'welcome-b': { src: welcomeB, width: 438, height: 408, body: 0.59 },
+	singing: { src: singing, width: 337, height: 408, body: 0.56 },
+	watering: { src: watering, width: 335, height: 408, body: 0.52 },
+	fishing: { src: fishing, width: 395, height: 408, body: 0.49 },
+	skiing: { src: skiing, width: 350, height: 408, body: 0.52 },
+	arcade: { src: arcade, width: 422, height: 408, body: 0.38 },
+	trash: { src: trash, width: 347, height: 408, body: 0.54 },
+	tea: { src: tea, width: 314, height: 408, body: 0.52 },
+	sports: { src: sports, width: 387, height: 408, body: 0.49 },
+	'water-pistol': { src: waterPistol, width: 408, height: 408, body: 0.6 },
+	writing: { src: writing, width: 314, height: 408, body: 0.52 },
+	knitting: { src: knitting, width: 327, height: 408, body: 0.47 },
+	phone: { src: phone, width: 311, height: 408, body: 0.54 },
+	skates: { src: skates, width: 367, height: 408, body: 0.48 },
+	lemonade: { src: lemonade, width: 313, height: 408, body: 0.51 },
+	coffee: { src: coffee, width: 313, height: 408, body: 0.5 },
+	laptop: { src: laptop, width: 396, height: 408, body: 0.52 },
+	fruit: { src: fruit, width: 288, height: 408, body: 0.51 },
+	juggling: { src: juggling, width: 362, height: 408, body: 0.5 },
+	bath: { src: bath, width: 389, height: 408, body: 0.52 },
+	mushrooms: { src: mushrooms, width: 311, height: 408, body: 0.52 },
+	friday: { src: friday, width: 517, height: 408, body: 0.43 },
+	snooze: { src: snooze, width: 315, height: 408, body: 0.52 },
+	socks: { src: socks, width: 383, height: 408, body: 0.53 },
+	settings: { src: settings, width: 320, height: 360, body: 0.53 },
+	'move-out': { src: moveOut, width: 320, height: 312, body: 0.6 }
 } as const;
 
 export type MascotName = keyof typeof MASCOTS;

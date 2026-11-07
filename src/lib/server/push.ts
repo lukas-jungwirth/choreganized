@@ -50,6 +50,12 @@ export type PushPayload = {
 	 * Android keeps notifications until they are swiped either way.
 	 */
 	requireInteraction?: boolean;
+	/** When the thing happened, in ms since the epoch, if that isn't when this arrives. */
+	timestamp?: number;
+	/** Buttons on the notification, handled by the worker without opening the app. */
+	actions?: { action: string; title: string }[];
+	/** The cook timer this is about, for the Stop button (→ DECISIONS #252). */
+	timerId?: string;
 };
 
 /** The `members` columns that gate a category of notification (→ SPEC §3.5, §3.6, §5.6, §11.11). */
@@ -79,6 +85,12 @@ export type SendOptions = {
 	 * Friday's nudges. (web-push's own default is four weeks.)
 	 */
 	ttlSeconds?: number;
+	/**
+	 * How hard the push service should try to reach a sleeping phone. At the default,
+	 * Android may hold a message until its next maintenance window, which can be
+	 * minutes on a locked phone lying still. Only for what can't wait.
+	 */
+	urgency?: 'normal' | 'high';
 };
 
 export type MemberSendOptions = SendOptions & {
@@ -264,7 +276,11 @@ async function deliverOne(
 				keys: { p256dh: subscription.p256dh, auth: subscription.auth }
 			},
 			body,
-			{ TTL: options.ttlSeconds ?? DEFAULT_TTL_SECONDS, timeout: REQUEST_TIMEOUT_MS }
+			{
+				TTL: options.ttlSeconds ?? DEFAULT_TTL_SECONDS,
+				urgency: options.urgency ?? 'normal',
+				timeout: REQUEST_TIMEOUT_MS
+			}
 		);
 		return true;
 	} catch (error) {

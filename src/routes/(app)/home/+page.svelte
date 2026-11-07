@@ -9,18 +9,25 @@
 
 	One raccoon, sitting on the first card's top edge right of the greeting
 	(→ DECISIONS #213, #216, #219). The server picks it (`utils/raccoon`): your
-	birthday, then a special day, then the reminder pose for a chore on you (a
-	bell while it's coming up, an alarm clock once it's late), then asleep after
+	birthday, then a special day, then the reminder pose for the first chore on
+	you (a bell on the day it's due, an alarm clock once it's late), then asleep after
 	22:00, and otherwise an everyday pose that fits the month, a new one each
-	morning, afternoon and evening.
+	morning, afternoon and evening. Poke it six times and it ducks away for a
+	few seconds (→ `RaccoonPoke`, DECISIONS #223). In admin mode a tap opens
+	the raccoon picker instead (→ `RaccoonPicker`, plan 34). Meeting one puts it
+	in your raccoon album, and the album's card under the counts says so until
+	you go and look (→ `AlbumCard`, DECISIONS #244).
 -->
 <script lang="ts">
 	import EnablePush from '$lib/components/EnablePush.svelte';
 	import HolidayNotice from '$lib/components/HolidayNotice.svelte';
 	import InstallPrompt from '$lib/components/InstallPrompt.svelte';
 	import ActivityCard from '$lib/components/home/ActivityCard.svelte';
+	import AlbumCard from '$lib/components/home/AlbumCard.svelte';
 	import DinnerCard from '$lib/components/home/DinnerCard.svelte';
-	import NextChoreCard from '$lib/components/home/NextChoreCard.svelte';
+	import NextChoreStack from '$lib/components/home/NextChoreStack.svelte';
+	import RaccoonPoke from '$lib/components/home/RaccoonPoke.svelte';
+	import { raccoonPlacement } from '$lib/components/home/raccoon-placement';
 	import StandingsStrip from '$lib/components/home/StandingsStrip.svelte';
 	import StatTile from '$lib/components/home/StatTile.svelte';
 	import BalanceLine from '$lib/components/home/BalanceLine.svelte';
@@ -30,7 +37,7 @@
 	import TaskDoneModal from '$lib/components/tasks/TaskDoneModal.svelte';
 	import AvatarStack from '$lib/components/ui/AvatarStack.svelte';
 	import Banner from '$lib/components/ui/Banner.svelte';
-	import Mascot from '$lib/components/ui/Mascot.svelte';
+	import { MASCOTS } from '$lib/assets/mascot';
 	import { messages } from '$lib/i18n';
 	import type { NextChore } from '$lib/server/services/home';
 	import type { CompletionResult, Standing } from '$lib/server/services/tasks';
@@ -53,8 +60,25 @@
 
 	const tasksLabel = $derived(m.home.stats.tasksDue(data.tasksDueCount));
 
-	/** Ticked but not yet confirmed — the card goes quiet before the server agrees. */
-	let pending = $state(false);
+	/** Home shows its raccoon 136px tall. */
+	const RACCOON_HEIGHT = 136;
+	/** Placed by its body, not its edge (→ `raccoon-placement`, DECISIONS #224). */
+	const placement = $derived(raccoonPlacement(MASCOTS[data.raccoon], RACCOON_HEIGHT));
+
+	/**
+	 * Admin mode's raccoon picker, fetched on the first tap: nobody else's Home
+	 * carries it (→ plan 34). The server still decides whether a pick applies.
+	 */
+	let Picker = $state<typeof import('$lib/components/home/RaccoonPicker.svelte').default | null>(
+		null
+	);
+
+	async function openPicker() {
+		Picker = (await import('$lib/components/home/RaccoonPicker.svelte')).default;
+	}
+
+	/** Ticked but not yet confirmed — that card goes quiet before the server agrees. */
+	let pendingId = $state<string | null>(null);
 	/**
 	 * The chore the snooze sheet is about, not a flag: a successful snooze moves
 	 * the task out of the card's window, and the sheet has to survive its own
@@ -67,34 +91,25 @@
 	 * The same handler shape the to-do list gives every check circle [4a], so
 	 * ticking a chore off here raises the same celebration it does there.
 	 */
-	const complete: SubmitFunction = () => {
-		pending = true;
+	const complete: SubmitFunction = ({ formData }) => {
+		pendingId = String(formData.get('id'));
 
 		return async ({ result, update }) => {
 			await update({ reset: false });
-			pending = false;
+			pendingId = null;
 
 			if (result.type !== 'success') return;
 			const completed = result.data?.completed as typeof done;
 			if (completed) done = completed;
 		};
 	};
-
-	/**
-	 * The banner counts what's already late; the card names the worst of it. With
-	 * exactly one overdue chore they are the same task twice, so the banner stands
-	 * down and lets the card — which can actually do something about it — speak.
-	 */
-	const showOverdueBanner = $derived(
-		data.overdue !== null && !(data.nextChore !== null && data.overdue.count === 1)
-	);
 </script>
 
 <svelte:head>
 	<title>{m.common.pageTitle(m.home.title)}</title>
 </svelte:head>
 
-<header>
+<header style:--raccoon-right="{placement.right}px" style:--raccoon-reach="{placement.reach}px">
 	<div class="who">
 		<p class="household">{data.household.name}</p>
 		<h1>{m.home.greeting(data.greeting)},<br />{data.currentMember.displayName}</h1>
@@ -108,23 +123,32 @@
 			<ChevronRight size={18} strokeWidth={2.2} aria-hidden="true" />
 		</a>
 	</div>
-	<Mascot name={data.raccoon} height={136} class="raccoon" />
+	<RaccoonPoke
+		name={data.raccoon}
+		height={RACCOON_HEIGHT}
+		class="raccoon"
+		onpick={data.adminMode ? openPicker : undefined}
+	/>
 </header>
 
-<div class="stack">
-	<!-- The one thing on this screen you can finish from this screen. -->
-	{#if data.nextChore}
-		{@const chore = data.nextChore}
-		<NextChoreCard
-			{chore}
-			today={data.today}
-			{pending}
-			{complete}
-			onsnooze={() => (snoozing = chore)}
-		/>
-	{/if}
+{#if Picker}
+	<Picker current={data.raccoon} today={data.todaysRaccoon} onclose={() => (Picker = null)} />
+{/if}
 
-	{#if data.overdue && showOverdueBanner}
+<div class="stack">
+	<!-- The one thing on this screen you can finish from this screen: one card,
+		 or a stack to swipe when more than one chore is on you. -->
+	<NextChoreStack
+		chores={data.nextChores}
+		more={data.moreChores}
+		today={data.today}
+		{pendingId}
+		{complete}
+		onsnooze={(chore) => (snoozing = chore)}
+	/>
+
+	<!-- Null when every overdue chore is already a card above (→ `getHomeSummary`). -->
+	{#if data.overdue}
 		{@const overdue = data.overdue}
 		<Banner
 			title={m.home.overdue.count(overdue.count)}
@@ -166,6 +190,8 @@
 			{#snippet icon()}<ChecklistIcon size={22} strokeWidth={1.8} />{/snippet}
 		</StatTile>
 	</div>
+
+	<AlbumCard album={data.album} />
 
 	{#if data.balance}
 		<BalanceLine balance={data.balance} />
@@ -210,15 +236,16 @@
 
 	/* Display names are free text up to 40 characters, so without min-width a
 	   long one pushes the whole page sideways; the max keeps the greeting clear
-	   of the raccoon. */
+	   of the raccoon — 150px, or as far as this pose reaches (→ DECISIONS #221,
+	   #224). */
 	.who {
 		min-width: 0;
-		max-width: calc(100% - 150px);
+		max-width: calc(100% - max(150px, var(--raccoon-reach) + 6px));
 	}
 
 	header :global(.raccoon) {
 		position: absolute;
-		right: 0;
+		right: var(--raccoon-right);
 		bottom: -2px;
 	}
 

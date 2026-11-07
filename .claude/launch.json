@@ -20,6 +20,7 @@
 				"AI_ANTHROPIC_BASE_URL=http://127.0.0.1:5199/anthropic",
 				"AI_OPENROUTER_BASE_URL=http://127.0.0.1:5199/openrouter",
 				"MAIL_OUTBOX=./data/verify-outbox.jsonl",
+				"ADMIN_EMAILS=admin@verify.test",
 				"npm",
 				"run",
 				"dev",

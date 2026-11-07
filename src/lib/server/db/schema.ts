@@ -780,8 +780,9 @@ export const cookTimers = sqliteTable(
 		recipeId: text('recipe_id').references(() => recipes.id, { onDelete: 'set null' }),
 		stepIndex: integer('step_index'),
 		endsAt: integer('ends_at', { mode: 'timestamp_ms' }).notNull(),
-		/** Set when the push was sent (idempotency). */
+		/** Set when the alert went out, by the push or the open page (idempotency). */
 		notifiedAt: integer('notified_at', { mode: 'timestamp_ms' }),
+		/** Set when somebody stops it, before or after it rang. Until then it stays on screen. */
 		canceledAt: integer('canceled_at', { mode: 'timestamp_ms' }),
 		createdAt: createdAt()
 	},
@@ -996,6 +997,47 @@ export const expenseRecurrenceShares = sqliteTable(
 	(t) => [primaryKey({ columns: [t.recurrenceId, t.personId] })]
 );
 
+/* ────────────────────────────────────────────────────────────────────────────
+ * The raccoon album (→ plan 35)
+ * ──────────────────────────────────────────────────────────────────────────── */
+
+/**
+ * Which of Home's raccoons a member has met (→ SPEC §6, DATA-MODEL.md). One row
+ * per member per raccoon, written by Home's `load` when it shows one
+ * (→ `services/raccoons.ts`); the album is these rows over the full list.
+ *
+ * **Per member, not per household**: everyone fills their own album, and a
+ * housemate's birthday raccoon is theirs. The member FK cascades, so leaving
+ * the household takes the album with it.
+ *
+ * `seenCount` counts Home's slots, not page loads: `lastSlot` is the slot the
+ * last sighting fell in (`YYYY-MM-DD#0|1|2`, or `#n` for the night →
+ * `utils/raccoon` `homeSlot`), and a sighting in that same slot changes
+ * nothing. `noticedAt` is when the album first showed it to them; null is the
+ * tile's "New" badge.
+ */
+export const raccoonSightings = sqliteTable(
+	'raccoon_sightings',
+	{
+		id: id(),
+		householdId: text('household_id')
+			.notNull()
+			.references(() => households.id, { onDelete: 'cascade' }),
+		memberId: text('member_id')
+			.notNull()
+			.references(() => members.id, { onDelete: 'cascade' }),
+		/** The mascot name, one of Home's (`HOME_RACCOONS`). */
+		raccoon: text('raccoon').notNull(),
+		/** Household-local 'YYYY-MM-DD'. */
+		firstSeenOn: text('first_seen_on').notNull(),
+		seenCount: integer('seen_count').notNull().default(1),
+		lastSlot: text('last_slot').notNull(),
+		noticedAt: integer('noticed_at', { mode: 'timestamp_ms' }),
+		createdAt: createdAt()
+	},
+	(t) => [uniqueIndex('raccoon_sightings_member_raccoon_unique').on(t.memberId, t.raccoon)]
+);
+
 /* ── Inferred row types ────────────────────────────────────────────────────── */
 
 export type User = typeof user.$inferSelect;
@@ -1021,3 +1063,4 @@ export type LedgerPerson = typeof ledgerPeople.$inferSelect;
 export type Expense = typeof expenses.$inferSelect;
 export type ExpenseShare = typeof expenseShares.$inferSelect;
 export type ExpenseRecurrence = typeof expenseRecurrences.$inferSelect;
+export type RaccoonSighting = typeof raccoonSightings.$inferSelect;

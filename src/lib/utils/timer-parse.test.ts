@@ -10,6 +10,7 @@ import { describe, it } from 'vitest';
 import {
 	MAX_TIMER_SECONDS,
 	formatDuration,
+	formatOvertime,
 	parseStepDuration,
 	stepDurations,
 	timerHref
@@ -198,5 +199,19 @@ describe('timerHref', () => {
 		// same fallback — the two have to agree on where a widowed timer points.
 		assert.equal(timerHref(null, 4), '/cooking');
 		assert.equal(timerHref(null, null), '/cooking');
+	});
+});
+
+describe('formatOvertime', () => {
+	it('reads as a clock past zero, rounded down', () => {
+		assert.equal(formatOvertime(0), '−0:00');
+		assert.equal(formatOvertime(999), '−0:00');
+		assert.equal(formatOvertime(1000), '−0:01');
+		assert.equal(formatOvertime(754_000), '−12:34');
+		assert.equal(formatOvertime(3_753_000), '−1:02:33');
+	});
+
+	it('never goes the wrong way when the clocks disagree', () => {
+		assert.equal(formatOvertime(-500), '−0:00');
 	});
 });

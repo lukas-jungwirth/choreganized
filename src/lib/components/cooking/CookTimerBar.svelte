@@ -18,7 +18,7 @@
 <script lang="ts">
 	import type { CookTimer } from '$lib/cook-timer.svelte';
 	import { messages } from '$lib/i18n';
-	import { formatDuration } from '$lib/utils/timer-parse';
+	import { formatDuration, formatOvertime } from '$lib/utils/timer-parse';
 	import ChevronRight from '@lucide/svelte/icons/chevron-right';
 	import TimerIcon from '@lucide/svelte/icons/timer';
 	import X from '@lucide/svelte/icons/x';
@@ -48,8 +48,11 @@
 	const elsewhere = $derived(timer.step !== null && (!here || timer.step !== step));
 
 	function go() {
+		// Going to look isn't stopping it: its step's ring shows how long it has been
+		// over (→ DECISIONS #251). Only with nowhere to go does a tap have to stop it.
+		// Read first, because the jump is what makes this false.
+		if (rang && !elsewhere) timer.dismiss();
 		if (timer.step !== null) onjump(timer.step);
-		if (rang) timer.dismiss();
 	}
 
 	/**
@@ -90,7 +93,7 @@
 	<TimerIcon size={18} strokeWidth={2} aria-hidden="true" />
 	<span class="text">
 		{#if rang}
-			{m.cooking.cook.barDone(
+			<b>{formatOvertime(timer.overMs)}</b> · {m.cooking.cook.barDone(
 				timer.label
 			)}{#if elsewhere && timer.step !== null}{m.cooking.cook.barBackTo(timer.step + 1)}{/if}
 		{:else}

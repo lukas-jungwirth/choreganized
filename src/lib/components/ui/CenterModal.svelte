@@ -4,7 +4,9 @@
 	as BottomSheet — see there for why.
 
 	`dismissible` is off for confirms, where a stray tap on the scrim shouldn't
-	answer the question.
+	answer the question. `bare` drops the white panel for content that is its
+	own surface (the raccoon album's card, plan 35): only the width and the
+	scroll stay.
 -->
 <script lang="ts">
 	import { lockBodyScroll } from '$lib/scroll-lock';
@@ -15,10 +17,11 @@
 		/** Announced as the dialog's name; the visible title lives in `children`. */
 		label: string;
 		dismissible?: boolean;
+		bare?: boolean;
 		children: Snippet;
 	};
 
-	let { open = $bindable(), label, dismissible = true, children }: Props = $props();
+	let { open = $bindable(), label, dismissible = true, bare = false, children }: Props = $props();
 
 	let dialog: HTMLDialogElement | undefined = $state();
 
@@ -80,7 +83,7 @@
 	aria-label={label}
 >
 	{#if open}
-		<div class="panel">{@render children()}</div>
+		<div class="panel" class:bare>{@render children()}</div>
 	{/if}
 </dialog>
 
@@ -122,6 +125,13 @@
 		text-align: center;
 		/* Inputs are white on the paper background but sunken on a white sheet. */
 		--input-surface: var(--field);
+	}
+
+	.panel.bare {
+		padding: 0;
+		border-radius: 0;
+		background: none;
+		box-shadow: none;
 	}
 
 	.modal[open] .panel {

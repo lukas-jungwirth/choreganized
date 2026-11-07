@@ -40,9 +40,15 @@
  * argument and still in every WHERE clause, because a timer id from another
  * household must find nothing.
  *
- * Untouched by any of that: `cancelTimer`, `markTimerRung`, `claim`, `ring`,
- * `payloadFor`, `sweepCookTimers`, the `alarms` map and every validator. The
- * change is only ever about *how many* rows may be live at once.
+ * Untouched by any of that: `markTimerRung`, `claim`, `ring`, `sweepCookTimers`,
+ * the `alarms` map and every validator. The change is only ever about *how many*
+ * rows may be live at once.
+ *
+ * **A rung timer stays until somebody stops it** (→ DECISIONS #251). Whoever
+ * comes back to a phone that was on silent has to be able to see how long the
+ * pan has been sitting there, even if the page that started it is long gone. So
+ * `notifiedAt` means "the alert went out" and nothing more; `canceledAt` is what
+ * takes a row off the screen, for a timer that rang just as for one that didn't.
  */
 import { and, asc, eq, gt, gte, isNull, lte, type SQL } from 'drizzle-orm';
 // Explicitly Node's, not the DOM's: this module is server-only and wants the
@@ -53,8 +59,10 @@ import {
 	MAX_TIMER_SECONDS,
 	MIN_TIMER_SECONDS,
 	TIMER_LABEL_MAX,
+	TIMER_STOP_ACTION,
 	TIMERS_MAX,
-	timerHref
+	timerHref,
+	timerNotificationTag
 } from '$lib/utils/timer-parse';
 import { db } from '../db';
 import { cookTimers, recipes } from '../db/schema';
@@ -98,7 +106,14 @@ const CATCH_UP_MS = 10 * 60 * 1000;
 const TIMER_TTL_SECONDS = 15 * 60;
 
 /**
- * A running timer as the page needs it.
+ * How long a rung timer nobody stopped keeps coming back to the screen. Long
+ * enough for dinner to be over, short enough that nobody opens the app the next
+ * morning to a pan that has been done for fourteen hours.
+ */
+const RUNG_KEPT_MS = 3 * 60 * 60 * 1000;
+
+/**
+ * A timer as the page needs it: running, or rung and not yet stopped.
  *
  * `remainingMs` rather than an absolute `endsAt`, deliberately: the browser
  * counts down against *its own* clock, and a phone whose clock is a minute off
@@ -113,8 +128,10 @@ export type CookTimerView = {
 	stepIndex: number | null;
 	/** What the timer was set for — the ring's "{label} · 8:00" line [7h]. */
 	totalSeconds: number;
-	/** Time left when this was read. Never negative. */
+	/** Time left when this was read; negative once it is past zero. */
 	remainingMs: number;
+	/** Its alert has gone out, so whoever reads this must not ring it again. */
+	rung: boolean;
 };
 
 export type StartTimerInput = {
@@ -147,9 +164,13 @@ function live(householdId: string, userId: string, now: Date): SQL | undefined {
 }
 
 /**
- * Every timer this person has running — what the app shell's dock and cook mode
- * both hydrate from, so tapping a notification (or just reloading) finds the
- * rings still turning rather than a fresh screen.
+ * Every timer this person still has on screen, running or rung — what the app
+ * shell's dock and cook mode both hydrate from, so tapping a notification (or
+ * just reloading) finds the rings still turning, and a timer that went off while
+ * the app was closed still counting past zero.
+ *
+ * Deliberately not `live`, which answers a different question: a rung timer has
+ * nothing left to buzz, so it spends no slot, but it does still need showing.
  *
  * Soonest first, which is the order every reader wants *and* the order they ring
  * in; `id` only breaks ties, because two rows can share a millisecond and the
@@ -167,7 +188,14 @@ export function listActiveTimers(
 	return db
 		.select()
 		.from(cookTimers)
-		.where(live(householdId, userId, now))
+		.where(
+			and(
+				eq(cookTimers.householdId, householdId),
+				eq(cookTimers.userId, userId),
+				isNull(cookTimers.canceledAt),
+				gt(cookTimers.endsAt, new Date(now.getTime() - RUNG_KEPT_MS))
+			)
+		)
 		.orderBy(asc(cookTimers.endsAt), asc(cookTimers.id))
 		.all()
 		.map((row) => toView(row, now));
@@ -185,7 +213,8 @@ function toView(row: TimerRow, now: Date): CookTimerView {
 		// it was created across. That stays true through "+1:00" and "resume",
 		// which are a cancel and a new row (→ DECISIONS #15).
 		totalSeconds: Math.max(1, Math.round((row.endsAt.getTime() - row.createdAt.getTime()) / 1000)),
-		remainingMs: Math.max(0, row.endsAt.getTime() - now.getTime())
+		remainingMs: row.endsAt.getTime() - now.getTime(),
+		rung: row.notifiedAt !== null
 	};
 }
 
@@ -235,7 +264,8 @@ export function startTimer(
 								eq(cookTimers.id, input.replaces),
 								eq(cookTimers.householdId, householdId),
 								eq(cookTimers.userId, userId),
-								isNull(cookTimers.notifiedAt),
+								// Not `notifiedAt`: "+1:00" in the last seconds replaces a row the page
+								// has already claimed, and left alone it would stay listed as rung.
 								isNull(cookTimers.canceledAt)
 							)
 						)
@@ -243,8 +273,8 @@ export function startTimer(
 						.all();
 
 		// Counted here, next to the insert, for the same reason the recipe is:
-		// two taps that raced would otherwise both find room. `live` is the
-		// predicate the dock reads, so the screen and the refusal can't disagree.
+		// two taps that raced would otherwise both find room. `live` leaves out what
+		// has already rung: a pan that is done must not refuse the next timer.
 		const running = tx
 			.select({ id: cookTimers.id })
 			.from(cookTimers)
@@ -279,11 +309,11 @@ export function startTimer(
 }
 
 /**
- * Stop one — the Cancel button [7h], and the first half of both "+1:00" and
- * "pause" (each of which starts a fresh one afterwards).
+ * Stop one — the Cancel button [7h], Stop on one that rang, and the first half
+ * of "pause" (which starts a fresh one afterwards).
  *
- * @returns whether there was a live timer to stop; `false` for one that already
- *   rang, was already canceled, or belongs to somebody else.
+ * @returns whether there was a timer to stop; `false` for one that was already
+ *   stopped or belongs to somebody else.
  */
 export function cancelTimer(
 	householdId: string,
@@ -299,7 +329,6 @@ export function cancelTimer(
 				eq(cookTimers.id, timerId),
 				eq(cookTimers.householdId, householdId),
 				eq(cookTimers.userId, userId),
-				isNull(cookTimers.notifiedAt),
 				isNull(cookTimers.canceledAt)
 			)
 		)
@@ -393,7 +422,11 @@ async function ring(row: TimerRow, now: Date): Promise<number | null> {
 	if (!claim(row.id, now)) return null;
 
 	clearAlarm(row.id);
-	return sendToUser(row.userId, payloadFor(row), { ttlSeconds: TIMER_TTL_SECONDS });
+	return sendToUser(row.userId, payloadFor(row), {
+		ttlSeconds: TIMER_TTL_SECONDS,
+		// The pan is done now, and the phone is probably locked on the counter.
+		urgency: 'high'
+	});
 }
 
 /**
@@ -418,13 +451,21 @@ function payloadFor(row: TimerRow): PayloadFor {
 		title: m.push.timerDone(row.label),
 		body: dish ?? undefined,
 		// Per timer, so a second timer never silently replaces the first's alert.
-		tag: `timer-${row.id}`,
+		tag: timerNotificationTag(row.id),
 		url: timerHref(row.recipeId, row.stepIndex),
 		// A kitchen is loud and hands are busy, and this is the one notification
 		// the app sends that somebody is actively waiting for — so it buzzes like
 		// an alarm and stays put until it is dealt with (→ DECISIONS #134).
 		vibrate: [400, 150, 400, 150, 400],
-		requireInteraction: true
+		requireInteraction: true,
+		// When it went off, not when it arrived, so a phone on silent can still
+		// say how long ago that was without the app being opened.
+		timestamp: row.endsAt.getTime(),
+		// Stop without unlocking into the app. The ring may be playing as a track
+		// on this very phone, and this is the closest a web app gets to an alarm's
+		// button (→ DECISIONS #252).
+		actions: [{ action: TIMER_STOP_ACTION, title: m.cooking.cook.dismiss }],
+		timerId: row.id
 	});
 }
 

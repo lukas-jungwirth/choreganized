@@ -20,7 +20,8 @@ user ─┬─ session / account / verification        (Better Auth)
                   │           │  (one per membership,  └─→ expense_recurrences (series it came from)
                   │           │   outlives it)                └─ expense_recurrence_shares
                   │           └─ (payer and people of a series)
-                  └─ holiday_notices             (per member × shop closure)
+                  ├─ holiday_notices             (per member × shop closure)
+                  └─ raccoon_sightings           (per member × Home raccoon, the album)
 ```
 
 ## Core principles
@@ -237,6 +238,25 @@ Per member, not per household: one person tapping dismiss must not silence the h
 actually doing the shopping. Rows for closures already under way are unreadable by definition
 and are deleted by the morning sweep, so the table stays at a couple of dozen rows a year.
 
+### `raccoon_sightings` (→ plan 35, SPEC §6)
+
+The raccoon album: one row per **member × raccoon** they have met on Home (unique on
+`(memberId, raccoon)`), written by Home's `load` once it has worked out the pose
+(→ `services/raccoons.ts`, [DECISIONS #231](DECISIONS.md)). The list of raccoons has no table:
+it is the code's (`HOME_RACCOONS`, the album numbers and stats in `mascots.json`), so a row only
+records the meeting.
+
+- `raccoon` — the mascot name. Only album raccoons are accepted; a section raccoon is refused.
+- `firstSeenOn` — household-local `YYYY-MM-DD`, the card's "First met".
+- `seenCount` / `lastSlot` — sightings count Home's **slots**, not page loads. `lastSlot` is
+  `YYYY-MM-DD#0|1|2` (morning, afternoon, evening) or `#n` for the night, dated by the evening it
+  began (`utils/raccoon` `homeSlot`); a sighting in the slot already recorded changes nothing.
+- `noticedAt` — when the album first showed it to them; null is the tile's "New" badge. The
+  album's load reads the rows, then stamps them.
+
+Per member, with `householdId` for scoping like every table. Both FKs cascade: leaving the
+household (or the household going) takes the album with it.
+
 ### `push_subscriptions`
 
 - One row per browser/device (`endpoint` unique, upsert on re-subscribe). Send failures with
@@ -249,9 +269,11 @@ and are deleted by the morning sweep, so the table stays at a couple of dozen ro
 ### `cook_timers`
 
 - Server-side alarm for locked-phone delivery: `endsAt` (+`label`, `recipeId`, `stepIndex` for
-  the notification deep link `/cooking/recipes/{id}/cook?step={i}`). `notifiedAt` =
-  idempotency; `canceledAt` set on cancel (pause v1 = cancel + recreate on resume with shifted
-  `endsAt`). Precision: in-process `setTimeout` scheduled at creation + the minute cron as
+  the notification deep link `/cooking/recipes/{id}/cook?step={i}`). `notifiedAt` = the alert
+  went out, and idempotency; `canceledAt` = somebody stopped it, before or after it rang (pause
+  v1 = cancel + recreate on resume with shifted `endsAt`). A row with `notifiedAt` and no
+  `canceledAt` is a rung timer still on screen, counting past zero, listed for 3 hours
+  (→ [DECISIONS #251](DECISIONS.md)). Precision: in-process `setTimeout` scheduled at creation + the minute cron as
   catch-up after restarts (→ ARCHITECTURE.md).
 - Up to `TIMERS_MAX` (3) live rows per `(household_id, user_id)`, counted inside `startTimer`'s
   transaction; a start may name **one** row it replaces, cancelled in the same transaction

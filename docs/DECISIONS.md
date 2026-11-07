@@ -3153,3 +3153,569 @@ units | null, name}`, written back as editor lines in the reader's unit spelling
      month depend on the one before. Pure rotation, no "tea in the evening" fitting (Lukas's
      pick). The masters came "card-ready" but still rounded; trimmed 1–4% to pass #218's test.
      ~210 KB more precache (about 23 KB a pose).
+220. **New raccoons come in through `/raccoons`, one list, four seasons** (Lukas's call
+     2026-11-03). Each batch so far meant hand-written image scripts and edits in three places,
+     so: `artwork/raccoon/mascots.json` lists every screen raccoon (height, `perched`, and for
+     Home's everyday poses `seasons` and `lookAlike`), and `npm run icons` generates the AVIFs,
+     `index.ts` and an image-free `everyday.ts` from it, which `utils/raccoon` and the tests read.
+     `npm run raccoons -- <folder>` checks a batch (transparent, not cut off, ≥408px tall,
+     bottom flat or cuttable within a fifth — the measure in `scripts/raccoon-art.ts`, shared with
+     the perch test), cuts and saves the masters and draws a contact sheet; it writes nothing if
+     any file fails. `/raccoons` (`.claude/commands/raccoons.md`) does the judgment around it:
+     names, seasons, look-alikes, a look at the sheet — it **decides, shows Lukas, and waits for
+     his OK**, then lists, tests, documents and ships to `dev`. A saved script rather than one
+     written per run, because the per-run ones broke in new ways each time (#219's crop) and the
+     cut must match the test exactly. Everyday months became the four meteorological seasons
+     (winter Dec–Feb … autumn Sep–Nov), multiple allowed — easier to judge than per-pose month
+     windows. Shifts from #219: summer gardening and fishing lose May → fishing is now spring to
+     autumn (Lukas: you fish in spring too), gardening gains March and November, snow and the
+     scarf end in February, tea runs autumn and winter. The one allowed repeat moves to a
+     season's first morning. A new special day or another screen still needs code; the command
+     says so instead of guessing.
+221. **Five more everyday raccoons** (Lukas's batch 2026-11-03, the first through `/raccoons`).
+     `skiing` (winter), `tennis` (spring–autumn, Lukas's pick over spring–summer), `handball`
+     (autumn–spring, the indoor season), `painting` and `phone` (all year). Tennis and handball
+     strike the same pose — one arm up with racket or ball, the other paw out — so they share a
+     new look-alike group, `ball-sport`, and never follow each other. Placed so neighbours differ
+     in every season (skiing well away from the snow raccoon); each season now has 10–11 poses,
+     so every one comes round within four days. Four came in flat, skiing lost 5px of ski tips.
+     ~100 KB more precache. The season test now takes its expected poses from `mascots.json`, so a
+     batch doesn't have to edit it; and the command's approval question now says what a
+     look-alike group does, which it didn't the first time. Tennis is the widest pose yet (158px
+     at Home's 136px), so the greeting now keeps clear of the raccoon's actual width
+     (`--raccoon-width` from the file, at least the old 150px) instead of a fixed 150px.
+222. **The empty "add dinner" card is filled with the page colour** (Lukas's report 2026-11-03).
+     It was dashed on transparent, and in a fresh household it is Home's first card, so the
+     raccoon perched on it showed its waist through. `background: var(--bg)` keeps the dashed,
+     not-yet-a-card look and covers the cut like any other first card (#213).
+223. **Home's raccoon can be poked away — for a moment** (Lukas's idea 2026-11-03). A hidden
+     game: tap it and it squashes, the third tap is a hit (shake, red flush), it sulks slightly
+     red after, and the sixth sends it down behind the card for four seconds before the same
+     raccoon comes back up. A first version swapped in the season's next pose instead; Lukas
+     turned that down — raccoons are meant to be discovered by coming back to the app at other
+     times, not picked by tapping — so the pose stays the date's and the hour's. Three seconds of
+     peace and the count resets. Component state only, nothing stored. The red is a CSS filter
+     on the art (sepia + hue-rotate), not a colour token — it shifts the raccoon's own palette,
+     like the art is theme-independent everywhere, and stays faint while sulking because red is
+     "overdue" elsewhere in the app. It is a real button with a label, so it is reachable and
+     announced, not a click on a decorative image. The pose gallery Lukas also wanted belongs to
+     a developer area tied to his account, later. The drop folder for new art,
+     `design/new-raccoons/`, now stays in the repo with its contents git-ignored; `/raccoons`
+     empties it after an import instead of deleting it.
+224. **Home places its raccoon by its body, not its picture's edge** (Lukas's report 2026-11-03).
+     Right-aligned pictures put a slim pose (phone) with its body against the edge and one
+     holding a prop out (tennis) well inside, so the rotation looked uneven. Now every perched
+     pose carries `body` — where its body is across its width — and Home lands that point 76px in
+     from the right; props reach out either side. `npm run icons` finds it: halfway between the
+     two gold overall buttons (`bodyCentre` in `scripts/raccoon-art.ts`: round, solid, in the
+     lower half, a level pair — candle flames and lemons don't qualify), checked by eye on all
+     27 poses. Where the buttons are hidden (the sleeping raccoon's blanket, the cold one's mug)
+     `mascots.json` gives `body` by hand, and the script refuses rather than guesses for a new
+     one. Two limits keep it sane: a prop may run 14px into the gutter, no further, and no pose
+     reaches further left than the widest always has (163px), so a pose with both arms out
+     (welcome A) shifts right a little instead of squeezing the greeting. Settings' two raccoons
+     are fixed poses and stay as they are.
+225. **Five indoor pastimes for the everyday raccoon** (Lukas's batch 2026-11-03, through
+     `/raccoons`). `call` (an old corded phone), `music` (headphones, eyes closed), `singing`
+     (a microphone), `arcade` (an arcade machine) and `writing` (quill and ink pot), all year —
+     none of them belongs to a season. Singing and the corded phone strike the same pose (one paw
+     at the face, the other held out palm up, mouth open), so they share a new look-alike group,
+     `talking`; the corded phone looks nothing like the smartphone `phone`, but sits well away
+     from it anyway. Writing was judged unlike painting. Placed after tennis, reading, welcome B,
+     skiing and dumbbell, so no neighbour is alike in any season; the rotation test passed as
+     placed. Each season now has 15–16 poses, so a pose comes round within six days (SPEC §2 said
+     three, already stale since #221). Three came in flat; music lost 10px and arcade 15px at the
+     bottom, through the overalls and the cabinet's foot. Arcade is wide (141px at Home's 136px),
+     the cabinet filling its right half, but narrower than tennis; `npm run icons` found all five
+     bodies by their overall buttons (#224), arcade's at 0.38, so the cabinet reaches out to the
+     right. +92 KB of AVIFs.
+226. **Nine more everyday raccoons, four of them for winter** (Lukas's batch 2026-11-03, through
+     `/raccoons`). All year: `camera`, `cards`, and `watering` (a potted houseplant: it needs
+     water in winter too). `flower` spring and summer (Lukas's pick over spring alone),
+     `water-pistol` summer, `knitting` autumn and winter (Lukas's pick over winter alone),
+     `snowman`, `snowflake` and `skates` winter. Two look-alikes: `watering` holds the garden
+     raccoon's terracotta pot, so it joins `gardening`; `knitting` wears exactly the snowball
+     raccoon's blue beanie and red snowflake scarf, so the two make a new group, `snow-gear`.
+     Placed so the winter outfits (snow, snowflake, cold, snowman, skiing, tea, knitting,
+     skates) never come two in a row, and watering sits far from both gardening poses. Seasons
+     now hold 18–23 poses, so a pose comes round within eight days, and the season test's
+     one-week window became one round of the longest season, read from `mascots.json`, so the
+     next batch doesn't have to touch it. `npm run icons` couldn't find three bodies: cards (the
+     fanned cards hide the right button), snowman (the snowman pushes it out of level) and
+     watering (the plant's leaves crowd it). Their `body` is set by hand from the button
+     positions in the art: 0.50, 0.45 and 0.52. Cut: skates 50px (only the blades), cards 10px;
+     the other seven came in flat. +176 KB of AVIFs.
+227. **Admin mode: a verified email on a server list, switched on by seven taps** (plan 34,
+     Lukas's pick 2026-11-03). Who is an admin is the deploy's (`ADMIN_EMAILS`), never a
+     column a bug or a migration could set; the address must be verified (Google and the email
+     code verify it; E2E mode's password sign-up doesn't, so that is trusted only in E2E mode,
+     which refuses to start off localhost). A password behind the seven taps was the other idea:
+     rejected because it is one shared secret anyone can guess at, where the list ties admin to
+     an account Lukas already proves he owns. The taps only set a cookie (`admin_mode`,
+     httpOnly, 30 days); it grants nothing alone, because every read also asks `isAdmin`, so
+     a forged cookie on another account is ignored. Anyone not in admin mode, admins included, gets a **404, not a 403**, from `/admin`, and a non-admin gets one from `?/enterAdmin` too: the page and the action don't exist for anyone else, and the taps fail silently. "Leave admin mode" at
+     the bottom of Settings is how out (Lukas's pick over tapping again). `services/admin.ts`
+     is the one service that reads across households, scoped by its only caller's guard
+     (`requireAdmin`, held by `tests/conventions/guards.test.ts`) instead of a `householdId`;
+     it returns counts, dates and household names, never content. The raccoon picker
+     overrides Home's pose through `?raccoon=`, which the server applies only in admin mode,
+     so placement is tested exactly as it renders; the sheet is a dynamic import, fetched on an
+     admin's first tap and never by anyone else.
+228. **The admin page has no design frame.** Built from the settings subpage's parts: the
+     `SubHeader` [6b], `Card` tiles, a CSS bar per week (sage households over terracotta
+     accounts, no chart library for twelve bars), and the households as a `RowGroup` list.
+     Only Lukas sees it, so it follows the house style rather than waiting for a frame.
+229. **The raccoon album collects Home's raccoons only, in three tiers worked out from the pose**
+     (plan 35, Lukas's picks 2026-11-03). Collectable is exactly what `homeRaccoon()` can
+     return (39 today): the title, sign-in and Settings raccoons are left out because the Home
+     art is the better art. Rarity is never typed in: ★ all year (every season, plus sleeping
+     and the reminders), ★★ seasonal (one to three seasons), ★★★ special days (holidays and your
+     birthday). A fourth "legendary" tier for raccoons earned by household feats was considered
+     and dropped. The album is per member, a sighting counts once per slot, and an unmet raccoon
+     is only a silhouette and a "?", with no hint (clues were too hard to write well). The card's
+     header carries only the number and the stars; one chip says when you can meet it (months,
+     a date or "All year"), so no fact is shown twice. The season sets the frame's hue and the
+     theme only its shade; several seasons blend first to last, and spring is pink so it can't
+     pass for all year's sage. Home's order stays as it is for the album: the reminder raccoon still
+     comes before the everyday poses when a chore is on you (Lukas, asked the same day).
+230. **The admin raccoon picker offers Home's raccoons only, kept apart by code, not by folder**
+     (Lukas 2026-11-03). The section raccoons (shopping, cooking, tasks, expenses, head,
+     settings, move-out) are drawn for their screens, at another quality, and never sit on
+     Home's card, but the picker listed every entry of `MASCOTS`. `HOME_RACCOONS` in
+     `utils/raccoon.ts` is now the list: the situations, the special days and the everyday
+     poses, built from the same constants `homeRaccoon` reads. The picker shows it, and the
+     server takes no other `?raccoon=`. A test runs `homeRaccoon` over every hour of two years
+     and asserts it returns exactly that set. Splitting the art into two folders was weighed
+     and not done: it would be a second record of the same split, one that could drift from
+     the code that really picks, and it would mean changing `scripts/icons.ts`, `/raccoons`, the
+     generated imports and every asset path for no behaviour.
+     Plan 35's album (#229) counts the same set, so it can take `HOME_RACCOONS` as its list.
+231. **The raccoon album, as built (plan 35).** Judgment calls the plan left open or that
+     changed on the way:
+     - **Home's `load` writes the sighting.** A deliberate exception to loads being reads: the
+       server decides the pose, and a second request from the browser to report it is one Home
+       could lose (a closed tab, a flaky train). A link preload of `/home` would count as meeting it,
+       which would spend the toast on a hover that never became a visit, so links to the two
+       loads that write (Home, the album) preload on tap, not hover (`$lib/preload`). Admin
+       mode's `?raccoon=` pick is never recorded, and a pose the album doesn't number yet is
+       skipped rather than failing Home. The album's own `load` stamps `noticedAt` after reading, the same exception,
+       so its "New" badges show on this visit and not the next.
+     - **`noticedAt` is a column the plan didn't list**: "met since you last opened the album"
+       needs to know when that was, per raccoon, and a null stamp is the badge.
+     - **The card is a centred modal** (`ui/CenterModal` with a new `bare` panel), not a
+       sheet: a trading card is held up to look at, and a sheet's handle and flat top fight its
+       frame. ‹ / › and a sideways swipe (`$lib/swipe`) page through every number; Close and
+       the scrim shut it.
+     - **The toast is `ui/UndoToast`'s pill with a link**: it gained `href` instead of the
+       form and a `detail` line, rather than a second toast component.
+     - **Silhouettes are a CSS mask** filled with `--silhouette`, not `filter: brightness(0)`
+       plus an opacity as the sketch drew it: `light-dark()` paints colours only, so a
+       theme-aware opacity isn't expressible.
+     - **The catalog is typed by `AlbumName`**, a union `npm run icons` generates from
+       `mascots.json` (`assets/mascot/album.ts`), and the convention test ties the album to
+       `HOME_RACCOONS`, so a missing translation is a `check` failure and a new Home pose
+       without a number is a test failure naming the fix.
+     - **Numbers**: ★ first (the all-season poses, sleeping, the reminders), then ★★ by the
+       season the run starts in, winter to autumn, then ★★★ in calendar order with the
+       birthday last. Names, titles, facts and stats are drafts, shipped for Lukas to review.
+     - **E2E reaches the next slot by moving the household's timezone** (Vienna afternoon →
+       Tokyo evening) rather than the clock, which is fixed for the whole run. Setup opens Home
+       and the album once for both seeded accounts so no journey or screenshot depends on being
+       first.
+232. **Home's everyday raccoon is a daily draw per member** (Lukas 2026-11-03, for the raccoon
+     album). It used to be one fixed rotation keyed by date and slot, so every member of every
+     household saw the same pose and housemates filled identical albums. Worse for collecting:
+     summer's 21 poses divide by the 3 slots, so someone who only looks in the evening met 7 of
+     them, and a visitor in every slot had the whole season within a week. Now each member gets
+     three of the season's poses a day, drawn from a seed of member id and date (FNV-1a into
+     mulberry32 in `utils/raccoon`): computed, never stored, steady for the slot on every
+     device. The one rule is within the day (three different, no two look-alikes), because the
+     sleeping raccoon separates one day's evening from the next morning. No hard guarantee of
+     meeting every pose in a season, on purpose: the last few taking luck is the fun. The tests
+     hold the draw to it statistically instead: 200 simulated members meet every pose of every
+     season looking in every slot, and evening-only visitors meet over 95% on average. Weighed
+     and dropped: a per-member offset into the fixed rotation (kept the evening trap and the
+     one-week set), a shuffled deck per member (a full set in a week again), and an
+     end-of-season catch-up that guarantees the set (more code for less suspense). Special
+     days, the birthday, the reminders and sleeping are unchanged.
+233. **Five new raccoons, one of them for a new special day** (`/raccoons`, Lukas 2026-11-04).
+     Four everyday poses, none looking like another: **sweets** (nibbling chocolate) and
+     **trash** (raiding a bin) all year, **butterfly** (net and butterfly) spring and summer,
+     **lemonade** (iced, with a straw) summer only; lemonade holds its glass the way tea holds a
+     cup, but the two never share a season, so no look-alike group. **fasching** (a pirate with
+     a treasure map) is Home's raccoon on **Faschingsdienstag** only, worked out as Easter
+     Sunday minus 47 days (`faschingsdienstag` in `utils/raccoon`), since the day moves with
+     Easter. Just the Tuesday, not Rosenmontag too: that's the day Austria dresses up. Its album
+     card is ★★★ with its own chip ("Shrove Tuesday" / "Faschingsdienstag"), like Easter's,
+     rather than a date that would be wrong next year. The album grows from 39 to 44, renumbered by
+     #231's order: sweets and trash are 15–16 after the all-year poses, butterfly follows flower,
+     lemonade follows summer-garden, fasching sits between Valentine's and Easter. Sightings are
+     stored by name, so renumbering moves nobody's album. Names, facts and stats are drafts for
+     Lukas to review, like #231's. The tests that counted 39 now read `ALBUM_SIZE` (the e2e
+     journey keeps the literal "of 44", as a reader sees it). Butterfly was cut 20 px flat at
+     the waist; the other four were already flat. Extra download: 91 KB of AVIF (butterfly 22,
+     fasching 18, sweets 17, lemonade 17, trash 17).
+234. **Home's raccoons face into the screen** (Lukas 2026-11-04). The raccoon sits at the
+     card's right edge, right of the greeting, and many poses looked right, off the screen,
+     pulling the eye away from the card. Fifteen masters are mirrored: fasching, trash,
+     butterfly, both reminders, welcome-a, flower, reading, snowflake, painting, handball,
+     snowman, water-pistol, music, call. They now look toward the greeting. The masters
+     themselves are mirrored rather than given a `flip` flag in `mascots.json`: one source of
+     truth, and the picture you open is the picture Home shows, with nothing new in
+     `scripts/icons.ts`. The originals are in git history. `npm run icons` found every body
+     again by its buttons. Snowman's hand-set `body` went from 0.45 to 0.55. One detail now
+     reads backwards: the "12" on reminder-overdue's clock face, too small at 136px to
+     matter. Butterfly's net now reaches left toward the greeting but clears it (checked at
+     390px). `/raccoons` now checks which way a new pose looks and mirrors it before the cut.
+235. **New app icon: the raccoon as a bust, laid out from the art** (Lukas 2026-11-04). The icon
+     masters were a floating head; the new ones are head and shoulders in the cape and overalls,
+     ending in a flat cut. Centred on the canvas as before, that cut floats with green below it,
+     and the favicon's 120% centre crop cut off the ears. So `scripts/icons.ts` now trims the art
+     and **stands the bust on the bottom edge** of every icon: the store/apple-touch icon at 86%
+     of the side, the maskable one at 72% so the ears clear the 80% safe circle (the mask
+     cutting the body is what a portrait in a circle looks like), and the favicons and the badge
+     take only the **head**, the top 72% of the bust, since a whole bust is a smudge at 32px and
+     the cape blurs the badge's silhouette. The masters went in as delivered (the green is
+     exactly #74A585, the foreground's alpha is hard-edged, which only the badge reads).
+     `tests/conventions/app-icons.test.ts` reads the shipped PNGs: the bust touches the bottom
+     edge, nothing but green outside the safe circle above the middle, the favicon's top row is
+     green. Weighed and dropped: re-cutting the masters so the art sits right on their canvas
+     (the next generated icon would need the same hand step).
+236. **The test deploy wears its own name and a TEST-labelled icon** (Lukas 2026-11-04). With
+     the test environment and the household's app both installed on one phone, they looked
+     identical. `APP_STAGE=test`, set on the test environment in Coolify, now gives it the name
+     "Haushaltsheld Test" and the short name **"HH Test"** (a home screen prints about 12
+     characters, so "Haushaltsheld Test" would show as "Haushaltsh…"), and an icon set in
+     `static/icons/test/` that `npm run icons` builds from the live one: a yellow **TEST pill**
+     below the face on the launcher icons (inside the 80% safe circle on the maskable ones),
+     and on the favicons a full-width band with the head standing on it, smaller, since a band
+     over the head would hide the face. The letters are drawn as blocks, not set in a font, so
+     the output doesn't depend on the machine's fonts. Anything but `test`, unset included, is
+     live, so a missing or mistyped variable can only leave the test app looking like the
+     household's, never the reverse. No test badge: Android draws it as a 24dp silhouette,
+     where no label reads. The notification icon stays the live one (the service worker
+     can't know the deploy; Android names the site under each notification anyway). The
+     service worker skips the test set when precaching, so the household's devices don't
+     download it. The name is a brand, not copy, so it isn't in the message catalog.
+     Installed apps read the name and the icon only at install: reinstall the test app once
+     the variable is set.
+237. **The raccoon album sorts by rarity, and a pose can keep to some days or slots** (Lukas
+     2026-11-04, with six new raccoons from `/raccoons`). The tiers said _when_ (All year,
+     Seasonal, Special days), which has no place for a workday or a morning raccoon. They now
+     say **how rare**: ★ Common, ★★ Rare, ★★★ Legendary (Häufig, Selten, Legendär), **worked
+     out** in `utils/raccoon-album` (never typed in per raccoon) from the share of the year's
+     hours it can be on Home: months/12 × weekdays/7 × hours/24, where a drawn pose has Home's 17
+     awake hours (or the hours of its slots: morning 6, afternoon 6, evening 5), sleeping the 7
+     night hours, the reminders every hour (they come with a chore, any time) and a special day
+     its days/365. **Common from 40%, Legendary under 3%**, Rare in between. So three-season
+     poses (tennis, garden, fishing, handball) move from ★★ to ★ Common at 53%, sleeping from ★
+     to ★★ Rare at 29%, and one or two seasons stay Rare (18%, 35%). The lines were drawn so
+     a workday pose (51%) is Common and a two-hour night slot on two nights a week (2.4%),
+     should one ever come, is Legendary. The numbers ignore that a drawn pose shares its slot with
+     the rest of the season's pool: that is the same for every drawn pose, so it doesn't change
+     the order, and "how often could it be there" is what a player can reason about.
+     **Time rules** are data: `days` (`mon`–`sun`) and `slots` (`morning`, `afternoon`,
+     `evening`) on an everyday pose in `mascots.json`. They narrow the **draw**, they don't
+     pin the pose: coffee is only in the morning's pool, the laptop only in a workday's, and
+     either still has to be drawn. A pose that shows _every_ time its slot comes round would be
+     a situation in `homeRaccoon`, like sleeping, which is code, not data. Hours finer than
+     the slots are left out: Home holds one raccoon per slot and the album counts sightings per
+     slot, so a two-hour window would need both to change. The card's chip says the rule after
+     the window: "All year · Mornings", "All year · Mon – Fri", "All year · Nights" (sleeping);
+     days read as a run ("Mon – Fri"), the weekend, every one of a day ("Fridays", "Freitags")
+     or a list. **Frames still follow the window** (sage, a season, holo), not the rarity, so a
+     card's colour keeps saying when. The **Missing filter is gone** (Lukas: odd to use, not
+     needed; the silhouettes already show what's missing): All plus one chip per rarity. Album
+     numbers never move, so the grid no longer runs ★ to ★★★ in order; the test that held it
+     to that went too. The "still to find" line counts the Rare and Legendary ones.
+     **The batch**, all as recommended: `coffee` (No. 045, all year, mornings, a hot drink like tea
+     and the cold raccoon, so never on the same day as them), `laptop` (046, all year,
+     Mon–Fri), `fruit` (047), `juggling` (048) and `bath` (049, a Schaffel bubble bath, eyes
+     shut), all year, and `mushrooms` (050, autumn, Schwammerl season; the basket hides a button,
+     so `"body": 0.52` by hand). None needed mirroring: each looks in, at its own prop, or has
+     its eyes shut. Only `bath` was cut (10px off the tub). +111 KB of AVIFs. `scripts/icons.ts`
+     now runs `everyday.ts` through Prettier, since an entry with a rule is longer than a line.
+     The draw tests: "meets every pose of a season" holds the unruled poses to a season and
+     the ruled ones to a year (coffee is one slot's pool in 3, so one simulated member in 200
+     missed it in a winter), and a new test walks a year per member to check that no ruled pose
+     ever shows outside its days or slots.
+238. **A member's first look at Home is the welcome raccoon** (Lukas 2026-11-04). Someone
+     opening the app for the first time met whichever pose the day's draw gave them, a raccoon
+     mid-tennis-match, which reads as confusing rather than as a hello. Now `homeRaccoon` takes
+     `firstVisit` and shows `welcome-a` (Wendelin Wave, No. 001), after your birthday and the
+     special days (meeting the Christmas raccoon on day one is a nice surprise, not a
+     confusing one) and ahead of the chore reminder and bedtime (a housemate joining a
+     household with chores, or at 23:00, still gets the hello first). **First visit** is
+     worked out from the album, nothing new is stored: `isFirstVisit` is true while the member
+     has met no raccoon, and for the rest of the slot in which the only one they have met is
+     `welcome-a`, so a reload doesn't swap the greeting out. The next slot draws as usual.
+     Existing members have sightings, so nothing changes for them. Tests: the e2e setup takes
+     each seeded account's first look at the household's midnight (Auckland), a slot of its
+     own, so every journey and screenshot keeps the ordinary afternoon; the album journey now
+     expects Wendelin first and steps to midnight for the sleeping raccoon rather than to an
+     evening draw that might have been Wendelin again; the visual `home-new-raccoon` shot no
+     longer moves its household to Nouméa, since a first visit is the same every run.
+239. **A raccoon's name says what it is; the invented first names are gone** (Lukas
+     2026-11-05). Fifty alliterative names ("Topspin Tom", "Teacup Theo") read as a pun
+     quota, more cringe than charm, and each new raccoon would need another. The card's
+     subline already said what each one is, so it **became the name**, without its article
+     ("The tennis ace" → **Tennis Ace**, „Das Tennis-Ass“ → **Tennis-Ass**), and the card lost
+     its subline: number and stars, the raccoon, the name, the when-chip, the fun fact, the
+     stats. A subline that only described a moment got a plain noun instead: Optimist, Skier
+     (Skifahrer), Cocoa Sipper (Kakaotrinker), Morgensportler for „Das Morgentraining“, Phone
+     Chatter (Dauertelefonierer). German keeps each subline's gender (Schalstrickerin,
+     Homeoffice-Heldin), so the facts' pronouns still agree; no fact named its raccoon, so none
+     changed. The catalog's `raccoons.*` entries are `{ name, fact }`; the locked card's "Not
+     met yet" line is interface copy and stays. The toast reads "Tennis Ace is in your album".
+     Lukas reviews the German names and facts in the "Waschbär-Texte" editor artifact; English
+     follows from his German.
+240. **Admin mode shows the whole raccoon album** (Lukas 2026-11-05). To check every
+     raccoon's art, name, fact and stats without meeting them all, the album in admin mode
+     shows every tile in colour and opens every card. It only changes the **view**: the album's
+     `load` passes `revealAll: adminMode`, the tiles and cards read it, and nothing is recorded,
+     so the count, the "New" badges and "First met" / "Seen" stay the admin's real ones. An unmet
+     card says so where "First met" would be ("Not met yet · shown in admin mode"), and a line
+     under the progress card names the mode, so a revealed album is never mistaken for a full
+     one. In the grid too: an unmet tile is faded inside a dashed edge and its label ends
+     "not met yet" (review, 2026-11-05), and one rule, `cardView(met, revealAll)` → met ·
+     revealed · locked, decides both the tile and its card. Weighed and dropped: recording sightings for everything (it would spoil the admin's
+     own album for good), and a separate admin page of cards (the album already is that page).
+241. **One gardener, not two** (Lukas 2026-11-05). `garden` and `summer-garden` were the same
+     picture, one with a sun hat, and read as a duplicate in the album ("Gärtnerin" and
+     "Sommergärtnerin"). They are one raccoon now: **`garden`**, the **sun-hat art**, in
+     **spring and summer** (was spring–autumn and summer alone), so ★★ Rare at 35% (it was
+     ★ Common). It keeps `garden`'s key and No. 029, so anyone who met the gardener still
+     has her, and takes summer-garden's fact, which fits the hat ("Waters the garden at dawn
+     and herself at noon"); the stats stay garden's. `summer-garden` is gone from the list,
+     its master and its AVIF, and the numbers after 33 move down one: the album is 49. That
+     is allowed because the album hasn't been in a release yet (`v0.2.0` predates plan 35);
+     a sighting of `summer-garden` on the test deploy just stops counting (the album reads
+     only names it lists), so no migration.
+
+242. **New art for the New Year raccoon** (Lukas 2026-11-05). `new-year` now holds a sparkler
+     and a glass of sekt, with watercolour fireworks behind it, instead of the party popper. The
+     file keeps its name (`npm run raccoons -- --replace`), so its rule (31 December – 1 January),
+     album number 042 and stats stay put. The fireworks are a soft half-transparent glow; checked
+     on the light and the dark card, where it reads as sky, not a smudge. The AVIF grows from
+     28 to 36 KB. No test: the picture changes, nothing the app does.
+
+243. **Odds for raccoons with a narrow window, and a raccoon after midnight** (Lukas 2026-11-05).
+     A pose kept to one weekday joined the draw with ordinary odds, so it had a seventh of the
+     chances: someone opening Home once a day needed 20 Fridays for an even chance and 15 months
+     for 90%. So an everyday pose can have a **`weight`** in `mascots.json` (a whole number from 2;
+     the rest count 1), which multiplies its odds where it is allowed. One day a week gets 3, which
+     brings that to 7 Fridays and 5 months and keeps it a small surprise. By that rule a weekend
+     pose would get 2, and the laptop's five days get none. Rarity ignores it, since it is odds and
+     not time: `friday` stays ★★ Rare at 10%.
+     **The midnight raccoon** isn't a draw: the night had none. `homeRaccoon` has a new step: from
+     00:00 to 02:00, on one night in three seeded by member and date, it replaces the sleeping
+     raccoon. The chance is generous because looking at that hour is already the hard part. Its
+     share of the year counts the chance (2/24 × 1/3 = 2.8%), which makes it ★★★ Legendary; without
+     it, it would be Rare. It comes **before the chore reminder**, or someone with chores due would
+     never meet it, and the card still names the chore; birthday, special days and a first visit
+     stay above it. Daytime raccoons stay under the reminder, or chore reminders would show less.
+     Both of `raccoon.test.ts`'s season checks had limits tied to the old pool size (nobody misses a
+     pose, an evening visitor meets 95%), which a bigger pool breaks through plain luck: one left
+     over is now allowed, and the evening's floor is worked out from the pool.
+244. **The raccoon album gets a card on Home, and the toast goes** (Lukas 2026-11-05). The album
+     was only reachable from Settings, and the one thing pointing at it was a toast gone after six
+     seconds. Now a card sits directly under the stat tiles, always in the same place, in the
+     design Lukas approved on a canvas (https://claude.ai/artifact/3urZbsREozVKNJC49naGC9); the
+     Settings row stays as the second way in. Judgment calls:
+     - **Its "new" is the album's own**: `noticedAt` was already there, so a raccoon waits on the
+       card until you open the album, across reloads and days. No schema change. Several waiting
+       say so ("3 new") and open the album rather than one card.
+     - **One coloured card, silhouettes behind.** Three framed raccoons overlapping looked messy
+       (Lukas), so only the newest has colour. The two behind are the first still unmet, in album
+       order, so they hold still until you meet one, and a full album keeps two of its own: plain
+       backs looked worse (Lukas). They use `--silhouette-back`, because the album's dark-theme
+       shadow disappears on `--sunken`.
+     - **Rarity as a word in the eyebrow**, not stars and not a second badge: "Rare raccoon!",
+       "Legendary raccoon!", and plain "New raccoon!" for a common one, which would rather not be
+       told it is common. The stars stay on the album's card.
+     - **A plain sage bar**: no terracotta tail for the newest one (Lukas).
+     - **Under the tiles, not moving up when something's new**: a card that changes place can't
+       be learned. Balance and standings move down by its height, which is its cost. Rejected on
+       the canvas: a one-line strip (no more present than Settings) and a big frame-coloured card
+       (the same raccoon twice at nearly the same size, right under the header one).
+     - **Back goes where you came from**, via `?from=home`, kept when a card closes.
+     - **No data preload on the card**, not even `tap` (#231's rule for loads that write): a tap
+       is a touchstart, and a finger starting a scroll on a card this big would run the album's
+       load and use up its "New".
+     - The toast's link variant and `detail` line had no other user, so `ui/UndoToast` lost them.
+245. **Four more raccoons: album 53** (Lukas 2026-11-05). `friday` No. 050 (sunglasses, tossing a
+     folder; Fridays, weight 3), `midnight` No. 051 (the cookie tin; → #243), `snooze` No. 052 (a
+     hand on the 07:00 clock; mornings, `body` set by hand because the clock hides the overall
+     buttons), `socks` No. 053 (two odd socks; all year). All all-year, no look-alikes; the snooze
+     clock resembles `reminder-overdue`'s, but a reminder is never in the draw. `friday` and
+     `socks` look at their props and `snooze` carries writing, so none was mirrored. `midnight`
+     was cut 25px, the others were already flat. Adds 78 KB of AVIFs, split per pose as ever.
+246. **Two visual flakes, one of them a real bug** (2026-11-06). Same commit, one CI run green and
+     one red, on the release PR too. **The album count:** e2e setup took each account's first look
+     at Auckland's midnight (#238), and since #243 that hour can be the midnight raccoon, on one
+     night in three seeded by the member's id, which is new every run. So about one run in three
+     started with an extra raccoon and every screen showing the count differed. Setup now looks at
+     02:00 (Honolulu), still a night slot of its own, and fails if that hour stops being outside
+     the midnight raccoon's window. **The invite code:** at 42px with 0.18em spacing the widest
+     codes didn't fit 390px and broke at the dash into two lines; at 320px every code did. A random
+     code picked the height of the card, in production too. It now stays on one line: spacing
+     0.1em, size `min(--fs-42, 100cqi / 7.6)`, about 39px on a 390px phone instead of 42. A
+     per-code fit would keep 42 for narrow codes, but then codes would differ in size for no reason.
+     The type-scale convention test gains that one form, `min(var(--fs-N), 100cqi / <n>)`.
+247. **The album never preloads, and setup stops travelling** (2026-11-06, from a review of #122–#124).
+     **Preload:** #244 turned preloading off on Home's album card, because a tap is a touchstart and a
+     finger starting a scroll would run the album's load and use up its "New". The Settings row kept
+     `tap`, and pressing it without opening it did exactly that, so Home's card went quiet for a
+     raccoon nobody had looked at. Now `$lib/preload` says `off` for every link to the album and the
+     card asks it too, so there is one rule. Home stays on `tap`: all a stray touch can do there is
+     meet the raccoon that is on your Home anyway. The album opens a moment later on a tap, which
+     nobody will notice on a page this light.
+     **The line under the count** said "You've met every raccoon!" whenever no rare or legendary
+     one was left, under "52 of 53 found" if a common one was missing, which the draw allows
+     (#232). `album.missing` now takes how many are left, says "2 still to find" for common ones and
+     is done only at none.
+     **Setup:** #238 took each account's first look at Home in the night so that its welcome raccoon
+     stayed out of the afternoon, and #246 kept that with another timezone and a guard. But the seed
+     has met raccoons for both accounts, so neither is ever on a first visit and the look only added
+     a sighting. It was also the only thing exposing setup to the midnight raccoon. It is gone, along
+     with the guard, and the visual baselines hold without it. New households are unaffected: the
+     album journey still starts from a real first visit.
+     **`--r-deck`** is the deck's 11px, which was raw. The other raw radii in the app (41 files) are
+     older and untouched: the rule says tokens and the convention test only checks colours and type.
+248. **The maskable icon's bust grows from 72% to 84%** (Lukas 2026-11-06). On a launcher with a
+     circular mask the raccoon sat low with a wide band of green above the ears: 28% of the icon,
+     about a quarter of the circle on Lukas's phone, which shows roughly the middle 90% of the
+     picture (fitted from a screenshot). #235 chose 72% to clear the safe circle of 80% diameter, but
+     the head only needed a circle of 70%. 84% is the largest size that still stands on the
+     bottom edge with the ears and face inside it (the limit is about 84.5%). That leaves 16% green
+     on the icon and about 12% in that circle. The TEST pill stays where it is, now right
+     under the chin. On a launcher cutting right at 80% the ears would touch the edge without being
+     cut. Weighed and dropped: moving the bust up unscaled (its flat cut would float above the bottom
+     edge on rounded-square launchers), and 88% sunk below the edge (a bigger face, the same
+     headroom, less of the overalls, and new layout code). The opaque store icon stays at 86%. A
+     phone that already has the app may keep the old icon until Android refreshes it.
+249. **The maskable icon's bust settles at 80%** (Lukas 2026-11-06). At 84% (#248) the raccoon looked
+     a little too big to Lukas, so it comes back to 80%, the middle option from that comparison. That
+     leaves 20% green on the icon and about 17% in the circle on his phone, against 16% and 12% at
+     84% and 28% and 25% at the original 72%. It also clears the safe circle with room to spare, so a
+     launcher cutting right at 80% no longer has the ears touching the edge. The fit is what decided
+     it, not the limit: 84% remains the largest size that fits. The headroom test now holds the size
+     from both sides (18–22% green). 82% is the next thing to try if this reads too small.
+250. **The album deck's shadow cards read as two, and take less room** (Lukas 2026-11-06). Level and
+     nearly parallel, they looked like one odd card. Now 58×78 instead of 64×86, the back one 10px
+     higher and tilted −11°, the middle −3° with `--shadow-card-stacked` on the card behind it. The
+     deck is 118px instead of 136px, and the text and bar get the difference. Lukas chose this from
+     five sketches; a bolder one with bigger steps was "a little bit too much".
+251. **The timer calls instead of alarming, counts past zero, and says what a web app can't do**
+     (Lukas 2026-11-06; → SPEC §4.6, `lib/alarm.ts`, `lib/cook-timer.svelte.ts`,
+     `services/cook-timers.ts`). Three complaints: the sound was frightening, a phone on silent with
+     the app closed gives nothing, and afterwards nobody can tell how long ago it went off.
+     - **The sound.** #134 fixed "too polite" with four square-wave beeps alternating a fifth, at
+       full volume, every 1.5 s. That carried, and it scared people. Now: G5, C6, E6 as struck
+       marimba notes (sines, ratios 1, 4 and 9.2, fading in 0.5 s or less) every 3.2 s, starting at
+       0.3 and swelling to full over 20 s. It peaks at 0.88 when rendered, close to the top on
+       purpose, because the fan complaint in #134 still stands. The vibration shrank to two short
+       buzzes. Nobody can judge a sound from a test, so the choice is Lukas's, on his own phone, and
+       the alarm's constants are all there is to change.
+     - **Past zero.** A rung timer shows "−3:42" on the ring, the bar and the dock. The hard part
+       was closing the app: `notifiedAt` used to drop a row off the list, so a timer that rang while
+       the app was closed simply wasn't there on return. Now only `canceledAt` does that, so Stop
+       reaches the server, and no migration was needed. Reading the two as separate facts also means
+       rung rows from before this change came back once, for at most 3 hours. A rung row spends no
+       slot against the cap, because a pan already done should not refuse the next timer. The 3 hours
+       is a judgment call: long enough for dinner, short enough to be gone the next morning.
+       The page stays silent for a timer more than 10 minutes late, matching the server's catch-up.
+     - **The notification says when, not just what.** `timestamp` is the moment it went off, so a
+       phone on silent can say how long ago from the shade. Stop closes it, since it otherwise asks
+       to stay until dealt with.
+     - **What the web can't do**, checked rather than assumed. `clients.openWindow()` needs a user
+       gesture, so no page or worker can bring the app forward. `showNotification` has no sound
+       option. Notification Triggers never shipped. A worker can't play audio. So the honest line
+       moved into the Set-timer sheet, which used to promise it rings "even with the phone locked".
+       Real alarms need native code: on Android a small shell with its own alarm channel and a
+       full-screen intent; on iOS a Critical Alerts entitlement or AlarmKit. Not built.
+     - **One way past silent mode, proven but not built here.** Media volume ignores silent
+       notifications, and an audio track needs no awake page, so the wait and the alarm can be one
+       track started by the tap. Lukas tried it on his Android phone: locked, with music or a video
+       playing, it paused them and rang. It shows as a media player rather than an alarm. WebKit's
+       bug tracker reports years of trouble with audio in installed apps, so an iPhone may differ.
+     - **Not built: pushing again.** Repeat notifications don't help a phone on silent, which is the
+       case that was reported. iOS's `navigator.audioSession` could beat the ringer switch while the
+       app is open, but nothing here can verify it, and a mistake there breaks the only sound an
+       iPhone gets.
+252. **On Android, the wait and the ring are one audio track, so a locked or silent phone rings**
+     (Lukas 2026-11-06; → SPEC §4.6, `lib/alarm-track.ts`). #251 left this as an untested idea. Lukas
+     tried it from a test page on his Android phone: it rang locked, and music or a podcast kept
+     playing through the silence and only paused when the ring began, which removed the one cost that
+     might have needed a setting. He also accepted that it shows as a media player.
+     - **One track per timer**, started by the tap, built from `renderRing` so it can't sound different
+       from the live alarm. Stopping a timer stops its track, and "+1:00" and resume build a new one.
+       Three players can't confuse anything, because they share one Media Session.
+     - **The live alarm stands down while a track plays**, leaving only the vibration, so a visible
+       page doesn't ring twice. If the system stopped the track, the live alarm takes over.
+     - **A playing track never claims the alert** (→ #253). The push has to go out, because it
+       carries the Stop button.
+     - **A Stop button on the notification**, handled by the worker: it tells open pages, so the sound
+       stops at once, then deletes the row. This is the nearest a web app gets to an alarm's button.
+     - **Pause on the player does nothing before the ring**, and means Stop during it. Letting it pause
+       the track would leave a timer that looks fine and rings nobody.
+     - **Android only.** It's the only place it has been heard, and Safari takes over the audio when a
+       track starts rather than when it gets loud, so it could silence a podcast for the whole wait.
+     - **2 hours at most.** WAV silence takes 32 KB a second, so 2 hours is 230 MB and 12 would be
+       1.4 GB. A longer timer gets the notification. The lengths and the player's wording are untested
+       on a phone beyond the page Lukas tried, and so is the notification's button.
+     - **Weighed and dropped:** a native Android shell, the only route to a full-screen alarm, as far
+       too much to maintain for this; streaming silence from the server, which needs a network at the
+       one moment it can't fail.
+253. **A timer's notification always goes out on a phone playing its track** (Lukas 2026-11-06; →
+     SPEC §4.6, `lib/cook-timer.svelte.ts`, `lib/server/push.ts`). Lukas heard the track ring on his
+     phone but got no notification. No phone can be observed from here, and a probe with an emulated
+     lock showed a hidden page claims nothing, so these close the two gaps that could explain it
+     rather than a proven cause.
+     - **The claim no longer depends on visibility.** #252 skipped it only while hidden, and a visible
+       page still claimed 2 seconds before zero, which cancels the push. A phone that still counted
+       as visible at that moment would ring and get no notification. Now a playing track never claims.
+       The cost is a notification over an open app while it rings, which Stop takes away.
+     - **Timer pushes are `urgency: high`.** They were sent at the default, and Android may hold those
+       on a locked phone lying still. With a 15-minute lifetime, a held one can expire undelivered.
+       Other notifications stay at normal: nothing else has to reach a sleeping phone this minute.
+254. **The album's texts, reviewed: 52 raccoons, no handball, "Snacklaune"** (Lukas 2026-11-07; →
+     SPEC §6, plan 35). Lukas went through every raccoon's name, fact and stats on a review page and
+     approved the result; `de.ts`, `en.ts` and the stats in `mascots.json` now carry it, and the
+     drafts are no longer drafts.
+     - **Situation names where a person reads oddly**: the special days are just the day
+       ("Weihnachten", "Ostern", "Geburtstag", "Silvester"…), and others name the moment rather than
+       the raccoon ("Teatime", "In der Warteschleife", "Heißer Kakao", "Erst mal Kaffee"). Characters
+       that read well as one keep that kind of name ("Pokerface", "Socken-Detektivin").
+     - **The handball pose is gone** (Lukas didn't like it): its master, its AVIF, its album entry
+       and its everyday slot. Tennis is left alone in the `ball-sport` look-alike group.
+     - **Numbers 37–53 moved down by one**, to 36–52. #245's "numbers never move once shipped"
+       holds: the album has not reached `main` yet, so nothing shipped moves. A test pins 1–52
+       contiguous. A test deploy's old `handball` sightings stay in the table and stop counting,
+       like any retired pose (`services/raccoons.ts` `inAlbum`).
+     - **"Jausenlust" → "Snacklaune"**, and English "Snack drive" → "Snack mood" to match.
+     - **English is a fresh translation of the approved German**, not the old drafts; Lukas reviewed
+       German only, so the English wording is Claude's.
+255. **The reminder raccoon waits for the due day** (Lukas 2026-11-07; → SPEC §2,
+     `utils/raccoon.ts`). Home's next-chore card looks 3 days ahead, and the bell raccoon came with
+     it, so one weekly chore put the bell on Home 4 days in 7 and a few chores kept it there all the
+     time: the everyday raccoons hardly showed, and the household was scolded for chores no one was
+     late on. Now the bell rings only on the due day and the alarm clock once it's overdue; the
+     days before keep the usual steps (sleeping, the draw), while the card still names the chore.
+     The card's window stays at 3 days: a heads-up is useful, a reproach isn't. Doing today's chore
+     takes the bell away, so the raccoon now rewards ticking it off.
+256. **Home's next-chore card swipes when more than one chore is on you** (Lukas 2026-11-07; →
+     SPEC §2.1, `components/home/NextChoreStack.svelte`). The card showed only the soonest chore,
+     so a second one due the same day was invisible on Home. Now every chore in the 3-day window
+     gets a card, soonest first, in a scroll-snap row.
+     - **No peek of the next card** (Lukas chose it over the sketch's 20px peek): the counter
+       ("1 / 3") on the card says there are more, and the dots say where you are. A peek would
+       narrow every card and break its line with the cards below. The gap between cards is both
+       gutters, so the next one starts past the screen's edge and one swipe is one screen.
+     - **At most 5 cards**, then "+N more" to Tasks: enough for a busy week, few enough that
+       the dots still read as a count.
+     - **The overdue banner stands down whenever every overdue chore is a card**, not only when
+       exactly one is; it would otherwise repeat what the cards say. The service sets `overdue`
+       to null then, so the page has no rule of its own.
+     - **The raccoon follows the first card**, not the one in view, so it doesn't change while
+       you swipe.

@@ -34,9 +34,11 @@
 import { browser } from '$app/environment';
 import type { Messages } from './i18n';
 import { primeAlarm, ringAlarm, stopAlarm } from './alarm';
-import { TIMERS_MAX, timerHref } from './utils/timer-parse';
+import { type AlarmTrack, clearPlayer, setPlayer, setPlayerStop, startTrack } from './alarm-track';
+import { TIMERS_MAX, timerHref, type TimerStoppedMessage } from './utils/timer-parse';
 import {
 	claimTimerAlert,
+	closeTimerNotification,
 	releaseTimer,
 	requestTimer,
 	TimerRequestError,
@@ -50,7 +52,7 @@ export type TimerPhase =
 	| 'running'
 	/** Held. No server row exists; the remainder is frozen in memory. */
 	| 'paused'
-	/** Reached zero and said so. Waits to be dismissed. */
+	/** Reached zero and said so. Counts on past it until it is stopped. */
 	| 'rang';
 
 /** How the display ticks. Fast enough that the ring doesn't visibly step. */
@@ -80,6 +82,14 @@ const CLAIM_LEAD_MS = 2000;
  * cancelled — a timer on screen that rings nothing.
  */
 const RELEASE_GRACE_MS = 10_000;
+
+/**
+ * How late this page will still make a noise for a timer nobody rang. The server
+ * rings on time unless it was down, and its catch-up stops at this same age
+ * (→ `CATCH_UP_MS` in `services/cook-timers.ts`): past it, a sudden alarm is a
+ * surprise about a pan that has long been dealt with, and the clock says enough.
+ */
+const LATE_RING_MS = 10 * 60 * 1000;
 
 /** DOM identity for `{#each}`, nothing more — see `CookTimer.key`. */
 let nextKey = 0;
@@ -136,6 +146,8 @@ export class CookTimer {
 	 * cannot know about the row, so it must not be read as "cancelled elsewhere".
 	 */
 	#confirmedAt = 0;
+	/** The ring playing with nobody awake, where this phone can (→ `alarm-track.ts`). */
+	#track: AlarmTrack | null = null;
 	/** Local-clock instant it fires at. */
 	#endsAt = $state(0);
 	/** What was left when it was paused. */
@@ -192,6 +204,9 @@ export class CookTimer {
 				: 0
 	);
 
+	/** How long ago it reached zero. What the screen shows once it has rung. */
+	overMs = $derived(this.phase === 'rang' ? Math.max(0, this.#now - this.#endsAt) : 0);
+
 	/** Ceiling, so a fresh 8:00 timer reads "8:00" and the last second reads "0:01". */
 	remainingSeconds = $derived(Math.ceil(this.remainingMs / 1000));
 
@@ -206,6 +221,11 @@ export class CookTimer {
 	/** The row this machine holds, while it holds one. */
 	get rowId(): string | null {
 		return this.#id;
+	}
+
+	/** Local-clock instant it fires at, for the words on the media player. */
+	get endsAt(): number {
+		return this.#endsAt;
 	}
 
 	/** Whether a start is still in flight — see `#pending`. */
@@ -347,6 +367,7 @@ export class CookTimer {
 		// countdown appears. Its reply will find a newer generation and drop
 		// itself, so nothing here is waiting on it any more.
 		this.#pending = false;
+		this.silence();
 		this.#release();
 	}
 
@@ -393,6 +414,7 @@ export class CookTimer {
 					// exactly like a timer that is going to buzz, and never would.
 					this.error = failure.message;
 					this.phase = 'paused';
+					this.silence();
 					return;
 				}
 
@@ -435,9 +457,16 @@ export class CookTimer {
 		this.totalSeconds = total;
 	}
 
-	/** Acknowledge a timer that has rung, clearing it off the screen [7h]. */
+	/**
+	 * Stop a timer that has rung, clearing it off the screen [7h] — on every device,
+	 * since a rung row stays listed until now (→ DECISIONS #251).
+	 */
 	dismiss(): void {
 		if (this.phase !== 'rang') return;
+
+		if (this.#id) void closeTimerNotification(this.#id);
+		this.#generation++;
+		this.#release();
 		this.#clear();
 		this.#gone(this);
 	}
@@ -452,6 +481,17 @@ export class CookTimer {
 		this.totalSeconds = timer.totalSeconds;
 		this.step = timer.stepIndex;
 		this.recipeId = timer.recipeId;
+
+		if (timer.rung && timer.remainingMs <= 0) {
+			// Its alert already went out, most likely while this app was closed. All
+			// that is left to do is show how long ago, so this skips `#fire` and its noise.
+			this.#endsAt = Date.now() + timer.remainingMs;
+			this.#now = Date.now();
+			this.phase = 'rang';
+			this.#wake();
+			return;
+		}
+
 		this.#begin(timer.remainingMs);
 	}
 
@@ -475,10 +515,32 @@ export class CookTimer {
 		this.#endsAt = Date.now() + remainingMs;
 		this.#now = Date.now();
 		this.phase = 'running';
+		this.#startTrack();
 		this.#wake();
 	}
 
+	#startTrack(): void {
+		this.#track?.stop();
+		this.#track = startTrack(this.#endsAt);
+	}
+
+	/**
+	 * Start the track if it isn't playing: a timer adopted on a cold start has had
+	 * no tap to start one with, and the system can stop one along the way. Called
+	 * from any tap in the app, which is what `play()` needs.
+	 */
+	arm(): void {
+		if (this.phase === 'running' && !this.#track?.playing) this.#startTrack();
+	}
+
+	/** Stop the track. Whatever the timer does next, it has nothing left to play. */
+	silence(): void {
+		this.#track?.stop();
+		this.#track = null;
+	}
+
 	#clear(): void {
+		this.silence();
 		this.#id = null;
 		this.phase = 'idle';
 		this.label = '';
@@ -508,21 +570,22 @@ export class CookTimer {
 		void releaseTimer(id);
 	}
 
-	/** Whether this machine just let go of `rowId` — see `#release`. */
-	releasedRecently(rowId: string, now: number): boolean {
-		return this.#releasedId === rowId && now - this.#releasedAt < RELEASE_GRACE_MS;
+	/** The last row this machine let go of — see `#release`. */
+	get released(): { id: string; at: number } | null {
+		return this.#releasedId ? { id: this.#releasedId, at: this.#releasedAt } : null;
 	}
 
 	/**
 	 * Ask for the alert a couple of seconds early, while there is still time for
 	 * the answer to come back before zero. Only while visible — a hidden page has
 	 * probably been frozen, and claiming an alert it may never deliver would
-	 * silence the push that is the whole point.
+	 * silence the push that is the whole point. Never with a track playing, see
+	 * `#fire`.
 	 */
 	#claimAhead(): void {
 		const id = this.#id;
 		if (this.#claim || this.#owned !== null || !id) return;
-		if (document.visibilityState !== 'visible') return;
+		if (document.visibilityState !== 'visible' || this.#track?.playing) return;
 
 		this.#claim = claimTimerAlert(id).then((owned) => {
 			this.#owned = owned;
@@ -534,6 +597,16 @@ export class CookTimer {
 		const id = this.#id;
 
 		this.phase = 'rang';
+		this.#wake();
+
+		// A track is already making the noise, and it never claims the alert: the
+		// push has to go out, because it carries the Stop button and it stays on the
+		// phone. Whether a page counts as visible can't be trusted to decide this
+		// on a phone the cook has just locked (→ DECISIONS #253).
+		if (this.#track?.playing) {
+			if (document.visibilityState === 'visible') ringAlarm(false);
+			return;
+		}
 
 		// Prefer, in order: an answer already in hand, the pre-zero claim still in
 		// flight (never a second request racing it), then a fresh claim for a page
@@ -542,9 +615,10 @@ export class CookTimer {
 		const owned =
 			this.#owned ?? (await (this.#claim ?? (id ? claimTimerAlert(id) : Promise.resolve(true))));
 		this.#owned = owned;
-		this.#id = null;
 
-		if (owned) ringAlarm();
+		// `#id` stays: Stop still has to tell the server, or the row comes back.
+		// Stopped while the claim was out? Then there is nothing left to ring for.
+		if (owned && this.phase === 'rang' && this.overMs < LATE_RING_MS) ringAlarm();
 	}
 }
 
@@ -560,6 +634,12 @@ export class CookTimers {
 	#m: Messages | null = null;
 	/** Whether the visibility listener is already attached — see `ready`. */
 	#listening = false;
+	/**
+	 * Rows just stopped, by when. Outlives the machine that held them: Stop drops
+	 * the machine at once, and a load already in flight still lists the row. Taking
+	 * it for a new timer would bring a stopped timer back to the screen.
+	 */
+	#stopped = new Map<string, number>();
 
 	/** A start that never became a timer — cook mode's chip row shows it. */
 	lastError = $state<string | null>(null);
@@ -624,6 +704,23 @@ export class CookTimers {
 		document.addEventListener('visibilitychange', () => {
 			if (document.visibilityState === 'visible' && this.any) primeAlarm();
 		});
+
+		// Any tap can start what a tap has to start: a track, for a timer that came
+		// back with the page (→ `CookTimer.arm`).
+		document.addEventListener('pointerdown', () => {
+			for (const timer of this.#timers) timer.arm();
+		});
+
+		// The media player's button, and the notification's. Both mean Stop.
+		setPlayerStop(() => {
+			for (const timer of this.all) if (timer.phase === 'rang') timer.dismiss();
+		});
+		navigator.serviceWorker?.addEventListener('message', (event: MessageEvent) => {
+			const message = event.data as TimerStoppedMessage | null;
+			if (message?.type !== 'timer-stopped') return;
+
+			this.#timers.find((timer) => timer.rowId === message.id)?.cancel();
+		});
 	}
 
 	/** The ring's timer: this recipe, this step. */
@@ -655,18 +752,14 @@ export class CookTimers {
 	 *
 	 * A merge, not a replacement. This store is the only thing that knows about a
 	 * timer whose POST is still in flight, or one that is paused — pause deletes
-	 * the row (→ DECISIONS #15) — or one that has rung and is waiting to be
-	 * acknowledged. What the server knows and this store doesn't runs the other
-	 * way: a cold start with a pan already on, or a timer started on the other
-	 * phone.
+	 * the row (→ DECISIONS #15). What the server knows and this store doesn't runs
+	 * the other way: a cold start with a pan already on, a timer that rang while
+	 * the app was closed (→ DECISIONS #251), or one started on the other phone.
 	 *
-	 * The one thing a sync may take *away* is a timer that has a confirmed row,
-	 * is still running, is no longer listed, has more than the claim lead left,
-	 * **and** whose row the snapshot could actually have known about — that is a
-	 * cancel from somewhere else. Anything closer to zero is mid-claim (our own
-	 * pre-zero claim stamps `notifiedAt`, which drops the row out of the list),
-	 * and pulling it out from under its own alarm would silence the alert it just
-	 * won.
+	 * The one thing a sync may take *away* is a timer that has a confirmed row, is
+	 * running or rung, is no longer listed, **and** whose row the snapshot could
+	 * actually have known about. That is a stop from somewhere else, or a rung
+	 * timer old enough to have aged off the list.
 	 *
 	 * `fetchedAt` is what makes that last clause possible. `refetchOnFocus` can
 	 * have a load in flight while a start commits: the POST answers first, then
@@ -688,9 +781,9 @@ export class CookTimers {
 
 		for (const snapshot of snapshots) {
 			if (this.#timers.some((timer) => timer.rowId === snapshot.id)) continue;
-			// A row this tab has just cancelled or paused: its DELETE is still in
+			// A row this tab has just stopped or paused: its DELETE is still in
 			// flight, so a payload built before it landed still lists the row.
-			if (this.#timers.some((timer) => timer.releasedRecently(snapshot.id, now))) continue;
+			if (this.#stoppedRecently(snapshot.id, now)) continue;
 
 			const timer = this.#make();
 			timer.adopt(snapshot);
@@ -698,14 +791,33 @@ export class CookTimers {
 		}
 
 		for (const timer of [...this.#timers]) {
-			if (timer.phase !== 'running' || timer.rowId === null) continue;
-			if (listed.has(timer.rowId) || timer.remainingMs <= CLAIM_LEAD_MS) continue;
+			if (timer.phase === 'paused' || timer.rowId === null) continue;
+			if (listed.has(timer.rowId)) continue;
 			// The snapshot predates the row — it cannot be evidence against it.
 			if (timer.confirmedAt > fetchedAt) continue;
 			this.#drop(timer);
 		}
 
-		if (this.#timers.length > 0) this.#startTicking();
+		if (this.#timers.length > 0) {
+			this.#startTicking();
+			this.#describePlayer();
+		}
+	}
+
+	/** Whether this tab let go of `rowId` a moment ago — see `#stopped`. */
+	#stoppedRecently(rowId: string, now: number): boolean {
+		const held = this.#timers.some((timer) => {
+			const released = timer.released;
+			return released?.id === rowId && now - released.at < RELEASE_GRACE_MS;
+		});
+		if (held) return true;
+
+		const at = this.#stopped.get(rowId);
+		if (at === undefined) return false;
+		if (now - at < RELEASE_GRACE_MS) return true;
+
+		this.#stopped.delete(rowId);
+		return false;
 	}
 
 	#make(): CookTimer {
@@ -715,7 +827,10 @@ export class CookTimers {
 		return new CookTimer(
 			m,
 			(timer, message) => this.#drop(timer, message),
-			() => this.#startTicking()
+			() => {
+				this.#startTicking();
+				this.#describePlayer();
+			}
 		);
 	}
 
@@ -727,6 +842,10 @@ export class CookTimers {
 	#drop(timer: CookTimer, message?: string | null): void {
 		if (message) this.lastError = message;
 
+		const released = timer.released;
+		if (released) this.#stopped.set(released.id, released.at);
+		timer.silence();
+
 		this.#timers = this.#timers.filter((candidate) => candidate !== timer);
 		if (this.#timers.length === 0) this.#stopTicking();
 
@@ -736,6 +855,27 @@ export class CookTimers {
 		// than in `dismiss`. Cancelling a *running* timer while another one rings
 		// must not silence the one you can hear.
 		if (!this.#timers.some((candidate) => candidate.phase === 'rang')) stopAlarm();
+		this.#describePlayer();
+	}
+
+	/**
+	 * What the media player says, set once whenever something changes. A page
+	 * asleep can't update it, so it names a time of day rather than counting down,
+	 * and what it names is whatever comes next.
+	 */
+	#describePlayer(): void {
+		const timer = this.next;
+		if (!timer || !this.#m) {
+			clearPlayer();
+			return;
+		}
+
+		setPlayer(
+			timer.label,
+			timer.phase === 'rang'
+				? this.#m.cooking.dock.done(timer.label)
+				: this.#m.cooking.cook.trackRingsAt(clockTime(timer.endsAt))
+		);
 	}
 
 	/**
@@ -747,7 +887,10 @@ export class CookTimers {
 	reset(): void {
 		this.#stopTicking();
 		stopAlarm();
+		for (const timer of this.#timers) timer.silence();
+		clearPlayer();
 		this.#timers = [];
+		this.#stopped.clear();
 		this.lastError = null;
 		this.#m = null;
 	}
@@ -771,10 +914,17 @@ export class CookTimers {
 		const now = Date.now();
 		for (const timer of this.#timers) timer.tick(now);
 
-		// Nothing left that counts down — a held or already-rung timer needs no
-		// clock. Resuming one calls `#wake()`, which starts this again.
-		if (!this.#timers.some((timer) => timer.phase === 'running')) this.#stopTicking();
+		// Nothing left that moves — a held timer needs no clock, while a rung one
+		// keeps counting past zero. Resuming one calls `#wake()`, which starts this again.
+		if (!this.#timers.some((timer) => timer.phase === 'running' || timer.phase === 'rang')) {
+			this.#stopTicking();
+		}
 	}
+}
+
+/** "18:42", the way this phone writes the time. A local instant, so its own locale is right. */
+function clockTime(instant: number): string {
+	return new Date(instant).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
 }
 
 /** The app's timers. A singleton because they outlive cook mode. */

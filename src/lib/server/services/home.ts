@@ -16,7 +16,7 @@ import { and, asc, count, desc, eq, isNull, lte, sql } from 'drizzle-orm';
 import type { MascotName } from '$lib/assets/mascot';
 import { DEFAULT_LOCALE } from '$lib/i18n';
 import { addDays, formatTimeIn, hourIn, type CalendarDate } from '$lib/utils/dates';
-import { homeRaccoon } from '$lib/utils/raccoon';
+import { homeRaccoon, homeSlot } from '$lib/utils/raccoon';
 import { mealSlotOrder, type MealSlot } from '$lib/utils/meals';
 import type { RecurUnit } from '$lib/utils/tasks';
 import { db } from '../db';
@@ -30,6 +30,7 @@ import {
 	type Member
 } from '../db/schema';
 import type { HouseholdMember } from './household';
+import { isFirstVisit } from './raccoons';
 import {
 	assigneeNotAway,
 	isAway,
@@ -84,7 +85,7 @@ export type NextChore = {
 	points: number;
 	recurUnit: RecurUnit;
 	recurInterval: number;
-	/** Never null: an undated one-off is never "coming up" (→ `nextChore`). */
+	/** Never null: an undated one-off is never "coming up" (→ `choresInWindow`). */
 	dueDate: CalendarDate;
 };
 
@@ -100,8 +101,16 @@ export type HomeSummary = {
 	greeting: TimeOfDay;
 	/** The raccoon on the first card — the day, the chore, the hour (→ `utils/raccoon`). */
 	raccoon: MascotName;
-	/** Null when this member has nothing of their own coming up (or is away). */
-	nextChore: NextChore | null;
+	/** The stretch of the day it holds still for — what the raccoon album counts by (→ plan 35). */
+	slot: string;
+	/**
+	 * What's on this member in the window, soonest first, at most
+	 * `NEXT_CHORE_CARDS` (→ SPEC §2.1). Empty when nothing is (or they're away):
+	 * no card. Two or more: the card swipes.
+	 */
+	nextChores: NextChore[];
+	/** How many more the window holds past the last card — the "+N more" link. */
+	moreChores: number;
 	dinner: TonightsDinner | null;
 	shoppingCount: number;
 	tasksDueCount: number;
@@ -109,7 +118,11 @@ export type HomeSummary = {
 	activity: ActivityEntry[];
 	/** Null until somebody has scored this month. */
 	standings: Standings | null;
-	/** Null when this member has nothing overdue (or is away). */
+	/**
+	 * Null when this member has nothing overdue (or is away) — and when every
+	 * overdue chore is already one of the cards, which can do something about it
+	 * where the banner can only point at the list.
+	 */
 	overdue: OverdueSummary | null;
 };
 
@@ -133,7 +146,10 @@ export function getHomeSummary(householdId: string, context: HomeContext): HomeS
 	// One reading of the clock for the greeting and the raccoon, so "Good
 	// evening" and the sleeping pose can't straddle 22:00 and disagree.
 	const hour = hourIn(timezone);
-	const next = nextChore(householdId, member, today);
+	const inWindow = choresInWindow(householdId, member, today);
+	const nextChores = inWindow.slice(0, NEXT_CHORE_CARDS);
+	const lateOnCards = nextChores.filter((chore) => chore.dueDate < today).length;
+	const slot = homeSlot(today, hour);
 
 	return {
 		greeting: greetingFor(hour),
@@ -141,15 +157,20 @@ export function getHomeSummary(householdId: string, context: HomeContext): HomeS
 			today,
 			hour,
 			birthday: member.birthday,
-			nextChoreDue: next?.dueDate ?? null
+			// The first card's: it holds still while you swipe through the rest.
+			nextChoreDue: nextChores[0]?.dueDate ?? null,
+			seed: member.id,
+			firstVisit: isFirstVisit(householdId, member.id, slot)
 		}),
-		nextChore: next,
+		slot,
+		nextChores,
+		moreChores: inWindow.length - nextChores.length,
 		dinner: tonightsDinner(householdId, today),
 		shoppingCount: countUnchecked(householdId),
 		tasksDueCount: countDueOrOverdue(householdId, today),
 		activity: recentActivity(householdId, timezone),
 		standings: monthStandings(householdId, member.id, today, timezone, context.members),
-		overdue: overdueSummary(context.overdue, member)
+		overdue: context.overdue.length > lateOnCards ? overdueSummary(context.overdue, member) : null
 	};
 }
 
@@ -167,15 +188,23 @@ function greetingFor(hour: number): TimeOfDay {
 const NEXT_CHORE_DAYS = 3;
 
 /**
- * The chore the top card is about (→ SPEC §2.1): the soonest thing *this*
- * member is on the hook for — theirs or "Anyone", never a housemate's — that is
- * already late or due within the window. Nothing there ⇒ no card at all.
+ * How many cards the stack swipes through before "+N more" hands over to the
+ * Tasks tab: enough for a busy week, few enough that the dots still read as a
+ * count at a glance (→ DECISIONS #256).
+ */
+const NEXT_CHORE_CARDS = 5;
+
+/**
+ * The chores the top card is about (→ SPEC §2.1): what *this* member is on the
+ * hook for — theirs or "Anyone", never a housemate's — that is already late or
+ * due within the window, soonest first, so the oldest overdue one leads. Nothing
+ * there ⇒ no card at all.
  *
  * Away means nothing is being asked of them, which is the whole promise of the
  * holiday pause: no banner, no badge, and no card either (→ SPEC §5.5).
  */
-function nextChore(householdId: string, member: Member, today: CalendarDate): NextChore | null {
-	if (isAway(member, today)) return null;
+function choresInWindow(householdId: string, member: Member, today: CalendarDate): NextChore[] {
+	if (isAway(member, today)) return [];
 
 	return (
 		db
@@ -198,11 +227,10 @@ function nextChore(householdId: string, member: Member, today: CalendarDate): Ne
 					onTheHookFor(member.id)
 				)
 			)
-			// The same total order as `listOverdueForMember`, so while something is
-			// overdue the card and the banner are always naming the same task.
+			// The same total order as `listOverdueForMember`, so the cards and the
+			// banner agree on which overdue chores come first.
 			.orderBy(asc(tasks.dueDate), asc(tasks.id))
-			.limit(1)
-			.get() ?? null
+			.all()
 	);
 }
 

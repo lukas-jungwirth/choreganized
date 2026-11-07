@@ -5,6 +5,7 @@ import { homeBalance } from '$lib/server/services/expenses';
 import { getHousehold, listMembers } from '$lib/server/services/household';
 import { answerHolidayNotice, readHolidayAnswer } from '$lib/server/services/holidays';
 import { getHomeSummary } from '$lib/server/services/home';
+import { albumSummary, recordSighting } from '$lib/server/services/raccoons';
 import {
 	completeTask,
 	memberStanding,
@@ -16,6 +17,8 @@ import {
 	type TaskContext
 } from '$lib/server/services/tasks';
 import { isCalendarDate, todayIn } from '$lib/utils/dates';
+import { isHomeRaccoon } from '$lib/utils/raccoon';
+import { isAlbumName } from '$lib/utils/raccoon-album';
 import type { Actions, PageServerLoad } from './$types';
 
 /**
@@ -31,16 +34,40 @@ import type { Actions, PageServerLoad } from './$types';
  */
 export const load: PageServerLoad = async (event) => {
 	const { member, householdId } = requireMember(event);
-	const { household, today, members, overdue } = await event.parent();
+	const { household, today, members, overdue, adminMode } = await event.parent();
+
+	const summary = getHomeSummary(householdId, {
+		member,
+		timezone: household.timezone,
+		today,
+		members,
+		overdue
+	});
+
+	// The raccoon picker (→ plan 34): `?raccoon=` swaps the pose, but only in
+	// admin mode and only for one of Home's own raccoons, never a section's.
+	// Anyone else can type the parameter; the server just doesn't listen.
+	const asked = event.url.searchParams.get('raccoon');
+	const picked = asked && adminMode && isHomeRaccoon(asked) ? asked : null;
+
+	// Meeting a raccoon here puts it in your album (→ plan 35). A write in a
+	// load, on purpose: the server decides the pose, and a second request from
+	// the browser to report it is one Home could lose (→ DECISIONS #231). A
+	// picked raccoon was never met, so the picker unlocks nothing. A pose the
+	// album doesn't number yet (the convention test's business) just isn't
+	// recorded: Home still renders.
+	const met = summary.raccoon;
+	if (!picked && isAlbumName(met)) {
+		recordSighting(householdId, member.id, met, today, summary.slot);
+	}
 
 	return {
-		...getHomeSummary(householdId, {
-			member,
-			timezone: household.timezone,
-			today,
-			members,
-			overdue
-		}),
+		...summary,
+		raccoon: picked ?? summary.raccoon,
+		/** The pose the date and hour chose — the picker's "back to today's raccoon". */
+		todaysRaccoon: summary.raccoon,
+		/** Home's album card, read after the sighting so a raccoon met just now is on it. */
+		album: albumSummary(householdId, member.id),
 		/** The expenses line under the stat tiles; null when square (→ SPEC §11.13). */
 		balance: homeBalance(householdId, member.id)
 	};

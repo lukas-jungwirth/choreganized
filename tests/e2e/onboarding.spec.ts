@@ -3,6 +3,7 @@
  * each run, so the journey starts where a real first sign-in does.
  */
 import { expect, request, test } from '@playwright/test';
+import { ALPHABET } from '../../src/lib/utils/invite-code';
 
 test.use({ storageState: { cookies: [], origins: [] } });
 
@@ -39,6 +40,16 @@ test('create a household: chooser → set up → invite → home', async ({ brow
 	await expect(page).toHaveURL(/\/home$/);
 	await expect(page.getByText('Testgasse 1')).toBeVisible();
 
+	// Nothing planned, nothing due: the dashed "add dinner" card is the first
+	// card, the raccoon sits on it, and its waist must not show through.
+	const addDinner = page.locator('a.empty[href="/cooking"]');
+	await expect(addDinner).toBeVisible();
+	const [card, screen] = await Promise.all([
+		addDinner.evaluate((element) => getComputedStyle(element).backgroundColor),
+		page.evaluate(() => getComputedStyle(document.documentElement).backgroundColor)
+	]);
+	expect(card).toBe(screen);
+
 	await context.close();
 });
 
@@ -68,5 +79,45 @@ test('the chooser shows who is signed in and lets them switch account', async ({
 	await page.goto('/onboarding');
 	await expect(page).toHaveURL(/\/login$/);
 
+	await context.close();
+});
+
+test('every invite code stays on one line, however wide its letters', async ({
+	browser,
+	baseURL
+}) => {
+	const api = await request.newContext({ baseURL });
+	const email = `fresh-code-${Date.now()}@e2e.test`;
+	const signUp = await api.post('/api/auth/sign-up/email', {
+		data: { name: 'Fresh Person', email, password: 'e2e-password-fresh' }
+	});
+	expect(signUp.ok()).toBe(true);
+	const context = await browser.newContext({ storageState: await api.storageState() });
+	await api.dispose();
+	const page = await context.newPage();
+
+	await page.goto('/onboarding/create');
+	await page.getByLabel('Household name').fill('Breite Gasse 1');
+	await page.getByLabel('Your display name').fill('Fresh');
+	await page.getByRole('button', { name: 'Continue' }).click();
+	await page.waitForURL(/\/onboarding\/invite$/);
+	await page.evaluate(() => document.fonts.ready);
+
+	for (const width of [390, 320]) {
+		await page.setViewportSize({ width, height: 800 });
+		const tooWide = await page.evaluate((alphabet) => {
+			const code = document.querySelector<HTMLElement>('.code')!;
+			const room = code.clientWidth;
+			return [...alphabet].flatMap((char) => {
+				code.textContent = `${char.repeat(3)}-${char.repeat(3)}`;
+				const text = document.createRange();
+				text.selectNodeContents(code);
+				const box = text.getBoundingClientRect();
+				const lines = text.getClientRects().length;
+				return box.width > room || lines > 1 ? [code.textContent] : [];
+			});
+		}, ALPHABET);
+		expect(tooWide, `codes that don't fit at ${width}px`).toEqual([]);
+	}
 	await context.close();
 });

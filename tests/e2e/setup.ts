@@ -38,6 +38,13 @@ setup('sign up the test accounts and seed their households', async ({ baseURL })
 		expect(seed.status, `seed for ${account.email}:\n${seed.stdout}${seed.stderr}`).toBe(0);
 
 		if (account.key === 'visual') await answerClosureNotice(api, baseURL!);
+		// Meet today's Home raccoon once and open the album once (→ plan 35), so
+		// the album card's "New raccoon!" and the "New" badges are behind both accounts
+		// before any journey or screenshot: the first look is the only one that
+		// differs, and which test got it would depend on the order they ran in. The
+		// seed has already met raccoons for them, so this is no first visit (→ DECISIONS #247).
+		expect((await api.get('/home')).ok()).toBe(true);
+		expect((await api.get('/settings/raccoons')).ok()).toBe(true);
 		await api.dispose();
 	}
 });

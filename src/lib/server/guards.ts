@@ -6,6 +6,7 @@
  */
 import { error, redirect, type RequestEvent } from '@sveltejs/kit';
 import { catalog } from '$lib/i18n';
+import { adminMode } from './admin';
 import type { Member } from './db/schema';
 
 export type SessionUser = NonNullable<App.Locals['user']>;
@@ -49,4 +50,15 @@ export function requireMemberApi(event: RequestEvent): MemberContext {
 	const { member } = event.locals;
 	if (!member) error(403, catalog(event.locals.locale).errors.notInHousehold);
 	return { user, member, householdId: member.householdId };
+}
+
+/**
+ * The admin screens (→ plan 34, `server/admin.ts`): a member, an admin, and in
+ * admin mode. Anything less is a 404 rather than a 403 — to everyone but an
+ * admin, `/admin` doesn't exist.
+ */
+export function requireAdmin(event: RequestEvent): MemberContext {
+	const context = requireMember(event);
+	if (!adminMode(event)) error(404, catalog(event.locals.locale).errors.notFound);
+	return context;
 }

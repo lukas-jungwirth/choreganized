@@ -25,10 +25,25 @@ describe('route guards', () => {
 			'+layout.server.ts',
 			'+server.ts'
 		])
-			.filter((file) => !file.text.includes('requireMember('))
+			// `requireAdmin` calls `requireMember` first, so it counts (→ plan 34).
+			.filter((file) => !/require(Member|Admin)\(/.test(file.text))
 			.map((file) => file.path);
 
 		assert.deepEqual(missing, [], 'Start every load and action with `requireMember(event)`.');
+	});
+
+	it('every admin server file calls requireAdmin', () => {
+		// `requireMember` alone would let any member read every household's
+		// numbers (→ plan 34): the admin screens are the one cross-household read.
+		const missing = sourceFiles('src/routes/(app)/admin', [
+			'+page.server.ts',
+			'+layout.server.ts',
+			'+server.ts'
+		])
+			.filter((file) => !file.text.includes('requireAdmin('))
+			.map((file) => file.path);
+
+		assert.deepEqual(missing, [], 'Every admin load and action calls `requireAdmin(event)`.');
 	});
 
 	it('every JSON endpoint is guarded, unless listed as public here', () => {

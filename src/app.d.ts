@@ -8,7 +8,14 @@ declare global {
 			 * Populated by hooks.server.ts (plan 00-foundation):
 			 * Better Auth session user, or null when signed out.
 			 */
-			user: { id: string; name: string; email: string; image?: string | null } | null;
+			user: {
+				id: string;
+				name: string;
+				email: string;
+				/** Better Auth's; the admin check trusts only a verified address (→ `server/admin.ts`). */
+				emailVerified: boolean;
+				image?: string | null;
+			} | null;
 			/**
 			 * The signed-in user's household membership, or null if they haven't
 			 * created/joined a household yet. Loaded once per request in hooks.

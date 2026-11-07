@@ -1,0 +1,463 @@
+{
+	"mascots": [
+		{
+			"name": "shopping",
+			"height": 264
+		},
+		{
+			"name": "cooking",
+			"height": 264
+		},
+		{
+			"name": "tasks",
+			"height": 264
+		},
+		{
+			"name": "expenses",
+			"height": 264
+		},
+		{
+			"name": "head",
+			"height": 270
+		},
+		{
+			"name": "reminder-upcoming",
+			"height": 408,
+			"perched": true,
+			"album": 18,
+			"stats": { "cosiness": 3, "mischief": 2, "snacks": 2, "helpfulness": 5 }
+		},
+		{
+			"name": "reminder-overdue",
+			"height": 408,
+			"perched": true,
+			"album": 19,
+			"stats": { "cosiness": 1, "mischief": 3, "snacks": 2, "helpfulness": 5 }
+		},
+		{
+			"name": "birthday",
+			"height": 408,
+			"perched": true,
+			"album": 42,
+			"stats": { "cosiness": 4, "mischief": 3, "snacks": 5, "helpfulness": 3 }
+		},
+		{
+			"name": "christmas",
+			"height": 408,
+			"perched": true,
+			"album": 40,
+			"stats": { "cosiness": 4, "mischief": 2, "snacks": 5, "helpfulness": 4 }
+		},
+		{
+			"name": "new-year",
+			"height": 408,
+			"perched": true,
+			"album": 41,
+			"stats": { "cosiness": 3, "mischief": 4, "snacks": 4, "helpfulness": 2 }
+		},
+		{
+			"name": "easter",
+			"height": 408,
+			"perched": true,
+			"album": 38,
+			"stats": { "cosiness": 2, "mischief": 4, "snacks": 4, "helpfulness": 3 }
+		},
+		{
+			"name": "fasching",
+			"height": 408,
+			"perched": true,
+			"album": 37,
+			"stats": { "cosiness": 2, "mischief": 5, "snacks": 3, "helpfulness": 2 }
+		},
+		{
+			"name": "halloween",
+			"height": 408,
+			"perched": true,
+			"album": 39,
+			"stats": { "cosiness": 3, "mischief": 5, "snacks": 5, "helpfulness": 1 }
+		},
+		{
+			"name": "valentines",
+			"height": 408,
+			"perched": true,
+			"album": 36,
+			"stats": { "cosiness": 5, "mischief": 2, "snacks": 4, "helpfulness": 3 }
+		},
+		{
+			"name": "sleeping",
+			"height": 408,
+			"perched": true,
+			"body": 0.56,
+			"album": 17,
+			"stats": { "cosiness": 5, "mischief": 1, "snacks": 3, "helpfulness": 1 }
+		},
+		{
+			"name": "midnight",
+			"height": 408,
+			"perched": true,
+			"album": 50,
+			"stats": { "cosiness": 4, "mischief": 5, "snacks": 5, "helpfulness": 1 }
+		},
+		{
+			"name": "welcome-a",
+			"height": 408,
+			"perched": true,
+			"seasons": ["winter", "spring", "summer", "autumn"],
+			"lookAlike": "greeting",
+			"album": 1,
+			"stats": { "cosiness": 2, "mischief": 3, "snacks": 2, "helpfulness": 5 }
+		},
+		{
+			"name": "beach",
+			"height": 408,
+			"perched": true,
+			"seasons": ["summer"],
+			"album": 31,
+			"stats": { "cosiness": 5, "mischief": 2, "snacks": 4, "helpfulness": 1 }
+		},
+		{
+			"name": "flower",
+			"height": 408,
+			"perched": true,
+			"seasons": ["spring", "summer"],
+			"album": 26,
+			"stats": { "cosiness": 4, "mischief": 1, "snacks": 2, "helpfulness": 3 }
+		},
+		{
+			"name": "butterfly",
+			"height": 408,
+			"perched": true,
+			"seasons": ["spring", "summer"],
+			"album": 27,
+			"stats": { "cosiness": 3, "mischief": 4, "snacks": 2, "helpfulness": 1 }
+		},
+		{
+			"name": "tennis",
+			"height": 408,
+			"perched": true,
+			"seasons": ["spring", "summer", "autumn"],
+			"lookAlike": "ball-sport",
+			"album": 28,
+			"stats": { "cosiness": 1, "mischief": 4, "snacks": 3, "helpfulness": 1 }
+		},
+		{
+			"name": "call",
+			"height": 408,
+			"perched": true,
+			"seasons": ["winter", "spring", "summer", "autumn"],
+			"lookAlike": "talking",
+			"album": 4,
+			"stats": { "cosiness": 3, "mischief": 1, "snacks": 2, "helpfulness": 3 }
+		},
+		{
+			"name": "snow",
+			"height": 408,
+			"perched": true,
+			"seasons": ["winter"],
+			"lookAlike": "snow-gear",
+			"album": 20,
+			"stats": { "cosiness": 2, "mischief": 5, "snacks": 3, "helpfulness": 1 }
+		},
+		{
+			"name": "reading",
+			"height": 408,
+			"perched": true,
+			"seasons": ["winter", "spring", "summer", "autumn"],
+			"album": 3,
+			"stats": { "cosiness": 5, "mischief": 1, "snacks": 3, "helpfulness": 3 }
+		},
+		{
+			"name": "music",
+			"height": 408,
+			"perched": true,
+			"seasons": ["winter", "spring", "summer", "autumn"],
+			"album": 6,
+			"stats": { "cosiness": 4, "mischief": 2, "snacks": 3, "helpfulness": 2 }
+		},
+		{
+			"name": "snowflake",
+			"height": 408,
+			"perched": true,
+			"seasons": ["winter"],
+			"album": 21,
+			"stats": { "cosiness": 4, "mischief": 2, "snacks": 2, "helpfulness": 2 }
+		},
+		{
+			"name": "camera",
+			"height": 408,
+			"perched": true,
+			"seasons": ["winter", "spring", "summer", "autumn"],
+			"album": 8,
+			"stats": { "cosiness": 1, "mischief": 3, "snacks": 4, "helpfulness": 2 }
+		},
+		{
+			"name": "garden",
+			"height": 408,
+			"perched": true,
+			"seasons": ["spring", "summer"],
+			"lookAlike": "gardening",
+			"album": 29,
+			"stats": { "cosiness": 4, "mischief": 2, "snacks": 3, "helpfulness": 5 }
+		},
+		{
+			"name": "painting",
+			"height": 408,
+			"perched": true,
+			"seasons": ["winter", "spring", "summer", "autumn"],
+			"album": 9,
+			"stats": { "cosiness": 4, "mischief": 2, "snacks": 3, "helpfulness": 2 }
+		},
+		{
+			"name": "cold",
+			"height": 408,
+			"perched": true,
+			"seasons": ["winter"],
+			"lookAlike": "hot-drink",
+			"body": 0.48,
+			"album": 25,
+			"stats": { "cosiness": 5, "mischief": 1, "snacks": 4, "helpfulness": 2 }
+		},
+		{
+			"name": "cards",
+			"height": 408,
+			"perched": true,
+			"seasons": ["winter", "spring", "summer", "autumn"],
+			"body": 0.5,
+			"album": 11,
+			"stats": { "cosiness": 3, "mischief": 5, "snacks": 3, "helpfulness": 1 }
+		},
+		{
+			"name": "sweets",
+			"height": 408,
+			"perched": true,
+			"seasons": ["winter", "spring", "summer", "autumn"],
+			"album": 15,
+			"stats": { "cosiness": 4, "mischief": 3, "snacks": 5, "helpfulness": 2 }
+		},
+		{
+			"name": "snowman",
+			"height": 408,
+			"perched": true,
+			"seasons": ["winter"],
+			"body": 0.55,
+			"album": 22,
+			"stats": { "cosiness": 4, "mischief": 2, "snacks": 5, "helpfulness": 3 }
+		},
+		{
+			"name": "welcome-b",
+			"height": 408,
+			"perched": true,
+			"seasons": ["winter", "spring", "summer", "autumn"],
+			"lookAlike": "greeting",
+			"album": 2,
+			"stats": { "cosiness": 3, "mischief": 4, "snacks": 3, "helpfulness": 3 }
+		},
+		{
+			"name": "singing",
+			"height": 408,
+			"perched": true,
+			"seasons": ["winter", "spring", "summer", "autumn"],
+			"lookAlike": "talking",
+			"album": 7,
+			"stats": { "cosiness": 2, "mischief": 4, "snacks": 3, "helpfulness": 2 }
+		},
+		{
+			"name": "watering",
+			"height": 408,
+			"perched": true,
+			"seasons": ["winter", "spring", "summer", "autumn"],
+			"lookAlike": "gardening",
+			"body": 0.52,
+			"album": 14,
+			"stats": { "cosiness": 4, "mischief": 1, "snacks": 2, "helpfulness": 5 }
+		},
+		{
+			"name": "fishing",
+			"height": 408,
+			"perched": true,
+			"seasons": ["spring", "summer", "autumn"],
+			"album": 30,
+			"stats": { "cosiness": 5, "mischief": 1, "snacks": 3, "helpfulness": 2 }
+		},
+		{
+			"name": "skiing",
+			"height": 408,
+			"perched": true,
+			"seasons": ["winter"],
+			"album": 23,
+			"stats": { "cosiness": 2, "mischief": 3, "snacks": 4, "helpfulness": 2 }
+		},
+		{
+			"name": "arcade",
+			"height": 408,
+			"perched": true,
+			"seasons": ["winter", "spring", "summer", "autumn"],
+			"album": 12,
+			"stats": { "cosiness": 2, "mischief": 4, "snacks": 4, "helpfulness": 1 }
+		},
+		{
+			"name": "trash",
+			"height": 408,
+			"perched": true,
+			"seasons": ["winter", "spring", "summer", "autumn"],
+			"album": 16,
+			"stats": { "cosiness": 1, "mischief": 5, "snacks": 5, "helpfulness": 2 }
+		},
+		{
+			"name": "tea",
+			"height": 408,
+			"perched": true,
+			"seasons": ["autumn", "winter"],
+			"lookAlike": "hot-drink",
+			"album": 34,
+			"stats": { "cosiness": 5, "mischief": 1, "snacks": 3, "helpfulness": 4 }
+		},
+		{
+			"name": "sports",
+			"height": 408,
+			"perched": true,
+			"seasons": ["winter", "spring", "summer", "autumn"],
+			"album": 13,
+			"stats": { "cosiness": 1, "mischief": 2, "snacks": 4, "helpfulness": 3 }
+		},
+		{
+			"name": "water-pistol",
+			"height": 408,
+			"perched": true,
+			"seasons": ["summer"],
+			"album": 32,
+			"stats": { "cosiness": 1, "mischief": 5, "snacks": 3, "helpfulness": 1 }
+		},
+		{
+			"name": "writing",
+			"height": 408,
+			"perched": true,
+			"seasons": ["winter", "spring", "summer", "autumn"],
+			"album": 10,
+			"stats": { "cosiness": 4, "mischief": 1, "snacks": 2, "helpfulness": 4 }
+		},
+		{
+			"name": "knitting",
+			"height": 408,
+			"perched": true,
+			"seasons": ["autumn", "winter"],
+			"lookAlike": "snow-gear",
+			"album": 35,
+			"stats": { "cosiness": 5, "mischief": 1, "snacks": 3, "helpfulness": 4 }
+		},
+		{
+			"name": "phone",
+			"height": 408,
+			"perched": true,
+			"seasons": ["winter", "spring", "summer", "autumn"],
+			"album": 5,
+			"stats": { "cosiness": 4, "mischief": 2, "snacks": 1, "helpfulness": 1 }
+		},
+		{
+			"name": "skates",
+			"height": 408,
+			"perched": true,
+			"seasons": ["winter"],
+			"album": 24,
+			"stats": { "cosiness": 2, "mischief": 4, "snacks": 3, "helpfulness": 2 }
+		},
+		{
+			"name": "lemonade",
+			"height": 408,
+			"perched": true,
+			"seasons": ["summer"],
+			"album": 33,
+			"stats": { "cosiness": 3, "mischief": 1, "snacks": 4, "helpfulness": 3 }
+		},
+		{
+			"name": "coffee",
+			"height": 408,
+			"perched": true,
+			"seasons": ["winter", "spring", "summer", "autumn"],
+			"slots": ["morning"],
+			"lookAlike": "hot-drink",
+			"album": 43,
+			"stats": { "cosiness": 5, "mischief": 1, "snacks": 3, "helpfulness": 1 }
+		},
+		{
+			"name": "laptop",
+			"height": 408,
+			"perched": true,
+			"seasons": ["winter", "spring", "summer", "autumn"],
+			"days": ["mon", "tue", "wed", "thu", "fri"],
+			"album": 44,
+			"stats": { "cosiness": 4, "mischief": 2, "snacks": 3, "helpfulness": 4 }
+		},
+		{
+			"name": "fruit",
+			"height": 408,
+			"perched": true,
+			"seasons": ["winter", "spring", "summer", "autumn"],
+			"album": 45,
+			"stats": { "cosiness": 3, "mischief": 2, "snacks": 5, "helpfulness": 2 }
+		},
+		{
+			"name": "juggling",
+			"height": 408,
+			"perched": true,
+			"seasons": ["winter", "spring", "summer", "autumn"],
+			"album": 46,
+			"stats": { "cosiness": 2, "mischief": 5, "snacks": 2, "helpfulness": 2 }
+		},
+		{
+			"name": "bath",
+			"height": 408,
+			"perched": true,
+			"seasons": ["winter", "spring", "summer", "autumn"],
+			"album": 47,
+			"stats": { "cosiness": 5, "mischief": 3, "snacks": 1, "helpfulness": 1 }
+		},
+		{
+			"name": "mushrooms",
+			"height": 408,
+			"perched": true,
+			"body": 0.52,
+			"seasons": ["autumn"],
+			"album": 48,
+			"stats": { "cosiness": 2, "mischief": 2, "snacks": 5, "helpfulness": 3 }
+		},
+		{
+			"name": "friday",
+			"height": 408,
+			"perched": true,
+			"seasons": ["winter", "spring", "summer", "autumn"],
+			"days": ["fri"],
+			"weight": 3,
+			"album": 49,
+			"stats": { "cosiness": 3, "mischief": 4, "snacks": 2, "helpfulness": 1 }
+		},
+		{
+			"name": "snooze",
+			"height": 408,
+			"perched": true,
+			"body": 0.52,
+			"seasons": ["winter", "spring", "summer", "autumn"],
+			"slots": ["morning"],
+			"album": 51,
+			"stats": { "cosiness": 5, "mischief": 2, "snacks": 1, "helpfulness": 1 }
+		},
+		{
+			"name": "socks",
+			"height": 408,
+			"perched": true,
+			"seasons": ["winter", "spring", "summer", "autumn"],
+			"album": 52,
+			"stats": { "cosiness": 2, "mischief": 1, "snacks": 1, "helpfulness": 4 }
+		},
+		{
+			"name": "settings",
+			"height": 360,
+			"perched": true
+		},
+		{
+			"name": "move-out",
+			"height": 312,
+			"perched": true
+		}
+	]
+}
