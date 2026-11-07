@@ -26,9 +26,14 @@
 		/** The page hands in the handler, as it does for every check circle [4a]. */
 		complete: SubmitFunction;
 		onsnooze: () => void;
+		/**
+		 * Where it sits in Home's stack (→ `NextChoreStack`), when there are two or
+		 * more: the counter in the corner, and "Also on you" past the first.
+		 */
+		position?: { index: number; total: number };
 	};
 
-	let { chore, today, pending, complete, onsnooze }: Props = $props();
+	let { chore, today, pending, complete, onsnooze, position }: Props = $props();
 
 	const m = messages();
 
@@ -46,7 +51,19 @@
 
 <Card>
 	<div class="chore" class:pending>
-		<p class="eyebrow">{m.home.nextChore.eyebrow}</p>
+		<div class="top">
+			<p class="eyebrow">
+				{position && position.index > 0 ? m.home.nextChore.alsoEyebrow : m.home.nextChore.eyebrow}
+			</p>
+			{#if position}
+				<p class="count">
+					<span aria-hidden="true">{position.index + 1} / {position.total}</span>
+					<span class="sr-only"
+						>{m.home.nextChore.position(position.index + 1, position.total)}</span
+					>
+				</p>
+			{/if}
+		</div>
 		<h2>{chore.name}</h2>
 		<!-- Due today is a nudge, overdue is a flag — the same two moods as a row. -->
 		<p class="meta" class:danger={days < 0} class:due={days === 0}>{meta}</p>
@@ -70,6 +87,7 @@
 
 <style>
 	.chore {
+		position: relative;
 		padding: 18px 18px 19px;
 		transition: opacity 160ms ease-out;
 	}
@@ -79,14 +97,41 @@
 		opacity: 0.5;
 	}
 
-	.eyebrow {
+	.top {
+		display: flex;
+		align-items: baseline;
+		justify-content: space-between;
+		gap: 12px;
 		margin: 0 0 10px;
+	}
+
+	.eyebrow {
+		margin: 0;
 		font-size: var(--fs-12);
 		font-weight: 700;
 		letter-spacing: 0.12em;
 		text-transform: uppercase;
 		/* Terracotta, not sage: this card is the Tasks tab speaking [8b]. */
 		color: var(--terracotta);
+	}
+
+	.count {
+		flex: none;
+		margin: 0;
+		font-size: var(--fs-14);
+		font-weight: 600;
+		font-variant-numeric: tabular-nums;
+		color: var(--text-5);
+	}
+
+	/* The same shape TimerDock and WeekStrip use. */
+	.sr-only {
+		position: absolute;
+		width: 1px;
+		height: 1px;
+		overflow: hidden;
+		clip-path: inset(50%);
+		white-space: nowrap;
 	}
 
 	h2 {

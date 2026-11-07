@@ -205,17 +205,26 @@ pose, first match wins, top to bottom (`lib/utils/raccoon.ts`, by the household'
   (→ item 5). Home counts a sighting once per slot (morning, afternoon, evening, or the night,
   dated by its evening). A pose from admin mode's picker is never a sighting (→ §12).
 
-1. **Next chore card** — the one chore that's on the current user next: the soonest task
-   assigned to them or to Anyone (never a housemate's) that is already overdue or due within
-   the next 3 days. Eyebrow "Your next chore", the task name large, "Due today · weekly ·
+1. **Next chore card** — the chores on the current user: every task assigned to them or to
+   Anyone (never a housemate's) that is already overdue or due within the next 3 days, soonest
+   first, so the oldest overdue one leads. Eyebrow "Your next chore", the task name large, "Due today · weekly ·
    worth 10 pts" under it (the due half turns terracotta today, danger when overdue; a
    0-point chore says nothing about points), then **Mark done** and a snooze button opening
    the same sheet as [4c]. Ticking it off raises the same celebration [4d] as the Tasks tab,
    Undo included. Hidden when there is nothing in the window — and while the user is away,
    like every other nudge (→ §5.5).
+   **More than one** ([DECISIONS #256](DECISIONS.md)): the cards sit side by side, each the
+   full width of the screen with no peek of the next, and swipe (scroll-snap). Each card says
+   where it is, "1 / 3" opposite the eyebrow (read aloud "1 of 3"); every card after the first
+   says "Also on you" instead of "Your next chore". Dots under the stack show which one is in
+   view. At most 5 cards; with more in the window, "+2 more" right of the dots links to Tasks.
+   Ticking one off takes its card out, and the rest close up. Cards share the tallest one's
+   height, so nothing below moves while swiping, and each is reachable by Tab without a swipe.
+   The raccoon goes by the first card, whichever one is in view.
 2. **Overdue banner** [4e] — shown when the current user has overdue tasks (assigned to them or
    Anyone): danger-tinted card "1 task overdue / {task} · your turn" + View → Tasks. Stands
-   down when the next-chore card is already showing that one task (i.e. exactly one overdue).
+   down when every overdue task is already one of the next-chore cards (so it speaks only when
+   there are more overdue than the 5 cards hold).
 3. **Tonight's dinner card** — today's meal from the plan: photo thumb (or placeholder art),
    name, "{member} is cooking" with mini avatar (cook line hidden if no cook set). Tap → recipe
    view (or Cooking tab for custom meals). Hidden if nothing is planned today; show it as an
