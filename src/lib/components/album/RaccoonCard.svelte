@@ -62,6 +62,8 @@
 				return m.album.window.fasching;
 			case 'birthday':
 				return m.album.window.birthday;
+			case 'surprise':
+				return m.album.window.surprise;
 		}
 	}
 

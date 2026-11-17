@@ -15,7 +15,9 @@
  *    once it's late. Home's card shows it three days ahead; the raccoon waits for
  *    the day, so a chore coming up doesn't scold anyone (→ DECISIONS #255);
  * 6. asleep from 22:00 to 05:00, household time;
- * 7. an everyday pose (→ `everydayRaccoon`): three of the season's poses
+ * 7. a surprise visitor, the thief or the unicorn, on 1% of a member's slots
+ *    each (→ `surpriseVisitor`);
+ * 8. an everyday pose (→ `everydayRaccoon`): three of the season's poses
  *    drawn for each member each day, one each morning, afternoon and evening.
  *
  * A special day and the midnight raccoon beat the reminder because the card
@@ -57,6 +59,19 @@ export const MIDNIGHT_RACCOON: MascotName = 'midnight';
  */
 export const MIDNIGHT_CHANCE = 1 / 3;
 
+/**
+ * Who can turn up out of the blue, any day of the year, in place of the
+ * everyday raccoon (→ DECISIONS #257). Rare by luck rather than by season.
+ */
+export const SURPRISE_VISITORS = ['thief', 'unicorn'] as const satisfies readonly MascotName[];
+
+/**
+ * Each surprise visitor's chance of taking one slot of one member's day. 1%
+ * meets each in about three months for someone who opens Home once a day, and
+ * in about one for someone who looks in all three slots: a find, not a chore.
+ */
+export const SURPRISE_CHANCE = 0.01;
+
 /** Fixed special days, `MM-DD`. Easter and Fasching move, so they are worked out per year. */
 export const SPECIAL_DAYS: Readonly<Record<string, MascotName>> = {
 	'12-24': 'christmas',
@@ -73,7 +88,8 @@ const SITUATIONS = [
 	'reminder-upcoming',
 	'reminder-overdue',
 	'sleeping',
-	'midnight'
+	'midnight',
+	...SURPRISE_VISITORS
 ] as const satisfies readonly MascotName[];
 
 /**
@@ -203,7 +219,25 @@ export function homeRaccoon({
 
 	if (hour >= BEDTIME || hour < WAKE_UP) return 'sleeping';
 
-	return everydayRaccoon(today, hour, seed);
+	return surpriseVisitor(today, hour, seed) ?? everydayRaccoon(today, hour, seed);
+}
+
+/**
+ * The surprise visitor who has taken this slot of the member's day, if one has.
+ * One roll per slot, each visitor owning its own `SURPRISE_CHANCE` of it, so
+ * they never collide and a slot holds still like the draw.
+ */
+export function surpriseVisitor(
+	today: CalendarDate,
+	hour: number,
+	seed = ''
+): (typeof SURPRISE_VISITORS)[number] | null {
+	const slot = Math.max(
+		SLOT_STARTS.findLastIndex((start) => hour >= start),
+		0
+	);
+	const roll = seededRandom(`${seed}|${today}|${slot}|surprise`)();
+	return SURPRISE_VISITORS[Math.floor(roll / SURPRISE_CHANCE)] ?? null;
 }
 
 /** Whether this night is one of the member's midnight raccoon's, from a seed like the draw's. */

@@ -2021,7 +2021,8 @@ export const de: Messages = {
 			allYear: 'Ganzjährig',
 			easter: 'Ostern',
 			fasching: 'Faschingsdienstag',
-			birthday: 'Dein Geburtstag'
+			birthday: 'Dein Geburtstag',
+			surprise: 'Überraschungsbesuch'
 		},
 		/** „Mo – Fr“, „Am Wochenende“, „Freitags“, „Morgens“, „Mo – Fr, morgens“. */
 		rule: (
@@ -2236,6 +2237,14 @@ export const de: Messages = {
 		midnight: {
 			name: 'Mitternachtssnack',
 			fact: 'Du hast nichts gesehen!'
+		},
+		thief: {
+			name: 'Kleiner Gauner',
+			fact: 'Nur ausgeborgt. Ehrlich.'
+		},
+		unicorn: {
+			name: 'Einhorn',
+			fact: 'Taucht auf, wenn du am wenigsten damit rechnest.'
 		},
 		snooze: {
 			name: 'Schlummertaste',

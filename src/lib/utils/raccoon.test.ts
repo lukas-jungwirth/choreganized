@@ -20,6 +20,9 @@ import {
 	MIDNIGHT_CHANCE,
 	MIDNIGHT_RACCOON,
 	specialDay,
+	SURPRISE_CHANCE,
+	SURPRISE_VISITORS,
+	surpriseVisitor,
 	WELCOME_RACCOON
 } from './raccoon.ts';
 
@@ -231,6 +234,63 @@ describe('the midnight raccoon', () => {
 		for (const seed of members) {
 			assert.equal(homeRaccoon({ ...plain, today: '2036-12-31', hour: 0, seed }), 'new-year');
 		}
+	});
+});
+
+describe('the surprise visitors', () => {
+	const days = Array.from({ length: 366 }, (_, day) => addDays('2036-01-01', day)).filter(
+		(today) => !specialDay(today)
+	);
+	const members = Array.from({ length: 40 }, (_, index) => `member-${index}`);
+	/** Every awake slot of the year for one member: [day, hour] at each slot's start. */
+	const slots = days.flatMap((today) => [5, 11, 17].map((hour) => [today, hour] as const));
+	const seen = (seed: string) =>
+		slots.map(([today, hour]) => homeRaccoon({ ...plain, today, hour, seed }));
+	/** A slot where the thief turned up, for the tests of what beats what. */
+	const [day, hour] = slots.find(([today, hour]) => surpriseVisitor(today, hour, 'member-0'))!;
+	const visit = { ...plain, today: day, hour, seed: 'member-0' };
+	const visitor = surpriseVisitor(day, hour, 'member-0')!;
+
+	it('each turns up on about 1% of a member’s slots, all year round', () => {
+		for (const name of SURPRISE_VISITORS) {
+			const shares = members.map(
+				(seed) => seen(seed).filter((raccoon) => raccoon === name).length / slots.length
+			);
+			const mean = shares.reduce((sum, share) => sum + share, 0) / shares.length;
+			assert.ok(Math.abs(mean - SURPRISE_CHANCE) < 0.002, `${name}: ${mean.toFixed(4)}`);
+			const months = new Set(
+				members.flatMap((seed) =>
+					slots
+						.filter(([today, hour]) => surpriseVisitor(today, hour, seed) === name)
+						.map(([today]) => today.slice(5, 7))
+				)
+			);
+			assert.equal(months.size, 12, `${name} met in ${[...months].join(', ')}`);
+		}
+	});
+
+	it('holds still for the whole slot and is each member’s own luck', () => {
+		const last = hour === 17 ? 21 : hour + 5;
+		for (let each = hour; each <= last; each++)
+			assert.equal(homeRaccoon({ ...visit, hour: each }), visitor, `${each}:00`);
+		assert.notDeepEqual(seen('member-0'), seen('member-1'));
+	});
+
+	it('only ever takes the everyday raccoon’s place', () => {
+		assert.equal(homeRaccoon(visit), visitor);
+		assert.equal(homeRaccoon({ ...visit, nextChoreDue: day }), 'reminder-upcoming');
+		assert.equal(homeRaccoon({ ...visit, birthday: day.slice(5) }), 'birthday');
+		assert.equal(homeRaccoon({ ...visit, firstVisit: true }), WELCOME_RACCOON);
+		for (const seed of members)
+			for (const each of [5, 11, 17])
+				assert.equal(homeRaccoon({ ...plain, today: '2036-12-24', hour: each, seed }), 'christmas');
+	});
+
+	it('is a Home raccoon, so the admin picker and the album know it', () => {
+		for (const name of SURPRISE_VISITORS) assert.ok(isHomeRaccoon(name), name);
+		assert.ok(
+			!EVERYDAY.some((pose) => (SURPRISE_VISITORS as readonly string[]).includes(pose.name))
+		);
 	});
 });
 

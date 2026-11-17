@@ -94,6 +94,8 @@ export const PERCHED: readonly MascotName[] = [
 	'valentines',
 	'sleeping',
 	'midnight',
+	'thief',
+	'unicorn',
 	'welcome-a',
 	'beach',
 	'flower',

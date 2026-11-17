@@ -59,6 +59,8 @@ checks that simulated members meet every pose of every season. The app icons are
 | `valentines.png`          | Home, 14 February                                              |
 | `sleeping.png`            | Home, 22:00–05:00 on an ordinary day without a chore on you    |
 | `midnight.png`            | Home, 00:00–02:00, one night in three, each member's own       |
+| `thief.png`               | Home, surprise visitor: 1% of a member's slots, all year       |
+| `unicorn.png`             | Home, surprise visitor: 1% of a member's slots, all year       |
 | `beach.png`               | Home, everyday, summer                                         |
 | `garden.png`              | Home, everyday, spring, summer (in a sun hat)                  |
 | `fishing.png`             | Home, everyday, spring, summer, autumn                         |

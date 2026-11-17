@@ -99,6 +99,20 @@
 			"stats": { "cosiness": 4, "mischief": 5, "snacks": 5, "helpfulness": 1 }
 		},
 		{
+			"name": "thief",
+			"height": 408,
+			"perched": true,
+			"album": 53,
+			"stats": { "cosiness": 2, "mischief": 5, "snacks": 4, "helpfulness": 1 }
+		},
+		{
+			"name": "unicorn",
+			"height": 408,
+			"perched": true,
+			"album": 54,
+			"stats": { "cosiness": 4, "mischief": 3, "snacks": 3, "helpfulness": 3 }
+		},
+		{
 			"name": "welcome-a",
 			"height": 408,
 			"perched": true,

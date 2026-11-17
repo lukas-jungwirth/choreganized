@@ -15,6 +15,8 @@ import halloween from './halloween.avif';
 import valentines from './valentines.avif';
 import sleeping from './sleeping.avif';
 import midnight from './midnight.avif';
+import thief from './thief.avif';
+import unicorn from './unicorn.avif';
 import welcomeA from './welcome-a.avif';
 import beach from './beach.avif';
 import flower from './flower.avif';
@@ -80,6 +82,8 @@ export const MASCOTS = {
 	valentines: { src: valentines, width: 384, height: 408, body: 0.5 },
 	sleeping: { src: sleeping, width: 426, height: 408, body: 0.56 },
 	midnight: { src: midnight, width: 335, height: 408, body: 0.53 },
+	thief: { src: thief, width: 364, height: 408, body: 0.44 },
+	unicorn: { src: unicorn, width: 347, height: 408, body: 0.41 },
 	'welcome-a': { src: welcomeA, width: 488, height: 408, body: 0.39 },
 	beach: { src: beach, width: 370, height: 408, body: 0.53 },
 	flower: { src: flower, width: 315, height: 408, body: 0.47 },

@@ -13,7 +13,8 @@
  *   (17 awake hours a day) and the laptop (workdays) are Common; a pose of one
  *   or two seasons, coffee (mornings) and sleeping (nights) are Rare; a special
  *   day, your birthday and the midnight raccoon (two hours, one night in three)
- *   are Legendary. A pose's `weight` doesn't count: it makes a raccoon easier to
+ *   are Legendary, and so are the surprise visitors (any slot, on 1% of
+ *   them). A pose's `weight` doesn't count: it makes a raccoon easier to
  *   meet when it is around, not around for longer.
  * - **Window**, the card's chip: when you can meet it, the season or the days
  *   of the year, and its **rule**, if it keeps to some weekdays or hours.
@@ -29,6 +30,8 @@ import {
 	SEASON_OF_MONTH,
 	SLOT_HOURS,
 	SPECIAL_DAYS,
+	SURPRISE_CHANCE,
+	SURPRISE_VISITORS,
 	WEEKDAYS
 } from './raccoon.ts';
 
@@ -56,7 +59,8 @@ export type Window =
 	| { kind: 'days'; from: string; to: string }
 	| { kind: 'easter' }
 	| { kind: 'fasching' }
-	| { kind: 'birthday' };
+	| { kind: 'birthday' }
+	| { kind: 'surprise' };
 
 /**
  * When in the week and the day it keeps to, on top of its window: some
@@ -168,6 +172,18 @@ function describe({ name, number, stats }: (typeof ALBUM)[number]): AlbumEntry {
 	if (days) return special({ kind: 'days', ...days.range }, days.count);
 
 	const allYear = { window: { kind: 'all-year' } as Window, frame: { kind: 'any' } as Frame };
+
+	// Any awake slot of the year, on the luck of the draw (→ DECISIONS #257).
+	if ((SURPRISE_VISITORS as readonly string[]).includes(name)) {
+		const availability = (hoursOf(null) / 24) * SURPRISE_CHANCE;
+		return {
+			...entry,
+			availability,
+			tier: tierOf(availability),
+			window: { kind: 'surprise' },
+			frame: { kind: 'holo' }
+		};
+	}
 
 	// Asleep every night, 22:00 to 05:00, all year.
 	if (name === 'sleeping') {
