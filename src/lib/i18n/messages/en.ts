@@ -2539,7 +2539,7 @@ export const en = {
 		subtitle: 'Every raccoon you’ve met on Home.',
 		back: 'Back to Settings',
 		backHome: 'Back to Home',
-		/** The Settings row's value: "17 of 52". */
+		/** The Settings row's value: "17 of 54". */
 		count: (found: number, total: number) => `${found} of ${total}`,
 		found: (found: number, total: number) => `${found} of ${total} found`,
 		/**
@@ -2578,7 +2578,8 @@ export const en = {
 			allYear: 'All year',
 			easter: 'Easter',
 			fasching: 'Shrove Tuesday',
-			birthday: 'Your birthday'
+			birthday: 'Your birthday',
+			surprise: 'Surprise visit'
 		},
 		/**
 		 * After the window, when a raccoon keeps to some days or hours: "Mon – Fri",
@@ -2798,6 +2799,14 @@ export const en = {
 		midnight: {
 			name: 'Midnight Snack',
 			fact: 'You didn’t see anything!'
+		},
+		thief: {
+			name: 'Little Bandit',
+			fact: 'Just borrowing. Honestly.'
+		},
+		unicorn: {
+			name: 'Unicorn',
+			fact: 'Turns up when you least expect it.'
 		},
 		snooze: {
 			name: 'Snooze Button',

@@ -3719,3 +3719,20 @@ units | null, name}`, written back as editor lines in the reader's unit spelling
        to null then, so the page has no rule of its own.
      - **The raccoon follows the first card**, not the one in view, so it doesn't change while
        you swipe.
+257. **Surprise visitors: the thief and the unicorn** (Lukas 2026-11-17; → SPEC §2,
+     `utils/raccoon.ts` `surpriseVisitor`, `utils/raccoon-album.ts`). Two raccoons that are rare by
+     luck, not by season: each takes 1% of a member's awake slots, any day of the year, in place
+     of the everyday pose. A once-a-day visitor meets each in about three months, someone who
+     looks in all three slots in about one.
+     - **A slot, not an hour**: a one-hour window would be missed for opening the app at the
+       wrong time, which reads as unfair rather than lucky. One seeded roll per member and slot,
+       each visitor owning its own 1% of it, so they never collide and the slot holds still.
+     - **Only the everyday pose gives way**: birthday, special days, the first visit, the midnight
+       raccoon, a chore on you and bedtime still win, so the card under the raccoon keeps
+       making sense.
+     - **★★★ by the same sum as the midnight raccoon** (#237, #243): 17/24 of the day × 1% = 0.7%,
+       under the 3% line. Holo frame like the special days; the chip reads "Surprise visit" /
+       "Überraschungsbesuch". Album numbers 53 and 54, so the album is 54 (#254's 52 + 2).
+     - **Art**: the unicorn was mirrored to look toward the greeting; the thief keeps his own
+       direction, his side-glance is the joke (Lukas). Thief cut 3.7% off the sack's bottom,
+       unicorn 0.4%. +35 KB of AVIF (18.0 + 18.0 KB).

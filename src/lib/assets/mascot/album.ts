@@ -59,7 +59,9 @@ export type AlbumName =
 	| 'friday'
 	| 'midnight'
 	| 'snooze'
-	| 'socks';
+	| 'socks'
+	| 'thief'
+	| 'unicorn';
 
 /** The raccoon album, by number (→ `utils/raccoon-album`). */
 export const ALBUM = [
@@ -130,7 +132,9 @@ export const ALBUM = [
 	{ name: 'friday', number: 49, stats: { cosiness: 3, mischief: 4, snacks: 2, helpfulness: 1 } },
 	{ name: 'midnight', number: 50, stats: { cosiness: 4, mischief: 5, snacks: 5, helpfulness: 1 } },
 	{ name: 'snooze', number: 51, stats: { cosiness: 5, mischief: 2, snacks: 1, helpfulness: 1 } },
-	{ name: 'socks', number: 52, stats: { cosiness: 2, mischief: 1, snacks: 1, helpfulness: 4 } }
+	{ name: 'socks', number: 52, stats: { cosiness: 2, mischief: 1, snacks: 1, helpfulness: 4 } },
+	{ name: 'thief', number: 53, stats: { cosiness: 2, mischief: 5, snacks: 4, helpfulness: 1 } },
+	{ name: 'unicorn', number: 54, stats: { cosiness: 4, mischief: 3, snacks: 3, helpfulness: 3 } }
 ] as const satisfies ReadonlyArray<{
 	name: AlbumName & MascotName;
 	number: number;

@@ -129,6 +129,10 @@ pose, first match wins, top to bottom (`lib/utils/raccoon.ts`, by the household'
   coming up is no one's fault, so Home keeps the steps below until then. Ticking off today's
   chore brings the everyday raccoon back.
 - **22:00–05:00**: asleep, under a starry blanket.
+- **A surprise visitor** ([DECISIONS #257](DECISIONS.md)): the thief (beanie, torch, loot sack)
+  or the unicorn (horn, rainbow mane, star wand), each on 1% of a member's morning, afternoon
+  and evening slots, any day of the year. Seeded per member and slot like the draw, so it holds
+  still for the slot. It only ever takes the everyday pose's place: everything above still wins.
 - Otherwise an **everyday pose** ([DECISIONS #219](DECISIONS.md), [#220](DECISIONS.md)), from
   the ones in season — winter Dec–Feb, spring Mar–May, summer Jun–Aug, autumn Sep–Nov:
 
@@ -238,16 +242,16 @@ pose, first match wins, top to bottom (`lib/utils/raccoon.ts`, by the household'
    tiles, in the same place every day. On the right a small deck: your newest raccoon on its
    album frame in front, two silhouettes of raccoons still to find behind it (a full album keeps
    two silhouettes of its own). Only the front card has colour. The bar is plain sage.
-   - **Nothing new**: "Raccoon album", "18 of 52 found", "6 rare · 3 legendary still to find"
+   - **Nothing new**: "Raccoon album", "18 of 54 found", "6 rare · 3 legendary still to find"
      ("2 still to find" when only common ones are left, "You've met every raccoon!" once none are). Tap → the album.
    - **One new since the album was last opened** (the album's own "New" count, so it stays until
      you look, across reloads and days): the front card pops over the card's top edge with a
      "New" badge, a terracotta outline, and the eyebrow says the rarity in words: "New raccoon!",
-     "Rare raccoon!" or "Legendary raccoon!" (gold outline), then its name and "18 of 52 found".
+     "Rare raccoon!" or "Legendary raccoon!" (gold outline), then its name and "18 of 54 found".
      A common raccoon doesn't say "Common", and there are no stars here: those stay on the
      album's card. Tap → the album at its card.
    - **Several new**: "New raccoons!", "3 in your album", "Tennis Ace, Flower Sniffer and 1 more
-     · 20 of 52", badge "3 new", the newest in front. Tap → the album, wearing its "New" badges.
+     · 20 of 54", badge "3 new", the newest in front. Tap → the album, wearing its "New" badges.
 
    Reached from here, the album's back button returns to Home (`?from=home`); from Settings it
    returns to Settings. With reduced motion the card doesn't pop in, it is just there.
@@ -918,12 +922,12 @@ The **History** tab is a stats landing; the full feed sits one level below it (�
 - Profile card: avatar, display name, email + **Edit**. A raccoon with a wrench sits on its top
   edge at the right, the way Home's sits on its first card; the title wraps rather than run
   under it ([DECISIONS #217](DECISIONS.md)).
-- **Raccoon album** (plan 35), a row right under the profile card with "17 of 52": every raccoon
+- **Raccoon album** (plan 35), a row right under the profile card with "17 of 54": every raccoon
   Home can show (exactly `HOME_RACCOONS`: the 42 everyday poses, the 6 special days, your birthday, sleeping,
   the midnight raccoon and the two reminders; never a tab's, the sign-in head, Settings' or the leaving raccoon), and
   which of them **you** have met. Per member: a housemate's album is their own.
   - `SubHeader` "Raccoon album" / "Every raccoon you've met on Home." A progress card: a ring,
-    "17 of 52 found", "5 rare · 4 legendary still to find", a plain sage bar.
+    "17 of 54 found", "5 rare · 4 legendary still to find", a plain sage bar.
   - Filters, sideways at 390px: All · ★ Common · ★★ Rare · ★★★ Legendary; a chip picks one
     rarity. (No Missing filter: dropped in [DECISIONS #237](DECISIONS.md).)
   - A grid of four, tiles 3:4, in album order: a met raccoon on its frame colour with its number
@@ -932,12 +936,12 @@ The **History** tab is a stats landing; the full feed sits one level below it (�
   - **Rarity** ([DECISIONS #237](DECISIONS.md)), worked out from how much of the year a raccoon
     can be on Home: its months × its weekdays × its hours (the 17 awake hours for a drawn pose, the
     7 night hours for sleeping, every hour for the reminders, which come with a chore; 2 hours × 1/3 of
-    nights for the midnight raccoon). A `weight` doesn't count: it is odds, not time. **★
+    nights for the midnight raccoon; the 17 awake hours × 1% for a surprise visitor). A `weight` doesn't count: it is odds, not time. **★
     Common** at 40% or more (an all-year pose, three seasons, the laptop), **★★ Rare** in between
     (one or two seasons, coffee, snooze, the Friday raccoon, sleeping), **★★★ Legendary** under 3%
-    (the special days, your birthday and the midnight raccoon). **Frames** follow the window, not the rarity: sage all year, the season's colour
+    (the special days, your birthday, the midnight raccoon and the two surprise visitors). **Frames** follow the window, not the rarity: sage all year, the season's colour
     for one season (winter ice, spring blossom pink, summer sand, autumn rust), a blend first to
-    last for several (tea: autumn → winter), holo foil for a special day; the theme changes only
+    last for several (tea: autumn → winter), holo foil for a special day and a surprise visitor (whose chip reads "Surprise visit"); the theme changes only
     the shade.
   - A tap opens the **card**, centred over the album: "No. 009" and the stars (★★☆) on top, the
     raccoon on a stage in its frame colour, its name, which says what it is ("Tennis Ace",

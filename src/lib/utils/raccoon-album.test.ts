@@ -60,7 +60,9 @@ describe('tier', () => {
 			'halloween',
 			'valentines',
 			'birthday',
-			'midnight'
+			'midnight',
+			'thief',
+			'unicorn'
 		] as const)
 			assert.equal(albumEntry(name).tier, 3, name);
 	});
@@ -76,6 +78,10 @@ describe('tier', () => {
 		close(albumEntry('sleeping').availability, 7 / 24);
 		// Two hours, on one night in three.
 		close(albumEntry('midnight').availability, (2 / 24) * (1 / 3));
+		// Any awake hour, on 1% of the slots.
+		close(albumEntry('thief').availability, (17 / 24) * 0.01);
+		assert.deepEqual(albumEntry('unicorn').window, { kind: 'surprise' });
+		assert.deepEqual(albumEntry('unicorn').frame, { kind: 'holo' });
 		// A weight is odds, not time: Friday is one day in seven whatever its odds.
 		close(albumEntry('friday').availability, (1 / 7) * (17 / 24));
 		close(albumEntry('christmas').availability, 2 / 365);
@@ -333,12 +339,15 @@ describe('homeSlot', () => {
 });
 
 describe('the reviewed album (Lukas 2026-11-07)', () => {
-	it('has 52 raccoons numbered 1 to 52, without the handball one', () => {
-		assert.equal(ALBUM_SIZE, 52);
+	it('has 54 raccoons numbered 1 to 54, without the handball one', () => {
+		// 52 reviewed, then the two surprise visitors, 53 and 54 (→ DECISIONS #257).
+		assert.equal(ALBUM_SIZE, 54);
 		assert.deepEqual(
 			ALBUM_ENTRIES.map((entry) => entry.number).sort((a, b) => a - b),
-			Array.from({ length: 52 }, (_, i) => i + 1)
+			Array.from({ length: 54 }, (_, i) => i + 1)
 		);
+		assert.equal(albumEntry('thief').number, 53);
+		assert.equal(albumEntry('unicorn').number, 54);
 		assert.ok(!ALBUM_ENTRIES.some((entry) => (entry.name as string) === 'handball'));
 		assert.equal(albumEntry('valentines').number, 36);
 	});

@@ -10,7 +10,19 @@ import { listMembers } from '$lib/server/services/household';
 import { getHomeSummary } from '$lib/server/services/home';
 import { listSightings, recordSighting } from '$lib/server/services/raccoons';
 import { addDays } from '$lib/utils/dates';
-import { everydayRaccoon, MIDNIGHT_RACCOON, WELCOME_RACCOON } from '$lib/utils/raccoon';
+import {
+	everydayRaccoon,
+	MIDNIGHT_RACCOON,
+	surpriseVisitor,
+	WELCOME_RACCOON
+} from '$lib/utils/raccoon';
+
+/**
+ * The raccoon an ordinary slot shows: the member's draw, unless one of the
+ * surprise visitors took it (1% each, and member ids are random).
+ */
+const drawn = (today: string, hour: number, seed: string) =>
+	surpriseVisitor(today, hour, seed) ?? everydayRaccoon(today, hour, seed);
 import { makeHousehold } from '../helpers/db';
 
 const TODAY = '2036-06-18';
@@ -46,7 +58,7 @@ describe("Home's everyday raccoon", () => {
 		for (const member of members) {
 			// Met one in the morning, so this afternoon is no first visit.
 			recordSighting(householdId, member.id, 'reading', TODAY, `${TODAY}#0`);
-			assert.equal(home(member).raccoon, everydayRaccoon(TODAY, 14, member.id), member.displayName);
+			assert.equal(home(member).raccoon, drawn(TODAY, 14, member.id), member.displayName);
 		}
 	});
 });
@@ -62,7 +74,7 @@ describe("a member's first visit", () => {
 		assert.equal(visit(me), WELCOME_RACCOON);
 		// The evening is the next slot: the day's own draw.
 		at('2036-06-18T16:00:00Z');
-		assert.equal(visit(me), everydayRaccoon(TODAY, 18, me.id));
+		assert.equal(visit(me), drawn(TODAY, 18, me.id));
 	});
 
 	it('is each member’s own: a housemate who joins later is welcomed too', () => {
@@ -71,7 +83,7 @@ describe("a member's first visit", () => {
 		at('2036-06-18T06:00:00Z');
 		visit(me);
 		at('2036-06-18T12:00:00Z');
-		assert.equal(visit(me), everydayRaccoon(TODAY, 14, me.id));
+		assert.equal(visit(me), drawn(TODAY, 14, me.id));
 		assert.equal(visit(mia), WELCOME_RACCOON);
 	});
 
@@ -85,7 +97,7 @@ describe("a member's first visit", () => {
 		const { householdId, members, home } = household();
 		const [me] = members;
 		recordSighting(householdId, me.id, 'sleeping', '2036-06-17', '2036-06-17#n');
-		assert.equal(home(me).raccoon, everydayRaccoon(TODAY, 14, me.id));
+		assert.equal(home(me).raccoon, drawn(TODAY, 14, me.id));
 	});
 });
 
