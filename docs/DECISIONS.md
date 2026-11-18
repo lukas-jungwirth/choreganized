@@ -3797,3 +3797,5 @@ units | null, name}`, written back as editor lines in the reader's unit spelling
        feast's „All you can eat“, safari's comma); five new facts written from his notes
        (paintball, wizard, meditating, candle, wine) and sent back to him for review in the
        editor, with the three fixed ones. English follows the German.
+     - **Final pass** (Lukas, same day): his own facts for paintball, wizard, puppies and
+       wine replaced the drafts; paintball got its full stop. Every card reviewed.

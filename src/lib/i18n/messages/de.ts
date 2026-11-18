@@ -2252,7 +2252,7 @@ export const de: Messages = {
 		},
 		paintball: {
 			name: 'Paintball',
-			fact: 'Kommt jeden Samstag bunt nach Hause. Nicht alles Blaue ist Farbe.'
+			fact: 'Sieht seinen Körper als Leinwand.'
 		},
 		travel: {
 			name: 'Entdeckerin',
@@ -2276,7 +2276,7 @@ export const de: Messages = {
 		},
 		wizard: {
 			name: 'Kleiner Zauberer',
-			fact: 'Spült das Geschirr mit der Hand, damit die Muggel nichts merken.'
+			fact: 'Stattet auch manchmal Muggeln einen Besuch ab.'
 		},
 		handyman: {
 			name: 'Heimwerker',
@@ -2308,11 +2308,11 @@ export const de: Messages = {
 		},
 		puppies: {
 			name: 'Welpensitter',
-			fact: 'Wollte nur kurz auf die Welpen aufpassen. Das war letzte Woche.'
+			fact: 'Gibt die Welpen auch ganz bestimmt wieder zurück.'
 		},
 		wine: {
 			name: 'Sommelier',
-			fact: 'Trinkt nur zum Essen. Chips zählen auch.'
+			fact: 'Ein Achterl ist immer noch gegangen.'
 		},
 		snooze: {
 			name: 'Schlummertaste',
