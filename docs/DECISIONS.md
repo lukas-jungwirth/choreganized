@@ -3748,11 +3748,22 @@ units | null, name}`, written back as editor lines in the reader's unit spelling
        make-up with face-mask (`face-care`, a brush to the cheek).
      - **The wizard** (glasses, wand, scarf) is a surprise visitor like the thief and the
        unicorn, 1% of a member's slots, ★★★, not an everyday pose (Lukas).
-     - **Direction**: Lukas had every drop mirrored except wine and the thief; four then looked
-       off the card to the right and were flipped back (basketball, wizard, handyman,
-       secret-agent). Cuts: handyman 2.9%, puppies 2.1%, red-panda 0.8%, paintball 0.4%, the
+     - **Direction**: Lukas had every drop mirrored except wine and the thief. Four (basketball,
+       wizard, handyman, secret-agent) were then flipped back on a misreading of a small overview
+       sheet; #259 undoes that. Cuts: handyman 2.9%, puppies 2.1%, red-panda 0.8%, paintball 0.4%, the
        rest already flat. +339 KB of AVIF.
      - **The rotation tests' limits now follow the pool**: with ~45 poses a season, three a day
        leaves one housemate in 800 two short of a full season, and the unluckiest evening-only
        visitor meets 74%. The average still matches the sum exactly, so the limits widened
        (≤ 2 missed; worst within 0.2 of the mean) rather than the draw changing.
+259. **Thirteen raccoons mirrored to face the greeting** (Lukas 2026-11-18; → #234). A check of
+     all 72, each face beside its mirror image at full size: tennis, singing, tea, fasching,
+     midnight, sports, knitting, skates and socks looked or turned right, off the card, at
+     nothing; basketball, wizard, handyman and secret-agent were #258's wrong flip-back. All
+     mirrored. Left as they are on purpose: seven that look right at their own prop on that side
+     (cards, chess, arcade, new-year, writing, camera, phone) and ten with only a slight glance
+     (christmas, valentines, birthday, halloween, garden, fishing, skiing, snow, lemonade,
+     coffee), Lukas's call for later; wine and the thief keep their direction (Lukas).
+     - **Judged by eye, not measured**: an iris-in-sclera measurement was tried and read too
+       noisily to trust (it scored closed eyes, and the pirate as looking left). What guards it
+       is the admin picker's screenshot, which shows every Home raccoon.
