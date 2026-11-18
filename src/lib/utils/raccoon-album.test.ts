@@ -75,20 +75,20 @@ describe('tier', () => {
 	it('works out the share from the months, the weekdays and the hours', () => {
 		const close = (actual: number, expected: number) =>
 			assert.ok(Math.abs(actual - expected) < 1e-9, `${actual} ≠ ${expected}`);
-		// Awake 17 hours a day: 05:00 to 22:00.
-		close(albumEntry('reading').availability, 17 / 24);
-		close(albumEntry('snowman').availability, (1 / 4) * (17 / 24));
-		close(albumEntry('laptop').availability, (5 / 7) * (17 / 24));
+		// Awake 18 hours a day: 05:00 to 23:00 (→ DECISIONS #260).
+		close(albumEntry('reading').availability, 18 / 24);
+		close(albumEntry('snowman').availability, (1 / 4) * (18 / 24));
+		close(albumEntry('laptop').availability, (5 / 7) * (18 / 24));
 		close(albumEntry('coffee').availability, 6 / 24);
-		close(albumEntry('sleeping').availability, 7 / 24);
+		close(albumEntry('sleeping').availability, 6 / 24);
 		// Two hours, on one night in three.
 		close(albumEntry('midnight').availability, (2 / 24) * (1 / 3));
 		// Any awake hour, on 1% of the slots.
-		close(albumEntry('thief').availability, (17 / 24) * 0.01);
+		close(albumEntry('thief').availability, (18 / 24) * 0.01);
 		assert.deepEqual(albumEntry('unicorn').window, { kind: 'surprise' });
 		assert.deepEqual(albumEntry('unicorn').frame, { kind: 'holo' });
 		// A weight is odds, not time: Friday is one day in seven whatever its odds.
-		close(albumEntry('friday').availability, (1 / 7) * (17 / 24));
+		close(albumEntry('friday').availability, (1 / 7) * (18 / 24));
 		close(albumEntry('christmas').availability, 2 / 365);
 		close(albumEntry('reminder-overdue').availability, 1);
 	});
@@ -337,7 +337,7 @@ describe('homeSlot', () => {
 	});
 
 	it('makes one slot of a night, dated by its evening', () => {
-		assert.equal(homeSlot('2036-06-18', 22), '2036-06-18#n');
+		assert.equal(homeSlot('2036-06-18', 23), '2036-06-18#n');
 		assert.equal(homeSlot('2036-06-19', 2), '2036-06-18#n');
 		assert.equal(homeSlot('2037-01-01', 4), '2036-12-31#n');
 	});

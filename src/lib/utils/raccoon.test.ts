@@ -21,6 +21,7 @@ import {
 	MIDNIGHT_RACCOON,
 	specialDay,
 	SURPRISE_CHANCE,
+	SLOT_HOURS,
 	SURPRISE_VISITORS,
 	surpriseVisitor,
 	WELCOME_RACCOON
@@ -142,9 +143,17 @@ describe('homeRaccoon', () => {
 		assert.equal(homeRaccoon({ ...plain, hour: 23, nextChoreDue: '2036-06-19' }), 'sleeping');
 	});
 
-	it('sleeps from 22:00 until 05:00', () => {
-		assert.notEqual(homeRaccoon({ ...plain, hour: 21 }), 'sleeping');
-		assert.equal(homeRaccoon({ ...plain, hour: 22 }), 'sleeping');
+	it('splits the awake day into three slots of six hours (→ DECISIONS #260)', () => {
+		assert.deepEqual(
+			[SLOT_HOURS.morning, SLOT_HOURS.afternoon, SLOT_HOURS.evening, SLOT_HOURS.night],
+			[6, 6, 6, 6]
+		);
+	});
+
+	it('sleeps from 23:00 until 05:00', () => {
+		// 22:00 is still the evening's raccoon since #260: three slots of six hours.
+		assert.notEqual(homeRaccoon({ ...plain, hour: 22 }), 'sleeping');
+		assert.equal(homeRaccoon({ ...plain, hour: 22 }), homeRaccoon({ ...plain, hour: 17 }));
 		assert.equal(homeRaccoon({ ...plain, hour: 23 }), 'sleeping');
 		assert.equal(homeRaccoon({ ...plain, hour: 2 }), 'sleeping');
 		assert.equal(homeRaccoon({ ...plain, hour: 4 }), 'sleeping');
@@ -296,7 +305,7 @@ describe('the surprise visitors', () => {
 	});
 
 	it('holds still for the whole slot and is each member’s own luck', () => {
-		const last = hour === 17 ? 21 : hour + 5;
+		const last = hour + 5;
 		for (let each = hour; each <= last; each++)
 			assert.equal(homeRaccoon({ ...visit, hour: each }), visitor, `${each}:00`);
 		assert.notDeepEqual(seen('member-0'), seen('member-1'));

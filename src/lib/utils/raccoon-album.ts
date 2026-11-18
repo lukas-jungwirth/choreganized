@@ -10,7 +10,7 @@
  *   the year it can be on Home (→ `availability`, DECISIONS #237): its months,
  *   its days of the week and its hours of the day, multiplied. Common is 40% of
  *   the year or more, Legendary under 3%, Rare in between. So an all-year pose
- *   (17 awake hours a day) and the laptop (workdays) are Common; a pose of one
+ *   (18 awake hours a day) and the laptop (workdays) are Common; a pose of one
  *   or two seasons, coffee (mornings) and sleeping (nights) are Rare; a special
  *   day, your birthday and the midnight raccoon (two hours, one night in three)
  *   are Legendary, and so are the surprise visitors (any slot, on 1% of
@@ -185,7 +185,7 @@ function describe({ name, number, stats }: (typeof ALBUM)[number]): AlbumEntry {
 		};
 	}
 
-	// Asleep every night, 22:00 to 05:00, all year.
+	// Asleep every night, 23:00 to 05:00, all year.
 	if (name === 'sleeping') {
 		const rule: Rule = { days: null, slots: ['night'] };
 		const availability = SLOT_HOURS.night / 24;
