@@ -97,7 +97,6 @@ checks that simulated members meet every pose of every season. The app icons are
 | `friday.png`              | Home, everyday, all year, Fridays only, 3× odds                |
 | `snooze.png`              | Home, everyday, all year, mornings only                        |
 | `socks.png`               | Home, everyday, all year                                       |
-| `basketball.png`          | Home, everyday, all year (never with sports)                   |
 | `paintball.png`           | Home, everyday, spring, summer, autumn                         |
 | `travel.png`              | Home, everyday, spring, summer, autumn                         |
 | `babysitting.png`         | Home, everyday, all year (never with puppies)                  |
@@ -107,11 +106,10 @@ checks that simulated members meet every pose of every season. The app icons are
 | `handyman.png`            | Home, everyday, all year                                       |
 | `secret-agent.png`        | Home, everyday, all year                                       |
 | `meditating.png`          | Home, everyday, all year                                       |
-| `make-up.png`             | Home, everyday, all year (never with face-mask)                |
 | `candle.png`              | Home, everyday, autumn, winter                                 |
 | `red-panda.png`           | Home, everyday, all year                                       |
 | `safari.png`              | Home, everyday, summer                                         |
-| `face-mask.png`           | Home, everyday, all year (never with make-up)                  |
+| `face-mask.png`           | Home, everyday, all year                                       |
 | `puppies.png`             | Home, everyday, all year (never with babysitting)              |
 | `wine.png`                | Home, everyday, all year, evenings only                        |
 | `skates.png`              | Home, everyday, winter                                         |

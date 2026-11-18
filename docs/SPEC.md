@@ -180,7 +180,6 @@ pose, first match wins, top to bottom (`lib/utils/raccoon.ts`, by the household'
   | throwing the paperwork away | all year               | Fridays   |
   | hitting the snooze button   | all year               | mornings  |
   | a pair of odd socks         | all year               |           |
-  | with a basketball           | all year               |           |
   | paintball, goggles on       | spring, summer, autumn |           |
   | with a map and a compass    | spring, summer, autumn |           |
   | babysitting a baby raccoon  | all year               |           |
@@ -190,7 +189,6 @@ pose, first match wins, top to bottom (`lib/utils/raccoon.ts`, by the household'
   | with a hammer and toolbox   | all year               |           |
   | a secret agent in a tux     | all year               |           |
   | meditating                  | all year               |           |
-  | make-up at a hand mirror    | all year               |           |
   | holding a candle            | autumn, winter         |           |
   | in a red panda hoodie       | all year               |           |
   | on safari with binoculars   | summer                 |           |
@@ -208,8 +206,7 @@ pose, first match wins, top to bottom (`lib/utils/raccoon.ts`, by the household'
   as long as the rest to meet: once a day, half of people would need 20 Fridays. A day's three are all different, and never two that look alike (the
   greetings, the gardening and watering poses, the hot drinks, the corded
   phone and the singer, the snowball and the knitter in the same hat and scarf; coffee joins the
-  hot drinks; the dumbbell and the basketball, the baby and the puppies, the make-up and the face
-  mask, [DECISIONS #258](DECISIONS.md)); the night's
+  hot drinks; the baby and the puppies, [DECISIONS #258](DECISIONS.md)); the night's
   sleeping raccoon sits between one day's evening and the next morning. Housemates meet different
   raccoons and fill their own raccoon albums (→ §6). There is no hard guarantee of meeting every
   pose in a season, on purpose: the last few take some luck, though looking in every slot you
@@ -266,16 +263,16 @@ pose, first match wins, top to bottom (`lib/utils/raccoon.ts`, by the household'
    tiles, in the same place every day. On the right a small deck: your newest raccoon on its
    album frame in front, two silhouettes of raccoons still to find behind it (a full album keeps
    two silhouettes of its own). Only the front card has colour. The bar is plain sage.
-   - **Nothing new**: "Raccoon album", "18 of 73 found", "6 rare · 3 legendary still to find"
+   - **Nothing new**: "Raccoon album", "18 of 71 found", "6 rare · 3 legendary still to find"
      ("2 still to find" when only common ones are left, "You've met every raccoon!" once none are). Tap → the album.
    - **One new since the album was last opened** (the album's own "New" count, so it stays until
      you look, across reloads and days): the front card pops over the card's top edge with a
      "New" badge, a terracotta outline, and the eyebrow says the rarity in words: "New raccoon!",
-     "Rare raccoon!" or "Legendary raccoon!" (gold outline), then its name and "18 of 73 found".
+     "Rare raccoon!" or "Legendary raccoon!" (gold outline), then its name and "18 of 71 found".
      A common raccoon doesn't say "Common", and there are no stars here: those stay on the
      album's card. Tap → the album at its card.
    - **Several new**: "New raccoons!", "3 in your album", "Tennis Ace, Flower Sniffer and 1 more
-     · 20 of 73", badge "3 new", the newest in front. Tap → the album, wearing its "New" badges.
+     · 20 of 71", badge "3 new", the newest in front. Tap → the album, wearing its "New" badges.
 
    Reached from here, the album's back button returns to Home (`?from=home`); from Settings it
    returns to Settings. With reduced motion the card doesn't pop in, it is just there.
@@ -946,12 +943,12 @@ The **History** tab is a stats landing; the full feed sits one level below it (�
 - Profile card: avatar, display name, email + **Edit**. A raccoon with a wrench sits on its top
   edge at the right, the way Home's sits on its first card; the title wraps rather than run
   under it ([DECISIONS #217](DECISIONS.md)).
-- **Raccoon album** (plan 35), a row right under the profile card with "17 of 73": every raccoon
+- **Raccoon album** (plan 35), a row right under the profile card with "17 of 71": every raccoon
   Home can show (exactly `HOME_RACCOONS`: the 42 everyday poses, the 6 special days, your birthday, sleeping,
   the midnight raccoon and the two reminders; never a tab's, the sign-in head, Settings' or the leaving raccoon), and
   which of them **you** have met. Per member: a housemate's album is their own.
   - `SubHeader` "Raccoon album" / "Every raccoon you've met on Home." A progress card: a ring,
-    "17 of 73 found", "5 rare · 4 legendary still to find", a plain sage bar.
+    "17 of 71 found", "5 rare · 4 legendary still to find", a plain sage bar.
   - Filters, sideways at 390px: All · ★ Common · ★★ Rare · ★★★ Legendary; a chip picks one
     rarity. (No Missing filter: dropped in [DECISIONS #237](DECISIONS.md).)
   - A grid of four, tiles 3:4, in album order: a met raccoon on its frame colour with its number

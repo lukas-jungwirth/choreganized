@@ -251,11 +251,7 @@ describe('the batch of 18 (→ DECISIONS #258)', () => {
 	const pose = (name: string) => EVERYDAY.find((each) => each.name === name);
 
 	it('never meets its look-alike on the same day', () => {
-		for (const [a, b] of [
-			['basketball', 'sports'],
-			['babysitting', 'puppies'],
-			['make-up', 'face-mask']
-		]) {
+		for (const [a, b] of [['babysitting', 'puppies']]) {
 			assert.ok(pose(a)?.lookAlike, a);
 			assert.equal(pose(a)?.lookAlike, pose(b)?.lookAlike, `${a} and ${b}`);
 		}
