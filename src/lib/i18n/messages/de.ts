@@ -2246,6 +2246,78 @@ export const de: Messages = {
 			name: 'Einhorn',
 			fact: 'Taucht auf, wenn du am wenigsten damit rechnest.'
 		},
+		basketball: {
+			name: 'Korbjäger',
+			fact: 'Zählt jeden Wurf als Dreier, auch die in den Wäschekorb.'
+		},
+		paintball: {
+			name: 'Paintball-Neuling',
+			fact: 'Kommt jeden Samstag in einer anderen Farbe heim.'
+		},
+		travel: {
+			name: 'Entdeckerin',
+			fact: 'Hat für jeden Ausflug eine Karte und fragt trotzdem nach dem Weg.'
+		},
+		babysitting: {
+			name: 'Babysitterin',
+			fact: 'Bringt jedes Baby zum Schlafen, nur sich selbst nicht.'
+		},
+		bubbles: {
+			name: 'Seifenblasen-Profi',
+			fact: 'Bläst die größten Seifenblasen der Gasse und lässt sie dann selber platzen.'
+		},
+		chess: {
+			name: 'Schachdenker',
+			fact: 'Denkt seit dem Mittagessen über einen Zug nach.'
+		},
+		feast: {
+			name: 'Buffet-Experte',
+			fact: 'Nimmt von allem ein bisserl. Zweimal.'
+		},
+		wizard: {
+			name: 'Kleiner Zauberer',
+			fact: 'Könnte das Geschirr sauber zaubern. Wollte bisher nur nicht.'
+		},
+		handyman: {
+			name: 'Heimwerker',
+			fact: 'Hat das Regal repariert. Drei Schrauben sind übrig geblieben.'
+		},
+		'secret-agent': {
+			name: 'Geheimagent',
+			fact: 'Ist auf geheimer Mission. Die Mission ist der Kühlschrank.'
+		},
+		meditating: {
+			name: 'Ruhepol',
+			fact: 'Atmet vier Sekunden ein, vier aus, und schneller, wenn wer „Jause“ sagt.'
+		},
+		'make-up': {
+			name: 'Schminkprofi',
+			fact: 'In fünf Minuten fertig. Seit vierzig Minuten.'
+		},
+		candle: {
+			name: 'Kerzenschein',
+			fact: 'Zündet jeden Abend eine Kerze an, einfach so, für die Stimmung.'
+		},
+		'red-panda': {
+			name: 'Pandafan',
+			fact: 'Hält den Pulli für die perfekte Verkleidung. Keiner traut sich, was zu sagen.'
+		},
+		safari: {
+			name: 'Safari-Führerin',
+			fact: 'Hat im Garten schon drei Löwen gesichtet. Alle waren die Katze vom Nachbarn.'
+		},
+		'face-mask': {
+			name: 'Wellnesstag',
+			fact: 'Ist gerade nicht da. Bitte nach der Gurke eine Nachricht hinterlassen.'
+		},
+		puppies: {
+			name: 'Welpensitter',
+			fact: 'Wollte nur kurz auf die Welpen aufpassen. Das war letzte Woche.'
+		},
+		wine: {
+			name: 'Sommelier',
+			fact: 'Schwenkt, schnuppert und sagt, er schmeckt nach Trauben.'
+		},
 		snooze: {
 			name: 'Schlummertaste',
 			fact: 'Sieht 07:00 eher als Vorschlag.'

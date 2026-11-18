@@ -15,7 +15,7 @@
  *    once it's late. Home's card shows it three days ahead; the raccoon waits for
  *    the day, so a chore coming up doesn't scold anyone (→ DECISIONS #255);
  * 6. asleep from 22:00 to 05:00, household time;
- * 7. a surprise visitor, the thief or the unicorn, on 1% of a member's slots
+ * 7. a surprise visitor, the thief, the unicorn or the wizard, on 1% of a member's slots
  *    each (→ `surpriseVisitor`);
  * 8. an everyday pose (→ `everydayRaccoon`): three of the season's poses
  *    drawn for each member each day, one each morning, afternoon and evening.
@@ -63,7 +63,11 @@ export const MIDNIGHT_CHANCE = 1 / 3;
  * Who can turn up out of the blue, any day of the year, in place of the
  * everyday raccoon (→ DECISIONS #257). Rare by luck rather than by season.
  */
-export const SURPRISE_VISITORS = ['thief', 'unicorn'] as const satisfies readonly MascotName[];
+export const SURPRISE_VISITORS = [
+	'thief',
+	'unicorn',
+	'wizard'
+] as const satisfies readonly MascotName[];
 
 /**
  * Each surprise visitor's chance of taking one slot of one member's day. 1%

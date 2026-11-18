@@ -61,6 +61,7 @@ checks that simulated members meet every pose of every season. The app icons are
 | `midnight.png`            | Home, 00:00–02:00, one night in three, each member's own       |
 | `thief.png`               | Home, surprise visitor: 1% of a member's slots, all year       |
 | `unicorn.png`             | Home, surprise visitor: 1% of a member's slots, all year       |
+| `wizard.png`              | Home, surprise visitor: 1% of a member's slots, all year       |
 | `beach.png`               | Home, everyday, summer                                         |
 | `garden.png`              | Home, everyday, spring, summer (in a sun hat)                  |
 | `fishing.png`             | Home, everyday, spring, summer, autumn                         |
@@ -95,6 +96,23 @@ checks that simulated members meet every pose of every season. The app icons are
 | `friday.png`              | Home, everyday, all year, Fridays only, 3× odds                |
 | `snooze.png`              | Home, everyday, all year, mornings only                        |
 | `socks.png`               | Home, everyday, all year                                       |
+| `basketball.png`          | Home, everyday, all year (never with sports)                   |
+| `paintball.png`           | Home, everyday, spring, summer, autumn                         |
+| `travel.png`              | Home, everyday, spring, summer, autumn                         |
+| `babysitting.png`         | Home, everyday, all year (never with puppies)                  |
+| `bubbles.png`             | Home, everyday, all year                                       |
+| `chess.png`               | Home, everyday, all year                                       |
+| `feast.png`               | Home, everyday, all year                                       |
+| `handyman.png`            | Home, everyday, all year                                       |
+| `secret-agent.png`        | Home, everyday, all year                                       |
+| `meditating.png`          | Home, everyday, all year                                       |
+| `make-up.png`             | Home, everyday, all year (never with face-mask)                |
+| `candle.png`              | Home, everyday, autumn, winter                                 |
+| `red-panda.png`           | Home, everyday, all year                                       |
+| `safari.png`              | Home, everyday, summer                                         |
+| `face-mask.png`           | Home, everyday, all year (never with make-up)                  |
+| `puppies.png`             | Home, everyday, all year (never with babysitting)              |
+| `wine.png`                | Home, everyday, all year, evenings only                        |
 | `skates.png`              | Home, everyday, winter                                         |
 | `sweets.png`              | Home, everyday, all year                                       |
 | `trash.png`               | Home, everyday, all year                                       |
