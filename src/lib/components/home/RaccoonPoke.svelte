@@ -8,8 +8,12 @@
 	- the sixth it has had enough: it ducks behind the card and stays away for
 	  a few seconds, then the same raccoon comes back up, calm again.
 
-	It never swaps the pose: which raccoon you get is the date's and the hour's
-	(`utils/raccoon`), something to discover by coming back, not to pick.
+	The sleeping raccoon is the exception (→ DECISIONS #261): it doesn't get cross
+	and duck away. The third poke wakes it, `wakesAs` shows for a few seconds,
+	blinking and grumpy, and then it dozes off again; `onwake` tells Home, which
+	puts the woken raccoon in the album. Otherwise it never swaps the pose: which
+	raccoon you get is the date's and the hour's (`utils/raccoon`), something to
+	discover by coming back, not to pick.
 	Leave it alone for a few seconds and it calms down: the count starts over.
 	In admin mode Home passes `onpick`, and a tap opens the raccoon picker
 	instead (→ plan 34).
@@ -27,9 +31,13 @@
 		class?: string;
 		/** Admin mode: a tap opens the picker rather than poking (→ plan 34). */
 		onpick?: () => void;
+		/** Who it becomes when poked awake, for the sleeping raccoon (→ DECISIONS #261). */
+		wakesAs?: MascotName;
+		/** Called as it wakes. */
+		onwake?: () => void;
 	};
 
-	let { name, height, class: className, onpick }: Props = $props();
+	let { name, height, class: className, onpick, wakesAs, onwake }: Props = $props();
 
 	const m = messages();
 
@@ -40,6 +48,8 @@
 	const CALM_DOWN = 3000;
 	/** How long it stays away once it has had enough. */
 	const AWAY = 4000;
+	/** How long a woken raccoon stays awake before it dozes off again. */
+	const AWAKE = 3500;
 
 	/*
 	 * Red without a colour: the art keeps its own palette, like the member
@@ -53,14 +63,42 @@
 	let busy = $state(false);
 	/** Gone behind the card: hidden for real, not just at the end of an animation. */
 	let away = $state(false);
+	/** Poked awake: `wakesAs` shows instead of `name` until it dozes off. */
+	let awake = $state(false);
 	let button: HTMLButtonElement;
 	let calm: ReturnType<typeof setTimeout> | undefined;
 
-	const annoyed = $derived(taps >= HIT);
+	const annoyed = $derived(taps >= HIT && !wakesAs);
 	const reducedMotion = () => window.matchMedia('(prefers-reduced-motion: reduce)').matches;
 
 	function play(keyframes: Keyframe[], duration: number, easing = 'ease-out') {
 		return button.animate(keyframes, { duration, easing }).finished;
+	}
+
+	/** Startled awake, a few seconds of blinking, then back to sleep. */
+	async function wake(still: boolean) {
+		busy = true;
+		taps = 0;
+		awake = true;
+		onwake?.();
+		if (!still) {
+			await play(
+				[
+					{ transform: 'none' },
+					{ transform: 'translateY(-5%) scale(1.03)', offset: 0.35 },
+					{ transform: 'translateX(-4px) rotate(-2deg)', offset: 0.6 },
+					{ transform: 'translateX(3px) rotate(1deg)', offset: 0.8 },
+					{ transform: 'none' }
+				],
+				460
+			);
+		}
+		await new Promise((resolve) => setTimeout(resolve, AWAKE));
+		// Dozing off: a slow fade down to the sleeping raccoon and back up.
+		await play([{ opacity: 1 }, { opacity: 0.25 }], still ? 160 : 420, 'ease-in');
+		awake = false;
+		await play([{ opacity: 0.25 }, { opacity: 1 }], still ? 160 : 420);
+		busy = false;
 	}
 
 	async function poke() {
@@ -68,6 +106,11 @@
 		clearTimeout(calm);
 		taps += 1;
 		const still = reducedMotion();
+
+		if (wakesAs && taps >= HIT) {
+			await wake(still);
+			return;
+		}
 
 		if (taps >= GONE) {
 			busy = true;
@@ -103,7 +146,7 @@
 
 		calm = setTimeout(() => (taps = 0), CALM_DOWN);
 
-		if (taps === HIT) {
+		if (taps === HIT && !wakesAs) {
 			const flush = [{ filter: 'none' }, { filter: FLUSHED, offset: 0.25 }, { filter: ANNOYED }];
 			const shake = [
 				{ transform: 'none' },
@@ -138,7 +181,7 @@
 	aria-haspopup={onpick ? 'dialog' : undefined}
 	onclick={onpick ?? poke}
 >
-	<Mascot {name} {height} />
+	<Mascot name={awake && wakesAs ? wakesAs : name} {height} />
 </button>
 
 <style>

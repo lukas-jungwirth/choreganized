@@ -92,6 +92,14 @@
 			"stats": { "cosiness": 5, "mischief": 1, "snacks": 3, "helpfulness": 1 }
 		},
 		{
+			"name": "woken",
+			"height": 408,
+			"perched": true,
+			"body": 0.56,
+			"album": 73,
+			"stats": { "cosiness": 3, "mischief": 1, "snacks": 2, "helpfulness": 1 }
+		},
+		{
 			"name": "midnight",
 			"height": 408,
 			"perched": true,

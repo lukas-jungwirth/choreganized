@@ -222,6 +222,11 @@ pose, first match wins, top to bottom (`lib/utils/raccoon.ts`, by the household'
   same raccoon comes back up, calm. It never swaps the pose: which raccoon you get is the date's
   and the hour's, something to discover by coming back. Three seconds without a tap and the count
   starts over. With reduced motion it doesn't move: the tint still shows, the hiding is a fade.
+  **The sleeping raccoon wakes up instead** ([DECISIONS #261](DECISIONS.md)): the first two
+  pokes only make it stir; the third startles it awake (the woken raccoon, blinking and grumpy in
+  the same bed) for three and a half seconds, then it dozes off again. It never gets cross or
+  ducks away. Waking it puts the woken raccoon in your album, at most once a night (the night is
+  one slot), and only while Home's raccoon really is the sleeping one.
 
   **The raccoon album** (plan 35, [DECISIONS #229](DECISIONS.md), [#231](DECISIONS.md)): the
   first time you meet a raccoon here it joins your album, and the album card below says so
@@ -261,16 +266,16 @@ pose, first match wins, top to bottom (`lib/utils/raccoon.ts`, by the household'
    tiles, in the same place every day. On the right a small deck: your newest raccoon on its
    album frame in front, two silhouettes of raccoons still to find behind it (a full album keeps
    two silhouettes of its own). Only the front card has colour. The bar is plain sage.
-   - **Nothing new**: "Raccoon album", "18 of 72 found", "6 rare · 3 legendary still to find"
+   - **Nothing new**: "Raccoon album", "18 of 73 found", "6 rare · 3 legendary still to find"
      ("2 still to find" when only common ones are left, "You've met every raccoon!" once none are). Tap → the album.
    - **One new since the album was last opened** (the album's own "New" count, so it stays until
      you look, across reloads and days): the front card pops over the card's top edge with a
      "New" badge, a terracotta outline, and the eyebrow says the rarity in words: "New raccoon!",
-     "Rare raccoon!" or "Legendary raccoon!" (gold outline), then its name and "18 of 72 found".
+     "Rare raccoon!" or "Legendary raccoon!" (gold outline), then its name and "18 of 73 found".
      A common raccoon doesn't say "Common", and there are no stars here: those stay on the
      album's card. Tap → the album at its card.
    - **Several new**: "New raccoons!", "3 in your album", "Tennis Ace, Flower Sniffer and 1 more
-     · 20 of 72", badge "3 new", the newest in front. Tap → the album, wearing its "New" badges.
+     · 20 of 73", badge "3 new", the newest in front. Tap → the album, wearing its "New" badges.
 
    Reached from here, the album's back button returns to Home (`?from=home`); from Settings it
    returns to Settings. With reduced motion the card doesn't pop in, it is just there.
@@ -941,12 +946,12 @@ The **History** tab is a stats landing; the full feed sits one level below it (�
 - Profile card: avatar, display name, email + **Edit**. A raccoon with a wrench sits on its top
   edge at the right, the way Home's sits on its first card; the title wraps rather than run
   under it ([DECISIONS #217](DECISIONS.md)).
-- **Raccoon album** (plan 35), a row right under the profile card with "17 of 72": every raccoon
+- **Raccoon album** (plan 35), a row right under the profile card with "17 of 73": every raccoon
   Home can show (exactly `HOME_RACCOONS`: the 42 everyday poses, the 6 special days, your birthday, sleeping,
   the midnight raccoon and the two reminders; never a tab's, the sign-in head, Settings' or the leaving raccoon), and
   which of them **you** have met. Per member: a housemate's album is their own.
   - `SubHeader` "Raccoon album" / "Every raccoon you've met on Home." A progress card: a ring,
-    "17 of 72 found", "5 rare · 4 legendary still to find", a plain sage bar.
+    "17 of 73 found", "5 rare · 4 legendary still to find", a plain sage bar.
   - Filters, sideways at 390px: All · ★ Common · ★★ Rare · ★★★ Legendary; a chip picks one
     rarity. (No Missing filter: dropped in [DECISIONS #237](DECISIONS.md).)
   - A grid of four, tiles 3:4, in album order: a met raccoon on its frame colour with its number

@@ -14,6 +14,7 @@ import fasching from './fasching.avif';
 import halloween from './halloween.avif';
 import valentines from './valentines.avif';
 import sleeping from './sleeping.avif';
+import woken from './woken.avif';
 import midnight from './midnight.avif';
 import thief from './thief.avif';
 import unicorn from './unicorn.avif';
@@ -99,6 +100,7 @@ export const MASCOTS = {
 	halloween: { src: halloween, width: 388, height: 408, body: 0.53 },
 	valentines: { src: valentines, width: 384, height: 408, body: 0.5 },
 	sleeping: { src: sleeping, width: 426, height: 408, body: 0.56 },
+	woken: { src: woken, width: 422, height: 408, body: 0.56 },
 	midnight: { src: midnight, width: 335, height: 408, body: 0.46 },
 	thief: { src: thief, width: 364, height: 408, body: 0.44 },
 	unicorn: { src: unicorn, width: 347, height: 408, body: 0.41 },
