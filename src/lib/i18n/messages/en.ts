@@ -2814,7 +2814,7 @@ export const en = {
 		},
 		paintball: {
 			name: 'Paintball',
-			fact: 'Comes home colourful every Saturday. Not all the blue is paint.'
+			fact: 'Sees his body as a canvas.'
 		},
 		travel: {
 			name: 'Explorer',
@@ -2838,7 +2838,7 @@ export const en = {
 		},
 		wizard: {
 			name: 'Little Wizard',
-			fact: 'Does the dishes by hand so the Muggles don’t notice.'
+			fact: 'Pays the Muggles a visit now and then.'
 		},
 		handyman: {
 			name: 'Handyman',
@@ -2870,11 +2870,11 @@ export const en = {
 		},
 		puppies: {
 			name: 'Puppy Sitter',
-			fact: 'Promised to watch the puppies for five minutes. That was last week.'
+			fact: 'Will definitely give the puppies back. Definitely.'
 		},
 		wine: {
 			name: 'Sommelier',
-			fact: 'Only drinks with food. Crisps count.'
+			fact: 'There’s always room for one more glass.'
 		},
 		snooze: {
 			name: 'Snooze Button',

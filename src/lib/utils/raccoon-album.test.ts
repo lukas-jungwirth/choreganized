@@ -370,6 +370,7 @@ describe('the reviewed album (Lukas 2026-11-07)', () => {
 	it('carries Lukas’s second review (2026-11-18, → DECISIONS #262)', () => {
 		assert.equal(de.raccoons.thief.name, 'Robin Hood');
 		assert.equal(de.raccoons.chess.fact, 'Schachmatt!');
+		assert.equal(de.raccoons.wine.fact, 'Ein Achterl ist immer noch gegangen.');
 		assert.equal(en.raccoons['red-panda'].fact, 'Definitely not a raccoon.');
 		// No em dashes in the album's copy, in either language (→ DECISIONS #205).
 		for (const catalog of [de, en])
