@@ -2240,27 +2240,23 @@ export const de: Messages = {
 		},
 		woken: {
 			name: 'Aufgeweckt',
-			fact: 'Hat gerade so schön von Palatschinken geträumt. Danke auch.'
+			fact: 'Hat gerade so schön geträumt. Danke für nichts.'
 		},
 		thief: {
-			name: 'Kleiner Gauner',
-			fact: 'Nur ausgeborgt. Ehrlich.'
+			name: 'Robin Hood',
+			fact: 'Bestiehlt nicht nur die Reichen.'
 		},
 		unicorn: {
 			name: 'Einhorn',
 			fact: 'Taucht auf, wenn du am wenigsten damit rechnest.'
 		},
-		basketball: {
-			name: 'Korbjäger',
-			fact: 'Zählt jeden Wurf als Dreier, auch die in den Wäschekorb.'
-		},
 		paintball: {
-			name: 'Paintball-Neuling',
-			fact: 'Kommt jeden Samstag in einer anderen Farbe heim.'
+			name: 'Paintball',
+			fact: 'Kommt jeden Samstag bunt nach Hause. Nicht alles Blaue ist Farbe.'
 		},
 		travel: {
 			name: 'Entdeckerin',
-			fact: 'Hat für jeden Ausflug eine Karte und fragt trotzdem nach dem Weg.'
+			fact: 'Warum Google Maps verwenden, wenn man sich auch verlaufen kann?'
 		},
 		babysitting: {
 			name: 'Babysitterin',
@@ -2268,19 +2264,19 @@ export const de: Messages = {
 		},
 		bubbles: {
 			name: 'Seifenblasen-Profi',
-			fact: 'Bläst die größten Seifenblasen der Gasse und lässt sie dann selber platzen.'
+			fact: 'Man ist nie zu alt für Seifenblasen.'
 		},
 		chess: {
-			name: 'Schachdenker',
-			fact: 'Denkt seit dem Mittagessen über einen Zug nach.'
+			name: 'Großmeister',
+			fact: 'Schachmatt!'
 		},
 		feast: {
-			name: 'Buffet-Experte',
-			fact: 'Nimmt von allem ein bisserl. Zweimal.'
+			name: 'Vielfraß',
+			fact: 'Nimmt „All you can eat“ immer wörtlich.'
 		},
 		wizard: {
 			name: 'Kleiner Zauberer',
-			fact: 'Könnte das Geschirr sauber zaubern. Wollte bisher nur nicht.'
+			fact: 'Spült das Geschirr mit der Hand, damit die Muggel nichts merken.'
 		},
 		handyman: {
 			name: 'Heimwerker',
@@ -2292,27 +2288,23 @@ export const de: Messages = {
 		},
 		meditating: {
 			name: 'Ruhepol',
-			fact: 'Atmet vier Sekunden ein, vier aus, und schneller, wenn wer „Jause“ sagt.'
-		},
-		'make-up': {
-			name: 'Schminkprofi',
-			fact: 'In fünf Minuten fertig. Seit vierzig Minuten.'
+			fact: 'Andere nennen es faul. Er nennt es Achtsamkeit.'
 		},
 		candle: {
 			name: 'Kerzenschein',
-			fact: 'Zündet jeden Abend eine Kerze an, einfach so, für die Stimmung.'
+			fact: 'Wollte es für die Gäste gemütlich machen. Jetzt ist auch die Feuerwehr da.'
 		},
 		'red-panda': {
-			name: 'Pandafan',
-			fact: 'Hält den Pulli für die perfekte Verkleidung. Keiner traut sich, was zu sagen.'
+			name: 'Roter Panda',
+			fact: 'Bestimmt kein Waschbär.'
 		},
 		safari: {
-			name: 'Safari-Führerin',
-			fact: 'Hat im Garten schon drei Löwen gesichtet. Alle waren die Katze vom Nachbarn.'
+			name: 'Safari',
+			fact: 'Hat im Garten schon drei Löwen gesichtet. Der Nachbar meint nur, sie soll seine Katzen in Ruhe lassen.'
 		},
 		'face-mask': {
 			name: 'Wellnesstag',
-			fact: 'Ist gerade nicht da. Bitte nach der Gurke eine Nachricht hinterlassen.'
+			fact: 'Man gönnt sich ja sonst nichts.'
 		},
 		puppies: {
 			name: 'Welpensitter',
@@ -2320,7 +2312,7 @@ export const de: Messages = {
 		},
 		wine: {
 			name: 'Sommelier',
-			fact: 'Schwenkt, schnuppert und sagt, er schmeckt nach Trauben.'
+			fact: 'Trinkt nur zum Essen. Chips zählen auch.'
 		},
 		snooze: {
 			name: 'Schlummertaste',

@@ -2802,27 +2802,23 @@ export const en = {
 		},
 		woken: {
 			name: 'Rudely Awakened',
-			fact: 'Was just dreaming about pancakes. Thanks a lot.'
+			fact: 'Was having such a lovely dream. Thanks for nothing.'
 		},
 		thief: {
-			name: 'Little Bandit',
-			fact: 'Just borrowing. Honestly.'
+			name: 'Robin Hood',
+			fact: 'Doesn’t only rob the rich.'
 		},
 		unicorn: {
 			name: 'Unicorn',
 			fact: 'Turns up when you least expect it.'
 		},
-		basketball: {
-			name: 'Court Regular',
-			fact: 'Calls every shot a three-pointer, the ones into the laundry basket too.'
-		},
 		paintball: {
-			name: 'Paintball Rookie',
-			fact: 'Comes home a different colour every Saturday.'
+			name: 'Paintball',
+			fact: 'Comes home colourful every Saturday. Not all the blue is paint.'
 		},
 		travel: {
 			name: 'Explorer',
-			fact: 'Has a map for every trip and still asks for directions.'
+			fact: 'Why use Google Maps when you could just get lost?'
 		},
 		babysitting: {
 			name: 'Babysitter',
@@ -2830,19 +2826,19 @@ export const en = {
 		},
 		bubbles: {
 			name: 'Bubble Blower',
-			fact: 'Blows the biggest bubbles in the street, then pops them itself.'
+			fact: 'You’re never too old for soap bubbles.'
 		},
 		chess: {
-			name: 'Chess Thinker',
-			fact: 'Has been thinking about one move since lunch.'
+			name: 'Grandmaster',
+			fact: 'Checkmate!'
 		},
 		feast: {
-			name: 'Buffet Expert',
-			fact: 'Takes a little of everything. Twice.'
+			name: 'Bottomless Pit',
+			fact: 'Takes “all you can eat” literally, every time.'
 		},
 		wizard: {
 			name: 'Little Wizard',
-			fact: 'Could magic the dishes clean. Just hasn’t felt like it yet.'
+			fact: 'Does the dishes by hand so the Muggles don’t notice.'
 		},
 		handyman: {
 			name: 'Handyman',
@@ -2854,27 +2850,23 @@ export const en = {
 		},
 		meditating: {
 			name: 'Inner Calm',
-			fact: 'Breathes in for four, out for four, and faster when someone says snacks.'
-		},
-		'make-up': {
-			name: 'Glam Raccoon',
-			fact: 'Ready in five minutes. For the last forty.'
+			fact: 'Others call it lazy. He calls it mindfulness.'
 		},
 		candle: {
 			name: 'Candlelight',
-			fact: 'Lights a candle every evening, just for the glow.'
+			fact: 'Wanted to make it cosy for the guests. Now the fire brigade is here too.'
 		},
 		'red-panda': {
-			name: 'Red Panda Fan',
-			fact: 'Thinks the hoodie is the perfect disguise. Nobody has the heart to say.'
+			name: 'Red Panda',
+			fact: 'Definitely not a raccoon.'
 		},
 		safari: {
-			name: 'Safari Guide',
-			fact: 'Has spotted three lions in the garden. All of them were the neighbour’s cat.'
+			name: 'Safari',
+			fact: 'Has spotted three lions in the garden. The neighbour just says to leave his cats alone.'
 		},
 		'face-mask': {
 			name: 'Spa Day',
-			fact: 'Not here right now. Leave a message after the cucumber.'
+			fact: 'You have to treat yourself sometimes.'
 		},
 		puppies: {
 			name: 'Puppy Sitter',
@@ -2882,7 +2874,7 @@ export const en = {
 		},
 		wine: {
 			name: 'Sommelier',
-			fact: 'Swirls, sniffs, and says it tastes of grapes.'
+			fact: 'Only drinks with food. Crisps count.'
 		},
 		snooze: {
 			name: 'Snooze Button',

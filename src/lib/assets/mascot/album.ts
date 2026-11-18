@@ -62,7 +62,6 @@ export type AlbumName =
 	| 'socks'
 	| 'thief'
 	| 'unicorn'
-	| 'basketball'
 	| 'paintball'
 	| 'travel'
 	| 'babysitting'
@@ -73,7 +72,6 @@ export type AlbumName =
 	| 'handyman'
 	| 'secret-agent'
 	| 'meditating'
-	| 'make-up'
 	| 'candle'
 	| 'red-panda'
 	| 'safari'
@@ -154,41 +152,35 @@ export const ALBUM = [
 	{ name: 'socks', number: 52, stats: { cosiness: 2, mischief: 1, snacks: 1, helpfulness: 4 } },
 	{ name: 'thief', number: 53, stats: { cosiness: 2, mischief: 5, snacks: 4, helpfulness: 1 } },
 	{ name: 'unicorn', number: 54, stats: { cosiness: 4, mischief: 3, snacks: 3, helpfulness: 3 } },
-	{
-		name: 'basketball',
-		number: 55,
-		stats: { cosiness: 2, mischief: 3, snacks: 3, helpfulness: 3 }
-	},
-	{ name: 'paintball', number: 56, stats: { cosiness: 1, mischief: 5, snacks: 3, helpfulness: 1 } },
-	{ name: 'travel', number: 57, stats: { cosiness: 3, mischief: 2, snacks: 3, helpfulness: 3 } },
+	{ name: 'paintball', number: 55, stats: { cosiness: 1, mischief: 5, snacks: 3, helpfulness: 1 } },
+	{ name: 'travel', number: 56, stats: { cosiness: 3, mischief: 2, snacks: 3, helpfulness: 3 } },
 	{
 		name: 'babysitting',
-		number: 58,
+		number: 57,
 		stats: { cosiness: 5, mischief: 1, snacks: 2, helpfulness: 5 }
 	},
-	{ name: 'bubbles', number: 59, stats: { cosiness: 4, mischief: 3, snacks: 1, helpfulness: 1 } },
-	{ name: 'chess', number: 60, stats: { cosiness: 3, mischief: 2, snacks: 2, helpfulness: 2 } },
-	{ name: 'feast', number: 61, stats: { cosiness: 4, mischief: 2, snacks: 5, helpfulness: 1 } },
-	{ name: 'wizard', number: 62, stats: { cosiness: 3, mischief: 4, snacks: 3, helpfulness: 3 } },
-	{ name: 'handyman', number: 63, stats: { cosiness: 2, mischief: 1, snacks: 3, helpfulness: 5 } },
+	{ name: 'bubbles', number: 58, stats: { cosiness: 4, mischief: 3, snacks: 1, helpfulness: 1 } },
+	{ name: 'chess', number: 59, stats: { cosiness: 3, mischief: 2, snacks: 2, helpfulness: 2 } },
+	{ name: 'feast', number: 60, stats: { cosiness: 4, mischief: 2, snacks: 5, helpfulness: 1 } },
+	{ name: 'wizard', number: 61, stats: { cosiness: 3, mischief: 4, snacks: 3, helpfulness: 3 } },
+	{ name: 'handyman', number: 62, stats: { cosiness: 2, mischief: 1, snacks: 3, helpfulness: 5 } },
 	{
 		name: 'secret-agent',
-		number: 64,
+		number: 63,
 		stats: { cosiness: 2, mischief: 4, snacks: 3, helpfulness: 2 }
 	},
 	{
 		name: 'meditating',
-		number: 65,
+		number: 64,
 		stats: { cosiness: 5, mischief: 1, snacks: 1, helpfulness: 2 }
 	},
-	{ name: 'make-up', number: 66, stats: { cosiness: 3, mischief: 2, snacks: 2, helpfulness: 1 } },
-	{ name: 'candle', number: 67, stats: { cosiness: 5, mischief: 1, snacks: 2, helpfulness: 2 } },
-	{ name: 'red-panda', number: 68, stats: { cosiness: 5, mischief: 3, snacks: 3, helpfulness: 1 } },
-	{ name: 'safari', number: 69, stats: { cosiness: 2, mischief: 3, snacks: 3, helpfulness: 2 } },
-	{ name: 'face-mask', number: 70, stats: { cosiness: 5, mischief: 1, snacks: 1, helpfulness: 1 } },
-	{ name: 'puppies', number: 71, stats: { cosiness: 5, mischief: 3, snacks: 2, helpfulness: 3 } },
-	{ name: 'wine', number: 72, stats: { cosiness: 5, mischief: 2, snacks: 4, helpfulness: 1 } },
-	{ name: 'woken', number: 73, stats: { cosiness: 3, mischief: 1, snacks: 2, helpfulness: 1 } }
+	{ name: 'candle', number: 65, stats: { cosiness: 5, mischief: 1, snacks: 2, helpfulness: 2 } },
+	{ name: 'red-panda', number: 66, stats: { cosiness: 5, mischief: 3, snacks: 3, helpfulness: 1 } },
+	{ name: 'safari', number: 67, stats: { cosiness: 2, mischief: 3, snacks: 3, helpfulness: 2 } },
+	{ name: 'face-mask', number: 68, stats: { cosiness: 5, mischief: 1, snacks: 1, helpfulness: 1 } },
+	{ name: 'puppies', number: 69, stats: { cosiness: 5, mischief: 3, snacks: 2, helpfulness: 3 } },
+	{ name: 'wine', number: 70, stats: { cosiness: 5, mischief: 2, snacks: 4, helpfulness: 1 } },
+	{ name: 'woken', number: 71, stats: { cosiness: 3, mischief: 1, snacks: 2, helpfulness: 1 } }
 ] as const satisfies ReadonlyArray<{
 	name: AlbumName & MascotName;
 	number: number;

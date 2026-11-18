@@ -96,7 +96,7 @@
 			"height": 408,
 			"perched": true,
 			"body": 0.56,
-			"album": 73,
+			"album": 71,
 			"stats": { "cosiness": 3, "mischief": 1, "snacks": 2, "helpfulness": 1 }
 		},
 		{
@@ -124,7 +124,7 @@
 			"name": "wizard",
 			"height": 408,
 			"perched": true,
-			"album": 62,
+			"album": 61,
 			"stats": { "cosiness": 3, "mischief": 4, "snacks": 3, "helpfulness": 3 }
 		},
 		{
@@ -346,7 +346,6 @@
 			"height": 408,
 			"perched": true,
 			"seasons": ["winter", "spring", "summer", "autumn"],
-			"lookAlike": "workout",
 			"album": 13,
 			"stats": { "cosiness": 1, "mischief": 2, "snacks": 4, "helpfulness": 3 }
 		},
@@ -480,20 +479,11 @@
 			"stats": { "cosiness": 2, "mischief": 1, "snacks": 1, "helpfulness": 4 }
 		},
 		{
-			"name": "basketball",
-			"height": 408,
-			"perched": true,
-			"seasons": ["winter", "spring", "summer", "autumn"],
-			"lookAlike": "workout",
-			"album": 55,
-			"stats": { "cosiness": 2, "mischief": 3, "snacks": 3, "helpfulness": 3 }
-		},
-		{
 			"name": "paintball",
 			"height": 408,
 			"perched": true,
 			"seasons": ["spring", "summer", "autumn"],
-			"album": 56,
+			"album": 55,
 			"stats": { "cosiness": 1, "mischief": 5, "snacks": 3, "helpfulness": 1 }
 		},
 		{
@@ -501,7 +491,7 @@
 			"height": 408,
 			"perched": true,
 			"seasons": ["spring", "summer", "autumn"],
-			"album": 57,
+			"album": 56,
 			"stats": { "cosiness": 3, "mischief": 2, "snacks": 3, "helpfulness": 3 }
 		},
 		{
@@ -510,7 +500,7 @@
 			"perched": true,
 			"seasons": ["winter", "spring", "summer", "autumn"],
 			"lookAlike": "cuddling",
-			"album": 58,
+			"album": 57,
 			"stats": { "cosiness": 5, "mischief": 1, "snacks": 2, "helpfulness": 5 }
 		},
 		{
@@ -518,7 +508,7 @@
 			"height": 408,
 			"perched": true,
 			"seasons": ["winter", "spring", "summer", "autumn"],
-			"album": 59,
+			"album": 58,
 			"stats": { "cosiness": 4, "mischief": 3, "snacks": 1, "helpfulness": 1 }
 		},
 		{
@@ -526,7 +516,7 @@
 			"height": 408,
 			"perched": true,
 			"seasons": ["winter", "spring", "summer", "autumn"],
-			"album": 60,
+			"album": 59,
 			"stats": { "cosiness": 3, "mischief": 2, "snacks": 2, "helpfulness": 2 }
 		},
 		{
@@ -534,7 +524,7 @@
 			"height": 408,
 			"perched": true,
 			"seasons": ["winter", "spring", "summer", "autumn"],
-			"album": 61,
+			"album": 60,
 			"stats": { "cosiness": 4, "mischief": 2, "snacks": 5, "helpfulness": 1 }
 		},
 		{
@@ -542,7 +532,7 @@
 			"height": 408,
 			"perched": true,
 			"seasons": ["winter", "spring", "summer", "autumn"],
-			"album": 63,
+			"album": 62,
 			"stats": { "cosiness": 2, "mischief": 1, "snacks": 3, "helpfulness": 5 }
 		},
 		{
@@ -550,7 +540,7 @@
 			"height": 408,
 			"perched": true,
 			"seasons": ["winter", "spring", "summer", "autumn"],
-			"album": 64,
+			"album": 63,
 			"stats": { "cosiness": 2, "mischief": 4, "snacks": 3, "helpfulness": 2 }
 		},
 		{
@@ -558,24 +548,15 @@
 			"height": 408,
 			"perched": true,
 			"seasons": ["winter", "spring", "summer", "autumn"],
-			"album": 65,
+			"album": 64,
 			"stats": { "cosiness": 5, "mischief": 1, "snacks": 1, "helpfulness": 2 }
-		},
-		{
-			"name": "make-up",
-			"height": 408,
-			"perched": true,
-			"seasons": ["winter", "spring", "summer", "autumn"],
-			"lookAlike": "face-care",
-			"album": 66,
-			"stats": { "cosiness": 3, "mischief": 2, "snacks": 2, "helpfulness": 1 }
 		},
 		{
 			"name": "candle",
 			"height": 408,
 			"perched": true,
 			"seasons": ["autumn", "winter"],
-			"album": 67,
+			"album": 65,
 			"stats": { "cosiness": 5, "mischief": 1, "snacks": 2, "helpfulness": 2 }
 		},
 		{
@@ -583,7 +564,7 @@
 			"height": 408,
 			"perched": true,
 			"seasons": ["winter", "spring", "summer", "autumn"],
-			"album": 68,
+			"album": 66,
 			"stats": { "cosiness": 5, "mischief": 3, "snacks": 3, "helpfulness": 1 }
 		},
 		{
@@ -591,7 +572,7 @@
 			"height": 408,
 			"perched": true,
 			"seasons": ["summer"],
-			"album": 69,
+			"album": 67,
 			"stats": { "cosiness": 2, "mischief": 3, "snacks": 3, "helpfulness": 2 }
 		},
 		{
@@ -599,8 +580,7 @@
 			"height": 408,
 			"perched": true,
 			"seasons": ["winter", "spring", "summer", "autumn"],
-			"lookAlike": "face-care",
-			"album": 70,
+			"album": 68,
 			"stats": { "cosiness": 5, "mischief": 1, "snacks": 1, "helpfulness": 1 }
 		},
 		{
@@ -609,7 +589,7 @@
 			"perched": true,
 			"seasons": ["winter", "spring", "summer", "autumn"],
 			"lookAlike": "cuddling",
-			"album": 71,
+			"album": 69,
 			"stats": { "cosiness": 5, "mischief": 3, "snacks": 2, "helpfulness": 3 }
 		},
 		{
@@ -618,7 +598,7 @@
 			"perched": true,
 			"seasons": ["winter", "spring", "summer", "autumn"],
 			"slots": ["evening"],
-			"album": 72,
+			"album": 70,
 			"stats": { "cosiness": 5, "mischief": 2, "snacks": 4, "helpfulness": 1 }
 		},
 		{

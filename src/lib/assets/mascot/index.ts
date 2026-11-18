@@ -60,7 +60,6 @@ import mushrooms from './mushrooms.avif';
 import friday from './friday.avif';
 import snooze from './snooze.avif';
 import socks from './socks.avif';
-import basketball from './basketball.avif';
 import paintball from './paintball.avif';
 import travel from './travel.avif';
 import babysitting from './babysitting.avif';
@@ -70,7 +69,6 @@ import feast from './feast.avif';
 import handyman from './handyman.avif';
 import secretAgent from './secret-agent.avif';
 import meditating from './meditating.avif';
-import makeUp from './make-up.avif';
 import candle from './candle.avif';
 import redPanda from './red-panda.avif';
 import safari from './safari.avif';
@@ -146,7 +144,6 @@ export const MASCOTS = {
 	friday: { src: friday, width: 517, height: 408, body: 0.43 },
 	snooze: { src: snooze, width: 315, height: 408, body: 0.52 },
 	socks: { src: socks, width: 383, height: 408, body: 0.47 },
-	basketball: { src: basketball, width: 348, height: 408, body: 0.45 },
 	paintball: { src: paintball, width: 324, height: 408, body: 0.39 },
 	travel: { src: travel, width: 323, height: 408, body: 0.46 },
 	babysitting: { src: babysitting, width: 319, height: 408, body: 0.52 },
@@ -156,7 +153,6 @@ export const MASCOTS = {
 	handyman: { src: handyman, width: 348, height: 408, body: 0.42 },
 	'secret-agent': { src: secretAgent, width: 326, height: 408, body: 0.44 },
 	meditating: { src: meditating, width: 405, height: 408, body: 0.48 },
-	'make-up': { src: makeUp, width: 365, height: 408, body: 0.47 },
 	candle: { src: candle, width: 318, height: 408, body: 0.46 },
 	'red-panda': { src: redPanda, width: 337, height: 408, body: 0.5 },
 	safari: { src: safari, width: 322, height: 408, body: 0.44 },

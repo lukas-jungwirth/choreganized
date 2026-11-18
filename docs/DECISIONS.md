@@ -3743,9 +3743,8 @@ units | null, name}`, written back as editor lines in the reader's unit spelling
        secret-agent, meditating, make-up, red-panda, face-mask, puppies; **spring–autumn**:
        paintball, travel; **summer**: safari; **autumn–winter**: candle; **all year, evenings
        only**: wine (never at breakfast, ★★ like coffee).
-     - **Look-alikes**, never on the same day: basketball with the dumbbell raccoon (`sports`,
-       headband and a raised fist, new group `workout`), babysitting with puppies (`cuddling`),
-       make-up with face-mask (`face-care`, a brush to the cheek).
+     - **Look-alikes**, never on the same day: babysitting with puppies (`cuddling`); basketball
+       with sports and make-up with face-mask had groups too, until #262 took the two out.
      - **The wizard** (glasses, wand, scarf) is a surprise visitor like the thief and the
        unicorn, 1% of a member's slots, ★★★, not an everyday pose (Lukas).
      - **Direction**: Lukas had every drop mirrored except wine and the thief. Four (basketball,
@@ -3788,3 +3787,13 @@ units | null, name}`, written back as editor lines in the reader's unit spelling
      - **Album No. 073, ★★**, the same window as the sleeping raccoon (nights, 25%): being woken
        takes a poke, but not more time. Its art touched the top edge by a few pixels (the right
        ear's tip); padded rather than refused, as it is under half a pixel at 136 px.
+262. **Basketball and make-up taken out again; Lukas's second text review** (Lukas 2026-11-18;
+     → #258). Lukas didn't like the two, so their art, cards and copy are gone, and the album
+     closes up behind them: No. 055–071 now (paintball 055 … woken 071). Renumbering is fine
+     because nothing past 052 has been released yet (#241). Their look-alike partners lose the
+     group (sports, face-mask), a group of one meaning nothing. Sightings of either stay in the
+     table and simply no longer count (`inAlbum`).
+     - **Texts**: Lukas's edits applied as written, three slips fixed (travel's question mark,
+       feast's „All you can eat“, safari's comma); five new facts written from his notes
+       (paintball, wizard, meditating, candle, wine) and sent back to him for review in the
+       editor, with the three fixed ones. English follows the German.

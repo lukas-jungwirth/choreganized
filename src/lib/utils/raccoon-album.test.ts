@@ -346,23 +346,35 @@ describe('homeSlot', () => {
 });
 
 describe('the reviewed album (Lukas 2026-11-07)', () => {
-	it('has 73 raccoons numbered 1 to 73, without the handball one', () => {
+	it('has 71 raccoons numbered 1 to 71, without handball, basketball or make-up', () => {
 		// 52 reviewed, the surprise visitors 53 and 54 (→ DECISIONS #257), then the
 		// batch of 18 at the end, so no card already met changes its number (#258).
-		assert.equal(ALBUM_SIZE, 73);
+		assert.equal(ALBUM_SIZE, 71);
 		assert.deepEqual(
 			ALBUM_ENTRIES.map((entry) => entry.number).sort((a, b) => a - b),
-			Array.from({ length: 73 }, (_, i) => i + 1)
+			Array.from({ length: 71 }, (_, i) => i + 1)
 		);
-		assert.equal(albumEntry('basketball').number, 55);
-		assert.equal(albumEntry('wizard').number, 62);
-		assert.equal(albumEntry('wine').number, 72);
+		// Basketball and make-up taken out again before release, the rest closed up (#262).
+		assert.ok(!ALBUM_ENTRIES.some((entry) => ['basketball', 'make-up'].includes(entry.name)));
+		assert.equal(albumEntry('paintball').number, 55);
+		assert.equal(albumEntry('wizard').number, 61);
+		assert.equal(albumEntry('wine').number, 70);
 		// Poked awake at night (→ DECISIONS #261).
-		assert.equal(albumEntry('woken').number, 73);
+		assert.equal(albumEntry('woken').number, 71);
 		assert.equal(albumEntry('thief').number, 53);
 		assert.equal(albumEntry('unicorn').number, 54);
 		assert.ok(!ALBUM_ENTRIES.some((entry) => (entry.name as string) === 'handball'));
 		assert.equal(albumEntry('valentines').number, 36);
+	});
+
+	it('carries Lukas’s second review (2026-11-18, → DECISIONS #262)', () => {
+		assert.equal(de.raccoons.thief.name, 'Robin Hood');
+		assert.equal(de.raccoons.chess.fact, 'Schachmatt!');
+		assert.equal(en.raccoons['red-panda'].fact, 'Definitely not a raccoon.');
+		// No em dashes in the album's copy, in either language (→ DECISIONS #205).
+		for (const catalog of [de, en])
+			for (const [name, text] of Object.entries(catalog.raccoons))
+				assert.ok(!/—/.test(text.name + text.fact), name);
 	});
 
 	it('calls the snack scale Snacklaune, and gives the holidays situation names', () => {
