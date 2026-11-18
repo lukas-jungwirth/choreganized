@@ -20,7 +20,12 @@ import {
 	MIDNIGHT_CHANCE,
 	MIDNIGHT_RACCOON,
 	specialDay,
-	WELCOME_RACCOON
+	SURPRISE_CHANCE,
+	SLOT_HOURS,
+	SURPRISE_VISITORS,
+	surpriseVisitor,
+	WELCOME_RACCOON,
+	WOKEN_RACCOON
 } from './raccoon.ts';
 
 /** An ordinary afternoon with nothing on: the baseline every case varies. */
@@ -139,9 +144,17 @@ describe('homeRaccoon', () => {
 		assert.equal(homeRaccoon({ ...plain, hour: 23, nextChoreDue: '2036-06-19' }), 'sleeping');
 	});
 
-	it('sleeps from 22:00 until 05:00', () => {
-		assert.notEqual(homeRaccoon({ ...plain, hour: 21 }), 'sleeping');
-		assert.equal(homeRaccoon({ ...plain, hour: 22 }), 'sleeping');
+	it('splits the awake day into three slots of six hours (→ DECISIONS #260)', () => {
+		assert.deepEqual(
+			[SLOT_HOURS.morning, SLOT_HOURS.afternoon, SLOT_HOURS.evening, SLOT_HOURS.night],
+			[6, 6, 6, 6]
+		);
+	});
+
+	it('sleeps from 23:00 until 05:00', () => {
+		// 22:00 is still the evening's raccoon since #260: three slots of six hours.
+		assert.notEqual(homeRaccoon({ ...plain, hour: 22 }), 'sleeping');
+		assert.equal(homeRaccoon({ ...plain, hour: 22 }), homeRaccoon({ ...plain, hour: 17 }));
 		assert.equal(homeRaccoon({ ...plain, hour: 23 }), 'sleeping');
 		assert.equal(homeRaccoon({ ...plain, hour: 2 }), 'sleeping');
 		assert.equal(homeRaccoon({ ...plain, hour: 4 }), 'sleeping');
@@ -234,6 +247,85 @@ describe('the midnight raccoon', () => {
 	});
 });
 
+describe('the batch of 18 (→ DECISIONS #258)', () => {
+	const pose = (name: string) => EVERYDAY.find((each) => each.name === name);
+
+	it('never meets its look-alike on the same day', () => {
+		for (const [a, b] of [['babysitting', 'puppies']]) {
+			assert.ok(pose(a)?.lookAlike, a);
+			assert.equal(pose(a)?.lookAlike, pose(b)?.lookAlike, `${a} and ${b}`);
+		}
+	});
+
+	it('pours the wine only in the evening, and keeps the candle to the dark half of the year', () => {
+		assert.deepEqual(pose('wine')?.slots, ['evening']);
+		assert.deepEqual([...pose('candle')!.seasons].sort(), ['autumn', 'winter']);
+		assert.deepEqual(pose('safari')?.seasons, ['summer']);
+	});
+
+	it('makes the wizard a surprise visitor, not an everyday pose', () => {
+		assert.ok((SURPRISE_VISITORS as readonly string[]).includes('wizard'));
+		assert.equal(pose('wizard'), undefined);
+	});
+});
+
+describe('the surprise visitors', () => {
+	const days = Array.from({ length: 366 }, (_, day) => addDays('2036-01-01', day)).filter(
+		(today) => !specialDay(today)
+	);
+	const members = Array.from({ length: 40 }, (_, index) => `member-${index}`);
+	/** Every awake slot of the year for one member: [day, hour] at each slot's start. */
+	const slots = days.flatMap((today) => [5, 11, 17].map((hour) => [today, hour] as const));
+	const seen = (seed: string) =>
+		slots.map(([today, hour]) => homeRaccoon({ ...plain, today, hour, seed }));
+	/** A slot where the thief turned up, for the tests of what beats what. */
+	const [day, hour] = slots.find(([today, hour]) => surpriseVisitor(today, hour, 'member-0'))!;
+	const visit = { ...plain, today: day, hour, seed: 'member-0' };
+	const visitor = surpriseVisitor(day, hour, 'member-0')!;
+
+	it('each turns up on about 1% of a member’s slots, all year round', () => {
+		for (const name of SURPRISE_VISITORS) {
+			const shares = members.map(
+				(seed) => seen(seed).filter((raccoon) => raccoon === name).length / slots.length
+			);
+			const mean = shares.reduce((sum, share) => sum + share, 0) / shares.length;
+			assert.ok(Math.abs(mean - SURPRISE_CHANCE) < 0.002, `${name}: ${mean.toFixed(4)}`);
+			const months = new Set(
+				members.flatMap((seed) =>
+					slots
+						.filter(([today, hour]) => surpriseVisitor(today, hour, seed) === name)
+						.map(([today]) => today.slice(5, 7))
+				)
+			);
+			assert.equal(months.size, 12, `${name} met in ${[...months].join(', ')}`);
+		}
+	});
+
+	it('holds still for the whole slot and is each member’s own luck', () => {
+		const last = hour + 5;
+		for (let each = hour; each <= last; each++)
+			assert.equal(homeRaccoon({ ...visit, hour: each }), visitor, `${each}:00`);
+		assert.notDeepEqual(seen('member-0'), seen('member-1'));
+	});
+
+	it('only ever takes the everyday raccoon’s place', () => {
+		assert.equal(homeRaccoon(visit), visitor);
+		assert.equal(homeRaccoon({ ...visit, nextChoreDue: day }), 'reminder-upcoming');
+		assert.equal(homeRaccoon({ ...visit, birthday: day.slice(5) }), 'birthday');
+		assert.equal(homeRaccoon({ ...visit, firstVisit: true }), WELCOME_RACCOON);
+		for (const seed of members)
+			for (const each of [5, 11, 17])
+				assert.equal(homeRaccoon({ ...plain, today: '2036-12-24', hour: each, seed }), 'christmas');
+	});
+
+	it('is a Home raccoon, so the admin picker and the album know it', () => {
+		for (const name of SURPRISE_VISITORS) assert.ok(isHomeRaccoon(name), name);
+		assert.ok(
+			!EVERYDAY.some((pose) => (SURPRISE_VISITORS as readonly string[]).includes(pose.name))
+		);
+	});
+});
+
 /**
  * What mascots.json says a season's poses are — what the draw may show, no more,
  * no less — or only those allowed in one slot (coffee is never an evening's).
@@ -285,8 +377,8 @@ describe('everydayRaccoon', () => {
 
 	it('meets every pose of a season within it, for anyone looking in every slot', () => {
 		// No hard guarantee by design (→ DECISIONS #232), but three a day for a
-		// season must be plenty: one left over is the luck the draw is meant to
-		// have, more than that is a broken draw.
+		// season must be plenty: one or two left over is the luck the draw is meant
+		// to have (two since the pools grew to ~45, #258), more is a broken draw.
 		// A pose with a time rule is rarer on purpose (one slot of three, or some
 		// days), so it is held to a year instead, in the next test.
 		const ruled = new Set<string>(
@@ -296,7 +388,7 @@ describe('everydayRaccoon', () => {
 			for (const seed of MEMBERS) {
 				const met = metIn(season, seed);
 				const missed = listedFor(season).filter((name) => !ruled.has(name) && !met.includes(name));
-				assert.ok(missed.length <= 1, `${season}, ${seed} missed ${missed.join(', ')}`);
+				assert.ok(missed.length <= 2, `${season}, ${seed} missed ${missed.join(', ')}`);
 			}
 		}
 	});
@@ -315,7 +407,12 @@ describe('everydayRaccoon', () => {
 				mean > expected - 0.03,
 				`${season}: an evening-only visitor meets ${mean.toFixed(2)}, expected ${expected.toFixed(2)}`
 			);
-			assert.ok(Math.min(...shares) > 0.75, `${season}: worst ${Math.min(...shares).toFixed(2)}`);
+			// The unluckiest of them, by the same measure: within 0.2 of the mean
+			// (it was 0.74 at ~45 poses a season, → DECISIONS #258).
+			assert.ok(
+				Math.min(...shares) > expected - 0.2,
+				`${season}: worst ${Math.min(...shares).toFixed(2)}, expected over ${(expected - 0.2).toFixed(2)}`
+			);
 		}
 	});
 
@@ -431,8 +528,9 @@ describe('HOME_RACCOONS', () => {
 		}
 		const missing = [...seen].filter((name) => !HOME_RACCOONS.includes(name));
 		assert.deepEqual(missing, []);
-		// And nothing extra: every listed raccoon really turns up on some day.
-		assert.deepEqual([...HOME_RACCOONS].sort(), [...seen].sort());
+		// And nothing extra: every listed raccoon really turns up on some day, the
+		// woken one by a poke on the sleeping one rather than the clock (#261).
+		assert.deepEqual([...HOME_RACCOONS].sort(), [...seen, WOKEN_RACCOON].sort());
 	});
 
 	it('leaves out the section raccoons, so the picker and ?raccoon= never offer them', () => {

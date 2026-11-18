@@ -46,7 +46,12 @@ describe('tier', () => {
 			'coffee',
 			'snooze',
 			'friday',
-			'sleeping'
+			'sleeping',
+			'woken',
+			// The batch of 18 (→ DECISIONS #258): one season, two, or evenings only.
+			'safari',
+			'candle',
+			'wine'
 		] as const)
 			assert.equal(albumEntry(name).tier, 2, name);
 	});
@@ -60,7 +65,10 @@ describe('tier', () => {
 			'halloween',
 			'valentines',
 			'birthday',
-			'midnight'
+			'midnight',
+			'thief',
+			'unicorn',
+			'wizard'
 		] as const)
 			assert.equal(albumEntry(name).tier, 3, name);
 	});
@@ -68,16 +76,20 @@ describe('tier', () => {
 	it('works out the share from the months, the weekdays and the hours', () => {
 		const close = (actual: number, expected: number) =>
 			assert.ok(Math.abs(actual - expected) < 1e-9, `${actual} ≠ ${expected}`);
-		// Awake 17 hours a day: 05:00 to 22:00.
-		close(albumEntry('reading').availability, 17 / 24);
-		close(albumEntry('snowman').availability, (1 / 4) * (17 / 24));
-		close(albumEntry('laptop').availability, (5 / 7) * (17 / 24));
+		// Awake 18 hours a day: 05:00 to 23:00 (→ DECISIONS #260).
+		close(albumEntry('reading').availability, 18 / 24);
+		close(albumEntry('snowman').availability, (1 / 4) * (18 / 24));
+		close(albumEntry('laptop').availability, (5 / 7) * (18 / 24));
 		close(albumEntry('coffee').availability, 6 / 24);
-		close(albumEntry('sleeping').availability, 7 / 24);
+		close(albumEntry('sleeping').availability, 6 / 24);
 		// Two hours, on one night in three.
 		close(albumEntry('midnight').availability, (2 / 24) * (1 / 3));
+		// Any awake hour, on 1% of the slots.
+		close(albumEntry('thief').availability, (18 / 24) * 0.01);
+		assert.deepEqual(albumEntry('unicorn').window, { kind: 'surprise' });
+		assert.deepEqual(albumEntry('unicorn').frame, { kind: 'holo' });
 		// A weight is odds, not time: Friday is one day in seven whatever its odds.
-		close(albumEntry('friday').availability, (1 / 7) * (17 / 24));
+		close(albumEntry('friday').availability, (1 / 7) * (18 / 24));
 		close(albumEntry('christmas').availability, 2 / 365);
 		close(albumEntry('reminder-overdue').availability, 1);
 	});
@@ -98,6 +110,7 @@ describe('rule', () => {
 			slots: null
 		});
 		assert.deepEqual(albumEntry('sleeping').rule, { days: null, slots: ['night'] });
+		assert.deepEqual(albumEntry('woken').rule, { days: null, slots: ['night'] });
 		assert.deepEqual(albumEntry('midnight').rule, { days: null, slots: ['midnight'] });
 		assert.deepEqual(albumEntry('friday').rule, { days: ['fri'], slots: null });
 		assert.equal(albumEntry('reading').rule, null);
@@ -326,21 +339,43 @@ describe('homeSlot', () => {
 	});
 
 	it('makes one slot of a night, dated by its evening', () => {
-		assert.equal(homeSlot('2036-06-18', 22), '2036-06-18#n');
+		assert.equal(homeSlot('2036-06-18', 23), '2036-06-18#n');
 		assert.equal(homeSlot('2036-06-19', 2), '2036-06-18#n');
 		assert.equal(homeSlot('2037-01-01', 4), '2036-12-31#n');
 	});
 });
 
 describe('the reviewed album (Lukas 2026-11-07)', () => {
-	it('has 52 raccoons numbered 1 to 52, without the handball one', () => {
-		assert.equal(ALBUM_SIZE, 52);
+	it('has 71 raccoons numbered 1 to 71, without handball, basketball or make-up', () => {
+		// 52 reviewed, the surprise visitors 53 and 54 (→ DECISIONS #257), then the
+		// batch of 18 at the end, so no card already met changes its number (#258).
+		assert.equal(ALBUM_SIZE, 71);
 		assert.deepEqual(
 			ALBUM_ENTRIES.map((entry) => entry.number).sort((a, b) => a - b),
-			Array.from({ length: 52 }, (_, i) => i + 1)
+			Array.from({ length: 71 }, (_, i) => i + 1)
 		);
+		// Basketball and make-up taken out again before release, the rest closed up (#262).
+		assert.ok(!ALBUM_ENTRIES.some((entry) => ['basketball', 'make-up'].includes(entry.name)));
+		assert.equal(albumEntry('paintball').number, 55);
+		assert.equal(albumEntry('wizard').number, 61);
+		assert.equal(albumEntry('wine').number, 70);
+		// Poked awake at night (→ DECISIONS #261).
+		assert.equal(albumEntry('woken').number, 71);
+		assert.equal(albumEntry('thief').number, 53);
+		assert.equal(albumEntry('unicorn').number, 54);
 		assert.ok(!ALBUM_ENTRIES.some((entry) => (entry.name as string) === 'handball'));
 		assert.equal(albumEntry('valentines').number, 36);
+	});
+
+	it('carries Lukas’s second review (2026-11-18, → DECISIONS #262)', () => {
+		assert.equal(de.raccoons.thief.name, 'Robin Hood');
+		assert.equal(de.raccoons.chess.fact, 'Schachmatt!');
+		assert.equal(de.raccoons.wine.fact, 'Ein Achterl ist immer noch gegangen.');
+		assert.equal(en.raccoons['red-panda'].fact, 'Definitely not a raccoon.');
+		// No em dashes in the album's copy, in either language (→ DECISIONS #205).
+		for (const catalog of [de, en])
+			for (const [name, text] of Object.entries(catalog.raccoons))
+				assert.ok(!/—/.test(text.name + text.fact), name);
 	});
 
 	it('calls the snack scale Snacklaune, and gives the holidays situation names', () => {

@@ -57,8 +57,12 @@ checks that simulated members meet every pose of every season. The app icons are
 | `fasching.png`            | Home, Faschingsdienstag (47 days before Easter)                |
 | `halloween.png`           | Home, 31 October                                               |
 | `valentines.png`          | Home, 14 February                                              |
-| `sleeping.png`            | Home, 22:00–05:00 on an ordinary day without a chore on you    |
+| `sleeping.png`            | Home, 23:00–05:00 on an ordinary day without a chore on you    |
+| `woken.png`               | Home, the sleeping raccoon poked awake (three pokes), briefly  |
 | `midnight.png`            | Home, 00:00–02:00, one night in three, each member's own       |
+| `thief.png`               | Home, surprise visitor: 1% of a member's slots, all year       |
+| `unicorn.png`             | Home, surprise visitor: 1% of a member's slots, all year       |
+| `wizard.png`              | Home, surprise visitor: 1% of a member's slots, all year       |
 | `beach.png`               | Home, everyday, summer                                         |
 | `garden.png`              | Home, everyday, spring, summer (in a sun hat)                  |
 | `fishing.png`             | Home, everyday, spring, summer, autumn                         |
@@ -93,6 +97,21 @@ checks that simulated members meet every pose of every season. The app icons are
 | `friday.png`              | Home, everyday, all year, Fridays only, 3× odds                |
 | `snooze.png`              | Home, everyday, all year, mornings only                        |
 | `socks.png`               | Home, everyday, all year                                       |
+| `paintball.png`           | Home, everyday, spring, summer, autumn                         |
+| `travel.png`              | Home, everyday, spring, summer, autumn                         |
+| `babysitting.png`         | Home, everyday, all year (never with puppies)                  |
+| `bubbles.png`             | Home, everyday, all year                                       |
+| `chess.png`               | Home, everyday, all year                                       |
+| `feast.png`               | Home, everyday, all year                                       |
+| `handyman.png`            | Home, everyday, all year                                       |
+| `secret-agent.png`        | Home, everyday, all year                                       |
+| `meditating.png`          | Home, everyday, all year                                       |
+| `candle.png`              | Home, everyday, autumn, winter                                 |
+| `red-panda.png`           | Home, everyday, all year                                       |
+| `safari.png`              | Home, everyday, summer                                         |
+| `face-mask.png`           | Home, everyday, all year                                       |
+| `puppies.png`             | Home, everyday, all year (never with babysitting)              |
+| `wine.png`                | Home, everyday, all year, evenings only                        |
 | `skates.png`              | Home, everyday, winter                                         |
 | `sweets.png`              | Home, everyday, all year                                       |
 | `trash.png`               | Home, everyday, all year                                       |

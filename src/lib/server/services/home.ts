@@ -16,7 +16,7 @@ import { and, asc, count, desc, eq, isNull, lte, sql } from 'drizzle-orm';
 import type { MascotName } from '$lib/assets/mascot';
 import { DEFAULT_LOCALE } from '$lib/i18n';
 import { addDays, formatTimeIn, hourIn, type CalendarDate } from '$lib/utils/dates';
-import { homeRaccoon, homeSlot } from '$lib/utils/raccoon';
+import { homeRaccoon, homeSlot, WOKEN_RACCOON } from '$lib/utils/raccoon';
 import { mealSlotOrder, type MealSlot } from '$lib/utils/meals';
 import type { RecurUnit } from '$lib/utils/tasks';
 import { db } from '../db';
@@ -30,7 +30,7 @@ import {
 	type Member
 } from '../db/schema';
 import type { HouseholdMember } from './household';
-import { isFirstVisit } from './raccoons';
+import { isFirstVisit, recordSighting } from './raccoons';
 import {
 	assigneeNotAway,
 	isAway,
@@ -144,7 +144,7 @@ export type HomeContext = {
 export function getHomeSummary(householdId: string, context: HomeContext): HomeSummary {
 	const { member, timezone, today } = context;
 	// One reading of the clock for the greeting and the raccoon, so "Good
-	// evening" and the sleeping pose can't straddle 22:00 and disagree.
+	// evening" and the sleeping pose can't straddle 23:00 and disagree.
 	const hour = hourIn(timezone);
 	const inWindow = choresInWindow(householdId, member, today);
 	const nextChores = inWindow.slice(0, NEXT_CHORE_CARDS);
@@ -153,15 +153,7 @@ export function getHomeSummary(householdId: string, context: HomeContext): HomeS
 
 	return {
 		greeting: greetingFor(hour),
-		raccoon: homeRaccoon({
-			today,
-			hour,
-			birthday: member.birthday,
-			// The first card's: it holds still while you swipe through the rest.
-			nextChoreDue: nextChores[0]?.dueDate ?? null,
-			seed: member.id,
-			firstVisit: isFirstVisit(householdId, member.id, slot)
-		}),
+		raccoon: raccoonOnHome(householdId, member, today, hour, nextChores[0]?.dueDate ?? null),
 		slot,
 		nextChores,
 		moreChores: inWindow.length - nextChores.length,
@@ -172,6 +164,45 @@ export function getHomeSummary(householdId: string, context: HomeContext): HomeS
 		standings: monthStandings(householdId, member.id, today, timezone, context.members),
 		overdue: context.overdue.length > lateOnCards ? overdueSummary(context.overdue, member) : null
 	};
+}
+
+/** The raccoon on this member's Home at this hour (→ `utils/raccoon` `homeRaccoon`). */
+function raccoonOnHome(
+	householdId: string,
+	member: Member,
+	today: CalendarDate,
+	hour: number,
+	// The first card's: it holds still while you swipe through the rest.
+	nextChoreDue: CalendarDate | null
+): MascotName {
+	return homeRaccoon({
+		today,
+		hour,
+		birthday: member.birthday,
+		nextChoreDue,
+		seed: member.id,
+		firstVisit: isFirstVisit(householdId, member.id, homeSlot(today, hour))
+	});
+}
+
+/**
+ * Poking the sleeping raccoon awake (→ `RaccoonPoke`, DECISIONS #261) puts the
+ * woken raccoon in the member's album. Only when Home's raccoon really is the
+ * sleeping one right now, worked out here as Home's load does, so a stale tab
+ * or a hand-made request in daylight records nothing. The night is one slot,
+ * so however often it is woken, it counts once a night.
+ */
+export function wakeRaccoon(
+	householdId: string,
+	member: Member,
+	timezone: string,
+	today: CalendarDate
+): boolean {
+	const hour = hourIn(timezone);
+	const nextChoreDue = choresInWindow(householdId, member, today)[0]?.dueDate ?? null;
+	if (raccoonOnHome(householdId, member, today, hour, nextChoreDue) !== 'sleeping') return false;
+	recordSighting(householdId, member.id, WOKEN_RACCOON, today, homeSlot(today, hour));
+	return true;
 }
 
 function greetingFor(hour: number): TimeOfDay {

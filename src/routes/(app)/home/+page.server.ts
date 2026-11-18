@@ -4,7 +4,7 @@ import { requireMember } from '$lib/server/guards';
 import { homeBalance } from '$lib/server/services/expenses';
 import { getHousehold, listMembers } from '$lib/server/services/household';
 import { answerHolidayNotice, readHolidayAnswer } from '$lib/server/services/holidays';
-import { getHomeSummary } from '$lib/server/services/home';
+import { getHomeSummary, wakeRaccoon } from '$lib/server/services/home';
 import { albumSummary, recordSighting } from '$lib/server/services/raccoons';
 import {
 	completeTask,
@@ -171,6 +171,17 @@ export const actions: Actions = {
 				? answerHolidayNotice(householdId, member.id, answered.closureDate, answered.answer)
 				: false
 		};
+	},
+
+	/**
+	 * The sleeping raccoon poked awake (→ `RaccoonPoke`, DECISIONS #261): the
+	 * woken raccoon goes in the album, once a night, if the raccoon on Home
+	 * really is asleep. The pose itself is the browser's few seconds of fun.
+	 */
+	woke: async (event) => {
+		const { householdId, member } = requireMember(event);
+		const { today, timezone } = clockOf(event, householdId);
+		return { woke: wakeRaccoon(householdId, member, timezone, today) };
 	},
 
 	/** The holiday pause the snooze sheet offers alongside — always your own. */

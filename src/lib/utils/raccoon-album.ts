@@ -10,10 +10,11 @@
  *   the year it can be on Home (→ `availability`, DECISIONS #237): its months,
  *   its days of the week and its hours of the day, multiplied. Common is 40% of
  *   the year or more, Legendary under 3%, Rare in between. So an all-year pose
- *   (17 awake hours a day) and the laptop (workdays) are Common; a pose of one
+ *   (18 awake hours a day) and the laptop (workdays) are Common; a pose of one
  *   or two seasons, coffee (mornings) and sleeping (nights) are Rare; a special
  *   day, your birthday and the midnight raccoon (two hours, one night in three)
- *   are Legendary. A pose's `weight` doesn't count: it makes a raccoon easier to
+ *   are Legendary, and so are the surprise visitors (any slot, on 1% of
+ *   them). A pose's `weight` doesn't count: it makes a raccoon easier to
  *   meet when it is around, not around for longer.
  * - **Window**, the card's chip: when you can meet it, the season or the days
  *   of the year, and its **rule**, if it keeps to some weekdays or hours.
@@ -29,7 +30,10 @@ import {
 	SEASON_OF_MONTH,
 	SLOT_HOURS,
 	SPECIAL_DAYS,
-	WEEKDAYS
+	SURPRISE_CHANCE,
+	SURPRISE_VISITORS,
+	WEEKDAYS,
+	WOKEN_RACCOON
 } from './raccoon.ts';
 
 /** ★ Common, ★★ Rare, ★★★ Legendary. */
@@ -56,7 +60,8 @@ export type Window =
 	| { kind: 'days'; from: string; to: string }
 	| { kind: 'easter' }
 	| { kind: 'fasching' }
-	| { kind: 'birthday' };
+	| { kind: 'birthday' }
+	| { kind: 'surprise' };
 
 /**
  * When in the week and the day it keeps to, on top of its window: some
@@ -169,8 +174,21 @@ function describe({ name, number, stats }: (typeof ALBUM)[number]): AlbumEntry {
 
 	const allYear = { window: { kind: 'all-year' } as Window, frame: { kind: 'any' } as Frame };
 
-	// Asleep every night, 22:00 to 05:00, all year.
-	if (name === 'sleeping') {
+	// Any awake slot of the year, on the luck of the draw (→ DECISIONS #257).
+	if ((SURPRISE_VISITORS as readonly string[]).includes(name)) {
+		const availability = (hoursOf(null) / 24) * SURPRISE_CHANCE;
+		return {
+			...entry,
+			availability,
+			tier: tierOf(availability),
+			window: { kind: 'surprise' },
+			frame: { kind: 'holo' }
+		};
+	}
+
+	// Asleep every night, 23:00 to 05:00, all year; woken up by a poke in the
+	// same hours (→ DECISIONS #261).
+	if (name === 'sleeping' || name === WOKEN_RACCOON) {
 		const rule: Rule = { days: null, slots: ['night'] };
 		const availability = SLOT_HOURS.night / 24;
 		return { ...entry, ...allYear, rule, availability, tier: tierOf(availability) };

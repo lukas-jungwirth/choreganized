@@ -78,7 +78,27 @@ export const EVERYDAY: ReadonlyArray<{
 		lookAlike: null,
 		slots: ['morning']
 	},
-	{ name: 'socks', seasons: ['winter', 'spring', 'summer', 'autumn'], lookAlike: null }
+	{ name: 'socks', seasons: ['winter', 'spring', 'summer', 'autumn'], lookAlike: null },
+	{ name: 'paintball', seasons: ['spring', 'summer', 'autumn'], lookAlike: null },
+	{ name: 'travel', seasons: ['spring', 'summer', 'autumn'], lookAlike: null },
+	{ name: 'babysitting', seasons: ['winter', 'spring', 'summer', 'autumn'], lookAlike: 'cuddling' },
+	{ name: 'bubbles', seasons: ['winter', 'spring', 'summer', 'autumn'], lookAlike: null },
+	{ name: 'chess', seasons: ['winter', 'spring', 'summer', 'autumn'], lookAlike: null },
+	{ name: 'feast', seasons: ['winter', 'spring', 'summer', 'autumn'], lookAlike: null },
+	{ name: 'handyman', seasons: ['winter', 'spring', 'summer', 'autumn'], lookAlike: null },
+	{ name: 'secret-agent', seasons: ['winter', 'spring', 'summer', 'autumn'], lookAlike: null },
+	{ name: 'meditating', seasons: ['winter', 'spring', 'summer', 'autumn'], lookAlike: null },
+	{ name: 'candle', seasons: ['autumn', 'winter'], lookAlike: null },
+	{ name: 'red-panda', seasons: ['winter', 'spring', 'summer', 'autumn'], lookAlike: null },
+	{ name: 'safari', seasons: ['summer'], lookAlike: null },
+	{ name: 'face-mask', seasons: ['winter', 'spring', 'summer', 'autumn'], lookAlike: null },
+	{ name: 'puppies', seasons: ['winter', 'spring', 'summer', 'autumn'], lookAlike: 'cuddling' },
+	{
+		name: 'wine',
+		seasons: ['winter', 'spring', 'summer', 'autumn'],
+		lookAlike: null,
+		slots: ['evening']
+	}
 ];
 
 /** The raccoons that sit on a card's top edge, so must be cut flat at the waist. */
@@ -93,7 +113,11 @@ export const PERCHED: readonly MascotName[] = [
 	'halloween',
 	'valentines',
 	'sleeping',
+	'woken',
 	'midnight',
+	'thief',
+	'unicorn',
+	'wizard',
 	'welcome-a',
 	'beach',
 	'flower',
@@ -135,6 +159,21 @@ export const PERCHED: readonly MascotName[] = [
 	'friday',
 	'snooze',
 	'socks',
+	'paintball',
+	'travel',
+	'babysitting',
+	'bubbles',
+	'chess',
+	'feast',
+	'handyman',
+	'secret-agent',
+	'meditating',
+	'candle',
+	'red-panda',
+	'safari',
+	'face-mask',
+	'puppies',
+	'wine',
 	'settings',
 	'move-out'
 ];

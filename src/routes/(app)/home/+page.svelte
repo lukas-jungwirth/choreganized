@@ -11,9 +11,10 @@
 	(→ DECISIONS #213, #216, #219). The server picks it (`utils/raccoon`): your
 	birthday, then a special day, then the reminder pose for the first chore on
 	you (a bell on the day it's due, an alarm clock once it's late), then asleep after
-	22:00, and otherwise an everyday pose that fits the month, a new one each
+	23:00, and otherwise an everyday pose that fits the month, a new one each
 	morning, afternoon and evening. Poke it six times and it ducks away for a
-	few seconds (→ `RaccoonPoke`, DECISIONS #223). In admin mode a tap opens
+	few seconds (→ `RaccoonPoke`, DECISIONS #223); poke the sleeping one three
+	times and it wakes up for a moment, which counts in the album (#261). In admin mode a tap opens
 	the raccoon picker instead (→ `RaccoonPicker`, plan 34). Meeting one puts it
 	in your raccoon album, and the album's card under the counts says so until
 	you go and look (→ `AlbumCard`, DECISIONS #244).
@@ -41,6 +42,7 @@
 	import { messages } from '$lib/i18n';
 	import type { NextChore } from '$lib/server/services/home';
 	import type { CompletionResult, Standing } from '$lib/server/services/tasks';
+	import { enhance } from '$app/forms';
 	import type { SubmitFunction } from '@sveltejs/kit';
 	import Bell from '@lucide/svelte/icons/bell';
 	import ChevronRight from '@lucide/svelte/icons/chevron-right';
@@ -76,6 +78,17 @@
 	async function openPicker() {
 		Picker = (await import('$lib/components/home/RaccoonPicker.svelte')).default;
 	}
+
+	/**
+	 * Poking the sleeping raccoon awake puts the woken one in the album (→
+	 * DECISIONS #261): a form, so the server decides whether it counts, and the
+	 * reload after it brings the album card's "New raccoon!" with it.
+	 */
+	let wakeForm = $state<HTMLFormElement>();
+	const woke: SubmitFunction =
+		() =>
+		async ({ update }) =>
+			update({ reset: false });
 
 	/** Ticked but not yet confirmed — that card goes quiet before the server agrees. */
 	let pendingId = $state<string | null>(null);
@@ -128,7 +141,10 @@
 		height={RACCOON_HEIGHT}
 		class="raccoon"
 		onpick={data.adminMode ? openPicker : undefined}
+		wakesAs={data.raccoon === 'sleeping' ? 'woken' : undefined}
+		onwake={() => wakeForm?.requestSubmit()}
 	/>
+	<form bind:this={wakeForm} method="POST" action="?/woke" use:enhance={woke} hidden></form>
 </header>
 
 {#if Picker}

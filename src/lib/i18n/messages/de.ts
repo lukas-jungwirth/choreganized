@@ -2021,7 +2021,8 @@ export const de: Messages = {
 			allYear: 'Ganzjährig',
 			easter: 'Ostern',
 			fasching: 'Faschingsdienstag',
-			birthday: 'Dein Geburtstag'
+			birthday: 'Dein Geburtstag',
+			surprise: 'Überraschungsbesuch'
 		},
 		/** „Mo – Fr“, „Am Wochenende“, „Freitags“, „Morgens“, „Mo – Fr, morgens“. */
 		rule: (
@@ -2236,6 +2237,82 @@ export const de: Messages = {
 		midnight: {
 			name: 'Mitternachtssnack',
 			fact: 'Du hast nichts gesehen!'
+		},
+		woken: {
+			name: 'Aufgeweckt',
+			fact: 'Hat gerade so schön geträumt. Danke für nichts.'
+		},
+		thief: {
+			name: 'Robin Hood',
+			fact: 'Bestiehlt nicht nur die Reichen.'
+		},
+		unicorn: {
+			name: 'Einhorn',
+			fact: 'Taucht auf, wenn du am wenigsten damit rechnest.'
+		},
+		paintball: {
+			name: 'Paintball',
+			fact: 'Sieht seinen Körper als Leinwand.'
+		},
+		travel: {
+			name: 'Entdeckerin',
+			fact: 'Warum Google Maps verwenden, wenn man sich auch verlaufen kann?'
+		},
+		babysitting: {
+			name: 'Babysitterin',
+			fact: 'Bringt jedes Baby zum Schlafen, nur sich selbst nicht.'
+		},
+		bubbles: {
+			name: 'Seifenblasen-Profi',
+			fact: 'Man ist nie zu alt für Seifenblasen.'
+		},
+		chess: {
+			name: 'Großmeister',
+			fact: 'Schachmatt!'
+		},
+		feast: {
+			name: 'Vielfraß',
+			fact: 'Nimmt „All you can eat“ immer wörtlich.'
+		},
+		wizard: {
+			name: 'Kleiner Zauberer',
+			fact: 'Stattet auch manchmal Muggeln einen Besuch ab.'
+		},
+		handyman: {
+			name: 'Heimwerker',
+			fact: 'Hat das Regal repariert. Drei Schrauben sind übrig geblieben.'
+		},
+		'secret-agent': {
+			name: 'Geheimagent',
+			fact: 'Ist auf geheimer Mission. Die Mission ist der Kühlschrank.'
+		},
+		meditating: {
+			name: 'Ruhepol',
+			fact: 'Andere nennen es faul. Er nennt es Achtsamkeit.'
+		},
+		candle: {
+			name: 'Kerzenschein',
+			fact: 'Wollte es für die Gäste gemütlich machen. Jetzt ist auch die Feuerwehr da.'
+		},
+		'red-panda': {
+			name: 'Roter Panda',
+			fact: 'Bestimmt kein Waschbär.'
+		},
+		safari: {
+			name: 'Safari',
+			fact: 'Hat im Garten schon drei Löwen gesichtet. Der Nachbar meint nur, sie soll seine Katzen in Ruhe lassen.'
+		},
+		'face-mask': {
+			name: 'Wellnesstag',
+			fact: 'Man gönnt sich ja sonst nichts.'
+		},
+		puppies: {
+			name: 'Welpensitter',
+			fact: 'Gibt die Welpen auch ganz bestimmt wieder zurück.'
+		},
+		wine: {
+			name: 'Sommelier',
+			fact: 'Ein Achterl ist immer noch gegangen.'
 		},
 		snooze: {
 			name: 'Schlummertaste',

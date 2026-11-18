@@ -2539,7 +2539,7 @@ export const en = {
 		subtitle: 'Every raccoon you’ve met on Home.',
 		back: 'Back to Settings',
 		backHome: 'Back to Home',
-		/** The Settings row's value: "17 of 52". */
+		/** The Settings row's value: "17 of 72". */
 		count: (found: number, total: number) => `${found} of ${total}`,
 		found: (found: number, total: number) => `${found} of ${total} found`,
 		/**
@@ -2578,7 +2578,8 @@ export const en = {
 			allYear: 'All year',
 			easter: 'Easter',
 			fasching: 'Shrove Tuesday',
-			birthday: 'Your birthday'
+			birthday: 'Your birthday',
+			surprise: 'Surprise visit'
 		},
 		/**
 		 * After the window, when a raccoon keeps to some days or hours: "Mon – Fri",
@@ -2798,6 +2799,82 @@ export const en = {
 		midnight: {
 			name: 'Midnight Snack',
 			fact: 'You didn’t see anything!'
+		},
+		woken: {
+			name: 'Rudely Awakened',
+			fact: 'Was having such a lovely dream. Thanks for nothing.'
+		},
+		thief: {
+			name: 'Robin Hood',
+			fact: 'Doesn’t only rob the rich.'
+		},
+		unicorn: {
+			name: 'Unicorn',
+			fact: 'Turns up when you least expect it.'
+		},
+		paintball: {
+			name: 'Paintball',
+			fact: 'Sees his body as a canvas.'
+		},
+		travel: {
+			name: 'Explorer',
+			fact: 'Why use Google Maps when you could just get lost?'
+		},
+		babysitting: {
+			name: 'Babysitter',
+			fact: 'Can get any baby to sleep. Just not itself.'
+		},
+		bubbles: {
+			name: 'Bubble Blower',
+			fact: 'You’re never too old for soap bubbles.'
+		},
+		chess: {
+			name: 'Grandmaster',
+			fact: 'Checkmate!'
+		},
+		feast: {
+			name: 'Bottomless Pit',
+			fact: 'Takes “all you can eat” literally, every time.'
+		},
+		wizard: {
+			name: 'Little Wizard',
+			fact: 'Pays the Muggles a visit now and then.'
+		},
+		handyman: {
+			name: 'Handyman',
+			fact: 'Fixed the shelf. Three screws left over.'
+		},
+		'secret-agent': {
+			name: 'Secret Agent',
+			fact: 'On a secret mission. The mission is the fridge.'
+		},
+		meditating: {
+			name: 'Inner Calm',
+			fact: 'Others call it lazy. He calls it mindfulness.'
+		},
+		candle: {
+			name: 'Candlelight',
+			fact: 'Wanted to make it cosy for the guests. Now the fire brigade is here too.'
+		},
+		'red-panda': {
+			name: 'Red Panda',
+			fact: 'Definitely not a raccoon.'
+		},
+		safari: {
+			name: 'Safari',
+			fact: 'Has spotted three lions in the garden. The neighbour just says to leave his cats alone.'
+		},
+		'face-mask': {
+			name: 'Spa Day',
+			fact: 'You have to treat yourself sometimes.'
+		},
+		puppies: {
+			name: 'Puppy Sitter',
+			fact: 'Will definitely give the puppies back. Definitely.'
+		},
+		wine: {
+			name: 'Sommelier',
+			fact: 'There’s always room for one more glass.'
 		},
 		snooze: {
 			name: 'Snooze Button',

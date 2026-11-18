@@ -3719,3 +3719,95 @@ units | null, name}`, written back as editor lines in the reader's unit spelling
        to null then, so the page has no rule of its own.
      - **The raccoon follows the first card**, not the one in view, so it doesn't change while
        you swipe.
+257. **Surprise visitors: the thief and the unicorn** (Lukas 2026-11-17; → SPEC §2,
+     `utils/raccoon.ts` `surpriseVisitor`, `utils/raccoon-album.ts`). Two raccoons that are rare by
+     luck, not by season: each takes 1% of a member's awake slots, any day of the year, in place
+     of the everyday pose. A once-a-day visitor meets each in about three months, someone who
+     looks in all three slots in about one.
+     - **A slot, not an hour**: a one-hour window would be missed for opening the app at the
+       wrong time, which reads as unfair rather than lucky. One seeded roll per member and slot,
+       each visitor owning its own 1% of it, so they never collide and the slot holds still.
+     - **Only the everyday pose gives way**: birthday, special days, the first visit, the midnight
+       raccoon, a chore on you and bedtime still win, so the card under the raccoon keeps
+       making sense.
+     - **★★★ by the same sum as the midnight raccoon** (#237, #243): 17/24 of the day × 1% = 0.7%,
+       under the 3% line. Holo frame like the special days; the chip reads "Surprise visit" /
+       "Überraschungsbesuch". Album numbers 53 and 54, so the album is 54 (#254's 52 + 2).
+     - **Art**: the unicorn was mirrored to look toward the greeting; the thief keeps his own
+       direction, his side-glance is the joke (Lukas). Thief cut 3.7% off the sack's bottom,
+       unicorn 0.4%. +35 KB of AVIF (18.0 + 18.0 KB).
+258. **A batch of 18 raccoons; the wizard is a third surprise visitor** (Lukas 2026-11-18; →
+     SPEC §2, `artwork/raccoon/mascots.json`, `utils/raccoon.ts`). Album No. 055–072, appended so
+     no card already met (the album shipped in v0.3.0) changes its number.
+     - **Everyday, all year**: basketball, babysitting, bubbles, chess, feast, handyman,
+       secret-agent, meditating, make-up, red-panda, face-mask, puppies; **spring–autumn**:
+       paintball, travel; **summer**: safari; **autumn–winter**: candle; **all year, evenings
+       only**: wine (never at breakfast, ★★ like coffee).
+     - **Look-alikes**, never on the same day: babysitting with puppies (`cuddling`); basketball
+       with sports and make-up with face-mask had groups too, until #262 took the two out.
+     - **The wizard** (glasses, wand, scarf) is a surprise visitor like the thief and the
+       unicorn, 1% of a member's slots, ★★★, not an everyday pose (Lukas).
+     - **Direction**: Lukas had every drop mirrored except wine and the thief. Four (basketball,
+       wizard, handyman, secret-agent) were then flipped back on a misreading of a small overview
+       sheet; #259 undoes that. Cuts: handyman 2.9%, puppies 2.1%, red-panda 0.8%, paintball 0.4%, the
+       rest already flat. +339 KB of AVIF.
+     - **The rotation tests' limits now follow the pool**: with ~45 poses a season, three a day
+       leaves one housemate in 800 two short of a full season, and the unluckiest evening-only
+       visitor meets 74%. The average still matches the sum exactly, so the limits widened
+       (≤ 2 missed; worst within 0.2 of the mean) rather than the draw changing.
+259. **Thirteen raccoons mirrored to face the greeting** (Lukas 2026-11-18; → #234). A check of
+     all 72, each face beside its mirror image at full size: tennis, singing, tea, fasching,
+     midnight, sports, knitting, skates and socks looked or turned right, off the card, at
+     nothing; basketball, wizard, handyman and secret-agent were #258's wrong flip-back. All
+     mirrored. Left as they are on purpose: seven that look right at their own prop on that side
+     (cards, chess, arcade, new-year, writing, camera, phone) and ten with only a slight glance
+     (christmas, valentines, birthday, halloween, garden, fishing, skiing, snow, lemonade,
+     coffee), Lukas's call for later; wine and the thief keep their direction (Lukas).
+     - **Judged by eye, not measured**: an iris-in-sclera measurement was tried and read too
+       noisily to trust (it scored closed eyes, and the pirate as looking left). What guards it
+       is the admin picker's screenshot, which shows every Home raccoon.
+260. **Bedtime at 23:00: three awake slots of six hours** (Lukas 2026-11-18; → SPEC §2,
+     `utils/raccoon.ts` `BEDTIME`). The sleeping raccoon took over at 22:00, so the evening slot
+     had five hours against the morning's and afternoon's six, and a household still up at ten
+     met the sleeping raccoon instead of the evening's. Now 05–11, 11–17, 17–23 and the night
+     23–05 are six hours each. Every drawn pose gains the same hour (17 → 18 awake), so no tier
+     moves: three seasons 53% → 56% (★), one season 18% → 19% (★★), sleeping 29% → 25% (★★),
+     a surprise visitor 0.71% → 0.75% (★★★). The midnight raccoon (00:00–02:00) is unchanged.
+261. **Poking the sleeping raccoon wakes it, and the woken raccoon is in the album** (Lukas
+     2026-11-18; → SPEC §2, `RaccoonPoke`, `services/home` `wakeRaccoon`, `?/woke`). New art: the
+     same bed, blinking and grumpy. The sleeping raccoon doesn't get cross and duck away like the
+     others: the third poke wakes it for 3.5 s, then it dozes off again.
+     - **Counted once a night**: waking it records a sighting through the existing per-slot rule,
+       and the night (23:00–05:00) is one slot, so however often it is woken, one night is one
+       sighting. Counting every wake-up was the alternative; it would let one evening of poking
+       inflate "Seen n×", which elsewhere means separate visits.
+     - **The server checks it really is asleep**, worked out as Home's load does, so a stale tab
+       or a hand-made POST in daylight records nothing. A form action (hidden form, `use:enhance`)
+       rather than an endpoint, and its reload brings the album card's "New raccoon!".
+     - **Album No. 073, ★★**, the same window as the sleeping raccoon (nights, 25%): being woken
+       takes a poke, but not more time. Its art touched the top edge by a few pixels (the right
+       ear's tip); padded rather than refused, as it is under half a pixel at 136 px.
+262. **Basketball and make-up taken out again; Lukas's second text review** (Lukas 2026-11-18;
+     → #258). Lukas didn't like the two, so their art, cards and copy are gone, and the album
+     closes up behind them: No. 055–071 now (paintball 055 … woken 071). Renumbering is fine
+     because nothing past 052 has been released yet (#241). Their look-alike partners lose the
+     group (sports, face-mask), a group of one meaning nothing. Sightings of either stay in the
+     table and simply no longer count (`inAlbum`).
+     - **Texts**: Lukas's edits applied as written, three slips fixed (travel's question mark,
+       feast's „All you can eat“, safari's comma); five new facts written from his notes
+       (paintball, wizard, meditating, candle, wine) and sent back to him for review in the
+       editor, with the three fixed ones. English follows the German.
+     - **Final pass** (Lukas, same day): his own facts for paintball, wizard, puppies and
+       wine replaced the drafts; paintball got its full stop. Every card reviewed.
+
+263. **The alarm-track e2e test allows a slow first ring, and the cook-mode spec stops its own
+     timers** (2026-11-18; → #252). Three e2e tests failed together on some CI runs (PR #141,
+     #143) and passed on a rerun. One cause: the track's silence is measured once the ring has
+     rendered, not at the tap (deliberate, so the ring lands on the second), and the test
+     wanted exactly 180 s. A CI runner that takes over half a second for the first render gets 179. That failure skipped the test's Cancel, and the 2:00 timer stayed running in the
+     shared household: the next test's Stop left it on screen, the retry found no "Start 2:00
+     timer" button, and its bar sat in the empty space the Tasks swipe test (#87) touches.
+     - The test now accepts 175–180 s; the app is unchanged, so no version bump.
+     - `cooking.spec.ts` stops every timer the owner still has running after each test,
+       passed or failed, so one failure stays one failure. Reproduced locally by delaying
+       `startRendering` 1.5 s: the old spec failed the same three tests, the new one passed.
