@@ -2,9 +2,34 @@
  * Library → recipe → cook mode (→ SPEC §4.3, §4.5, §4.6): the deep-linkable
  * routes, stepped through the way a phone on the counter does.
  */
+import Database from 'better-sqlite3';
 import { expect, test } from '@playwright/test';
-import { SEED } from './accounts';
+import { ACCOUNTS, DATABASE_PATH, SEED } from './accounts';
 import { finger } from './touch';
+
+/**
+ * Every timer a test started is stopped after it, passed or failed (→ DECISIONS #263).
+ * The household is shared with every spec after this one, and a timer left running
+ * puts its bar on every screen (over the empty space the Tasks swipe test touches)
+ * and its ring in place of the step's "Start 2:00 timer" button a retry looks for.
+ */
+test.afterEach(async ({ page }) => {
+	const db = new Database(DATABASE_PATH, { readonly: true });
+	let running: { id: string }[];
+	try {
+		running = db
+			.prepare(
+				`select cook_timers.id from cook_timers join user on user.id = cook_timers.user_id
+				 where user.email = ? and cook_timers.canceled_at is null`
+			)
+			.all(ACCOUNTS[0].email) as { id: string }[];
+	} finally {
+		db.close();
+	}
+	for (const { id } of running) {
+		expect((await page.request.delete(`/api/timers/${id}`)).ok()).toBe(true);
+	}
+});
 
 test('open a recipe and step through cook mode', async ({ page }) => {
 	await page.goto('/cooking/recipes');
@@ -228,7 +253,7 @@ test.describe('on an Android phone', () => {
 		const track = () =>
 			page.evaluate(() => {
 				const [audio] = (window as unknown as { tracks: HTMLMediaElement[] }).tracks;
-				return audio ? { paused: audio.paused, duration: Math.round(audio.duration) } : null;
+				return audio ? { paused: audio.paused, duration: audio.duration } : null;
 			});
 
 		await page.goto('/cooking/recipes');
@@ -239,8 +264,15 @@ test.describe('on an Android phone', () => {
 		await page.getByRole('link', { name: 'Start cook mode' }).click();
 		await page.getByRole('button', { name: 'Start 2:00 timer' }).click();
 
-		// Two minutes of silence, and the minute the alarm rings for.
-		await expect.poll(track).toEqual({ paused: false, duration: 180 });
+		// Two minutes of silence, and the minute the alarm rings for. The silence is
+		// measured once the ring has rendered, not at the tap (→ `AlarmTrack`), so a
+		// slow first render shortens it: on a CI runner by more than half a second.
+		const playing = async () => {
+			const audio = await track();
+			return audio && !audio.paused ? audio.duration : Number.NaN;
+		};
+		await expect.poll(playing).toBeGreaterThan(175);
+		expect(await playing()).toBeLessThanOrEqual(180);
 
 		const player = await page.evaluate(() => ({
 			title: navigator.mediaSession.metadata?.title,

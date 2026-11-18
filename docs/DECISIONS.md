@@ -3799,3 +3799,15 @@ units | null, name}`, written back as editor lines in the reader's unit spelling
        editor, with the three fixed ones. English follows the German.
      - **Final pass** (Lukas, same day): his own facts for paintball, wizard, puppies and
        wine replaced the drafts; paintball got its full stop. Every card reviewed.
+
+263. **The alarm-track e2e test allows a slow first ring, and the cook-mode spec stops its own
+     timers** (2026-11-18; → #252). Three e2e tests failed together on some CI runs (PR #141,
+     #143) and passed on a rerun. One cause: the track's silence is measured once the ring has
+     rendered, not at the tap (deliberate, so the ring lands on the second), and the test
+     wanted exactly 180 s. A CI runner that takes over half a second for the first render gets 179. That failure skipped the test's Cancel, and the 2:00 timer stayed running in the
+     shared household: the next test's Stop left it on screen, the retry found no "Start 2:00
+     timer" button, and its bar sat in the empty space the Tasks swipe test (#87) touches.
+     - The test now accepts 175–180 s; the app is unchanged, so no version bump.
+     - `cooking.spec.ts` stops every timer the owner still has running after each test,
+       passed or failed, so one failure stays one failure. Reproduced locally by delaying
+       `startRendering` 1.5 s: the old spec failed the same three tests, the new one passed.

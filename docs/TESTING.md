@@ -200,7 +200,9 @@ serial (`workers: 1`) because they share a server and, within `e2e`, a household
 
 Find things the way a user does — `getByRole`, `getByLabel`, `getByPlaceholder` — with the
 English copy from `en.ts`. A test that switches language switches it back in a `finally`. The
-seeded names live in `tests/e2e/accounts.ts`.
+seeded names live in `tests/e2e/accounts.ts`. Anything a test leaves on every screen of the
+shared household is undone in an `afterEach`, passed or failed: a cook timer left running puts
+its bar over later specs' pages (→ DECISIONS #263).
 
 Debug a failure with the report: `npx playwright show-report`, or the trace CI uploaded
 (`npx playwright show-trace test-results/<test>/trace.zip`). Every failure also leaves an
