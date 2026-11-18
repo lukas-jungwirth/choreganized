@@ -17,6 +17,7 @@ import sleeping from './sleeping.avif';
 import midnight from './midnight.avif';
 import thief from './thief.avif';
 import unicorn from './unicorn.avif';
+import wizard from './wizard.avif';
 import welcomeA from './welcome-a.avif';
 import beach from './beach.avif';
 import flower from './flower.avif';
@@ -58,6 +59,23 @@ import mushrooms from './mushrooms.avif';
 import friday from './friday.avif';
 import snooze from './snooze.avif';
 import socks from './socks.avif';
+import basketball from './basketball.avif';
+import paintball from './paintball.avif';
+import travel from './travel.avif';
+import babysitting from './babysitting.avif';
+import bubbles from './bubbles.avif';
+import chess from './chess.avif';
+import feast from './feast.avif';
+import handyman from './handyman.avif';
+import secretAgent from './secret-agent.avif';
+import meditating from './meditating.avif';
+import makeUp from './make-up.avif';
+import candle from './candle.avif';
+import redPanda from './red-panda.avif';
+import safari from './safari.avif';
+import faceMask from './face-mask.avif';
+import puppies from './puppies.avif';
+import wine from './wine.avif';
 import settings from './settings.avif';
 import moveOut from './move-out.avif';
 
@@ -84,6 +102,7 @@ export const MASCOTS = {
 	midnight: { src: midnight, width: 335, height: 408, body: 0.53 },
 	thief: { src: thief, width: 364, height: 408, body: 0.44 },
 	unicorn: { src: unicorn, width: 347, height: 408, body: 0.41 },
+	wizard: { src: wizard, width: 376, height: 408, body: 0.5 },
 	'welcome-a': { src: welcomeA, width: 488, height: 408, body: 0.39 },
 	beach: { src: beach, width: 370, height: 408, body: 0.53 },
 	flower: { src: flower, width: 315, height: 408, body: 0.47 },
@@ -125,6 +144,23 @@ export const MASCOTS = {
 	friday: { src: friday, width: 517, height: 408, body: 0.43 },
 	snooze: { src: snooze, width: 315, height: 408, body: 0.52 },
 	socks: { src: socks, width: 383, height: 408, body: 0.53 },
+	basketball: { src: basketball, width: 348, height: 408, body: 0.55 },
+	paintball: { src: paintball, width: 324, height: 408, body: 0.39 },
+	travel: { src: travel, width: 323, height: 408, body: 0.46 },
+	babysitting: { src: babysitting, width: 319, height: 408, body: 0.52 },
+	bubbles: { src: bubbles, width: 405, height: 408, body: 0.52 },
+	chess: { src: chess, width: 334, height: 408, body: 0.44 },
+	feast: { src: feast, width: 352, height: 408, body: 0.47 },
+	handyman: { src: handyman, width: 348, height: 408, body: 0.58 },
+	'secret-agent': { src: secretAgent, width: 326, height: 408, body: 0.56 },
+	meditating: { src: meditating, width: 405, height: 408, body: 0.48 },
+	'make-up': { src: makeUp, width: 365, height: 408, body: 0.47 },
+	candle: { src: candle, width: 318, height: 408, body: 0.46 },
+	'red-panda': { src: redPanda, width: 337, height: 408, body: 0.5 },
+	safari: { src: safari, width: 322, height: 408, body: 0.44 },
+	'face-mask': { src: faceMask, width: 337, height: 408, body: 0.46 },
+	puppies: { src: puppies, width: 365, height: 408, body: 0.46 },
+	wine: { src: wine, width: 323, height: 408, body: 0.54 },
 	settings: { src: settings, width: 320, height: 360, body: 0.53 },
 	'move-out': { src: moveOut, width: 320, height: 312, body: 0.6 }
 } as const;

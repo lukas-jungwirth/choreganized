@@ -3736,3 +3736,23 @@ units | null, name}`, written back as editor lines in the reader's unit spelling
      - **Art**: the unicorn was mirrored to look toward the greeting; the thief keeps his own
        direction, his side-glance is the joke (Lukas). Thief cut 3.7% off the sack's bottom,
        unicorn 0.4%. +35 KB of AVIF (18.0 + 18.0 KB).
+258. **A batch of 18 raccoons; the wizard is a third surprise visitor** (Lukas 2026-11-18; →
+     SPEC §2, `artwork/raccoon/mascots.json`, `utils/raccoon.ts`). Album No. 055–072, appended so
+     no card already met (the album shipped in v0.3.0) changes its number.
+     - **Everyday, all year**: basketball, babysitting, bubbles, chess, feast, handyman,
+       secret-agent, meditating, make-up, red-panda, face-mask, puppies; **spring–autumn**:
+       paintball, travel; **summer**: safari; **autumn–winter**: candle; **all year, evenings
+       only**: wine (never at breakfast, ★★ like coffee).
+     - **Look-alikes**, never on the same day: basketball with the dumbbell raccoon (`sports`,
+       headband and a raised fist, new group `workout`), babysitting with puppies (`cuddling`),
+       make-up with face-mask (`face-care`, a brush to the cheek).
+     - **The wizard** (glasses, wand, scarf) is a surprise visitor like the thief and the
+       unicorn, 1% of a member's slots, ★★★, not an everyday pose (Lukas).
+     - **Direction**: Lukas had every drop mirrored except wine and the thief; four then looked
+       off the card to the right and were flipped back (basketball, wizard, handyman,
+       secret-agent). Cuts: handyman 2.9%, puppies 2.1%, red-panda 0.8%, paintball 0.4%, the
+       rest already flat. +339 KB of AVIF.
+     - **The rotation tests' limits now follow the pool**: with ~45 poses a season, three a day
+       leaves one housemate in 800 two short of a full season, and the unluckiest evening-only
+       visitor meets 74%. The average still matches the sum exactly, so the limits widened
+       (≤ 2 missed; worst within 0.2 of the mean) rather than the draw changing.

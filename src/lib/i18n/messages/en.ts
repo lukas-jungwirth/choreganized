@@ -2539,7 +2539,7 @@ export const en = {
 		subtitle: 'Every raccoon you’ve met on Home.',
 		back: 'Back to Settings',
 		backHome: 'Back to Home',
-		/** The Settings row's value: "17 of 54". */
+		/** The Settings row's value: "17 of 72". */
 		count: (found: number, total: number) => `${found} of ${total}`,
 		found: (found: number, total: number) => `${found} of ${total} found`,
 		/**
@@ -2807,6 +2807,78 @@ export const en = {
 		unicorn: {
 			name: 'Unicorn',
 			fact: 'Turns up when you least expect it.'
+		},
+		basketball: {
+			name: 'Court Regular',
+			fact: 'Calls every shot a three-pointer, the ones into the laundry basket too.'
+		},
+		paintball: {
+			name: 'Paintball Rookie',
+			fact: 'Comes home a different colour every Saturday.'
+		},
+		travel: {
+			name: 'Explorer',
+			fact: 'Has a map for every trip and still asks for directions.'
+		},
+		babysitting: {
+			name: 'Babysitter',
+			fact: 'Can get any baby to sleep. Just not itself.'
+		},
+		bubbles: {
+			name: 'Bubble Blower',
+			fact: 'Blows the biggest bubbles in the street, then pops them itself.'
+		},
+		chess: {
+			name: 'Chess Thinker',
+			fact: 'Has been thinking about one move since lunch.'
+		},
+		feast: {
+			name: 'Buffet Expert',
+			fact: 'Takes a little of everything. Twice.'
+		},
+		wizard: {
+			name: 'Little Wizard',
+			fact: 'Could magic the dishes clean. Just hasn’t felt like it yet.'
+		},
+		handyman: {
+			name: 'Handyman',
+			fact: 'Fixed the shelf. Three screws left over.'
+		},
+		'secret-agent': {
+			name: 'Secret Agent',
+			fact: 'On a secret mission. The mission is the fridge.'
+		},
+		meditating: {
+			name: 'Inner Calm',
+			fact: 'Breathes in for four, out for four, and faster when someone says snacks.'
+		},
+		'make-up': {
+			name: 'Glam Raccoon',
+			fact: 'Ready in five minutes. For the last forty.'
+		},
+		candle: {
+			name: 'Candlelight',
+			fact: 'Lights a candle every evening, just for the glow.'
+		},
+		'red-panda': {
+			name: 'Red Panda Fan',
+			fact: 'Thinks the hoodie is the perfect disguise. Nobody has the heart to say.'
+		},
+		safari: {
+			name: 'Safari Guide',
+			fact: 'Has spotted three lions in the garden. All of them were the neighbour’s cat.'
+		},
+		'face-mask': {
+			name: 'Spa Day',
+			fact: 'Not here right now. Leave a message after the cucumber.'
+		},
+		puppies: {
+			name: 'Puppy Sitter',
+			fact: 'Promised to watch the puppies for five minutes. That was last week.'
+		},
+		wine: {
+			name: 'Sommelier',
+			fact: 'Swirls, sniffs, and says it tastes of grapes.'
 		},
 		snooze: {
 			name: 'Snooze Button',

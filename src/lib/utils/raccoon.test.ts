@@ -237,6 +237,32 @@ describe('the midnight raccoon', () => {
 	});
 });
 
+describe('the batch of 18 (→ DECISIONS #258)', () => {
+	const pose = (name: string) => EVERYDAY.find((each) => each.name === name);
+
+	it('never meets its look-alike on the same day', () => {
+		for (const [a, b] of [
+			['basketball', 'sports'],
+			['babysitting', 'puppies'],
+			['make-up', 'face-mask']
+		]) {
+			assert.ok(pose(a)?.lookAlike, a);
+			assert.equal(pose(a)?.lookAlike, pose(b)?.lookAlike, `${a} and ${b}`);
+		}
+	});
+
+	it('pours the wine only in the evening, and keeps the candle to the dark half of the year', () => {
+		assert.deepEqual(pose('wine')?.slots, ['evening']);
+		assert.deepEqual([...pose('candle')!.seasons].sort(), ['autumn', 'winter']);
+		assert.deepEqual(pose('safari')?.seasons, ['summer']);
+	});
+
+	it('makes the wizard a surprise visitor, not an everyday pose', () => {
+		assert.ok((SURPRISE_VISITORS as readonly string[]).includes('wizard'));
+		assert.equal(pose('wizard'), undefined);
+	});
+});
+
 describe('the surprise visitors', () => {
 	const days = Array.from({ length: 366 }, (_, day) => addDays('2036-01-01', day)).filter(
 		(today) => !specialDay(today)
@@ -345,8 +371,8 @@ describe('everydayRaccoon', () => {
 
 	it('meets every pose of a season within it, for anyone looking in every slot', () => {
 		// No hard guarantee by design (→ DECISIONS #232), but three a day for a
-		// season must be plenty: one left over is the luck the draw is meant to
-		// have, more than that is a broken draw.
+		// season must be plenty: one or two left over is the luck the draw is meant
+		// to have (two since the pools grew to ~45, #258), more is a broken draw.
 		// A pose with a time rule is rarer on purpose (one slot of three, or some
 		// days), so it is held to a year instead, in the next test.
 		const ruled = new Set<string>(
@@ -356,7 +382,7 @@ describe('everydayRaccoon', () => {
 			for (const seed of MEMBERS) {
 				const met = metIn(season, seed);
 				const missed = listedFor(season).filter((name) => !ruled.has(name) && !met.includes(name));
-				assert.ok(missed.length <= 1, `${season}, ${seed} missed ${missed.join(', ')}`);
+				assert.ok(missed.length <= 2, `${season}, ${seed} missed ${missed.join(', ')}`);
 			}
 		}
 	});
@@ -375,7 +401,12 @@ describe('everydayRaccoon', () => {
 				mean > expected - 0.03,
 				`${season}: an evening-only visitor meets ${mean.toFixed(2)}, expected ${expected.toFixed(2)}`
 			);
-			assert.ok(Math.min(...shares) > 0.75, `${season}: worst ${Math.min(...shares).toFixed(2)}`);
+			// The unluckiest of them, by the same measure: within 0.2 of the mean
+			// (it was 0.74 at ~45 poses a season, → DECISIONS #258).
+			assert.ok(
+				Math.min(...shares) > expected - 0.2,
+				`${season}: worst ${Math.min(...shares).toFixed(2)}, expected over ${(expected - 0.2).toFixed(2)}`
+			);
 		}
 	});
 
