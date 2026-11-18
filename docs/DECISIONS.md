@@ -3767,3 +3767,10 @@ units | null, name}`, written back as editor lines in the reader's unit spelling
      - **Judged by eye, not measured**: an iris-in-sclera measurement was tried and read too
        noisily to trust (it scored closed eyes, and the pirate as looking left). What guards it
        is the admin picker's screenshot, which shows every Home raccoon.
+260. **Bedtime at 23:00: three awake slots of six hours** (Lukas 2026-11-18; → SPEC §2,
+     `utils/raccoon.ts` `BEDTIME`). The sleeping raccoon took over at 22:00, so the evening slot
+     had five hours against the morning's and afternoon's six, and a household still up at ten
+     met the sleeping raccoon instead of the evening's. Now 05–11, 11–17, 17–23 and the night
+     23–05 are six hours each. Every drawn pose gains the same hour (17 → 18 awake), so no tier
+     moves: three seasons 53% → 56% (★), one season 18% → 19% (★★), sleeping 29% → 25% (★★),
+     a surprise visitor 0.71% → 0.75% (★★★). The midnight raccoon (00:00–02:00) is unchanged.

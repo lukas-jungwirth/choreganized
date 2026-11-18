@@ -144,7 +144,7 @@ export type HomeContext = {
 export function getHomeSummary(householdId: string, context: HomeContext): HomeSummary {
 	const { member, timezone, today } = context;
 	// One reading of the clock for the greeting and the raccoon, so "Good
-	// evening" and the sleeping pose can't straddle 22:00 and disagree.
+	// evening" and the sleeping pose can't straddle 23:00 and disagree.
 	const hour = hourIn(timezone);
 	const inWindow = choresInWindow(householdId, member, today);
 	const nextChores = inWindow.slice(0, NEXT_CHORE_CARDS);

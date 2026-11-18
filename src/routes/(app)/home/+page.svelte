@@ -11,7 +11,7 @@
 	(→ DECISIONS #213, #216, #219). The server picks it (`utils/raccoon`): your
 	birthday, then a special day, then the reminder pose for the first chore on
 	you (a bell on the day it's due, an alarm clock once it's late), then asleep after
-	22:00, and otherwise an everyday pose that fits the month, a new one each
+	23:00, and otherwise an everyday pose that fits the month, a new one each
 	morning, afternoon and evening. Poke it six times and it ducks away for a
 	few seconds (→ `RaccoonPoke`, DECISIONS #223). In admin mode a tap opens
 	the raccoon picker instead (→ `RaccoonPicker`, plan 34). Meeting one puts it

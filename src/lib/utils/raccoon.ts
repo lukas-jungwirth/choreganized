@@ -14,7 +14,7 @@
  * 5. the next chore on you, once it's due — a bell on the day, an alarm clock
  *    once it's late. Home's card shows it three days ahead; the raccoon waits for
  *    the day, so a chore coming up doesn't scold anyone (→ DECISIONS #255);
- * 6. asleep from 22:00 to 05:00, household time;
+ * 6. asleep from 23:00 to 05:00, household time;
  * 7. a surprise visitor, the thief, the unicorn or the wizard, on 1% of a member's slots
  *    each (→ `surpriseVisitor`);
  * 8. an everyday pose (→ `everydayRaccoon`): three of the season's poses
@@ -119,8 +119,8 @@ export function isHomeRaccoon(value: string): value is MascotName {
 	return (HOME_RACCOONS as readonly string[]).includes(value);
 }
 
-/** The hours the raccoon is asleep: from 22:00, until 05:00. */
-const BEDTIME = 22;
+/** The hours the raccoon is asleep: from 23:00, until 05:00 (→ DECISIONS #260). */
+const BEDTIME = 23;
 const WAKE_UP = 5;
 
 /** The midnight raccoon's stretch ends at 02:00; it starts at 00:00. */

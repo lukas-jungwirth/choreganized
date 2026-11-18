@@ -128,7 +128,7 @@ pose, first match wins, top to bottom (`lib/utils/raccoon.ts`, by the household'
   The card shows a chore up to 3 days ahead, but the raccoon waits for the day: a chore still
   coming up is no one's fault, so Home keeps the steps below until then. Ticking off today's
   chore brings the everyday raccoon back.
-- **22:00–05:00**: asleep, under a starry blanket.
+- **23:00–05:00** ([DECISIONS #260](DECISIONS.md)): asleep, under a starry blanket.
 - **A surprise visitor** ([DECISIONS #257](DECISIONS.md), [#258](DECISIONS.md)): the thief
   (beanie, torch, loot sack), the unicorn (horn, rainbow mane, star wand) or the wizard (round
   glasses, wand, striped scarf), each on 1% of a member's morning, afternoon
@@ -953,9 +953,9 @@ The **History** tab is a stats landing; the full feed sits one level below it (�
     (`009`) and a "New" badge if met since you last opened the album; an unmet one is its
     silhouette and a "?", with no hint and no stars.
   - **Rarity** ([DECISIONS #237](DECISIONS.md)), worked out from how much of the year a raccoon
-    can be on Home: its months × its weekdays × its hours (the 17 awake hours for a drawn pose, the
-    7 night hours for sleeping, every hour for the reminders, which come with a chore; 2 hours × 1/3 of
-    nights for the midnight raccoon; the 17 awake hours × 1% for a surprise visitor). A `weight` doesn't count: it is odds, not time. **★
+    can be on Home: its months × its weekdays × its hours (the 18 awake hours for a drawn pose, the
+    6 night hours for sleeping, every hour for the reminders, which come with a chore; 2 hours × 1/3 of
+    nights for the midnight raccoon; the 18 awake hours × 1% for a surprise visitor). A `weight` doesn't count: it is odds, not time. **★
     Common** at 40% or more (an all-year pose, three seasons, the laptop), **★★ Rare** in between
     (one or two seasons, coffee, snooze, the Friday raccoon, sleeping), **★★★ Legendary** under 3%
     (the special days, your birthday, the midnight raccoon and the three surprise visitors). **Frames** follow the window, not the rarity: sage all year, the season's colour
