@@ -47,6 +47,7 @@ describe('tier', () => {
 			'snooze',
 			'friday',
 			'sleeping',
+			'woken',
 			// The batch of 18 (→ DECISIONS #258): one season, two, or evenings only.
 			'safari',
 			'candle',
@@ -109,6 +110,7 @@ describe('rule', () => {
 			slots: null
 		});
 		assert.deepEqual(albumEntry('sleeping').rule, { days: null, slots: ['night'] });
+		assert.deepEqual(albumEntry('woken').rule, { days: null, slots: ['night'] });
 		assert.deepEqual(albumEntry('midnight').rule, { days: null, slots: ['midnight'] });
 		assert.deepEqual(albumEntry('friday').rule, { days: ['fri'], slots: null });
 		assert.equal(albumEntry('reading').rule, null);
@@ -344,17 +346,19 @@ describe('homeSlot', () => {
 });
 
 describe('the reviewed album (Lukas 2026-11-07)', () => {
-	it('has 72 raccoons numbered 1 to 72, without the handball one', () => {
+	it('has 73 raccoons numbered 1 to 73, without the handball one', () => {
 		// 52 reviewed, the surprise visitors 53 and 54 (→ DECISIONS #257), then the
 		// batch of 18 at the end, so no card already met changes its number (#258).
-		assert.equal(ALBUM_SIZE, 72);
+		assert.equal(ALBUM_SIZE, 73);
 		assert.deepEqual(
 			ALBUM_ENTRIES.map((entry) => entry.number).sort((a, b) => a - b),
-			Array.from({ length: 72 }, (_, i) => i + 1)
+			Array.from({ length: 73 }, (_, i) => i + 1)
 		);
 		assert.equal(albumEntry('basketball').number, 55);
 		assert.equal(albumEntry('wizard').number, 62);
 		assert.equal(albumEntry('wine').number, 72);
+		// Poked awake at night (→ DECISIONS #261).
+		assert.equal(albumEntry('woken').number, 73);
 		assert.equal(albumEntry('thief').number, 53);
 		assert.equal(albumEntry('unicorn').number, 54);
 		assert.ok(!ALBUM_ENTRIES.some((entry) => (entry.name as string) === 'handball'));

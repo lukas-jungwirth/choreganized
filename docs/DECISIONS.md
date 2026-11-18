@@ -3774,3 +3774,17 @@ units | null, name}`, written back as editor lines in the reader's unit spelling
      23–05 are six hours each. Every drawn pose gains the same hour (17 → 18 awake), so no tier
      moves: three seasons 53% → 56% (★), one season 18% → 19% (★★), sleeping 29% → 25% (★★),
      a surprise visitor 0.71% → 0.75% (★★★). The midnight raccoon (00:00–02:00) is unchanged.
+261. **Poking the sleeping raccoon wakes it, and the woken raccoon is in the album** (Lukas
+     2026-11-18; → SPEC §2, `RaccoonPoke`, `services/home` `wakeRaccoon`, `?/woke`). New art: the
+     same bed, blinking and grumpy. The sleeping raccoon doesn't get cross and duck away like the
+     others: the third poke wakes it for 3.5 s, then it dozes off again.
+     - **Counted once a night**: waking it records a sighting through the existing per-slot rule,
+       and the night (23:00–05:00) is one slot, so however often it is woken, one night is one
+       sighting. Counting every wake-up was the alternative; it would let one evening of poking
+       inflate "Seen n×", which elsewhere means separate visits.
+     - **The server checks it really is asleep**, worked out as Home's load does, so a stale tab
+       or a hand-made POST in daylight records nothing. A form action (hidden form, `use:enhance`)
+       rather than an endpoint, and its reload brings the album card's "New raccoon!".
+     - **Album No. 073, ★★**, the same window as the sleeping raccoon (nights, 25%): being woken
+       takes a poke, but not more time. Its art touched the top edge by a few pixels (the right
+       ear's tip); padded rather than refused, as it is under half a pixel at 136 px.

@@ -7,7 +7,8 @@
 import assert from 'node:assert/strict';
 import { afterEach, beforeEach, describe, it, vi } from 'vitest';
 import { listMembers } from '$lib/server/services/household';
-import { getHomeSummary } from '$lib/server/services/home';
+import { getHomeSummary, wakeRaccoon } from '$lib/server/services/home';
+import { createTask } from '$lib/server/services/tasks';
 import { listSightings, recordSighting } from '$lib/server/services/raccoons';
 import { addDays } from '$lib/utils/dates';
 import {
@@ -131,5 +132,55 @@ describe('after midnight', () => {
 		assert.ok(first, 'met it within a month of late nights');
 		assert.ok(shown.includes('sleeping'), 'and not every night');
 		assert.deepEqual([...new Set(shown)].sort(), [MIDNIGHT_RACCOON, 'sleeping'].sort());
+	});
+});
+
+describe('poking the sleeping raccoon awake (→ DECISIONS #261)', () => {
+	const woken = (householdId: string, memberId: string) =>
+		listSightings(householdId, memberId).find((seen) => seen.raccoon === 'woken');
+
+	it('puts the woken raccoon in the album, once a night however often it is woken', () => {
+		const { householdId, members } = household();
+		const [me] = members;
+		recordSighting(householdId, me.id, 'reading', TODAY, `${TODAY}#0`);
+
+		at('2036-06-18T21:30:00Z'); // 23:30 in Vienna: asleep
+		assert.equal(wakeRaccoon(householdId, me, 'Europe/Vienna', TODAY), true);
+		assert.equal(wakeRaccoon(householdId, me, 'Europe/Vienna', TODAY), true);
+		at('2036-06-19T01:00:00Z'); // 03:00, the same night
+		assert.equal(wakeRaccoon(householdId, me, 'Europe/Vienna', '2036-06-19'), true);
+		assert.equal(woken(householdId, me.id)?.seenCount, 1);
+
+		at('2036-06-19T21:30:00Z'); // the next night counts again
+		wakeRaccoon(householdId, me, 'Europe/Vienna', '2036-06-19');
+		assert.equal(woken(householdId, me.id)?.seenCount, 2);
+	});
+
+	it('records nothing while Home shows anyone but the sleeping raccoon', () => {
+		const { householdId, members } = household();
+		const [me] = members;
+		recordSighting(householdId, me.id, 'reading', TODAY, `${TODAY}#0`);
+
+		// The afternoon: an everyday pose, so a hand-made request does nothing.
+		assert.equal(wakeRaccoon(householdId, me, 'Europe/Vienna', TODAY), false);
+
+		// Night, but a chore due today: the bell beats sleeping, so there is no one to wake.
+		createTask(
+			householdId,
+			me.id,
+			{
+				name: 'Bins',
+				points: 5,
+				recurUnit: 'week',
+				recurInterval: 1,
+				dueDate: TODAY,
+				assigneeMemberId: me.id,
+				rotate: false
+			},
+			TODAY
+		);
+		at('2036-06-18T21:30:00Z');
+		assert.equal(wakeRaccoon(householdId, me, 'Europe/Vienna', TODAY), false);
+		assert.equal(woken(householdId, me.id), undefined);
 	});
 });

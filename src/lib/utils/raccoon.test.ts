@@ -24,7 +24,8 @@ import {
 	SLOT_HOURS,
 	SURPRISE_VISITORS,
 	surpriseVisitor,
-	WELCOME_RACCOON
+	WELCOME_RACCOON,
+	WOKEN_RACCOON
 } from './raccoon.ts';
 
 /** An ordinary afternoon with nothing on: the baseline every case varies. */
@@ -531,8 +532,9 @@ describe('HOME_RACCOONS', () => {
 		}
 		const missing = [...seen].filter((name) => !HOME_RACCOONS.includes(name));
 		assert.deepEqual(missing, []);
-		// And nothing extra: every listed raccoon really turns up on some day.
-		assert.deepEqual([...HOME_RACCOONS].sort(), [...seen].sort());
+		// And nothing extra: every listed raccoon really turns up on some day, the
+		// woken one by a poke on the sleeping one rather than the clock (#261).
+		assert.deepEqual([...HOME_RACCOONS].sort(), [...seen, WOKEN_RACCOON].sort());
 	});
 
 	it('leaves out the section raccoons, so the picker and ?raccoon= never offer them', () => {

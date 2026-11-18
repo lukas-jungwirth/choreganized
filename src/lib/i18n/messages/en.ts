@@ -2800,6 +2800,10 @@ export const en = {
 			name: 'Midnight Snack',
 			fact: 'You didn’t see anything!'
 		},
+		woken: {
+			name: 'Rudely Awakened',
+			fact: 'Was just dreaming about pancakes. Thanks a lot.'
+		},
 		thief: {
 			name: 'Little Bandit',
 			fact: 'Just borrowing. Honestly.'

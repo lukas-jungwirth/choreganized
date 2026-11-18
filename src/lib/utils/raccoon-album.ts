@@ -32,7 +32,8 @@ import {
 	SPECIAL_DAYS,
 	SURPRISE_CHANCE,
 	SURPRISE_VISITORS,
-	WEEKDAYS
+	WEEKDAYS,
+	WOKEN_RACCOON
 } from './raccoon.ts';
 
 /** ★ Common, ★★ Rare, ★★★ Legendary. */
@@ -185,8 +186,9 @@ function describe({ name, number, stats }: (typeof ALBUM)[number]): AlbumEntry {
 		};
 	}
 
-	// Asleep every night, 23:00 to 05:00, all year.
-	if (name === 'sleeping') {
+	// Asleep every night, 23:00 to 05:00, all year; woken up by a poke in the
+	// same hours (→ DECISIONS #261).
+	if (name === 'sleeping' || name === WOKEN_RACCOON) {
 		const rule: Rule = { days: null, slots: ['night'] };
 		const availability = SLOT_HOURS.night / 24;
 		return { ...entry, ...allYear, rule, availability, tier: tierOf(availability) };

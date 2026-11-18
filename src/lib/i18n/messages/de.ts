@@ -2238,6 +2238,10 @@ export const de: Messages = {
 			name: 'Mitternachtssnack',
 			fact: 'Du hast nichts gesehen!'
 		},
+		woken: {
+			name: 'Aufgeweckt',
+			fact: 'Hat gerade so schön von Palatschinken geträumt. Danke auch.'
+		},
 		thief: {
 			name: 'Kleiner Gauner',
 			fact: 'Nur ausgeborgt. Ehrlich.'

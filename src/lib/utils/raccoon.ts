@@ -49,6 +49,13 @@ type Input = {
 /** Who greets someone opening Home for the first time. */
 export const WELCOME_RACCOON: MascotName = 'welcome-a';
 
+/**
+ * Who the sleeping raccoon becomes for a few seconds when it is poked awake
+ * (→ `RaccoonPoke`, DECISIONS #261). Never chosen by the clock: only a poke on
+ * the sleeping raccoon shows it, and the server records it then, once a night.
+ */
+export const WOKEN_RACCOON = 'woken' as const satisfies MascotName;
+
 /** Who sneaks into the kitchen after midnight, when the night's draw lets it. */
 export const MIDNIGHT_RACCOON: MascotName = 'midnight';
 
@@ -92,6 +99,7 @@ const SITUATIONS = [
 	'reminder-upcoming',
 	'reminder-overdue',
 	'sleeping',
+	WOKEN_RACCOON,
 	'midnight',
 	...SURPRISE_VISITORS
 ] as const satisfies readonly MascotName[];

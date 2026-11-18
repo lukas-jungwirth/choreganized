@@ -57,7 +57,8 @@ checks that simulated members meet every pose of every season. The app icons are
 | `fasching.png`            | Home, Faschingsdienstag (47 days before Easter)                |
 | `halloween.png`           | Home, 31 October                                               |
 | `valentines.png`          | Home, 14 February                                              |
-| `sleeping.png`            | Home, 22:00–05:00 on an ordinary day without a chore on you    |
+| `sleeping.png`            | Home, 23:00–05:00 on an ordinary day without a chore on you    |
+| `woken.png`               | Home, the sleeping raccoon poked awake (three pokes), briefly  |
 | `midnight.png`            | Home, 00:00–02:00, one night in three, each member's own       |
 | `thief.png`               | Home, surprise visitor: 1% of a member's slots, all year       |
 | `unicorn.png`             | Home, surprise visitor: 1% of a member's slots, all year       |
