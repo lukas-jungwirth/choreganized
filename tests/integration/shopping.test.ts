@@ -33,6 +33,7 @@ import {
 	undoReset,
 	updateItem
 } from '$lib/server/services/shopping';
+import { shoppingActions } from '$lib/server/shopping-actions';
 import { splitList } from '$lib/utils/shopping';
 import { makeHousehold } from '../helpers/db';
 
@@ -546,5 +547,58 @@ describe('checklists (plan 36 step 2)', () => {
 			getShoppingList(householdId).map((item) => [item.name, item.storeId]),
 			[['Milk', null]]
 		);
+	});
+});
+
+describe('the add field reads the amount (plan 37)', () => {
+	/** The add field's post, through the action itself: parse, `literal`, known names. */
+	async function quickAdd(
+		fixture: ReturnType<typeof makeHousehold>,
+		line: string,
+		fields: Record<string, string> = {}
+	) {
+		const form = new FormData();
+		form.set('quick', '1');
+		form.set('name', line);
+		for (const [key, value] of Object.entries(fields)) form.set(key, value);
+		const event = {
+			locals: {
+				user: { id: fixture.owner.userId },
+				member: fixture.owner,
+				locale: 'en'
+			},
+			request: new Request('http://localhost/shopping?/add', { method: 'POST', body: form })
+		} as unknown as Parameters<typeof shoppingActions.add>[0];
+		return shoppingActions.add(event);
+	}
+
+	it('"Gurken x3" is Gurken, three of them', async () => {
+		const fixture = makeHousehold();
+		await quickAdd(fixture, 'Gurken x3');
+
+		const [row] = getShoppingList(fixture.householdId);
+		assert.deepEqual([row.name, row.quantity, row.unit], ['Gurken', 3, null]);
+	});
+
+	it('a line added as typed is remembered, and the same line is not split again', async () => {
+		const fixture = makeHousehold();
+		const { householdId } = fixture;
+
+		await quickAdd(fixture, 'Windeln 4', { literal: '1' });
+		assert.ok(listItemNames(householdId).some((known) => known.name === 'Windeln 4'));
+
+		// Bought, swept: the name outlives the row.
+		const first = getShoppingList(householdId)[0];
+		deleteItem(householdId, first.id);
+
+		await quickAdd(fixture, 'Windeln 4');
+		const [again] = getShoppingList(householdId);
+		assert.deepEqual([again.name, again.quantity], ['Windeln 4', null]);
+
+		// An amount on top of the known name is still read.
+		deleteItem(householdId, again.id);
+		await quickAdd(fixture, 'Windeln 4 x2');
+		const [two] = getShoppingList(householdId);
+		assert.deepEqual([two.name, two.quantity], ['Windeln 4', 2]);
 	});
 });

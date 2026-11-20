@@ -128,7 +128,15 @@
 	</div>
 {/if}
 
-<QuickAdd offered={suggestions} lists={[]} fallback={data.list.id} fixed={data.list} />
+<!-- `known` only feeds the amount chip here (a name the household uses is never
+	 split); the list is fixed, so it moves no icon. -->
+<QuickAdd
+	known={data.suggestions}
+	offered={suggestions}
+	lists={[]}
+	fallback={data.list.id}
+	fixed={data.list}
+/>
 
 <ListCard
 	{group}
