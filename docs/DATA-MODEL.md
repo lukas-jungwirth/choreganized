@@ -231,11 +231,27 @@ occurrence changes (done, skip, snooze, edit of due date).
    reverts exactly that (delete completion; for one-offs re-insert the task row from the
    returned snapshot).
 
+**Done together** (service `setCompletionDoers`, → SPEC §5.4, DECISIONS #277): the celebration's
+row of faces replaces who a completion is credited to. In one transaction it undoes the
+completion from the snapshot and logs it again for the new doers, keeping the group id, the
+`completedAt` and the next due date, so it is the same completion told again. One row per doer,
+each with `splitPoints(task.points, doers)` (even split, rounded to nearest, at least 1 when the
+task is worth something). Rotation: one doer → from the doer, as in step 2; several → from the
+assignee. An empty or foreign list of doers changes nothing.
+
 **Skip** = same as done with `action 'skipped'`, `points 0`, credited to the tapper, not shown
 in the history feed. Its rotation advances from the **assignee** (a skip is nobody's doing), not
 from whoever tapped.
 
 ### `task_completions`
+
+- `groupId` — one finishing of one task. Every row a completion writes carries it: a task done
+  alone is a group of one, a task done together is one row per doer with the same `groupId`,
+  each holding that doer's share. The `completionId` the browser holds for Undo is this id.
+  NULL on rows written before shared completions existed; those are their own group, keyed
+  by `id` (readers use `coalesce(groupId, id)`). Because shares are ordinary rows,
+  `SUM(points) GROUP BY memberId` needs no change; anything that counts _completions_ or
+  lists them (the feed, Home's activity, "{n} done this week") groups by it.
 
 - Leaderboard month: `completedAt` within the current household-local calendar month and
   `action = 'done'`; `SUM(points) GROUP BY memberId`. Month boundaries computed from

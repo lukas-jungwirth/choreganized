@@ -14,6 +14,7 @@
  */
 import { and, asc, count, desc, eq, isNull, lte, sql } from 'drizzle-orm';
 import type { MascotName } from '$lib/assets/mascot';
+import { MEMBER_COLORS } from '$lib/member-colors';
 import { DEFAULT_LOCALE } from '$lib/i18n';
 import { addDays, formatTimeIn, hourIn, type CalendarDate } from '$lib/utils/dates';
 import { homeRaccoon, homeSlot, WOKEN_RACCOON } from '$lib/utils/raccoon';
@@ -29,6 +30,7 @@ import {
 	tasks,
 	type Member
 } from '../db/schema';
+import { completionRowColumns, groupCompletions, type FeedEntry } from './history';
 import type { HouseholdMember } from './household';
 import { isFirstVisit, recordSighting } from './raccoons';
 import { notOnChecklist } from './shopping';
@@ -55,16 +57,8 @@ export type TonightsDinner = {
 	others: number;
 };
 
-export type ActivityEntry = {
-	id: string;
-	taskName: string;
-	memberName: string;
-	/** From the *current* member row; null once that housemate has left. */
-	memberColor: string | null;
-	points: number;
-	/** Household-local clock time, e.g. "8:20". */
-	time: string;
-};
+/** The same line History shows, a task done together included (→ SPEC §5.8). */
+export type ActivityEntry = FeedEntry;
 
 export type Standings = {
 	/** Competition rank of the current member (1-based, ties share a rank). */
@@ -354,30 +348,28 @@ function countDueOrOverdue(householdId: string, today: CalendarDate): number {
 	return row?.n ?? 0;
 }
 
+/** How many completions Home's activity card shows [8b]. */
+const ACTIVITY_LINES = 2;
+
 function recentActivity(householdId: string, timezone: string): ActivityEntry[] {
-	return (
-		db
-			.select({
-				id: taskCompletions.id,
-				taskName: taskCompletions.taskName,
-				// The snapshot, so a departed housemate keeps their name in the feed.
-				memberName: taskCompletions.memberName,
-				memberColor: members.color,
-				points: taskCompletions.points,
-				completedAt: taskCompletions.completedAt
-			})
-			.from(taskCompletions)
-			.leftJoin(members, eq(taskCompletions.memberId, members.id))
-			.where(and(eq(taskCompletions.householdId, householdId), eq(taskCompletions.action, 'done')))
-			// `id` breaks ties for completions logged in the same millisecond.
-			.orderBy(desc(taskCompletions.completedAt), desc(taskCompletions.id))
-			.limit(2)
-			.all()
-			.map(({ completedAt, ...entry }) => ({
-				...entry,
-				time: formatTimeIn(completedAt, timezone)
-			}))
-	);
+	const rows = db
+		.select(completionRowColumns)
+		.from(taskCompletions)
+		.leftJoin(members, eq(taskCompletions.memberId, members.id))
+		.where(and(eq(taskCompletions.householdId, householdId), eq(taskCompletions.action, 'done')))
+		// `id` breaks ties for completions logged in the same millisecond.
+		.orderBy(desc(taskCompletions.completedAt), desc(taskCompletions.id))
+		// A task done together is one line of several rows, one per doer, and a
+		// household has as many members as there are colours.
+		.limit(ACTIVITY_LINES * MEMBER_COLORS.length)
+		.all();
+
+	return groupCompletions(rows)
+		.slice(0, ACTIVITY_LINES)
+		.map(({ completedAt, ...entry }) => ({
+			...entry,
+			time: formatTimeIn(completedAt, timezone)
+		}));
 }
 
 /**

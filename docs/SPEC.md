@@ -1023,9 +1023,15 @@ actually need is the chore this replaces (→ [DECISIONS #123](DECISIONS.md)).
 - Name, overdue pill ("3 days overdue · was due Jul 14") when overdue, meta row (repeat ·
   whose turn · points).
 - Primary: **Mark as done · +{points}**.
-- List: **Snooze / reschedule** → [4c] · **Reassign to {other member}** (swaps current
-  assignee) · **Skip this time · no points** (advances recurrence + rotation, logs a skip) ·
+- List: **Snooze / reschedule** → [4c] · **Reassign** (below) · **Skip this time · no points** (advances recurrence + rotation, logs a skip) ·
   **Edit task** → [3b prefilled]. Below: **Delete task** (confirm; history keeps snapshots).
+- **Reassign is one row.** With a single other person to hand it to (a household of two, on
+  an assigned task) the row does it in one tap: "Reassign to {name}", or "Assign to {name}"
+  from Anyone. With more choices the row reads **Reassign** (or **Assign**) and swaps the
+  sheet's menu for a list, "Who takes it?": every member with their avatar, "{name} (you)"
+  for the reader, a tick and "current" on the current holder, and **Anyone** last. A tap
+  reassigns and closes the sheet; **Back** returns to the menu (→ DECISIONS #277, sketch
+  `design/sketches/task-done-together.html` [T4] [T5]).
 
 ### 5.4 Completing [4d]
 
@@ -1039,9 +1045,30 @@ actually need is the chore this replaces (→ [DECISIONS #123](DECISIONS.md)).
   One-offs remove the task row (history remains). A 0-point task logs a 0-point completion just
   the same.
 - Celebration modal: "Nice work, {name}!" (the doer), "{task} · logged to history", `+{points}`
-  chip, "Next due {date} · Rescheduled · {next member}'s turn next" (recurring only), the doer's
-  live standings line ("You're now leading 235 – 240"), **Undo** (reverts completion, restores
-  due date/assignee/reminder flags).
+  chip, "Next due {date} · Rescheduled · {next member}'s turn next" (recurring only), the
+  **Who did it?** row (below), the reader's own standings line, **Undo** (reverts the
+  completion, every doer's share at once, and restores due date/assignee/reminder flags).
+- **Standings line**: the gap to the rival, not the two totals: "You're 5 points ahead of
+  Elisabeth", "You're 5 points behind Elisabeth", "You're level with Elisabeth"; alone in the
+  household, "{n} points this month". It is always the reader's line, with the reader's avatar,
+  whoever was credited (→ DECISIONS #277).
+- **Who did it? · Tap to change** [T1–T3]: one face per member in join order (the reader's
+  says "You"), the credited ones ringed and ticked. It is how the credit is corrected after
+  the tick, on Tasks and on Home alike, in a household of two or more:
+  - Tap a face **on** to share the task; tap one **off** to take that person out. So "done
+    together", "somebody else did it" and "my own task, done by my housemate" are the same
+    control. The last face can't be tapped off (taking it back altogether is Undo).
+  - Each tap saves at once and the modal redraws from the answer: title ("Nice work, you
+    two!", "Nice work, Elisabeth and Jonas!", "Nice work, all three!"), "{task} · {points}
+    points shared by {n}", the chip "+{share} points each", the next turn, the standings.
+  - **Shared points**: an even split of the task's points, rounded to the nearest whole point
+    for each (20 by three is 7 each), never below 1 for a task worth something.
+  - **Next turn** on an alternating task: done alone it passes on from the doer, as above;
+    done together it passes on from whoever's turn it was. The next due date never moves.
+  - The "Who did it?" question before the tick stays as it is, for other people's tasks only:
+    it picks the one person the modal opens with. There is no "together" answer there;
+    sharing is always added here.
+  - Once the modal is closed the credit stands; there is no editing from History (yet).
 
 ### 5.5 Snooze & holiday [4c]
 
@@ -1092,7 +1119,10 @@ The **History** tab is a stats landing; the full feed sits one level below it (�
   the window; the reader's own row is marked "you".
 - **All completed chores** link → the full feed.
 - **Completed feed** (`/tasks/history/all`) grouped by day (Today, Yesterday, {date}): check
-  circle in member colour, task name, "{member} · {time}", `+{points}` chip. "Load more" by
+  circle in member colour, task name, "{member} · {time}", `+{points}` chip. A task done
+  together is **one** line [T6]: a tick per doer, overlapping, "{Lukas and Elisabeth} ·
+  {time}", and a neutral chip "+{share} each". Home's activity card shows the same line, and
+  "{n} done this week" counts it once. "Load more" by
   month; skips are not shown. Opens with a **Back to history** link.
 - The month podium [8a] was replaced by the Points card; it lives on only as a design-kit
   component.

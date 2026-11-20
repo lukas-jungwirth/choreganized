@@ -244,6 +244,8 @@
 	<TaskDoneModal
 		completion={done.completion}
 		standing={done.standing}
+		members={data.members}
+		currentMemberId={data.currentMember.id}
 		onclose={() => (done = null)}
 	/>
 {/if}

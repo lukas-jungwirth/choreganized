@@ -9,8 +9,10 @@
  */
 import assert from 'node:assert/strict';
 import { describe, it } from 'vitest';
+import { getCompletedFeed } from '$lib/server/services/history';
 import {
 	completeTask,
+	countDoneSince,
 	countDue,
 	createTask,
 	deleteTask,
@@ -18,6 +20,7 @@ import {
 	listOverdueForMember,
 	pointsByMemberSince,
 	setAway,
+	setCompletionDoers,
 	skipTask,
 	snoozeTask,
 	undoCompletion,
@@ -204,6 +207,187 @@ describe('undoCompletion', () => {
 		undoCompletion(householdId, done.completionId, done.snapshot);
 
 		assert.equal(getTaskList(householdId, context(fixture)).total, 1);
+	});
+});
+
+describe('done together (setCompletionDoers)', () => {
+	/** A 20-pointer that alternates, on the owner's turn, in a household of three. */
+	function shared() {
+		const fixture = makeHousehold({ housemates: ['Elisabeth', 'Jonas'] });
+		const { householdId, members } = fixture;
+		const [owner, elisabeth, jonas] = members;
+		const taskId = createTask(
+			householdId,
+			owner.id,
+			weekly({ name: 'Bathroom', points: 20, assigneeMemberId: owner.id, rotate: true }),
+			TODAY
+		);
+		const done = completeTask(householdId, taskId, owner.id, TODAY);
+		assert.ok(done);
+		const points = () => Object.fromEntries(pointsByMemberSince(householdId, null));
+		return { fixture, householdId, owner, elisabeth, jonas, taskId, done, points };
+	}
+
+	it('splits the points between everyone who did it', () => {
+		const { fixture, householdId, owner, elisabeth, done, points } = shared();
+
+		const both = setCompletionDoers(
+			householdId,
+			done.completionId,
+			[owner.id, elisabeth.id],
+			done.snapshot,
+			fixture.timezone
+		);
+
+		assert.ok(both);
+		assert.equal(both.points, 10);
+		assert.equal(both.taskPoints, 20);
+		assert.deepEqual(
+			both.doers.map((doer) => doer.displayName),
+			['Owner', 'Elisabeth']
+		);
+		assert.deepEqual(points(), { [owner.id]: 10, [elisabeth.id]: 10 });
+	});
+
+	it('rounds an uneven split to the nearest whole point for each', () => {
+		const { fixture, householdId, owner, elisabeth, jonas, done, points } = shared();
+
+		const all = setCompletionDoers(
+			householdId,
+			done.completionId,
+			[owner.id, elisabeth.id, jonas.id],
+			done.snapshot,
+			fixture.timezone
+		);
+
+		assert.equal(all?.points, 7);
+		assert.deepEqual(points(), { [owner.id]: 7, [elisabeth.id]: 7, [jonas.id]: 7 });
+	});
+
+	it('stays one completion: same id, same moment, one line in the feed, one thing done', () => {
+		const { fixture, householdId, owner, elisabeth, done } = shared();
+
+		const both = setCompletionDoers(
+			householdId,
+			done.completionId,
+			[owner.id, elisabeth.id],
+			done.snapshot,
+			fixture.timezone
+		);
+
+		assert.equal(both?.completionId, done.completionId);
+		// The feed's own clock is the real one: the completion was logged just now.
+		const now = { today: TODAY, timezone: fixture.timezone, locale: 'en' as const };
+		const entries = getCompletedFeed(householdId, now, '2000-01-01').days.flatMap(
+			(day) => day.entries
+		);
+		assert.equal(entries.length, 1);
+		assert.deepEqual(
+			entries[0].doers.map((doer) => doer.name),
+			['Owner', 'Elisabeth']
+		);
+		assert.equal(entries[0].points, 10);
+		assert.equal(countDoneSince(householdId, new Date(0)), 1);
+	});
+
+	it('passes the turn on from the assignee when shared, from the doer when alone', () => {
+		const { fixture, householdId, owner, elisabeth, jonas, done } = shared();
+		const change = (ids: string[]) =>
+			setCompletionDoers(householdId, done.completionId, ids, done.snapshot, fixture.timezone);
+
+		// Alone, the owner's turn passed to Elisabeth.
+		assert.equal(done.nextAssigneeName, 'Elisabeth');
+		// Elisabeth and Jonas did the owner's turn together: still Elisabeth next.
+		assert.equal(change([elisabeth.id, jonas.id])?.nextAssigneeName, 'Elisabeth');
+		// It was Elisabeth alone after all: the turn passes on from her.
+		assert.equal(change([elisabeth.id])?.nextAssigneeName, 'Jonas');
+		// And back to the owner: exactly where the tick left it.
+		const back = change([owner.id]);
+		assert.equal(back?.nextAssigneeName, 'Elisabeth');
+		assert.equal(back?.nextDueDate, done.nextDueDate);
+		assert.equal(back?.points, 20);
+	});
+
+	it('undo takes back every share at once', () => {
+		const { fixture, householdId, owner, elisabeth, done, points } = shared();
+		setCompletionDoers(
+			householdId,
+			done.completionId,
+			[owner.id, elisabeth.id],
+			done.snapshot,
+			fixture.timezone
+		);
+
+		assert.equal(undoCompletion(householdId, done.completionId, done.snapshot), true);
+
+		assert.deepEqual(points(), {});
+		assert.deepEqual(sectionsOf(fixture), { today: ['Bathroom'] });
+		const [task] = getTaskList(householdId, context(fixture)).sections.flatMap((s) => s.tasks);
+		assert.equal(task.assignee?.displayName, 'Owner');
+	});
+
+	it('shares a one-off, which stays gone', () => {
+		const fixture = makeHousehold({ housemates: ['Elisabeth'] });
+		const { householdId, members } = fixture;
+		const [owner, elisabeth] = members;
+		const taskId = createTask(
+			householdId,
+			owner.id,
+			weekly({ name: 'Cellar', points: 40, recurUnit: 'none' }),
+			TODAY
+		);
+		const done = completeTask(householdId, taskId, owner.id, TODAY);
+		assert.ok(done);
+
+		const both = setCompletionDoers(
+			householdId,
+			done.completionId,
+			[owner.id, elisabeth.id],
+			done.snapshot,
+			fixture.timezone
+		);
+
+		assert.equal(both?.points, 20);
+		assert.equal(getTaskList(householdId, context(fixture)).total, 0);
+		assert.equal(pointsByMemberSince(householdId, null).get(elisabeth.id), 20);
+	});
+
+	it('leaves the completion standing when nobody valid is named', () => {
+		const { fixture, householdId, owner, done, points } = shared();
+		const stranger = makeHousehold().owner.id;
+
+		assert.equal(
+			setCompletionDoers(householdId, done.completionId, [], done.snapshot, fixture.timezone),
+			null
+		);
+		assert.equal(
+			setCompletionDoers(
+				householdId,
+				done.completionId,
+				[stranger],
+				done.snapshot,
+				fixture.timezone
+			),
+			null
+		);
+		assert.deepEqual(points(), { [owner.id]: 20 });
+	});
+
+	it("cannot touch another household's completion", () => {
+		const { fixture, done, owner, points } = shared();
+		const other = makeHousehold();
+
+		assert.equal(
+			setCompletionDoers(
+				other.householdId,
+				done.completionId,
+				[other.owner.id],
+				done.snapshot,
+				fixture.timezone
+			),
+			null
+		);
+		assert.deepEqual(points(), { [owner.id]: 20 });
 	});
 });
 

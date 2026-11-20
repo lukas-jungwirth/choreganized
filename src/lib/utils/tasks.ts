@@ -27,6 +27,17 @@ export const POINTS_MAX = 999;
 export const RECUR_INTERVAL_MAX = 99;
 
 /**
+ * What each person gets when `people` finish a task together (→ SPEC §5.4,
+ * DECISIONS #277): an even split, rounded to the nearest whole point, so 20 by
+ * three is 7 each. Never less than 1 for a task that is worth something —
+ * helping must not score nothing — and a 0-point chore stays 0.
+ */
+export function splitPoints(points: number, people: number): number {
+	if (people <= 1 || points <= 0) return Math.max(points, 0);
+	return Math.max(1, Math.round(points / people));
+}
+
+/**
  * Effort → points [3b]. The canonical four (→ DECISIONS #2), plus a **None · 0**
  * preset for a chore worth tracking that shouldn't score (→ DECISIONS #115).
  */
