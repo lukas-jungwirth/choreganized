@@ -564,6 +564,8 @@ export const en = {
 			/** The CTA names where the item is going. */
 			addTo: (store: string) => `Add to ${store} list`,
 			addToList: 'Add to the list',
+			/** Editing: who put it on the list (the row no longer shows them). */
+			addedBy: (member: string) => `Added by ${member}`,
 			delete: 'Delete item'
 		},
 

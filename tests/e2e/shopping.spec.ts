@@ -162,3 +162,14 @@ test('a list from another household, or none at all, is not found', async ({ pag
 	expect((await page.goto(href!))?.status()).toBe(404);
 	expect((await page.goto('/shopping/00000000-0000-4000-8000-000000000000'))?.status()).toBe(404);
 });
+
+test('a row says nothing about who added it; its edit sheet does', async ({ page }) => {
+	await page.goto('/shopping');
+	const row = page.getByRole('listitem').filter({ hasText: 'Baby spinach' });
+	await expect(row.getByRole('button', { name: 'Check off Baby spinach' })).toBeVisible();
+	await expect(row.locator('.avatar')).toHaveCount(0);
+
+	await row.getByRole('button', { name: 'Edit Baby spinach' }).click();
+	const sheet = page.getByRole('dialog', { name: 'Edit item' });
+	await expect(sheet.getByText(`Added by ${SEED.housemate}`)).toBeVisible();
+});

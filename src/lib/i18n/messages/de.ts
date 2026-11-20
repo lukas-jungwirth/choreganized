@@ -427,6 +427,7 @@ export const de: Messages = {
 			store: 'Liste',
 			addTo: (store: string) => `Auf die Liste für ${store}`,
 			addToList: 'Auf die Liste',
+			addedBy: (member: string) => `Hinzugefügt von ${member}`,
 			delete: 'Eintrag löschen'
 		},
 

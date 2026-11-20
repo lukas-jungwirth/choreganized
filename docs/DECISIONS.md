@@ -3860,3 +3860,8 @@ units | null, name}`, written back as editor lines in the reader's unit spelling
      - **Not verified by hand: drag to reorder.** Neither a stepped mouse drag nor svelte-dnd-
        action's keyboard drag moves a row under Playwright here, on this branch or on `dev`, so
        the harness can't tell. The drag code moved into `ListCard` as it was.
+265. **Shopping rows lose the "added by" avatar; the item sheet names who added it** (Lukas
+     2026-11-20; → SPEC §3.1, §3.2, #264). In a household of two the small member circle on every
+     row is noise, and it took the space next to the quantity. Editing an item now shows "Added by
+     {member}" under its name, or nothing when that member has left. Who **ticked** a row still
+     shows: the settle in their colour and the live notice; a ticked checklist row (plan 36 step 2) keeps the ticker's avatar. The sketch's shopping rows draw no avatar either.

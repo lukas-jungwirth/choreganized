@@ -524,7 +524,7 @@
 		return `<li class="item ${done ? 'is-done' : ''} ${it.settling ? 'is-settling' : ''}">
 			<button class="check" data-act="tick" data-id="${L.id}" data-i="${i}" aria-pressed="${!!done}" aria-label="${esc(it.n)}">${CHECK}</button>
 			<span class="name">${esc(it.n)}</span>${it.q ? `<span class="qty">${esc(it.q)}</span>` : ''}
-			${L.kind === 'buy' ? (it.settling ? '' : av(it.by)) : it.done && it.who ? av(it.who) : ''}
+			${L.kind === 'buy' ? '' : it.done && it.who ? av(it.who) : ''}
 			<span class="grip">${ic('grip', 16)}</span></li>`;
 	};
 

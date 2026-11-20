@@ -355,8 +355,10 @@ lists; checklists (ticks that stay until "Start over") are step 2 and not built 
   per store: a drag never leaves its group, so it never reassigns a store (that's the sheet's
   job). A list nobody has dragged reads in the order things were added; a new item, and a
   recipe's ingredients, land at the group's end (→ [DECISIONS #118](DECISIONS.md)).
-- Row: check circle, name, optional quantity ("×6", "2L" — quantity+unit compact), adder's mini
-  avatar, and a **drag grip** at the right edge. Checking: sage fill + strikethrough, and the
+- Row: check circle, name, optional quantity ("×6", "2L" — quantity+unit compact), and a
+  **drag grip** at the right edge. No avatar of who added it: in a household of two it is noise
+  next to the quantity, and the edit sheet [3a] names them (→ [DECISIONS #265](DECISIONS.md)).
+  Who **ticked** a row still shows, in the settle's colour and the live notice. Checking: sage fill + strikethrough, and the
   row **moves under "{n} bought"** at the foot of its own card. Unchecking puts it back.
 - **A tick plays out where it stands.** For ~1.4 s the row stays in its list, visibly
   ticked: the circle fills with a small pop and draws its ✓, the quantity and avatar fade back,
@@ -398,6 +400,8 @@ lists; checklists (ticks that stay until "Start over") are step 2 and not built 
   pcs), **List** (chips of every list; the first list, or the opened list, preselected).
 - Opened by tapping a row (to edit) or the empty state's button (to add); the add field no
   longer has a sliders button, since the amount is typed inline.
+- Editing shows one quiet line under the name, "Added by {member}"; none when that member has
+  left the household.
 - CTA: "Add to {list} list". Editing: "Save changes" + a delete row.
 
 ### 3.3 Empty state [7d]
