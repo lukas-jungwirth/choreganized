@@ -96,7 +96,8 @@ function readTicks(form: FormData): ResetTick[] {
 export const shoppingActions = {
 	/**
 	 * The add field and the sheet [3a] both post here. The field says so
-	 * (`quick`): its line may carry an amount ("2 l milk"), a known name keeps the
+	 * (`quick`): its line may carry an amount at either end ("Gurken x3", plan
+	 * 37) unless it says `literal`, a known name keeps the
 	 * household's spelling ("milk" → "Milk"), and a name under "{n} bought" on
 	 * the target list is put back rather than added twice (plan 36).
 	 */
@@ -119,9 +120,17 @@ export const shoppingActions = {
 			return { added: true };
 		}
 
-		const parsed = parseQuickAdd(name.name);
+		// The amount is read here again, never taken from the browser (plan 37):
+		// the same rules the field's chip showed, and the same known names, so a
+		// line the household uses as a name is never split. The chip switched
+		// off (`literal`) means the line is the name, exactly as typed.
+		const names = listItemNames(householdId);
+		const parsed =
+			form.get('literal') !== null
+				? { name: name.name.replace(/\s+/g, ' '), quantity: null, unit: null }
+				: parseQuickAdd(name.name, new Set(names.map((row) => suggestionKey(row.name))));
 		const key = suggestionKey(parsed.name);
-		const known = listItemNames(householdId).find((row) => suggestionKey(row.name) === key);
+		const known = names.find((row) => suggestionKey(row.name) === key);
 		const lists = listStores(householdId);
 		const kindOf = (id: string | null | undefined) =>
 			lists.find((list) => list.id === id)?.kind ?? 'buy';

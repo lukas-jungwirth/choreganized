@@ -8,9 +8,12 @@
 	list it went to last, and a line under the field says why; a picked list
 	wins over that. On an opened list the icon is that list and nothing else.
 
-	"2 l milk" sets the amount in the same line (the server parses it,
-	→ `utils/lists` `parseQuickAdd`); tapping a row still opens the sheet [3a]
-	to edit.
+	"Gurken x3", "Milch 2l", "3 Gurken" set the amount in the same line, at
+	either end (plan 37, → `utils/lists` `parseQuickAdd`). A chip before the +
+	shows what was understood while typing ("×3", "2 L"); tap it off and the
+	line is added exactly as typed, and remembered as a name, so it is never
+	split again. The server reads the line again with the same rules; tapping a
+	row still opens the sheet [3a] to edit.
 
 	Under the field sit the household's own words (→ `lib/item-suggest.svelte.ts`),
 	each with the list it would go to. Tapping one adds it there and then — and
@@ -26,8 +29,14 @@
 	import SuggestionList from '$lib/components/shopping/SuggestionList.svelte';
 	import { messages } from '$lib/i18n';
 	import { itemSuggest } from '$lib/item-suggest.svelte';
-	import { listTarget, quickAddName, type KnownName, type ListKind } from '$lib/utils/lists';
-	import { ITEM_NAME_MAX } from '$lib/utils/shopping';
+	import {
+		listTarget,
+		parseQuickAdd,
+		quickAddName,
+		type KnownName,
+		type ListKind
+	} from '$lib/utils/lists';
+	import { ITEM_NAME_MAX, suggestionKey } from '$lib/utils/shopping';
 	import Check from '@lucide/svelte/icons/check';
 	import ChevronDown from '@lucide/svelte/icons/chevron-down';
 	import Plus from '@lucide/svelte/icons/plus';
@@ -114,8 +123,29 @@
 
 	const targetList = $derived(fixed ?? lists.find((list) => list.id === target.storeId) ?? null);
 
+	/** The names the household uses: a line that is one of them is never split (rule 1). */
+	const knownKeys = $derived(new Set(known.map((row) => suggestionKey(row.name))));
+
+	/** What the line would become: the chip shows its amount (plan 37). */
+	const parsed = $derived(parseQuickAdd(value, knownKeys));
+
+	/**
+	 * The chip's toggle: off adds the line exactly as typed. Back on whenever the
+	 * field is emptied, so one line's "no" doesn't carry over to the next.
+	 */
+	let amountOn = $state(true);
+	$effect(() => {
+		if (!value.trim()) amountOn = true;
+	});
+
+	const amount = $derived(
+		parsed.quantity === null
+			? null
+			: m.units.quantity(parsed.quantity, parsed.unit) || `×${parsed.quantity}`
+	);
+
 	const suggest = itemSuggest(
-		() => quickAddName(value),
+		() => quickAddName(value, knownKeys),
 		() => offered
 	);
 	const listId = $props.id();
@@ -205,6 +235,7 @@
 		}}
 	>
 		<input type="hidden" name="quick" value="1" />
+		{#if amount !== null && !amountOn}<input type="hidden" name="literal" value="1" />{/if}
 		{#if target.storeId !== null && (hydrated || fixed)}
 			<input type="hidden" name="storeId" value={target.storeId} />
 		{/if}
@@ -266,6 +297,23 @@
 			required
 		/>
 
+		{#if amount !== null}
+			<button
+				type="button"
+				class="amount"
+				class:off={!amountOn}
+				aria-pressed={amountOn}
+				aria-label={m.shopping.quickAdd.amount(amount)}
+				onclick={(event) => {
+					amountOn = !amountOn;
+					// A tap hands the keyboard back to the line; a key press (detail 0)
+					// stays on the chip, so it can be pressed again.
+					if (event.detail > 0) input?.focus();
+				}}
+			>
+				{amount}
+			</button>
+		{/if}
 		<button type="submit" class="submit" aria-label={m.shopping.quickAdd.submit}>
 			<Plus size={16} strokeWidth={2.4} />
 		</button>
@@ -432,6 +480,38 @@
 
 	.input:focus {
 		outline: none;
+	}
+
+	/* What the line would be read as (plan 37): sage while it applies, struck
+	   and muted once tapped off, so it can be switched back on. 32px drawn, a
+	   44px target; its type stops at 18px so the field keeps one line at 200%. */
+	.amount {
+		position: relative;
+		flex: none;
+		max-width: 40%;
+		min-height: 32px;
+		padding: 4px 10px;
+		overflow: hidden;
+		border-radius: var(--r-chip);
+		background: var(--sage-tint);
+		font-size: min(var(--fs-14), 18px);
+		font-weight: 700;
+		font-variant-numeric: tabular-nums;
+		white-space: nowrap;
+		text-overflow: ellipsis;
+		color: var(--sage-deep);
+	}
+
+	.amount::after {
+		content: '';
+		position: absolute;
+		inset: -6px 0;
+	}
+
+	.amount.off {
+		background: var(--sunken);
+		color: var(--text-5);
+		text-decoration: line-through;
 	}
 
 	.submit {

@@ -8,12 +8,13 @@
  *   wins, then the list a known name went to last time, then the first
  *   shopping list. The app never guesses: an unknown name goes where the icon
  *   already points.
- * - **"2 l milk"** (`parseQuickAdd`): an amount typed in the same line.
+ * - **"Gurken x3"** (`parseQuickAdd`): an amount typed in the same line, at
+ *   either end (plan 37).
  * - **Folded cards** (`readFolded` / `foldedCookie`): per device, in a cookie
  *   the load reads, so a folded card is folded in the first paint too.
  */
 // Written with its extension so `node --test` can load this module (→ ingredients.ts).
-import { parseIngredient, unitFromWord } from './ingredients.ts';
+import { unitFromWord } from './ingredients.ts';
 import { QUANTITY_MAX, suggestionKey } from './shopping.ts';
 
 /** The New list sheet's twelve icons [L6], in the order it shows them. */
@@ -100,7 +101,12 @@ export function listTarget(input: {
 		return { storeId: input.picked, remembered: null };
 	}
 
-	const name = quickAddName(input.typed);
+	// The known names as rule 1 reads them: a line the household uses whole
+	// ("Windeln 4") is looked up whole, not as "Windeln".
+	const name = quickAddName(
+		input.typed,
+		new Set(input.known.map((known) => suggestionKey(known.name)))
+	);
 	const key = suggestionKey(name);
 	const hit = key ? input.known.find((known) => suggestionKey(known.name) === key) : undefined;
 
@@ -114,51 +120,294 @@ export function listTarget(input: {
 	return { storeId: input.fallback, remembered: null };
 }
 
-/* ── "2 l milk" ───────────────────────────────────────────────────────────── */
+/* ── "Gurken x3" ─────────────────────────────────────────────────────────── */
 
 export type QuickAdd = { name: string; quantity: number | null; unit: string | null };
 
-/**
- * The first word has to *be* an amount ("2", "1,5", "½") or an amount fused
- * with a measuring unit ("500g"), or the line is all name. That is what keeps
- * "7up" and "4-Kornbrot" whole: the recipe parser is happy to read a leading
- * 7 off anything, and a recipe line is a different kind of writing.
- */
-const LEADING_AMOUNT = /^(?:[\d.,/½⅓⅔¼¾⅛]+|\d+(?:[.,]\d+)?(?:g|kg|ml|l))$/i;
+/** Something that can say whether a `suggestionKey` is a name the household uses. */
+export type KnownKeys = { has(key: string): boolean };
+
+/** The units a shopping row may wear. `tbsp`/`tsp` are recipe units (plan 37). */
+const SHOPPING_UNITS = new Set(['g', 'kg', 'ml', 'L', 'pcs', 'pack']);
+
+/** The Austrian deli counter: a Deka is ten grams ("20 dag Extrawurst" → 200 g). */
+const DEKA = new Set(['dag', 'dkg', 'deka']);
 
 /**
- * One typed line → the row it becomes: "2 l milk" is Milk, 2 L; "6 eggs" is
- * eggs ×6; "milk" is milk with no amount. Uses the recipe parser
- * (`utils/ingredients.ts`), so a household writes amounts the same way in both
- * places, in either language ("2 Pck. Butter").
+ * Words after which a trailing number is a size, not an amount: "Windeln Gr. 4",
+ * "Sonnencreme LSF 30", "Kaffee Nr 3" (plan 37 rule 7).
+ */
+const SIZE_WORDS = new Set([
+	'gr',
+	'gr.',
+	'größe',
+	'grösse',
+	'groesse',
+	'nr',
+	'nr.',
+	'no',
+	'no.',
+	'typ',
+	'type',
+	'size',
+	'lsf',
+	'spf',
+	'stufe',
+	'klasse',
+	'din'
+]);
+
+const GLYPHS: Record<string, number> = {
+	'½': 0.5,
+	'⅓': 1 / 3,
+	'⅔': 2 / 3,
+	'¼': 0.25,
+	'¾': 0.75,
+	'⅛': 0.125
+};
+const GLYPH = `[${Object.keys(GLYPHS).join('')}]`;
+
+const WHOLE = /^\d+$/;
+const DECIMAL = /^\d+[.,]\d+$/;
+const SLASH = /^(\d+)\/(\d+)$/;
+const MIXED = new RegExp(`^(\\d*)(${GLYPH})$`);
+/** "500g", "2l", "1,5kg", "3stk", "15dkg", "2pkg.": a number fused with a unit. */
+const FUSED = /^(\d+(?:[.,]\d+)?)(\p{L}+\.?)$/u;
+/** "3x", "x3", "3×": a count marker in one token. */
+const MARKER = /^(?:(\d+)[x×]|[x×](\d+))$/i;
+const X = /^[x×]$/i;
+
+type Amount = { quantity: number; unit: string | null };
+
+/** A unit a shopping row may wear, and what the number is multiplied by. */
+function unitOf(word: string): { unit: string; factor: number } | null {
+	const lower = word.toLowerCase();
+	if (DEKA.has(lower.replace(/\.$/, ''))) return { unit: 'g', factor: 10 };
+	if (X.test(lower)) return null;
+	const unit = unitFromWord(lower);
+	return unit && SHOPPING_UNITS.has(unit) ? { unit, factor: 1 } : null;
+}
+
+/**
+ * One token as a number, and what kind: a whole number, a decimal ("1,5"), or a
+ * fraction ("1/2", "½", "1½"). Null when it isn't one ("1.", "4-Korn", "10er").
+ */
+function numberOf(token: string): { value: number; kind: 'whole' | 'decimal' | 'fraction' } | null {
+	if (WHOLE.test(token)) return { value: Number(token), kind: 'whole' };
+	if (DECIMAL.test(token)) return { value: Number(token.replace(',', '.')), kind: 'decimal' };
+	const slash = SLASH.exec(token);
+	if (slash && Number(slash[2]) > 0) {
+		return { value: Number(slash[1]) / Number(slash[2]), kind: 'fraction' };
+	}
+	const mixed = MIXED.exec(token);
+	if (mixed) return { value: Number(mixed[1] || 0) + GLYPHS[mixed[2]], kind: 'fraction' };
+	return null;
+}
+
+/** "500g", "2l", "15dkg": a number fused with a unit, in one token. */
+function fusedOf(token: string): Amount | null {
+	const match = FUSED.exec(token);
+	if (!match) return null;
+	const unit = unitOf(match[2]);
+	if (!unit) return null;
+	return { quantity: Number(match[1].replace(',', '.')) * unit.factor, unit: unit.unit };
+}
+
+/** "3x", "x3": the count, or null. A count is a whole number. */
+function markerOf(token: string): number | null {
+	const match = MARKER.exec(token);
+	return match ? Number(match[1] ?? match[2]) : null;
+}
+
+/** "Gurken," → "Gurken": separators left at a name's edges go. */
+function trimName(name: string): string {
+	return name.replace(/^[\s,;:–-]+|[\s,;:–-]+$/gu, '');
+}
+
+/**
+ * The finished reading of a line, or null when it isn't one: a name with a
+ * letter in it that isn't itself a unit, and an amount the row can hold.
+ * Grams and millilitres step up to kilos and litres at a thousand.
+ */
+function accept(rawName: string, amount: Amount | null): QuickAdd | null {
+	if (!amount) return null;
+	const name = trimName(rawName);
+	if (!/\p{L}/u.test(name) || unitOf(name) || X.test(name)) return null;
+
+	let { quantity, unit } = amount;
+	if (unit === 'g' && quantity >= 1000) [quantity, unit] = [quantity / 1000, 'kg'];
+	else if (unit === 'ml' && quantity >= 1000) [quantity, unit] = [quantity / 1000, 'L'];
+	if (!(quantity > 0) || quantity > QUANTITY_MAX) return null;
+
+	return { name, quantity, unit };
+}
+
+/** A count from a marker or a bare number: whole, from 1 to the field's ceiling. */
+function count(value: number | null): Amount | null {
+	return value !== null && Number.isInteger(value) && value >= 1 && value <= QUANTITY_MAX
+		? { quantity: value, unit: null }
+		: null;
+}
+
+/**
+ * A whole bracket's worth of amount: "(10)", "(1 kg)", "(6x)". Anything else in
+ * it ("(E27)") is part of the name.
+ */
+function bracketOf(inner: string): Amount | null {
+	const tokens = inner.trim().split(' ').filter(Boolean);
+	if (tokens.length === 1) {
+		const [token] = tokens;
+		const number = numberOf(token);
+		if (number?.kind === 'whole') return count(number.value);
+		return fusedOf(token) ?? count(markerOf(token));
+	}
+	if (tokens.length === 2) {
+		const number = numberOf(tokens[0]);
+		const unit = unitOf(tokens[1]);
+		if (number && unit) return { quantity: number.value * unit.factor, unit: unit.unit };
+		if (number?.kind === 'whole' && X.test(tokens[1])) return count(number.value);
+	}
+	return null;
+}
+
+/** "Wasser 6 x 1,5l": an amount right after an x is a pack size, not what to buy. */
+const isNumber = (token: string | undefined) => token !== undefined && numberOf(token) !== null;
+
+/**
+ * One typed line → the row it becomes (plan 37, SPEC §3.1): "Gurken x3" is
+ * Gurken ×3, "Milch 2l" is Milch 2 L, "20 dag Extrawurst" is 200 g, "7up" and
+ * "1. Mai Kerzen" stay what they say. The amount may stand at either end; the
+ * rules below are tried in order and the first that leaves a real name wins.
  *
- * An amount past the field's ceiling is a typo, not an amount: the line is kept
- * whole rather than quietly clamped.
+ * `known` holds the `suggestionKey`s of the names the household already uses:
+ * a line that is one of them is that name and is never split (rule 1), which is
+ * how a correction ("Windeln 4" is the size, not four) sticks.
+ *
+ * One function for the field's chip and the server's add, so what the chip
+ * promised is what lands.
  */
-export function parseQuickAdd(text: string): QuickAdd {
+export function parseQuickAdd(text: string, known?: KnownKeys): QuickAdd {
 	const line = text.trim().replace(/\s+/g, ' ');
-	const [first] = line.split(' ');
+	const whole: QuickAdd = { name: line, quantity: null, unit: null };
+	if (!line) return whole;
 
-	if (!first || !LEADING_AMOUNT.test(first)) return { name: line, quantity: null, unit: null };
+	// 1. A name the household already uses.
+	if (known?.has(suggestionKey(line))) return whole;
 
-	const parsed = parseIngredient(line);
-	if (
-		!parsed ||
-		parsed.quantity === null ||
-		parsed.quantity > QUANTITY_MAX ||
-		// "2 kg", "500g": an amount with nothing to measure. The recipe parser
-		// keeps the unit as the name; a row called "kg" helps nobody.
-		unitFromWord(parsed.name) !== null
-	) {
-		return { name: line, quantity: null, unit: null };
+	const tokens = line.split(' ');
+	const last = tokens.length - 1;
+
+	// 2. Brackets at the end: "Eier (10)", "Mehl (1 kg)", "Bier (6x)".
+	const bracket = /^(.*?)\s*\(([^()]*)\)$/.exec(line);
+	if (bracket) {
+		const found = accept(bracket[1], bracketOf(bracket[2]));
+		if (found) return found;
 	}
 
-	return { name: parsed.name, quantity: parsed.quantity, unit: parsed.unit };
+	// 3. A count marker in front: "3x Gurken", "x3 Gurken", "3 x Gurken" — but
+	//    not "3 x 40 Schrauben", where the x makes a size.
+	{
+		const fused = markerOf(tokens[0]);
+		if (fused !== null && !isNumber(tokens[1])) {
+			const found = accept(tokens.slice(1).join(' '), count(fused));
+			if (found) return found;
+		}
+		const number = numberOf(tokens[0]);
+		if (number?.kind === 'whole' && X.test(tokens[1] ?? '') && !isNumber(tokens[2])) {
+			const found = accept(tokens.slice(2).join(' '), count(number.value));
+			if (found) return found;
+		}
+	}
+
+	// 4. A count marker at the end: "Gurken x3", "Gurken 3x", "Gurken x 3",
+	//    "Gurken 3 x" — but not "Schrauben 4 x 40".
+	{
+		const fused = markerOf(tokens[last]);
+		if (fused !== null) {
+			const found = accept(tokens.slice(0, last).join(' '), count(fused));
+			if (found) return found;
+		}
+		if (last >= 2 && X.test(tokens[last - 1]) && !isNumber(tokens[last - 2])) {
+			const number = numberOf(tokens[last]);
+			if (number?.kind === 'whole') {
+				const found = accept(tokens.slice(0, last - 1).join(' '), count(number.value));
+				if (found) return found;
+			}
+		}
+		if (last >= 1 && X.test(tokens[last])) {
+			const number = numberOf(tokens[last - 1]);
+			if (number?.kind === 'whole') {
+				const found = accept(tokens.slice(0, last - 1).join(' '), count(number.value));
+				if (found) return found;
+			}
+		}
+	}
+
+	// 5. An amount in front: "500g Mehl", "2 l Milch", "3 Gurken", "½ Brot". Not
+	//    a bare decimal ("0,5 Cola"), and not before "%", or "x" / "in" and a
+	//    number ("100 % Orangensaft", "2 in 1 Shampoo").
+	{
+		const fused = fusedOf(tokens[0]);
+		if (fused) {
+			const found = accept(tokens.slice(1).join(' '), fused);
+			if (found) return found;
+		}
+		const number = numberOf(tokens[0]);
+		const unit = tokens[1] !== undefined ? unitOf(tokens[1]) : null;
+		if (number && unit) {
+			const found = accept(tokens.slice(2).join(' '), {
+				quantity: number.value * unit.factor,
+				unit: unit.unit
+			});
+			if (found) return found;
+		}
+		const next = tokens[1] ?? '';
+		const guarded =
+			next.startsWith('%') ||
+			((X.test(next) || next.toLowerCase() === 'in') && isNumber(tokens[2]));
+		if (number && number.kind !== 'decimal' && !unit && !guarded) {
+			const amount =
+				number.kind === 'whole' ? count(number.value) : { quantity: number.value, unit: null };
+			const found = accept(tokens.slice(1).join(' '), amount);
+			if (found) return found;
+		}
+	}
+
+	// 6. A measured amount at the end: "Milch 2l", "Gurken 3 Stk", "Erdäpfel
+	//    1,5 kg". Not right after an x ("Wasser 6 x 1,5l").
+	{
+		const fused = fusedOf(tokens[last]);
+		if (fused && !X.test(tokens[last - 1] ?? '')) {
+			const found = accept(tokens.slice(0, last).join(' '), fused);
+			if (found) return found;
+		}
+		const unit = unitOf(tokens[last]);
+		const number = last >= 1 ? numberOf(tokens[last - 1]) : null;
+		if (unit && number && !X.test(tokens[last - 2] ?? '')) {
+			const found = accept(tokens.slice(0, last - 1).join(' '), {
+				quantity: number.value * unit.factor,
+				unit: unit.unit
+			});
+			if (found) return found;
+		}
+	}
+
+	// 7. A bare whole number at the end, 1 to 99: "Gurken 3", "Eier 10". Not
+	//    after a size word or an x, and never three digits ("Mehl 480").
+	if (last >= 1 && /^\d{1,2}$/.test(tokens[last])) {
+		const before = tokens[last - 1].toLowerCase();
+		if (!SIZE_WORDS.has(before) && !X.test(before)) {
+			const found = accept(tokens.slice(0, last).join(' '), count(Number(tokens[last])));
+			if (found) return found;
+		}
+	}
+
+	return whole;
 }
 
 /** Just the name part of a typed line — what suggestions and the target key on. */
-export function quickAddName(text: string): string {
-	return parseQuickAdd(text).name;
+export function quickAddName(text: string, known?: KnownKeys): string {
+	return parseQuickAdd(text, known).name;
 }
 
 /* ── Folded cards ─────────────────────────────────────────────────────────── */

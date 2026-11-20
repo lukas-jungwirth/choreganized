@@ -333,10 +333,26 @@ sketch is `design/sketches/lists.html`, frames [L1]–[L7]. A list is one of two
     ("**Shampoo** goes to Drugstore, like last time."). A list picked from the menu wins. An
     unknown name lands on the list shown: the app never guesses. The icon never moves to a
     checklist by itself: a name whose last list has become one stays on the list shown.
-  - **"2 l milk" sets the amount** in the same line: a leading amount and an optional unit,
-    read the way a recipe line is (`utils/lists.ts` `parseQuickAdd`), in either language. A
-    first word that is not purely an amount keeps the line whole ("7up", "4-Kornbrot"). A known
-    name keeps the household's spelling ("milk" becomes "Milk" if that is how it was written).
+  - **The amount may be typed at either end of the line** (plan 37, → `utils/lists.ts`
+    `parseQuickAdd`, DECISIONS #269): "Gurken x3", "3x Gurken", "Gurken 3 Stk", "Milch 2l",
+    "500g Mehl", "Eier (10)", "20 dag Extrawurst" (a Deka is ten grams). Seven rules, tried in
+    order: a name the household already uses stays whole · an amount in brackets at the end ·
+    a count marker (x, ×) in front · one at the end · an amount in front (a bare decimal, an
+    ordinal like "1. Mai", and a number before "%", "x 40" or "in 1" are not one) · a measured
+    amount at the end (not right after an x: "Wasser 6 x 1,5l") · a bare whole number 1 to 99
+    at the end (not after a size word like Gr., LSF, Nr, Typ). The name must keep a letter and
+    not be a unit; 1000 g and more is kg, 1000 ml and more is L; anything else above 999 keeps
+    the line whole. "7up", "WD-40", "Schrauben 4x40", "Windeln Gr. 4" stay as typed. The
+    contract (119 lines) is in `utils/lists.test.ts` and the plan.
+  - **A chip before the + shows what was understood** while typing ("×3", "2 L", "200 g"), in
+    sage. It is a toggle: tapped off it is struck and muted, and the line is added **exactly as
+    typed** and remembered as a name, so the same line is never split again ("Windeln 4" is a
+    size, not four nappies). It is back on whenever the field is emptied. The server reads the
+    line again with the same rules and the same known names, unless the form says `literal`.
+    On a checklist a literal line is not remembered (a checklist teaches the field nothing,
+    §3.7), so its chip comes back next time.
+  - A known name keeps the household's spelling ("milk" becomes "Milk" if that is how it was
+    written).
   - **On an opened list the field adds to that list and nothing else**; its icon is that list,
     with no menu.
   - An add to a list that is folded or not on screen makes that card flash sage once.
