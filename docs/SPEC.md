@@ -327,8 +327,8 @@ sketch is `design/sketches/lists.html`, frames [L1]–[L7]. A list is one of two
   two-arrows button. Its accessible name is "Open Grocery, 4 to get". The fold chevron after the
   name points down or up; the pill's points right. At 200% text the name truncates, never the
   pill. It opens the list full screen, at `/shopping/[listId]`: its own route, so
-  the phone's back button and the swipe-back return to the overview. "‹ Lists" and a ⋯ (edit
-  name and icon), the list's icon and name, "{n} to get · {n} bought", the add field, and the
+  the phone's back button and the swipe-back return to the overview. "‹ Lists" and a ⋯ (the
+  list's sheet: name, kind, icon, delete, §3.4; after a delete the overview), the list's icon and name, "{n} to get · {n} bought", the add field, and the
   same card body with "{n} bought" unfolded. A list id from another household is a 404. "Other"
   has no pill (it is not a list anyone made) and keeps its bare count.
 - **The add field's leading icon is the list it adds to**, and the placeholder names it ("Add
@@ -453,15 +453,22 @@ sketch is `design/sketches/lists.html`, frames [L1]–[L7]. A list is one of two
 
 ### 3.4 Manage lists (was Manage stores [7g]), and New list [L6]
 
-- Reorder with the arrows ("in the order you walk through town"), rename inline, **Add a
-  list**, delete (items fall back to Other). Any member may manage lists. Each row shows the
-  list's icon and its item count.
+- Each row shows the list's icon (sage well, terracotta for a checklist), its name and its item
+  count, and ends in a right-pointing chevron: **tapping the row opens the list's sheet**
+  (below), "Edit {list}" to a screen reader. A hairline sets the reorder arrows apart ("in the
+  order you walk through town"); they stay on the row and work without JavaScript. When the
+  sheet closes, focus goes back to the row. At 200% a long name wraps. **Add a list** opens the
+  same sheet to create one. Any member may manage lists. "Other" is not a list and has no row
+  (→ [DECISIONS #273](DECISIONS.md)). Editing a list needs JavaScript, like the item sheet.
 - **New list** (the dashed row on the overview, or the field's menu): a sheet with a name, the
   switch **Shopping list | Checklist** (basket and checklist icons, shopping list preselected),
   and an icon from a fixed set of twelve (basket, bag, droplet, pill, hammer, gift, suitcase,
   tent, door, paw, book, house). No explanatory copy. On create, the list opens so it can be
-  filled. The ⋯ on an opened list opens the same sheet to rename it, change its icon and change
-  its kind (§3.7).
+  filled. **The same sheet edits a list**, from its row here or from the ⋯ on an opened list:
+  name, kind (§3.7), icon, and under the save button a **Delete list** row (danger text, as in
+  the item sheet [3a]). Deleting asks first: a shopping list's items fall back to "Other" ("Its
+  3 items move to “Other”…"), an empty list says nothing else changes. After a delete from an
+  opened list the overview opens; from Manage lists it stays.
 - Deleting a **checklist** deletes its rows with it; the confirm says how many ("Its 6 items are
   deleted with it."). A checklist's tile here is terracotta, and the sage "add field starts
   here" tint is on the first shopping list, wherever it stands.

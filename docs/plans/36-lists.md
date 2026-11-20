@@ -236,8 +236,9 @@ spelling. Drag to reorder was not verified by hand (the harness can't drag, on `
   match a checklist row, both kind conversions · Playwright: create a checklist, it opens, add
   three, tick two, start over, undo · visual baseline of an opened checklist, light and dark.
 
-**Built 2026-11-20** (DECISIONS #268). Deviations: delete stays in Manage lists (as in step 1)
-rather than in the ⋯ sheet; the kind confirm appears only when rows would move; "Other" sits
+**Built 2026-11-20** (DECISIONS #268). Deviations: delete stayed in Manage lists (as in step 1)
+rather than in the ⋯ sheet, until Lukas moved it into the sheet the same day (#273: a list's
+row in Manage lists opens that sheet, and delete lives there); the kind confirm appears only when rows would move; "Other" sits
 before the checklists; an opened checklist's field offers no suggestions; a checklist tick is a
 silent refresh on the other phone (no "got" notice). Acceptance 13 and 15 were checked by
 integration tests against the real service functions, not by hand.

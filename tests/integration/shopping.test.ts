@@ -536,9 +536,12 @@ describe('checklists (plan 36 step 2)', () => {
 		add('Sunscreen');
 		addItem(householdId, owner.id, { name: 'Milk', storeId: grocery.id });
 
-		assert.equal(
-			listStoresWithCounts(householdId).find((store) => store.id === list.id)?.itemCount,
-			2
+		setChecked(householdId, getShoppingList(householdId)[0].id, owner.id, true);
+		// Manage lists counts everything, and the ticked rows a kind change would move.
+		const summary = listStoresWithCounts(householdId).find((store) => store.id === list.id);
+		assert.deepEqual(
+			[summary?.itemCount, summary?.checkedCount, summary?.kind],
+			[2, 1, 'checklist']
 		);
 		assert.equal(deleteStore(householdId, list.id), true);
 		assert.equal(deleteStore(householdId, grocery.id), true);

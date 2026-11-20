@@ -244,6 +244,8 @@ export type StoreSummary = {
 	kind: ListKind;
 	/** Everything filed here, checked items included — what [7g] counts. */
 	itemCount: number;
+	/** Ticked (bought) rows: what the edit sheet's kind change would move. */
+	checkedCount: number;
 };
 
 export function listStoresWithCounts(householdId: string): StoreSummary[] {
@@ -255,7 +257,9 @@ export function listStoresWithCounts(householdId: string): StoreSummary[] {
 			kind: stores.kind,
 			// Counting the item id, not the row: a store with nothing in it is a
 			// single all-NULL join row, and count(*) would call that 1.
-			itemCount: count(shoppingItems.id)
+			itemCount: count(shoppingItems.id),
+			// `count` of a column skips NULLs: only the ticked rows.
+			checkedCount: count(shoppingItems.checkedAt)
 		})
 		.from(stores)
 		.leftJoin(shoppingItems, eq(shoppingItems.storeId, stores.id))

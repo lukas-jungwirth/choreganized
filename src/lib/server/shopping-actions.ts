@@ -14,6 +14,7 @@ import {
 	addItem,
 	createStore,
 	deleteItem,
+	deleteStore,
 	listItemNames,
 	listStores,
 	quickAddItem,
@@ -258,6 +259,18 @@ export const shoppingActions = {
 		if (kind) setStoreKind(householdId, id, kind);
 
 		return { listId: id };
+	},
+
+	/**
+	 * Delete a list, from its edit sheet (Manage lists or an opened list's ⋯).
+	 * A shopping list's items move to "Other"; a checklist's rows go with it
+	 * (→ `deleteStore`). The sheet has asked first.
+	 */
+	deleteList: async (event: RequestEvent) => {
+		const { householdId } = requireMember(event);
+		const form = await event.request.formData();
+
+		return { deleted: deleteStore(householdId, String(form.get('id') ?? '')) };
 	},
 
 	/**
