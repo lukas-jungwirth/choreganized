@@ -615,11 +615,21 @@ export const taskCompletions = sqliteTable(
 			.default('done'),
 		memberId: text('member_id').references(() => members.id, { onDelete: 'set null' }),
 		memberName: text('member_name').notNull(),
+		/**
+		 * One finishing of one task. Done together = one row per doer, each holding
+		 * that doer's share of the points, all with the same `groupId` (→ SPEC §5.4).
+		 * A task done alone is a group of one. NULL on rows from before shared
+		 * completions existed; those are their own group, keyed by `id`.
+		 */
+		groupId: text('group_id'),
 		completedAt: integer('completed_at', { mode: 'timestamp_ms' })
 			.notNull()
 			.$defaultFn(() => new Date())
 	},
-	(t) => [index('task_completions_household_idx').on(t.householdId, t.completedAt)]
+	(t) => [
+		index('task_completions_household_idx').on(t.householdId, t.completedAt),
+		index('task_completions_group_idx').on(t.groupId)
+	]
 );
 
 /**

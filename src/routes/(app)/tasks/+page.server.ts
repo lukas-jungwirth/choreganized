@@ -1,5 +1,5 @@
 /**
- * Tasks (→ SPEC §5). Nine actions, one service call each — the lifecycle lives
+ * Tasks (→ SPEC §5). Ten actions, one service call each — the lifecycle lives
  * in `services/tasks.ts`, and everything here is reading a form.
  *
  * Every action recomputes the household's `today` rather than trusting one from
@@ -22,6 +22,7 @@ import {
 	parseSnapshot,
 	reassignTask,
 	setAway,
+	setCompletionDoers,
 	skipTask,
 	snoozeTask,
 	undoCompletion,
@@ -180,9 +181,46 @@ export const actions: Actions = {
 		return {
 			completed: {
 				completion,
-				// The celebration is the doer's — their points, their standings line.
+				// The standings line is the reader's own, whoever was credited: with
+				// several doers there is no single "their" line to show.
 				standing: memberStanding(
-					creditMemberId,
+					member.id,
+					listMembers(householdId),
+					monthPointsByMember(householdId, context)
+				)
+			}
+		};
+	},
+
+	/**
+	 * The celebration's row of faces (→ SPEC §5.4): who the completion is credited
+	 * to, changed after the tick. Several faces share the points. The answer is a
+	 * whole new celebration, so the modal redraws from it.
+	 */
+	doers: async (event) => {
+		const { householdId, member } = requireMember(event);
+		const form = await event.request.formData();
+		const context = clockOf(event, householdId);
+		const failed = catalog(event.locals.locale).tasks.done.whoFailed;
+
+		const snapshot = parseSnapshot(form.get('snapshot'));
+		if (!snapshot) return fail(400, { error: failed });
+
+		const completion = setCompletionDoers(
+			householdId,
+			String(form.get('completionId') ?? ''),
+			form.getAll('memberId').map(String),
+			snapshot,
+			context.timezone
+		);
+		// Undone on another phone, or nobody left to credit.
+		if (!completion) return fail(404, { error: failed });
+
+		return {
+			completed: {
+				completion,
+				standing: memberStanding(
+					member.id,
 					listMembers(householdId),
 					monthPointsByMember(householdId, context)
 				)

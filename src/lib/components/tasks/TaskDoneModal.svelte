@@ -6,29 +6,89 @@
 	row back (→ services/tasks.ts).
 
 	No confetti: the design celebrates with words.
+
+	It is also where the credit is corrected (→ SPEC §5.4, DECISIONS #277). The
+	tick credited one person; the row of faces says who it really was. Tap a face
+	on and the points are shared, tap one off and they are not. Every tap posts
+	`?/doers` and the whole modal redraws from the answer, so the points, the next
+	turn and the standings line can't disagree with what was saved.
 -->
 <script lang="ts">
 	import { enhance } from '$app/forms';
 	import Avatar from '$lib/components/ui/Avatar.svelte';
 	import CenterModal from '$lib/components/ui/CenterModal.svelte';
 	import { messages } from '$lib/i18n';
+	import type { HouseholdMember } from '$lib/server/services/household';
 	import type { CompletionResult, Standing } from '$lib/server/services/tasks';
+	import type { SubmitFunction } from '@sveltejs/kit';
 	import Calendar from '@lucide/svelte/icons/calendar';
 	import Check from '@lucide/svelte/icons/check';
 	import Star from '@lucide/svelte/icons/star';
 
 	type Props = {
+		/** What the tick logged. The faces can replace it while the modal is up. */
 		completion: CompletionResult;
+		/** The reader's own place this month, whoever was credited. */
 		standing: Standing;
+		/** The household, in join order: one face each. */
+		members: HouseholdMember[];
+		currentMemberId: string;
 		onclose: () => void;
 	};
 
-	let { completion, standing, onclose }: Props = $props();
+	let {
+		completion: logged,
+		standing: loggedStanding,
+		members,
+		currentMemberId,
+		onclose
+	}: Props = $props();
 
 	const m = messages();
 
 	let open = $state(true);
 	let submitting = $state(false);
+	/** The answer to the last change of faces; until then, what the tick logged. */
+	let changed = $state<{ completion: CompletionResult; standing: Standing } | null>(null);
+	const completion = $derived(changed?.completion ?? logged);
+	const standing = $derived(changed?.standing ?? loggedStanding);
+
+	const me = $derived(members.find((member) => member.id === currentMemberId));
+	const doerIds = $derived(completion.doers.map((doer) => doer.id));
+	const together = $derived(completion.doers.length > 1);
+
+	const title = $derived.by(() => {
+		const names = completion.doers.map((doer) => doer.displayName);
+		return together
+			? m.tasks.done.niceWorkTogether(names, doerIds.includes(currentMemberId))
+			: m.tasks.done.niceWork(names[0] ?? '');
+	});
+
+	/** The doers after a tap on `memberId`: in if they were out, out if they were in. */
+	function toggled(memberId: string): string[] {
+		return doerIds.includes(memberId)
+			? doerIds.filter((id) => id !== memberId)
+			: [...doerIds, memberId];
+	}
+
+	const change: SubmitFunction = () => {
+		submitting = true;
+		error = undefined;
+
+		return async ({ result, update }) => {
+			// The list behind the modal moves too: the next turn may have changed.
+			await update({ reset: false });
+			submitting = false;
+
+			if (result.type === 'success' && result.data?.completed) {
+				changed = result.data.completed as NonNullable<typeof changed>;
+				return;
+			}
+			if (result.type === 'failure') {
+				error = typeof result.data?.error === 'string' ? result.data.error : m.tasks.done.whoFailed;
+			}
+		};
+	};
 	/** This form's own rejection — a failed undo must not look like a done one. */
 	let error = $state<string | undefined>();
 
@@ -43,23 +103,32 @@
 		return completion.rotated ? m.tasks.done.handoverNext(name) : m.tasks.done.handoverSame(name);
 	});
 
+	/** The gap to the rival, not the two totals: "5 points ahead of Elisabeth". */
 	const standings = $derived.by(() => {
 		const { points, rival, state } = standing;
 		if (!rival) return m.tasks.done.standingsSolo(points);
-		if (state === 'leading') return m.tasks.done.standingsLeading(points, rival.points);
-		if (state === 'tied') return m.tasks.done.standingsTied(points, rival.points);
-		return m.tasks.done.standingsBehind(rival.displayName, rival.points, points);
+		if (state === 'tied') return m.tasks.done.standingsTied(rival.displayName);
+		const gap = Math.abs(points - rival.points);
+		return state === 'leading'
+			? m.tasks.done.standingsAhead(gap, rival.displayName)
+			: m.tasks.done.standingsBehind(gap, rival.displayName);
 	});
 </script>
 
 <CenterModal bind:open label={m.tasks.done.label}>
 	<div class="badge" aria-hidden="true"><Check size={36} strokeWidth={3} /></div>
 
-	<h2>{m.tasks.done.niceWork(completion.memberName)}</h2>
-	<p class="what">{m.tasks.done.logged(completion.taskName)}</p>
+	<h2>{title}</h2>
+	<p class="what">
+		{together
+			? m.tasks.done.shared(completion.taskName, completion.taskPoints, completion.doers.length)
+			: m.tasks.done.logged(completion.taskName)}
+	</p>
 
 	<p class="points">
-		<Star size={18} strokeWidth={2} aria-hidden="true" />{m.tasks.done.points(completion.points)}
+		<Star size={18} strokeWidth={2} aria-hidden="true" />{together
+			? m.tasks.done.pointsEach(completion.points)
+			: m.tasks.done.points(completion.points)}
 	</p>
 
 	{#if completion.nextDueDate}
@@ -72,8 +141,50 @@
 		</div>
 	{/if}
 
+	<!-- Who did it. One small form per face: each posts the doers as they would be
+		 after that tap, so it works the same with no JavaScript. Alone in the
+		 household there is nobody to share with, and no row. -->
+	{#if members.length > 1}
+		<div class="who" role="group" aria-labelledby="who-label">
+			<p class="who-label">
+				<span id="who-label">{m.tasks.done.who}</span>
+				<span class="hint">{m.tasks.done.whoHint}</span>
+			</p>
+			<div class="faces">
+				{#each members as member (member.id)}
+					{@const on = doerIds.includes(member.id)}
+					{@const next = toggled(member.id)}
+					<form method="POST" action="?/doers" use:enhance={change}>
+						<input type="hidden" name="completionId" value={completion.completionId} />
+						<input type="hidden" name="snapshot" value={JSON.stringify(completion.snapshot)} />
+						{#each next as id (id)}
+							<input type="hidden" name="memberId" value={id} />
+						{/each}
+						<!-- The last face stays: a completion is always somebody's. Taking
+							 it back altogether is what Undo is for. -->
+						<button
+							type="submit"
+							class="face"
+							aria-pressed={on}
+							aria-label={member.displayName}
+							disabled={submitting || next.length === 0}
+						>
+							<span class="disc">
+								<Avatar name={member.displayName} color={member.color} size={38} />
+								<span class="tick" aria-hidden="true"><Check size={11} strokeWidth={3.4} /></span>
+							</span>
+							<span class="name" aria-hidden="true">
+								{member.id === currentMemberId ? m.tasks.done.whoYou : member.displayName}
+							</span>
+						</button>
+					</form>
+				{/each}
+			</div>
+		</div>
+	{/if}
+
 	<p class="standings">
-		<Avatar name={completion.memberName} color={completion.memberColor} size={20} />{standings}
+		{#if me}<Avatar name={me.displayName} color={me.color} size={20} />{/if}{standings}
 	</p>
 
 	<form
@@ -177,6 +288,118 @@
 		display: block;
 		margin-top: 1px;
 		font-size: var(--fs-14);
+	}
+
+	/* The row of faces. Up to 76px each, so a name has room in a small household;
+	   five still share one line of the 390px modal. */
+	.who {
+		margin-bottom: 18px;
+		padding: 12px 6px 10px;
+		border: 1px solid var(--border);
+		border-radius: var(--r-block);
+	}
+
+	.who-label {
+		display: flex;
+		flex-wrap: wrap;
+		justify-content: center;
+		gap: 0 6px;
+		margin: 0 0 10px;
+		font-size: var(--fs-14);
+		font-weight: 600;
+		color: var(--text-4);
+	}
+
+	.hint {
+		font-weight: 500;
+		color: var(--text-5);
+	}
+
+	.faces {
+		display: flex;
+		justify-content: center;
+	}
+
+	.faces form {
+		flex: 0 1 76px;
+		min-width: 0;
+	}
+
+	.face {
+		display: flex;
+		flex-direction: column;
+		align-items: center;
+		gap: 5px;
+		width: 100%;
+		padding: 3px 0;
+		border-radius: 12px;
+	}
+
+	/* The ring is drawn around the avatar, in the gap the padding leaves. */
+	.disc {
+		position: relative;
+		display: flex;
+		padding: 3px;
+		border-radius: 50%;
+		box-shadow: inset 0 0 0 2px transparent;
+		transition: box-shadow 150ms ease-out;
+	}
+
+	.disc :global(.avatar) {
+		opacity: 0.32;
+		transition: opacity 150ms ease-out;
+	}
+
+	.tick {
+		position: absolute;
+		right: -1px;
+		bottom: -1px;
+		display: flex;
+		align-items: center;
+		justify-content: center;
+		width: 17px;
+		height: 17px;
+		border-radius: 50%;
+		background: var(--sage);
+		box-shadow: 0 0 0 2px var(--card);
+		color: var(--on-sage);
+		transform: scale(0);
+		transition: transform 150ms ease-out;
+	}
+
+	.name {
+		max-width: 100%;
+		overflow: hidden;
+		font-size: var(--fs-13);
+		font-weight: 500;
+		text-overflow: ellipsis;
+		white-space: nowrap;
+		color: var(--text-5);
+	}
+
+	.face[aria-pressed='true'] .disc {
+		box-shadow: inset 0 0 0 2px var(--sage);
+	}
+
+	.face[aria-pressed='true'] .disc :global(.avatar) {
+		opacity: 1;
+	}
+
+	.face[aria-pressed='true'] .tick {
+		transform: scale(1);
+	}
+
+	.face[aria-pressed='true'] .name {
+		font-weight: 700;
+		color: var(--ink);
+	}
+
+	@media (prefers-reduced-motion: reduce) {
+		.disc,
+		.disc :global(.avatar),
+		.tick {
+			transition: none;
+		}
 	}
 
 	.standings {

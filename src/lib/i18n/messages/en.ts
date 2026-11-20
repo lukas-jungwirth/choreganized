@@ -379,6 +379,10 @@ export const en = {
 
 		/** "+10" — a task's worth, wherever points are a badge. */
 		points: (points: number) => `+${points}`,
+		/** A task done together, in the feeds: what each doer got (→ SPEC §5.8). */
+		pointsEach: (points: number) => `+${points} each`,
+		/** Who did it, in the feeds: "Lukas", "Lukas and Elisabeth". */
+		doers: (names: string[]) => list(names),
 
 		/**
 		 * The overdue card's footer, left half: "It's Elisabeth's turn" [4a]. An
@@ -859,6 +863,17 @@ export const en = {
 			reassignTo: (name: string) => `Reassign to ${name}`,
 			/** How the current member appears in those two rows. */
 			me: 'me',
+			/**
+			 * With more than one person to hand it to, one row opens a list instead
+			 * of a row per housemate (→ SPEC §5.3, DECISIONS #277).
+			 */
+			assign: 'Assign',
+			reassign: 'Reassign',
+			pickTitle: 'Who takes it?',
+			/** The current member in that list: "Lukas (you)". */
+			pickYou: (name: string) => `${name} (you)`,
+			pickCurrent: 'current',
+			pickBack: 'Back',
 			skip: 'Skip this time',
 			skipNote: '· no points',
 			edit: 'Edit task',
@@ -872,8 +887,25 @@ export const en = {
 		done: {
 			label: 'Task completed',
 			niceWork: (name: string) => `Nice work, ${name}!`,
+			/** Done together (→ SPEC §5.4). Two are named or addressed, more are counted. */
+			niceWorkTogether: (names: string[], includesMe: boolean) => {
+				if (names.length === 2) {
+					return includesMe ? 'Nice work, you two!' : `Nice work, ${list(names)}!`;
+				}
+				const count = ['three', 'four', 'five'][names.length - 3] ?? String(names.length);
+				return `Nice work, all ${count}!`;
+			},
 			logged: (task: string) => `${task} · logged to history`,
+			/** The same line when the points were split: what the task was worth, and by how many. */
+			shared: (task: string, points: number, people: number) =>
+				`${task} · ${points} ${points === 1 ? 'point' : 'points'} shared by ${people}`,
 			points: (points: number) => `+${points} points`,
+			pointsEach: (points: number) => `+${points} ${points === 1 ? 'point' : 'points'} each`,
+			/** The row of faces: who it is credited to, changeable until the pop-up closes. */
+			who: 'Who did it?',
+			whoHint: 'Tap to change',
+			whoYou: 'You',
+			whoFailed: 'Couldn’t change that.',
 			nextDue: (date: string) => `Next due ${date}`,
 			/** Where the chore went next — or the truth, when nothing changed hands. */
 			handoverAnyone: 'Rescheduled · anyone can take it',
@@ -881,10 +913,11 @@ export const en = {
 			handoverSame: (name: string) => `Rescheduled · still ${name}'s`,
 			/** The month's standings, in one line (→ SPEC §5.4). */
 			standingsSolo: (points: number) => `${points} points this month`,
-			standingsLeading: (mine: number, theirs: number) => `You're now leading ${mine} – ${theirs}`,
-			standingsTied: (mine: number, theirs: number) => `You're level at ${mine} – ${theirs}`,
-			standingsBehind: (name: string, theirs: number, mine: number) =>
-				`${name} leads ${theirs} – ${mine}`,
+			standingsAhead: (gap: number, name: string) =>
+				`You're ${gap} ${gap === 1 ? 'point' : 'points'} ahead of ${name}`,
+			standingsTied: (name: string) => `You're level with ${name}`,
+			standingsBehind: (gap: number, name: string) =>
+				`You're ${gap} ${gap === 1 ? 'point' : 'points'} behind ${name}`,
 			undo: 'Undo',
 			undoFailed: 'Couldn’t undo that one.'
 		},

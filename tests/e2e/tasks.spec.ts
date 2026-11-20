@@ -23,6 +23,42 @@ test('mark a chore done, then undo it from the modal', async ({ page }) => {
 	await expect(page.getByRole('button', { name: `Mark ${name} done` })).toBeVisible();
 });
 
+test('a chore done together splits the points, from the faces in the modal (#277)', async ({
+	page
+}) => {
+	await page.goto('/tasks');
+
+	const done = page.getByRole('button', { name: /^Mark .* done$/ }).first();
+	const name = (await done.getAttribute('aria-label'))!.replace(/^Mark (.*) done$/, '$1');
+	await done.click();
+
+	const modal = page.getByRole('dialog');
+	const faces = modal.getByRole('group', { name: 'Who did it?' });
+	const lukas = faces.getByRole('button', { name: 'Lukas' });
+	const elisabeth = faces.getByRole('button', { name: 'Elisabeth' });
+
+	// The tick credited whoever holds the phone, and nobody else.
+	await expect(lukas).toHaveAttribute('aria-pressed', 'true');
+	await expect(elisabeth).toHaveAttribute('aria-pressed', 'false');
+	// The last face can't be tapped off: a completion is always somebody's.
+	await expect(lukas).toBeDisabled();
+
+	await elisabeth.click();
+	await expect(modal.getByRole('heading', { name: 'Nice work, you two!' })).toBeVisible();
+	await expect(modal.getByText(/points? each$/)).toBeVisible();
+	await expect(modal.getByText(/shared by 2$/)).toBeVisible();
+
+	// It was Elisabeth alone after all.
+	await lukas.click();
+	await expect(modal.getByRole('heading', { name: 'Nice work, Elisabeth!' })).toBeVisible();
+	await expect(elisabeth).toBeDisabled();
+
+	// Undo still takes the whole thing back.
+	await modal.getByRole('button', { name: 'Undo' }).click();
+	await expect(modal).toBeHidden();
+	await expect(page.getByRole('button', { name: `Mark ${name} done` })).toBeVisible();
+});
+
 test('the Tasks tab carries the overdue badge the layout computes', async ({ page }) => {
 	await page.goto('/home');
 	const tasksTab = page

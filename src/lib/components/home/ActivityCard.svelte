@@ -24,14 +24,24 @@
 
 		<ul>
 			{#each entries as entry (entry.id)}
-				{@const color = entry.memberColor ?? 'var(--text-4)'}
+				{@const colors = entry.doers.map((doer) => doer.color ?? 'var(--text-4)')}
+				{@const shared = entry.doers.length > 1}
 				<li>
-					<CheckCircle checked tinted size={28} {color} />
+					<!-- Done together: a tick per doer, and points that are nobody's colour. -->
+					<span class="ticks">
+						{#each colors as color, index (index)}
+							<span class="tick"><CheckCircle checked tinted size={28} {color} /></span>
+						{/each}
+					</span>
 					<span class="what">
 						<span class="task">{entry.taskName}</span>
-						<span class="meta">{entry.memberName} · {entry.time}</span>
+						<span class="meta">
+							{m.task.doers(entry.doers.map((doer) => doer.name))} · {entry.time}
+						</span>
 					</span>
-					<span class="points" style:color>{m.task.points(entry.points)}</span>
+					<span class="points" style:color={shared ? 'var(--text-3)' : colors[0]}>
+						{shared ? m.task.pointsEach(entry.points) : m.task.points(entry.points)}
+					</span>
 				</li>
 			{/each}
 		</ul>
@@ -82,6 +92,22 @@
 
 	li + li {
 		border-top: 1px solid var(--divider);
+	}
+
+	.ticks {
+		display: flex;
+		flex: none;
+	}
+
+	.tick {
+		display: flex;
+		border-radius: 50%;
+		background: var(--card);
+		box-shadow: 0 0 0 2px var(--card);
+	}
+
+	.tick + .tick {
+		margin-left: -11px;
 	}
 
 	.what {

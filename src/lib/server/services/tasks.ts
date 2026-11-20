@@ -12,7 +12,7 @@
  * Plan 02 opened this file with `listOverdueForMember`, which the tab badge and
  * the Home banner share; plan 04 built the rest around it.
  */
-import { and, asc, count, eq, gte, isNull, lt, or, sql, type SQL } from 'drizzle-orm';
+import { and, asc, eq, gte, isNull, lt, or, sql, type SQL } from 'drizzle-orm';
 import { alias } from 'drizzle-orm/sqlite-core';
 import { type Locale } from '$lib/i18n';
 import {
@@ -27,6 +27,7 @@ import {
 	isRecurUnit,
 	POINTS_MAX,
 	RECUR_INTERVAL_MAX,
+	splitPoints,
 	TASK_NAME_MAX,
 	type RecurUnit
 } from '$lib/utils/tasks';
@@ -510,16 +511,20 @@ export function parseSnapshot(raw: unknown): TaskSnapshot | null {
 
 export type TaskActionKind = 'done' | 'skipped';
 
+/** One of the people a completion is credited to. */
+export type CompletionDoer = { id: string; displayName: string; color: string };
+
 export type CompletionResult = {
+	/** The completion's group: one id for every doer's row (→ `task_completions.groupId`). */
 	completionId: string;
 	action: TaskActionKind;
 	taskName: string;
-	/** What was actually logged: the task's points, or 0 for a skip. */
+	/** What each doer was credited: the whole task alone, their share together, 0 for a skip. */
 	points: number;
-	/** Who it's credited to — the tapper, or the assignee when done on their behalf. */
-	memberName: string;
-	/** That member's colour, for the avatar on the celebration's standings line. */
-	memberColor: string;
+	/** What the task is worth in full, before any split. */
+	taskPoints: number;
+	/** Who it's credited to, in join order. One for a task done alone, more when shared. */
+	doers: CompletionDoer[];
 	/** NULL for a one-off — the row is gone, only the history entry remains. */
 	nextDueDate: CalendarDate | null;
 	/** Who holds it next, rotated or not; NULL = Anyone. */
@@ -534,7 +539,8 @@ export type CompletionResult = {
  * — the tapper for their own and "Anyone" tasks, or the person named by the "who
  * did it?" choice when the task was somebody else's — and move the task on, with
  * rotation following that doer (→ docs/DATA-MODEL.md "Completion algorithm",
- * SPEC §5.4).
+ * SPEC §5.4). Sharing it comes afterwards, from the celebration
+ * (→ `setCompletionDoers`).
  */
 export function completeTask(
 	householdId: string,
@@ -542,7 +548,9 @@ export function completeTask(
 	creditMemberId: string,
 	today: CalendarDate
 ): CompletionResult | null {
-	return logTaskAction(householdId, taskId, creditMemberId, today, 'done');
+	return db.transaction((tx) =>
+		logTaskAction(tx, householdId, taskId, [creditMemberId], today, 'done')
+	);
 }
 
 /**
@@ -556,45 +564,126 @@ export function skipTask(
 	memberId: string,
 	today: CalendarDate
 ): CompletionResult | null {
-	return logTaskAction(householdId, taskId, memberId, today, 'skipped');
+	return db.transaction((tx) =>
+		logTaskAction(tx, householdId, taskId, [memberId], today, 'skipped')
+	);
+}
+
+/**
+ * Change who a completion is credited to, from the celebration's row of faces
+ * (→ SPEC §5.4): somebody else did it, or several people did it together and
+ * share the points. It is the same completion told again — the old rows go, the
+ * task returns to the state the snapshot holds, and it is logged afresh for the
+ * new doers under the same group id and the same moment, so the feed keeps its
+ * place and Undo still has one thing to take back.
+ *
+ * Null when there is nothing to change: the completion is gone (undone on
+ * another phone), or none of the ids is a housemate.
+ */
+export function setCompletionDoers(
+	householdId: string,
+	completionId: string,
+	memberIds: string[],
+	snapshot: TaskSnapshot,
+	timezone: string
+): CompletionResult | null {
+	return db.transaction((tx) => {
+		const logged = tx
+			.select({ completedAt: taskCompletions.completedAt })
+			.from(taskCompletions)
+			.where(
+				and(
+					eq(taskCompletions.householdId, householdId),
+					eq(taskCompletions.action, 'done'),
+					inGroup(completionId)
+				)
+			)
+			.get();
+
+		if (!logged) return null;
+
+		// Checked before anything is taken apart: an empty answer must leave the
+		// completion standing rather than undo it.
+		const known = tx
+			.select({ id: members.id })
+			.from(members)
+			.where(eq(members.householdId, householdId))
+			.all();
+		const doerIds = known.map((member) => member.id).filter((id) => memberIds.includes(id));
+		if (doerIds.length === 0) return null;
+
+		// Where the completion sent a recurring task. Telling it again must not
+		// move that date, so it is read off the row before the row is put back.
+		const moved = tx
+			.select({ dueDate: tasks.dueDate })
+			.from(tasks)
+			.where(and(eq(tasks.id, snapshot.id), eq(tasks.householdId, householdId)))
+			.get();
+
+		undoIn(tx, householdId, completionId, snapshot);
+
+		return logTaskAction(
+			tx,
+			householdId,
+			snapshot.id,
+			doerIds,
+			// Only reached for when the row had no date to keep: then the day it
+			// was done, not the day it was corrected.
+			toCalendarDate(logged.completedAt, timezone),
+			'done',
+			{
+				groupId: completionId,
+				completedAt: logged.completedAt,
+				nextDueDate: moved?.dueDate ?? null
+			}
+		);
+	});
+}
+
+/** Every row of one completion: its group, or the single pre-group row with that id. */
+function inGroup(completionId: string): SQL | undefined {
+	return or(eq(taskCompletions.groupId, completionId), eq(taskCompletions.id, completionId));
 }
 
 function logTaskAction(
+	tx: Transaction,
 	householdId: string,
 	taskId: string,
-	creditMemberId: string,
+	creditMemberIds: string[],
 	today: CalendarDate,
-	action: TaskActionKind
+	action: TaskActionKind,
+	/** Set when an existing completion is being told again (→ `setCompletionDoers`). */
+	keep?: { groupId: string; completedAt: Date; nextDueDate: CalendarDate | null }
 ): CompletionResult | null {
-	return db.transaction((tx) => {
-		const task = tx
-			.select()
-			.from(tasks)
-			.where(and(eq(tasks.id, taskId), eq(tasks.householdId, householdId)))
-			.get();
+	const task = tx
+		.select()
+		.from(tasks)
+		.where(and(eq(tasks.id, taskId), eq(tasks.householdId, householdId)))
+		.get();
 
-		if (!task) return null;
+	if (!task) return null;
 
-		// One read, three uses: it validates the doer, names and colours them for
-		// the completion snapshot, and is the rotation order (→ docs/DATA-MODEL.md).
-		const roster = tx
-			.select({ id: members.id, displayName: members.displayName, color: members.color })
-			.from(members)
-			.where(eq(members.householdId, householdId))
-			.orderBy(asc(members.joinedAt), asc(members.id))
-			.all();
+	// One read, three uses: it validates the doers, names and colours them for
+	// the completion snapshot, and is the rotation order (→ docs/DATA-MODEL.md).
+	const roster = tx
+		.select({ id: members.id, displayName: members.displayName, color: members.color })
+		.from(members)
+		.where(eq(members.householdId, householdId))
+		.orderBy(asc(members.joinedAt), asc(members.id))
+		.all();
 
-		// Who the completion is credited to: the tapper by default, or whoever the
-		// "who did it?" choice named when the task was somebody else's (→ SPEC §5.4).
-		// A skip is always the tapper's — nobody else is claiming it.
-		const doer = roster.find((member) => member.id === creditMemberId);
-		if (!doer) return null;
+	// Who the completion is credited to: the tapper by default, whoever the "who
+	// did it?" choice named, or everyone the celebration's faces say did it
+	// together (→ SPEC §5.4). A skip is always the tapper's alone.
+	const doers = roster.filter((member) => creditMemberIds.includes(member.id));
+	if (doers.length === 0) return null;
 
-		const points = action === 'done' ? task.points : 0;
+	const points = action === 'done' ? splitPoints(task.points, doers.length) : 0;
+	const groupId = keep?.groupId ?? crypto.randomUUID();
 
-		const completion = tx
-			.insert(taskCompletions)
-			.values({
+	tx.insert(taskCompletions)
+		.values(
+			doers.map((doer) => ({
 				householdId,
 				taskId: task.id,
 				// Snapshots, so history survives the task and the member
@@ -603,91 +692,93 @@ function logTaskAction(
 				points,
 				action,
 				memberId: doer.id,
-				memberName: doer.displayName
-			})
-			.returning({ id: taskCompletions.id })
-			.get();
+				memberName: doer.displayName,
+				groupId,
+				...(keep ? { completedAt: keep.completedAt } : {})
+			}))
+		)
+		.run();
 
-		const snapshot: TaskSnapshot = {
-			id: task.id,
-			name: task.name,
-			points: task.points,
-			recurUnit: task.recurUnit,
-			recurInterval: task.recurInterval,
-			dueDate: task.dueDate,
-			assigneeMemberId: task.assigneeMemberId,
-			rotate: task.rotate,
-			createdByMemberId: task.createdByMemberId,
-			createdAt: task.createdAt.getTime(),
-			dueReminderSentAt: task.dueReminderSentAt?.getTime() ?? null,
-			overdueReminderSentAt: task.overdueReminderSentAt?.getTime() ?? null
-		};
+	const snapshot: TaskSnapshot = {
+		id: task.id,
+		name: task.name,
+		points: task.points,
+		recurUnit: task.recurUnit,
+		recurInterval: task.recurInterval,
+		dueDate: task.dueDate,
+		assigneeMemberId: task.assigneeMemberId,
+		rotate: task.rotate,
+		createdByMemberId: task.createdByMemberId,
+		createdAt: task.createdAt.getTime(),
+		dueReminderSentAt: task.dueReminderSentAt?.getTime() ?? null,
+		overdueReminderSentAt: task.overdueReminderSentAt?.getTime() ?? null
+	};
 
-		const result = {
-			completionId: completion.id,
-			action,
-			taskName: task.name,
-			points,
-			memberName: doer.displayName,
-			memberColor: doer.color,
-			snapshot
-		};
+	const result = {
+		completionId: groupId,
+		action,
+		taskName: task.name,
+		points,
+		taskPoints: task.points,
+		doers,
+		snapshot
+	};
 
-		if (task.recurUnit === 'none') {
-			// A one-off is done being a task. The completion row we just wrote has
-			// its `taskId` nulled by the FK, which is the honest answer: the task no
-			// longer exists. Undo puts the row back under the same id.
-			tx.delete(tasks)
-				.where(and(eq(tasks.id, task.id), eq(tasks.householdId, householdId)))
-				.run();
-
-			return { ...result, nextDueDate: null, nextAssigneeName: null, rotated: false };
-		}
-
-		// Counted from the day it was actually done, not from the date it missed,
-		// so an overdue weekly task gets a full week rather than reappearing
-		// tomorrow (→ DECISIONS #6).
-		const nextDueDate = addInterval(today, task.recurInterval, task.recurUnit);
-
-		// Rotation advances from whoever was responsible for this occurrence. A
-		// completion is the doer's, so doing a task that was someone else's hands
-		// the next turn to *them* rather than back to yourself (→ SPEC §5.4,
-		// DECISIONS #116). A skip is nobody's doing, so the assignee's turn is the
-		// one that passes — the long-standing behaviour, unchanged.
-		const rotateFrom = action === 'done' ? doer.id : task.assigneeMemberId;
-		const current = roster.findIndex((member) => member.id === rotateFrom);
-		// Wrapping through join order; a departed assignee is already NULL, and
-		// with one member there is nobody to alternate with.
-		const nextAssigneeId =
-			task.rotate && current !== -1
-				? roster[(current + 1) % roster.length].id
-				: task.assigneeMemberId;
-
-		tx.update(tasks)
-			.set({
-				dueDate: nextDueDate,
-				assigneeMemberId: nextAssigneeId,
-				// A new occurrence has been nudged about exactly nothing.
-				dueReminderSentAt: null,
-				overdueReminderSentAt: null,
-				updatedAt: new Date()
-			})
+	if (task.recurUnit === 'none') {
+		// A one-off is done being a task. The completion rows we just wrote have
+		// their `taskId` nulled by the FK, which is the honest answer: the task no
+		// longer exists. Undo puts the row back under the same id.
+		tx.delete(tasks)
 			.where(and(eq(tasks.id, task.id), eq(tasks.householdId, householdId)))
 			.run();
 
-		return {
-			...result,
-			nextDueDate,
-			nextAssigneeName: roster.find((member) => member.id === nextAssigneeId)?.displayName ?? null,
-			rotated: nextAssigneeId !== task.assigneeMemberId
-		};
-	});
+		return { ...result, nextDueDate: null, nextAssigneeName: null, rotated: false };
+	}
+
+	// Counted from the day it was actually done, not from the date it missed,
+	// so an overdue weekly task gets a full week rather than reappearing
+	// tomorrow (→ DECISIONS #6).
+	const nextDueDate = keep?.nextDueDate ?? addInterval(today, task.recurInterval, task.recurUnit);
+
+	// Rotation advances from whoever was responsible for this occurrence. A
+	// completion by one person is theirs, so doing a task that was someone else's
+	// hands the next turn to *them* rather than back to yourself (→ SPEC §5.4,
+	// DECISIONS #116). Done together it is nobody's in particular, and a skip is
+	// nobody's doing at all: in both the assignee's turn is the one that passes.
+	const rotateFrom = action === 'done' && doers.length === 1 ? doers[0].id : task.assigneeMemberId;
+	const current = roster.findIndex((member) => member.id === rotateFrom);
+	// Wrapping through join order; a departed assignee is already NULL, and
+	// with one member there is nobody to alternate with.
+	const nextAssigneeId =
+		task.rotate && current !== -1
+			? roster[(current + 1) % roster.length].id
+			: task.assigneeMemberId;
+
+	tx.update(tasks)
+		.set({
+			dueDate: nextDueDate,
+			assigneeMemberId: nextAssigneeId,
+			// A new occurrence has been nudged about exactly nothing.
+			dueReminderSentAt: null,
+			overdueReminderSentAt: null,
+			updatedAt: new Date()
+		})
+		.where(and(eq(tasks.id, task.id), eq(tasks.householdId, householdId)))
+		.run();
+
+	return {
+		...result,
+		nextDueDate,
+		nextAssigneeName: roster.find((member) => member.id === nextAssigneeId)?.displayName ?? null,
+		rotated: nextAssigneeId !== task.assigneeMemberId
+	};
 }
 
 /**
- * Undo a completion (→ SPEC §5.4): the history row goes, the task goes back to
- * the due date, assignee and reminder flags it had a moment ago — and if it was
- * a one-off, the row itself comes back under its original id.
+ * Undo a completion (→ SPEC §5.4): the history rows go — every doer's share at
+ * once — the task goes back to the due date, assignee and reminder flags it had
+ * a moment ago, and if it was a one-off, the row itself comes back under its
+ * original id.
  *
  * Returns false when there is nothing to undo, which is the honest answer to
  * the second tap on a button that already worked.
@@ -697,58 +788,63 @@ export function undoCompletion(
 	completionId: string,
 	snapshot: TaskSnapshot
 ): boolean {
-	return db.transaction((tx) => {
-		const removed = tx
-			.delete(taskCompletions)
-			.where(
-				and(eq(taskCompletions.id, completionId), eq(taskCompletions.householdId, householdId))
-			)
-			.run();
+	return db.transaction((tx) => undoIn(tx, householdId, completionId, snapshot));
+}
 
-		if (removed.changes === 0) return false;
+function undoIn(
+	tx: Transaction,
+	householdId: string,
+	completionId: string,
+	snapshot: TaskSnapshot
+): boolean {
+	const removed = tx
+		.delete(taskCompletions)
+		.where(and(eq(taskCompletions.householdId, householdId), inGroup(completionId)))
+		.run();
 
-		const assigneeMemberId = resolveMemberId(householdId, snapshot.assigneeMemberId, tx);
-		const flags = {
-			dueReminderSentAt: instantOf(snapshot.dueReminderSentAt),
-			overdueReminderSentAt: instantOf(snapshot.overdueReminderSentAt)
-		};
+	if (removed.changes === 0) return false;
 
-		const restored = tx
-			.update(tasks)
-			.set({
-				dueDate: snapshot.dueDate,
+	const assigneeMemberId = resolveMemberId(householdId, snapshot.assigneeMemberId, tx);
+	const flags = {
+		dueReminderSentAt: instantOf(snapshot.dueReminderSentAt),
+		overdueReminderSentAt: instantOf(snapshot.overdueReminderSentAt)
+	};
+
+	const restored = tx
+		.update(tasks)
+		.set({
+			dueDate: snapshot.dueDate,
+			assigneeMemberId,
+			...flags,
+			updatedAt: new Date()
+		})
+		.where(and(eq(tasks.id, snapshot.id), eq(tasks.householdId, householdId)))
+		.run();
+
+	// Nothing to update means the row was deleted — a one-off. Put it back
+	// whole, id included, so anything that referenced it still does.
+	if (restored.changes === 0) {
+		tx.insert(tasks)
+			.values({
+				id: snapshot.id,
+				householdId,
+				name: snapshot.name.slice(0, TASK_NAME_MAX),
+				points: clamp(snapshot.points, 0, POINTS_MAX),
+				recurUnit: snapshot.recurUnit,
+				recurInterval: clamp(snapshot.recurInterval, 1, RECUR_INTERVAL_MAX),
+				dueDate: isCalendarDate(snapshot.dueDate) ? snapshot.dueDate : null,
 				assigneeMemberId,
-				...flags,
-				updatedAt: new Date()
+				rotate: snapshot.rotate && assigneeMemberId !== null,
+				createdByMemberId: resolveMemberId(householdId, snapshot.createdByMemberId, tx),
+				// Undated one-offs are ordered by this, so the row has to come
+				// back where it was rather than at the bottom of the section.
+				createdAt: instantOf(snapshot.createdAt) ?? new Date(),
+				...flags
 			})
-			.where(and(eq(tasks.id, snapshot.id), eq(tasks.householdId, householdId)))
 			.run();
+	}
 
-		// Nothing to update means the row was deleted — a one-off. Put it back
-		// whole, id included, so anything that referenced it still does.
-		if (restored.changes === 0) {
-			tx.insert(tasks)
-				.values({
-					id: snapshot.id,
-					householdId,
-					name: snapshot.name.slice(0, TASK_NAME_MAX),
-					points: clamp(snapshot.points, 0, POINTS_MAX),
-					recurUnit: snapshot.recurUnit,
-					recurInterval: clamp(snapshot.recurInterval, 1, RECUR_INTERVAL_MAX),
-					dueDate: isCalendarDate(snapshot.dueDate) ? snapshot.dueDate : null,
-					assigneeMemberId,
-					rotate: snapshot.rotate && assigneeMemberId !== null,
-					createdByMemberId: resolveMemberId(householdId, snapshot.createdByMemberId, tx),
-					// Undated one-offs are ordered by this, so the row has to come
-					// back where it was rather than at the bottom of the section.
-					createdAt: instantOf(snapshot.createdAt) ?? new Date(),
-					...flags
-				})
-				.run();
-		}
-
-		return true;
-	});
+	return true;
 }
 
 function instantOf(at: number | null): Date | null {
@@ -917,7 +1013,10 @@ export function memberStanding(
 /** A completions count — the To do screen's "N done this week" summary line. */
 export function countDoneSince(householdId: string, since: Date): number {
 	const row = db
-		.select({ n: count() })
+		// A task done together is one thing done, however many rows share it.
+		.select({
+			n: sql<number>`count(distinct coalesce(${taskCompletions.groupId}, ${taskCompletions.id}))`
+		})
 		.from(taskCompletions)
 		.where(
 			and(

@@ -284,6 +284,8 @@ export const de: Messages = {
 		},
 
 		points: (points: number) => `+${points}`,
+		pointsEach: (points: number) => `je +${points}`,
+		doers: (names: string[]) => list(names),
 
 		/**
 		 * "Du bist dran" / "Elisabeth ist dran" — Deutsch braucht dafür keinen
@@ -645,6 +647,12 @@ export const de: Messages = {
 			assignTo: (name: string) => `${name} zuweisen`,
 			reassignTo: (name: string) => `${name} neu zuweisen`,
 			me: 'mir',
+			assign: 'Zuweisen',
+			reassign: 'Neu zuweisen',
+			pickTitle: 'Wer übernimmt?',
+			pickYou: (name: string) => `${name} (du)`,
+			pickCurrent: 'aktuell',
+			pickBack: 'Zurück',
 			skip: 'Diesmal überspringen',
 			skipNote: '· keine Punkte',
 			edit: 'Aufgabe bearbeiten',
@@ -657,17 +665,32 @@ export const de: Messages = {
 		done: {
 			label: 'Aufgabe erledigt',
 			niceWork: (name: string) => `Gut gemacht, ${name}!`,
+			niceWorkTogether: (names: string[], includesMe: boolean) => {
+				if (names.length === 2) {
+					return includesMe ? 'Gut gemacht, ihr zwei!' : `Gut gemacht, ${list(names)}!`;
+				}
+				const count = ['drei', 'vier', 'fünf'][names.length - 3] ?? String(names.length);
+				return `Gut gemacht, alle ${count}!`;
+			},
 			logged: (task: string) => `${task} · in der Historie vermerkt`,
+			shared: (task: string, points: number, people: number) =>
+				`${task} · ${points} ${points === 1 ? 'Punkt' : 'Punkte'}, durch ${people} geteilt`,
 			points: (points: number) => `+${points} Punkte`,
+			pointsEach: (points: number) => `je +${points} ${points === 1 ? 'Punkt' : 'Punkte'}`,
+			who: 'Wer hat’s gemacht?',
+			whoHint: 'Zum Ändern antippen',
+			whoYou: 'Du',
+			whoFailed: 'Das ließ sich nicht ändern.',
 			nextDue: (date: string) => `Nächste Fälligkeit ${date}`,
 			handoverAnyone: 'Neu geplant · kann jemand übernehmen',
 			handoverNext: (name: string) => `Neu geplant · als Nächstes ist ${name} dran`,
 			handoverSame: (name: string) => `Neu geplant · weiterhin ${name}`,
 			standingsSolo: (points: number) => `${points} Punkte diesen Monat`,
-			standingsLeading: (mine: number, theirs: number) => `Du führst jetzt ${mine} – ${theirs}`,
-			standingsTied: (mine: number, theirs: number) => `Gleichstand ${mine} – ${theirs}`,
-			standingsBehind: (name: string, theirs: number, mine: number) =>
-				`${name} führt ${theirs} – ${mine}`,
+			standingsAhead: (gap: number, name: string) =>
+				`Du liegst ${gap} ${gap === 1 ? 'Punkt' : 'Punkte'} vor ${name}`,
+			standingsTied: (name: string) => `Du liegst gleichauf mit ${name}`,
+			standingsBehind: (gap: number, name: string) =>
+				`Du liegst ${gap} ${gap === 1 ? 'Punkt' : 'Punkte'} hinter ${name}`,
 			undo: 'Rückgängig',
 			undoFailed: 'Das ließ sich nicht rückgängig machen.'
 		},

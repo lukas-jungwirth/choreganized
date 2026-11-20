@@ -58,17 +58,82 @@ export type Podium = {
 
 /* ── Completed feed ───────────────────────────────────────────────────────── */
 
+export type FeedDoer = {
+	/** The snapshot, so a departed housemate keeps their name in the feed. */
+	name: string;
+	/** From the *current* member row; null once that housemate has left. */
+	color: string | null;
+};
+
 export type FeedEntry = {
+	/** The completion's group, or the row's own id from before groups existed. */
 	id: string;
 	taskName: string;
-	/** The snapshot, so a departed housemate keeps their name in the feed. */
-	memberName: string;
-	/** From the *current* member row; null once that housemate has left. */
-	memberColor: string | null;
+	/** Who did it, in join order. More than one = done together (→ SPEC §5.4). */
+	doers: FeedDoer[];
+	/** What each doer got: the whole task alone, their share together. */
 	points: number;
 	/** Household-local clock time, e.g. "8:20". */
 	time: string;
 };
+
+/** One `task_completions` row with its member, as both feeds read it. */
+export type CompletionRow = {
+	id: string;
+	groupId: string | null;
+	taskName: string;
+	memberName: string;
+	memberColor: string | null;
+	memberJoinedAt: Date | null;
+	points: number;
+	completedAt: Date;
+};
+
+/** The columns of a `CompletionRow`, for a select joined to `members`. */
+export const completionRowColumns = {
+	id: taskCompletions.id,
+	groupId: taskCompletions.groupId,
+	taskName: taskCompletions.taskName,
+	memberName: taskCompletions.memberName,
+	memberColor: members.color,
+	memberJoinedAt: members.joinedAt,
+	points: taskCompletions.points,
+	completedAt: taskCompletions.completedAt
+};
+
+/**
+ * Rows → feed entries: every doer's row of one completion becomes a single
+ * line (→ SPEC §5.8). Shared by the History feed and Home's activity card, so a
+ * task done together reads the same in both. Order is the rows' own, by each
+ * group's first row; inside a group the doers stand in join order, departed
+ * housemates last.
+ */
+export function groupCompletions(
+	rows: CompletionRow[]
+): (Omit<FeedEntry, 'time'> & { completedAt: Date })[] {
+	const groups = new Map<string, CompletionRow[]>();
+
+	for (const row of rows) {
+		const key = row.groupId ?? row.id;
+		const group = groups.get(key);
+		if (group) group.push(row);
+		else groups.set(key, [row]);
+	}
+
+	return [...groups].map(([id, group]) => ({
+		id,
+		taskName: group[0].taskName,
+		doers: group
+			.toSorted(
+				(a, b) =>
+					(a.memberJoinedAt?.getTime() ?? Infinity) - (b.memberJoinedAt?.getTime() ?? Infinity) ||
+					a.id.localeCompare(b.id)
+			)
+			.map((row) => ({ name: row.memberName, color: row.memberColor })),
+		points: group[0].points,
+		completedAt: group[0].completedAt
+	}));
+}
 
 export type FeedDay = {
 	date: CalendarDate;
@@ -110,14 +175,7 @@ export function getCompletedFeed(
 	const windowStart = zonedStartOfDay(requested, context.timezone);
 
 	const rows = db
-		.select({
-			id: taskCompletions.id,
-			taskName: taskCompletions.taskName,
-			memberName: taskCompletions.memberName,
-			memberColor: members.color,
-			points: taskCompletions.points,
-			completedAt: taskCompletions.completedAt
-		})
+		.select(completionRowColumns)
 		.from(taskCompletions)
 		.leftJoin(members, eq(taskCompletions.memberId, members.id))
 		.where(
@@ -134,7 +192,7 @@ export function getCompletedFeed(
 	const days: FeedDay[] = [];
 	let day: FeedDay | undefined;
 
-	for (const { completedAt, ...entry } of rows) {
+	for (const { completedAt, ...entry } of groupCompletions(rows)) {
 		const date = toCalendarDate(completedAt, context.timezone);
 
 		// Rows arrive newest first, so the only group a completion can join is the

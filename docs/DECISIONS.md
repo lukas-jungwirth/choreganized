@@ -4067,3 +4067,23 @@ store_id` NULL already means "no memory" (a deleted list), and telling the two a
      top-up (`toppedUpCount: 1`, "topped up", not "added") and publishes `added` so other
      screens refetch; "already" changed nothing and publishes nothing. The sheet's rename does
      not merge.
+
+277. **A task can be done together, and who did it is corrected after the tick** (Lukas
+     2026-11-20; → SPEC §5.3, §5.4, §5.8, DATA-MODEL `task_completions.groupId`, sketch
+     `design/sketches/task-done-together.html`). The celebration modal gains a **Who did it?**
+     row: one face per member, the credited ones on; a tap adds or removes a person and saves
+     at once. That one control is "done together", "somebody else did it" and "my task, done
+     by my housemate". **Why after and not before**: most ticks are your own task done by you,
+     so a question before every tick would cost a tap to confirm a right guess. **The question
+     before the tick stays** for other people's tasks (#116), unchanged, because there the app
+     has no good guess and a silent wrong credit is the worse error; it picks one person and
+     has no "together" answer, so sharing lives in one place. **Points are split and rounded
+     to the nearest whole point each** (20 by three is 7, so 21 in all): rounding down would
+     make sharing cost points; at least 1 each for a task worth something. **Storage**: one
+     row per doer with a shared `groupId`, so every points sum is untouched and only the
+     feeds and counts group. Changing the doers is undo plus log-again in one transaction,
+     keeping the id, the moment and the next due date. **Rotation**: alone from the doer
+     (#116), together from the assignee. **The standings line shows the gap** ("5 points ahead
+     of Elisabeth"), not two totals, and is always the reader's own. **Reassign is one row**:
+     direct with a single other choice, a list ("Who takes it?", Anyone included) with more,
+     instead of a row per housemate. **Not built**: correcting the credit later from History.

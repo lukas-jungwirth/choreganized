@@ -115,16 +115,25 @@
 		{
 			id: 'f1',
 			taskName: 'Change the bedsheets',
-			memberName: 'Lukas',
-			memberColor: 'var(--member-sage)',
+			doers: [{ name: 'Lukas', color: 'var(--member-sage)' }],
 			points: 20,
 			time: '8:20'
 		},
 		{
+			// Done together: one line, a tick each, and what each of them got.
+			id: 'f4',
+			taskName: 'Clean the bathroom',
+			doers: [
+				{ name: 'Lukas', color: 'var(--member-sage)' },
+				{ name: 'Elisabeth', color: 'var(--member-terracotta)' }
+			],
+			points: 10,
+			time: '8:05'
+		},
+		{
 			id: 'f2',
 			taskName: 'Water the plants',
-			memberName: 'Elisabeth',
-			memberColor: 'var(--member-terracotta)',
+			doers: [{ name: 'Elisabeth', color: 'var(--member-terracotta)' }],
 			points: 5,
 			time: '7:45'
 		},
@@ -133,8 +142,7 @@
 			// is gone with their row.
 			id: 'f3',
 			taskName: 'Take out recycling',
-			memberName: 'Marco',
-			memberColor: null,
+			doers: [{ name: 'Marco', color: null }],
 			points: 10,
 			time: '19:10'
 		}
