@@ -39,12 +39,37 @@ const ITEM = /^[-*]\s+(.*)$/;
  * A web address (http or https only) or an email address. Deliberately plain:
  * the text is a few hundred words a person wrote, not untrusted markup, and
  * anything this misses is still shown, just not as a link.
+ *
+ * An address ends at a quote mark of any kind, not only the straight ones:
+ * German text puts an address in „…“ or »…«, and the closing mark in the link
+ * would send the reader to a page that isn't there (→ DECISIONS #281).
  */
 const LINKABLE =
-	/(https?:\/\/[^\s<>"']+)|([A-Za-z0-9._%+-]+@[A-Za-z0-9-]+(?:\.[A-Za-z0-9-]+)*\.[A-Za-z]{2,})/g;
+	/(https?:\/\/[^\s<>"'„“”‟‚‘’‛«»‹›]+)|([A-Za-z0-9._%+-]+@[A-Za-z0-9-]+(?:\.[A-Za-z0-9-]+)*\.[A-Za-z]{2,})/g;
 
 /** What a sentence puts after an address, which is not part of it. */
-const TRAILING = /[.,;:!?)\]]+$/;
+const PUNCTUATION = '.,;:!?';
+
+/** A closing bracket ends the address only when the address never opened it. */
+const OPENED_BY: Record<string, string> = { ')': '(', ']': '[' };
+
+/**
+ * Where the address in `found` ends: before the sentence's own punctuation,
+ * and before a closing bracket the sentence opened. "(see https://a.example)"
+ * loses its bracket; "…/wiki/Datenschutz-Grundverordnung_(EU)" keeps it.
+ */
+function addressEnd(found: string): number {
+	let end = found.length;
+	for (; end > 0; end--) {
+		const last = found[end - 1];
+		if (PUNCTUATION.includes(last)) continue;
+		const opener = OPENED_BY[last];
+		if (!opener) break;
+		const address = found.slice(0, end);
+		if (address.split(last).length <= address.split(opener).length) break;
+	}
+	return end;
+}
 
 export function parseLegalText(source: string): Block[] {
 	const text = source.replace(/\r\n?/g, '\n').replace(/\\n/g, '\n');
@@ -88,8 +113,7 @@ export function linkify(line: string): Line {
 	for (const match of line.matchAll(LINKABLE)) {
 		const found = match[0];
 		// "see https://example.com." — the full stop ends the sentence, not the address.
-		const trailing = TRAILING.exec(found)?.[0] ?? '';
-		const address = found.slice(0, found.length - trailing.length);
+		const address = found.slice(0, addressEnd(found));
 		const start = match.index;
 
 		if (start > at) out.push({ kind: 'text', text: line.slice(at, start) });

@@ -36,7 +36,7 @@
 
 	<Card radius="md">
 		<div class="text">
-			<LegalText blocks={data.blocks} />
+			<LegalText blocks={data.blocks} lang={data.lang} />
 		</div>
 	</Card>
 

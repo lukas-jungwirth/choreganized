@@ -88,9 +88,11 @@ const child = spawn(process.execPath, [...preload, 'build/index.js'], {
 		// Both legal pages, with made-up text (→ SPEC §13): sign-in, Settings and
 		// the pages themselves are tested and screenshotted with them on. Unset
 		// they hide, which tests/integration/legal-pages.test.ts covers. One
-		// written on one line with `\n`, the way a single-line variable is.
+		// written on one line with `\n`, the way a single-line variable is. The
+		// made-up text is English, and says so (the default is German).
 		LEGAL_IMPRINT: E2E_IMPRINT,
 		LEGAL_PRIVACY: E2E_PRIVACY,
+		LEGAL_LANG: 'en',
 		...fakeAiEnv(fakeAi.url),
 		...fixedClock
 	}

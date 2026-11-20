@@ -4,6 +4,10 @@
 	`href` is set, like `Button`, so a way to another screen stays a real link.
 	It always carries an `aria-label`, since the icon is all there is to see.
 	Position it from the parent (`class` + `:global`); the shape lives here.
+
+	Drawn 38px, tappable on 44px: an invisible 3px rim (`::after`) takes the
+	taps that land just off the circle. It changes no layout, so keep 3px clear
+	around the button for anything else that answers a tap (→ DECISIONS #281).
 -->
 <script lang="ts">
 	import type { Snippet } from 'svelte';
@@ -30,6 +34,8 @@
 
 <style>
 	.round {
+		/* For the rim below; a parent that places it `absolute` works as well. */
+		position: relative;
 		display: flex;
 		align-items: center;
 		justify-content: center;
@@ -41,6 +47,13 @@
 		box-shadow: var(--shadow-card);
 		color: var(--text-4);
 		transition: transform 120ms ease-out;
+	}
+
+	.round::after {
+		content: '';
+		position: absolute;
+		inset: -3px;
+		border-radius: 50%;
 	}
 
 	.round:active {

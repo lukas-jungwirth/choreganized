@@ -4,7 +4,7 @@
  */
 import assert from 'node:assert/strict';
 import { describe, it } from 'vitest';
-import { legalLinksFrom, legalTextFrom } from './legal';
+import { legalLangFrom, legalLinksFrom, legalTextFrom } from './legal';
 
 describe('legalTextFrom', () => {
 	it('is null while the variable is unset, empty or only whitespace', () => {
@@ -34,5 +34,24 @@ describe('legalLinksFrom', () => {
 			imprint: true,
 			privacy: true
 		});
+	});
+});
+
+describe('legalLangFrom', () => {
+	it('is German unless the deploy says otherwise', () => {
+		assert.equal(legalLangFrom({}), 'de');
+		assert.equal(legalLangFrom({ LEGAL_LANG: '' }), 'de');
+		assert.equal(legalLangFrom({ LEGAL_LANG: '  ' }), 'de');
+	});
+
+	it('takes a language tag as written, trimmed', () => {
+		assert.equal(legalLangFrom({ LEGAL_LANG: 'en' }), 'en');
+		assert.equal(legalLangFrom({ LEGAL_LANG: ' de-AT ' }), 'de-AT');
+	});
+
+	it('falls back to German for anything that is not a language tag', () => {
+		for (const value of ['english', 'de_AT', 'en"><script>', 'de AT', '1']) {
+			assert.equal(legalLangFrom({ LEGAL_LANG: value }), 'de', value);
+		}
 	});
 });

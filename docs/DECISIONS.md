@@ -4147,3 +4147,28 @@ store_id` NULL already means "no memory" (a deleted list), and telling the two a
      result; the error is a `role="alert"` outside both forms. The reassign list in the task
      sheet moves focus in and hands it back. German "durch 3 geteilt" became "auf 3
      aufgeteilt", the word the expenses use.
+
+280. **The gear answers on 44px, the legal text says its language, and an address ends where
+     the writer meant** (review of #266 and #270, 2026-11-20; → SPEC §2, §13). Four low
+     findings, each checked with a test first, all four kept because each fix is a few lines.
+     **Tap area**: `RoundButton` stays 38px to look at (#266) and gains an invisible 3px rim
+     (`::after`, `inset: -3px`), so it answers on 44px. A pseudo-element and not padding with a
+     pulled-back margin (as `LegalLinks` does), because the button is a flex item on Expenses
+     and absolutely placed on Home, and the rim changes neither layout. Nothing else that
+     answers a tap is within 3px: on Home the raccoon starts 10px below (#266, now asserted in
+     `home.spec.ts`), on Expenses the open menu starts 8px below. **Not 48px**: the raccoon's
+     10px gap is the budget, and half of it would go. **`LEGAL_LANG`**: the legal text is
+     never translated, so on an English screen a German Impressum inherited `lang="en"` and a
+     screen reader read it with English sounds. The text now carries its own `lang`, from an
+     optional `LEGAL_LANG`, **German when unset or not a language tag**: an Impressum is a
+     German-language duty and the one deploy there is writes German, so it sets nothing. One
+     variable for both texts, not one each: nobody writes the two in different languages. Not
+     guessed from the text: a detector for a few hundred words is a dependency for something
+     the operator knows. The e2e server's made-up text is English and sets `en`. **Quotes**:
+     an address ends at any quote mark („ “ ” ‚ ‘ ’ « » ‹ ›), not only the straight ones, so
+     an address written in German quotes no longer keeps the closing one and leads nowhere. A
+     real address with a bare typographic quote in it is cut short; none is known, and it is
+     written percent-encoded. **Brackets**: a closing `)` or `]` is the sentence's only when
+     the address has more closing than opening ones, so `…/Datenschutz-Grundverordnung_(EU)`
+     stays whole and `(siehe https://…)` still loses its bracket. **Left as it was**: email
+     addresses, whose pattern already ends on a letter.
