@@ -55,6 +55,14 @@ export function isListIcon(value: unknown): value is ListIcon {
 	return typeof value === 'string' && (LIST_ICONS as readonly string[]).includes(value);
 }
 
+/**
+ * What "Other" wears: three dots. Deliberately not in `LIST_ICONS`, so no real
+ * list can pick it, and a stored icon can never be it (the column only takes
+ * keys from the set). Before this, Other drew the default basket, which made it
+ * look like the grocery list (Lukas 2026-11-20).
+ */
+export const OTHER_ICON = 'other';
+
 /** The icon to draw for a stored value, whatever the column holds. */
 export function listIcon(value: string | null | undefined): ListIcon {
 	return isListIcon(value) ? value : DEFAULT_LIST_ICON;
@@ -66,7 +74,10 @@ export function listIcon(value: string | null | undefined): ListIcon {
 export type KnownName = { name: string; storeId: string | null };
 
 export type ListTarget = {
-	/** The list the field adds to; null only when the household has no list at all. */
+	/**
+	 * The list the field adds to; null is "Other": picked from the menu
+	 * (`OTHER_LIST_KEY`), or the household has no list at all.
+	 */
 	storeId: string | null;
 	/**
 	 * Set when the target moved by itself because the typed name is known: the
@@ -79,6 +90,8 @@ export type ListTarget = {
  * Where what is typed goes (→ SPEC §3.1, plan 36 [L2] [L3]).
  *
  * 1. A list picked from the menu wins, for as long as the screen is open.
+ *    "Other" can be picked too (`OTHER_LIST_KEY`), and is then a choice like
+ *    any list: a known name doesn't move the field off it.
  *    "Keep here" under the field (`keep`) is a pick of the list the field was
  *    on: it holds for the line being typed, until the field is emptied.
  * 2. Otherwise a name the household knows goes back to the list it went to
@@ -101,6 +114,7 @@ export function listTarget(input: {
 }): ListTarget {
 	const exists = (id: string | null) => id !== null && input.lists.some((list) => list.id === id);
 
+	if (input.picked === OTHER_LIST_KEY) return { storeId: null, remembered: null };
 	if (input.picked !== null && exists(input.picked)) {
 		return { storeId: input.picked, remembered: null };
 	}

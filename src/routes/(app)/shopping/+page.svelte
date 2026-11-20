@@ -74,6 +74,9 @@
 		})
 	);
 
+	/** What is left to get on "Other", for its entry at the foot of the menu. */
+	const otherLeft = $derived(shopping.find((group) => group.storeId === null)?.items.length ?? 0);
+
 	/**
 	 * The names the field completes from, minus whatever is already waiting to
 	 * be bought: offering "Oat milk" while "Oat milk" is three rows below is an
@@ -187,6 +190,7 @@
 	known={data.suggestions}
 	offered={suggestions}
 	lists={menuLists}
+	other={{ status: m.shopping.lists.status(otherLeft) }}
 	fallback={firstListId}
 	onadding={adding}
 	onadded={added}

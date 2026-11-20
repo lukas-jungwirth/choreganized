@@ -6,7 +6,11 @@
 import assert from 'node:assert/strict';
 import { describe, it } from 'vitest';
 import {
+	LIST_ICONS,
+	OTHER_ICON,
+	OTHER_LIST_KEY,
 	foldedCookie,
+	isListIcon,
 	listIcon,
 	listTarget,
 	parseQuickAdd,
@@ -101,6 +105,18 @@ describe('listTarget', () => {
 		// Pure: what the household remembers is untouched until something is added.
 		assert.deepEqual(KNOWN[0], { name: 'Shampoo', storeId: 'drugstore' });
 		assert.deepEqual(target('Shampoo'), { storeId: 'drugstore', remembered: 'Shampoo' });
+	});
+
+	it('"Other" picked from the menu is a choice, not the absence of one', () => {
+		assert.deepEqual(target('Shampoo', OTHER_LIST_KEY), { storeId: null, remembered: null });
+		assert.deepEqual(target('Anything', OTHER_LIST_KEY), { storeId: null, remembered: null });
+	});
+
+	it('"Other" has an icon of its own that no list can pick', () => {
+		assert.ok(!(LIST_ICONS as readonly string[]).includes(OTHER_ICON));
+		assert.equal(isListIcon(OTHER_ICON), false);
+		// A list whose column somehow held it still draws the default.
+		assert.equal(listIcon(OTHER_ICON), 'basket');
 	});
 
 	it('a list picked from the menu wins over what is remembered', () => {

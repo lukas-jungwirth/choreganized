@@ -154,7 +154,16 @@ export const shoppingActions = {
 			storeId: target
 		});
 
-		return { added: true, restored: result.restored };
+		// What happened, so the field can say it when nothing new appeared: a row
+		// already there grew, or was there with nothing to change.
+		return {
+			added: true,
+			restored: result.restored,
+			effect: result.effect,
+			name: result.name,
+			quantity: result.quantity,
+			unit: result.unit
+		};
 	},
 
 	update: async (event: RequestEvent) => {

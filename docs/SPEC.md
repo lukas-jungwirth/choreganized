@@ -330,12 +330,18 @@ sketch is `design/sketches/lists.html`, frames [L1]–[L7]. A list is one of two
   the phone's back button and the swipe-back return to the overview. "‹ Lists" and a ⋯ (the
   list's sheet: name, kind, icon, delete, §3.4; after a delete the overview), the list's icon and name, "{n} to get · {n} bought", the add field, and the
   same card body with "{n} bought" unfolded. A list id from another household is a 404. "Other"
-  has no pill (it is not a list anyone made) and keeps its bare count.
+  has no pill (it is not a list anyone made) and keeps its bare count. It wears **three dots**
+  (a horizontal ellipsis in a sage well) wherever it is drawn: its card, the field's icon and
+  its menu entry. The dots are not one of the twelve list icons, so no list can wear them
+  (→ [DECISIONS #275](DECISIONS.md)). Its card is still hidden while nothing is on it.
 - **The add field's leading icon is the list it adds to**, and the placeholder names it ("Add
   to Grocery…"). It starts on the first shopping list every time the screen is opened.
   - **Tap the icon for the menu** [L2]: every list with its icon and what is on it ("4",
     "empty", or a checklist's "5/12" in its terracotta well), the current one ticked, then
-    **New list**. A list picked there stays until the screen is left.
+    **Other** ("Sonstiges", always, even while its card is hidden), then **New list**. A list
+    picked there stays until the screen is left. Other picked is a choice like any list: a known
+    name does not move the field off it. A name added to Other is not remembered there: next
+    time it starts on the first shopping list (→ [DECISIONS #275](DECISIONS.md)).
   - **It remembers** [L3]: each name the household knows keeps the list it last went to. Typing
     a known name moves the icon there by itself and a line under the field says so, list
     first: "Goes on **Drugstore**, like last time." / "Kommt auf **Drugstore**, wie letztes
@@ -371,6 +377,21 @@ sketch is `design/sketches/lists.html`, frames [L1]–[L7]. A list is one of two
   - **On an opened list the field adds to that list and nothing else**; its icon is that list,
     with no menu.
   - An add to a list that is folded or not on screen makes that card flash sage once.
+  - **The same thing on the same list adds up** (Lukas 2026-11-20, → `quickAddItem`,
+    `utils/shopping.ts` `addOnto`, [DECISIONS #276](DECISIONS.md)). On a shopping list or
+    Other, a row with the typed name (case-blind) **still open on the target list** wins over
+    everything else: "Gurke x3" twice is one row of ×6, "Milch 500 ml" onto Milch 1 L is
+    1.5 L (the recipe rules: same dimension, the row's unit, no unit is pcs). A row with no
+    amount takes the typed one. A line with no amount changes nothing and writes no second
+    row. Amounts that can't be added (3 pcs, 500 g) become a second row: it was typed on
+    purpose. Other lists are never searched, and a checklist takes a second "Towels" as
+    typed. Because no new row appears, a line under the field (in the same live region as
+    the remembered-list line, gone on the next keystroke or after six seconds) says what
+    happened: "**Gurke** was already on the list, now **×6**." / "**Gurke** war schon auf
+    der Liste, jetzt **×6**.", or "**Gurke** is already on the list." / "**Gurke** steht
+    schon auf der Liste.". A top-up refreshes the other screens and pushes like a recipe's
+    top-up (§3.5); "already there" changed nothing and tells nobody. Renaming a row in the
+    sheet [3a] to a name already on the list keeps two rows.
 - **Suggestions**: as you type, the field offers names this household has put on the list
   before, most recently used first ("Rind" → "Rinderhackfleisch"). Case- and accent-blind, and
   a match inside a word counts — German compounds make "starts with" useless on its own. Up to
@@ -379,8 +400,8 @@ sketch is `design/sketches/lists.html`, frames [L1]–[L7]. A list is one of two
   the name and stops, because the sheet exists to say how much and which list. Names already
   waiting on the list are never suggested. The pool is every name ever added, renamed or poured
   in from a recipe — it outlives the items themselves (→ [DECISIONS #106](DECISIONS.md)). On the
-  overview each suggestion shows, on its right, the list it would go to. **A name sitting under
-  "{n} bought" on the target list is put back** (unticked, at the end of the walking order, with
+  overview each suggestion shows, on its right, the list it would go to. **When no row with the
+  name is open there, a name sitting under "{n} bought" on the target list is put back** (unticked, at the end of the walking order, with
   a typed amount if there was one) instead of being added a second time.
 - **A recipe's ingredients merge into the list rather than pile onto it** (→ §4.8). A name that
   is already there (case-blind) tops up the row it finds instead of starting a second one, so
@@ -456,10 +477,14 @@ sketch is `design/sketches/lists.html`, frames [L1]–[L7]. A list is one of two
 - Each row shows the list's icon (sage well, terracotta for a checklist), its name and its item
   count, and ends in a right-pointing chevron: **tapping the row opens the list's sheet**
   (below), "Edit {list}" to a screen reader. A hairline sets the reorder arrows apart ("in the
-  order you walk through town"); they stay on the row and work without JavaScript. When the
+  order the overview follows); they stay on the row and work without JavaScript. When the
   sheet closes, focus goes back to the row. At 200% a long name wraps. **Add a list** opens the
   same sheet to create one. Any member may manage lists. "Other" is not a list and has no row
   (→ [DECISIONS #273](DECISIONS.md)). Editing a list needs JavaScript, like the item sheet.
+  No subtitle under the title, and one line of help under "Add a list": "The overview follows
+  this order, and the add field starts on the first shopping list." / "Die Übersicht folgt
+  dieser Reihenfolge, und das Eingabefeld beginnt bei der ersten Einkaufsliste."
+  (→ [DECISIONS #274](DECISIONS.md)).
 - **New list** (the dashed row on the overview, or the field's menu): a sheet with a name, the
   switch **Shopping list | Checklist** (basket and checklist icons, shopping list preselected),
   and an icon from a fixed set of twelve (basket, bag, droplet, pill, hammer, gift, suitcase,

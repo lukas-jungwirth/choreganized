@@ -15,6 +15,15 @@
 	split again. The server reads the line again with the same rules; tapping a
 	row still opens the sheet [3a] to edit.
 
+	"Other" is the menu's last entry, always, also while its card is hidden
+	because nothing is on it (Lukas 2026-11-20). It wears three dots, which
+	no list can pick, and picking it posts an empty list: on purpose, so a
+	known name is not moved off it.
+
+	The same name still open on the target list is not written twice: the
+	typed amount goes onto that row (→ services `quickAddItem`), and a line
+	under the field says so, because no new row appears to show it.
+
 	Under the field sit the household's own words (→ `lib/item-suggest.svelte.ts`),
 	each with the list it would go to. Tapping one adds it there and then — and
 	a name under "{n} bought" is put back rather than added twice (→ services
@@ -30,6 +39,8 @@
 	import { messages } from '$lib/i18n';
 	import { itemSuggest } from '$lib/item-suggest.svelte';
 	import {
+		OTHER_ICON,
+		OTHER_LIST_KEY,
 		listTarget,
 		parseQuickAdd,
 		quickAddName,
@@ -64,6 +75,11 @@
 		offered?: string[];
 		/** Every list, in order — the menu [L2]. */
 		lists: QuickAddList[];
+		/**
+		 * "Other" as the menu's last entry, with what is on it. Left out on an
+		 * opened list, where the field has no menu.
+		 */
+		other?: { status: string } | null;
 		/** Where it adds when nothing else says otherwise: the first shopping list. */
 		fallback: string | null;
 		/** An opened list: the field adds to it and nothing else. */
@@ -81,6 +97,7 @@
 		known = [],
 		offered = [],
 		lists,
+		other = null,
 		fallback,
 		fixed = null,
 		onadding,
@@ -99,7 +116,10 @@
 	 */
 	let error = $state<string | undefined>();
 
-	/** A list picked from the menu. Component state, so leaving the screen resets it. */
+	/**
+	 * A list picked from the menu (`OTHER_LIST_KEY` for "Other"). Component
+	 * state, so leaving the screen resets it.
+	 */
 	let picked = $state<string | null>(null);
 
 	/**
@@ -136,7 +156,48 @@
 	/** The list "Keep here" goes back to: the one the field was on before the move. */
 	const fallbackList = $derived(lists.find((list) => list.id === fallback) ?? null);
 
-	const targetList = $derived(fixed ?? lists.find((list) => list.id === target.storeId) ?? null);
+	/** "Other" drawn like a list: its name, its three dots. */
+	const otherList = $derived({
+		id: OTHER_LIST_KEY,
+		name: m.shopping.other,
+		icon: OTHER_ICON,
+		kind: 'buy' as const
+	});
+
+	/** No list id with lists on screen is "Other", picked from the menu. */
+	const targetList = $derived(
+		fixed ??
+			(target.storeId === null
+				? lists.length > 0
+					? otherList
+					: null
+				: (lists.find((list) => list.id === target.storeId) ?? null))
+	);
+
+	/**
+	 * What the last add did when it wrote no new row (→ `quickAddItem`): the
+	 * line under the field, until the next thing is typed or a few seconds pass.
+	 */
+	let note = $state<{ name: string; amount: string | null } | null>(null);
+	$effect(() => {
+		if (value.trim()) note = null;
+	});
+	$effect(() => {
+		if (!note) return;
+		const timer = setTimeout(() => (note = null), 6000);
+		return () => clearTimeout(timer);
+	});
+
+	function noteFrom(data: Record<string, unknown> | undefined) {
+		if (!data || typeof data.name !== 'string') return null;
+		if (data.effect === 'already') return { name: data.name, amount: null };
+		if (data.effect !== 'toppedUp' || typeof data.quantity !== 'number') return null;
+		const unit = typeof data.unit === 'string' ? data.unit : null;
+		return {
+			name: data.name,
+			amount: m.units.quantity(data.quantity, unit) || `×${data.quantity}`
+		};
+	}
 
 	/** The names the household uses: a line that is one of them is never split (rule 1). */
 	const knownKeys = $derived(new Set(known.map((row) => suggestionKey(row.name))));
@@ -173,6 +234,7 @@
 	function detail(name: string): string | undefined {
 		if (fixed) return undefined;
 		const id = listTarget({ typed: name, known, lists, picked, fallback, keep }).storeId;
+		if (id === null) return lists.length > 0 ? m.shopping.other : undefined;
 		return lists.find((list) => list.id === id)?.name;
 	}
 
@@ -233,6 +295,7 @@
 		action="?/add"
 		use:enhance={() => {
 			error = undefined;
+			note = null;
 			const landed = target.storeId;
 			onadding?.(landed);
 			return async ({ result, update }) => {
@@ -241,6 +304,7 @@
 				await update({ reset: false });
 				if (result.type === 'success') {
 					value = '';
+					note = noteFrom(result.data);
 					onadded?.(landed);
 				} else if (result.type === 'failure') {
 					error = typeof result.data?.error === 'string' ? result.data.error : undefined;
@@ -251,8 +315,9 @@
 	>
 		<input type="hidden" name="quick" value="1" />
 		{#if amount !== null && !amountOn}<input type="hidden" name="literal" value="1" />{/if}
-		{#if target.storeId !== null && (hydrated || fixed)}
-			<input type="hidden" name="storeId" value={target.storeId} />
+		<!-- "" is "Other", chosen; no field at all lets the server decide. -->
+		{#if hydrated || fixed}
+			<input type="hidden" name="storeId" value={target.storeId ?? ''} />
 		{/if}
 
 		{#if fixed}
@@ -365,6 +430,22 @@
 						>{/if}
 				</button>
 			{/each}
+			{#if other}
+				{@const on = target.storeId === null}
+				<button
+					type="button"
+					class="mrow"
+					class:on
+					aria-pressed={on}
+					onclick={() => choose(OTHER_LIST_KEY)}
+				>
+					<span class="well" aria-hidden="true"><ListIcon icon={OTHER_ICON} size={17} /></span>
+					<span class="mname">{m.shopping.other}</span>
+					<small>{other.status}</small>
+					{#if on}<span class="tick" aria-hidden="true"><Check size={17} strokeWidth={2.6} /></span
+						>{/if}
+				</button>
+			{/if}
 			{#if onnewlist}
 				<button
 					type="button"
@@ -413,6 +494,14 @@
 					{m.shopping.quickAdd.keepHere}
 				</button>
 			{/if}
+		</p>
+	{:else if note}
+		<p class="why" data-testid="quick-add-note">
+			<span
+				>{#each note.amount === null ? m.shopping.quickAdd.already(note.name) : m.shopping.quickAdd.toppedUp(note.name, note.amount) as part, index (index)}{#if part.strong}<strong
+							>{part.text}</strong
+						>{:else}{part.text}{/if}{/each}</span
+			>
 		</p>
 	{/if}
 </div>
