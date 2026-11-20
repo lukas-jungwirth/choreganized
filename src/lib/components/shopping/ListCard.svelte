@@ -5,7 +5,8 @@
 	now in the card each row came from.
 
 	The whole header folds, as a header with a chevron does anywhere; opening
-	the list has a button of its own, in the same corner on every card. Folded,
+	the list is the pill at its right edge, "4 ›", which also says how much is
+	left (→ `OpenPill`). "Other" can't be opened, so it keeps a bare count. Folded,
 	the header shows what is on it in one line ("Toothpaste, Cotton pads").
 
 	On an opened list [L5] the screen has its own title, so the card comes
@@ -31,7 +32,7 @@
 	import type { SubmitFunction } from '@sveltejs/kit';
 	import Check from '@lucide/svelte/icons/check';
 	import ChevronDown from '@lucide/svelte/icons/chevron-down';
-	import Maximize2 from '@lucide/svelte/icons/maximize-2';
+	import OpenPill from '$lib/components/shopping/OpenPill.svelte';
 	import RotateCcw from '@lucide/svelte/icons/rotate-ccw';
 	import { untrack } from 'svelte';
 	import { dragHandleZone, type DndEvent } from 'svelte-dnd-action';
@@ -177,19 +178,33 @@
 						</span>
 						{#if folded || left.length === 0}<span class="peek">{peek}</span>{/if}
 					</span>
-					{#if left.length > 0}
-						<span class="count">
-							<span aria-hidden="true">{left.length}</span>
-							<span class="hidden-label">{m.shopping.lists.toGet(left.length)}</span>
-						</span>
-					{:else}
-						<span class="count done" aria-hidden="true"><Check size={16} strokeWidth={2.6} /></span>
+					{#if !openHref}
+						{#if left.length > 0}
+							<span class="count">
+								<span aria-hidden="true">{left.length}</span>
+								<span class="hidden-label">{m.shopping.lists.toGet(left.length)}</span>
+							</span>
+						{:else}
+							<span class="count done" aria-hidden="true"
+								><Check size={16} strokeWidth={2.6} /></span
+							>
+						{/if}
 					{/if}
 				</button>
 				{#if openHref}
-					<a class="opener" href={openHref} aria-label={m.shopping.lists.open(name)}>
-						<Maximize2 size={16} strokeWidth={2} />
-					</a>
+					<span class="pill-slot">
+						<OpenPill
+							href={openHref}
+							label={m.shopping.lists.openWith(name, left.length)}
+							done={left.length === 0}
+						>
+							{#if left.length > 0}
+								{left.length}
+							{:else}
+								<Check size={16} strokeWidth={2.6} aria-hidden="true" />
+							{/if}
+						</OpenPill>
+					</span>
 				{:else}
 					<span class="pad"></span>
 				{/if}
@@ -394,25 +409,11 @@
 		color: var(--sage-deep);
 	}
 
-	/* 34px drawn on a sunken square; the ::after grows the target to 44. */
-	.opener {
-		position: relative;
-		display: grid;
+	.pill-slot {
+		display: flex;
 		flex: none;
-		place-items: center;
-		align-self: center;
-		width: 34px;
-		height: 34px;
-		margin: 0 12px 0 11px;
-		border-radius: 11px;
-		background: var(--sunken);
-		color: var(--text-3);
-	}
-
-	.opener::after {
-		content: '';
-		position: absolute;
-		inset: -5px;
+		align-items: center;
+		margin: 0 12px 0 10px;
 	}
 
 	.pad {

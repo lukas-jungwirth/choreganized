@@ -111,14 +111,15 @@ Saturday") is a shopping list too.
   and after the nightly sweep the card goes. "Other" stays virtual, as today.
 - **Tap the header to fold, the corner button to open.** The whole header of a shopping list
   folds and unfolds it, with a small chevron after the name, the way any section with a chevron
-  behaves. Opening full screen has a button of its own at the right edge (two arrows, 34 px on
-  a sunken square, 44 px target), in the same place on every card. The second pass had the
+  behaves. Opening full screen has a button of its own at the right edge, in the same place on
+  every card: since 2026-11-20 (Lukas, DECISIONS #270) one pill that carries the count and a
+  right-pointing chevron ("4 ›"), which replaced the count beside a two-arrows button. The second pass had the
   name open the list and the chevron fold it; Lukas asked whether that was clear, and it was
   not: nothing says a name is a button. Folded, a card shows a one-line preview ("Toothpaste,
   Cotton pads"). Folded state is per device, in a cookie read by the load (the theme is the
   precedent, DECISIONS #119).
 - **A checklist is always one row** on the overview: icon, name, "7 left · Sunscreen, Swimwear…",
-  ring and "5/12", and the same open button. A tap anywhere on it opens it. It never unfolds in
+  and the same pill with the ring and "5/12" in it ("◔ 5/12 ›"). A tap anywhere on it opens it. It never unfolds in
   place.
 - **"{n} bought"** is the last line of a shopping list's card (was the "Recently bought"
   section). Tap to unfold the struck rows, newest first; tap a row's circle to put it back.

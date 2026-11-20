@@ -201,6 +201,11 @@
 	.phone .lopen, .lopen { width: 34px; height: 34px; border-radius: 11px; background: var(--sunken); color: var(--text-3); display: grid; place-items: center; flex: none; align-self: center; margin: 0 11px 0 10px; }
 	.solo .lopen { margin: 0 1px 0 4px; }
 	.lpad { width: 14px; flex: none; }
+	/* The count and the open button are one pill (Lukas 2026-11-20): "4 ›", or "◔ 5/12 ›" on a checklist. */
+	.phone .lpill, .lpill { display: flex; align-items: center; gap: 5px; flex: none; align-self: center; min-height: 34px; padding: 0 7px 0 12px; margin: 0 11px 0 8px; border-radius: 999px; background: var(--sunken); color: var(--text-3); font-size: 14px; font-weight: 700; font-variant-numeric: tabular-nums; white-space: nowrap; }
+	.lpill.all { color: var(--sage-deep); }
+	.solo .lpill { margin: 0 1px 0 4px; }
+	.lpill .go-in { color: var(--text-5); }
 	.rows { list-style: none; padding: 0; border-top: 1px solid var(--divider); }
 	.bare > .rows:first-child { border-top: 0; }
 	.item { display: flex; align-items: center; gap: 11px; padding: 0 12px 0 15px; min-height: 48px; font-size: 16.5px; }
@@ -556,11 +561,14 @@
 			: `<span class="count ${total && !left ? 'all' : ''}">${ring(done, total)}${done}/${total}</span>`;
 		const split = o.head !== 'name'; // the header folds, and a button of its own opens the list
 		const txt = (chev) => `<span class="well">${ic(L.icon, 19)}</span><span class="ltxt"><span class="lname"><b>${esc(L.name)}</b>${chev ? ic('chev', 15, 2.4, 'chev') : ''}</span>${open ? '' : `<small>${esc(peek)}</small>`}</span>`;
-		const openBtn = (tag) => `<${tag} class="lopen" ${tag === 'button' ? `data-act="open" data-id="${L.id}" aria-label="Open ${esc(L.name)} full screen"` : ''}>${ic('expand', 16, 2)}</${tag}>`;
+		// The count and the way in, one pill: "4 ›", a sage tick once everything is bought, "◔ 5/12 ›" on a checklist.
+		const inner = buy ? (left ? `${left}` : ic('check', 16, 2.6)) : `${ring(done, total)}${done}/${total}`;
+		const allDone = buy ? !left : total && !left;
+		const pill = (tag) => `<${tag} class="lpill ${allDone ? 'all' : ''}" ${tag === 'button' ? `data-act="open" data-id="${L.id}" aria-label="Open ${esc(L.name)}"` : ''}>${inner}${ic('right', 15, 2.4, 'go-in')}</${tag}>`;
 		const head = !inPlace
-			? `<button class="lmain solo" data-act="open" data-id="${L.id}">${txt(false)}${count}${split ? openBtn('span') : ic('right', 18, 2, 'go-in')}</button>`
+			? `<button class="lmain solo" data-act="open" data-id="${L.id}">${txt(false)}${split ? pill('span') : count + ic('right', 18, 2, 'go-in')}</button>`
 			: split
-				? `<button class="lmain" data-act="fold" data-id="${L.id}" aria-expanded="${open}">${txt(true)}${count}</button>${o.focus ? openBtn('button') : '<span class="lpad"></span>'}`
+				? `<button class="lmain" data-act="fold" data-id="${L.id}" aria-expanded="${open}">${txt(true)}${o.focus ? '' : count}</button>${o.focus ? pill('button') : '<span class="lpad"></span>'}`
 				: `<button class="lmain" data-act="${o.focus ? 'open' : 'fold'}" data-id="${L.id}">${txt(false)}</button>
 					<button class="lfold" data-act="fold" data-id="${L.id}" aria-expanded="${open}" aria-label="${open ? 'Fold' : 'Unfold'} ${esc(L.name)}">${count}${ic('chev', 18, 2, 'chev')}</button>`;
 		return `<section class="card list ${s.flash === L.id ? 'flash' : ''}" data-kind="${L.kind}"><div class="lhead">${head}</div>${open ? body(L, s, o, false) : ''}</section>`;
