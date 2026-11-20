@@ -91,3 +91,65 @@ test.describe('the next-chore stack', () => {
 		await expect(cards).toHaveCount(3);
 	});
 });
+
+/**
+ * Home's one way into Settings is the gear in the header's corner; the faces
+ * under the greeting are a picture of the household, not a button (→ SPEC §2,
+ * DECISIONS #266).
+ */
+test.describe('the way into Settings', () => {
+	test.afterEach(async ({ page, baseURL }) => {
+		const restored = await page.request.post('/settings?/language', {
+			form: { locale: 'en' },
+			headers: { origin: baseURL! },
+			maxRedirects: 0
+		});
+		expect([200, 303]).toContain(restored.status());
+	});
+
+	test('the gear opens Settings, and its back chevron returns Home', async ({ page }) => {
+		await page.goto('/home');
+		const faces = page.getByRole('img', { name: /^Household: / });
+		await expect(faces).toBeVisible();
+		await expect(faces).toHaveAccessibleName(/Elisabeth/);
+		// The faces are no control any more, and the gear is the header's one link.
+		await expect(page.locator('header a', { has: faces })).toHaveCount(0);
+		await expect(page.locator('header a')).toHaveCount(1);
+
+		await page.getByRole('link', { name: 'Settings', exact: true }).click();
+		await expect(page).toHaveURL(/\/settings$/);
+		await expect(page.getByRole('heading', { name: 'Settings', level: 1 })).toBeVisible();
+
+		await page.getByRole('link', { name: 'Back to home' }).click();
+		await expect(page).toHaveURL(/\/home$/);
+	});
+
+	/**
+	 * The raccoon hangs from the header's bottom edge, so a short greeting is the
+	 * worst case: German's "Guten Tag," fits one line where "Good afternoon,"
+	 * wraps (every run is the same afternoon, → TESTING "The fixed clock"). At the
+	 * old 170px header the raccoon's picture started 2px above the gear's bottom
+	 * edge, and some poses draw right up to the top of their picture.
+	 */
+	for (const locale of ['en', 'de'] as const) {
+		test(`the gear clears the raccoon by at least 8px (${locale})`, async ({ page, baseURL }) => {
+			const switched = await page.request.post('/settings?/language', {
+				form: { locale },
+				headers: { origin: baseURL! },
+				maxRedirects: 0
+			});
+			expect([200, 303]).toContain(switched.status());
+
+			await page.goto('/home');
+			const gear = page.locator('header a[href="/settings"]');
+			const raccoon = page.locator('header img.mascot');
+			await expect(gear).toBeVisible();
+			await expect(raccoon).toBeVisible();
+
+			const [g, r] = await Promise.all([gear.boundingBox(), raccoon.boundingBox()]);
+			expect(r!.y - (g!.y + g!.height)).toBeGreaterThanOrEqual(8);
+			// …and it is the raccoon's column it sits over, not one beside it.
+			expect(g!.x + g!.width).toBeGreaterThan(r!.x);
+		});
+	}
+});

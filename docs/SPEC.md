@@ -67,8 +67,9 @@ and the title, the line and the header's buttons all stand on the raccoon's feet
 
 ### 1.3 Create → set up your home [5c] (step 1 of 2)
 
-- Fields: **Household name** (e.g. "Sonnengasse 12"), **Your display name** (prefilled from
-  Google given name), **Your colour** — swatch row from the member palette (sage, terracotta,
+- Fields: **Household name** (e.g. "Sonnengasse 12", up to 60 characters), **Your display
+  name** (prefilled from Google given name, up to 20 characters, the same limit as the profile
+  sheet's, → [DECISIONS #267](DECISIONS.md)), **Your colour** — swatch row from the member palette (sage, terracotta,
   blue, amber, plum); preview avatar shows the initial on the chosen colour.
 - Creates household (creator becomes **owner**), stores timezone from the browser
   (`Intl.DateTimeFormat().resolvedOptions().timeZone`), seeds default stores
@@ -104,8 +105,14 @@ and the title, the line and the header's buttons all stand on the raccoon's feet
 ## 2. Home tab [8b is the canonical variant]
 
 Top: household name (small caps), "Good {morning|afternoon|evening}, {name}", and under the
-greeting the stacked member avatars in a pill with a chevron — the way into Settings
-([DECISIONS #214](DECISIONS.md)). Then, in order:
+greeting the stacked member avatars (28px, rings cut from the page). The faces are a picture of
+the household, not a button; a screen reader hears "Household: {names}", and Home is the only
+screen that names the housemates. **Settings** is the round gear in the header's top-right
+corner, above the raccoon's ears (38px, card surface, the same `RoundButton` as Expenses' •••
+menu), and only Home has one. The header is at least 182px tall, so the raccoon starts 10px
+below the gear even when the greeting is short, since some poses draw right up to the top of
+their picture ([DECISIONS #266](DECISIONS.md)). A long single-word name breaks with a hyphen
+where the language allows it ([#267](DECISIONS.md)). Then, in order:
 
 **The raccoon** ([DECISIONS #213](DECISIONS.md), [#216](DECISIONS.md), [#219](DECISIONS.md)) sits on the first card's
 top edge, right of the greeting — its upper body, so it reads as peeking over the card. Which
@@ -1029,6 +1036,8 @@ The **History** tab is a stats landing; the full feed sits one level below it (�
 ---
 
 ## 6. Settings [6a]
+
+Reached from Home's gear (→ §2), and its back chevron returns to Home.
 
 - Profile card: avatar, display name, email + **Edit**. A raccoon with a wrench sits on its top
   edge at the right, the way Home's sits on its first card; the title wraps rather than run

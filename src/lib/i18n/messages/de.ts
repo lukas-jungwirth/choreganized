@@ -496,7 +496,8 @@ export const de: Messages = {
 		title: 'Start',
 		greeting: (time: 'morning' | 'afternoon' | 'evening'): string =>
 			time === 'morning' ? 'Guten Morgen' : time === 'afternoon' ? 'Guten Tag' : 'Guten Abend',
-		settingsLink: (names: string) => `Einstellungen · Haushalt: ${names}`,
+		openSettings: 'Einstellungen',
+		householdFaces: (names: string) => `Haushalt: ${names}`,
 		pokeRaccoon: 'Waschbär anstupsen',
 		/** Admin mode only (→ plan 34): tapping the raccoon picks any pose. */
 		raccoonPicker: {

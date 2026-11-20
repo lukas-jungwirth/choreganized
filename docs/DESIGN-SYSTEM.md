@@ -194,6 +194,10 @@ background at all when there is nothing to measure.
 - **Button** — primary (sage bg, white 700 16px, `--r-button`, `--shadow-button`), secondary
   (white, 1.5px `--border`), danger (only in confirm dialogs), dark (`--ink` bg — "Start cook
   mode"). Full-width by default; renders an `<a>` when given `href`.
+- **RoundButton** — one icon in a 38px circle on the card surface (`--card`,
+  `--shadow-card`, `--text-4`), pressed at 0.97 (off under reduced motion); an `<a>` when given
+  `href`, and an `aria-label` always. Expenses' ••• menu and Home's gear to Settings (→
+  DECISIONS #266); the parent positions it.
 - **TextField** — uppercase micro-label + white field, `--r-input`, sage border on focus,
   `error` prop for the message a failed form action sends back.
 - **CodeInput** — a one-time code as a row of boxes, one digit each, with TextField's micro-label
@@ -234,8 +238,9 @@ background at all when there is nothing to measure.
   dashed `--border-dashed`, optionally wrapping an icon (the + on "waiting to join" [5d]).
 - **AvatarStack** — overlapping avatars; overlap and ring width derive from `size`
   (36 → −12px/2.5px, 26 → −9px/2px), so pass the size and nothing else. Decorative by default;
-  pass `label` where the stack is the only place those people are named (the Home header, the
-  standings strip) so screen readers still hear who's in the household.
+  where the stack is the only place those people are named, screen readers must still hear
+  who's in the household: Home's header wraps the stack in a `role="img"` named "Household:
+  {names}" from the catalog (→ DECISIONS #266).
 - **Chip** — pill `--r-chip`, 1.5px border; selected = sage bg/white. Pass a member `color` and
   selection switches to that member's tint + hairline + darkened label. Stores, effort,
   assignees, snooze presets. Extra attributes are forwarded, and `class` is merged rather than
