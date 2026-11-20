@@ -87,6 +87,10 @@ describe('parseQuickAdd', () => {
 	it('keeps a line with no name, or an absurd amount, whole', () => {
 		assert.deepEqual(parseQuickAdd('2'), { name: '2', quantity: null, unit: null });
 		assert.deepEqual(parseQuickAdd('5000 eggs'), { name: '5000 eggs', quantity: null, unit: null });
+		// An amount and a unit with nothing to measure is not a row called "kg".
+		assert.deepEqual(parseQuickAdd('2 kg'), { name: '2 kg', quantity: null, unit: null });
+		assert.deepEqual(parseQuickAdd('500g'), { name: '500g', quantity: null, unit: null });
+		assert.deepEqual(parseQuickAdd('2 Stk.'), { name: '2 Stk.', quantity: null, unit: null });
 	});
 });
 

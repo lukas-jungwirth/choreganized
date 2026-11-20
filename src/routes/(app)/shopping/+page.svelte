@@ -84,7 +84,10 @@
 		const key = keyOf(storeId);
 		if (folded.has(key)) folded.delete(key);
 		else folded.add(key);
-		document.cookie = foldedCookie(folded);
+		// Only lists that still exist, so a deleted list's key doesn't sit in the
+		// cookie for good.
+		const live = new Set([OTHER_LIST_KEY, ...data.stores.map((store) => store.id)]);
+		document.cookie = foldedCookie([...folded].filter((folded) => live.has(folded)));
 	}
 
 	/* ── Where an add landed ──────────────────────────────────────────────── */
@@ -107,6 +110,15 @@
 		flashes.set(flashNext, (flashes.get(flashNext) ?? 0) + 1);
 		flashNext = null;
 	}
+
+	// A card that leaves the overview forgets its flash, or it would replay the
+	// day a housemate's add brings it back.
+	$effect(() => {
+		const shown = new Set(list.groups.map((group) => keyOf(group.storeId)));
+		untrack(() => {
+			for (const key of [...flashes.keys()]) if (!shown.has(key)) flashes.delete(key);
+		});
+	});
 
 	/* ── Sheets ───────────────────────────────────────────────────────────── */
 

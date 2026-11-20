@@ -72,7 +72,18 @@ export function shoppingTicks(source: () => ShoppingListItem[]) {
 	 */
 	const settleMeta = new Map<
 		string,
-		{ item: ShoppingListItem; undoable: boolean; timer: ReturnType<typeof setTimeout> }
+		{
+			item: ShoppingListItem;
+			undoable: boolean;
+			timer: ReturnType<typeof setTimeout>;
+			/**
+			 * The server has written the tick (our action answered, or it was a
+			 * housemate's to begin with). From then on a row that reads unchecked
+			 * was *put back* — a restore from the add field, a housemate's untick —
+			 * rather than still on its way, and must not be held for ever.
+			 */
+			confirmed: boolean;
+		}
 	>();
 
 	const elapsed = new SvelteSet<string>();
@@ -109,7 +120,12 @@ export function shoppingTicks(source: () => ShoppingListItem[]) {
 	 * bar that comes up at the end offers to put something back, and theirs was
 	 * never yours to take away.
 	 */
-	function startSettle(item: ShoppingListItem, color: string, undoable: boolean) {
+	function startSettle(
+		item: ShoppingListItem,
+		color: string,
+		undoable: boolean,
+		confirmed = false
+	) {
 		clearSettle(item.id);
 		pending.set(item.id, null);
 		settling.set(item.id, color);
@@ -118,7 +134,7 @@ export function shoppingTicks(source: () => ShoppingListItem[]) {
 			typeof matchMedia === 'function' && matchMedia('(prefers-reduced-motion: reduce)').matches;
 
 		const timer = setTimeout(() => elapsed.add(item.id), reduced ? SETTLE_REDUCED_MS : SETTLE_MS);
-		settleMeta.set(item.id, { item, undoable, timer });
+		settleMeta.set(item.id, { item, undoable, timer, confirmed });
 	}
 
 	/**
@@ -136,9 +152,14 @@ export function shoppingTicks(source: () => ShoppingListItem[]) {
 		untrack(() => {
 			for (const id of ready) {
 				const row = rows.find((candidate) => candidate.id === id);
-				if (row && row.checkedAt === null) continue;
-
 				const meta = settleMeta.get(id);
+				if (row && row.checkedAt === null) {
+					// Still on its way: keep holding. Already written and now open
+					// again: somebody put it back, so let go, with nothing to undo.
+					if (meta?.confirmed) clearSettle(id);
+					continue;
+				}
+
 				clearSettle(id);
 				// The row is gone from its place *now*, which is the moment it becomes
 				// hard to find again — so this is when the way back appears, rather
@@ -176,6 +197,10 @@ export function shoppingTicks(source: () => ShoppingListItem[]) {
 					// A tick that didn't happen must not go on being held, and must not
 					// grow an undo bar for it either.
 					if (result.type !== 'success') clearSettle(item.id);
+					else {
+						const meta = settleMeta.get(item.id);
+						if (meta) meta.confirmed = true;
+					}
 				} else {
 					pending.delete(item.id);
 				}
@@ -210,7 +235,8 @@ export function shoppingTicks(source: () => ShoppingListItem[]) {
 		// started it keeps it; restarting would only stutter the animation.
 		if (settling.has(itemId)) return;
 
-		startSettle(item, actor.color, false);
+		// The event is the server telling us: this tick is written.
+		startSettle(item, actor.color, false, true);
 	}
 
 	return {

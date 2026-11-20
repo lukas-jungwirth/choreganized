@@ -3860,6 +3860,12 @@ units | null, name}`, written back as editor lines in the reader's unit spelling
      - **Not verified by hand: drag to reorder.** Neither a stepped mouse drag nor svelte-dnd-
        action's keyboard drag moves a row under Playwright here, on this branch or on `dev`, so
        the harness can't tell. The drag code moved into `ListCard` as it was.
+     - **From the review before shipping:** the field posts no list until it has hydrated, so a
+       name submitted on a slow connection goes where it went last instead of to the first list
+       (and doesn't teach the vocabulary the wrong list); opening the list menu moves focus into
+       it, so it works from a keyboard; "2 kg" with nothing after it stays one row named "2 kg";
+       and a settling tick whose row was put back meanwhile (a restore from the field, a
+       housemate's untick) is let go once the server has the tick, instead of staying struck.
 265. **Shopping rows lose the "added by" avatar; the item sheet names who added it** (Lukas
      2026-11-20; → SPEC §3.1, §3.2, #264). In a household of two the small member circle on every
      row is noise, and it took the space next to the quantity. Editing an item now shows "Added by

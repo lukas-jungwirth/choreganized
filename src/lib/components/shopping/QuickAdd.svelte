@@ -91,6 +91,18 @@
 	/** A list picked from the menu. Component state, so leaving the screen resets it. */
 	let picked = $state<string | null>(null);
 	let menuOpen = $state(false);
+	let menu: HTMLDivElement | undefined = $state();
+
+	/**
+	 * Before hydration the icon can't follow what is typed, so the field posts
+	 * no list and the server sends a known name where it went last (→
+	 * `shopping-actions`). Posting the fallback instead would file Shampoo under
+	 * Grocery *and* teach the vocabulary that it belongs there.
+	 */
+	let hydrated = $state(false);
+	$effect(() => {
+		hydrated = true;
+	});
 
 	const target = $derived(
 		fixed
@@ -191,7 +203,7 @@
 		}}
 	>
 		<input type="hidden" name="quick" value="1" />
-		{#if target.storeId !== null}
+		{#if target.storeId !== null && (hydrated || fixed)}
 			<input type="hidden" name="storeId" value={target.storeId} />
 		{/if}
 
@@ -202,11 +214,17 @@
 				bind:this={menuButton}
 				type="button"
 				class="pick"
-				aria-haspopup="true"
 				aria-expanded={menuOpen}
 				aria-controls={menuOpen ? `${listId}-menu` : undefined}
 				aria-label={m.shopping.quickAdd.choose(targetList?.name ?? m.shopping.other)}
-				onclick={() => (menuOpen = !menuOpen)}
+				onclick={async () => {
+					menuOpen = !menuOpen;
+					if (!menuOpen) return;
+					// Into the menu, on the list it is on now: Tab from the icon would
+					// otherwise land in the field first, which closes the menu.
+					await tick();
+					menu?.querySelector<HTMLButtonElement>('.mrow.on, .mrow')?.focus();
+				}}
 			>
 				<span class="well"><ListIcon icon={targetList?.icon} size={17} /></span>
 				<span class="caret" class:open={menuOpen}><ChevronDown size={13} strokeWidth={2.4} /></span>
@@ -248,7 +266,18 @@
 	</form>
 
 	{#if menuOpen && !fixed}
-		<div class="menu" id="{listId}-menu" role="group" aria-label={m.shopping.quickAdd.menu}>
+		<div
+			bind:this={menu}
+			class="menu"
+			id="{listId}-menu"
+			role="group"
+			aria-label={m.shopping.quickAdd.menu}
+			onfocusout={(event) => {
+				// Tabbing out of the menu, anywhere but back into the field, closes it.
+				const next = event.relatedTarget as Node | null;
+				if (!next || !menu?.parentElement?.contains(next)) menuOpen = false;
+			}}
+		>
 			{#each lists as list (list.id)}
 				{@const on = list.id === target.storeId}
 				<button

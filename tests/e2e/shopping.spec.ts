@@ -173,3 +173,38 @@ test('a row says nothing about who added it; its edit sheet does', async ({ page
 	const sheet = page.getByRole('dialog', { name: 'Edit item' });
 	await expect(sheet.getByText(`Added by ${SEED.housemate}`)).toBeVisible();
 });
+
+test('the list menu works from the keyboard', async ({ page }) => {
+	await page.goto('/shopping');
+	const icon = page.getByRole('button', { name: `Adding to ${GROCERY}. Choose another list` });
+	await icon.focus();
+	await page.keyboard.press('Enter');
+
+	// Focus goes into the menu, on the list it is on now.
+	const menu = page.getByRole('group', { name: 'Lists' });
+	await expect(menu.getByRole('button', { name: new RegExp(GROCERY) })).toBeFocused();
+	await page.keyboard.press('Tab');
+	await expect(menu.getByRole('button', { name: new RegExp(DRUGSTORE) })).toBeFocused();
+	await page.keyboard.press('Enter');
+
+	await expect(menu).toBeHidden();
+	await expect(page.getByPlaceholder(`Add to ${DRUGSTORE}…`)).toBeFocused();
+});
+
+test('putting a row back while its tick is still playing leaves it open', async ({ page }) => {
+	await page.goto('/shopping');
+	const name = fresh('Figs');
+	const field = page.getByPlaceholder(`Add to ${GROCERY}…`);
+	await field.fill(name);
+	await field.press('Enter');
+	await page.getByRole('button', { name: `Check off ${name}` }).click();
+
+	// Inside the settle: the same name again puts the bought row back.
+	await field.fill(name);
+	await field.press('Enter');
+
+	// After the beat it reads open, not stuck half-ticked, and there is one row.
+	await page.waitForTimeout(2000);
+	await expect(page.getByRole('button', { name: `Check off ${name}` })).toBeVisible();
+	await expect(page.getByRole('listitem').filter({ hasText: name })).toHaveCount(1);
+});

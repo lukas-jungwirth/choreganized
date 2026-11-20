@@ -13,7 +13,7 @@
  *   the load reads, so a folded card is folded in the first paint too.
  */
 // Written with its extension so `node --test` can load this module (→ ingredients.ts).
-import { parseIngredient } from './ingredients.ts';
+import { parseIngredient, unitFromWord } from './ingredients.ts';
 import { QUANTITY_MAX, suggestionKey } from './shopping.ts';
 
 /** The New list sheet's twelve icons [L6], in the order it shows them. */
@@ -124,7 +124,14 @@ export function parseQuickAdd(text: string): QuickAdd {
 	if (!first || !LEADING_AMOUNT.test(first)) return { name: line, quantity: null, unit: null };
 
 	const parsed = parseIngredient(line);
-	if (!parsed || parsed.quantity === null || parsed.quantity > QUANTITY_MAX) {
+	if (
+		!parsed ||
+		parsed.quantity === null ||
+		parsed.quantity > QUANTITY_MAX ||
+		// "2 kg", "500g": an amount with nothing to measure. The recipe parser
+		// keeps the unit as the name; a row called "kg" helps nobody.
+		unitFromWord(parsed.name) !== null
+	) {
 		return { name: line, quantity: null, unit: null };
 	}
 
@@ -162,7 +169,7 @@ export function readFolded(value: string | undefined | null): string[] {
 	} catch {
 		return [];
 	}
-	return [...new Set(decoded.split('.').filter((key) => FOLD_KEY.test(key)))].slice(0, 50);
+	return [...new Set(decoded.split('.').filter((key) => FOLD_KEY.test(key)))].slice(-50);
 }
 
 /** The `document.cookie` assignment that stores these folded keys. */

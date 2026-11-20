@@ -164,8 +164,10 @@
 						{#if folded || left.length === 0}<span class="peek">{peek}</span>{/if}
 					</span>
 					{#if left.length > 0}
-						<span class="count" aria-label={m.shopping.lists.toGet(left.length)}>{left.length}</span
-						>
+						<span class="count">
+							<span aria-hidden="true">{left.length}</span>
+							<span class="hidden-label">{m.shopping.lists.toGet(left.length)}</span>
+						</span>
 					{:else}
 						<span class="count done" aria-hidden="true"><Check size={16} strokeWidth={2.6} /></span>
 					{/if}
@@ -351,6 +353,16 @@
 		font-weight: 700;
 		font-variant-numeric: tabular-nums;
 		color: var(--text-3);
+	}
+
+	/* Read out as "3 to get"; the eye has the bare number. */
+	.hidden-label {
+		position: absolute;
+		width: 1px;
+		height: 1px;
+		overflow: hidden;
+		clip-path: inset(50%);
+		white-space: nowrap;
 	}
 
 	.count.done {
