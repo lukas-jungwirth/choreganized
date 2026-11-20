@@ -337,8 +337,15 @@ sketch is `design/sketches/lists.html`, frames [L1]–[L7]. A list is one of two
     "empty", or a checklist's "5/12" in its terracotta well), the current one ticked, then
     **New list**. A list picked there stays until the screen is left.
   - **It remembers** [L3]: each name the household knows keeps the list it last went to. Typing
-    a known name moves the icon there by itself and a line under the field says why
-    ("**Shampoo** goes to Drugstore, like last time."). A list picked from the menu wins. An
+    a known name moves the icon there by itself and a line under the field says so, list
+    first: "Goes on **Drugstore**, like last time." / "Kommt auf **Drugstore**, wie letztes
+    Mal.", followed on the same line by a text button **Keep here** / **Hier lassen** ("Keep on
+    Grocery" to a screen reader, 44 px target, next in the tab order after the field). It puts
+    the field back on the list it was on and hides the line, for this line only: once the
+    field is emptied (an add empties it) the next known name moves the icon again. Nothing is
+    remembered until the add, which then remembers the kept list, so the same name typed again
+    proposes nothing (→ [DECISIONS #272](DECISIONS.md)). The line sits in a polite live region;
+    at 200% text the button wraps like a word. A list picked from the menu wins. An
     unknown name lands on the list shown: the app never guesses. The icon never moves to a
     checklist by itself: a name whose last list has become one stays on the list shown.
   - **The amount may be typed at either end of the line** (plan 37, → `utils/lists.ts`

@@ -101,6 +101,18 @@
 
 	/** A list picked from the menu. Component state, so leaving the screen resets it. */
 	let picked = $state<string | null>(null);
+
+	/**
+	 * "Keep here" under the remembered-list line: the field stays on the list it
+	 * was on for this line, like a pick, and lets go once the field is emptied
+	 * (an add empties it), so the next known name moves the icon again. Nothing
+	 * is written until the add, which then remembers the kept list.
+	 */
+	let keep = $state(false);
+	$effect(() => {
+		if (!value.trim()) keep = false;
+	});
+
 	let menuOpen = $state(false);
 	let menu: HTMLDivElement | undefined = $state();
 
@@ -118,8 +130,11 @@
 	const target = $derived(
 		fixed
 			? { storeId: fixed.id, remembered: null }
-			: listTarget({ typed: value, known, lists, picked, fallback })
+			: listTarget({ typed: value, known, lists, picked, fallback, keep })
 	);
+
+	/** The list "Keep here" goes back to: the one the field was on before the move. */
+	const fallbackList = $derived(lists.find((list) => list.id === fallback) ?? null);
 
 	const targetList = $derived(fixed ?? lists.find((list) => list.id === target.storeId) ?? null);
 
@@ -157,7 +172,7 @@
 	/** The list a suggestion would land on, for the right edge of its row. */
 	function detail(name: string): string | undefined {
 		if (fixed) return undefined;
-		const id = listTarget({ typed: name, known, lists, picked, fallback }).storeId;
+		const id = listTarget({ typed: name, known, lists, picked, fallback, keep }).storeId;
 		return lists.find((list) => list.id === id)?.name;
 	}
 
@@ -375,16 +390,32 @@
 	{/if}
 </div>
 
-{#if target.remembered && targetList && !fixed}
-	<p class="why">
-		<ListIcon icon={targetList.icon} size={14} />
-		<span
-			>{#each m.shopping.quickAdd.remembered(target.remembered, targetList.name) as part, index (index)}{#if part.strong}<strong
-						>{part.text}</strong
-					>{:else}{part.text}{/if}{/each}</span
-		>
-	</p>
-{/if}
+<!-- Always in the page, so a line appearing in it is read out (politely). -->
+<div class="why-slot" aria-live="polite">
+	{#if target.remembered && targetList && !fixed}
+		<p class="why">
+			<ListIcon icon={targetList.icon} size={14} />
+			<span
+				>{#each m.shopping.quickAdd.remembered(targetList.name) as part, index (index)}{#if part.strong}<strong
+							>{part.text}</strong
+						>{:else}{part.text}{/if}{/each}</span
+			>
+			{#if fallbackList}
+				<button
+					type="button"
+					class="keep"
+					aria-label={m.shopping.quickAdd.keepOn(fallbackList.name)}
+					onclick={() => {
+						keep = true;
+						input?.focus();
+					}}
+				>
+					{m.shopping.quickAdd.keepHere}
+				</button>
+			{/if}
+		</p>
+	{/if}
+</div>
 
 {#if error}
 	<p class="error">{error}</p>
@@ -612,13 +643,38 @@
 		color: var(--text-4);
 	}
 
+	/* The sentence and "Keep here" run as one line of text, so the button
+	   follows the last word and wraps like a word at large text sizes rather
+	   than truncating anything. */
 	.why {
-		display: flex;
-		align-items: center;
-		gap: 7px;
 		margin: -8px 6px 14px;
 		font-size: var(--fs-14);
+		line-height: 1.6;
 		color: var(--text-4);
+	}
+
+	.why > :global(svg) {
+		margin-right: 5px;
+		vertical-align: -2px;
+	}
+
+	/* A text button, 44px tall by its target; the focus ring is the app's own. */
+	.keep {
+		position: relative;
+		display: inline;
+		padding: 0 4px;
+		margin-left: 2px;
+		border-radius: 6px;
+		font-size: var(--fs-14);
+		font-weight: 700;
+		white-space: nowrap;
+		color: var(--sage-deep);
+	}
+
+	.keep::after {
+		content: '';
+		position: absolute;
+		inset: -13px -4px;
 	}
 
 	.why :global(strong) {

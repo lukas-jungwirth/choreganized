@@ -212,6 +212,18 @@ export const SCREENS: Screen[] = [
 				.click();
 		}
 	},
+	// A known name moved the field to another list: the line says where, and
+	// "Keep here" puts it back (Lukas 2026-11-20).
+	{
+		name: 'shopping-remembered',
+		route: '/(app)/shopping',
+		path: '',
+		navigate: async (page) => {
+			await page.goto('/shopping');
+			await page.getByPlaceholder(/^Add to /).fill('Toothpaste');
+			await page.getByRole('button', { name: /^Keep on / }).waitFor();
+		}
+	},
 	// The add field reading an amount at the end of the line (plan 37): the chip.
 	{ name: 'shopping-amount', route: '/(app)/shopping', path: '', navigate: typeAmount },
 	{

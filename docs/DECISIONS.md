@@ -3998,3 +3998,14 @@ units | null, name}`, written back as editor lines in the reader's unit spelling
      its bare count. The fold chevron stays after the name; checked at 390 px and at 200% text,
      where the name truncates and the pill does not. No version bump: `dev` is already at 0.5.0,
      above the last tag.
+272. **The remembered-list line says the list first and offers "Keep here"** (Lukas 2026-11-20;
+     → SPEC §3.1). Typing "Gurke" showed "Gurke kommt wie beim letzten Mal zu Einkauf.", which
+     read as the app overruling him rather than as "this goes to another list". The automatic
+     move stays exactly as `listTarget` decides it; the line now reads "Kommt auf **Einkauf**,
+     wie letztes Mal." / "Goes on **Grocery**, like last time." and ends in a text button "Hier
+     lassen" / "Keep here". **It holds for the line being typed, not the whole visit**: a
+     `keep` flag in the field, cleared when the field is emptied (an add empties it). Holding
+     it for the visit like a menu pick would quietly switch the remembering off for every
+     later name, which is not what one tap on one line says. Nothing is written until the add,
+     and the add remembers the kept list as any add does. The line sits in a polite live
+     region (it had none) and runs as text, so at 200% the button wraps like a word.

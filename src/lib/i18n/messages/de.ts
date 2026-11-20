@@ -332,10 +332,13 @@ export const de: Messages = {
 			addTo: (list: string) => `${list}: eintragen…`,
 			choose: (list: string) => `Liste: ${list}. Andere Liste wählen`,
 			menu: 'Listen',
-			remembered: (item: string, list: string): RichText => [
-				{ text: item, strong: true },
-				{ text: ` kommt wie beim letzten Mal zu ${list}.` }
+			remembered: (list: string): RichText => [
+				{ text: 'Kommt auf ' },
+				{ text: list, strong: true },
+				{ text: ', wie letztes Mal.' }
 			],
+			keepHere: 'Hier lassen',
+			keepOn: (list: string) => `Auf ${list} lassen`,
 			amount: (amount: string) => `${amount} als Menge lesen`,
 			submit: 'Eintragen'
 		},

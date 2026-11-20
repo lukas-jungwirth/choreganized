@@ -442,10 +442,14 @@ export const en = {
 			/** The menu of every list under that button. */
 			menu: 'Lists',
 			/** The line under the field when a known name moved the icon [L3]. */
-			remembered: (item: string, list: string): RichText => [
-				{ text: item, strong: true },
-				{ text: ` goes to ${list}, like last time.` }
+			remembered: (list: string): RichText => [
+				{ text: 'Goes on ' },
+				{ text: list, strong: true },
+				{ text: ', like last time.' }
 			],
+			/** After that line: keep the field on the list it was on. */
+			keepHere: 'Keep here',
+			keepOn: (list: string) => `Keep on ${list}`,
 			/**
 			 * The chip that shows the amount read from the line (plan 37). A toggle:
 			 * its pressed state says whether it applies.
