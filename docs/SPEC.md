@@ -313,7 +313,7 @@ sketch is `design/sketches/lists.html`, frames [L1]–[L7]. A list is one of two
 
 - Header **Lists** + "{n} things to get" (open rows on shopping lists, a settling tick already
   counts as got) or "Nothing to get". The tab bar says "Lists" / "Listen"; the bag icon and the shopping raccoon
-  stay. A settings icon (top right) opens Manage lists (§3.4).
+  stay. A settings icon (top right, a 44 px target) opens Manage lists (§3.4).
 - **One card per shopping list that has something on it**, in the household's list order, then
   "Other", then **every checklist** as a single row (§3.7), empty ones included. A shopping list
   with nothing on it, open or bought, is not on the overview; the field's menu still reaches it. With every row ticked its header reads **All done** with a ✓, until the nightly
@@ -338,7 +338,8 @@ sketch is `design/sketches/lists.html`, frames [L1]–[L7]. A list is one of two
 - **The add field's leading icon is the list it adds to**, and the placeholder names it ("Add
   to Grocery…"). It starts on the first shopping list every time the screen is opened.
   - **Tap the icon for the menu** [L2]: every list with its icon and what is on it ("4",
-    "empty", or a checklist's "5/12" in its terracotta well), the current one ticked, then
+    "empty", or a checklist's "5/12" in its terracotta well; a settling tick already counts
+    as got, as in the header), the current one ticked and focused when the menu opens, then
     **Other** ("Sonstiges", always, even while its card is hidden), then **New list**. A list
     picked there stays until the screen is left. Other picked is a choice like any list: a known
     name does not move the field off it. A name added to Other is not remembered there: next
@@ -371,6 +372,7 @@ sketch is `design/sketches/lists.html`, frames [L1]–[L7]. A list is one of two
     typed** and remembered as a name, so the same line is never split again ("Windeln 4" is a
     size, not four nappies). It is back on whenever the field is emptied. The server reads the
     line again with the same rules and the same known names, unless the form says `literal`.
+    32 px drawn, a 44 px target.
     On a checklist a literal line is not remembered (a checklist teaches the field nothing,
     §3.7), so its chip comes back next time.
   - A known name keeps the household's spelling ("milk" becomes "Milk" if that is how it was
@@ -396,6 +398,9 @@ sketch is `design/sketches/lists.html`, frames [L1]–[L7]. A list is one of two
     is "already there" as well, from the field and from a recipe
     (→ [DECISIONS #279](DECISIONS.md)). Renaming a row in the sheet [3a] to a name already on
     the list keeps two rows.
+  - **One add at a time**: while an add is on its way the line is still in the field, so a
+    second Enter, a double tap on + or on a suggestion is ignored. Otherwise the rule above
+    would turn "Gurken x3" into ×6 ([DECISIONS #278](DECISIONS.md)).
 - **Suggestions**: as you type, the field offers names this household has put on the list
   before, most recently used first ("Rind" → "Rinderhackfleisch"). Case- and accent-blind, and
   a match inside a word counts — German compounds make "starts with" useless on its own. Up to
@@ -588,12 +593,16 @@ item sheet [3a]; what differs is what a tick does and what counts as shopping.
   field that adds here and nowhere else (no suggestions: a packing list is not shopping), and
   the rows in their own order.
 - **A tick is immediate and in place**: no settle, no undo bar, no "{n} bought". The row is
-  struck and wears the small avatar of whoever ticked it; tap the circle again to untick. Order
-  never changes on a tick; drag moves ticked rows as well as open ones.
+  struck and wears the small avatar of whoever ticked it (to a screen reader the row reads
+  "Edit Passports, ticked by Elisabeth"); tap the circle again to untick. Order
+  never changes on a tick; drag moves ticked rows as well as open ones. A row tapped again
+  before the first tap is answered keeps what the last tap said: an earlier answer never shows
+  through ([DECISIONS #278](DECISIONS.md)).
 - **Start over** appears at the right of the card's foot once anything is ticked, quiet while
   the trip is under way and filled once everything is. It unticks every row in one transaction
   and raises the undo bar ("**Vacation packing** started over · Undo"), which puts back exactly
-  those ticks with their own time and ticker. It never happens by itself.
+  those ticks with their own time and ticker. It never happens by itself. Its button leaves
+  with the press, so focus moves to the first row's circle.
 - **Live**: a housemate's tick or Start over refreshes the open screen without an animation or a
   notice; their adds are announced as on a shopping list.
 - **Not shopping**: a checklist's rows are never swept overnight, never counted on Home's stat
@@ -604,7 +613,8 @@ item sheet [3a]; what differs is what a tick does and what counts as shopping.
   ticked row. Shopping list → checklist: its bought rows stay ticked, in place, until Start
   over. Checklist → shopping list: its ticked rows go under "{n} bought" and are swept that
   night. When rows would move, Save asks first and says which ("Its 3 ticked items go under
-  “3 bought” and are cleared overnight.").
+  “3 bought” and are cleared overnight."). Enter in the name field asks the same question:
+  the confirm sits on the form's submit, not on the button.
 - **Later, not built**: a date on a checklist (plan 36 "Later").
 
 ---

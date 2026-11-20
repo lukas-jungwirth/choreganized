@@ -427,6 +427,7 @@ export const de: Messages = {
 			check: (item: string) => `${item} abhaken`,
 			uncheck: (item: string) => `${item} zurück auf die Liste`,
 			edit: (item: string) => `${item} bearbeiten`,
+			editTicked: (item: string, by: string) => `${item} bearbeiten, abgehakt von ${by}`,
 			reorder: (item: string) => `${item} verschieben`
 		},
 

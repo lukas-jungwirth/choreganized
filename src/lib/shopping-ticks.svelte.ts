@@ -71,6 +71,42 @@ export function shoppingTicks(
 	/** The ticker a pending tick wears when it isn't you: Start over's undo. */
 	const pendingBy = new SvelteMap<string, Ticker | null>();
 
+	/**
+	 * Whose turn a row's `pending` entry is. A row can be tapped again before
+	 * the first tap is answered (tick then untick, Start over then a new tick),
+	 * and the earlier answer must not take away the later tap's entry: the row
+	 * would show the server's in-between state until the second answer
+	 * (→ DECISIONS #278). So every optimistic write takes the next number, and
+	 * only the latest may let go.
+	 */
+	const turns = new Map<string, number>();
+	/** One counter for every row, so a number is never handed out twice. */
+	let lastTurn = 0;
+
+	function claim(itemId: string) {
+		lastTurn += 1;
+		turns.set(itemId, lastTurn);
+		return lastTurn;
+	}
+
+	/**
+	 * Act as if the server had written `checkedAt` (ticked by `by`, when it
+	 * isn't you). Returns the release for this write's answer, which does
+	 * nothing once a later write has taken the row over.
+	 */
+	function hold(itemId: string, checkedAt: number | null, by?: Ticker | null) {
+		const turn = claim(itemId);
+		if (by === undefined) pendingBy.delete(itemId);
+		else pendingBy.set(itemId, by);
+		pending.set(itemId, checkedAt);
+		return () => {
+			if (turns.get(itemId) !== turn) return;
+			turns.delete(itemId);
+			pending.delete(itemId);
+			pendingBy.delete(itemId);
+		};
+	}
+
 	const items = $derived(
 		source().map((item) => {
 			if (!pending.has(item.id)) return item;
@@ -169,6 +205,8 @@ export function shoppingTicks(
 		confirmed = false
 	) {
 		clearSettle(item.id);
+		// The settle owns the row now: an earlier untick's answer must not release it.
+		claim(item.id);
 		pending.set(item.id, null);
 		settling.set(item.id, color);
 
@@ -225,10 +263,10 @@ export function shoppingTicks(
 	function toggleInPlace(item: ShoppingListItem): SubmitFunction {
 		return ({ formData }) => {
 			const checked = formData.get('checked') === 'true';
-			pending.set(item.id, checked ? Date.now() : null);
+			const release = hold(item.id, checked ? Date.now() : null);
 			return async ({ update }) => {
 				await update({ reset: false });
-				pending.delete(item.id);
+				release();
 			};
 		};
 	}
@@ -239,6 +277,7 @@ export function shoppingTicks(
 		return ({ formData }) => {
 			const checked = formData.get('checked') === 'true';
 
+			let release: (() => void) | undefined;
 			if (checked) {
 				// Yours is sage — the list's own accent. Only a housemate's tick wears
 				// a colour, because only then is *who* part of the news.
@@ -247,7 +286,7 @@ export function shoppingTicks(
 				// Unchecking answers at once: there is nothing to watch, and "put it
 				// back" is a correction, which wants to look immediate.
 				clearSettle(item.id);
-				pending.set(item.id, null);
+				release = hold(item.id, null);
 			}
 
 			return async ({ update, result }) => {
@@ -261,7 +300,7 @@ export function shoppingTicks(
 						if (meta) meta.confirmed = true;
 					}
 				} else {
-					pending.delete(item.id);
+					release?.();
 				}
 				if (result.type !== 'success' && ticked?.item.id === item.id) ticked = null;
 			};
@@ -307,11 +346,11 @@ export function shoppingTicks(
 	function resetSubmit(listId: string): SubmitFunction {
 		return () => {
 			const unticking = items.filter((item) => item.storeId === listId && item.checkedAt !== null);
-			for (const item of unticking) pending.set(item.id, null);
+			const releases = unticking.map((item) => hold(item.id, null));
 
 			return async ({ result, update }) => {
 				await update({ reset: false });
-				for (const item of unticking) pending.delete(item.id);
+				for (const release of releases) release();
 				const reset = result.type === 'success' ? result.data?.reset : null;
 				if (
 					reset &&
@@ -333,17 +372,13 @@ export function shoppingTicks(
 	/** The undo bar's Undo: the ticks back on screen at once, then on the server. */
 	function undoResetSubmit(undo: ResetUndo): SubmitFunction {
 		return () => {
-			for (const tick of undo.ticks) {
-				pendingBy.set(tick.id, undo.tickers.get(tick.id) ?? null);
-				pending.set(tick.id, tick.checkedAt);
-			}
+			const releases = undo.ticks.map((tick) =>
+				hold(tick.id, tick.checkedAt, undo.tickers.get(tick.id) ?? null)
+			);
 			resetUndo = null;
 			return async ({ update }) => {
 				await update({ reset: false });
-				for (const tick of undo.ticks) {
-					pending.delete(tick.id);
-					pendingBy.delete(tick.id);
-				}
+				for (const release of releases) release();
 			};
 		};
 	}

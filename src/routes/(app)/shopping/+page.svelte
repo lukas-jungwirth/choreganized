@@ -63,7 +63,10 @@
 	const menuLists = $derived<QuickAddList[]>(
 		data.stores.map((store) => {
 			const rows = ticks.items.filter((item) => item.storeId === store.id);
-			const left = rows.filter((item) => item.checkedAt === null).length;
+			// A settling row counts as got, as in the header and on its card.
+			const left = rows.filter(
+				(item) => item.checkedAt === null && !ticks.isSettling(item.id)
+			).length;
 			return {
 				...store,
 				status:
@@ -75,7 +78,11 @@
 	);
 
 	/** What is left to get on "Other", for its entry at the foot of the menu. */
-	const otherLeft = $derived(shopping.find((group) => group.storeId === null)?.items.length ?? 0);
+	const otherLeft = $derived(
+		shopping
+			.find((group) => group.storeId === null)
+			?.items.filter((item) => !ticks.isSettling(item.id)).length ?? 0
+	);
 
 	/**
 	 * The names the field completes from, minus whatever is already waiting to
@@ -280,12 +287,20 @@
 
 <style>
 	.manage {
+		position: relative;
 		display: flex;
 		/* The header aligns on the baseline; the icon wants its own centre. */
 		align-self: center;
 		padding: 4px;
 		margin: -4px -4px -4px 0;
 		color: var(--text-4);
+	}
+
+	/* 27px drawn; the target is 44 without moving the header. */
+	.manage::after {
+		content: '';
+		position: absolute;
+		inset: -9px;
 	}
 
 	/* The header sits tight against the field it introduces; the notice needs the

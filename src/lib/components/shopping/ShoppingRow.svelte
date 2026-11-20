@@ -98,7 +98,16 @@
 		</button>
 	</form>
 
-	<button type="button" class="body" onclick={onedit} aria-label={m.shopping.row.edit(item.name)}>
+	<!-- The label replaces the button's content, the ticker's avatar included,
+		 so a ticked checklist row names its ticker in words. -->
+	<button
+		type="button"
+		class="body"
+		onclick={onedit}
+		aria-label={checked && ticker
+			? m.shopping.row.editTicked(item.name, ticker.displayName)
+			: m.shopping.row.edit(item.name)}
+	>
 		<!-- Struck, but by a line that draws itself: `text-decoration` can't be
 			 animated, so the settle borrows a hairline of its own and the static
 			 rule takes over once the row lands under "{n} bought". -->

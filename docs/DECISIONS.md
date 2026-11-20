@@ -4088,7 +4088,34 @@ store_id` NULL already means "no memory" (a deleted list), and telling the two a
      direct with a single other choice, a list ("Who takes it?", Anyone included) with more,
      instead of a row per housemate. **Not built**: correcting the credit later from History.
 
-278. **Lists data, after the review of 2026-11-20: a put-back is an add, a top-up that changes
+278. **Lists screens: what the review of 2026-11-20 changed, and what a second tap may do**
+     (review of the day's ten PRs; → SPEC §3.1, §3.7, `tests/e2e/shopping.spec.ts`). Eleven
+     findings on the client side of Lists, each read again and reproduced in a journey before
+     it was fixed; all eleven were real and small enough to fix. **The kind-change confirm
+     sits on the form's submit, not on the button**: turning Save into `type="button"` left
+     the form with no submit button, so Enter in the name field submitted without asking and
+     a checklist's ticks were swept that night. `enhance` cancels the submit and raises the
+     confirm; the confirm's yes lets exactly one through. **One add at a time**: since the
+     same name adds up (#276) a double tap doubled the amount, so `QuickAdd` ignores a submit
+     (and a suggestion tap) while one is on its way. A flag, not a disabled +, because a
+     disabled button would drop the phone's keyboard; the server is untouched. **An
+     optimistic tick is released only by the latest tap** (`shopping-ticks` `hold`): each
+     write to a row takes a number, and an answer whose number is no longer the row's does
+     nothing. That covers tick then untick on a checklist, a new tick while Start over is
+     still out, and an untick's answer arriving under a new settle on a shopping list (same
+     flaw, found while fixing the first two). **Targets**: the amount chip's ellipsis moved to
+     an inner span, because `overflow: hidden` clipped the `::after` that makes it 44 px; the
+     Manage lists icon got the same `::after`. **A suggestion's list name gives way first**
+     (at most 45% of the row, ellipsis), so a 40-character list name cannot squeeze the
+     item's name out. **Small ones**: the menu opens with focus on the current list (one
+     selector list answered with the first row); the menu counts a settling row as got, like
+     the header; Start over moves focus to the first row's circle instead of dropping it;
+     a ticked checklist row says who ticked it in its accessible name (`row.editTicked`, new
+     copy in both languages). **Left alone**: text typed while an add is still on its way is
+     cleared with the answer, as before; it needs a slow connection and a fast typist, and
+     holding the line back is the smaller surprise than adding half of it.
+
+279. **Lists data, after the review of 2026-11-20: a put-back is an add, a top-up that changes
      nothing is none, a moved row goes to the end** (→ SPEC §3.1, §3.2, §3.5, DATA-MODEL
      `shopping_items`). Six findings on the server side of the Lists rebuild (#264, #268,
      #276), each checked again with a test before deciding.
