@@ -18,13 +18,15 @@
 
 	type Props = {
 		store: StoreSummary;
-		/** The topmost store is where quick-add lands — the design tints it sage. */
+		/** Can't move up. */
 		first: boolean;
 		last: boolean;
+		/** Where quick-add lands, the topmost shopping list: the design tints it sage. */
+		isDefault?: boolean;
 		ondelete: () => void;
 	};
 
-	let { store, first, last, ondelete }: Props = $props();
+	let { store, first, last, isDefault = false, ondelete }: Props = $props();
 
 	const m = messages();
 
@@ -55,7 +57,12 @@
 </script>
 
 <li class="row">
-	<span class="tile" class:default={first} aria-hidden="true">
+	<span
+		class="tile"
+		class:default={isDefault}
+		class:check={store.kind === 'checklist'}
+		aria-hidden="true"
+	>
 		<ListIcon icon={store.icon} size={16} />
 	</span>
 
@@ -131,6 +138,12 @@
 		border-radius: 9px;
 		background: var(--divider);
 		color: var(--text-4);
+	}
+
+	/* A checklist wears terracotta here too, as on the overview (plan 36). */
+	.check {
+		background: var(--terracotta-tint);
+		color: var(--terracotta-deep);
 	}
 
 	.default {

@@ -55,7 +55,11 @@ describe('scripts/seed.ts', { timeout: 30_000 }, () => {
 		assert.equal(run.status, 0, `seed in ${zone}:\n${run.stdout}${run.stderr}`);
 
 		const checked = new Database(databasePath, { readonly: true })
-			.prepare('select checked_at as at from shopping_items where checked_at is not null')
+			.prepare(
+				`select checked_at as at from shopping_items
+				 where checked_at is not null
+				 and store_id not in (select id from stores where kind = 'checklist')`
+			)
 			.all() as { at: number }[];
 		const cutoff = Date.now() - CHECKED_ITEM_TTL_MS;
 

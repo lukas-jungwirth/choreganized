@@ -47,6 +47,14 @@ export async function openGrocery(page: Page): Promise<void> {
 	await page.getByRole('heading', { level: 1, name: SEED.stores[0] }).waitFor();
 }
 
+/** The seeded checklist, opened from its row on the overview (plan 36 [L4]). */
+export async function openChecklist(page: Page): Promise<void> {
+	await page.goto('/shopping');
+	await page.getByRole('link', { name: new RegExp(`^${SEED.checklist}`) }).click();
+	await page.waitForURL(/\/shopping\/(?!stores$)[^/]+$/);
+	await page.getByRole('heading', { level: 1, name: SEED.checklist }).waitFor();
+}
+
 /**
  * A brand-new sign-up with no household, for the onboarding screens — the only
  * way to reach them, since both seeded accounts own one. A new account per test
@@ -151,6 +159,35 @@ export const SCREENS: Screen[] = [
 		path: '',
 		navigate: openGrocery,
 		theme: 'dark'
+	},
+	// A checklist opened [L4] (plan 36 step 2), in both themes: ticks in place
+	// with the ticker's avatar, the progress bar, Start over at the foot.
+	{
+		name: 'shopping-checklist',
+		route: '/(app)/shopping/[listId]',
+		path: '',
+		navigate: openChecklist
+	},
+	{
+		name: 'shopping-checklist-dark',
+		route: '/(app)/shopping/[listId]',
+		path: '',
+		navigate: openChecklist,
+		theme: 'dark'
+	},
+	// New list [L6]: a name, the "Shopping list | Checklist" switch, the icons.
+	{
+		name: 'shopping-new-list',
+		route: '/(app)/shopping',
+		path: '',
+		navigate: async (page) => {
+			await page.goto('/shopping');
+			await page.getByRole('button', { name: 'New list' }).last().click();
+			await page
+				.getByRole('dialog', { name: 'New list' })
+				.getByRole('tab', { name: 'Checklist' })
+				.click();
+		}
 	},
 	{ name: 'tasks', route: '/(app)/tasks', path: '/tasks', bottom: true },
 	// The calendar screens, which the real clock kept out of here until the

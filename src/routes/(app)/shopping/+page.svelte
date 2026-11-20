@@ -6,11 +6,15 @@
 	(`/shopping/[listId]`). A shopping list with nothing on it is not on screen —
 	the field's menu still reaches it. What was ticked off waits at the foot of
 	its own card as "{n} bought" until the nightly sweep.
+
+	Checklists (plan 36 step 2) come after the shopping lists, each always one
+	row that opens it (→ `ChecklistRow`), empty or not.
 -->
 <script lang="ts">
 	import HolidayNotice from '$lib/components/HolidayNotice.svelte';
 	import BasketIcon from '$lib/components/icons/BasketIcon.svelte';
 	import PageHeader from '$lib/components/shell/PageHeader.svelte';
+	import ChecklistRow from '$lib/components/shopping/ChecklistRow.svelte';
 	import ListCard from '$lib/components/shopping/ListCard.svelte';
 	import ListSheet from '$lib/components/shopping/ListSheet.svelte';
 	import LiveNotice from '$lib/components/shopping/LiveNotice.svelte';
@@ -36,25 +40,37 @@
 
 	const m = messages();
 
-	const ticks = shoppingTicks(() => data.items);
+	const ticks = shoppingTicks(() => data.items, {
+		checklists: () =>
+			data.stores.filter((store) => store.kind === 'checklist').map((store) => store.id),
+		me: () => data.currentMember
+	});
 
 	const list = $derived(splitList(ticks.items, data.stores));
 
-	/** What is left to get across every list; a settling row counts as got. */
+	/** The shopping lists' cards (and "Other"): what there is to get. */
+	const shopping = $derived(list.groups.filter((group) => group.kind === 'buy'));
+
+	/** What is left to get across every shopping list; a settling row counts as got. */
 	const toGet = $derived(
-		list.groups.flatMap((group) => group.items).filter((item) => !ticks.isSettling(item.id)).length
+		shopping.flatMap((group) => group.items).filter((item) => !ticks.isSettling(item.id)).length
 	);
 
-	/** Where the field adds when nothing else says otherwise: the first list. */
-	const firstListId = $derived(data.stores[0]?.id ?? null);
+	/** Where the field adds when nothing else says otherwise: the first shopping list. */
+	const firstListId = $derived(data.stores.find((store) => store.kind === 'buy')?.id ?? null);
 
 	/** Every list for the field's menu [L2], with what is on it. */
 	const menuLists = $derived<QuickAddList[]>(
 		data.stores.map((store) => {
-			const left = ticks.items.filter(
-				(item) => item.storeId === store.id && item.checkedAt === null
-			).length;
-			return { ...store, status: m.shopping.lists.status(left) };
+			const rows = ticks.items.filter((item) => item.storeId === store.id);
+			const left = rows.filter((item) => item.checkedAt === null).length;
+			return {
+				...store,
+				status:
+					store.kind === 'checklist'
+						? m.shopping.lists.ticked(rows.length - left, rows.length)
+						: m.shopping.lists.status(left)
+			};
 		})
 	);
 
@@ -66,7 +82,7 @@
 	 */
 	const suggestions = $derived.by(() => {
 		const onTheList = new Set(
-			list.groups.flatMap((group) => group.items).map((item) => suggestionKey(item.name))
+			shopping.flatMap((group) => group.items).map((item) => suggestionKey(item.name))
 		);
 		return data.suggestions
 			.filter((known) => !onTheList.has(suggestionKey(known.name)))
@@ -101,8 +117,9 @@
 
 	function adding(storeId: string | null) {
 		const key = keyOf(storeId);
-		const shown = list.groups.some((group) => keyOf(group.storeId) === key);
-		flashNext = !shown || folded.has(key) ? key : null;
+		const card = list.groups.find((group) => keyOf(group.storeId) === key);
+		// A checklist's row shows no rows of its own, so an add there always flashes.
+		flashNext = !card || card.kind === 'checklist' || folded.has(key) ? key : null;
 	}
 
 	function added() {
@@ -193,16 +210,24 @@
 {:else}
 	<div class="lists">
 		{#each list.groups as group (keyOf(group.storeId))}
-			<ListCard
-				{group}
-				toggle={ticks.toggle}
-				onedit={edit}
-				settling={ticks.settling}
-				folded={folded.has(keyOf(group.storeId))}
-				onfold={() => fold(group.storeId)}
-				openHref={group.storeId ? `/shopping/${group.storeId}` : null}
-				flash={flashes.get(keyOf(group.storeId)) ?? 0}
-			/>
+			{#if group.kind === 'checklist' && group.storeId}
+				<ChecklistRow
+					{group}
+					href="/shopping/{group.storeId}"
+					flash={flashes.get(keyOf(group.storeId)) ?? 0}
+				/>
+			{:else}
+				<ListCard
+					{group}
+					toggle={ticks.toggle}
+					onedit={edit}
+					settling={ticks.settling}
+					folded={folded.has(keyOf(group.storeId))}
+					onfold={() => fold(group.storeId)}
+					openHref={group.storeId ? `/shopping/${group.storeId}` : null}
+					flash={flashes.get(keyOf(group.storeId)) ?? 0}
+				/>
+			{/if}
 		{/each}
 	</div>
 {/if}

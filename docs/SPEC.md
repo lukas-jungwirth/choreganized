@@ -264,7 +264,8 @@ pose, first match wins, top to bottom (`lib/utils/raccoon.ts`, by the household'
    (§4.1) and the card still shows **one**: the dinner, or — with no dinner planned — the last
    meal the day does have, its eyebrow naming which ("Today's lunch"). Anything else today is
    counted beside the cook line ("+1 more today"), never listed; the Cooking tab is the list.
-4. **Stat tiles** (2-up): "{n} on shopping list" (unchecked items) → Shopping;
+4. **Stat tiles** (2-up): "{n} on shopping list" (unchecked items on shopping lists and "Other";
+   a checklist's rows are not counted, §3.7) → Shopping;
    "{n} tasks due today" (due today + overdue) → Tasks.
 5. **Raccoon album card** ([DECISIONS #244](DECISIONS.md)) — always there, directly under the
    tiles, in the same place every day. On the right a small deck: your newest raccoon on its
@@ -299,17 +300,19 @@ a danger badge with the current user's overdue count [4e].
 ## 3. Lists tab (was Shopping; → plan 36)
 
 Every shop is a **list** with an icon (the database still calls them `stores`, → DATA-MODEL). The
-sketch is `design/sketches/lists.html`, frames [L1]–[L7]. Step 1 of plan 36 builds shopping
-lists; checklists (ticks that stay until "Start over") are step 2 and not built yet.
+sketch is `design/sketches/lists.html`, frames [L1]–[L7]. A list is one of two kinds: a
+**shopping list**, whose ticks settle under "{n} bought" and are swept overnight (§3.1), or a
+**checklist** (vacation packing, "before we leave"), whose ticks stay in place until "Start over"
+(§3.7). Everything in §3.1–§3.6 is about shopping lists unless it says otherwise.
 
 ### 3.1 Lists [L1] [L7], and a list opened [L5]
 
-- Header **Lists** + "{n} things to get" (open rows, a settling tick already counts as got) or
-  "Nothing to get". The tab bar says "Lists" / "Listen"; the bag icon and the shopping raccoon
+- Header **Lists** + "{n} things to get" (open rows on shopping lists, a settling tick already
+  counts as got) or "Nothing to get". The tab bar says "Lists" / "Listen"; the bag icon and the shopping raccoon
   stay. A settings icon (top right) opens Manage lists (§3.4).
-- **One card per list that has something on it**, in the household's list order, "Other" last.
-  A list with nothing on it, open or bought, is not on the overview; the field's menu still
-  reaches it. With every row ticked its header reads **All done** with a ✓, until the nightly
+- **One card per shopping list that has something on it**, in the household's list order, then
+  "Other", then **every checklist** as a single row (§3.7), empty ones included. A shopping list
+  with nothing on it, open or bought, is not on the overview; the field's menu still reaches it. With every row ticked its header reads **All done** with a ✓, until the nightly
   sweep takes the bought rows and the card with them. A dashed **New list** row ends the page.
 - **The whole card header folds** the card (icon, name, chevron, count of what is left). Folded,
   it shows the first three open names in one line ("Tomatoes, Baby spinach, Oat milk…").
@@ -321,14 +324,15 @@ lists; checklists (ticks that stay until "Start over") are step 2 and not built 
   same card body with "{n} bought" unfolded. A list id from another household is a 404. "Other"
   has no open button: it is not a list anyone made.
 - **The add field's leading icon is the list it adds to**, and the placeholder names it ("Add
-  to Grocery…"). It starts on the first list every time the screen is opened.
+  to Grocery…"). It starts on the first shopping list every time the screen is opened.
   - **Tap the icon for the menu** [L2]: every list with its icon and what is on it ("4",
-    "empty"), the current one ticked, then **New list**. A list picked there stays until the
-    screen is left.
+    "empty", or a checklist's "5/12" in its terracotta well), the current one ticked, then
+    **New list**. A list picked there stays until the screen is left.
   - **It remembers** [L3]: each name the household knows keeps the list it last went to. Typing
     a known name moves the icon there by itself and a line under the field says why
     ("**Shampoo** goes to Drugstore, like last time."). A list picked from the menu wins. An
-    unknown name lands on the list shown: the app never guesses.
+    unknown name lands on the list shown: the app never guesses. The icon never moves to a
+    checklist by itself: a name whose last list has become one stays on the list shown.
   - **"2 l milk" sets the amount** in the same line: a leading amount and an optional unit,
     read the way a recipe line is (`utils/lists.ts` `parseQuickAdd`), in either language. A
     first word that is not purely an amount keeps the line whole ("7up", "4-Kornbrot"). A known
@@ -421,18 +425,23 @@ lists; checklists (ticks that stay until "Start over") are step 2 and not built 
 - Reorder with the arrows ("in the order you walk through town"), rename inline, **Add a
   list**, delete (items fall back to Other). Any member may manage lists. Each row shows the
   list's icon and its item count.
-- **New list** (the dashed row on the overview, or the field's menu): a sheet with a name and an
-  icon from a fixed set of twelve (basket, bag, droplet, pill, hammer, gift, suitcase, tent,
-  door, paw, book, house). No explanatory copy. On create, the list opens so it can be filled.
-  The **Shopping list | Checklist** switch the sketch draws comes with checklists (plan 36
-  step 2). The ⋯ on an opened list opens the same sheet to rename it and change its icon.
+- **New list** (the dashed row on the overview, or the field's menu): a sheet with a name, the
+  switch **Shopping list | Checklist** (basket and checklist icons, shopping list preselected),
+  and an icon from a fixed set of twelve (basket, bag, droplet, pill, hammer, gift, suitcase,
+  tent, door, paw, book, house). No explanatory copy. On create, the list opens so it can be
+  filled. The ⋯ on an opened list opens the same sheet to rename it, change its icon and change
+  its kind (§3.7).
+- Deleting a **checklist** deletes its rows with it; the confirm says how many ("Its 6 items are
+  deleted with it."). A checklist's tile here is terracotta, and the sage "add field starts
+  here" tint is on the first shopping list, wherever it stands.
 - A new household's three lists wear the basket, the droplet and the hammer. A list from before
   plan 36 has no icon and wears the basket.
 
 ### 3.5 Notifications
 
 - Optional "Shopping list updates" push (default **off**): "🛒 {member} added {n} items to the
-  list", coalesced (max one per member per ~15 min), never for your own adds.
+  list", coalesced (max one per member per ~15 min), never for your own adds, and never for an
+  add to a checklist (packing the suitcase is nobody's errand).
 - A pour-in that only **topped up** rows already on the list (§4.8) says so instead — "🛒
   {member} needs more of {n} things on the list". Nothing new appeared, and sending somebody
   standing in the shop to look for a line that isn't there is worse than saying nothing.
@@ -489,6 +498,40 @@ where it can still be acted on (→ [DECISIONS #131](DECISIONS.md)).
 - **Austria only** in v1, gated on the household's timezone. A household keeping time elsewhere
   is told nothing rather than told something wrong; `lib/utils/holidays.ts` is where another
   country would be added.
+
+### 3.7 Checklists [L4] (plan 36 step 2)
+
+A list whose ticks **stay**: a packing list, "before we leave". Same rows, same add field, same
+item sheet [3a]; what differs is what a tick does and what counts as shopping.
+
+- **On the overview** [L1] [L7]: always one row, after the shopping lists and "Other", empty or
+  not. Icon in a **terracotta** well (shopping lists wear sage), the name, "7 left · Sunscreen,
+  Swimwear, First-aid kit…" ("Nothing on it yet" when empty, "All done" when every row is
+  ticked), a ring and "5/12" (the ring sage once complete), and the open button. A tap anywhere
+  on the row opens it; it never unfolds in place.
+- **Opened** [L4], at `/shopping/[listId]` like any list: "‹ Lists" and ⋯, the icon in its
+  terracotta well, "5 of 12 done" over a progress bar (terracotta, sage when complete), the add
+  field that adds here and nowhere else (no suggestions: a packing list is not shopping), and
+  the rows in their own order.
+- **A tick is immediate and in place**: no settle, no undo bar, no "{n} bought". The row is
+  struck and wears the small avatar of whoever ticked it; tap the circle again to untick. Order
+  never changes on a tick; drag moves ticked rows as well as open ones.
+- **Start over** appears at the right of the card's foot once anything is ticked, quiet while
+  the trip is under way and filled once everything is. It unticks every row in one transaction
+  and raises the undo bar ("**Vacation packing** started over · Undo"), which puts back exactly
+  those ticks with their own time and ticker. It never happens by itself.
+- **Live**: a housemate's tick or Start over refreshes the open screen without an animation or a
+  notice; their adds are announced as on a shopping list.
+- **Not shopping**: a checklist's rows are never swept overnight, never counted on Home's stat
+  tile (§2), never matched or topped up by a recipe's pour-in (§4.8), never teach the add field
+  its vocabulary, never send the "added" push (§3.5). A known name added to a checklist keeps the
+  spelling typed.
+- **The kind can be changed later** (the ⋯ sheet). The rows are not rewritten: a bought row is a
+  ticked row. Shopping list → checklist: its bought rows stay ticked, in place, until Start
+  over. Checklist → shopping list: its ticked rows go under "{n} bought" and are swept that
+  night. When rows would move, Save asks first and says which ("Its 3 ticked items go under
+  “3 bought” and are cleared overnight.").
+- **Later, not built**: a date on a checklist (plan 36 "Later").
 
 ---
 
@@ -857,7 +900,8 @@ actually need is the chore this replaces (→ [DECISIONS #123](DECISIONS.md)).
     pepper" lines drops the other's promise from 4 to 3 rather than leaving a number the submit
     won't honour.
 - **Add {n} to the list** writes them, and the result banner reports what happened: what's new,
-  what was topped up, what was already there.
+  what was topped up, what was already there. They land on the first **shopping** list, and only
+  shopping rows are matched: a checklist's "Sunscreen" is never topped up (§3.7).
 - **The cupboard is learned, never declared.** Leave an ingredient off twice and from then on it
   opens unticked; tick it once and that is forgotten, because a household putting olive oil on
   the list has run out of olive oil. Only rows the sheet offered _ticked_ count as "left off" —
@@ -1034,8 +1078,8 @@ Reached from Home's gear (→ §2), and its back chevron returns to Home.
   (optional; day and month, no year — two selects in the profile sheet, "–" in both clears it,
   one without the other is refused; its only use is Home's birthday raccoon), **Language**
   (→ §9), **Appearance** (→ §10). (No password row in v1 — Google only.)
-- **Notifications**: Task reminders · Overdue nudges · Shopping list updates · Shop closing days
-  (→ §3.6) — toggles per member, so they follow the person between devices, under a caption
+- **Notifications**: Task reminders · Overdue nudges · Shopping list updates (shopping lists
+  only, never a checklist → §3.7) · Shop closing days (→ §3.6) — toggles per member, so they follow the person between devices, under a caption
   saying they apply on every device switched on below.
 - **This device**: Enable on this device (subscribes push, shows permission state) · Send test
   notification. Its own group and heading, because permission is per-browser and the switch is

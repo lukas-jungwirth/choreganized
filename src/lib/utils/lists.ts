@@ -34,6 +34,19 @@ export const LIST_ICONS = [
 
 export type ListIcon = (typeof LIST_ICONS)[number];
 
+/**
+ * The two kinds of list (plan 36): a shopping list, whose ticks settle under
+ * "{n} bought" and are swept overnight, and a checklist, whose ticks stay in
+ * place until "Start over".
+ */
+export const LIST_KINDS = ['buy', 'checklist'] as const;
+
+export type ListKind = (typeof LIST_KINDS)[number];
+
+export function isListKind(value: unknown): value is ListKind {
+	return typeof value === 'string' && (LIST_KINDS as readonly string[]).includes(value);
+}
+
 /** What a list with no icon (every list from before plan 36) wears. */
 export const DEFAULT_LIST_ICON: ListIcon = 'basket';
 
@@ -70,12 +83,14 @@ export type ListTarget = {
  * 3. Otherwise the first shopping list (`fallback`).
  *
  * `lists` is every list that exists, so a remembered list that has since been
- * deleted (or never belonged here) can't be pointed at.
+ * deleted (or never belonged here) can't be pointed at. A remembered list that
+ * has become a checklist is passed over too: a checklist is only ever picked
+ * (plan 36 step 2), the icon never moves there by itself.
  */
 export function listTarget(input: {
 	typed: string;
 	known: KnownName[];
-	lists: { id: string }[];
+	lists: { id: string; kind?: ListKind }[];
 	picked: string | null;
 	fallback: string | null;
 }): ListTarget {
@@ -89,7 +104,10 @@ export function listTarget(input: {
 	const key = suggestionKey(name);
 	const hit = key ? input.known.find((known) => suggestionKey(known.name) === key) : undefined;
 
-	if (hit && exists(hit.storeId) && hit.storeId !== input.fallback) {
+	const shopping = (id: string | null) =>
+		input.lists.some((list) => list.id === id && list.kind !== 'checklist');
+
+	if (hit && shopping(hit.storeId) && hit.storeId !== input.fallback) {
 		return { storeId: hit.storeId, remembered: hit.name };
 	}
 

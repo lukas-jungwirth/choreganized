@@ -365,6 +365,31 @@ export const de: Messages = {
 			namePlaceholder: 'Campingwochenende',
 			icon: 'Symbol',
 			create: 'Liste anlegen',
+			kinds: {
+				label: 'Art der Liste',
+				buy: 'Einkaufsliste',
+				checklist: 'Checkliste'
+			},
+			ticked: (done: number, total: number) => `${done}/${total}`,
+			checklistPeek: (left: number, names: string) => `${left} offen · ${names}`,
+			doneOf: (done: number, total: number) => `${done} von ${total} erledigt`,
+			startOver: 'Neu anfangen',
+			toChecklist: {
+				title: (list: string) => `${list} zur Checkliste machen?`,
+				copy: (count: number) =>
+					count === 1
+						? 'Der eine gekaufte Eintrag bleibt abgehakt, bis du die Liste neu anfängst.'
+						: `Die ${count} gekauften Einträge bleiben abgehakt, bis du die Liste neu anfängst.`,
+				confirm: 'Zur Checkliste machen'
+			},
+			toShopping: {
+				title: (list: string) => `${list} zur Einkaufsliste machen?`,
+				copy: (count: number) =>
+					count === 1
+						? 'Der eine abgehakte Eintrag kommt unter „1 gekauft“ und wird über Nacht gelöscht.'
+						: `Die ${count} abgehakten Einträge kommen unter „${count} gekauft“ und werden über Nacht gelöscht.`,
+				confirm: 'Zur Einkaufsliste machen'
+			},
 			icons: {
 				basket: 'Korb',
 				bag: 'Tasche',
@@ -390,6 +415,10 @@ export const de: Messages = {
 
 		undo: {
 			checked: (item: string): RichText => [{ text: item, strong: true }, { text: ' abgehakt' }],
+			startedOver: (list: string): RichText => [
+				{ text: list, strong: true },
+				{ text: ' von vorn' }
+			],
 			action: 'Rückgängig'
 		},
 
@@ -450,6 +479,10 @@ export const de: Messages = {
 					? 'Der eine Eintrag wandert zu „Sonstiges“, nichts geht verloren.'
 					: `Die ${count} Einträge wandern zu „Sonstiges“, nichts geht verloren.`,
 			deleteEmpty: 'Es steht nichts drauf, also ändert sich sonst nichts.',
+			deleteChecklist: (count: number) =>
+				count === 1
+					? 'Der eine Eintrag wird mit ihr gelöscht.'
+					: `Die ${count} Einträge werden mit ihr gelöscht.`,
 			defaults: {
 				grocery: 'Supermarkt',
 				drugstore: 'Drogerie',
