@@ -3871,3 +3871,40 @@ units | null, name}`, written back as editor lines in the reader's unit spelling
      row is noise, and it took the space next to the quantity. Editing an item now shows "Added by
      {member}" under its name, or nothing when that member has left. Who **ticked** a row still
      shows: the settle in their colour and the live notice; a ticked checklist row (plan 36 step 2) keeps the ticker's avatar. The sketch's shopping rows draw no avatar either.
+266. **Lists, step 2: checklists, whose ticks stay until "Start over"** (plan 36, approved by
+     Lukas 2026-11-20; → SPEC §3.7, DATA-MODEL `stores.kind`, sketch [L4] [L6]). `stores.kind =
+'checklist'` is written by the New list sheet's switch and the ⋯ sheet; no migration (0023
+     added the column). The calls made while building it:
+     - **One SQL condition says "not shopping"**: `notOnChecklist()` in services/shopping.ts, used
+       by the nightly sweep, Home's stat tile and `listOpenItems` (the rows a recipe matches).
+       "Other" (no list) counts as shopping. `defaultStoreId` is the first **shopping** list, so a
+       pour-in or a quick add with nothing picked never lands on a checklist, even one at the top
+       of the order; a pour-in aimed at one is redirected there too.
+     - **Changing the kind rewrites no rows.** A bought row and a ticked row are the same columns,
+       so `setStoreKind` updates one cell and the plan's two conversions fall out: bought rows
+       stay ticked on a checklist; a checklist's ticks land under "{n} bought" and the next sweep
+       takes them. The sheet asks only when rows would move (`ticked > 0` and the kind changed);
+       otherwise Save just saves.
+     - **Start over's undo is carried by the browser**: `resetList` answers with the ids it
+       unticked and their `checkedAt`/`checkedByMemberId`, and `undoReset` writes them back. The
+       server trusts none of it: only rows of that checklist, still unticked (a row re-ticked
+       meanwhile keeps its new tick), a ticker from this household (else nobody), a time not in
+       the future. No server-side undo state, like the shopping tick's undo.
+     - **A checklist tick publishes `changed`, not `checked`**: the other phone refetches and
+       draws the tick with its avatar, without the shopping settle or a "{member} got
+       **Passports**" notice (that verb is shopping's). Start over publishes a `reset` event,
+       which the client treats as a silent refetch.
+     - **The opened checklist's field offers no suggestions** (the sketch draws none), and a
+       checklist add neither writes `shopping_suggestions` nor respells a known name, nor puts a
+       ticked row back: "Towels" typed twice is two rows, as typed.
+     - **"Other" comes before the checklists**, not last: it is shopping that lost its list.
+     - **Checklist rows drag, ticked ones included** (`reorderItems` takes every row of a
+       checklist): a tick never moves a row there, so its order is all of its rows.
+     - **Delete stays in Manage lists** (#264), now with "Its {n} items are deleted with it." for a
+       checklist; its tile there is terracotta, and the sage "add field starts here" tint moved
+       from "the first row" to "the first shopping list".
+     - **The segmented control takes an icon per option** (`ui/SegmentedControl`), for the
+       "Shopping list | Checklist" switch; the label stays the accessible name.
+     - **The demo seed has a checklist** ("Vacation packing", three of six ticked by both
+       members), so the overview and the visual baselines show one.
+     - **Assumed, still not confirmed by Lukas:** the tab name "Lists" / "Listen" (#264).

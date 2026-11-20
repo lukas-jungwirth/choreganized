@@ -23,6 +23,9 @@
 
 	const m = messages();
 
+	/** Where quick-add lands: the topmost shopping list, never a checklist. */
+	const defaultId = $derived(data.stores.find((store) => store.kind === 'buy')?.id);
+
 	let newStore = $state('');
 	let confirming = $state<StoreSummary | null>(null);
 	let confirmOpen = $state(false);
@@ -54,6 +57,7 @@
 					{store}
 					first={index === 0}
 					last={index === data.stores.length - 1}
+					isDefault={store.id === defaultId}
 					ondelete={() => askDelete(store)}
 				/>
 			{/each}
@@ -99,7 +103,9 @@
 		<div class="well" aria-hidden="true"><Trash2 size={26} strokeWidth={1.9} /></div>
 		<h2>{m.shopping.stores.deleteConfirm(confirming.name)}</h2>
 		<p class="copy">
-			{#if confirming.itemCount > 0}
+			{#if confirming.itemCount > 0 && confirming.kind === 'checklist'}
+				{m.shopping.stores.deleteChecklist(confirming.itemCount)}
+			{:else if confirming.itemCount > 0}
 				{m.shopping.stores.deleteMoves(confirming.itemCount)}
 			{:else}
 				{m.shopping.stores.deleteEmpty}

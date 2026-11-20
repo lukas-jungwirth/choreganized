@@ -31,7 +31,11 @@ export type LiveActor = { memberId: string; displayName: string; color: string }
 export type LiveEvent =
 	| {
 			topic: 'shopping';
-			kind: 'checked' | 'unchecked' | 'added';
+			/**
+			 * `reset`: a checklist was started over (plan 36 step 2); `name` is the
+			 * list's. Nothing to animate or announce, the refetch is the news.
+			 */
+			kind: 'checked' | 'unchecked' | 'added' | 'reset';
 			actor: LiveActor;
 			itemId?: string;
 			name?: string;

@@ -1,7 +1,7 @@
 # 36 · Lists: shopping lists you can open, and checklists you can run again
 
-**Status: step 1 done (2026-11-20, v0.5.0); step 2 (checklists) is left.** Approved by Lukas on 2026-11-20 after three passes over the sketch. Step 2 is not
-built. Depends on: 03 (Shopping), 15 (live list).
+**Status: done. Step 1 2026-11-20 (v0.5.0, DECISIONS #264); step 2, checklists, 2026-11-20
+(v0.5.0, DECISIONS #266).** Approved by Lukas on 2026-11-20 after three passes over the sketch. Depends on: 03 (Shopping), 15 (live list).
 SPEC: §3 is rewritten when this is built; §2 (Home's stat tile), §4.8 (recipe pour-in) and §6
 (notification names) each gain a line.
 Design: no frame in `design/Hearth.dc.html` (→ `size:l`). The sketch is
@@ -234,6 +234,12 @@ spelling. Drag to reorder was not verified by hand (the harness can't drag, on `
   ticked 13 h ago survives), reset and its undo, Home's count, a recipe pour-in that must not
   match a checklist row, both kind conversions · Playwright: create a checklist, it opens, add
   three, tick two, start over, undo · visual baseline of an opened checklist, light and dark.
+
+**Built 2026-11-20** (DECISIONS #266). Deviations: delete stays in Manage lists (as in step 1)
+rather than in the ⋯ sheet; the kind confirm appears only when rows would move; "Other" sits
+before the checklists; an opened checklist's field offers no suggestions; a checklist tick is a
+silent refresh on the other phone (no "got" notice). Acceptance 13 and 15 were checked by
+integration tests against the real service functions, not by hand.
 
 ### Later, each its own small plan if wanted
 

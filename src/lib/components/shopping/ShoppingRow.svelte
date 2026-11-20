@@ -10,9 +10,14 @@
 
 	Checked, the row goes quiet the way the design draws it: the quantity folds
 	into the struck name — bought is bought.
+
+	On a checklist (plan 36 [L4]) a ticked row stays in place and wears the
+	small avatar of whoever ticked it (`ticker`), which is the news there:
+	"Elisabeth packed the passports".
 -->
 <script lang="ts">
 	import { enhance } from '$app/forms';
+	import Avatar from '$lib/components/ui/Avatar.svelte';
 	import CheckCircle from '$lib/components/ui/CheckCircle.svelte';
 	import { messages } from '$lib/i18n';
 	import type { ShoppingListItem } from '$lib/server/services/shopping';
@@ -43,9 +48,19 @@
 		 * goes.
 		 */
 		settling?: string | undefined;
+		/** A ticked checklist row: who ticked it, drawn as a small avatar. */
+		ticker?: { displayName: string; color: string } | null;
 	};
 
-	let { item, checked, toggle, onedit, reorderable = false, settling }: Props = $props();
+	let {
+		item,
+		checked,
+		toggle,
+		onedit,
+		reorderable = false,
+		settling,
+		ticker = null
+	}: Props = $props();
 
 	const m = messages();
 
@@ -93,6 +108,10 @@
 		<!-- Faded rather than dropped: pulling the quantity out of the markup
 			 mid-settle would reflow the row under its own animation. -->
 		{#if !checked && quantity}<span class="qty">{quantity}</span>{/if}
+		{#if checked && ticker}
+			<span class="ticker"><Avatar name={ticker.displayName} color={ticker.color} size={20} /></span
+			>
+		{/if}
 	</button>
 
 	{#if reorderable}
@@ -218,6 +237,11 @@
 		from {
 			background: color-mix(in srgb, var(--tick-color) 24%, transparent);
 		}
+	}
+
+	.ticker {
+		display: flex;
+		flex: none;
 	}
 
 	.qty {

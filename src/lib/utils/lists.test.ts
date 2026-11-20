@@ -14,9 +14,16 @@ import {
 	type KnownName
 } from './lists.ts';
 
-const LISTS = [{ id: 'grocery' }, { id: 'drugstore' }, { id: 'hardware' }];
+const LISTS = [
+	{ id: 'grocery' },
+	{ id: 'drugstore' },
+	{ id: 'hardware' },
+	{ id: 'packing', kind: 'checklist' as const }
+];
 const KNOWN: KnownName[] = [
 	{ name: 'Shampoo', storeId: 'drugstore' },
+	// Went to a list that has since become a checklist.
+	{ name: 'Sunscreen', storeId: 'packing' },
 	{ name: 'Milk', storeId: 'grocery' },
 	{ name: 'Screws', storeId: 'deleted' },
 	{ name: 'Candles', storeId: null }
@@ -46,6 +53,11 @@ describe('listTarget', () => {
 	it('ignores a remembered list that no longer exists, or "Other"', () => {
 		assert.deepEqual(target('Screws'), { storeId: 'grocery', remembered: null });
 		assert.deepEqual(target('Candles'), { storeId: 'grocery', remembered: null });
+	});
+
+	it('never moves the icon to a checklist by itself, but a pick may go there', () => {
+		assert.deepEqual(target('Sunscreen'), { storeId: 'grocery', remembered: null });
+		assert.deepEqual(target('Sunscreen', 'packing'), { storeId: 'packing', remembered: null });
 	});
 
 	it('a list picked from the menu wins over what is remembered', () => {

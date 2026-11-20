@@ -26,7 +26,7 @@
 	import SuggestionList from '$lib/components/shopping/SuggestionList.svelte';
 	import { messages } from '$lib/i18n';
 	import { itemSuggest } from '$lib/item-suggest.svelte';
-	import { listTarget, quickAddName, type KnownName } from '$lib/utils/lists';
+	import { listTarget, quickAddName, type KnownName, type ListKind } from '$lib/utils/lists';
 	import { ITEM_NAME_MAX } from '$lib/utils/shopping';
 	import Check from '@lucide/svelte/icons/check';
 	import ChevronDown from '@lucide/svelte/icons/chevron-down';
@@ -37,7 +37,9 @@
 		id: string;
 		name: string;
 		icon: string | null;
-		/** What the menu says is on it: "4", "empty". */
+		/** A checklist wears the terracotta well, and the icon never moves to it by itself. */
+		kind: ListKind;
+		/** What the menu says is on it: "4", "empty", or a checklist's "5/12". */
 		status: string;
 	};
 
@@ -56,7 +58,7 @@
 		/** Where it adds when nothing else says otherwise: the first shopping list. */
 		fallback: string | null;
 		/** An opened list: the field adds to it and nothing else. */
-		fixed?: { id: string; name: string; icon: string | null } | null;
+		fixed?: { id: string; name: string; icon: string | null; kind: ListKind } | null;
 		/** About to add to this list (null = "Other"), before the post goes out. */
 		onadding?: (storeId: string | null) => void;
 		/** It landed there. */
@@ -208,7 +210,9 @@
 		{/if}
 
 		{#if fixed}
-			<span class="well" aria-hidden="true"><ListIcon icon={fixed.icon} size={17} /></span>
+			<span class="well" class:check={fixed.kind === 'checklist'} aria-hidden="true"
+				><ListIcon icon={fixed.icon} size={17} /></span
+			>
 		{:else if lists.length > 0}
 			<button
 				bind:this={menuButton}
@@ -226,7 +230,9 @@
 					menu?.querySelector<HTMLButtonElement>('.mrow.on, .mrow')?.focus();
 				}}
 			>
-				<span class="well"><ListIcon icon={targetList?.icon} size={17} /></span>
+				<span class="well" class:check={targetList?.kind === 'checklist'}
+					><ListIcon icon={targetList?.icon} size={17} /></span
+				>
 				<span class="caret" class:open={menuOpen}><ChevronDown size={13} strokeWidth={2.4} /></span>
 			</button>
 		{:else}
@@ -287,7 +293,9 @@
 					aria-pressed={on}
 					onclick={() => choose(list.id)}
 				>
-					<span class="well" aria-hidden="true"><ListIcon icon={list.icon} size={17} /></span>
+					<span class="well" class:check={list.kind === 'checklist'} aria-hidden="true"
+						><ListIcon icon={list.icon} size={17} /></span
+					>
 					<span class="mname">{list.name}</span>
 					<small>{list.status}</small>
 					{#if on}<span class="tick" aria-hidden="true"><Check size={17} strokeWidth={2.6} /></span
@@ -510,6 +518,12 @@
 
 	.mrow.new {
 		color: var(--text-3);
+	}
+
+	/* A checklist's well is terracotta, as on the overview (plan 36). */
+	.well.check {
+		background: var(--terracotta-tint);
+		color: var(--terracotta-deep);
 	}
 
 	.well.dashed {

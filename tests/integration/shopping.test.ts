@@ -8,7 +8,10 @@
  * rows are invisible and immovable from another's.
  */
 import assert from 'node:assert/strict';
-import { describe, it } from 'vitest';
+import { afterEach, describe, it, vi } from 'vitest';
+import { listMembers } from '$lib/server/services/household';
+import { getHomeSummary } from '$lib/server/services/home';
+import { listOverdueForMember } from '$lib/server/services/tasks';
 import {
 	addIngredients,
 	addItem,
@@ -20,9 +23,14 @@ import {
 	listItemNames,
 	listStores,
 	purgeCheckedItems,
+	listOpenItems,
+	listStoresWithCounts,
 	quickAddItem,
 	renameStore,
+	resetList,
 	setChecked,
+	setStoreKind,
+	undoReset,
 	updateItem
 } from '$lib/server/services/shopping';
 import { splitList } from '$lib/utils/shopping';
@@ -287,5 +295,256 @@ describe('lists (plan 36)', () => {
 		assert.equal(getStore(a.householdId, camping.id)?.icon, 'luggage');
 
 		assert.equal(getStore(b.householdId, camping.id), undefined);
+	});
+});
+
+describe('checklists (plan 36 step 2)', () => {
+	afterEach(() => vi.useRealTimers());
+
+	const HOUR = 60 * 60 * 1000;
+
+	/** A household with a checklist, "Vacation packing", last in the order. */
+	function packing(housemates: string[] = []) {
+		const fixture = makeHousehold({ housemates });
+		const [grocery] = listStores(fixture.householdId);
+		const list = createStore(fixture.householdId, 'Vacation packing', 'luggage', 'checklist');
+		const add = (name: string) =>
+			addItem(fixture.householdId, fixture.owner.id, { name, storeId: list.id });
+		return { ...fixture, grocery, list, add };
+	}
+
+	it('the nightly sweep leaves a checklist tick of 13 hours ago alone', () => {
+		vi.useFakeTimers({ toFake: ['Date'] });
+		vi.setSystemTime(new Date('2036-06-18T08:00:00Z'));
+		const { householdId, owner, grocery, add } = packing();
+		const passports = add('Passports');
+		const milk = addItem(householdId, owner.id, { name: 'Milk', storeId: grocery.id });
+		setChecked(householdId, passports.id, owner.id, true);
+		setChecked(householdId, milk.id, owner.id, true);
+
+		vi.setSystemTime(new Date('2036-06-18T21:00:00Z'));
+		const removed = purgeCheckedItems(householdId, new Date(Date.now() - 12 * HOUR));
+
+		assert.equal(removed, 1);
+		assert.deepEqual(
+			getShoppingList(householdId).map((item) => [item.name, item.checkedAt !== null]),
+			[['Passports', true]]
+		);
+	});
+
+	it('a ticked checklist row stays in place and says who ticked it', () => {
+		const { householdId, members, list, add } = packing(['Elisabeth']);
+		const [, elisabeth] = members;
+		const rows = ['Passports', 'Sunscreen', 'Swimwear'].map(add);
+		setChecked(householdId, rows[0].id, elisabeth.id, true);
+
+		const [group] = splitList(getShoppingList(householdId), listStores(householdId)).groups;
+
+		assert.equal(group.storeId, list.id);
+		assert.equal(group.kind, 'checklist');
+		assert.deepEqual(
+			group.items.map((item) => [item.name, item.checkedBy?.displayName ?? null]),
+			[
+				['Passports', 'Elisabeth'],
+				['Sunscreen', null],
+				['Swimwear', null]
+			]
+		);
+		assert.deepEqual(group.bought, []);
+	});
+
+	it('Start over unticks every row in one go, and its undo puts the same ticks back', () => {
+		vi.useFakeTimers({ toFake: ['Date'] });
+		vi.setSystemTime(new Date('2036-06-18T08:00:00Z'));
+		const { householdId, members, list, add } = packing(['Elisabeth']);
+		const [owner, elisabeth] = members;
+		const [passports, chargers, sunscreen] = ['Passports', 'Chargers', 'Sunscreen'].map(add);
+		setChecked(householdId, passports.id, owner.id, true);
+		vi.setSystemTime(new Date('2036-06-18T09:00:00Z'));
+		setChecked(householdId, chargers.id, elisabeth.id, true);
+		const before = getShoppingList(householdId);
+
+		vi.setSystemTime(new Date('2036-06-18T10:00:00Z'));
+		const reset = resetList(householdId, owner.id, list.id);
+
+		assert.equal(reset?.name, 'Vacation packing');
+		assert.equal(reset?.ticks.length, 2);
+		assert.ok(getShoppingList(householdId).every((item) => item.checkedAt === null));
+
+		assert.equal(undoReset(householdId, list.id, reset!.ticks), 2);
+		const after = getShoppingList(householdId);
+		for (const id of [passports.id, chargers.id, sunscreen.id]) {
+			const was = before.find((item) => item.id === id)!;
+			const is = after.find((item) => item.id === id)!;
+			assert.equal(is.checkedAt, was.checkedAt, `${was.name}'s tick time`);
+			assert.deepEqual(is.checkedBy, was.checkedBy, `${was.name}'s ticker`);
+		}
+	});
+
+	it('the undo trusts nothing it is handed back', () => {
+		const { householdId, owner, list, add } = packing();
+		const other = makeHousehold();
+		const [mine, retick, future] = ['Passports', 'Towels', 'Hat'].map(add);
+		const theirs = addItem(other.householdId, other.owner.id, { name: 'Theirs' });
+		const since = Date.now() - HOUR;
+
+		const restored = undoReset(
+			householdId,
+			list.id,
+			[
+				// A ticker from another household is nobody's tick here.
+				{ id: mine.id, checkedAt: since, by: other.owner.id },
+				// Ticked again since the reset: the new tick stays.
+				{ id: retick.id, checkedAt: since, by: owner.id },
+				// No tick from the future.
+				{ id: future.id, checkedAt: Date.now() + HOUR, by: owner.id },
+				// Another household's row.
+				{ id: theirs.id, checkedAt: since, by: other.owner.id }
+			].map((tick, index) => {
+				if (index === 1) setChecked(householdId, retick.id, owner.id, true);
+				return tick;
+			})
+		);
+
+		assert.equal(restored, 1);
+		const rows = getShoppingList(householdId);
+		const row = (id: string) => rows.find((item) => item.id === id)!;
+		assert.equal(row(mine.id).checkedAt, since);
+		assert.equal(row(mine.id).checkedBy, null);
+		assert.notEqual(row(retick.id).checkedAt, since);
+		assert.equal(row(future.id).checkedAt, null);
+		assert.equal(getShoppingList(other.householdId)[0].checkedAt, null);
+	});
+
+	it('only a checklist of this household can be started over', () => {
+		const { householdId, owner, grocery, list } = packing();
+		const other = makeHousehold();
+
+		assert.equal(resetList(householdId, owner.id, grocery.id), null);
+		assert.equal(resetList(other.householdId, other.owner.id, list.id), null);
+		assert.equal(setStoreKind(other.householdId, list.id, 'buy'), false);
+	});
+
+	it("Home's stat tile counts shopping only", () => {
+		const { householdId, owner, grocery, add } = packing();
+		add('Passports');
+		add('Sunscreen');
+		addItem(householdId, owner.id, { name: 'Milk', storeId: grocery.id });
+
+		const today = '2036-06-18';
+		const summary = getHomeSummary(householdId, {
+			member: owner,
+			timezone: 'Europe/Vienna',
+			today,
+			members: listMembers(householdId),
+			overdue: listOverdueForMember(householdId, owner, today)
+		});
+
+		assert.equal(summary.shoppingCount, 1);
+	});
+
+	it("a recipe neither tops up a checklist's row nor lands on a checklist", () => {
+		const fixture = makeHousehold({ storeNames: ['Vacation packing', 'Grocery'] });
+		const { householdId, owner } = fixture;
+		// A checklist first in the order: the pour-in still goes to shopping.
+		const [list, grocery] = listStores(householdId);
+		setStoreKind(householdId, list.id, 'checklist');
+		addItem(householdId, owner.id, { name: 'Sunscreen', quantity: 1, storeId: list.id });
+
+		const result = addIngredients(householdId, owner.id, [{ name: 'Sunscreen', quantity: 2 }]);
+
+		assert.deepEqual(result, { added: 1, merged: 0, skipped: 0 });
+		// Same millisecond, so not in a fixed order: compare as a set.
+		const rows = getShoppingList(householdId).map((item) => [
+			item.name,
+			item.storeId,
+			item.quantity
+		]);
+		assert.equal(rows.length, 2);
+		assert.deepEqual(
+			rows.find((row) => row[1] === list.id),
+			['Sunscreen', list.id, 1]
+		);
+		assert.deepEqual(
+			rows.find((row) => row[1] === grocery.id),
+			['Sunscreen', grocery.id, 2]
+		);
+		assert.deepEqual(
+			listOpenItems(householdId).map((item) => item.quantity),
+			[2]
+		);
+	});
+
+	it('a checklist add teaches the add field nothing and never puts a row back', () => {
+		const { householdId, owner, list, add } = packing();
+		const towels = add('Towels');
+		setChecked(householdId, towels.id, owner.id, true);
+
+		const again = quickAddItem(householdId, owner.id, { name: 'Towels', storeId: list.id });
+
+		assert.equal(again.restored, false);
+		assert.equal(getShoppingList(householdId).length, 2);
+		assert.ok(!listItemNames(householdId).some((known) => known.name === 'Towels'));
+	});
+
+	it('shopping list → checklist keeps its bought rows ticked, in place', () => {
+		const { householdId, owner, grocery } = packing();
+		const bread = addItem(householdId, owner.id, { name: 'Bread', storeId: grocery.id });
+		addItem(householdId, owner.id, { name: 'Milk', storeId: grocery.id });
+		setChecked(householdId, bread.id, owner.id, true);
+
+		assert.equal(setStoreKind(householdId, grocery.id, 'checklist'), true);
+
+		const group = splitList(getShoppingList(householdId), listStores(householdId)).groups.find(
+			(candidate) => candidate.storeId === grocery.id
+		)!;
+		assert.equal(group.kind, 'checklist');
+		assert.deepEqual(
+			group.items.map((item) => [item.name, item.checkedAt !== null]),
+			[
+				['Bread', true],
+				['Milk', false]
+			]
+		);
+		// ...and the sweep no longer takes it.
+		assert.equal(purgeCheckedItems(householdId, new Date(Date.now() + HOUR)), 0);
+	});
+
+	it('checklist → shopping list puts its ticked rows under "bought", for the sweep', () => {
+		const { householdId, owner, list, add } = packing();
+		const passports = add('Passports');
+		add('Sunscreen');
+		setChecked(householdId, passports.id, owner.id, true);
+
+		assert.equal(setStoreKind(householdId, list.id, 'buy'), true);
+
+		const group = splitList(getShoppingList(householdId), listStores(householdId)).groups.find(
+			(candidate) => candidate.storeId === list.id
+		)!;
+		assert.equal(group.kind, 'buy');
+		assert.deepEqual(
+			group.bought.map((item) => item.name),
+			['Passports']
+		);
+		assert.equal(purgeCheckedItems(householdId, new Date(Date.now() + HOUR)), 1);
+	});
+
+	it('deleting a checklist deletes its rows; deleting a shopping list moves them to Other', () => {
+		const { householdId, owner, grocery, list, add } = packing();
+		add('Passports');
+		add('Sunscreen');
+		addItem(householdId, owner.id, { name: 'Milk', storeId: grocery.id });
+
+		assert.equal(
+			listStoresWithCounts(householdId).find((store) => store.id === list.id)?.itemCount,
+			2
+		);
+		assert.equal(deleteStore(householdId, list.id), true);
+		assert.equal(deleteStore(householdId, grocery.id), true);
+
+		assert.deepEqual(
+			getShoppingList(householdId).map((item) => [item.name, item.storeId]),
+			[['Milk', null]]
+		);
 	});
 });

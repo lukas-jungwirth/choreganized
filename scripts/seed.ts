@@ -67,6 +67,8 @@ import {
 	SEED_HOUSEHOLD_NAME,
 	SEED_HOUSEMATE_NAME,
 	SEED_RECIPE_NAMES,
+	SEED_CHECKLIST_ITEMS,
+	SEED_CHECKLIST_NAME,
 	SEED_STORE_NAMES,
 	SEED_TIMEZONE
 } from './seed-data.ts';
@@ -461,6 +463,48 @@ const seeded = db.transaction((tx) => {
 					addedByMemberId: ownerMemberId
 				}
 			])
+		)
+		.onConflictDoNothing()
+		.run();
+
+	/*
+	 * A checklist (plan 36 step 2), half packed: its ticks stay until somebody
+	 * starts it over, each with the avatar of who ticked it. Last in the order,
+	 * where a new list goes.
+	 */
+	const packingId = sid('store', 'packing');
+	tx.insert(stores)
+		.values({
+			id: packingId,
+			householdId,
+			name: SEED_CHECKLIST_NAME,
+			icon: 'luggage',
+			kind: 'checklist',
+			sortOrder: DEMO_STORES.length
+		})
+		.onConflictDoNothing()
+		.run();
+
+	/** Who ticked which row: the passports were Lukas's job, the rest Elisabeth's. */
+	const PACKED: Record<string, string> = {
+		Passports: ownerMemberId,
+		'Phone chargers': housemateMemberId,
+		Toothbrushes: housemateMemberId
+	};
+
+	tx.insert(shoppingItems)
+		.values(
+			spaced(
+				SEED_CHECKLIST_ITEMS.map((name, sortOrder) => ({
+					id: sid('item', `packing-${sortOrder}`),
+					householdId,
+					storeId: packingId,
+					name,
+					sortOrder,
+					addedByMemberId: ownerMemberId,
+					...(PACKED[name] ? { checkedAt: JUST_BOUGHT, checkedByMemberId: PACKED[name] } : {})
+				}))
+			)
 		)
 		.onConflictDoNothing()
 		.run();

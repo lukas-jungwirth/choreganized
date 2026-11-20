@@ -105,17 +105,28 @@ user ─┬─ session / account / verification        (Better Auth)
   drizzle's rename path is the one that has bitten before (0013) (→
   [DECISIONS #264](DECISIONS.md)).
 - Store order (`sortOrder`, contiguous ints) = the order the overview shows the lists in, and
-  the first one is where the add field starts. `storeId NULL` → virtual "Other" group, rendered
-  last. Deleting a store sets its items' `storeId` to NULL.
+  the first **shopping** list is where the add field and a recipe's pour-in land
+  (`defaultStoreId`). `storeId NULL` → virtual "Other" group, rendered after the shopping lists
+  and before the checklists. Deleting a shopping list sets its items' `storeId` to NULL;
+  deleting a checklist deletes its items in the same transaction (plan 36 step 2).
 - `stores.icon` (TEXT NULL, migration 0023): a key from the fixed set of twelve in
   `utils/lists.ts` `LIST_ICONS`; NULL, or a key a later build no longer knows, draws the basket.
   A new household's three lists get basket, droplet and hammer.
 - `stores.kind` (TEXT NOT NULL DEFAULT 'buy', migration 0023): 'buy' is a shopping list,
-  'checklist' a list whose ticks stay until "Start over". Added in plan 36 step 1 so step 2
-  needs no migration; nothing writes 'checklist' yet.
+  'checklist' a list whose ticks stay until "Start over" (plan 36 step 2, no migration of its
+  own). The rows read the same columns either way: a bought row **is** a ticked row, so changing
+  the kind (`setStoreKind`) touches only this column. A checklist's rows are not shopping, and
+  `notOnChecklist()` (services/shopping.ts) is the one SQL condition that keeps them out of the
+  nightly sweep, Home's "{n} on shopping list" and the rows a recipe's pour-in matches against.
+  Checklist adds write no `shopping_suggestions` row and send no "added" push. Start over
+  (`resetList`) sets `checkedAt` and `checkedByMemberId` to NULL on every row of the list in one
+  transaction and hands back what it cleared, so its undo (`undoReset`) can write the same
+  ticks back.
 - `checkedAt NULL` = open; set = bought (struck through, and under "{n} bought" at the foot of
-  its own list's card — → [DECISIONS #105](DECISIONS.md)). Cleanup cron deletes items with
-  `checkedAt < now - 12h` (nightly at 03:30 household-local; exact age not critical).
+  its own list's card — → [DECISIONS #105](DECISIONS.md)), or ticked in place on a checklist,
+  where `checkedByMemberId` draws the ticker's avatar. Cleanup cron deletes items with
+  `checkedAt < now - 12h` (nightly at 03:30 household-local; exact age not critical), never a
+  checklist's.
 - `shopping_suggestions` is the household's **vocabulary**, one row per distinct name, and the
   reason it is a table rather than a `SELECT DISTINCT` over `shopping_items` is that line above:
   the items are swept up, the words shouldn't be. `nameKey` (trimmed + lowercased,

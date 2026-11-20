@@ -1,9 +1,12 @@
 <!--
-	New list [L6], and the same sheet to edit one (plan 36): a name and an icon
-	from the fixed twelve. No explanatory copy.
+	New list [L6], and the same sheet to edit one (plan 36): a name, the switch
+	"Shopping list | Checklist", and an icon from the fixed twelve. No
+	explanatory copy: the kind can be changed later, here, which is what makes
+	the missing explanation safe.
 
-	Step 1 makes shopping lists only, so the Shopping list | Checklist switch
-	the sketch draws arrives with checklists (plan 36 step 2).
+	Changing the kind of a list with ticked rows asks first, and says what
+	happens to them: a shopping list's bought rows stay ticked on a checklist;
+	a checklist's ticked rows go under "{n} bought" and are swept overnight.
 
 	Creating answers with the new list's id and the page opens it, so it can be
 	filled straight away. The page mounts this only while it is open, so the
@@ -14,29 +17,46 @@
 	import ListIcon from '$lib/components/shopping/ListIcon.svelte';
 	import BottomSheet from '$lib/components/ui/BottomSheet.svelte';
 	import Button from '$lib/components/ui/Button.svelte';
+	import CenterModal from '$lib/components/ui/CenterModal.svelte';
+	import SegmentedControl from '$lib/components/ui/SegmentedControl.svelte';
 	import TextField from '$lib/components/ui/TextField.svelte';
 	import { messages } from '$lib/i18n';
-	import { DEFAULT_LIST_ICON, LIST_ICONS, listIcon } from '$lib/utils/lists';
+	import { DEFAULT_LIST_ICON, LIST_ICONS, listIcon, type ListKind } from '$lib/utils/lists';
 	import { STORE_NAME_MAX } from '$lib/utils/shopping';
+	import ListChecks from '@lucide/svelte/icons/list-checks';
+	import ShoppingBasket from '@lucide/svelte/icons/shopping-basket';
 	import { untrack } from 'svelte';
 
 	type Props = {
 		/** The list being edited; null for New list. */
-		list: { id: string; name: string; icon: string | null } | null;
+		list: { id: string; name: string; icon: string | null; kind: ListKind } | null;
+		/** Editing: how many of its rows are ticked (bought), which a kind change moves. */
+		ticked?: number;
 		/** Created: the new list's id. Edited: the same id. */
 		ondone: (listId: string) => void;
 		onclose: () => void;
 	};
 
-	let { list, ondone, onclose }: Props = $props();
+	let { list, ticked = 0, ondone, onclose }: Props = $props();
 
 	const m = messages();
 
 	let open = $state(true);
 	let name = $state(untrack(() => list?.name ?? ''));
 	let icon = $state<string>(untrack(() => (list ? listIcon(list.icon) : DEFAULT_LIST_ICON)));
+	let kind = $state<ListKind>(untrack(() => list?.kind ?? 'buy'));
 	let submitting = $state(false);
 	let error = $state<string | undefined>();
+	let form: HTMLFormElement | undefined = $state();
+
+	/** A kind change that moves ticked rows is asked about first. */
+	const asks = $derived(list !== null && kind !== list.kind && ticked > 0);
+	let confirming = $state(false);
+
+	const kinds = $derived([
+		{ value: 'buy', label: m.shopping.lists.kinds.buy, icon: ShoppingBasket },
+		{ value: 'checklist', label: m.shopping.lists.kinds.checklist, icon: ListChecks }
+	]);
 
 	$effect(() => {
 		if (!open) onclose();
@@ -47,6 +67,7 @@
 
 <BottomSheet bind:open title={list ? m.shopping.lists.editTitle : m.shopping.lists.newList}>
 	<form
+		bind:this={form}
 		method="POST"
 		action={list ? '?/editList' : '?/createList'}
 		use:enhance={() => {
@@ -69,6 +90,7 @@
 	>
 		{#if list}<input type="hidden" name="id" value={list.id} />{/if}
 		<input type="hidden" name="icon" value={icon} />
+		<input type="hidden" name="kind" value={kind} />
 
 		<TextField
 			label={m.shopping.lists.name}
@@ -80,6 +102,10 @@
 			required
 			{error}
 		/>
+
+		<div class="kinds">
+			<SegmentedControl options={kinds} bind:value={kind} label={m.shopping.lists.kinds.label} />
+		</div>
 
 		<p class="label" id={iconsId}>{m.shopping.lists.icon}</p>
 		<div class="icons" role="radiogroup" aria-labelledby={iconsId}>
@@ -98,13 +124,41 @@
 			{/each}
 		</div>
 
-		<Button type="submit" disabled={submitting || !name.trim()}>
+		<Button
+			type={asks ? 'button' : 'submit'}
+			disabled={submitting || !name.trim()}
+			onclick={asks ? () => (confirming = true) : undefined}
+		>
 			{list ? m.common.saveChanges : m.shopping.lists.create}
 		</Button>
 	</form>
 </BottomSheet>
 
+{#if list}
+	{@const change =
+		kind === 'checklist' ? m.shopping.lists.toChecklist : m.shopping.lists.toShopping}
+	<CenterModal bind:open={confirming} label={change.title(list.name)} dismissible={false}>
+		<h2>{change.title(list.name)}</h2>
+		<p class="copy">{change.copy(ticked)}</p>
+		<Button
+			onclick={() => {
+				confirming = false;
+				form?.requestSubmit();
+			}}
+		>
+			{change.confirm}
+		</Button>
+		<button type="button" class="cancel" onclick={() => (confirming = false)}>
+			{m.common.cancel}
+		</button>
+	</CenterModal>
+{/if}
+
 <style>
+	.kinds {
+		margin-top: 16px;
+	}
+
 	.label {
 		margin: 18px 0 8px;
 		font-size: var(--fs-13);
@@ -129,6 +183,28 @@
 		border-radius: 12px;
 		background: var(--field);
 		color: var(--text-3);
+	}
+
+	/* The confirm a kind change raises, set like the other confirms ([7g]). */
+	h2 {
+		margin-bottom: 10px;
+		font-size: var(--fs-24);
+		overflow-wrap: anywhere;
+	}
+
+	.copy {
+		margin: 0 0 24px;
+		font-size: var(--fs-16);
+		line-height: 1.5;
+		color: var(--text-4);
+	}
+
+	.cancel {
+		width: 100%;
+		padding: 13px;
+		font-size: var(--fs-17);
+		font-weight: 700;
+		color: var(--text-2);
 	}
 
 	.icon.on {
