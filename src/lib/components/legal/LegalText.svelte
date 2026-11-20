@@ -2,11 +2,15 @@
 	The operator's Impressum or Datenschutz text, as blocks (→ utils/legal-text).
 	Every word goes through Svelte's text binding, never `{@html}`: the text is
 	shown exactly as written, and nothing in it can become markup.
+
+	`lang` is the language the operator wrote in (→ server/legal `legalLang`),
+	not the reader's: the page around it may be English while this is German,
+	and a screen reader picks its voice by it.
 -->
 <script lang="ts">
 	import type { Block, Line } from '$lib/utils/legal-text';
 
-	let { blocks }: { blocks: Block[] } = $props();
+	let { blocks, lang }: { blocks: Block[]; lang: string } = $props();
 </script>
 
 {#snippet line(parts: Line)}
@@ -27,7 +31,7 @@
 	{/each}
 {/snippet}
 
-<div class="legal-text">
+<div class="legal-text" {lang}>
 	{#each blocks as block, index (index)}
 		{#if block.kind === 'heading'}
 			<h2>{block.text}</h2>

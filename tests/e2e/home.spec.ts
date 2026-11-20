@@ -125,6 +125,32 @@ test.describe('the way into Settings', () => {
 	});
 
 	/**
+	 * The gear is drawn 38px wide and answers on 44px: a thumb that lands just
+	 * off the circle still opens Settings, and the raccoon underneath, which
+	 * answers a poke of its own, stays clear of it (→ DECISIONS #281).
+	 */
+	test('a tap just off the gear still opens Settings', async ({ page }) => {
+		await page.goto('/home');
+		const gear = page.getByRole('link', { name: 'Settings', exact: true });
+		const box = (await gear.boundingBox())!;
+		expect(box.width).toBe(38);
+		expect(box.height).toBe(38);
+
+		const raccoon = (await page.locator('header .raccoon').boundingBox())!;
+		expect(raccoon.y).toBeGreaterThanOrEqual(box.y + box.height + 3);
+
+		// Two pixels outside the circle: straight below it, then straight left of
+		// it. Positions are from the gear's own corner, so Playwright only clicks
+		// once the gear is what is under that point.
+		await gear.click({ position: { x: 19, y: 40 }, timeout: 3000 });
+		await expect(page).toHaveURL(/\/settings$/);
+
+		await page.goto('/home');
+		await gear.click({ position: { x: -2, y: 19 }, timeout: 3000 });
+		await expect(page).toHaveURL(/\/settings$/);
+	});
+
+	/**
 	 * The raccoon hangs from the header's bottom edge, so a short greeting is the
 	 * worst case: German's "Guten Tag," fits one line where "Good afternoon,"
 	 * wraps (every run is the same afternoon, → TESTING "The fixed clock"). At the

@@ -197,7 +197,8 @@ background at all when there is nothing to measure.
 - **RoundButton** — one icon in a 38px circle on the card surface (`--card`,
   `--shadow-card`, `--text-4`), pressed at 0.97 (off under reduced motion); an `<a>` when given
   `href`, and an `aria-label` always. Expenses' ••• menu and Home's gear to Settings (→
-  DECISIONS #266); the parent positions it.
+  DECISIONS #266); the parent positions it. An invisible 3px rim makes the tap area 44px
+  without moving anything, so keep 3px clear of other controls (→ DECISIONS #281).
 - **TextField** — uppercase micro-label + white field, `--r-input`, sage border on focus,
   `error` prop for the message a failed form action sends back.
 - **CodeInput** — a one-time code as a row of boxes, one digit each, with TextField's micro-label

@@ -368,6 +368,8 @@ needs `http://localhost:3000/api/auth/callback/google` added to the OAuth client
 - **Legal pages** (`LEGAL_IMPRINT`, `LEGAL_PRIVACY`): the operator's Impressum and
   Datenschutz text (→ `lib/server/legal.ts`, SPEC §13, DECISIONS #270). Optional, each on its
   own. Unset, its page is a 404 and its links hide. Multi-line values, or `\n` on one line.
+  `LEGAL_LANG` (optional, `de` when unset) is the language they are written in, set as `lang`
+  on the text (DECISIONS #281).
 
 ## Email
 

@@ -112,7 +112,8 @@ greeting the stacked member avatars (28px, rings cut from the page). The faces a
 the household, not a button; a screen reader hears "Household: {names}", and Home is the only
 screen that names the housemates. **Settings** is the round gear in the header's top-right
 corner, above the raccoon's ears (38px, card surface, the same `RoundButton` as Expenses' •••
-menu), and only Home has one. The header is at least 182px tall, so the raccoon starts 10px
+menu), and only Home has one. It answers a tap on 44px, 3px beyond the circle it draws
+([#281](DECISIONS.md)). The header is at least 182px tall, so the raccoon starts 10px
 below the gear even when the greeting is short, since some poses draw right up to the top of
 their picture ([DECISIONS #266](DECISIONS.md)). A long single-word name breaks with a hyphen
 where the language allows it ([#267](DECISIONS.md)). Then, in order:
@@ -1700,12 +1701,17 @@ Two public pages, `/legal/imprint` ("Imprint" / "Impressum") and `/legal/privacy
 
 - **The text is the operator's**, from the deploy's `LEGAL_IMPRINT` and `LEGAL_PRIVACY`, shown
   exactly as written whatever the UI language (never translated, like household content). The
-  title, the back label and the links are the app's and follow the reader's language.
+  title, the back label and the links are the app's and follow the reader's language. The text
+  carries its own `lang`, so a screen reader reads a German Impressum in German on an English
+  screen: `LEGAL_LANG`, German when unset ([#281](DECISIONS.md)).
 - **Hidden while unset.** A page exists only while its variable has text; otherwise its route is
   a 404 and every link to it is gone. The two are independent.
 - **Format:** a blank line starts a paragraph (line breaks inside one are kept), `## ` starts a
   heading, `- ` a list item; `https://…` addresses and email addresses become links (email as
   `mailto:`). A literal `\n` is a line break too. No HTML: anything else is shown as text.
+  An address ends before the sentence's punctuation, before any quote mark („…“, »…«, "…")
+  and before a closing bracket the address did not open itself, so `…/Verordnung_(EU)` stays
+  whole and `(siehe https://…)` loses the bracket ([#281](DECISIONS.md)).
 - **Where from:** sign-in and the invite landing (a quiet pair under the footnote / button) and
   Settings → About (two rows). Signed in or out, the pages open; there is no tab bar.
 - **The page:** back chevron and title (`SubHeader`), the text in a card, then one row to the

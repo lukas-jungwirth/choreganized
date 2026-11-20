@@ -7,7 +7,7 @@
  * doesn't exist: an install that never set one has no such page at all.
  */
 import { error } from '@sveltejs/kit';
-import { legalLinks, legalText } from '$lib/server/legal';
+import { legalLang, legalLinks, legalText } from '$lib/server/legal';
 import { isLegalPage, legalBack, legalHref, parseLegalFrom } from '$lib/utils/legal';
 import { parseLegalText } from '$lib/utils/legal-text';
 import type { PageServerLoad } from './$types';
@@ -24,6 +24,8 @@ export const load: PageServerLoad = ({ params, url, locals }) => {
 	return {
 		page,
 		blocks: parseLegalText(text),
+		/** The language the operator wrote in, which need not be the reader's. */
+		lang: legalLang(),
 		back: legalBack(from, !!locals.member),
 		/** The other page, keeping where the reader started; null while it isn't set. */
 		other: legalLinks()[other] ? { page: other, href: legalHref(other, from) } : null

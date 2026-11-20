@@ -75,6 +75,10 @@ test.describe('signed out', () => {
 		await expect(page.locator('html')).toHaveAttribute('lang', 'de-AT');
 		await expect(page.getByRole('heading', { level: 1, name: 'Impressum' })).toBeVisible();
 		await expect(page.getByText('Haushaltsheld is a private project')).toBeVisible();
+		// …and says which language it is in, so a screen reader set to the page's
+		// German doesn't read the operator's English with German sounds (the e2e
+		// server sets LEGAL_LANG=en for its made-up English text).
+		await expect(page.locator('[lang="en"]')).toContainText('Haushaltsheld is a private project');
 		await expect(page.getByRole('link', { name: 'Datenschutz' })).toBeVisible();
 		await context.close();
 	});

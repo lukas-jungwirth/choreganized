@@ -95,6 +95,52 @@ describe('linkify', () => {
 		);
 	});
 
+	const web = (address: string) => ({
+		kind: 'link',
+		text: address,
+		href: address,
+		external: true
+	});
+
+	it('ends an address at a typographic quote, as it does at a straight one', () => {
+		const address = 'https://example.com/datenschutz';
+		for (const [open, close] of [
+			['„', '“'],
+			['“', '”'],
+			['‚', '‘'],
+			['‘', '’'],
+			['«', '»'],
+			['»', '«'],
+			['‹', '›']
+		]) {
+			assert.deepEqual(
+				linkify(`Siehe ${open}${address}${close}.`),
+				[text(`Siehe ${open}`), web(address), text(`${close}.`)],
+				`${open}…${close}`
+			);
+		}
+	});
+
+	it('keeps a closing bracket that belongs to the address', () => {
+		const address = 'https://de.wikipedia.org/wiki/Datenschutz-Grundverordnung_(EU)';
+		assert.deepEqual(linkify(`Siehe ${address}.`), [text('Siehe '), web(address), text('.')]);
+		assert.deepEqual(linkify(`(siehe ${address})`), [text('(siehe '), web(address), text(')')]);
+		assert.deepEqual(linkify('https://example.com/a[1]'), [web('https://example.com/a[1]')]);
+	});
+
+	it('still leaves the sentence’s own bracket outside the address', () => {
+		assert.deepEqual(linkify('(siehe https://example.com/datenschutz).'), [
+			text('(siehe '),
+			web('https://example.com/datenschutz'),
+			text(').')
+		]);
+		assert.deepEqual(linkify('[https://example.com/x]'), [
+			text('['),
+			web('https://example.com/x'),
+			text(']')
+		]);
+	});
+
 	it('leaves a line with nothing to link as one run of text', () => {
 		assert.deepEqual(linkify('Erika Musterfrau'), [text('Erika Musterfrau')]);
 	});
