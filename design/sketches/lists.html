@@ -162,6 +162,7 @@
 	.phone .sq.go { background: var(--sage); color: var(--on-sage); }
 	.why { display: flex; gap: 7px; align-items: center; font-size: 13px; color: var(--text-4); padding: 8px 6px 0; }
 	.why b { color: var(--ink); font-weight: 600; }
+	.phone .keep { display: inline; font-weight: 700; color: var(--sage-deep); padding: 0 4px; margin-left: 2px; border-radius: 6px; white-space: nowrap; }
 	.pop { position: absolute; left: 0; right: 0; top: calc(100% + 6px); border-radius: 16px; box-shadow: var(--shadow-modal); overflow: hidden; }
 	.phone .sugg { display: flex; width: 100%; align-items: baseline; gap: 10px; padding: 12px 15px; font-size: 16px; font-weight: 500; }
 	.sugg + .sugg, .mrow + .mrow { border-top: 1px solid var(--divider); }
@@ -641,7 +642,7 @@
 			const words = fixed && fixed.kind === 'check' ? [] : VOCAB;
 			const hits = t && s.focus && !s.menu ? words.filter(([n]) => n.toLowerCase().includes(t) && n.toLowerCase() !== t && !have.has(n.toLowerCase())).slice(0, 4) : [];
 			$('.extras').innerHTML =
-				(s.why && !fixed ? `<p class="why">${ic(T.icon, 14)}<span><b>${esc(s.why)}</b> goes to ${esc(T.name)}, like last time.</span></p>` : '')
+				(s.why && !fixed ? `<p class="why">${ic(T.icon, 14)}<span>Goes on <b>${esc(T.name)}</b>, like last time. <button class="keep" data-act="keep" aria-label="Keep on ${esc(list(first()).name)}">Keep here</button></span></p>` : '')
 				+ (s.menu && !fixed ? `<div class="card pop">${s.lists.map((L) => { const { left, total, done } = stats(L); return `<button class="mrow ${L.id === s.target ? 'on' : ''}" data-act="target" data-id="${L.id}" data-kind="${L.kind}"><span class="well mini">${ic(L.icon, 17)}</span><span class="grow">${esc(L.name)}</span><small>${L.kind === 'buy' ? left || 'empty' : `${done}/${total}`}</small>${L.id === s.target ? ic('check', 17, 2.6) : ''}</button>`; }).join('')}
 					<button class="mrow new" data-act="sheet"><span class="well mini">${ic('plus', 16, 2.2)}</span><span class="grow">New list</span></button></div>` : '')
 				+ (hits.length ? `<div class="card pop">${hits.map(([n, id]) => {
@@ -689,7 +690,7 @@
 			L.items.push({ n, q, by: 'l' });
 			const known = VOCAB.find(([v]) => v.toLowerCase() === n.toLowerCase());
 			if (L.kind === 'buy') { if (known) known[1] = id; else VOCAB.push([n, id]); }
-			s.flash = id; s.text = ''; s.why = '';
+			s.flash = id; s.text = ''; s.why = ''; s.kept = false;
 			if (!s.manual && !s.view) s.target = first();
 			paint();
 		}
@@ -704,6 +705,8 @@
 			else if (act === 'open') { s.view = id; s.menu = false; s.focus = false; s.text = ''; s.why = ''; paint(true); }
 			else if (act === 'back') { s.view = null; s.text = ''; paint(true); }
 			else if (act === 'menu') { s.menu = !s.menu; paintExtras(); }
+			// "Keep here": back to the list the field was on, for this line, until the field is emptied.
+			else if (act === 'keep') { s.target = first(); s.kept = true; s.why = ''; s.focus = true; paintExtras(); input.focus(); }
 			else if (act === 'target') { s.target = id; s.manual = true; s.menu = false; s.why = ''; s.focus = true; paintExtras(); input.focus(); }
 			else if (act === 'bought') { list(id).boughtOpen = !list(id).boughtOpen; paint(); }
 			else if (act === 'add') { add(input.value, s.view || s.target); $('.main-input').focus(); }
@@ -738,7 +741,8 @@
 		el.addEventListener('input', (e) => {
 			if (!e.target.matches('.main-input')) return;
 			s.text = e.target.value;
-			if (!s.view && !s.manual) {
+			if (!s.text.trim()) s.kept = false;
+			if (!s.view && !s.manual && !s.kept) {
 				const known = VOCAB.find(([n]) => n.toLowerCase() === s.text.trim().toLowerCase());
 				s.target = known ? known[1] : first();
 				s.why = known && known[1] !== first() ? known[0] : '';

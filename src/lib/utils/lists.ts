@@ -79,6 +79,8 @@ export type ListTarget = {
  * Where what is typed goes (→ SPEC §3.1, plan 36 [L2] [L3]).
  *
  * 1. A list picked from the menu wins, for as long as the screen is open.
+ *    "Keep here" under the field (`keep`) is a pick of the list the field was
+ *    on: it holds for the line being typed, until the field is emptied.
  * 2. Otherwise a name the household knows goes back to the list it went to
  *    last, as long as that list still exists.
  * 3. Otherwise the first shopping list (`fallback`).
@@ -94,12 +96,15 @@ export function listTarget(input: {
 	lists: { id: string; kind?: ListKind }[];
 	picked: string | null;
 	fallback: string | null;
+	/** "Keep here" was tapped: no known name moves the field off `fallback`. */
+	keep?: boolean;
 }): ListTarget {
 	const exists = (id: string | null) => id !== null && input.lists.some((list) => list.id === id);
 
 	if (input.picked !== null && exists(input.picked)) {
 		return { storeId: input.picked, remembered: null };
 	}
+	if (input.keep) return { storeId: input.fallback, remembered: null };
 
 	// The known names as rule 1 reads them: a line the household uses whole
 	// ("Windeln 4") is looked up whole, not as "Windeln".

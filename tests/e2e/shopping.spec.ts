@@ -73,7 +73,7 @@ test('a known name goes to the list it went to last time', async ({ page }) => {
 	// The seed sent Toothpaste to the drugstore once.
 	await field.fill('Toothpaste');
 	await expect(page.getByPlaceholder(`Add to ${DRUGSTORE}…`)).toBeVisible();
-	await expect(page.getByText(`goes to ${DRUGSTORE}, like last time.`)).toBeVisible();
+	await expect(page.getByText(`Goes on ${DRUGSTORE}, like last time.`)).toBeVisible();
 	await page.getByPlaceholder(`Add to ${DRUGSTORE}…`).press('Enter');
 
 	await expect(
@@ -392,4 +392,39 @@ test('a card ends in one pill that carries the count and opens the list', async 
 	await pill.click();
 	await expect(page.getByRole('heading', { level: 1, name: GROCERY })).toBeVisible();
 	await expect(page.getByText(new RegExp(`^${count} to get`))).toBeVisible();
+});
+
+test('"Keep here" keeps a known name on the list the field was on, and it is remembered there', async ({
+	page
+}) => {
+	await page.goto('/shopping');
+	const field = page.getByPlaceholder(`Add to ${GROCERY}…`);
+
+	// Teach a fresh name the drugstore, through the menu.
+	const name = fresh('Floss');
+	await page.getByRole('button', { name: `Adding to ${GROCERY}. Choose another list` }).click();
+	await page
+		.getByRole('group', { name: 'Lists' })
+		.getByRole('button', { name: new RegExp(DRUGSTORE) })
+		.click();
+	await page.getByPlaceholder(`Add to ${DRUGSTORE}…`).fill(name);
+	await page.getByPlaceholder(`Add to ${DRUGSTORE}…`).press('Enter');
+	await expect(card(page, DRUGSTORE).getByText(name)).toBeVisible();
+	// Back on the overview's own start, so no pick holds.
+	await page.goto('/home');
+	await page.goto('/shopping');
+
+	// Typed again, the field moves to the drugstore and says so.
+	await field.fill(name);
+	await expect(page.getByText(`Goes on ${DRUGSTORE}, like last time.`)).toBeVisible();
+	await page.getByRole('button', { name: `Keep on ${GROCERY}` }).click();
+	await expect(page.getByText('like last time')).toBeHidden();
+	await expect(page.getByPlaceholder(`Add to ${GROCERY}…`)).toBeFocused();
+	await page.getByPlaceholder(`Add to ${GROCERY}…`).press('Enter');
+	await expect(card(page, GROCERY).getByText(name)).toBeVisible();
+
+	// Now the grocery is where it went last: typing it proposes nothing.
+	await page.getByPlaceholder(`Add to ${GROCERY}…`).fill(name);
+	await expect(page.getByPlaceholder(`Add to ${GROCERY}…`)).toBeVisible();
+	await expect(page.getByText('like last time')).toBeHidden();
 });

@@ -74,6 +74,35 @@ describe('listTarget', () => {
 		assert.deepEqual(target('Sunscreen', 'packing'), { storeId: 'packing', remembered: null });
 	});
 
+	it('"Keep here" holds the field on its own list, whatever is remembered', () => {
+		const kept = (typed: string) =>
+			listTarget({
+				typed,
+				known: KNOWN,
+				lists: LISTS,
+				picked: null,
+				fallback: 'grocery',
+				keep: true
+			});
+		assert.deepEqual(kept('Shampoo'), { storeId: 'grocery', remembered: null });
+		assert.deepEqual(kept('2 shampoo'), { storeId: 'grocery', remembered: null });
+		// A pick from the menu still wins over it.
+		assert.deepEqual(
+			listTarget({
+				typed: 'Shampoo',
+				known: KNOWN,
+				lists: LISTS,
+				picked: 'hardware',
+				fallback: 'grocery',
+				keep: true
+			}),
+			{ storeId: 'hardware', remembered: null }
+		);
+		// Pure: what the household remembers is untouched until something is added.
+		assert.deepEqual(KNOWN[0], { name: 'Shampoo', storeId: 'drugstore' });
+		assert.deepEqual(target('Shampoo'), { storeId: 'drugstore', remembered: 'Shampoo' });
+	});
+
 	it('a list picked from the menu wins over what is remembered', () => {
 		assert.deepEqual(target('Shampoo', 'hardware'), { storeId: 'hardware', remembered: null });
 		assert.deepEqual(target('Milk', 'hardware'), { storeId: 'hardware', remembered: null });
