@@ -2034,6 +2034,12 @@ export const de: Messages = {
 		alreadyLeft: 'Die Person hat den Haushalt schon verlassen.'
 	},
 
+	legal: {
+		imprint: 'Impressum',
+		privacy: 'Datenschutz',
+		links: 'Rechtliches'
+	},
+
 	admin: {
 		row: 'Admin',
 		entered: 'Admin-Modus an',

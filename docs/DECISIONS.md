@@ -3965,7 +3965,29 @@ units | null, name}`, written back as editor lines in the reader's unit spelling
        line at 200% text.
      - **`pkg`, `pkg.` and `stueck` joined `UNIT_ALIASES`** (recipes read them too); the Deka
        factor stays in `utils/lists.ts`, since a recipe line does not convert.
-270. **A list's count and its open button are one pill** (Lukas 2026-11-20; → SPEC §3.1, §3.7,
+
+270. **Impressum and Datenschutz are the deploy's text, in two variables, rendered without
+     `{@html}`** (Lukas 2026-11-20, "as sketched" in `design/sketches/settings-access.html`;
+     → SPEC §13). `LEGAL_IMPRINT` and `LEGAL_PRIVACY` hold the operator's own words; each page
+     exists only while its variable has text, otherwise `/legal/<page>` is a 404 and every link
+     to it hides, like email sign-in without SMTP (#179): someone else's install must never
+     show this one's address. Variables, not files: Coolify takes multi-line values, there is
+     no volume to mount a file into on the test app, and a literal `\n` is accepted for a
+     setting that only takes one line. The text is never in the catalog and never translated
+     (like household content); the title and the links are. The format is a small subset
+     parsed by `utils/legal-text.ts` into blocks that Svelte renders as elements: blank line =
+     paragraph (its line breaks kept, for an address), `## ` (also `#`, `###`) = heading,
+     `- ` (also `* `) = list item, a plain line under an item continues it, and bare `http(s)://`
+     and email addresses become links (`mailto:`, web links open in a new tab). No Markdown
+     dependency and no `{@html}`, so `<script>` or `javascript:` in the text is shown as text.
+     The routes are one `legal/[page=legal]` outside `(app)`, public signed in or out, without
+     a tab bar; `guards.test.ts` now lists every page outside `(app)`/onboarding with its reason.
+     Back follows `?from=` (`settings`, `login`, `invite-<CODE>`) from an allow-list, built
+     from a known shape and never copied from the query; anything else falls back to Settings
+     for a member and sign-in for anyone else. The cross-link keeps a valid `from`. The e2e
+     server sets both with invented text (`scripts/e2e-legal.ts`); the unset half is tested
+     against the real `load`s with the environment mocked (`tests/integration/legal-pages`).
+271. **A list's count and its open button are one pill** (Lukas 2026-11-20; → SPEC §3.1, §3.7,
      plan 36, sketch `card`). A shopping list's header used to end with the count ("4") beside a
      boxed two-arrows button: solid, but two unrelated things side by side. Now one pill at the
      right edge, `ui`-tokened (`--r-chip`, `--sunken`, the count's ink and step), "4 ›", or a sage

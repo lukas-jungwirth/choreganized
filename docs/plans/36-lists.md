@@ -112,7 +112,7 @@ Saturday") is a shopping list too.
 - **Tap the header to fold, the corner button to open.** The whole header of a shopping list
   folds and unfolds it, with a small chevron after the name, the way any section with a chevron
   behaves. Opening full screen has a button of its own at the right edge, in the same place on
-  every card: since 2026-11-20 (Lukas, DECISIONS #270) one pill that carries the count and a
+  every card: since 2026-11-20 (Lukas, DECISIONS #271) one pill that carries the count and a
   right-pointing chevron ("4 ›"), which replaced the count beside a two-arrows button. The second pass had the
   name open the list and the chevron fold it; Lukas asked whether that was clear, and it was
   not: nothing says a name is a button. Folded, a card shows a one-line preview ("Toothpaste,

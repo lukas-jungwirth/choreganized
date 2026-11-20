@@ -4,12 +4,14 @@
 	the code in six boxes, then the "or" rule and Google. The Apple button stays out
 	(DECISIONS #1). A deploy with no mail settings shows Google alone, as v1 did.
 	Everything else is the design: logo tile, wordmark, tagline rule, footer
-	line pinned to the bottom.
+	line pinned to the bottom, and under it Privacy · Imprint when the deploy has
+	them (→ SPEC §13).
 -->
 <script lang="ts">
 	import { goto } from '$app/navigation';
 	import googleG from '$lib/assets/google-g.svg';
 	import { emailOtp, signIn } from '$lib/auth-client';
+	import LegalLinks from '$lib/components/legal/LegalLinks.svelte';
 	import Screen from '$lib/components/shell/Screen.svelte';
 	import Mascot from '$lib/components/ui/Mascot.svelte';
 	import Button from '$lib/components/ui/Button.svelte';
@@ -260,6 +262,9 @@
 	</div>
 
 	<p class="footnote">{data.emailSignIn ? m.auth.footnoteEmail : m.auth.footnote}</p>
+	<!-- The first place the app asks for an email address, so the first place
+		 its privacy text is offered (→ SPEC §13). -->
+	<LegalLinks links={data.legal} from="login" />
 </Screen>
 
 <style>

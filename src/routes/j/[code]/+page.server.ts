@@ -1,6 +1,8 @@
 import { redirect } from '@sveltejs/kit';
+import { legalLinks } from '$lib/server/legal';
 import { getInvitePreview } from '$lib/server/services/household';
 import { INVITE_CODE_COOKIE } from '$lib/utils/invite-code';
+import { inviteFrom } from '$lib/utils/legal';
 import type { Actions, PageServerLoad } from './$types';
 
 /** An invite link is only useful until it's used; an hour covers the sign-in. */
@@ -20,7 +22,9 @@ export const load: PageServerLoad = ({ params, locals }) => {
 	// Signed in and free to join — skip the landing, go straight to the form.
 	if (preview && locals.user) redirect(303, `/onboarding/join?code=${preview.code}`);
 
-	return { preview };
+	// The same Privacy · Imprint pair as sign-in (→ SPEC §13): back from them
+	// returns to this invite, so it needs the code.
+	return { preview, legal: legalLinks(), legalFrom: preview ? inviteFrom(preview.code) : null };
 };
 
 export const actions: Actions = {
