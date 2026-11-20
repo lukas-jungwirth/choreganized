@@ -390,8 +390,11 @@ sketch is `design/sketches/lists.html`, frames [L1]–[L7]. A list is one of two
     happened: "**Gurke** was already on the list, now **×6**." / "**Gurke** war schon auf
     der Liste, jetzt **×6**.", or "**Gurke** is already on the list." / "**Gurke** steht
     schon auf der Liste.". A top-up refreshes the other screens and pushes like a recipe's
-    top-up (§3.5); "already there" changed nothing and tells nobody. Renaming a row in the
-    sheet [3a] to a name already on the list keeps two rows.
+    top-up (§3.5); "already there" changed nothing and tells nobody. An amount too small to
+    change what the row shows (4 g onto 1 kg, or anything onto a row at the 99,999 ceiling)
+    is "already there" as well, from the field and from a recipe
+    (→ [DECISIONS #279](DECISIONS.md)). Renaming a row in the sheet [3a] to a name already on
+    the list keeps two rows.
 - **Suggestions**: as you type, the field offers names this household has put on the list
   before, most recently used first ("Rind" → "Rinderhackfleisch"). Case- and accent-blind, and
   a match inside a word counts — German compounds make "starts with" useless on its own. Up to
@@ -402,7 +405,9 @@ sketch is `design/sketches/lists.html`, frames [L1]–[L7]. A list is one of two
   in from a recipe — it outlives the items themselves (→ [DECISIONS #106](DECISIONS.md)). On the
   overview each suggestion shows, on its right, the list it would go to. **When no row with the
   name is open there, a name sitting under "{n} bought" on the target list is put back** (unticked, at the end of the walking order, with
-  a typed amount if there was one) instead of being added a second time.
+  a typed amount if there was one) instead of being added a second time. To the household that
+  is an add: it pushes like one (§3.5), and the row is now "Added by" whoever put it back
+  (→ [DECISIONS #279](DECISIONS.md)). Unticking a bought row by hand is neither.
 - **A recipe's ingredients merge into the list rather than pile onto it** (→ §4.8). A name that
   is already there (case-blind) tops up the row it finds instead of starting a second one, so
   two recipes wanting two cucumbers each leave **one row asking for four**. Amounts combine
@@ -465,6 +470,9 @@ sketch is `design/sketches/lists.html`, frames [L1]–[L7]. A list is one of two
   longer has a sliders button, since the amount is typed inline.
 - Editing shows one quiet line under the name, "Added by {member}"; none when that member has
   left the household.
+- Saving with another **List** chosen moves the row to the **end** of that list, where a new
+  item goes. A tick moves with it as it is: a bought row arrives bought, and on a checklist
+  ticked (→ [DECISIONS #279](DECISIONS.md)).
 - CTA: "Add to {list} list". Editing: "Save changes" + a delete row.
 
 ### 3.3 Empty state [7d]
@@ -504,7 +512,8 @@ sketch is `design/sketches/lists.html`, frames [L1]–[L7]. A list is one of two
 
 - Optional "Shopping list updates" push (default **off**): "🛒 {member} added {n} items to the
   list", coalesced (max one per member per ~15 min), never for your own adds, and never for an
-  add to a checklist (packing the suitcase is nobody's errand).
+  add to a checklist (packing the suitcase is nobody's errand). An item the add field puts
+  back from "{n} bought" (§3.1) counts as one added.
 - A pour-in that only **topped up** rows already on the list (§4.8) says so instead — "🛒
   {member} needs more of {n} things on the list". Nothing new appeared, and sending somebody
   standing in the shop to look for a line that isn't there is worse than saying nothing.

@@ -373,7 +373,10 @@ export function combineAmounts(base: Amount, extra: Amount): { quantity: number 
  *   Only for a line somebody typed (`typed`), where the person just said how
  *   many; a recipe leaves "some pasta" alone (→ `planAdds`).
  * - **have**: nothing needs to change. The add said no amount, or (from a
- *   recipe) the amounts can't be added and the need is on the list already.
+ *   recipe) the amounts can't be added and the need is on the list already, or
+ *   the sum is the amount the row already shows (4 g onto 1 kg rounds back to
+ *   1 kg, and a row at the ceiling cannot grow): a row that reads the same has
+ *   not been topped up, and nobody is told it was (→ DECISIONS #279).
  * - **apart**: a typed line whose amount can't be spoken of together with the
  *   row's (3 pcs and 500 g). Somebody typed that on purpose, so it becomes a
  *   row of its own.
@@ -383,7 +386,10 @@ export type AmountMerge =
 
 export function addOnto(row: Amount, extra: Amount, typed = false): AmountMerge {
 	const combined = combineAmounts(row, extra);
-	if (combined) return { effect: 'merge', quantity: combined.quantity, unit: row.unit };
+	if (combined) {
+		if (combined.quantity === row.quantity) return { effect: 'have' };
+		return { effect: 'merge', quantity: combined.quantity, unit: row.unit };
+	}
 	if (!typed || extra.quantity === null) return { effect: 'have' };
 	if (row.quantity === null) {
 		return {

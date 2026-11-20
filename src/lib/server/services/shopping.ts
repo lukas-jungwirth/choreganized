@@ -596,6 +596,9 @@ export function quickAddItem(
 			.set({
 				checkedAt: null,
 				checkedByMemberId: null,
+				// Whoever asks for it now is who the sheet's "Added by" names: the
+				// row is this week's need, not the one somebody bought last time.
+				addedByMemberId: memberId,
 				// Back at the end of the list's walking order, where a new add goes.
 				sortOrder: nextItemSortOrder(tx, householdId, values.storeId),
 				...amount
@@ -615,6 +618,10 @@ export function quickAddItem(
 	if (!result) return added(addItem(householdId, memberId, input));
 
 	if (result.effect === 'restored') {
+		// To a housemate this is an add like any other: Milk was not on the list
+		// and now it is (→ SPEC §3.5). The live event stays `unchecked`, which is
+		// what the other screen has to play.
+		notifyShoppingAdd({ householdId, actorMemberId: memberId, itemCount: 1 });
 		publishShopping(householdId, memberId, {
 			kind: 'unchecked',
 			itemId: result.itemId,
@@ -646,18 +653,34 @@ function amountOf(row: { name: string; quantity: number | null; unit: string | n
  * the edit is somebody fixing a typo they'd otherwise be offered forever. A
  * save that didn't touch the name only moves that name back up the pool, which
  * is exactly where somebody who just edited the item would look for it.
+ *
+ * A row the sheet moves to another list joins that list at the end, as a new
+ * item would; its old `sortOrder` means nothing there and could tie with any
+ * row. Its tick moves with it untouched: a bought row is a ticked row
+ * (→ `setStoreKind`, DECISIONS #279).
  */
 export function updateItem(householdId: string, itemId: string, input: UpdateItemInput): boolean {
 	const edited = db.transaction((tx) => {
 		const values = normalize(householdId, input);
-		const result = tx
-			.update(shoppingItems)
-			.set(values)
-			.where(and(eq(shoppingItems.id, itemId), eq(shoppingItems.householdId, householdId)))
-			.run();
+		const ours = and(eq(shoppingItems.id, itemId), eq(shoppingItems.householdId, householdId));
+		const current = tx
+			.select({ storeId: shoppingItems.storeId })
+			.from(shoppingItems)
+			.where(ours)
+			.get();
 
-		// Nothing was updated ⇒ the id wasn't ours, and neither is the name.
-		if (result.changes === 0) return false;
+		// Not found ⇒ the id wasn't ours, and neither is the name.
+		if (!current) return false;
+
+		const moved = current.storeId !== values.storeId;
+		tx.update(shoppingItems)
+			.set(
+				moved
+					? { ...values, sortOrder: nextItemSortOrder(tx, householdId, values.storeId) }
+					: values
+			)
+			.where(ours)
+			.run();
 
 		if (listKind(householdId, values.storeId) === 'buy') {
 			rememberName(tx, householdId, values.name, values.storeId);
