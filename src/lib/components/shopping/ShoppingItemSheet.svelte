@@ -190,6 +190,12 @@
 			{/if}
 		</div>
 
+		<!-- Who put it on the list: the rows don't say any more (→ DECISIONS #265).
+			 Nothing when that member has left the household. -->
+		{#if item?.addedBy}
+			<p class="added">{m.shopping.sheet.addedBy(item.addedBy.displayName)}</p>
+		{/if}
+
 		<div class="measure">
 			<div class="quantity">
 				<Stepper
@@ -246,6 +252,12 @@
 <style>
 	.named {
 		position: relative;
+	}
+
+	.added {
+		margin: 8px 4px 0;
+		font-size: var(--fs-15);
+		color: var(--text-4);
 	}
 
 	.measure {

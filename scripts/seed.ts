@@ -340,9 +340,9 @@ const seeded = db.transaction((tx) => {
 	 * the name first and only insert what's genuinely missing.
 	 */
 	const DEMO_STORES = [
-		{ key: 'grocery', name: SEED_STORE_NAMES[0] },
-		{ key: 'drugstore', name: SEED_STORE_NAMES[1] },
-		{ key: 'hardware', name: SEED_STORE_NAMES[2] }
+		{ key: 'grocery', name: SEED_STORE_NAMES[0], icon: 'basket' },
+		{ key: 'drugstore', name: SEED_STORE_NAMES[1], icon: 'droplet' },
+		{ key: 'hardware', name: SEED_STORE_NAMES[2], icon: 'hammer' }
 	];
 
 	const existingStores = tx
@@ -361,10 +361,11 @@ const seeded = db.transaction((tx) => {
 
 	tx.insert(stores)
 		.values(
-			DEMO_STORES.map(({ key, name }, sortOrder) => ({
+			DEMO_STORES.map(({ key, name, icon }, sortOrder) => ({
 				id: storeId(key),
 				householdId,
 				name,
+				icon,
 				sortOrder
 			}))
 		)
@@ -492,6 +493,15 @@ const seeded = db.transaction((tx) => {
 		'Red lentils'
 	];
 
+	const DEMO_NAME_LISTS = new Map([
+		['Shampoo', 'drugstore'],
+		['Cotton pads', 'drugstore'],
+		['Toothpaste', 'drugstore'],
+		['Dish soap', 'drugstore'],
+		['LED bulbs (E27)', 'hardware'],
+		['AA batteries', 'hardware']
+	]);
+
 	tx.insert(shoppingSuggestions)
 		.values(
 			DEMO_NAMES.map((name, index) => ({
@@ -499,6 +509,9 @@ const seeded = db.transaction((tx) => {
 				householdId,
 				name,
 				nameKey: suggestionKey(name),
+				// The list each name went to last, so the add field's icon follows
+				// a known name (plan 36 [L3]): Shampoo goes to the drugstore.
+				storeId: storeId(DEMO_NAME_LISTS.get(name) ?? 'grocery'),
 				// Newest first, one a day back — the order the field offers them in.
 				lastUsedAt: daysAgo(index, 18)
 			}))

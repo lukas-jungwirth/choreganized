@@ -1,5 +1,5 @@
 <!--
-	Manage stores [7g] — the walking order the shopping list follows.
+	Manage lists (was Manage stores [7g]) — the order the overview follows.
 
 	The design says "drag to reorder"; this ships arrow buttons instead
 	(→ DECISIONS). They work on touch, on a keyboard and without JavaScript,

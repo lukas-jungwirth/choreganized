@@ -86,8 +86,9 @@ docs/                          # this documentation + plans/
 /onboarding/invite              [5d]  invite screen after create
 (app)/                          layout: session + membership guard, tab bar shell
   home                          [02/8b]
-  shopping                      [03]   sheets: add/edit item [3a]
-  shopping/stores               [7g]
+  shopping                      [L1]   lists overview; sheets: add/edit item [3a], New list [L6]
+  shopping/[listId]             [L5]   one list opened (plan 36); a foreign id is a 404
+  shopping/stores               [7g]   Manage lists
   cooking                       [04]   sheet: plan meal [3d]
   cooking/recipes               (browse all)
   cooking/recipes/new           [3c]

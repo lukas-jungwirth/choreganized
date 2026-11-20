@@ -8,7 +8,7 @@
 /** Field limits, shared by the `maxlength` attribute and the action's guard. */
 export const HOUSEHOLD_NAME_MAX = 60;
 /**
- * 20, not 40 (→ DECISIONS #265): Home greets you by name in 30px type beside
+ * 20, not 40 (→ DECISIONS #267): Home greets you by name in 30px type beside
  * the raccoon, a column with room for about ten letters a line. A longer name
  * already saved stays until its owner next edits the profile.
  */

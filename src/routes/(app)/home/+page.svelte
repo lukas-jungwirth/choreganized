@@ -132,7 +132,7 @@
 			>
 		</h1>
 		<!-- The household's faces: a picture of who lives here, not a button, on the
-			 page itself (→ DECISIONS #264). Named as one image, since Home is the only
+			 page itself (→ DECISIONS #266). Named as one image, since Home is the only
 			 screen that says who the housemates are. -->
 		<span class="faces" role="img" aria-label={m.home.householdFaces(names)}>
 			<AvatarStack members={stack} size={28} />
@@ -140,7 +140,7 @@
 	</div>
 	<!-- Home's one way into Settings, whose back chevron [6a] returns here: the
 		 corner above the raccoon's ears, the one free spot in the header
-		 (→ DECISIONS #264, amending #57, #81 and #214). -->
+		 (→ DECISIONS #266, amending #57, #81 and #214). -->
 	<RoundButton href="/settings" class="gear" aria-label={m.home.openSettings}>
 		<Settings size={19} strokeWidth={1.9} aria-hidden="true" />
 	</RoundButton>
@@ -254,7 +254,7 @@
 	   it. 182px, not 170: the raccoon (136px, 2px below the header) then starts
 	   10px under the gear's bottom edge when the greeting is short. The gap has
 	   to come from here, since some poses' art reaches the top of the picture
-	   right under the gear (→ DECISIONS #264). */
+	   right under the gear (→ DECISIONS #266). */
 	header {
 		position: relative;
 		min-height: 182px;

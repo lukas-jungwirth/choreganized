@@ -95,7 +95,7 @@ test.describe('the next-chore stack', () => {
 /**
  * Home's one way into Settings is the gear in the header's corner; the faces
  * under the greeting are a picture of the household, not a button (→ SPEC §2,
- * DECISIONS #264).
+ * DECISIONS #266).
  */
 test.describe('the way into Settings', () => {
 	test.afterEach(async ({ page, baseURL }) => {

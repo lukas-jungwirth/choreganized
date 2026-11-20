@@ -39,6 +39,14 @@ export async function openRecipe(page: Page): Promise<void> {
 	await page.getByRole('heading', { level: 1 }).waitFor();
 }
 
+/** The first list, opened from its card's corner button (plan 36 [L5]). */
+export async function openGrocery(page: Page): Promise<void> {
+	await page.goto('/shopping');
+	await page.getByRole('link', { name: `Open ${SEED.stores[0]}` }).click();
+	await page.waitForURL(/\/shopping\/(?!stores$)[^/]+$/);
+	await page.getByRole('heading', { level: 1, name: SEED.stores[0] }).waitFor();
+}
+
 /**
  * A brand-new sign-up with no household, for the onboarding screens — the only
  * way to reach them, since both seeded accounts own one. A new account per test
@@ -123,6 +131,27 @@ export const SCREENS: Screen[] = [
 	{ name: 'home-dark', route: '/(app)/home', path: '/home', theme: 'dark' },
 	{ name: 'shopping', route: '/(app)/shopping', path: '/shopping', bottom: true },
 	{ name: 'shopping-dark', route: '/(app)/shopping', path: '/shopping', theme: 'dark' },
+	// The add field's list menu [L2] (plan 36).
+	{
+		name: 'shopping-menu',
+		route: '/(app)/shopping',
+		path: '',
+		navigate: async (page) => {
+			await page.goto('/shopping');
+			await page.getByRole('button', { name: /Choose another list$/ }).click();
+			await page.getByRole('group', { name: 'Lists' }).waitFor();
+		}
+	},
+	// A list opened by itself [L5], in both themes: the struck rows under
+	// "{n} bought" start unfolded here.
+	{ name: 'shopping-list', route: '/(app)/shopping/[listId]', path: '', navigate: openGrocery },
+	{
+		name: 'shopping-list-dark',
+		route: '/(app)/shopping/[listId]',
+		path: '',
+		navigate: openGrocery,
+		theme: 'dark'
+	},
 	{ name: 'tasks', route: '/(app)/tasks', path: '/tasks', bottom: true },
 	// The calendar screens, which the real clock kept out of here until the
 	// fixed one (→ DECISIONS #184).

@@ -28,7 +28,7 @@ test('create a household: chooser → set up → invite → home', async ({ brow
 
 	await page.getByLabel('Household name').fill('Testgasse 1');
 
-	// 20 characters at most (→ DECISIONS #265): the field stops there, and a 21st
+	// 20 characters at most (→ DECISIONS #267): the field stops there, and a 21st
 	// that gets past the attribute is refused with the reason under the field.
 	const name = page.getByLabel('Your display name');
 	await expect(name).toHaveAttribute('maxlength', '20');

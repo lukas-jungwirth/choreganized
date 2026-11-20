@@ -1,18 +1,18 @@
 <!--
-	One line of the list [03]: check circle, name, compact quantity, and the
-	mini avatar of whoever put it there.
+	One line of the list [03]: check circle, name and compact quantity. Who
+	added it is not on the row (a dot of noise in a household of two, next to
+	the quantity): the edit sheet [3a] says it instead (→ DECISIONS #265). Who
+	*ticked* it still shows, in the settle's colour.
 
 	Two targets, one row (→ SPEC §3.1): the circle checks the item off, the rest
 	of the row opens the edit sheet. They're siblings rather than nested buttons,
 	which HTML doesn't allow and screen readers can't announce.
 
 	Checked, the row goes quiet the way the design draws it: the quantity folds
-	into the struck name and the avatar drops away — bought is bought, who wanted
-	it stops mattering.
+	into the struck name — bought is bought.
 -->
 <script lang="ts">
 	import { enhance } from '$app/forms';
-	import Avatar from '$lib/components/ui/Avatar.svelte';
 	import CheckCircle from '$lib/components/ui/CheckCircle.svelte';
 	import { messages } from '$lib/i18n';
 	import type { ShoppingListItem } from '$lib/server/services/shopping';
@@ -29,7 +29,7 @@
 		onedit: () => void;
 		/**
 		 * Draws the drag grip and turns the row into a `dragHandleZone` handle. Only
-		 * the open store groups pass it; "recently bought" is sorted by when things
+		 * the open rows of a list pass it; "{n} bought" is sorted by when things
 		 * were ticked, not by hand.
 		 */
 		reorderable?: boolean;
@@ -86,18 +86,13 @@
 	<button type="button" class="body" onclick={onedit} aria-label={m.shopping.row.edit(item.name)}>
 		<!-- Struck, but by a line that draws itself: `text-decoration` can't be
 			 animated, so the settle borrows a hairline of its own and the static
-			 rule takes over once the row lands in "recently bought". -->
+			 rule takes over once the row lands under "{n} bought". -->
 		<span class="name" class:done={checked} class:striking={settling !== undefined}>
 			{checked && quantity ? `${item.name} ${quantity}` : item.name}
 		</span>
-		<!-- Faded rather than dropped: pulling the quantity and the avatar out of
-			 the markup mid-settle would reflow the row under its own animation. -->
-		{#if !checked}
-			{#if quantity}<span class="qty">{quantity}</span>{/if}
-			{#if item.addedBy}
-				<Avatar name={item.addedBy.displayName} color={item.addedBy.color} size={20} />
-			{/if}
-		{/if}
+		<!-- Faded rather than dropped: pulling the quantity out of the markup
+			 mid-settle would reflow the row under its own animation. -->
+		{#if !checked && quantity}<span class="qty">{quantity}</span>{/if}
 	</button>
 
 	{#if reorderable}
@@ -184,10 +179,9 @@
 		transition: color 260ms ease-out;
 	}
 
-	/* The trailing detail steps back while the name is struck: bought is bought,
-	   and who wanted it stops mattering (the checked row drops them entirely). */
-	.settling .qty,
-	.settling :global(.avatar) {
+	/* The quantity steps back while the name is struck: bought is bought (the
+	   checked row folds it into the name). */
+	.settling .qty {
 		opacity: 0;
 		transition: opacity 200ms ease-out;
 	}
@@ -256,8 +250,7 @@
 			animation: none;
 		}
 		.settling .name,
-		.settling .qty,
-		.settling :global(.avatar) {
+		.settling .qty {
 			transition: none;
 		}
 		.striking {

@@ -85,7 +85,7 @@ test('recipe wording is chosen in a sheet and named on its row', async ({ page }
 });
 
 /**
- * A display name is 20 characters at most (→ DECISIONS #265): the field stops
+ * A display name is 20 characters at most (→ DECISIONS #267): the field stops
  * typing there, and the server refuses a 21st that gets past it.
  */
 test('a display name takes 20 characters and refuses 21', async ({ page }) => {

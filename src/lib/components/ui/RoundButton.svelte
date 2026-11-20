@@ -1,6 +1,6 @@
 <!--
 	RoundButton — a 38px circle on the card surface holding one icon: Expenses'
-	••• menu and Home's gear to Settings (→ DECISIONS #264). Renders an <a> when
+	••• menu and Home's gear to Settings (→ DECISIONS #266). Renders an <a> when
 	`href` is set, like `Button`, so a way to another screen stays a real link.
 	It always carries an `aria-label`, since the icon is all there is to see.
 	Position it from the parent (`class` + `:global`); the shape lives here.

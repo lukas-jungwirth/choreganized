@@ -100,11 +100,21 @@ user ─┬─ session / account / verification        (Better Auth)
 
 ### `stores` / `shopping_items` / `shopping_suggestions` / `pantry_staples`
 
-- Store order (`sortOrder`, contiguous ints) = walking order; list renders stores by it.
-  `storeId NULL` → virtual "Other" group, rendered last. Deleting a store sets its items'
-  `storeId` to NULL.
-- `checkedAt NULL` = open; set = bought (struck through, out of its store group and into
-  "Recently bought" — → [DECISIONS #105](DECISIONS.md)). Cleanup cron deletes items with
+- **A store is a list** (plan 36). The UI and the catalog say "list"; the table and the
+  `store_id` columns keep their names, because a rename buys nothing the household can see and
+  drizzle's rename path is the one that has bitten before (0013) (→
+  [DECISIONS #264](DECISIONS.md)).
+- Store order (`sortOrder`, contiguous ints) = the order the overview shows the lists in, and
+  the first one is where the add field starts. `storeId NULL` → virtual "Other" group, rendered
+  last. Deleting a store sets its items' `storeId` to NULL.
+- `stores.icon` (TEXT NULL, migration 0023): a key from the fixed set of twelve in
+  `utils/lists.ts` `LIST_ICONS`; NULL, or a key a later build no longer knows, draws the basket.
+  A new household's three lists get basket, droplet and hammer.
+- `stores.kind` (TEXT NOT NULL DEFAULT 'buy', migration 0023): 'buy' is a shopping list,
+  'checklist' a list whose ticks stay until "Start over". Added in plan 36 step 1 so step 2
+  needs no migration; nothing writes 'checklist' yet.
+- `checkedAt NULL` = open; set = bought (struck through, and under "{n} bought" at the foot of
+  its own list's card — → [DECISIONS #105](DECISIONS.md)). Cleanup cron deletes items with
   `checkedAt < now - 12h` (nightly at 03:30 household-local; exact age not critical).
 - `shopping_suggestions` is the household's **vocabulary**, one row per distinct name, and the
   reason it is a table rather than a `SELECT DISTINCT` over `shopping_items` is that line above:
@@ -112,7 +122,10 @@ user ─┬─ session / account / verification        (Better Auth)
   `utils/shopping.ts` `suggestionKey`) is unique per household and the upsert's conflict target;
   `name` keeps the spelling last used, which is what gets offered back. Written on every add,
   rename and recipe pour-in; read most-recent-first, capped, and filtered in the browser
-  (→ [DECISIONS #106](DECISIONS.md)).
+  (→ [DECISIONS #106](DECISIONS.md)). `storeId` (migration 0023, → `stores.id` ON DELETE SET
+  NULL, added to the generated `ALTER TABLE` by hand as in 0019) is the list the name went to
+  **last**, rewritten by every add, edit and pour-in; the add field moves its icon there when a
+  known name is typed (plan 36 [L3]).
 - `pantry_staples` is the same shape as `shopping_suggestions` doing the opposite job: the names
   this household **doesn't** need to buy. Nobody fills in a pantry inventory, so it is learned
   from the ingredient picker (§4.8) — `skipCount` goes up each time a name is offered and left

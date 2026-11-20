@@ -69,7 +69,7 @@ and the title, the line and the header's buttons all stand on the raccoon's feet
 
 - Fields: **Household name** (e.g. "Sonnengasse 12", up to 60 characters), **Your display
   name** (prefilled from Google given name, up to 20 characters, the same limit as the profile
-  sheet's, → [DECISIONS #265](DECISIONS.md)), **Your colour** — swatch row from the member palette (sage, terracotta,
+  sheet's, → [DECISIONS #267](DECISIONS.md)), **Your colour** — swatch row from the member palette (sage, terracotta,
   blue, amber, plum); preview avatar shows the initial on the chosen colour.
 - Creates household (creator becomes **owner**), stores timezone from the browser
   (`Intl.DateTimeFormat().resolvedOptions().timeZone`), seeds default stores
@@ -111,8 +111,8 @@ screen that names the housemates. **Settings** is the round gear in the header's
 corner, above the raccoon's ears (38px, card surface, the same `RoundButton` as Expenses' •••
 menu), and only Home has one. The header is at least 182px tall, so the raccoon starts 10px
 below the gear even when the greeting is short, since some poses draw right up to the top of
-their picture ([DECISIONS #264](DECISIONS.md)). A long single-word name breaks with a hyphen
-where the language allows it ([#265](DECISIONS.md)). Then, in order:
+their picture ([DECISIONS #266](DECISIONS.md)). A long single-word name breaks with a hyphen
+where the language allows it ([#267](DECISIONS.md)). Then, in order:
 
 **The raccoon** ([DECISIONS #213](DECISIONS.md), [#216](DECISIONS.md), [#219](DECISIONS.md)) sits on the first card's
 top edge, right of the greeting — its upper body, so it reads as peeking over the card. Which
@@ -296,22 +296,57 @@ a danger badge with the current user's overdue count [4e].
 
 ---
 
-## 3. Shopping tab
+## 3. Lists tab (was Shopping; → plan 36)
 
-### 3.1 List [03 main]
+Every shop is a **list** with an icon (the database still calls them `stores`, → DATA-MODEL). The
+sketch is `design/sketches/lists.html`, frames [L1]–[L7]. Step 1 of plan 36 builds shopping
+lists; checklists (ticks that stay until "Start over") are step 2 and not built yet.
 
-- Header "Shopping" + "{checked} of {total} done" under it; "Nothing on the list" when empty.
-- **Add an item…** inline field pinned above the list; typing + Enter (or the + button) adds
-  instantly to the default store (topmost). Opening the field's expand affordance opens the full
-  sheet [3a].
+### 3.1 Lists [L1] [L7], and a list opened [L5]
+
+- Header **Lists** + "{n} things to get" (open rows, a settling tick already counts as got) or
+  "Nothing to get". The tab bar says "Lists" / "Listen"; the bag icon and the shopping raccoon
+  stay. A settings icon (top right) opens Manage lists (§3.4).
+- **One card per list that has something on it**, in the household's list order, "Other" last.
+  A list with nothing on it, open or bought, is not on the overview; the field's menu still
+  reaches it. With every row ticked its header reads **All done** with a ✓, until the nightly
+  sweep takes the bought rows and the card with them. A dashed **New list** row ends the page.
+- **The whole card header folds** the card (icon, name, chevron, count of what is left). Folded,
+  it shows the first three open names in one line ("Tomatoes, Baby spinach, Oat milk…").
+  Folding is **per device**, in the `lists_folded` cookie the load reads, so the first paint is
+  already folded and another phone is unaffected (→ [DECISIONS #264](DECISIONS.md)).
+- **The corner button opens the list** full screen, at `/shopping/[listId]`: its own route, so
+  the phone's back button and the swipe-back return to the overview. "‹ Lists" and a ⋯ (edit
+  name and icon), the list's icon and name, "{n} to get · {n} bought", the add field, and the
+  same card body with "{n} bought" unfolded. A list id from another household is a 404. "Other"
+  has no open button: it is not a list anyone made.
+- **The add field's leading icon is the list it adds to**, and the placeholder names it ("Add
+  to Grocery…"). It starts on the first list every time the screen is opened.
+  - **Tap the icon for the menu** [L2]: every list with its icon and what is on it ("4",
+    "empty"), the current one ticked, then **New list**. A list picked there stays until the
+    screen is left.
+  - **It remembers** [L3]: each name the household knows keeps the list it last went to. Typing
+    a known name moves the icon there by itself and a line under the field says why
+    ("**Shampoo** goes to Drugstore, like last time."). A list picked from the menu wins. An
+    unknown name lands on the list shown: the app never guesses.
+  - **"2 l milk" sets the amount** in the same line: a leading amount and an optional unit,
+    read the way a recipe line is (`utils/lists.ts` `parseQuickAdd`), in either language. A
+    first word that is not purely an amount keeps the line whole ("7up", "4-Kornbrot"). A known
+    name keeps the household's spelling ("milk" becomes "Milk" if that is how it was written).
+  - **On an opened list the field adds to that list and nothing else**; its icon is that list,
+    with no menu.
+  - An add to a list that is folded or not on screen makes that card flash sage once.
 - **Suggestions**: as you type, the field offers names this household has put on the list
   before, most recently used first ("Rind" → "Rinderhackfleisch"). Case- and accent-blind, and
   a match inside a word counts — German compounds make "starts with" useless on its own. Up to
   6 at a time, in a list floating under the field; ↑/↓ + Enter or a tap. In the quick field a
   pick **adds the item** (one gesture is the field's whole point); in the sheet [3a] it fills
-  the name and stops, because the sheet exists to say how much and which shop. Names already
+  the name and stops, because the sheet exists to say how much and which list. Names already
   waiting on the list are never suggested. The pool is every name ever added, renamed or poured
-  in from a recipe — it outlives the items themselves (→ [DECISIONS #106](DECISIONS.md)).
+  in from a recipe — it outlives the items themselves (→ [DECISIONS #106](DECISIONS.md)). On the
+  overview each suggestion shows, on its right, the list it would go to. **A name sitting under
+  "{n} bought" on the target list is put back** (unticked, at the end of the walking order, with
+  a typed amount if there was one) instead of being added a second time.
 - **A recipe's ingredients merge into the list rather than pile onto it** (→ §4.8). A name that
   is already there (case-blind) tops up the row it finds instead of starting a second one, so
   two recipes wanting two cucumbers each leave **one row asking for four**. Amounts combine
@@ -322,17 +357,17 @@ a danger badge with the current user's overdue count [4e].
   trolley can reconcile those. Matching is against what is still **open**: something bought this
   morning and not yet swept up is a fresh need and goes back on
   (→ [DECISIONS #123](DECISIONS.md)).
-- Items grouped by **store**, in store sort order; items without a store under **Other** (last).
-  Store header: pin icon + uppercase name. Stores with nothing left to buy are hidden.
-- Within a store group, items keep a **manual walking order** — drag a row by its grip to
+- Within a list, items keep a **manual walking order** — drag a row by its grip to
   reorder ("your list follows this order, so arrange it the way you walk the aisles"). Order is
   per store: a drag never leaves its group, so it never reassigns a store (that's the sheet's
   job). A list nobody has dragged reads in the order things were added; a new item, and a
   recipe's ingredients, land at the group's end (→ [DECISIONS #118](DECISIONS.md)).
-- Row: check circle, name, optional quantity ("×6", "2L" — quantity+unit compact), adder's mini
-  avatar, and a **drag grip** at the right edge. Checking: sage fill + strikethrough, and the
-  row **leaves its store group** for "Recently bought". Unchecking puts it back where it was.
-- **A tick plays out where it stands.** For ~1.4 s the row stays in its store group, visibly
+- Row: check circle, name, optional quantity ("×6", "2L" — quantity+unit compact), and a
+  **drag grip** at the right edge. No avatar of who added it: in a household of two it is noise
+  next to the quantity, and the edit sheet [3a] names them (→ [DECISIONS #265](DECISIONS.md)).
+  Who **ticked** a row still shows, in the settle's colour and the live notice. Checking: sage fill + strikethrough, and the
+  row **moves under "{n} bought"** at the foot of its own card. Unchecking puts it back.
+- **A tick plays out where it stands.** For ~1.4 s the row stays in its list, visibly
   ticked: the circle fills with a small pop and draws its ✓, the quantity and avatar fade back,
   and a line grows through the name. Then it goes. The write is never delayed — only the row's
   departure — so the other phone hears about it at once regardless
@@ -349,19 +384,18 @@ a danger badge with the current user's overdue count [4e].
 - **Live notice**: for ~4 s, the same dark toast slot says "{member} got **{item}**" (or
   "{member} added **{item}**"), with their avatar and no button. Several in a row from the same
   person become "{member} got **3 things**" rather than a queue of toasts. It earns its place
-  next to the in-place tick because the row may be below the fold, or already folded into
-  "Recently bought", or the change may be an add with no row of yours to animate. The **undo
+  next to the in-place tick because the row may be below the fold, in a folded card, or under
+  "{n} bought", or the change may be an add with no row of yours to animate. The **undo
   bar wins the slot** whenever both want it — it is the one with something to press.
 - **Undo bar**: for ~5 s **after the row leaves**, a dark toast above the tab bar says
   "**{item}** checked off" with an **Undo** — the moment you'd notice the wrong line is also the moment the row is
   hardest to find. Inverted on purpose: in an otherwise cream-and-white list it's the one
   surface that can't be mistaken for a row (→ [DECISIONS #107](DECISIONS.md)). It replaces
   itself when the next item is ticked, and holds while a keyboard is on it. Nothing is lost when
-  it goes: un-ticking the row in "Recently bought" does the same thing.
-- **Recently bought** — one section under the stores, all stores together, most recently ticked
-  off first. Collapsed to its heading ("Recently bought · 3") so a half-done trip doesn't push
-  what you still need off the screen; one tap opens it, to look or to put something back. It
-  starts open when there is nothing left to buy at all.
+  it goes: un-ticking the row under "{n} bought" does the same thing.
+- **"{n} bought"** — the last line of each card (it was one "Recently bought" section under all
+  the stores). What was ticked off on that list, most recently first; folded on the overview,
+  unfolded on an opened list. One tap opens it, to look or to put something back.
 - Checked items are cleared automatically ~12 h after checking (nightly cleanup) — the list
   keeps "done" context during a shopping trip but stays clean day-to-day.
 - Tap a row (not the circle) → edit in the same sheet as [3a]; delete lives there.
@@ -370,18 +404,30 @@ a danger badge with the current user's overdue count [4e].
 
 - Fields: **Item** (text, required, with the same suggestions as the quick field — see §3.1),
   **Quantity** (stepper, optional), **Unit** (pcs · g · kg · ml · L · pack — free pick, default
-  pcs), **Store** (chips of the household's stores; the add-field's current store preselected).
-- CTA: "Add to {store} list". Editing: "Save changes" + a delete row.
+  pcs), **List** (chips of every list; the first list, or the opened list, preselected).
+- Opened by tapping a row (to edit) or the empty state's button (to add); the add field no
+  longer has a sliders button, since the amount is typed inline.
+- Editing shows one quiet line under the name, "Added by {member}"; none when that member has
+  left the household.
+- CTA: "Add to {list} list". Editing: "Save changes" + a delete row.
 
 ### 3.3 Empty state [7d]
 
-- Basket illustration, "Nothing to buy yet", copy, **Add first item** button.
+- When no list has anything on it: basket illustration, "Nothing on any list yet", copy, **Add
+  first item** button, and the New list row under it.
 
-### 3.4 Manage stores [7g] (from Shopping via an overflow/settings affordance)
+### 3.4 Manage lists (was Manage stores [7g]), and New list [L6]
 
-- Reorder by drag ("your list follows this order, so arrange it the way you walk through
-  town"), rename inline, **Add a store**, delete (items fall back to Other). Any member may
-  manage stores. Item counts shown per store.
+- Reorder with the arrows ("in the order you walk through town"), rename inline, **Add a
+  list**, delete (items fall back to Other). Any member may manage lists. Each row shows the
+  list's icon and its item count.
+- **New list** (the dashed row on the overview, or the field's menu): a sheet with a name and an
+  icon from a fixed set of twelve (basket, bag, droplet, pill, hammer, gift, suitcase, tent,
+  door, paw, book, house). No explanatory copy. On create, the list opens so it can be filled.
+  The **Shopping list | Checklist** switch the sketch draws comes with checklists (plan 36
+  step 2). The ⋯ on an opened list opens the same sheet to rename it and change its icon.
+- A new household's three lists wear the basket, the droplet and the hammer. A list from before
+  plan 36 has no icon and wears the basket.
 
 ### 3.5 Notifications
 
