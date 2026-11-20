@@ -156,7 +156,7 @@ export const de: Messages = {
 	/* ── The tab bar [02] ──────────────────────────────────────────────────── */
 	nav: {
 		home: 'Start',
-		shopping: 'Einkauf',
+		shopping: 'Listen',
 		tasks: 'Aufgaben',
 		cooking: 'Kochen',
 		expenses: 'Ausgaben',
@@ -317,22 +317,25 @@ export const de: Messages = {
 
 	/* ── Shopping [03] [3a] [7d] [7g] ──────────────────────────────────────── */
 	shopping: {
-		title: 'Einkauf',
-		progress: (checked: number, total: number) => `${checked} von ${total} erledigt`,
-		nothingListed: 'Nichts auf der Liste',
-		manageStores: 'Geschäfte verwalten',
+		title: 'Listen',
+		manageStores: 'Listen verwalten',
 		other: 'Sonstiges',
 
 		empty: {
-			title: 'Noch nichts zu kaufen',
-			copy: 'Trag ein, was ausgeht. Nach Geschäft sortiert für alle, die einkaufen gehen.',
+			title: 'Noch nichts auf einer Liste',
+			copy: 'Trag ein, was ausgeht. Jedes Geschäft bekommt seine eigene Liste.',
 			cta: 'Erstes Ding eintragen'
 		},
 
 		quickAdd: {
 			placeholder: 'Etwas eintragen…',
-			label: 'Etwas eintragen',
-			expand: 'Mit Menge und Geschäft eintragen',
+			addTo: (list: string) => `${list}: eintragen…`,
+			choose: (list: string) => `Liste: ${list}. Andere Liste wählen`,
+			menu: 'Listen',
+			remembered: (item: string, list: string): RichText => [
+				{ text: item, strong: true },
+				{ text: ` kommt wie beim letzten Mal zu ${list}.` }
+			],
 			submit: 'Eintragen'
 		},
 
@@ -341,7 +344,41 @@ export const de: Messages = {
 		},
 
 		bought: {
-			heading: (count: number) => `Zuletzt gekauft · ${count}`
+			foot: (count: number) => `${count} gekauft`
+		},
+
+		lists: {
+			allDone: 'Alles erledigt',
+			toGet: (count: number) => `${count} zu holen`,
+			thingsToGet: (count: number) =>
+				count === 1 ? '1 Sache zu holen' : `${count} Sachen zu holen`,
+			nothingToGet: 'Nichts zu holen',
+			openedStatus: (left: number, bought: number) => `${left} zu holen · ${bought} gekauft`,
+			open: (list: string) => `${list} öffnen`,
+			edit: (list: string) => `${list} bearbeiten`,
+			status: (left: number) => (left > 0 ? String(left) : 'leer'),
+			nothingYet: 'Noch nichts drauf',
+			notFound: 'Diese Liste gibt es nicht mehr.',
+			newList: 'Neue Liste',
+			editTitle: 'Liste bearbeiten',
+			name: 'Name',
+			namePlaceholder: 'Campingwochenende',
+			icon: 'Symbol',
+			create: 'Liste anlegen',
+			icons: {
+				basket: 'Korb',
+				bag: 'Tasche',
+				droplet: 'Tropfen',
+				pill: 'Tablette',
+				hammer: 'Hammer',
+				gift: 'Geschenk',
+				luggage: 'Koffer',
+				tent: 'Zelt',
+				door: 'Tür',
+				paw: 'Pfote',
+				book: 'Buch',
+				home: 'Haus'
+			}
 		},
 
 		row: {
@@ -387,31 +424,31 @@ export const de: Messages = {
 			quantity: 'Menge',
 			unit: 'Einheit',
 			unitHint: 'Stk. · g · kg · ml · l …',
-			store: 'Geschäft',
+			store: 'Liste',
 			addTo: (store: string) => `Auf die Liste für ${store}`,
 			addToList: 'Auf die Liste',
 			delete: 'Eintrag löschen'
 		},
 
 		stores: {
-			title: 'Geschäfte',
-			subtitle: 'Die Einkaufsliste nach Geschäft gruppieren',
-			back: 'Zurück zum Einkauf',
-			add: 'Geschäft hinzufügen',
+			title: 'Listen verwalten',
+			subtitle: 'In der Reihenfolge, in der du durch die Stadt gehst',
+			back: 'Zurück zu den Listen',
+			add: 'Liste hinzufügen',
 			addButton: 'Hinzufügen',
 			items: (count: number) => (count === 1 ? '1 Eintrag' : `${count} Einträge`),
 			rename: (store: string) => `${store} umbenennen`,
 			moveUp: (store: string) => `${store} nach oben`,
 			moveDown: (store: string) => `${store} nach unten`,
 			remove: (store: string) => `${store} löschen`,
-			help: 'Mit den Pfeilen umsortieren. Die Liste folgt dieser Reihenfolge, also ordne sie so, wie du durch die Stadt gehst. Schnell eingetragene Sachen landen im ersten Geschäft; alles ohne Geschäft steht unter „Sonstiges“.',
-			deleteLabel: 'Geschäft löschen',
+			help: 'Mit den Pfeilen umsortieren. Die Übersicht folgt dieser Reihenfolge, und das Eingabefeld beginnt bei der ersten Liste. Alles ohne Liste steht unter „Sonstiges“.',
+			deleteLabel: 'Liste löschen',
 			deleteConfirm: (store: string) => `${store} löschen?`,
 			deleteMoves: (count: number) =>
 				count === 1
 					? 'Der eine Eintrag wandert zu „Sonstiges“, nichts geht verloren.'
 					: `Die ${count} Einträge wandern zu „Sonstiges“, nichts geht verloren.`,
-			deleteEmpty: 'Es ist nichts eingetragen, also ändert sich sonst nichts.',
+			deleteEmpty: 'Es steht nichts drauf, also ändert sich sonst nichts.',
 			defaults: {
 				grocery: 'Supermarkt',
 				drugstore: 'Drogerie',
@@ -1916,7 +1953,7 @@ export const de: Messages = {
 
 		shopping: {
 			itemName: 'Gib dem Eintrag einen Namen.',
-			storeName: 'Gib dem Geschäft einen Namen.'
+			storeName: 'Gib der Liste einen Namen.'
 		},
 
 		recipes: {

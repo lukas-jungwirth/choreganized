@@ -3811,3 +3811,52 @@ units | null, name}`, written back as editor lines in the reader's unit spelling
      - `cooking.spec.ts` stops every timer the owner still has running after each test,
        passed or failed, so one failure stays one failure. Reproduced locally by delaying
        `startRendering` 1.5 s: the old spec failed the same three tests, the new one passed.
+264. **Lists, step 1: every shop is a list you can open, fold, and add to by its icon** (plan 36,
+     approved by Lukas 2026-11-20; → SPEC §3, sketch `design/sketches/lists.html`). The tab is
+     "Lists" / "Listen"; the overview shows one card per list with something on it, "{n} bought"
+     at the foot of each card replaces the "Recently bought" section, a card's header folds it
+     and a corner button opens it at `/shopping/[listId]`, and the add field's leading icon is
+     the list it adds to. The calls made while building it:
+     - **Kept identifiers.** The table is still `stores` and the columns `store_id`, the routes
+       `/shopping` and `/shopping/stores`, the catalog keys `nav.shopping` and `m.shopping.*`,
+       the components `StoreRow` and the services `createStore`/`renameStore`. The UI says
+       "list" everywhere; a rename would buy nothing the household can see. Migration 0023 is
+       `ADD COLUMN` only (`stores.icon`, `stores.kind`, `shopping_suggestions.store_id`), with
+       `ON DELETE set null` added to the generated statement by hand, as in 0019 (#175).
+     - **Assumed, not confirmed by Lukas:** the tab's new name "Lists" / "Listen" (the bag
+       icon and the shopping raccoon stay). It is one key per language (`nav.shopping`,
+       `shopping.title`) if he flips it back.
+     - **Folded cards live in a cookie** (`lists_folded`, a year, written by the page with
+       `document.cookie`), read by the load, so the first paint is folded and another phone is
+       not: per device, like the theme (#119). The keys are list ids, plus `other`; anything
+       else in the cookie is dropped.
+     - **Where an add lands is one function** (`utils/lists.ts` `listTarget`), shared by the
+       field and the action: a picked list, else the list a known name last went to (if it
+       still exists), else the first list. The pick is component state, so leaving the screen
+       resets it. Without JavaScript the action applies the remembered list itself.
+     - **The amount is parsed on the server** (`parseQuickAdd`, built on the recipe parser), so
+       the field posts the line as typed and works without JavaScript. Only a first word that
+       is purely an amount ("2", "1,5", "½") or an amount fused with g/kg/ml/l ("500g") counts:
+       the recipe parser would read "7up" as seven of "up". An amount over 999 keeps the line
+       whole rather than being clamped.
+     - **A known name keeps the household's spelling** on a quick add ("milk" is written as
+       "Milk" when that is how the household knows it), so the plan's "2 l milk → Milk · 2 L"
+       holds and one thing does not end up in two spellings. An unknown name is kept as typed.
+     - **A bought name is put back, not added twice** (`quickAddItem`): only on the list being
+       added to, newest tick first, to the end of the walking order, taking a typed amount.
+       Milk bought at another shop is a fresh need where it is being added now.
+     - **The ⋯ on an opened list edits name and icon** in the same sheet as New list. Delete and
+       reorder stay in Manage lists, which is one tap away on the overview; a second menu for
+       the same three actions would be two places to keep in step. Changing the kind comes with
+       checklists.
+     - **"Other" can't be opened** and is not in the field's menu: nobody made it, it only
+       collects rows whose list was deleted. It still folds.
+     - **New households' first lists get icons** (basket, droplet, hammer); existing lists keep
+       NULL and draw the basket, as the plan says, rather than being guessed at by name.
+     - **The tick bookkeeping moved, unchanged, into `lib/shopping-ticks.svelte.ts`** so the
+       overview and an opened list settle, undo and play a housemate's tick the same way; the
+       actions both screens post to are `lib/server/shopping-actions.ts`, spread into each
+       route like `meal-actions.ts`.
+     - **Not verified by hand: drag to reorder.** Neither a stepped mouse drag nor svelte-dnd-
+       action's keyboard drag moves a row under Playwright here, on this branch or on `dev`, so
+       the harness can't tell. The drag code moved into `ListCard` as it was.

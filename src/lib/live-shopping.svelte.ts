@@ -9,7 +9,7 @@
  *    is a hint; the list comes from the server load, so the browser never has a
  *    second opinion about grouping or walking order.
  * 2. **Hand a housemate's tick to the page**, which plays it out in the row's
- *    own place before letting it go to "recently bought". Your own events are
+ *    own place before letting it go under "{n} bought". Your own events are
  *    skipped here — your tap already started that animation.
  * 3. **Say who did what**, once, in a toast — because the row may be below the
  *    fold, or folded into a collapsed section, or the change may be an *add*

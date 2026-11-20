@@ -1,5 +1,5 @@
 <!--
-	One store in [7g]: pin tile, its name (editable in place), how much is filed
+	One list in Manage lists [7g]: its icon, its name (editable in place), how much is filed
 	under it, and the controls that move or remove it.
 
 	The name is a live text field rather than a tap-to-edit mode — one less
@@ -8,12 +8,12 @@
 -->
 <script lang="ts">
 	import { enhance } from '$app/forms';
+	import ListIcon from '$lib/components/shopping/ListIcon.svelte';
 	import { messages } from '$lib/i18n';
 	import type { StoreSummary } from '$lib/server/services/shopping';
 	import { STORE_NAME_MAX } from '$lib/utils/shopping';
 	import ChevronDown from '@lucide/svelte/icons/chevron-down';
 	import ChevronUp from '@lucide/svelte/icons/chevron-up';
-	import MapPin from '@lucide/svelte/icons/map-pin';
 	import Trash2 from '@lucide/svelte/icons/trash-2';
 
 	type Props = {
@@ -56,7 +56,7 @@
 
 <li class="row">
 	<span class="tile" class:default={first} aria-hidden="true">
-		<MapPin size={16} strokeWidth={1.9} />
+		<ListIcon icon={store.icon} size={16} />
 	</span>
 
 	<form class="rename" method="POST" action="?/rename" use:enhance>

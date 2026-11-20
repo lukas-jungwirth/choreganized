@@ -29,7 +29,7 @@
 		onedit: () => void;
 		/**
 		 * Draws the drag grip and turns the row into a `dragHandleZone` handle. Only
-		 * the open store groups pass it; "recently bought" is sorted by when things
+		 * the open rows of a list pass it; "{n} bought" is sorted by when things
 		 * were ticked, not by hand.
 		 */
 		reorderable?: boolean;
@@ -86,7 +86,7 @@
 	<button type="button" class="body" onclick={onedit} aria-label={m.shopping.row.edit(item.name)}>
 		<!-- Struck, but by a line that draws itself: `text-decoration` can't be
 			 animated, so the settle borrows a hairline of its own and the static
-			 rule takes over once the row lands in "recently bought". -->
+			 rule takes over once the row lands under "{n} bought". -->
 		<span class="name" class:done={checked} class:striking={settling !== undefined}>
 			{checked && quantity ? `${item.name} ${quantity}` : item.name}
 		</span>

@@ -167,10 +167,18 @@ sitting above it at `z-index: 12` and reading `--timer-dock-h` the way the FAB d
 `role="status"` and its own `?/toggle` form. It is **the app's one inverted surface** — a toast
 must not read as a row, and in an all-cream UI only inverted ink does that; the `--toast*` tokens
 are `--ink` warmed with cook mode's off-white text and a sage lifted to clear AA on the dark.
-**`BoughtSection`** — the collapsed "Recently bought · 3" list under the store groups
-(→ [DECISIONS #105](DECISIONS.md)): it borrows the store headings' micro-label typography, because
-it is one more group and not a new idea, and its rows are the ordinary `ShoppingRow`, which
-already goes quiet when it is checked. **`SuggestionList`** — the names an add field offers under
+**`ListCard`** (plan 36, [L1] [L5] [L7], → [DECISIONS #264](DECISIONS.md)) replaced the store
+groups and `BoughtSection`: one `--card` per list at `--r-card`, a header button that folds it
+(a 38px `--sage-tint` icon well, the name at `--fs-18`/600, a chevron, the open count, or a ✓
+in `--sage-deep` when all is done), and a 34px `--sunken` corner link that opens the list (its
+`::after` grows the target to 44). Its foot is "✓ {n} bought" at `--fs-15`/600 `--text-4`,
+unfolding the struck rows, which are the ordinary `ShoppingRow`. An add to a folded or hidden
+card flashes it once with a 2px `--sage` ring. **`ListIcon`** draws a list's icon from the
+fixed twelve lucide glyphs; **`ListSheet`** is New list / Edit list (name, a 6×2 grid of icon
+radios: `--field`, picked `--sage-tint` with an inset 2px `--sage` ring). The add field
+(`QuickAdd`) leads with the target list's 32px icon well, a button with a caret that opens the
+list menu (`--card`, `--shadow-modal`, 50px rows); on an opened list the well is plain.
+**`SuggestionList`** — the names an add field offers under
 itself [03] [3a]: a `role="listbox"` of `role="option"` **buttons** (a real tap target and a real
 click event; out of the tab order, since the field keeps focus and drives them through
 `aria-activedescendant`), absolutely positioned so it floats instead of shoving the page down, on

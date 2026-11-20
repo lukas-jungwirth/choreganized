@@ -21,9 +21,11 @@
 		/** Which row the keyboard is on, or −1 for none. */
 		active: number;
 		onpick: (name: string) => void;
+		/** Shown at the right edge of a row: the list the pick would go to (plan 36). */
+		detail?: (name: string) => string | undefined;
 	};
 
-	let { id, matches, active, onpick }: Props = $props();
+	let { id, matches, active, onpick, detail }: Props = $props();
 
 	const m = messages();
 </script>
@@ -45,7 +47,8 @@
 			}}
 			onclick={() => onpick(name)}
 		>
-			{name}
+			<span class="name">{name}</span>
+			{#if detail?.(name)}<small>{detail(name)}</small>{/if}
 		</button>
 	{/each}
 </div>
@@ -65,7 +68,9 @@
 	}
 
 	.option {
-		display: block;
+		display: flex;
+		align-items: baseline;
+		gap: 10px;
 		width: 100%;
 		padding: 12px 16px;
 		border-top: 1px solid var(--divider);
@@ -73,10 +78,22 @@
 		font-weight: 500;
 		color: var(--ink);
 		text-align: left;
-		/* A long name is one row, not two — the list stays a glance. */
+	}
+
+	/* A long name is one row, not two — the list stays a glance. */
+	.name {
+		flex: 1;
+		min-width: 0;
 		overflow: hidden;
 		white-space: nowrap;
 		text-overflow: ellipsis;
+	}
+
+	small {
+		flex: none;
+		font-size: var(--fs-14);
+		font-weight: 500;
+		color: var(--text-4);
 	}
 
 	.option:first-child {

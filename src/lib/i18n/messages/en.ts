@@ -204,7 +204,8 @@ export const en = {
 	/* ── The tab bar [02] ──────────────────────────────────────────────────── */
 	nav: {
 		home: 'Home',
-		shopping: 'Shopping',
+		/** The tab is "Lists" since plan 36; the key keeps its old name. */
+		shopping: 'Lists',
 		tasks: 'Tasks',
 		cooking: 'Cooking',
 		expenses: 'Expenses',
@@ -420,25 +421,31 @@ export const en = {
 
 	/* ── Shopping [03] [3a] [7d] [7g] ──────────────────────────────────────── */
 	shopping: {
-		title: 'Shopping',
-		progress: (checked: number, total: number) => `${checked} of ${total} done`,
-		/** Under the title when the list is empty — where `progress` would be. */
-		nothingListed: 'Nothing on the list',
-		manageStores: 'Manage stores',
+		title: 'Lists',
+		manageStores: 'Manage lists',
 		/** The group items with no store fall into — also the fallback in copy. */
 		other: 'Other',
 
 		empty: {
-			title: 'Nothing to buy yet',
-			copy: "Add items as you run out. They'll be grouped by store for whoever does the shopping.",
+			title: 'Nothing on any list yet',
+			copy: 'Add things as you run out. Every shop gets a list of its own.',
 			cta: 'Add first item'
 		},
 
-		/** The field pinned above the list [03] [7d]. */
+		/** The add field [L2] [L3]: its icon is the list it adds to. */
 		quickAdd: {
+			/** Only when the household has no list at all. */
 			placeholder: 'Add an item…',
-			label: 'Add an item',
-			expand: 'Add with quantity and store',
+			addTo: (list: string) => `Add to ${list}…`,
+			/** The icon button in front of the field. */
+			choose: (list: string) => `Adding to ${list}. Choose another list`,
+			/** The menu of every list under that button. */
+			menu: 'Lists',
+			/** The line under the field when a known name moved the icon [L3]. */
+			remembered: (item: string, list: string): RichText => [
+				{ text: item, strong: true },
+				{ text: ` goes to ${list}, like last time.` }
+			],
 			submit: 'Add item'
 		},
 
@@ -451,10 +458,51 @@ export const en = {
 			label: 'Suggestions'
 		},
 
-		/** The second list, under the stores: what's already in the basket. */
+		/** The last line of a list's card: what was ticked off there today. */
 		bought: {
-			/** The section heads itself and says how much is in it, like a tab. */
-			heading: (count: number) => `Recently bought · ${count}`
+			foot: (count: number) => `${count} bought`
+		},
+
+		/** Lists (plan 36): the cards, an opened list, New list [L6]. */
+		lists: {
+			/** A list whose every row is ticked off. */
+			allDone: 'All done',
+			toGet: (count: number) => `${count} to get`,
+			/** Under the overview's title. */
+			thingsToGet: (count: number) => (count === 1 ? '1 thing to get' : `${count} things to get`),
+			nothingToGet: 'Nothing to get',
+			/** An opened list's subtitle [L5]. */
+			openedStatus: (left: number, bought: number) => `${left} to get · ${bought} bought`,
+			/** The corner button on a card. */
+			open: (list: string) => `Open ${list}`,
+			/** The ⋯ on an opened list. */
+			edit: (list: string) => `Edit ${list}`,
+			/** What the field's menu says is on a list: a count, or nothing. */
+			status: (left: number) => (left > 0 ? String(left) : 'empty'),
+			/** An opened list with nothing on it. */
+			nothingYet: 'Nothing on it yet',
+			notFound: 'This list is gone.',
+			newList: 'New list',
+			editTitle: 'Edit list',
+			name: 'Name',
+			namePlaceholder: 'Camping weekend',
+			icon: 'Icon',
+			create: 'Create list',
+			/** What each of the twelve icons is called, for a screen reader. */
+			icons: {
+				basket: 'Basket',
+				bag: 'Bag',
+				droplet: 'Drop',
+				pill: 'Pill',
+				hammer: 'Hammer',
+				gift: 'Gift',
+				luggage: 'Suitcase',
+				tent: 'Tent',
+				door: 'Door',
+				paw: 'Paw',
+				book: 'Book',
+				home: 'House'
+			}
 		},
 
 		row: {
@@ -512,33 +560,33 @@ export const en = {
 			unit: 'Unit',
 			/** A taste of the dropdown, under the field. */
 			unitHint: 'pcs · g · kg · ml · L …',
-			store: 'Store',
+			store: 'List',
 			/** The CTA names where the item is going. */
 			addTo: (store: string) => `Add to ${store} list`,
 			addToList: 'Add to the list',
 			delete: 'Delete item'
 		},
 
-		/** Manage stores [7g] — the walking order the list follows. */
+		/** Manage lists (was Manage stores [7g]): the order the overview follows. */
 		stores: {
-			title: 'Stores',
-			subtitle: 'Group your shopping list by shop',
-			back: 'Back to shopping',
-			add: 'Add a store',
+			title: 'Manage lists',
+			subtitle: 'In the order you walk through town',
+			back: 'Back to lists',
+			add: 'Add a list',
 			addButton: 'Add',
 			items: (count: number) => (count === 1 ? '1 item' : `${count} items`),
 			rename: (store: string) => `Rename ${store}`,
 			moveUp: (store: string) => `Move ${store} up`,
 			moveDown: (store: string) => `Move ${store} down`,
 			remove: (store: string) => `Delete ${store}`,
-			help: 'Use the arrows to reorder. Your list follows this order, so arrange it the way you walk through town. Quick-added items land in the first store; items without a store go under “Other”.',
-			deleteLabel: 'Delete store',
+			help: 'Use the arrows to reorder. The overview follows this order, and the add field starts on the first list. Items without a list go under “Other”.',
+			deleteLabel: 'Delete list',
 			deleteConfirm: (store: string) => `Delete ${store}?`,
 			deleteMoves: (count: number) =>
 				count === 1
 					? 'Its 1 item moves to “Other”, so nothing falls off the list.'
 					: `Its ${count} items move to “Other”, so nothing falls off the list.`,
-			deleteEmpty: 'Nothing is filed under it, so nothing else changes.',
+			deleteEmpty: 'Nothing is on it, so nothing else changes.',
 			/**
 			 * The three stores a new household starts with (→ SPEC §3.4). Written
 			 * into the database when the household is created, in whatever language
@@ -2458,7 +2506,7 @@ export const en = {
 
 		shopping: {
 			itemName: 'Give the item a name.',
-			storeName: 'Give the store a name.'
+			storeName: 'Give the list a name.'
 		},
 
 		recipes: {
