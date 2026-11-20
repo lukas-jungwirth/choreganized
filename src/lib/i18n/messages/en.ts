@@ -488,6 +488,39 @@ export const en = {
 			namePlaceholder: 'Camping weekend',
 			icon: 'Icon',
 			create: 'Create list',
+			/** The New list sheet's switch [L6]: the two kinds, no explanation. */
+			kinds: {
+				label: 'Kind of list',
+				buy: 'Shopping list',
+				checklist: 'Checklist'
+			},
+			/** A checklist: how far it is, on the overview row and in the field's menu. */
+			ticked: (done: number, total: number) => `${done}/${total}`,
+			/** A checklist's line on the overview: what is left, then the first names. */
+			checklistPeek: (left: number, names: string) => `${left} left · ${names}`,
+			/** An opened checklist's subtitle [L4], and its ring's spoken label. */
+			doneOf: (done: number, total: number) => `${done} of ${total} done`,
+			startOver: 'Start over',
+			/**
+			 * Changing the kind of a list that has ticked rows (plan 36: "the kind
+			 * can be changed later"). Says what happens to them.
+			 */
+			toChecklist: {
+				title: (list: string) => `Make ${list} a checklist?`,
+				copy: (count: number) =>
+					count === 1
+						? 'Its 1 bought item stays ticked until you start the list over.'
+						: `Its ${count} bought items stay ticked until you start the list over.`,
+				confirm: 'Make it a checklist'
+			},
+			toShopping: {
+				title: (list: string) => `Make ${list} a shopping list?`,
+				copy: (count: number) =>
+					count === 1
+						? 'Its 1 ticked item goes under “1 bought” and is cleared overnight.'
+						: `Its ${count} ticked items go under “${count} bought” and are cleared overnight.`,
+				confirm: 'Make it a shopping list'
+			},
 			/** What each of the twelve icons is called, for a screen reader. */
 			icons: {
 				basket: 'Basket',
@@ -519,6 +552,11 @@ export const en = {
 		 */
 		undo: {
 			checked: (item: string): RichText => [{ text: item, strong: true }, { text: ' checked off' }],
+			/** Start over on a checklist [L4]. */
+			startedOver: (list: string): RichText => [
+				{ text: list, strong: true },
+				{ text: ' started over' }
+			],
 			action: 'Undo'
 		},
 
@@ -589,6 +627,9 @@ export const en = {
 					? 'Its 1 item moves to “Other”, so nothing falls off the list.'
 					: `Its ${count} items move to “Other”, so nothing falls off the list.`,
 			deleteEmpty: 'Nothing is on it, so nothing else changes.',
+			/** A checklist's rows go with it (plan 36 step 2). */
+			deleteChecklist: (count: number) =>
+				count === 1 ? 'Its 1 item is deleted with it.' : `Its ${count} items are deleted with it.`,
 			/**
 			 * The three stores a new household starts with (→ SPEC §3.4). Written
 			 * into the database when the household is created, in whatever language

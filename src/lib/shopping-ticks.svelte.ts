@@ -10,6 +10,11 @@
  *
  * Call it during component init: the cleanup `$effect`s below belong to the
  * component that called it.
+ *
+ * A checklist's row (plan 36 step 2) skips all of that: a tick there is
+ * immediate and stays where it is, with no settle and no undo bar. Its Start
+ * over is here too (`resetSubmit`), so the rows untick before the server
+ * answers and the undo bar can put the ticks back.
  */
 import type { RemoteTick } from '$lib/live-shopping.svelte';
 import type { ShoppingListItem } from '$lib/server/services/shopping';
@@ -29,7 +34,28 @@ const SETTLE_REDUCED_MS = 700;
 
 export type ShoppingTicks = ReturnType<typeof shoppingTicks>;
 
-export function shoppingTicks(source: () => ShoppingListItem[]) {
+type Ticker = { displayName: string; color: string };
+
+export type ResetUndo = {
+	listId: string;
+	name: string;
+	ticks: { id: string; checkedAt: number; by: string | null }[];
+	/** Who had ticked each row, so the undo draws their avatar, not yours. Browser only. */
+	tickers: Map<string, Ticker | null>;
+};
+
+export function shoppingTicks(
+	source: () => ShoppingListItem[],
+	options: {
+		/** The ids of the lists that are checklists. */
+		checklists?: () => Iterable<string>;
+		/** Who is ticking: the avatar a checklist tick wears before the server answers. */
+		me?: () => Ticker;
+	} = {}
+) {
+	const checklistIds = $derived(new Set(options.checklists?.() ?? []));
+	const onChecklist = (item: ShoppingListItem) =>
+		item.storeId !== null && checklistIds.has(item.storeId);
 	/**
 	 * Checks that have been tapped but not yet confirmed: item id → the
 	 * `checkedAt` we're acting as if the server had already written.
@@ -42,11 +68,27 @@ export function shoppingTicks(source: () => ShoppingListItem[]) {
 	 */
 	const pending = new SvelteMap<string, number | null>();
 
+	/** The ticker a pending tick wears when it isn't you: Start over's undo. */
+	const pendingBy = new SvelteMap<string, Ticker | null>();
+
 	const items = $derived(
-		source().map((item) =>
-			pending.has(item.id) ? { ...item, checkedAt: pending.get(item.id) ?? null } : item
-		)
+		source().map((item) => {
+			if (!pending.has(item.id)) return item;
+			const checkedAt = pending.get(item.id) ?? null;
+			// Only a checklist tick is ever pending as ticked (a shopping tick is
+			// held open while it settles), and it wears its ticker straight away.
+			const checkedBy =
+				checkedAt === null
+					? null
+					: pendingBy.has(item.id)
+						? (pendingBy.get(item.id) ?? null)
+						: (options.me?.() ?? item.checkedBy);
+			return { ...item, checkedAt, checkedBy };
+		})
 	);
+
+	/** Start over's undo, while its bar is up (→ `resetSubmit`). */
+	let resetUndo = $state<ResetUndo | null>(null);
 
 	/**
 	 * Ticks playing out in place: item id → the colour to draw them in. Sage when
@@ -176,7 +218,24 @@ export function shoppingTicks(source: () => ShoppingListItem[]) {
 		settleMeta.clear();
 	});
 
+	/**
+	 * A checklist tick: in place at once, and nothing to hold or undo — the row
+	 * is right there to tap again.
+	 */
+	function toggleInPlace(item: ShoppingListItem): SubmitFunction {
+		return ({ formData }) => {
+			const checked = formData.get('checked') === 'true';
+			pending.set(item.id, checked ? Date.now() : null);
+			return async ({ update }) => {
+				await update({ reset: false });
+				pending.delete(item.id);
+			};
+		};
+	}
+
 	function toggle(item: ShoppingListItem): SubmitFunction {
+		if (onChecklist(item)) return toggleInPlace(item);
+
 		return ({ formData }) => {
 			const checked = formData.get('checked') === 'true';
 
@@ -227,6 +286,8 @@ export function shoppingTicks(source: () => ShoppingListItem[]) {
 	 */
 	function onRemoteTick({ itemId, actor }: RemoteTick) {
 		const item = items.find((row) => row.id === itemId);
+		// A checklist tick has nothing to play: it stays where it is.
+		if (item && onChecklist(item)) return;
 		// Only a row that is still open here has a tick to play. An event for one
 		// this client already shows as bought — a late echo, a refetch that landed
 		// first — must not haul it back out from under "{n} bought".
@@ -239,6 +300,54 @@ export function shoppingTicks(source: () => ShoppingListItem[]) {
 		startSettle(item, actor.color, false, true);
 	}
 
+	/**
+	 * Start over on a checklist: its rows untick before the server answers, and
+	 * the answer (what was unticked) becomes the undo bar.
+	 */
+	function resetSubmit(listId: string): SubmitFunction {
+		return () => {
+			const unticking = items.filter((item) => item.storeId === listId && item.checkedAt !== null);
+			for (const item of unticking) pending.set(item.id, null);
+
+			return async ({ result, update }) => {
+				await update({ reset: false });
+				for (const item of unticking) pending.delete(item.id);
+				const reset = result.type === 'success' ? result.data?.reset : null;
+				if (
+					reset &&
+					typeof reset === 'object' &&
+					Array.isArray(reset.ticks) &&
+					reset.ticks.length
+				) {
+					resetUndo = {
+						listId,
+						name: String(reset.name),
+						ticks: reset.ticks,
+						tickers: new Map(unticking.map((item) => [item.id, item.checkedBy]))
+					};
+				}
+			};
+		};
+	}
+
+	/** The undo bar's Undo: the ticks back on screen at once, then on the server. */
+	function undoResetSubmit(undo: ResetUndo): SubmitFunction {
+		return () => {
+			for (const tick of undo.ticks) {
+				pendingBy.set(tick.id, undo.tickers.get(tick.id) ?? null);
+				pending.set(tick.id, tick.checkedAt);
+			}
+			resetUndo = null;
+			return async ({ update }) => {
+				await update({ reset: false });
+				for (const tick of undo.ticks) {
+					pending.delete(tick.id);
+					pendingBy.delete(tick.id);
+				}
+			};
+		};
+	}
+
 	return {
 		/** The rows with every optimistic tick applied — what the screen splits. */
 		get items() {
@@ -247,6 +356,14 @@ export function shoppingTicks(source: () => ShoppingListItem[]) {
 		get ticked() {
 			return ticked;
 		},
+		get resetUndo() {
+			return resetUndo;
+		},
+		dismissResetUndo() {
+			resetUndo = null;
+		},
+		resetSubmit,
+		undoResetSubmit,
 		/** The colour a row's tick is playing out in, or undefined. */
 		settling: (itemId: string) => settling.get(itemId),
 		/** Whether a row is mid-settle: it reads as done already. */

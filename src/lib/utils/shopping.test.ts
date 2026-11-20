@@ -153,6 +153,39 @@ describe('splitList', () => {
 			[[null, ['orphan']]]
 		);
 	});
+
+	it("keeps a checklist's ticked rows in place, after the shopping lists, even when empty", () => {
+		const stores = [
+			{ id: 'packing', name: 'Vacation packing', kind: 'checklist' as const },
+			{ id: 'grocery', name: 'Grocery', kind: 'buy' as const },
+			{ id: 'leave', name: 'Before we leave', kind: 'checklist' as const }
+		];
+		const { groups } = splitList(
+			[
+				item('passports', { storeId: 'packing', sortOrder: 0, checkedAt: 5000 }),
+				item('sunscreen', { storeId: 'packing', sortOrder: 1 }),
+				item('chargers', { storeId: 'packing', sortOrder: 2, checkedAt: 6000 }),
+				item('milk', { storeId: 'grocery', checkedAt: 7000 }),
+				item('batteries', { storeId: null })
+			],
+			stores
+		);
+
+		assert.deepEqual(
+			groups.map((group) => [
+				group.storeId,
+				group.kind,
+				group.items.map((i) => i.id),
+				group.bought.map((i) => i.id)
+			]),
+			[
+				['grocery', 'buy', [], ['milk']],
+				[null, 'buy', ['batteries'], []],
+				['packing', 'checklist', ['passports', 'sunscreen', 'chargers'], []],
+				['leave', 'checklist', [], []]
+			]
+		);
+	});
 });
 
 describe('matchNames', () => {

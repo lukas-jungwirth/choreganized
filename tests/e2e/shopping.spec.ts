@@ -208,3 +208,107 @@ test('putting a row back while its tick is still playing leaves it open', async 
 	await expect(page.getByRole('button', { name: `Check off ${name}` })).toBeVisible();
 	await expect(page.getByRole('listitem').filter({ hasText: name })).toHaveCount(1);
 });
+
+/* ── Checklists (plan 36 step 2) ──────────────────────────────────────────── */
+
+test('a new checklist opens, ticks stay in place, Start over and its undo', async ({ page }) => {
+	await page.goto('/shopping');
+	await page.getByRole('button', { name: 'New list' }).last().click();
+	const sheet = page.getByRole('dialog', { name: 'New list' });
+	const name = fresh('Camping');
+	await sheet.getByLabel('Name').fill(name);
+	await sheet.getByRole('tab', { name: 'Checklist' }).click();
+	await sheet.getByRole('radio', { name: 'Tent' }).click();
+	await sheet.getByRole('button', { name: 'Create list' }).click();
+
+	// It opens, ready to fill.
+	await expect(page.getByRole('heading', { level: 1, name })).toBeVisible();
+	await expect(page.getByText('0 of 0 done')).toBeVisible();
+	const field = page.getByPlaceholder(`Add to ${name}…`);
+	for (const row of ['Tent pegs', 'Sleeping bags', 'Headlamp']) {
+		await field.fill(row);
+		await field.press('Enter');
+		await expect(page.getByRole('button', { name: `Check off ${row}` })).toBeVisible();
+	}
+
+	// Ticks stay where they are: no settle, no undo bar, the order unchanged.
+	await page.getByRole('button', { name: 'Check off Tent pegs' }).click();
+	await page.getByRole('button', { name: 'Check off Headlamp' }).click();
+	await expect(page.getByText('2 of 3 done')).toBeVisible();
+	await expect(page.getByRole('status')).toBeHidden();
+	await expect(page.getByRole('listitem')).toHaveText([/Tent pegs/, /Sleeping bags/, /Headlamp/]);
+	await expect(page.getByRole('button', { name: /\d+ bought/ })).toBeHidden();
+
+	await page.getByRole('button', { name: 'Start over' }).click();
+	await expect(page.getByText('0 of 3 done')).toBeVisible();
+	const undo = page.getByRole('status').getByRole('button', { name: 'Undo' });
+	await expect(page.getByRole('status')).toContainText(`${name} started over`);
+	await undo.click();
+	await expect(page.getByText('2 of 3 done')).toBeVisible();
+	await expect(page.getByRole('button', { name: 'Put Tent pegs back on the list' })).toBeVisible();
+
+	// The reload agrees: the undo reached the server.
+	await page.reload();
+	await expect(page.getByText('2 of 3 done')).toBeVisible();
+
+	// On the overview it is one row, after the shopping lists, and opens on a tap.
+	await page.goto('/shopping');
+	const row = page.getByRole('link', { name: new RegExp(`^${name}`) });
+	await expect(row).toContainText('2/3');
+	await expect(row).toContainText('1 left · Sleeping bags');
+	await row.click();
+	await expect(page.getByRole('heading', { level: 1, name })).toBeVisible();
+
+	await deleteList(page, name, 'Its 3 items are deleted with it.');
+});
+
+test('a checklist changes kind both ways, and the confirm says what moves', async ({ page }) => {
+	await page.goto('/shopping');
+	await page.getByRole('button', { name: 'New list' }).last().click();
+	const name = fresh('Errands');
+	await page.getByRole('dialog', { name: 'New list' }).getByLabel('Name').fill(name);
+	await page.getByRole('tab', { name: 'Checklist' }).click();
+	await page.getByRole('button', { name: 'Create list' }).click();
+	await expect(page.getByRole('heading', { level: 1, name })).toBeVisible();
+
+	const field = page.getByPlaceholder(`Add to ${name}…`);
+	for (const row of ['Post office', 'Bank']) {
+		await field.fill(row);
+		await field.press('Enter');
+		await expect(page.getByRole('button', { name: `Check off ${row}` })).toBeVisible();
+	}
+	await page.getByRole('button', { name: 'Check off Bank' }).click();
+	await expect(page.getByText('1 of 2 done')).toBeVisible();
+
+	// Checklist → shopping list: the ticked row goes under "1 bought".
+	await page.getByRole('button', { name: `Edit ${name}` }).click();
+	await page.getByRole('tab', { name: 'Shopping list' }).click();
+	await page.getByRole('button', { name: 'Save changes' }).click();
+	const confirm = page.getByRole('dialog', { name: `Make ${name} a shopping list?` });
+	await expect(confirm).toContainText('goes under “1 bought” and is cleared overnight');
+	await confirm.getByRole('button', { name: 'Make it a shopping list' }).click();
+	await expect(page.getByText('1 to get · 1 bought')).toBeVisible();
+	await expect(page.getByRole('button', { name: '1 bought' })).toBeVisible();
+
+	// And back: the bought row stays ticked, in place.
+	await page.getByRole('button', { name: `Edit ${name}` }).click();
+	await page.getByRole('tab', { name: 'Checklist' }).click();
+	await page.getByRole('button', { name: 'Save changes' }).click();
+	const back = page.getByRole('dialog', { name: `Make ${name} a checklist?` });
+	await expect(back).toContainText('stays ticked until you start the list over');
+	await back.getByRole('button', { name: 'Make it a checklist' }).click();
+	await expect(page.getByText('1 of 2 done')).toBeVisible();
+	await expect(page.getByRole('button', { name: 'Start over' })).toBeVisible();
+
+	await deleteList(page, name, 'Its 2 items are deleted with it.');
+});
+
+/** Manage lists → delete, after a confirm that says what goes with it. */
+async function deleteList(page: Page, name: string, says: string) {
+	await page.goto('/shopping/stores');
+	await page.getByRole('button', { name: `Delete ${name}` }).click();
+	const confirm = page.getByRole('dialog', { name: 'Delete list' });
+	await expect(confirm).toContainText(says);
+	await confirm.getByRole('button', { name: 'Delete list' }).click();
+	await expect(page.getByRole('button', { name: `Delete ${name}` })).toBeHidden();
+}

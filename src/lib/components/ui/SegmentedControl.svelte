@@ -5,13 +5,20 @@
 	the options an `href` and the control becomes navigation: real links, real
 	`aria-current`, works without JavaScript, and `value` just says which page
 	you're on. Without one it's a local switch you `bind:value` to.
+
+	An option may carry an icon in front of its label — "Shopping list |
+	Checklist" in the New list sheet [L6].
 -->
 <script lang="ts">
+	import type { Component } from 'svelte';
+
 	type Option = {
 		value: string;
 		label: string;
 		/** Set on every option to make the control navigate rather than switch. */
 		href?: string;
+		/** A lucide icon drawn before the label. */
+		icon?: Component<{ size?: number; strokeWidth?: number; 'aria-hidden'?: boolean | 'true' }>;
 	};
 
 	type Props = {
@@ -31,6 +38,7 @@
 		{@const active = option.value === value}
 		{#if option.href}
 			<a class="segment" class:active href={option.href} aria-current={active ? 'page' : undefined}>
+				{#if option.icon}<option.icon size={17} strokeWidth={1.9} aria-hidden="true" />{/if}
 				{option.label}
 			</a>
 		{:else}
@@ -42,6 +50,7 @@
 				aria-selected={navigational ? undefined : active}
 				onclick={() => (value = option.value)}
 			>
+				{#if option.icon}<option.icon size={17} strokeWidth={1.9} aria-hidden="true" />{/if}
 				{option.label}
 			</button>
 		{/if}
@@ -67,7 +76,11 @@
 	   text: it stops at 18px (→ DESIGN-SYSTEM "Type scale"), and a word that
 	   still won't fit breaks rather than spilling into its neighbour. */
 	.segment {
+		display: flex;
 		flex: 1;
+		align-items: center;
+		justify-content: center;
+		gap: 7px;
 		min-width: 0;
 		padding: 8px 4px;
 		border-radius: 10px;
@@ -77,6 +90,10 @@
 		text-align: center;
 		color: var(--text-4);
 		transition: background 140ms ease-out;
+	}
+
+	.segment > :global(svg) {
+		flex: none;
 	}
 
 	.active {

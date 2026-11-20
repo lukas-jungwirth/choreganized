@@ -31,6 +31,7 @@ import {
 } from '../db/schema';
 import type { HouseholdMember } from './household';
 import { isFirstVisit, recordSighting } from './raccoons';
+import { notOnChecklist } from './shopping';
 import {
 	assigneeNotAway,
 	isAway,
@@ -318,11 +319,18 @@ function tonightsDinner(householdId: string, today: CalendarDate): TonightsDinne
 	};
 }
 
+/** What is left to buy. A checklist's open rows are not shopping (plan 36 step 2). */
 function countUnchecked(householdId: string): number {
 	const row = db
 		.select({ n: count() })
 		.from(shoppingItems)
-		.where(and(eq(shoppingItems.householdId, householdId), isNull(shoppingItems.checkedAt)))
+		.where(
+			and(
+				eq(shoppingItems.householdId, householdId),
+				isNull(shoppingItems.checkedAt),
+				notOnChecklist()
+			)
+		)
 		.get();
 
 	return row?.n ?? 0;

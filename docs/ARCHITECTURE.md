@@ -366,7 +366,7 @@ needs `http://localhost:3000/api/auth/callback/google` added to the OAuth client
   spam. Test and production may share a provider but should send from their own address.
 
 - **Legal pages** (`LEGAL_IMPRINT`, `LEGAL_PRIVACY`): the operator's Impressum and
-  Datenschutz text (→ `lib/server/legal.ts`, SPEC §13, DECISIONS #268). Optional, each on its
+  Datenschutz text (→ `lib/server/legal.ts`, SPEC §13, DECISIONS #269). Optional, each on its
   own. Unset, its page is a 404 and its links hide. Multi-line values, or `\n` on one line.
 
 ## Email

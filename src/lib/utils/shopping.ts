@@ -107,16 +107,23 @@ export type ItemGroup<T> = {
 	storeId: string | null;
 	name: string | null;
 	icon: string | null;
-	/** What is still to buy, in the manual walking order. */
+	/** "Other" is shopping. */
+	kind: 'buy' | 'checklist';
+	/**
+	 * A shopping list: what is still to buy, in the manual walking order. A
+	 * checklist: every row, ticked ones included, in its order (plan 36 step 2:
+	 * a tick stays where it is).
+	 */
 	items: T[];
-	/** What was ticked off and not yet swept, most recently bought first. */
+	/** What was ticked off and not yet swept, most recently bought first. Empty on a checklist. */
 	bought: T[];
 };
 
 export type SplitList<T> = {
 	/**
-	 * Every list with something on it, open or bought, in the household's order,
-	 * "Other" last. A list with nothing on it is not here at all (plan 36).
+	 * Every shopping list with something on it, open or bought, in the
+	 * household's order, then "Other", then every checklist, empty or not. A
+	 * shopping list with nothing on it is not here at all (plan 36).
 	 */
 	groups: ItemGroup<T>[];
 };
@@ -149,8 +156,11 @@ function compareBought(a: OrderedItem, b: OrderedItem): number {
  */
 export function splitList<T extends OrderedItem>(
 	items: T[],
-	stores: { id: string; name: string; icon?: string | null }[]
+	stores: { id: string; name: string; icon?: string | null; kind?: 'buy' | 'checklist' }[]
 ): SplitList<T> {
+	const checklists = new Set(
+		stores.filter((store) => store.kind === 'checklist').map((store) => store.id)
+	);
 	const known = new Set(stores.map((store) => store.id));
 	const open = new Map<string | null, T[]>();
 	const bought = new Map<string | null, T[]>();
@@ -161,30 +171,46 @@ export function splitList<T extends OrderedItem>(
 		// but a group nothing renders would take its items off the screen
 		// silently, which is the one failure a shopping list must not have.
 		const key = item.storeId !== null && known.has(item.storeId) ? item.storeId : null;
-		const into = item.checkedAt === null ? open : bought;
+		// A checklist's ticks stay in place, so all its rows are one run.
+		const into = item.checkedAt === null || (key !== null && checklists.has(key)) ? open : bought;
 		const bucket = into.get(key);
 		if (bucket) bucket.push(item);
 		else into.set(key, [item]);
 	}
 
 	const groups: ItemGroup<T>[] = [];
-	const group = (storeId: string | null, name: string | null, icon: string | null) => {
+	const group = (
+		storeId: string | null,
+		name: string | null,
+		icon: string | null,
+		kind: 'buy' | 'checklist' = 'buy'
+	) => {
 		const storeItems = open.get(storeId) ?? [];
 		const storeBought = bought.get(storeId) ?? [];
-		if (!storeItems.length && !storeBought.length) return;
+		// A checklist is on the overview even with nothing on it: it is a thing
+		// the household keeps, not a need that comes and goes.
+		if (kind === 'buy' && !storeItems.length && !storeBought.length) return;
 		groups.push({
 			storeId,
 			name,
 			icon,
+			kind,
 			items: storeItems.sort(compareOpen),
 			bought: storeBought.sort(compareBought)
 		});
 	};
 
-	for (const store of stores) group(store.id, store.name, store.icon ?? null);
+	for (const store of stores) {
+		if (!checklists.has(store.id)) group(store.id, store.name, store.icon ?? null);
+	}
 	// Items filed under no list — quick-added before any list existed, or in a
-	// list since deleted — are their own group, always last (→ SPEC §3.1).
+	// list since deleted — are their own group, after the shopping lists
+	// (→ SPEC §3.1): "Other" is shopping too.
 	group(null, null, null);
+	// Checklists come after everything to buy, in their own order (plan 36).
+	for (const store of stores) {
+		if (checklists.has(store.id)) group(store.id, store.name, store.icon ?? null, 'checklist');
+	}
 
 	return { groups };
 }

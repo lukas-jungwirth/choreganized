@@ -1,5 +1,5 @@
 /**
- * The Impressum and Datenschutz texts (→ SPEC §13, DECISIONS #268).
+ * The Impressum and Datenschutz texts (→ SPEC §13, DECISIONS #269).
  *
  * They are the operator's words, not the app's: whoever runs a deploy sets
  * `LEGAL_IMPRINT` and `LEGAL_PRIVACY`, and the pages show them as written in

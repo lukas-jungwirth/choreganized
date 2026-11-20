@@ -11,6 +11,11 @@
 	On an opened list [L5] the screen has its own title, so the card comes
 	without a header and "{n} bought" starts unfolded.
 
+	A checklist, opened [L4] (plan 36 step 2): every row in its own place,
+	ticked ones struck with the ticker's avatar, and **Start over** at the
+	foot once anything is ticked, filled when everything is. On the overview a
+	checklist is a single row instead (→ `ChecklistRow`).
+
 	Drag to reorder lives here (it was `ShoppingGroup`): the order the finger
 	leaves has to hold the instant it lands, the same way a tick strikes a row
 	before the server answers. So this owns a small copy of the list's open rows
@@ -27,6 +32,7 @@
 	import Check from '@lucide/svelte/icons/check';
 	import ChevronDown from '@lucide/svelte/icons/chevron-down';
 	import Maximize2 from '@lucide/svelte/icons/maximize-2';
+	import RotateCcw from '@lucide/svelte/icons/rotate-ccw';
 	import { untrack } from 'svelte';
 	import { dragHandleZone, type DndEvent } from 'svelte-dnd-action';
 
@@ -47,6 +53,8 @@
 		boughtOpen?: boolean;
 		/** Something was just added here while it was folded or off screen. */
 		flash?: number;
+		/** A checklist's Start over: the page's handler (→ `shopping-ticks`). */
+		reset?: SubmitFunction;
 	};
 
 	let {
@@ -59,13 +67,19 @@
 		onfold,
 		openHref = null,
 		boughtOpen = false,
-		flash = 0
+		flash = 0,
+		reset
 	}: Props = $props();
 
 	const m = messages();
 	const bodyId = $props.id();
 
 	const name = $derived(group.name ?? m.shopping.other);
+	const checklist = $derived(group.kind === 'checklist');
+	/** A checklist's ticked rows, for Start over. */
+	const done = $derived(
+		checklist ? group.items.filter((item) => item.checkedAt !== null).length : 0
+	);
 
 	// The list `dndzone` reorders in place, seeded from the page for the first
 	// paint (SSR included) and reconciled with `group.items` by the effect below —
@@ -204,8 +218,9 @@
 							<ShoppingRow
 								{item}
 								reorderable
-								checked={false}
-								settling={settling(item.id)}
+								checked={checklist && item.checkedAt !== null}
+								ticker={checklist ? item.checkedBy : null}
+								settling={checklist ? undefined : settling(item.id)}
 								toggle={toggle(item)}
 								onedit={() => onedit(item)}
 							/>
@@ -213,6 +228,16 @@
 					</ul>
 				{:else if !header && group.bought.length === 0}
 					<p class="nothing">{m.shopping.lists.nothingYet}</p>
+				{/if}
+
+				{#if checklist && done > 0 && reset}
+					<form class="foot" method="POST" action="?/resetList" use:enhance={reset}>
+						<input type="hidden" name="id" value={group.storeId ?? ''} />
+						<button type="submit" class="reset" class:loud={done === group.items.length}>
+							<RotateCcw size={15} strokeWidth={2.1} aria-hidden="true" />
+							{m.shopping.lists.startOver}
+						</button>
+					</form>
 				{/if}
 
 				{#if group.bought.length > 0}
@@ -430,6 +455,41 @@
 
 	.bought .chevron {
 		margin-left: auto;
+	}
+
+	/* Start over sits at the right of the card's foot: quiet while the trip is
+	   under way, filled once everything is ticked [L4]. */
+	.foot {
+		display: flex;
+		justify-content: flex-end;
+		min-height: 46px;
+		padding: 0 8px;
+		border-top: 1px solid var(--divider);
+	}
+
+	/* 34px drawn; the ::after grows the target to 44, like the open button. */
+	.reset {
+		position: relative;
+		display: flex;
+		align-items: center;
+		gap: 6px;
+		align-self: center;
+		min-height: 34px;
+		padding: 4px 10px;
+		border-radius: 10px;
+		font-size: var(--fs-15);
+		font-weight: 600;
+		color: var(--terracotta-deep);
+	}
+
+	.reset::after {
+		content: '';
+		position: absolute;
+		inset: -5px 0;
+	}
+
+	.reset.loud {
+		background: var(--terracotta-tint);
 	}
 
 	.nothing {
