@@ -1,0 +1,467 @@
+<meta charset="utf-8" />
+<title>Shared Task Completion</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link href="https://fonts.googleapis.com/css2?family=Figtree:wght@400;500;600;700&family=Fraunces:opsz,wght@9..144,500;9..144,600&display=swap" rel="stylesheet" />
+<style>
+	/*
+		Sketch (2026-11-20), built as DECISIONS #277 → SPEC §5.3, §5.4, §5.8. Finishing a task together, saying afterwards who
+		did it, and one Reassign row instead of one per housemate.
+		Layout: a plain presentation page, one row of phones per idea. The phones
+		are drawn by the script at the bottom and they work: tap the faces.
+		The phones use the token names and values of src/app.css.
+		Frame ids ([T1]…[T6]) are element ids, the way design/Hearth.dc.html does it.
+	*/
+	:root {
+		/* The page around the phones */
+		--page: light-dark(#f1f0ec, #171613);
+		--page-ink: light-dark(#24231f, #ecebe5);
+		--page-muted: light-dark(#66645c, #a4a298);
+		--page-line: light-dark(#d6d4cc, #35332d);
+		--page-card: light-dark(#fbfaf7, #1f1d19);
+
+		/* The app (src/app.css, the subset these screens use) */
+		--font-display: 'Fraunces', serif;
+		--font-body: 'Figtree', system-ui, sans-serif;
+		--bg: light-dark(#f5f3ee, #191510);
+		--card: light-dark(#ffffff, #221e18);
+		--sunken: light-dark(#efebe2, #15110c);
+		--sunken-2: light-dark(#eae6dd, #110e0a);
+		--field: light-dark(#f5f3ee, #1c1813);
+		--ink: light-dark(#22201c, #efe9de);
+		--text-2: light-dark(#57534c, #cfc7ba);
+		--text-3: light-dark(#6e6a62, #b3aba0);
+		--text-4: light-dark(#8a867e, #a5a096);
+		--text-5: light-dark(#a7a29a, #857f74);
+		--sage: light-dark(#5f8d72, #74a585);
+		--sage-tint: light-dark(#edf3ee, #1e2a22);
+		--sage-deep: light-dark(#3e5d49, #a9cfb6);
+		--on-sage: light-dark(#ffffff, #12100d);
+		--terracotta: light-dark(#c67c51, #d9946b);
+		--danger: light-dark(#c0473a, #dc6152);
+		--danger-tint: light-dark(#f7e9e6, #2e1b17);
+		--border: light-dark(#e4dfd5, #322c24);
+		--divider: light-dark(#f1eee7, #262019);
+		--divider-sheet: light-dark(#e9e5dc, #2c261e);
+		--border-dashed: light-dark(#d8d3c9, #3d362c);
+		--scrim: light-dark(rgba(34, 32, 28, 0.4), rgba(0, 0, 0, 0.62));
+		--shadow-card: 0 1px 3px light-dark(rgba(40, 34, 24, 0.05), rgba(0, 0, 0, 0.45));
+		--shadow-sheet: 0 -12px 40px light-dark(rgba(40, 34, 24, 0.18), rgba(0, 0, 0, 0.7));
+		--shadow-modal: 0 24px 60px -12px light-dark(rgba(40, 34, 24, 0.4), rgba(0, 0, 0, 0.8));
+		--shadow-fab: 0 8px 20px -4px light-dark(rgba(95, 141, 114, 0.6), rgba(0, 0, 0, 0.7));
+		--shadow-button: 0 8px 20px -6px light-dark(rgba(95, 141, 114, 0.5), rgba(0, 0, 0, 0.6));
+		/* Member colours never change with the theme (→ DESIGN-SYSTEM). */
+		--member-sage: #5f8d72;
+		--member-terracotta: #c67c51;
+		--member-blue: #5c7fa3;
+		--member-amber: #d69b4a;
+		--member-plum: #9a6b8f;
+		--on-member: #ffffff;
+	}
+	@media (prefers-color-scheme: dark) {
+		:root:not([data-theme='light']) { color-scheme: dark; }
+	}
+	:root[data-theme='dark'] { color-scheme: dark; }
+	:root[data-theme='light'] { color-scheme: light; }
+
+	* { box-sizing: border-box; margin: 0; }
+	body {
+		background: var(--page);
+		color: var(--page-ink);
+		font-family: var(--font-body);
+		font-size: 16px;
+		line-height: 1.5;
+		padding-left: max(16px, env(safe-area-inset-left, 0px));
+		padding-right: max(16px, env(safe-area-inset-right, 0px));
+		padding-block: 32px 64px;
+	}
+	.wrap { max-width: 1240px; margin-inline: auto; display: grid; grid-template-columns: minmax(0, 1fr); gap: 56px; }
+	.intro { display: grid; gap: 10px; max-width: 66ch; }
+	.kicker { font-size: 12px; font-weight: 700; letter-spacing: 0.12em; text-transform: uppercase; color: var(--page-muted); }
+	h1 { font-family: var(--font-display); font-size: clamp(30px, 5vw, 40px); font-weight: 600; line-height: 1.1; text-wrap: balance; }
+	h2 { font-family: var(--font-display); font-size: 26px; font-weight: 600; line-height: 1.2; text-wrap: balance; }
+	.intro p, .head p { color: var(--page-muted); }
+	.part { display: grid; gap: 18px; min-width: 0; }
+	.head { display: grid; gap: 6px; max-width: 68ch; }
+	.row { display: grid; grid-auto-flow: column; grid-auto-columns: min(360px, calc(100vw - 40px)); grid-template-rows: auto auto; column-gap: 26px; row-gap: 12px; overflow-x: auto; padding: 4px 2px 18px; scroll-snap-type: x proximity; }
+	figure { display: grid; grid-row: span 2; grid-template-rows: subgrid; scroll-snap-align: center; min-width: 0; }
+	figure .phone { align-self: start; }
+	figcaption { display: grid; gap: 2px; font-size: 14px; line-height: 1.4; color: var(--page-muted); align-content: start; }
+	figcaption b { color: var(--page-ink); font-size: 16px; font-weight: 600; display: flex; gap: 8px; align-items: baseline; }
+	figcaption i { font-style: normal; color: var(--page-ink); }
+	.tag { font-size: 12px; font-weight: 700; color: var(--page-muted); border: 1px solid var(--page-line); border-radius: 6px; padding: 0 5px; font-variant-numeric: tabular-nums; }
+	.asks { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 12px; padding: 0; list-style: none; }
+	.asks li { background: var(--page-card); border: 1px solid var(--page-line); border-radius: 14px; padding: 14px 16px; display: grid; gap: 6px; align-content: start; }
+	.asks q { quotes: none; color: var(--page-muted); font-size: 14px; }
+	.asks b { font-weight: 600; font-size: 17px; }
+	.asks span { color: var(--page-muted); font-size: 15px; }
+	.tablewrap { overflow-x: auto; border: 1px solid var(--page-line); border-radius: 14px; background: var(--page-card); }
+	table { border-collapse: collapse; width: 100%; min-width: 640px; font-size: 15px; line-height: 1.45; }
+	th { text-align: left; font-size: 12px; letter-spacing: 0.1em; text-transform: uppercase; color: var(--page-muted); font-weight: 700; padding: 12px 16px; border-bottom: 1px solid var(--page-line); }
+	td { padding: 12px 16px; vertical-align: top; border-top: 1px solid var(--page-line); color: var(--page-muted); }
+	tr:first-child td { border-top: 0; }
+	td:first-child { color: var(--page-ink); font-weight: 600; width: 30%; }
+	td.num { font-variant-numeric: tabular-nums; white-space: nowrap; }
+
+	/* ── The phone ────────────────────────────────────────────── */
+	.phone {
+		position: relative; width: 100%; height: 760px; overflow: hidden; border-radius: 34px;
+		background: var(--bg); color: var(--ink); font-family: var(--font-body); font-size: 16px; line-height: 1.3;
+		box-shadow: 0 0 0 1px var(--page-line), 0 18px 40px -22px rgba(0, 0, 0, 0.45); isolation: isolate;
+	}
+	.phone[data-kind='feed'] { height: 470px; }
+	.phone button { font: inherit; color: inherit; background: none; border: 0; padding: 0; cursor: pointer; text-align: left; }
+	.phone :focus-visible { outline: 2px solid var(--sage); outline-offset: 2px; }
+	.ic { flex: none; display: block; }
+	.scroll { position: absolute; inset: 0; padding: 34px 18px 30px; overflow: hidden; }
+	.phone h3 { font-family: var(--font-display); font-weight: 600; font-size: 32px; line-height: 1.05; }
+	.sub { font-size: 14px; color: var(--text-4); font-weight: 500; margin: 4px 0 16px; }
+	.seg { display: grid; grid-template-columns: 1fr 1fr; background: var(--sunken-2); border-radius: 13px; padding: 3px; margin-bottom: 18px; }
+	.seg span { text-align: center; padding: 9px 6px; border-radius: 10px; font-weight: 600; font-size: 15px; color: var(--text-4); }
+	.seg .on { background: var(--card); color: var(--ink); box-shadow: var(--shadow-card); }
+	.sect { font-size: 12px; font-weight: 700; letter-spacing: 0.1em; text-transform: uppercase; color: var(--text-4); margin: 0 4px 8px; }
+	.card { background: var(--card); border-radius: 18px; box-shadow: var(--shadow-card); }
+	.task { display: flex; align-items: center; gap: 12px; padding: 14px 14px; margin-bottom: 10px; }
+	.task .circle { width: 26px; height: 26px; border-radius: 50%; border: 1.7px solid var(--border-dashed); flex: none; }
+	.task .grow { flex: 1; min-width: 0; }
+	.task b { display: block; font-weight: 600; font-size: 16px; }
+	.task small { font-size: 13.5px; color: var(--text-4); }
+	.task .pts { font-size: 14px; font-weight: 700; color: var(--terracotta); }
+
+	/* Avatars: a member-coloured disc with an initial. */
+	.av { width: var(--s, 20px); height: var(--s, 20px); border-radius: 50%; display: grid; place-items: center; flex: none; font-size: calc(var(--s, 20px) * 0.46); font-weight: 700; color: var(--on-member); background: var(--c); }
+	.av.any { background: none; box-shadow: inset 0 0 0 1.5px var(--border-dashed); }
+
+	/* The celebration [4d], with the new row. */
+	.scrim { position: absolute; inset: 0; background: var(--scrim); z-index: 8; }
+	.modal { position: absolute; left: 26px; right: 26px; top: 50%; transform: translateY(-50%); z-index: 9; background: var(--card); border-radius: 28px; box-shadow: var(--shadow-modal); padding: 28px 22px 20px; text-align: center; }
+	.badge { width: 64px; height: 64px; margin: 0 auto 16px; border-radius: 50%; background: var(--sage); color: var(--on-sage); display: grid; place-items: center; box-shadow: var(--shadow-fab); }
+	.modal h4 { font-family: var(--font-display); font-weight: 600; font-size: 27px; line-height: 1.12; margin-bottom: 6px; text-wrap: balance; }
+	.what { font-size: 15.5px; color: var(--text-4); margin-bottom: 16px; }
+	.points { display: inline-flex; align-items: center; gap: 8px; margin-bottom: 16px; padding: 9px 18px; border-radius: 999px; background: var(--sage-tint); font-size: 19px; font-weight: 700; color: var(--sage-deep); font-variant-numeric: tabular-nums; }
+	.points .ic { color: var(--sage); }
+	.next { display: flex; align-items: center; gap: 11px; margin-bottom: 14px; padding: 12px 14px; border-radius: 16px; background: var(--field); text-align: left; color: var(--text-4); }
+	.next b { display: block; font-size: 15px; font-weight: 600; color: var(--ink); }
+	.next small { font-size: 14px; }
+	/* New: who did it. One face each, tap to add or take away. */
+	.whobox { border: 1px solid var(--border); border-radius: 16px; padding: 11px 6px 9px; margin-bottom: 14px; }
+	.wholabel { display: flex; justify-content: center; gap: 6px; font-size: 13px; font-weight: 600; color: var(--text-4); margin-bottom: 9px; }
+	.wholabel em { font-style: normal; font-weight: 500; color: var(--text-5); }
+	.faces { display: flex; justify-content: center; }
+	/* Up to 76px each, so a name has room in a small household; five still share one line. */
+	.phone .who { display: grid; justify-items: center; gap: 4px; flex: 0 1 76px; min-width: 0; padding: 2px 0; border-radius: 12px; }
+	.who .face { position: relative; --s: 38px; border-radius: 50%; padding: 3px; margin: -3px; box-shadow: inset 0 0 0 2px transparent; transition: box-shadow 0.15s; }
+	.who .av { opacity: 0.32; transition: opacity 0.15s; }
+	.who small { font-size: 12px; font-weight: 500; color: var(--text-5); max-width: 100%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+	.who .tick { position: absolute; right: -2px; bottom: -2px; width: 17px; height: 17px; border-radius: 50%; background: var(--sage); color: var(--on-sage); display: grid; place-items: center; box-shadow: 0 0 0 2px var(--card); transform: scale(0); transition: transform 0.15s; }
+	.who[aria-pressed='true'] .face { box-shadow: inset 0 0 0 2px var(--sage); }
+	.who[aria-pressed='true'] .av { opacity: 1; }
+	.who[aria-pressed='true'] .tick { transform: scale(1); }
+	.who[aria-pressed='true'] small { color: var(--ink); font-weight: 700; }
+	.standings { display: flex; align-items: center; justify-content: center; gap: 8px; margin-bottom: 12px; font-size: 15px; color: var(--text-4); font-variant-numeric: tabular-nums; }
+	.phone .undo { width: 100%; padding: 6px; font-size: 16px; font-weight: 600; color: var(--text-4); text-align: center; }
+
+	/* The detail sheet [4b] and the reassign picker. */
+	.sheet { position: absolute; left: 0; right: 0; bottom: 0; z-index: 9; background: var(--card); border-radius: 28px 28px 0 0; box-shadow: var(--shadow-sheet); padding: 10px 20px 24px; }
+	.handle { width: 38px; height: 4px; border-radius: 2px; background: var(--border); margin: 0 auto 16px; }
+	.sheet h4 { font-family: var(--font-display); font-weight: 600; font-size: 25px; line-height: 1.15; }
+	.facts { display: flex; flex-wrap: wrap; align-items: center; gap: 6px 14px; margin: 10px 2px 18px; font-size: 14px; color: var(--text-4); }
+	.fact { display: inline-flex; align-items: center; gap: 6px; }
+	.fact.pts { font-weight: 700; color: var(--terracotta); }
+	.phone .cta { display: flex; align-items: center; justify-content: center; gap: 8px; width: 100%; min-height: 54px; border-radius: 16px; background: var(--sage); color: var(--on-sage); font-weight: 600; font-size: 17px; box-shadow: var(--shadow-button); }
+	.menu { overflow: hidden; margin-top: 14px; border-radius: 16px; background: var(--field); }
+	.phone .item { display: flex; align-items: center; gap: 13px; width: 100%; padding: 14px 16px; font-size: 17px; font-weight: 500; color: var(--text-2); }
+	.item + .item { border-top: 1px solid var(--divider-sheet); }
+	.item .grow { flex: 1; min-width: 0; }
+	.item .quiet { font-weight: 400; color: var(--text-5); }
+	.item .now { font-size: 14px; color: var(--text-4); font-weight: 500; }
+	.item.new { box-shadow: inset 3px 0 0 var(--sage); }
+	.item.on { color: var(--ink); font-weight: 600; }
+	.item .sel { color: var(--sage); }
+	.phone .delete { width: 100%; margin-top: 14px; padding: 6px; font-size: 16px; font-weight: 600; text-align: center; color: var(--danger); }
+	.sheetsub { font-size: 14.5px; color: var(--text-4); margin: 4px 0 2px; }
+
+	/* History feed [8a] */
+	.feed { list-style: none; padding: 0; }
+	.feed li { display: flex; align-items: center; gap: 12px; padding: 13px 16px; }
+	.feed li + li { border-top: 1px solid var(--divider); }
+	.ticks { display: flex; flex: none; }
+	.ticks span { width: 30px; height: 30px; border-radius: 50%; display: grid; place-items: center; background: color-mix(in srgb, var(--c) 14%, var(--card)); color: var(--c); box-shadow: 0 0 0 2px var(--card); }
+	.ticks span + span { margin-left: -12px; }
+	.feed .grow { flex: 1; min-width: 0; }
+	.feed b { display: block; font-size: 16px; font-weight: 600; line-height: 1.2; }
+	.feed small { font-size: 14px; color: var(--text-4); }
+	.chip { flex: none; padding: 4px 9px; border-radius: 999px; font-size: 14px; font-weight: 700; font-variant-numeric: tabular-nums; background: color-mix(in srgb, var(--c, var(--text-3)) 12%, var(--card)); color: var(--c, var(--text-3)); }
+
+	@media (prefers-reduced-motion: reduce) {
+		.who .face, .who .av, .who .tick { transition: none; }
+	}
+</style>
+
+<div class="wrap">
+	<header class="intro">
+		<span class="kicker">Haushaltsheld · sketch · Tasks</span>
+		<h1>Done together, and who did it</h1>
+		<p>Ticking a task stays one tap and still means "I did it". The pop-up that already offers Undo gets one new row of faces. Tap a face to add a housemate, tap your own to take yourself out. That one row covers done together, done by somebody else, and your own task done by your partner.</p>
+		<p>The phones work. Tap the faces and watch the points, the next turn and the standings follow.</p>
+	</header>
+
+	<section class="part">
+		<div class="head">
+			<h2>Your questions</h2>
+		</div>
+		<ul class="asks">
+			<li><q>A step in between, or adjust it in the pop-up?</q><b>Adjust it in the pop-up.</b><span>Most ticks are your own task done by you. A question before every tick would cost a tap each time to answer what the app already guessed right. In the pop-up the right guess costs nothing and a wrong one costs one tap.</span></li>
+			<li><q>Should I be able to tick my own task for somebody else?</q><b>Yes, and it comes for free.</b><span>Elisabeth cleaned the bathroom on your turn and you tick it: tap her face, tap yours off. No separate feature, the same row.</span></li>
+			<li><q>What about the "Who did it?" question on other people's tasks?</q><b>It stays, unchanged.</b><span>On somebody else's task the app has no good guess, and a silent wrong credit is the worse mistake. The question picks one person and the pop-up opens with that face on. It gets no "together" answer: sharing is always added in the pop-up.</span></li>
+			<li><q>Does it work from the Home card?</q><b>Yes, unchanged.</b><span>Home already opens this same pop-up after "Mark done". The row arrives there without Home changing at all.</span></li>
+			<li><q>One "Assign to" row per housemate is too many.</q><b>Agreed. One row, then pick.</b><span>A household can have five members, which makes four rows today. With three or more people it becomes one "Reassign" row that opens a short list. With two people it stays the direct one-tap row.</span></li>
+		</ul>
+	</section>
+
+	<section class="part">
+		<div class="head">
+			<h2>The pop-up after a tick</h2>
+			<p>Same pop-up as today plus the "Who did it?" row. Each tap saves at once, there is no confirm button. Undo still takes the whole thing back.</p>
+		</div>
+		<div class="row">
+			<figure id="T1">
+				<figcaption><b><span class="tag">T1</span>Just ticked</b>The preset: you did it, you get the 20 points. Nothing to do if that is right. <i>Tap Elisabeth to share it.</i></figcaption>
+				<div class="phone" data-kind="done" data-size="2" data-doers="L"></div>
+			</figure>
+			<figure id="T2">
+				<figcaption><b><span class="tag">T2</span>Done together</b>Both faces on. The points are split, the line under the title says so, and the standings count 10 for each. <i>Tap your own face off and it was Elisabeth alone.</i></figcaption>
+				<div class="phone" data-kind="done" data-size="2" data-doers="L,E"></div>
+			</figure>
+			<figure id="T3">
+				<figcaption><b><span class="tag">T3</span>A household of five</b>The row still fits on one line at the largest household. Three of five did it here: 20 by 3 is 6.67, rounded to 7 each.</figcaption>
+				<div class="phone" data-kind="done" data-size="5" data-doers="L,E,M"></div>
+			</figure>
+		</div>
+	</section>
+
+	<section class="part">
+		<div class="head">
+			<h2>The rules behind it</h2>
+		</div>
+		<div class="tablewrap">
+			<table>
+				<thead><tr><th>Case</th><th>What happens</th><th>Example, 20 points</th></tr></thead>
+				<tbody>
+					<tr><td>Points when shared</td><td>Split evenly, rounded to the nearest whole point. Never less than 1 each.</td><td class="num">2 people: 10 each · 3: 7 each · 5: 4 each</td></tr>
+					<tr><td>Whose turn is next</td><td>Done alone: the turn passes on from whoever did it, as today. Done together: it passes on from the person whose turn it was.</td><td>Lukas's turn, done together: Elisabeth is next</td></tr>
+					<tr><td>History</td><td>One line with every doer's tick, and the share each got.</td><td class="num">Lukas &amp; Elisabeth · +10 each</td></tr>
+					<tr><td>Undo</td><td>Takes back every share at once and puts the task back.</td><td></td></tr>
+					<tr><td>At least one</td><td>The last face cannot be tapped off. To take it all back, use Undo.</td><td></td></tr>
+				</tbody>
+			</table>
+		</div>
+	</section>
+
+	<section class="part">
+		<div class="head">
+			<h2>Reassign: one row, then pick</h2>
+			<p>Shown for a household of five. The task sheet loses three rows, and "Anyone" becomes reachable from here, which it is not today.</p>
+		</div>
+		<div class="row">
+			<figure id="T4">
+				<figcaption><b><span class="tag">T4</span>The task sheet</b>One "Reassign" row where four "Reassign to …" rows stand today. The marked row is the only change on this sheet.</figcaption>
+				<div class="phone" data-kind="sheet"></div>
+			</figure>
+			<figure id="T5">
+				<figcaption><b><span class="tag">T5</span>Pick who takes it</b>Tap a name and the sheet closes, done. The tick shows who has it now. <i>Tap a row to try.</i></figcaption>
+				<div class="phone" data-kind="picker"></div>
+			</figure>
+			<figure id="T6">
+				<figcaption><b><span class="tag">T6</span>In History</b>A shared task is one line, with a tick in each doer's colour. The points chip goes neutral and says what each got.</figcaption>
+				<div class="phone" data-kind="feed"></div>
+			</figure>
+		</div>
+	</section>
+
+	<section class="part">
+		<div class="head">
+			<h2>What was decided</h2>
+		</div>
+		<ul class="asks">
+			<li><b>The question before the tick stays.</b><span>Only for other people's tasks, with its two answers, as today. Your own and "Anyone" tasks go straight to the pop-up.</span></li>
+			<li><b>Rounding to the nearest whole.</b><span>20 by 3 gives 7 each, so 21 in total. Rounding down would make sharing cost points.</span></li>
+			<li><b>The standings line shows the gap.</b><span>"You're 5 points ahead of Elisabeth", not the two totals.</span></li>
+			<li><b>No correcting later.</b><span>Once the pop-up is closed, the credit stands. If that bites, the fix is the same row of faces behind a tap on the History line.</span></li>
+		</ul>
+	</section>
+</div>
+
+<script>
+	const PEOPLE = [
+		{ id: 'L', name: 'Lukas', color: 'var(--member-sage)', score: 225 },
+		{ id: 'E', name: 'Elisabeth', color: 'var(--member-terracotta)', score: 240 },
+		{ id: 'J', name: 'Jonas', color: 'var(--member-blue)', score: 180 },
+		{ id: 'M', name: 'Mara', color: 'var(--member-amber)', score: 150 },
+		{ id: 'P', name: 'Paul', color: 'var(--member-plum)', score: 95 }
+	];
+	const ME = 'L';
+	const TASK = { name: 'Clean the bathroom', points: 20, assignee: 'L' };
+
+	const PATHS = {
+		check: '<path d="M20 6 9 17l-5-5"/>',
+		star: '<polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/>',
+		calendar: '<path d="M8 2v4M16 2v4M3 10h18"/><rect x="3" y="4" width="18" height="18" rx="2"/>',
+		clock: '<circle cx="12" cy="12" r="10"/><path d="M12 6v6l4 2"/>',
+		chevron: '<path d="m9 18 6-6-6-6"/>',
+		arrow: '<path d="M5 12h14M12 5l7 7-7 7"/>',
+		pencil: '<path d="M21.174 6.812a1 1 0 0 0-3.986-3.987L3.842 16.174a2 2 0 0 0-.5.83l-1.321 4.352a.5.5 0 0 0 .623.622l4.353-1.32a2 2 0 0 0 .83-.497zM15 5l4 4"/>',
+		rotate: '<path d="M21 12a9 9 0 1 1-9-9c2.52 0 4.93 1 6.74 2.74L21 8M21 3v5h-5"/>',
+		user: '<path d="M2 21a8 8 0 0 1 13.292-6"/><circle cx="10" cy="8" r="5"/><path d="m16 19 2 2 4-4"/>'
+	};
+	const icon = (name, size = 19, width = 1.9) =>
+		`<svg class="ic" width="${size}" height="${size}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="${width}" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${PATHS[name]}</svg>`;
+	const av = (p, size) => `<span class="av" style="--s:${size}px;--c:${p.color}">${p.id}</span>`;
+	const person = (id) => PEOPLE.find((p) => p.id === id);
+
+	/** The Tasks list behind every sheet and pop-up. */
+	const backdrop = () => `
+		<div class="scroll" aria-hidden="true">
+			<h3>Tasks</h3>
+			<p class="sub">1 overdue · 2 today</p>
+			<div class="seg"><span class="on">To do</span><span>History</span></div>
+			<p class="sect">Today</p>
+			<div class="card task"><span class="circle"></span><span class="grow"><b>Clean the bathroom</b><small>Every 2 weeks · due today</small></span>${av(PEOPLE[0], 22)}<span class="pts">+20</span></div>
+			<div class="card task"><span class="circle"></span><span class="grow"><b>Take out the bins</b><small>Weekly · due today</small></span>${av(PEOPLE[1], 22)}<span class="pts">+5</span></div>
+			<p class="sect" style="margin-top:18px">Upcoming</p>
+			<div class="card task"><span class="circle"></span><span class="grow"><b>Change the bedsheets</b><small>Monthly · due Sat</small></span>${av(PEOPLE[0], 22)}<span class="pts">+10</span></div>
+			<div class="card task"><span class="circle"></span><span class="grow"><b>Water the plants</b><small>Every 3 days · due Sun</small></span><span class="av any" style="--s:22px"></span><span class="pts">+5</span></div>
+			<div class="card task"><span class="circle"></span><span class="grow"><b>Vacuum the living room</b><small>Weekly · due Mon</small></span>${av(PEOPLE[1], 22)}<span class="pts">+10</span></div>
+		</div>
+		<div class="scrim"></div>`;
+
+	const share = (n) => (n === 1 ? TASK.points : Math.max(1, Math.round(TASK.points / n)));
+	const COUNT = ['', '', 'two', 'three', 'four', 'five'];
+
+	function drawDone(phone) {
+		const people = PEOPLE.slice(0, Number(phone.dataset.size));
+		const doers = phone.dataset.doers.split(',');
+		const n = doers.length;
+		const each = share(n);
+		const names = people.filter((p) => doers.includes(p.id)).map((p) => p.name);
+
+		let title;
+		if (n === 1) title = `Nice work, ${names[0]}!`;
+		else if (!doers.includes(ME) && n === 2) title = `Nice work, ${names[0]} and ${names[1]}!`;
+		else title = n === 2 ? 'Nice work, you two!' : `Nice work, all ${COUNT[n]}!`;
+
+		// Alone: the turn passes on from the doer. Together: from the assignee.
+		const from = n === 1 ? doers[0] : TASK.assignee;
+		const next = people[(people.findIndex((p) => p.id === from) + 1) % people.length];
+		const turn = next.id === ME ? 'your turn next' : `${next.name}'s turn next`;
+
+		const total = (p) => p.score + (doers.includes(p.id) ? each : 0);
+		const mine = total(person(ME));
+		const rival = people.filter((p) => p.id !== ME).sort((a, b) => total(b) - total(a))[0];
+		const theirs = total(rival);
+		const standing =
+			mine > theirs ? `You're ${mine - theirs} points ahead of ${rival.name}`
+			: mine === theirs ? `You're level with ${rival.name}`
+			: `You're ${theirs - mine} points behind ${rival.name}`;
+
+		phone.innerHTML = `${backdrop()}
+			<div class="modal" role="group" aria-label="Task completed">
+				<div class="badge">${icon('check', 30, 2.6)}</div>
+				<h4>${title}</h4>
+				<p class="what">${TASK.name} · ${n === 1 ? 'logged to history' : `${TASK.points} points shared by ${COUNT[n]}`}</p>
+				<p class="points">${icon('star', 18, 2)}+${each} points${n > 1 ? ' each' : ''}</p>
+				<div class="next">${icon('calendar', 20)}<span><b>Next due Dec 4</b><small>Rescheduled · ${turn}</small></span></div>
+				<div class="whobox">
+					<p class="wholabel">Who did it? <em>Tap to change</em></p>
+					<div class="faces">${people
+						.map(
+							(p) => `<button type="button" class="who" data-id="${p.id}" aria-pressed="${doers.includes(p.id)}" aria-label="${p.name}">
+								<span class="face">${av(p, 38)}<span class="tick">${icon('check', 11, 3.4)}</span></span>
+								<small>${p.id === ME ? 'You' : p.name}</small>
+							</button>`
+						)
+						.join('')}</div>
+				</div>
+				<p class="standings">${av(person(ME), 20)}${standing}</p>
+				<button type="button" class="undo">Undo</button>
+			</div>`;
+
+		phone.querySelectorAll('.who').forEach((button) =>
+			button.addEventListener('click', () => {
+				const id = button.dataset.id;
+				const set = doers.includes(id) ? doers.filter((d) => d !== id) : [...doers, id];
+				if (set.length === 0) return; // the last face stays
+				phone.dataset.doers = set.join(',');
+				drawDone(phone);
+				phone.querySelector(`.who[data-id="${id}"]`).focus({ preventScroll: true });
+			})
+		);
+	}
+
+	function drawSheet(phone) {
+		phone.innerHTML = `${backdrop()}
+			<div class="sheet">
+				<div class="handle"></div>
+				<h4>${TASK.name}</h4>
+				<p class="facts">
+					<span class="fact">${icon('rotate', 13, 2)}Every 2 weeks</span>
+					<span class="fact">${av(PEOPLE[0], 18)}Your turn</span>
+					<span class="fact pts">${icon('star', 13, 2)}20 pts</span>
+				</p>
+				<button type="button" class="cta">${icon('check', 19, 2.6)}Mark as done · +20</button>
+				<div class="menu">
+					<button type="button" class="item">${icon('clock')}<span class="grow">Snooze / reschedule</span>${icon('chevron', 14, 2)}</button>
+					<button type="button" class="item new">${icon('user')}<span class="grow">Reassign</span>${icon('chevron', 14, 2)}</button>
+					<button type="button" class="item">${icon('arrow')}<span class="grow">Skip this time <span class="quiet">· no points</span></span></button>
+					<button type="button" class="item">${icon('pencil')}<span class="grow">Edit task</span>${icon('chevron', 14, 2)}</button>
+				</div>
+				<button type="button" class="delete">Delete task</button>
+			</div>`;
+	}
+
+	function drawPicker(phone) {
+		const holder = phone.dataset.holder ?? TASK.assignee;
+		const row = (id, face, label) => `
+			<button type="button" class="item ${id === holder ? 'on' : ''}" data-id="${id}" aria-pressed="${id === holder}">
+				${face}<span class="grow">${label}${id === TASK.assignee && id === holder ? ' <span class="now">· current</span>' : ''}</span>
+				${id === holder ? `<span class="sel">${icon('check', 19, 2.6)}</span>` : ''}
+			</button>`;
+		phone.innerHTML = `${backdrop()}
+			<div class="sheet">
+				<div class="handle"></div>
+				<h4>Who takes it?</h4>
+				<p class="sheetsub">${TASK.name}</p>
+				<div class="menu">
+					${PEOPLE.map((p) => row(p.id, av(p, 28), p.id === ME ? `${p.name} (you)` : p.name)).join('')}
+					${row('any', '<span class="av any" style="--s:28px"></span>', 'Anyone')}
+				</div>
+			</div>`;
+		phone.querySelectorAll('.item').forEach((button) =>
+			button.addEventListener('click', () => {
+				phone.dataset.holder = button.dataset.id;
+				drawPicker(phone);
+				phone.querySelector(`.item[data-id="${button.dataset.id}"]`).focus({ preventScroll: true });
+			})
+		);
+	}
+
+	function drawFeed(phone) {
+		const ticks = (ids) => `<span class="ticks">${ids.map((id) => `<span style="--c:${person(id).color}">${icon('check', 15, 2.8)}</span>`).join('')}</span>`;
+		phone.innerHTML = `
+			<div class="scroll">
+				<p class="sect">Today</p>
+				<ul class="feed card">
+					<li>${ticks(['L', 'E'])}<span class="grow"><b>Clean the bathroom</b><small>Lukas &amp; Elisabeth · 18:42</small></span><span class="chip">+10 each</span></li>
+					<li>${ticks(['E'])}<span class="grow"><b>Take out the bins</b><small>Elisabeth · 08:15</small></span><span class="chip" style="--c:${person('E').color}">+5</span></li>
+				</ul>
+				<p class="sect" style="margin-top:20px">Yesterday</p>
+				<ul class="feed card">
+					<li>${ticks(['L', 'E', 'M'])}<span class="grow"><b>Clear out the cellar</b><small>Lukas, Elisabeth &amp; Mara · 17:05</small></span><span class="chip">+13 each</span></li>
+					<li>${ticks(['L'])}<span class="grow"><b>Water the plants</b><small>Lukas · 07:50</small></span><span class="chip" style="--c:${person('L').color}">+5</span></li>
+				</ul>
+			</div>`;
+	}
+
+	const DRAW = { done: drawDone, sheet: drawSheet, picker: drawPicker, feed: drawFeed };
+	document.querySelectorAll('.phone').forEach((phone) => DRAW[phone.dataset.kind](phone));
+</script>

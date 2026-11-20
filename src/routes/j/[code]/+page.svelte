@@ -1,6 +1,7 @@
 <!-- Public invite landing: "{inviter} invited you to {household}" → sign in → join. -->
 <script lang="ts">
 	import { enhance } from '$app/forms';
+	import LegalLinks from '$lib/components/legal/LegalLinks.svelte';
 	import InvitePreviewCard from '$lib/components/onboarding/InvitePreviewCard.svelte';
 	import Screen from '$lib/components/shell/Screen.svelte';
 	import Mascot from '$lib/components/ui/Mascot.svelte';
@@ -42,6 +43,9 @@
 			<Button href="/login" variant="secondary">{m.onboarding.landing.goToSignIn}</Button>
 		</div>
 	{/if}
+
+	<!-- The same pair as sign-in, which is where accepting leads (→ SPEC §13). -->
+	<LegalLinks links={data.legal} from={data.legalFrom} />
 </Screen>
 
 <style>
@@ -70,5 +74,11 @@
 	.cta {
 		margin-top: auto;
 		padding-top: 22px;
+	}
+
+	/* Under the button, where sign-in has them under its footnote. */
+	.cta + :global(.legal-links),
+	form + :global(.legal-links) {
+		margin-top: 18px;
 	}
 </style>

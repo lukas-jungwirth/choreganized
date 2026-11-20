@@ -10,12 +10,15 @@
  *   every move and delete renumbers the whole (tiny) list rather than leaving
  *   gaps for the next writer to reason about.
  */
-import { and, asc, count, desc, eq, isNull, lt, sql } from 'drizzle-orm';
+import { and, asc, count, desc, eq, isNotNull, isNull, lt, sql, type SQL } from 'drizzle-orm';
+import { alias } from 'drizzle-orm/sqlite-core';
+import { isListIcon, isListKind, type KnownName, type ListKind } from '$lib/utils/lists';
 import {
 	ITEM_NAME_MAX,
 	QUANTITY_MAX,
 	STORE_NAME_MAX,
 	TOTAL_QUANTITY_MAX,
+	addOnto,
 	itemName,
 	planAdds,
 	splitList,
@@ -71,7 +74,21 @@ export type ShoppingListItem = {
 	sortOrder: number;
 	/** Null once the housemate who added it has left. */
 	addedBy: { displayName: string; color: string } | null;
+	/**
+	 * Who ticked it, while it is ticked: a checklist row wears their small
+	 * avatar (plan 36 step 2). Null when open, or once they have left.
+	 */
+	checkedBy: { displayName: string; color: string } | null;
 };
+
+/**
+ * The rows that belong to shopping: on a shopping list, or on none ("Other").
+ * A checklist's rows are not shopping (plan 36 step 2): the nightly sweep,
+ * Home's count and a recipe's pour-in all leave them alone.
+ */
+export function notOnChecklist(): SQL {
+	return sql`(${shoppingItems.storeId} is null or ${shoppingItems.storeId} not in (select ${stores.id} from ${stores} where ${stores.kind} = 'checklist'))`;
+}
 
 /**
  * A store's slice of the list, once the screen has grouped it. Exported for
@@ -82,12 +99,13 @@ export type ShoppingGroup = ItemGroup<ShoppingListItem>;
 /* ── Reading ──────────────────────────────────────────────────────────────── */
 
 /**
- * The household's list, flat. Grouping it by store and lifting the checked
- * items out into "recently bought" is `splitList`'s job, and the screen calls
+ * The household's lists, flat. Grouping them by list and setting the checked
+ * items apart under "{n} bought" is `splitList`'s job, and the screen calls
  * it — with the stores it already loaded for the sheet's chips, and again on
  * every optimistic tick (→ `utils/shopping`, DECISIONS #105).
  */
 export function getShoppingList(householdId: string): ShoppingListItem[] {
+	const checker = alias(members, 'checker');
 	return (
 		db
 			.select({
@@ -100,10 +118,13 @@ export function getShoppingList(householdId: string): ShoppingListItem[] {
 				createdAt: shoppingItems.createdAt,
 				sortOrder: shoppingItems.sortOrder,
 				addedByName: members.displayName,
-				addedByColor: members.color
+				addedByColor: members.color,
+				checkedByName: checker.displayName,
+				checkedByColor: checker.color
 			})
 			.from(shoppingItems)
 			.leftJoin(members, eq(shoppingItems.addedByMemberId, members.id))
+			.leftJoin(checker, eq(shoppingItems.checkedByMemberId, checker.id))
 			.where(eq(shoppingItems.householdId, householdId))
 			// Not the rendered order — that is `splitList`'s — but a stable one, so
 			// two reads of an unchanged list produce byte-identical payloads.
@@ -121,6 +142,10 @@ export function getShoppingList(householdId: string): ShoppingListItem[] {
 				addedBy:
 					row.addedByName && row.addedByColor
 						? { displayName: row.addedByName, color: row.addedByColor }
+						: null,
+				checkedBy:
+					row.checkedAt && row.checkedByName && row.checkedByColor
+						? { displayName: row.checkedByName, color: row.checkedByColor }
 						: null
 			}))
 	);
@@ -139,15 +164,19 @@ export function getShoppingList(householdId: string): ShoppingListItem[] {
  */
 const SUGGESTION_POOL_MAX = 250;
 
-export function listItemNames(householdId: string, limit = SUGGESTION_POOL_MAX): string[] {
+/**
+ * Each name comes with the list it last went to (plan 36), which is how the add
+ * field's icon moves by itself when a known name is typed [L3]. Null is
+ * "Other", or a list deleted since.
+ */
+export function listItemNames(householdId: string, limit = SUGGESTION_POOL_MAX): KnownName[] {
 	return db
-		.select({ name: shoppingSuggestions.name })
+		.select({ name: shoppingSuggestions.name, storeId: shoppingSuggestions.storeId })
 		.from(shoppingSuggestions)
 		.where(eq(shoppingSuggestions.householdId, householdId))
 		.orderBy(desc(shoppingSuggestions.lastUsedAt), asc(shoppingSuggestions.name))
 		.limit(limit)
-		.all()
-		.map((row) => row.name);
+		.all();
 }
 
 export function listStores(householdId: string): Store[] {
@@ -161,6 +190,15 @@ export function listStores(householdId: string): Store[] {
 			.orderBy(asc(stores.sortOrder), asc(stores.createdAt), asc(stores.id))
 			.all()
 	);
+}
+
+/** One list, if it is this household's — what `/shopping/[listId]` opens. */
+export function getStore(householdId: string, storeId: string): Store | undefined {
+	return db
+		.select()
+		.from(stores)
+		.where(and(eq(stores.id, storeId), eq(stores.householdId, householdId)))
+		.get();
 }
 
 /**
@@ -188,7 +226,14 @@ export function listOpenItems(householdId: string): {
 			unit: shoppingItems.unit
 		})
 		.from(shoppingItems)
-		.where(and(eq(shoppingItems.householdId, householdId), isNull(shoppingItems.checkedAt)))
+		.where(
+			and(
+				eq(shoppingItems.householdId, householdId),
+				isNull(shoppingItems.checkedAt),
+				// A packing list's "Sunscreen" is not a need a recipe can top up.
+				notOnChecklist()
+			)
+		)
 		.orderBy(asc(shoppingItems.sortOrder), asc(shoppingItems.createdAt), asc(shoppingItems.id))
 		.all();
 }
@@ -196,8 +241,12 @@ export function listOpenItems(householdId: string): {
 export type StoreSummary = {
 	id: string;
 	name: string;
+	icon: string | null;
+	kind: ListKind;
 	/** Everything filed here, checked items included — what [7g] counts. */
 	itemCount: number;
+	/** Ticked (bought) rows: what the edit sheet's kind change would move. */
+	checkedCount: number;
 };
 
 export function listStoresWithCounts(householdId: string): StoreSummary[] {
@@ -205,9 +254,13 @@ export function listStoresWithCounts(householdId: string): StoreSummary[] {
 		.select({
 			id: stores.id,
 			name: stores.name,
+			icon: stores.icon,
+			kind: stores.kind,
 			// Counting the item id, not the row: a store with nothing in it is a
 			// single all-NULL join row, and count(*) would call that 1.
-			itemCount: count(shoppingItems.id)
+			itemCount: count(shoppingItems.id),
+			// `count` of a column skips NULLs: only the ticked rows.
+			checkedCount: count(shoppingItems.checkedAt)
 		})
 		.from(stores)
 		.leftJoin(shoppingItems, eq(shoppingItems.storeId, stores.id))
@@ -303,17 +356,31 @@ function resolveStoreId(householdId: string, storeId: string | null | undefined)
 	return store?.id ?? null;
 }
 
-/** Where the quick-add field puts things: the topmost store, or "Other". */
+/**
+ * Where the quick-add field and a recipe put things: the topmost shopping
+ * list, or "Other". Never a checklist (plan 36 step 2).
+ */
 export function defaultStoreId(householdId: string): string | null {
 	const first = db
 		.select({ id: stores.id })
 		.from(stores)
-		.where(eq(stores.householdId, householdId))
+		.where(and(eq(stores.householdId, householdId), eq(stores.kind, 'buy')))
 		.orderBy(asc(stores.sortOrder), asc(stores.createdAt), asc(stores.id))
 		.limit(1)
 		.get();
 
 	return first?.id ?? null;
+}
+
+/** What kind of list a row on `storeId` is on. "Other" (null) is shopping. */
+function listKind(householdId: string, storeId: string | null): ListKind {
+	if (storeId === null) return 'buy';
+	const row = db
+		.select({ kind: stores.kind })
+		.from(stores)
+		.where(and(eq(stores.id, storeId), eq(stores.householdId, householdId)))
+		.get();
+	return row?.kind ?? 'buy';
 }
 
 /**
@@ -325,16 +392,24 @@ export function defaultStoreId(householdId: string): string | null {
  * "Rinderhackfleisch" moves the same row up rather than starting a second one,
  * and the spelling last used is the one offered back.
  */
-function rememberName(tx: Transaction, householdId: string, name: string): void {
+function rememberName(
+	tx: Transaction,
+	householdId: string,
+	name: string,
+	storeId: string | null
+): void {
 	const trimmed = name.trim();
 	const nameKey = suggestionKey(trimmed);
 	if (!nameKey) return;
 
+	// The list goes with it: the place a name went *last* is where the add field
+	// sends it next time (plan 36 [L3]). Always the latest, so moving Shampoo to
+	// another list once is how the household changes its mind.
 	tx.insert(shoppingSuggestions)
-		.values({ householdId, name: trimmed, nameKey, lastUsedAt: new Date() })
+		.values({ householdId, name: trimmed, nameKey, storeId, lastUsedAt: new Date() })
 		.onConflictDoUpdate({
 			target: [shoppingSuggestions.householdId, shoppingSuggestions.nameKey],
-			set: { name: trimmed, lastUsedAt: new Date() }
+			set: { name: trimmed, storeId, lastUsedAt: new Date() }
 		})
 		.run();
 }
@@ -360,8 +435,12 @@ function nextItemSortOrder(tx: Transaction, householdId: string, storeId: string
 }
 
 export function addItem(householdId: string, memberId: string, input: AddItemInput): ShoppingItem {
+	const values = normalize(householdId, input);
+	// A packing item is not a shopping habit (plan 36): a checklist's rows teach
+	// the add field nothing and ping nobody's phone.
+	const shopping = listKind(householdId, values.storeId) === 'buy';
+
 	const item = db.transaction((tx) => {
-		const values = normalize(householdId, input);
 		const row = tx
 			.insert(shoppingItems)
 			.values({
@@ -375,12 +454,12 @@ export function addItem(householdId: string, memberId: string, input: AddItemInp
 			.returning()
 			.get();
 
-		rememberName(tx, householdId, values.name);
+		if (shopping) rememberName(tx, householdId, values.name, values.storeId);
 
 		return row;
 	});
 
-	notifyShoppingAdd({ householdId, actorMemberId: memberId, itemCount: 1 });
+	if (shopping) notifyShoppingAdd({ householdId, actorMemberId: memberId, itemCount: 1 });
 	// Fire-and-forget, outside the transaction, next to the push for the same
 	// reason: the row is written, and nobody's failure to hear about it may
 	// unwrite it (→ `../live.ts`, DECISIONS #135).
@@ -394,24 +473,218 @@ export function addItem(householdId: string, memberId: string, input: AddItemInp
 }
 
 /**
+ * What the add field did with a line, so it can say so (→ `QuickAdd.svelte`):
+ *
+ * - `added`: a new row.
+ * - `restored`: a row under "{n} bought" went back on.
+ * - `toppedUp`: a row already open on the list took the amount (it grew, or it
+ *   had none and now has the typed one).
+ * - `already`: a row already open on the list, and nothing to change.
+ */
+export type QuickAddEffect = 'added' | 'restored' | 'toppedUp' | 'already';
+
+export type QuickAddResult = {
+	itemId: string;
+	effect: QuickAddEffect;
+	/** True for `restored`; kept for the callers that only ask that. */
+	restored: boolean;
+	/** The row as it stands now: its name and amount, for the line under the field. */
+	name: string;
+	quantity: number | null;
+	unit: string | null;
+};
+
+/**
+ * What the add field does (plan 36, Lukas 2026-11-20). On a shopping list,
+ * including "Other", and only within the list it is going to:
+ *
+ * 1. A row with that name **still open** there wins. The typed amount goes
+ *    onto it by `addOnto`'s rules for a typed line: "Gurke x3" onto Gurke ×3
+ *    is ×6, 500 ml onto a litre is 1.5 L, an amount onto a row with none is
+ *    that amount, and no amount changes nothing. Only amounts that can't be
+ *    spoken of together (3 pcs, 500 g) fall through to a row of their own.
+ * 2. Otherwise a row under "{n} bought" is **put back** rather than added a
+ *    second time, the way the suggestion offering it promised; a typed amount
+ *    travels with it.
+ * 3. Otherwise an ordinary `addItem`.
+ *
+ * Milk at another shop is a different need, so other lists are never searched.
+ * A checklist skips all of it: a second "Towels" is what was typed.
+ */
+export function quickAddItem(
+	householdId: string,
+	memberId: string,
+	input: AddItemInput
+): QuickAddResult {
+	const values = normalize(householdId, input);
+	const key = suggestionKey(values.name);
+	const added = (item: ShoppingItem): QuickAddResult => ({
+		itemId: item.id,
+		effect: 'added',
+		restored: false,
+		...amountOf(item)
+	});
+
+	if (listKind(householdId, values.storeId) === 'checklist') {
+		return added(addItem(householdId, memberId, { ...input, storeId: values.storeId }));
+	}
+
+	const inList =
+		values.storeId === null
+			? isNull(shoppingItems.storeId)
+			: eq(shoppingItems.storeId, values.storeId);
+	const columns = {
+		id: shoppingItems.id,
+		name: shoppingItems.name,
+		quantity: shoppingItems.quantity,
+		unit: shoppingItems.unit
+	};
+
+	const result = db.transaction((tx): QuickAddResult | null => {
+		// `suggestionKey` in JavaScript rather than SQL's lower(), which only
+		// folds ASCII: "Äpfel" and "äpfel" are the same row to the household.
+		// In walking order, so a name that is on the list twice tops up the row
+		// higher up, as a recipe does (→ `listOpenItems`).
+		const open = tx
+			.select(columns)
+			.from(shoppingItems)
+			.where(
+				and(eq(shoppingItems.householdId, householdId), inList, isNull(shoppingItems.checkedAt))
+			)
+			.orderBy(asc(shoppingItems.sortOrder), asc(shoppingItems.createdAt), asc(shoppingItems.id))
+			.all()
+			.find((row) => suggestionKey(row.name) === key);
+
+		if (open) {
+			const onto = addOnto(open, values, true);
+			if (onto.effect === 'have') {
+				rememberName(tx, householdId, open.name, values.storeId);
+				return { itemId: open.id, effect: 'already', restored: false, ...amountOf(open) };
+			}
+			if (onto.effect === 'merge' || onto.effect === 'set') {
+				tx.update(shoppingItems)
+					.set({ quantity: onto.quantity, unit: onto.unit })
+					.where(and(eq(shoppingItems.id, open.id), eq(shoppingItems.householdId, householdId)))
+					.run();
+				rememberName(tx, householdId, open.name, values.storeId);
+				return {
+					itemId: open.id,
+					effect: 'toppedUp',
+					restored: false,
+					name: open.name,
+					quantity: onto.quantity,
+					unit: onto.unit
+				};
+			}
+			// 'apart': typed on purpose, so it is not folded into this row.
+		}
+
+		const bought = tx
+			.select(columns)
+			.from(shoppingItems)
+			.where(
+				and(eq(shoppingItems.householdId, householdId), inList, isNotNull(shoppingItems.checkedAt))
+			)
+			.orderBy(desc(shoppingItems.checkedAt), asc(shoppingItems.id))
+			.all()
+			.find((row) => suggestionKey(row.name) === key);
+
+		if (!bought) return null;
+
+		const amount = values.quantity !== null ? { quantity: values.quantity, unit: values.unit } : {};
+		tx.update(shoppingItems)
+			.set({
+				checkedAt: null,
+				checkedByMemberId: null,
+				// Whoever asks for it now is who the sheet's "Added by" names: the
+				// row is this week's need, not the one somebody bought last time.
+				addedByMemberId: memberId,
+				// Back at the end of the list's walking order, where a new add goes.
+				sortOrder: nextItemSortOrder(tx, householdId, values.storeId),
+				...amount
+			})
+			.where(and(eq(shoppingItems.id, bought.id), eq(shoppingItems.householdId, householdId)))
+			.run();
+
+		rememberName(tx, householdId, bought.name, values.storeId);
+		return {
+			itemId: bought.id,
+			effect: 'restored',
+			restored: true,
+			...amountOf({ ...bought, ...amount })
+		};
+	});
+
+	if (!result) return added(addItem(householdId, memberId, input));
+
+	if (result.effect === 'restored') {
+		// To a housemate this is an add like any other: Milk was not on the list
+		// and now it is (→ SPEC §3.5). The live event stays `unchecked`, which is
+		// what the other screen has to play.
+		notifyShoppingAdd({ householdId, actorMemberId: memberId, itemCount: 1 });
+		publishShopping(householdId, memberId, {
+			kind: 'unchecked',
+			itemId: result.itemId,
+			name: result.name
+		});
+	} else if (result.effect === 'toppedUp') {
+		// The recipe pour-in's precedent (→ `addIngredients`): a row that grew is
+		// news for a housemate in the shop, pushed as a top-up and not as a new
+		// item, and every other screen refetches the list.
+		notifyShoppingAdd({ householdId, actorMemberId: memberId, itemCount: 0, toppedUpCount: 1 });
+		publishShopping(householdId, memberId, {
+			kind: 'added',
+			itemId: result.itemId,
+			name: result.name
+		});
+	}
+	// 'already' changed nothing on the list, so nobody else needs to hear of it.
+
+	return result;
+}
+
+/** A row's name and amount, as `QuickAddResult` reports them. */
+function amountOf(row: { name: string; quantity: number | null; unit: string | null }) {
+	return { name: row.name, quantity: row.quantity, unit: row.unit };
+}
+
+/**
  * Renaming a row teaches the same lesson adding one does — most of all when
  * the edit is somebody fixing a typo they'd otherwise be offered forever. A
  * save that didn't touch the name only moves that name back up the pool, which
  * is exactly where somebody who just edited the item would look for it.
+ *
+ * A row the sheet moves to another list joins that list at the end, as a new
+ * item would; its old `sortOrder` means nothing there and could tie with any
+ * row. Its tick moves with it untouched: a bought row is a ticked row
+ * (→ `setStoreKind`, DECISIONS #279).
  */
 export function updateItem(householdId: string, itemId: string, input: UpdateItemInput): boolean {
 	const edited = db.transaction((tx) => {
 		const values = normalize(householdId, input);
-		const result = tx
-			.update(shoppingItems)
-			.set(values)
-			.where(and(eq(shoppingItems.id, itemId), eq(shoppingItems.householdId, householdId)))
+		const ours = and(eq(shoppingItems.id, itemId), eq(shoppingItems.householdId, householdId));
+		const current = tx
+			.select({ storeId: shoppingItems.storeId })
+			.from(shoppingItems)
+			.where(ours)
+			.get();
+
+		// Not found ⇒ the id wasn't ours, and neither is the name.
+		if (!current) return false;
+
+		const moved = current.storeId !== values.storeId;
+		tx.update(shoppingItems)
+			.set(
+				moved
+					? { ...values, sortOrder: nextItemSortOrder(tx, householdId, values.storeId) }
+					: values
+			)
+			.where(ours)
 			.run();
 
-		// Nothing was updated ⇒ the id wasn't ours, and neither is the name.
-		if (result.changes === 0) return false;
-
-		rememberName(tx, householdId, values.name);
+		if (listKind(householdId, values.storeId) === 'buy') {
+			rememberName(tx, householdId, values.name, values.storeId);
+		}
 		return true;
 	});
 
@@ -444,10 +717,17 @@ export function setChecked(
 				: { checkedAt: null, checkedByMemberId: null }
 		)
 		.where(and(eq(shoppingItems.id, itemId), eq(shoppingItems.householdId, householdId)))
-		.returning({ name: shoppingItems.name })
+		.returning({ name: shoppingItems.name, storeId: shoppingItems.storeId })
 		.get();
 
 	if (!row) return false;
+
+	// A checklist tick stays where it is, with no settle to play on the other
+	// phone and no "Elisabeth got Passports" to announce: it just refreshes there.
+	if (listKind(householdId, row.storeId) === 'checklist') {
+		publish(householdId, { topic: 'shopping', kind: 'changed' });
+		return true;
+	}
 
 	publishShopping(householdId, memberId, {
 		kind: checked ? 'checked' : 'unchecked',
@@ -516,7 +796,11 @@ export function addIngredients(
 		// appended to that group — the recipe's own order, kept by `sortOrder`
 		// (which the list sorts on before `createdAt`, so a shared insert stamp is
 		// fine now).
-		const targetStore = resolveStoreId(householdId, storeId);
+		// Never onto a checklist (plan 36 step 2): a pour-in aimed at one goes
+		// where every other pour-in goes.
+		const resolved = resolveStoreId(householdId, storeId);
+		const targetStore =
+			listKind(householdId, resolved) === 'checklist' ? defaultStoreId(householdId) : resolved;
 		const start = nextItemSortOrder(tx, householdId, targetStore);
 
 		const rows = plan.inserts.map((row, index) => ({
@@ -542,7 +826,7 @@ export function addIngredients(
 
 		// Only what actually went on the list as a new word: a topped-up or
 		// skipped name is one the household already knows, by definition.
-		for (const row of rows) rememberName(tx, householdId, row.name);
+		for (const row of rows) rememberName(tx, householdId, row.name, targetStore);
 
 		return {
 			added: rows.length,
@@ -580,7 +864,14 @@ export function addIngredients(
 export function purgeCheckedItems(householdId: string, before: Date): number {
 	const purged = db
 		.delete(shoppingItems)
-		.where(and(eq(shoppingItems.householdId, householdId), lt(shoppingItems.checkedAt, before)))
+		.where(
+			and(
+				eq(shoppingItems.householdId, householdId),
+				lt(shoppingItems.checkedAt, before),
+				// A checklist's ticks stay until somebody starts it over (plan 36).
+				notOnChecklist()
+			)
+		)
 		.run().changes;
 
 	// 03:30, so almost always nobody — but a phone left open on the list
@@ -605,6 +896,10 @@ export function reorderItems(
 	storeId: string | null,
 	orderedIds: string[]
 ): boolean {
+	// A checklist's ticked rows keep their place (plan 36 step 2), so they are
+	// part of its order; a shopping list's bought rows are sorted by tick.
+	const everyRow = listKind(householdId, storeId) === 'checklist';
+
 	const reordered = db.transaction((tx) => {
 		const inGroup = tx
 			.select({ id: shoppingItems.id })
@@ -613,7 +908,7 @@ export function reorderItems(
 				and(
 					eq(shoppingItems.householdId, householdId),
 					storeId === null ? isNull(shoppingItems.storeId) : eq(shoppingItems.storeId, storeId),
-					isNull(shoppingItems.checkedAt)
+					everyRow ? undefined : isNull(shoppingItems.checkedAt)
 				)
 			)
 			.orderBy(asc(shoppingItems.sortOrder), asc(shoppingItems.createdAt), asc(shoppingItems.id))
@@ -653,7 +948,7 @@ function publishShopping(
 	householdId: string,
 	memberId: string,
 	change: {
-		kind: 'checked' | 'unchecked' | 'added';
+		kind: 'checked' | 'unchecked' | 'added' | 'reset';
 		itemId?: string;
 		name?: string;
 		count?: number;
@@ -688,7 +983,18 @@ function writeItemOrder(tx: Transaction, householdId: string, orderedIds: string
 
 /* ── Stores ───────────────────────────────────────────────────────────────── */
 
-export function createStore(householdId: string, name: string): Store {
+/** A stored icon is a key from the fixed set or nothing (→ `utils/lists`). */
+function normalizeIcon(icon: string | null | undefined): string | null {
+	return isListIcon(icon) ? icon : null;
+}
+
+/** A new list goes to the end of the household's order, a shopping list unless told. */
+export function createStore(
+	householdId: string,
+	name: string,
+	icon?: string | null,
+	kind: ListKind = 'buy'
+): Store {
 	return db.transaction((tx) => {
 		const next = tx
 			.select({ sortOrder: sql<number>`coalesce(max(${stores.sortOrder}), -1) + 1` })
@@ -701,6 +1007,8 @@ export function createStore(householdId: string, name: string): Store {
 			.values({
 				householdId,
 				name: name.trim().slice(0, STORE_NAME_MAX),
+				icon: normalizeIcon(icon),
+				kind: isListKind(kind) ? kind : 'buy',
 				sortOrder: next?.sortOrder ?? 0
 			})
 			.returning()
@@ -708,13 +1016,19 @@ export function createStore(householdId: string, name: string): Store {
 	});
 }
 
-export function renameStore(householdId: string, storeId: string, name: string): boolean {
+/** `icon` left out keeps the list's icon; anything else (null included) replaces it. */
+export function renameStore(
+	householdId: string,
+	storeId: string,
+	name: string,
+	icon?: string | null
+): boolean {
 	const trimmed = name.trim().slice(0, STORE_NAME_MAX);
 	if (!trimmed) return false;
 
 	const result = db
 		.update(stores)
-		.set({ name: trimmed })
+		.set(icon === undefined ? { name: trimmed } : { name: trimmed, icon: normalizeIcon(icon) })
 		.where(and(eq(stores.id, storeId), eq(stores.householdId, householdId)))
 		.run();
 
@@ -722,11 +1036,19 @@ export function renameStore(householdId: string, storeId: string, name: string):
 }
 
 /**
- * Deleting a store never deletes shopping: `shopping_items.store_id` is
+ * Deleting a shopping list never deletes shopping: `shopping_items.store_id` is
  * ON DELETE SET NULL, so its items reappear under "Other" (→ DATA-MODEL.md).
+ * A checklist takes its rows with it (plan 36 step 2): "Passports" under
+ * "Other" would be a shopping need nobody has. The confirm says how many.
  */
 export function deleteStore(householdId: string, storeId: string): boolean {
-	return db.transaction((tx) => {
+	const deleted = db.transaction((tx) => {
+		if (listKind(householdId, storeId) === 'checklist') {
+			tx.delete(shoppingItems)
+				.where(and(eq(shoppingItems.householdId, householdId), eq(shoppingItems.storeId, storeId)))
+				.run();
+		}
+
 		const result = tx
 			.delete(stores)
 			.where(and(eq(stores.id, storeId), eq(stores.householdId, householdId)))
@@ -737,6 +1059,141 @@ export function deleteStore(householdId: string, storeId: string): boolean {
 		renumber(tx, householdId);
 		return true;
 	});
+
+	if (deleted) publish(householdId, { topic: 'shopping', kind: 'changed' });
+	return deleted;
+}
+
+/**
+ * Turn a shopping list into a checklist or back (plan 36: "the kind can be
+ * changed later"). The rows are not touched, because the two kinds read the
+ * same columns differently: a bought row *is* a ticked row. Shopping list →
+ * checklist, its bought rows stay ticked until Start over; checklist →
+ * shopping list, its ticked rows are under "{n} bought" and the next nightly
+ * sweep takes them. The confirm in the sheet says which.
+ */
+export function setStoreKind(householdId: string, storeId: string, kind: ListKind): boolean {
+	if (!isListKind(kind)) return false;
+
+	const result = db
+		.update(stores)
+		.set({ kind })
+		.where(and(eq(stores.id, storeId), eq(stores.householdId, householdId)))
+		.run();
+
+	if (result.changes === 0) return false;
+
+	publish(householdId, { topic: 'shopping', kind: 'changed' });
+	return true;
+}
+
+/* ── Start over ───────────────────────────────────────────────────────────── */
+
+/** One tick Start over took away, as the undo puts it back. */
+export type ResetTick = { id: string; checkedAt: number; by: string | null };
+
+/**
+ * Start over (plan 36 [L4]): untick every row of a checklist in one
+ * transaction. Answers with what it unticked, so the undo bar can put exactly
+ * those ticks back, with their own time and ticker. Null when the list isn't
+ * this household's checklist: a shopping list is never started over.
+ */
+export function resetList(
+	householdId: string,
+	memberId: string,
+	storeId: string
+): { name: string; ticks: ResetTick[] } | null {
+	const result = db.transaction((tx) => {
+		const list = tx
+			.select({ name: stores.name, kind: stores.kind })
+			.from(stores)
+			.where(and(eq(stores.id, storeId), eq(stores.householdId, householdId)))
+			.get();
+		if (!list || list.kind !== 'checklist') return null;
+
+		const onList = and(
+			eq(shoppingItems.householdId, householdId),
+			eq(shoppingItems.storeId, storeId),
+			isNotNull(shoppingItems.checkedAt)
+		);
+
+		const ticked = tx
+			.select({
+				id: shoppingItems.id,
+				checkedAt: shoppingItems.checkedAt,
+				by: shoppingItems.checkedByMemberId
+			})
+			.from(shoppingItems)
+			.where(onList)
+			.all();
+
+		tx.update(shoppingItems).set({ checkedAt: null, checkedByMemberId: null }).where(onList).run();
+
+		return {
+			name: list.name,
+			ticks: ticked.map((row) => ({
+				id: row.id,
+				checkedAt: row.checkedAt?.getTime() ?? Date.now(),
+				by: row.by
+			}))
+		};
+	});
+
+	// So the other phone follows: its rows untick on the refetch this triggers.
+	if (result) publishShopping(householdId, memberId, { kind: 'reset', name: result.name });
+
+	return result;
+}
+
+/**
+ * Undo for Start over: the ticks it took away, back as they were. The browser
+ * hands them back, so nothing is taken on trust: only rows of this checklist
+ * that are still unticked, a ticker who is in this household (or nobody), and
+ * a time that isn't in the future. A row ticked again meanwhile keeps its new
+ * tick. Answers with how many were put back.
+ */
+export function undoReset(householdId: string, storeId: string, ticks: ResetTick[]): number {
+	const restored = db.transaction((tx) => {
+		const list = tx
+			.select({ kind: stores.kind })
+			.from(stores)
+			.where(and(eq(stores.id, storeId), eq(stores.householdId, householdId)))
+			.get();
+		if (!list || list.kind !== 'checklist') return 0;
+
+		const ours = new Set(
+			tx
+				.select({ id: members.id })
+				.from(members)
+				.where(eq(members.householdId, householdId))
+				.all()
+				.map((row) => row.id)
+		);
+		const now = Date.now();
+		let count = 0;
+
+		for (const tick of ticks) {
+			if (!Number.isFinite(tick.checkedAt) || tick.checkedAt <= 0 || tick.checkedAt > now) continue;
+			const by = tick.by !== null && ours.has(tick.by) ? tick.by : null;
+			count += tx
+				.update(shoppingItems)
+				.set({ checkedAt: new Date(tick.checkedAt), checkedByMemberId: by })
+				.where(
+					and(
+						eq(shoppingItems.id, tick.id),
+						eq(shoppingItems.householdId, householdId),
+						eq(shoppingItems.storeId, storeId),
+						isNull(shoppingItems.checkedAt)
+					)
+				)
+				.run().changes;
+		}
+
+		return count;
+	});
+
+	if (restored > 0) publish(householdId, { topic: 'shopping', kind: 'changed' });
+	return restored;
 }
 
 /** One step up or down the walking order; a no-op at either end. */

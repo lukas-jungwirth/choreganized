@@ -156,7 +156,7 @@ export const de: Messages = {
 	/* ── The tab bar [02] ──────────────────────────────────────────────────── */
 	nav: {
 		home: 'Start',
-		shopping: 'Einkauf',
+		shopping: 'Listen',
 		tasks: 'Aufgaben',
 		cooking: 'Kochen',
 		expenses: 'Ausgaben',
@@ -284,6 +284,8 @@ export const de: Messages = {
 		},
 
 		points: (points: number) => `+${points}`,
+		pointsEach: (points: number) => `je +${points}`,
+		doers: (names: string[]) => list(names),
 
 		/**
 		 * "Du bist dran" / "Elisabeth ist dran" — Deutsch braucht dafür keinen
@@ -317,23 +319,40 @@ export const de: Messages = {
 
 	/* ── Shopping [03] [3a] [7d] [7g] ──────────────────────────────────────── */
 	shopping: {
-		title: 'Einkauf',
-		progress: (checked: number, total: number) => `${checked} von ${total} erledigt`,
-		nothingListed: 'Nichts auf der Liste',
-		manageStores: 'Geschäfte verwalten',
+		title: 'Listen',
+		manageStores: 'Listen verwalten',
 		other: 'Sonstiges',
 
 		empty: {
-			title: 'Noch nichts zu kaufen',
-			copy: 'Trag ein, was ausgeht. Nach Geschäft sortiert für alle, die einkaufen gehen.',
+			title: 'Noch nichts auf einer Liste',
+			copy: 'Trag ein, was ausgeht. Jedes Geschäft bekommt seine eigene Liste.',
 			cta: 'Erstes Ding eintragen'
 		},
 
 		quickAdd: {
 			placeholder: 'Etwas eintragen…',
-			label: 'Etwas eintragen',
-			expand: 'Mit Menge und Geschäft eintragen',
-			submit: 'Eintragen'
+			addTo: (list: string) => `${list}: eintragen…`,
+			choose: (list: string) => `Liste: ${list}. Andere Liste wählen`,
+			menu: 'Listen',
+			remembered: (list: string): RichText => [
+				{ text: 'Kommt auf ' },
+				{ text: list, strong: true },
+				{ text: ', wie letztes Mal.' }
+			],
+			keepHere: 'Hier lassen',
+			keepOn: (list: string) => `Auf ${list} lassen`,
+			amount: (amount: string) => `${amount} als Menge lesen`,
+			submit: 'Eintragen',
+			toppedUp: (item: string, amount: string): RichText => [
+				{ text: item, strong: true },
+				{ text: ' war schon auf der Liste, jetzt ' },
+				{ text: amount, strong: true },
+				{ text: '.' }
+			],
+			already: (item: string): RichText => [
+				{ text: item, strong: true },
+				{ text: ' steht schon auf der Liste.' }
+			]
 		},
 
 		suggestions: {
@@ -341,18 +360,83 @@ export const de: Messages = {
 		},
 
 		bought: {
-			heading: (count: number) => `Zuletzt gekauft · ${count}`
+			foot: (count: number) => `${count} gekauft`
+		},
+
+		lists: {
+			allDone: 'Alles erledigt',
+			toGet: (count: number) => `${count} zu holen`,
+			thingsToGet: (count: number) =>
+				count === 1 ? '1 Sache zu holen' : `${count} Sachen zu holen`,
+			nothingToGet: 'Nichts zu holen',
+			openedStatus: (left: number, bought: number) => `${left} zu holen · ${bought} gekauft`,
+			openWith: (list: string, left: number) =>
+				left > 0 ? `${list} öffnen, ${left} zu holen` : `${list} öffnen, alles erledigt`,
+			edit: (list: string) => `${list} bearbeiten`,
+			status: (left: number) => (left > 0 ? String(left) : 'leer'),
+			nothingYet: 'Noch nichts drauf',
+			notFound: 'Diese Liste gibt es nicht mehr.',
+			newList: 'Neue Liste',
+			editTitle: 'Liste bearbeiten',
+			name: 'Name',
+			namePlaceholder: 'Campingwochenende',
+			icon: 'Symbol',
+			create: 'Liste anlegen',
+			kinds: {
+				label: 'Art der Liste',
+				buy: 'Einkaufsliste',
+				checklist: 'Checkliste'
+			},
+			ticked: (done: number, total: number) => `${done}/${total}`,
+			checklistPeek: (left: number, names: string) => `${left} offen · ${names}`,
+			doneOf: (done: number, total: number) => `${done} von ${total} erledigt`,
+			startOver: 'Neu anfangen',
+			toChecklist: {
+				title: (list: string) => `${list} zur Checkliste machen?`,
+				copy: (count: number) =>
+					count === 1
+						? 'Der eine gekaufte Eintrag bleibt abgehakt, bis du die Liste neu anfängst.'
+						: `Die ${count} gekauften Einträge bleiben abgehakt, bis du die Liste neu anfängst.`,
+				confirm: 'Zur Checkliste machen'
+			},
+			toShopping: {
+				title: (list: string) => `${list} zur Einkaufsliste machen?`,
+				copy: (count: number) =>
+					count === 1
+						? 'Der eine abgehakte Eintrag kommt unter „1 gekauft“ und wird über Nacht gelöscht.'
+						: `Die ${count} abgehakten Einträge kommen unter „${count} gekauft“ und werden über Nacht gelöscht.`,
+				confirm: 'Zur Einkaufsliste machen'
+			},
+			icons: {
+				basket: 'Korb',
+				bag: 'Tasche',
+				droplet: 'Tropfen',
+				pill: 'Tablette',
+				hammer: 'Hammer',
+				gift: 'Geschenk',
+				luggage: 'Koffer',
+				tent: 'Zelt',
+				door: 'Tür',
+				paw: 'Pfote',
+				book: 'Buch',
+				home: 'Haus'
+			}
 		},
 
 		row: {
 			check: (item: string) => `${item} abhaken`,
 			uncheck: (item: string) => `${item} zurück auf die Liste`,
 			edit: (item: string) => `${item} bearbeiten`,
+			editTicked: (item: string, by: string) => `${item} bearbeiten, abgehakt von ${by}`,
 			reorder: (item: string) => `${item} verschieben`
 		},
 
 		undo: {
 			checked: (item: string): RichText => [{ text: item, strong: true }, { text: ' abgehakt' }],
+			startedOver: (list: string): RichText => [
+				{ text: list, strong: true },
+				{ text: ' von vorn' }
+			],
 			action: 'Rückgängig'
 		},
 
@@ -387,31 +471,32 @@ export const de: Messages = {
 			quantity: 'Menge',
 			unit: 'Einheit',
 			unitHint: 'Stk. · g · kg · ml · l …',
-			store: 'Geschäft',
+			store: 'Liste',
 			addTo: (store: string) => `Auf die Liste für ${store}`,
 			addToList: 'Auf die Liste',
+			addedBy: (member: string) => `Hinzugefügt von ${member}`,
 			delete: 'Eintrag löschen'
 		},
 
 		stores: {
-			title: 'Geschäfte',
-			subtitle: 'Die Einkaufsliste nach Geschäft gruppieren',
-			back: 'Zurück zum Einkauf',
-			add: 'Geschäft hinzufügen',
-			addButton: 'Hinzufügen',
+			title: 'Listen verwalten',
+			back: 'Zurück zu den Listen',
+			add: 'Liste hinzufügen',
 			items: (count: number) => (count === 1 ? '1 Eintrag' : `${count} Einträge`),
-			rename: (store: string) => `${store} umbenennen`,
 			moveUp: (store: string) => `${store} nach oben`,
 			moveDown: (store: string) => `${store} nach unten`,
-			remove: (store: string) => `${store} löschen`,
-			help: 'Mit den Pfeilen umsortieren. Die Liste folgt dieser Reihenfolge, also ordne sie so, wie du durch die Stadt gehst. Schnell eingetragene Sachen landen im ersten Geschäft; alles ohne Geschäft steht unter „Sonstiges“.',
-			deleteLabel: 'Geschäft löschen',
+			help: 'Die Übersicht folgt dieser Reihenfolge, und das Eingabefeld beginnt bei der ersten Einkaufsliste.',
+			deleteLabel: 'Liste löschen',
 			deleteConfirm: (store: string) => `${store} löschen?`,
 			deleteMoves: (count: number) =>
 				count === 1
 					? 'Der eine Eintrag wandert zu „Sonstiges“, nichts geht verloren.'
 					: `Die ${count} Einträge wandern zu „Sonstiges“, nichts geht verloren.`,
-			deleteEmpty: 'Es ist nichts eingetragen, also ändert sich sonst nichts.',
+			deleteEmpty: 'Es steht nichts drauf, also ändert sich sonst nichts.',
+			deleteChecklist: (count: number) =>
+				count === 1
+					? 'Der eine Eintrag wird mit ihr gelöscht.'
+					: `Die ${count} Einträge werden mit ihr gelöscht.`,
 			defaults: {
 				grocery: 'Supermarkt',
 				drugstore: 'Drogerie',
@@ -425,7 +510,8 @@ export const de: Messages = {
 		title: 'Start',
 		greeting: (time: 'morning' | 'afternoon' | 'evening'): string =>
 			time === 'morning' ? 'Guten Morgen' : time === 'afternoon' ? 'Guten Tag' : 'Guten Abend',
-		settingsLink: (names: string) => `Einstellungen · Haushalt: ${names}`,
+		openSettings: 'Einstellungen',
+		householdFaces: (names: string) => `Haushalt: ${names}`,
 		pokeRaccoon: 'Waschbär anstupsen',
 		/** Admin mode only (→ plan 34): tapping the raccoon picks any pose. */
 		raccoonPicker: {
@@ -562,6 +648,12 @@ export const de: Messages = {
 			assignTo: (name: string) => `${name} zuweisen`,
 			reassignTo: (name: string) => `${name} neu zuweisen`,
 			me: 'mir',
+			assign: 'Zuweisen',
+			reassign: 'Neu zuweisen',
+			pickTitle: 'Wer übernimmt?',
+			pickYou: (name: string) => `${name} (du)`,
+			pickCurrent: 'aktuell',
+			pickBack: 'Zurück',
 			skip: 'Diesmal überspringen',
 			skipNote: '· keine Punkte',
 			edit: 'Aufgabe bearbeiten',
@@ -574,17 +666,33 @@ export const de: Messages = {
 		done: {
 			label: 'Aufgabe erledigt',
 			niceWork: (name: string) => `Gut gemacht, ${name}!`,
+			niceWorkTogether: (names: string[], includesMe: boolean) => {
+				if (names.length === 2) {
+					return includesMe ? 'Gut gemacht, ihr zwei!' : `Gut gemacht, ${list(names)}!`;
+				}
+				const count = ['drei', 'vier', 'fünf'][names.length - 3] ?? String(names.length);
+				return `Gut gemacht, alle ${count}!`;
+			},
 			logged: (task: string) => `${task} · in der Historie vermerkt`,
+			shared: (task: string, points: number, people: number) =>
+				`${task} · ${points} ${points === 1 ? 'Punkt' : 'Punkte'}, auf ${people} aufgeteilt`,
 			points: (points: number) => `+${points} Punkte`,
+			pointsEach: (points: number) => `je +${points} ${points === 1 ? 'Punkt' : 'Punkte'}`,
+			who: 'Wer hat’s gemacht?',
+			whoHint: 'Zum Ändern antippen',
+			whoYou: 'Du',
+			whoLast: 'Jemand muss es gemacht haben. Mit Rückgängig nimmst du es zurück.',
+			whoFailed: 'Das ließ sich nicht ändern.',
 			nextDue: (date: string) => `Nächste Fälligkeit ${date}`,
 			handoverAnyone: 'Neu geplant · kann jemand übernehmen',
 			handoverNext: (name: string) => `Neu geplant · als Nächstes ist ${name} dran`,
 			handoverSame: (name: string) => `Neu geplant · weiterhin ${name}`,
 			standingsSolo: (points: number) => `${points} Punkte diesen Monat`,
-			standingsLeading: (mine: number, theirs: number) => `Du führst jetzt ${mine} – ${theirs}`,
-			standingsTied: (mine: number, theirs: number) => `Gleichstand ${mine} – ${theirs}`,
-			standingsBehind: (name: string, theirs: number, mine: number) =>
-				`${name} führt ${theirs} – ${mine}`,
+			standingsAhead: (gap: number, name: string) =>
+				`Du liegst ${gap} ${gap === 1 ? 'Punkt' : 'Punkte'} vor ${name}`,
+			standingsTied: (name: string) => `Du liegst gleichauf mit ${name}`,
+			standingsBehind: (gap: number, name: string) =>
+				`Du liegst ${gap} ${gap === 1 ? 'Punkt' : 'Punkte'} hinter ${name}`,
 			undo: 'Rückgängig',
 			undoFailed: 'Das ließ sich nicht rückgängig machen.'
 		},
@@ -1916,7 +2024,7 @@ export const de: Messages = {
 
 		shopping: {
 			itemName: 'Gib dem Eintrag einen Namen.',
-			storeName: 'Gib dem Geschäft einen Namen.'
+			storeName: 'Gib der Liste einen Namen.'
 		},
 
 		recipes: {
@@ -1958,6 +2066,12 @@ export const de: Messages = {
 		colourTakenJoin: 'Die Farbe hat schon jemand im Haushalt. Nimm eine andere.',
 		ownerOnlyMembers: 'Nur die Besitzer:in kann Mitglieder verwalten.',
 		alreadyLeft: 'Die Person hat den Haushalt schon verlassen.'
+	},
+
+	legal: {
+		imprint: 'Impressum',
+		privacy: 'Datenschutz',
+		links: 'Rechtliches'
 	},
 
 	admin: {

@@ -67,6 +67,8 @@ import {
 	SEED_HOUSEHOLD_NAME,
 	SEED_HOUSEMATE_NAME,
 	SEED_RECIPE_NAMES,
+	SEED_CHECKLIST_ITEMS,
+	SEED_CHECKLIST_NAME,
 	SEED_STORE_NAMES,
 	SEED_TIMEZONE
 } from './seed-data.ts';
@@ -340,16 +342,24 @@ const seeded = db.transaction((tx) => {
 	 * the name first and only insert what's genuinely missing.
 	 */
 	const DEMO_STORES = [
-		{ key: 'grocery', name: SEED_STORE_NAMES[0] },
-		{ key: 'drugstore', name: SEED_STORE_NAMES[1] },
-		{ key: 'hardware', name: SEED_STORE_NAMES[2] }
+		{ key: 'grocery', name: SEED_STORE_NAMES[0], icon: 'basket' },
+		{ key: 'drugstore', name: SEED_STORE_NAMES[1], icon: 'droplet' },
+		{ key: 'hardware', name: SEED_STORE_NAMES[2], icon: 'hammer' }
 	];
 
 	const existingStores = tx
-		.select({ id: stores.id, name: stores.name })
+		.select({ id: stores.id, name: stores.name, sortOrder: stores.sortOrder })
 		.from(stores)
 		.where(eq(stores.householdId, householdId))
 		.all();
+
+	/*
+	 * A list the seed adds goes after the ones the household already has, the way
+	 * `createStore` numbers it. Counting from 0 regardless gave a household with
+	 * lists of its own two at the same place in the order.
+	 */
+	let nextStoreOrder = Math.max(-1, ...existingStores.map((store) => store.sortOrder)) + 1;
+	const isNewStore = (id: string) => !existingStores.some((store) => store.id === id);
 
 	const storeId = (key: string): string => {
 		const demo = DEMO_STORES.find((store) => store.key === key);
@@ -361,12 +371,11 @@ const seeded = db.transaction((tx) => {
 
 	tx.insert(stores)
 		.values(
-			DEMO_STORES.map(({ key, name }, sortOrder) => ({
-				id: storeId(key),
-				householdId,
-				name,
-				sortOrder
-			}))
+			DEMO_STORES.map(({ key, name, icon }) => {
+				const id = storeId(key);
+				// One that is already there keeps its place (the insert is skipped).
+				return { id, householdId, name, icon, sortOrder: isNewStore(id) ? nextStoreOrder++ : 0 };
+			})
 		)
 		.onConflictDoNothing()
 		.run();
@@ -465,6 +474,48 @@ const seeded = db.transaction((tx) => {
 		.run();
 
 	/*
+	 * A checklist (plan 36 step 2), half packed: its ticks stay until somebody
+	 * starts it over, each with the avatar of who ticked it. Last in the order,
+	 * where a new list goes.
+	 */
+	const packingId = sid('store', 'packing');
+	tx.insert(stores)
+		.values({
+			id: packingId,
+			householdId,
+			name: SEED_CHECKLIST_NAME,
+			icon: 'luggage',
+			kind: 'checklist',
+			sortOrder: isNewStore(packingId) ? nextStoreOrder++ : 0
+		})
+		.onConflictDoNothing()
+		.run();
+
+	/** Who ticked which row: the passports were Lukas's job, the rest Elisabeth's. */
+	const PACKED: Record<string, string> = {
+		Passports: ownerMemberId,
+		'Phone chargers': housemateMemberId,
+		Toothbrushes: housemateMemberId
+	};
+
+	tx.insert(shoppingItems)
+		.values(
+			spaced(
+				SEED_CHECKLIST_ITEMS.map((name, sortOrder) => ({
+					id: sid('item', `packing-${sortOrder}`),
+					householdId,
+					storeId: packingId,
+					name,
+					sortOrder,
+					addedByMemberId: ownerMemberId,
+					...(PACKED[name] ? { checkedAt: JUST_BOUGHT, checkedByMemberId: PACKED[name] } : {})
+				}))
+			)
+		)
+		.onConflictDoNothing()
+		.run();
+
+	/*
 	 * What the add field completes from: everything above, plus the things a
 	 * household of two has bought and long since finished — those rows are swept
 	 * up 12 h after they're checked off, and the vocabulary outlives them
@@ -492,6 +543,15 @@ const seeded = db.transaction((tx) => {
 		'Red lentils'
 	];
 
+	const DEMO_NAME_LISTS = new Map([
+		['Shampoo', 'drugstore'],
+		['Cotton pads', 'drugstore'],
+		['Toothpaste', 'drugstore'],
+		['Dish soap', 'drugstore'],
+		['LED bulbs (E27)', 'hardware'],
+		['AA batteries', 'hardware']
+	]);
+
 	tx.insert(shoppingSuggestions)
 		.values(
 			DEMO_NAMES.map((name, index) => ({
@@ -499,6 +559,9 @@ const seeded = db.transaction((tx) => {
 				householdId,
 				name,
 				nameKey: suggestionKey(name),
+				// The list each name went to last, so the add field's icon follows
+				// a known name (plan 36 [L3]): Shampoo goes to the drugstore.
+				storeId: storeId(DEMO_NAME_LISTS.get(name) ?? 'grocery'),
 				// Newest first, one a day back — the order the field offers them in.
 				lastUsedAt: daysAgo(index, 18)
 			}))

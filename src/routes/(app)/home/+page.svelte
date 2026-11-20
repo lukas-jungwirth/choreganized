@@ -38,6 +38,7 @@
 	import TaskDoneModal from '$lib/components/tasks/TaskDoneModal.svelte';
 	import AvatarStack from '$lib/components/ui/AvatarStack.svelte';
 	import Banner from '$lib/components/ui/Banner.svelte';
+	import RoundButton from '$lib/components/ui/RoundButton.svelte';
 	import { MASCOTS } from '$lib/assets/mascot';
 	import { messages } from '$lib/i18n';
 	import type { NextChore } from '$lib/server/services/home';
@@ -45,7 +46,7 @@
 	import { enhance } from '$app/forms';
 	import type { SubmitFunction } from '@sveltejs/kit';
 	import Bell from '@lucide/svelte/icons/bell';
-	import ChevronRight from '@lucide/svelte/icons/chevron-right';
+	import Settings from '@lucide/svelte/icons/settings';
 	import type { PageProps } from './$types';
 
 	let { data }: PageProps = $props();
@@ -125,17 +126,24 @@
 <header style:--raccoon-right="{placement.right}px" style:--raccoon-reach="{placement.reach}px">
 	<div class="who">
 		<p class="household">{data.household.name}</p>
-		<h1>{m.home.greeting(data.greeting)},<br />{data.currentMember.displayName}</h1>
-		<!-- The household's faces are the way into the household's settings; the back
-			 chevron [6a] opens with has to come from somewhere (→ DECISIONS #57). Under
-			 the greeting in a pill with a chevron, so it reads as the button it is and
-			 the raccoon gets the right-hand side (→ DECISIONS #214). The link names
-			 the housemates itself — Home is still the only screen that does. -->
-		<a class="settings" href="/settings" aria-label={m.home.settingsLink(names)}>
-			<AvatarStack members={stack} size={28} ringColor="var(--card)" />
-			<ChevronRight size={18} strokeWidth={2.2} aria-hidden="true" />
-		</a>
+		<h1>
+			{m.home.greeting(data.greeting)},<br /><span class="name"
+				>{data.currentMember.displayName}</span
+			>
+		</h1>
+		<!-- The household's faces: a picture of who lives here, not a button, on the
+			 page itself (→ DECISIONS #266). Named as one image, since Home is the only
+			 screen that says who the housemates are. -->
+		<span class="faces" role="img" aria-label={m.home.householdFaces(names)}>
+			<AvatarStack members={stack} size={28} />
+		</span>
 	</div>
+	<!-- Home's one way into Settings, whose back chevron [6a] returns here: the
+		 corner above the raccoon's ears, the one free spot in the header
+		 (→ DECISIONS #266, amending #57, #81 and #214). -->
+	<RoundButton href="/settings" class="gear" aria-label={m.home.openSettings}>
+		<Settings size={19} strokeWidth={1.9} aria-hidden="true" />
+	</RoundButton>
 	<RaccoonPoke
 		name={data.raccoon}
 		height={RACCOON_HEIGHT}
@@ -236,21 +244,35 @@
 	<TaskDoneModal
 		completion={done.completion}
 		standing={done.standing}
+		members={data.members}
+		currentMemberId={data.currentMember.id}
 		onclose={() => (done = null)}
 	/>
 {/if}
 
 <style>
-	/* Greeting and the household pill on the left; the raccoon owns the right,
+	/* Greeting and the household's faces on the left; the raccoon owns the right,
 	   its flat-cut waist on the first card's top edge so it reads as sitting on
-	   it. */
+	   it. 182px, not 170: the raccoon (136px, 2px below the header) then starts
+	   10px under the gear's bottom edge when the greeting is short. The gap has
+	   to come from here, since some poses' art reaches the top of the picture
+	   right under the gear (→ DECISIONS #266). */
 	header {
 		position: relative;
-		min-height: 170px;
+		min-height: 182px;
 		padding: 8px 0 20px;
 	}
 
-	/* Display names are free text up to 40 characters, so without min-width a
+	/* Above the raccoon, in the corner over its ears. */
+	header :global(.gear) {
+		position: absolute;
+		top: 0;
+		right: 0;
+		z-index: 2;
+		color: var(--text-3);
+	}
+
+	/* Display names are free text up to 20 characters, so without min-width a
 	   long one pushes the whole page sideways; the max keeps the greeting clear
 	   of the raccoon — 150px, or as far as this pose reaches (→ DECISIONS #221,
 	   #224). */
@@ -265,31 +287,10 @@
 		bottom: -2px;
 	}
 
-	/* The whole pill is the target: faces + chevron, on the card surface. */
-	.settings {
-		display: inline-flex;
-		align-items: center;
-		gap: 8px;
+	.faces {
+		display: flex;
+		width: fit-content;
 		margin-top: 14px;
-		padding: 5px 8px 5px 5px;
-		border-radius: var(--r-chip);
-		background: var(--card);
-		box-shadow: var(--shadow-card);
-		color: var(--text-4);
-		transition: transform 120ms ease-out;
-	}
-
-	.settings:active {
-		transform: scale(0.97);
-	}
-
-	@media (prefers-reduced-motion: reduce) {
-		.settings {
-			transition: none;
-		}
-		.settings:active {
-			transform: none;
-		}
 	}
 
 	.household,
@@ -310,6 +311,14 @@
 	h1 {
 		font-size: var(--fs-30);
 		line-height: 1.05;
+	}
+
+	/* One long word as a name breaks with a hyphen where the language allows it
+	   ("Bartholo-mäus"), by `<html lang>`; `anywhere` stays the last resort. The
+	   name only: the greeting's own words wrap whole ("Good / afternoon,", not
+	   "Good after- / noon,"). */
+	.name {
+		hyphens: auto;
 	}
 
 	/* Above the greeting raccoon, which tucks in behind the first card. */

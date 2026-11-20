@@ -3811,3 +3811,391 @@ units | null, name}`, written back as editor lines in the reader's unit spelling
      - `cooking.spec.ts` stops every timer the owner still has running after each test,
        passed or failed, so one failure stays one failure. Reproduced locally by delaying
        `startRendering` 1.5 s: the old spec failed the same three tests, the new one passed.
+264. **Lists, step 1: every shop is a list you can open, fold, and add to by its icon** (plan 36,
+     approved by Lukas 2026-11-20; → SPEC §3, sketch `design/sketches/lists.html`). The tab is
+     "Lists" / "Listen"; the overview shows one card per list with something on it, "{n} bought"
+     at the foot of each card replaces the "Recently bought" section, a card's header folds it
+     and a corner button opens it at `/shopping/[listId]`, and the add field's leading icon is
+     the list it adds to. The calls made while building it:
+     - **Kept identifiers.** The table is still `stores` and the columns `store_id`, the routes
+       `/shopping` and `/shopping/stores`, the catalog keys `nav.shopping` and `m.shopping.*`,
+       the components `StoreRow` and the services `createStore`/`renameStore`. The UI says
+       "list" everywhere; a rename would buy nothing the household can see. Migration 0023 is
+       `ADD COLUMN` only (`stores.icon`, `stores.kind`, `shopping_suggestions.store_id`), with
+       `ON DELETE set null` added to the generated statement by hand, as in 0019 (#175).
+     - **Assumed, not confirmed by Lukas:** the tab's new name "Lists" / "Listen" (the bag
+       icon and the shopping raccoon stay). It is one key per language (`nav.shopping`,
+       `shopping.title`) if he flips it back.
+     - **Folded cards live in a cookie** (`lists_folded`, a year, written by the page with
+       `document.cookie`), read by the load, so the first paint is folded and another phone is
+       not: per device, like the theme (#119). The keys are list ids, plus `other`; anything
+       else in the cookie is dropped.
+     - **Where an add lands is one function** (`utils/lists.ts` `listTarget`), shared by the
+       field and the action: a picked list, else the list a known name last went to (if it
+       still exists), else the first list. The pick is component state, so leaving the screen
+       resets it. Without JavaScript the action applies the remembered list itself.
+     - **The amount is parsed on the server** (`parseQuickAdd`, built on the recipe parser), so
+       the field posts the line as typed and works without JavaScript. Only a first word that
+       is purely an amount ("2", "1,5", "½") or an amount fused with g/kg/ml/l ("500g") counts:
+       the recipe parser would read "7up" as seven of "up". An amount over 999 keeps the line
+       whole rather than being clamped.
+     - **A known name keeps the household's spelling** on a quick add ("milk" is written as
+       "Milk" when that is how the household knows it), so the plan's "2 l milk → Milk · 2 L"
+       holds and one thing does not end up in two spellings. An unknown name is kept as typed.
+     - **A bought name is put back, not added twice** (`quickAddItem`): only on the list being
+       added to, newest tick first, to the end of the walking order, taking a typed amount.
+       Milk bought at another shop is a fresh need where it is being added now.
+     - **The ⋯ on an opened list edits name and icon** in the same sheet as New list. (Changed by
+       #273: delete moved into that sheet.) Delete and reorder stay in Manage lists, which is one tap away on the overview; a second menu for
+       the same three actions would be two places to keep in step. Changing the kind comes with
+       checklists.
+     - **"Other" can't be opened** and is not in the field's menu: nobody made it, it only
+       collects rows whose list was deleted. It still folds.
+     - **New households' first lists get icons** (basket, droplet, hammer); existing lists keep
+       NULL and draw the basket, as the plan says, rather than being guessed at by name.
+     - **The tick bookkeeping moved, unchanged, into `lib/shopping-ticks.svelte.ts`** so the
+       overview and an opened list settle, undo and play a housemate's tick the same way; the
+       actions both screens post to are `lib/server/shopping-actions.ts`, spread into each
+       route like `meal-actions.ts`.
+     - **Not verified by hand: drag to reorder.** Neither a stepped mouse drag nor svelte-dnd-
+       action's keyboard drag moves a row under Playwright here, on this branch or on `dev`, so
+       the harness can't tell. The drag code moved into `ListCard` as it was.
+     - **From the review before shipping:** the field posts no list until it has hydrated, so a
+       name submitted on a slow connection goes where it went last instead of to the first list
+       (and doesn't teach the vocabulary the wrong list); opening the list menu moves focus into
+       it, so it works from a keyboard; "2 kg" with nothing after it stays one row named "2 kg";
+       and a settling tick whose row was put back meanwhile (a restore from the field, a
+       housemate's untick) is let go once the server has the tick, instead of staying struck.
+265. **Shopping rows lose the "added by" avatar; the item sheet names who added it** (Lukas
+     2026-11-20; → SPEC §3.1, §3.2, #264). In a household of two the small member circle on every
+     row is noise, and it took the space next to the quantity. Editing an item now shows "Added by
+     {member}" under its name, or nothing when that member has left. Who **ticked** a row still
+     shows: the settle in their colour and the live notice; a ticked checklist row (plan 36 step 2) keeps the ticker's avatar. The sketch's shopping rows draw no avatar either.
+
+266. **A gear in Home's top-right corner opens Settings; the faces stop being a button**
+     (Lukas 2026-11-20, sketch `design/sketches/settings-access.html`; → SPEC §2). Amends #57
+     and #81, which kept a gear off Home and made the household's faces the door, and #214,
+     which put those faces in a pill with a chevron. People did not find Settings behind a
+     picture of their housemates. Now a round 38px card-surface link with lucide's `Settings`
+     (19px, stroke 1.9, `--text-3`) sits at the header's `top: 0; right: 0`, above the raccoon's
+     ears and above the raccoon in z-order, named "Settings" from the catalog. Only Home gets
+     one; no other tab changes.
+     - **The faces stay as a picture**: the same 28px `AvatarStack` under the greeting, no
+       surface, no chevron, no link, rings cut from `--bg` since they now sit on the page. A
+       `role="img"` named "Household: {names}" (a catalog function) keeps the housemates
+       announced, since Home is still the only screen that names them.
+     - **The header grows from 170px to 182px.** The raccoon is 136px tall at `bottom: -2px`, so
+       a short greeting is the worst case: with German's "Guten Tag," on one line the header
+       stays at its minimum, and at 170px the raccoon's picture started at page y 44 while the
+       gear ends at 46. Measured over all 71 Home raccoons: in 36 the art comes within 10px of
+       the picture's top under the gear's column and in 7 it touches it, so the gap has to
+       come from the header, not the art. 182px gives 10px in the worst case;
+       `tests/e2e/home.spec.ts` checks at least 8px in English and German (it read −2 at 170).
+     - **One round button, not two**: Expenses' ••• menu was the same 38px circle, so both now
+       use `ui/RoundButton` (an `<a>` with `href`, a `<button>` without, like `Button`) rather
+       than a second copy of its styles. Expenses' button gains the 0.97 pressed state; its
+       colour stays `--text-4`, and Home sets `--text-3` on its gear.
+
+267. **Display names are 20 characters, and Home's greeting hyphenates** (Lukas 2026-11-20;
+     → SPEC §1.3, §2). `DISPLAY_NAME_MAX` 40 → 20 for onboarding (create and join) and the
+     profile sheet, client `maxlength` and server guard alike; `HOUSEHOLD_NAME_MAX` stays 60.
+     Home greets you by name in 30px type in the column left of the raccoon, which has room for
+     about ten letters a line, and 40 characters could run the greeting down past the raccoon.
+     No migration: a longer name already saved stays until its owner next edits the profile,
+     and the sheet then asks for a shorter one. The name in the greeting's `h1` gets
+     `hyphens: auto` (with `overflow-wrap: anywhere` as the last resort), so one long word
+     breaks with a hyphen ("Bartholo-mäus") by `<html lang>`, which the server sets per member
+     locale. Only the name: on the whole `h1`, Linux Chromium split the greeting itself into
+     "Good after- / noon," in the English baseline. A browser with no hyphenation dictionary
+     for a made-up name falls back to the mid-word break; no JS hyphenator.
+268. **Lists, step 2: checklists, whose ticks stay until "Start over"** (plan 36, approved by
+     Lukas 2026-11-20; → SPEC §3.7, DATA-MODEL `stores.kind`, sketch [L4] [L6]). `stores.kind =
+'checklist'` is written by the New list sheet's switch and the ⋯ sheet; no migration (0023
+     added the column). The calls made while building it:
+     - **One SQL condition says "not shopping"**: `notOnChecklist()` in services/shopping.ts, used
+       by the nightly sweep, Home's stat tile and `listOpenItems` (the rows a recipe matches).
+       "Other" (no list) counts as shopping. `defaultStoreId` is the first **shopping** list, so a
+       pour-in or a quick add with nothing picked never lands on a checklist, even one at the top
+       of the order; a pour-in aimed at one is redirected there too.
+     - **Changing the kind rewrites no rows.** A bought row and a ticked row are the same columns,
+       so `setStoreKind` updates one cell and the plan's two conversions fall out: bought rows
+       stay ticked on a checklist; a checklist's ticks land under "{n} bought" and the next sweep
+       takes them. The sheet asks only when rows would move (`ticked > 0` and the kind changed);
+       otherwise Save just saves.
+     - **Start over's undo is carried by the browser**: `resetList` answers with the ids it
+       unticked and their `checkedAt`/`checkedByMemberId`, and `undoReset` writes them back. The
+       server trusts none of it: only rows of that checklist, still unticked (a row re-ticked
+       meanwhile keeps its new tick), a ticker from this household (else nobody), a time not in
+       the future. No server-side undo state, like the shopping tick's undo.
+     - **A checklist tick publishes `changed`, not `checked`**: the other phone refetches and
+       draws the tick with its avatar, without the shopping settle or a "{member} got
+       **Passports**" notice (that verb is shopping's). Start over publishes a `reset` event,
+       which the client treats as a silent refetch.
+     - **The opened checklist's field offers no suggestions** (the sketch draws none), and a
+       checklist add neither writes `shopping_suggestions` nor respells a known name, nor puts a
+       ticked row back: "Towels" typed twice is two rows, as typed.
+     - **"Other" comes before the checklists**, not last: it is shopping that lost its list.
+     - **Checklist rows drag, ticked ones included** (`reorderItems` takes every row of a
+       checklist): a tick never moves a row there, so its order is all of its rows.
+     - **Delete stays in Manage lists** (#264; moved into the list's sheet by #273), now with "Its {n} items are deleted with it." for a
+       checklist; its tile there is terracotta, and the sage "add field starts here" tint moved
+       from "the first row" to "the first shopping list".
+     - **The segmented control takes an icon per option** (`ui/SegmentedControl`), for the
+       "Shopping list | Checklist" switch; the label stays the accessible name.
+     - **The demo seed has a checklist** ("Vacation packing", three of six ticked by both
+       members), so the overview and the visual baselines show one.
+     - **Assumed, still not confirmed by Lukas:** the tab name "Lists" / "Listen" (#264).
+269. **Quick add reads the amount at either end of the line, and a chip shows it first** (plan
+     37, agreed with Lukas 2026-11-20; → SPEC §3.1). `parseQuickAdd(text, known)` no longer leans
+     on the recipe parser: seven ordered rules, the plan's 119-line contract in
+     `utils/lists.test.ts`, every line passing as written (none changed). The calls made while
+     building it:
+     - **"119 cases" is 114 typed lines plus 5 against known names**; the test asserts the sum.
+     - **Rule 1's known names are the same 250 the field already holds** (`listItemNames`, most
+       recent first), on the client and in the action, so the chip and the server can't disagree
+       about a name; a name older than that can be split again, and the chip shows it.
+     - **The action parses again and trusts only `literal`** from the browser: the line, whitespace
+       collapsed, becomes the name. Its suggestion row is written by the ordinary add, which is
+       what rule 1 reads next time.
+     - **On a checklist a literal add is not remembered**: checklist adds write no suggestion
+       (#268), so the chip comes back for the same line there. Kept, rather than teaching the
+       shopping vocabulary from packing lists.
+     - **The chip refocuses the field after a tap, not after a key press**, so a keyboard user can
+       press it again; its type stops at 18px (`min(var(--fs-14), 18px)`) so the field stays one
+       line at 200% text.
+     - **`pkg`, `pkg.` and `stueck` joined `UNIT_ALIASES`** (recipes read them too); the Deka
+       factor stays in `utils/lists.ts`, since a recipe line does not convert.
+
+270. **Impressum and Datenschutz are the deploy's text, in two variables, rendered without
+     `{@html}`** (Lukas 2026-11-20, "as sketched" in `design/sketches/settings-access.html`;
+     → SPEC §13). `LEGAL_IMPRINT` and `LEGAL_PRIVACY` hold the operator's own words; each page
+     exists only while its variable has text, otherwise `/legal/<page>` is a 404 and every link
+     to it hides, like email sign-in without SMTP (#179): someone else's install must never
+     show this one's address. Variables, not files: Coolify takes multi-line values, there is
+     no volume to mount a file into on the test app, and a literal `\n` is accepted for a
+     setting that only takes one line. The text is never in the catalog and never translated
+     (like household content); the title and the links are. The format is a small subset
+     parsed by `utils/legal-text.ts` into blocks that Svelte renders as elements: blank line =
+     paragraph (its line breaks kept, for an address), `## ` (also `#`, `###`) = heading,
+     `- ` (also `* `) = list item, a plain line under an item continues it, and bare `http(s)://`
+     and email addresses become links (`mailto:`, web links open in a new tab). No Markdown
+     dependency and no `{@html}`, so `<script>` or `javascript:` in the text is shown as text.
+     The routes are one `legal/[page=legal]` outside `(app)`, public signed in or out, without
+     a tab bar; `guards.test.ts` now lists every page outside `(app)`/onboarding with its reason.
+     Back follows `?from=` (`settings`, `login`, `invite-<CODE>`) from an allow-list, built
+     from a known shape and never copied from the query; anything else falls back to Settings
+     for a member and sign-in for anyone else. The cross-link keeps a valid `from`. The e2e
+     server sets both with invented text (`scripts/e2e-legal.ts`); the unset half is tested
+     against the real `load`s with the environment mocked (`tests/integration/legal-pages`).
+271. **A list's count and its open button are one pill** (Lukas 2026-11-20; → SPEC §3.1, §3.7,
+     plan 36, sketch `card`). A shopping list's header used to end with the count ("4") beside a
+     boxed two-arrows button: solid, but two unrelated things side by side. Now one pill at the
+     right edge, `ui`-tokened (`--r-chip`, `--sunken`, the count's ink and step), "4 ›", or a sage
+     ✓ and the chevron once everything is bought, is the link that opens the list; its name says
+     the count ("Open Grocery, 4 to get"). A checklist's row ends in the same pill holding the ring
+     and "5/12", so both kinds end the same way (`shopping/OpenPill`, a link on a card, a plain
+     span inside the checklist row, which is already the link). "Other" can't be opened and keeps
+     its bare count. The fold chevron stays after the name; checked at 390 px and at 200% text,
+     where the name truncates and the pill does not. No version bump: `dev` is already at 0.5.0,
+     above the last tag.
+272. **The remembered-list line says the list first and offers "Keep here"** (Lukas 2026-11-20;
+     → SPEC §3.1). Typing "Gurke" showed "Gurke kommt wie beim letzten Mal zu Einkauf.", which
+     read as the app overruling him rather than as "this goes to another list". The automatic
+     move stays exactly as `listTarget` decides it; the line now reads "Kommt auf **Einkauf**,
+     wie letztes Mal." / "Goes on **Grocery**, like last time." and ends in a text button "Hier
+     lassen" / "Keep here". **It holds for the line being typed, not the whole visit**: a
+     `keep` flag in the field, cleared when the field is emptied (an add empties it). Holding
+     it for the visit like a menu pick would quietly switch the remembering off for every
+     later name, which is not what one tap on one line says. Nothing is written until the add,
+     and the add remembers the kept list as any add does. The line sits in a polite live
+     region (it had none) and runs as text, so at 200% the button wraps like a word.
+273. **In Manage lists a list's row opens its sheet, and delete lives in the sheet** (Lukas
+     2026-11-20; → SPEC §3.4, amends #264). The row was an inline name field, "very small"
+     between the icon, the count and the buttons, the icon could not be changed there, and the
+     real editor only opened from the ⋯ of an opened list. Now the row (icon, name, count, a
+     right-pointing chevron) is one button that opens `ListSheet` for that list; the reorder
+     arrows stay, set apart by a hairline so three chevrons don't read as one control; the bin
+     left the row. The sheet ends in a **Delete list** row like the item sheet's, behind the
+     confirms Manage lists already had (a shopping list's items to "Other", a checklist's rows
+     deleted and counted). The same sheet opens from both places; after a delete from an opened
+     list the overview opens, from Manage lists it stays. "Add a list" opens the sheet too.
+     **Editing a list now needs JavaScript**, like the item sheet [3a]: the inline rename was the
+     only no-JS path, and no other sheet in the app has a no-JS fallback; the arrows still work
+     without it. The delete posts the shared `deleteList` action and does not re-run the page's
+     load itself (an opened list would 404 before it could leave). `listStoresWithCounts` gained
+     `checkedCount` for the sheet's kind confirm. The catalog lost `stores.rename`,
+     `stores.remove` and `stores.addButton`. No version bump: `dev` is at 0.5.0.
+274. **Manage lists lost its subtitle and most of its help** (Lukas 2026-11-20; → SPEC §3.4).
+     "In the order you walk through town" is gone (key and rendering), and the help keeps only
+     the sentence about order: "The overview follows this order, and the add field starts on
+     the first shopping list." / "Die Übersicht folgt dieser Reihenfolge, und das Eingabefeld
+     beginnt bei der ersten Einkaufsliste." Tapping a row, the arrows and "Other" explain
+     themselves on the screen.
+275. **"Other" is a list you can choose, with three dots, and it is not remembered** (Lukas
+     2026-11-20; → SPEC §3.1, DATA-MODEL). Other only ever filled when a list was deleted or
+     through the item sheet's chip; the add field's menu did not offer it, and its card drew
+     the default basket, so it looked like Grocery. Now the menu ends in **Other** (before
+     "New list", also while its card is hidden), and Other wears `OTHER_ICON`, Lucide's
+     horizontal ellipsis, through `ListIcon`; it is deliberately **not** in `LIST_ICONS`, so no
+     list can pick it and the icon column can never hold it. In the browser the pick is
+     `OTHER_LIST_KEY`, which `listTarget` returns as `storeId: null`; the field then posts an
+     empty `storeId`, which the action already read as "Other, on purpose" (a missing field is
+     "no choice"). The field now always posts `storeId` once hydrated, so a null target is never
+     confused with "let the server decide". **Other is not remembered**: `shopping_suggestions.
+store_id` NULL already means "no memory" (a deleted list), and telling the two apart would
+     need a sentinel column or value for a list that doesn't exist. So a name added to Other
+     writes NULL there, like today, and next time starts on the first shopping list. The card
+     stays hidden while empty and stays out of Manage lists. The item sheet's list chips are
+     text only, so they gained no icon.
+276. **The add field adds up the same thing on the same list, with `addOnto` shared with
+     recipes** (Lukas 2026-11-20; → SPEC §3.1). "Gurke x3" twice wrote two rows; a recipe's
+     pour-in already merged them. One helper, `addOnto(row, extra, typed)` in
+     `utils/shopping.ts`, now decides for both: `combineAmounts` adds where it can (merge);
+     otherwise a recipe leaves the row as it is (have, unchanged), while a **typed** line gives
+     its amount to a row that had none (set: the person just said how many), changes nothing
+     when it has no amount (have), and stays a row of its own when the amounts can't be added
+     (apart: 3 pcs and 500 g was typed on purpose). `planAdds` calls it with `typed` false.
+     `quickAddItem` looks only at **open** rows on the **target** list (Other included,
+     checklists skipped), first in walking order, before the existing put-back-from-bought
+     rule; so an open row beats a bought one. It returns an `effect` (`added`, `restored`,
+     `toppedUp`, `already`) with the row's name and amount, and the field shows a line under
+     itself for the last two, because no new row appears to show it ("**Gurke** was already on
+     the list, now **×6**." / "**Gurke** war schon auf der Liste, jetzt **×6**.", "… is already
+     on the list." / "… steht schon auf der Liste."). That line, not a toast: the field already
+     has a polite live region for the remembered-list line, and the toast slot belongs to
+     housemates' changes. **Push and live follow the recipe precedent**: a top-up pushes as a
+     top-up (`toppedUpCount: 1`, "topped up", not "added") and publishes `added` so other
+     screens refetch; "already" changed nothing and publishes nothing. The sheet's rename does
+     not merge.
+
+277. **A task can be done together, and who did it is corrected after the tick** (Lukas
+     2026-11-20; → SPEC §5.3, §5.4, §5.8, DATA-MODEL `task_completions.groupId`, sketch
+     `design/sketches/task-done-together.html`). The celebration modal gains a **Who did it?**
+     row: one face per member, the credited ones on; a tap adds or removes a person and saves
+     at once. That one control is "done together", "somebody else did it" and "my task, done
+     by my housemate". **Why after and not before**: most ticks are your own task done by you,
+     so a question before every tick would cost a tap to confirm a right guess. **The question
+     before the tick stays** for other people's tasks (#116), unchanged, because there the app
+     has no good guess and a silent wrong credit is the worse error; it picks one person and
+     has no "together" answer, so sharing lives in one place. **Points are split and rounded
+     to the nearest whole point each** (20 by three is 7, so 21 in all): rounding down would
+     make sharing cost points; at least 1 each for a task worth something. **Storage**: one
+     row per doer with a shared `groupId`, so every points sum is untouched and only the
+     feeds and counts group. Changing the doers is undo plus log-again in one transaction,
+     keeping the id, the moment and the next due date. **Rotation**: alone from the doer
+     (#116), together from the assignee. **The standings line shows the gap** ("5 points ahead
+     of Elisabeth"), not two totals, and is always the reader's own. **Reassign is one row**:
+     direct with a single other choice, a list ("Who takes it?", Anyone included) with more,
+     instead of a row per housemate. **Not built**: correcting the credit later from History.
+
+278. **Lists screens: what the review of 2026-11-20 changed, and what a second tap may do**
+     (review of the day's ten PRs; → SPEC §3.1, §3.7, `tests/e2e/shopping.spec.ts`). Eleven
+     findings on the client side of Lists, each read again and reproduced in a journey before
+     it was fixed; all eleven were real and small enough to fix. **The kind-change confirm
+     sits on the form's submit, not on the button**: turning Save into `type="button"` left
+     the form with no submit button, so Enter in the name field submitted without asking and
+     a checklist's ticks were swept that night. `enhance` cancels the submit and raises the
+     confirm; the confirm's yes lets exactly one through. **One add at a time**: since the
+     same name adds up (#276) a double tap doubled the amount, so `QuickAdd` ignores a submit
+     (and a suggestion tap) while one is on its way. A flag, not a disabled +, because a
+     disabled button would drop the phone's keyboard; the server is untouched. **An
+     optimistic tick is released only by the latest tap** (`shopping-ticks` `hold`): each
+     write to a row takes a number, and an answer whose number is no longer the row's does
+     nothing. That covers tick then untick on a checklist, a new tick while Start over is
+     still out, and an untick's answer arriving under a new settle on a shopping list (same
+     flaw, found while fixing the first two). **Targets**: the amount chip's ellipsis moved to
+     an inner span, because `overflow: hidden` clipped the `::after` that makes it 44 px; the
+     Manage lists icon got the same `::after`. **A suggestion's list name gives way first**
+     (at most 45% of the row, ellipsis), so a 40-character list name cannot squeeze the
+     item's name out. **Small ones**: the menu opens with focus on the current list (one
+     selector list answered with the first row); the menu counts a settling row as got, like
+     the header; Start over moves focus to the first row's circle instead of dropping it;
+     a ticked checklist row says who ticked it in its accessible name (`row.editTicked`, new
+     copy in both languages). **Left alone**: text typed while an add is still on its way is
+     cleared with the answer, as before; it needs a slow connection and a fast typist, and
+     holding the line back is the smaller surprise than adding half of it.
+
+279. **Lists data, after the review of 2026-11-20: a put-back is an add, a top-up that changes
+     nothing is none, a moved row goes to the end** (→ SPEC §3.1, §3.2, §3.5, DATA-MODEL
+     `shopping_items`). Six findings on the server side of the Lists rebuild (#264, #268,
+     #276), each checked again with a test before deciding.
+     - **Fixed: the add field putting a bought row back pushes "added".** Since #264 typing
+       "Milk" again restores the bought row, and only the live `unchecked` event went out, so a
+       housemate with the app closed heard nothing. `quickAddItem` now calls
+       `notifyShoppingAdd` with one item for `restored`. The live event stays `unchecked`.
+     - **Fixed: the restored row is "Added by" whoever put it back** (`addedByMemberId`), since
+       the sheet shows that line (#265). `createdAt` is left alone: nothing shows it, and it is
+       only a tie-break. Unticking by hand changes neither and pushes nothing.
+     - **Fixed: a merge that leaves the amount as it was is `have`.** `combineAmounts` rounds
+       to two decimals and stops at 99,999, so "Mehl 4 g" onto 1 kg came back as a merge to
+       1 kg: the field said "now 1 kg" and a "needs more" push went out. Decided in `addOnto`,
+       so the recipe pour-in and the picker's preview agree with the field.
+     - **Fixed: a row the sheet moves to another list lands at its end** (`updateItem` writes
+       `nextItemSortOrder` when the list changed). It kept its old number, which could tie with
+       any row there and put it at the top. An edit that stays on the list keeps its place.
+       **Left:** its tick moves with it, so a bought row moved onto a checklist arrives ticked.
+       That is #268's rule ("a bought row is a ticked row"), and one tap undoes it.
+     - **Fixed: the seed numbers a list it adds after the lists the household has**, as
+       `createStore` does, instead of from 0 (demo lists) and 3 (the packing list).
+     - **Left: shopping list → checklist does not renumber.** After a drag on a shopping list
+       a bought row can share a `sortOrder` with an open one, and as a checklist the two then
+       sort by `createdAt`. That needs a drag while something bought today is still under
+       "{n} bought", then a change of kind; the order that results is stable, nothing is lost,
+       and the first drag on the checklist renumbers every row. Any renumbering would also
+       have to choose between "in place" (#268) and "bought last", which is Lukas's call.
+     - **Not here:** a double submit of the add field is guarded on the client (#278).
+
+280. **Changing who did it rewrites the completion, not the task** (review of #277, 2026-11-20;
+     → SPEC §5.4, DATA-MODEL `task_completions`). #277 built the faces as undo plus log-again,
+     which read the task row as it was _then_ back from the browser and as it is _now_ from
+     the database. Four ways that went wrong, each reproduced in
+     `tests/integration/tasks.test.ts` before the fix: a task edited on another phone between
+     tick and tap was re-priced (and deleted, if edited into a one-off); a reassign or a
+     second tick in between was reverted; a task deleted in between came back; and a crafted
+     post could re-credit an old completion, split one in two through a doer's row id, or
+     mint points from a made-up one-off. **Now** `setCompletionDoers` replaces the group's
+     rows and nothing else: points come from the snapshot's price, accepted only when it
+     splits into the shares that were logged; the snapshot must name the completion's own
+     task; the group is found by `groupId` alone; and a completion more than a day old stands
+     (the pop-up is open for seconds, a day covers a phone left on it overnight). The task
+     gets one column written, the assignee, and only while it is where this completion left
+     it. **Otherwise the credit still changes and the turn is left alone**, rather than
+     refusing: the person tapping is right about who did it, and the housemate who reassigned
+     is right about who is next. A deleted task's completion can be re-credited too; the
+     pop-up just loses its "Next due" block. **Left alone on purpose**: Undo trusts the same
+     browser-carried snapshot with no window (its comment in `services/tasks.ts` says why,
+     and it can only give back what the edit sheet could set); and `splitPoints` keeps its
+     1-point floor, so five people sharing a 1-point chore make 5 points. That is 4 points
+     too many at the very worst, needs the whole household to tap themselves in, and the
+     alternative is #277's rejected "helping scores nothing". **The pop-up reads out
+     properly**: faces are `aria-disabled` instead of `disabled` (a disabled button drops
+     focus, and hid the last face from screen readers), named by the visible word ("You"),
+     the last one described by a hidden line; a `role="status"` line announces the redrawn
+     result; the error is a `role="alert"` outside both forms. The reassign list in the task
+     sheet moves focus in and hands it back. German "durch 3 geteilt" became "auf 3
+     aufgeteilt", the word the expenses use.
+
+281. **The gear answers on 44px, the legal text says its language, and an address ends where
+     the writer meant** (review of #266 and #270, 2026-11-20; → SPEC §2, §13). Four low
+     findings, each checked with a test first, all four kept because each fix is a few lines.
+     **Tap area**: `RoundButton` stays 38px to look at (#266) and gains an invisible 3px rim
+     (`::after`, `inset: -3px`), so it answers on 44px. A pseudo-element and not padding with a
+     pulled-back margin (as `LegalLinks` does), because the button is a flex item on Expenses
+     and absolutely placed on Home, and the rim changes neither layout. Nothing else that
+     answers a tap is within 3px: on Home the raccoon starts 10px below (#266, now asserted in
+     `home.spec.ts`), on Expenses the open menu starts 8px below. **Not 48px**: the raccoon's
+     10px gap is the budget, and half of it would go. **`LEGAL_LANG`**: the legal text is
+     never translated, so on an English screen a German Impressum inherited `lang="en"` and a
+     screen reader read it with English sounds. The text now carries its own `lang`, from an
+     optional `LEGAL_LANG`, **German when unset or not a language tag**: an Impressum is a
+     German-language duty and the one deploy there is writes German, so it sets nothing. One
+     variable for both texts, not one each: nobody writes the two in different languages. Not
+     guessed from the text: a detector for a few hundred words is a dependency for something
+     the operator knows. The e2e server's made-up text is English and sets `en`. **Quotes**:
+     an address ends at any quote mark („ “ ” ‚ ‘ ’ « » ‹ ›), not only the straight ones, so
+     an address written in German quotes no longer keeps the closing one and leads nowhere. A
+     real address with a bare typographic quote in it is cut short; none is known, and it is
+     written percent-encoded. **Brackets**: a closing `)` or `]` is the sentence's only when
+     the address has more closing than opening ones, so `…/Datenschutz-Grundverordnung_(EU)`
+     stays whole and `(siehe https://…)` still loses its bracket. **Left as it was**: email
+     addresses, whose pattern already ends on a letter.

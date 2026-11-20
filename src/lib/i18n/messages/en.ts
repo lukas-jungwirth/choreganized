@@ -204,7 +204,8 @@ export const en = {
 	/* ── The tab bar [02] ──────────────────────────────────────────────────── */
 	nav: {
 		home: 'Home',
-		shopping: 'Shopping',
+		/** The tab is "Lists" since plan 36; the key keeps its old name. */
+		shopping: 'Lists',
 		tasks: 'Tasks',
 		cooking: 'Cooking',
 		expenses: 'Expenses',
@@ -378,6 +379,10 @@ export const en = {
 
 		/** "+10" — a task's worth, wherever points are a badge. */
 		points: (points: number) => `+${points}`,
+		/** A task done together, in the feeds: what each doer got (→ SPEC §5.8). */
+		pointsEach: (points: number) => `+${points} each`,
+		/** Who did it, in the feeds: "Lukas", "Lukas and Elisabeth". */
+		doers: (names: string[]) => list(names),
 
 		/**
 		 * The overdue card's footer, left half: "It's Elisabeth's turn" [4a]. An
@@ -420,26 +425,56 @@ export const en = {
 
 	/* ── Shopping [03] [3a] [7d] [7g] ──────────────────────────────────────── */
 	shopping: {
-		title: 'Shopping',
-		progress: (checked: number, total: number) => `${checked} of ${total} done`,
-		/** Under the title when the list is empty — where `progress` would be. */
-		nothingListed: 'Nothing on the list',
-		manageStores: 'Manage stores',
+		title: 'Lists',
+		manageStores: 'Manage lists',
 		/** The group items with no store fall into — also the fallback in copy. */
 		other: 'Other',
 
 		empty: {
-			title: 'Nothing to buy yet',
-			copy: "Add items as you run out. They'll be grouped by store for whoever does the shopping.",
+			title: 'Nothing on any list yet',
+			copy: 'Add things as you run out. Every shop gets a list of its own.',
 			cta: 'Add first item'
 		},
 
-		/** The field pinned above the list [03] [7d]. */
+		/** The add field [L2] [L3]: its icon is the list it adds to. */
 		quickAdd: {
+			/** Only when the household has no list at all. */
 			placeholder: 'Add an item…',
-			label: 'Add an item',
-			expand: 'Add with quantity and store',
-			submit: 'Add item'
+			addTo: (list: string) => `Add to ${list}…`,
+			/** The icon button in front of the field. */
+			choose: (list: string) => `Adding to ${list}. Choose another list`,
+			/** The menu of every list under that button. */
+			menu: 'Lists',
+			/** The line under the field when a known name moved the icon [L3]. */
+			remembered: (list: string): RichText => [
+				{ text: 'Goes on ' },
+				{ text: list, strong: true },
+				{ text: ', like last time.' }
+			],
+			/** After that line: keep the field on the list it was on. */
+			keepHere: 'Keep here',
+			keepOn: (list: string) => `Keep on ${list}`,
+			/**
+			 * The chip that shows the amount read from the line (plan 37). A toggle:
+			 * its pressed state says whether it applies.
+			 */
+			amount: (amount: string) => `Read ${amount} as the amount`,
+			submit: 'Add item',
+			/**
+			 * Under the field after an add that wrote no new row: the same thing was
+			 * open on that list already, and the typed amount went onto it.
+			 */
+			toppedUp: (item: string, amount: string): RichText => [
+				{ text: item, strong: true },
+				{ text: ' was already on the list, now ' },
+				{ text: amount, strong: true },
+				{ text: '.' }
+			],
+			/** …or it was there already and nothing needed to change. */
+			already: (item: string): RichText => [
+				{ text: item, strong: true },
+				{ text: ' is already on the list.' }
+			]
 		},
 
 		/**
@@ -451,16 +486,93 @@ export const en = {
 			label: 'Suggestions'
 		},
 
-		/** The second list, under the stores: what's already in the basket. */
+		/** The last line of a list's card: what was ticked off there today. */
 		bought: {
-			/** The section heads itself and says how much is in it, like a tab. */
-			heading: (count: number) => `Recently bought · ${count}`
+			foot: (count: number) => `${count} bought`
+		},
+
+		/** Lists (plan 36): the cards, an opened list, New list [L6]. */
+		lists: {
+			/** A list whose every row is ticked off. */
+			allDone: 'All done',
+			toGet: (count: number) => `${count} to get`,
+			/** Under the overview's title. */
+			thingsToGet: (count: number) => (count === 1 ? '1 thing to get' : `${count} things to get`),
+			nothingToGet: 'Nothing to get',
+			/** An opened list's subtitle [L5]. */
+			openedStatus: (left: number, bought: number) => `${left} to get · ${bought} bought`,
+			/** The pill at a card's end: it opens the list and says what is left. */
+			openWith: (list: string, left: number) =>
+				left > 0 ? `Open ${list}, ${left} to get` : `Open ${list}, all done`,
+			/** The ⋯ on an opened list. */
+			edit: (list: string) => `Edit ${list}`,
+			/** What the field's menu says is on a list: a count, or nothing. */
+			status: (left: number) => (left > 0 ? String(left) : 'empty'),
+			/** An opened list with nothing on it. */
+			nothingYet: 'Nothing on it yet',
+			notFound: 'This list is gone.',
+			newList: 'New list',
+			editTitle: 'Edit list',
+			name: 'Name',
+			namePlaceholder: 'Camping weekend',
+			icon: 'Icon',
+			create: 'Create list',
+			/** The New list sheet's switch [L6]: the two kinds, no explanation. */
+			kinds: {
+				label: 'Kind of list',
+				buy: 'Shopping list',
+				checklist: 'Checklist'
+			},
+			/** A checklist: how far it is, on the overview row and in the field's menu. */
+			ticked: (done: number, total: number) => `${done}/${total}`,
+			/** A checklist's line on the overview: what is left, then the first names. */
+			checklistPeek: (left: number, names: string) => `${left} left · ${names}`,
+			/** An opened checklist's subtitle [L4], and its ring's spoken label. */
+			doneOf: (done: number, total: number) => `${done} of ${total} done`,
+			startOver: 'Start over',
+			/**
+			 * Changing the kind of a list that has ticked rows (plan 36: "the kind
+			 * can be changed later"). Says what happens to them.
+			 */
+			toChecklist: {
+				title: (list: string) => `Make ${list} a checklist?`,
+				copy: (count: number) =>
+					count === 1
+						? 'Its 1 bought item stays ticked until you start the list over.'
+						: `Its ${count} bought items stay ticked until you start the list over.`,
+				confirm: 'Make it a checklist'
+			},
+			toShopping: {
+				title: (list: string) => `Make ${list} a shopping list?`,
+				copy: (count: number) =>
+					count === 1
+						? 'Its 1 ticked item goes under “1 bought” and is cleared overnight.'
+						: `Its ${count} ticked items go under “${count} bought” and are cleared overnight.`,
+				confirm: 'Make it a shopping list'
+			},
+			/** What each of the twelve icons is called, for a screen reader. */
+			icons: {
+				basket: 'Basket',
+				bag: 'Bag',
+				droplet: 'Drop',
+				pill: 'Pill',
+				hammer: 'Hammer',
+				gift: 'Gift',
+				luggage: 'Suitcase',
+				tent: 'Tent',
+				door: 'Door',
+				paw: 'Paw',
+				book: 'Book',
+				home: 'House'
+			}
 		},
 
 		row: {
 			check: (item: string) => `Check off ${item}`,
 			uncheck: (item: string) => `Put ${item} back on the list`,
 			edit: (item: string) => `Edit ${item}`,
+			/** A ticked checklist row: the avatar on it, in words. */
+			editTicked: (item: string, by: string) => `Edit ${item}, ticked by ${by}`,
 			reorder: (item: string) => `Drag to reorder ${item}`
 		},
 
@@ -471,6 +583,11 @@ export const en = {
 		 */
 		undo: {
 			checked: (item: string): RichText => [{ text: item, strong: true }, { text: ' checked off' }],
+			/** Start over on a checklist [L4]. */
+			startedOver: (list: string): RichText => [
+				{ text: list, strong: true },
+				{ text: ' started over' }
+			],
 			action: 'Undo'
 		},
 
@@ -512,33 +629,34 @@ export const en = {
 			unit: 'Unit',
 			/** A taste of the dropdown, under the field. */
 			unitHint: 'pcs · g · kg · ml · L …',
-			store: 'Store',
+			store: 'List',
 			/** The CTA names where the item is going. */
 			addTo: (store: string) => `Add to ${store} list`,
 			addToList: 'Add to the list',
+			/** Editing: who put it on the list (the row no longer shows them). */
+			addedBy: (member: string) => `Added by ${member}`,
 			delete: 'Delete item'
 		},
 
-		/** Manage stores [7g] — the walking order the list follows. */
+		/** Manage lists (was Manage stores [7g]): the order the overview follows. */
 		stores: {
-			title: 'Stores',
-			subtitle: 'Group your shopping list by shop',
-			back: 'Back to shopping',
-			add: 'Add a store',
-			addButton: 'Add',
+			title: 'Manage lists',
+			back: 'Back to lists',
+			add: 'Add a list',
 			items: (count: number) => (count === 1 ? '1 item' : `${count} items`),
-			rename: (store: string) => `Rename ${store}`,
 			moveUp: (store: string) => `Move ${store} up`,
 			moveDown: (store: string) => `Move ${store} down`,
-			remove: (store: string) => `Delete ${store}`,
-			help: 'Use the arrows to reorder. Your list follows this order, so arrange it the way you walk through town. Quick-added items land in the first store; items without a store go under “Other”.',
-			deleteLabel: 'Delete store',
+			help: 'The overview follows this order, and the add field starts on the first shopping list.',
+			deleteLabel: 'Delete list',
 			deleteConfirm: (store: string) => `Delete ${store}?`,
 			deleteMoves: (count: number) =>
 				count === 1
 					? 'Its 1 item moves to “Other”, so nothing falls off the list.'
 					: `Its ${count} items move to “Other”, so nothing falls off the list.`,
-			deleteEmpty: 'Nothing is filed under it, so nothing else changes.',
+			deleteEmpty: 'Nothing is on it, so nothing else changes.',
+			/** A checklist's rows go with it (plan 36 step 2). */
+			deleteChecklist: (count: number) =>
+				count === 1 ? 'Its 1 item is deleted with it.' : `Its ${count} items are deleted with it.`,
 			/**
 			 * The three stores a new household starts with (→ SPEC §3.4). Written
 			 * into the database when the household is created, in whatever language
@@ -569,9 +687,11 @@ export const en = {
 				: time === 'afternoon'
 					? 'Good afternoon'
 					: 'Good evening',
-		/** The avatar stack is the door to Settings — and the only place the
-		 *  household is named out loud. */
-		settingsLink: (names: string) => `Settings · Household: ${names}`,
+		/** The gear in the header's corner, Home's one way into Settings (→ DECISIONS #266). */
+		openSettings: 'Settings',
+		/** The faces under the greeting: a picture, not a button, and the only
+		 *  place the household is named out loud. */
+		householdFaces: (names: string) => `Household: ${names}`,
 		/** The raccoon is a button: six taps and it ducks away for another (→ DECISIONS #223). */
 		pokeRaccoon: 'Poke the raccoon',
 		/** Admin mode only (→ plan 34): tapping the raccoon picks any pose. */
@@ -745,6 +865,17 @@ export const en = {
 			reassignTo: (name: string) => `Reassign to ${name}`,
 			/** How the current member appears in those two rows. */
 			me: 'me',
+			/**
+			 * With more than one person to hand it to, one row opens a list instead
+			 * of a row per housemate (→ SPEC §5.3, DECISIONS #277).
+			 */
+			assign: 'Assign',
+			reassign: 'Reassign',
+			pickTitle: 'Who takes it?',
+			/** The current member in that list: "Lukas (you)". */
+			pickYou: (name: string) => `${name} (you)`,
+			pickCurrent: 'current',
+			pickBack: 'Back',
 			skip: 'Skip this time',
 			skipNote: '· no points',
 			edit: 'Edit task',
@@ -758,8 +889,27 @@ export const en = {
 		done: {
 			label: 'Task completed',
 			niceWork: (name: string) => `Nice work, ${name}!`,
+			/** Done together (→ SPEC §5.4). Two are named or addressed, more are counted. */
+			niceWorkTogether: (names: string[], includesMe: boolean) => {
+				if (names.length === 2) {
+					return includesMe ? 'Nice work, you two!' : `Nice work, ${list(names)}!`;
+				}
+				const count = ['three', 'four', 'five'][names.length - 3] ?? String(names.length);
+				return `Nice work, all ${count}!`;
+			},
 			logged: (task: string) => `${task} · logged to history`,
+			/** The same line when the points were split: what the task was worth, and by how many. */
+			shared: (task: string, points: number, people: number) =>
+				`${task} · ${points} ${points === 1 ? 'point' : 'points'} shared by ${people}`,
 			points: (points: number) => `+${points} points`,
+			pointsEach: (points: number) => `+${points} ${points === 1 ? 'point' : 'points'} each`,
+			/** The row of faces: who it is credited to, changeable until the pop-up closes. */
+			who: 'Who did it?',
+			whoHint: 'Tap to change',
+			whoYou: 'You',
+			/** Read out on the last face left on: why a tap does nothing. */
+			whoLast: 'Somebody has to have done it. Undo takes it back.',
+			whoFailed: 'Couldn’t change that.',
 			nextDue: (date: string) => `Next due ${date}`,
 			/** Where the chore went next — or the truth, when nothing changed hands. */
 			handoverAnyone: 'Rescheduled · anyone can take it',
@@ -767,10 +917,11 @@ export const en = {
 			handoverSame: (name: string) => `Rescheduled · still ${name}'s`,
 			/** The month's standings, in one line (→ SPEC §5.4). */
 			standingsSolo: (points: number) => `${points} points this month`,
-			standingsLeading: (mine: number, theirs: number) => `You're now leading ${mine} – ${theirs}`,
-			standingsTied: (mine: number, theirs: number) => `You're level at ${mine} – ${theirs}`,
-			standingsBehind: (name: string, theirs: number, mine: number) =>
-				`${name} leads ${theirs} – ${mine}`,
+			standingsAhead: (gap: number, name: string) =>
+				`You're ${gap} ${gap === 1 ? 'point' : 'points'} ahead of ${name}`,
+			standingsTied: (name: string) => `You're level with ${name}`,
+			standingsBehind: (gap: number, name: string) =>
+				`You're ${gap} ${gap === 1 ? 'point' : 'points'} behind ${name}`,
 			undo: 'Undo',
 			undoFailed: 'Couldn’t undo that one.'
 		},
@@ -2458,7 +2609,7 @@ export const en = {
 
 		shopping: {
 			itemName: 'Give the item a name.',
-			storeName: 'Give the store a name.'
+			storeName: 'Give the list a name.'
 		},
 
 		recipes: {
@@ -2504,6 +2655,17 @@ export const en = {
 		colourTakenJoin: 'Someone in the household already has that colour. Pick another.',
 		ownerOnlyMembers: 'Only the owner can manage members.',
 		alreadyLeft: 'They already left the household.'
+	},
+
+	/*
+	 * The legal pages (→ SPEC §13). Only their names and the way to them: the
+	 * text on them is the operator's, from the deploy, and never translated.
+	 */
+	legal: {
+		imprint: 'Imprint',
+		privacy: 'Privacy',
+		/** The pair under the sign-in footnote, named for a screen reader. */
+		links: 'Legal'
 	},
 
 	/** Admin mode (→ plan 34, SPEC §12). Only an admin ever reads these. */

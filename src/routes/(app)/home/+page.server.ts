@@ -13,6 +13,7 @@ import {
 	parseSnapshot,
 	setAway,
 	snoozeTask,
+	setCompletionDoers,
 	undoCompletion,
 	type TaskContext
 } from '$lib/server/services/tasks';
@@ -113,6 +114,41 @@ export const actions: Actions = {
 		if (!completion) {
 			return fail(404, { error: catalog(event.locals.locale).errors.tasks.gone });
 		}
+
+		return {
+			completed: {
+				completion,
+				standing: memberStanding(
+					member.id,
+					listMembers(householdId),
+					monthPointsByMember(householdId, context)
+				)
+			}
+		};
+	},
+
+	/**
+	 * The celebration's row of faces (→ SPEC §5.4): who the completion is credited
+	 * to, changed after the tick. Several faces share the points. The answer is a
+	 * whole new celebration, so the modal redraws from it.
+	 */
+	doers: async (event) => {
+		const { householdId, member } = requireMember(event);
+		const form = await event.request.formData();
+		const context = clockOf(event, householdId);
+		const failed = catalog(event.locals.locale).tasks.done.whoFailed;
+
+		const snapshot = parseSnapshot(form.get('snapshot'));
+		if (!snapshot) return fail(400, { error: failed });
+
+		const completion = setCompletionDoers(
+			householdId,
+			String(form.get('completionId') ?? ''),
+			form.getAll('memberId').map(String),
+			snapshot
+		);
+		// Undone on another phone, too long ago, or nobody left to credit.
+		if (!completion) return fail(404, { error: failed });
 
 		return {
 			completed: {

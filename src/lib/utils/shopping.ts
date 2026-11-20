@@ -1,12 +1,12 @@
 /**
  * The things the shopping list's server and browser halves must agree on:
  * which units exist, how a quantity is written, how the list is split into
- * "still to buy" and "recently bought", how a recipe's ingredients land on it,
+ * "still to buy" and "{n} bought" per list, how a recipe's ingredients land on it,
  * and how the add field completes what you type.
  *
  * The split matters twice: the service does it for the first paint, and the
  * page does it again in the browser when a check is applied optimistically —
- * ticking a box moves the row out of its store group and into "recently
+ * ticking a box moves the row out of its list's open rows and under "{n}
  * bought" *before* the server answers. So it is one function called from both
  * sides (→ DECISIONS #105), not a SQL half and a JavaScript half kept in step.
  *
@@ -99,18 +99,33 @@ export type OrderedItem = {
 	sortOrder: number;
 };
 
-/** A store's slice of the list. `name` is null for "Other", which the screen names. */
+/**
+ * One list's slice of the items (plan 36). `name` and `icon` are null for
+ * "Other", which the screen names and draws.
+ */
 export type ItemGroup<T> = {
 	storeId: string | null;
 	name: string | null;
+	icon: string | null;
+	/** "Other" is shopping. */
+	kind: 'buy' | 'checklist';
+	/**
+	 * A shopping list: what is still to buy, in the manual walking order. A
+	 * checklist: every row, ticked ones included, in its order (plan 36 step 2:
+	 * a tick stays where it is).
+	 */
 	items: T[];
+	/** What was ticked off and not yet swept, most recently bought first. Empty on a checklist. */
+	bought: T[];
 };
 
 export type SplitList<T> = {
-	/** Only what's still to buy, by store in walking order, "Other" last. */
+	/**
+	 * Every shopping list with something on it, open or bought, in the
+	 * household's order, then "Other", then every checklist, empty or not. A
+	 * shopping list with nothing on it is not here at all (plan 36).
+	 */
 	groups: ItemGroup<T>[];
-	/** Everything checked off, across all stores, most recently bought first. */
-	bought: T[];
 };
 
 /**
@@ -127,57 +142,77 @@ function compareOpen(a: OrderedItem, b: OrderedItem): number {
 	return a.id < b.id ? -1 : a.id > b.id ? 1 : 0;
 }
 
-/** Bought items newest first — "recently bought" is a trip in reverse. */
+/** Bought items newest first — "{n} bought" is a trip in reverse. */
 function compareBought(a: OrderedItem, b: OrderedItem): number {
 	if (a.checkedAt !== b.checkedAt) return (b.checkedAt ?? 0) - (a.checkedAt ?? 0);
 	return -compareOpen(a, b);
 }
 
 /**
- * The list as it is rendered (→ SPEC §3.1): the store groups hold what's still
- * to buy, and everything ticked off leaves them for one "recently bought" list
- * at the bottom — a shopping trip shouldn't push what you still need off the
- * screen. A store with nothing left to buy drops out entirely; its bought items
- * are in the second list like everyone else's.
+ * The lists as they are rendered (→ SPEC §3.1, plan 36): one group per list,
+ * holding what is still to buy and, apart, what was ticked off there and not
+ * yet swept ("{n} bought" at the foot of its card). A list with neither is
+ * left out: empty shopping lists don't take up the overview.
  */
 export function splitList<T extends OrderedItem>(
 	items: T[],
-	stores: { id: string; name: string }[]
+	stores: { id: string; name: string; icon?: string | null; kind?: 'buy' | 'checklist' }[]
 ): SplitList<T> {
+	const checklists = new Set(
+		stores.filter((store) => store.kind === 'checklist').map((store) => store.id)
+	);
 	const known = new Set(stores.map((store) => store.id));
 	const open = new Map<string | null, T[]>();
-	const bought: T[] = [];
+	const bought = new Map<string | null, T[]>();
 
 	for (const item of items) {
-		if (item.checkedAt !== null) {
-			bought.push(item);
-			continue;
-		}
 		// A store nobody here has heard of is the same as no store at all. It
 		// shouldn't happen — deleting a store sets its items' `storeId` to NULL —
 		// but a group nothing renders would take its items off the screen
 		// silently, which is the one failure a shopping list must not have.
 		const key = item.storeId !== null && known.has(item.storeId) ? item.storeId : null;
-		const bucket = open.get(key);
+		// A checklist's ticks stay in place, so all its rows are one run.
+		const into = item.checkedAt === null || (key !== null && checklists.has(key)) ? open : bought;
+		const bucket = into.get(key);
 		if (bucket) bucket.push(item);
-		else open.set(key, [item]);
+		else into.set(key, [item]);
 	}
 
 	const groups: ItemGroup<T>[] = [];
+	const group = (
+		storeId: string | null,
+		name: string | null,
+		icon: string | null,
+		kind: 'buy' | 'checklist' = 'buy'
+	) => {
+		const storeItems = open.get(storeId) ?? [];
+		const storeBought = bought.get(storeId) ?? [];
+		// A checklist is on the overview even with nothing on it: it is a thing
+		// the household keeps, not a need that comes and goes.
+		if (kind === 'buy' && !storeItems.length && !storeBought.length) return;
+		groups.push({
+			storeId,
+			name,
+			icon,
+			kind,
+			items: storeItems.sort(compareOpen),
+			bought: storeBought.sort(compareBought)
+		});
+	};
 
 	for (const store of stores) {
-		const storeItems = open.get(store.id);
-		if (storeItems?.length) {
-			groups.push({ storeId: store.id, name: store.name, items: storeItems.sort(compareOpen) });
-		}
+		if (!checklists.has(store.id)) group(store.id, store.name, store.icon ?? null);
+	}
+	// Items filed under no list — quick-added before any list existed, or in a
+	// list since deleted — are their own group, after the shopping lists
+	// (→ SPEC §3.1): "Other" is shopping too.
+	group(null, null, null);
+	// Checklists come after everything to buy, in their own order (plan 36).
+	for (const store of stores) {
+		if (checklists.has(store.id)) group(store.id, store.name, store.icon ?? null, 'checklist');
 	}
 
-	// Items filed under no store — quick-added before any store existed, or in a
-	// store since deleted — are their own group, always last (→ SPEC §3.1).
-	const other = open.get(null);
-	if (other?.length) groups.push({ storeId: null, name: null, items: other.sort(compareOpen) });
-
-	return { groups, bought: bought.sort(compareBought) };
+	return { groups };
 }
 
 /* ── What the add field completes from ────────────────────────────────────── */
@@ -326,6 +361,46 @@ export function combineAmounts(base: Amount, extra: Amount): { quantity: number 
 	return { quantity: Math.min(Math.round(total * 100) / 100, TOTAL_QUANTITY_MAX) };
 }
 
+/**
+ * What one more of a thing does to a row that already has it, decided once for
+ * every way something reaches the list (Lukas 2026-11-20: "always grouped as
+ * good as possible").
+ *
+ * - **merge**: the two amounts add up (`combineAmounts`), and the row grows,
+ *   in its own unit. Two cucumbers and three are five; 500 ml onto a litre is
+ *   1.5 L.
+ * - **set**: the row had no amount and the add has one: the row takes it.
+ *   Only for a line somebody typed (`typed`), where the person just said how
+ *   many; a recipe leaves "some pasta" alone (→ `planAdds`).
+ * - **have**: nothing needs to change. The add said no amount, or (from a
+ *   recipe) the amounts can't be added and the need is on the list already, or
+ *   the sum is the amount the row already shows (4 g onto 1 kg rounds back to
+ *   1 kg, and a row at the ceiling cannot grow): a row that reads the same has
+ *   not been topped up, and nobody is told it was (→ DECISIONS #279).
+ * - **apart**: a typed line whose amount can't be spoken of together with the
+ *   row's (3 pcs and 500 g). Somebody typed that on purpose, so it becomes a
+ *   row of its own.
+ */
+export type AmountMerge =
+	{ effect: 'merge' | 'set'; quantity: number; unit: string | null } | { effect: 'have' | 'apart' };
+
+export function addOnto(row: Amount, extra: Amount, typed = false): AmountMerge {
+	const combined = combineAmounts(row, extra);
+	if (combined) {
+		if (combined.quantity === row.quantity) return { effect: 'have' };
+		return { effect: 'merge', quantity: combined.quantity, unit: row.unit };
+	}
+	if (!typed || extra.quantity === null) return { effect: 'have' };
+	if (row.quantity === null) {
+		return {
+			effect: 'set',
+			quantity: Math.min(extra.quantity, TOTAL_QUANTITY_MAX),
+			unit: extra.unit
+		};
+	}
+	return { effect: 'apart' };
+}
+
 /** What adding one ingredient to the list does. */
 export type AddEffect =
 	/** Nothing by that name is on the list — it becomes a row. */
@@ -404,9 +479,9 @@ export function planAdds(
 			continue;
 		}
 
-		const combined = combineAmounts(target, ingredient);
+		const combined = addOnto(target, ingredient);
 
-		if (!combined) {
+		if (combined.effect !== 'merge') {
 			rows.push({ effect: 'have', result: { quantity: target.quantity, unit: target.unit } });
 			continue;
 		}

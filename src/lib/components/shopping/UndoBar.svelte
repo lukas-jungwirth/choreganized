@@ -2,7 +2,7 @@
 	"**Avocado** checked off · Undo" — the few seconds after a tick, above the
 	tab bar.
 
-	A check is one tap and the row leaves for "Recently bought", which is folded
+	A check is one tap and the row leaves for "{n} bought", which is folded
 	up: right when you'd notice you ticked the wrong line, it is also the moment
 	the row is hardest to find. So the way back sits under your thumb for a few
 	seconds, and then gets out of the way — nothing is lost when it goes, because

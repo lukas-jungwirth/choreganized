@@ -8,6 +8,8 @@ import {
 	SEED_HOUSEMATE_NAME,
 	SEED_ITEM_NAMES,
 	SEED_RECIPE_NAMES,
+	SEED_CHECKLIST_ITEMS,
+	SEED_CHECKLIST_NAME,
 	SEED_STORE_NAMES
 } from '../../scripts/seed-data';
 
@@ -33,6 +35,8 @@ export const SEED = {
 	householdName: SEED_HOUSEHOLD_NAME,
 	housemate: SEED_HOUSEMATE_NAME,
 	stores: SEED_STORE_NAMES,
+	checklist: SEED_CHECKLIST_NAME,
+	checklistItems: SEED_CHECKLIST_ITEMS,
 	items: SEED_ITEM_NAMES,
 	recipes: SEED_RECIPE_NAMES
 };

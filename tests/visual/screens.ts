@@ -39,6 +39,29 @@ export async function openRecipe(page: Page): Promise<void> {
 	await page.getByRole('heading', { level: 1 }).waitFor();
 }
 
+/** The first list, opened from its card's corner button (plan 36 [L5]). */
+export async function openGrocery(page: Page): Promise<void> {
+	await page.goto('/shopping');
+	await page.getByRole('link', { name: `Open ${SEED.stores[0]}` }).click();
+	await page.waitForURL(/\/shopping\/(?!stores$)[^/]+$/);
+	await page.getByRole('heading', { level: 1, name: SEED.stores[0] }).waitFor();
+}
+
+/** "Gurken x3" typed into the add field, not yet added: the amount chip shows ×3. */
+export async function typeAmount(page: Page): Promise<void> {
+	await page.goto('/shopping');
+	await page.getByPlaceholder(/^Add to /).fill('Gurken x3');
+	await page.getByRole('button', { name: 'Read ×3 as the amount' }).waitFor();
+}
+
+/** The seeded checklist, opened from its row on the overview (plan 36 [L4]). */
+export async function openChecklist(page: Page): Promise<void> {
+	await page.goto('/shopping');
+	await page.getByRole('link', { name: new RegExp(`^${SEED.checklist}`) }).click();
+	await page.waitForURL(/\/shopping\/(?!stores$)[^/]+$/);
+	await page.getByRole('heading', { level: 1, name: SEED.checklist }).waitFor();
+}
+
 /**
  * A brand-new sign-up with no household, for the onboarding screens — the only
  * way to reach them, since both seeded accounts own one. A new account per test
@@ -117,12 +140,99 @@ async function openAdmin(page: Page): Promise<void> {
 
 export const SCREENS: Screen[] = [
 	{ name: 'login', route: '/login', path: '/login', signedOut: true, fullPage: true },
+	// The legal pages (→ SPEC §13), with the e2e server's made-up text: the long
+	// one signed out, as sign-in opens it, and the short one dark, from Settings.
+	{
+		name: 'legal-privacy',
+		route: '/legal/[page=legal]',
+		path: '/legal/privacy?from=login',
+		signedOut: true,
+		fullPage: true
+	},
+	{
+		name: 'legal-imprint-dark',
+		route: '/legal/[page=legal]',
+		path: '/legal/imprint?from=settings',
+		theme: 'dark',
+		fullPage: true
+	},
 	{ name: 'kit-light', route: '/dev/kit', path: '/dev/kit', fullPage: true },
 	{ name: 'kit-dark', route: '/dev/kit', path: '/dev/kit', theme: 'dark', fullPage: true },
 	{ name: 'home', route: '/(app)/home', path: '/home', bottom: true },
 	{ name: 'home-dark', route: '/(app)/home', path: '/home', theme: 'dark' },
 	{ name: 'shopping', route: '/(app)/shopping', path: '/shopping', bottom: true },
 	{ name: 'shopping-dark', route: '/(app)/shopping', path: '/shopping', theme: 'dark' },
+	// The add field's list menu [L2] (plan 36).
+	{
+		name: 'shopping-menu',
+		route: '/(app)/shopping',
+		path: '',
+		navigate: async (page) => {
+			await page.goto('/shopping');
+			await page.getByRole('button', { name: /Choose another list$/ }).click();
+			await page.getByRole('group', { name: 'Lists' }).waitFor();
+		}
+	},
+	// A list opened by itself [L5], in both themes: the struck rows under
+	// "{n} bought" start unfolded here.
+	{ name: 'shopping-list', route: '/(app)/shopping/[listId]', path: '', navigate: openGrocery },
+	{
+		name: 'shopping-list-dark',
+		route: '/(app)/shopping/[listId]',
+		path: '',
+		navigate: openGrocery,
+		theme: 'dark'
+	},
+	// A checklist opened [L4] (plan 36 step 2), in both themes: ticks in place
+	// with the ticker's avatar, the progress bar, Start over at the foot.
+	{
+		name: 'shopping-checklist',
+		route: '/(app)/shopping/[listId]',
+		path: '',
+		navigate: openChecklist
+	},
+	{
+		name: 'shopping-checklist-dark',
+		route: '/(app)/shopping/[listId]',
+		path: '',
+		navigate: openChecklist,
+		theme: 'dark'
+	},
+	// New list [L6]: a name, the "Shopping list | Checklist" switch, the icons.
+	{
+		name: 'shopping-new-list',
+		route: '/(app)/shopping',
+		path: '',
+		navigate: async (page) => {
+			await page.goto('/shopping');
+			await page.getByRole('button', { name: 'New list' }).last().click();
+			await page
+				.getByRole('dialog', { name: 'New list' })
+				.getByRole('tab', { name: 'Checklist' })
+				.click();
+		}
+	},
+	// A known name moved the field to another list: the line says where, and
+	// "Keep here" puts it back (Lukas 2026-11-20).
+	{
+		name: 'shopping-remembered',
+		route: '/(app)/shopping',
+		path: '',
+		navigate: async (page) => {
+			await page.goto('/shopping');
+			await page.getByPlaceholder(/^Add to /).fill('Toothpaste');
+			await page.getByRole('button', { name: /^Keep on / }).waitFor();
+		}
+	},
+	// The add field reading an amount at the end of the line (plan 37): the chip.
+	{ name: 'shopping-amount', route: '/(app)/shopping', path: '', navigate: typeAmount },
+	{
+		name: 'shopping-amount-dark',
+		route: '/(app)/shopping',
+		path: '',
+		navigate: typeAmount,
+		theme: 'dark'
+	},
 	{ name: 'tasks', route: '/(app)/tasks', path: '/tasks', bottom: true },
 	// The calendar screens, which the real clock kept out of here until the
 	// fixed one (→ DECISIONS #184).

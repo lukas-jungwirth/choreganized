@@ -162,6 +162,20 @@
       "when": 1793723937371,
       "tag": "0022_raccoon_sightings",
       "breakpoints": true
+    },
+    {
+      "idx": 23,
+      "version": "6",
+      "when": 1795173988141,
+      "tag": "0023_lists",
+      "breakpoints": true
+    },
+    {
+      "idx": 24,
+      "version": "6",
+      "when": 1795190999572,
+      "tag": "0024_flawless_vapor",
+      "breakpoints": true
     }
   ]
 }

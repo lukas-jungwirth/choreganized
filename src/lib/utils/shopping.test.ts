@@ -2,8 +2,8 @@
  * `npm test` — Vitest (→ docs/TESTING.md; born as `node --test` in plan 08).
  *
  * The three halves of the shopping list that are worth pinning down in a test
- * rather than in a walkthrough: how the list splits into "still to buy" and
- * "recently bought" (the same call the server and the browser both make, so it
+ * rather than in a walkthrough: how the list splits into lists of "still to
+ * buy" and "{n} bought" (the same call the server and the browser both make, so it
  * has to answer identically), which names the add field offers back — where the
  * interesting cases are the German compounds and the accents, and seeing them in
  * a running app means typing each one into the field — and what pouring a
@@ -13,6 +13,7 @@
 import assert from 'node:assert/strict';
 import { describe, it } from 'vitest';
 import {
+	addOnto,
 	matchNames,
 	planAdds,
 	splitList,
@@ -99,36 +100,49 @@ describe('splitList', () => {
 		);
 	});
 
-	it('drops a store with nothing left to buy', () => {
-		const { groups } = splitList(
-			[item('a', { storeId: 'drugstore', checkedAt: 5000 }), item('b')],
-			STORES
-		);
+	it('keeps a list whose rows are all bought, and drops one with nothing on it', () => {
+		const { groups } = splitList([item('a', { storeId: 'drugstore', checkedAt: 5000 })], STORES);
 
+		// Grocery has nothing at all; Drugstore has a bought row to put back.
 		assert.deepEqual(
-			groups.map((group) => group.storeId),
-			['grocery']
+			groups.map((group) => [group.storeId, group.items.length, group.bought.length]),
+			[['drugstore', 0, 1]]
 		);
 	});
 
-	it('lifts everything checked out of the groups, most recently bought first', () => {
-		const { groups, bought } = splitList(
+	it('keeps bought rows in the list they came from, most recently bought first', () => {
+		const { groups } = splitList(
 			[
 				item('early', { checkedAt: 1000 }),
 				item('open'),
+				item('later', { checkedAt: 4000 }),
 				item('late', { storeId: 'drugstore', checkedAt: 9000 })
 			],
 			STORES
 		);
 
 		assert.deepEqual(
-			groups.flatMap((group) => group.items.map((i) => i.id)),
-			['open']
+			groups.map((group) => [
+				group.storeId,
+				group.items.map((i) => i.id),
+				group.bought.map((i) => i.id)
+			]),
+			[
+				['grocery', ['open'], ['later', 'early']],
+				['drugstore', [], ['late']]
+			]
 		);
-		// Across all stores — the second list is one list.
+	});
+
+	it("carries each list's icon", () => {
+		const { groups } = splitList(
+			[item('a'), item('b', { storeId: null })],
+			[{ id: 'grocery', name: 'Grocery', icon: 'bag' }]
+		);
+
 		assert.deepEqual(
-			bought.map((i) => i.id),
-			['late', 'early']
+			groups.map((group) => group.icon),
+			['bag', null]
 		);
 	});
 
@@ -138,6 +152,39 @@ describe('splitList', () => {
 		assert.deepEqual(
 			groups.map((group) => [group.storeId, group.items.map((i) => i.id)]),
 			[[null, ['orphan']]]
+		);
+	});
+
+	it("keeps a checklist's ticked rows in place, after the shopping lists, even when empty", () => {
+		const stores = [
+			{ id: 'packing', name: 'Vacation packing', kind: 'checklist' as const },
+			{ id: 'grocery', name: 'Grocery', kind: 'buy' as const },
+			{ id: 'leave', name: 'Before we leave', kind: 'checklist' as const }
+		];
+		const { groups } = splitList(
+			[
+				item('passports', { storeId: 'packing', sortOrder: 0, checkedAt: 5000 }),
+				item('sunscreen', { storeId: 'packing', sortOrder: 1 }),
+				item('chargers', { storeId: 'packing', sortOrder: 2, checkedAt: 6000 }),
+				item('milk', { storeId: 'grocery', checkedAt: 7000 }),
+				item('batteries', { storeId: null })
+			],
+			stores
+		);
+
+		assert.deepEqual(
+			groups.map((group) => [
+				group.storeId,
+				group.kind,
+				group.items.map((i) => i.id),
+				group.bought.map((i) => i.id)
+			]),
+			[
+				['grocery', 'buy', [], ['milk']],
+				[null, 'buy', ['batteries'], []],
+				['packing', 'checklist', ['passports', 'sunscreen', 'chargers'], []],
+				['leave', 'checklist', [], []]
+			]
 		);
 	});
 });
@@ -193,6 +240,67 @@ describe('matchNames', () => {
 	it('offers no more than it was asked for', () => {
 		const pool = ['Milk 1', 'Milk 2', 'Milk 3'];
 		assert.deepEqual(matchNames('milk', pool, 2), ['Milk 1', 'Milk 2']);
+	});
+});
+
+describe('addOnto', () => {
+	const amount = (quantity: number | null, unit: string | null = null) => ({ quantity, unit });
+
+	it('adds up the same thing in the same unit: three cucumbers and three are six', () => {
+		assert.deepEqual(addOnto(amount(3), amount(3), true), {
+			effect: 'merge',
+			quantity: 6,
+			unit: null
+		});
+		// The sheet's preselected pcs and a typed bare count are the same pieces.
+		assert.deepEqual(addOnto(amount(3, 'pcs'), amount(3), true), {
+			effect: 'merge',
+			quantity: 6,
+			unit: 'pcs'
+		});
+	});
+
+	it("converts and keeps the row's unit: 500 ml onto a litre is 1.5 L", () => {
+		assert.deepEqual(addOnto(amount(1, 'L'), amount(500, 'ml'), true), {
+			effect: 'merge',
+			quantity: 1.5,
+			unit: 'L'
+		});
+	});
+
+	it('gives a typed amount to a row that had none', () => {
+		assert.deepEqual(addOnto(amount(null), amount(3), true), {
+			effect: 'set',
+			quantity: 3,
+			unit: null
+		});
+		assert.deepEqual(addOnto(amount(null), amount(2, 'L'), true), {
+			effect: 'set',
+			quantity: 2,
+			unit: 'L'
+		});
+	});
+
+	it('leaves a row alone when the typed line says no amount', () => {
+		assert.deepEqual(addOnto(amount(3), amount(null), true), { effect: 'have' });
+		assert.deepEqual(addOnto(amount(null), amount(null), true), { effect: 'have' });
+	});
+
+	it('keeps a typed amount that cannot be added apart: 3 pcs and 500 g', () => {
+		assert.deepEqual(addOnto(amount(3, 'pcs'), amount(500, 'g'), true), { effect: 'apart' });
+	});
+
+	it('an amount that leaves the row as it was is "have", not a merge', () => {
+		// 1 kg + 4 g rounds back to 1 kg; a row at the ceiling cannot grow.
+		assert.deepEqual(addOnto(amount(1, 'kg'), amount(4, 'g'), true), { effect: 'have' });
+		assert.deepEqual(addOnto(amount(1, 'kg'), amount(4, 'g')), { effect: 'have' });
+		assert.deepEqual(addOnto(amount(99_999), amount(5), true), { effect: 'have' });
+	});
+
+	it('never sets or splits for a recipe: what cannot be added is had', () => {
+		assert.deepEqual(addOnto(amount(null), amount(400, 'g')), { effect: 'have' });
+		assert.deepEqual(addOnto(amount(3, 'pcs'), amount(500, 'g')), { effect: 'have' });
+		assert.deepEqual(addOnto(amount(2), amount(2)), { effect: 'merge', quantity: 4, unit: null });
 	});
 });
 

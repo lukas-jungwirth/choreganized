@@ -1,0 +1,762 @@
+<meta charset="utf-8" />
+<title>Lists Tab Rebuild</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link href="https://fonts.googleapis.com/css2?family=Figtree:wght@400;500;600;700&family=Fraunces:opsz,wght@9..144,500;9..144,600&display=swap" rel="stylesheet" />
+<style>
+	/*
+		Sketch only, second pass (→ docs/plans/36-lists.md). The Shopping tab
+		rebuilt as lists. Layout: a plain presentation page, one row of phones per
+		idea. Every phone is drawn by the script at the bottom from one small
+		state object, so the frames are real: open a list, tick a row, type.
+		The phones use the token names and values of src/app.css.
+		Frame ids ([L1]…[L7]) are element ids, the way design/Hearth.dc.html does it.
+	*/
+	:root {
+		/* The page around the phones */
+		--page: light-dark(#f1f0ec, #171613);
+		--page-ink: light-dark(#24231f, #ecebe5);
+		--page-muted: light-dark(#66645c, #a4a298);
+		--page-line: light-dark(#d6d4cc, #35332d);
+		--page-card: light-dark(#fbfaf7, #1f1d19);
+
+		/* The app (src/app.css, the subset these screens use) */
+		--font-display: 'Fraunces', serif;
+		--font-body: 'Figtree', system-ui, sans-serif;
+		--bg: light-dark(#f5f3ee, #191510);
+		--card: light-dark(#ffffff, #221e18);
+		--sunken: light-dark(#efebe2, #15110c);
+		--sunken-2: light-dark(#eae6dd, #110e0a);
+		--field: light-dark(#f5f3ee, #1c1813);
+		--tabbar-bg: light-dark(rgba(255, 255, 255, 0.9), rgba(25, 21, 16, 0.9));
+		--tabbar-border: light-dark(rgba(236, 233, 226, 0.8), rgba(52, 46, 38, 0.8));
+		--tabbar-pill: light-dark(rgba(95, 141, 114, 0.14), rgba(116, 165, 133, 0.18));
+		--tabbar-active: light-dark(#3f6b52, #8fbc9e);
+		--ink: light-dark(#22201c, #efe9de);
+		--text-2: light-dark(#57534c, #cfc7ba);
+		--text-3: light-dark(#6e6a62, #b3aba0);
+		--text-4: light-dark(#8a867e, #a5a096);
+		--text-5: light-dark(#a7a29a, #857f74);
+		--text-disabled: light-dark(#b7b2a9, #6e675e);
+		--sage: light-dark(#5f8d72, #74a585);
+		--sage-tint: light-dark(#edf3ee, #1e2a22);
+		--sage-row: light-dark(#f7faf7, #1c2620);
+		--sage-deep: light-dark(#3e5d49, #a9cfb6);
+		--on-sage: light-dark(#ffffff, #12100d);
+		--terracotta: light-dark(#c67c51, #d9946b);
+		--terracotta-tint: light-dark(#f7ede6, #2c211a);
+		--terracotta-deep: light-dark(#8a4b29, #e8b592);
+		--danger: light-dark(#c0473a, #dc6152);
+		--border: light-dark(#e4dfd5, #322c24);
+		--divider: light-dark(#f1eee7, #262019);
+		--border-dashed: light-dark(#d8d3c9, #3d362c);
+		--track: light-dark(#ede9e1, #2a241d);
+		--scrim: light-dark(rgba(34, 32, 28, 0.4), rgba(0, 0, 0, 0.62));
+		--shadow-card: 0 1px 3px light-dark(rgba(40, 34, 24, 0.05), rgba(0, 0, 0, 0.45));
+		--shadow-sheet: 0 -12px 40px light-dark(rgba(40, 34, 24, 0.18), rgba(0, 0, 0, 0.7));
+		--shadow-modal: 0 24px 60px -12px light-dark(rgba(40, 34, 24, 0.4), rgba(0, 0, 0, 0.8));
+		--shadow-tabbar: 0 -10px 26px -14px light-dark(rgba(40, 34, 24, 0.16), rgba(0, 0, 0, 0.6));
+		--shadow-button: 0 8px 20px -6px light-dark(rgba(95, 141, 114, 0.5), rgba(0, 0, 0, 0.6));
+		/* Member colours never change with the theme (→ DESIGN-SYSTEM). */
+		--member-sage: #5f8d72;
+		--member-terracotta: #c67c51;
+		--on-member: #ffffff;
+	}
+	@media (prefers-color-scheme: dark) {
+		:root:not([data-theme='light']) { color-scheme: dark; }
+	}
+	:root[data-theme='dark'] { color-scheme: dark; }
+	:root[data-theme='light'] { color-scheme: light; }
+
+	* { box-sizing: border-box; margin: 0; }
+	[hidden] { display: none !important; }
+	body {
+		background: var(--page);
+		color: var(--page-ink);
+		font-family: var(--font-body);
+		font-size: 16px;
+		line-height: 1.5;
+		padding-left: max(16px, env(safe-area-inset-left, 0px));
+		padding-right: max(16px, env(safe-area-inset-right, 0px));
+		padding-block: 32px 64px;
+	}
+	.wrap { max-width: 1240px; margin-inline: auto; display: grid; grid-template-columns: minmax(0, 1fr); gap: 56px; }
+	.intro { display: grid; gap: 10px; max-width: 66ch; }
+	.kicker { font-size: 12px; font-weight: 700; letter-spacing: 0.12em; text-transform: uppercase; color: var(--page-muted); }
+	h1 { font-family: var(--font-display); font-size: clamp(30px, 5vw, 40px); font-weight: 600; line-height: 1.1; text-wrap: balance; }
+	h2 { font-family: var(--font-display); font-size: 26px; font-weight: 600; line-height: 1.2; text-wrap: balance; }
+	.intro p, .head p { color: var(--page-muted); }
+	.part { display: grid; gap: 18px; min-width: 0; }
+	.head { display: grid; gap: 6px; max-width: 68ch; }
+	.pick-tag { justify-self: start; font-size: 12px; font-weight: 700; letter-spacing: 0.08em; text-transform: uppercase; color: var(--sage-deep); background: var(--sage-tint); padding: 3px 10px; border-radius: 999px; }
+	/* Captions share one row and phones the next, so every phone starts on the same line. */
+	.row { display: grid; grid-auto-flow: column; grid-auto-columns: min(360px, calc(100vw - 40px)); grid-template-rows: auto auto; column-gap: 26px; row-gap: 12px; overflow-x: auto; padding: 4px 2px 18px; scroll-snap-type: x proximity; }
+	figure { display: grid; grid-row: span 2; grid-template-rows: subgrid; scroll-snap-align: center; min-width: 0; }
+	figure .phone { align-self: start; }
+	.split figure { width: min(360px, calc(100vw - 40px)); display: block; }
+	figcaption { display: grid; gap: 2px; font-size: 14px; line-height: 1.4; color: var(--page-muted); align-content: start; }
+	figcaption b { color: var(--page-ink); font-size: 16px; font-weight: 600; display: flex; gap: 8px; align-items: baseline; }
+	figcaption i { font-style: normal; color: var(--page-ink); }
+	.tag { font-size: 12px; font-weight: 700; color: var(--page-muted); border: 1px solid var(--page-line); border-radius: 6px; padding: 0 5px; font-variant-numeric: tabular-nums; }
+	.notes { display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 14px 30px; border-top: 1px solid var(--page-line); padding: 18px 0 0; list-style: none; }
+	.notes li { display: grid; grid-template-columns: auto 1fr; gap: 12px; font-size: 15px; line-height: 1.45; color: var(--page-muted); min-width: 0; }
+	.notes b { color: var(--page-ink); font-weight: 600; display: block; }
+	.num { width: 22px; height: 22px; border-radius: 50%; background: var(--page-ink); color: var(--page); font-size: 12px; font-weight: 700; display: grid; place-items: center; margin-top: 1px; }
+	.split { display: grid; grid-template-columns: auto minmax(0, 1fr); gap: 34px; align-items: start; }
+	.split .notes { grid-template-columns: 1fr; border-top: 0; padding-top: 30px; max-width: 46ch; }
+	@media (max-width: 760px) { .split { grid-template-columns: minmax(0, 1fr); } .split .notes { padding-top: 0; } }
+	.tablewrap { overflow-x: auto; border: 1px solid var(--page-line); border-radius: 14px; background: var(--page-card); }
+	table { border-collapse: collapse; width: 100%; min-width: 720px; font-size: 15px; line-height: 1.45; }
+	th { text-align: left; font-size: 12px; letter-spacing: 0.1em; text-transform: uppercase; color: var(--page-muted); font-weight: 700; padding: 12px 16px; border-bottom: 1px solid var(--page-line); }
+	td { padding: 12px 16px; vertical-align: top; border-top: 1px solid var(--page-line); color: var(--page-muted); }
+	tr:first-child td { border-top: 0; }
+	td:first-child { color: var(--page-ink); font-weight: 600; width: 27%; }
+	td:nth-child(2) { width: 25%; }
+	.asks { display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 12px; padding: 0; list-style: none; }
+	.asks li { background: var(--page-card); border: 1px solid var(--page-line); border-radius: 14px; padding: 14px 16px; display: grid; gap: 6px; align-content: start; }
+	.asks q { quotes: none; color: var(--page-muted); font-size: 14px; }
+	.asks b { font-weight: 600; font-size: 17px; }
+	.asks span { color: var(--page-muted); font-size: 15px; }
+	.sources { font-size: 13px; color: var(--page-muted); max-width: 90ch; }
+	.sources a { color: inherit; }
+
+	/* ── The phone ────────────────────────────────────────────── */
+	.phone {
+		position: relative; width: 100%; height: 760px; overflow: hidden; border-radius: 34px;
+		background: var(--bg); color: var(--ink); font-family: var(--font-body); font-size: 16px; line-height: 1.3;
+		box-shadow: 0 0 0 1px var(--page-line), 0 18px 40px -22px rgba(0, 0, 0, 0.45); isolation: isolate;
+	}
+	.phone.force-dark { color-scheme: dark; }
+	.phone button { font: inherit; color: inherit; background: none; border: 0; padding: 0; cursor: pointer; text-align: left; }
+	.phone :focus-visible { outline: 2px solid var(--sage); outline-offset: 2px; }
+	.scroll { position: absolute; inset: 0; padding: 20px 18px 104px; overflow-y: auto; scrollbar-width: none; }
+	.scroll::-webkit-scrollbar { display: none; }
+	.top { display: flex; align-items: flex-end; gap: 8px; min-height: 86px; margin-bottom: 12px; }
+	.mascot { height: 84px; width: auto; flex: none; margin-left: -6px; }
+	.phone h3 { font-family: var(--font-display); font-weight: 600; font-size: 32px; line-height: 1.05; }
+	.sub { font-size: 14px; color: var(--text-4); font-weight: 500; }
+	.grow { flex: 1; min-width: 0; }
+	.top .grow { padding-bottom: 6px; }
+	.manage { color: var(--text-4); padding: 6px; margin: 0 -4px 6px 0; display: flex; }
+	.ic { flex: none; display: block; }
+	.card { background: var(--card); border-radius: 18px; box-shadow: var(--shadow-card); }
+	.lists { display: grid; gap: 10px; }
+	.well { width: 36px; height: 36px; border-radius: 12px; display: grid; place-items: center; flex: none; background: var(--sage-tint); color: var(--sage-deep); }
+	[data-kind='check'] .well, .well[data-kind='check'] { background: var(--terracotta-tint); color: var(--terracotta-deep); }
+	.well.mini { width: 32px; height: 32px; border-radius: 11px; }
+	.well.big { width: 48px; height: 48px; border-radius: 16px; }
+
+	/* The add field. Its leading icon is the list it adds to. */
+	.compose { position: relative; margin-bottom: 14px; z-index: 3; }
+	.composecard { border-radius: 16px; transition: box-shadow 0.15s; }
+	.compose.is-focus .composecard { box-shadow: 0 0 0 2px var(--sage), var(--shadow-card); }
+	.quick { display: flex; align-items: center; gap: 10px; padding: 10px 11px 10px 15px; color: var(--text-5); }
+	.quick.has-lead { padding-left: 10px; }
+	.quick input, .inline-input { flex: 1; min-width: 0; border: 0; background: none; font: inherit; font-size: 16px; color: var(--ink); padding: 0; }
+	.quick input::placeholder, .inline-input::placeholder { color: var(--text-5); }
+	.quick input:focus, .inline-input:focus { outline: none; }
+	.phone .pick { display: flex; align-items: center; gap: 2px; flex: none; border-radius: 12px; }
+	.pick .pc { color: var(--text-5); transition: transform 0.2s; }
+	.pick[aria-expanded='true'] .pc { transform: rotate(180deg); }
+	.sq { width: 32px; height: 32px; border-radius: 11px; display: grid; place-items: center; flex: none; }
+	.phone .sq.go { background: var(--sage); color: var(--on-sage); }
+	.why { display: flex; gap: 7px; align-items: center; font-size: 13px; color: var(--text-4); padding: 8px 6px 0; }
+	.why b { color: var(--ink); font-weight: 600; }
+	.phone .keep { display: inline; font-weight: 700; color: var(--sage-deep); padding: 0 4px; margin-left: 2px; border-radius: 6px; white-space: nowrap; }
+	.pop { position: absolute; left: 0; right: 0; top: calc(100% + 6px); border-radius: 16px; box-shadow: var(--shadow-modal); overflow: hidden; }
+	.phone .sugg { display: flex; width: 100%; align-items: baseline; gap: 10px; padding: 12px 15px; font-size: 16px; font-weight: 500; }
+	.sugg + .sugg, .mrow + .mrow { border-top: 1px solid var(--divider); }
+	.sugg span { flex: 1; min-width: 0; }
+	.sugg small { font-size: 13px; color: var(--text-4); font-weight: 500; }
+	.sugg mark { background: none; color: var(--sage-deep); font-weight: 700; }
+	.phone .mrow { display: flex; width: 100%; align-items: center; gap: 11px; padding: 7px 14px 7px 10px; min-height: 48px; font-size: 16px; font-weight: 500; }
+	.mrow span.grow { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+	.mrow small { font-size: 13px; color: var(--text-4); font-weight: 600; font-variant-numeric: tabular-nums; }
+	.mrow.on span.grow { font-weight: 700; }
+	.mrow.on > .ic:last-child { color: var(--sage); }
+	.mrow.new { color: var(--text-3); }
+	.mrow.new .well { background: none; box-shadow: inset 0 0 0 1.5px var(--border-dashed); color: var(--text-4); }
+
+	/* One list = one card */
+	.list { overflow: hidden; }
+	.list.flash { animation: flash 0.9s ease-out; }
+	@keyframes flash { 0%, 35% { box-shadow: 0 0 0 2px var(--sage), var(--shadow-card); } 100% { box-shadow: 0 0 0 2px transparent, var(--shadow-card); } }
+	.lhead { display: flex; align-items: stretch; min-height: 58px; }
+	.phone .lmain { flex: 1; min-width: 0; display: flex; align-items: center; gap: 11px; padding: 11px 0 11px 12px; }
+	.phone .lmain.solo { padding-right: 10px; }
+	.phone .lfold { display: flex; align-items: center; gap: 8px; padding: 0 12px 0 12px; flex: none; }
+	.ltxt { flex: 1; min-width: 0; display: grid; }
+	.ltxt b { font-size: 16.5px; font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+	.ltxt small { font-size: 13px; color: var(--text-4); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+	.count { font-size: 14px; font-weight: 700; color: var(--text-3); font-variant-numeric: tabular-nums; display: flex; align-items: center; gap: 6px; flex: none; }
+	.count.all { color: var(--sage-deep); }
+	.ringp { transform: rotate(-90deg); }
+	.ringp .bg { stroke: var(--track); }
+	.ringp .fg { stroke: var(--terracotta); transition: stroke-dashoffset 0.3s; }
+	.count.all .fg { stroke: var(--sage); }
+	.chev, .go-in { color: var(--text-5); transition: transform 0.2s; }
+	[aria-expanded='true'] .chev { transform: rotate(180deg); }
+	.lname { display: flex; align-items: center; gap: 5px; min-width: 0; }
+	.lname b { min-width: 0; }
+	/* Opening full screen has a button of its own, so the header can simply fold. */
+	.phone .lopen, .lopen { width: 34px; height: 34px; border-radius: 11px; background: var(--sunken); color: var(--text-3); display: grid; place-items: center; flex: none; align-self: center; margin: 0 11px 0 10px; }
+	.solo .lopen { margin: 0 1px 0 4px; }
+	.lpad { width: 14px; flex: none; }
+	/* The count and the open button are one pill (Lukas 2026-11-20): "4 ›", or "◔ 5/12 ›" on a checklist. */
+	.phone .lpill, .lpill { display: flex; align-items: center; gap: 5px; flex: none; align-self: center; min-height: 34px; padding: 0 7px 0 12px; margin: 0 11px 0 8px; border-radius: 999px; background: var(--sunken); color: var(--text-3); font-size: 14px; font-weight: 700; font-variant-numeric: tabular-nums; white-space: nowrap; }
+	.lpill.all { color: var(--sage-deep); }
+	.solo .lpill { margin: 0 1px 0 4px; }
+	.lpill .go-in { color: var(--text-5); }
+	.rows { list-style: none; padding: 0; border-top: 1px solid var(--divider); }
+	.bare > .rows:first-child { border-top: 0; }
+	.item { display: flex; align-items: center; gap: 11px; padding: 0 12px 0 15px; min-height: 48px; font-size: 16.5px; }
+	.item + .item { border-top: 1px solid var(--divider); }
+	.item .name { flex: 1; min-width: 0; font-weight: 500; overflow-wrap: anywhere; padding: 8px 0; }
+	.item .qty { color: var(--text-4); font-size: 14px; }
+	.grip { color: var(--border-dashed); display: flex; }
+	.av { width: 20px; height: 20px; border-radius: 50%; display: grid; place-items: center; flex: none; font-size: 9.5px; font-weight: 700; color: var(--on-member); }
+	.av-l { background: var(--member-sage); }
+	.av-e { background: var(--member-terracotta); }
+	.phone .check { width: 26px; height: 26px; flex: none; display: block; color: var(--border-dashed); }
+	.check svg { width: 100%; height: 100%; display: block; }
+	.check .ring { fill: none; stroke: currentColor; stroke-width: 1.7; }
+	.check .ring-fill { fill: transparent; transition: fill 0.2s; }
+	.check .tick { fill: none; stroke: var(--on-sage); stroke-width: 2.4; stroke-linecap: round; stroke-linejoin: round; stroke-dasharray: 20; stroke-dashoffset: 20; transition: stroke-dashoffset 0.25s ease-out; }
+	.is-done .check { color: var(--sage); }
+	.is-done .ring-fill { fill: var(--sage); }
+	.is-done .tick { stroke-dashoffset: 0; }
+	.is-done .name { color: var(--text-disabled); text-decoration: line-through; }
+	.is-done .qty { color: var(--text-disabled); }
+	.is-settling { background: var(--sage-row); }
+	.none { padding: 18px 16px; font-size: 15px; color: var(--text-4); }
+	.lfoot { display: flex; align-items: center; gap: 8px; border-top: 1px solid var(--divider); padding: 0 8px 0 15px; min-height: 46px; }
+	.bare > .lfoot:first-child { border-top: 0; }
+	.phone .addrow { flex: 1; display: flex; align-items: center; gap: 15px; color: var(--text-4); font-size: 15px; font-weight: 500; min-height: 46px; }
+	.addrow .ic { margin-left: 4px; }
+	.phone .reset { display: flex; align-items: center; gap: 6px; font-size: 14px; font-weight: 600; color: var(--terracotta-deep); padding: 7px 10px; border-radius: 10px; flex: none; }
+	.phone .reset.loud { background: var(--terracotta-tint); }
+	/* What used to be the "Recently bought" section: one quiet line in the card it came from. */
+	.phone .bfoot { display: flex; align-items: center; gap: 8px; width: 100%; min-height: 42px; padding: 0 14px 0 20px; border-top: 1px solid var(--divider); font-size: 14px; font-weight: 600; color: var(--text-4); }
+	.bfoot .chev { margin-left: auto; }
+	.bfoot > .ic:first-child { color: var(--sage); }
+	.phone .newlist { display: flex; align-items: center; justify-content: center; gap: 8px; width: 100%; min-height: 50px; border: 1.5px dashed var(--border-dashed); border-radius: 16px; color: var(--text-4); font-weight: 600; font-size: 15px; margin-top: 4px; }
+	.empties { display: flex; flex-wrap: wrap; gap: 6px; align-items: center; padding: 6px 2px 0; }
+	.empties .to { font-size: 12px; font-weight: 700; letter-spacing: 0.1em; text-transform: uppercase; color: var(--text-5); margin-right: 2px; }
+	.phone .chip { display: flex; align-items: center; gap: 6px; font-size: 14px; font-weight: 600; padding: 6px 11px 6px 9px; border-radius: 999px; background: var(--sunken); color: var(--text-3); white-space: nowrap; }
+
+	/* A list opened by itself */
+	.fbar { display: flex; justify-content: space-between; align-items: center; margin: -6px 0 12px; }
+	.phone .back { display: flex; align-items: center; gap: 2px; font-weight: 600; font-size: 15px; color: var(--sage-deep); padding: 6px 10px 6px 0; margin-left: -5px; }
+	.fbar .manage { margin: 0 -4px 0 0; }
+	.ftitle { display: flex; gap: 13px; align-items: center; margin-bottom: 14px; }
+	.ftitle h3 { font-size: 27px; line-height: 1.1; }
+	.bar { height: 6px; border-radius: 3px; background: var(--track); overflow: hidden; margin-bottom: 14px; }
+	.bar i { display: block; height: 100%; background: var(--terracotta); border-radius: 3px; transition: width 0.3s; }
+	.bar.all i { background: var(--sage); }
+	.due { display: inline-flex; gap: 7px; align-items: center; font-size: 14px; font-weight: 600; color: var(--terracotta-deep); background: var(--terracotta-tint); padding: 6px 12px 6px 10px; border-radius: 999px; margin-bottom: 12px; }
+
+	.tabs { position: absolute; left: 0; right: 0; bottom: 0; height: 80px; display: flex; align-items: center; justify-content: space-around; padding: 0 12px 10px; background: var(--tabbar-bg); backdrop-filter: blur(18px); border-top: 1px solid var(--tabbar-border); box-shadow: var(--shadow-tabbar); z-index: 6; color: var(--text-4); }
+	.tab { position: relative; display: flex; align-items: center; gap: 7px; padding: 10px; border-radius: 999px; font-weight: 600; font-size: 15px; }
+	.tab.on { background: var(--tabbar-pill); color: var(--tabbar-active); padding-inline: 14px; }
+	.dot { position: absolute; top: 3px; right: 2px; min-width: 16px; height: 16px; border-radius: 8px; background: var(--danger); color: var(--on-sage); font-size: 10px; font-weight: 700; display: grid; place-items: center; }
+
+	/* New list */
+	.scrim { position: absolute; inset: 0; background: var(--scrim); z-index: 8; }
+	.sheet { position: absolute; left: 0; right: 0; bottom: 0; z-index: 9; background: var(--card); border-radius: 28px 28px 0 0; box-shadow: var(--shadow-sheet); padding: 10px 20px 22px; display: grid; gap: 16px; }
+	.handle { width: 38px; height: 4px; border-radius: 2px; background: var(--border); justify-self: center; }
+	.sheet h4 { font-family: var(--font-display); font-weight: 600; font-size: 24px; }
+	.sheet input { width: 100%; border: 1px solid var(--border); background: var(--field); border-radius: 14px; padding: 12px 14px; font: inherit; font-size: 16px; color: var(--ink); }
+	.seg { display: grid; grid-template-columns: 1fr 1fr; background: var(--sunken-2); border-radius: 13px; padding: 3px; }
+	.phone .seg button { display: flex; gap: 7px; align-items: center; justify-content: center; padding: 9px 6px; border-radius: 10px; font-weight: 600; font-size: 15px; color: var(--text-4); }
+	.phone .seg .on { background: var(--card); color: var(--ink); box-shadow: var(--shadow-card); }
+	.icons { display: grid; grid-template-columns: repeat(6, 1fr); gap: 8px; }
+	.phone .icn { aspect-ratio: 1; border-radius: 12px; background: var(--field); color: var(--text-3); display: grid; place-items: center; }
+	.phone .icn.on { background: var(--sage-tint); color: var(--sage-deep); box-shadow: inset 0 0 0 2px var(--sage); }
+	.phone .cta { min-height: 52px; border-radius: 16px; background: var(--sage); color: var(--on-sage); font-weight: 600; font-size: 16px; text-align: center; box-shadow: var(--shadow-button); }
+
+	@media (prefers-reduced-motion: reduce) {
+		.list.flash { animation: none; }
+		.chev, .pc, .check .tick, .check .ring-fill, .ringp .fg, .bar i { transition: none; }
+	}
+</style>
+
+<div class="wrap">
+	<header class="intro">
+		<span class="kicker">Haushaltsheld · sketch for plan 36 · second pass</span>
+		<h1>Lists: a slimmer overview, and three ways to add</h1>
+		<p>This pass follows your five questions. Empty lists are gone, Recently bought has moved into the card it belongs to, the row of chips is out, and a list can be opened by itself to work in it.</p>
+		<p>Every phone works: open a list, tick a row, type in the field, press Start over.</p>
+	</header>
+
+	<section class="part">
+		<div class="head">
+			<h2>Your five questions</h2>
+			<p>Each one weighed. Where I disagree, it says so.</p>
+		</div>
+		<ul class="asks">
+			<li><q>Should lists without items be shown?</q><b>No. You are right.</b><span>An empty list only needs a place to be added to, and the list menu in the field gives it one. A list stays on screen while it still has something bought today, so a wrong tick can be undone, then it goes.</span></li>
+			<li><q>Is Recently bought relevant, or an unnecessary divider?</q><b>Relevant, but not as a section.</b><span>It is the only way back from a wrong tick once Undo has gone, and mid-shop it answers "did you get the milk already?". As a heading between lists it was a divider. Now it is one quiet line inside the card: "2 bought".</span></li>
+			<li><q>Is "Add to" intuitive? Can I focus on one list?</q><b>The chips were the weak part. Focus is the better idea.</b><span>You would not have scrolled per item (the choice stuck), but five chips in a row that scrolls sideways hides the fifth. Three replacements are below to try. I would build the first two together.</span></li>
+			<li><q>Does the new list sheet need the explanations?</q><b>No. Cut.</b><span>"Shopping list" and "Checklist" say it. To make a wrong pick harmless, the kind can be switched later. The cost: a one-off list like "Party" has to call itself a shopping list.</span></li>
+			<li><q>Should a checklist get a due date? Or both kinds?</q><b>Shopping lists no. Checklists maybe, later.</b><span>A packing list has a new date on every trip, so the date belongs to this run, not to the list, and it should not grow into a second Tasks tab. Drawn further down so you can judge it.</span></li>
+		</ul>
+	</section>
+
+	<section class="part">
+		<div class="head">
+			<h2>Adding: three ways to try</h2>
+			<p>Each phone does one thing differently. Add a few items to Vacation packing in each and see which one your thumb agrees with.</p>
+		</div>
+		<div class="row">
+			<figure>
+				<figcaption><b><span class="tag">A</span>The field says where it goes</b>The icon at the start of the field is the list. Tap it for all your lists, top to bottom, empty ones included. The choice stays while you are on the screen. <i>Costs: one extra tap when the list is not the usual one.</i></figcaption>
+				<div class="phone" data-focus="0" data-preset="menu"></div>
+			</figure>
+			<figure>
+				<figcaption><b><span class="tag">B</span>Open a list and work in it</b>Tap a list and it is the whole screen. The field there adds only to it. This is your "preparing for the flight" idea. <i>Costs: on its own, empty lists need a line of their own at the bottom to be reachable.</i></figcaption>
+				<div class="phone" data-picker="0" data-preset="main"></div>
+			</figure>
+			<figure>
+				<figcaption><b><span class="tag">C</span>A field in every list</b>No field on top. Each list ends with its own "Add to" row. Nothing to choose, ever. <i>Costs: empty lists must stay on screen, and adding milk means finding the end of Grocery first.</i></figcaption>
+				<div class="phone" data-own="1" data-preset="main"></div>
+			</figure>
+		</div>
+	</section>
+
+	<section class="part">
+		<div class="head">
+			<span class="pick-tag">What I would build</span>
+			<h2>A and B together</h2>
+			<p>A covers the quick case from the overview: milk, or the one thing for the hardware store. B covers the long case: packing, or walking one shop. Together they also let empty lists disappear, because the menu still reaches them.</p>
+		</div>
+		<div class="row">
+			<figure>
+				<figcaption><b><span class="tag">L1</span>A normal day</b>One grocery list, two checklists put away as single rows. No headings, no empty lists. "2 bought" is what is left of Recently bought.</figcaption>
+				<div class="phone" id="L1" data-preset="main"></div>
+			</figure>
+			<figure>
+				<figcaption><b><span class="tag">L2</span>Choosing the list</b>The menu shows every list with its icon and what is on it, then Other (three dots, always there), and ends with New list. Hardware store is empty, so this is where it lives.</figcaption>
+				<div class="phone" id="L2" data-preset="menu"></div>
+			</figure>
+			<figure>
+				<figcaption><b><span class="tag">L3</span>It remembers</b>Shampoo went to Drugstore last time, so the icon changes by itself and a line says why. A list you picked by hand always wins.</figcaption>
+				<div class="phone" id="L3" data-preset="known"></div>
+			</figure>
+			<figure>
+				<figcaption><b><span class="tag">L4</span>A checklist, opened</b>Tapping Vacation packing on the overview lands here. Ticks stay in place and show who made them. Start over is for the next trip.</figcaption>
+				<div class="phone" id="L4" data-preset="pack"></div>
+			</figure>
+			<figure>
+				<figcaption><b><span class="tag">L5</span>A shopping list, opened</b>The same view for walking one shop. Bought things are unfolded here, one tap puts a wrong tick back.</figcaption>
+				<div class="phone" id="L5" data-preset="shop"></div>
+			</figure>
+			<figure>
+				<figcaption><b><span class="tag">L6</span>New list</b>A name, one switch, an icon. No explanations. The new list opens straight away so you can fill it.</figcaption>
+				<div class="phone" id="L6" data-preset="sheet"></div>
+			</figure>
+			<figure>
+				<figcaption><b><span class="tag">L7</span>A busy day, dark</b>Three shops with something on them and two checklists. Grocery is folded; a tap on its header brings the rows back.</figcaption>
+				<div class="phone force-dark" id="L7" data-preset="busy"></div>
+			</figure>
+		</div>
+		<ul class="notes">
+			<li><span class="num">1</span><span><b>Tap the header to fold, the corner button to open</b>A shopping list shows its rows on the overview and folds like any section. The button with the two arrows opens a list full screen. A checklist is a single row and opens wherever you tap it.</span></li>
+			<li><span class="num">2</span><span><b>Where an item lands</b>Opened list: that list. Overview: the list on the icon, which is the first shopping list unless the name is known or you picked another.</span></li>
+			<li><span class="num">3</span><span><b>Amounts in the same line</b>"2 l milk" becomes Milk · 2 L. The sliders button is gone; tapping a row still opens the sheet to edit.</span></li>
+			<li><span class="num">4</span><span><b>What does not change</b>Drag to reorder, the tick that plays out in place, the undo bar, live ticks from the other phone, recipes pouring in.</span></li>
+		</ul>
+	</section>
+
+	<section class="part">
+		<div class="head">
+			<h2>Fold or open: is it clear which tap does what?</h2>
+			<p>The second pass hid two actions in one header. This is the same screen before and after. Try to fold Grocery, then to open it, in each.</p>
+		</div>
+		<div class="row">
+			<figure>
+				<figcaption><b><span class="tag">Before</span>The name opens, the chevron folds</b>Nothing says the name is a button. A header with a chevron is expected to fold wherever you tap it, so a tap on "Grocery" lands on another screen by surprise.</figcaption>
+				<div class="phone" data-head="name" data-preset="busylight"></div>
+			</figure>
+			<figure>
+				<figcaption><b><span class="tag">After</span>The header folds, a button opens</b>The whole header folds, as a header with a chevron should. Full screen has its own button with its own icon, on every list in the same corner. Each action has one place and one sign.</figcaption>
+				<div class="phone" data-preset="busylight"></div>
+			</figure>
+		</div>
+	</section>
+
+	<section class="part">
+		<div class="head">
+			<h2>A date on a checklist?</h2>
+			<p>Drawn so you can judge it. I would leave it out of the first build and add it after one real trip, if you missed it.</p>
+		</div>
+		<div class="split">
+			<figure>
+				<div class="phone" data-preset="due"></div>
+			</figure>
+			<ul class="notes">
+				<li><span class="num">+</span><span><b>What it would do</b>Show "in 8 days" on the list, bring the list to the top of the overview in its last three days, and send one push the evening before if anything is unticked.</span></li>
+				<li><span class="num">+</span><span><b>It belongs to this run</b>Optional, one date for the whole list, cleared by Start over. "Before we leave" would never have one.</span></li>
+				<li><span class="num">−</span><span><b>Not on shopping lists</b>You shop when you shop. The one real deadline, shops closing for a holiday, is already announced.</span></li>
+				<li><span class="num">−</span><span><b>The risk</b>Dates per row, reminders and owners are what the Tasks tab is. If a list needs those, it is a task. One date per list is where this would have to stop.</span></li>
+			</ul>
+		</div>
+	</section>
+
+	<section class="part">
+		<div class="head">
+			<h2>What good list apps do, and what this takes from them</h2>
+			<p>From the help pages and reviews of Bring!, AnyList, Apple Reminders, Google Keep, Todoist, OurGroceries, Microsoft To Do, Things, Listonic and PackPoint.</p>
+		</div>
+		<div class="tablewrap">
+			<table>
+				<thead><tr><th>Pattern</th><th>Who does it</th><th>In this design</th></tr></thead>
+				<tbody>
+					<tr><td>Add from inside the list</td><td>Bring!, AnyList, OurGroceries</td><td>Open a list and the field belongs to it [L4] [L5].</td></tr>
+					<tr><td>The item remembers where it belongs</td><td>OurGroceries (list per item), Reminders and AnyList (section per item)</td><td>The household's word list keeps each name's last list. The icon moves by itself [L3].</td></tr>
+					<tr><td>Amount typed in the same line</td><td>Bring! ("2 kg apples")</td><td>"2 l milk" becomes Milk · 2 L.</td></tr>
+					<tr><td>Suggestions that know the list</td><td>AnyList (marks what is on the list, a tap uncrosses it)</td><td>Names waiting on a list are not offered. A bought name goes back instead of doubling.</td></tr>
+					<tr><td>Ticked things collect below, newest first</td><td>OurGroceries, Google Keep, Bring! ("Recently used")</td><td>Kept, as "2 bought" inside each card.</td></tr>
+					<tr><td>One tap to run a checklist again</td><td>Google Keep ("Uncheck all items"). Reminders and AnyList lack it and people ask for it.</td><td>Start over on every checklist [L4].</td></tr>
+					<tr><td>Hide what is empty</td><td>Bring! and Reminders hide empty categories</td><td>Empty shopping lists leave the overview.</td></tr>
+				</tbody>
+			</table>
+		</div>
+		<p class="sources">Sources: <a href="https://getbring.com/help-center-main-categories/items-lists">Bring! help</a> · <a href="https://help.anylist.com/articles/feature-overview-adding-items">AnyList: adding items</a> · <a href="https://help.anylist.com/articles/autocomplete-icons">AnyList: autocomplete icons</a> · <a href="https://support.apple.com/HT213830">Apple: grocery lists in Reminders</a> · <a href="https://support.google.com/keep/answer/6395451">Google Keep: lists</a> · <a href="https://ourgroceries.com/user-guide">OurGroceries user guide</a> · <a href="https://www.todoist.com/help/articles/use-task-quick-add-in-todoist-va4Lhpzz">Todoist Quick Add</a></p>
+	</section>
+
+	<section class="part">
+		<div class="head">
+			<h2>Still yours to call</h2>
+		</div>
+		<ul class="asks">
+			<li><b>Which way to add: A, B, C, or A and B together?</b><span>Assumed: A and B together.</span></li>
+			<li><b>The tab's name: "Lists", or stay "Shopping"?</b><span>Assumed: Lists (Listen), with the shopping bag and the shopping raccoon kept.</span></li>
+			<li><b>A date on checklists: now, later, or never?</b><span>Assumed: later, as a small step of its own.</span></li>
+		</ul>
+	</section>
+</div>
+
+<script>
+	const MASCOT = 'data:image/avif;base64,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';
+	const I = {
+		plus: '<path d="M5 12h14M12 5v14"/>',
+		chev: '<path d="m6 9 6 6 6-6"/>',
+		left: '<path d="m15 18-6-6 6-6"/>',
+		right: '<path d="m9 18 6-6-6-6"/>',
+		check: '<path d="M20 6 9 17l-5-5"/>',
+		expand: '<path d="M15 3h6v6M9 21H3v-6M21 3l-7 7M3 21l7-7"/>',
+		more: '<circle cx="12" cy="12" r="1"/><circle cx="19" cy="12" r="1"/><circle cx="5" cy="12" r="1"/>',
+		cal: '<path d="M8 2v4M16 2v4M3 10h18"/><rect width="18" height="18" x="3" y="4" rx="2"/>',
+		grip: '<circle cx="9" cy="12" r="1"/><circle cx="9" cy="5" r="1"/><circle cx="9" cy="19" r="1"/><circle cx="15" cy="12" r="1"/><circle cx="15" cy="5" r="1"/><circle cx="15" cy="19" r="1"/>',
+		rotate: '<path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"/><path d="M3 3v5h5"/>',
+		basket: '<path d="m15 11-1 9M19 11l-4-7M2 11h20M3.5 11l1.6 7.4a2 2 0 0 0 2 1.6h9.8a2 2 0 0 0 2-1.6l1.7-7.4M4.5 15.5h15M5 11l4-7M9 11l1 9"/>',
+		bag: '<path d="M6 2 3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4Z"/><path d="M3 6h18M16 10a4 4 0 0 1-8 0"/>',
+		home: '<path d="M15 21v-8a1 1 0 0 0-1-1h-4a1 1 0 0 0-1 1v8"/><path d="M3 10a2 2 0 0 1 .709-1.528l7-5.999a2 2 0 0 1 2.582 0l7 5.999A2 2 0 0 1 21 10v9a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/>',
+		chef: '<path d="M17 21a1 1 0 0 0 1-1v-5.35c0-.457.316-.844.727-1.041a4 4 0 0 0-2.134-7.589 5 5 0 0 0-9.186 0 4 4 0 0 0-2.134 7.588c.411.198.727.585.727 1.041V20a1 1 0 0 0 1 1Z"/><path d="M6 17h12"/>',
+		tasks: '<path d="m3 17 2 2 4-4M3 7l2 2 4-4M13 6h8M13 12h8M13 18h8"/>',
+		receipt: '<path d="M4 2v20l2-1 2 1 2-1 2 1 2-1 2 1 2-1 2 1V2l-2 1-2-1-2 1-2-1-2 1-2-1-2 1Z"/><path d="M14 8H8M16 12H8M13 16H8"/>',
+		hammer: '<path d="m15 12-8.373 8.373a1 1 0 1 1-3-3L12 9"/><path d="m18 15 4-4"/><path d="m21.5 11.5-1.914-1.914A2 2 0 0 1 19 8.172V7l-2.26-2.26a6 6 0 0 0-4.202-1.756L9 2.96l.92.82A6.18 6.18 0 0 1 12 8.4V10l2 2h1.172a2 2 0 0 1 1.414.586L18.5 14.5"/>',
+		luggage: '<path d="M6 20a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h12a2 2 0 0 1 2 2v10a2 2 0 0 1-2 2"/><path d="M8 18V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v14M10 20h4"/><circle cx="16" cy="20" r="2"/><circle cx="8" cy="20" r="2"/>',
+		door: '<path d="M11 20H2M11 4.562v16.157a1 1 0 0 0 1.242.97L19 20V5.562a2 2 0 0 0-1.515-1.94l-4-1A2 2 0 0 0 11 4.561zM11 4H8a2 2 0 0 0-2 2v14M14 12h.01M22 20h-3"/>',
+		droplet: '<path d="M12 22a7 7 0 0 0 7-7c0-2-1-3.9-3-5.5s-3.5-4-4-6.5c-.5 2.5-2 4.9-4 6.5C6 11.1 5 13 5 15a7 7 0 0 0 7 7z"/>',
+		gift: '<path d="M20 12v10H4V12M2 7h20v5H2zM12 22V7M12 7H7.5a2.5 2.5 0 0 1 0-5C11 2 12 7 12 7zM12 7h4.5a2.5 2.5 0 0 0 0-5C13 2 12 7 12 7z"/>',
+		pill: '<path d="m10.5 20.5 10-10a4.95 4.95 0 1 0-7-7l-10 10a4.95 4.95 0 1 0 7 7Z"/><path d="m8.5 8.5 7 7"/>',
+		tent: '<path d="M3.5 21 14 3M20.5 21 10 3M15.5 21 12 15l-3.5 6M2 21h20"/>',
+		paw: '<circle cx="11" cy="4" r="2"/><circle cx="18" cy="8" r="2"/><circle cx="20" cy="16" r="2"/><path d="M9 10a5 5 0 0 1 5 5v3.5a3.5 3.5 0 0 1-6.84 1.045Q6.52 17.48 4.46 16.84A3.5 3.5 0 0 1 5.5 10Z"/>',
+		book: '<path d="M12 7v14M3 18a1 1 0 0 1-1-1V4a1 1 0 0 1 1-1h5a4 4 0 0 1 4 4 4 4 0 0 1 4-4h5a1 1 0 0 1 1 1v13a1 1 0 0 1-1 1h-6a3 3 0 0 0-3 3 3 3 0 0 0-3-3z"/>',
+		gear: '<path d="M14 17H5M19 7h-9"/><circle cx="17" cy="17" r="3"/><circle cx="7" cy="7" r="3"/>'
+	};
+	const ic = (n, s = 18, w = 1.9, cls = '') =>
+		`<svg class="ic ${cls}" viewBox="0 0 24 24" width="${s}" height="${s}" fill="none" stroke="currentColor" stroke-width="${w}" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${I[n]}</svg>`;
+	const CHECK = '<svg viewBox="0 0 26 26" aria-hidden="true"><circle class="ring-fill" cx="13" cy="13" r="11"/><circle class="ring" cx="13" cy="13" r="11"/><path class="tick" d="M8 13.5l3.2 3.2L18 9.8"/></svg>';
+	const TABS = `<nav class="tabs"><span class="tab">${ic('home', 23)}</span><span class="tab on">${ic('bag', 22)}Lists</span><span class="tab">${ic('chef', 23)}</span><span class="tab">${ic('tasks', 23)}<span class="dot">1</span></span><span class="tab">${ic('receipt', 23)}</span></nav>`;
+	const esc = (t) => String(t).replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' })[c]);
+	const reduced = matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+	/* What this household has added before, and the list each name went to last. */
+	const WORDS = [
+		['Shampoo', 'drug'], ['Shower gel', 'drug'], ['Shallots', 'grocery'], ['Sunscreen', 'drug'],
+		['Dishwasher tabs', 'drug'], ['Eggs', 'grocery'], ['Butter', 'grocery'], ['Milk', 'grocery'],
+		['Bread', 'grocery'], ['Coffee beans', 'grocery'], ['Screws 4×40', 'hardware'], ['Wall plugs', 'hardware']
+	];
+
+	const seed = () => ({
+		lists: [
+			{ id: 'grocery', name: 'Grocery', icon: 'basket', kind: 'buy', open: true, bought: [{ n: 'Bananas', by: 'e' }, { n: 'Yoghurt', q: '×2', by: 'l' }], items: [
+				{ n: 'Tomatoes', q: '×6', by: 'l' }, { n: 'Baby spinach', by: 'e' }, { n: 'Oat milk', q: '2 L', by: 'l' }, { n: 'Olive oil', by: 'e' }] },
+			{ id: 'drug', name: 'Drugstore', icon: 'droplet', kind: 'buy', open: true, bought: [], items: [] },
+			{ id: 'hardware', name: 'Hardware store', icon: 'hammer', kind: 'buy', open: true, bought: [], items: [] },
+			{ id: 'pack', name: 'Vacation packing', icon: 'luggage', kind: 'check', open: false, bought: [], items: [
+				{ n: 'Passports', done: true, who: 'l' }, { n: 'Phone chargers', done: true, who: 'e' }, { n: 'Sunscreen' }, { n: 'Swimwear' },
+				{ n: 'Toothbrushes', done: true, who: 'e' }, { n: 'First-aid kit' }, { n: 'Hiking boots' }, { n: 'Rain jackets', done: true, who: 'l' },
+				{ n: 'Books' }, { n: 'Camera' }, { n: 'Water bottles', done: true, who: 'l' }, { n: 'Sunglasses' }] },
+			{ id: 'leave', name: 'Before we leave', icon: 'door', kind: 'check', open: false, bought: [], items: [
+				{ n: 'Windows closed' }, { n: 'Heating turned down' }, { n: 'Bins out' }, { n: 'Plants watered' },
+				{ n: 'Fridge checked' }, { n: 'Stove off' }, { n: 'Key to the neighbours' }] }
+		],
+		target: 'grocery', manual: false, focus: false, text: '', why: '', menu: false, view: null, inline: null,
+		sheet: false, kind: 'check', icon: 'tent', flash: null, due: false
+	});
+
+	const PRESETS = {
+		main: () => {},
+		menu: (s) => { s.menu = true; },
+		known: (s) => { s.focus = true; s.text = 'Shampoo'; s.target = 'drug'; s.why = 'Shampoo'; },
+		pack: (s) => { s.view = 'pack'; },
+		shop: (s) => { s.view = 'grocery'; s.lists[0].boughtOpen = true; },
+		sheet: (s) => { s.sheet = true; },
+		due: (s) => { s.view = 'pack'; s.due = true; },
+		busylight: (s) => {
+			s.lists[1].items = [{ n: 'Toothpaste', by: 'e' }, { n: 'Cotton pads', q: '2 pack', by: 'e' }];
+		},
+		busy: (s) => {
+			s.lists[1].items = [{ n: 'Toothpaste', by: 'e' }, { n: 'Cotton pads', q: '2 pack', by: 'e' }];
+			s.lists[2].items = [{ n: 'LED bulbs (E27)', q: '×2', by: 'l' }];
+			s.lists[0].open = false;
+		}
+	};
+
+	const av = (who) => `<span class="av av-${who}">${who.toUpperCase()}</span>`;
+	const ring = (done, total) => {
+		const c = 2 * Math.PI * 7;
+		return `<svg class="ringp" width="18" height="18" viewBox="0 0 18 18" fill="none" stroke-width="3" aria-hidden="true"><circle class="bg" cx="9" cy="9" r="7"/><circle class="fg" cx="9" cy="9" r="7" stroke-linecap="round" stroke-dasharray="${c}" stroke-dashoffset="${total ? c * (1 - done / total) : c}"/></svg>`;
+	};
+	const stats = (L) => {
+		const left = L.items.filter((x) => !x.done).length;
+		return { left, total: L.items.length, done: L.items.length - left };
+	};
+	const row = (L, it, i) => {
+		const done = it.done || it.settling;
+		return `<li class="item ${done ? 'is-done' : ''} ${it.settling ? 'is-settling' : ''}">
+			<button class="check" data-act="tick" data-id="${L.id}" data-i="${i}" aria-pressed="${!!done}" aria-label="${esc(it.n)}">${CHECK}</button>
+			<span class="name">${esc(it.n)}</span>${it.q ? `<span class="qty">${esc(it.q)}</span>` : ''}
+			${L.kind === 'buy' ? '' : it.done && it.who ? av(it.who) : ''}
+			<span class="grip">${ic('grip', 16)}</span></li>`;
+	};
+
+	/* Everything under a list's header: rows, its own add row (variant C), Start over, "2 bought". */
+	function body(L, s, o, opened) {
+		const { left, done } = stats(L);
+		const buy = L.kind === 'buy';
+		const rows = L.items.length ? `<ul class="rows">${L.items.map((it, i) => row(L, it, i)).join('')}</ul>`
+			: opened ? `<p class="none">${buy && L.bought.length ? 'Everything is bought.' : 'Nothing here yet. Add the first thing above.'}</p>` : '';
+		const own = !o.own ? '' : s.inline === L.id
+			? `<span class="addrow">${ic('plus', 16)}<input class="inline-input" data-id="${L.id}" placeholder="Add to ${esc(L.name)}…" aria-label="Add to ${esc(L.name)}" autocomplete="off" /></span>`
+			: `<button class="addrow" data-act="inline" data-id="${L.id}">${ic('plus', 16)}Add to ${esc(L.name)}</button>`;
+		const reset = !buy && done ? `<button class="reset ${!left ? 'loud' : ''}" data-act="reset" data-id="${L.id}">${ic('rotate', 15, 2.1)}Start over</button>` : '';
+		const foot = own || reset ? `<div class="lfoot">${own || '<span class="grow"></span>'}${reset}</div>` : '';
+		const bought = !buy || !L.bought.length ? '' : `<button class="bfoot" data-act="bought" data-id="${L.id}" aria-expanded="${!!L.boughtOpen}">${ic('check', 15, 2.6)}${L.bought.length} bought${ic('chev', 14, 2.4, 'chev')}</button>
+			${L.boughtOpen ? `<ul class="rows">${L.bought.map((b, i) => `<li class="item is-done"><button class="check" data-act="restore" data-id="${L.id}" data-i="${i}" aria-pressed="true" aria-label="Put ${esc(b.n)} back">${CHECK}</button><span class="name">${esc(b.n)}</span>${b.q ? `<span class="qty">${esc(b.q)}</span>` : ''}</li>`).join('')}</ul>` : ''}`;
+		return rows + foot + bought;
+	}
+
+	function card(L, s, o) {
+		const { left, total, done } = stats(L);
+		const buy = L.kind === 'buy';
+		const inPlace = buy || !o.focus; // a checklist only unfolds on the overview where lists cannot be opened
+		const open = inPlace && L.open;
+		const names = L.items.filter((x) => !x.done).slice(0, 3).map((x) => x.n).join(', ');
+		const peek = buy ? (left ? names + (left > 3 ? '…' : '') : L.bought.length ? 'All done' : 'Nothing to get')
+			: !total ? 'Nothing on it yet' : left ? `${left} left · ${names}…` : 'All done';
+		const count = buy ? (left ? `<span class="count">${left}</span>` : L.bought.length ? `<span class="count all">${ic('check', 16, 2.6)}</span>` : '')
+			: `<span class="count ${total && !left ? 'all' : ''}">${ring(done, total)}${done}/${total}</span>`;
+		const split = o.head !== 'name'; // the header folds, and a button of its own opens the list
+		const txt = (chev) => `<span class="well">${ic(L.icon, 19)}</span><span class="ltxt"><span class="lname"><b>${esc(L.name)}</b>${chev ? ic('chev', 15, 2.4, 'chev') : ''}</span>${open ? '' : `<small>${esc(peek)}</small>`}</span>`;
+		// The count and the way in, one pill: "4 ›", a sage tick once everything is bought, "◔ 5/12 ›" on a checklist.
+		const inner = buy ? (left ? `${left}` : ic('check', 16, 2.6)) : `${ring(done, total)}${done}/${total}`;
+		const allDone = buy ? !left : total && !left;
+		const pill = (tag) => `<${tag} class="lpill ${allDone ? 'all' : ''}" ${tag === 'button' ? `data-act="open" data-id="${L.id}" aria-label="Open ${esc(L.name)}"` : ''}>${inner}${ic('right', 15, 2.4, 'go-in')}</${tag}>`;
+		const head = !inPlace
+			? `<button class="lmain solo" data-act="open" data-id="${L.id}">${txt(false)}${split ? pill('span') : count + ic('right', 18, 2, 'go-in')}</button>`
+			: split
+				? `<button class="lmain" data-act="fold" data-id="${L.id}" aria-expanded="${open}">${txt(true)}${o.focus ? '' : count}</button>${o.focus ? pill('button') : '<span class="lpad"></span>'}`
+				: `<button class="lmain" data-act="${o.focus ? 'open' : 'fold'}" data-id="${L.id}">${txt(false)}</button>
+					<button class="lfold" data-act="fold" data-id="${L.id}" aria-expanded="${open}" aria-label="${open ? 'Fold' : 'Unfold'} ${esc(L.name)}">${count}${ic('chev', 18, 2, 'chev')}</button>`;
+		return `<section class="card list ${s.flash === L.id ? 'flash' : ''}" data-kind="${L.kind}"><div class="lhead">${head}</div>${open ? body(L, s, o, false) : ''}</section>`;
+	}
+
+	function compose(s, o, fixed) {
+		const T = fixed || s.lists.find((l) => l.id === s.target);
+		const lead = fixed ? `<span class="well mini" data-kind="${T.kind}">${ic(T.icon, 17)}</span>`
+			: o.picker ? `<button class="pick" data-act="menu" data-kind="${T.kind}" aria-expanded="${s.menu}" aria-label="Adding to ${esc(T.name)}. Choose another list"><span class="well mini">${ic(T.icon, 17)}</span>${ic('chev', 13, 2.4, 'pc')}</button>`
+			: ic('plus', 18, 2);
+		const ph = fixed || o.picker ? `Add to ${T.name}…` : 'Add an item…';
+		return `<div class="compose"><div class="card composecard"><div class="quick ${fixed || o.picker ? 'has-lead' : ''}">${lead}
+			<input class="main-input" placeholder="${esc(ph)}" aria-label="${esc(ph)}" autocomplete="off" />
+			<button class="sq go" data-act="add" aria-label="Add">${ic('plus', 16, 2.4)}</button></div></div><div class="extras"></div></div>`;
+	}
+
+	function overview(s, o) {
+		const buy = s.lists.filter((l) => l.kind === 'buy'), chk = s.lists.filter((l) => l.kind === 'check');
+		const shown = buy.filter((l) => o.own || l.items.length || l.bought.length);
+		const hidden = buy.filter((l) => !shown.includes(l));
+		const toBuy = buy.reduce((n, l) => n + l.items.filter((i) => !i.settling).length, 0);
+		return `<header class="top"><img class="mascot" src="${MASCOT}" alt="" /><div class="grow"><h3>Lists</h3><p class="sub">${toBuy ? `${toBuy} ${toBuy === 1 ? 'thing' : 'things'} to get` : 'Nothing to get'}</p></div><span class="manage">${ic('gear', 19)}</span></header>
+			${o.own ? '' : compose(s, o, null)}
+			<div class="lists">${shown.map((L) => card(L, s, o)).join('')}${chk.map((L) => card(L, s, o)).join('')}
+				${!o.picker && o.focus && hidden.length ? `<div class="empties"><span class="to">Empty</span>${hidden.map((L) => `<button class="chip" data-act="open" data-id="${L.id}">${ic(L.icon, 15)}${esc(L.name)}</button>`).join('')}</div>` : ''}
+				<button class="newlist" data-act="sheet">${ic('plus', 17, 2.2)}New list</button></div>`;
+	}
+
+	function opened(L, s, o) {
+		const { left, total, done } = stats(L);
+		const buy = L.kind === 'buy';
+		const sub = buy ? `${left ? `${left} to get` : 'Nothing to get'}${L.bought.length ? ` · ${L.bought.length} bought` : ''}` : `${done} of ${total} done`;
+		return `<div class="fbar"><button class="back" data-act="back">${ic('left', 19, 2.2)}Lists</button><span class="manage">${ic('more', 20)}</span></div>
+			<div class="ftitle" data-kind="${L.kind}"><span class="well big">${ic(L.icon, 24)}</span><div class="grow"><h3>${esc(L.name)}</h3><p class="sub">${sub}</p></div></div>
+			${s.due && !buy ? `<p class="due">${ic('cal', 15, 2)}Needed Sat 28 Nov · in 8 days</p>` : ''}
+			${buy ? '' : `<div class="bar ${total && !left ? 'all' : ''}"><i style="width:${total ? (done / total) * 100 : 0}%"></i></div>`}
+			${compose(s, o, L)}
+			<div class="lists"><section class="card list bare ${s.flash === L.id ? 'flash' : ''}" data-kind="${L.kind}">${body(L, s, o, true)}</section></div>`;
+	}
+
+	function mount(el) {
+		const d = el.dataset;
+		const o = { head: d.head || 'split', own: d.own === '1', picker: d.picker !== '0' && d.own !== '1', focus: d.focus !== '0' && d.own !== '1' };
+		const s = seed();
+		const VOCAB = WORDS.map((w) => [...w]); // each phone has its own memory
+		(PRESETS[d.preset] || (() => {}))(s);
+		el.innerHTML = `<div class="scroll"></div>${TABS}<div class="overlay"></div>`;
+		const $ = (q) => el.querySelector(q);
+		const sc = $('.scroll');
+		const list = (id) => s.lists.find((l) => l.id === id);
+		const first = () => s.lists.find((l) => l.kind === 'buy').id;
+		const waiting = () => new Set(s.lists.filter((l) => l.kind === 'buy').flatMap((l) => l.items.map((i) => i.n.toLowerCase())));
+
+		function paintExtras() {
+			const c = $('.compose');
+			if (!c) return;
+			c.classList.toggle('is-focus', s.focus);
+			const fixed = s.view ? list(s.view) : null;
+			const T = fixed || list(s.target);
+			const input = $('.main-input');
+			if (!fixed && o.picker) {
+				const p = $('.pick');
+				p.dataset.kind = T.kind;
+				p.querySelector('.well').innerHTML = ic(T.icon, 17);
+				p.setAttribute('aria-expanded', s.menu);
+				input.placeholder = `Add to ${T.name}…`;
+			}
+			const t = s.text.trim().toLowerCase();
+			const have = waiting();
+			const words = fixed && fixed.kind === 'check' ? [] : VOCAB;
+			const hits = t && s.focus && !s.menu ? words.filter(([n]) => n.toLowerCase().includes(t) && n.toLowerCase() !== t && !have.has(n.toLowerCase())).slice(0, 4) : [];
+			$('.extras').innerHTML =
+				(s.why && !fixed ? `<p class="why">${ic(T.icon, 14)}<span>Goes on <b>${esc(T.name)}</b>, like last time. <button class="keep" data-act="keep" aria-label="Keep on ${esc(list(first()).name)}">Keep here</button></span></p>` : '')
+				+ (s.menu && !fixed ? `<div class="card pop">${s.lists.map((L) => { const { left, total, done } = stats(L); return `<button class="mrow ${L.id === s.target ? 'on' : ''}" data-act="target" data-id="${L.id}" data-kind="${L.kind}"><span class="well mini">${ic(L.icon, 17)}</span><span class="grow">${esc(L.name)}</span><small>${L.kind === 'buy' ? left || 'empty' : `${done}/${total}`}</small>${L.id === s.target ? ic('check', 17, 2.6) : ''}</button>`; }).join('')}
+					<button class="mrow"><span class="well mini">${ic('more', 17)}</span><span class="grow">Other</span><small>empty</small></button>
+					<button class="mrow new" data-act="sheet"><span class="well mini">${ic('plus', 16, 2.2)}</span><span class="grow">New list</span></button></div>` : '')
+				+ (hits.length ? `<div class="card pop">${hits.map(([n, id]) => {
+					const at = n.toLowerCase().indexOf(t);
+					const name = esc(n.slice(0, at)) + '<mark>' + esc(n.slice(at, at + t.length)) + '</mark>' + esc(n.slice(at + t.length));
+					return `<button class="sugg" data-act="pick" data-name="${esc(n)}" data-id="${id}"><span>${name}</span>${fixed ? '' : `<small>${esc(list(id).name)}</small>`}</button>`;
+				}).join('')}</div>` : '');
+		}
+
+		function paintSheet() {
+			$('.overlay').innerHTML = !s.sheet ? '' : `<div class="scrim" data-act="sheet"></div>
+				<div class="sheet"><span class="handle"></span><h4>New list</h4>
+					<input class="list-name" value="Camping weekend" aria-label="List name" />
+					<div class="seg"><button class="${s.kind === 'buy' ? 'on' : ''}" data-act="kind" data-id="buy">${ic('basket', 17)}Shopping list</button><button class="${s.kind === 'check' ? 'on' : ''}" data-act="kind" data-id="check">${ic('tasks', 17)}Checklist</button></div>
+					<div class="icons">${['basket', 'bag', 'droplet', 'pill', 'hammer', 'gift', 'luggage', 'tent', 'door', 'paw', 'book', 'home'].map((n) => `<button class="icn ${s.icon === n ? 'on' : ''}" data-act="icon" data-id="${n}" aria-label="${n}">${ic(n, 20)}</button>`).join('')}</div>
+					<button class="cta" data-act="create">Create list</button></div>`;
+		}
+
+		function paint(toTop) {
+			const a = document.activeElement;
+			const had = a && el.contains(a) ? (a.matches('.main-input') ? 'main' : a.matches('.inline-input') ? 'inline' : '') : '';
+			const typed = $('.inline-input')?.value;
+			const top = sc.scrollTop;
+			sc.innerHTML = s.view ? opened(list(s.view), s, o) : overview(s, o);
+			s.flash = null;
+			const input = $('.main-input');
+			if (input) input.value = s.text;
+			paintExtras();
+			paintSheet();
+			const inl = $('.inline-input');
+			if (inl && typed) inl.value = typed;
+			if (had === 'main') input?.focus({ preventScroll: true });
+			if (had === 'inline') inl?.focus({ preventScroll: true });
+			sc.scrollTop = toTop ? 0 : top;
+		}
+
+		function add(raw, id) {
+			const t = raw.trim();
+			if (!t) return;
+			const m = t.match(/^(\d+(?:[.,]\d+)?)\s*(kg|g|ml|l|pack|x)?\s+(.+)$/i);
+			let n = t, q = '';
+			if (m) { n = m[3]; q = m[2] && m[2].toLowerCase() !== 'x' ? `${m[1]} ${m[2].toLowerCase() === 'l' ? 'L' : m[2]}` : `×${m[1]}`; }
+			n = n[0].toUpperCase() + n.slice(1);
+			const L = list(id);
+			L.items.push({ n, q, by: 'l' });
+			const known = VOCAB.find(([v]) => v.toLowerCase() === n.toLowerCase());
+			if (L.kind === 'buy') { if (known) known[1] = id; else VOCAB.push([n, id]); }
+			s.flash = id; s.text = ''; s.why = ''; s.kept = false;
+			if (!s.manual && !s.view) s.target = first();
+			paint();
+		}
+
+		el.addEventListener('click', (e) => {
+			const b = e.target.closest('[data-act]');
+			if ((s.focus || s.menu) && !e.target.closest('.compose')) { s.focus = false; s.menu = false; paintExtras(); }
+			if (!b) return;
+			const { act, id, i } = b.dataset;
+			const input = $('.main-input');
+			if (act === 'fold') { list(id).open = !list(id).open; if (s.inline === id) s.inline = null; paint(); }
+			else if (act === 'open') { s.view = id; s.menu = false; s.focus = false; s.text = ''; s.why = ''; paint(true); }
+			else if (act === 'back') { s.view = null; s.text = ''; paint(true); }
+			else if (act === 'menu') { s.menu = !s.menu; paintExtras(); }
+			// "Keep here": back to the list the field was on, for this line, until the field is emptied.
+			else if (act === 'keep') { s.target = first(); s.kept = true; s.why = ''; s.focus = true; paintExtras(); input.focus(); }
+			else if (act === 'target') { s.target = id; s.manual = true; s.menu = false; s.why = ''; s.focus = true; paintExtras(); input.focus(); }
+			else if (act === 'bought') { list(id).boughtOpen = !list(id).boughtOpen; paint(); }
+			else if (act === 'add') { add(input.value, s.view || s.target); $('.main-input').focus(); }
+			else if (act === 'pick') { add(b.dataset.name, s.view || (s.manual ? s.target : id)); $('.main-input').focus(); }
+			else if (act === 'inline') { s.inline = id; paint(); $('.inline-input')?.focus({ preventScroll: true }); }
+			else if (act === 'reset') { list(id).items.forEach((it) => { it.done = false; it.who = null; }); paint(); }
+			else if (act === 'restore') { const L = list(id); const back = L.bought.splice(+i, 1)[0]; L.items.push({ n: back.n, q: back.q, by: back.by || 'l' }); paint(); }
+			else if (act === 'sheet') { s.sheet = !s.sheet; s.menu = false; paintExtras(); paintSheet(); }
+			else if (act === 'kind') { s.kind = id; paintSheet(); }
+			else if (act === 'icon') { s.icon = id; paintSheet(); }
+			else if (act === 'create') {
+				const L = { id: 'n' + Date.now(), name: $('.list-name').value.trim() || 'New list', icon: s.icon, kind: s.kind, open: true, items: [], bought: [] };
+				s.lists.push(L);
+				s.sheet = false;
+				if (o.focus) s.view = L.id; else if (L.kind === 'buy') { s.target = L.id; s.manual = true; }
+				paint(true);
+			}
+			else if (act === 'tick') {
+				const L = list(id), it = L.items[+i];
+				if (L.kind === 'check') { it.done = !it.done; it.who = it.done ? 'l' : null; paint(); }
+				else if (!it.settling) {
+					it.settling = true; paint();
+					setTimeout(() => { L.items.splice(L.items.indexOf(it), 1); L.bought.unshift({ n: it.n, q: it.q, by: it.by }); paint(); }, reduced ? 500 : 1100);
+				}
+			}
+		});
+		el.addEventListener('focusin', (e) => {
+			if (!e.target.matches('.main-input')) return;
+			s.focus = true;
+			paintExtras();
+		});
+		el.addEventListener('input', (e) => {
+			if (!e.target.matches('.main-input')) return;
+			s.text = e.target.value;
+			if (!s.text.trim()) s.kept = false;
+			if (!s.view && !s.manual && !s.kept) {
+				const known = VOCAB.find(([n]) => n.toLowerCase() === s.text.trim().toLowerCase());
+				s.target = known ? known[1] : first();
+				s.why = known && known[1] !== first() ? known[0] : '';
+			}
+			paintExtras();
+		});
+		el.addEventListener('keydown', (e) => {
+			if (e.key !== 'Enter') return;
+			if (e.target.matches('.main-input')) add(e.target.value, s.view || s.target);
+			else if (e.target.matches('.inline-input')) { const id = e.target.dataset.id, v = e.target.value; e.target.value = ''; add(v, id); }
+		});
+		paint();
+	}
+
+	document.querySelectorAll('.phone').forEach(mount);
+</script>

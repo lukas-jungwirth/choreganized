@@ -47,6 +47,8 @@ plus your session date). Note deviations in the plan file and in DECISIONS.md.
 | 33  | [Swipe between To do and History on the Tasks tab](33-swipe-tasks-view.md)                       | done (2026-10-31) | 32                       |
 | 34  | [Admin mode: stats and the raccoon picker](34-admin-mode.md)                                     | done (2026-11-03) | 00, 10                   |
 | 35  | [The raccoon album: collect every raccoon Home shows you](35-raccoon-album.md)                   | done              | 02, 10                   |
+| 36  | [Lists: shopping lists you can open, checklists to run again](36-lists.md)                       | done (2026-11-20) | 03, 15                   |
+| 37  | [Quick add reads the amount wherever it is typed](37-quick-add-amounts.md)                       | done (2026-11-20) | 36                       |
 
 Work done after the twelve plans, tracked here so the queue stays the whole story:
 

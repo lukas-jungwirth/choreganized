@@ -2,10 +2,16 @@
 	Tap a task [4b] — everything you can do to it in one sheet: finish it, push
 	it, hand it over, let this one go, edit it, or delete it.
 
+	Handing it over is one row. With a single other choice that row does it
+	("Reassign to Elisabeth"); with more it opens a list of the household inside
+	this sheet, "Anyone" included, instead of a row per housemate
+	(→ SPEC §5.3, DECISIONS #277).
+
 	Delete asks first, in a confirm raised from *inside* this sheet — the
 	composition BottomSheet and CenterModal were built around (→ DECISIONS #36).
 -->
 <script lang="ts">
+	import { tick } from 'svelte';
 	import { enhance } from '$app/forms';
 	import Avatar from '$lib/components/ui/Avatar.svelte';
 	import BottomSheet from '$lib/components/ui/BottomSheet.svelte';
@@ -56,7 +62,24 @@
 
 	let open = $state(true);
 	let confirmOpen = $state(false);
+	/** The sheet is showing the "who takes it?" list in place of its menu. */
+	let picking = $state(false);
 	let submitting = $state(false);
+
+	/**
+	 * Swapping the menu for the list unmounts the button that was just pressed,
+	 * and focus with it. So it is carried across: into the list on the way in,
+	 * back onto the row that opened it on the way out (→ DECISIONS #280).
+	 */
+	let list: HTMLElement | undefined = $state();
+	let opener: HTMLButtonElement | undefined = $state();
+
+	async function pick(on: boolean) {
+		picking = on;
+		await tick();
+		if (on) list?.querySelector<HTMLElement>('button:not(:disabled)')?.focus();
+		else opener?.focus();
+	}
 
 	$effect(() => {
 		if (!open) onclose();
@@ -67,7 +90,7 @@
 		m.task.turnLabel(task.assignee?.displayName ?? null, task.assignee?.id === currentMemberId)
 	);
 
-	/** Everyone it isn't already with — one row each (→ SPEC §5.3). */
+	/** Everyone it isn't already with: one makes a direct row, more make the list (→ SPEC §5.3). */
 	const others = $derived(members.filter((member) => member.id !== task.assignee?.id));
 
 	/**
@@ -98,99 +121,158 @@
 	};
 </script>
 
-<BottomSheet bind:open title={task.name}>
-	{#if overdue && task.dueDate}
-		<p class="pill">
-			{m.date.dueMeta(task.dueDate, today)} · {m.tasks.detail.wasDue(m.date.short(task.dueDate))}
-		</p>
-	{/if}
-
-	<p class="facts">
-		<span class="fact">
-			<RotateCw size={13} strokeWidth={2} aria-hidden="true" />
-			{m.task.repeat(task.recurUnit, task.recurInterval)}
-		</span>
-		<span class="fact">
-			{#if task.assignee}
-				<Avatar name={task.assignee.displayName} color={task.assignee.color} size={18} />
-			{:else}
-				<Avatar empty size={18} />
-			{/if}
-			{turn}
-		</span>
-		<span class="fact points">
-			<Star size={13} strokeWidth={2} aria-hidden="true" />
-			{m.tasks.detail.pts(task.points)}
-		</span>
-	</p>
-
-	{#if task.paused && task.assignee?.awayUntil}
-		<p class="paused">
-			{m.tasks.detail.pausedNote(task.assignee.displayName, m.date.short(task.assignee.awayUntil))}
-		</p>
-	{/if}
-
-	<!-- Someone else's task opens the "who did it?" choice; the click handler
-		 prevents the submit with JS, and without JS the form still posts and marks
-		 done as the tapper. Everything else marks done straight off. -->
-	<form method="POST" action="?/complete" use:enhance={complete}>
-		<input type="hidden" name="id" value={task.id} />
-		<Button
-			type="submit"
-			onclick={needsChoice ? chooseInstead : undefined}
-			aria-haspopup={needsChoice ? 'dialog' : undefined}
-			disabled={submitting}
-		>
-			<Check size={19} strokeWidth={2.6} />{m.tasks.detail.markAsDone(task.points)}
-		</Button>
-	</form>
-
-	<div class="menu">
-		<button type="button" class="item" onclick={onsnooze}>
-			<Clock size={19} strokeWidth={1.9} aria-hidden="true" />
-			<span class="what">{m.tasks.detail.snooze}</span>
-			<ChevronRight size={14} strokeWidth={2} aria-hidden="true" />
-		</button>
-
-		{#each others as member (member.id)}
-			{@const who = member.id === currentMemberId ? m.tasks.detail.me : member.displayName}
+<BottomSheet bind:open title={picking ? m.tasks.detail.pickTitle : task.name}>
+	{#if picking}
+		<p class="picked">{task.name}</p>
+		<div class="menu" bind:this={list}>
+			{#each members as member (member.id)}
+				{@const current = member.id === task.assignee?.id}
+				<form method="POST" action="?/reassign" use:enhance={closeOnSuccess}>
+					<input type="hidden" name="id" value={task.id} />
+					<input type="hidden" name="assigneeMemberId" value={member.id} />
+					<button type="submit" class="item" class:current disabled={submitting || current}>
+						<Avatar name={member.displayName} color={member.color} size={26} />
+						<span class="what">
+							{member.id === currentMemberId
+								? m.tasks.detail.pickYou(member.displayName)
+								: member.displayName}
+							{#if current}<span class="quiet">· {m.tasks.detail.pickCurrent}</span>{/if}
+						</span>
+						{#if current}
+							<span class="mark"><Check size={19} strokeWidth={2.6} aria-hidden="true" /></span>
+						{/if}
+					</button>
+				</form>
+			{/each}
 			<form method="POST" action="?/reassign" use:enhance={closeOnSuccess}>
 				<input type="hidden" name="id" value={task.id} />
-				<input type="hidden" name="assigneeMemberId" value={member.id} />
-				<button type="submit" class="item" disabled={submitting}>
+				<!-- No assignee id posted: that is "Anyone". -->
+				<button
+					type="submit"
+					class="item"
+					class:current={!task.assignee}
+					disabled={submitting || !task.assignee}
+				>
+					<Avatar empty size={26} />
+					<span class="what">
+						{m.common.anyone}
+						{#if !task.assignee}<span class="quiet">· {m.tasks.detail.pickCurrent}</span>{/if}
+					</span>
+					{#if !task.assignee}
+						<span class="mark"><Check size={19} strokeWidth={2.6} aria-hidden="true" /></span>
+					{/if}
+				</button>
+			</form>
+		</div>
+		<button type="button" class="back" onclick={() => pick(false)}>
+			{m.tasks.detail.pickBack}
+		</button>
+	{:else}
+		{#if overdue && task.dueDate}
+			<p class="pill">
+				{m.date.dueMeta(task.dueDate, today)} · {m.tasks.detail.wasDue(m.date.short(task.dueDate))}
+			</p>
+		{/if}
+
+		<p class="facts">
+			<span class="fact">
+				<RotateCw size={13} strokeWidth={2} aria-hidden="true" />
+				{m.task.repeat(task.recurUnit, task.recurInterval)}
+			</span>
+			<span class="fact">
+				{#if task.assignee}
+					<Avatar name={task.assignee.displayName} color={task.assignee.color} size={18} />
+				{:else}
+					<Avatar empty size={18} />
+				{/if}
+				{turn}
+			</span>
+			<span class="fact points">
+				<Star size={13} strokeWidth={2} aria-hidden="true" />
+				{m.tasks.detail.pts(task.points)}
+			</span>
+		</p>
+
+		{#if task.paused && task.assignee?.awayUntil}
+			<p class="paused">
+				{m.tasks.detail.pausedNote(
+					task.assignee.displayName,
+					m.date.short(task.assignee.awayUntil)
+				)}
+			</p>
+		{/if}
+
+		<!-- Someone else's task opens the "who did it?" choice; the click handler
+		 prevents the submit with JS, and without JS the form still posts and marks
+		 done as the tapper. Everything else marks done straight off. -->
+		<form method="POST" action="?/complete" use:enhance={complete}>
+			<input type="hidden" name="id" value={task.id} />
+			<Button
+				type="submit"
+				onclick={needsChoice ? chooseInstead : undefined}
+				aria-haspopup={needsChoice ? 'dialog' : undefined}
+				disabled={submitting}
+			>
+				<Check size={19} strokeWidth={2.6} />{m.tasks.detail.markAsDone(task.points)}
+			</Button>
+		</form>
+
+		<div class="menu">
+			<button type="button" class="item" onclick={onsnooze}>
+				<Clock size={19} strokeWidth={1.9} aria-hidden="true" />
+				<span class="what">{m.tasks.detail.snooze}</span>
+				<ChevronRight size={14} strokeWidth={2} aria-hidden="true" />
+			</button>
+
+			{#if others.length === 1}
+				{@const member = others[0]}
+				{@const who = member.id === currentMemberId ? m.tasks.detail.me : member.displayName}
+				<form method="POST" action="?/reassign" use:enhance={closeOnSuccess}>
+					<input type="hidden" name="id" value={task.id} />
+					<input type="hidden" name="assigneeMemberId" value={member.id} />
+					<button type="submit" class="item" disabled={submitting}>
+						<UserRoundCheck size={19} strokeWidth={1.9} aria-hidden="true" />
+						<span class="what">
+							{task.assignee ? m.tasks.detail.reassignTo(who) : m.tasks.detail.assignTo(who)}
+						</span>
+						<ChevronRight size={14} strokeWidth={2} aria-hidden="true" />
+					</button>
+				</form>
+			{:else if others.length > 1}
+				<button type="button" class="item" bind:this={opener} onclick={() => pick(true)}>
 					<UserRoundCheck size={19} strokeWidth={1.9} aria-hidden="true" />
 					<span class="what">
-						{task.assignee ? m.tasks.detail.reassignTo(who) : m.tasks.detail.assignTo(who)}
+						{task.assignee ? m.tasks.detail.reassign : m.tasks.detail.assign}
 					</span>
 					<ChevronRight size={14} strokeWidth={2} aria-hidden="true" />
 				</button>
-			</form>
-		{/each}
+			{/if}
 
-		{#if task.recurUnit !== 'none'}
-			<!-- "This time" only means something when there is a next time; a
+			{#if task.recurUnit !== 'none'}
+				<!-- "This time" only means something when there is a next time; a
 				 one-off is skipped by deleting it (→ docs/plans/04-tasks.md). -->
-			<form method="POST" action="?/skip" use:enhance={closeOnSuccess}>
-				<input type="hidden" name="id" value={task.id} />
-				<button type="submit" class="item" disabled={submitting}>
-					<ArrowRight size={19} strokeWidth={1.9} aria-hidden="true" />
-					<span class="what">
-						{m.tasks.detail.skip} <span class="quiet">{m.tasks.detail.skipNote}</span>
-					</span>
-				</button>
-			</form>
-		{/if}
+				<form method="POST" action="?/skip" use:enhance={closeOnSuccess}>
+					<input type="hidden" name="id" value={task.id} />
+					<button type="submit" class="item" disabled={submitting}>
+						<ArrowRight size={19} strokeWidth={1.9} aria-hidden="true" />
+						<span class="what">
+							{m.tasks.detail.skip} <span class="quiet">{m.tasks.detail.skipNote}</span>
+						</span>
+					</button>
+				</form>
+			{/if}
 
-		<button type="button" class="item" onclick={onedit}>
-			<Pencil size={19} strokeWidth={1.9} aria-hidden="true" />
-			<span class="what">{m.tasks.detail.edit}</span>
-			<ChevronRight size={14} strokeWidth={2} aria-hidden="true" />
+			<button type="button" class="item" onclick={onedit}>
+				<Pencil size={19} strokeWidth={1.9} aria-hidden="true" />
+				<span class="what">{m.tasks.detail.edit}</span>
+				<ChevronRight size={14} strokeWidth={2} aria-hidden="true" />
+			</button>
+		</div>
+
+		<button type="button" class="delete" onclick={() => (confirmOpen = true)}>
+			{m.tasks.detail.delete}
 		</button>
-	</div>
-
-	<button type="button" class="delete" onclick={() => (confirmOpen = true)}>
-		{m.tasks.detail.delete}
-	</button>
+	{/if}
 
 	<CenterModal bind:open={confirmOpen} label={m.tasks.detail.delete} dismissible={false}>
 		<div class="well" aria-hidden="true"><Trash2 size={26} strokeWidth={1.9} /></div>
@@ -305,6 +387,39 @@
 	.quiet {
 		font-weight: 400;
 		color: var(--text-5);
+	}
+
+	/* The "who takes it?" list: the task's name under the title, a tick on whoever
+	   has it now, and a way back to the menu. */
+	.picked {
+		margin: -14px 0 4px;
+		font-size: var(--fs-15);
+		color: var(--text-4);
+		overflow-wrap: anywhere;
+	}
+
+	.current {
+		font-weight: 600;
+		color: var(--ink);
+	}
+
+	.item.current:disabled {
+		opacity: 1;
+	}
+
+	.mark {
+		display: flex;
+		color: var(--sage);
+	}
+
+	.back {
+		width: 100%;
+		margin-top: 16px;
+		padding: 6px;
+		font-size: var(--fs-16);
+		font-weight: 600;
+		text-align: center;
+		color: var(--text-4);
 	}
 
 	.delete {

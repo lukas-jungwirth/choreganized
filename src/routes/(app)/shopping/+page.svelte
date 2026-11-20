@@ -1,28 +1,37 @@
 <!--
-	Shopping [03] — the shared list, grouped by store in walking order, with the
-	quick-add field pinned above it, everything already bought folded into one
-	section underneath, and the full sheet [3a] behind both the sliders button
-	and any row.
+	Lists, the overview [L1] [L7] (plan 36, SPEC §3.1): the add field, then one
+	card per list with something on it, then "New list".
+
+	A card's header folds it; its corner button opens the list full screen
+	(`/shopping/[listId]`). A shopping list with nothing on it is not on screen —
+	the field's menu still reaches it. What was ticked off waits at the foot of
+	its own card as "{n} bought" until the nightly sweep.
+
+	Checklists (plan 36 step 2) come after the shopping lists, each always one
+	row that opens it (→ `ChecklistRow`), empty or not.
 -->
 <script lang="ts">
 	import HolidayNotice from '$lib/components/HolidayNotice.svelte';
 	import BasketIcon from '$lib/components/icons/BasketIcon.svelte';
 	import PageHeader from '$lib/components/shell/PageHeader.svelte';
-	import BoughtSection from '$lib/components/shopping/BoughtSection.svelte';
+	import ChecklistRow from '$lib/components/shopping/ChecklistRow.svelte';
+	import ListCard from '$lib/components/shopping/ListCard.svelte';
+	import ListSheet from '$lib/components/shopping/ListSheet.svelte';
 	import LiveNotice from '$lib/components/shopping/LiveNotice.svelte';
-	import QuickAdd from '$lib/components/shopping/QuickAdd.svelte';
-	import ShoppingGroup from '$lib/components/shopping/ShoppingGroup.svelte';
+	import QuickAdd, { type QuickAddList } from '$lib/components/shopping/QuickAdd.svelte';
 	import ShoppingItemSheet from '$lib/components/shopping/ShoppingItemSheet.svelte';
 	import UndoBar from '$lib/components/shopping/UndoBar.svelte';
 	import Button from '$lib/components/ui/Button.svelte';
 	import EmptyState from '$lib/components/ui/EmptyState.svelte';
+	import { goto } from '$app/navigation';
 	import { messages } from '$lib/i18n';
-	import { liveShopping, type RemoteTick } from '$lib/live-shopping.svelte';
+	import { liveShopping } from '$lib/live-shopping.svelte';
 	import type { ShoppingListItem } from '$lib/server/services/shopping';
+	import { shoppingTicks } from '$lib/shopping-ticks.svelte';
+	import { OTHER_LIST_KEY, foldedCookie } from '$lib/utils/lists';
 	import { splitList, suggestionKey } from '$lib/utils/shopping';
-	import type { SubmitFunction } from '@sveltejs/kit';
-	import MapPin from '@lucide/svelte/icons/map-pin';
 	import Plus from '@lucide/svelte/icons/plus';
+	import Settings2 from '@lucide/svelte/icons/settings-2';
 	import { untrack } from 'svelte';
 	import { SvelteMap, SvelteSet } from 'svelte/reactivity';
 	import type { PageProps } from './$types';
@@ -31,235 +40,128 @@
 
 	const m = messages();
 
-	/**
-	 * How long a tick plays out where it stands before the row goes
-	 * (→ SPEC §3.1). Long enough to read the name you just ticked — or the one a
-	 * housemate did — and short enough that nobody waits for it.
-	 */
-	const SETTLE_MS = 1400;
+	const ticks = shoppingTicks(() => data.items, {
+		checklists: () =>
+			data.stores.filter((store) => store.kind === 'checklist').map((store) => store.id),
+		me: () => data.currentMember
+	});
 
-	/** With the motion gone there is only the state to take in, so: less of it. */
-	const SETTLE_REDUCED_MS = 700;
+	const list = $derived(splitList(ticks.items, data.stores));
 
-	/**
-	 * Checks that have been tapped but not yet confirmed: item id → the
-	 * `checkedAt` we're acting as if the server had already written.
-	 *
-	 * Ticking a box has to feel instant, and it isn't only the circle that
-	 * changes — the row strikes through and leaves its store for "recently
-	 * bought" (and takes the store's heading with it, if it was the last thing
-	 * left to buy there). So the optimistic value goes through the same split
-	 * the server used, and the entry is dropped again once the real data lands.
-	 */
-	const pending = new SvelteMap<string, number | null>();
+	/** The shopping lists' cards (and "Other"): what there is to get. */
+	const shopping = $derived(list.groups.filter((group) => group.kind === 'buy'));
 
-	const items = $derived(
-		data.items.map((item) =>
-			pending.has(item.id) ? { ...item, checkedAt: pending.get(item.id) ?? null } : item
-		)
+	/** What is left to get across every shopping list; a settling row counts as got. */
+	const toGet = $derived(
+		shopping.flatMap((group) => group.items).filter((item) => !ticks.isSettling(item.id)).length
+	);
+
+	/** Where the field adds when nothing else says otherwise: the first shopping list. */
+	const firstListId = $derived(data.stores.find((store) => store.kind === 'buy')?.id ?? null);
+
+	/** Every list for the field's menu [L2], with what is on it. */
+	const menuLists = $derived<QuickAddList[]>(
+		data.stores.map((store) => {
+			const rows = ticks.items.filter((item) => item.storeId === store.id);
+			// A settling row counts as got, as in the header and on its card.
+			const left = rows.filter(
+				(item) => item.checkedAt === null && !ticks.isSettling(item.id)
+			).length;
+			return {
+				...store,
+				status:
+					store.kind === 'checklist'
+						? m.shopping.lists.ticked(rows.length - left, rows.length)
+						: m.shopping.lists.status(left)
+			};
+		})
+	);
+
+	/** What is left to get on "Other", for its entry at the foot of the menu. */
+	const otherLeft = $derived(
+		shopping
+			.find((group) => group.storeId === null)
+			?.items.filter((item) => !ticks.isSettling(item.id)).length ?? 0
 	);
 
 	/**
-	 * Ticks playing out in place: item id → the colour to draw them in. Sage when
-	 * it was you, the housemate's own colour when it wasn't.
-	 *
-	 * This is the other half of `pending`. A settling row is held at
-	 * `checkedAt: null` so `splitList` leaves it exactly where it is, and *this*
-	 * is what tells the row to look ticked anyway. When the entry goes, the real
-	 * data — which arrived long ago — applies, and the row leaves for "recently
-	 * bought" (→ DECISIONS #135).
-	 */
-	const settling = new SvelteMap<string, string>();
-
-	/**
-	 * The bookkeeping behind each settling row, and the ids whose beat is up.
-	 *
-	 * A settle ends on **two** conditions, not one: its time is up *and* the
-	 * server's list agrees the item is checked. The beat alone isn't enough —
-	 * on a slow connection (a shop basement, which is exactly where this runs)
-	 * the action can still be in flight at 1.4 s, and releasing then would snap
-	 * the row back to un-ticked while the undo bar said it was checked off.
-	 * Holding costs nothing: the row already looks the way it will end up.
-	 */
-	const settleMeta = new Map<
-		string,
-		{ item: ShoppingListItem; undoable: boolean; timer: ReturnType<typeof setTimeout> }
-	>();
-
-	const elapsed = new SvelteSet<string>();
-
-	const list = $derived(splitList(items, data.stores));
-
-	/**
-	 * The header counts a settling row as done. It has a ✓ on it and a line
-	 * through it; a count that still called it "to buy" would be arguing with
-	 * what is on the screen.
-	 */
-	const doneCount = $derived(list.bought.length + settling.size);
-
-	/** The topmost store — where quick-add lands, and the sheet's preselection. */
-	const defaultStoreId = $derived(data.stores[0]?.id ?? null);
-
-	/**
-	 * The names both fields complete from, minus whatever is already waiting to
+	 * The names the field completes from, minus whatever is already waiting to
 	 * be bought: offering "Oat milk" while "Oat milk" is three rows below is an
-	 * invitation to buy it twice.
+	 * invitation to buy it twice. A name under "{n} bought" stays offered —
+	 * taking it puts that row back.
 	 */
 	const suggestions = $derived.by(() => {
 		const onTheList = new Set(
-			list.groups.flatMap((group) => group.items).map((item) => suggestionKey(item.name))
+			shopping.flatMap((group) => group.items).map((item) => suggestionKey(item.name))
 		);
-		return data.suggestions.filter((name) => !onTheList.has(suggestionKey(name)));
+		return data.suggestions
+			.filter((known) => !onTheList.has(suggestionKey(known.name)))
+			.map((known) => known.name);
 	});
+
+	/* ── Folding ──────────────────────────────────────────────────────────── */
+
+	/** Folded cards, per device: seeded from the cookie, then owned by the taps. */
+	const folded = new SvelteSet<string>(untrack(() => data.folded));
+
+	const keyOf = (storeId: string | null) => storeId ?? OTHER_LIST_KEY;
+
+	function fold(storeId: string | null) {
+		const key = keyOf(storeId);
+		if (folded.has(key)) folded.delete(key);
+		else folded.add(key);
+		// Only lists that still exist, so a deleted list's key doesn't sit in the
+		// cookie for good.
+		const live = new Set([OTHER_LIST_KEY, ...data.stores.map((store) => store.id)]);
+		document.cookie = foldedCookie([...folded].filter((folded) => live.has(folded)));
+	}
+
+	/* ── Where an add landed ──────────────────────────────────────────────── */
+
+	/**
+	 * A list something was just added to, while it was folded or not on screen:
+	 * its card lights up once (a counter, so a second add replays it).
+	 */
+	const flashes = new SvelteMap<string, number>();
+	let flashNext: string | null = null;
+
+	function adding(storeId: string | null) {
+		const key = keyOf(storeId);
+		const card = list.groups.find((group) => keyOf(group.storeId) === key);
+		// A checklist's row shows no rows of its own, so an add there always flashes.
+		flashNext = !card || card.kind === 'checklist' || folded.has(key) ? key : null;
+	}
+
+	function added() {
+		if (flashNext === null) return;
+		flashes.set(flashNext, (flashes.get(flashNext) ?? 0) + 1);
+		flashNext = null;
+	}
+
+	// A card that leaves the overview forgets its flash, or it would replay the
+	// day a housemate's add brings it back.
+	$effect(() => {
+		const shown = new Set(list.groups.map((group) => keyOf(group.storeId)));
+		untrack(() => {
+			for (const key of [...flashes.keys()]) if (!shown.has(key)) flashes.delete(key);
+		});
+	});
+
+	/* ── Sheets ───────────────────────────────────────────────────────────── */
 
 	/** null = closed. Mounting the sheet per opening is what resets its form. */
 	let sheet = $state<{ item: ShoppingListItem | null; name: string } | null>(null);
+	let newList = $state(false);
 
 	/** Lives here rather than in QuickAdd so the sheet can take it over. */
 	let quickName = $state('');
 
-	/**
-	 * The item the undo bar is currently offering to put back, or null.
-	 *
-	 * A fresh object per tick, which is what the `{#key}` below keys on: ticking
-	 * a second item replaces the bar rather than letting the new name inherit
-	 * what was left of the old one's few seconds.
-	 */
-	let ticked = $state<{ item: ShoppingListItem } | null>(null);
-
-	/** Stop holding a row, whether it finished or was tapped again. */
-	function clearSettle(itemId: string) {
-		const meta = settleMeta.get(itemId);
-		if (meta) clearTimeout(meta.timer);
-		settleMeta.delete(itemId);
-		elapsed.delete(itemId);
-		settling.delete(itemId);
-		pending.delete(itemId);
-	}
-
-	/**
-	 * Hold a row where it stands while its tick plays out, then let it go.
-	 *
-	 * `pending` at null is what does the holding: the server has the item down as
-	 * checked, and until this ends we act as though it hadn't — so `splitList`
-	 * leaves the row in its store group and `settling` tells it to look ticked
-	 * anyway. The write is never delayed, only the departure, so the other phone
-	 * hears about it at once either way.
-	 *
-	 * `undoable` is the one difference between your tick and a housemate's: the
-	 * bar that comes up at the end offers to put something back, and theirs was
-	 * never yours to take away.
-	 */
-	function startSettle(item: ShoppingListItem, color: string, undoable: boolean) {
-		clearSettle(item.id);
-		pending.set(item.id, null);
-		settling.set(item.id, color);
-
-		const reduced =
-			typeof matchMedia === 'function' && matchMedia('(prefers-reduced-motion: reduce)').matches;
-
-		const timer = setTimeout(() => elapsed.add(item.id), reduced ? SETTLE_REDUCED_MS : SETTLE_MS);
-		settleMeta.set(item.id, { item, undoable, timer });
-	}
-
-	/**
-	 * Let go of the rows whose beat is up and whose server row has caught up.
-	 *
-	 * Re-runs on both halves of that: `elapsed` when a beat ends, `data.items`
-	 * when a load lands. A row that has vanished from the list altogether — a
-	 * housemate deleted it, the nightly sweep took it — has nothing left to hold
-	 * either, so it counts as caught up.
-	 */
-	$effect(() => {
-		const rows = data.items;
-		const ready = [...elapsed];
-
-		untrack(() => {
-			for (const id of ready) {
-				const row = rows.find((candidate) => candidate.id === id);
-				if (row && row.checkedAt === null) continue;
-
-				const meta = settleMeta.get(id);
-				clearSettle(id);
-				// The row is gone from its group *now*, which is the moment it becomes
-				// hard to find again — so this is when the way back appears, rather
-				// than a second and a half before there was anything to undo.
-				if (meta?.undoable) ticked = { item: meta.item };
-			}
-		});
-	});
-
-	function toggle(item: ShoppingListItem): SubmitFunction {
-		return ({ formData }) => {
-			const checked = formData.get('checked') === 'true';
-
-			if (checked) {
-				// Yours is sage — the list's own accent. Only a housemate's tick wears
-				// a colour, because only then is *who* part of the news.
-				startSettle(item, 'var(--sage)', true);
-			} else {
-				// Unchecking answers at once: there is nothing to watch, and "put it
-				// back" is a correction, which wants to look immediate.
-				clearSettle(item.id);
-				pending.set(item.id, null);
-			}
-
-			return async ({ update, result }) => {
-				await update({ reset: false });
-				if (checked) {
-					// A tick that didn't happen must not go on being held, and must not
-					// grow an undo bar for it either.
-					if (result.type !== 'success') clearSettle(item.id);
-				} else {
-					pending.delete(item.id);
-				}
-				if (result.type !== 'success' && ticked?.item.id === item.id) ticked = null;
-			};
-		};
-	}
-
-	/** Undoing is a tick in reverse, plus taking the bar away. */
-	function undo(item: ShoppingListItem): SubmitFunction {
-		const submit = toggle(item);
-
-		return (input) => {
-			const done = submit(input);
-			ticked = null;
-			return done;
-		};
-	}
-
-	/**
-	 * A housemate ticked something. It plays out in their colour, in the row's own
-	 * place in the walking order — the same settle your own tap gets, minus the
-	 * undo bar at the end of it, because it wasn't yours to undo.
-	 */
-	function onRemoteTick({ itemId, actor }: RemoteTick) {
-		const item = items.find((row) => row.id === itemId);
-		// Only a row that is still open here has a tick to play. An event for one
-		// this client already shows as bought — a late echo, a refetch that landed
-		// first — must not haul it back out of "recently bought".
-		if (!item || item.checkedAt !== null) return;
-		// Already playing — most likely we both tapped the same row. Whoever
-		// started it keeps it; restarting would only stutter the animation.
-		if (settling.has(itemId)) return;
-
-		startSettle(item, actor.color, false);
-	}
-
 	const live = liveShopping(
 		() => data.currentMember.id,
-		(tick) => onRemoteTick(tick)
+		(tick) => ticks.onRemoteTick(tick)
 	);
 
 	$effect(live.start);
-
-	// Leaving the screen mid-settle would otherwise leave a timer holding a row
-	// that no longer exists.
-	$effect(() => () => {
-		for (const { timer } of settleMeta.values()) clearTimeout(timer);
-		settleMeta.clear();
-	});
 
 	function edit(item: ShoppingListItem) {
 		sheet = { item, name: item.name };
@@ -273,11 +175,11 @@
 <PageHeader
 	mascot="shopping"
 	title={m.shopping.title}
-	meta={items.length > 0 ? m.shopping.progress(doneCount, items.length) : m.shopping.nothingListed}
+	meta={toGet > 0 ? m.shopping.lists.thingsToGet(toGet) : m.shopping.lists.nothingToGet}
 >
 	{#snippet actions()}
-		<a class="stores" href="/shopping/stores" aria-label={m.shopping.manageStores}>
-			<MapPin size={18} strokeWidth={1.9} />
+		<a class="manage" href="/shopping/stores" aria-label={m.shopping.manageStores}>
+			<Settings2 size={19} strokeWidth={1.9} />
 		</a>
 	{/snippet}
 </PageHeader>
@@ -292,11 +194,17 @@
 
 <QuickAdd
 	bind:value={quickName}
-	{suggestions}
-	onexpand={() => (sheet = { item: null, name: quickName })}
+	known={data.suggestions}
+	offered={suggestions}
+	lists={menuLists}
+	other={{ status: m.shopping.lists.status(otherLeft) }}
+	fallback={firstListId}
+	onadding={adding}
+	onadded={added}
+	onnewlist={() => (newList = true)}
 />
 
-{#if items.length === 0}
+{#if list.groups.length === 0}
 	<div class="empty">
 		<EmptyState title={m.shopping.empty.title}>
 			{#snippet icon()}<BasketIcon size={40} strokeWidth={1.6} />{/snippet}
@@ -311,27 +219,45 @@
 		</EmptyState>
 	</div>
 {:else}
-	{#each list.groups as group (group.storeId ?? 'other')}
-		<ShoppingGroup {group} {toggle} onedit={edit} settling={(id) => settling.get(id)} />
-	{/each}
-
-	{#if list.bought.length > 0}
-		<BoughtSection
-			items={list.bought}
-			startOpen={list.groups.length === 0}
-			{toggle}
-			onedit={edit}
-		/>
-	{/if}
+	<div class="lists">
+		{#each list.groups as group (keyOf(group.storeId))}
+			{#if group.kind === 'checklist' && group.storeId}
+				<ChecklistRow
+					{group}
+					href="/shopping/{group.storeId}"
+					flash={flashes.get(keyOf(group.storeId)) ?? 0}
+				/>
+			{:else}
+				<ListCard
+					{group}
+					toggle={ticks.toggle}
+					onedit={edit}
+					settling={ticks.settling}
+					folded={folded.has(keyOf(group.storeId))}
+					onfold={() => fold(group.storeId)}
+					openHref={group.storeId ? `/shopping/${group.storeId}` : null}
+					flash={flashes.get(keyOf(group.storeId)) ?? 0}
+				/>
+			{/if}
+		{/each}
+	</div>
 {/if}
+
+<button type="button" class="new-list" onclick={() => (newList = true)}>
+	<Plus size={17} strokeWidth={2.2} />{m.shopping.lists.newList}
+</button>
 
 <!-- One slot, and the undo bar owns it whenever it wants it: it is the only one
 	 of the two with something to press, and it takes itself away after five
 	 seconds. The housemate's row has already ticked itself off on screen either
 	 way, so nothing is lost by the notice waiting its turn. -->
-{#if ticked}
-	{#key ticked}
-		<UndoBar item={ticked.item} undo={undo(ticked.item)} onclose={() => (ticked = null)} />
+{#if ticks.ticked}
+	{#key ticks.ticked}
+		<UndoBar
+			item={ticks.ticked.item}
+			undo={ticks.undo(ticks.ticked.item)}
+			onclose={ticks.dismissUndo}
+		/>
 	{/key}
 {:else if live.notice}
 	{#key live.notice}
@@ -345,14 +271,23 @@
 		initialName={sheet.name}
 		{suggestions}
 		stores={data.stores}
-		{defaultStoreId}
+		defaultStoreId={firstListId}
 		onadded={() => (quickName = '')}
 		onclose={() => (sheet = null)}
 	/>
 {/if}
 
+{#if newList}
+	<ListSheet
+		list={null}
+		ondone={(id) => goto(`/shopping/${id}`)}
+		onclose={() => (newList = false)}
+	/>
+{/if}
+
 <style>
-	.stores {
+	.manage {
+		position: relative;
 		display: flex;
 		/* The header aligns on the baseline; the icon wants its own centre. */
 		align-self: center;
@@ -361,16 +296,43 @@
 		color: var(--text-4);
 	}
 
+	/* 27px drawn; the target is 44 without moving the header. */
+	.manage::after {
+		content: '';
+		position: absolute;
+		inset: -9px;
+	}
+
 	/* The header sits tight against the field it introduces; the notice needs the
 	   gap a card gets everywhere else in the app. */
 	.notice {
 		margin-bottom: 14px;
 	}
 
+	.lists {
+		display: grid;
+		gap: 12px;
+	}
+
+	.new-list {
+		display: flex;
+		align-items: center;
+		justify-content: center;
+		gap: 8px;
+		width: 100%;
+		min-height: 52px;
+		margin-top: 14px;
+		border: 1.5px dashed var(--border-dashed);
+		border-radius: var(--r-block);
+		font-size: var(--fs-16);
+		font-weight: 600;
+		color: var(--text-4);
+	}
+
 	.empty {
 		/* [7d] floats the basket at 46% of the screen; this lands near it without
 		   pinning anything to a viewport height the shell doesn't own. */
-		margin-top: 12vh;
+		margin: 8vh 0 6vh;
 	}
 
 	.cta :global(.button) {

@@ -22,6 +22,7 @@ import {
 import { isMemberColor } from '$lib/member-colors';
 import { enterAdminMode, isAdmin, leaveAdminMode } from '$lib/server/admin';
 import { requireMember } from '$lib/server/guards';
+import { legalLinks } from '$lib/server/legal';
 import { pushConfigured, sendTestNotification, type NotificationPref } from '$lib/server/push';
 import {
 	aiErrorMessage,
@@ -111,6 +112,8 @@ export const load: PageServerLoad = (event) => {
 		/** The raccoon album row under the profile card: "17 of 39" (→ plan 35). */
 		album: { found: countSightings(householdId, member.id), total: ALBUM_SIZE },
 		email: user.email,
+		/** About → Privacy and Imprint, each only if the deploy set its text (→ SPEC §13). */
+		legal: legalLinks(),
 		// Which provider and model each AI slot uses, and a masked hint — never the
 		// key itself (→ SPEC §6, plan 20). Members see it read-only; only the owner
 		// can change it.

@@ -30,10 +30,10 @@ user ─┬─ session / account / verification        (Better Auth)
    by it (enforced via the `requireMember` guard — see ARCHITECTURE.md). SQLite has no RLS; the
    service layer is the boundary.
 2. **Identity vs. profile.** `user` is the Better Auth identity (Google). `members` is the
-   household profile (display name, colour, role, notification prefs, away state). UI always
-   shows member data, never user data. v1 enforces one household per user
-   (`members_user_unique` index) — drop that index to unlock multi-household later; nothing
-   else assumes it.
+   household profile (display name of up to 20 characters, colour, role, notification prefs,
+   away state). UI always shows member data, never user data. v1 enforces one household per
+   user (`members_user_unique` index) — drop that index to unlock multi-household later;
+   nothing else assumes it.
 3. **Calendar dates are TEXT `YYYY-MM-DD`** in the household's timezone (`households.timezone`,
    captured at creation). "Due Thursday" is a calendar concept: comparing/adding days happens on
    date strings (lexicographic compare works), _never_ through UTC Date conversions. Instants
@@ -100,19 +100,55 @@ user ─┬─ session / account / verification        (Better Auth)
 
 ### `stores` / `shopping_items` / `shopping_suggestions` / `pantry_staples`
 
-- Store order (`sortOrder`, contiguous ints) = walking order; list renders stores by it.
-  `storeId NULL` → virtual "Other" group, rendered last. Deleting a store sets its items'
-  `storeId` to NULL.
-- `checkedAt NULL` = open; set = bought (struck through, out of its store group and into
-  "Recently bought" — → [DECISIONS #105](DECISIONS.md)). Cleanup cron deletes items with
-  `checkedAt < now - 12h` (nightly at 03:30 household-local; exact age not critical).
+- **A store is a list** (plan 36). The UI and the catalog say "list"; the table and the
+  `store_id` columns keep their names, because a rename buys nothing the household can see and
+  drizzle's rename path is the one that has bitten before (0013) (→
+  [DECISIONS #264](DECISIONS.md)).
+- Store order (`sortOrder`, contiguous ints) = the order the overview shows the lists in, and
+  the first **shopping** list is where the add field and a recipe's pour-in land
+  (`defaultStoreId`). `storeId NULL` → virtual "Other" group, rendered after the shopping lists
+  and before the checklists, and a target the add field's menu offers (an empty `storeId` in
+  the form; a missing one means "wherever the field would go"). Deleting a shopping list sets its items' `storeId` to NULL;
+  deleting a checklist deletes its items in the same transaction (plan 36 step 2).
+- `shopping_items.sortOrder` is the walking order within one list, and only ever compared
+  there. Every way a row **joins** a list writes `max + 1` of that list (`nextItemSortOrder`):
+  a new item, a bought one the add field puts back, and one the sheet moves over from another
+  list. Dragging renumbers the open rows 0…n−1 (every row, on a checklist), so a shopping
+  list's bought rows may repeat an open row's number; nothing sorts the two together until
+  the list is turned into a checklist, where `createdAt` breaks the tie
+  (→ [DECISIONS #279](DECISIONS.md)).
+- `shopping_items.addedByMemberId` is who asked for the row **last**: the add field putting a
+  bought row back rewrites it, an untick by hand does not. `createdAt` stays the first add.
+- `stores.icon` (TEXT NULL, migration 0023): a key from the fixed set of twelve in
+  `utils/lists.ts` `LIST_ICONS`; NULL, or a key a later build no longer knows, draws the basket.
+  A new household's three lists get basket, droplet and hammer.
+- `stores.kind` (TEXT NOT NULL DEFAULT 'buy', migration 0023): 'buy' is a shopping list,
+  'checklist' a list whose ticks stay until "Start over" (plan 36 step 2, no migration of its
+  own). The rows read the same columns either way: a bought row **is** a ticked row, so changing
+  the kind (`setStoreKind`) touches only this column. A checklist's rows are not shopping, and
+  `notOnChecklist()` (services/shopping.ts) is the one SQL condition that keeps them out of the
+  nightly sweep, Home's "{n} on shopping list" and the rows a recipe's pour-in matches against.
+  Checklist adds write no `shopping_suggestions` row and send no "added" push. Start over
+  (`resetList`) sets `checkedAt` and `checkedByMemberId` to NULL on every row of the list in one
+  transaction and hands back what it cleared, so its undo (`undoReset`) can write the same
+  ticks back.
+- `checkedAt NULL` = open; set = bought (struck through, and under "{n} bought" at the foot of
+  its own list's card — → [DECISIONS #105](DECISIONS.md)), or ticked in place on a checklist,
+  where `checkedByMemberId` draws the ticker's avatar. Cleanup cron deletes items with
+  `checkedAt < now - 12h` (nightly at 03:30 household-local; exact age not critical), never a
+  checklist's.
 - `shopping_suggestions` is the household's **vocabulary**, one row per distinct name, and the
   reason it is a table rather than a `SELECT DISTINCT` over `shopping_items` is that line above:
   the items are swept up, the words shouldn't be. `nameKey` (trimmed + lowercased,
   `utils/shopping.ts` `suggestionKey`) is unique per household and the upsert's conflict target;
   `name` keeps the spelling last used, which is what gets offered back. Written on every add,
   rename and recipe pour-in; read most-recent-first, capped, and filtered in the browser
-  (→ [DECISIONS #106](DECISIONS.md)).
+  (→ [DECISIONS #106](DECISIONS.md)). `storeId` (migration 0023, → `stores.id` ON DELETE SET
+  NULL, added to the generated `ALTER TABLE` by hand as in 0019) is the list the name went to
+  **last**, rewritten by every add, edit and pour-in; the add field moves its icon there when a
+  known name is typed (plan 36 [L3]). NULL is **no memory**: the list was deleted, or the name
+  last went to "Other", which the add field offers as a choice but does not remember
+  (→ [DECISIONS #275](DECISIONS.md)); the field then starts on the first shopping list.
 - `pantry_staples` is the same shape as `shopping_suggestions` doing the opposite job: the names
   this household **doesn't** need to buy. Nobody fills in a pantry inventory, so it is learned
   from the ingredient picker (§4.8) — `skipCount` goes up each time a name is offered and left
@@ -204,11 +240,36 @@ occurrence changes (done, skip, snooze, edit of due date).
    reverts exactly that (delete completion; for one-offs re-insert the task row from the
    returned snapshot).
 
+**Done together** (service `setCompletionDoers`, → SPEC §5.4, DECISIONS #277): the celebration's
+row of faces replaces who a completion is credited to. In one transaction it undoes the
+completion from the snapshot and logs it again for the new doers, keeping the group id, the
+`completedAt` and the next due date, so it is the same completion told again. One row per doer,
+each with `splitPoints(task.points, doers)` (even split, rounded to nearest, at least 1 when the
+task is worth something). Rotation: one doer → from the doer, as in step 2; several → from the
+assignee. An empty or foreign list of doers changes nothing.
+
 **Skip** = same as done with `action 'skipped'`, `points 0`, credited to the tapper, not shown
 in the history feed. Its rotation advances from the **assignee** (a skip is nobody's doing), not
 from whoever tapped.
 
 ### `task_completions`
+
+- `groupId` — one finishing of one task. Every row a completion writes carries it: a task done
+  alone is a group of one, a task done together is one row per doer with the same `groupId`,
+  each holding that doer's share. The `completionId` the browser holds for Undo is this id.
+  NULL on rows written before shared completions existed; those are their own group, keyed
+  by `id` (readers use `coalesce(groupId, id)`). Because shares are ordinary rows,
+  `SUM(points) GROUP BY memberId` needs no change; anything that counts _completions_ or
+  lists them (the feed, Home's activity, "{n} done this week") groups by it.
+  **Changing the doers** (`setCompletionDoers`, the celebration's faces) replaces the group's
+  rows in one transaction: same `groupId`, `completedAt`, `taskId` and `taskName`, new
+  members, each with their share of the price in the snapshot the browser carries. That
+  snapshot is checked against the rows first (same task or `taskId` NULL, and its points must
+  split into the shares that were logged), the group is found by `groupId` only, and it must
+  be less than a day old (`DOERS_WINDOW_MS`). On `tasks` it writes `assigneeMemberId` and
+  nothing else, and only while the task is where this completion left it: same assignee and
+  `rotate` as the completion produced, and no later completion row for the task
+  (→ DECISIONS #280).
 
 - Leaderboard month: `completedAt` within the current household-local calendar month and
   `action = 'done'`; `SUM(points) GROUP BY memberId`. Month boundaries computed from

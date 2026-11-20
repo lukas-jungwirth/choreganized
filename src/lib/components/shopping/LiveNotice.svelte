@@ -5,7 +5,7 @@
 	The row has already ticked itself off where it stood, in their colour, which
 	is the better signal because it is in the walking order you were reading. This
 	is for when that isn't enough: the row is below the fold, or it went into a
-	folded-up "recently bought", or the change was an *add* and there was no row
+	folded-up "{n} bought", or the change was an *add* and there was no row
 	of yours to animate at all.
 
 	Deliberately not `UndoBar`, though it borrows its furniture — the 480px

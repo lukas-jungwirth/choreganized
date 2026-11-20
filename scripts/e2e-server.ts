@@ -17,6 +17,7 @@ import { spawn } from 'node:child_process';
 import { existsSync, mkdirSync, rmSync } from 'node:fs';
 import { dirname } from 'node:path';
 import { fakeAiEnv, startFakeAi } from './fake-ai.ts';
+import { E2E_IMPRINT, E2E_PRIVACY } from './e2e-legal.ts';
 
 const port = process.env.PORT ?? '4173';
 const origin = `http://127.0.0.1:${port}`;
@@ -84,6 +85,14 @@ const child = spawn(process.execPath, [...preload, 'build/index.js'], {
 		// A journey watches "Send again" count down and come back; a minute is too
 		// long to wait (→ lib/server/send-limit.ts, honoured in E2E mode only).
 		SIGN_IN_CODE_COOLDOWN_SECONDS: '3',
+		// Both legal pages, with made-up text (→ SPEC §13): sign-in, Settings and
+		// the pages themselves are tested and screenshotted with them on. Unset
+		// they hide, which tests/integration/legal-pages.test.ts covers. One
+		// written on one line with `\n`, the way a single-line variable is. The
+		// made-up text is English, and says so (the default is German).
+		LEGAL_IMPRINT: E2E_IMPRINT,
+		LEGAL_PRIVACY: E2E_PRIVACY,
+		LEGAL_LANG: 'en',
 		...fakeAiEnv(fakeAi.url),
 		...fixedClock
 	}

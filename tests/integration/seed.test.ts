@@ -55,7 +55,11 @@ describe('scripts/seed.ts', { timeout: 30_000 }, () => {
 		assert.equal(run.status, 0, `seed in ${zone}:\n${run.stdout}${run.stderr}`);
 
 		const checked = new Database(databasePath, { readonly: true })
-			.prepare('select checked_at as at from shopping_items where checked_at is not null')
+			.prepare(
+				`select checked_at as at from shopping_items
+				 where checked_at is not null
+				 and store_id not in (select id from stores where kind = 'checklist')`
+			)
 			.all() as { at: number }[];
 		const cutoff = Date.now() - CHECKED_ITEM_TTL_MS;
 
@@ -96,5 +100,39 @@ describe('scripts/seed.ts', { timeout: 30_000 }, () => {
 			'every member has a ledger person'
 		);
 		assert.equal(stubDone, MEMBER_COLORS.length - 2);
+	});
+
+	it('a list it adds to a household that has its own goes after them, never beside one', () => {
+		// The household above, as if it had made a list of its own and never had
+		// the packing list: the seed has one to add.
+		const sqlite = new Database(databasePath);
+		const household = sqlite.prepare('select id from households').pluck().get() as string;
+		sqlite.prepare(`delete from shopping_items where store_id like 'seed:%:store:packing'`).run();
+		sqlite.prepare(`delete from stores where id like 'seed:%:store:packing'`).run();
+		sqlite
+			.prepare(
+				`insert into stores (id, household_id, name, kind, sort_order, created_at)
+				 select 'own-list', ?, 'Bakery', 'buy', coalesce(max(sort_order), -1) + 1, ?
+				 from stores where household_id = ?`
+			)
+			.run(household, Date.now(), household);
+		sqlite.close();
+
+		const run = seed('UTC');
+		assert.equal(run.status, 0, run.stdout + run.stderr);
+
+		const after = new Database(databasePath, { readonly: true });
+		const orders = after
+			.prepare('select name, sort_order as sortOrder from stores order by sort_order, name')
+			.all() as { name: string; sortOrder: number }[];
+		after.close();
+
+		assert.equal(orders.length, 5);
+		assert.deepEqual(
+			orders.map(({ sortOrder }) => sortOrder),
+			[0, 1, 2, 3, 4],
+			JSON.stringify(orders)
+		);
+		assert.equal(orders[4].name, 'Vacation packing');
 	});
 });

@@ -1,80 +1,59 @@
 <!--
-	One store in [7g]: pin tile, its name (editable in place), how much is filed
-	under it, and the controls that move or remove it.
+	One list in Manage lists [7g]: its icon, its name, how much is filed under
+	it, and the arrows that move it. The row itself opens the edit sheet (name,
+	kind, icon, delete → `ListSheet`), with a chevron that says so (Lukas
+	2026-11-20). It used to be an inline text field squeezed between the icon,
+	the count and the buttons, with the icon unchangeable and the bin beside it.
 
-	The name is a live text field rather than a tap-to-edit mode — one less
-	state, and it renames without JavaScript, since Enter submits a single-field
-	form on its own. Blur is what saves; Escape puts the old name back.
+	The arrows stay on the row and keep working without JavaScript; editing a
+	list needs it, like the item sheet [3a].
 -->
 <script lang="ts">
 	import { enhance } from '$app/forms';
+	import ListIcon from '$lib/components/shopping/ListIcon.svelte';
 	import { messages } from '$lib/i18n';
 	import type { StoreSummary } from '$lib/server/services/shopping';
-	import { STORE_NAME_MAX } from '$lib/utils/shopping';
 	import ChevronDown from '@lucide/svelte/icons/chevron-down';
+	import ChevronRight from '@lucide/svelte/icons/chevron-right';
 	import ChevronUp from '@lucide/svelte/icons/chevron-up';
-	import MapPin from '@lucide/svelte/icons/map-pin';
-	import Trash2 from '@lucide/svelte/icons/trash-2';
 
 	type Props = {
 		store: StoreSummary;
-		/** The topmost store is where quick-add lands — the design tints it sage. */
+		/** Can't move up. */
 		first: boolean;
 		last: boolean;
-		ondelete: () => void;
+		/** Where quick-add lands, the topmost shopping list: the design tints it sage. */
+		isDefault?: boolean;
+		onedit: () => void;
 	};
 
-	let { store, first, last, ondelete }: Props = $props();
+	let { store, first, last, isDefault = false, onedit }: Props = $props();
 
 	const m = messages();
-
-	function save(event: FocusEvent & { currentTarget: HTMLInputElement }) {
-		const field = event.currentTarget;
-		const next = field.value.trim();
-
-		// Nothing typed, or nothing changed: no POST, and an emptied field gets
-		// its name back rather than being left blank on screen.
-		if (!next || next === store.name) {
-			field.value = store.name;
-			return;
-		}
-
-		field.form?.requestSubmit();
-	}
-
-	function onkeydown(event: KeyboardEvent & { currentTarget: HTMLInputElement }) {
-		if (event.key === 'Enter') {
-			// Let blur be the one path that saves, and drop the phone keyboard.
-			event.preventDefault();
-			event.currentTarget.blur();
-		} else if (event.key === 'Escape') {
-			event.currentTarget.value = store.name;
-			event.currentTarget.blur();
-		}
-	}
 </script>
 
 <li class="row">
-	<span class="tile" class:default={first} aria-hidden="true">
-		<MapPin size={16} strokeWidth={1.9} />
-	</span>
-
-	<form class="rename" method="POST" action="?/rename" use:enhance>
-		<input type="hidden" name="id" value={store.id} />
-		<input
-			class="name"
-			type="text"
-			name="name"
-			value={store.name}
-			aria-label={m.shopping.stores.rename(store.name)}
-			maxlength={STORE_NAME_MAX}
-			autocomplete="off"
-			required
-			onblur={save}
-			{onkeydown}
-		/>
-		<span class="count">{m.shopping.stores.items(store.itemCount)}</span>
-	</form>
+	<button
+		type="button"
+		class="open"
+		data-edit={store.id}
+		aria-label={m.shopping.lists.edit(store.name)}
+		onclick={onedit}
+	>
+		<span
+			class="tile"
+			class:default={isDefault}
+			class:check={store.kind === 'checklist'}
+			aria-hidden="true"
+		>
+			<ListIcon icon={store.icon} size={16} />
+		</span>
+		<span class="titles">
+			<span class="name">{store.name}</span>
+			<span class="count">{m.shopping.stores.items(store.itemCount)}</span>
+		</span>
+		<span class="go" aria-hidden="true"><ChevronRight size={17} strokeWidth={2.2} /></span>
+	</button>
 
 	<form class="move" method="POST" action="?/move" use:enhance>
 		<input type="hidden" name="id" value={store.id} />
@@ -97,28 +76,34 @@
 			<ChevronDown size={17} strokeWidth={2.2} />
 		</button>
 	</form>
-
-	<button
-		type="button"
-		class="delete"
-		onclick={ondelete}
-		aria-label={m.shopping.stores.remove(store.name)}
-	>
-		<Trash2 size={17} strokeWidth={1.9} />
-	</button>
 </li>
 
 <style>
 	.row {
 		display: flex;
-		align-items: center;
-		gap: 10px;
-		padding: 10px 12px 10px 14px;
+		align-items: stretch;
 		border-top: 1px solid var(--divider);
 	}
 
 	.row:first-child {
 		border-top: none;
+	}
+
+	/* The whole row but the arrows: one target, at least 44px tall. */
+	.open {
+		display: flex;
+		flex: 1;
+		align-items: center;
+		gap: 10px;
+		min-width: 0;
+		min-height: 56px;
+		padding: 10px 10px 10px 14px;
+		text-align: left;
+		color: inherit;
+	}
+
+	.open:active {
+		background: var(--field);
 	}
 
 	.tile {
@@ -133,58 +118,60 @@
 		color: var(--text-4);
 	}
 
+	/* A checklist wears terracotta here too, as on the overview (plan 36). */
+	.check {
+		background: var(--terracotta-tint);
+		color: var(--terracotta-deep);
+	}
+
 	.default {
 		background: var(--sage-tint);
 		color: var(--sage);
 	}
 
-	.rename {
-		display: flex;
-		flex-direction: column;
+	.titles {
+		display: grid;
 		flex: 1;
 		min-width: 0;
 	}
 
-	/* Reads as the row's title until you touch it. */
+	/* Wraps rather than truncating: at 200% a long name takes two lines. */
 	.name {
-		width: 100%;
-		padding: 3px 6px;
-		margin-left: -6px;
-		border: 1.5px solid transparent;
-		border-radius: 9px;
-		background: none;
-		font-family: inherit;
 		font-size: var(--fs-17);
 		font-weight: 600;
+		overflow-wrap: anywhere;
 		color: var(--ink);
-		text-overflow: ellipsis;
-	}
-
-	.name:focus {
-		outline: none;
-		border-color: var(--sage);
-		background: var(--field);
 	}
 
 	.count {
-		margin-left: -1px;
 		font-size: var(--fs-14);
 		color: var(--text-4);
 	}
 
+	.go {
+		display: flex;
+		flex: none;
+		color: var(--text-5);
+	}
+
+	/* A hairline between "open" and "move": three chevrons side by side would
+	   read as one control. */
 	.move {
 		display: flex;
 		flex: none;
+		align-items: center;
+		margin: 12px 0;
+		padding: 0 8px 0 6px;
+		border-left: 1px solid var(--divider);
 	}
 
-	.move button,
-	.delete {
+	.move button {
 		display: flex;
 		align-items: center;
 		justify-content: center;
 		flex: none;
-		width: 32px;
-		height: 40px;
+		width: 36px;
+		height: 44px;
 		border-radius: 10px;
 		color: var(--text-4);
 	}
@@ -194,14 +181,7 @@
 		cursor: default;
 	}
 
-	.move button:active:not(:disabled),
-	.delete:active {
+	.move button:active:not(:disabled) {
 		background: var(--field);
-	}
-
-	/* Same weight as the arrows: three red bins would be the loudest thing on a
-	   screen the design draws entirely in greys. The confirm carries the danger. */
-	.delete {
-		margin-left: 2px;
 	}
 </style>

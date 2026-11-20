@@ -80,14 +80,16 @@ docs/                          # this documentation + plans/
 /                               → redirect: no session → /login · no household → /onboarding · else /home
 /login                          [5a]  public
 /j/[code]                       [5e]  public invite landing (sets cookie, → login → join)
+/legal/[page=legal]             —     public Impressum / Datenschutz: imprint · privacy; 404 unless its LEGAL_* is set; ?from= [§13]
 /onboarding                     [5b]  create-or-join chooser        (authed, no household)
 /onboarding/create              [5c]  household + profile
 /onboarding/join                [5e]  code entry + profile
 /onboarding/invite              [5d]  invite screen after create
 (app)/                          layout: session + membership guard, tab bar shell
   home                          [02/8b]
-  shopping                      [03]   sheets: add/edit item [3a]
-  shopping/stores               [7g]
+  shopping                      [L1]   lists overview; sheets: add/edit item [3a], New list [L6]
+  shopping/[listId]             [L5]   one list opened (plan 36); a foreign id is a 404
+  shopping/stores               [7g]   Manage lists
   cooking                       [04]   sheet: plan meal [3d]
   cooking/recipes               (browse all)
   cooking/recipes/new           [3c]
@@ -362,6 +364,12 @@ needs `http://localhost:3000/api/auth/callback/google` added to the OAuth client
   mail (→ `lib/server/mail.ts`, DECISIONS #179). Optional. Without it the login page offers
   Google only. Set SPF/DKIM/DMARC for `MAIL_FROM`'s domain at the provider, or the codes land in
   spam. Test and production may share a provider but should send from their own address.
+
+- **Legal pages** (`LEGAL_IMPRINT`, `LEGAL_PRIVACY`): the operator's Impressum and
+  Datenschutz text (→ `lib/server/legal.ts`, SPEC §13, DECISIONS #270). Optional, each on its
+  own. Unset, its page is a 404 and its links hide. Multi-line values, or `\n` on one line.
+  `LEGAL_LANG` (optional, `de` when unset) is the language they are written in, set as `lang`
+  on the text (DECISIONS #281).
 
 ## Email
 

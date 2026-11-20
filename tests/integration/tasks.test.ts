@@ -9,22 +9,29 @@
  */
 import assert from 'node:assert/strict';
 import { describe, it } from 'vitest';
+import { getCompletedFeed } from '$lib/server/services/history';
 import {
 	completeTask,
+	countDoneSince,
 	countDue,
 	createTask,
 	deleteTask,
+	DOERS_WINDOW_MS,
 	getTaskList,
 	listOverdueForMember,
 	pointsByMemberSince,
+	reassignTask,
 	setAway,
+	setCompletionDoers,
 	skipTask,
 	snoozeTask,
 	undoCompletion,
+	updateTask,
 	type TaskInput
 } from '$lib/server/services/tasks';
 import { addDays } from '$lib/utils/dates';
-import { makeHousehold, memberRow, type Fixture } from '../helpers/db';
+import { eq } from 'drizzle-orm';
+import { db, makeHousehold, memberRow, tables, type Fixture } from '../helpers/db';
 
 const TODAY = '2026-03-10';
 
@@ -204,6 +211,332 @@ describe('undoCompletion', () => {
 		undoCompletion(householdId, done.completionId, done.snapshot);
 
 		assert.equal(getTaskList(householdId, context(fixture)).total, 1);
+	});
+});
+
+describe('done together (setCompletionDoers)', () => {
+	/** A 20-pointer that alternates, on the owner's turn, in a household of three. */
+	function shared() {
+		const fixture = makeHousehold({ housemates: ['Elisabeth', 'Jonas'] });
+		const { householdId, members } = fixture;
+		const [owner, elisabeth, jonas] = members;
+		const taskId = createTask(
+			householdId,
+			owner.id,
+			weekly({ name: 'Bathroom', points: 20, assigneeMemberId: owner.id, rotate: true }),
+			TODAY
+		);
+		const done = completeTask(householdId, taskId, owner.id, TODAY);
+		assert.ok(done);
+		const points = () => Object.fromEntries(pointsByMemberSince(householdId, null));
+		return { fixture, householdId, owner, elisabeth, jonas, taskId, done, points };
+	}
+
+	it('splits the points between everyone who did it', () => {
+		const { fixture, householdId, owner, elisabeth, done, points } = shared();
+
+		const both = setCompletionDoers(
+			householdId,
+			done.completionId,
+			[owner.id, elisabeth.id],
+			done.snapshot
+		);
+
+		assert.ok(both);
+		assert.equal(both.points, 10);
+		assert.equal(both.taskPoints, 20);
+		assert.deepEqual(
+			both.doers.map((doer) => doer.displayName),
+			['Owner', 'Elisabeth']
+		);
+		assert.deepEqual(points(), { [owner.id]: 10, [elisabeth.id]: 10 });
+	});
+
+	it('rounds an uneven split to the nearest whole point for each', () => {
+		const { fixture, householdId, owner, elisabeth, jonas, done, points } = shared();
+
+		const all = setCompletionDoers(
+			householdId,
+			done.completionId,
+			[owner.id, elisabeth.id, jonas.id],
+			done.snapshot
+		);
+
+		assert.equal(all?.points, 7);
+		assert.deepEqual(points(), { [owner.id]: 7, [elisabeth.id]: 7, [jonas.id]: 7 });
+	});
+
+	it('stays one completion: same id, same moment, one line in the feed, one thing done', () => {
+		const { fixture, householdId, owner, elisabeth, done } = shared();
+
+		const both = setCompletionDoers(
+			householdId,
+			done.completionId,
+			[owner.id, elisabeth.id],
+			done.snapshot
+		);
+
+		assert.equal(both?.completionId, done.completionId);
+		// The feed's own clock is the real one: the completion was logged just now.
+		const now = { today: TODAY, timezone: fixture.timezone, locale: 'en' as const };
+		const entries = getCompletedFeed(householdId, now, '2000-01-01').days.flatMap(
+			(day) => day.entries
+		);
+		assert.equal(entries.length, 1);
+		assert.deepEqual(
+			entries[0].doers.map((doer) => doer.name),
+			['Owner', 'Elisabeth']
+		);
+		assert.equal(entries[0].points, 10);
+		assert.equal(countDoneSince(householdId, new Date(0)), 1);
+	});
+
+	it('passes the turn on from the assignee when shared, from the doer when alone', () => {
+		const { fixture, householdId, owner, elisabeth, jonas, done } = shared();
+		const change = (ids: string[]) =>
+			setCompletionDoers(householdId, done.completionId, ids, done.snapshot);
+
+		// Alone, the owner's turn passed to Elisabeth.
+		assert.equal(done.nextAssigneeName, 'Elisabeth');
+		// Elisabeth and Jonas did the owner's turn together: still Elisabeth next.
+		assert.equal(change([elisabeth.id, jonas.id])?.nextAssigneeName, 'Elisabeth');
+		// It was Elisabeth alone after all: the turn passes on from her.
+		assert.equal(change([elisabeth.id])?.nextAssigneeName, 'Jonas');
+		// And back to the owner: exactly where the tick left it.
+		const back = change([owner.id]);
+		assert.equal(back?.nextAssigneeName, 'Elisabeth');
+		assert.equal(back?.nextDueDate, done.nextDueDate);
+		assert.equal(back?.points, 20);
+	});
+
+	it('undo takes back every share at once', () => {
+		const { fixture, householdId, owner, elisabeth, done, points } = shared();
+		setCompletionDoers(householdId, done.completionId, [owner.id, elisabeth.id], done.snapshot);
+
+		assert.equal(undoCompletion(householdId, done.completionId, done.snapshot), true);
+
+		assert.deepEqual(points(), {});
+		assert.deepEqual(sectionsOf(fixture), { today: ['Bathroom'] });
+		const [task] = getTaskList(householdId, context(fixture)).sections.flatMap((s) => s.tasks);
+		assert.equal(task.assignee?.displayName, 'Owner');
+	});
+
+	it('shares a one-off, which stays gone', () => {
+		const fixture = makeHousehold({ housemates: ['Elisabeth'] });
+		const { householdId, members } = fixture;
+		const [owner, elisabeth] = members;
+		const taskId = createTask(
+			householdId,
+			owner.id,
+			weekly({ name: 'Cellar', points: 40, recurUnit: 'none' }),
+			TODAY
+		);
+		const done = completeTask(householdId, taskId, owner.id, TODAY);
+		assert.ok(done);
+
+		const both = setCompletionDoers(
+			householdId,
+			done.completionId,
+			[owner.id, elisabeth.id],
+			done.snapshot
+		);
+
+		assert.equal(both?.points, 20);
+		assert.equal(getTaskList(householdId, context(fixture)).total, 0);
+		assert.equal(pointsByMemberSince(householdId, null).get(elisabeth.id), 20);
+	});
+
+	it('leaves the completion standing when nobody valid is named', () => {
+		const { fixture, householdId, owner, done, points } = shared();
+		const stranger = makeHousehold().owner.id;
+
+		assert.equal(setCompletionDoers(householdId, done.completionId, [], done.snapshot), null);
+		assert.equal(
+			setCompletionDoers(householdId, done.completionId, [stranger], done.snapshot),
+			null
+		);
+		assert.deepEqual(points(), { [owner.id]: 20 });
+	});
+
+	it("cannot touch another household's completion", () => {
+		const { fixture, done, owner, points } = shared();
+		const other = makeHousehold();
+
+		assert.equal(
+			setCompletionDoers(other.householdId, done.completionId, [other.owner.id], done.snapshot),
+			null
+		);
+		assert.deepEqual(points(), { [owner.id]: 20 });
+	});
+
+	/* What happened on another phone between the tick and the face tap stands
+	   (→ DECISIONS #280): the faces change the credit, and the turn at most. */
+
+	it('keeps the price it was ticked at when the task is edited in between', () => {
+		const { fixture, householdId, owner, elisabeth, taskId, done, points } = shared();
+		updateTask(
+			householdId,
+			taskId,
+			weekly({ name: 'Bathroom', points: 40, assigneeMemberId: elisabeth.id, rotate: true }),
+			TODAY
+		);
+
+		const both = setCompletionDoers(
+			householdId,
+			done.completionId,
+			[owner.id, elisabeth.id],
+			done.snapshot
+		);
+
+		assert.equal(both?.taskPoints, 20);
+		assert.deepEqual(points(), { [owner.id]: 10, [elisabeth.id]: 10 });
+		const [task] = getTaskList(householdId, context(fixture)).sections.flatMap((s) => s.tasks);
+		assert.equal(task.points, 40);
+	});
+
+	it('does not delete a task that was edited into a one-off in between', () => {
+		const { fixture, householdId, owner, elisabeth, taskId, done } = shared();
+		updateTask(
+			householdId,
+			taskId,
+			weekly({
+				name: 'Bathroom',
+				points: 20,
+				recurUnit: 'none',
+				dueDate: done.nextDueDate,
+				assigneeMemberId: elisabeth.id,
+				rotate: true
+			}),
+			TODAY
+		);
+
+		assert.ok(
+			setCompletionDoers(householdId, done.completionId, [owner.id, elisabeth.id], done.snapshot)
+		);
+
+		assert.equal(getTaskList(householdId, context(fixture)).total, 1);
+	});
+
+	it('leaves a reassign from another phone alone, and still changes the credit', () => {
+		const { fixture, householdId, elisabeth, jonas, taskId, done, points } = shared();
+		// The tick passed the turn to Elisabeth; somebody hands it to Jonas.
+		reassignTask(householdId, taskId, jonas.id);
+
+		// Elisabeth alone would pass the turn on from her, to Jonas... or, read
+		// from the snapshot, back round. Either way it is no longer ours to move.
+		const changed = setCompletionDoers(
+			householdId,
+			done.completionId,
+			[elisabeth.id, jonas.id],
+			done.snapshot
+		);
+
+		assert.deepEqual(points(), { [elisabeth.id]: 10, [jonas.id]: 10 });
+		assert.equal(changed?.nextAssigneeName, 'Jonas');
+		const [task] = getTaskList(householdId, context(fixture)).sections.flatMap((s) => s.tasks);
+		assert.equal(task.assignee?.displayName, 'Jonas');
+	});
+
+	it('leaves the turn alone once the task was done again on another phone', async () => {
+		const { fixture, householdId, owner, elisabeth, taskId, done, points } = shared();
+		// A later moment: the two completions must not share a millisecond.
+		await new Promise((resolve) => setTimeout(resolve, 5));
+		// Elisabeth does her turn: on to Jonas, and a week further out.
+		const again = completeTask(householdId, taskId, elisabeth.id, addDays(TODAY, 1));
+		assert.equal(again?.nextAssigneeName, 'Jonas');
+
+		// The first completion was the two of them together after all.
+		assert.ok(
+			setCompletionDoers(householdId, done.completionId, [owner.id, elisabeth.id], done.snapshot)
+		);
+
+		assert.deepEqual(points(), { [owner.id]: 10, [elisabeth.id]: 30 });
+		const [task] = getTaskList(householdId, context(fixture)).sections.flatMap((s) => s.tasks);
+		assert.equal(task.assignee?.displayName, 'Jonas');
+		assert.equal(task.dueDate, addDays(TODAY, 8));
+	});
+
+	it('does not bring back a task that was deleted in between', () => {
+		const { fixture, householdId, owner, elisabeth, taskId, done, points } = shared();
+		deleteTask(householdId, taskId);
+
+		const both = setCompletionDoers(
+			householdId,
+			done.completionId,
+			[owner.id, elisabeth.id],
+			done.snapshot
+		);
+
+		assert.equal(both?.nextDueDate, null);
+		assert.deepEqual(points(), { [owner.id]: 10, [elisabeth.id]: 10 });
+		assert.equal(getTaskList(householdId, context(fixture)).total, 0);
+	});
+
+	/* A crafted post: the snapshot and the ids come back from the browser. */
+
+	it("refuses a snapshot that is not this completion's", () => {
+		const { householdId, owner, elisabeth, done, points } = shared();
+		const otherId = createTask(householdId, owner.id, weekly({ name: 'Bins', points: 5 }), TODAY);
+		const other = completeTask(householdId, otherId, owner.id, TODAY);
+		assert.ok(other);
+		const change = (snapshot: typeof done.snapshot) =>
+			setCompletionDoers(householdId, done.completionId, [elisabeth.id], snapshot);
+
+		// Another task's snapshot, a made-up price, a made-up one-off.
+		assert.equal(change(other.snapshot), null);
+		assert.equal(change({ ...done.snapshot, points: 999 }), null);
+		assert.equal(
+			change({ ...done.snapshot, id: crypto.randomUUID(), recurUnit: 'none', points: 999 }),
+			null
+		);
+
+		assert.deepEqual(points(), { [owner.id]: 25 });
+		assert.equal(
+			getTaskList(householdId, { today: TODAY, timezone: 'UTC', locale: 'en' }).total,
+			2
+		);
+	});
+
+	it("is found by its group only: one doer's row cannot be split off", () => {
+		const { householdId, owner, elisabeth, jonas, done, points } = shared();
+		setCompletionDoers(householdId, done.completionId, [owner.id, elisabeth.id], done.snapshot);
+		const row = db
+			.select({ id: tables.taskCompletions.id })
+			.from(tables.taskCompletions)
+			.where(eq(tables.taskCompletions.memberId, elisabeth.id))
+			.get();
+		assert.ok(row);
+
+		assert.equal(setCompletionDoers(householdId, row.id, [jonas.id], done.snapshot), null);
+
+		assert.deepEqual(points(), { [owner.id]: 10, [elisabeth.id]: 10 });
+	});
+
+	it('stands once it is a day old', () => {
+		const { householdId, owner, elisabeth, done, points } = shared();
+		const later = (ms: number) => new Date(Date.now() + ms);
+
+		assert.equal(
+			setCompletionDoers(
+				householdId,
+				done.completionId,
+				[elisabeth.id],
+				done.snapshot,
+				later(DOERS_WINDOW_MS + 60_000)
+			),
+			null
+		);
+		assert.deepEqual(points(), { [owner.id]: 20 });
+
+		assert.ok(
+			setCompletionDoers(
+				householdId,
+				done.completionId,
+				[elisabeth.id],
+				done.snapshot,
+				later(DOERS_WINDOW_MS - 60_000)
+			)
+		);
 	});
 });
 
