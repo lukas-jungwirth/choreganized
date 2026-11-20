@@ -1,4 +1,5 @@
 import { redirect } from '@sveltejs/kit';
+import { legalLinks } from '$lib/server/legal';
 import { mailEnabled, SIGN_IN_CODE_MINUTES } from '$lib/server/mail';
 import { activeSendLimits } from '$lib/server/send-limit';
 import type { PageServerLoad } from './$types';
@@ -14,6 +15,8 @@ export const load: PageServerLoad = ({ locals, url }) => {
 		emailSignIn: mailEnabled(),
 		codeMinutes: SIGN_IN_CODE_MINUTES,
 		// How long "Send again" counts down — the server's own limit per address.
-		codeCooldownSeconds: activeSendLimits().cooldownSeconds
+		codeCooldownSeconds: activeSendLimits().cooldownSeconds,
+		// Privacy · Imprint under the footnote, each only if the deploy set it (→ SPEC §13).
+		legal: legalLinks()
 	};
 };

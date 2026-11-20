@@ -38,6 +38,8 @@ and the title, the line and the header's buttons all stand on the raccoon's feet
   code expired, too many tries with this code, too many requests (wait a minute), and mail couldn't
   be sent ("The email couldn't be sent, so no code is on its way. Try again in a moment, or
   continue with Google." — the page stays on the email step). Footnote: "New here? Signing in creates your account."
+  Under the footnote, quietly: **Privacy · Imprint** (de "Datenschutz · Impressum"), each only if
+  the deploy has that page, the dot only between two (→ §13).
 - **How often a code can be sent** (→ [DECISIONS #183](DECISIONS.md)): one per address per
   minute, five per address per hour, on top of three requests per minute per IP. After each
   code, **Send again** counts down ("Send again in 0:42") and comes back after a minute. Asking
@@ -94,6 +96,7 @@ and the title, the line and the header's buttons all stand on the raccoon's feet
 - After joining, the joiner sets **display name + colour** (same fields as 1.3, minus household
   name; colours already taken by other members are shown as unavailable).
 - Invalid/revoked code → inline error, stay on screen.
+- The landing has the same **Privacy · Imprint** pair at the bottom as sign-in (→ §13).
 
 ### 1.6 Rules
 
@@ -1082,7 +1085,9 @@ Reached from Home's gear (→ §2), and its back chevron returns to Home.
   sent it, on what, and when stays in the app's own database, tied to the issue by its id.
   It is saved in the app first and
   mirrored to a GitHub issue afterwards, so a report never depends on GitHub being reachable and
-  the confirmation is honest either way (→ [DECISIONS #136](DECISIONS.md)). Below it, **Version**
+  the confirmation is honest either way (→ [DECISIONS #136](DECISIONS.md)). Then **Privacy**
+  (lock) and **Imprint** (scales), each a row with a chevron to its page, each only if the deploy
+  has it (→ §13). Below them, **Version**
   — the build a report will name, `dev` outside a container
   (→ [DECISIONS #137](DECISIONS.md)); tap it to copy, confirmed by the value swapping to "Copied"
   for two seconds (→ [DECISIONS #145](DECISIONS.md)).
@@ -1531,3 +1536,25 @@ For whoever runs the server, never for a household. No design frame (DECISIONS #
   stays your own."), and an unmet card's footer reads "Not met yet · shown in admin mode"
   where "First met" would be. Nothing is recorded: the count, the "New" badges and the
   sightings stay the admin's real ones, and leaving admin mode locks the unmet ones again.
+
+## 13. Impressum and Datenschutz (→ [DECISIONS #268](DECISIONS.md))
+
+Two public pages, `/legal/imprint` ("Imprint" / "Impressum") and `/legal/privacy` ("Privacy" /
+"Datenschutz"), built to `design/sketches/settings-access.html` (no design frame).
+
+- **The text is the operator's**, from the deploy's `LEGAL_IMPRINT` and `LEGAL_PRIVACY`, shown
+  exactly as written whatever the UI language (never translated, like household content). The
+  title, the back label and the links are the app's and follow the reader's language.
+- **Hidden while unset.** A page exists only while its variable has text; otherwise its route is
+  a 404 and every link to it is gone. The two are independent.
+- **Format:** a blank line starts a paragraph (line breaks inside one are kept), `## ` starts a
+  heading, `- ` a list item; `https://…` addresses and email addresses become links (email as
+  `mailto:`). A literal `\n` is a line break too. No HTML: anything else is shown as text.
+- **Where from:** sign-in and the invite landing (a quiet pair under the footnote / button) and
+  Settings → About (two rows). Signed in or out, the pages open; there is no tab bar.
+- **The page:** back chevron and title (`SubHeader`), the text in a card, then one row to the
+  other page if it exists.
+- **Back** returns where you came from: links carry `?from=settings`, `?from=login` or
+  `?from=invite-<CODE>` (→ that `/j/<CODE>`). Any other value is ignored, never followed: back
+  then goes to Settings for a member and to sign-in for anyone else. The cross-link keeps the
+  `from`.

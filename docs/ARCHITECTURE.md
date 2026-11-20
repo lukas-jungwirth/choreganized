@@ -80,6 +80,7 @@ docs/                          # this documentation + plans/
 /                               → redirect: no session → /login · no household → /onboarding · else /home
 /login                          [5a]  public
 /j/[code]                       [5e]  public invite landing (sets cookie, → login → join)
+/legal/[page=legal]             —     public Impressum / Datenschutz: imprint · privacy; 404 unless its LEGAL_* is set; ?from= [§13]
 /onboarding                     [5b]  create-or-join chooser        (authed, no household)
 /onboarding/create              [5c]  household + profile
 /onboarding/join                [5e]  code entry + profile
@@ -363,6 +364,10 @@ needs `http://localhost:3000/api/auth/callback/google` added to the OAuth client
   mail (→ `lib/server/mail.ts`, DECISIONS #179). Optional. Without it the login page offers
   Google only. Set SPF/DKIM/DMARC for `MAIL_FROM`'s domain at the provider, or the codes land in
   spam. Test and production may share a provider but should send from their own address.
+
+- **Legal pages** (`LEGAL_IMPRINT`, `LEGAL_PRIVACY`): the operator's Impressum and
+  Datenschutz text (→ `lib/server/legal.ts`, SPEC §13, DECISIONS #268). Optional, each on its
+  own. Unset, its page is a 404 and its links hide. Multi-line values, or `\n` on one line.
 
 ## Email
 

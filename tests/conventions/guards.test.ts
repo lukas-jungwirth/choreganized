@@ -55,6 +55,27 @@ describe('route guards', () => {
 		assert.deepEqual(missing, [], 'JSON endpoints answer with `requireMemberApi(event)` (→ #89).');
 	});
 
+	it('every page outside (app) and onboarding is public by design, and listed here', () => {
+		// A page the household guard doesn't cover is readable by anyone with the
+		// address. That has to be a decision, not an accident of where it was put.
+		const PUBLIC_PAGES: Record<string, string> = {
+			'src/routes/+page.svelte': 'redirects to sign-in, onboarding or home',
+			'src/routes/login/+page.svelte': 'the way in',
+			'src/routes/j/[code]/+page.svelte': 'an invite link is opened before sign-in',
+			'src/routes/dev/kit/+page.svelte': 'component gallery; 404 unless dev or E2E mode',
+			// The sign-in screen links here, before anyone has an account (→ SPEC §13).
+			// The text is the operator's, from the deploy; nothing household-specific.
+			'src/routes/legal/[page=legal]/+page.svelte': 'Impressum and Datenschutz'
+		};
+		const unlisted = sourceFiles('src/routes', ['+page.svelte'])
+			.map((file) => file.path)
+			.filter((path) => !path.startsWith('src/routes/(app)/'))
+			.filter((path) => !path.startsWith('src/routes/onboarding/'))
+			.filter((path) => !(path in PUBLIC_PAGES));
+
+		assert.deepEqual(unlisted, [], 'Put the page in (app), or list it here with the reason.');
+	});
+
 	it('onboarding is for signed-in users', () => {
 		const missing = sourceFiles('src/routes/onboarding', ['+layout.server.ts'])
 			.filter((file) => !file.text.includes('requireUser('))

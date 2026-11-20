@@ -125,6 +125,22 @@ async function openAdmin(page: Page): Promise<void> {
 
 export const SCREENS: Screen[] = [
 	{ name: 'login', route: '/login', path: '/login', signedOut: true, fullPage: true },
+	// The legal pages (→ SPEC §13), with the e2e server's made-up text: the long
+	// one signed out, as sign-in opens it, and the short one dark, from Settings.
+	{
+		name: 'legal-privacy',
+		route: '/legal/[page=legal]',
+		path: '/legal/privacy?from=login',
+		signedOut: true,
+		fullPage: true
+	},
+	{
+		name: 'legal-imprint-dark',
+		route: '/legal/[page=legal]',
+		path: '/legal/imprint?from=settings',
+		theme: 'dark',
+		fullPage: true
+	},
 	{ name: 'kit-light', route: '/dev/kit', path: '/dev/kit', fullPage: true },
 	{ name: 'kit-dark', route: '/dev/kit', path: '/dev/kit', theme: 'dark', fullPage: true },
 	{ name: 'home', route: '/(app)/home', path: '/home', bottom: true },
