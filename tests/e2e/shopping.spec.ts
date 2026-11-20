@@ -334,6 +334,53 @@ test('"Gurken x3" shows its amount before Enter and lands as Gurken ×3', async 
 	await expect(chip).toBeHidden();
 });
 
+test('"Gurke x3" twice is one row of six, and the field says so', async ({ page }) => {
+	await page.goto('/shopping');
+	const name = fresh('Gurke');
+	const field = page.getByPlaceholder(`Add to ${GROCERY}…`);
+	await field.fill(`${name} x3`);
+	await field.press('Enter');
+	const rows = page.getByRole('listitem').filter({ hasText: name });
+	await expect(rows).toContainText('×3');
+
+	await field.fill(`${name} x3`);
+	await field.press('Enter');
+	await expect(rows).toHaveCount(1);
+	await expect(rows).toContainText('×6');
+	await expect(page.getByTestId('quick-add-note')).toHaveText(
+		`${name} was already on the list, now ×6.`
+	);
+
+	// No amount: nothing changes, and it says the thing is there already.
+	await field.fill(name);
+	await field.press('Enter');
+	await expect(page.getByTestId('quick-add-note')).toHaveText(`${name} is already on the list.`);
+	await expect(rows).toHaveCount(1);
+	await expect(rows).toContainText('×6');
+});
+
+test('"Other" is the last entry in the menu, and adds there', async ({ page }) => {
+	await page.goto('/shopping');
+	await page.getByRole('button', { name: `Adding to ${GROCERY}. Choose another list` }).click();
+	const menu = page.getByRole('group', { name: 'Lists' });
+	const other = menu.getByRole('button', { name: /^Other\b/ });
+	await expect(other).toBeVisible();
+	// Last of the lists, checklists included, before "New list".
+	await expect(menu.getByRole('button').nth(-2)).toContainText('Other');
+	await other.click();
+
+	const field = page.getByPlaceholder('Add to Other…');
+	await expect(
+		page.getByRole('button', { name: 'Adding to Other. Choose another list' })
+	).toBeVisible();
+	const name = fresh('Kerzen');
+	await field.fill(`${name} x2`);
+	await field.press('Enter');
+	await expect(card(page, 'Other').getByText(name)).toBeVisible();
+	// Picked, so it holds for the next add, too.
+	await expect(field).toBeVisible();
+});
+
 test('the chip tapped off adds the line as typed, and it is never split again', async ({
 	page
 }) => {

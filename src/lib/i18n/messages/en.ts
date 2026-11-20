@@ -455,7 +455,22 @@ export const en = {
 			 * its pressed state says whether it applies.
 			 */
 			amount: (amount: string) => `Read ${amount} as the amount`,
-			submit: 'Add item'
+			submit: 'Add item',
+			/**
+			 * Under the field after an add that wrote no new row: the same thing was
+			 * open on that list already, and the typed amount went onto it.
+			 */
+			toppedUp: (item: string, amount: string): RichText => [
+				{ text: item, strong: true },
+				{ text: ' was already on the list, now ' },
+				{ text: amount, strong: true },
+				{ text: '.' }
+			],
+			/** …or it was there already and nothing needed to change. */
+			already: (item: string): RichText => [
+				{ text: item, strong: true },
+				{ text: ' is already on the list.' }
+			]
 		},
 
 		/**
@@ -620,13 +635,12 @@ export const en = {
 		/** Manage lists (was Manage stores [7g]): the order the overview follows. */
 		stores: {
 			title: 'Manage lists',
-			subtitle: 'In the order you walk through town',
 			back: 'Back to lists',
 			add: 'Add a list',
 			items: (count: number) => (count === 1 ? '1 item' : `${count} items`),
 			moveUp: (store: string) => `Move ${store} up`,
 			moveDown: (store: string) => `Move ${store} down`,
-			help: 'Tap a list to edit or delete it. Use the arrows to reorder: the overview follows this order, and the add field starts on the first shopping list. Items without a list go under “Other”.',
+			help: 'The overview follows this order, and the add field starts on the first shopping list.',
 			deleteLabel: 'Delete list',
 			deleteConfirm: (store: string) => `Delete ${store}?`,
 			deleteMoves: (count: number) =>

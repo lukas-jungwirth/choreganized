@@ -29,6 +29,7 @@
 	import ShoppingRow from '$lib/components/shopping/ShoppingRow.svelte';
 	import { messages } from '$lib/i18n';
 	import type { ShoppingGroup, ShoppingListItem } from '$lib/server/services/shopping';
+	import { OTHER_ICON } from '$lib/utils/lists';
 	import type { SubmitFunction } from '@sveltejs/kit';
 	import Check from '@lucide/svelte/icons/check';
 	import ChevronDown from '@lucide/svelte/icons/chevron-down';
@@ -168,7 +169,9 @@
 					aria-controls={bodyId}
 					onclick={onfold}
 				>
-					<span class="well" aria-hidden="true"><ListIcon icon={group.icon} size={19} /></span>
+					<span class="well" aria-hidden="true"
+						><ListIcon icon={group.storeId === null ? OTHER_ICON : group.icon} size={19} /></span
+					>
 					<span class="titles">
 						<span class="name-line">
 							<span class="name">{name}</span>

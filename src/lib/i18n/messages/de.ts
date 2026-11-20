@@ -340,7 +340,17 @@ export const de: Messages = {
 			keepHere: 'Hier lassen',
 			keepOn: (list: string) => `Auf ${list} lassen`,
 			amount: (amount: string) => `${amount} als Menge lesen`,
-			submit: 'Eintragen'
+			submit: 'Eintragen',
+			toppedUp: (item: string, amount: string): RichText => [
+				{ text: item, strong: true },
+				{ text: ' war schon auf der Liste, jetzt ' },
+				{ text: amount, strong: true },
+				{ text: '.' }
+			],
+			already: (item: string): RichText => [
+				{ text: item, strong: true },
+				{ text: ' steht schon auf der Liste.' }
+			]
 		},
 
 		suggestions: {
@@ -467,13 +477,12 @@ export const de: Messages = {
 
 		stores: {
 			title: 'Listen verwalten',
-			subtitle: 'In der Reihenfolge, in der du durch die Stadt gehst',
 			back: 'Zurück zu den Listen',
 			add: 'Liste hinzufügen',
 			items: (count: number) => (count === 1 ? '1 Eintrag' : `${count} Einträge`),
 			moveUp: (store: string) => `${store} nach oben`,
 			moveDown: (store: string) => `${store} nach unten`,
-			help: 'Tippe auf eine Liste, um sie zu bearbeiten oder zu löschen. Mit den Pfeilen umsortieren: Die Übersicht folgt dieser Reihenfolge, und das Eingabefeld beginnt bei der ersten Einkaufsliste. Alles ohne Liste steht unter „Sonstiges“.',
+			help: 'Die Übersicht folgt dieser Reihenfolge, und das Eingabefeld beginnt bei der ersten Einkaufsliste.',
 			deleteLabel: 'Liste löschen',
 			deleteConfirm: (store: string) => `${store} löschen?`,
 			deleteMoves: (count: number) =>

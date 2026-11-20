@@ -107,7 +107,8 @@ user ─┬─ session / account / verification        (Better Auth)
 - Store order (`sortOrder`, contiguous ints) = the order the overview shows the lists in, and
   the first **shopping** list is where the add field and a recipe's pour-in land
   (`defaultStoreId`). `storeId NULL` → virtual "Other" group, rendered after the shopping lists
-  and before the checklists. Deleting a shopping list sets its items' `storeId` to NULL;
+  and before the checklists, and a target the add field's menu offers (an empty `storeId` in
+  the form; a missing one means "wherever the field would go"). Deleting a shopping list sets its items' `storeId` to NULL;
   deleting a checklist deletes its items in the same transaction (plan 36 step 2).
 - `stores.icon` (TEXT NULL, migration 0023): a key from the fixed set of twelve in
   `utils/lists.ts` `LIST_ICONS`; NULL, or a key a later build no longer knows, draws the basket.
@@ -136,7 +137,9 @@ user ─┬─ session / account / verification        (Better Auth)
   (→ [DECISIONS #106](DECISIONS.md)). `storeId` (migration 0023, → `stores.id` ON DELETE SET
   NULL, added to the generated `ALTER TABLE` by hand as in 0019) is the list the name went to
   **last**, rewritten by every add, edit and pour-in; the add field moves its icon there when a
-  known name is typed (plan 36 [L3]).
+  known name is typed (plan 36 [L3]). NULL is **no memory**: the list was deleted, or the name
+  last went to "Other", which the add field offers as a choice but does not remember
+  (→ [DECISIONS #275](DECISIONS.md)); the field then starts on the first shopping list.
 - `pantry_staples` is the same shape as `shopping_suggestions` doing the opposite job: the names
   this household **doesn't** need to buy. Nobody fills in a pantry inventory, so it is learned
   from the ingredient picker (§4.8) — `skipCount` goes up each time a name is offered and left

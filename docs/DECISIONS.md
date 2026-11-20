@@ -4025,3 +4025,45 @@ units | null, name}`, written back as editor lines in the reader's unit spelling
      load itself (an opened list would 404 before it could leave). `listStoresWithCounts` gained
      `checkedCount` for the sheet's kind confirm. The catalog lost `stores.rename`,
      `stores.remove` and `stores.addButton`. No version bump: `dev` is at 0.5.0.
+274. **Manage lists lost its subtitle and most of its help** (Lukas 2026-11-20; → SPEC §3.4).
+     "In the order you walk through town" is gone (key and rendering), and the help keeps only
+     the sentence about order: "The overview follows this order, and the add field starts on
+     the first shopping list." / "Die Übersicht folgt dieser Reihenfolge, und das Eingabefeld
+     beginnt bei der ersten Einkaufsliste." Tapping a row, the arrows and "Other" explain
+     themselves on the screen.
+275. **"Other" is a list you can choose, with three dots, and it is not remembered** (Lukas
+     2026-11-20; → SPEC §3.1, DATA-MODEL). Other only ever filled when a list was deleted or
+     through the item sheet's chip; the add field's menu did not offer it, and its card drew
+     the default basket, so it looked like Grocery. Now the menu ends in **Other** (before
+     "New list", also while its card is hidden), and Other wears `OTHER_ICON`, Lucide's
+     horizontal ellipsis, through `ListIcon`; it is deliberately **not** in `LIST_ICONS`, so no
+     list can pick it and the icon column can never hold it. In the browser the pick is
+     `OTHER_LIST_KEY`, which `listTarget` returns as `storeId: null`; the field then posts an
+     empty `storeId`, which the action already read as "Other, on purpose" (a missing field is
+     "no choice"). The field now always posts `storeId` once hydrated, so a null target is never
+     confused with "let the server decide". **Other is not remembered**: `shopping_suggestions.
+store_id` NULL already means "no memory" (a deleted list), and telling the two apart would
+     need a sentinel column or value for a list that doesn't exist. So a name added to Other
+     writes NULL there, like today, and next time starts on the first shopping list. The card
+     stays hidden while empty and stays out of Manage lists. The item sheet's list chips are
+     text only, so they gained no icon.
+276. **The add field adds up the same thing on the same list, with `addOnto` shared with
+     recipes** (Lukas 2026-11-20; → SPEC §3.1). "Gurke x3" twice wrote two rows; a recipe's
+     pour-in already merged them. One helper, `addOnto(row, extra, typed)` in
+     `utils/shopping.ts`, now decides for both: `combineAmounts` adds where it can (merge);
+     otherwise a recipe leaves the row as it is (have, unchanged), while a **typed** line gives
+     its amount to a row that had none (set: the person just said how many), changes nothing
+     when it has no amount (have), and stays a row of its own when the amounts can't be added
+     (apart: 3 pcs and 500 g was typed on purpose). `planAdds` calls it with `typed` false.
+     `quickAddItem` looks only at **open** rows on the **target** list (Other included,
+     checklists skipped), first in walking order, before the existing put-back-from-bought
+     rule; so an open row beats a bought one. It returns an `effect` (`added`, `restored`,
+     `toppedUp`, `already`) with the row's name and amount, and the field shows a line under
+     itself for the last two, because no new row appears to show it ("**Gurke** was already on
+     the list, now **×6**." / "**Gurke** war schon auf der Liste, jetzt **×6**.", "… is already
+     on the list." / "… steht schon auf der Liste."). That line, not a toast: the field already
+     has a polite live region for the remembered-list line, and the toast slot belongs to
+     housemates' changes. **Push and live follow the recipe precedent**: a top-up pushes as a
+     top-up (`toppedUpCount: 1`, "topped up", not "added") and publishes `added` so other
+     screens refetch; "already" changed nothing and publishes nothing. The sheet's rename does
+     not merge.

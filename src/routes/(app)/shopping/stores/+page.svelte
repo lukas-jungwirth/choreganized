@@ -47,12 +47,7 @@
 	<title>{m.common.pageTitle(m.shopping.stores.title)}</title>
 </svelte:head>
 
-<SubHeader
-	title={m.shopping.stores.title}
-	subtitle={m.shopping.stores.subtitle}
-	back="/shopping"
-	backLabel={m.shopping.stores.back}
-/>
+<SubHeader title={m.shopping.stores.title} back="/shopping" backLabel={m.shopping.stores.back} />
 
 {#if data.stores.length > 0}
 	<Card radius="md">

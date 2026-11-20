@@ -33,6 +33,7 @@ import {
 	undoReset,
 	updateItem
 } from '$lib/server/services/shopping';
+import { subscribe, type LiveEvent } from '$lib/server/live';
 import { shoppingActions } from '$lib/server/shopping-actions';
 import { splitList } from '$lib/utils/shopping';
 import { makeHousehold } from '../helpers/db';
@@ -252,7 +253,14 @@ describe('lists (plan 36)', () => {
 
 		const result = quickAddItem(householdId, owner.id, { name: 'milk', storeId: grocery.id });
 
-		assert.deepEqual(result, { itemId: milk.id, restored: true });
+		assert.deepEqual(result, {
+			itemId: milk.id,
+			effect: 'restored',
+			restored: true,
+			name: 'Milk',
+			quantity: 1,
+			unit: 'L'
+		});
 		const rows = getShoppingList(householdId);
 		assert.equal(rows.length, 1);
 		assert.equal(rows[0].checkedAt, null);
@@ -603,5 +611,251 @@ describe('the add field reads the amount (plan 37)', () => {
 		await quickAdd(fixture, 'Windeln 4 x2');
 		const [two] = getShoppingList(householdId);
 		assert.deepEqual([two.name, two.quantity], ['Windeln 4', 2]);
+	});
+});
+
+describe('the same thing on the same list adds up (Lukas 2026-11-20)', () => {
+	/** Open rows on one list (null = "Other"), as [name, quantity, unit]. */
+	function openOn(householdId: string, storeId: string | null) {
+		return getShoppingList(householdId)
+			.filter((row) => row.storeId === storeId && row.checkedAt === null)
+			.sort((a, b) => a.sortOrder - b.sortOrder)
+			.map((row) => [row.name, row.quantity, row.unit]);
+	}
+
+	/** The add field's post, through the action: parse, list, service. */
+	async function quickAdd(
+		fixture: ReturnType<typeof makeHousehold>,
+		line: string,
+		storeId: string
+	) {
+		const form = new FormData();
+		form.set('quick', '1');
+		form.set('name', line);
+		form.set('storeId', storeId);
+		const event = {
+			locals: { user: { id: fixture.owner.userId }, member: fixture.owner, locale: 'en' },
+			request: new Request('http://localhost/shopping?/add', { method: 'POST', body: form })
+		} as unknown as Parameters<typeof shoppingActions.add>[0];
+		return shoppingActions.add(event);
+	}
+
+	it('"Gurke x3" twice is one row of six', async () => {
+		const fixture = makeHousehold();
+		const [grocery] = listStores(fixture.householdId);
+
+		await quickAdd(fixture, 'Gurke x3', grocery.id);
+		const second = await quickAdd(fixture, 'Gurke x3', grocery.id);
+
+		assert.deepEqual(openOn(fixture.householdId, grocery.id), [['Gurke', 6, null]]);
+		assert.equal((second as { effect: string }).effect, 'toppedUp');
+	});
+
+	it("converts into the row's unit: 500 ml onto a litre is 1.5 L", () => {
+		const { householdId, owner } = makeHousehold();
+		const [grocery] = listStores(householdId);
+		addItem(householdId, owner.id, { name: 'Milch', quantity: 1, unit: 'L', storeId: grocery.id });
+
+		const result = quickAddItem(householdId, owner.id, {
+			name: 'milch',
+			quantity: 500,
+			unit: 'ml',
+			storeId: grocery.id
+		});
+
+		assert.equal(result.effect, 'toppedUp');
+		assert.deepEqual([result.name, result.quantity, result.unit], ['Milch', 1.5, 'L']);
+		assert.deepEqual(openOn(householdId, grocery.id), [['Milch', 1.5, 'L']]);
+	});
+
+	it('a row with no amount takes the typed one', () => {
+		const { householdId, owner } = makeHousehold();
+		const [grocery] = listStores(householdId);
+		addItem(householdId, owner.id, { name: 'Gurke', storeId: grocery.id });
+
+		const result = quickAddItem(householdId, owner.id, {
+			name: 'Gurke',
+			quantity: 3,
+			unit: null,
+			storeId: grocery.id
+		});
+
+		assert.equal(result.effect, 'toppedUp');
+		assert.deepEqual(openOn(householdId, grocery.id), [['Gurke', 3, null]]);
+	});
+
+	it('a line with no amount changes nothing and writes no second row', () => {
+		const { householdId, owner } = makeHousehold();
+		const [grocery] = listStores(householdId);
+		addItem(householdId, owner.id, { name: 'Gurke', quantity: 3, storeId: grocery.id });
+		addItem(householdId, owner.id, { name: 'Brot', storeId: grocery.id });
+
+		const withAmount = quickAddItem(householdId, owner.id, { name: 'gurke', storeId: grocery.id });
+		const without = quickAddItem(householdId, owner.id, { name: 'Brot', storeId: grocery.id });
+
+		assert.equal(withAmount.effect, 'already');
+		assert.equal(without.effect, 'already');
+		assert.deepEqual(openOn(householdId, grocery.id), [
+			['Gurke', 3, null],
+			['Brot', null, null]
+		]);
+	});
+
+	it('amounts that cannot be added together stay two rows: 3 pcs and 500 g', () => {
+		const { householdId, owner } = makeHousehold();
+		const [grocery] = listStores(householdId);
+		addItem(householdId, owner.id, {
+			name: 'Tomaten',
+			quantity: 3,
+			unit: 'pcs',
+			storeId: grocery.id
+		});
+
+		const result = quickAddItem(householdId, owner.id, {
+			name: 'Tomaten',
+			quantity: 500,
+			unit: 'g',
+			storeId: grocery.id
+		});
+
+		assert.equal(result.effect, 'added');
+		assert.deepEqual(openOn(householdId, grocery.id), [
+			['Tomaten', 3, 'pcs'],
+			['Tomaten', 500, 'g']
+		]);
+	});
+
+	it('only within the target list', () => {
+		const { householdId, owner } = makeHousehold();
+		const [grocery, drugstore] = listStores(householdId);
+		addItem(householdId, owner.id, { name: 'Seife', quantity: 2, storeId: grocery.id });
+
+		const result = quickAddItem(householdId, owner.id, {
+			name: 'Seife',
+			quantity: 2,
+			unit: null,
+			storeId: drugstore.id
+		});
+
+		assert.equal(result.effect, 'added');
+		assert.deepEqual(openOn(householdId, grocery.id), [['Seife', 2, null]]);
+		assert.deepEqual(openOn(householdId, drugstore.id), [['Seife', 2, null]]);
+	});
+
+	it('not on a checklist: a second "Towels" is what was typed', () => {
+		const { householdId, owner } = makeHousehold();
+		const packing = createStore(householdId, 'Packing', 'luggage', 'checklist');
+		addItem(householdId, owner.id, { name: 'Towels', quantity: 2, storeId: packing.id });
+
+		const result = quickAddItem(householdId, owner.id, {
+			name: 'Towels',
+			quantity: 2,
+			unit: null,
+			storeId: packing.id
+		});
+
+		assert.equal(result.effect, 'added');
+		assert.equal(openOn(householdId, packing.id).length, 2);
+	});
+
+	it('a bought row is still put back when no open row matches, and an open row wins over it', () => {
+		const { householdId, owner } = makeHousehold();
+		const [grocery] = listStores(householdId);
+		const eggs = addItem(householdId, owner.id, { name: 'Eier', quantity: 6, storeId: grocery.id });
+		setChecked(householdId, eggs.id, owner.id, true);
+
+		const back = quickAddItem(householdId, owner.id, {
+			name: 'Eier',
+			quantity: 10,
+			unit: null,
+			storeId: grocery.id
+		});
+		assert.deepEqual([back.effect, back.itemId], ['restored', eggs.id]);
+		assert.deepEqual(openOn(householdId, grocery.id), [['Eier', 10, null]]);
+
+		const boughtButter = addItem(householdId, owner.id, { name: 'Butter', storeId: grocery.id });
+		setChecked(householdId, boughtButter.id, owner.id, true);
+		const butter = addItem(householdId, owner.id, {
+			name: 'Butter',
+			quantity: 1,
+			storeId: grocery.id
+		});
+
+		const topped = quickAddItem(householdId, owner.id, {
+			name: 'Butter',
+			quantity: 1,
+			unit: null,
+			storeId: grocery.id
+		});
+		assert.deepEqual([topped.effect, topped.itemId], ['toppedUp', butter.id]);
+		assert.notEqual(
+			getShoppingList(householdId).find((row) => row.id === boughtButter.id)?.checkedAt,
+			null
+		);
+	});
+
+	it('"Other" is a choice: it is added to and topped up there, and not remembered', async () => {
+		const fixture = makeHousehold();
+		const { householdId } = fixture;
+		const [grocery] = listStores(householdId);
+		// Known on Grocery, so a post that read "Other" as "no choice" would go there.
+		await quickAdd(fixture, 'Kerzen', grocery.id);
+		deleteItem(householdId, getShoppingList(householdId)[0].id);
+
+		await quickAdd(fixture, 'Kerzen x2', '');
+		await quickAdd(fixture, 'Kerzen x2', '');
+
+		assert.deepEqual(openOn(householdId, null), [['Kerzen', 4, null]]);
+		assert.deepEqual(openOn(householdId, grocery.id), []);
+		// NULL in the vocabulary is "no memory": the next Kerzen starts on the first list.
+		assert.equal(listItemNames(householdId).find((row) => row.name === 'Kerzen')?.storeId, null);
+	});
+
+	it('a top-up tells the other screens; "already there" tells nobody', () => {
+		const { householdId, owner } = makeHousehold();
+		const [grocery] = listStores(householdId);
+		addItem(householdId, owner.id, { name: 'Gurke', quantity: 3, storeId: grocery.id });
+
+		const events: LiveEvent[] = [];
+		const stop = subscribe(householdId, (event) => events.push(event));
+		try {
+			quickAddItem(householdId, owner.id, {
+				name: 'Gurke',
+				quantity: 3,
+				unit: null,
+				storeId: grocery.id
+			});
+			quickAddItem(householdId, owner.id, { name: 'Gurke', storeId: grocery.id });
+		} finally {
+			stop();
+		}
+
+		assert.deepEqual(
+			events.map((event) => event.kind),
+			['added']
+		);
+	});
+
+	it('renaming a row in the sheet to a name already on the list keeps two rows', () => {
+		const { householdId, owner } = makeHousehold();
+		const [grocery] = listStores(householdId);
+		addItem(householdId, owner.id, { name: 'Gurke', quantity: 3, storeId: grocery.id });
+		const second = addItem(householdId, owner.id, {
+			name: 'Gurken',
+			quantity: 2,
+			storeId: grocery.id
+		});
+
+		updateItem(householdId, second.id, {
+			name: 'Gurke',
+			quantity: 2,
+			unit: null,
+			storeId: grocery.id
+		});
+
+		assert.deepEqual(openOn(householdId, grocery.id), [
+			['Gurke', 3, null],
+			['Gurke', 2, null]
+		]);
 	});
 });

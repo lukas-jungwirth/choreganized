@@ -361,6 +361,40 @@ export function combineAmounts(base: Amount, extra: Amount): { quantity: number 
 	return { quantity: Math.min(Math.round(total * 100) / 100, TOTAL_QUANTITY_MAX) };
 }
 
+/**
+ * What one more of a thing does to a row that already has it, decided once for
+ * every way something reaches the list (Lukas 2026-11-20: "always grouped as
+ * good as possible").
+ *
+ * - **merge**: the two amounts add up (`combineAmounts`), and the row grows,
+ *   in its own unit. Two cucumbers and three are five; 500 ml onto a litre is
+ *   1.5 L.
+ * - **set**: the row had no amount and the add has one: the row takes it.
+ *   Only for a line somebody typed (`typed`), where the person just said how
+ *   many; a recipe leaves "some pasta" alone (→ `planAdds`).
+ * - **have**: nothing needs to change. The add said no amount, or (from a
+ *   recipe) the amounts can't be added and the need is on the list already.
+ * - **apart**: a typed line whose amount can't be spoken of together with the
+ *   row's (3 pcs and 500 g). Somebody typed that on purpose, so it becomes a
+ *   row of its own.
+ */
+export type AmountMerge =
+	{ effect: 'merge' | 'set'; quantity: number; unit: string | null } | { effect: 'have' | 'apart' };
+
+export function addOnto(row: Amount, extra: Amount, typed = false): AmountMerge {
+	const combined = combineAmounts(row, extra);
+	if (combined) return { effect: 'merge', quantity: combined.quantity, unit: row.unit };
+	if (!typed || extra.quantity === null) return { effect: 'have' };
+	if (row.quantity === null) {
+		return {
+			effect: 'set',
+			quantity: Math.min(extra.quantity, TOTAL_QUANTITY_MAX),
+			unit: extra.unit
+		};
+	}
+	return { effect: 'apart' };
+}
+
 /** What adding one ingredient to the list does. */
 export type AddEffect =
 	/** Nothing by that name is on the list — it becomes a row. */
@@ -439,9 +473,9 @@ export function planAdds(
 			continue;
 		}
 
-		const combined = combineAmounts(target, ingredient);
+		const combined = addOnto(target, ingredient);
 
-		if (!combined) {
+		if (combined.effect !== 'merge') {
 			rows.push({ effect: 'have', result: { quantity: target.quantity, unit: target.unit } });
 			continue;
 		}

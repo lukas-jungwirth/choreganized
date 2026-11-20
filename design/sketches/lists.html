@@ -335,7 +335,7 @@
 				<div class="phone" id="L1" data-preset="main"></div>
 			</figure>
 			<figure>
-				<figcaption><b><span class="tag">L2</span>Choosing the list</b>The menu shows every list with its icon and what is on it, and ends with New list. Hardware store is empty, so this is where it lives.</figcaption>
+				<figcaption><b><span class="tag">L2</span>Choosing the list</b>The menu shows every list with its icon and what is on it, then Other (three dots, always there), and ends with New list. Hardware store is empty, so this is where it lives.</figcaption>
 				<div class="phone" id="L2" data-preset="menu"></div>
 			</figure>
 			<figure>
@@ -644,6 +644,7 @@
 			$('.extras').innerHTML =
 				(s.why && !fixed ? `<p class="why">${ic(T.icon, 14)}<span>Goes on <b>${esc(T.name)}</b>, like last time. <button class="keep" data-act="keep" aria-label="Keep on ${esc(list(first()).name)}">Keep here</button></span></p>` : '')
 				+ (s.menu && !fixed ? `<div class="card pop">${s.lists.map((L) => { const { left, total, done } = stats(L); return `<button class="mrow ${L.id === s.target ? 'on' : ''}" data-act="target" data-id="${L.id}" data-kind="${L.kind}"><span class="well mini">${ic(L.icon, 17)}</span><span class="grow">${esc(L.name)}</span><small>${L.kind === 'buy' ? left || 'empty' : `${done}/${total}`}</small>${L.id === s.target ? ic('check', 17, 2.6) : ''}</button>`; }).join('')}
+					<button class="mrow"><span class="well mini">${ic('more', 17)}</span><span class="grow">Other</span><small>empty</small></button>
 					<button class="mrow new" data-act="sheet"><span class="well mini">${ic('plus', 16, 2.2)}</span><span class="grow">New list</span></button></div>` : '')
 				+ (hits.length ? `<div class="card pop">${hits.map(([n, id]) => {
 					const at = n.toLowerCase().indexOf(t);

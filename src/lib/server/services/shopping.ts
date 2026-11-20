@@ -18,6 +18,7 @@ import {
 	QUANTITY_MAX,
 	STORE_NAME_MAX,
 	TOTAL_QUANTITY_MAX,
+	addOnto,
 	itemName,
 	planAdds,
 	splitList,
@@ -471,16 +472,44 @@ export function addItem(householdId: string, memberId: string, input: AddItemInp
 	return item;
 }
 
-export type QuickAddResult = { itemId: string; restored: boolean };
+/**
+ * What the add field did with a line, so it can say so (→ `QuickAdd.svelte`):
+ *
+ * - `added`: a new row.
+ * - `restored`: a row under "{n} bought" went back on.
+ * - `toppedUp`: a row already open on the list took the amount (it grew, or it
+ *   had none and now has the typed one).
+ * - `already`: a row already open on the list, and nothing to change.
+ */
+export type QuickAddEffect = 'added' | 'restored' | 'toppedUp' | 'already';
+
+export type QuickAddResult = {
+	itemId: string;
+	effect: QuickAddEffect;
+	/** True for `restored`; kept for the callers that only ask that. */
+	restored: boolean;
+	/** The row as it stands now: its name and amount, for the line under the field. */
+	name: string;
+	quantity: number | null;
+	unit: string | null;
+};
 
 /**
- * What the add field does (plan 36): a name sitting under "{n} bought" in the
- * list it is going to is **put back** rather than added a second time, the way
- * the suggestion offering it promised. Anything else is an ordinary `addItem`.
+ * What the add field does (plan 36, Lukas 2026-11-20). On a shopping list,
+ * including "Other", and only within the list it is going to:
  *
- * Only the target list is searched: an opened list adds to itself and nothing
- * else, and Milk bought at another shop is a fresh need here. A typed amount
- * travels with the row it puts back; no amount leaves the row's own alone.
+ * 1. A row with that name **still open** there wins. The typed amount goes
+ *    onto it by `addOnto`'s rules for a typed line: "Gurke x3" onto Gurke ×3
+ *    is ×6, 500 ml onto a litre is 1.5 L, an amount onto a row with none is
+ *    that amount, and no amount changes nothing. Only amounts that can't be
+ *    spoken of together (3 pcs, 500 g) fall through to a row of their own.
+ * 2. Otherwise a row under "{n} bought" is **put back** rather than added a
+ *    second time, the way the suggestion offering it promised; a typed amount
+ *    travels with it.
+ * 3. Otherwise an ordinary `addItem`.
+ *
+ * Milk at another shop is a different need, so other lists are never searched.
+ * A checklist skips all of it: a second "Towels" is what was typed.
  */
 export function quickAddItem(
 	householdId: string,
@@ -489,62 +518,127 @@ export function quickAddItem(
 ): QuickAddResult {
 	const values = normalize(householdId, input);
 	const key = suggestionKey(values.name);
+	const added = (item: ShoppingItem): QuickAddResult => ({
+		itemId: item.id,
+		effect: 'added',
+		restored: false,
+		...amountOf(item)
+	});
 
-	// A checklist has no "{n} bought" to put a row back from: its ticked rows
-	// stay where they are, and a second "Towels" is what was typed.
 	if (listKind(householdId, values.storeId) === 'checklist') {
-		const item = addItem(householdId, memberId, { ...input, storeId: values.storeId });
-		return { itemId: item.id, restored: false };
+		return added(addItem(householdId, memberId, { ...input, storeId: values.storeId }));
 	}
 
-	const restored = db.transaction((tx) => {
-		const match = tx
-			.select({ id: shoppingItems.id, name: shoppingItems.name })
+	const inList =
+		values.storeId === null
+			? isNull(shoppingItems.storeId)
+			: eq(shoppingItems.storeId, values.storeId);
+	const columns = {
+		id: shoppingItems.id,
+		name: shoppingItems.name,
+		quantity: shoppingItems.quantity,
+		unit: shoppingItems.unit
+	};
+
+	const result = db.transaction((tx): QuickAddResult | null => {
+		// `suggestionKey` in JavaScript rather than SQL's lower(), which only
+		// folds ASCII: "Äpfel" and "äpfel" are the same row to the household.
+		// In walking order, so a name that is on the list twice tops up the row
+		// higher up, as a recipe does (→ `listOpenItems`).
+		const open = tx
+			.select(columns)
 			.from(shoppingItems)
 			.where(
-				and(
-					eq(shoppingItems.householdId, householdId),
-					values.storeId === null
-						? isNull(shoppingItems.storeId)
-						: eq(shoppingItems.storeId, values.storeId),
-					isNotNull(shoppingItems.checkedAt)
-				)
+				and(eq(shoppingItems.householdId, householdId), inList, isNull(shoppingItems.checkedAt))
+			)
+			.orderBy(asc(shoppingItems.sortOrder), asc(shoppingItems.createdAt), asc(shoppingItems.id))
+			.all()
+			.find((row) => suggestionKey(row.name) === key);
+
+		if (open) {
+			const onto = addOnto(open, values, true);
+			if (onto.effect === 'have') {
+				rememberName(tx, householdId, open.name, values.storeId);
+				return { itemId: open.id, effect: 'already', restored: false, ...amountOf(open) };
+			}
+			if (onto.effect === 'merge' || onto.effect === 'set') {
+				tx.update(shoppingItems)
+					.set({ quantity: onto.quantity, unit: onto.unit })
+					.where(and(eq(shoppingItems.id, open.id), eq(shoppingItems.householdId, householdId)))
+					.run();
+				rememberName(tx, householdId, open.name, values.storeId);
+				return {
+					itemId: open.id,
+					effect: 'toppedUp',
+					restored: false,
+					name: open.name,
+					quantity: onto.quantity,
+					unit: onto.unit
+				};
+			}
+			// 'apart': typed on purpose, so it is not folded into this row.
+		}
+
+		const bought = tx
+			.select(columns)
+			.from(shoppingItems)
+			.where(
+				and(eq(shoppingItems.householdId, householdId), inList, isNotNull(shoppingItems.checkedAt))
 			)
 			.orderBy(desc(shoppingItems.checkedAt), asc(shoppingItems.id))
 			.all()
-			// `suggestionKey` in JavaScript rather than SQL's lower(), which only
-			// folds ASCII: "Äpfel" and "äpfel" are the same row to the household.
 			.find((row) => suggestionKey(row.name) === key);
 
-		if (!match) return null;
+		if (!bought) return null;
 
+		const amount = values.quantity !== null ? { quantity: values.quantity, unit: values.unit } : {};
 		tx.update(shoppingItems)
 			.set({
 				checkedAt: null,
 				checkedByMemberId: null,
 				// Back at the end of the list's walking order, where a new add goes.
 				sortOrder: nextItemSortOrder(tx, householdId, values.storeId),
-				...(values.quantity !== null ? { quantity: values.quantity, unit: values.unit } : {})
+				...amount
 			})
-			.where(and(eq(shoppingItems.id, match.id), eq(shoppingItems.householdId, householdId)))
+			.where(and(eq(shoppingItems.id, bought.id), eq(shoppingItems.householdId, householdId)))
 			.run();
 
-		rememberName(tx, householdId, match.name, values.storeId);
-		return match;
+		rememberName(tx, householdId, bought.name, values.storeId);
+		return {
+			itemId: bought.id,
+			effect: 'restored',
+			restored: true,
+			...amountOf({ ...bought, ...amount })
+		};
 	});
 
-	if (!restored) {
-		const item = addItem(householdId, memberId, input);
-		return { itemId: item.id, restored: false };
+	if (!result) return added(addItem(householdId, memberId, input));
+
+	if (result.effect === 'restored') {
+		publishShopping(householdId, memberId, {
+			kind: 'unchecked',
+			itemId: result.itemId,
+			name: result.name
+		});
+	} else if (result.effect === 'toppedUp') {
+		// The recipe pour-in's precedent (→ `addIngredients`): a row that grew is
+		// news for a housemate in the shop, pushed as a top-up and not as a new
+		// item, and every other screen refetches the list.
+		notifyShoppingAdd({ householdId, actorMemberId: memberId, itemCount: 0, toppedUpCount: 1 });
+		publishShopping(householdId, memberId, {
+			kind: 'added',
+			itemId: result.itemId,
+			name: result.name
+		});
 	}
+	// 'already' changed nothing on the list, so nobody else needs to hear of it.
 
-	publishShopping(householdId, memberId, {
-		kind: 'unchecked',
-		itemId: restored.id,
-		name: restored.name
-	});
+	return result;
+}
 
-	return { itemId: restored.id, restored: true };
+/** A row's name and amount, as `QuickAddResult` reports them. */
+function amountOf(row: { name: string; quantity: number | null; unit: string | null }) {
+	return { name: row.name, quantity: row.quantity, unit: row.unit };
 }
 
 /**
