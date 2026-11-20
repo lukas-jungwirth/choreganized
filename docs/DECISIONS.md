@@ -4145,7 +4145,7 @@ store_id` NULL already means "no memory" (a deleted list), and telling the two a
        have to choose between "in place" (#268) and "bought last", which is Lukas's call.
      - **Not here:** a double submit of the add field is guarded on the client (#278).
 
-279. **Changing who did it rewrites the completion, not the task** (review of #277, 2026-11-20;
+280. **Changing who did it rewrites the completion, not the task** (review of #277, 2026-11-20;
      → SPEC §5.4, DATA-MODEL `task_completions`). #277 built the faces as undo plus log-again,
      which read the task row as it was _then_ back from the browser and as it is _now_ from
      the database. Four ways that went wrong, each reproduced in
