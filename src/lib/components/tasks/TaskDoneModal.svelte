@@ -64,6 +64,15 @@
 			: m.tasks.done.niceWork(names[0] ?? '');
 	});
 
+	const what = $derived(
+		together
+			? m.tasks.done.shared(completion.taskName, completion.taskPoints, completion.doers.length)
+			: m.tasks.done.logged(completion.taskName)
+	);
+	const points = $derived(
+		together ? m.tasks.done.pointsEach(completion.points) : m.tasks.done.points(completion.points)
+	);
+
 	/** The doers after a tap on `memberId`: in if they were out, out if they were in. */
 	function toggled(memberId: string): string[] {
 		return doerIds.includes(memberId)
@@ -71,7 +80,18 @@
 			: [...doerIds, memberId];
 	}
 
-	const change: SubmitFunction = () => {
+	/**
+	 * The faces are never `disabled`: that would drop the keyboard's focus out of
+	 * the row on every tap, and hide the last face from a screen reader
+	 * altogether. They are `aria-disabled` and the tap is refused here instead
+	 * (→ DECISIONS #280). With no JavaScript the server refuses the same two.
+	 */
+	const change: SubmitFunction = ({ formData, cancel }) => {
+		// A second tap while the first is on its way, or the last face tapped off.
+		if (submitting || formData.getAll('memberId').length === 0) {
+			cancel();
+			return;
+		}
 		submitting = true;
 		error = undefined;
 
@@ -89,7 +109,7 @@
 			}
 		};
 	};
-	/** This form's own rejection — a failed undo must not look like a done one. */
+	/** What the last tap was refused with, a face's or Undo's. */
 	let error = $state<string | undefined>();
 
 	$effect(() => {
@@ -105,10 +125,10 @@
 
 	/** The gap to the rival, not the two totals: "5 points ahead of Elisabeth". */
 	const standings = $derived.by(() => {
-		const { points, rival, state } = standing;
-		if (!rival) return m.tasks.done.standingsSolo(points);
+		const { points: mine, rival, state } = standing;
+		if (!rival) return m.tasks.done.standingsSolo(mine);
 		if (state === 'tied') return m.tasks.done.standingsTied(rival.displayName);
-		const gap = Math.abs(points - rival.points);
+		const gap = Math.abs(mine - rival.points);
 		return state === 'leading'
 			? m.tasks.done.standingsAhead(gap, rival.displayName)
 			: m.tasks.done.standingsBehind(gap, rival.displayName);
@@ -119,16 +139,22 @@
 	<div class="badge" aria-hidden="true"><Check size={36} strokeWidth={3} /></div>
 
 	<h2>{title}</h2>
-	<p class="what">
-		{together
-			? m.tasks.done.shared(completion.taskName, completion.taskPoints, completion.doers.length)
-			: m.tasks.done.logged(completion.taskName)}
-	</p>
+	<p class="what">{what}</p>
 
 	<p class="points">
-		<Star size={18} strokeWidth={2} aria-hidden="true" />{together
-			? m.tasks.done.pointsEach(completion.points)
-			: m.tasks.done.points(completion.points)}
+		<Star size={18} strokeWidth={2} aria-hidden="true" />{points}
+	</p>
+
+	<!-- A tap on a face redraws the lines above without moving focus, so a screen
+		 reader would hear nothing: this says what the tap came to. Empty until then,
+		 because opening the dialog already reads it. -->
+	<p class="sr-only" role="status">
+		{#if changed}
+			<span>{title}</span>
+			<span>{what}</span>
+			<span>{points}</span>
+			{#if completion.nextDueDate}<span>{handover}</span>{/if}
+		{/if}
 	</p>
 
 	{#if completion.nextDueDate}
@@ -161,31 +187,37 @@
 							<input type="hidden" name="memberId" value={id} />
 						{/each}
 						<!-- The last face stays: a completion is always somebody's. Taking
-							 it back altogether is what Undo is for. -->
+							 it back altogether is what Undo is for, and the face says so.
+							 Its name is the word under it ("You" for the reader), so what
+							 is heard is what is seen. -->
 						<button
 							type="submit"
 							class="face"
 							aria-pressed={on}
-							aria-label={member.displayName}
-							disabled={submitting || next.length === 0}
+							aria-disabled={next.length === 0}
+							aria-describedby={next.length === 0 ? 'who-last' : undefined}
 						>
-							<span class="disc">
+							<span class="disc" aria-hidden="true">
 								<Avatar name={member.displayName} color={member.color} size={38} />
-								<span class="tick" aria-hidden="true"><Check size={11} strokeWidth={3.4} /></span>
+								<span class="tick"><Check size={11} strokeWidth={3.4} /></span>
 							</span>
-							<span class="name" aria-hidden="true">
+							<span class="name">
 								{member.id === currentMemberId ? m.tasks.done.whoYou : member.displayName}
 							</span>
 						</button>
 					</form>
 				{/each}
 			</div>
+			<p id="who-last" class="sr-only">{m.tasks.done.whoLast}</p>
 		</div>
 	{/if}
 
 	<p class="standings">
 		{#if me}<Avatar name={me.displayName} color={me.color} size={20} />{/if}{standings}
 	</p>
+
+	<!-- Either form's rejection, outside both so it belongs to neither. -->
+	{#if error}<p class="error" role="alert">{error}</p>{/if}
 
 	<form
 		method="POST"
@@ -211,7 +243,6 @@
 		<!-- Everything needed to put the world back, straight from the response
 			 that opened this modal (→ services/tasks.ts `TaskSnapshot`). -->
 		<input type="hidden" name="snapshot" value={JSON.stringify(completion.snapshot)} />
-		{#if error}<p class="error">{error}</p>{/if}
 		<button type="submit" class="undo" disabled={submitting}>{m.tasks.done.undo}</button>
 	</form>
 </CenterModal>
@@ -375,6 +406,19 @@
 		text-overflow: ellipsis;
 		white-space: nowrap;
 		color: var(--text-5);
+	}
+
+	.face[aria-disabled='true'] {
+		cursor: default;
+	}
+
+	.sr-only {
+		position: absolute;
+		width: 1px;
+		height: 1px;
+		overflow: hidden;
+		clip-path: inset(50%);
+		white-space: nowrap;
 	}
 
 	.face[aria-pressed='true'] .disc {

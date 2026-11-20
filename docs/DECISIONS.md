@@ -4117,3 +4117,33 @@ store_id` NULL already means "no memory" (a deleted list), and telling the two a
        and the first drag on the checklist renumbers every row. Any renumbering would also
        have to choose between "in place" (#268) and "bought last", which is Lukas's call.
      - **Not here:** a double submit of the add field is guarded on the client (#278).
+
+279. **Changing who did it rewrites the completion, not the task** (review of #277, 2026-11-20;
+     → SPEC §5.4, DATA-MODEL `task_completions`). #277 built the faces as undo plus log-again,
+     which read the task row as it was _then_ back from the browser and as it is _now_ from
+     the database. Four ways that went wrong, each reproduced in
+     `tests/integration/tasks.test.ts` before the fix: a task edited on another phone between
+     tick and tap was re-priced (and deleted, if edited into a one-off); a reassign or a
+     second tick in between was reverted; a task deleted in between came back; and a crafted
+     post could re-credit an old completion, split one in two through a doer's row id, or
+     mint points from a made-up one-off. **Now** `setCompletionDoers` replaces the group's
+     rows and nothing else: points come from the snapshot's price, accepted only when it
+     splits into the shares that were logged; the snapshot must name the completion's own
+     task; the group is found by `groupId` alone; and a completion more than a day old stands
+     (the pop-up is open for seconds, a day covers a phone left on it overnight). The task
+     gets one column written, the assignee, and only while it is where this completion left
+     it. **Otherwise the credit still changes and the turn is left alone**, rather than
+     refusing: the person tapping is right about who did it, and the housemate who reassigned
+     is right about who is next. A deleted task's completion can be re-credited too; the
+     pop-up just loses its "Next due" block. **Left alone on purpose**: Undo trusts the same
+     browser-carried snapshot with no window (its comment in `services/tasks.ts` says why,
+     and it can only give back what the edit sheet could set); and `splitPoints` keeps its
+     1-point floor, so five people sharing a 1-point chore make 5 points. That is 4 points
+     too many at the very worst, needs the whole household to tap themselves in, and the
+     alternative is #277's rejected "helping scores nothing". **The pop-up reads out
+     properly**: faces are `aria-disabled` instead of `disabled` (a disabled button drops
+     focus, and hid the last face from screen readers), named by the visible word ("You"),
+     the last one described by a hidden line; a `role="status"` line announces the redrawn
+     result; the error is a `role="alert"` outside both forms. The reassign list in the task
+     sheet moves focus in and hands it back. German "durch 3 geteilt" became "auf 3
+     aufgeteilt", the word the expenses use.

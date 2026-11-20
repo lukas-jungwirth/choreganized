@@ -1077,7 +1077,19 @@ actually need is the chore this replaces (→ [DECISIONS #123](DECISIONS.md)).
   - The "Who did it?" question before the tick stays as it is, for other people's tasks only:
     it picks the one person the modal opens with. There is no "together" answer there;
     sharing is always added here.
-  - Once the modal is closed the credit stands; there is no editing from History (yet).
+  - Once the modal is closed the credit stands; there is no editing from History (yet). The
+    server holds the same line: a completion more than a day old is not changed.
+  - **A tap changes the credit, and at most whose turn is next** (→ DECISIONS #280). The
+    completion keeps the points the task was worth when it was ticked, and nothing else on
+    the task is written. So whatever a housemate did on another phone in between stands: an
+    edit stays (new points apply from the next time), a deleted task stays deleted, and after
+    a reassign or a second tick the turn is left where they put it while the credit still
+    changes.
+  - **Reading it out**: a face is named by the word under it ("You" for the reader). The
+    faces are never disabled, so a tap keeps the keyboard's focus; the last face is marked
+    unavailable and says why ("Somebody has to have done it. Undo takes it back."). After a
+    tap the new title, points and next turn are announced; "Couldn't change that." is an
+    alert.
 
 ### 5.5 Snooze & holiday [4c]
 

@@ -261,6 +261,15 @@ from whoever tapped.
   by `id` (readers use `coalesce(groupId, id)`). Because shares are ordinary rows,
   `SUM(points) GROUP BY memberId` needs no change; anything that counts _completions_ or
   lists them (the feed, Home's activity, "{n} done this week") groups by it.
+  **Changing the doers** (`setCompletionDoers`, the celebration's faces) replaces the group's
+  rows in one transaction: same `groupId`, `completedAt`, `taskId` and `taskName`, new
+  members, each with their share of the price in the snapshot the browser carries. That
+  snapshot is checked against the rows first (same task or `taskId` NULL, and its points must
+  split into the shares that were logged), the group is found by `groupId` only, and it must
+  be less than a day old (`DOERS_WINDOW_MS`). On `tasks` it writes `assigneeMemberId` and
+  nothing else, and only while the task is where this completion left it: same assignee and
+  `rotate` as the completion produced, and no later completion row for the task
+  (→ DECISIONS #280).
 
 - Leaderboard month: `completedAt` within the current household-local calendar month and
   `action = 'done'`; `SUM(points) GROUP BY memberId`. Month boundaries computed from

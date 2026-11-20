@@ -145,10 +145,9 @@ export const actions: Actions = {
 			householdId,
 			String(form.get('completionId') ?? ''),
 			form.getAll('memberId').map(String),
-			snapshot,
-			context.timezone
+			snapshot
 		);
-		// Undone on another phone, or nobody left to credit.
+		// Undone on another phone, too long ago, or nobody left to credit.
 		if (!completion) return fail(404, { error: failed });
 
 		return {

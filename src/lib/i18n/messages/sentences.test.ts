@@ -81,3 +81,17 @@ describe('the add-expense sentence', () => {
 		);
 	});
 });
+
+describe('a task done together (→ SPEC §5.4)', () => {
+	it('says the points were split up, in the words the expenses use', () => {
+		assert.equal(
+			catalog('en').tasks.done.shared('Bathroom', 20, 3),
+			'Bathroom · 20 points shared by 3'
+		);
+		// "aufgeteilt", as in "gleich aufgeteilt": "durch 3 geteilt" reads as a sum.
+		assert.equal(
+			catalog('de').tasks.done.shared('Bad putzen', 20, 3),
+			'Bad putzen · 20 Punkte, auf 3 aufgeteilt'
+		);
+	});
+});

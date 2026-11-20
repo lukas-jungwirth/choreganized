@@ -12,7 +12,7 @@
  * Plan 02 opened this file with `listOverdueForMember`, which the tab badge and
  * the Home banner share; plan 04 built the rest around it.
  */
-import { and, asc, eq, gte, isNull, lt, or, sql, type SQL } from 'drizzle-orm';
+import { and, asc, eq, gt, gte, isNull, lt, or, sql, type SQL } from 'drizzle-orm';
 import { alias } from 'drizzle-orm/sqlite-core';
 import { type Locale } from '$lib/i18n';
 import {
@@ -570,73 +570,144 @@ export function skipTask(
 }
 
 /**
+ * How long after the tick the celebration's faces may still change the credit.
+ * The pop-up is open for seconds; a day covers a phone left on it overnight.
+ * Past that the credit stands (→ SPEC §5.4, DECISIONS #280).
+ */
+export const DOERS_WINDOW_MS = 24 * 60 * 60 * 1000;
+
+/**
  * Change who a completion is credited to, from the celebration's row of faces
  * (→ SPEC §5.4): somebody else did it, or several people did it together and
- * share the points. It is the same completion told again — the old rows go, the
- * task returns to the state the snapshot holds, and it is logged afresh for the
- * new doers under the same group id and the same moment, so the feed keeps its
- * place and Undo still has one thing to take back.
+ * share the points. It is the same completion told again: its rows are replaced
+ * under the same group id and the same moment, so the feed keeps its place and
+ * Undo still has one thing to take back.
+ *
+ * It changes the completion's rows and, at most, whose turn is next. Nothing
+ * else on the task is written, and the task as it is now prices nothing
+ * (→ DECISIONS #280): the completion keeps the price it was ticked at, a task
+ * edited or deleted on another phone in the meantime stays edited or deleted,
+ * and the turn only moves while the task is still where this completion left
+ * it (same assignee, same "alternate" setting, nothing logged for it since).
  *
  * Null when there is nothing to change: the completion is gone (undone on
- * another phone), or none of the ids is a housemate.
+ * another phone), is older than `DOERS_WINDOW_MS`, isn't the one the snapshot
+ * describes, or none of the ids is a housemate.
  */
 export function setCompletionDoers(
 	householdId: string,
 	completionId: string,
 	memberIds: string[],
 	snapshot: TaskSnapshot,
-	timezone: string
+	now: Date = new Date()
 ): CompletionResult | null {
 	return db.transaction((tx) => {
-		const logged = tx
-			.select({ completedAt: taskCompletions.completedAt })
+		// By group id only: one doer's row id would split the completion in two.
+		const group = and(
+			eq(taskCompletions.householdId, householdId),
+			eq(taskCompletions.groupId, completionId)
+		);
+		const logged = tx.select().from(taskCompletions).where(group).all();
+		const [first] = logged;
+
+		if (!first || first.action !== 'done') return null;
+		if (now.getTime() - first.completedAt.getTime() > DOERS_WINDOW_MS) return null;
+		// The snapshot has to be this completion's: the same task (NULL once the
+		// task is gone: a finished one-off, or one deleted since), and a price that
+		// splits into the shares that were logged.
+		if (first.taskId !== null && first.taskId !== snapshot.id) return null;
+		if (!Number.isInteger(snapshot.points)) return null;
+		if (splitPoints(snapshot.points, logged.length) !== first.points) return null;
+
+		const roster = rosterOf(tx, householdId);
+		const doers = roster.filter((member) => memberIds.includes(member.id));
+		// An empty answer leaves the completion standing rather than undoing it.
+		if (doers.length === 0) return null;
+
+		const points = splitPoints(snapshot.points, doers.length);
+
+		tx.delete(taskCompletions).where(group).run();
+		tx.insert(taskCompletions)
+			.values(
+				doers.map((doer) => ({
+					householdId,
+					taskId: first.taskId,
+					taskName: first.taskName,
+					points,
+					action: 'done' as const,
+					memberId: doer.id,
+					memberName: doer.displayName,
+					groupId: completionId,
+					completedAt: first.completedAt
+				}))
+			)
+			.run();
+
+		const result = {
+			completionId,
+			action: 'done' as const,
+			taskName: first.taskName,
+			points,
+			taskPoints: snapshot.points,
+			doers,
+			snapshot
+		};
+
+		const task = first.taskId
+			? tx
+					.select()
+					.from(tasks)
+					.where(and(eq(tasks.id, first.taskId), eq(tasks.householdId, householdId)))
+					.get()
+			: undefined;
+
+		if (!task) return { ...result, nextDueDate: null, nextAssigneeName: null, rotated: false };
+
+		// Whose turn is next follows who did it (→ `nextAssigneeAfter`), so a new
+		// answer can move it. Only while the task is where this completion left
+		// it, though: a reassign or a second tick from another phone wins.
+		const before = { assigneeMemberId: snapshot.assigneeMemberId, rotate: snapshot.rotate };
+		const leftAt = nextAssigneeAfter(
+			roster,
+			before,
+			logged.flatMap((row) => row.memberId ?? []),
+			'done'
+		);
+		const later = tx
+			.select({ id: taskCompletions.id })
 			.from(taskCompletions)
 			.where(
 				and(
 					eq(taskCompletions.householdId, householdId),
-					eq(taskCompletions.action, 'done'),
-					inGroup(completionId)
+					eq(taskCompletions.taskId, task.id),
+					gt(taskCompletions.completedAt, first.completedAt)
 				)
 			)
 			.get();
+		const untouched = !later && task.rotate === snapshot.rotate && task.assigneeMemberId === leftAt;
 
-		if (!logged) return null;
-
-		// Checked before anything is taken apart: an empty answer must leave the
-		// completion standing rather than undo it.
-		const known = tx
-			.select({ id: members.id })
-			.from(members)
-			.where(eq(members.householdId, householdId))
-			.all();
-		const doerIds = known.map((member) => member.id).filter((id) => memberIds.includes(id));
-		if (doerIds.length === 0) return null;
-
-		// Where the completion sent a recurring task. Telling it again must not
-		// move that date, so it is read off the row before the row is put back.
-		const moved = tx
-			.select({ dueDate: tasks.dueDate })
-			.from(tasks)
-			.where(and(eq(tasks.id, snapshot.id), eq(tasks.householdId, householdId)))
-			.get();
-
-		undoIn(tx, householdId, completionId, snapshot);
-
-		return logTaskAction(
-			tx,
-			householdId,
-			snapshot.id,
-			doerIds,
-			// Only reached for when the row had no date to keep: then the day it
-			// was done, not the day it was corrected.
-			toCalendarDate(logged.completedAt, timezone),
-			'done',
-			{
-				groupId: completionId,
-				completedAt: logged.completedAt,
-				nextDueDate: moved?.dueDate ?? null
+		let nextAssigneeId = task.assigneeMemberId;
+		if (untouched) {
+			nextAssigneeId = nextAssigneeAfter(
+				roster,
+				before,
+				doers.map((doer) => doer.id),
+				'done'
+			);
+			if (nextAssigneeId !== task.assigneeMemberId) {
+				tx.update(tasks)
+					.set({ assigneeMemberId: nextAssigneeId, updatedAt: new Date() })
+					.where(and(eq(tasks.id, task.id), eq(tasks.householdId, householdId)))
+					.run();
 			}
-		);
+		}
+
+		return {
+			...result,
+			nextDueDate: task.recurUnit === 'none' ? null : task.dueDate,
+			nextAssigneeName: roster.find((member) => member.id === nextAssigneeId)?.displayName ?? null,
+			rotated: nextAssigneeId !== snapshot.assigneeMemberId
+		};
 	});
 }
 
@@ -645,15 +716,50 @@ function inGroup(completionId: string): SQL | undefined {
 	return or(eq(taskCompletions.groupId, completionId), eq(taskCompletions.id, completionId));
 }
 
+/**
+ * The household in join order. One read, three uses: it validates the doers,
+ * names and colours them for the completion snapshot, and is the rotation order
+ * (→ docs/DATA-MODEL.md).
+ */
+function rosterOf(tx: Transaction, householdId: string): CompletionDoer[] {
+	return tx
+		.select({ id: members.id, displayName: members.displayName, color: members.color })
+		.from(members)
+		.where(eq(members.householdId, householdId))
+		.orderBy(asc(members.joinedAt), asc(members.id))
+		.all();
+}
+
+/**
+ * Who holds a task after it was done or skipped. Rotation advances from whoever
+ * was responsible for this occurrence. A completion by one person is theirs, so
+ * doing a task that was someone else's hands the next turn to *them* rather than
+ * back to yourself (→ SPEC §5.4, DECISIONS #116). Done together it is nobody's
+ * in particular, and a skip is nobody's doing at all: in both the assignee's
+ * turn is the one that passes.
+ */
+function nextAssigneeAfter(
+	roster: CompletionDoer[],
+	task: { assigneeMemberId: string | null; rotate: boolean },
+	doerIds: string[],
+	action: TaskActionKind
+): string | null {
+	const rotateFrom = action === 'done' && doerIds.length === 1 ? doerIds[0] : task.assigneeMemberId;
+	const current = roster.findIndex((member) => member.id === rotateFrom);
+	// Wrapping through join order; a departed assignee is already NULL, and
+	// with one member there is nobody to alternate with.
+	return task.rotate && current !== -1
+		? roster[(current + 1) % roster.length].id
+		: task.assigneeMemberId;
+}
+
 function logTaskAction(
 	tx: Transaction,
 	householdId: string,
 	taskId: string,
 	creditMemberIds: string[],
 	today: CalendarDate,
-	action: TaskActionKind,
-	/** Set when an existing completion is being told again (→ `setCompletionDoers`). */
-	keep?: { groupId: string; completedAt: Date; nextDueDate: CalendarDate | null }
+	action: TaskActionKind
 ): CompletionResult | null {
 	const task = tx
 		.select()
@@ -663,23 +769,15 @@ function logTaskAction(
 
 	if (!task) return null;
 
-	// One read, three uses: it validates the doers, names and colours them for
-	// the completion snapshot, and is the rotation order (→ docs/DATA-MODEL.md).
-	const roster = tx
-		.select({ id: members.id, displayName: members.displayName, color: members.color })
-		.from(members)
-		.where(eq(members.householdId, householdId))
-		.orderBy(asc(members.joinedAt), asc(members.id))
-		.all();
+	const roster = rosterOf(tx, householdId);
 
 	// Who the completion is credited to: the tapper by default, whoever the "who
-	// did it?" choice named, or everyone the celebration's faces say did it
-	// together (→ SPEC §5.4). A skip is always the tapper's alone.
+	// did it?" choice named (→ SPEC §5.4). A skip is always the tapper's alone.
 	const doers = roster.filter((member) => creditMemberIds.includes(member.id));
 	if (doers.length === 0) return null;
 
 	const points = action === 'done' ? splitPoints(task.points, doers.length) : 0;
-	const groupId = keep?.groupId ?? crypto.randomUUID();
+	const groupId = crypto.randomUUID();
 
 	tx.insert(taskCompletions)
 		.values(
@@ -693,8 +791,7 @@ function logTaskAction(
 				action,
 				memberId: doer.id,
 				memberName: doer.displayName,
-				groupId,
-				...(keep ? { completedAt: keep.completedAt } : {})
+				groupId
 			}))
 		)
 		.run();
@@ -738,21 +835,14 @@ function logTaskAction(
 	// Counted from the day it was actually done, not from the date it missed,
 	// so an overdue weekly task gets a full week rather than reappearing
 	// tomorrow (→ DECISIONS #6).
-	const nextDueDate = keep?.nextDueDate ?? addInterval(today, task.recurInterval, task.recurUnit);
+	const nextDueDate = addInterval(today, task.recurInterval, task.recurUnit);
 
-	// Rotation advances from whoever was responsible for this occurrence. A
-	// completion by one person is theirs, so doing a task that was someone else's
-	// hands the next turn to *them* rather than back to yourself (→ SPEC §5.4,
-	// DECISIONS #116). Done together it is nobody's in particular, and a skip is
-	// nobody's doing at all: in both the assignee's turn is the one that passes.
-	const rotateFrom = action === 'done' && doers.length === 1 ? doers[0].id : task.assigneeMemberId;
-	const current = roster.findIndex((member) => member.id === rotateFrom);
-	// Wrapping through join order; a departed assignee is already NULL, and
-	// with one member there is nobody to alternate with.
-	const nextAssigneeId =
-		task.rotate && current !== -1
-			? roster[(current + 1) % roster.length].id
-			: task.assigneeMemberId;
+	const nextAssigneeId = nextAssigneeAfter(
+		roster,
+		task,
+		doers.map((doer) => doer.id),
+		action
+	);
 
 	tx.update(tasks)
 		.set({
