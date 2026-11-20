@@ -4175,7 +4175,7 @@ store_id` NULL already means "no memory" (a deleted list), and telling the two a
      sheet moves focus in and hands it back. German "durch 3 geteilt" became "auf 3
      aufgeteilt", the word the expenses use.
 
-280. **The gear answers on 44px, the legal text says its language, and an address ends where
+281. **The gear answers on 44px, the legal text says its language, and an address ends where
      the writer meant** (review of #266 and #270, 2026-11-20; → SPEC §2, §13). Four low
      findings, each checked with a test first, all four kept because each fix is a few lines.
      **Tap area**: `RoundButton` stays 38px to look at (#266) and gains an invisible 3px rim
