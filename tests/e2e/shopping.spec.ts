@@ -312,3 +312,63 @@ async function deleteList(page: Page, name: string, says: string) {
 	await confirm.getByRole('button', { name: 'Delete list' }).click();
 	await expect(page.getByRole('button', { name: `Delete ${name}` })).toBeHidden();
 }
+
+/* ── The amount anywhere in the line (plan 37) ───────────────────────────── */
+
+test('"Gurken x3" shows its amount before Enter and lands as Gurken ×3', async ({ page }) => {
+	await page.goto('/shopping');
+	const name = fresh('Gurken');
+	const field = page.getByPlaceholder(`Add to ${GROCERY}…`);
+	await field.fill(`${name} x3`);
+	const chip = page.getByRole('button', { name: 'Read ×3 as the amount' });
+	await expect(chip).toHaveAttribute('aria-pressed', 'true');
+	await field.press('Enter');
+
+	const row = page.getByRole('listitem').filter({ hasText: name });
+	await expect(row).toContainText('×3');
+	await expect(row.getByRole('button', { name: `Check off ${name}` })).toBeVisible();
+	await expect(chip).toBeHidden();
+});
+
+test('the chip tapped off adds the line as typed, and it is never split again', async ({
+	page
+}) => {
+	await page.goto('/shopping');
+	const word = fresh('Windeln');
+	const line = `${word} 4`;
+	const field = page.getByPlaceholder(`Add to ${GROCERY}…`);
+	await field.fill(line);
+	const chip = page.getByRole('button', { name: 'Read ×4 as the amount' });
+	await chip.click();
+	await expect(chip).toHaveAttribute('aria-pressed', 'false');
+	await field.press('Enter');
+	await expect(page.getByRole('button', { name: `Check off ${line}` })).toBeVisible();
+
+	// The same line again: the household uses it as a name now, so no chip.
+	await page.getByPlaceholder(`Add to ${GROCERY}…`).fill(line);
+	await expect(page.getByRole('button', { name: /as the amount$/ })).toBeHidden();
+	// An amount on top of it is still read.
+	await page.getByPlaceholder(`Add to ${GROCERY}…`).fill(`${line} x2`);
+	await expect(page.getByRole('button', { name: 'Read ×2 as the amount' })).toBeVisible();
+});
+
+test('the chip works from the keyboard and in an opened list', async ({ page }) => {
+	await page.goto('/shopping');
+	await page.getByRole('link', { name: `Open ${GROCERY}` }).click();
+	await expect(page.getByRole('heading', { level: 1, name: GROCERY })).toBeVisible();
+
+	const name = fresh('Milch');
+	const field = page.getByPlaceholder(`Add to ${GROCERY}…`);
+	await field.fill(`${name} 2l`);
+	const chip = page.getByRole('button', { name: 'Read 2 L as the amount' });
+	await expect(chip).toBeVisible();
+	await chip.focus();
+	await page.keyboard.press('Enter');
+	await expect(chip).toHaveAttribute('aria-pressed', 'false');
+	await page.keyboard.press('Space');
+	await expect(chip).toHaveAttribute('aria-pressed', 'true');
+
+	await field.press('Enter');
+	const row = page.getByRole('listitem').filter({ hasText: name });
+	await expect(row).toContainText('2 L');
+});

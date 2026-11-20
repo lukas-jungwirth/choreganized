@@ -6,7 +6,7 @@
  * nothing here translates, reflows or "fixes" it. It is also never HTML. There
  * is no `{@html}` on the page, so a `<script>` or a `javascript:` in the text
  * stays text; the only links are the ones this module finds, and it only
- * finds `http(s)://` addresses and email addresses (→ DECISIONS #269).
+ * finds `http(s)://` addresses and email addresses (→ DECISIONS #270).
  *
  * The format, all of it:
  *

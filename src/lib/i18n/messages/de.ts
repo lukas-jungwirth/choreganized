@@ -336,6 +336,7 @@ export const de: Messages = {
 				{ text: item, strong: true },
 				{ text: ` kommt wie beim letzten Mal zu ${list}.` }
 			],
+			amount: (amount: string) => `${amount} als Menge lesen`,
 			submit: 'Eintragen'
 		},
 

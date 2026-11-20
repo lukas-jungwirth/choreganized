@@ -446,6 +446,11 @@ export const en = {
 				{ text: item, strong: true },
 				{ text: ` goes to ${list}, like last time.` }
 			],
+			/**
+			 * The chip that shows the amount read from the line (plan 37). A toggle:
+			 * its pressed state says whether it applies.
+			 */
+			amount: (amount: string) => `Read ${amount} as the amount`,
 			submit: 'Add item'
 		},
 

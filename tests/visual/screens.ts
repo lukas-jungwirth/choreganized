@@ -47,6 +47,13 @@ export async function openGrocery(page: Page): Promise<void> {
 	await page.getByRole('heading', { level: 1, name: SEED.stores[0] }).waitFor();
 }
 
+/** "Gurken x3" typed into the add field, not yet added: the amount chip shows ×3. */
+export async function typeAmount(page: Page): Promise<void> {
+	await page.goto('/shopping');
+	await page.getByPlaceholder(/^Add to /).fill('Gurken x3');
+	await page.getByRole('button', { name: 'Read ×3 as the amount' }).waitFor();
+}
+
 /** The seeded checklist, opened from its row on the overview (plan 36 [L4]). */
 export async function openChecklist(page: Page): Promise<void> {
 	await page.goto('/shopping');
@@ -204,6 +211,15 @@ export const SCREENS: Screen[] = [
 				.getByRole('tab', { name: 'Checklist' })
 				.click();
 		}
+	},
+	// The add field reading an amount at the end of the line (plan 37): the chip.
+	{ name: 'shopping-amount', route: '/(app)/shopping', path: '', navigate: typeAmount },
+	{
+		name: 'shopping-amount-dark',
+		route: '/(app)/shopping',
+		path: '',
+		navigate: typeAmount,
+		theme: 'dark'
 	},
 	{ name: 'tasks', route: '/(app)/tasks', path: '/tasks', bottom: true },
 	// The calendar screens, which the real clock kept out of here until the

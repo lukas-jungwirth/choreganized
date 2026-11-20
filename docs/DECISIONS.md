@@ -3945,8 +3945,28 @@ units | null, name}`, written back as editor lines in the reader's unit spelling
      - **The demo seed has a checklist** ("Vacation packing", three of six ticked by both
        members), so the overview and the visual baselines show one.
      - **Assumed, still not confirmed by Lukas:** the tab name "Lists" / "Listen" (#264).
+269. **Quick add reads the amount at either end of the line, and a chip shows it first** (plan
+     37, agreed with Lukas 2026-11-20; → SPEC §3.1). `parseQuickAdd(text, known)` no longer leans
+     on the recipe parser: seven ordered rules, the plan's 119-line contract in
+     `utils/lists.test.ts`, every line passing as written (none changed). The calls made while
+     building it:
+     - **"119 cases" is 114 typed lines plus 5 against known names**; the test asserts the sum.
+     - **Rule 1's known names are the same 250 the field already holds** (`listItemNames`, most
+       recent first), on the client and in the action, so the chip and the server can't disagree
+       about a name; a name older than that can be split again, and the chip shows it.
+     - **The action parses again and trusts only `literal`** from the browser: the line, whitespace
+       collapsed, becomes the name. Its suggestion row is written by the ordinary add, which is
+       what rule 1 reads next time.
+     - **On a checklist a literal add is not remembered**: checklist adds write no suggestion
+       (#268), so the chip comes back for the same line there. Kept, rather than teaching the
+       shopping vocabulary from packing lists.
+     - **The chip refocuses the field after a tap, not after a key press**, so a keyboard user can
+       press it again; its type stops at 18px (`min(var(--fs-14), 18px)`) so the field stays one
+       line at 200% text.
+     - **`pkg`, `pkg.` and `stueck` joined `UNIT_ALIASES`** (recipes read them too); the Deka
+       factor stays in `utils/lists.ts`, since a recipe line does not convert.
 
-269. **Impressum and Datenschutz are the deploy's text, in two variables, rendered without
+270. **Impressum and Datenschutz are the deploy's text, in two variables, rendered without
      `{@html}`** (Lukas 2026-11-20, "as sketched" in `design/sketches/settings-access.html`;
      → SPEC §13). `LEGAL_IMPRINT` and `LEGAL_PRIVACY` hold the operator's own words; each page
      exists only while its variable has text, otherwise `/legal/<page>` is a 404 and every link
