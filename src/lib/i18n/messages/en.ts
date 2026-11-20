@@ -905,6 +905,8 @@ export const en = {
 			who: 'Who did it?',
 			whoHint: 'Tap to change',
 			whoYou: 'You',
+			/** Read out on the last face left on: why a tap does nothing. */
+			whoLast: 'Somebody has to have done it. Undo takes it back.',
 			whoFailed: 'Couldn’t change that.',
 			nextDue: (date: string) => `Next due ${date}`,
 			/** Where the chore went next — or the truth, when nothing changed hands. */

@@ -11,6 +11,7 @@
 	composition BottomSheet and CenterModal were built around (→ DECISIONS #36).
 -->
 <script lang="ts">
+	import { tick } from 'svelte';
 	import { enhance } from '$app/forms';
 	import Avatar from '$lib/components/ui/Avatar.svelte';
 	import BottomSheet from '$lib/components/ui/BottomSheet.svelte';
@@ -65,6 +66,21 @@
 	let picking = $state(false);
 	let submitting = $state(false);
 
+	/**
+	 * Swapping the menu for the list unmounts the button that was just pressed,
+	 * and focus with it. So it is carried across: into the list on the way in,
+	 * back onto the row that opened it on the way out (→ DECISIONS #280).
+	 */
+	let list: HTMLElement | undefined = $state();
+	let opener: HTMLButtonElement | undefined = $state();
+
+	async function pick(on: boolean) {
+		picking = on;
+		await tick();
+		if (on) list?.querySelector<HTMLElement>('button:not(:disabled)')?.focus();
+		else opener?.focus();
+	}
+
 	$effect(() => {
 		if (!open) onclose();
 	});
@@ -108,7 +124,7 @@
 <BottomSheet bind:open title={picking ? m.tasks.detail.pickTitle : task.name}>
 	{#if picking}
 		<p class="picked">{task.name}</p>
-		<div class="menu">
+		<div class="menu" bind:this={list}>
 			{#each members as member (member.id)}
 				{@const current = member.id === task.assignee?.id}
 				<form method="POST" action="?/reassign" use:enhance={closeOnSuccess}>
@@ -148,7 +164,7 @@
 				</button>
 			</form>
 		</div>
-		<button type="button" class="back" onclick={() => (picking = false)}>
+		<button type="button" class="back" onclick={() => pick(false)}>
 			{m.tasks.detail.pickBack}
 		</button>
 	{:else}
@@ -223,7 +239,7 @@
 					</button>
 				</form>
 			{:else if others.length > 1}
-				<button type="button" class="item" onclick={() => (picking = true)}>
+				<button type="button" class="item" bind:this={opener} onclick={() => pick(true)}>
 					<UserRoundCheck size={19} strokeWidth={1.9} aria-hidden="true" />
 					<span class="what">
 						{task.assignee ? m.tasks.detail.reassign : m.tasks.detail.assign}
