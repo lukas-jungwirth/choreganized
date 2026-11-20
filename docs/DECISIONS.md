@@ -4087,3 +4087,33 @@ store_id` NULL already means "no memory" (a deleted list), and telling the two a
      of Elisabeth"), not two totals, and is always the reader's own. **Reassign is one row**:
      direct with a single other choice, a list ("Who takes it?", Anyone included) with more,
      instead of a row per housemate. **Not built**: correcting the credit later from History.
+
+278. **Lists data, after the review of 2026-11-20: a put-back is an add, a top-up that changes
+     nothing is none, a moved row goes to the end** (→ SPEC §3.1, §3.2, §3.5, DATA-MODEL
+     `shopping_items`). Six findings on the server side of the Lists rebuild (#264, #268,
+     #276), each checked again with a test before deciding.
+     - **Fixed: the add field putting a bought row back pushes "added".** Since #264 typing
+       "Milk" again restores the bought row, and only the live `unchecked` event went out, so a
+       housemate with the app closed heard nothing. `quickAddItem` now calls
+       `notifyShoppingAdd` with one item for `restored`. The live event stays `unchecked`.
+     - **Fixed: the restored row is "Added by" whoever put it back** (`addedByMemberId`), since
+       the sheet shows that line (#265). `createdAt` is left alone: nothing shows it, and it is
+       only a tie-break. Unticking by hand changes neither and pushes nothing.
+     - **Fixed: a merge that leaves the amount as it was is `have`.** `combineAmounts` rounds
+       to two decimals and stops at 99,999, so "Mehl 4 g" onto 1 kg came back as a merge to
+       1 kg: the field said "now 1 kg" and a "needs more" push went out. Decided in `addOnto`,
+       so the recipe pour-in and the picker's preview agree with the field.
+     - **Fixed: a row the sheet moves to another list lands at its end** (`updateItem` writes
+       `nextItemSortOrder` when the list changed). It kept its old number, which could tie with
+       any row there and put it at the top. An edit that stays on the list keeps its place.
+       **Left:** its tick moves with it, so a bought row moved onto a checklist arrives ticked.
+       That is #268's rule ("a bought row is a ticked row"), and one tap undoes it.
+     - **Fixed: the seed numbers a list it adds after the lists the household has**, as
+       `createStore` does, instead of from 0 (demo lists) and 3 (the packing list).
+     - **Left: shopping list → checklist does not renumber.** After a drag on a shopping list
+       a bought row can share a `sortOrder` with an open one, and as a checklist the two then
+       sort by `createdAt`. That needs a drag while something bought today is still under
+       "{n} bought", then a change of kind; the order that results is stable, nothing is lost,
+       and the first drag on the checklist renumbers every row. Any renumbering would also
+       have to choose between "in place" (#268) and "bought last", which is Lukas's call.
+     - **Not here:** a double submit of the add field is guarded on the client (#278).

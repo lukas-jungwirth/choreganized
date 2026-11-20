@@ -290,6 +290,13 @@ describe('addOnto', () => {
 		assert.deepEqual(addOnto(amount(3, 'pcs'), amount(500, 'g'), true), { effect: 'apart' });
 	});
 
+	it('an amount that leaves the row as it was is "have", not a merge', () => {
+		// 1 kg + 4 g rounds back to 1 kg; a row at the ceiling cannot grow.
+		assert.deepEqual(addOnto(amount(1, 'kg'), amount(4, 'g'), true), { effect: 'have' });
+		assert.deepEqual(addOnto(amount(1, 'kg'), amount(4, 'g')), { effect: 'have' });
+		assert.deepEqual(addOnto(amount(99_999), amount(5), true), { effect: 'have' });
+	});
+
 	it('never sets or splits for a recipe: what cannot be added is had', () => {
 		assert.deepEqual(addOnto(amount(null), amount(400, 'g')), { effect: 'have' });
 		assert.deepEqual(addOnto(amount(3, 'pcs'), amount(500, 'g')), { effect: 'have' });

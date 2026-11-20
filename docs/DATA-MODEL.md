@@ -110,6 +110,15 @@ user ─┬─ session / account / verification        (Better Auth)
   and before the checklists, and a target the add field's menu offers (an empty `storeId` in
   the form; a missing one means "wherever the field would go"). Deleting a shopping list sets its items' `storeId` to NULL;
   deleting a checklist deletes its items in the same transaction (plan 36 step 2).
+- `shopping_items.sortOrder` is the walking order within one list, and only ever compared
+  there. Every way a row **joins** a list writes `max + 1` of that list (`nextItemSortOrder`):
+  a new item, a bought one the add field puts back, and one the sheet moves over from another
+  list. Dragging renumbers the open rows 0…n−1 (every row, on a checklist), so a shopping
+  list's bought rows may repeat an open row's number; nothing sorts the two together until
+  the list is turned into a checklist, where `createdAt` breaks the tie
+  (→ [DECISIONS #279](DECISIONS.md)).
+- `shopping_items.addedByMemberId` is who asked for the row **last**: the add field putting a
+  bought row back rewrites it, an untick by hand does not. `createdAt` stays the first add.
 - `stores.icon` (TEXT NULL, migration 0023): a key from the fixed set of twelve in
   `utils/lists.ts` `LIST_ICONS`; NULL, or a key a later build no longer knows, draws the basket.
   A new household's three lists get basket, droplet and hammer.

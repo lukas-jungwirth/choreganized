@@ -8,6 +8,7 @@
  * rows are invisible and immovable from another's.
  */
 import assert from 'node:assert/strict';
+import { eq } from 'drizzle-orm';
 import { afterEach, describe, it, vi } from 'vitest';
 import { listMembers } from '$lib/server/services/household';
 import { getHomeSummary } from '$lib/server/services/home';
@@ -34,9 +35,17 @@ import {
 	updateItem
 } from '$lib/server/services/shopping';
 import { subscribe, type LiveEvent } from '$lib/server/live';
+import { notifyShoppingAdd } from '$lib/server/push';
 import { shoppingActions } from '$lib/server/shopping-actions';
 import { splitList } from '$lib/utils/shopping';
-import { makeHousehold } from '../helpers/db';
+import { db, makeHousehold, tables } from '../helpers/db';
+
+// Push is a no-op without VAPID keys; the spy is how a test sees who would have
+// been told (the real function still runs).
+vi.mock('$lib/server/push', async (importOriginal) => {
+	const push = await importOriginal<typeof import('$lib/server/push')>();
+	return { ...push, notifyShoppingAdd: vi.fn(push.notifyShoppingAdd) };
+});
 
 describe('addItem', () => {
 	it('lands in the chosen store at the next walking position, and is remembered', () => {
@@ -857,5 +866,108 @@ describe('the same thing on the same list adds up (Lukas 2026-11-20)', () => {
 			['Gurke', 3, null],
 			['Gurke', 2, null]
 		]);
+	});
+});
+
+describe('review of the Lists rebuild (DECISIONS #279)', () => {
+	const pushes = vi.mocked(notifyShoppingAdd);
+
+	it('putting a bought item back with the add field pushes like an add, and is now theirs', () => {
+		const { householdId, owner, members } = makeHousehold({ housemates: ['Elisabeth'] });
+		const elisabeth = members[1];
+		const [grocery] = listStores(householdId);
+		const milk = addItem(householdId, owner.id, { name: 'Milk', storeId: grocery.id });
+		setChecked(householdId, milk.id, owner.id, true);
+		pushes.mockClear();
+
+		const result = quickAddItem(householdId, elisabeth.id, { name: 'Milk', storeId: grocery.id });
+
+		assert.equal(result.effect, 'restored');
+		assert.deepEqual(
+			pushes.mock.calls.map(([notice]) => notice),
+			[{ householdId, actorMemberId: elisabeth.id, itemCount: 1 }]
+		);
+		// The sheet's "Added by" names who wants it now, not who wanted it last week.
+		assert.equal(getShoppingList(householdId)[0].addedBy?.displayName, 'Elisabeth');
+
+		// Unticking by hand is taking a tick back, not adding: nobody is pushed.
+		setChecked(householdId, milk.id, owner.id, true);
+		pushes.mockClear();
+		setChecked(householdId, milk.id, owner.id, false);
+		assert.equal(pushes.mock.calls.length, 0);
+		assert.equal(getShoppingList(householdId)[0].addedBy?.displayName, 'Elisabeth');
+	});
+
+	it('an amount too small to change the row is "already there": no push, no event', () => {
+		const { householdId, owner } = makeHousehold();
+		const [grocery] = listStores(householdId);
+		const flour = addItem(householdId, owner.id, {
+			name: 'Mehl',
+			quantity: 1,
+			unit: 'kg',
+			storeId: grocery.id
+		});
+		pushes.mockClear();
+
+		const events: LiveEvent[] = [];
+		const stop = subscribe(householdId, (event) => events.push(event));
+		let result;
+		try {
+			result = quickAddItem(householdId, owner.id, {
+				name: 'Mehl',
+				quantity: 4,
+				unit: 'g',
+				storeId: grocery.id
+			});
+		} finally {
+			stop();
+		}
+
+		assert.deepEqual(result, {
+			itemId: flour.id,
+			effect: 'already',
+			restored: false,
+			name: 'Mehl',
+			quantity: 1,
+			unit: 'kg'
+		});
+		assert.equal(pushes.mock.calls.length, 0);
+		assert.deepEqual(events, []);
+
+		// A recipe says the same: nothing merged, nothing announced.
+		const poured = addIngredients(householdId, owner.id, [
+			{ name: 'Mehl', quantity: 4, unit: 'g' }
+		]);
+		assert.deepEqual(poured, { added: 0, merged: 0, skipped: 1 });
+		assert.equal(pushes.mock.calls.length, 0);
+	});
+
+	it('an item moved to another list in the sheet lands at its end', () => {
+		const { householdId, owner } = makeHousehold();
+		const [grocery, drugstore] = listStores(householdId);
+		// Added first, so both its sortOrder (0) and its createdAt would win a tie.
+		const soap = addItem(householdId, owner.id, { name: 'Soap', storeId: grocery.id });
+		for (const name of ['Shampoo', 'Toothpaste']) {
+			addItem(householdId, owner.id, { name, storeId: drugstore.id });
+		}
+		db.update(tables.shoppingItems)
+			.set({ createdAt: new Date(Date.now() - 60_000) })
+			.where(eq(tables.shoppingItems.id, soap.id))
+			.run();
+
+		const edit = (storeId: string, name = 'Soap') =>
+			updateItem(householdId, soap.id, { name, quantity: null, unit: null, storeId });
+		const onDrugstore = () =>
+			splitList(getShoppingList(householdId), listStores(householdId))
+				.groups.find((group) => group.storeId === drugstore.id)!
+				.items.map((item) => item.name);
+
+		edit(drugstore.id);
+		assert.deepEqual(onDrugstore(), ['Shampoo', 'Toothpaste', 'Soap']);
+
+		// An edit that stays on the list keeps the row where it was dragged to.
+		const order = getShoppingList(householdId).find((row) => row.id === soap.id)!.sortOrder;
+		edit(drugstore.id, 'Hand soap');
+		assert.equal(getShoppingList(householdId).find((row) => row.id === soap.id)!.sortOrder, order);
 	});
 });

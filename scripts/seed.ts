@@ -348,10 +348,18 @@ const seeded = db.transaction((tx) => {
 	];
 
 	const existingStores = tx
-		.select({ id: stores.id, name: stores.name })
+		.select({ id: stores.id, name: stores.name, sortOrder: stores.sortOrder })
 		.from(stores)
 		.where(eq(stores.householdId, householdId))
 		.all();
+
+	/*
+	 * A list the seed adds goes after the ones the household already has, the way
+	 * `createStore` numbers it. Counting from 0 regardless gave a household with
+	 * lists of its own two at the same place in the order.
+	 */
+	let nextStoreOrder = Math.max(-1, ...existingStores.map((store) => store.sortOrder)) + 1;
+	const isNewStore = (id: string) => !existingStores.some((store) => store.id === id);
 
 	const storeId = (key: string): string => {
 		const demo = DEMO_STORES.find((store) => store.key === key);
@@ -363,13 +371,11 @@ const seeded = db.transaction((tx) => {
 
 	tx.insert(stores)
 		.values(
-			DEMO_STORES.map(({ key, name, icon }, sortOrder) => ({
-				id: storeId(key),
-				householdId,
-				name,
-				icon,
-				sortOrder
-			}))
+			DEMO_STORES.map(({ key, name, icon }) => {
+				const id = storeId(key);
+				// One that is already there keeps its place (the insert is skipped).
+				return { id, householdId, name, icon, sortOrder: isNewStore(id) ? nextStoreOrder++ : 0 };
+			})
 		)
 		.onConflictDoNothing()
 		.run();
@@ -480,7 +486,7 @@ const seeded = db.transaction((tx) => {
 			name: SEED_CHECKLIST_NAME,
 			icon: 'luggage',
 			kind: 'checklist',
-			sortOrder: DEMO_STORES.length
+			sortOrder: isNewStore(packingId) ? nextStoreOrder++ : 0
 		})
 		.onConflictDoNothing()
 		.run();
