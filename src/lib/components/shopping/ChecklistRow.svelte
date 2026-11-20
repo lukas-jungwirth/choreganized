@@ -4,14 +4,15 @@
 	worked through opened, not glanced at between shopping lists.
 
 	Icon in the terracotta well (shopping lists wear sage), the name, what is
-	left ("7 left · Sunscreen, Swimwear…"), a ring with "5/12", and the same
-	open button every card has, drawn here because the whole row is the link.
+	left ("7 left · Sunscreen, Swimwear…"), and the same pill every card ends
+	with (→ `OpenPill`), here holding the ring and "5/12" ("◔ 5/12 ›"). The
+	whole row is the link, so the pill is drawn without one.
 -->
 <script lang="ts">
 	import ListIcon from '$lib/components/shopping/ListIcon.svelte';
 	import { messages } from '$lib/i18n';
 	import type { ShoppingGroup } from '$lib/server/services/shopping';
-	import Maximize2 from '@lucide/svelte/icons/maximize-2';
+	import OpenPill from '$lib/components/shopping/OpenPill.svelte';
 
 	type Props = {
 		group: ShoppingGroup;
@@ -54,8 +55,8 @@
 			<span class="name">{group.name}</span>
 			<span class="peek">{peek}</span>
 		</span>
-		<span class="count" class:all>
-			<svg class="ring" width="18" height="18" viewBox="0 0 18 18" aria-hidden="true">
+		<OpenPill done={all}>
+			<svg class="ring" class:all width="18" height="18" viewBox="0 0 18 18" aria-hidden="true">
 				<circle class="track" cx="9" cy="9" r="7" />
 				<circle
 					class="fill"
@@ -68,8 +69,7 @@
 			</svg>
 			<span aria-hidden="true">{m.shopping.lists.ticked(done, total)}</span>
 			<span class="hidden-label">{m.shopping.lists.doneOf(done, total)}</span>
-		</span>
-		<span class="opener" aria-hidden="true"><Maximize2 size={16} strokeWidth={2} /></span>
+		</OpenPill>
 	</a>
 {/key}
 
@@ -146,21 +146,6 @@
 		color: var(--text-4);
 	}
 
-	.count {
-		display: flex;
-		flex: none;
-		align-items: center;
-		gap: 6px;
-		font-size: var(--fs-15);
-		font-weight: 700;
-		font-variant-numeric: tabular-nums;
-		color: var(--text-3);
-	}
-
-	.count.all {
-		color: var(--sage-deep);
-	}
-
 	.ring {
 		flex: none;
 		transform: rotate(-90deg);
@@ -181,7 +166,8 @@
 		transition: stroke-dashoffset 300ms ease-out;
 	}
 
-	.all .ring .fill {
+	/* Complete: the ring closes in sage, as the pill's text turns sage. */
+	.ring.all .fill {
 		stroke: var(--sage);
 	}
 
@@ -193,18 +179,6 @@
 		overflow: hidden;
 		clip-path: inset(50%);
 		white-space: nowrap;
-	}
-
-	.opener {
-		display: grid;
-		flex: none;
-		place-items: center;
-		width: 34px;
-		height: 34px;
-		margin-left: -1px;
-		border-radius: 11px;
-		background: var(--sunken);
-		color: var(--text-3);
 	}
 
 	@media (prefers-reduced-motion: reduce) {

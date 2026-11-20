@@ -372,3 +372,24 @@ test('the chip works from the keyboard and in an opened list', async ({ page }) 
 	const row = page.getByRole('listitem').filter({ hasText: name });
 	await expect(row).toContainText('2 L');
 });
+
+test('a card ends in one pill that carries the count and opens the list', async ({ page }) => {
+	await page.goto('/shopping');
+	const grocery = card(page, GROCERY);
+	const pill = grocery.getByRole('link', { name: new RegExp(`^Open ${GROCERY}, \\d+ to get$`) });
+	await expect(pill).toBeVisible();
+	const count = Number((await pill.innerText()).trim());
+	expect(count).toBeGreaterThan(0);
+	await expect(grocery.getByRole('button', { name: new RegExp(`^${GROCERY}`) })).toHaveAttribute(
+		'aria-expanded',
+		'true'
+	);
+	// The count is the pill's now: the header that folds no longer says it.
+	await expect(grocery.getByRole('button', { name: new RegExp(`^${GROCERY}`) })).not.toContainText(
+		String(count)
+	);
+
+	await pill.click();
+	await expect(page.getByRole('heading', { level: 1, name: GROCERY })).toBeVisible();
+	await expect(page.getByText(new RegExp(`^${count} to get`))).toBeVisible();
+});

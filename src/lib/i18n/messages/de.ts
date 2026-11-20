@@ -355,7 +355,8 @@ export const de: Messages = {
 				count === 1 ? '1 Sache zu holen' : `${count} Sachen zu holen`,
 			nothingToGet: 'Nichts zu holen',
 			openedStatus: (left: number, bought: number) => `${left} zu holen · ${bought} gekauft`,
-			open: (list: string) => `${list} öffnen`,
+			openWith: (list: string, left: number) =>
+				left > 0 ? `${list} öffnen, ${left} zu holen` : `${list} öffnen, alles erledigt`,
 			edit: (list: string) => `${list} bearbeiten`,
 			status: (left: number) => (left > 0 ? String(left) : 'leer'),
 			nothingYet: 'Noch nichts drauf',

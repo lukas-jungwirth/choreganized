@@ -317,15 +317,20 @@ sketch is `design/sketches/lists.html`, frames [L1]–[L7]. A list is one of two
   "Other", then **every checklist** as a single row (§3.7), empty ones included. A shopping list
   with nothing on it, open or bought, is not on the overview; the field's menu still reaches it. With every row ticked its header reads **All done** with a ✓, until the nightly
   sweep takes the bought rows and the card with them. A dashed **New list** row ends the page.
-- **The whole card header folds** the card (icon, name, chevron, count of what is left). Folded,
+- **The whole card header folds** the card (icon, name, chevron). Folded,
   it shows the first three open names in one line ("Tomatoes, Baby spinach, Oat milk…").
   Folding is **per device**, in the `lists_folded` cookie the load reads, so the first paint is
   already folded and another phone is unaffected (→ [DECISIONS #264](DECISIONS.md)).
-- **The corner button opens the list** full screen, at `/shopping/[listId]`: its own route, so
+- **The pill at the header's right edge opens the list** ("4 ›": what is left, then a chevron
+  pointing right; a sage ✓ instead of the number once everything is bought), on the sunken fill,
+  44 px target (→ [DECISIONS #271](DECISIONS.md)). It replaced the count beside a boxed
+  two-arrows button. Its accessible name is "Open Grocery, 4 to get". The fold chevron after the
+  name points down or up; the pill's points right. At 200% text the name truncates, never the
+  pill. It opens the list full screen, at `/shopping/[listId]`: its own route, so
   the phone's back button and the swipe-back return to the overview. "‹ Lists" and a ⋯ (edit
   name and icon), the list's icon and name, "{n} to get · {n} bought", the add field, and the
   same card body with "{n} bought" unfolded. A list id from another household is a 404. "Other"
-  has no open button: it is not a list anyone made.
+  has no pill (it is not a list anyone made) and keeps its bare count.
 - **The add field's leading icon is the list it adds to**, and the placeholder names it ("Add
   to Grocery…"). It starts on the first shopping list every time the screen is opened.
   - **Tap the icon for the menu** [L2]: every list with its icon and what is on it ("4",
@@ -526,7 +531,8 @@ item sheet [3a]; what differs is what a tick does and what counts as shopping.
 - **On the overview** [L1] [L7]: always one row, after the shopping lists and "Other", empty or
   not. Icon in a **terracotta** well (shopping lists wear sage), the name, "7 left · Sunscreen,
   Swimwear, First-aid kit…" ("Nothing on it yet" when empty, "All done" when every row is
-  ticked), a ring and "5/12" (the ring sage once complete), and the open button. A tap anywhere
+  ticked), and the same pill as a shopping list's card with the ring and "5/12" in it ("◔ 5/12 ›",
+  the ring and the text sage once complete). A tap anywhere
   on the row opens it; it never unfolds in place.
 - **Opened** [L4], at `/shopping/[listId]` like any list: "‹ Lists" and ⋯, the icon in its
   terracotta well, "5 of 12 done" over a progress bar (terracotta, sage when complete), the add

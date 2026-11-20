@@ -3987,3 +3987,14 @@ units | null, name}`, written back as editor lines in the reader's unit spelling
      for a member and sign-in for anyone else. The cross-link keeps a valid `from`. The e2e
      server sets both with invented text (`scripts/e2e-legal.ts`); the unset half is tested
      against the real `load`s with the environment mocked (`tests/integration/legal-pages`).
+271. **A list's count and its open button are one pill** (Lukas 2026-11-20; → SPEC §3.1, §3.7,
+     plan 36, sketch `card`). A shopping list's header used to end with the count ("4") beside a
+     boxed two-arrows button: solid, but two unrelated things side by side. Now one pill at the
+     right edge, `ui`-tokened (`--r-chip`, `--sunken`, the count's ink and step), "4 ›", or a sage
+     ✓ and the chevron once everything is bought, is the link that opens the list; its name says
+     the count ("Open Grocery, 4 to get"). A checklist's row ends in the same pill holding the ring
+     and "5/12", so both kinds end the same way (`shopping/OpenPill`, a link on a card, a plain
+     span inside the checklist row, which is already the link). "Other" can't be opened and keeps
+     its bare count. The fold chevron stays after the name; checked at 390 px and at 200% text,
+     where the name truncates and the pill does not. No version bump: `dev` is already at 0.5.0,
+     above the last tag.

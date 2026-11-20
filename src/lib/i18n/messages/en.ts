@@ -478,8 +478,9 @@ export const en = {
 			nothingToGet: 'Nothing to get',
 			/** An opened list's subtitle [L5]. */
 			openedStatus: (left: number, bought: number) => `${left} to get · ${bought} bought`,
-			/** The corner button on a card. */
-			open: (list: string) => `Open ${list}`,
+			/** The pill at a card's end: it opens the list and says what is left. */
+			openWith: (list: string, left: number) =>
+				left > 0 ? `Open ${list}, ${left} to get` : `Open ${list}, all done`,
 			/** The ⋯ on an opened list. */
 			edit: (list: string) => `Edit ${list}`,
 			/** What the field's menu says is on a list: a count, or nothing. */
