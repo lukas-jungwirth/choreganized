@@ -126,7 +126,11 @@
 <header style:--raccoon-right="{placement.right}px" style:--raccoon-reach="{placement.reach}px">
 	<div class="who">
 		<p class="household">{data.household.name}</p>
-		<h1>{m.home.greeting(data.greeting)},<br />{data.currentMember.displayName}</h1>
+		<h1>
+			{m.home.greeting(data.greeting)},<br /><span class="name"
+				>{data.currentMember.displayName}</span
+			>
+		</h1>
 		<!-- The household's faces: a picture of who lives here, not a button, on the
 			 page itself (→ DECISIONS #264). Named as one image, since Home is the only
 			 screen that says who the housemates are. -->
@@ -302,11 +306,16 @@
 		color: var(--text-5);
 	}
 
-	/* One long word as a name breaks with a hyphen where the language allows it
-	   ("Bartholo-mäus"), by `<html lang>`; `anywhere` stays the last resort. */
 	h1 {
 		font-size: var(--fs-30);
 		line-height: 1.05;
+	}
+
+	/* One long word as a name breaks with a hyphen where the language allows it
+	   ("Bartholo-mäus"), by `<html lang>`; `anywhere` stays the last resort. The
+	   name only: the greeting's own words wrap whole ("Good / afternoon,", not
+	   "Good after- / noon,"). */
+	.name {
 		hyphens: auto;
 	}
 

@@ -3842,8 +3842,9 @@ units | null, name}`, written back as editor lines in the reader's unit spelling
      Home greets you by name in 30px type in the column left of the raccoon, which has room for
      about ten letters a line, and 40 characters could run the greeting down past the raccoon.
      No migration: a longer name already saved stays until its owner next edits the profile,
-     and the sheet then asks for a shorter one. The greeting's `h1` gets `hyphens: auto` (with
-     `overflow-wrap: anywhere` as the last resort), so one long word breaks with a hyphen
-     ("Bartholo-mäus") by `<html lang>`, which the server sets per member locale. A browser with
-     no hyphenation dictionary for a made-up name falls back to the mid-word break; no JS
-     hyphenator.
+     and the sheet then asks for a shorter one. The name in the greeting's `h1` gets
+     `hyphens: auto` (with `overflow-wrap: anywhere` as the last resort), so one long word
+     breaks with a hyphen ("Bartholo-mäus") by `<html lang>`, which the server sets per member
+     locale. Only the name: on the whole `h1`, Linux Chromium split the greeting itself into
+     "Good after- / noon," in the English baseline. A browser with no hyphenation dictionary
+     for a made-up name falls back to the mid-word break; no JS hyphenator.
