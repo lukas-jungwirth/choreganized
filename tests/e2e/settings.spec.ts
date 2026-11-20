@@ -84,6 +84,42 @@ test('recipe wording is chosen in a sheet and named on its row', async ({ page }
 	await expect(row).toContainText('As written');
 });
 
+/**
+ * A display name is 20 characters at most (→ DECISIONS #267): the field stops
+ * typing there, and the server refuses a 21st that gets past it.
+ */
+test('a display name takes 20 characters and refuses 21', async ({ page }) => {
+	await page.goto('/settings');
+	const row = page.getByRole('button', { name: /^Display name/ });
+	const sheet = page.getByRole('dialog');
+	const field = sheet.getByLabel('Display name');
+
+	await row.click();
+	const original = await field.inputValue();
+	await expect(field).toHaveAttribute('maxlength', '20');
+
+	try {
+		// Past the attribute, the way an old client or a script would send it.
+		await field.evaluate((input) => input.removeAttribute('maxlength'));
+		await field.fill('Bartholomäus Grünwald');
+		expect('Bartholomäus Grünwald').toHaveLength(21);
+		await sheet.getByRole('button', { name: 'Save changes' }).click();
+		await expect(sheet.getByText('Keep it under 20 characters.')).toBeVisible();
+
+		await field.fill('Bartholomäus Grünwal');
+		await sheet.getByRole('button', { name: 'Save changes' }).click();
+		await expect(sheet).toBeHidden();
+		await expect(row).toContainText('Bartholomäus Grünwal');
+	} finally {
+		await page.goto('/settings');
+		await row.click();
+		await field.fill(original);
+		await sheet.getByRole('button', { name: 'Save changes' }).click();
+		await expect(sheet).toBeHidden();
+	}
+	await expect(row).toContainText(original);
+});
+
 test('a birthday is day and month, shown on its row, and cleared again', async ({ page }) => {
 	await page.goto('/settings');
 	const row = page.getByRole('button', { name: /^Birthday/ });

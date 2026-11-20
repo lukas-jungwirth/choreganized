@@ -619,9 +619,11 @@ export const en = {
 				: time === 'afternoon'
 					? 'Good afternoon'
 					: 'Good evening',
-		/** The avatar stack is the door to Settings — and the only place the
-		 *  household is named out loud. */
-		settingsLink: (names: string) => `Settings · Household: ${names}`,
+		/** The gear in the header's corner, Home's one way into Settings (→ DECISIONS #266). */
+		openSettings: 'Settings',
+		/** The faces under the greeting: a picture, not a button, and the only
+		 *  place the household is named out loud. */
+		householdFaces: (names: string) => `Household: ${names}`,
 		/** The raccoon is a button: six taps and it ducks away for another (→ DECISIONS #223). */
 		pokeRaccoon: 'Poke the raccoon',
 		/** Admin mode only (→ plan 34): tapping the raccoon picks any pose. */

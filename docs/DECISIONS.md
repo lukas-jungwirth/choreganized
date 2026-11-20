@@ -3871,3 +3871,40 @@ units | null, name}`, written back as editor lines in the reader's unit spelling
      row is noise, and it took the space next to the quantity. Editing an item now shows "Added by
      {member}" under its name, or nothing when that member has left. Who **ticked** a row still
      shows: the settle in their colour and the live notice; a ticked checklist row (plan 36 step 2) keeps the ticker's avatar. The sketch's shopping rows draw no avatar either.
+
+266. **A gear in Home's top-right corner opens Settings; the faces stop being a button**
+     (Lukas 2026-11-20, sketch `design/sketches/settings-access.html`; → SPEC §2). Amends #57
+     and #81, which kept a gear off Home and made the household's faces the door, and #214,
+     which put those faces in a pill with a chevron. People did not find Settings behind a
+     picture of their housemates. Now a round 38px card-surface link with lucide's `Settings`
+     (19px, stroke 1.9, `--text-3`) sits at the header's `top: 0; right: 0`, above the raccoon's
+     ears and above the raccoon in z-order, named "Settings" from the catalog. Only Home gets
+     one; no other tab changes.
+     - **The faces stay as a picture**: the same 28px `AvatarStack` under the greeting, no
+       surface, no chevron, no link, rings cut from `--bg` since they now sit on the page. A
+       `role="img"` named "Household: {names}" (a catalog function) keeps the housemates
+       announced, since Home is still the only screen that names them.
+     - **The header grows from 170px to 182px.** The raccoon is 136px tall at `bottom: -2px`, so
+       a short greeting is the worst case: with German's "Guten Tag," on one line the header
+       stays at its minimum, and at 170px the raccoon's picture started at page y 44 while the
+       gear ends at 46. Measured over all 71 Home raccoons: in 36 the art comes within 10px of
+       the picture's top under the gear's column and in 7 it touches it, so the gap has to
+       come from the header, not the art. 182px gives 10px in the worst case;
+       `tests/e2e/home.spec.ts` checks at least 8px in English and German (it read −2 at 170).
+     - **One round button, not two**: Expenses' ••• menu was the same 38px circle, so both now
+       use `ui/RoundButton` (an `<a>` with `href`, a `<button>` without, like `Button`) rather
+       than a second copy of its styles. Expenses' button gains the 0.97 pressed state; its
+       colour stays `--text-4`, and Home sets `--text-3` on its gear.
+
+267. **Display names are 20 characters, and Home's greeting hyphenates** (Lukas 2026-11-20;
+     → SPEC §1.3, §2). `DISPLAY_NAME_MAX` 40 → 20 for onboarding (create and join) and the
+     profile sheet, client `maxlength` and server guard alike; `HOUSEHOLD_NAME_MAX` stays 60.
+     Home greets you by name in 30px type in the column left of the raccoon, which has room for
+     about ten letters a line, and 40 characters could run the greeting down past the raccoon.
+     No migration: a longer name already saved stays until its owner next edits the profile,
+     and the sheet then asks for a shorter one. The name in the greeting's `h1` gets
+     `hyphens: auto` (with `overflow-wrap: anywhere` as the last resort), so one long word
+     breaks with a hyphen ("Bartholo-mäus") by `<html lang>`, which the server sets per member
+     locale. Only the name: on the whole `h1`, Linux Chromium split the greeting itself into
+     "Good after- / noon," in the English baseline. A browser with no hyphenation dictionary
+     for a made-up name falls back to the mid-word break; no JS hyphenator.
