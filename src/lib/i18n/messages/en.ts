@@ -571,6 +571,8 @@ export const en = {
 			check: (item: string) => `Check off ${item}`,
 			uncheck: (item: string) => `Put ${item} back on the list`,
 			edit: (item: string) => `Edit ${item}`,
+			/** A ticked checklist row: the avatar on it, in words. */
+			editTicked: (item: string, by: string) => `Edit ${item}, ticked by ${by}`,
 			reorder: (item: string) => `Drag to reorder ${item}`
 		},
 

@@ -35,7 +35,7 @@
 	import ChevronDown from '@lucide/svelte/icons/chevron-down';
 	import OpenPill from '$lib/components/shopping/OpenPill.svelte';
 	import RotateCcw from '@lucide/svelte/icons/rotate-ccw';
-	import { untrack } from 'svelte';
+	import { tick, untrack } from 'svelte';
 	import { dragHandleZone, type DndEvent } from 'svelte-dnd-action';
 
 	type Props = {
@@ -143,6 +143,25 @@
 		formEl?.requestSubmit();
 	}
 
+	let rowsEl: HTMLUListElement | undefined = $state();
+
+	/**
+	 * Start over unticks every row at once, which takes its own button off the
+	 * screen with the focus still on it. Focus goes to the first row's circle
+	 * instead of falling to the page (a keyboard or a screen reader would start
+	 * again from the top).
+	 */
+	const startOver: SubmitFunction = (input) => {
+		const answered = reset?.(input);
+		if (document.activeElement === input.submitter) {
+			void tick().then(() => {
+				if (document.activeElement && document.activeElement !== document.body) return;
+				rowsEl?.querySelector<HTMLButtonElement>('button')?.focus();
+			});
+		}
+		return answered;
+	};
+
 	/** Our order stops being the newer one once the server has answered. */
 	const saved: SubmitFunction =
 		() =>
@@ -218,6 +237,7 @@
 			{#if !folded}
 				{#if items.length > 0}
 					<ul
+						bind:this={rowsEl}
 						class="rows"
 						use:dragHandleZone={{
 							items,
@@ -249,7 +269,7 @@
 				{/if}
 
 				{#if checklist && done > 0 && reset}
-					<form class="foot" method="POST" action="?/resetList" use:enhance={reset}>
+					<form class="foot" method="POST" action="?/resetList" use:enhance={startOver}>
 						<input type="hidden" name="id" value={group.storeId ?? ''} />
 						<button type="submit" class="reset" class:loud={done === group.items.length}>
 							<RotateCcw size={15} strokeWidth={2.1} aria-hidden="true" />

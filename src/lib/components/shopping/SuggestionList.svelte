@@ -89,8 +89,15 @@
 		text-overflow: ellipsis;
 	}
 
+	/* The list's name gives way first: at most 45% of the row, so a 40-character
+	   list name can't squeeze the item's own name out. */
 	small {
-		flex: none;
+		flex: 0 1 auto;
+		min-width: 0;
+		max-width: 45%;
+		overflow: hidden;
+		white-space: nowrap;
+		text-overflow: ellipsis;
 		font-size: var(--fs-14);
 		font-weight: 500;
 		color: var(--text-4);

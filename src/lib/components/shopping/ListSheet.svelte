@@ -64,6 +64,8 @@
 	/** A kind change that moves ticked rows is asked about first. */
 	const asks = $derived(list !== null && kind !== list.kind && ticked > 0);
 	let confirming = $state(false);
+	/** The confirm said yes: the one submit that may go through while `asks`. */
+	let confirmed = false;
 
 	const kinds = $derived([
 		{ value: 'buy', label: m.shopping.lists.kinds.buy, icon: ShoppingBasket },
@@ -82,7 +84,15 @@
 		bind:this={form}
 		method="POST"
 		action={list ? '?/editList' : '?/createList'}
-		use:enhance={() => {
+		use:enhance={({ cancel }) => {
+			// Asked here, where every submit passes, and not on the button: Enter
+			// in the name field (a phone keyboard's "Go") submits without a click.
+			if (asks && !confirmed) {
+				cancel();
+				confirming = true;
+				return;
+			}
+			confirmed = false;
 			submitting = true;
 			error = undefined;
 			return async ({ result, update }) => {
@@ -136,11 +146,7 @@
 			{/each}
 		</div>
 
-		<Button
-			type={asks ? 'button' : 'submit'}
-			disabled={submitting || !name.trim()}
-			onclick={asks ? () => (confirming = true) : undefined}
-		>
+		<Button type="submit" disabled={submitting || !name.trim()}>
 			{list ? m.common.saveChanges : m.shopping.lists.create}
 		</Button>
 	</form>
@@ -197,6 +203,7 @@
 		<Button
 			onclick={() => {
 				confirming = false;
+				confirmed = true;
 				form?.requestSubmit();
 			}}
 		>

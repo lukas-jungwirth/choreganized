@@ -4,7 +4,7 @@
  * folded, an add field that knows which list a thing goes to, and a list you
  * can open by itself.
  */
-import { expect, test, type Page } from '@playwright/test';
+import { expect, test, type Page, type Route } from '@playwright/test';
 import { SEED, storageStateFor } from './accounts';
 
 const [GROCERY, DRUGSTORE, HARDWARE] = SEED.stores;
@@ -189,6 +189,11 @@ test('the list menu works from the keyboard', async ({ page }) => {
 
 	await expect(menu).toBeHidden();
 	await expect(page.getByPlaceholder(`Add to ${DRUGSTORE}…`)).toBeFocused();
+
+	// Opened again, focus is on the list it is on now, which is no longer the first.
+	await page.getByRole('button', { name: `Adding to ${DRUGSTORE}. Choose another list` }).focus();
+	await page.keyboard.press('Enter');
+	await expect(menu.getByRole('button', { name: new RegExp(DRUGSTORE) })).toBeFocused();
 });
 
 test('putting a row back while its tick is still playing leaves it open', async ({ page }) => {
@@ -238,9 +243,16 @@ test('a new checklist opens, ticks stay in place, Start over and its undo', asyn
 	await expect(page.getByRole('status')).toBeHidden();
 	await expect(page.getByRole('listitem')).toHaveText([/Tent pegs/, /Sleeping bags/, /Headlamp/]);
 	await expect(page.getByRole('button', { name: /\d+ bought/ })).toBeHidden();
+	// Who ticked it is an avatar for the eye and a name for a screen reader.
+	await expect(
+		page.getByRole('button', { name: /^Edit Tent pegs, ticked by Lukas/ })
+	).toBeVisible();
+	await expect(page.getByRole('button', { name: 'Edit Sleeping bags', exact: true })).toBeVisible();
 
 	await page.getByRole('button', { name: 'Start over' }).click();
 	await expect(page.getByText('0 of 3 done')).toBeVisible();
+	// Start over leaves the screen with the press; focus goes to the first row, not nowhere.
+	await expect(page.getByRole('button', { name: 'Check off Tent pegs' })).toBeFocused();
 	const undo = page.getByRole('status').getByRole('button', { name: 'Undo' });
 	await expect(page.getByRole('status')).toContainText(`${name} started over`);
 	await undo.click();
@@ -283,8 +295,13 @@ test('a checklist changes kind both ways, and the confirm says what moves', asyn
 	// Checklist → shopping list: the ticked row goes under "1 bought".
 	await page.getByRole('button', { name: `Edit ${name}` }).click();
 	await page.getByRole('tab', { name: 'Shopping list' }).click();
-	await page.getByRole('button', { name: 'Save changes' }).click();
 	const confirm = page.getByRole('dialog', { name: `Make ${name} a shopping list?` });
+	// Enter in the name field (a phone keyboard's "Go") asks as the button does.
+	await page.getByRole('dialog', { name: 'Edit list' }).getByLabel('Name').press('Enter');
+	await expect(confirm).toBeVisible();
+	await confirm.getByRole('button', { name: 'Cancel' }).click();
+	await expect(page.getByText('1 of 2 done')).toBeVisible();
+	await page.getByRole('button', { name: 'Save changes' }).click();
 	await expect(confirm).toContainText('goes under “1 bought” and is cleared overnight');
 	await confirm.getByRole('button', { name: 'Make it a shopping list' }).click();
 	await expect(page.getByText('1 to get · 1 bought')).toBeVisible();
@@ -551,4 +568,190 @@ test('delete from an opened list goes back to the overview', async ({ page }) =>
 		.getByRole('button', { name: 'Delete item' })
 		.click();
 	await expect(page.getByText(item)).toBeHidden();
+});
+
+/* ── Two taps, slow answers, small targets (review of 2026-11-20, DECISIONS #278) ── */
+
+/** Posts to one form action, for holding or counting them. */
+const posts = (action: string) => (url: URL) => url.search === `?/${action}`;
+
+test('a second Enter while the first add is on its way adds nothing', async ({ page }) => {
+	await page.goto('/shopping');
+	let sent = 0;
+	await page.route(posts('add'), async (route) => {
+		sent += 1;
+		await new Promise((done) => setTimeout(done, 400));
+		await route.continue();
+	});
+
+	const name = fresh('Gurken');
+	const field = page.getByPlaceholder(`Add to ${GROCERY}…`);
+	await field.fill(`${name} x3`);
+	await field.press('Enter');
+	await field.press('Enter');
+	await page.getByRole('button', { name: 'Add item' }).click();
+
+	const row = page.getByRole('listitem').filter({ hasText: name });
+	await expect(row).toContainText('×3');
+	await expect(field).toHaveValue('');
+	expect(sent).toBe(1);
+});
+
+test('a checklist row ticked and unticked before the first answer stays unticked', async ({
+	page
+}) => {
+	await page.goto('/shopping');
+	await page.getByRole('button', { name: 'New list' }).last().click();
+	const list = fresh('Day trip');
+	await page.getByRole('dialog', { name: 'New list' }).getByLabel('Name').fill(list);
+	await page.getByRole('tab', { name: 'Checklist' }).click();
+	await page.getByRole('button', { name: 'Create list' }).click();
+	const name = 'Charger';
+	const field = page.getByPlaceholder(`Add to ${list}…`);
+	await field.fill(name);
+	await field.press('Enter');
+	const tick = page.getByRole('button', { name: `Check off ${name}` });
+	const untick = page.getByRole('button', { name: `Put ${name} back on the list` });
+	await expect(tick).toBeVisible();
+
+	const held: Route[] = [];
+	await page.route(posts('toggle'), (route) => void held.push(route));
+	await tick.click();
+	await untick.click();
+	await expect.poll(() => held.length).toBe(2);
+
+	// The first answer lands while the second is still out: the row must not
+	// jump back to ticked in between.
+	const answered = page.waitForResponse((response) => response.url().includes('__data.json'));
+	await held[0].continue();
+	await answered;
+	await page.waitForTimeout(300);
+	await expect(tick).toBeVisible();
+
+	await held[1].continue();
+	await page.unroute(posts('toggle'));
+	await page.reload();
+	await expect(tick).toBeVisible();
+	await deleteList(page, list, 'Its 1 item is deleted with it.');
+});
+
+test('a row ticked again before Start over answers stays ticked', async ({ page }) => {
+	await page.goto('/shopping');
+	await page.getByRole('button', { name: 'New list' }).last().click();
+	const name = fresh('Bike trip');
+	await page.getByRole('dialog', { name: 'New list' }).getByLabel('Name').fill(name);
+	await page.getByRole('tab', { name: 'Checklist' }).click();
+	await page.getByRole('button', { name: 'Create list' }).click();
+	const field = page.getByPlaceholder(`Add to ${name}…`);
+	await field.fill('Pump');
+	await field.press('Enter');
+	await page.getByRole('button', { name: 'Check off Pump' }).click();
+	await expect(page.getByText('1 of 1 done')).toBeVisible();
+
+	// The reset reaches the server, but its answer is slow; the new tick is slower still.
+	let answer: (() => Promise<void>) | undefined;
+	await page.route(posts('resetList'), async (route) => {
+		const response = await route.fetch();
+		answer = () => route.fulfill({ response });
+	});
+	const held: Route[] = [];
+	await page.route(posts('toggle'), (route) => void held.push(route));
+
+	await page.getByRole('button', { name: 'Start over' }).click();
+	await expect.poll(() => answer).toBeDefined();
+	await page.getByRole('button', { name: 'Check off Pump' }).click();
+	await expect.poll(() => held.length).toBe(1);
+
+	const answered = page.waitForResponse((response) => response.url().includes('__data.json'));
+	await answer!();
+	await answered;
+	await page.waitForTimeout(300);
+	await expect(page.getByRole('button', { name: 'Put Pump back on the list' })).toBeVisible();
+
+	await held[0].continue();
+	await page.unroute(posts('toggle'));
+	await page.unroute(posts('resetList'));
+	await expect(page.getByText('1 of 1 done')).toBeVisible();
+	await deleteList(page, name, 'Its 1 item is deleted with it.');
+});
+
+/** Whether a point `dy` px above (negative) or below the element's box still hits it. */
+function hitsAt(element: Element, dy: number) {
+	const box = element.getBoundingClientRect();
+	const y = dy < 0 ? box.top + dy : box.bottom + dy;
+	const hit = document.elementFromPoint(box.left + box.width / 2, y);
+	return hit !== null && element.contains(hit);
+}
+
+test('the amount chip and the Manage lists icon are 44px targets', async ({ page }) => {
+	await page.goto('/shopping');
+	const manage = page.getByRole('link', { name: 'Manage lists' });
+	const box = (await manage.boundingBox())!;
+	const reach = Math.ceil((44 - box.height) / 2) - 1;
+	expect(await manage.evaluate(hitsAt, -reach)).toBe(true);
+	expect(await manage.evaluate(hitsAt, reach)).toBe(true);
+
+	await page.getByPlaceholder(`Add to ${GROCERY}…`).fill('Gurken x3');
+	const chip = page.getByRole('button', { name: 'Read ×3 as the amount' });
+	await expect(chip).toBeVisible();
+	expect(await chip.evaluate(hitsAt, -5)).toBe(true);
+	expect(await chip.evaluate(hitsAt, 5)).toBe(true);
+});
+
+test('a long list name leaves a suggestion its own name', async ({ page }) => {
+	await page.goto('/shopping');
+	await page.getByRole('button', { name: 'New list' }).last().click();
+	// 40 characters, the most a list name takes.
+	const name = fresh('Wholesale market on the far side').padEnd(40, 'x').slice(0, 40);
+	await page.getByRole('dialog', { name: 'New list' }).getByLabel('Name').fill(name);
+	await page.getByRole('button', { name: 'Create list' }).click();
+	await expect(page.getByRole('heading', { level: 1, name })).toBeVisible();
+
+	// Something the household has bought there before: ticked, so it is offered again.
+	const thing = fresh('Zest');
+	const field = page.getByPlaceholder(`Add to ${name}…`);
+	await field.fill(thing);
+	await field.press('Enter');
+	await page.getByRole('button', { name: `Check off ${thing}` }).click();
+	await expect(page.getByRole('button', { name: '1 bought' })).toBeVisible();
+
+	await page.goto('/shopping');
+	await page.getByPlaceholder(`Add to ${GROCERY}…`).fill('Zest');
+	const option = page.getByRole('option', { name: new RegExp(thing) });
+	await expect(option).toContainText(name);
+	const item = (await option.locator('.name').boundingBox())!;
+	const row = (await option.boundingBox())!;
+	expect(item.width).toBeGreaterThan(row.width * 0.4);
+
+	await deleteList(page, name, 'Its 1 item moves to');
+});
+
+test('the menu counts a row whose tick is still playing as got, like the header', async ({
+	page
+}) => {
+	await page.goto('/shopping');
+	const name = fresh('Plums');
+	const field = page.getByPlaceholder(`Add to ${GROCERY}…`);
+	await field.fill(name);
+	await field.press('Enter');
+	await expect(page.getByRole('button', { name: `Check off ${name}` })).toBeVisible();
+
+	const icon = page.getByRole('button', { name: `Adding to ${GROCERY}. Choose another list` });
+	const entry = page
+		.getByRole('group', { name: 'Lists' })
+		.getByRole('button', { name: new RegExp(GROCERY) })
+		.locator('small');
+	await icon.click();
+	const before = Number(await entry.innerText());
+	await page.keyboard.press('Escape');
+
+	// The answer held back, the settle lasts as long as the test needs it.
+	const held: Route[] = [];
+	await page.route(posts('toggle'), (route) => void held.push(route));
+	await page.getByRole('button', { name: `Check off ${name}` }).click();
+	await icon.click();
+	await expect(entry).toHaveText(String(before - 1));
+
+	await held[0].continue();
+	await page.unroute(posts('toggle'));
 });

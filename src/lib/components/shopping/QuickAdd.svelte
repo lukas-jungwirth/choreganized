@@ -117,6 +117,14 @@
 	let error = $state<string | undefined>();
 
 	/**
+	 * An add is on its way. The line stays in the field until the answer, and the
+	 * same name on the same list adds up (→ DECISIONS #276), so a second Enter or
+	 * a double tap would turn ×3 into ×6: it is ignored instead (→ DECISIONS #278).
+	 * Not `$state`: nothing draws it, and a disabled + would drop the keyboard.
+	 */
+	let sending = false;
+
+	/**
 	 * A list picked from the menu (`OTHER_LIST_KEY` for "Other"). Component
 	 * state, so leaving the screen resets it.
 	 */
@@ -248,6 +256,7 @@
 	 * through to the DOM.
 	 */
 	async function add(name: string) {
+		if (sending) return;
 		value = name;
 		await tick();
 		form?.requestSubmit();
@@ -293,12 +302,18 @@
 		bind:this={form}
 		method="POST"
 		action="?/add"
-		use:enhance={() => {
+		use:enhance={({ cancel }) => {
+			if (sending) {
+				cancel();
+				return;
+			}
+			sending = true;
 			error = undefined;
 			note = null;
 			const landed = target.storeId;
 			onadding?.(landed);
 			return async ({ result, update }) => {
+				sending = false;
 				// `reset: false` and clearing by hand: a form reset doesn't notify the
 				// `bind:value`, and a rejected item should stay in the field.
 				await update({ reset: false });
@@ -336,9 +351,13 @@
 					menuOpen = !menuOpen;
 					if (!menuOpen) return;
 					// Into the menu, on the list it is on now: Tab from the icon would
-					// otherwise land in the field first, which closes the menu.
+					// otherwise land in the field first, which closes the menu. Two
+					// lookups: one selector list would answer with the first row.
 					await tick();
-					menu?.querySelector<HTMLButtonElement>('.mrow.on, .mrow')?.focus();
+					(
+						menu?.querySelector<HTMLButtonElement>('.mrow.on') ??
+						menu?.querySelector<HTMLButtonElement>('.mrow')
+					)?.focus();
 				}}
 			>
 				<span class="well" class:check={targetList?.kind === 'checklist'}
@@ -391,7 +410,7 @@
 					if (event.detail > 0) input?.focus();
 				}}
 			>
-				{amount}
+				<span>{amount}</span>
 			</button>
 		{/if}
 		<button type="submit" class="submit" aria-label={m.shopping.quickAdd.submit}>
@@ -604,22 +623,30 @@
 
 	/* What the line would be read as (plan 37): sage while it applies, struck
 	   and muted once tapped off, so it can be switched back on. 32px drawn, a
-	   44px target; its type stops at 18px so the field keeps one line at 200%. */
+	   44px target; its type stops at 18px so the field keeps one line at 200%.
+	   The ellipsis is the inner span's: `overflow: hidden` here would clip the
+	   ::after that makes the target. */
 	.amount {
 		position: relative;
+		display: flex;
 		flex: none;
+		align-items: center;
 		max-width: 40%;
 		min-height: 32px;
 		padding: 4px 10px;
-		overflow: hidden;
 		border-radius: var(--r-chip);
 		background: var(--sage-tint);
 		font-size: min(var(--fs-14), 18px);
 		font-weight: 700;
 		font-variant-numeric: tabular-nums;
+		color: var(--sage-deep);
+	}
+
+	.amount span {
+		min-width: 0;
+		overflow: hidden;
 		white-space: nowrap;
 		text-overflow: ellipsis;
-		color: var(--sage-deep);
 	}
 
 	.amount::after {
