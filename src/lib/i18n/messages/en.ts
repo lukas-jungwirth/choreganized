@@ -2604,6 +2604,17 @@ export const en = {
 		alreadyLeft: 'They already left the household.'
 	},
 
+	/*
+	 * The legal pages (→ SPEC §13). Only their names and the way to them: the
+	 * text on them is the operator's, from the deploy, and never translated.
+	 */
+	legal: {
+		imprint: 'Imprint',
+		privacy: 'Privacy',
+		/** The pair under the sign-in footnote, named for a screen reader. */
+		links: 'Legal'
+	},
+
 	/** Admin mode (→ plan 34, SPEC §12). Only an admin ever reads these. */
 	admin: {
 		row: 'Admin',

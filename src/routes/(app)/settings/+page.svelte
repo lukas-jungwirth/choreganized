@@ -38,10 +38,13 @@
 	import RowGroup from '$lib/components/ui/RowGroup.svelte';
 	import { LOCALE_NAMES, isLocale, messages } from '$lib/i18n';
 	import { preloadData } from '$lib/preload';
+	import { legalHref } from '$lib/utils/legal';
 	import ChevronRight from '@lucide/svelte/icons/chevron-right';
 	import Info from '@lucide/svelte/icons/info';
 	import Languages from '@lucide/svelte/icons/languages';
 	import PawPrint from '@lucide/svelte/icons/paw-print';
+	import Scale from '@lucide/svelte/icons/scale';
+	import Lock from '@lucide/svelte/icons/lock';
 	import LogOut from '@lucide/svelte/icons/log-out';
 	import MessageSquareText from '@lucide/svelte/icons/message-square-text';
 	import Send from '@lucide/svelte/icons/send';
@@ -447,6 +450,22 @@
 		<span class="label">{m.settings.feedback.row}</span>
 		<ChevronRight size={15} strokeWidth={2} class="chevron" />
 	</button>
+
+	<!-- The operator's legal pages (→ SPEC §13), each only if this deploy has it. -->
+	{#if data.legal.privacy}
+		<a class="row" href={legalHref('privacy', 'settings')}>
+			<span class="tile" aria-hidden="true"><Lock size={18} strokeWidth={1.9} /></span>
+			<span class="label">{m.legal.privacy}</span>
+			<ChevronRight size={15} strokeWidth={2} class="chevron" />
+		</a>
+	{/if}
+	{#if data.legal.imprint}
+		<a class="row" href={legalHref('imprint', 'settings')}>
+			<span class="tile" aria-hidden="true"><Scale size={18} strokeWidth={1.9} /></span>
+			<span class="label">{m.legal.imprint}</span>
+			<ChevronRight size={15} strokeWidth={2} class="chevron" />
+		</a>
+	{/if}
 
 	<!-- Tappable — copies the build a report would otherwise have to be read off
 		 the screen to name (→ #7). -->
