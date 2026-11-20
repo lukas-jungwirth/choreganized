@@ -1,18 +1,13 @@
 /**
- * Manage stores [7g] (→ SPEC §3.4). Any member may reorder, rename, add and
- * delete; deleting drops its items into "Other" rather than removing them.
+ * Manage lists [7g] (→ SPEC §3.4). Any member may reorder, add, edit and
+ * delete. Adding, editing (name, kind, icon) and deleting go through the list
+ * sheet, whose actions are shared with the overview and an opened list
+ * (→ `lib/server/shopping-actions`); the arrows are the one action only this
+ * screen has, and they work without JavaScript.
  */
-import { fail } from '@sveltejs/kit';
-import { catalog, type Messages } from '$lib/i18n';
 import { requireMember } from '$lib/server/guards';
-import {
-	createStore,
-	deleteStore,
-	listStoresWithCounts,
-	moveStore,
-	renameStore
-} from '$lib/server/services/shopping';
-import { STORE_NAME_MAX } from '$lib/utils/shopping';
+import { listStoresWithCounts, moveStore } from '$lib/server/services/shopping';
+import { shoppingActions } from '$lib/server/shopping-actions';
 import type { Actions, PageServerLoad } from './$types';
 
 export const load: PageServerLoad = (event) => {
@@ -21,37 +16,8 @@ export const load: PageServerLoad = (event) => {
 	return { stores: listStoresWithCounts(householdId) };
 };
 
-function readName(form: FormData, m: Messages): { name: string } | { error: string } {
-	const name = String(form.get('name') ?? '').trim();
-	if (!name) return { error: m.errors.shopping.storeName };
-	if (name.length > STORE_NAME_MAX) return { error: m.errors.keepUnder(STORE_NAME_MAX) };
-	return { name };
-}
-
 export const actions: Actions = {
-	create: async (event) => {
-		const { householdId } = requireMember(event);
-		const form = await event.request.formData();
-
-		const name = readName(form, catalog(event.locals.locale));
-		if ('error' in name) return fail(400, { error: name.error });
-
-		createStore(householdId, name.name);
-
-		return { created: true };
-	},
-
-	rename: async (event) => {
-		const { householdId } = requireMember(event);
-		const form = await event.request.formData();
-
-		const name = readName(form, catalog(event.locals.locale));
-		if ('error' in name) return fail(400, { error: name.error });
-
-		renameStore(householdId, String(form.get('id') ?? ''), name.name);
-
-		return { renamed: true };
-	},
+	...shoppingActions,
 
 	move: async (event) => {
 		const { householdId } = requireMember(event);
@@ -61,14 +27,5 @@ export const actions: Actions = {
 		moveStore(householdId, String(form.get('id') ?? ''), direction);
 
 		return { moved: true };
-	},
-
-	delete: async (event) => {
-		const { householdId } = requireMember(event);
-		const form = await event.request.formData();
-
-		deleteStore(householdId, String(form.get('id') ?? ''));
-
-		return { deleted: true };
 	}
 };

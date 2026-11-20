@@ -8,6 +8,11 @@
 	happens to them: a shopping list's bought rows stay ticked on a checklist;
 	a checklist's ticked rows go under "{n} bought" and are swept overnight.
 
+	Editing ends in **Delete list** (Lukas 2026-11-20, as the item sheet [3a]
+	ends in its delete), behind the confirm Manage lists used to raise: a
+	shopping list's items move to "Other", a checklist's rows go with it, and it
+	says how many. The page decides where to go after a delete.
+
 	Creating answers with the new list's id and the page opens it, so it can be
 	filled straight away. The page mounts this only while it is open, so the
 	`$state` initialisers are the form reset.
@@ -25,6 +30,7 @@
 	import { STORE_NAME_MAX } from '$lib/utils/shopping';
 	import ListChecks from '@lucide/svelte/icons/list-checks';
 	import ShoppingBasket from '@lucide/svelte/icons/shopping-basket';
+	import Trash2 from '@lucide/svelte/icons/trash-2';
 	import { untrack } from 'svelte';
 
 	type Props = {
@@ -32,12 +38,18 @@
 		list: { id: string; name: string; icon: string | null; kind: ListKind } | null;
 		/** Editing: how many of its rows are ticked (bought), which a kind change moves. */
 		ticked?: number;
+		/** Editing: everything on it, for the delete confirm. */
+		itemCount?: number;
+		/** Deleted: the page decides where to go (an opened list goes back to the overview). */
+		ondeleted?: () => void;
 		/** Created: the new list's id. Edited: the same id. */
 		ondone: (listId: string) => void;
 		onclose: () => void;
 	};
 
-	let { list, ticked = 0, ondone, onclose }: Props = $props();
+	let { list, ticked = 0, itemCount = 0, ondone, ondeleted, onclose }: Props = $props();
+
+	let deleting = $state(false);
 
 	const m = messages();
 
@@ -132,7 +144,49 @@
 			{list ? m.common.saveChanges : m.shopping.lists.create}
 		</Button>
 	</form>
+
+	{#if list}
+		<button type="button" class="delete" onclick={() => (deleting = true)}>
+			<Trash2 size={19} strokeWidth={1.9} aria-hidden="true" />
+			<span>{m.shopping.stores.deleteLabel}</span>
+		</button>
+	{/if}
 </BottomSheet>
+
+{#if list}
+	<CenterModal bind:open={deleting} label={m.shopping.stores.deleteLabel} dismissible={false}>
+		<div class="bin" aria-hidden="true"><Trash2 size={26} strokeWidth={1.9} /></div>
+		<h2>{m.shopping.stores.deleteConfirm(list.name)}</h2>
+		<p class="copy">
+			{#if itemCount > 0 && list.kind === 'checklist'}
+				{m.shopping.stores.deleteChecklist(itemCount)}
+			{:else if itemCount > 0}
+				{m.shopping.stores.deleteMoves(itemCount)}
+			{:else}
+				{m.shopping.stores.deleteEmpty}
+			{/if}
+		</p>
+		<form
+			method="POST"
+			action="?/deleteList"
+			use:enhance={() =>
+				async ({ result }) => {
+					// No `update` here: on an opened list the page's own load would 404
+					// before the page could leave. The page refreshes or navigates.
+					if (result.type !== 'success') return;
+					deleting = false;
+					open = false;
+					ondeleted?.();
+				}}
+		>
+			<input type="hidden" name="id" value={list.id} />
+			<Button type="submit" variant="danger">{m.shopping.stores.deleteLabel}</Button>
+		</form>
+		<button type="button" class="cancel" onclick={() => (deleting = false)}>
+			{m.common.cancel}
+		</button>
+	</CenterModal>
+{/if}
 
 {#if list}
 	{@const change =
@@ -183,6 +237,32 @@
 		border-radius: 12px;
 		background: var(--field);
 		color: var(--text-3);
+	}
+
+	/* Below the save button, like the item sheet's delete [3a]. */
+	.delete {
+		display: flex;
+		align-items: center;
+		gap: 13px;
+		width: 100%;
+		min-height: 44px;
+		margin-top: 8px;
+		padding: 13px 4px;
+		font-size: var(--fs-17);
+		font-weight: 500;
+		color: var(--danger);
+	}
+
+	.bin {
+		display: flex;
+		align-items: center;
+		justify-content: center;
+		width: 60px;
+		height: 60px;
+		margin: 0 auto 18px;
+		border-radius: 50%;
+		background: var(--danger-tint);
+		color: var(--danger);
 	}
 
 	/* The confirm a kind change raises, set like the other confirms ([7g]). */

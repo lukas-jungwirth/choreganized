@@ -303,14 +303,18 @@ test('a checklist changes kind both ways, and the confirm says what moves', asyn
 	await deleteList(page, name, 'Its 2 items are deleted with it.');
 });
 
-/** Manage lists → delete, after a confirm that says what goes with it. */
+/** Manage lists → tap the list → Delete list, after a confirm that says what goes with it. */
 async function deleteList(page: Page, name: string, says: string) {
 	await page.goto('/shopping/stores');
-	await page.getByRole('button', { name: `Delete ${name}` }).click();
+	await page.getByRole('button', { name: `Edit ${name}` }).click();
+	await page
+		.getByRole('dialog', { name: 'Edit list' })
+		.getByRole('button', { name: 'Delete list' })
+		.click();
 	const confirm = page.getByRole('dialog', { name: 'Delete list' });
 	await expect(confirm).toContainText(says);
 	await confirm.getByRole('button', { name: 'Delete list' }).click();
-	await expect(page.getByRole('button', { name: `Delete ${name}` })).toBeHidden();
+	await expect(page.getByRole('button', { name: `Edit ${name}` })).toBeHidden();
 }
 
 /* ── The amount anywhere in the line (plan 37) ───────────────────────────── */
@@ -427,4 +431,77 @@ test('"Keep here" keeps a known name on the list the field was on, and it is rem
 	await page.getByPlaceholder(`Add to ${GROCERY}…`).fill(name);
 	await expect(page.getByPlaceholder(`Add to ${GROCERY}…`)).toBeVisible();
 	await expect(page.getByText('like last time')).toBeHidden();
+});
+
+/* ── Manage lists: a list opens its sheet, and delete lives there (Lukas 2026-11-20) ── */
+
+test('Manage lists: tap a list, change its name and icon, and both show', async ({ page }) => {
+	// A list of its own, so the seeded ones stay as the other tests expect them.
+	await page.goto('/shopping/stores');
+	await page.getByRole('button', { name: 'Add a list' }).click();
+	const name = fresh('Garden');
+	await page.getByRole('dialog', { name: 'New list' }).getByLabel('Name').fill(name);
+	await page.getByRole('button', { name: 'Create list' }).click();
+	const row = page.getByRole('button', { name: `Edit ${name}` });
+	await expect(row).toBeVisible();
+
+	await row.click();
+	const sheet = page.getByRole('dialog', { name: 'Edit list' });
+	const renamed = fresh('Garden centre');
+	await sheet.getByLabel('Name').fill(renamed);
+	await sheet.getByRole('radio', { name: 'Tent' }).click();
+	await sheet.getByRole('button', { name: 'Save changes' }).click();
+	await expect(sheet).toBeHidden();
+	const edited = page.getByRole('button', { name: `Edit ${renamed}` });
+	await expect(edited).toBeVisible();
+	// Focus is back on the row the sheet came from.
+	await expect(edited).toBeFocused();
+	await expect(edited.locator('.lucide-tent')).toBeVisible();
+
+	// On the overview: an empty shopping list has no card, so the field's menu shows it.
+	await page.goto('/shopping');
+	await page.getByRole('button', { name: `Adding to ${GROCERY}. Choose another list` }).click();
+	const entry = page
+		.getByRole('group', { name: 'Lists' })
+		.getByRole('button', { name: new RegExp(renamed) });
+	await expect(entry).toBeVisible();
+	await expect(entry.locator('.lucide-tent')).toBeVisible();
+
+	await deleteList(page, renamed, 'Nothing is on it, so nothing else changes.');
+});
+
+test('delete from an opened list goes back to the overview', async ({ page }) => {
+	await page.goto('/shopping');
+	await page.getByRole('button', { name: 'New list' }).last().click();
+	const name = fresh('Party');
+	await page.getByRole('dialog', { name: 'New list' }).getByLabel('Name').fill(name);
+	await page.getByRole('button', { name: 'Create list' }).click();
+	await expect(page.getByRole('heading', { level: 1, name })).toBeVisible();
+	const field = page.getByPlaceholder(`Add to ${name}…`);
+	const item = fresh('Balloons');
+	await field.fill(item);
+	await field.press('Enter');
+	await expect(page.getByRole('button', { name: `Check off ${item}` })).toBeVisible();
+
+	await page.getByRole('button', { name: `Edit ${name}` }).click();
+	await page
+		.getByRole('dialog', { name: 'Edit list' })
+		.getByRole('button', { name: 'Delete list' })
+		.click();
+	const confirm = page.getByRole('dialog', { name: 'Delete list' });
+	await expect(confirm).toContainText('Its 1 item moves to “Other”');
+	await confirm.getByRole('button', { name: 'Delete list' }).click();
+
+	await expect(page).toHaveURL(/\/shopping$/);
+	// Its item fell back to "Other", as deleting a shopping list always did.
+	await expect(card(page, 'Other').getByText(item)).toBeVisible();
+	// Tidy up: the item goes, so "Other" looks as the seed left it.
+	await card(page, 'Other')
+		.getByRole('button', { name: `Edit ${item}` })
+		.click();
+	await page
+		.getByRole('dialog', { name: 'Edit item' })
+		.getByRole('button', { name: 'Delete item' })
+		.click();
+	await expect(page.getByText(item)).toBeHidden();
 });

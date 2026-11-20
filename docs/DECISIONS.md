@@ -3845,8 +3845,8 @@ units | null, name}`, written back as editor lines in the reader's unit spelling
      - **A bought name is put back, not added twice** (`quickAddItem`): only on the list being
        added to, newest tick first, to the end of the walking order, taking a typed amount.
        Milk bought at another shop is a fresh need where it is being added now.
-     - **The ⋯ on an opened list edits name and icon** in the same sheet as New list. Delete and
-       reorder stay in Manage lists, which is one tap away on the overview; a second menu for
+     - **The ⋯ on an opened list edits name and icon** in the same sheet as New list. (Changed by
+       #273: delete moved into that sheet.) Delete and reorder stay in Manage lists, which is one tap away on the overview; a second menu for
        the same three actions would be two places to keep in step. Changing the kind comes with
        checklists.
      - **"Other" can't be opened** and is not in the field's menu: nobody made it, it only
@@ -3937,7 +3937,7 @@ units | null, name}`, written back as editor lines in the reader's unit spelling
      - **"Other" comes before the checklists**, not last: it is shopping that lost its list.
      - **Checklist rows drag, ticked ones included** (`reorderItems` takes every row of a
        checklist): a tick never moves a row there, so its order is all of its rows.
-     - **Delete stays in Manage lists** (#264), now with "Its {n} items are deleted with it." for a
+     - **Delete stays in Manage lists** (#264; moved into the list's sheet by #273), now with "Its {n} items are deleted with it." for a
        checklist; its tile there is terracotta, and the sage "add field starts here" tint moved
        from "the first row" to "the first shopping list".
      - **The segmented control takes an icon per option** (`ui/SegmentedControl`), for the
@@ -4009,3 +4009,19 @@ units | null, name}`, written back as editor lines in the reader's unit spelling
      later name, which is not what one tap on one line says. Nothing is written until the add,
      and the add remembers the kept list as any add does. The line sits in a polite live
      region (it had none) and runs as text, so at 200% the button wraps like a word.
+273. **In Manage lists a list's row opens its sheet, and delete lives in the sheet** (Lukas
+     2026-11-20; → SPEC §3.4, amends #264). The row was an inline name field, "very small"
+     between the icon, the count and the buttons, the icon could not be changed there, and the
+     real editor only opened from the ⋯ of an opened list. Now the row (icon, name, count, a
+     right-pointing chevron) is one button that opens `ListSheet` for that list; the reorder
+     arrows stay, set apart by a hairline so three chevrons don't read as one control; the bin
+     left the row. The sheet ends in a **Delete list** row like the item sheet's, behind the
+     confirms Manage lists already had (a shopping list's items to "Other", a checklist's rows
+     deleted and counted). The same sheet opens from both places; after a delete from an opened
+     list the overview opens, from Manage lists it stays. "Add a list" opens the sheet too.
+     **Editing a list now needs JavaScript**, like the item sheet [3a]: the inline rename was the
+     only no-JS path, and no other sheet in the app has a no-JS fallback; the arrows still work
+     without it. The delete posts the shared `deleteList` action and does not re-run the page's
+     load itself (an opened list would 404 before it could leave). `listStoresWithCounts` gained
+     `checkedCount` for the sheet's kind confirm. The catalog lost `stores.rename`,
+     `stores.remove` and `stores.addButton`. No version bump: `dev` is at 0.5.0.

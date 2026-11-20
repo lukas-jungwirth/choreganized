@@ -22,6 +22,7 @@
 	import UndoBar from '$lib/components/shopping/UndoBar.svelte';
 	import ProgressBar from '$lib/components/ui/ProgressBar.svelte';
 	import UndoToast from '$lib/components/ui/UndoToast.svelte';
+	import { goto } from '$app/navigation';
 	import { messages } from '$lib/i18n';
 	import { liveShopping } from '$lib/live-shopping.svelte';
 	import { preloadData } from '$lib/preload';
@@ -191,7 +192,14 @@
 {/if}
 
 {#if editing}
-	<ListSheet list={data.list} ticked={bought} ondone={() => {}} onclose={() => (editing = false)} />
+	<ListSheet
+		list={data.list}
+		ticked={bought}
+		itemCount={data.items.length}
+		ondone={() => {}}
+		ondeleted={() => goto('/shopping')}
+		onclose={() => (editing = false)}
+	/>
 {/if}
 
 <style>
