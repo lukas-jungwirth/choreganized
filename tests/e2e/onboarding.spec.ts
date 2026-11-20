@@ -27,6 +27,18 @@ test('create a household: chooser → set up → invite → home', async ({ brow
 	await expect(page).toHaveURL(/\/onboarding\/create$/);
 
 	await page.getByLabel('Household name').fill('Testgasse 1');
+
+	// 20 characters at most (→ DECISIONS #265): the field stops there, and a 21st
+	// that gets past the attribute is refused with the reason under the field.
+	const name = page.getByLabel('Your display name');
+	await expect(name).toHaveAttribute('maxlength', '20');
+	await name.evaluate((input) => input.removeAttribute('maxlength'));
+	await name.fill('x'.repeat(21));
+	await page.locator('label', { has: page.getByRole('radio', { name: 'Terracotta' }) }).click();
+	await page.getByRole('button', { name: 'Continue' }).click();
+	await expect(page.getByText('Keep it under 20 characters.')).toBeVisible();
+	await expect(page).toHaveURL(/\/onboarding\/create$/);
+
 	await page.getByLabel('Your display name').fill('Fresh');
 	// The radio itself is visually hidden behind the swatch; the label takes the tap.
 	await page.locator('label', { has: page.getByRole('radio', { name: 'Terracotta' }) }).click();

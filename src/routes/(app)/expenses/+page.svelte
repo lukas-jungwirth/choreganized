@@ -29,6 +29,7 @@
 	import Button from '$lib/components/ui/Button.svelte';
 	import EmptyState from '$lib/components/ui/EmptyState.svelte';
 	import FAB from '$lib/components/ui/FAB.svelte';
+	import RoundButton from '$lib/components/ui/RoundButton.svelte';
 	import UndoToast from '$lib/components/ui/UndoToast.svelte';
 	import { messages } from '$lib/i18n';
 	import { formatTimeIn, toCalendarDate } from '$lib/utils/dates';
@@ -93,16 +94,14 @@
 >
 	{#snippet actions()}
 		<div class="menu-wrap">
-			<button
-				type="button"
-				class="more"
+			<RoundButton
 				aria-label={m.expenses.menu.label}
 				aria-expanded={menuOpen}
 				aria-haspopup="menu"
 				onclick={() => (menuOpen = !menuOpen)}
 			>
 				<Ellipsis size={17} strokeWidth={2.6} />
-			</button>
+			</RoundButton>
 			{#if menuOpen}
 				<div class="menu" role="menu">
 					<a role="menuitem" href="/expenses/recurring" onclick={() => (menuOpen = false)}>
@@ -235,18 +234,6 @@
 <style>
 	.menu-wrap {
 		position: relative;
-	}
-
-	.more {
-		display: flex;
-		align-items: center;
-		justify-content: center;
-		width: 38px;
-		height: 38px;
-		border-radius: 50%;
-		background: var(--card);
-		box-shadow: var(--shadow-card);
-		color: var(--text-4);
 	}
 
 	.menu {

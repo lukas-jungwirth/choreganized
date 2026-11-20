@@ -30,10 +30,10 @@ user ─┬─ session / account / verification        (Better Auth)
    by it (enforced via the `requireMember` guard — see ARCHITECTURE.md). SQLite has no RLS; the
    service layer is the boundary.
 2. **Identity vs. profile.** `user` is the Better Auth identity (Google). `members` is the
-   household profile (display name, colour, role, notification prefs, away state). UI always
-   shows member data, never user data. v1 enforces one household per user
-   (`members_user_unique` index) — drop that index to unlock multi-household later; nothing
-   else assumes it.
+   household profile (display name of up to 20 characters, colour, role, notification prefs,
+   away state). UI always shows member data, never user data. v1 enforces one household per
+   user (`members_user_unique` index) — drop that index to unlock multi-household later;
+   nothing else assumes it.
 3. **Calendar dates are TEXT `YYYY-MM-DD`** in the household's timezone (`households.timezone`,
    captured at creation). "Due Thursday" is a calendar concept: comparing/adding days happens on
    date strings (lexicographic compare works), _never_ through UTC Date conversions. Instants
