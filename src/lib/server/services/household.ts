@@ -14,6 +14,7 @@
  * write happen anyway.
  */
 import { and, asc, eq, inArray, isNull, ne, or, sql } from 'drizzle-orm';
+import type { ListIcon } from '$lib/utils/lists';
 import type { Locale } from '$lib/i18n';
 import { isMemberColor } from '$lib/member-colors';
 import { isBirthday } from '$lib/utils/birthday';
@@ -179,6 +180,9 @@ export type CreateHouseholdInput = {
 	storeNames: string[];
 };
 
+/** Grocery, Drugstore, Hardware store: the icons the three first lists wear (plan 36). */
+const DEFAULT_STORE_ICONS: ListIcon[] = ['basket', 'droplet', 'hammer'];
+
 export function createHousehold(userId: string, input: CreateHouseholdInput): Member {
 	return db.transaction((tx) => {
 		if (membershipOf(tx, userId)) throw new HouseholdError('already-member');
@@ -195,7 +199,14 @@ export function createHousehold(userId: string, input: CreateHouseholdInput): Me
 			.run();
 
 		tx.insert(stores)
-			.values(input.storeNames.map((name, sortOrder) => ({ householdId, name, sortOrder })))
+			.values(
+				input.storeNames.map((name, sortOrder) => ({
+					householdId,
+					name,
+					sortOrder,
+					icon: DEFAULT_STORE_ICONS[sortOrder] ?? null
+				}))
+			)
 			.run();
 
 		return insertMember(tx, {

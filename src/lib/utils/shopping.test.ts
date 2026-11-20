@@ -2,8 +2,8 @@
  * `npm test` — Vitest (→ docs/TESTING.md; born as `node --test` in plan 08).
  *
  * The three halves of the shopping list that are worth pinning down in a test
- * rather than in a walkthrough: how the list splits into "still to buy" and
- * "recently bought" (the same call the server and the browser both make, so it
+ * rather than in a walkthrough: how the list splits into lists of "still to
+ * buy" and "{n} bought" (the same call the server and the browser both make, so it
  * has to answer identically), which names the add field offers back — where the
  * interesting cases are the German compounds and the accents, and seeing them in
  * a running app means typing each one into the field — and what pouring a
@@ -99,36 +99,49 @@ describe('splitList', () => {
 		);
 	});
 
-	it('drops a store with nothing left to buy', () => {
-		const { groups } = splitList(
-			[item('a', { storeId: 'drugstore', checkedAt: 5000 }), item('b')],
-			STORES
-		);
+	it('keeps a list whose rows are all bought, and drops one with nothing on it', () => {
+		const { groups } = splitList([item('a', { storeId: 'drugstore', checkedAt: 5000 })], STORES);
 
+		// Grocery has nothing at all; Drugstore has a bought row to put back.
 		assert.deepEqual(
-			groups.map((group) => group.storeId),
-			['grocery']
+			groups.map((group) => [group.storeId, group.items.length, group.bought.length]),
+			[['drugstore', 0, 1]]
 		);
 	});
 
-	it('lifts everything checked out of the groups, most recently bought first', () => {
-		const { groups, bought } = splitList(
+	it('keeps bought rows in the list they came from, most recently bought first', () => {
+		const { groups } = splitList(
 			[
 				item('early', { checkedAt: 1000 }),
 				item('open'),
+				item('later', { checkedAt: 4000 }),
 				item('late', { storeId: 'drugstore', checkedAt: 9000 })
 			],
 			STORES
 		);
 
 		assert.deepEqual(
-			groups.flatMap((group) => group.items.map((i) => i.id)),
-			['open']
+			groups.map((group) => [
+				group.storeId,
+				group.items.map((i) => i.id),
+				group.bought.map((i) => i.id)
+			]),
+			[
+				['grocery', ['open'], ['later', 'early']],
+				['drugstore', [], ['late']]
+			]
 		);
-		// Across all stores — the second list is one list.
+	});
+
+	it("carries each list's icon", () => {
+		const { groups } = splitList(
+			[item('a'), item('b', { storeId: null })],
+			[{ id: 'grocery', name: 'Grocery', icon: 'bag' }]
+		);
+
 		assert.deepEqual(
-			bought.map((i) => i.id),
-			['late', 'early']
+			groups.map((group) => group.icon),
+			['bag', null]
 		);
 	});
 

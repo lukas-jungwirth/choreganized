@@ -10,7 +10,8 @@
  *   every move and delete renumbers the whole (tiny) list rather than leaving
  *   gaps for the next writer to reason about.
  */
-import { and, asc, count, desc, eq, isNull, lt, sql } from 'drizzle-orm';
+import { and, asc, count, desc, eq, isNotNull, isNull, lt, sql } from 'drizzle-orm';
+import { isListIcon, type KnownName } from '$lib/utils/lists';
 import {
 	ITEM_NAME_MAX,
 	QUANTITY_MAX,
@@ -82,8 +83,8 @@ export type ShoppingGroup = ItemGroup<ShoppingListItem>;
 /* ── Reading ──────────────────────────────────────────────────────────────── */
 
 /**
- * The household's list, flat. Grouping it by store and lifting the checked
- * items out into "recently bought" is `splitList`'s job, and the screen calls
+ * The household's lists, flat. Grouping them by list and setting the checked
+ * items apart under "{n} bought" is `splitList`'s job, and the screen calls
  * it — with the stores it already loaded for the sheet's chips, and again on
  * every optimistic tick (→ `utils/shopping`, DECISIONS #105).
  */
@@ -139,15 +140,19 @@ export function getShoppingList(householdId: string): ShoppingListItem[] {
  */
 const SUGGESTION_POOL_MAX = 250;
 
-export function listItemNames(householdId: string, limit = SUGGESTION_POOL_MAX): string[] {
+/**
+ * Each name comes with the list it last went to (plan 36), which is how the add
+ * field's icon moves by itself when a known name is typed [L3]. Null is
+ * "Other", or a list deleted since.
+ */
+export function listItemNames(householdId: string, limit = SUGGESTION_POOL_MAX): KnownName[] {
 	return db
-		.select({ name: shoppingSuggestions.name })
+		.select({ name: shoppingSuggestions.name, storeId: shoppingSuggestions.storeId })
 		.from(shoppingSuggestions)
 		.where(eq(shoppingSuggestions.householdId, householdId))
 		.orderBy(desc(shoppingSuggestions.lastUsedAt), asc(shoppingSuggestions.name))
 		.limit(limit)
-		.all()
-		.map((row) => row.name);
+		.all();
 }
 
 export function listStores(householdId: string): Store[] {
@@ -161,6 +166,15 @@ export function listStores(householdId: string): Store[] {
 			.orderBy(asc(stores.sortOrder), asc(stores.createdAt), asc(stores.id))
 			.all()
 	);
+}
+
+/** One list, if it is this household's — what `/shopping/[listId]` opens. */
+export function getStore(householdId: string, storeId: string): Store | undefined {
+	return db
+		.select()
+		.from(stores)
+		.where(and(eq(stores.id, storeId), eq(stores.householdId, householdId)))
+		.get();
 }
 
 /**
@@ -196,6 +210,7 @@ export function listOpenItems(householdId: string): {
 export type StoreSummary = {
 	id: string;
 	name: string;
+	icon: string | null;
 	/** Everything filed here, checked items included — what [7g] counts. */
 	itemCount: number;
 };
@@ -205,6 +220,7 @@ export function listStoresWithCounts(householdId: string): StoreSummary[] {
 		.select({
 			id: stores.id,
 			name: stores.name,
+			icon: stores.icon,
 			// Counting the item id, not the row: a store with nothing in it is a
 			// single all-NULL join row, and count(*) would call that 1.
 			itemCount: count(shoppingItems.id)
@@ -325,16 +341,24 @@ export function defaultStoreId(householdId: string): string | null {
  * "Rinderhackfleisch" moves the same row up rather than starting a second one,
  * and the spelling last used is the one offered back.
  */
-function rememberName(tx: Transaction, householdId: string, name: string): void {
+function rememberName(
+	tx: Transaction,
+	householdId: string,
+	name: string,
+	storeId: string | null
+): void {
 	const trimmed = name.trim();
 	const nameKey = suggestionKey(trimmed);
 	if (!nameKey) return;
 
+	// The list goes with it: the place a name went *last* is where the add field
+	// sends it next time (plan 36 [L3]). Always the latest, so moving Shampoo to
+	// another list once is how the household changes its mind.
 	tx.insert(shoppingSuggestions)
-		.values({ householdId, name: trimmed, nameKey, lastUsedAt: new Date() })
+		.values({ householdId, name: trimmed, nameKey, storeId, lastUsedAt: new Date() })
 		.onConflictDoUpdate({
 			target: [shoppingSuggestions.householdId, shoppingSuggestions.nameKey],
-			set: { name: trimmed, lastUsedAt: new Date() }
+			set: { name: trimmed, storeId, lastUsedAt: new Date() }
 		})
 		.run();
 }
@@ -375,7 +399,7 @@ export function addItem(householdId: string, memberId: string, input: AddItemInp
 			.returning()
 			.get();
 
-		rememberName(tx, householdId, values.name);
+		rememberName(tx, householdId, values.name, values.storeId);
 
 		return row;
 	});
@@ -391,6 +415,75 @@ export function addItem(householdId: string, memberId: string, input: AddItemInp
 	});
 
 	return item;
+}
+
+export type QuickAddResult = { itemId: string; restored: boolean };
+
+/**
+ * What the add field does (plan 36): a name sitting under "{n} bought" in the
+ * list it is going to is **put back** rather than added a second time, the way
+ * the suggestion offering it promised. Anything else is an ordinary `addItem`.
+ *
+ * Only the target list is searched: an opened list adds to itself and nothing
+ * else, and Milk bought at another shop is a fresh need here. A typed amount
+ * travels with the row it puts back; no amount leaves the row's own alone.
+ */
+export function quickAddItem(
+	householdId: string,
+	memberId: string,
+	input: AddItemInput
+): QuickAddResult {
+	const values = normalize(householdId, input);
+	const key = suggestionKey(values.name);
+
+	const restored = db.transaction((tx) => {
+		const match = tx
+			.select({ id: shoppingItems.id, name: shoppingItems.name })
+			.from(shoppingItems)
+			.where(
+				and(
+					eq(shoppingItems.householdId, householdId),
+					values.storeId === null
+						? isNull(shoppingItems.storeId)
+						: eq(shoppingItems.storeId, values.storeId),
+					isNotNull(shoppingItems.checkedAt)
+				)
+			)
+			.orderBy(desc(shoppingItems.checkedAt), asc(shoppingItems.id))
+			.all()
+			// `suggestionKey` in JavaScript rather than SQL's lower(), which only
+			// folds ASCII: "Äpfel" and "äpfel" are the same row to the household.
+			.find((row) => suggestionKey(row.name) === key);
+
+		if (!match) return null;
+
+		tx.update(shoppingItems)
+			.set({
+				checkedAt: null,
+				checkedByMemberId: null,
+				// Back at the end of the list's walking order, where a new add goes.
+				sortOrder: nextItemSortOrder(tx, householdId, values.storeId),
+				...(values.quantity !== null ? { quantity: values.quantity, unit: values.unit } : {})
+			})
+			.where(and(eq(shoppingItems.id, match.id), eq(shoppingItems.householdId, householdId)))
+			.run();
+
+		rememberName(tx, householdId, match.name, values.storeId);
+		return match;
+	});
+
+	if (!restored) {
+		const item = addItem(householdId, memberId, input);
+		return { itemId: item.id, restored: false };
+	}
+
+	publishShopping(householdId, memberId, {
+		kind: 'unchecked',
+		itemId: restored.id,
+		name: restored.name
+	});
+
+	return { itemId: restored.id, restored: true };
 }
 
 /**
@@ -411,7 +504,7 @@ export function updateItem(householdId: string, itemId: string, input: UpdateIte
 		// Nothing was updated ⇒ the id wasn't ours, and neither is the name.
 		if (result.changes === 0) return false;
 
-		rememberName(tx, householdId, values.name);
+		rememberName(tx, householdId, values.name, values.storeId);
 		return true;
 	});
 
@@ -542,7 +635,7 @@ export function addIngredients(
 
 		// Only what actually went on the list as a new word: a topped-up or
 		// skipped name is one the household already knows, by definition.
-		for (const row of rows) rememberName(tx, householdId, row.name);
+		for (const row of rows) rememberName(tx, householdId, row.name, targetStore);
 
 		return {
 			added: rows.length,
@@ -688,7 +781,16 @@ function writeItemOrder(tx: Transaction, householdId: string, orderedIds: string
 
 /* ── Stores ───────────────────────────────────────────────────────────────── */
 
-export function createStore(householdId: string, name: string): Store {
+/** A stored icon is a key from the fixed set or nothing (→ `utils/lists`). */
+function normalizeIcon(icon: string | null | undefined): string | null {
+	return isListIcon(icon) ? icon : null;
+}
+
+/**
+ * A new list goes to the end of the household's order. Step 1 of plan 36 only
+ * makes shopping lists; `kind` keeps its default ('buy').
+ */
+export function createStore(householdId: string, name: string, icon?: string | null): Store {
 	return db.transaction((tx) => {
 		const next = tx
 			.select({ sortOrder: sql<number>`coalesce(max(${stores.sortOrder}), -1) + 1` })
@@ -701,6 +803,7 @@ export function createStore(householdId: string, name: string): Store {
 			.values({
 				householdId,
 				name: name.trim().slice(0, STORE_NAME_MAX),
+				icon: normalizeIcon(icon),
 				sortOrder: next?.sortOrder ?? 0
 			})
 			.returning()
@@ -708,13 +811,19 @@ export function createStore(householdId: string, name: string): Store {
 	});
 }
 
-export function renameStore(householdId: string, storeId: string, name: string): boolean {
+/** `icon` left out keeps the list's icon; anything else (null included) replaces it. */
+export function renameStore(
+	householdId: string,
+	storeId: string,
+	name: string,
+	icon?: string | null
+): boolean {
 	const trimmed = name.trim().slice(0, STORE_NAME_MAX);
 	if (!trimmed) return false;
 
 	const result = db
 		.update(stores)
-		.set({ name: trimmed })
+		.set(icon === undefined ? { name: trimmed } : { name: trimmed, icon: normalizeIcon(icon) })
 		.where(and(eq(stores.id, storeId), eq(stores.householdId, householdId)))
 		.run();
 

@@ -291,6 +291,19 @@ export const stores = sqliteTable(
 		name: text('name').notNull(),
 		/** List renders stores in this order ("arrange it the way you walk through town"). */
 		sortOrder: integer('sort_order').notNull(),
+		/**
+		 * A key from the fixed set the New list sheet offers (`utils/lists.ts`
+		 * `LIST_ICONS`); NULL draws the basket. Free text on purpose: a key a later
+		 * build drops falls back to the basket rather than failing a read.
+		 */
+		icon: text('icon'),
+		/**
+		 * 'buy' (a shopping list) or 'checklist' (plan 36 step 2). Step 1 only
+		 * ever writes 'buy'; the column is here so step 2 needs no migration.
+		 */
+		kind: text('kind', { enum: ['buy', 'checklist'] })
+			.notNull()
+			.default('buy'),
 		createdAt: createdAt()
 	},
 	(t) => [index('stores_household_idx').on(t.householdId, t.sortOrder)]
@@ -349,6 +362,11 @@ export const shoppingSuggestions = sqliteTable(
 			.references(() => households.id, { onDelete: 'cascade' }),
 		name: text('name').notNull(),
 		nameKey: text('name_key').notNull(),
+		/**
+		 * The list this name last went to, so the add field can send it there
+		 * again (plan 36, SPEC §3.1). NULL = "Other", or a list since deleted.
+		 */
+		storeId: text('store_id').references(() => stores.id, { onDelete: 'set null' }),
 		lastUsedAt: integer('last_used_at', { mode: 'timestamp_ms' })
 			.notNull()
 			.$defaultFn(() => new Date())

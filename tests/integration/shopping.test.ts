@@ -16,13 +16,16 @@ import {
 	deleteItem,
 	deleteStore,
 	getShoppingList,
+	getStore,
 	listItemNames,
 	listStores,
 	purgeCheckedItems,
+	quickAddItem,
 	renameStore,
 	setChecked,
 	updateItem
 } from '$lib/server/services/shopping';
+import { splitList } from '$lib/utils/shopping';
 import { makeHousehold } from '../helpers/db';
 
 describe('addItem', () => {
@@ -53,7 +56,7 @@ describe('addItem', () => {
 				['Oat milk', grocery.id, 'Owner']
 			]
 		);
-		assert.ok(listItemNames(householdId).includes('Tomatoes'));
+		assert.ok(listItemNames(householdId).some((known) => known.name === 'Tomatoes'));
 	});
 
 	it('a store id from another household is treated as "no store"', () => {
@@ -165,5 +168,124 @@ describe('addIngredients (pouring a recipe onto the list)', () => {
 		assert.equal(result.added, 1);
 		assert.equal(result.merged, 0);
 		assert.equal(getShoppingList(householdId).length, 2);
+	});
+});
+
+describe('lists (plan 36)', () => {
+	it('every name remembers the list it last went to', () => {
+		const { householdId, owner } = makeHousehold();
+		const [grocery, drugstore] = listStores(householdId);
+
+		addItem(householdId, owner.id, { name: 'Shampoo', storeId: drugstore.id });
+		addItem(householdId, owner.id, { name: 'Milk', storeId: grocery.id });
+
+		const known = listItemNames(householdId);
+		assert.equal(known.find((row) => row.name === 'Shampoo')?.storeId, drugstore.id);
+		assert.equal(known.find((row) => row.name === 'Milk')?.storeId, grocery.id);
+
+		// Moving it once is how the household changes its mind.
+		const again = addItem(householdId, owner.id, { name: 'shampoo', storeId: grocery.id });
+		updateItem(householdId, again.id, {
+			name: 'shampoo',
+			quantity: null,
+			unit: null,
+			storeId: drugstore.id
+		});
+		assert.equal(
+			listItemNames(householdId).find((row) => row.name === 'shampoo')?.storeId,
+			drugstore.id
+		);
+
+		// A list deleted since leaves the name with no list, not a dangling id.
+		deleteStore(householdId, drugstore.id);
+		assert.equal(listItemNames(householdId).find((row) => row.name === 'shampoo')?.storeId, null);
+	});
+
+	it('bought rows stay with their own list, and a list with nothing on it is left out', () => {
+		const { householdId, owner } = makeHousehold();
+		const stores = listStores(householdId);
+		const [grocery, drugstore, hardware] = stores;
+
+		addItem(householdId, owner.id, { name: 'Bananas', storeId: grocery.id });
+		const yoghurt = addItem(householdId, owner.id, { name: 'Yoghurt', storeId: grocery.id });
+		const soap = addItem(householdId, owner.id, { name: 'Soap', storeId: drugstore.id });
+		setChecked(householdId, yoghurt.id, owner.id, true);
+		setChecked(householdId, soap.id, owner.id, true);
+
+		const { groups } = splitList(getShoppingList(householdId), stores);
+
+		assert.deepEqual(
+			groups.map((group) => [
+				group.storeId,
+				group.items.map((item) => item.name),
+				group.bought.map((item) => item.name)
+			]),
+			[
+				[grocery.id, ['Bananas'], ['Yoghurt']],
+				// Nothing left to buy here, but the bought row keeps the card on screen
+				// so a wrong tick can still be put back.
+				[drugstore.id, [], ['Soap']]
+			]
+		);
+		assert.ok(!groups.some((group) => group.storeId === hardware.id));
+	});
+
+	it('adding a bought name puts that row back instead of writing a second one', () => {
+		const { householdId, owner } = makeHousehold();
+		const [grocery, drugstore] = listStores(householdId);
+		const milk = addItem(householdId, owner.id, {
+			name: 'Milk',
+			quantity: 1,
+			unit: 'L',
+			storeId: grocery.id
+		});
+		setChecked(householdId, milk.id, owner.id, true);
+
+		const result = quickAddItem(householdId, owner.id, { name: 'milk', storeId: grocery.id });
+
+		assert.deepEqual(result, { itemId: milk.id, restored: true });
+		const rows = getShoppingList(householdId);
+		assert.equal(rows.length, 1);
+		assert.equal(rows[0].checkedAt, null);
+		// No amount typed: the row keeps its own.
+		assert.equal(rows[0].quantity, 1);
+
+		// Another list's bought Milk is a fresh need there.
+		setChecked(householdId, milk.id, owner.id, true);
+		const elsewhere = quickAddItem(householdId, owner.id, {
+			name: 'Milk',
+			storeId: drugstore.id
+		});
+		assert.equal(elsewhere.restored, false);
+		assert.equal(getShoppingList(householdId).length, 2);
+
+		// A typed amount travels with the row it puts back.
+		const back = quickAddItem(householdId, owner.id, {
+			name: 'Milk',
+			quantity: 2,
+			unit: 'L',
+			storeId: grocery.id
+		});
+		assert.equal(back.itemId, milk.id);
+		assert.equal(getShoppingList(householdId).find((row) => row.id === milk.id)?.quantity, 2);
+	});
+
+	it('a list carries its icon, and opens only for its own household', () => {
+		const a = makeHousehold();
+		const b = makeHousehold();
+
+		const camping = createStore(a.householdId, 'Camping', 'tent');
+		assert.equal(camping.icon, 'tent');
+		assert.equal(camping.kind, 'buy');
+		// A key outside the fixed set is stored as nothing, which draws the basket.
+		assert.equal(createStore(a.householdId, 'Odd', 'rocket').icon, null);
+
+		assert.equal(renameStore(a.householdId, camping.id, 'Camping trip', 'luggage'), true);
+		assert.equal(getStore(a.householdId, camping.id)?.icon, 'luggage');
+		// Renaming alone keeps the icon.
+		renameStore(a.householdId, camping.id, 'Camping');
+		assert.equal(getStore(a.householdId, camping.id)?.icon, 'luggage');
+
+		assert.equal(getStore(b.householdId, camping.id), undefined);
 	});
 });
