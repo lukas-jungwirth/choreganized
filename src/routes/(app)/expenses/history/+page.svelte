@@ -436,7 +436,12 @@
 			meAvatar
 		)}
 		{#each others as person (person.id)}
-			{#snippet avatar()}<Avatar name={person.name} color={person.color} size={32} />{/snippet}
+			{#snippet avatar()}<Avatar
+					name={person.name}
+					color={person.color}
+					guest={person.guest}
+					size={32}
+				/>{/snippet}
 			{@render option(
 				current.payer === person.id,
 				person.name,
@@ -525,7 +530,7 @@
 				color={person.color}
 				onclick={() => apply({ payer: person.id })}
 			>
-				<Avatar name={person.name} color={person.color} size={20} />
+				<Avatar name={person.name} color={person.color} guest={person.guest} size={20} />
 				{person.name}
 			</Chip>
 		{/each}

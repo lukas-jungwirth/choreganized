@@ -6,7 +6,8 @@
 <script lang="ts">
 	import Avatar from './Avatar.svelte';
 
-	type StackMember = { id: string; displayName: string; color: string };
+	/** `guest`: someone outside the household in Expenses, drawn outlined (→ SPEC §11.15). */
+	type StackMember = { id: string; displayName: string; color: string; guest?: boolean };
 
 	type Props = {
 		members: StackMember[];
@@ -36,7 +37,14 @@
 	aria-hidden={label ? undefined : 'true'}
 >
 	{#each members as member (member.id)}
-		<Avatar name={member.displayName} color={member.color} {size} {ringColor} ring />
+		<Avatar
+			name={member.displayName}
+			color={member.color}
+			guest={member.guest}
+			{size}
+			{ringColor}
+			ring
+		/>
 	{/each}
 </span>
 

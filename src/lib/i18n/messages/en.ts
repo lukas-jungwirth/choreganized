@@ -1934,6 +1934,49 @@ export const en = {
 			saved: 'Saved'
 		},
 
+		/** Guests: people outside the household in the tally (→ SPEC §11.15) [G1]–[G5]. */
+		guests: {
+			/** Beside a guest's name in pickers and lists [G1]. */
+			tag: 'Guest',
+			/** The split sheet's last row [G1] and Expense settings' [G4]. */
+			add: 'Add a guest',
+			/** The payer picker's last entry, which opens [G2]. */
+			someoneElse: 'Someone else…',
+			/** [G2] */
+			addTitle: 'Add a guest',
+			addSubtitle: 'Someone outside the household who shares a cost with you.',
+			name: 'Name',
+			addCaption: 'No account needed. A guest is a name in the tally and nothing more.',
+			addNamed: (name: string) => (name ? `Add ${name}` : 'Add'),
+			/** Expense settings' group [G4]. */
+			group: 'Guests',
+			groupCaption: 'People outside the household who share a cost, like a friend on a trip.',
+			/** Where a guest stands, as a row's second line [G4]: "Owes €132.20". */
+			standing: (balanceMinor: number, amount: string) =>
+				balanceMinor < 0 ? `Owes ${amount}` : balanceMinor > 0 ? `Is owed ${amount}` : 'Settled up',
+			/** The guest sheet's subtitle [G5]: "Guest · owes €132.20". */
+			subtitle: (balanceMinor: number, amount: string) =>
+				balanceMinor < 0
+					? `Guest · owes ${amount}`
+					: balanceMinor > 0
+						? `Guest · is owed ${amount}`
+						: 'Guest · settled up',
+			/** Tapping a guest's name or avatar on the balance card opens their sheet [G3]. */
+			open: (name: string) => `${name}, guest: open their page`,
+			/** In Remind's place on a one-person card about a guest [G3]. */
+			page: (name: string) => `${name}’s page`,
+			saveName: 'Save name',
+			includeInNew: 'Include in new expenses',
+			includeInNewDetail: 'For a trip. Switch it off afterwards.',
+			/** The switch under a % or shares default (→ SPEC §11.15). */
+			includeOnlyEqual: 'Only with an equal default split',
+			remove: 'Remove guest',
+			removeWhenSettled: (name: string) => `Possible once ${name} is settled up.`,
+			removeConfirm: (name: string) => `Remove ${name}?`,
+			removeCopy:
+				'They leave every picker. Their name stays on the expenses they were part of. Adding them again makes a new guest.'
+		},
+
 		/** Home's one line (→ SPEC §11.13). */
 		home: {
 			owed: (amount: string, from: string): RichText => [
@@ -1979,7 +2022,11 @@ export const en = {
 			nextDate: 'The next one can’t be before today.',
 			dateTooOld: 'That date is too long ago. Check the year.',
 			seriesStart: 'A repeating expense can start at most a year ago.',
-			seriesPerson: 'Someone in it has left the household, so it can’t repeat.'
+			seriesPerson: 'Someone in it has left the household, so it can’t repeat.',
+			guestName: 'Give the guest a name of up to 20 characters.',
+			guestNameTaken: 'Someone in the household already goes by that name.',
+			guestLimit: 'A household can have 10 guests at a time.',
+			guestBalance: 'A guest can only be removed once they are settled up.'
 		}
 	},
 

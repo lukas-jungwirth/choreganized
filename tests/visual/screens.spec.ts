@@ -19,14 +19,15 @@
  * that is neither here nor excused. Each screen names its `route` for that test.
  */
 import { expect, test } from '@playwright/test';
-import { masksFor, SCREENS, scrolledToBottom, settle } from './screens';
+import { storageStateFor } from '../e2e/accounts';
+import { masksFor, SCREENS, scrolledToBottom, settle, type Screen } from './screens';
 
 test.skip(
 	process.platform !== 'linux',
 	'Visual baselines are Linux-only — run `npm run test:visual` (Docker) or let CI compare.'
 );
 
-for (const screen of SCREENS) {
+function screenshot(screen: Screen) {
 	test(screen.name, async ({ page, context, baseURL }) => {
 		if (screen.signedOut) await context.clearCookies();
 		if (screen.theme) {
@@ -51,3 +52,11 @@ for (const screen of SCREENS) {
 		}
 	});
 }
+
+for (const screen of SCREENS.filter((screen) => !screen.account)) screenshot(screen);
+
+// The households other than `visual`, each signed in as its own account.
+test.describe('as the guests household', () => {
+	test.use({ storageState: storageStateFor('guests') });
+	for (const screen of SCREENS.filter((screen) => screen.account === 'guests')) screenshot(screen);
+});

@@ -1,6 +1,9 @@
 <!--
 	Member avatar: initial on the member's colour. `empty` renders the dashed
 	placeholder used for "Anyone" tasks and the waiting-for-a-housemate row.
+	`guest` is someone outside the household in Expenses (→ SPEC §11.15) [G1]:
+	a disc tinted with their colour, the letter and a ring in it, so a guest is
+	never mistaken for a housemate.
 	Sizes are the design's: 20 · 26 · 32 · 36 · 44 · 52.
 -->
 <script lang="ts">
@@ -11,6 +14,8 @@
 		color?: string;
 		size?: number;
 		empty?: boolean;
+		/** A guest in Expenses: outlined rather than filled [G1]. */
+		guest?: boolean;
 		/** Adds the paper ring used when avatars overlap or sit on cards. */
 		ring?: boolean;
 		/** What the ring cuts out of: the screen by default, `--card` on a card. */
@@ -24,6 +29,7 @@
 		color = 'var(--member-sage)',
 		size = 36,
 		empty = false,
+		guest = false,
 		ring = false,
 		ringColor = 'var(--bg)',
 		children
@@ -37,6 +43,7 @@
 <span
 	class="avatar"
 	class:empty
+	class:guest
 	class:ring
 	style:--avatar-size="{size}px"
 	style:--avatar-color={color}
@@ -68,6 +75,20 @@
 
 	.ring {
 		box-shadow: 0 0 0 var(--avatar-ring-width) var(--avatar-ring);
+	}
+
+	/* The guest's own colour carries the letter and the ring, on a tint of it
+	   over the card, so the disc reads in both themes. */
+	.guest {
+		background: color-mix(in srgb, var(--avatar-color) 16%, var(--card));
+		color: var(--avatar-color);
+		box-shadow: inset 0 0 0 1.5px var(--avatar-color);
+	}
+
+	.guest.ring {
+		box-shadow:
+			inset 0 0 0 1.5px var(--avatar-color),
+			0 0 0 var(--avatar-ring-width) var(--avatar-ring);
 	}
 
 	.empty {

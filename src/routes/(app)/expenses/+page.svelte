@@ -21,6 +21,7 @@
 	import ExpenseRow from '$lib/components/expenses/ExpenseRow.svelte';
 	import ExpenseSettingsSheet from '$lib/components/expenses/ExpenseSettingsSheet.svelte';
 	import ExpenseSheet from '$lib/components/expenses/ExpenseSheet.svelte';
+	import GuestSheet from '$lib/components/expenses/GuestSheet.svelte';
 	import SettleSheet from '$lib/components/expenses/SettleSheet.svelte';
 	import { groupByDay, pickablePeople } from '$lib/components/expenses/split-draft';
 	import ReceiptIcon from '$lib/components/icons/ReceiptIcon.svelte';
@@ -40,7 +41,11 @@
 
 	const m = messages();
 
-	type Sheet = { kind: 'add' } | { kind: 'settle'; payment: Payment | null } | { kind: 'settings' };
+	type Sheet =
+		| { kind: 'add' }
+		| { kind: 'settle'; payment: Payment | null }
+		| { kind: 'settings' }
+		| { kind: 'guest'; id: string };
 
 	let sheet = $state<Sheet | null>(null);
 	let menuOpen = $state(false);
@@ -53,6 +58,14 @@
 	const days = $derived(groupByDay(data.recent));
 	const empty = $derived(data.recent.length === 0);
 	const isOwner = $derived(data.currentMember.role === 'owner');
+	/** The guest whose sheet [G5] the balance card opened, while they are still a guest. */
+	const openGuest = $derived.by(() => {
+		const open = sheet;
+		if (open?.kind !== 'guest') return null;
+		return (
+			data.people.find((person) => person.id === open.id && person.guest && !person.removed) ?? null
+		);
+	});
 
 	// The detail screen deletes, then sends the reader here to offer the undo.
 	// The load has checked the row really is waiting for one; either way the
@@ -148,6 +161,7 @@
 		me={data.me}
 		currency={data.currency}
 		onsettle={(payment) => (sheet = { kind: 'settle', payment })}
+		onguest={(id) => (sheet = { kind: 'guest', id })}
 	/>
 
 	<h2 class="recent">{m.expenses.recent}</h2>
@@ -206,10 +220,21 @@
 {:else if sheet?.kind === 'settings'}
 	<ExpenseSettingsSheet
 		people={data.people}
+		balances={data.balances.byPerson}
+		series={data.series}
 		currency={data.currency}
 		currencyLocked={data.currencyLocked}
 		{isOwner}
 		splitDefault={data.splitDefault}
+		onclose={() => (sheet = null)}
+	/>
+{:else if openGuest}
+	<GuestSheet
+		guest={openGuest}
+		balance={data.balances.byPerson[openGuest.id] ?? 0}
+		currency={data.currency}
+		equalDefault={data.splitDefault.mode === 'equal'}
+		series={data.series[openGuest.id] ?? []}
 		onclose={() => (sheet = null)}
 	/>
 {/if}

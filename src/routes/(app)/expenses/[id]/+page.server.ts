@@ -7,6 +7,7 @@ import { error } from '@sveltejs/kit';
 import { catalog } from '$lib/i18n';
 import { requireMember } from '$lib/server/guards';
 import {
+	addGuestAction,
 	deleteExpenseAction,
 	saveExpenseAction,
 	savePaymentAction,
@@ -55,5 +56,6 @@ export const actions: Actions = {
 	pay: savePaymentAction,
 	delete: deleteExpenseAction,
 	saveSeries: saveSeriesAction,
-	splitDefault: splitDefaultAction
+	splitDefault: splitDefaultAction,
+	addGuest: addGuestAction
 };

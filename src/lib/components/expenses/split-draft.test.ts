@@ -4,8 +4,16 @@
  */
 import assert from 'node:assert/strict';
 import { describe, it } from 'vitest';
-import type { ExpenseItem } from '$lib/server/services/expenses';
-import { draftRows, previewSplit, switchDraftMode, yourPart } from './split-draft';
+import type { ExpenseItem, ExpensePerson } from '$lib/server/services/expenses';
+import { netBalances, settlePayments } from '$lib/utils/money';
+import {
+	draftFromDefault,
+	draftRows,
+	pickablePeople,
+	previewSplit,
+	switchDraftMode,
+	yourPart
+} from './split-draft';
 
 function item(paidById: string, shares: [string, number][]): ExpenseItem {
 	return {
@@ -104,5 +112,99 @@ describe('switching mode', () => {
 		assert.deepEqual(shares.draft.inputs, { a: '1', b: '1' });
 		const back = switchDraftMode(shares.draft, 'amounts', shares.typed, 4210, 'EUR', false);
 		assert.deepEqual(back.draft.inputs, { a: '10.00', b: '32.10' });
+	});
+});
+
+/* ── Guests (→ plan 38, SPEC §11.15) ────────────────────────────────────── */
+
+function person(id: string, extra: Partial<ExpensePerson> = {}): ExpensePerson {
+	return {
+		id,
+		name: id,
+		color: '#5F8D72',
+		memberId: `member-${id}`,
+		guest: false,
+		removed: false,
+		includeInNew: false,
+		defaultWeight: null,
+		...extra
+	};
+}
+
+const guest = (id: string, extra: Partial<ExpensePerson> = {}) =>
+	person(id, { memberId: null, guest: true, ...extra });
+
+describe('a weekend with a guest (the sketch’s four expenses)', () => {
+	const split3 = (paidById: string, amount: number) =>
+		item(paidById, [
+			['lukas', amount / 3],
+			['elisabeth', amount / 3],
+			['jonas', amount / 3]
+		]);
+
+	it('gives Elisabeth → Lukas €167.60 and Jonas → Lukas €132.20', () => {
+		const ledger = [
+			split3('lukas', 42000), // the hut
+			split3('elisabeth', 9660), // groceries for the hut
+			split3('lukas', 14400), // dinner in Bozen
+			split3('jonas', 13200) // fuel and toll, paid by the guest
+		];
+		const balances = netBalances(['lukas', 'elisabeth', 'jonas'], ledger);
+		assert.deepEqual(Object.fromEntries(balances), {
+			lukas: 29980,
+			elisabeth: -16760,
+			jonas: -13220
+		});
+		assert.deepEqual(settlePayments(balances), [
+			{ from: 'elisabeth', to: 'lukas', amountMinor: 16760 },
+			{ from: 'jonas', to: 'lukas', amountMinor: 13220 }
+		]);
+	});
+});
+
+describe('guests and the people a new expense starts with', () => {
+	const people = [person('lukas'), person('elisabeth'), guest('jonas'), guest('anna')];
+
+	it('an equal default is the members only, with the switch off', () => {
+		const draft = draftFromDefault(people, { mode: 'equal', weights: {} }, false);
+		assert.deepEqual(draft.inIds, ['lukas', 'elisabeth']);
+	});
+
+	it('"Include in new expenses" adds that guest, split equally, and nobody else', () => {
+		const withJonas = people.map((row) =>
+			row.id === 'jonas' ? { ...row, includeInNew: true } : row
+		);
+		const draft = draftFromDefault(withJonas, { mode: 'equal', weights: {} }, false);
+		assert.deepEqual(draft, { mode: 'equal', inIds: ['lukas', 'elisabeth', 'jonas'], inputs: {} });
+	});
+
+	it('a % default leaves the switched-on guest out rather than invent a percentage', () => {
+		const withJonas = people.map((row) =>
+			row.id === 'jonas' ? { ...row, includeInNew: true } : row
+		);
+		const draft = draftFromDefault(
+			withJonas,
+			{ mode: 'percent', weights: { lukas: 3000, elisabeth: 7000 } },
+			false
+		);
+		assert.deepEqual(draft.inIds, ['lukas', 'elisabeth']);
+		assert.equal(draft.mode, 'percent');
+	});
+
+	it('an active guest is pickable with a zero balance; a removed one only while owing', () => {
+		const roster = [
+			person('lukas'),
+			guest('jonas'),
+			guest('anna', { removed: true }),
+			person('marco', { memberId: null })
+		];
+		assert.deepEqual(
+			pickablePeople(roster, {}).map((row) => row.id),
+			['lukas', 'jonas']
+		);
+		assert.deepEqual(
+			pickablePeople(roster, { anna: -100, marco: 100 }).map((row) => row.id),
+			['lukas', 'jonas', 'anna', 'marco']
+		);
 	});
 });

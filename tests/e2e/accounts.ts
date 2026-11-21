@@ -21,11 +21,29 @@ import {
  */
 export const DATABASE_PATH = process.env.E2E_DATABASE_PATH ?? 'data/e2e/choreganized.db';
 
-export type Account = { key: 'owner' | 'visual'; name: string; email: string; password: string };
+export type Account = {
+	key: 'owner' | 'visual' | 'guests';
+	name: string;
+	email: string;
+	password: string;
+	/** Extra `scripts/seed.ts` flags for this household. */
+	seed?: string[];
+};
 
 export const ACCOUNTS: Account[] = [
 	{ key: 'owner', name: 'Lukas Test', email: 'owner@e2e.test', password: 'e2e-password-owner' },
-	{ key: 'visual', name: 'Visual Test', email: 'visual@e2e.test', password: 'e2e-password-visual' }
+	{ key: 'visual', name: 'Visual Test', email: 'visual@e2e.test', password: 'e2e-password-visual' },
+	/**
+	 * The sketch's weekend with Jonas (→ plan 38, `--guests`): a guest on the
+	 * balance card, screenshotted like `visual` and, like it, never touched.
+	 */
+	{
+		key: 'guests',
+		name: 'Lukas Guests',
+		email: 'guests@e2e.test',
+		password: 'e2e-password-guests',
+		seed: ['--guests']
+	}
 ];
 
 export const storageStateFor = (key: Account['key']) => `tests/.auth/${key}.json`;

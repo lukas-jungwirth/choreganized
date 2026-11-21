@@ -23,6 +23,11 @@ export type Screen = {
 	fullPage?: boolean;
 	/** Also capture the screen scrolled to the bottom, as `<name>-bottom`. */
 	bottom?: boolean;
+	/**
+	 * Another seeded household than `visual` (→ tests/e2e/accounts.ts): `guests`
+	 * spent the sketch's weekend with Jonas (→ plan 38). Unmutated, like `visual`.
+	 */
+	account?: 'guests';
 };
 
 export async function openRecipe(page: Page): Promise<void> {
@@ -336,6 +341,52 @@ export const SCREENS: Screen[] = [
 			await page.goto('/expenses/recurring');
 			await page.getByTestId('series-row').first().click();
 			await page.getByRole('dialog', { name: 'Strom · Wien Energie' }).waitFor();
+		}
+	},
+	// Guests [G1] [G3] [G5] (→ plan 38), in the household that spent the weekend with Jonas.
+	{
+		name: 'expenses-guest-split',
+		route: '/(app)/expenses/[id]',
+		path: '',
+		account: 'guests',
+		navigate: async (page) => {
+			await page.goto('/expenses');
+			await page.getByRole('link', { name: /Dinner in Bozen/ }).click();
+			await page.getByRole('button', { name: 'Edit' }).click();
+			await page.getByRole('dialog', { name: 'Edit expense' }).waitFor();
+			await page.getByRole('button', { name: /^Split/ }).click();
+			await page.getByRole('dialog', { name: 'Split' }).waitFor();
+		}
+	},
+	{ name: 'expenses-guests', route: '/(app)/expenses', path: '/expenses', account: 'guests' },
+	{
+		name: 'expenses-guests-dark',
+		route: '/(app)/expenses',
+		path: '/expenses',
+		account: 'guests',
+		theme: 'dark'
+	},
+	{
+		name: 'expenses-guest-sheet',
+		route: '/(app)/expenses',
+		path: '',
+		account: 'guests',
+		navigate: async (page) => {
+			await page.goto('/expenses');
+			await page.getByRole('button', { name: 'Jonas, guest: open their page' }).click();
+			await page.getByRole('dialog', { name: 'Jonas' }).waitFor();
+		}
+	},
+	{
+		name: 'expenses-guest-settings',
+		route: '/(app)/expenses',
+		path: '',
+		account: 'guests',
+		navigate: async (page) => {
+			await page.goto('/expenses');
+			await page.getByRole('button', { name: 'More' }).click();
+			await page.getByRole('menuitem', { name: 'Expense settings' }).click();
+			await page.getByRole('dialog', { name: 'Expenses' }).getByText('Guests').waitFor();
 		}
 	},
 	{ name: 'settings', route: '/(app)/settings', path: '/settings', bottom: true },

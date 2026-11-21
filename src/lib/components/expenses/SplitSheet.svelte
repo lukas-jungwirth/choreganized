@@ -12,6 +12,7 @@
 	import { enhance } from '$app/forms';
 	import AlertCircle from '@lucide/svelte/icons/circle-alert';
 	import Check from '@lucide/svelte/icons/check';
+	import Plus from '@lucide/svelte/icons/plus';
 	import Avatar from '$lib/components/ui/Avatar.svelte';
 	import BottomSheet from '$lib/components/ui/BottomSheet.svelte';
 	import Button from '$lib/components/ui/Button.svelte';
@@ -26,6 +27,8 @@
 	} from '$lib/utils/expenses';
 	import { formatPercent, parsePercent } from '$lib/utils/money';
 	import { untrack } from 'svelte';
+	import AddGuestSheet from './AddGuestSheet.svelte';
+	import GuestTag from './GuestTag.svelte';
 	import {
 		draftRows,
 		previewSplit,
@@ -102,13 +105,22 @@
 		}))
 	);
 
-	/** In roster order, whatever order they were ticked in. */
+	/**
+	 * In roster order, whatever order they were ticked in. A guest added a
+	 * moment ago may not be in `people` yet; they go last, where the roster
+	 * puts a new guest anyway.
+	 */
 	function setIn(id: string, included: boolean) {
 		const next = new Set(inIds);
 		if (included) next.add(id);
 		else next.delete(id);
-		inIds = people.map((person) => person.id).filter((personId) => next.has(personId));
+		const order = people.map((person) => person.id);
+		if (!order.includes(id)) order.push(id);
+		inIds = order.filter((personId) => next.has(personId));
 	}
+
+	/** "Add a guest" [G1] → [G2]; the new guest comes back ticked in. */
+	let addingGuest = $state(false);
 
 	/** What each mode had typed in it, so leaving one and coming back keeps its numbers. */
 	let typed = $state<ModeInputs>({});
@@ -226,9 +238,10 @@
 					aria-label={m.expenses.split.include(person.name)}
 					onchange={(event) => setIn(person.id, event.currentTarget.checked)}
 				/>
-				<Avatar name={person.name} color={person.color} size={28} />
+				<Avatar name={person.name} color={person.color} guest={person.guest} size={28} />
 				<span class="name">
 					{person.name}
+					{#if person.guest}<GuestTag />{/if}
 					{#if person.id === payerId}<span class="tag">{m.expenses.split.paid}</span>{/if}
 				</span>
 				{#if !included}
@@ -256,6 +269,14 @@
 				{/if}
 			</li>
 		{/each}
+		{#if !forDefault}
+			<li class="person">
+				<button type="button" class="add-guest" onclick={() => (addingGuest = true)}>
+					<span class="plus" aria-hidden="true"><Plus size={16} strokeWidth={2.2} /></span>
+					{m.expenses.guests.add}
+				</button>
+			</li>
+		{/if}
 	</ul>
 
 	{#if forDefault && mode !== 'equal'}
@@ -333,6 +354,10 @@
 	<span hidden id={groupId}>{m.expenses.split.title}</span>
 </BottomSheet>
 
+{#if addingGuest}
+	<AddGuestSheet onadded={(id) => setIn(id, true)} onclose={() => (addingGuest = false)} />
+{/if}
+
 <style>
 	.modes {
 		margin-bottom: 8px;
@@ -388,6 +413,30 @@
 		font-size: var(--fs-14);
 		font-weight: 500;
 		color: var(--text-5);
+	}
+
+	/* [G1]: the plus sits where a row's avatar does, under the checkboxes' column. */
+	.add-guest {
+		display: flex;
+		align-items: center;
+		gap: 12px;
+		width: 100%;
+		min-height: 44px;
+		font-size: var(--fs-16);
+		font-weight: 600;
+		text-align: left;
+		color: var(--sage-deep);
+	}
+
+	.plus {
+		display: grid;
+		flex: none;
+		place-items: center;
+		width: 28px;
+		height: 28px;
+		margin-left: 34px;
+		border-radius: 50%;
+		box-shadow: inset 0 0 0 1.5px var(--border-dashed);
 	}
 
 	.not-in {
