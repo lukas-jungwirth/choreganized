@@ -14,10 +14,13 @@ import {
 	createExpense,
 	createPayment,
 	ExpenseError,
+	guestPage,
+	guestShareToken,
 	listLedger,
 	listPeople,
 	removeGuest,
 	renameGuest,
+	renewGuestShareToken,
 	setGuestIncludeInNew,
 	updateExpense,
 	type ExpenseInput
@@ -277,5 +280,132 @@ describe('removing a guest', () => {
 			listSeries(householdId).map((series) => series.description),
 			['Rent']
 		);
+	});
+});
+
+describe('the guest’s link and page (→ plan 38 step 2)', () => {
+	function weekend() {
+		const fixture = makeHousehold({ name: 'Villa Kunterbunt', housemates: ['Elisabeth'] });
+		const [lukas, elisabeth] = listPeople(fixture.householdId).map((person) => person.id);
+		const jonas = addGuest(fixture.householdId, 'Jonas');
+		// Unequal shares, so nobody else's share can hide behind Jonas's own number.
+		createExpense(
+			fixture.householdId,
+			fixture.owner.id,
+			{
+				...dinner(lukas, []),
+				amountMinor: 14411,
+				splitMode: 'amounts',
+				rows: [
+					{ id: lukas, input: 7013 },
+					{ id: elisabeth, input: 2417 },
+					{ id: jonas, input: 4981 }
+				]
+			},
+			TODAY
+		);
+		// Something Jonas is not part of.
+		createExpense(
+			fixture.householdId,
+			fixture.owner.id,
+			{ ...dinner(lukas, [lukas, elisabeth], 8642), description: 'Strom · Wien Energie' },
+			TODAY
+		);
+		return { ...fixture, lukas, elisabeth, jonas };
+	}
+
+	it('makes the token once, 32 random bytes as base64url, and keeps it', () => {
+		const { householdId, jonas } = weekend();
+		const token = guestShareToken(householdId, jonas);
+		assert.match(token, /^[A-Za-z0-9_-]{43}$/);
+		assert.equal(guestShareToken(householdId, jonas), token);
+		assert.equal(person(householdId, jonas)?.shareToken, token);
+	});
+
+	it('shows only the guest’s own rows and share, and nothing of the household', () => {
+		const { householdId, jonas } = weekend();
+		const page = guestPage(guestShareToken(householdId, jonas));
+		assert.ok(page);
+
+		assert.equal(page.name, 'Jonas');
+		assert.deepEqual(
+			page.members.map((member) => member.name),
+			['Owner', 'Elisabeth']
+		);
+		assert.deepEqual(page.payments, [{ owe: true, name: 'Owner', amountMinor: 4981 }]);
+		assert.equal(page.items.length, 1);
+		assert.deepEqual(page.items[0], {
+			kind: 'expense',
+			description: 'Dinner in Bozen',
+			category: 'eatingOut',
+			date: TODAY,
+			paidBy: 'Owner',
+			amountMinor: 14411,
+			shareMinor: 4981
+		});
+		assert.equal(page.paidMinor, 0);
+		assert.equal(page.shareMinor, 4981);
+
+		// What reaches the browser: no foreign expense, no other share, no
+		// household name, no id of anything.
+		const serialized = JSON.stringify(page);
+		for (const absent of [
+			'Strom',
+			'8642',
+			'7013',
+			'2417',
+			'Villa Kunterbunt',
+			householdId,
+			jonas
+		]) {
+			assert.ok(!serialized.includes(absent), `the page data holds ${absent}`);
+		}
+	});
+
+	it('tells the guest’s own payment from their side', () => {
+		const { householdId, owner, lukas, jonas } = weekend();
+		createPayment(
+			householdId,
+			owner.id,
+			{ fromId: jonas, toId: lukas, amountMinor: 4981, date: TODAY },
+			TODAY
+		);
+		const page = guestPage(guestShareToken(householdId, jonas));
+		assert.deepEqual(page?.payments, []);
+		assert.deepEqual(page?.items[0], {
+			kind: 'payment',
+			date: TODAY,
+			from: null,
+			to: 'Owner',
+			amountMinor: 4981
+		});
+	});
+
+	it('a replaced token no longer resolves, nor a removed guest’s, nor one never made', () => {
+		const { householdId, owner, lukas, jonas } = weekend();
+		const first = guestShareToken(householdId, jonas);
+		const second = renewGuestShareToken(householdId, jonas);
+		assert.notEqual(second, first);
+		assert.equal(guestPage(first), null);
+		assert.ok(guestPage(second));
+
+		createPayment(
+			householdId,
+			owner.id,
+			{ fromId: jonas, toId: lukas, amountMinor: 4981, date: TODAY },
+			TODAY
+		);
+		removeGuest(householdId, jonas);
+		assert.equal(guestPage(second), null);
+		assert.equal(guestPage('x'.repeat(43)), null);
+		assert.equal(guestPage(''), null);
+	});
+
+	it('another household can’t make or replace a guest’s link', () => {
+		const ours = weekend();
+		const theirs = household();
+		assert.throws(() => guestShareToken(theirs.householdId, ours.jonas), rejects('not-found'));
+		assert.throws(() => renewGuestShareToken(theirs.householdId, ours.jonas), rejects('not-found'));
+		assert.throws(() => guestShareToken(ours.householdId, ours.lukas), rejects('not-found'));
 	});
 });

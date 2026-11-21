@@ -4261,3 +4261,39 @@ store_id` NULL already means "no memory" (a deleted list), and telling the two a
      with `account: 'guests'` in `tests/visual/screens.ts` run under that account's session;
      nothing mutates it. The guest journey runs in `owner`'s household and removes its guests
      again, with an `afterEach` that deletes them from the database if it fails half-way.
+288. **A guest's link token is stored readable, made on first use, and looked up by its index**
+     (plan 38 step 2, 2026-11-21; → SPEC §11.15, DATA-MODEL "ledger_people"). 32 random bytes
+     as base64url (43 characters) in `ledger_people.share_token`, unique. Readable rather than
+     hashed, so any member can show and copy the same link again from the guest's sheet; a hash
+     would need a new link every time someone wants to resend it. The secret it guards is a
+     guest's own tally, and the household already sees it in full. It is made by the first
+     Share link or Copy (`guestShareToken`), not when the guest is added, so a guest nobody
+     sends a link to has none. The page finds the guest by the unique index alone
+     (`guestPage`), after a shape check, so there is no compare to time. The token reaches the
+     household's own pages as `ExpensePerson.shareToken`, for active guests only; the page's
+     data is built field by field and carries no id at all.
+289. **The guest's page knows no session, offers no install, and is kept out of indexes and
+     caches** (plan 38 step 2; → SPEC §11.15, ARCHITECTURE routing map). `/g/<token>` sits
+     outside `(app)`, beside `/j` and `/legal`, on `PUBLIC_PAGES` with its reason.
+     `hooks.server.ts` does not look up a session on `/g/` at all: the page is the same for
+     whoever holds the link, a member opening it included, so it speaks the request's language
+     as for a signed-out visitor. The same hook sets `X-Robots-Tag: noindex, nofollow`,
+     `Referrer-Policy: no-referrer` and `Cache-Control: private, no-store` on every `/g/`
+     response, the 404 included, and leaves app.html's manifest link out, so the browser offers
+     no "Add to home screen" for the household's app. The service worker is left as on every
+     page: it never caches a page (network first, → #56). The theme is the device's, or the
+     theme cookie if that device has one, as on every page.
+290. **A dead link names nobody** (plan 38 step 2; → SPEC §11.15 [G8]). An unknown token, a
+     replaced one and a removed guest's are one answer: status 404 and "This link no longer
+     works", from `routes/g/[token]/+error.svelte`, with no name, no household and no hint which
+     of the three it was. Whoever holds an old link, after a falling-out say, learns nothing
+     from it.
+291. **Share falls back to Copy, Copy to a field; the legal links lead back to the page** (plan 38
+     step 2; → SPEC §11.15, §13). The first Share or Copy has to fetch the token before it can
+     share or copy, and a browser may refuse either that long after the tap: Share then copies,
+     and a refused copy shows the link in a field to copy by hand, rather than failing quietly.
+     Closing the share sheet is not a failure. The page's Privacy · Imprint links carry
+     `?from=guest-<token>` (`utils/legal`, parsed strictly to the token's shape like an invite
+     code), so back from them returns to the guest's page instead of to sign-in, which a guest
+     has no use for. The token then sits in that page's address too; it is the guest's own
+     history, and the referrer policy keeps it from going further.

@@ -65,7 +65,10 @@ describe('route guards', () => {
 			'src/routes/dev/kit/+page.svelte': 'component gallery; 404 unless dev or E2E mode',
 			// The sign-in screen links here, before anyone has an account (→ SPEC §13).
 			// The text is the operator's, from the deploy; nothing household-specific.
-			'src/routes/legal/[page=legal]/+page.svelte': 'Impressum and Datenschutz'
+			'src/routes/legal/[page=legal]/+page.svelte': 'Impressum and Datenschutz',
+			// A guest has no account (→ SPEC §11.15): the link is the key. The page
+			// reads only that guest's own share and balance, from the token alone.
+			'src/routes/g/[token]/+page.svelte': 'a guest’s read-only page, opened from their link'
 		};
 		const unlisted = sourceFiles('src/routes', ['+page.svelte'])
 			.map((file) => file.path)

@@ -7,6 +7,7 @@
  */
 import { expect, type Page } from '@playwright/test';
 import { SEED } from '../e2e/accounts';
+import { SEED_GUEST_TOKEN } from '../../scripts/seed-data';
 
 export type Screen = {
 	name: string;
@@ -388,6 +389,27 @@ export const SCREENS: Screen[] = [
 			await page.getByRole('menuitem', { name: 'Expense settings' }).click();
 			await page.getByRole('dialog', { name: 'Expenses' }).getByText('Guests').waitFor();
 		}
+	},
+	// Jonas's own page [G6], opened from his link with no session, and a dead link [G8].
+	{
+		name: 'guest-page',
+		route: '/g/[token]',
+		path: `/g/${SEED_GUEST_TOKEN}`,
+		signedOut: true,
+		fullPage: true
+	},
+	{
+		name: 'guest-page-dark',
+		route: '/g/[token]',
+		path: `/g/${SEED_GUEST_TOKEN}`,
+		signedOut: true,
+		theme: 'dark'
+	},
+	{
+		name: 'guest-page-gone',
+		route: '/g/[token]',
+		path: `/g/${'0'.repeat(43)}`,
+		signedOut: true
 	},
 	{ name: 'settings', route: '/(app)/settings', path: '/settings', bottom: true },
 	{

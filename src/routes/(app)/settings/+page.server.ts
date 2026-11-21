@@ -37,7 +37,9 @@ import {
 import {
 	addGuestAction,
 	currencyAction,
+	guestLinkAction,
 	removeGuestAction,
+	renewGuestLinkAction,
 	splitDefaultAction,
 	updateGuestAction
 } from '$lib/server/expense-actions';
@@ -190,6 +192,8 @@ export const actions: Actions = {
 	/** …and its Guests group [G4] [G5] (→ SPEC §11.15). */
 	addGuest: addGuestAction,
 	updateGuest: updateGuestAction,
+	guestLink: guestLinkAction,
+	renewGuestLink: renewGuestLinkAction,
 	removeGuest: removeGuestAction,
 
 	/** Name, colour and birthday [6a] — always your own membership (→ SPEC §6 "Account"). */

@@ -1,6 +1,6 @@
 # 38 · Guests in Expenses: share a cost with someone outside the household
 
-**Status: in progress (step 1 done 2026-11-21).** Step 1, guests in the ledger, is built (DECISIONS #282–#287); step 2, the link and the page, is next. Asked for by Lukas on 2026-11-21:
+**Status: done (2026-11-21, v0.6.0).** Step 1, guests in the ledger (DECISIONS #282–#287), and step 2, the link and the page (#288–#291). Asked for by Lukas on 2026-11-21:
 "it is possible to add external persons to share the spendings. For example we are doing a
 trip with a friend that is not in the household so we can also track his share." Depends on:
 29, 30 (both done).
@@ -161,10 +161,10 @@ with [G6] [G7] [G8].
 - [x] "Include in new expenses" adds the guest to the next new expense and to nothing else.
 - [x] A guest with an open balance cannot be removed; a settled one can, and stays readable in
       history.
-- [ ] The link opens without a session and shows only that guest's balance and expenses, in
+- [x] The link opens without a session and shows only that guest's balance and expenses, in
       English and German, light and dark, at 390px and at 200% text size.
-- [ ] A replaced link and a removed guest's link both show [G8].
-- [ ] `npm run verify` and `npm run test:visual` clean; SPEC, DATA-MODEL, DECISIONS and the
+- [x] A replaced link and a removed guest's link both show [G8].
+- [x] `npm run verify` and `npm run test:visual` clean; SPEC, DATA-MODEL, DECISIONS and the
       status table updated.
 
 ## Not in this plan

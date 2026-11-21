@@ -10,7 +10,9 @@ import {
 	currencyAction,
 	deleteExpenseAction,
 	remindAction,
+	guestLinkAction,
 	removeGuestAction,
+	renewGuestLinkAction,
 	restoreExpenseAction,
 	saveExpenseAction,
 	savePaymentAction,
@@ -77,5 +79,7 @@ export const actions: Actions = {
 	currency: currencyAction,
 	addGuest: addGuestAction,
 	updateGuest: updateGuestAction,
+	guestLink: guestLinkAction,
+	renewGuestLink: renewGuestLinkAction,
 	removeGuest: removeGuestAction
 };

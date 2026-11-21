@@ -49,6 +49,20 @@ async function shutDown() {
 	process.exit(code);
 }
 
+/** `/g/<token>`, a guest's read-only page (→ SPEC §11.15). */
+function isGuestPage(pathname: string): boolean {
+	return pathname === '/g' || pathname.startsWith('/g/');
+}
+
+/**
+ * A guest's page leaves out app.html's manifest link: there is nothing for a
+ * guest to install, and without it the browser offers no "Add to home screen"
+ * for the household's app.
+ */
+function withoutManifest(html: string): string {
+	return html.replace(/<link rel="manifest"[^>]*>/, '');
+}
+
 export const handle: Handle = async ({ event, resolve }) => {
 	// Set before the branch below: `App.Locals.locale` promises it is always
 	// there, and `svelteKitHandler` hands the event back to `resolve` while the
@@ -67,7 +81,11 @@ export const handle: Handle = async ({ event, resolve }) => {
 		return svelteKitHandler({ auth, event, resolve, building });
 	}
 
-	const session = await auth.api.getSession({ headers: event.request.headers });
+	// A guest's page (→ SPEC §11.15) is the same for whoever holds the link:
+	// nobody is signed in there, not even a member opening it, so it speaks the
+	// request's own language and knows nothing of an account.
+	const guestPage = isGuestPage(event.url.pathname);
+	const session = guestPage ? null : await auth.api.getSession({ headers: event.request.headers });
 	event.locals.user = session?.user ?? null;
 	event.locals.member = session
 		? (db.select().from(members).where(eq(members.userId, session.user.id)).get() ?? null)
@@ -86,7 +104,7 @@ export const handle: Handle = async ({ event, resolve }) => {
 	const brand = branding();
 	const response = await resolve(event, {
 		transformPageChunk: ({ html }) =>
-			html
+			(guestPage ? withoutManifest(html) : html)
 				.replace('%lang%', HTML_LANG[event.locals.locale])
 				// No leading space: app.html already separates the placeholder from
 				// `lang`, so an empty expansion just leaves a harmless one inside the
@@ -107,6 +125,14 @@ export const handle: Handle = async ({ event, resolve }) => {
 	// been served and so gets the hint for free
 	// (→ `routes/manifest.webmanifest`, `$lib/theme`).
 	response.headers.append('Accept-CH', 'Sec-CH-Prefers-Color-Scheme');
+
+	if (guestPage) {
+		// Kept out of search engines, never cached, and the link itself never
+		// passed on as a referrer (→ DECISIONS #289).
+		response.headers.set('X-Robots-Tag', 'noindex, nofollow');
+		response.headers.set('Referrer-Policy', 'no-referrer');
+		response.headers.set('Cache-Control', 'private, no-store');
+	}
 
 	return response;
 };

@@ -20,6 +20,8 @@ import {
 	reminders,
 	getExpenseSettings,
 	removeGuest,
+	guestShareToken,
+	renewGuestShareToken,
 	renameGuest,
 	restoreExpense,
 	setCurrency,
@@ -277,6 +279,31 @@ export async function updateGuestAction(event: RequestEvent) {
 		const include = form.get('includeInNew');
 		if (include !== null) setGuestIncludeInNew(householdId, guestId, include === 'on');
 		return { guestSaved: guestId };
+	} catch (error) {
+		return failWith(event, error);
+	}
+}
+
+/**
+ * The guest's link [G5]: the token, made on the first Share link or Copy and
+ * the same one after that. The sheet builds the address from it.
+ */
+export async function guestLinkAction(event: RequestEvent) {
+	const form = await event.request.formData();
+	try {
+		const { householdId } = requireMember(event);
+		return { token: guestShareToken(householdId, String(form.get('guestId') ?? '')) };
+	} catch (error) {
+		return failWith(event, error);
+	}
+}
+
+/** "Make a new link" [G5], after its confirm: the old link stops working. */
+export async function renewGuestLinkAction(event: RequestEvent) {
+	const form = await event.request.formData();
+	try {
+		const { householdId } = requireMember(event);
+		return { token: renewGuestShareToken(householdId, String(form.get('guestId') ?? '')) };
 	} catch (error) {
 		return failWith(event, error);
 	}

@@ -2,15 +2,23 @@
 	One guest [G5] (→ SPEC §11.15): where they stand, their name, "Include in
 	new expenses", and removing them once they are settled. Opened from the
 	Guests group in Expense settings [G4] and by tapping a guest on the balance
-	card [G3]. The link box of plan 38's step 2 goes between the switch and
-	Remove.
+	card [G3].
+
+	The link box: the guest's read-only page, `/g/<token>` (→ SPEC §11.15). The
+	token is made on the first Share link or Copy and stays the same after
+	that; "Make a new link" replaces it behind one confirm. Share link uses the
+	system share sheet where the browser has one, else it copies.
 
 	Each part is a form of its own, posting to `?/updateGuest` or
 	`?/removeGuest` on whichever page mounted the sheet. The switch saves as it
 	flips; the name saves with its own button, which shows once it changed.
 -->
 <script lang="ts">
-	import { enhance } from '$app/forms';
+	import { deserialize, enhance } from '$app/forms';
+	import { invalidateAll } from '$app/navigation';
+	import Copy from '@lucide/svelte/icons/copy';
+	import Link2Off from '@lucide/svelte/icons/link-2-off';
+	import Share from '@lucide/svelte/icons/share';
 	import UserRoundX from '@lucide/svelte/icons/user-round-x';
 	import BottomSheet from '$lib/components/ui/BottomSheet.svelte';
 	import Button from '$lib/components/ui/Button.svelte';
@@ -46,6 +54,14 @@
 	let submitting = $state(false);
 	let error = $state<string | undefined>();
 	let includeForm: HTMLFormElement | undefined = $state();
+	/** The link's token, once one exists; null until the first Share or Copy. */
+	let token = $state(untrack(() => guest.shareToken));
+	/** What the last Share / Copy / new link did, said under the buttons. */
+	let linkStatus = $state<'copied' | 'renewed' | null>(null);
+	/** Neither share nor copy was allowed: the link, to copy by hand. */
+	let manual = $state<string | null>(null);
+	let renewOpen = $state(false);
+	let linking = $state(false);
 
 	$effect(() => {
 		if (!open) onclose();
@@ -65,6 +81,86 @@
 				error = typeof result.data?.error === 'string' ? result.data.error : undefined;
 				// The switch shows what is stored, not what failed to be.
 				includeInNew = guest.includeInNew;
+			}
+		};
+	};
+
+	const address = (value: string) => `${location.origin}/g/${value}`;
+
+	/** The token, made by the server the first time it is asked for. */
+	async function linkToken(): Promise<string | null> {
+		if (token) return token;
+		const body = new FormData();
+		body.set('guestId', guest.id);
+		const response = await fetch('?/guestLink', {
+			method: 'POST',
+			body,
+			headers: { 'x-sveltekit-action': 'true' }
+		});
+		const result = deserialize(await response.text());
+		if (result.type !== 'success' || typeof result.data?.token !== 'string') {
+			error =
+				result.type === 'failure' && typeof result.data?.error === 'string'
+					? result.data.error
+					: undefined;
+			return null;
+		}
+		token = result.data.token;
+		// The roster carries the token too, for the next time the sheet opens.
+		void invalidateAll();
+		return token;
+	}
+
+	async function copyLink() {
+		linking = true;
+		error = undefined;
+		manual = null;
+		linkStatus = null;
+		const value = await linkToken();
+		linking = false;
+		if (!value) return;
+		try {
+			await navigator.clipboard.writeText(address(value));
+			linkStatus = 'copied';
+		} catch {
+			// A browser that wants the tap and the copy closer together than a
+			// round trip allows: the link is there to copy by hand.
+			manual = address(value);
+		}
+	}
+
+	async function shareLink() {
+		if (typeof navigator.share !== 'function') return copyLink();
+		linking = true;
+		error = undefined;
+		manual = null;
+		linkStatus = null;
+		const value = await linkToken();
+		linking = false;
+		if (!value) return;
+		try {
+			await navigator.share({ text: m.expenses.guests.link.shareText, url: address(value) });
+		} catch (cause) {
+			// Closing the share sheet is no failure; anything else falls back to copying.
+			if ((cause as Error)?.name !== 'AbortError') await copyLink();
+		}
+	}
+
+	const renewing: SubmitFunction = () => {
+		submitting = true;
+		error = undefined;
+		return async ({ result, update }) => {
+			await update({ reset: false });
+			submitting = false;
+			if (result.type === 'failure') {
+				error = typeof result.data?.error === 'string' ? result.data.error : undefined;
+				return;
+			}
+			if (result.type === 'success' && typeof result.data?.token === 'string') {
+				token = result.data.token;
+				manual = null;
+				linkStatus = 'renewed';
+				renewOpen = false;
 			}
 		};
 	};
@@ -130,7 +226,38 @@
 		/>
 	</form>
 
-	{#if error && !confirmOpen}<p class="error" role="alert">{error}</p>{/if}
+	<section class="link" aria-labelledby="{guest.id}-link">
+		<h3 class="link-title" id="{guest.id}-link">{m.expenses.guests.page(guest.name)}</h3>
+		<p class="link-about">{m.expenses.guests.link.about}</p>
+		<div class="pair">
+			<Button type="button" disabled={linking} onclick={shareLink}>
+				<Share size={18} strokeWidth={2} aria-hidden="true" />
+				{m.expenses.guests.link.share}
+			</Button>
+			<Button type="button" variant="secondary" disabled={linking} onclick={copyLink}>
+				<Copy size={18} strokeWidth={2} aria-hidden="true" />
+				{m.expenses.guests.link.copy}
+			</Button>
+		</div>
+		{#if linkStatus}
+			<p class="link-status" role="status">
+				{linkStatus === 'copied' ? m.expenses.guests.link.copied : m.expenses.guests.link.renewed}
+			</p>
+		{/if}
+		{#if manual}
+			<label class="manual">
+				<span>{m.expenses.guests.link.manual}</span>
+				<input readonly value={manual} onfocus={(event) => event.currentTarget.select()} />
+			</label>
+		{/if}
+		{#if token}
+			<button type="button" class="renew" onclick={() => (renewOpen = true)}>
+				{m.expenses.guests.link.renew}
+			</button>
+		{/if}
+	</section>
+
+	{#if error && !confirmOpen && !renewOpen}<p class="error" role="alert">{error}</p>{/if}
 
 	<button
 		type="button"
@@ -146,6 +273,20 @@
 	{#if !settled}
 		<p class="caption">{m.expenses.guests.removeWhenSettled(guest.name)}</p>
 	{/if}
+
+	<CenterModal bind:open={renewOpen} label={m.expenses.guests.link.renew} dismissible={false}>
+		<div class="well calm" aria-hidden="true"><Link2Off size={26} strokeWidth={1.9} /></div>
+		<h3>{m.expenses.guests.link.renewConfirm}</h3>
+		<p class="copy">{m.expenses.guests.link.renewCopy}</p>
+		{#if error}<p class="error">{error}</p>{/if}
+		<form method="POST" action="?/renewGuestLink" use:enhance={renewing}>
+			<input type="hidden" name="guestId" value={guest.id} />
+			<Button type="submit" disabled={submitting}>{m.expenses.guests.link.renew}</Button>
+		</form>
+		<button type="button" class="plain-cancel" onclick={() => (renewOpen = false)}>
+			{m.common.cancel}
+		</button>
+	</CenterModal>
 
 	<CenterModal bind:open={confirmOpen} label={m.expenses.guests.remove} dismissible={false}>
 		<div class="well" aria-hidden="true"><UserRoundX size={26} strokeWidth={1.9} /></div>
@@ -204,6 +345,90 @@
 
 	.disabled .row-label {
 		color: var(--text-4);
+	}
+
+	/* The link box [G5]: the guest's page, on the field colour. */
+	.link {
+		margin-top: 18px;
+		padding: 14px 16px;
+		border-radius: var(--r-block);
+		background: var(--field);
+	}
+
+	.link-title {
+		margin: 0;
+		font-family: var(--font-body);
+		font-size: var(--fs-16);
+		font-weight: 600;
+		color: var(--ink);
+	}
+
+	.link-about {
+		margin: 2px 0 12px;
+		font-size: var(--fs-15);
+		line-height: 1.4;
+		color: var(--text-4);
+	}
+
+	.pair {
+		display: flex;
+		flex-wrap: wrap;
+		gap: 8px;
+	}
+
+	/* Side by side [G5], Share the wide one; at a large text size Copy wraps under it. */
+	.link .pair > :global(*) {
+		width: auto;
+	}
+
+	.link .pair > :global(:first-child) {
+		flex: 1 1 auto;
+	}
+
+	.link .pair > :global(:last-child) {
+		flex: 1 0 auto;
+		max-width: max-content;
+		padding-inline: 18px;
+	}
+
+	.link-status {
+		margin: 10px 0 0;
+		font-size: var(--fs-15);
+		font-weight: 600;
+		color: var(--sage-deep);
+	}
+
+	.manual {
+		display: flex;
+		flex-direction: column;
+		gap: 6px;
+		margin-top: 10px;
+		font-size: var(--fs-14);
+		color: var(--text-4);
+	}
+
+	.manual input {
+		width: 100%;
+		padding: 10px 12px;
+		border: 1px solid var(--border);
+		border-radius: var(--r-input);
+		background: var(--card);
+		font-size: var(--fs-16);
+		color: var(--ink);
+	}
+
+	.renew {
+		display: block;
+		margin-top: 10px;
+		padding: 4px 0;
+		font-size: var(--fs-15);
+		font-weight: 600;
+		color: var(--text-3);
+	}
+
+	.well.calm {
+		background: var(--sage-tint);
+		color: var(--sage);
 	}
 
 	.remove {
