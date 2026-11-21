@@ -523,6 +523,34 @@ export function transferOwnership(
 }
 
 /**
+ * Stop every running series a ledger person pays or shares in — when a member
+ * leaves and when a guest is removed (→ DECISIONS #180, SPEC §11.15): nobody
+ * would be left to stop it charging them. What it already logged stays.
+ */
+export function stopSeriesOf(tx: Transaction, householdId: string, personId: string): void {
+	const now = new Date();
+	tx.update(expenseRecurrences)
+		.set({ stoppedAt: now, updatedAt: now })
+		.where(
+			and(
+				eq(expenseRecurrences.householdId, householdId),
+				isNull(expenseRecurrences.stoppedAt),
+				or(
+					eq(expenseRecurrences.paidById, personId),
+					inArray(
+						expenseRecurrences.id,
+						tx
+							.select({ id: expenseRecurrenceShares.recurrenceId })
+							.from(expenseRecurrenceShares)
+							.where(eq(expenseRecurrenceShares.personId, personId))
+					)
+				)
+			)
+		)
+		.run();
+}
+
+/**
  * The half of leaving that is the same whether you went or were shown the door
  * (→ DECISIONS #12): the membership row goes, their tasks become **Anyone**,
  * their completions keep the name snapshot — the points stay with the house —
@@ -568,28 +596,7 @@ function departMember(tx: Transaction, householdId: string, memberId: string): v
 				.run();
 		}
 	}
-	if (person) {
-		const now = new Date();
-		tx.update(expenseRecurrences)
-			.set({ stoppedAt: now, updatedAt: now })
-			.where(
-				and(
-					eq(expenseRecurrences.householdId, householdId),
-					isNull(expenseRecurrences.stoppedAt),
-					or(
-						eq(expenseRecurrences.paidById, person.id),
-						inArray(
-							expenseRecurrences.id,
-							tx
-								.select({ id: expenseRecurrenceShares.recurrenceId })
-								.from(expenseRecurrenceShares)
-								.where(eq(expenseRecurrenceShares.personId, person.id))
-						)
-					)
-				)
-			)
-			.run();
-	}
+	if (person) stopSeriesOf(tx, householdId, person.id);
 
 	// Their ledger person outlives them, frozen as they were (→ DECISIONS #168):
 	// a balance they still owe has to stay readable under a name. The FK would

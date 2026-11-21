@@ -17,6 +17,7 @@
  * screens.spec.ts's job. Dark twins are skipped: the theme moves colour, not size.
  */
 import { expect, test, type BrowserContext, type Page } from '@playwright/test';
+import { storageStateFor } from '../e2e/accounts';
 import { SCREENS, scrolledToBottom, settle, type Screen } from './screens';
 
 const ROOT_SCALE = 2;
@@ -66,18 +67,26 @@ async function atTwiceTheTextSize(page: Page, context: BrowserContext, screen: S
 	}
 }
 
-for (const screen of SCREENS.filter((screen) => !screen.theme)) {
-	test(`${screen.name} at 200% text`, async ({ page, context }) => {
-		await atTwiceTheTextSize(page, context, screen);
-	});
-}
-
-test.describe('in German', () => {
-	test.use({ locale: 'de-AT' });
-
-	for (const screen of SCREENS.filter((screen) => !screen.theme && !screen.navigate)) {
+/** The households other than `visual` sign in as their own account (→ screens.ts `account`). */
+function walk(screens: Screen[]) {
+	for (const screen of screens.filter((screen) => !screen.account)) {
 		test(`${screen.name} at 200% text`, async ({ page, context }) => {
 			await atTwiceTheTextSize(page, context, screen);
 		});
 	}
+	test.describe('as the guests household', () => {
+		test.use({ storageState: storageStateFor('guests') });
+		for (const screen of screens.filter((screen) => screen.account === 'guests')) {
+			test(`${screen.name} at 200% text`, async ({ page, context }) => {
+				await atTwiceTheTextSize(page, context, screen);
+			});
+		}
+	});
+}
+
+walk(SCREENS.filter((screen) => !screen.theme));
+
+test.describe('in German', () => {
+	test.use({ locale: 'de-AT' });
+	walk(SCREENS.filter((screen) => !screen.theme && !screen.navigate));
 });

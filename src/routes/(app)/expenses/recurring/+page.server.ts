@@ -6,6 +6,7 @@
  */
 import { requireMember } from '$lib/server/guards';
 import {
+	addGuestAction,
 	saveExpenseAction,
 	saveSeriesAction,
 	splitDefaultAction,
@@ -46,5 +47,6 @@ export const actions: Actions = {
 	save: saveExpenseAction,
 	saveSeries: saveSeriesAction,
 	stop: stopSeriesAction,
-	splitDefault: splitDefaultAction
+	splitDefault: splitDefaultAction,
+	addGuest: addGuestAction
 };

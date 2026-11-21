@@ -195,7 +195,10 @@ the test file (see `PROPORTIONAL_TYPE` in `design-tokens.test.ts`, `PUBLIC_ENDPO
 `playwright.config.ts` runs three projects: `setup` signs up two accounts through Better
 Auth's own `/api/auth/sign-up/email` and seeds each with `scripts/seed.ts` (the same demo
 household a developer looks at); `e2e` runs the journeys as the `owner` household and may
-mutate it; `visual` screenshots the `visual` household, which nothing mutates. Tests are
+mutate it; `visual` screenshots the `visual` household, which nothing mutates. A third
+account, `guests`, is seeded with `--guests` (the weekend with Jonas, a guest, → plan 38,
+DECISIONS #287) and screenshotted, unmutated, for the screens a `visual/screens.ts` row marks
+`account: 'guests'`. Tests are
 serial (`workers: 1`) because they share a server and, within `e2e`, a household.
 
 Find things the way a user does — `getByRole`, `getByLabel`, `getByPlaceholder` — with the

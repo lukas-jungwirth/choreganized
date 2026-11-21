@@ -31,13 +31,17 @@ setup('sign up the test accounts and seed their households', async ({ baseURL })
 
 		await api.storageState({ path: storageStateFor(account.key) });
 
-		const seed = spawnSync(process.execPath, ['scripts/seed.ts', account.email], {
-			encoding: 'utf8',
-			env: { ...process.env, DATABASE_PATH }
-		});
+		const seed = spawnSync(
+			process.execPath,
+			['scripts/seed.ts', account.email, ...(account.seed ?? [])],
+			{
+				encoding: 'utf8',
+				env: { ...process.env, DATABASE_PATH }
+			}
+		);
 		expect(seed.status, `seed for ${account.email}:\n${seed.stdout}${seed.stderr}`).toBe(0);
 
-		if (account.key === 'visual') await answerClosureNotice(api, baseURL!);
+		if (account.key !== 'owner') await answerClosureNotice(api, baseURL!);
 		// Meet today's Home raccoon once and open the album once (→ plan 35), so
 		// the album card's "New raccoon!" and the "New" badges are behind both accounts
 		// before any journey or screenshot: the first look is the only one that

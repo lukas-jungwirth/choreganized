@@ -70,6 +70,9 @@ export function repeatChoice(repeat: Repeat): RepeatPreset | typeof CUSTOM_REPEA
 
 export const EXPENSE_DESCRIPTION_MAX = 80;
 
+/** Active guests a household may have at once (→ SPEC §11.15). */
+export const GUESTS_MAX = 10;
+
 /** One million in the household currency's major unit (→ SPEC §11.3). */
 export const AMOUNT_MAX_MAJOR = 1_000_000;
 

@@ -18,6 +18,11 @@
 
 	Every Mark as paid / Settle up opens the settle-up sheet [9d] filled in for that
 	payment, so a partial payment stays one edit away.
+
+	A guest (→ SPEC §11.15) stands here like anyone else [G3], outlined. They
+	have no phone in the app, so Remind never targets them; instead their name
+	in a row, or a quiet "Jonas's page" in Remind's place on a one-person card,
+	opens their sheet [G5].
 -->
 <script lang="ts">
 	import { applyAction, enhance } from '$app/forms';
@@ -25,6 +30,7 @@
 	import Bell from '@lucide/svelte/icons/bell';
 	import Check from '@lucide/svelte/icons/check';
 	import ChevronDown from '@lucide/svelte/icons/chevron-down';
+	import ChevronRight from '@lucide/svelte/icons/chevron-right';
 	import Avatar from '$lib/components/ui/Avatar.svelte';
 	import AvatarStack from '$lib/components/ui/AvatarStack.svelte';
 	import { messages } from '$lib/i18n';
@@ -40,9 +46,11 @@
 		me: string;
 		currency: string;
 		onsettle: (payment: Payment) => void;
+		/** A guest's name or avatar was tapped: open their sheet [G5]. */
+		onguest?: (personId: string) => void;
 	};
 
-	let { balance, payments, people, me, currency, onsettle }: Props = $props();
+	let { balance, payments, people, me, currency, onsettle, onguest }: Props = $props();
 
 	const m = messages();
 
@@ -184,7 +192,8 @@
 					members={counterparts.map((person, index) => ({
 						id: person?.id ?? String(index),
 						displayName: person?.name ?? '?',
-						color: person?.color ?? 'var(--member-sage)'
+						color: person?.color ?? 'var(--member-sage)',
+						guest: person?.guest
 					}))}
 					size={24}
 					ringColor="var(--card)"
@@ -210,6 +219,11 @@
 				</button>
 				{#if remindable}
 					{@render remind(payment.from, m.expenses.balance.remind, 'soft')}
+				{:else if counterparts[0]?.guest && onguest}
+					{@const guest = counterparts[0]}
+					<button type="button" class="soft" onclick={() => onguest(guest.id)}>
+						{m.expenses.guests.page(guest.name)}
+					</button>
 				{/if}
 			</div>
 		{:else}
@@ -217,8 +231,21 @@
 				{#each rows as payment (`${payment.from}-${payment.to}`)}
 					{@const person = byId.get(payment.from === me ? payment.to : payment.from)}
 					<li class="row">
-						<Avatar name={person?.name} color={person?.color} size={28} />
-						<span class="row-name">{person?.name ?? '?'}</span>
+						{#if person?.guest && onguest}
+							<button
+								type="button"
+								class="row-who"
+								aria-label={m.expenses.guests.open(person.name)}
+								onclick={() => onguest(person.id)}
+							>
+								<Avatar name={person.name} color={person.color} guest size={28} />
+								<span class="row-name">{person.name}</span>
+								<ChevronRight size={15} strokeWidth={2.2} aria-hidden="true" />
+							</button>
+						{:else}
+							<Avatar name={person?.name} color={person?.color} guest={person?.guest} size={28} />
+							<span class="row-name">{person?.name ?? '?'}</span>
+						{/if}
 						<span class="row-amount">{money(payment.amountMinor)}</span>
 						<button
 							type="button"
@@ -372,8 +399,11 @@
 		list-style: none;
 	}
 
+	/* At twice the text size the amount and Settle up no longer fit beside a
+	   name: the button wraps under the row rather than push the page sideways. */
 	.row {
 		display: flex;
+		flex-wrap: wrap;
 		align-items: center;
 		gap: 11px;
 		padding: 11px 0;
@@ -389,6 +419,28 @@
 		color: var(--ink);
 		text-overflow: ellipsis;
 		white-space: nowrap;
+	}
+
+	/* A guest's avatar and name, one button to their sheet [G3]. */
+	.row-who {
+		flex: 1 1 0;
+		min-width: 0;
+		display: flex;
+		align-items: center;
+		gap: 11px;
+		padding: 0;
+		text-align: left;
+		color: var(--text-5);
+	}
+
+	.row-who .row-name {
+		flex: 0 1 auto;
+	}
+
+	/* The chevron belongs to the name [G3], closer than the avatar is. */
+	.row-who :global(svg) {
+		flex: none;
+		margin-left: -8px;
 	}
 
 	.row-amount {

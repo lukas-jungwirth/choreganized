@@ -67,32 +67,49 @@ export function switchDraftMode(
 	return { draft: { ...draft, mode: next, inputs: filled }, typed: kept };
 }
 
-/** People a new expense can name: current members, plus anyone still owed or owing. */
+/**
+ * People a new expense can name: current members and active guests, plus
+ * anyone still owed or owing — a former member, or a removed guest whose old
+ * expense was edited since.
+ */
 export function pickablePeople(
 	people: ExpensePerson[],
 	balances: Record<string, number>
 ): ExpensePerson[] {
-	return people.filter((person) => person.memberId !== null || (balances[person.id] ?? 0) !== 0);
+	return people.filter(
+		(person) =>
+			person.memberId !== null ||
+			(person.guest && !person.removed) ||
+			(balances[person.id] ?? 0) !== 0
+	);
 }
 
-/** Where a new expense starts (→ SPEC §11.5). */
+/**
+ * Where a new expense starts (→ SPEC §11.5). Guests are never part of the
+ * default; with an equal default, the ones switched to "Include in new
+ * expenses" join it, split equally with everyone (→ SPEC §11.15). Under a % or
+ * shares default they are left out: nobody agreed a percentage for them.
+ */
 export function draftFromDefault(
 	people: ExpensePerson[],
 	splitDefault: SplitDefault,
 	decimalComma: boolean
 ): SplitDraft {
 	const members = people.filter((person) => person.memberId !== null);
-	if (splitDefault.mode === 'equal') {
-		return { mode: 'equal', inIds: members.map((person) => person.id), inputs: {} };
-	}
+	const equal = (): SplitDraft => ({
+		mode: 'equal',
+		inIds: people
+			.filter((person) => person.memberId !== null || person.includeInNew)
+			.map((person) => person.id),
+		inputs: {}
+	});
+	if (splitDefault.mode === 'equal') return equal();
 
 	const inIds = members
 		.filter((person) => splitDefault.weights[person.id] !== undefined)
 		.map((person) => person.id);
 	// A default nobody in the house is part of any more starts equal instead.
-	if (inIds.length === 0) {
-		return { mode: 'equal', inIds: members.map((person) => person.id), inputs: {} };
-	}
+	if (inIds.length === 0) return equal();
 	return {
 		mode: splitDefault.mode,
 		inIds,

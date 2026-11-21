@@ -6,15 +6,18 @@
  */
 import { requireMember } from '$lib/server/guards';
 import {
+	addGuestAction,
 	currencyAction,
 	deleteExpenseAction,
 	remindAction,
+	removeGuestAction,
 	restoreExpenseAction,
 	saveExpenseAction,
 	savePaymentAction,
-	splitDefaultAction
+	splitDefaultAction,
+	updateGuestAction
 } from '$lib/server/expense-actions';
-import { countSeries } from '$lib/server/services/expense-recurrences';
+import { countSeries, seriesByPerson } from '$lib/server/services/expense-recurrences';
 import {
 	balancesOf,
 	deletedExpense,
@@ -51,6 +54,8 @@ export const load: PageServerLoad = async (event) => {
 		suggestions: descriptionSuggestions(ledger),
 		/** Running series, for the ••• menu's "Recurring" [9a-owe]. */
 		seriesCount: countSeries(householdId),
+		/** What removing a guest would stop [G5] (→ SPEC §11.15). */
+		series: seriesByPerson(householdId),
 		/**
 		 * The detail screen deletes, then comes here with `?deleted=` for the undo
 		 * bar. Only a row that really is deleted, and this household's, gets one.
@@ -69,5 +74,8 @@ export const actions: Actions = {
 	restore: restoreExpenseAction,
 	remind: remindAction,
 	splitDefault: splitDefaultAction,
-	currency: currencyAction
+	currency: currencyAction,
+	addGuest: addGuestAction,
+	updateGuest: updateGuestAction,
+	removeGuest: removeGuestAction
 };

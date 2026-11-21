@@ -30,3 +30,16 @@ export function isMemberColor(value: string): boolean {
 export function firstFreeColor(taken: string[]): string {
 	return (MEMBER_COLORS.find((color) => !taken.includes(color.value)) ?? MEMBER_COLORS[0]).value;
 }
+
+/**
+ * A guest's colour (→ SPEC §11.15): the first one nobody active wears, else the
+ * one fewest people wear, ties in palette order. Not choosable: a guest has no
+ * profile to choose it in.
+ */
+export function leastUsedColor(taken: string[]): string {
+	const uses = (value: string) =>
+		taken.filter((color) => color.toUpperCase() === value.toUpperCase()).length;
+	let best = MEMBER_COLORS[0];
+	for (const color of MEMBER_COLORS) if (uses(color.value) < uses(best.value)) best = color;
+	return best.value;
+}

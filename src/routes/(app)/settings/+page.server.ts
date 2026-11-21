@@ -34,9 +34,21 @@ import {
 	setAiInstructions,
 	testAiConnection
 } from '$lib/server/services/ai';
-import { currencyAction, splitDefaultAction } from '$lib/server/expense-actions';
-import { seriesByMember } from '$lib/server/services/expense-recurrences';
-import { balancesByMember, getExpenseSettings, listPeople } from '$lib/server/services/expenses';
+import {
+	addGuestAction,
+	currencyAction,
+	removeGuestAction,
+	splitDefaultAction,
+	updateGuestAction
+} from '$lib/server/expense-actions';
+import { seriesByMember, seriesByPerson } from '$lib/server/services/expense-recurrences';
+import {
+	balancesByMember,
+	balancesOf,
+	getExpenseSettings,
+	listLedger,
+	listPeople
+} from '$lib/server/services/expenses';
 import { FeedbackError, submitFeedback, syncFeedback } from '$lib/server/services/feedback';
 import {
 	getHousehold,
@@ -126,8 +138,12 @@ export const load: PageServerLoad = (event) => {
 		 */
 		expenses: (() => {
 			const settings = getExpenseSettings(householdId);
+			const people = listPeople(householdId);
 			return {
-				people: listPeople(householdId),
+				people,
+				/** Where each guest stands [G4], and what removing them would stop [G5]. */
+				balances: balancesOf(people, listLedger(householdId, people)).byPerson,
+				series: seriesByPerson(householdId),
 				currency: settings.currency,
 				currencyLocked: settings.hasExpenses,
 				splitDefault: settings.splitDefault,
@@ -171,6 +187,10 @@ export const actions: Actions = {
 	/** Settings → Expenses: the currency (owner) and the default split (→ SPEC §11.10). */
 	currency: currencyAction,
 	splitDefault: splitDefaultAction,
+	/** …and its Guests group [G4] [G5] (→ SPEC §11.15). */
+	addGuest: addGuestAction,
+	updateGuest: updateGuestAction,
+	removeGuest: removeGuestAction,
 
 	/** Name, colour and birthday [6a] — always your own membership (→ SPEC §6 "Account"). */
 	profile: async (event) => {

@@ -1480,6 +1480,43 @@ export const de: Messages = {
 			saved: 'Gespeichert'
 		},
 
+		guests: {
+			tag: 'Gast',
+			add: 'Gast hinzufügen',
+			someoneElse: 'Jemand anderes…',
+			addTitle: 'Gast hinzufügen',
+			addSubtitle: 'Jemand außerhalb des Haushalts, der sich Kosten mit euch teilt.',
+			name: 'Name',
+			addCaption: 'Kein Konto nötig. Ein Gast ist ein Name in der Abrechnung, sonst nichts.',
+			addNamed: (name: string) => (name ? `${name} hinzufügen` : 'Hinzufügen'),
+			group: 'Gäste',
+			groupCaption:
+				'Leute außerhalb des Haushalts, die sich Kosten mit euch teilen, etwa ein Freund auf Reisen.',
+			standing: (balanceMinor: number, amount: string) =>
+				balanceMinor < 0
+					? `Schuldet ${amount}`
+					: balanceMinor > 0
+						? `Bekommt ${amount}`
+						: 'Ausgeglichen',
+			subtitle: (balanceMinor: number, amount: string) =>
+				balanceMinor < 0
+					? `Gast · schuldet ${amount}`
+					: balanceMinor > 0
+						? `Gast · bekommt ${amount}`
+						: 'Gast · ausgeglichen',
+			open: (name: string) => `${name}, Gast: Seite öffnen`,
+			page: (name: string) => `Seite von ${name}`,
+			saveName: 'Namen speichern',
+			includeInNew: 'Bei neuen Ausgaben dabei',
+			includeInNewDetail: 'Für eine Reise. Danach wieder ausschalten.',
+			includeOnlyEqual: 'Nur bei gleicher Standard-Aufteilung',
+			remove: 'Gast entfernen',
+			removeWhenSettled: (name: string) => `Möglich, sobald mit ${name} alles ausgeglichen ist.`,
+			removeConfirm: (name: string) => `${name} entfernen?`,
+			removeCopy:
+				'Der Gast verschwindet aus allen Auswahllisten. Sein Name bleibt bei den Ausgaben, an denen er beteiligt war. Fügt ihr ihn wieder hinzu, ist er ein neuer Gast.'
+		},
+
 		home: {
 			owed: (amount: string, from: string): RichText => [
 				{ text: 'Du bekommst ' },
@@ -1521,7 +1558,11 @@ export const de: Messages = {
 			dateTooOld: 'Das Datum liegt zu weit zurück. Schau dir das Jahr an.',
 			seriesStart: 'Eine wiederkehrende Ausgabe kann höchstens vor einem Jahr beginnen.',
 			seriesPerson:
-				'Jemand darin ist nicht mehr im Haushalt, deshalb kann sie sich nicht wiederholen.'
+				'Jemand darin ist nicht mehr im Haushalt, deshalb kann sie sich nicht wiederholen.',
+			guestName: 'Gib dem Gast einen Namen mit höchstens 20 Zeichen.',
+			guestNameTaken: 'So heißt schon jemand im Haushalt.',
+			guestLimit: 'Ein Haushalt kann 10 Gäste gleichzeitig haben.',
+			guestBalance: 'Ein Gast kann erst entfernt werden, wenn alles ausgeglichen ist.'
 		}
 	},
 

@@ -1374,9 +1374,9 @@ balance card as a sentence (one person · `10a · 2` two owe you · `10a · 3` y
 
 - **Expense**: something one person paid for others (or for others plus themselves): an
   amount, what it was for, who paid, a date, a category, and how it is split.
-- **Person**: anyone who can pay or share. Today that is exactly the household's members, plus
-  former members who still have a balance. The model keeps the door open for **guests**
-  (a friend on a trip, the cleaner) without building them yet (→ [DECISIONS #168](DECISIONS.md)).
+- **Person**: anyone who can pay or share: the household's members, **guests** (people outside
+  the household, a friend on a trip, → §11.15), and former members who still have a balance
+  (→ [DECISIONS #168](DECISIONS.md), [#282](DECISIONS.md)).
 - **Balance**: one number per person, `everything they paid − their share of everything`.
   Positive = they are owed, negative = they owe. All balances add up to zero.
 - **Settling up**: recording that money changed hands outside the app ("Elisabeth paid me
@@ -1417,7 +1417,11 @@ FAB stands down — the two share the corner, and Undo is the one that can't wai
      (§11.11). The button then reads **Reminded ✓** — only for someone who will hear it:
      with expense notifications off, or no phone set up for push, nobody is nudged and the card
      says so. If the card was out of date (they paid in the meantime), it just redraws. A former member can't be reminded, so the button
-     only shows when at least one of the people who owe you is still a member.
+     only shows when at least one of the people who owe you is still a member. A guest is
+     never reminded either (→ §11.15): **tapping a guest's avatar or name** in a row (the name
+     carries a small chevron) opens their sheet [G5], and on a one-person card about a guest a
+     quiet **"Jonas's page"** ("Seite von Jonas") stands in Remind's place, owed or owing
+     (→ [DECISIONS #286](DECISIONS.md)).
    - **All settled up** (neutral, with a quiet check) when none of the payments involve you,
      with the others' payments under it if there are any, else "Nobody owes anybody anything."
    - These are the _simplified_ payments (→ §11.6). There is no pairwise view and no switch.
@@ -1443,7 +1447,9 @@ A bottom sheet. Its fields, in this order:
    **was?** bezahlt"), each field underlined in place, sage while focused. Each language orders
    the words its own way (`m.expenses.form.sentence`).
    - **Who paid**: a picker of the household's people, **you** preselected. Picking someone
-     else is how you log a spend someone else made ("Elisabeth ⌄ paid …").
+     else is how you log a spend someone else made ("Elisabeth ⌄ paid …"). Its last entry,
+     **"Someone else…"** ("Jemand anderes…"), opens Add a guest [G2]; the new guest becomes the
+     payer, and closing the sheet without adding leaves the payer as it was (→ §11.15).
    - **Amount**: focused on open, decimal keypad (`inputmode="decimal"`). Accepts `12,50` and
      `12.50` in either language, at most two decimals, more than 0, at most 1 000 000.
      Thousands may be grouped (`1.234,50`), but one mark with three digits after it
@@ -1478,7 +1484,9 @@ A second sheet over [9b]:
 
 - **Who's in**: one row per person, a checkbox and an avatar. Defaults to everyone in the
   default split. At least one person must stay in. The payer doesn't have to be in, so "I
-  bought Elisabeth's train ticket" works: Elisabeth's share is 100%.
+  bought Elisabeth's train ticket" works: Elisabeth's share is 100%. A guest's row has the
+  outlined avatar and a "Guest" tag; the last row, **Add a guest** [G1], opens [G2], and the
+  new guest comes back ticked in (→ §11.15).
 - **How**: segmented control **Equally · Amounts · % · Shares**:
   - _Equally_: everyone in pays the same. Each row shows the result read-only.
   - _Amounts_: type each person's amount. Footer: "€3.20 left to assign" / "€1.00 too
@@ -1489,7 +1497,8 @@ A second sheet over [9b]:
     amount live.
 - Every row always shows the resulting money amount. **Done** is disabled until it adds up.
 - **Make this the household default**: a small link under the rows, for _Equally_, _%_ and
-  _Shares_ (_Amounts_ can't be a default because it depends on the total). One confirm line:
+  _Shares_ (_Amounts_ can't be a default because it depends on the total), and only while
+  everyone ticked is a current member: never with a guest ticked in (→ §11.15). One confirm line:
   "New expenses will start split 30 / 70." Same setting as Settings → Expenses (§11.10).
 - **Rounding** (shown nowhere, true everywhere): shares are computed in cents, and leftover
   cents go one at a time to the people with the largest remainder, ties in the order of the
@@ -1503,7 +1512,9 @@ _Equally_ they are simply in. With _%_ or _Shares_ the default is left as it was
 small note on [9c] says "Marco isn't part of the default split", so a percentage nobody
 agreed to is never invented. Someone leaving takes their part with them: a _%_ default goes
 back to _Equally_ (it no longer adds up), a _Shares_ one just loses their shares
-(→ [DECISIONS #203](DECISIONS.md)).
+(→ [DECISIONS #203](DECISIONS.md)). _Equally between everyone_ means the **members**: a guest
+is never part of the default, except that an equal default also takes in the guests switched to
+"Include in new expenses" (→ §11.15, [DECISIONS #283](DECISIONS.md)).
 
 ### 11.6 Balances and "who pays whom"
 
@@ -1513,7 +1524,9 @@ back to _Equally_ (it no longer adds up), a _Shares_ one just loses their shares
 - **Simplified payments**: take the people who owe, largest first, and match each with the
   people owed, largest first, until everything is zero. At most _n − 1_ payments. With your
   example of A → B €10, B → C €10, C → A €10, everyone is at 0, so nobody owes anything. Two
-  people always see exactly one line, or none (→ [DECISIONS #167](DECISIONS.md)).
+  people always see exactly one line, or none (→ [DECISIONS #167](DECISIONS.md)). Guests are
+  in the same simplification, so the card can say "Jonas owes Elisabeth" although Jonas only
+  shared costs with Lukas. The sums are right either way (→ [DECISIONS #284](DECISIONS.md)).
 - Amounts are shown in the household currency, formatted for the reader's language
   (`€24.50` in English, `€ 24,50` in Austrian German).
 
@@ -1529,8 +1542,8 @@ A sheet (→ [DECISIONS #198, #202](DECISIONS.md)):
 
 - **From → To**: two boxes, one above the other so a long name keeps the width, each a
   micro-label, the avatar and the name, with a dotted sage arrow down their left from one to
-  the other. Each name is a picker of the household's people, for a payment the card didn't
-  suggest. There is no swap: the pair always arrives filled in, and either picker changes it.
+  the other. Each name is a picker of the household's people, guests included, for a payment
+  the card didn't suggest. There is no swap: the pair always arrives filled in, and either picker changes it.
   You appear by your own name, marked: "Lukas (you)" / "Lukas (du)", the one form that reads
   right in both slots (German would need "mir" after Von and "mich" after An).
 - **Amount**: centred, sized like the add sheet's sentence, not a hero.
@@ -1586,6 +1599,10 @@ card updating. Edit and delete work as they do for expenses.
     (→ [DECISIONS #170](DECISIONS.md), [#204](DECISIONS.md)).
   - **Default split**: opens [9c] in default mode (§11.5). Anyone may set it, here or from
     [9c]'s link: it only pre-fills a form everyone can change (→ [DECISIONS #173](DECISIONS.md)).
+  - **Guests** [G4]: one row per active guest, their avatar, name and where they stand ("Owes
+    €132.20", "Is owed …", "Settled up"), each opening their sheet [G5]; then **Add a guest**,
+    and the caption "People outside the household who share a cost, like a friend on a trip."
+    (→ §11.15).
 - **Notifications → Expenses**: per member, default **on** (§11.11).
 
 ### 11.11 Notifications (→ plan 30, DECISIONS #176)
@@ -1668,9 +1685,45 @@ until at least 50 rows are showing, so fifteen payments across a year show at on
 
 ### 11.14 Not in v1 (on purpose)
 
-Guests and people outside the household (the model is ready, → #168) · linking with other
+Linking with other
 Haushaltsheld households · receipt photos · "log what this shop cost?" after a shopping trip ·
 several currencies · statistics and charts · groups or trips inside a household · export.
+
+### 11.15 Guests (→ plan 38, DECISIONS #282–#287)
+
+Someone outside the household who shares a cost, a friend on a trip: a name in the tally and
+nothing more. No account, no membership, no chores, lists or points. Frames:
+**[`design/sketches/expense-guests.html`](../design/sketches/expense-guests.html)** [G1]–[G5]
+(the link and the guest's page, [G6]–[G8], are plan 38's step 2).
+
+- **Adding** [G1] [G2]: from the split sheet's last row, the payer picker's "Someone else…", or
+  Expense settings' Guests group [G4]. One sheet, "Add a guest" ("Gast hinzufügen"), a name
+  field and **Add Jonas**. From the split sheet the new guest is ticked in; from the payer picker
+  they are the payer. Any member may add, rename and remove a guest.
+- **The name**: required, trimmed, at most 20 characters (the member limit), refused when a
+  member or an active guest already has it in any case ("Someone in the household already goes
+  by that name."). At most **10** active guests. The **colour** is the app's: the first palette
+  colour no member or active guest wears, else the least worn.
+- **How a guest looks**: an outlined avatar (a disc tinted with their colour, the letter and a
+  ring in it) and a **"Guest"** tag ("Gast") in pickers and lists. Never under Members, never in
+  task or list pickers.
+- **In the ledger** a guest shares and pays like a member: the balance card, settle up (from and
+  to), the detail, All activity and its "Paid by". Nothing is sent to a guest; members hear about
+  an expense with a guest in it as usual (§11.11). **Remind** never targets a guest and "Remind
+  everyone" skips them (§11.2).
+- **The default split** never includes a guest (§11.5). **Include in new expenses** [G5], one
+  switch per guest, off when added: on, a new expense starts with the default people plus that
+  guest, split equally. Offered only while the default is _Equally_; under a _%_ or _Shares_
+  default the switch is disabled, says "Only with an equal default split", and nobody is added.
+  Recurring series keep the people they were made with.
+- **One guest** [G5], from [G4] or by tapping them on the balance card: the name as title,
+  "Guest · owes €132.20" under it, the **Name** field (with **Save name** once changed), the
+  switch, and **Remove guest**.
+- **Removing**: only once the guest's balance is zero. Until then the button is disabled, with
+  "Possible once Jonas is settled up." A confirm ("Remove Jonas?") names the recurring series it
+  stops ("Rent will stop repeating."), as when a member leaves (§11.13). Removed, the guest leaves
+  every picker and keeps their name on every old expense; an edit of such an expense keeps them
+  in it. A removed guest can't be brought back: the same name again is a new guest.
 
 ## 12. Admin mode (→ plan 34)
 

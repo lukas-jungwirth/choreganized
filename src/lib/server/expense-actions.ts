@@ -12,14 +12,18 @@ import { fail, type RequestEvent } from '@sveltejs/kit';
 import { catalog, type Messages } from '$lib/i18n';
 import { requireMember } from '$lib/server/guards';
 import {
+	addGuest,
 	createExpense,
 	createPayment,
 	deleteExpense,
 	ExpenseError,
 	reminders,
 	getExpenseSettings,
+	removeGuest,
+	renameGuest,
 	restoreExpense,
 	setCurrency,
+	setGuestIncludeInNew,
 	setSplitDefault,
 	updateExpense,
 	updatePayment,
@@ -50,7 +54,11 @@ const MESSAGE: Record<ExpenseErrorCode, keyof Messages['expenses']['errors']> = 
 	'next-date': 'nextDate',
 	'date-too-old': 'dateTooOld',
 	'series-start': 'seriesStart',
-	'series-person': 'seriesPerson'
+	'series-person': 'seriesPerson',
+	'guest-name': 'guestName',
+	'guest-name-taken': 'guestNameTaken',
+	'guest-limit': 'guestLimit',
+	'guest-balance': 'guestBalance'
 };
 
 function failWith(event: RequestEvent, error: unknown) {
@@ -238,6 +246,50 @@ export async function splitDefaultAction(event: RequestEvent) {
 			readRows(form.get('split')).map((row) => ({ personId: row.id, weight: row.input ?? 0 }))
 		);
 		return { splitDefault: getExpenseSettings(householdId).splitDefault };
+	} catch (error) {
+		return failWith(event, error);
+	}
+}
+
+/**
+ * Add a guest [G2] (→ SPEC §11.15), from the split sheet, the payer picker or
+ * Expense settings. Answers the new person's id: the sheet it came from ticks
+ * them in or makes them the payer.
+ */
+export async function addGuestAction(event: RequestEvent) {
+	const form = await event.request.formData();
+	try {
+		const { householdId } = requireMember(event);
+		return { guestId: addGuest(householdId, String(form.get('name') ?? '')) };
+	} catch (error) {
+		return failWith(event, error);
+	}
+}
+
+/** The guest sheet [G5]: a new name, and "Include in new expenses". */
+export async function updateGuestAction(event: RequestEvent) {
+	const form = await event.request.formData();
+	try {
+		const { householdId } = requireMember(event);
+		const guestId = String(form.get('guestId') ?? '');
+		const name = form.get('name');
+		if (name !== null) renameGuest(householdId, guestId, String(name));
+		const include = form.get('includeInNew');
+		if (include !== null) setGuestIncludeInNew(householdId, guestId, include === 'on');
+		return { guestSaved: guestId };
+	} catch (error) {
+		return failWith(event, error);
+	}
+}
+
+/** "Remove guest" [G5], once they are settled up. */
+export async function removeGuestAction(event: RequestEvent) {
+	const form = await event.request.formData();
+	try {
+		const { householdId } = requireMember(event);
+		const guestId = String(form.get('guestId') ?? '');
+		removeGuest(householdId, guestId);
+		return { guestRemoved: guestId };
 	} catch (error) {
 		return failWith(event, error);
 	}

@@ -4199,3 +4199,65 @@ store_id` NULL already means "no memory" (a deleted list), and telling the two a
      the address has more closing than opening ones, so `…/Datenschutz-Grundverordnung_(EU)`
      stays whole and `(siehe https://…)` still loses its bracket. **Left as it was**: email
      addresses, whose pattern already ends on a letter.
+282. **A guest is a ledger person and nothing more** (plan 38 step 1, 2026-11-21; → SPEC §11.15,
+     DATA-MODEL "ledger_people"). The row plan 29 prepared (`kind = 'guest'`, `memberId` and
+     `userId` NULL, → #168) gains three columns in one migration (`0025`): `includeInNew`,
+     `removedAt` and `shareToken`, the last unused until step 2 so the schema changes once.
+     A guest's `name` and `color` are the truth, not a snapshot. **Guests and former members
+     are both `memberId IS NULL`, and they are not the same**: `ExpensePerson` says `guest` and
+     `removed`, and every place that read "no member" as "has left" was looked at. The roster
+     is members, then active guests, then former members and removed guests. Pickable: members
+     and active guests always, anyone else only while owed or owing (a removed guest is square
+     when removed, so only an edit could bring them back). The "Former member" tag becomes
+     "Guest" for a guest. A **series** may name an active guest (removing them stops it, as
+     leaving does a member's, through the same `stopSeriesOf`), never a former member or a
+     removed guest. A **removed guest** may not be named in a new expense or payment, but an
+     edit of an old row that already names them keeps them (`peopleIn`'s `keep`), or the
+     dinner they shared could never be corrected. Remind and the default split already read
+     `memberId IS NOT NULL` and needed no change.
+283. **Guests stand outside the default split, and "Include in new expenses" only adds to an
+     equal one** (plan 38; → SPEC §11.5, §11.15). `setSplitDefault` and the weights only know
+     current members, so a guest can never get a `defaultWeight`, and the split sheet's "Make
+     this the household default" is not offered with a guest ticked in (it already required
+     every ticked person to be a member). The switch is stored as set, whatever the default,
+     and read only by `draftFromDefault` under an equal default (or the equal fallback): with a
+     % or shares default it is disabled in the sheet and the guest is simply left out, since a
+     percentage nobody agreed to would otherwise be invented. Recurring series ignore it.
+284. **Who pays whom is simplified across guests too** (plan 38; → SPEC §11.6, §11.15). One
+     ledger, one `settlePayments` over everyone, so the card may say "Jonas owes Elisabeth"
+     although Jonas only shared costs with Lukas. The sums are right either way, and keeping a
+     guest's debts with the people they shared with would be a second, pairwise rule the app
+     deliberately doesn't have (#167). Open with Lukas in the plan; built as the plan assumes.
+285. **A guest's name follows the member rules, compared without case, and the colour is the
+     app's** (plan 38; → SPEC §11.15). Trimmed, at most `DISPLAY_NAME_MAX` (20) characters,
+     refused when any member or active guest already has it in any case: two "Jonas" rows can't
+     be told apart in a picker. A removed guest frees the name; adding it again makes a new
+     person, never the old one. The colour is `member-colors` `leastUsedColor`: the first
+     palette colour no member or active guest wears, else the least worn, ties in palette
+     order, so a sixth person still gets a colour. Members renaming themselves are not checked
+     against guests: a member's profile is theirs, and the clash is the household's to notice.
+     At most 10 active guests (`GUESTS_MAX`).
+286. **"Someone else…" is an option that never stays picked, and a guest is reached from the
+     card by their name** (plan 38; → SPEC §11.3, §11.2, [G1]–[G5]). A `<select>` can't hold a
+     button, so the payer picker's last option opens Add a guest and puts the select straight
+     back on the current payer; only an added guest changes it, so closing the sheet changes
+     nothing. Add a guest is its own sheet and form, mounted outside the add sheet's form
+     (forms don't nest). On the balance card a guest's avatar and name are one button with a
+     chevron to their sheet; on a one-person card about a guest, "Jonas's page" stands where
+     Remind would, **in both directions** (owed and owe), not only where Remind would have been
+     (owed): the sheet is where the guest's link will live, and you may want it either way.
+     Removing a guest confirms in a centre modal like removing a member, naming the series it
+     stops, and is disabled with a reason while a balance is open (checked again in the
+     service, inside the transaction). The card's rows now **wrap**: at twice the text size an
+     avatar, a name, the amount and Settle up no longer fit across 390px, which no screen had
+     shown before because the visual household's card has a single payment; Settle up drops
+     under the row instead of pushing the page sideways.
+287. **A third e2e account, `guests`, seeded with the weekend with Jonas** (plan 38; → TESTING
+     "End-to-end", `tests/e2e/accounts.ts`). The visual screens of a guest need a household with
+     one, and adding Jonas to the shared seed would have changed every Expenses baseline and the
+     numbers the expense journeys read. `scripts/seed.ts --guests` spends the sketch's four
+     expenses (hut, groceries, dinner, fuel paid by Jonas) in place of the ordinary week and
+     its series, so the card reads "Elisabeth and Jonas owe you €299.80" as in [G3]. Screens
+     with `account: 'guests'` in `tests/visual/screens.ts` run under that account's session;
+     nothing mutates it. The guest journey runs in `owner`'s household and removes its guests
+     again, with an `afterEach` that deletes them from the database if it fails half-way.

@@ -575,6 +575,8 @@
 {#if expenseSettings}
 	<ExpenseSettingsSheet
 		people={data.expenses.people}
+		balances={data.expenses.balances}
+		series={data.expenses.series}
 		currency={data.expenses.currency}
 		currencyLocked={data.expenses.currencyLocked}
 		isOwner={owner}

@@ -236,7 +236,9 @@ background at all when there is nothing to measure.
   `--shadow-modal`, `dismissible={false}` for confirms.
 - **Avatar** — circle, member colour bg, white initial, sizes 20/26/32/36/44/52; `ring` +
   `ringColor` for the cut-out ring (`--bg` on screen, `--card` on a card); "empty" variant
-  dashed `--border-dashed`, optionally wrapping an icon (the + on "waiting to join" [5d]).
+  dashed `--border-dashed`, optionally wrapping an icon (the + on "waiting to join" [5d]);
+  `guest` variant for a guest in Expenses: a disc tinted with their colour over `--card`, the
+  letter and a 1.5px ring in it [G1] (→ SPEC §11.15). `AvatarStack` passes `guest` through.
 - **AvatarStack** — overlapping avatars; overlap and ring width derive from `size`
   (36 → −12px/2.5px, 26 → −9px/2px), so pass the size and nothing else. Decorative by default;
   where the stack is the only place those people are named, screen readers must still hear

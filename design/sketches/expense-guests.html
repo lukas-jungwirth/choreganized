@@ -1,0 +1,454 @@
+<!doctype html>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Expense Guests</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link href="https://fonts.googleapis.com/css2?family=Figtree:wght@400;500;600;700&family=Fraunces:opsz,wght@9..144,500;9..144,600&display=swap" rel="stylesheet" />
+<style>
+	/*
+		Sketch (2026-11-21) for plan 38 → SPEC §11. Guests in Expenses: someone outside the
+		household who shares a cost (a friend on a trip), and the read-only page they open
+		from a link.
+		Layout: a plain presentation page, one row of phones per part, like
+		design/sketches/task-done-together.html. The phones are static.
+		The phones use the token names and values of src/app.css.
+		Frame ids ([G1]…[G8]) are element ids, the way design/Hearth.dc.html does it.
+		Mock date: Monday 24 November, as in design/Expenses.dc.html.
+	*/
+	:root {
+		/* The page around the phones */
+		--page: light-dark(#f1f0ec, #171613);
+		--page-ink: light-dark(#24231f, #ecebe5);
+		--page-muted: light-dark(#66645c, #a4a298);
+		--page-line: light-dark(#d6d4cc, #35332d);
+		--page-card: light-dark(#fbfaf7, #1f1d19);
+
+		/* The app (src/app.css, the subset these screens use) */
+		--font-display: 'Fraunces', serif;
+		--font-body: 'Figtree', system-ui, sans-serif;
+		--bg: light-dark(#f5f3ee, #191510);
+		--card: light-dark(#ffffff, #221e18);
+		--sunken: light-dark(#efebe2, #15110c);
+		--sunken-2: light-dark(#eae6dd, #110e0a);
+		--field: light-dark(#f5f3ee, #1c1813);
+		--ink: light-dark(#22201c, #efe9de);
+		--text-2: light-dark(#57534c, #cfc7ba);
+		--text-3: light-dark(#6e6a62, #b3aba0);
+		--text-4: light-dark(#8a867e, #a5a096);
+		--text-5: light-dark(#a7a29a, #857f74);
+		--sage: light-dark(#5f8d72, #74a585);
+		--sage-tint: light-dark(#edf3ee, #1e2a22);
+		--sage-deep: light-dark(#3e5d49, #a9cfb6);
+		--on-sage: light-dark(#ffffff, #12100d);
+		--terracotta: light-dark(#c67c51, #d9946b);
+		--danger: light-dark(#c0473a, #dc6152);
+		--border: light-dark(#e4dfd5, #322c24);
+		--divider: light-dark(#f1eee7, #262019);
+		--divider-sheet: light-dark(#e9e5dc, #2c261e);
+		--border-dashed: light-dark(#d8d3c9, #3d362c);
+		--scrim: light-dark(rgba(34, 32, 28, 0.4), rgba(0, 0, 0, 0.62));
+		--shadow-card: 0 1px 3px light-dark(rgba(40, 34, 24, 0.05), rgba(0, 0, 0, 0.45));
+		--shadow-sheet: 0 -12px 40px light-dark(rgba(40, 34, 24, 0.18), rgba(0, 0, 0, 0.7));
+		--shadow-fab: 0 8px 20px -4px light-dark(rgba(95, 141, 114, 0.6), rgba(0, 0, 0, 0.7));
+		--shadow-button: 0 8px 20px -6px light-dark(rgba(95, 141, 114, 0.5), rgba(0, 0, 0, 0.6));
+		/* Member colours never change with the theme (→ DESIGN-SYSTEM). */
+		--member-sage: #5f8d72;
+		--member-terracotta: #c67c51;
+		--member-blue: #5c7fa3;
+		--on-member: #ffffff;
+	}
+	@media (prefers-color-scheme: dark) {
+		:root:not([data-theme='light']) { color-scheme: dark; }
+	}
+	:root[data-theme='dark'] { color-scheme: dark; }
+	:root[data-theme='light'] { color-scheme: light; }
+
+	* { box-sizing: border-box; margin: 0; }
+	body {
+		background: var(--page);
+		color: var(--page-ink);
+		font-family: var(--font-body);
+		font-size: 16px;
+		line-height: 1.5;
+		padding-left: max(16px, env(safe-area-inset-left, 0px));
+		padding-right: max(16px, env(safe-area-inset-right, 0px));
+		padding-block: 32px 64px;
+	}
+	.wrap { max-width: 1240px; margin-inline: auto; display: grid; grid-template-columns: minmax(0, 1fr); gap: 56px; }
+	.intro { display: grid; gap: 10px; max-width: 66ch; }
+	.kicker { font-size: 12px; font-weight: 700; letter-spacing: 0.12em; text-transform: uppercase; color: var(--page-muted); }
+	h1 { font-family: var(--font-display); font-size: clamp(30px, 5vw, 40px); font-weight: 600; line-height: 1.1; text-wrap: balance; }
+	h2 { font-family: var(--font-display); font-size: 26px; font-weight: 600; line-height: 1.2; text-wrap: balance; }
+	.intro p, .head p { color: var(--page-muted); }
+	.part { display: grid; gap: 18px; min-width: 0; }
+	.head { display: grid; gap: 6px; max-width: 68ch; }
+	.row { display: grid; grid-auto-flow: column; grid-auto-columns: min(360px, calc(100vw - 40px)); grid-template-rows: auto auto; column-gap: 26px; row-gap: 12px; overflow-x: auto; padding: 4px 2px 18px; scroll-snap-type: x proximity; }
+	figure { display: grid; grid-row: span 2; grid-template-rows: subgrid; scroll-snap-align: center; min-width: 0; }
+	figure .phone { align-self: start; }
+	figcaption { display: grid; gap: 2px; font-size: 14px; line-height: 1.4; color: var(--page-muted); align-content: start; }
+	figcaption b { color: var(--page-ink); font-size: 16px; font-weight: 600; display: flex; gap: 8px; align-items: baseline; }
+	.tag { font-size: 12px; font-weight: 700; color: var(--page-muted); border: 1px solid var(--page-line); border-radius: 6px; padding: 0 5px; font-variant-numeric: tabular-nums; }
+	.asks { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 12px; padding: 0; list-style: none; }
+	.asks li { background: var(--page-card); border: 1px solid var(--page-line); border-radius: 14px; padding: 14px 16px; display: grid; gap: 6px; align-content: start; }
+	.asks q { quotes: none; color: var(--page-muted); font-size: 14px; }
+	.asks b { font-weight: 600; font-size: 17px; }
+	.asks span { color: var(--page-muted); font-size: 15px; }
+
+	/* ── The phone ────────────────────────────────────────────── */
+	.phone {
+		position: relative; width: 100%; height: 760px; overflow: hidden; border-radius: 34px;
+		background: var(--bg); color: var(--ink); font-family: var(--font-body); font-size: 16px; line-height: 1.3;
+		box-shadow: 0 0 0 1px var(--page-line), 0 18px 40px -22px rgba(0, 0, 0, 0.45); isolation: isolate;
+	}
+	.phone.short { height: 470px; }
+	.ic { flex: none; display: block; }
+	.grow { flex: 1; min-width: 0; }
+	.num { font-variant-numeric: tabular-nums; }
+	.scroll { position: absolute; inset: 0; padding: 34px 18px 30px; overflow: hidden; }
+	.phone h3 { font-family: var(--font-display); font-weight: 600; font-size: 32px; line-height: 1.05; }
+	.sub { font-size: 14px; color: var(--text-4); font-weight: 500; margin: 4px 0 16px; }
+	.sect { font-size: 12px; font-weight: 700; letter-spacing: 0.1em; text-transform: uppercase; color: var(--text-4); margin: 18px 4px 8px; }
+	.card { background: var(--card); border-radius: 18px; box-shadow: var(--shadow-card); }
+	.new { box-shadow: inset 3px 0 0 var(--sage); }
+
+	/* Avatars. A member is a filled disc. A guest is a tinted disc with a coloured
+	   letter and ring, so a guest is never mistaken for a housemate. */
+	.av { width: var(--s, 28px); height: var(--s, 28px); border-radius: 50%; display: grid; place-items: center; flex: none; font-size: calc(var(--s, 28px) * 0.46); font-weight: 700; color: var(--on-member); background: var(--c); }
+	.av.guest { background: color-mix(in srgb, var(--c) 16%, var(--card)); color: var(--c); box-shadow: inset 0 0 0 1.5px var(--c); }
+	.gtag { margin-left: 6px; padding: 1px 7px; border-radius: 999px; font-size: 12px; font-weight: 600; color: var(--text-3); background: var(--sunken); vertical-align: 1px; }
+
+	/* Sheets */
+	.scrim { position: absolute; inset: 0; background: var(--scrim); z-index: 8; }
+	.sheet { position: absolute; left: 0; right: 0; bottom: 0; z-index: 9; background: var(--card); border-radius: 28px 28px 0 0; box-shadow: var(--shadow-sheet); padding: 10px 20px 24px; }
+	.sheet.over { z-index: 11; }
+	.handle { width: 38px; height: 4px; border-radius: 2px; background: var(--border); margin: 0 auto 16px; }
+	.sheet h4 { font-family: var(--font-display); font-weight: 600; font-size: 25px; line-height: 1.15; }
+	.sheetsub { font-size: 14.5px; color: var(--text-4); margin: 4px 0 16px; }
+	.cta { display: flex; align-items: center; justify-content: center; gap: 8px; width: 100%; min-height: 54px; border-radius: 16px; background: var(--sage); color: var(--on-sage); font-weight: 600; font-size: 17px; box-shadow: var(--shadow-button); }
+	.caption { margin: 8px 4px 0; font-size: 14px; line-height: 1.45; color: var(--text-4); }
+	.label { display: block; margin: 0 4px 6px; font-size: 14px; font-weight: 600; color: var(--text-3); }
+	.input { display: flex; align-items: center; padding: 14px 16px; border-radius: 14px; background: var(--field); font-size: 17px; font-weight: 600; border: 1.5px solid transparent; }
+	.input.focus { border-color: var(--sage); }
+	.caret { width: 2px; height: 20px; background: var(--sage); margin-left: 1px; }
+
+	/* Split sheet [9c] */
+	.modes { display: grid; grid-template-columns: repeat(4, 1fr); background: var(--sunken-2); border-radius: 13px; padding: 3px; margin: 14px 0 8px; }
+	.modes span { text-align: center; padding: 9px 2px; border-radius: 10px; font-weight: 600; font-size: 14.5px; color: var(--text-4); }
+	.modes .on { background: var(--card); color: var(--ink); box-shadow: var(--shadow-card); }
+	.people { list-style: none; padding: 0; margin: 0 0 14px; }
+	.people li { display: flex; align-items: center; gap: 12px; min-height: 64px; padding: 8px 0; }
+	.people li + li { border-top: 1px solid var(--divider-sheet); }
+	.box { width: 22px; height: 22px; border-radius: 5px; flex: none; display: grid; place-items: center; background: var(--sage); color: var(--on-sage); }
+	.people .name { flex: 1; min-width: 0; font-size: 17px; font-weight: 600; }
+	.people .paid { margin-left: 4px; font-size: 14px; font-weight: 500; color: var(--text-5); }
+	.people .money { font-size: 17px; font-weight: 700; }
+	.people .add { color: var(--sage-deep); font-weight: 600; font-size: 16px; padding-left: 8px; margin-left: -8px; border-radius: 4px; }
+	.plus { width: 28px; height: 28px; border-radius: 50%; display: grid; place-items: center; flex: none; box-shadow: inset 0 0 0 1.5px var(--border-dashed); color: var(--sage-deep); margin-left: 34px; }
+
+	/* Balance card [10a · 2] and Recent */
+	.fabbtn { position: absolute; right: 18px; bottom: 96px; width: 58px; height: 58px; border-radius: 50%; background: var(--sage); color: var(--on-sage); display: grid; place-items: center; box-shadow: var(--shadow-fab); }
+	.tabbar { position: absolute; left: 14px; right: 14px; bottom: 16px; height: 62px; border-radius: 22px; background: var(--card); box-shadow: var(--shadow-card), 0 0 0 1px var(--border); display: flex; align-items: center; justify-content: space-around; color: var(--text-5); padding: 0 8px; }
+	.tabbar .on { display: flex; align-items: center; gap: 6px; padding: 9px 14px; border-radius: 999px; background: var(--sage-tint); color: var(--sage-deep); font-weight: 700; font-size: 14px; }
+	.titlebar { display: flex; align-items: flex-start; justify-content: space-between; }
+	.dots { width: 40px; height: 40px; border-radius: 50%; display: grid; place-items: center; background: var(--card); box-shadow: var(--shadow-card); color: var(--text-3); }
+	.balance { padding: 18px 16px 14px; }
+	.stack { display: flex; margin-bottom: 10px; }
+	.stack .av + .av { margin-left: -8px; }
+	.stack .av { outline: 2px solid var(--card); }
+	.sentence { font-family: var(--font-display); font-weight: 600; font-size: 23px; line-height: 1.2; text-wrap: balance; }
+	.owed { color: var(--sage-deep); }
+	.owe { color: var(--terracotta); }
+	.brows { list-style: none; padding: 0; margin: 14px 0 0; }
+	.brows li { display: flex; align-items: center; gap: 10px; padding: 10px 0; border-top: 1px solid var(--divider); }
+	.brows .n { flex: 1; min-width: 0; font-weight: 600; font-size: 16px; }
+	.brows .a { font-weight: 700; font-size: 16px; }
+	.chipbtn { padding: 8px 12px; border-radius: 999px; background: var(--sage-tint); color: var(--sage-deep); font-weight: 600; font-size: 14px; white-space: nowrap; }
+	.brows .tap { display: flex; align-items: center; gap: 3px; }
+	.brows .tap .ic { color: var(--text-5); }
+	.quiet { display: block; text-align: center; padding: 10px 6px 0; font-size: 15px; font-weight: 600; color: var(--text-3); }
+	.list { list-style: none; padding: 0; }
+	.list li { display: flex; align-items: center; gap: 12px; padding: 13px 14px; }
+	.list li + li { border-top: 1px solid var(--divider); }
+	.cat { width: 38px; height: 38px; border-radius: 12px; display: grid; place-items: center; flex: none; background: var(--sunken); color: var(--text-3); }
+	.list b { display: block; font-size: 16px; font-weight: 600; line-height: 1.25; }
+	.list small { font-size: 14px; color: var(--text-4); }
+	.part-r { text-align: right; font-size: 13.5px; line-height: 1.25; color: var(--text-4); flex: none; }
+	.part-r b { font-size: 15px; font-weight: 700; }
+
+	/* Settings sheet and the guest sheet */
+	.fixed { display: flex; align-items: center; justify-content: space-between; padding: 14px 16px; border-radius: 14px; background: var(--field); font-weight: 600; margin-top: 14px; }
+	.fixed span:last-child { font-weight: 700; color: var(--text-3); }
+	.setrow { display: flex; align-items: center; gap: 12px; margin-top: 18px; padding: 14px 16px; border: 1px solid var(--border); border-radius: 16px; color: var(--text-4); }
+	.setrow b { display: block; font-size: 16px; font-weight: 600; color: var(--ink); }
+	.setrow small { font-size: 15px; color: var(--text-4); }
+	.group { margin-top: 8px; border: 1px solid var(--border); border-radius: 16px; overflow: hidden; }
+	.group > div { display: flex; align-items: center; gap: 12px; padding: 12px 16px; color: var(--text-4); }
+	.group > div + div { border-top: 1px solid var(--divider-sheet); }
+	.group b { display: block; font-size: 16px; font-weight: 600; color: var(--ink); }
+	.group small { font-size: 14.5px; }
+	.group .addrow { color: var(--sage-deep); font-weight: 600; font-size: 16px; }
+	.group .addrow .plus { margin-left: 0; }
+	.switch { width: 46px; height: 28px; border-radius: 999px; background: var(--border); position: relative; flex: none; }
+	.switch::after { content: ''; position: absolute; top: 3px; left: 3px; width: 22px; height: 22px; border-radius: 50%; background: var(--card); box-shadow: 0 1px 2px rgba(0, 0, 0, 0.25); }
+	.switch.on { background: var(--sage); }
+	.switch.on::after { left: 21px; }
+	.linkbox { margin-top: 18px; padding: 14px 16px; border-radius: 16px; background: var(--field); }
+	.linkbox b { font-size: 16px; font-weight: 600; }
+	.linkbox p { font-size: 14.5px; color: var(--text-4); margin: 2px 0 12px; line-height: 1.4; }
+	.pair { display: grid; grid-template-columns: 1fr auto; gap: 8px; }
+	.btn { display: flex; align-items: center; justify-content: center; gap: 8px; min-height: 46px; padding: 0 16px; border-radius: 14px; font-weight: 600; font-size: 16px; }
+	.btn.fill { background: var(--sage); color: var(--on-sage); }
+	.btn.line { background: var(--card); color: var(--ink); box-shadow: inset 0 0 0 1px var(--border); }
+	.textlink { display: block; margin-top: 10px; font-size: 14.5px; font-weight: 600; color: var(--text-3); }
+	.remove { display: block; width: 100%; margin-top: 18px; padding: 6px; font-size: 16px; font-weight: 600; text-align: center; color: var(--danger); opacity: 0.4; }
+
+	/* The guest's page: no tab bar, no header menu, nothing to tap but the rows' own text. */
+	.gpage { position: absolute; inset: 0; padding: 30px 18px 24px; overflow: hidden; display: flex; flex-direction: column; }
+	.brand { display: flex; align-items: center; gap: 8px; font-size: 14px; font-weight: 700; color: var(--text-3); margin-bottom: 22px; }
+	.brand i { width: 22px; height: 22px; border-radius: 7px; background: var(--sage); display: block; }
+	.with { display: flex; align-items: center; gap: 8px; font-size: 14.5px; color: var(--text-4); margin: 6px 0 18px; }
+	.with .av + .av { margin-left: -14px; outline: 2px solid var(--bg); }
+	.gcard { padding: 18px 16px; }
+	.gcard p:not(.sentence) { font-size: 14.5px; color: var(--text-4); margin-top: 6px; line-height: 1.4; }
+	.totals { display: flex; justify-content: space-between; padding: 12px 14px; border-top: 1px solid var(--divider); font-size: 14.5px; color: var(--text-4); }
+	.totals b { color: var(--ink); font-weight: 700; }
+	.foot { margin-top: auto; padding-top: 16px; text-align: center; font-size: 13px; line-height: 1.45; color: var(--text-5); }
+	.settled { display: flex; align-items: center; gap: 12px; padding: 18px 16px; }
+	.settled .check { width: 40px; height: 40px; border-radius: 50%; display: grid; place-items: center; background: var(--sage-tint); color: var(--sage-deep); flex: none; }
+	.settled b { font-family: var(--font-display); font-size: 21px; font-weight: 600; display: block; }
+	.settled small { font-size: 14.5px; color: var(--text-4); }
+	.gone { margin: auto 0; text-align: center; display: grid; gap: 8px; justify-items: center; padding: 0 16px; }
+	.gone .cat { width: 56px; height: 56px; border-radius: 18px; }
+	.gone b { font-family: var(--font-display); font-size: 24px; font-weight: 600; }
+	.gone p { color: var(--text-4); font-size: 15.5px; line-height: 1.45; }
+</style>
+
+<div class="wrap">
+	<header class="intro">
+		<span class="kicker">Haushaltsheld · sketch · Expenses · plan 38</span>
+		<h1>Guests: sharing a cost with someone outside the household</h1>
+		<p>A guest is a name in the tally and nothing more: no account, no chores, no lists. You add one at the moment you split a cost with them, and you can send them a link to a page that shows their share and only their share.</p>
+		<p>The example: a weekend in Südtirol with Jonas. Lukas paid the hut and a dinner, Elisabeth the groceries, Jonas the fuel.</p>
+	</header>
+
+	<section class="part">
+		<div class="head"><h2>Your two questions</h2></div>
+		<ul class="asks">
+			<li><q>How do I add a new person, only in the spendings tab?</q><b>Yes, only in Expenses, where you need them.</b><span>"Add a guest" is the last row of the split sheet, and "Someone else…" is the last entry of the "who paid" picker. Both open the same one-field sheet. Guests are managed under Expense settings. They never show under Members.</span></li>
+			<li><q>How can this person see their share?</q><b>Through a private link, read only.</b><span>No account and no household of their own. The page shows what they owe or are owed, who to pay, and the expenses they are part of. It works the same whether or not they use Haushaltsheld themselves.</span></li>
+		</ul>
+	</section>
+
+	<section class="part">
+		<div class="head">
+			<h2>Adding a guest</h2>
+			<p>The marked rows are the only changes to screens that exist today.</p>
+		</div>
+		<div class="row">
+			<figure id="G1">
+				<figcaption><b><span class="tag">G1</span>The split sheet</b>One new row under the people: "Add a guest". A guest carries a small tag and an outlined avatar. With a guest ticked in, "Make this the household default" is not offered.</figcaption>
+				<div class="phone">
+					<div class="scrim"></div>
+					<div class="sheet">
+						<div class="handle"></div>
+						<h4>Split</h4>
+						<p class="sheetsub" style="margin-bottom:0">Dinner in Bozen · <span class="num">€144.00</span></p>
+						<div class="modes"><span class="on">Equally</span><span>Amounts</span><span>%</span><span>Shares</span></div>
+						<ul class="people">
+							<li><span class="box" data-ic="check" data-s="15" data-w="3"></span><span class="av" style="--c:var(--member-sage)">L</span><span class="name">Lukas<span class="paid">paid</span></span><span class="money num">€48.00</span></li>
+							<li><span class="box" data-ic="check" data-s="15" data-w="3"></span><span class="av" style="--c:var(--member-terracotta)">E</span><span class="name">Elisabeth</span><span class="money num">€48.00</span></li>
+							<li><span class="box" data-ic="check" data-s="15" data-w="3"></span><span class="av guest" style="--c:var(--member-blue)">J</span><span class="name">Jonas<span class="gtag">Guest</span></span><span class="money num">€48.00</span></li>
+							<li class="new"><span class="plus" data-ic="plus" data-s="16" data-w="2.2"></span><span class="add">Add a guest</span></li>
+						</ul>
+						<div class="cta">Done</div>
+					</div>
+				</div>
+			</figure>
+			<figure id="G2">
+				<figcaption><b><span class="tag">G2</span>Add a guest</b>A name is all it takes. The app picks the colour. After "Add" the guest is ticked into the split you came from, or set as the payer if you came from "who paid".</figcaption>
+				<div class="phone">
+					<div class="scrim"></div>
+					<div class="sheet over">
+						<div class="handle"></div>
+						<h4>Add a guest</h4>
+						<p class="sheetsub">Someone outside the household who shares a cost with you.</p>
+						<span class="label">Name</span>
+						<div class="input focus">Jonas<span class="caret"></span></div>
+						<p class="caption" style="margin-bottom:18px">No account needed. You can send them a link to their share afterwards.</p>
+						<div class="cta">Add Jonas</div>
+					</div>
+				</div>
+			</figure>
+			<figure id="G3">
+				<figcaption><b><span class="tag">G3</span>The Expenses tab</b>A guest stands in the balance like anyone else. Tap a guest's name to open their sheet [G5], where the link is. A guest cannot get a push reminder, so "Remind everyone" reaches the members only.</figcaption>
+				<div class="phone">
+					<div class="scroll">
+						<div class="titlebar"><div><h3>Expenses</h3><p class="sub num">€792.60 this month</p></div><span class="dots" data-ic="dots" data-s="20"></span></div>
+						<div class="card balance">
+							<span class="stack"><span class="av" style="--s:34px;--c:var(--member-terracotta)">E</span><span class="av guest" style="--s:34px;--c:var(--member-blue)">J</span></span>
+							<p class="sentence">Elisabeth and Jonas owe you <span class="owed num">€299.80</span></p>
+							<ul class="brows">
+								<li><span class="av" style="--c:var(--member-terracotta)">E</span><span class="n">Elisabeth</span><span class="a num">€167.60</span><span class="chipbtn">Settle up</span></li>
+								<li class="new" style="padding-left:8px;margin-left:-8px"><span class="av guest" style="--c:var(--member-blue)">J</span><span class="n tap">Jonas<span data-ic="chevron" data-s="15" data-w="2.2"></span></span><span class="a num">€132.20</span><span class="chipbtn">Settle up</span></li>
+							</ul>
+							<span class="quiet">Remind everyone</span>
+						</div>
+						<p class="sect">Yesterday</p>
+						<div class="card"><ul class="list">
+							<li><span class="cat" data-ic="utensils" data-s="19"></span><span class="grow"><b>Dinner in Bozen</b><small class="num">Lukas paid €144.00</small></span><span class="part-r">you lent<br><b class="owed num">€96.00</b></span></li>
+							<li><span class="cat" data-ic="car" data-s="19"></span><span class="grow"><b>Fuel and toll</b><small class="num">Jonas paid €132.00</small></span><span class="part-r">you borrowed<br><b class="owe num">€44.00</b></span></li>
+						</ul></div>
+					</div>
+					<span class="fabbtn" data-ic="plus" data-s="26" data-w="2.2"></span>
+					<div class="tabbar"><span data-ic="home" data-s="22"></span><span data-ic="cart" data-s="22"></span><span data-ic="chef" data-s="22"></span><span data-ic="checks" data-s="22"></span><span class="on"><span data-ic="wallet" data-s="19"></span>Expenses</span></div>
+				</div>
+			</figure>
+		</div>
+	</section>
+
+	<section class="part">
+		<div class="head">
+			<h2>Managing guests</h2>
+			<p>Under the tab's ••• menu → Expense settings, the sheet that holds the currency and the default split today.</p>
+		</div>
+		<div class="row">
+			<figure id="G4">
+				<figcaption><b><span class="tag">G4</span>Expense settings</b>A new "Guests" group under the two rows that are there today. Each guest shows where they stand. A second way to add one, for setting up before the trip.</figcaption>
+				<div class="phone">
+					<div class="scrim"></div>
+					<div class="sheet">
+						<div class="handle"></div>
+						<h4>Expense settings</h4>
+						<div class="fixed"><span>Currency</span><span>EUR</span></div>
+						<p class="caption">Can't be changed once expenses are added.</p>
+						<div class="setrow"><span class="grow"><b>Default split</b><small>Equally between everyone</small></span><span data-ic="chevron" data-s="16" data-w="2"></span></div>
+						<p class="sect" style="margin-top:22px">Guests</p>
+						<div class="group new">
+							<div><span class="av guest" style="--s:32px;--c:var(--member-blue)">J</span><span class="grow"><b>Jonas</b><small class="num">Owes €132.20</small></span><span data-ic="chevron" data-s="16" data-w="2"></span></div>
+							<div class="addrow"><span class="plus" data-ic="plus" data-s="16" data-w="2.2" style="width:32px;height:32px"></span>Add a guest</div>
+						</div>
+						<p class="caption" style="margin-bottom:6px">People outside the household who share a cost, like a friend on a trip.</p>
+					</div>
+				</div>
+			</figure>
+			<figure id="G5">
+				<figcaption><b><span class="tag">G5</span>One guest</b>Rename, send the link, and switch on "Include in new expenses" for the days of the trip so nobody has to tick Jonas in each time. "Make a new link" switches the old one off. Removing waits until the guest is settled.</figcaption>
+				<div class="phone">
+					<div class="scrim"></div>
+					<div class="sheet over">
+						<div class="handle"></div>
+						<h4>Jonas</h4>
+						<p class="sheetsub num">Guest · owes €132.20</p>
+						<span class="label">Name</span>
+						<div class="input">Jonas</div>
+						<div class="setrow" style="margin-top:12px"><span class="grow"><b>Include in new expenses</b><small>For a trip. Switch it off afterwards.</small></span><span class="switch on"></span></div>
+						<div class="linkbox">
+							<b>Jonas's page</b>
+							<p>Shows his balance and the expenses he is part of. Nothing else from your household.</p>
+							<div class="pair"><span class="btn fill"><span data-ic="share" data-s="18"></span>Share link</span><span class="btn line"><span data-ic="copy" data-s="18"></span>Copy</span></div>
+							<span class="textlink">Make a new link</span>
+						</div>
+						<span class="remove">Remove guest</span>
+						<p class="caption" style="text-align:center;margin-top:0">Possible once Jonas is settled up.</p>
+					</div>
+				</div>
+			</figure>
+		</div>
+	</section>
+
+	<section class="part">
+		<div class="head">
+			<h2>What the guest sees</h2>
+			<p>A page outside the app, opened from the link. Nothing to sign in to and nothing to change. It follows the phone's language and its light or dark setting.</p>
+		</div>
+		<div class="row">
+			<figure id="G6">
+				<figcaption><b><span class="tag">G6</span>Jonas's page</b>The answer first, the same sentence the app speaks. Then every expense he is part of with his share, newest first. The household's other expenses are not on it.</figcaption>
+				<div class="phone" style="height:790px">
+					<div class="gpage">
+						<div class="brand"><i></i>Haushaltsheld</div>
+						<h3>Hi Jonas</h3>
+						<div class="with"><span class="av" style="--s:24px;--c:var(--member-sage)">L</span><span class="av" style="--s:24px;--c:var(--member-terracotta)">E</span>Shared with Lukas and Elisabeth</div>
+						<div class="card gcard">
+							<p class="sentence" style="margin:0;color:var(--ink)">You owe Lukas <span class="owe num">€132.20</span></p>
+							<p>Pay Lukas directly. He marks it as paid and this page follows.</p>
+						</div>
+						<p class="sect">What you shared</p>
+						<div class="card"><ul class="list">
+							<li><span class="cat" data-ic="utensils" data-s="19"></span><span class="grow"><b>Dinner in Bozen</b><small class="num">Sun 23 Nov · Lukas paid €144.00</small></span><span class="part-r">your share<br><b class="num" style="color:var(--ink)">€48.00</b></span></li>
+							<li><span class="cat" data-ic="car" data-s="19"></span><span class="grow"><b>Fuel and toll</b><small class="num">Sun 23 Nov · you paid €132.00</small></span><span class="part-r">your share<br><b class="num" style="color:var(--ink)">€44.00</b></span></li>
+							<li><span class="cat" data-ic="cart" data-s="19"></span><span class="grow"><b>Groceries for the hut</b><small class="num">Sat 22 Nov · Elisabeth paid €96.60</small></span><span class="part-r">your share<br><b class="num" style="color:var(--ink)">€32.20</b></span></li>
+							<li><span class="cat" data-ic="bed" data-s="19"></span><span class="grow"><b>Hut, two nights</b><small class="num">Fri 21 Nov · Lukas paid €420.00</small></span><span class="part-r">your share<br><b class="num" style="color:var(--ink)">€140.00</b></span></li>
+						</ul>
+						<div class="totals num"><span>You paid <b>€132.00</b></span><span>Your share <b>€264.20</b></span></div></div>
+						<p class="foot">Read only. Lukas and Elisabeth keep this tally with Haushaltsheld.</p>
+					</div>
+				</div>
+			</figure>
+			<figure id="G7">
+				<figcaption><b><span class="tag">G7</span>Settled</b>After Lukas records the payment. The payment joins the list, so the page still explains itself months later.</figcaption>
+				<div class="phone short">
+					<div class="gpage">
+						<div class="brand"><i></i>Haushaltsheld</div>
+						<h3>Hi Jonas</h3>
+						<div class="with"><span class="av" style="--s:24px;--c:var(--member-sage)">L</span><span class="av" style="--s:24px;--c:var(--member-terracotta)">E</span>Shared with Lukas and Elisabeth</div>
+						<div class="card settled"><span class="check" data-ic="check" data-s="20" data-w="2.4"></span><span><b>All settled up</b><small>Nothing left to pay.</small></span></div>
+						<p class="sect">What you shared</p>
+						<div class="card"><ul class="list">
+							<li><span class="cat" data-ic="transfer" data-s="19"></span><span class="grow"><b class="num">You paid Lukas €132.20</b><small>Tue 25 Nov</small></span></li>
+							<li><span class="cat" data-ic="utensils" data-s="19"></span><span class="grow"><b>Dinner in Bozen</b><small class="num">Sun 23 Nov · Lukas paid €144.00</small></span><span class="part-r">your share<br><b class="num" style="color:var(--ink)">€48.00</b></span></li>
+						</ul></div>
+					</div>
+				</div>
+			</figure>
+			<figure id="G8">
+				<figcaption><b><span class="tag">G8</span>A link that was switched off</b>After "Make a new link" or "Remove guest". It names nobody, because whoever holds an old link should learn nothing from it.</figcaption>
+				<div class="phone short">
+					<div class="gpage">
+						<div class="brand"><i></i>Haushaltsheld</div>
+						<div class="gone"><span class="cat" data-ic="unlink" data-s="26"></span><b>This link no longer works</b><p>Ask the person who sent it to you for a new one.</p></div>
+					</div>
+				</div>
+			</figure>
+		</div>
+	</section>
+
+	<section class="part">
+		<div class="head"><h2>The rules behind it</h2></div>
+		<ul class="asks">
+			<li><b>A guest is only in what you tick them into.</b><span>Never part of the default split, so the weekly shop stays between the household. The "Include in new expenses" switch is the one exception, and it is yours to flip.</span></li>
+			<li><b>A guest can pay, too.</b><span>"Jonas paid €132.00 for fuel" is logged by one of you with Jonas as the payer. Guests cannot add or change anything themselves.</span></li>
+			<li><b>Who pays whom counts everyone.</b><span>The app keeps the fewest payments across members and guests. It can therefore say "Jonas pays Elisabeth" even if Jonas only shared costs with Lukas. The sums are right either way.</span></li>
+			<li><b>The link is the key.</b><span>Long and unguessable, one per guest. Anyone who has it can read that guest's page, so it can be replaced at any time. Search engines are told to stay away.</span></li>
+			<li><b>Removing keeps the history.</b><span>A settled guest can be removed: gone from the pickers, the link off, the old expenses still readable with their name.</span></li>
+			<li><b>Not in this plan.</b><span>Linking two Haushaltsheld households, trips as their own group, guests adding expenses, several currencies.</span></li>
+		</ul>
+	</section>
+</div>
+
+<script>
+	const PATHS = {
+		check: '<path d="M20 6 9 17l-5-5"/>',
+		plus: '<path d="M5 12h14M12 5v14"/>',
+		chevron: '<path d="m9 18 6-6-6-6"/>',
+		dots: '<circle cx="5" cy="12" r="1"/><circle cx="12" cy="12" r="1"/><circle cx="19" cy="12" r="1"/>',
+		share: '<path d="M12 2v13M16 6l-4-4-4 4M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8"/>',
+		copy: '<rect x="8" y="8" width="14" height="14" rx="2"/><path d="M4 16c-1.1 0-2-.9-2-2V4c0-1.1.9-2 2-2h10c1.1 0 2 .9 2 2"/>',
+		utensils: '<path d="M3 2v7c0 1.1.9 2 2 2h4a2 2 0 0 0 2-2V2M7 2v20M21 15V2a5 5 0 0 0-5 5v6c0 1.1.9 2 2 2h3Zm0 0v7"/>',
+		car: '<path d="M19 17h2c.6 0 1-.4 1-1v-3c0-.9-.7-1.7-1.5-1.9C18.7 10.6 16 10 16 10s-1.3-1.4-2.2-2.3c-.5-.4-1.1-.7-1.8-.7H5c-.6 0-1.1.4-1.4.9l-1.4 2.9A3.7 3.7 0 0 0 2 12v4c0 .6.4 1 1 1h2"/><circle cx="7" cy="17" r="2"/><path d="M9 17h6"/><circle cx="17" cy="17" r="2"/>',
+		cart: '<circle cx="8" cy="21" r="1"/><circle cx="19" cy="21" r="1"/><path d="M2.05 2.05h2l2.66 12.42a2 2 0 0 0 2 1.58h9.78a2 2 0 0 0 1.95-1.57l1.65-7.43H5.12"/>',
+		bed: '<path d="M2 4v16M2 8h18a2 2 0 0 1 2 2v10M2 17h20M6 8v9"/>',
+		home: '<path d="M15 21v-8a1 1 0 0 0-1-1h-4a1 1 0 0 0-1 1v8"/><path d="M3 10a2 2 0 0 1 .709-1.528l7-6a2 2 0 0 1 2.582 0l7 6A2 2 0 0 1 21 10v9a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/>',
+		chef: '<path d="M17 21a1 1 0 0 0 1-1v-5.35c0-.457.316-.844.727-1.041a4 4 0 0 0-2.134-7.589 5 5 0 0 0-9.186 0 4 4 0 0 0-2.134 7.588c.411.198.727.585.727 1.041V20a1 1 0 0 0 1 1ZM6 17h12"/>',
+		checks: '<path d="M18 6 7 17l-5-5M22 10l-7.5 7.5L13 16"/>',
+		wallet: '<path d="M19 7V4a1 1 0 0 0-1-1H5a2 2 0 0 0 0 4h15a1 1 0 0 1 1 1v4h-3a2 2 0 0 0 0 4h3a1 1 0 0 0 1-1v-2a1 1 0 0 0-1-1"/><path d="M3 5v14a2 2 0 0 0 2 2h15a1 1 0 0 0 1-1v-4"/>',
+		transfer: '<path d="M8 3 4 7l4 4M4 7h16M16 21l4-4-4-4M20 17H4"/>',
+		unlink: '<path d="m18.84 12.25 1.72-1.71a5 5 0 0 0-7.07-7.07l-1.72 1.71M5.17 11.75l-1.71 1.71a5 5 0 0 0 7.07 7.07l1.71-1.71M8 2v3M2 8h3M16 19v3M19 16h3"/>'
+	};
+	for (const el of document.querySelectorAll('[data-ic]')) {
+		const size = el.dataset.s ?? 19;
+		const svg = `<svg class="ic" width="${size}" height="${size}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="${el.dataset.w ?? 1.9}" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${PATHS[el.dataset.ic]}</svg>`;
+		el.insertAdjacentHTML('afterbegin', svg);
+	}
+</script>
