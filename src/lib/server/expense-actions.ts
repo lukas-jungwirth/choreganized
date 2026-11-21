@@ -12,14 +12,20 @@ import { fail, type RequestEvent } from '@sveltejs/kit';
 import { catalog, type Messages } from '$lib/i18n';
 import { requireMember } from '$lib/server/guards';
 import {
+	addGuest,
 	createExpense,
 	createPayment,
 	deleteExpense,
 	ExpenseError,
 	reminders,
 	getExpenseSettings,
+	removeGuest,
+	guestShareToken,
+	renewGuestShareToken,
+	renameGuest,
 	restoreExpense,
 	setCurrency,
+	setGuestIncludeInNew,
 	setSplitDefault,
 	updateExpense,
 	updatePayment,
@@ -29,7 +35,9 @@ import { stopSeries, updateSeries } from '$lib/server/services/expense-recurrenc
 import { sendNotices } from '$lib/server/services/expense-notify';
 import { getHousehold, HouseholdError } from '$lib/server/services/household';
 import { todayIn } from '$lib/utils/dates';
+import { DISPLAY_NAME_MAX } from '$lib/utils/household';
 import {
+	GUESTS_MAX,
 	isDefaultSplitMode,
 	isExpenseCategory,
 	readRepeat,
@@ -37,7 +45,11 @@ import {
 } from '$lib/utils/expenses';
 import { parseAmount, type SplitRow } from '$lib/utils/money';
 
-const MESSAGE: Record<ExpenseErrorCode, keyof Messages['expenses']['errors']> = {
+type Errors = Messages['expenses']['errors'];
+/** The messages that are plain text; the two with a limit in them are below. */
+type PlainError = { [K in keyof Errors]: Errors[K] extends string ? K : never }[keyof Errors];
+
+const MESSAGE: Record<Exclude<ExpenseErrorCode, 'guest-name' | 'guest-limit'>, PlainError> = {
 	amount: 'amount',
 	description: 'description',
 	date: 'date',
@@ -50,13 +62,21 @@ const MESSAGE: Record<ExpenseErrorCode, keyof Messages['expenses']['errors']> = 
 	'next-date': 'nextDate',
 	'date-too-old': 'dateTooOld',
 	'series-start': 'seriesStart',
-	'series-person': 'seriesPerson'
+	'series-person': 'seriesPerson',
+	'guest-name-taken': 'guestNameTaken',
+	'guest-balance': 'guestBalance'
 };
 
 function failWith(event: RequestEvent, error: unknown) {
 	if (!(error instanceof ExpenseError)) throw error;
+	const errors = catalog(event.locals.locale).expenses.errors;
 	return fail(400, {
-		error: catalog(event.locals.locale).expenses.errors[MESSAGE[error.code]]
+		error:
+			error.code === 'guest-name'
+				? errors.guestName(DISPLAY_NAME_MAX)
+				: error.code === 'guest-limit'
+					? errors.guestLimit(GUESTS_MAX)
+					: errors[MESSAGE[error.code]]
 	});
 }
 
@@ -238,6 +258,75 @@ export async function splitDefaultAction(event: RequestEvent) {
 			readRows(form.get('split')).map((row) => ({ personId: row.id, weight: row.input ?? 0 }))
 		);
 		return { splitDefault: getExpenseSettings(householdId).splitDefault };
+	} catch (error) {
+		return failWith(event, error);
+	}
+}
+
+/**
+ * Add a guest [G2] (→ SPEC §11.15), from the split sheet, the payer picker or
+ * Expense settings. Answers the new person's id: the sheet it came from ticks
+ * them in or makes them the payer.
+ */
+export async function addGuestAction(event: RequestEvent) {
+	const form = await event.request.formData();
+	try {
+		const { householdId } = requireMember(event);
+		return { guestId: addGuest(householdId, String(form.get('name') ?? '')) };
+	} catch (error) {
+		return failWith(event, error);
+	}
+}
+
+/** The guest sheet [G5]: a new name, and "Include in new expenses". */
+export async function updateGuestAction(event: RequestEvent) {
+	const form = await event.request.formData();
+	try {
+		const { householdId } = requireMember(event);
+		const guestId = String(form.get('guestId') ?? '');
+		const name = form.get('name');
+		if (name !== null) renameGuest(householdId, guestId, String(name));
+		const include = form.get('includeInNew');
+		if (include !== null) setGuestIncludeInNew(householdId, guestId, include === 'on');
+		return { guestSaved: guestId };
+	} catch (error) {
+		return failWith(event, error);
+	}
+}
+
+/**
+ * The guest's link [G5]: the token, made on the first Share link or Copy and
+ * the same one after that. The sheet builds the address from it.
+ */
+export async function guestLinkAction(event: RequestEvent) {
+	const form = await event.request.formData();
+	try {
+		const { householdId } = requireMember(event);
+		return { token: guestShareToken(householdId, String(form.get('guestId') ?? '')) };
+	} catch (error) {
+		return failWith(event, error);
+	}
+}
+
+/** "Make a new link" [G5], after its confirm: the old link stops working. */
+export async function renewGuestLinkAction(event: RequestEvent) {
+	const form = await event.request.formData();
+	try {
+		const { householdId } = requireMember(event);
+		return { token: renewGuestShareToken(householdId, String(form.get('guestId') ?? '')) };
+	} catch (error) {
+		return failWith(event, error);
+	}
+}
+
+/** "Remove guest" [G5], once they are settled up. */
+export async function removeGuestAction(event: RequestEvent) {
+	const form = await event.request.formData();
+	try {
+		const { householdId } = requireMember(event);
+		const guestId = String(form.get('guestId') ?? '');
+		removeGuest(householdId, guestId);
+		return { guestRemoved: guestId };
 	} catch (error) {
 		return failWith(event, error);
 	}

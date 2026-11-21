@@ -12,6 +12,7 @@
 	import CategoryIcon from '$lib/components/expenses/CategoryIcon.svelte';
 	import RepeatIcon from '$lib/components/icons/RepeatIcon.svelte';
 	import ExpenseSheet from '$lib/components/expenses/ExpenseSheet.svelte';
+	import GuestTag from '$lib/components/expenses/GuestTag.svelte';
 	import SettleSheet from '$lib/components/expenses/SettleSheet.svelte';
 	import { pickablePeople } from '$lib/components/expenses/split-draft';
 	import Avatar from '$lib/components/ui/Avatar.svelte';
@@ -118,11 +119,11 @@
 	<h2 class="section">{m.expenses.detail.paidBy}</h2>
 	<div class="card">
 		<div class="line">
-			<Avatar name={payer?.name} color={payer?.color} size={28} />
+			<Avatar name={payer?.name} color={payer?.color} guest={payer?.guest} size={28} />
 			<span class="name">
 				{payer?.name ?? '?'}
 				{#if item.paidById === data.me}<span class="tag">{m.expenses.detail.you}</span>{/if}
-				{#if payer && payer.memberId === null}<span class="tag"
+				{#if payer?.guest}<GuestTag />{:else if payer && payer.memberId === null}<span class="tag"
 						>{m.expenses.detail.formerMember}</span
 					>{/if}
 			</span>
@@ -135,12 +136,12 @@
 		{#each item.shares as share (share.personId)}
 			{@const person = byId.get(share.personId)}
 			<li class="line">
-				<Avatar name={person?.name} color={person?.color} size={28} />
+				<Avatar name={person?.name} color={person?.color} guest={person?.guest} size={28} />
 				<span class="name-block">
 					<span class="name">
 						{person?.name ?? '?'}
-						{#if person && person.memberId === null}<span class="tag"
-								>{m.expenses.detail.formerMember}</span
+						{#if person?.guest}<GuestTag />{:else if person && person.memberId === null}<span
+								class="tag">{m.expenses.detail.formerMember}</span
 							>{/if}
 					</span>
 					{#if share.personId !== item.paidById && share.shareMinor > 0}

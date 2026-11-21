@@ -382,9 +382,20 @@ household (or the household going) takes the album with it.
   stays readable. While the membership lasts, the `members` row is the truth for name and colour
   (`listPeople` joins it). `userId` (plain text, not a foreign key) remembers the user behind the
   membership, so someone who leaves and joins again gets the same person back, debts included
-  (→ #174). `kind = 'guest'` is reserved for people outside the household; nothing
-  writes it yet. A person is never deleted except with the household, so the references to it
+  (→ #174). A person is never deleted except with the household, so the references to it
   cascade rather than restrict (a RESTRICT would make deleting a household fail).
+- **Guests** (→ plan 38, SPEC §11.15, DECISIONS #282) are `kind = 'guest'` rows that never had a
+  member: `memberId` and `userId` NULL, `name` and `color` the truth rather than a snapshot,
+  `defaultWeight` always NULL. `includeInNew` is the guest's "Include in new expenses" switch.
+  `removedAt` marks a guest removed once settled: they leave the pickers and stay named in
+  history, and no write but an edit of a row that already names them may name them again.
+  `shareToken` (unique, NULL) is the guest's read-only link, `/g/<token>`: 32 random bytes as
+  base64url, made on the first Share or Copy (`guestShareToken`), replaced by "Make a new link"
+  (`renewGuestShareToken`), cleared on removal. Stored readable, not hashed, so the link can be
+  shown again (→ DECISIONS #288); `guestPage(token)` looks it up by the unique index alone. **Former members and guests are both `memberId IS NULL`**: read `kind` (and `removedAt`)
+  to tell them apart. The service (`services/expenses.ts` `addGuest` · `renameGuest` ·
+  `setGuestIncludeInNew` · `removeGuest`) checks the name, the cap of 10 and the balance inside
+  the transaction.
 - **An expense and a payment are the same row** (→ #167): `kind = 'payment'` is paid by the
   sender, has no description or category, and one share — the recipient's, the whole amount.
   So the balance is one formula over every row: `Σ amountMinor where paidById = p − Σ shareMinor

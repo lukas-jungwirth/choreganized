@@ -29,6 +29,7 @@
 	import { EXPENSE_CATEGORIES, type ExpenseCategory } from '$lib/utils/expenses';
 	import { formatAmountInput, parseAmount } from '$lib/utils/money';
 	import { untrack } from 'svelte';
+	import AddGuestSheet from './AddGuestSheet.svelte';
 	import CategoryIcon from './CategoryIcon.svelte';
 	import DateRow from './DateRow.svelte';
 	import DeleteExpenseForm from './DeleteExpenseForm.svelte';
@@ -48,7 +49,7 @@
 		item: ExpenseItem | null;
 		/** The series being edited instead of an expense [9h-stop]. */
 		series?: SeriesItem | null;
-		/** Who can pay or share — members, plus anyone still owed or owing. */
+		/** Who can pay or share: members and active guests, plus anyone still owed or owing. */
 		people: ExpensePerson[];
 		me: string;
 		currency: string;
@@ -104,6 +105,8 @@
 		)
 	);
 	let splitting = $state(false);
+	/** The payer picker's "Someone else…" [G2]: the new guest becomes the payer. */
+	let addingPayer = $state(false);
 	let describing = $state(false);
 	let submitting = $state(false);
 	let error = $state<string | undefined>();
@@ -217,6 +220,7 @@
 				{me}
 				{currency}
 				autofocus={!source}
+				onsomeoneelse={() => (addingPayer = true)}
 				describe={{
 					onfocus: () => (describing = true),
 					oninput: () => (describing = true),
@@ -307,6 +311,10 @@
 		ondone={(next) => (draft = next)}
 		onclose={() => (splitting = false)}
 	/>
+{/if}
+
+{#if addingPayer}
+	<AddGuestSheet onadded={(id) => (paidById = id)} onclose={() => (addingPayer = false)} />
 {/if}
 
 <style>

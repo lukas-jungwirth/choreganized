@@ -81,6 +81,7 @@ docs/                          # this documentation + plans/
 /login                          [5a]  public
 /j/[code]                       [5e]  public invite landing (sets cookie, → login → join)
 /legal/[page=legal]             —     public Impressum / Datenschutz: imprint · privacy; 404 unless its LEGAL_* is set; ?from= [§13]
+/g/[token]                      [G6]  public, read-only page of one guest from their link; no session looked up, noindex/no-referrer/no-store; 404 [G8] [§11.15]
 /onboarding                     [5b]  create-or-join chooser        (authed, no household)
 /onboarding/create              [5c]  household + profile
 /onboarding/join                [5e]  code entry + profile

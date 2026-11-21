@@ -29,6 +29,12 @@
 		autofocus?: boolean;
 		/** The description field's own handlers — the sheet drives its suggestions. */
 		describe?: Pick<HTMLInputAttributes, 'onfocus' | 'oninput' | 'onblur'>;
+		/**
+		 * The picker's last entry, "Someone else…", which opens Add a guest [G2]
+		 * (→ SPEC §11.15). A <select> can't hold a button, so it is an option that
+		 * never stays picked: the payer is only changed once a guest exists.
+		 */
+		onsomeoneelse?: () => void;
 	};
 
 	let {
@@ -39,8 +45,12 @@
 		me,
 		currency,
 		autofocus = false,
-		describe = {}
+		describe = {},
+		onsomeoneelse
 	}: Props = $props();
+
+	/** The value of "Someone else…": no person id looks like it. */
+	const SOMEONE_ELSE = '+guest';
 
 	const m = messages();
 	const id = $props.id();
@@ -58,14 +68,27 @@
 					<select
 						id="{id}-payer"
 						name="paidById"
-						bind:value={paidById}
+						value={paidById}
 						aria-label={m.expenses.form.paidBy}
+						onchange={(event) => {
+							const picked = event.currentTarget.value;
+							if (picked !== SOMEONE_ELSE) {
+								paidById = picked;
+								return;
+							}
+							// The previous payer stays until a guest is added.
+							event.currentTarget.value = paidById;
+							onsomeoneelse?.();
+						}}
 					>
 						{#each people as person (person.id)}
 							<option value={person.id}>
 								{person.id === me ? m.expenses.form.payerYou : person.name}
 							</option>
 						{/each}
+						{#if onsomeoneelse}
+							<option value={SOMEONE_ELSE}>{m.expenses.guests.someoneElse}</option>
+						{/if}
 					</select>
 					<ChevronDown size={14} strokeWidth={2.4} aria-hidden="true" />
 				</label>

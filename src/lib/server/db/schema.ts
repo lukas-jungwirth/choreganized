@@ -833,8 +833,9 @@ export const cookTimers = sqliteTable(
  * Anyone who can pay for or share an expense (→ DECISIONS #168). Today that is
  * one row per membership, created in the same transaction as the membership. A
  * member who leaves keeps their row, with `memberId` NULL and the name and
- * colour they had, so a balance they still owe stays readable. Guests will be
- * `kind = 'guest'` rows that never had a member.
+ * colour they had, so a balance they still owe stays readable. Guests are
+ * `kind = 'guest'` rows that never had a member (→ plan 38, SPEC §11.15): their
+ * `name` and `color` are the truth, not a snapshot.
  *
  * `name` and `color` are a snapshot taken when the membership ends; while it
  * lasts, the member row is the truth and the read joins it.
@@ -871,6 +872,19 @@ export const ledgerPeople = sqliteTable(
 		 * not in the default. Unused while the default is `equal`.
 		 */
 		defaultWeight: integer('default_weight'),
+		/**
+		 * A guest's read-only page, `/g/<token>` (→ plan 38 step 2): 32 random
+		 * bytes, base64url, made the first time the link is shared, replaced by
+		 * "Make a new link", cleared on removal. NULL for members and until then.
+		 */
+		shareToken: text('share_token').unique(),
+		/** A guest only: new expenses start with them ticked in (→ SPEC §11.15). */
+		includeInNew: integer('include_in_new', { mode: 'boolean' }).notNull().default(false),
+		/**
+		 * A guest only: removed once settled. They leave every picker and stay
+		 * named in history; a removed guest is never brought back.
+		 */
+		removedAt: integer('removed_at', { mode: 'timestamp_ms' }),
 		createdAt: createdAt()
 	},
 	(t) => [

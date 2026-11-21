@@ -18,7 +18,8 @@
  * also what lets the search match "Billa" inside "Wocheneinkauf · Billa" with
  * the reader's own idea of upper and lower case (→ DECISIONS #172).
  */
-import { and, asc, desc, eq, inArray, isNotNull, isNull, lt } from 'drizzle-orm';
+import { randomBytes } from 'node:crypto';
+import { and, asc, desc, eq, inArray, isNotNull, isNull, lt, ne, or } from 'drizzle-orm';
 import {
 	addInterval,
 	addRepeat,
@@ -35,6 +36,7 @@ import {
 import {
 	AMOUNT_MAX_MAJOR,
 	EXPENSE_DESCRIPTION_MAX,
+	GUESTS_MAX,
 	isCurrency,
 	isDefaultSplitMode,
 	isExpenseCategory,
@@ -64,7 +66,9 @@ import {
 	members
 } from '../db/schema';
 import { notifyExpense, reminderNotices, sharesOf, type ReminderNotice } from './expense-notify';
-import { requireOwner, type Transaction } from './household';
+import { leastUsedColor } from '$lib/member-colors';
+import { DISPLAY_NAME_MAX } from '$lib/utils/household';
+import { requireOwner, stopSeriesOf, type Transaction } from './household';
 
 export type ExpenseErrorCode =
 	/** Not a positive amount, or more than the app takes. */
@@ -92,7 +96,15 @@ export type ExpenseErrorCode =
 	/** A series that would start more than `SERIES_START_MAX_YEARS` back (→ SPEC §11.9). */
 	| 'series-start'
 	/** A former member in a series: they would be charged with nobody there to stop it. */
-	| 'series-person';
+	| 'series-person'
+	/** A guest's name: empty, or longer than a member's may be (→ SPEC §11.15). */
+	| 'guest-name'
+	/** Someone active in the household already goes by that name. */
+	| 'guest-name-taken'
+	/** `GUESTS_MAX` active guests already. */
+	| 'guest-limit'
+	/** Removing a guest who still owes or is owed. */
+	| 'guest-balance';
 
 /**
  * The earliest date the ledger takes. Nobody logs a shop from the last
@@ -115,29 +127,49 @@ export class ExpenseError extends Error {
 
 export type ExpensePerson = {
 	id: string;
-	/** The member's current name, or the snapshot once they have left. */
+	/** The member's current name, the snapshot once they have left, or the guest's name. */
 	name: string;
 	color: string;
-	/** Null once the membership has ended ("Former member"). */
+	/**
+	 * Null once the membership has ended ("Former member"), and always for a
+	 * guest, who never had one: `guest` tells the two apart.
+	 */
 	memberId: string | null;
-	/** Their part of the default split, when it is `percent` / `shares`. */
+	/** Someone outside the household who shares costs (→ SPEC §11.15). */
+	guest: boolean;
+	/** A guest removed once settled: in no picker, still named in history. */
+	removed: boolean;
+	/** An active guest whom new expenses start with, while the default is equal. */
+	includeInNew: boolean;
+	/**
+	 * An active guest's link token, once one was made (→ SPEC §11.15): stored
+	 * readable so any member can show the link again (→ DECISIONS #288).
+	 */
+	shareToken: string | null;
+	/** Their part of the default split, when it is `percent` / `shares`. Never a guest's. */
 	defaultWeight: number | null;
 };
 
 /**
  * Everyone the ledger knows, current members first in join order (the order
- * avatars stack in), then former members in the order they first appeared.
- * While someone is a member, their row in `members` is the truth for name and
- * colour; `ledger_people` only holds what was true when they left.
+ * avatars stack in), then active guests in the order they were added, then
+ * former members and removed guests in the order they first appeared. While
+ * someone is a member, their row in `members` is the truth for name and
+ * colour; `ledger_people` only holds what was true when they left, or, for a
+ * guest, what the household calls them.
  */
 export function listPeople(householdId: string): ExpensePerson[] {
 	const rows = db
 		.select({
 			id: ledgerPeople.id,
+			kind: ledgerPeople.kind,
 			snapshotName: ledgerPeople.name,
 			snapshotColor: ledgerPeople.color,
 			memberId: ledgerPeople.memberId,
 			defaultWeight: ledgerPeople.defaultWeight,
+			includeInNew: ledgerPeople.includeInNew,
+			shareToken: ledgerPeople.shareToken,
+			removedAt: ledgerPeople.removedAt,
 			memberName: members.displayName,
 			memberColor: members.color,
 			joinedAt: members.joinedAt,
@@ -156,13 +188,19 @@ export function listPeople(householdId: string): ExpensePerson[] {
 				(a.joinedAt?.getTime() ?? 0) - (b.joinedAt?.getTime() ?? 0) ||
 				(a.memberId ?? '').localeCompare(b.memberId ?? '')
 		);
-	const former = rows.filter((row) => row.memberId === null);
+	const active = (row: (typeof rows)[number]) => row.kind === 'guest' && row.removedAt === null;
+	const guests = rows.filter(active);
+	const gone = rows.filter((row) => row.memberId === null && !active(row));
 
-	return [...current, ...former].map((row) => ({
+	return [...current, ...guests, ...gone].map((row) => ({
 		id: row.id,
 		name: row.memberName ?? row.snapshotName,
 		color: row.memberColor ?? row.snapshotColor,
 		memberId: row.memberId,
+		guest: row.kind === 'guest',
+		removed: row.removedAt !== null,
+		includeInNew: active(row) && row.includeInNew,
+		shareToken: active(row) ? row.shareToken : null,
 		defaultWeight: row.defaultWeight
 	}));
 }
@@ -178,16 +216,47 @@ export function personIdFor(householdId: string, memberId: string): string {
 	return row.id;
 }
 
-function peopleIn(tx: Transaction, householdId: string, ids: string[]): Set<string> {
+/**
+ * Which of `ids` this household's ledger knows and a row may name. A removed
+ * guest has left every picker, so they may not, except where they already are
+ * (`keep`): editing an old expense they shared keeps them in it. And except
+ * while they owe or are owed: an edit, delete or restore of an old row after
+ * the removal can move their balance off zero again, and then the settle
+ * sheet offers them (`pickablePeople`) so the debt can still be cleared, as
+ * for a former member.
+ */
+function peopleIn(
+	tx: Transaction,
+	householdId: string,
+	ids: string[],
+	keep: ReadonlySet<string> = new Set()
+): Set<string> {
 	if (ids.length === 0) return new Set();
 	return new Set(
 		tx
-			.select({ id: ledgerPeople.id })
+			.select({ id: ledgerPeople.id, removedAt: ledgerPeople.removedAt })
 			.from(ledgerPeople)
 			.where(and(eq(ledgerPeople.householdId, householdId), inArray(ledgerPeople.id, ids)))
 			.all()
+			.filter(
+				(row) =>
+					row.removedAt === null || keep.has(row.id) || balanceOf(tx, householdId, row.id) !== 0
+			)
 			.map((row) => row.id)
 	);
+}
+
+/** Who an existing row names: its payer and everyone with a share. */
+function namedIn(tx: Transaction, row: { id: string; paidById: string }): Set<string> {
+	return new Set([
+		row.paidById,
+		...tx
+			.select({ personId: expenseShares.personId })
+			.from(expenseShares)
+			.where(eq(expenseShares.expenseId, row.id))
+			.all()
+			.map((share) => share.personId)
+	]);
 }
 
 /* ── Reading the ledger ───────────────────────────────────────────────────── */
@@ -570,21 +639,23 @@ function checkDate(date: string, today: CalendarDate): void {
 /**
  * Everyone a series charges must be able to stop it: leaving stops the series
  * a member is in (→ DECISIONS #180), so a former member — still pickable while
- * they have a balance — can't be put into a new one.
+ * they have a balance — can't be put into a new one. An active guest can:
+ * removing them stops their series the same way (→ SPEC §11.15).
  */
 export function checkSeriesPeople(tx: Transaction, householdId: string, ids: string[]): void {
-	const former = tx
+	const gone = tx
 		.select({ id: ledgerPeople.id })
 		.from(ledgerPeople)
 		.where(
 			and(
 				eq(ledgerPeople.householdId, householdId),
 				inArray(ledgerPeople.id, ids),
-				isNull(ledgerPeople.memberId)
+				isNull(ledgerPeople.memberId),
+				or(eq(ledgerPeople.kind, 'member'), isNotNull(ledgerPeople.removedAt))
 			)
 		)
 		.get();
-	if (former) throw new ExpenseError('series-person');
+	if (gone) throw new ExpenseError('series-person');
 }
 
 /** The expense row, if it is this household's and not deleted. */
@@ -626,7 +697,9 @@ export function writeShares(
 export function validTemplate(
 	tx: Transaction,
 	householdId: string,
-	input: Omit<ExpenseInput, 'date'>
+	input: Omit<ExpenseInput, 'date'>,
+	/** People the row already names, who stay nameable after a guest's removal. */
+	keep?: ReadonlySet<string>
 ) {
 	const description = input.description.trim();
 	if (!description || description.length > EXPENSE_DESCRIPTION_MAX) {
@@ -638,7 +711,7 @@ export function validTemplate(
 	checkAmount(tx, householdId, input.amountMinor);
 
 	const ids = [input.paidById, ...input.rows.map((row) => row.id)];
-	const known = peopleIn(tx, householdId, ids);
+	const known = peopleIn(tx, householdId, ids, keep);
 	if (ids.some((id) => !known.has(id))) throw new ExpenseError('person');
 
 	const split = splitAmount(input.amountMinor, input.splitMode, input.rows);
@@ -651,10 +724,11 @@ function validExpense(
 	tx: Transaction,
 	householdId: string,
 	input: ExpenseInput,
-	today: CalendarDate
+	today: CalendarDate,
+	keep?: ReadonlySet<string>
 ) {
 	checkDate(input.date, today);
-	return validTemplate(tx, householdId, input);
+	return validTemplate(tx, householdId, input, keep);
 }
 
 /**
@@ -783,7 +857,7 @@ export function updateExpense(
 	const before = db.transaction((tx) => {
 		const row = liveExpense(tx, householdId, id);
 		if (row.kind !== 'expense') throw new ExpenseError('not-found');
-		const template = validExpense(tx, householdId, input, today);
+		const template = validExpense(tx, householdId, input, today, namedIn(tx, row));
 		const { description, shares } = template;
 		const before = sharesOf(id);
 
@@ -815,12 +889,13 @@ function validPayment(
 	tx: Transaction,
 	householdId: string,
 	input: PaymentInput,
-	today: CalendarDate
+	today: CalendarDate,
+	keep?: ReadonlySet<string>
 ): void {
 	checkAmount(tx, householdId, input.amountMinor);
 	checkDate(input.date, today);
 	if (input.fromId === input.toId) throw new ExpenseError('same-person');
-	const known = peopleIn(tx, householdId, [input.fromId, input.toId]);
+	const known = peopleIn(tx, householdId, [input.fromId, input.toId], keep);
 	if (!known.has(input.fromId) || !known.has(input.toId)) throw new ExpenseError('person');
 }
 
@@ -874,7 +949,7 @@ export function updatePayment(
 	const moved = db.transaction((tx) => {
 		const row = liveExpense(tx, householdId, id);
 		if (row.kind !== 'payment') throw new ExpenseError('not-found');
-		validPayment(tx, householdId, input, today);
+		validPayment(tx, householdId, input, today, namedIn(tx, row));
 		const before = sharesOf(id);
 
 		tx.update(expenses)
@@ -1091,4 +1166,345 @@ export function setCurrency(householdId: string, actorMemberId: string, currency
 		if (any) throw new ExpenseError('currency-locked');
 		tx.update(households).set({ currency }).where(eq(households.id, householdId)).run();
 	});
+}
+
+/* ── Guests (→ SPEC §11.15, plan 38) ──────────────────────────────────────── */
+
+/**
+ * A live guest of this household. The id came off a form, so it is a claim
+ * until this says otherwise; a removed guest is no longer anyone's to change.
+ */
+function liveGuest(tx: Transaction, householdId: string, guestId: string): void {
+	const row = tx
+		.select({ id: ledgerPeople.id })
+		.from(ledgerPeople)
+		.where(
+			and(
+				eq(ledgerPeople.id, guestId),
+				eq(ledgerPeople.householdId, householdId),
+				eq(ledgerPeople.kind, 'guest'),
+				isNull(ledgerPeople.removedAt)
+			)
+		)
+		.get();
+	if (!row) throw new ExpenseError('not-found');
+}
+
+/**
+ * A guest's name, checked: trimmed, the member name limit, and nobody active
+ * in the household (member or guest, `except` aside) already called that,
+ * whatever the case: two rows called "Jonas" can't be told apart in a picker.
+ */
+function guestName(tx: Transaction, householdId: string, raw: string, except?: string): string {
+	const name = raw.trim();
+	if (!name || [...name].length > DISPLAY_NAME_MAX) throw new ExpenseError('guest-name');
+
+	const key = name.toLocaleLowerCase();
+	const taken = [
+		...tx
+			.select({ name: members.displayName })
+			.from(members)
+			.where(eq(members.householdId, householdId))
+			.all(),
+		...tx
+			.select({ name: ledgerPeople.name })
+			.from(ledgerPeople)
+			.where(
+				and(
+					eq(ledgerPeople.householdId, householdId),
+					eq(ledgerPeople.kind, 'guest'),
+					isNull(ledgerPeople.removedAt),
+					except ? ne(ledgerPeople.id, except) : undefined
+				)
+			)
+			.all()
+	];
+	if (taken.some((row) => row.name.trim().toLocaleLowerCase() === key)) {
+		throw new ExpenseError('guest-name-taken');
+	}
+	return name;
+}
+
+/**
+ * Add a guest [G2]: a name in the tally and nothing more (→ SPEC §11.15). Any
+ * member may. The colour is the app's: the first one no active person wears,
+ * else the least worn. Answers the new person's id, which the split sheet
+ * ticks in or the payer picker picks.
+ */
+export function addGuest(householdId: string, rawName: string): string {
+	return db.transaction((tx) => {
+		const name = guestName(tx, householdId, rawName);
+
+		const guests = tx
+			.select({ color: ledgerPeople.color })
+			.from(ledgerPeople)
+			.where(
+				and(
+					eq(ledgerPeople.householdId, householdId),
+					eq(ledgerPeople.kind, 'guest'),
+					isNull(ledgerPeople.removedAt)
+				)
+			)
+			.all();
+		if (guests.length >= GUESTS_MAX) throw new ExpenseError('guest-limit');
+
+		const memberColors = tx
+			.select({ color: members.color })
+			.from(members)
+			.where(eq(members.householdId, householdId))
+			.all();
+
+		return tx
+			.insert(ledgerPeople)
+			.values({
+				householdId,
+				kind: 'guest',
+				name,
+				color: leastUsedColor([...memberColors, ...guests].map((row) => row.color))
+			})
+			.returning({ id: ledgerPeople.id })
+			.get().id;
+	});
+}
+
+export function renameGuest(householdId: string, guestId: string, rawName: string): void {
+	db.transaction((tx) => {
+		liveGuest(tx, householdId, guestId);
+		const name = guestName(tx, householdId, rawName, guestId);
+		tx.update(ledgerPeople).set({ name }).where(eq(ledgerPeople.id, guestId)).run();
+	});
+}
+
+/**
+ * "Include in new expenses" [G5]. Stored whatever the default split is, and
+ * only read while it is equal (→ `split-draft` `draftFromDefault`): under a %
+ * default a switch left on does nothing rather than invent a percentage.
+ */
+export function setGuestIncludeInNew(householdId: string, guestId: string, on: boolean): void {
+	db.transaction((tx) => {
+		liveGuest(tx, householdId, guestId);
+		tx.update(ledgerPeople).set({ includeInNew: on }).where(eq(ledgerPeople.id, guestId)).run();
+	});
+}
+
+/** One person's balance from the live rows: what they paid minus their shares. */
+function balanceOf(tx: Transaction, householdId: string, personId: string): number {
+	const paid = tx
+		.select({ amountMinor: expenses.amountMinor })
+		.from(expenses)
+		.where(
+			and(
+				eq(expenses.householdId, householdId),
+				eq(expenses.paidById, personId),
+				isNull(expenses.deletedAt)
+			)
+		)
+		.all()
+		.reduce((sum, row) => sum + row.amountMinor, 0);
+	const owed = tx
+		.select({ shareMinor: expenseShares.shareMinor })
+		.from(expenseShares)
+		.innerJoin(expenses, eq(expenseShares.expenseId, expenses.id))
+		.where(
+			and(
+				eq(expenses.householdId, householdId),
+				eq(expenseShares.personId, personId),
+				isNull(expenses.deletedAt)
+			)
+		)
+		.all()
+		.reduce((sum, row) => sum + row.shareMinor, 0);
+	return paid - owed;
+}
+
+/**
+ * Remove a settled guest [G5] (→ SPEC §11.15): refused while they owe or are
+ * owed anything. They leave every picker, their link stops working, and every
+ * series they pay or share in stops, as when a member leaves (→ DECISIONS
+ * #180); their name stays on every old expense. There is no way back: adding
+ * the same name again makes a new person.
+ */
+export function removeGuest(householdId: string, guestId: string): void {
+	db.transaction((tx) => {
+		liveGuest(tx, householdId, guestId);
+		if (balanceOf(tx, householdId, guestId) !== 0) throw new ExpenseError('guest-balance');
+		tx.update(ledgerPeople)
+			.set({ removedAt: new Date(), includeInNew: false, shareToken: null })
+			.where(eq(ledgerPeople.id, guestId))
+			.run();
+		stopSeriesOf(tx, householdId, guestId);
+	});
+}
+
+/* ── A guest's page, /g/<token> (→ SPEC §11.15, plan 38 step 2) ───────────── */
+
+/** 32 random bytes, base64url: 43 characters, nothing to guess. */
+const TOKEN = /^[A-Za-z0-9_-]{43}$/;
+
+function newToken(): string {
+	return randomBytes(32).toString('base64url');
+}
+
+/**
+ * The guest's link token, made the first time someone shares or copies the
+ * link [G5]. Stored readable rather than hashed, so the link can be shown and
+ * copied again by any member (→ DECISIONS #288).
+ */
+export function guestShareToken(householdId: string, guestId: string): string {
+	return db.transaction((tx) => {
+		liveGuest(tx, householdId, guestId);
+		const row = tx
+			.select({ token: ledgerPeople.shareToken })
+			.from(ledgerPeople)
+			.where(eq(ledgerPeople.id, guestId))
+			.get();
+		if (row?.token) return row.token;
+		const token = newToken();
+		tx.update(ledgerPeople).set({ shareToken: token }).where(eq(ledgerPeople.id, guestId)).run();
+		return token;
+	});
+}
+
+/** "Make a new link" [G5]: the old one stops working at once. */
+export function renewGuestShareToken(householdId: string, guestId: string): string {
+	return db.transaction((tx) => {
+		liveGuest(tx, householdId, guestId);
+		const token = newToken();
+		tx.update(ledgerPeople).set({ shareToken: token }).where(eq(ledgerPeople.id, guestId)).run();
+		return token;
+	});
+}
+
+/** One row of the guest's list [G6], told from the guest's side. */
+export type GuestPageItem =
+	| {
+			kind: 'expense';
+			description: string;
+			category: ExpenseCategory;
+			date: CalendarDate;
+			/** Who paid; null when it was the guest. */
+			paidBy: string | null;
+			amountMinor: number;
+			/** The guest's own share, and nobody else's. */
+			shareMinor: number;
+	  }
+	| {
+			kind: 'payment';
+			date: CalendarDate;
+			/** Null on the guest's side of it. */
+			from: string | null;
+			to: string | null;
+			amountMinor: number;
+	  };
+
+/**
+ * Everything the page [G6] [G7] shows, and only that: the guest's name, the
+ * members' names and colours, the guest's own payments to make or receive,
+ * and the rows the guest is part of with their share alone. No ids, no
+ * household name, no other share, no row the guest isn't in.
+ */
+export type GuestPage = {
+	name: string;
+	color: string;
+	currency: string;
+	/** The household's timezone, for "today" in the day labels. */
+	timezone: string;
+	members: { name: string; color: string }[];
+	/** The simplified payments that involve the guest, largest first. */
+	payments: { owe: boolean; name: string; amountMinor: number }[];
+	items: GuestPageItem[];
+	/** What the guest paid for expenses, and what their shares come to. */
+	paidMinor: number;
+	shareMinor: number;
+};
+
+/**
+ * The page's read, the one that starts from a token instead of a household:
+ * it looks the token up by its unique index, then reads through the same
+ * `listPeople` · `listLedger` · `balancesOf` the tab does, so the page and the
+ * app can never disagree. Null for an unknown, replaced or removed guest's
+ * token: one answer for all three [G8].
+ */
+export function guestPage(token: string): GuestPage | null {
+	if (!TOKEN.test(token)) return null;
+	const guest = db
+		.select({
+			id: ledgerPeople.id,
+			householdId: ledgerPeople.householdId,
+			name: ledgerPeople.name,
+			color: ledgerPeople.color
+		})
+		.from(ledgerPeople)
+		.where(
+			and(
+				eq(ledgerPeople.shareToken, token),
+				eq(ledgerPeople.kind, 'guest'),
+				isNull(ledgerPeople.removedAt)
+			)
+		)
+		.get();
+	if (!guest) return null;
+
+	const household = db
+		.select({ currency: households.currency, timezone: households.timezone })
+		.from(households)
+		.where(eq(households.id, guest.householdId))
+		.get();
+	if (!household) return null;
+
+	const people = listPeople(guest.householdId);
+	const ledger = listLedger(guest.householdId, people);
+	const { payments } = balancesOf(people, ledger);
+	const nameOf = new Map(people.map((person) => [person.id, person.name]));
+	const name = (id: string) => (id === guest.id ? null : (nameOf.get(id) ?? '?'));
+
+	const items: GuestPageItem[] = [];
+	let paidMinor = 0;
+	let shareMinor = 0;
+	for (const item of ledger) {
+		const share = item.shares.find((row) => row.personId === guest.id);
+		if (item.paidById !== guest.id && !share) continue;
+		if (item.kind === 'payment') {
+			items.push({
+				kind: 'payment',
+				date: item.date,
+				from: name(item.paidById),
+				to: name(item.shares[0]?.personId ?? ''),
+				amountMinor: item.amountMinor
+			});
+			continue;
+		}
+		if (item.paidById === guest.id) paidMinor += item.amountMinor;
+		shareMinor += share?.shareMinor ?? 0;
+		items.push({
+			kind: 'expense',
+			description: item.description ?? '',
+			category: item.category ?? 'other',
+			date: item.date,
+			paidBy: name(item.paidById),
+			amountMinor: item.amountMinor,
+			shareMinor: share?.shareMinor ?? 0
+		});
+	}
+
+	return {
+		name: guest.name,
+		color: guest.color,
+		currency: household.currency,
+		timezone: household.timezone,
+		members: people
+			.filter((person) => person.memberId !== null)
+			.map((person) => ({ name: person.name, color: person.color })),
+		payments: payments
+			.filter((payment) => payment.from === guest.id || payment.to === guest.id)
+			.sort((a, b) => b.amountMinor - a.amountMinor)
+			.map((payment) => ({
+				owe: payment.from === guest.id,
+				name: nameOf.get(payment.from === guest.id ? payment.to : payment.from) ?? '?',
+				amountMinor: payment.amountMinor
+			})),
+		items,
+		paidMinor,
+		shareMinor
+	};
 }

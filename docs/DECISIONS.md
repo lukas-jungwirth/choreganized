@@ -4199,3 +4199,121 @@ store_id` NULL already means "no memory" (a deleted list), and telling the two a
      the address has more closing than opening ones, so `…/Datenschutz-Grundverordnung_(EU)`
      stays whole and `(siehe https://…)` still loses its bracket. **Left as it was**: email
      addresses, whose pattern already ends on a letter.
+282. **A guest is a ledger person and nothing more** (plan 38 step 1, 2026-11-21; → SPEC §11.15,
+     DATA-MODEL "ledger_people"). The row plan 29 prepared (`kind = 'guest'`, `memberId` and
+     `userId` NULL, → #168) gains three columns in one migration (`0025`): `includeInNew`,
+     `removedAt` and `shareToken`, the last unused until step 2 so the schema changes once.
+     A guest's `name` and `color` are the truth, not a snapshot. **Guests and former members
+     are both `memberId IS NULL`, and they are not the same**: `ExpensePerson` says `guest` and
+     `removed`, and every place that read "no member" as "has left" was looked at. The roster
+     is members, then active guests, then former members and removed guests. Pickable: members
+     and active guests always, anyone else only while owed or owing (a removed guest is square
+     when removed, so only an edit could bring them back). The "Former member" tag becomes
+     "Guest" for a guest. A **series** may name an active guest (removing them stops it, as
+     leaving does a member's, through the same `stopSeriesOf`), never a former member or a
+     removed guest. A **removed guest** may not be named in a new expense or payment, but an
+     edit of an old row that already names them keeps them (`peopleIn`'s `keep`), or the
+     dinner they shared could never be corrected. Remind and the default split already read
+     `memberId IS NOT NULL` and needed no change.
+283. **Guests stand outside the default split, and "Include in new expenses" only adds to an
+     equal one** (plan 38; → SPEC §11.5, §11.15). `setSplitDefault` and the weights only know
+     current members, so a guest can never get a `defaultWeight`, and the split sheet's "Make
+     this the household default" is not offered with a guest ticked in (it already required
+     every ticked person to be a member). The switch is stored as set, whatever the default,
+     and read only by `draftFromDefault` under an equal default (or the equal fallback): with a
+     % or shares default it is disabled in the sheet and the guest is simply left out, since a
+     percentage nobody agreed to would otherwise be invented. Recurring series ignore it.
+284. **Who pays whom is simplified across guests too** (plan 38; → SPEC §11.6, §11.15). One
+     ledger, one `settlePayments` over everyone, so the card may say "Jonas owes Elisabeth"
+     although Jonas only shared costs with Lukas. The sums are right either way, and keeping a
+     guest's debts with the people they shared with would be a second, pairwise rule the app
+     deliberately doesn't have (#167). Open with Lukas in the plan; built as the plan assumes.
+285. **A guest's name follows the member rules, compared without case, and the colour is the
+     app's** (plan 38; → SPEC §11.15). Trimmed, at most `DISPLAY_NAME_MAX` (20) characters,
+     refused when any member or active guest already has it in any case: two "Jonas" rows can't
+     be told apart in a picker. A removed guest frees the name; adding it again makes a new
+     person, never the old one. The colour is `member-colors` `leastUsedColor`: the first
+     palette colour no member or active guest wears, else the least worn, ties in palette
+     order, so a sixth person still gets a colour. Members renaming themselves are not checked
+     against guests: a member's profile is theirs, and the clash is the household's to notice.
+     At most 10 active guests (`GUESTS_MAX`).
+286. **"Someone else…" is an option that never stays picked, and a guest is reached from the
+     card by their name** (plan 38; → SPEC §11.3, §11.2, [G1]–[G5]). A `<select>` can't hold a
+     button, so the payer picker's last option opens Add a guest and puts the select straight
+     back on the current payer; only an added guest changes it, so closing the sheet changes
+     nothing. Add a guest is its own sheet and form, mounted outside the add sheet's form
+     (forms don't nest). On the balance card a guest's avatar and name are one button with a
+     chevron to their sheet; on a one-person card about a guest, "Jonas's page" stands where
+     Remind would, **in both directions** (owed and owe), not only where Remind would have been
+     (owed): the sheet is where the guest's link will live, and you may want it either way.
+     Removing a guest confirms in a centre modal like removing a member, naming the series it
+     stops, and is disabled with a reason while a balance is open (checked again in the
+     service, inside the transaction). The card's rows now **wrap**: at twice the text size an
+     avatar, a name, the amount and Settle up no longer fit across 390px, which no screen had
+     shown before because the visual household's card has a single payment; Settle up drops
+     under the row instead of pushing the page sideways.
+287. **A third e2e account, `guests`, seeded with the weekend with Jonas** (plan 38; → TESTING
+     "End-to-end", `tests/e2e/accounts.ts`). The visual screens of a guest need a household with
+     one, and adding Jonas to the shared seed would have changed every Expenses baseline and the
+     numbers the expense journeys read. `scripts/seed.ts --guests` spends the sketch's four
+     expenses (hut, groceries, dinner, fuel paid by Jonas) in place of the ordinary week and
+     its series, so the card reads "Elisabeth and Jonas owe you €299.80" as in [G3]. Screens
+     with `account: 'guests'` in `tests/visual/screens.ts` run under that account's session;
+     nothing mutates it. The guest journey runs in `owner`'s household and removes its guests
+     again, with an `afterEach` that deletes them from the database if it fails half-way.
+288. **A guest's link token is stored readable, made on first use, and looked up by its index**
+     (plan 38 step 2, 2026-11-21; → SPEC §11.15, DATA-MODEL "ledger_people"). 32 random bytes
+     as base64url (43 characters) in `ledger_people.share_token`, unique. Readable rather than
+     hashed, so any member can show and copy the same link again from the guest's sheet; a hash
+     would need a new link every time someone wants to resend it. The secret it guards is a
+     guest's own tally, and the household already sees it in full. It is made by the first
+     Share link or Copy (`guestShareToken`), not when the guest is added, so a guest nobody
+     sends a link to has none. The page finds the guest by the unique index alone
+     (`guestPage`), after a shape check, so there is no compare to time. The token reaches the
+     household's own pages as `ExpensePerson.shareToken`, for active guests only; the page's
+     data is built field by field and carries no id at all.
+289. **The guest's page knows no session, offers no install, and is kept out of indexes and
+     caches** (plan 38 step 2; → SPEC §11.15, ARCHITECTURE routing map). `/g/<token>` sits
+     outside `(app)`, beside `/j` and `/legal`, on `PUBLIC_PAGES` with its reason.
+     `hooks.server.ts` does not look up a session on `/g/` at all: the page is the same for
+     whoever holds the link, a member opening it included, so it speaks the request's language
+     as for a signed-out visitor. The same hook sets `X-Robots-Tag: noindex, nofollow`,
+     `Referrer-Policy: no-referrer` and `Cache-Control: private, no-store` on every `/g/`
+     response, the 404 included, and leaves app.html's manifest link out, so the browser offers
+     no "Add to home screen" for the household's app. The service worker is left as on every
+     page: it never caches a page (network first, → #56). The theme is the device's, or the
+     theme cookie if that device has one, as on every page.
+290. **A dead link names nobody** (plan 38 step 2; → SPEC §11.15 [G8]). An unknown token, a
+     replaced one and a removed guest's are one answer: status 404 and "This link no longer
+     works", from `routes/g/[token]/+error.svelte`, with no name, no household and no hint which
+     of the three it was. Whoever holds an old link, after a falling-out say, learns nothing
+     from it.
+291. **Share falls back to Copy, Copy to a field; the legal links lead back to the page** (plan 38
+     step 2; → SPEC §11.15, §13). The first Share or Copy has to fetch the token before it can
+     share or copy, and a browser may refuse either that long after the tap: Share then copies,
+     and a refused copy shows the link in a field to copy by hand, rather than failing quietly.
+     Closing the share sheet is not a failure. The page's Privacy · Imprint links carry
+     `?from=guest-<token>` (`utils/legal`, parsed strictly to the token's shape like an invite
+     code), so back from them returns to the guest's page instead of to sign-in, which a guest
+     has no use for. The token then sits in that page's address too; it is the guest's own
+     history, and the referrer policy keeps it from going further.
+292. **Lukas's notes on the guest page, and the review of plan 38** (2026-11-21; → SPEC §11.15).
+     The page's corner shows the deploy's real app icon, not the sketch's placeholder square
+     (the root layout hands every page `icons`, the stage's icon folder, → #236). A quiet
+     **Get the app** card under the list opens this deploy's sign-in and a **No thanks** whose answer
+     lives in `localStorage`: a guest has no account to store it on, and losing it only means
+     the card comes back. The German footer reads "Schreibgeschützt … verwalten diese
+     Abrechnung" (my reading of Lukas's "Read-only"), the switch says what it does ("Added to
+     every new expense automatically"), and the link box no longer adds "Nothing else from
+     your household". The review found four things worth fixing: **one Escape closed two
+     stacked sheets**, because the sheet that took it never called `preventDefault()` and the
+     browser then closed the dialog underneath as well (`BottomSheet`, `CenterModal`; older than
+     plan 38, which only added more stacks); **a removed guest could owe again** once an old
+     row was edited, deleted or restored, and then could not be settled, so `peopleIn` now lets
+     a removed guest be named while their balance is not zero, as the settle sheet already
+     offered; **the first Share on an iPhone could not share**, since Safari drops the tap's
+     permission across the token round trip, so the sheet now makes the token when it opens
+     (amends #288's "on first use"), and Share keeps the buttons busy until the system sheet
+     closes; and the guest page's error screen now tells a dead link (404) from the server
+     failing. Kept as they are: a member may still rename themselves to a guest's name (#285),
+     and the service worker still registers on the guest page (#289).

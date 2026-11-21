@@ -4,6 +4,7 @@
  *   npm run db:seed -- you@example.com
  *   npm run db:seed -- you@example.com --full-house
  *   npm run db:seed -- you@example.com --history
+ *   npm run db:seed -- you@example.com --guests
  *
  * `--full-house` fills the household to as many members as the app allows —
  * one per colour in the member palette, since two members can't share one —
@@ -15,6 +16,11 @@
  * the weekly shop, the monthly bills, evenings out, a trip, a settle-up a
  * month — so All activity [9f] has months and a last year to page and filter
  * through. Off by default for the same reason.
+ *
+ * `--guests` spends the week differently: the weekend in Südtirol with Jonas,
+ * a guest (→ plan 38, design/sketches/expense-guests.html), in place of the
+ * ordinary week and its monthly series, so the balance card reads the
+ * sketch's "Elisabeth and Jonas owe you €299.80" [G3].
  *
  * The email is the Google account you signed in with: the seed binds the demo
  * household to that existing user, so **sign in once before running it**. If you
@@ -65,6 +71,7 @@ import { MEMBER_COLORS } from '../src/lib/member-colors.ts';
 import {
 	SEED_EXTRA_MEMBER_NAMES,
 	SEED_HOUSEHOLD_NAME,
+	SEED_GUEST_TOKEN,
 	SEED_HOUSEMATE_NAME,
 	SEED_RECIPE_NAMES,
 	SEED_CHECKLIST_ITEMS,
@@ -114,10 +121,11 @@ const JUST_BOUGHT = new Date(Date.now() - 90 * 60_000);
 const args = process.argv.slice(2);
 const fullHouse = args.includes('--full-house');
 const history = args.includes('--history');
+const guests = args.includes('--guests');
 const email = args.find((arg) => !arg.startsWith('--'));
 
 if (!email) {
-	console.error('Usage: npm run db:seed -- you@example.com [--full-house] [--history]');
+	console.error('Usage: npm run db:seed -- you@example.com [--full-house] [--history] [--guests]');
 	process.exit(1);
 }
 
@@ -966,7 +974,8 @@ const seeded = db.transaction((tx) => {
 		category: (typeof expenses.$inferInsert)['category'],
 		amountMinor: number,
 		paidById: string,
-		to?: string
+		to?: string,
+		among: string[] = both
 	) => {
 		const id = sid('expense', key);
 		const created = tx
@@ -991,7 +1000,7 @@ const seeded = db.transaction((tx) => {
 		if (!created) return;
 
 		// Equal halves; the odd cent goes to the first person, as the app does it.
-		const owers = to ? [to] : both;
+		const owers = to ? [to] : among;
 		const each = Math.floor(amountMinor / owers.length);
 		tx.insert(expenseShares)
 			.values(
@@ -1005,48 +1014,81 @@ const seeded = db.transaction((tx) => {
 			.run();
 	};
 
-	spend('billa', 0, 'Weekly shop · Billa', 'groceries', 4210, ownerPerson);
-	spend('pizza', 0, 'Pizza at Riva', 'eatingOut', 3180, housematePerson);
-	spend('soap', 2, 'Dish soap & sponges', 'household', 870, ownerPerson);
-	if (housematePerson !== ownerPerson) {
-		spend('payment', 2, null, null, 1800, housematePerson, ownerPerson);
+	// --guests: the weekend with Jonas (→ plan 38), instead of the week below.
+	if (guests && housematePerson !== ownerPerson) {
+		const jonas = sid('person', 'guest-jonas');
+		tx.insert(ledgerPeople)
+			.values({
+				id: jonas,
+				householdId,
+				kind: 'guest',
+				name: 'Jonas',
+				color: '#5C7FA3',
+				// A fixed link, so the screenshots of his page [G6] have an address.
+				shareToken: SEED_GUEST_TOKEN
+			})
+			.onConflictDoNothing()
+			.run();
+		const trip = [ownerPerson, housematePerson, jonas];
+		spend('g:hut', 3, 'Hut, two nights', 'travel', 42000, ownerPerson, undefined, trip);
+		spend(
+			'g:groceries',
+			2,
+			'Groceries for the hut',
+			'groceries',
+			9660,
+			housematePerson,
+			undefined,
+			trip
+		);
+		spend('g:dinner', 1, 'Dinner in Bozen', 'eatingOut', 14400, ownerPerson, undefined, trip);
+		spend('g:fuel', 1, 'Fuel and toll', 'transport', 13200, jonas, undefined, trip);
 	}
-	spend('strom', 4, 'Strom · Wien Energie', 'bills', 8640, ownerPerson);
-	spend('tickets', 5, 'Wiener Linien · 2 tickets', 'transport', 680, housematePerson);
 
-	// The electricity bill repeats monthly (→ plan 30): a series started from
-	// the expense above, next due a month after it, so Recurring [9h] has a row
-	// and Strom carries the repeat badge. The sweep logs nothing until then.
-	const stromDate = addDays(today, -4);
-	const anchorDay = Number(stromDate.slice(8, 10));
-	const series = sid('series', 'strom');
-	const started = tx
-		.insert(expenseRecurrences)
-		.values({
-			id: series,
-			householdId,
-			description: 'Strom · Wien Energie',
-			category: 'bills',
-			amountMinor: 8640,
-			paidById: ownerPerson,
-			splitMode: 'equal',
-			unit: 'month',
-			anchorDay,
-			nextDate: addRepeat(stromDate, 'month', anchorDay),
-			createdByMemberId: ownerMemberId,
-			createdAt: daysAgo(4, 19),
-			updatedAt: daysAgo(4, 19)
-		})
-		.onConflictDoNothing()
-		.run().changes;
-	if (started) {
-		tx.insert(expenseRecurrenceShares)
-			.values(both.map((personId) => ({ recurrenceId: series, personId, input: null })))
-			.run();
-		tx.update(expenses)
-			.set({ recurrenceId: series })
-			.where(eq(expenses.id, sid('expense', 'strom')))
-			.run();
+	if (!guests) {
+		spend('billa', 0, 'Weekly shop · Billa', 'groceries', 4210, ownerPerson);
+		spend('pizza', 0, 'Pizza at Riva', 'eatingOut', 3180, housematePerson);
+		spend('soap', 2, 'Dish soap & sponges', 'household', 870, ownerPerson);
+		if (housematePerson !== ownerPerson) {
+			spend('payment', 2, null, null, 1800, housematePerson, ownerPerson);
+		}
+		spend('strom', 4, 'Strom · Wien Energie', 'bills', 8640, ownerPerson);
+		spend('tickets', 5, 'Wiener Linien · 2 tickets', 'transport', 680, housematePerson);
+
+		// The electricity bill repeats monthly (→ plan 30): a series started from
+		// the expense above, next due a month after it, so Recurring [9h] has a row
+		// and Strom carries the repeat badge. The sweep logs nothing until then.
+		const stromDate = addDays(today, -4);
+		const anchorDay = Number(stromDate.slice(8, 10));
+		const series = sid('series', 'strom');
+		const started = tx
+			.insert(expenseRecurrences)
+			.values({
+				id: series,
+				householdId,
+				description: 'Strom · Wien Energie',
+				category: 'bills',
+				amountMinor: 8640,
+				paidById: ownerPerson,
+				splitMode: 'equal',
+				unit: 'month',
+				anchorDay,
+				nextDate: addRepeat(stromDate, 'month', anchorDay),
+				createdByMemberId: ownerMemberId,
+				createdAt: daysAgo(4, 19),
+				updatedAt: daysAgo(4, 19)
+			})
+			.onConflictDoNothing()
+			.run().changes;
+		if (started) {
+			tx.insert(expenseRecurrenceShares)
+				.values(both.map((personId) => ({ recurrenceId: series, personId, input: null })))
+				.run();
+			tx.update(expenses)
+				.set({ recurrenceId: series })
+				.where(eq(expenses.id, sid('expense', 'strom')))
+				.run();
+		}
 	}
 
 	// --history: older spending, a day at a time back to fourteen months ago.
@@ -1126,7 +1168,11 @@ console.log(`  household  ${seeded.householdName} — ${seeded.members}`);
 console.log('  shopping   3 stores · 10 items (2 already checked off)');
 console.log('  cooking    2 recipes · meals planned for today, tomorrow and the day after');
 console.log('  tasks      7 tasks (overdue · today · upcoming · undated) · 8 history entries');
-console.log('  expenses   5 expenses · 1 settle-up · 1 monthly series');
+console.log(
+	guests
+		? '  expenses   a weekend with Jonas, a guest: 4 expenses split three ways'
+		: '  expenses   5 expenses · 1 settle-up · 1 monthly series'
+);
 if (history) console.log('  history    ~14 months of older expenses and monthly settle-ups');
 console.log(`  → ${rowsWritten() - before} rows written; anything already there was left alone.`);
 

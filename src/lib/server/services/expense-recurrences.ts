@@ -162,18 +162,23 @@ function readSeries(householdId: string, id: string | null): SeriesItem[] {
  * what leaving or removing them would stop (→ SPEC §11.13, DECISIONS #180).
  */
 export function seriesByMember(householdId: string): Record<string, string[]> {
-	const memberOf = new Map(
+	const byPerson = seriesByPerson(householdId);
+	return Object.fromEntries(
 		listPeople(householdId)
-			.filter((person) => person.memberId !== null)
-			.map((person) => [person.id, person.memberId as string])
+			.filter((person) => person.memberId !== null && byPerson[person.id])
+			.map((person) => [person.memberId as string, byPerson[person.id]])
 	);
+}
+
+/**
+ * The running series each ledger person pays or shares in, by person id — what
+ * removing a guest would stop (→ SPEC §11.15), as leaving does for a member.
+ */
+export function seriesByPerson(householdId: string): Record<string, string[]> {
 	const named: Record<string, string[]> = {};
 	for (const series of listSeries(householdId)) {
 		const involved = new Set([series.paidById, ...series.shares.map((share) => share.personId)]);
-		for (const personId of involved) {
-			const memberId = memberOf.get(personId);
-			if (memberId) (named[memberId] ??= []).push(series.description);
-		}
+		for (const personId of involved) (named[personId] ??= []).push(series.description);
 	}
 	return named;
 }

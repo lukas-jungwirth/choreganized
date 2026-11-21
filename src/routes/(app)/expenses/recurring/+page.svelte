@@ -88,7 +88,7 @@
 							· {seriesSchedule(m, series, data.today)}
 						</span>
 					</span>
-					<Avatar name={payer?.name} color={payer?.color} size={24} />
+					<Avatar name={payer?.name} color={payer?.color} guest={payer?.guest} size={24} />
 				</button>
 			</li>
 		{/each}

@@ -100,7 +100,7 @@
 	{@const person = byId.get(value)}
 	<div class="end">
 		<span class="end-label" id="{uid}-{side}-label">{label}</span>
-		<Avatar name={person?.name} color={person?.color} size={36} />
+		<Avatar name={person?.name} color={person?.color} guest={person?.guest} size={36} />
 		<span class="select">
 			<select
 				{name}
