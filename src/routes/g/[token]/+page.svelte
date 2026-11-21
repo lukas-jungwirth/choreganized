@@ -3,14 +3,17 @@
 	sentence from the guest's side, then every expense and payment they are part
 	of, newest first, each with their share alone. Nothing to do on it: no
 	forms, no sign-in, no tab bar, no install prompt, no live stream. A reload
-	shows the current state.
+	shows the current state. Under the list, one "Get the app" card the guest
+	can close for good (GetAppCard).
 
 	The frames: `design/sketches/expense-guests.html` [G6] [G7].
 -->
 <script lang="ts">
 	import Check from '@lucide/svelte/icons/check';
+	import GetAppCard from '$lib/components/expenses/GetAppCard.svelte';
 	import CategoryIcon from '$lib/components/expenses/CategoryIcon.svelte';
 	import LegalLinks from '$lib/components/legal/LegalLinks.svelte';
+	import GuestBrand from '$lib/components/expenses/GuestBrand.svelte';
 	import Screen from '$lib/components/shell/Screen.svelte';
 	import Avatar from '$lib/components/ui/Avatar.svelte';
 	import { messages } from '$lib/i18n';
@@ -39,7 +42,7 @@
 </svelte:head>
 
 <Screen>
-	<p class="brand"><span class="mark" aria-hidden="true"></span>{m.common.appName}</p>
+	<GuestBrand />
 
 	<h1>{g.title(guest.name)}</h1>
 	<p class="with">
@@ -61,7 +64,7 @@
 		</section>
 	{:else}
 		<section class="card answer" data-testid="guest-balance">
-			{#each guest.payments as payment (payment.name)}
+			{#each guest.payments as payment, index (index)}
 				<h2 class="sentence" class:owe={payment.owe}>
 					{@render rich(
 						payment.owe
@@ -111,6 +114,8 @@
 		{/if}
 	</div>
 
+	<GetAppCard />
+
 	<footer class="foot">
 		<p>{g.foot(memberNames)}</p>
 		<LegalLinks links={data.legal} from={data.legalFrom} />
@@ -118,23 +123,6 @@
 </Screen>
 
 <style>
-	.brand {
-		display: flex;
-		align-items: center;
-		gap: 8px;
-		margin: 6px 0 22px;
-		font-size: var(--fs-14);
-		font-weight: 700;
-		color: var(--text-3);
-	}
-
-	.mark {
-		width: 22px;
-		height: 22px;
-		border-radius: 7px;
-		background: var(--sage);
-	}
-
 	h1 {
 		margin: 0;
 		font-size: var(--fs-32);

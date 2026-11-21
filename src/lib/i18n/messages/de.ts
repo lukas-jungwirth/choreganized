@@ -136,7 +136,7 @@ export const de: Messages = {
 	/* ── The kit's own words ───────────────────────────────────────────────── */
 	ui: {
 		close: 'Schließen',
-		dismiss: 'Ausblenden',
+		dismiss: 'Nein danke',
 		search: 'Suchen',
 		clearSearch: 'Suche löschen',
 		/** Kein `toLowerCase()`: deutsche Substantive bleiben großgeschrieben. */
@@ -1487,7 +1487,7 @@ export const de: Messages = {
 			addTitle: 'Gast hinzufügen',
 			addSubtitle: 'Jemand außerhalb des Haushalts, der sich Kosten mit euch teilt.',
 			name: 'Name',
-			addCaption: 'Kein Konto nötig. Einen Link zu seinem Anteil könnt ihr danach schicken.',
+			addCaption: 'Kein Konto nötig. Einen Link zum Anteil könnt ihr danach schicken.',
 			addNamed: (name: string) => (name ? `${name} hinzufügen` : 'Hinzufügen'),
 			group: 'Gäste',
 			groupCaption:
@@ -1508,19 +1508,19 @@ export const de: Messages = {
 			page: (name: string) => `Seite von ${name}`,
 			saveName: 'Namen speichern',
 			includeInNew: 'Bei neuen Ausgaben dabei',
-			includeInNewDetail: 'Für eine Reise. Danach wieder ausschalten.',
-			includeOnlyEqual: 'Nur bei gleicher Standard-Aufteilung',
+			includeInNewDetail: 'Wird automatisch zu jeder neuen Ausgabe hinzugefügt.',
+			includeOnlyEqual: 'Nur wenn die Standard-Aufteilung „Gleich“ ist',
 			remove: 'Gast entfernen',
 			removeWhenSettled: (name: string) => `Möglich, sobald mit ${name} alles ausgeglichen ist.`,
 			removeConfirm: (name: string) => `${name} entfernen?`,
 			removeCopy:
 				'Der Gast verschwindet aus allen Auswahllisten, sein Link funktioniert nicht mehr. Sein Name bleibt bei den Ausgaben, an denen er beteiligt war. Fügt ihr ihn wieder hinzu, ist er ein neuer Gast.',
 			link: {
-				about:
-					'Zeigt den Stand und die Ausgaben, an denen der Gast beteiligt ist. Sonst nichts aus eurem Haushalt.',
+				about: 'Zeigt den Stand und die Ausgaben, an denen der Gast beteiligt ist.',
 				share: 'Link teilen',
 				copy: 'Kopieren',
 				copied: 'Link kopiert',
+				failed: 'Der Link konnte nicht erstellt werden. Versuch es noch einmal.',
 				manual: 'Hier ist der Link zum Kopieren:',
 				shareText: 'Das haben wir geteilt:',
 				renew: 'Neuen Link erstellen',
@@ -1560,9 +1560,17 @@ export const de: Messages = {
 			totalShare: 'Dein Anteil',
 			empty: 'Noch nichts geteilt.',
 			foot: (names: string[]) =>
-				`Nur zum Lesen. ${list(names)} ${names.length === 1 ? 'führt' : 'führen'} diese Abrechnung mit Haushaltsheld.`,
+				`Schreibgeschützt. ${list(names)} ${names.length === 1 ? 'verwaltet' : 'verwalten'} diese Abrechnung mit Haushaltsheld.`,
+			getApp: {
+				title: 'Haushaltsheld für deinen Haushalt',
+				detail: 'Einkauf, Kochen, Aufgaben und geteilte Kosten in einer App.',
+				action: 'App holen',
+				dismiss: 'Ausblenden'
+			},
 			deadTitle: 'Dieser Link funktioniert nicht mehr',
-			deadCopy: 'Frag die Person, die ihn dir geschickt hat, nach einem neuen.'
+			deadCopy: 'Frag die Person, die ihn dir geschickt hat, nach einem neuen.',
+			brokenTitle: 'Diese Seite kann gerade nicht angezeigt werden',
+			brokenCopy: 'Versuch es in einer Weile noch einmal.'
 		},
 
 		home: {
@@ -1607,9 +1615,9 @@ export const de: Messages = {
 			seriesStart: 'Eine wiederkehrende Ausgabe kann höchstens vor einem Jahr beginnen.',
 			seriesPerson:
 				'Jemand darin ist nicht mehr im Haushalt, deshalb kann sie sich nicht wiederholen.',
-			guestName: 'Gib dem Gast einen Namen mit höchstens 20 Zeichen.',
+			guestName: (max: number) => `Gib dem Gast einen Namen mit höchstens ${max} Zeichen.`,
 			guestNameTaken: 'So heißt schon jemand im Haushalt.',
-			guestLimit: 'Ein Haushalt kann 10 Gäste gleichzeitig haben.',
+			guestLimit: (max: number) => `Ein Haushalt kann ${max} Gäste gleichzeitig haben.`,
 			guestBalance: 'Ein Gast kann erst entfernt werden, wenn alles ausgeglichen ist.'
 		}
 	},

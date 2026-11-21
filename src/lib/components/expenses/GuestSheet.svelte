@@ -5,8 +5,10 @@
 	card [G3].
 
 	The link box: the guest's read-only page, `/g/<token>` (→ SPEC §11.15). The
-	token is made on the first Share link or Copy and stays the same after
-	that; "Make a new link" replaces it behind one confirm. Share link uses the
+	token is made when the sheet first opens for a guest without one, so Share
+	link and Copy never wait on the network inside the tap (Safari drops the
+	tap's permission to share or copy across a round trip), and stays the same
+	after that; "Make a new link" replaces it behind one confirm. Share link uses the
 	system share sheet where the browser has one, else it copies.
 
 	Each part is a form of its own, posting to `?/updateGuest` or
@@ -67,6 +69,11 @@
 		if (!open) onclose();
 	});
 
+	// Have the link ready before anyone taps Share link (see the top comment).
+	$effect(() => {
+		if (untrack(() => token) === null) void linkToken();
+	});
+
 	const amount = $derived(m.expenses.money(Math.abs(balance), currency));
 	const renamed = $derived(name.trim() !== '' && name.trim() !== guest.name);
 	const settled = $derived(balance === 0);
@@ -99,10 +106,12 @@
 		});
 		const result = deserialize(await response.text());
 		if (result.type !== 'success' || typeof result.data?.token !== 'string') {
+			// A failure says what; anything else (signed out, a server error) still
+			// says something rather than leaving the buttons doing nothing.
 			error =
 				result.type === 'failure' && typeof result.data?.error === 'string'
 					? result.data.error
-					: undefined;
+					: m.expenses.guests.link.failed;
 			return null;
 		}
 		token = result.data.token;
@@ -136,11 +145,17 @@
 		manual = null;
 		linkStatus = null;
 		const value = await linkToken();
-		linking = false;
-		if (!value) return;
+		if (!value) {
+			linking = false;
+			return;
+		}
 		try {
+			// Busy until the system sheet is gone: a second tap while it is up
+			// would be refused and wrongly fall back to "Link copied".
 			await navigator.share({ text: m.expenses.guests.link.shareText, url: address(value) });
+			linking = false;
 		} catch (cause) {
+			linking = false;
 			// Closing the share sheet is no failure; anything else falls back to copying.
 			if ((cause as Error)?.name !== 'AbortError') await copyLink();
 		}
@@ -419,7 +434,7 @@
 
 	.renew {
 		display: block;
-		margin-top: 10px;
+		margin-top: 18px;
 		padding: 4px 0;
 		font-size: var(--fs-15);
 		font-weight: 600;

@@ -57,6 +57,9 @@
 	function onKeydown(event: KeyboardEvent) {
 		if (!open || event.key !== 'Escape') return;
 		if (!ownsEscape(event.target)) return;
+		// Taken either way, so the browser's own Escape can't reach the sheet
+		// underneath once this one is gone (→ BottomSheet `onKeydown`).
+		event.preventDefault();
 		if (dismissible) open = false;
 	}
 

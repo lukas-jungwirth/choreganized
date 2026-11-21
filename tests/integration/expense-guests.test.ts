@@ -201,6 +201,45 @@ describe('removing a guest', () => {
 		);
 	});
 
+	it('can still be settled when an old row moves their balance after the removal', () => {
+		const { householdId, owner, lukas, elisabeth } = household();
+		const jonas = addGuest(householdId, 'Jonas');
+		const id = createExpense(
+			householdId,
+			owner.id,
+			dinner(lukas, [lukas, elisabeth, jonas], 900),
+			TODAY
+		);
+		createPayment(
+			householdId,
+			owner.id,
+			{ fromId: jonas, toId: lukas, amountMinor: 300, date: TODAY },
+			TODAY
+		);
+		removeGuest(householdId, jonas);
+
+		// The dinner was €30, not €9: Jonas owes €7 more, after his removal.
+		updateExpense(householdId, owner.id, id, dinner(lukas, [lukas, elisabeth, jonas], 3000), TODAY);
+		createPayment(
+			householdId,
+			owner.id,
+			{ fromId: jonas, toId: lukas, amountMinor: 700, date: TODAY },
+			TODAY
+		);
+
+		// Settled again, so he is out of reach once more.
+		assert.throws(
+			() =>
+				createPayment(
+					householdId,
+					owner.id,
+					{ fromId: jonas, toId: lukas, amountMinor: 100, date: TODAY },
+					TODAY
+				),
+			rejects('person')
+		);
+	});
+
 	it('takes them out of new rows, keeps them in old ones, and frees the name', () => {
 		const { householdId, owner, lukas, elisabeth } = household();
 		const jonas = addGuest(householdId, 'Jonas');

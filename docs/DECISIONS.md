@@ -4297,3 +4297,23 @@ store_id` NULL already means "no memory" (a deleted list), and telling the two a
      code), so back from them returns to the guest's page instead of to sign-in, which a guest
      has no use for. The token then sits in that page's address too; it is the guest's own
      history, and the referrer policy keeps it from going further.
+292. **Lukas's notes on the guest page, and the review of plan 38** (2026-11-21; → SPEC §11.15).
+     The page's corner shows the deploy's real app icon, not the sketch's placeholder square
+     (the root layout hands every page `icons`, the stage's icon folder, → #236). A quiet
+     **Get the app** card under the list opens this deploy's sign-in and a **No thanks** whose answer
+     lives in `localStorage`: a guest has no account to store it on, and losing it only means
+     the card comes back. The German footer reads "Schreibgeschützt … verwalten diese
+     Abrechnung" (my reading of Lukas's "Read-only"), the switch says what it does ("Added to
+     every new expense automatically"), and the link box no longer adds "Nothing else from
+     your household". The review found four things worth fixing: **one Escape closed two
+     stacked sheets**, because the sheet that took it never called `preventDefault()` and the
+     browser then closed the dialog underneath as well (`BottomSheet`, `CenterModal`; older than
+     plan 38, which only added more stacks); **a removed guest could owe again** once an old
+     row was edited, deleted or restored, and then could not be settled, so `peopleIn` now lets
+     a removed guest be named while their balance is not zero, as the settle sheet already
+     offered; **the first Share on an iPhone could not share**, since Safari drops the tap's
+     permission across the token round trip, so the sheet now makes the token when it opens
+     (amends #288's "on first use"), and Share keeps the buttons busy until the system sheet
+     closes; and the guest page's error screen now tells a dead link (404) from the server
+     failing. Kept as they are: a member may still rename themselves to a guest's name (#285),
+     and the service worker still registers on the guest page (#289).

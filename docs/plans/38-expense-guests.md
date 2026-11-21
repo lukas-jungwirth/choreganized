@@ -87,7 +87,7 @@ removed guest cannot be brought back; adding the same name again makes a new per
   owe Lukas **€132.20**", one row per payment when there are several, "All settled up" [G7]).
   Under it, newest first, every expense the guest has a share in or paid, and every payment
   from or to them: description, date, category icon, who paid how much, and "your share". A
-  totals line: what they paid, what their share comes to. A footer: "Read only. Lukas and
+  totals line: what they paid, what their share comes to. A "Get the app" card the guest can close for good (added 2026-11-21 after Lukas tried it, → DECISIONS #292). A footer: "Read only. Lukas and
   Elisabeth keep this tally with Haushaltsheld.", plus the Impressum and Datenschutz links
   when they are configured (§13).
 - **What it never shows**: any expense the guest is not part of, anyone else's share,
