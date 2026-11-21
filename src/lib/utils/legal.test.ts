@@ -4,13 +4,23 @@
  */
 import assert from 'node:assert/strict';
 import { describe, it } from 'vitest';
-import { inviteFrom, legalBack, legalHref, parseLegalFrom } from './legal';
+import { guestFrom, inviteFrom, legalBack, legalHref, parseLegalFrom } from './legal';
 
 describe('parseLegalFrom', () => {
 	it('knows Settings, sign-in and an invite landing', () => {
 		assert.equal(parseLegalFrom('settings'), 'settings');
 		assert.equal(parseLegalFrom('login'), 'login');
 		assert.equal(parseLegalFrom('invite-7K4P2X'), 'invite-7K4P2X');
+	});
+
+	it('knows a guest’s page by its 43-character token (→ SPEC §11.15)', () => {
+		const token = 'a'.repeat(40) + '_-Z';
+		assert.equal(parseLegalFrom(`guest-${token}`), `guest-${token}`);
+		assert.equal(guestFrom(token), `guest-${token}`);
+		assert.equal(legalBack(`guest-${token}`, false), `/g/${token}`);
+		assert.equal(parseLegalFrom(`guest-${token}x`), null);
+		assert.equal(parseLegalFrom('guest-short'), null);
+		assert.equal(parseLegalFrom(`guest-${'a'.repeat(40)}/..`), null);
 	});
 
 	it('is null for anything else, including addresses', () => {

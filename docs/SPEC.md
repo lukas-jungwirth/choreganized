@@ -1689,12 +1689,11 @@ Linking with other
 Haushaltsheld households · receipt photos · "log what this shop cost?" after a shopping trip ·
 several currencies · statistics and charts · groups or trips inside a household · export.
 
-### 11.15 Guests (→ plan 38, DECISIONS #282–#287)
+### 11.15 Guests (→ plan 38, DECISIONS #282–#291)
 
 Someone outside the household who shares a cost, a friend on a trip: a name in the tally and
 nothing more. No account, no membership, no chores, lists or points. Frames:
-**[`design/sketches/expense-guests.html`](../design/sketches/expense-guests.html)** [G1]–[G5]
-(the link and the guest's page, [G6]–[G8], are plan 38's step 2).
+**[`design/sketches/expense-guests.html`](../design/sketches/expense-guests.html)** [G1]–[G8].
 
 - **Adding** [G1] [G2]: from the split sheet's last row, the payer picker's "Someone else…", or
   Expense settings' Guests group [G4]. One sheet, "Add a guest" ("Gast hinzufügen"), a name
@@ -1718,7 +1717,36 @@ nothing more. No account, no membership, no chores, lists or points. Frames:
   Recurring series keep the people they were made with.
 - **One guest** [G5], from [G4] or by tapping them on the balance card: the name as title,
   "Guest · owes €132.20" under it, the **Name** field (with **Save name** once changed), the
-  switch, and **Remove guest**.
+  switch, the link box ("Jonas's page", below), and **Remove guest**.
+- **The link** [G5]: `/g/<token>`, the token 32 random bytes as base64url, made the first time
+  someone taps **Share link** ("Link teilen") or **Copy**, stored on the guest's row and the
+  same after that. **Share link** opens the system share sheet where the browser has one (text
+  "Here is what we shared:" and the link), else it copies; Copy says "Link copied". If the
+  browser allows neither, the link shows in a field to copy by hand. **Make a new link**
+  replaces it after one confirm ("The old link stops working."). Removing the guest clears it.
+- **The guest's page** [G6] [G7], `/g/<token>`, for whoever holds the link, no sign-in: "Hi
+  Jonas", the members' avatars and "Shared with Lukas and Elisabeth", then the balance as the
+  app's own sentence from the guest's side ("You owe Lukas **€132.20**", one line per payment,
+  or "All settled up · Nothing left to pay." [G7]) with "Pay Lukas directly. Once it is marked as
+  paid, this page follows." Under **What you shared**, newest first: every expense the guest has
+  a share in or paid (description, day, category icon, who paid how much, **your share**) and
+  every payment from or to them ("You paid Lukas €132.20"), then a totals line (You paid · Your
+  share). Footer: "Read only. Lukas and Elisabeth keep this tally with Haushaltsheld." and the
+  Privacy · Imprint links when the deploy has them (§13; back from them leads to the page).
+- **What the page never shows**: any expense the guest is not part of, anyone else's share,
+  balances between other people, the household's name, anything outside Expenses. It reads
+  through the same balance and simplification code as the tab, so the two never disagree.
+  Nothing to do on it: no forms, no actions, no tab bar, no install prompt (the page leaves out
+  the manifest), no live stream; a reload shows the current state.
+- **A dead link** [G8], unknown, replaced or the guest removed: one page for all three, status
+  404, "This link no longer works · Ask the person who sent it to you for a new one.", naming
+  nobody.
+- **Language and theme**: the request's own language, as for a signed-out visitor (even a
+  member opening the link is not signed in there), and the device's light or dark setting.
+  Headers: `X-Robots-Tag: noindex, nofollow`, `Referrer-Policy: no-referrer`, `Cache-Control:
+private, no-store`.
+- **Privacy**: whoever holds the link sees first names and what was bought. That is its point,
+  and why it can be replaced.
 - **Removing**: only once the guest's balance is zero. Until then the button is disabled, with
   "Possible once Jonas is settled up." A confirm ("Remove Jonas?") names the recurring series it
   stops ("Rent will stop repeating."), as when a member leaves (§11.13). Removed, the guest leaves

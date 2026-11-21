@@ -1487,7 +1487,7 @@ export const de: Messages = {
 			addTitle: 'Gast hinzufügen',
 			addSubtitle: 'Jemand außerhalb des Haushalts, der sich Kosten mit euch teilt.',
 			name: 'Name',
-			addCaption: 'Kein Konto nötig. Ein Gast ist ein Name in der Abrechnung, sonst nichts.',
+			addCaption: 'Kein Konto nötig. Einen Link zu seinem Anteil könnt ihr danach schicken.',
 			addNamed: (name: string) => (name ? `${name} hinzufügen` : 'Hinzufügen'),
 			group: 'Gäste',
 			groupCaption:
@@ -1514,7 +1514,55 @@ export const de: Messages = {
 			removeWhenSettled: (name: string) => `Möglich, sobald mit ${name} alles ausgeglichen ist.`,
 			removeConfirm: (name: string) => `${name} entfernen?`,
 			removeCopy:
-				'Der Gast verschwindet aus allen Auswahllisten. Sein Name bleibt bei den Ausgaben, an denen er beteiligt war. Fügt ihr ihn wieder hinzu, ist er ein neuer Gast.'
+				'Der Gast verschwindet aus allen Auswahllisten, sein Link funktioniert nicht mehr. Sein Name bleibt bei den Ausgaben, an denen er beteiligt war. Fügt ihr ihn wieder hinzu, ist er ein neuer Gast.',
+			link: {
+				about:
+					'Zeigt den Stand und die Ausgaben, an denen der Gast beteiligt ist. Sonst nichts aus eurem Haushalt.',
+				share: 'Link teilen',
+				copy: 'Kopieren',
+				copied: 'Link kopiert',
+				manual: 'Hier ist der Link zum Kopieren:',
+				shareText: 'Das haben wir geteilt:',
+				renew: 'Neuen Link erstellen',
+				renewConfirm: 'Neuen Link erstellen?',
+				renewCopy: 'Der alte Link funktioniert dann nicht mehr.',
+				renewed: 'Neuer Link erstellt'
+			}
+		},
+
+		guestPage: {
+			title: (name: string) => `Hallo ${name}`,
+			sharedWith: (names: string[]) => `Geteilt mit ${list(names)}`,
+			youOwe: (name: string, amount: string): RichText => [
+				{ text: `Du schuldest ${name} ` },
+				{ text: amount, strong: true }
+			],
+			owesYou: (name: string, amount: string): RichText => [
+				{ text: `${name} schuldet dir ` },
+				{ text: amount, strong: true }
+			],
+			payHint: (names: string[]) =>
+				`Zahl direkt an ${list(names)}. Sobald es als bezahlt eingetragen ist, zeigt es diese Seite.`,
+			owedHint: 'Sobald es als bezahlt eingetragen ist, zeigt es diese Seite.',
+			settled: 'Alles ausgeglichen',
+			settledDetail: 'Nichts mehr zu zahlen.',
+			shared: 'Was ihr geteilt habt',
+			paid: (day: string, who: string | null, amount: string) =>
+				who === null
+					? `${day} · du hast ${amount} bezahlt`
+					: `${day} · ${who} hat ${amount} bezahlt`,
+			yourShare: 'dein Anteil',
+			payment: (from: string | null, to: string | null, amount: string) =>
+				from === null
+					? `Du hast ${to ?? ''} ${amount} gezahlt`
+					: `${from} hat ${to === null ? 'dir' : to} ${amount} gezahlt`,
+			totalPaid: 'Du hast bezahlt',
+			totalShare: 'Dein Anteil',
+			empty: 'Noch nichts geteilt.',
+			foot: (names: string[]) =>
+				`Nur zum Lesen. ${list(names)} ${names.length === 1 ? 'führt' : 'führen'} diese Abrechnung mit Haushaltsheld.`,
+			deadTitle: 'Dieser Link funktioniert nicht mehr',
+			deadCopy: 'Frag die Person, die ihn dir geschickt hat, nach einem neuen.'
 		},
 
 		home: {

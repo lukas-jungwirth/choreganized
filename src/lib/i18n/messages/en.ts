@@ -1946,7 +1946,7 @@ export const en = {
 			addTitle: 'Add a guest',
 			addSubtitle: 'Someone outside the household who shares a cost with you.',
 			name: 'Name',
-			addCaption: 'No account needed. A guest is a name in the tally and nothing more.',
+			addCaption: 'No account needed. You can send them a link to their share afterwards.',
 			addNamed: (name: string) => (name ? `Add ${name}` : 'Add'),
 			/** Expense settings' group [G4]. */
 			group: 'Guests',
@@ -1974,7 +1974,59 @@ export const en = {
 			removeWhenSettled: (name: string) => `Possible once ${name} is settled up.`,
 			removeConfirm: (name: string) => `Remove ${name}?`,
 			removeCopy:
-				'They leave every picker. Their name stays on the expenses they were part of. Adding them again makes a new guest.'
+				'They leave every picker and their link stops working. Their name stays on the expenses they were part of. Adding them again makes a new guest.',
+			/** The link box in [G5] (→ SPEC §11.15). */
+			link: {
+				about:
+					'Shows their balance and the expenses they are part of. Nothing else from your household.',
+				share: 'Share link',
+				copy: 'Copy',
+				copied: 'Link copied',
+				/** Neither share nor copy was allowed: the link to copy by hand. */
+				manual: 'Copy the link from here:',
+				/** The system share sheet's text, before the link. */
+				shareText: 'Here is what we shared:',
+				renew: 'Make a new link',
+				renewConfirm: 'Make a new link?',
+				renewCopy: 'The old link stops working.',
+				renewed: 'New link made'
+			}
+		},
+
+		/** The guest's own page, `/g/<token>` [G6] [G7] [G8] (→ SPEC §11.15). */
+		guestPage: {
+			title: (name: string) => `Hi ${name}`,
+			sharedWith: (names: string[]) => `Shared with ${list(names)}`,
+			/** The answer first, the app's own sentence from the guest's side. */
+			youOwe: (name: string, amount: string): RichText => [
+				{ text: `You owe ${name} ` },
+				{ text: amount, strong: true }
+			],
+			owesYou: (name: string, amount: string): RichText => [
+				{ text: `${name} owes you ` },
+				{ text: amount, strong: true }
+			],
+			payHint: (names: string[]) =>
+				`Pay ${list(names)} directly. Once it is marked as paid, this page follows.`,
+			owedHint: 'Once it is marked as paid, this page follows.',
+			settled: 'All settled up',
+			settledDetail: 'Nothing left to pay.',
+			shared: 'What you shared',
+			/** "Sun 23 Nov · Lukas paid €144.00", "… · you paid €132.00". */
+			paid: (day: string, who: string | null, amount: string) =>
+				`${day} · ${who ?? 'you'} paid ${amount}`,
+			yourShare: 'your share',
+			/** A settle-up the guest sent or got: "You paid Lukas €132.20". */
+			payment: (from: string | null, to: string | null, amount: string) =>
+				`${from ?? 'You'} paid ${to ?? 'you'} ${amount}`,
+			totalPaid: 'You paid',
+			totalShare: 'Your share',
+			empty: 'Nothing shared yet.',
+			foot: (names: string[]) =>
+				`Read only. ${list(names)} ${names.length === 1 ? 'keeps' : 'keep'} this tally with Haushaltsheld.`,
+			/** [G8]: names nobody. */
+			deadTitle: 'This link no longer works',
+			deadCopy: 'Ask the person who sent it to you for a new one.'
 		},
 
 		/** Home's one line (→ SPEC §11.13). */

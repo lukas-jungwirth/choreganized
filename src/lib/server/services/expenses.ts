@@ -18,6 +18,7 @@
  * also what lets the search match "Billa" inside "Wocheneinkauf · Billa" with
  * the reader's own idea of upper and lower case (→ DECISIONS #172).
  */
+import { randomBytes } from 'node:crypto';
 import { and, asc, desc, eq, inArray, isNotNull, isNull, lt, ne, or } from 'drizzle-orm';
 import {
 	addInterval,
@@ -140,6 +141,11 @@ export type ExpensePerson = {
 	removed: boolean;
 	/** An active guest whom new expenses start with, while the default is equal. */
 	includeInNew: boolean;
+	/**
+	 * An active guest's link token, once one was made (→ SPEC §11.15): stored
+	 * readable so any member can show the link again (→ DECISIONS #288).
+	 */
+	shareToken: string | null;
 	/** Their part of the default split, when it is `percent` / `shares`. Never a guest's. */
 	defaultWeight: number | null;
 };
@@ -162,6 +168,7 @@ export function listPeople(householdId: string): ExpensePerson[] {
 			memberId: ledgerPeople.memberId,
 			defaultWeight: ledgerPeople.defaultWeight,
 			includeInNew: ledgerPeople.includeInNew,
+			shareToken: ledgerPeople.shareToken,
 			removedAt: ledgerPeople.removedAt,
 			memberName: members.displayName,
 			memberColor: members.color,
@@ -193,6 +200,7 @@ export function listPeople(householdId: string): ExpensePerson[] {
 		guest: row.kind === 'guest',
 		removed: row.removedAt !== null,
 		includeInNew: active(row) && row.includeInNew,
+		shareToken: active(row) ? row.shareToken : null,
 		defaultWeight: row.defaultWeight
 	}));
 }
@@ -1319,4 +1327,177 @@ export function removeGuest(householdId: string, guestId: string): void {
 			.run();
 		stopSeriesOf(tx, householdId, guestId);
 	});
+}
+
+/* ── A guest's page, /g/<token> (→ SPEC §11.15, plan 38 step 2) ───────────── */
+
+/** 32 random bytes, base64url: 43 characters, nothing to guess. */
+const TOKEN = /^[A-Za-z0-9_-]{43}$/;
+
+function newToken(): string {
+	return randomBytes(32).toString('base64url');
+}
+
+/**
+ * The guest's link token, made the first time someone shares or copies the
+ * link [G5]. Stored readable rather than hashed, so the link can be shown and
+ * copied again by any member (→ DECISIONS #288).
+ */
+export function guestShareToken(householdId: string, guestId: string): string {
+	return db.transaction((tx) => {
+		liveGuest(tx, householdId, guestId);
+		const row = tx
+			.select({ token: ledgerPeople.shareToken })
+			.from(ledgerPeople)
+			.where(eq(ledgerPeople.id, guestId))
+			.get();
+		if (row?.token) return row.token;
+		const token = newToken();
+		tx.update(ledgerPeople).set({ shareToken: token }).where(eq(ledgerPeople.id, guestId)).run();
+		return token;
+	});
+}
+
+/** "Make a new link" [G5]: the old one stops working at once. */
+export function renewGuestShareToken(householdId: string, guestId: string): string {
+	return db.transaction((tx) => {
+		liveGuest(tx, householdId, guestId);
+		const token = newToken();
+		tx.update(ledgerPeople).set({ shareToken: token }).where(eq(ledgerPeople.id, guestId)).run();
+		return token;
+	});
+}
+
+/** One row of the guest's list [G6], told from the guest's side. */
+export type GuestPageItem =
+	| {
+			kind: 'expense';
+			description: string;
+			category: ExpenseCategory;
+			date: CalendarDate;
+			/** Who paid; null when it was the guest. */
+			paidBy: string | null;
+			amountMinor: number;
+			/** The guest's own share, and nobody else's. */
+			shareMinor: number;
+	  }
+	| {
+			kind: 'payment';
+			date: CalendarDate;
+			/** Null on the guest's side of it. */
+			from: string | null;
+			to: string | null;
+			amountMinor: number;
+	  };
+
+/**
+ * Everything the page [G6] [G7] shows, and only that: the guest's name, the
+ * members' names and colours, the guest's own payments to make or receive,
+ * and the rows the guest is part of with their share alone. No ids, no
+ * household name, no other share, no row the guest isn't in.
+ */
+export type GuestPage = {
+	name: string;
+	color: string;
+	currency: string;
+	/** The household's timezone, for "today" in the day labels. */
+	timezone: string;
+	members: { name: string; color: string }[];
+	/** The simplified payments that involve the guest, largest first. */
+	payments: { owe: boolean; name: string; amountMinor: number }[];
+	items: GuestPageItem[];
+	/** What the guest paid for expenses, and what their shares come to. */
+	paidMinor: number;
+	shareMinor: number;
+};
+
+/**
+ * The page's read, the one that starts from a token instead of a household:
+ * it looks the token up by its unique index, then reads through the same
+ * `listPeople` · `listLedger` · `balancesOf` the tab does, so the page and the
+ * app can never disagree. Null for an unknown, replaced or removed guest's
+ * token: one answer for all three [G8].
+ */
+export function guestPage(token: string): GuestPage | null {
+	if (!TOKEN.test(token)) return null;
+	const guest = db
+		.select({
+			id: ledgerPeople.id,
+			householdId: ledgerPeople.householdId,
+			name: ledgerPeople.name,
+			color: ledgerPeople.color
+		})
+		.from(ledgerPeople)
+		.where(
+			and(
+				eq(ledgerPeople.shareToken, token),
+				eq(ledgerPeople.kind, 'guest'),
+				isNull(ledgerPeople.removedAt)
+			)
+		)
+		.get();
+	if (!guest) return null;
+
+	const household = db
+		.select({ currency: households.currency, timezone: households.timezone })
+		.from(households)
+		.where(eq(households.id, guest.householdId))
+		.get();
+	if (!household) return null;
+
+	const people = listPeople(guest.householdId);
+	const ledger = listLedger(guest.householdId, people);
+	const { payments } = balancesOf(people, ledger);
+	const nameOf = new Map(people.map((person) => [person.id, person.name]));
+	const name = (id: string) => (id === guest.id ? null : (nameOf.get(id) ?? '?'));
+
+	const items: GuestPageItem[] = [];
+	let paidMinor = 0;
+	let shareMinor = 0;
+	for (const item of ledger) {
+		const share = item.shares.find((row) => row.personId === guest.id);
+		if (item.paidById !== guest.id && !share) continue;
+		if (item.kind === 'payment') {
+			items.push({
+				kind: 'payment',
+				date: item.date,
+				from: name(item.paidById),
+				to: name(item.shares[0]?.personId ?? ''),
+				amountMinor: item.amountMinor
+			});
+			continue;
+		}
+		if (item.paidById === guest.id) paidMinor += item.amountMinor;
+		shareMinor += share?.shareMinor ?? 0;
+		items.push({
+			kind: 'expense',
+			description: item.description ?? '',
+			category: item.category ?? 'other',
+			date: item.date,
+			paidBy: name(item.paidById),
+			amountMinor: item.amountMinor,
+			shareMinor: share?.shareMinor ?? 0
+		});
+	}
+
+	return {
+		name: guest.name,
+		color: guest.color,
+		currency: household.currency,
+		timezone: household.timezone,
+		members: people
+			.filter((person) => person.memberId !== null)
+			.map((person) => ({ name: person.name, color: person.color })),
+		payments: payments
+			.filter((payment) => payment.from === guest.id || payment.to === guest.id)
+			.sort((a, b) => b.amountMinor - a.amountMinor)
+			.map((payment) => ({
+				owe: payment.from === guest.id,
+				name: nameOf.get(payment.from === guest.id ? payment.to : payment.from) ?? '?',
+				amountMinor: payment.amountMinor
+			})),
+		items,
+		paidMinor,
+		shareMinor
+	};
 }

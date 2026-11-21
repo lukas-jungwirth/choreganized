@@ -71,6 +71,7 @@ import { MEMBER_COLORS } from '../src/lib/member-colors.ts';
 import {
 	SEED_EXTRA_MEMBER_NAMES,
 	SEED_HOUSEHOLD_NAME,
+	SEED_GUEST_TOKEN,
 	SEED_HOUSEMATE_NAME,
 	SEED_RECIPE_NAMES,
 	SEED_CHECKLIST_ITEMS,
@@ -1017,7 +1018,15 @@ const seeded = db.transaction((tx) => {
 	if (guests && housematePerson !== ownerPerson) {
 		const jonas = sid('person', 'guest-jonas');
 		tx.insert(ledgerPeople)
-			.values({ id: jonas, householdId, kind: 'guest', name: 'Jonas', color: '#5C7FA3' })
+			.values({
+				id: jonas,
+				householdId,
+				kind: 'guest',
+				name: 'Jonas',
+				color: '#5C7FA3',
+				// A fixed link, so the screenshots of his page [G6] have an address.
+				shareToken: SEED_GUEST_TOKEN
+			})
 			.onConflictDoNothing()
 			.run();
 		const trip = [ownerPerson, housematePerson, jonas];

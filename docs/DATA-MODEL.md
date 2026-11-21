@@ -389,8 +389,10 @@ household (or the household going) takes the album with it.
   `defaultWeight` always NULL. `includeInNew` is the guest's "Include in new expenses" switch.
   `removedAt` marks a guest removed once settled: they leave the pickers and stay named in
   history, and no write but an edit of a row that already names them may name them again.
-  `shareToken` (unique, NULL) is the guest's read-only link of plan 38's step 2; removal clears
-  it. **Former members and guests are both `memberId IS NULL`**: read `kind` (and `removedAt`)
+  `shareToken` (unique, NULL) is the guest's read-only link, `/g/<token>`: 32 random bytes as
+  base64url, made on the first Share or Copy (`guestShareToken`), replaced by "Make a new link"
+  (`renewGuestShareToken`), cleared on removal. Stored readable, not hashed, so the link can be
+  shown again (→ DECISIONS #288); `guestPage(token)` looks it up by the unique index alone. **Former members and guests are both `memberId IS NULL`**: read `kind` (and `removedAt`)
   to tell them apart. The service (`services/expenses.ts` `addGuest` · `renameGuest` ·
   `setGuestIncludeInNew` · `removeGuest`) checks the name, the cap of 10 and the balance inside
   the transaction.

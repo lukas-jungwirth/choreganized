@@ -126,6 +126,7 @@ function person(id: string, extra: Partial<ExpensePerson> = {}): ExpensePerson {
 		guest: false,
 		removed: false,
 		includeInNew: false,
+		shareToken: null,
 		defaultWeight: null,
 		...extra
 	};
