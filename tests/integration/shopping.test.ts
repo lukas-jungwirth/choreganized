@@ -553,7 +553,12 @@ describe('checklists (plan 36 step 2)', () => {
 		add('Sunscreen');
 		addItem(householdId, owner.id, { name: 'Milk', storeId: grocery.id });
 
-		setChecked(householdId, getShoppingList(householdId)[0].id, owner.id, true);
+		// Tick a checklist row by name: the three rows are added in the same
+		// millisecond, so their order can fall back to the random ids, and "the
+		// first row" was sometimes Milk, on the grocery list.
+		const passports = getShoppingList(householdId).find((item) => item.name === 'Passports');
+		assert.ok(passports);
+		setChecked(householdId, passports.id, owner.id, true);
 		// Manage lists counts everything, and the ticked rows a kind change would move.
 		const summary = listStoresWithCounts(householdId).find((store) => store.id === list.id);
 		assert.deepEqual(
