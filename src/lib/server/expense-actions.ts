@@ -35,7 +35,9 @@ import { stopSeries, updateSeries } from '$lib/server/services/expense-recurrenc
 import { sendNotices } from '$lib/server/services/expense-notify';
 import { getHousehold, HouseholdError } from '$lib/server/services/household';
 import { todayIn } from '$lib/utils/dates';
+import { DISPLAY_NAME_MAX } from '$lib/utils/household';
 import {
+	GUESTS_MAX,
 	isDefaultSplitMode,
 	isExpenseCategory,
 	readRepeat,
@@ -43,7 +45,11 @@ import {
 } from '$lib/utils/expenses';
 import { parseAmount, type SplitRow } from '$lib/utils/money';
 
-const MESSAGE: Record<ExpenseErrorCode, keyof Messages['expenses']['errors']> = {
+type Errors = Messages['expenses']['errors'];
+/** The messages that are plain text; the two with a limit in them are below. */
+type PlainError = { [K in keyof Errors]: Errors[K] extends string ? K : never }[keyof Errors];
+
+const MESSAGE: Record<Exclude<ExpenseErrorCode, 'guest-name' | 'guest-limit'>, PlainError> = {
 	amount: 'amount',
 	description: 'description',
 	date: 'date',
@@ -57,16 +63,20 @@ const MESSAGE: Record<ExpenseErrorCode, keyof Messages['expenses']['errors']> = 
 	'date-too-old': 'dateTooOld',
 	'series-start': 'seriesStart',
 	'series-person': 'seriesPerson',
-	'guest-name': 'guestName',
 	'guest-name-taken': 'guestNameTaken',
-	'guest-limit': 'guestLimit',
 	'guest-balance': 'guestBalance'
 };
 
 function failWith(event: RequestEvent, error: unknown) {
 	if (!(error instanceof ExpenseError)) throw error;
+	const errors = catalog(event.locals.locale).expenses.errors;
 	return fail(400, {
-		error: catalog(event.locals.locale).expenses.errors[MESSAGE[error.code]]
+		error:
+			error.code === 'guest-name'
+				? errors.guestName(DISPLAY_NAME_MAX)
+				: error.code === 'guest-limit'
+					? errors.guestLimit(GUESTS_MAX)
+					: errors[MESSAGE[error.code]]
 	});
 }
 

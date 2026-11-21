@@ -48,6 +48,12 @@ test('add a guest from the split sheet and the payer picker, see them on the car
 	await sheet.getByLabel('What for?').fill(what);
 	await sheet.getByRole('button', { name: /^Split/ }).click();
 	const split = page.getByRole('dialog', { name: 'Split' });
+	// One Escape closes only the sheet on top: Split goes, Add expense stays.
+	await page.keyboard.press('Escape');
+	await expect(split).toBeHidden();
+	await expect(sheet).toBeVisible();
+	await expect(sheet.getByLabel('What for?')).toHaveValue(what);
+	await sheet.getByRole('button', { name: /^Split/ }).click();
 	await split.getByRole('button', { name: 'Add a guest' }).click();
 	const add = page.getByRole('dialog', { name: 'Add a guest' });
 	await add.getByLabel('Name').fill(JONAS);
@@ -175,6 +181,22 @@ test('copy a guest’s link, open it signed out, then replace it and see the old
 		await expect(outside.getByText('Weekly shop · Billa')).toHaveCount(0);
 		await expect(outside.locator('form')).toHaveCount(0);
 		await expect(outside.locator('link[rel="manifest"]')).toHaveCount(0);
+
+		// The app's real icon at the top, loaded, not a placeholder square.
+		const icon = outside.locator('.brand img');
+		await expect(icon).toHaveAttribute('src', /\/icons(\/test)?\/icon-192\.png$/);
+		await expect
+			.poll(() => icon.evaluate((img: HTMLImageElement) => img.complete && img.naturalWidth))
+			.toBeGreaterThan(0);
+
+		// "Get the app": leads to sign-in, and once hidden it stays hidden here.
+		const card = outside.getByTestId('get-app');
+		await expect(card.getByRole('button', { name: 'Get the app' })).toBeVisible();
+		await card.getByRole('button', { name: 'No thanks' }).click();
+		await expect(card).toHaveCount(0);
+		await outside.reload({ waitUntil: 'networkidle' });
+		await expect(outside.getByTestId('guest-balance')).toBeVisible();
+		await expect(outside.getByTestId('get-app')).toHaveCount(0);
 
 		// "Make a new link", one confirm: the old address answers [G8], the new one works.
 		await guest.getByRole('button', { name: 'Make a new link' }).click();

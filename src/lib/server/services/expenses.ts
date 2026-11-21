@@ -219,7 +219,11 @@ export function personIdFor(householdId: string, memberId: string): string {
 /**
  * Which of `ids` this household's ledger knows and a row may name. A removed
  * guest has left every picker, so they may not, except where they already are
- * (`keep`): editing an old expense they shared keeps them in it.
+ * (`keep`): editing an old expense they shared keeps them in it. And except
+ * while they owe or are owed: an edit, delete or restore of an old row after
+ * the removal can move their balance off zero again, and then the settle
+ * sheet offers them (`pickablePeople`) so the debt can still be cleared, as
+ * for a former member.
  */
 function peopleIn(
 	tx: Transaction,
@@ -234,7 +238,10 @@ function peopleIn(
 			.from(ledgerPeople)
 			.where(and(eq(ledgerPeople.householdId, householdId), inArray(ledgerPeople.id, ids)))
 			.all()
-			.filter((row) => row.removedAt === null || keep.has(row.id))
+			.filter(
+				(row) =>
+					row.removedAt === null || keep.has(row.id) || balanceOf(tx, householdId, row.id) !== 0
+			)
 			.map((row) => row.id)
 	);
 }

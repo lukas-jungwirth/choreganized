@@ -230,6 +230,11 @@
 		// second, unasked-for dismissal.
 		if (event.defaultPrevented) return;
 		if (!ownsEscape(event.target)) return;
+		// Taken: without this the browser's own Escape handling runs after us and
+		// closes whichever modal is on top by then, the sheet underneath, so one
+		// keystroke closed both (Split over Add expense, the guest sheets over
+		// Expense settings).
+		event.preventDefault();
 		open = false;
 	}
 
