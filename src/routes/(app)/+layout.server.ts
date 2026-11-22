@@ -14,7 +14,7 @@ import { requireMember } from '$lib/server/guards';
 import { listActiveTimers } from '$lib/server/services/cook-timers';
 import { holidayNoticeFor } from '$lib/server/services/holidays';
 import { getHousehold, listMembers } from '$lib/server/services/household';
-import { listOverdueForMember } from '$lib/server/services/tasks';
+import { listOverdueForMember, settleReturns } from '$lib/server/services/tasks';
 import { todayIn } from '$lib/utils/dates';
 import type { LayoutServerLoad } from './$types';
 
@@ -29,6 +29,12 @@ export const load: LayoutServerLoad = (event) => {
 
 	const today = todayIn(household.timezone);
 
+	// A holiday that has run out is settled before anything below can call its
+	// tasks overdue (→ DECISIONS #293). The guard's `member` was read before
+	// that, so a return date already behind us is reported as the null it now is.
+	settleReturns(householdId, today);
+	const awayUntil = member.awayUntil !== null && member.awayUntil < today ? null : member.awayUntil;
+
 	return {
 		household: { name: household.name, timezone: household.timezone },
 		/** In join order — the order avatars stack in. */
@@ -38,7 +44,7 @@ export const load: LayoutServerLoad = (event) => {
 			displayName: member.displayName,
 			color: member.color,
 			role: member.role,
-			awayUntil: member.awayUntil,
+			awayUntil,
 			/** Your own only — the profile sheet's, never a housemate's. */
 			birthday: member.birthday
 		},

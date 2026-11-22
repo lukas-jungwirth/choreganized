@@ -2599,6 +2599,8 @@ export const de: Messages = {
 		] as RichText,
 		toggle: 'Verreist',
 		backOn: 'Zurück am',
+		shiftHint:
+			'Aufgaben, die in der Zeit fällig werden, verschieben sich auf die Tage nach deiner Rückkehr.',
 		pauseUntil: (date: string) => `Aufgaben pausieren bis ${date}`,
 		updateUntil: (date: string) => `Pause ändern auf ${date}`
 	}

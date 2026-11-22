@@ -229,6 +229,14 @@ export const members = sqliteTable(
 		 */
 		awayUntil: text('away_until'),
 		/**
+		 * The household-local day the current pause began (`YYYY-MM-DD`), set
+		 * when the pause goes from off to on and kept while the return date
+		 * changes. On return, tasks that fell due in `[awaySince, return)` are
+		 * moved to after it (→ `settleReturns`, DECISIONS #293). NULL whenever
+		 * `awayUntil` is, and on pauses older than the column.
+		 */
+		awaySince: text('away_since'),
+		/**
 		 * Optional birthday, `MM-DD` — day and month, never a year, so no age is
 		 * kept. Its only reader is Home's raccoon, which brings a cake that day
 		 * (→ `$lib/utils/raccoon`). `02-29` is shown on 28 February otherwise.

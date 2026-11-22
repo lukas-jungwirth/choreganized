@@ -1017,7 +1017,7 @@ actually need is the chore this replaces (→ [DECISIONS #123](DECISIONS.md)).
   - "Anyone" tasks show a neutral avatar (dashed circle).
 - **Holiday banner** [4a]: "{member} is away until {date} — their tasks are paused, nothing
   counts as overdue" when any member has `awayUntil` ≥ today. Away members' tasks render
-  dimmed/paused instead of overdue.
+  dimmed/paused instead of overdue, and move to after the return when it comes (→ §5.5).
 - FAB (+) → new task sheet. Under the list, a single summary link across to History —
   "{n} done this week · See history" (just "See history" when the week is empty). It replaces
   the old points tiles and "Recent history" preview (→ DECISIONS #117).
@@ -1117,6 +1117,15 @@ actually need is the chore this replaces (→ [DECISIONS #123](DECISIONS.md)).
 - **Going away?** toggle in the same sheet: pauses **all my tasks** until a picked return date
   (`member.awayUntil`) — no overdue, no reminders; banner appears for the household. Turning it
   off clears the date. Also accessible from Settings.
+- **The holiday is cut out of the calendar** (→ DECISIONS #293): on the first day home, every
+  task assigned to the returning member that fell due while they were away moves to after the
+  return, as far past it as it fell into the holiday, capped at a week (due on day 2 of the
+  holiday → due 2 days after coming back). The order is kept and nothing comes back red.
+  Reminder flags reset, as with a snooze. The first day home is the day after the return date,
+  or today when the pause is switched off early. Not moved: "Anyone" tasks (the others had them
+  all along), undated one-offs, tasks already overdue before the holiday began, and tasks due
+  from the first day home on. Changing the return date while away keeps the day it began.
+  Under the date picker: "Tasks that come due while you're away move to after you're back."
 
 ### 5.6 Reminders [4e] (full lifecycle — "a quiet nudge, never a red-alert storm")
 

@@ -22,6 +22,7 @@ import {
 	parseSnapshot,
 	reassignTask,
 	setAway,
+	settleReturns,
 	setCompletionDoers,
 	skipTask,
 	snoozeTask,
@@ -40,6 +41,11 @@ export const load: PageServerLoad = async (event) => {
 	// the sections and the tab badge are answering the same question.
 	const { household, today } = await event.parent();
 	const context: TaskContext = { today, timezone: household.timezone, locale: event.locals.locale };
+	// Again here, not only in the layout, and on a clock read now rather than the
+	// layout's: client-side navigation reuses the layout's data, and a holiday can
+	// end while the app sits open overnight (→ DECISIONS #293). Idempotent, and
+	// one read when nobody is coming home.
+	settleReturns(householdId, todayIn(household.timezone));
 
 	// The summary link that replaced the recent-history preview [05]: how many the
 	// household has ticked off since Monday, and whether there's any history at all
