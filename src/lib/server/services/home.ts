@@ -41,8 +41,9 @@ import {
 	onTheHookFor,
 	type OverdueTask
 } from './tasks';
+import { greetingFor, type TimeOfDay } from '$lib/utils/greeting';
 
-export type TimeOfDay = 'morning' | 'afternoon' | 'evening';
+export type { TimeOfDay };
 
 export type TonightsDinner = {
 	name: string;
@@ -198,12 +199,6 @@ export function wakeRaccoon(
 	if (raccoonOnHome(householdId, member, today, hour, nextChoreDue) !== 'sleeping') return false;
 	recordSighting(householdId, member.id, WOKEN_RACCOON, today, homeSlot(today, hour));
 	return true;
-}
-
-function greetingFor(hour: number): TimeOfDay {
-	if (hour < 12) return 'morning';
-	if (hour < 18) return 'afternoon';
-	return 'evening';
 }
 
 /**
