@@ -4417,3 +4417,10 @@ store_id` NULL already means "no memory" (a deleted list), and telling the two a
      overlapping). At 390px the 278px beside the avatar takes six 38px dots with 10px gaps, so
      each dot still sits in a 44px target; `space-between` lines the last dot up with the name
      field, and a `max-width` stops the gaps at 16px on wider phones.
+301. **A taken colour shows who wears it, not a faded dot** (2026-11-22; → SPEC §1.5,
+     DESIGN-SYSTEM "ColorPicker"). Lukas found the 30%-opacity swatch in Settings confusing: it
+     looked broken rather than taken. The swatch now keeps its colour and carries the wearer's
+     initial, the same 38px disc as their Avatar everywhere else, and still can't be picked
+     (disabled radio, "Teal, already taken" to a screen reader). Free colours stay plain dots, so
+     a letter means "somebody's". The join screen gets only each wearer's **initial** from the
+     invite preview, not the name: it goes to anyone holding the code before they have joined.

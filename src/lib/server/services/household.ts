@@ -306,8 +306,12 @@ export type InvitePreview = {
 	householdName: string;
 	/** The owner — "{inviter} invited you to {household}". */
 	inviter: { displayName: string; color: string } | null;
-	/** Colours the joiner can't pick. */
-	takenColors: string[];
+	/**
+	 * Colours the joiner can't pick, each with its wearer's initial for the
+	 * swatch (→ DECISIONS #301). Only the letter: this goes to anyone holding
+	 * the code, before they have joined.
+	 */
+	taken: { color: string; initial: string }[];
 };
 
 /** Public: resolves an invite code for the landing page and the join screen. */
@@ -331,7 +335,10 @@ export function getInvitePreview(code: string): InvitePreview | null {
 		code: inviteCode,
 		householdName: household.name,
 		inviter: inviter ? { displayName: inviter.displayName, color: inviter.color } : null,
-		takenColors: householdMembers.map((member) => member.color)
+		taken: householdMembers.map((member) => ({
+			color: member.color,
+			initial: ([...member.displayName.trim()][0] ?? '').toUpperCase()
+		}))
 	};
 }
 

@@ -207,7 +207,9 @@ background at all when there is nothing to measure.
   last digit; `invalid` outlines every box (→ DECISIONS #184).
 - **ColorPicker** — the member palette (`$lib/member-colors`) as a radio group: 38px dots, six
   to a row, spread so the row ends where the fields above end (gaps capped at 16px on wider
-  phones), the rest below from the left (→ DECISIONS #300); `taken` colours render disabled.
+  phones), the rest below from the left (→ DECISIONS #300); `taken` colours (each
+  with its wearer's initial) render as that member's 38px Avatar and can't be picked, rather than a
+  faded dot that reads as "broken" (→ DECISIONS #301).
   Pair it with a 52px Avatar preview [5c].
 - **RowGroup** — the white block a settings-style list sits in: `--r-card`, `--shadow-card`, a
   `--divider` hairline between every direct child, corners clipped. Settings' sections [6a] and

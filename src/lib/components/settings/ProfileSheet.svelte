@@ -27,7 +27,7 @@
 		/** `MM-DD`, or null when not given. */
 		birthday: string | null;
 		/** Colours the housemates wear — everything but your own. */
-		takenColors: string[];
+		takenColors: { color: string; initial: string }[];
 		onclose: () => void;
 	};
 

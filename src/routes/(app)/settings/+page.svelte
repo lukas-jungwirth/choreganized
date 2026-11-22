@@ -73,9 +73,11 @@
 
 	const me = $derived(data.currentMember);
 	const owner = $derived(me.role === 'owner');
-	/** Everyone else's colours — the picker greys those out (SPEC §1.5). */
+	/** Everyone else's colours — the picker marks each with its wearer (SPEC §1.5). */
 	const takenColors = $derived(
-		data.members.filter((member) => member.id !== me.id).map((member) => member.color)
+		data.members
+			.filter((member) => member.id !== me.id)
+			.map((member) => ({ color: member.color, initial: member.displayName.trim().charAt(0) }))
 	);
 
 	/**
