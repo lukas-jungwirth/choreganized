@@ -157,7 +157,7 @@ export const en = {
 	meta: {
 		/** `<meta name="description">`, set in the root layout (→ app.html). */
 		description:
-			'Every chore, organized. A shared household app for shopping, meal planning and chores.'
+			'Little helpers for every day. A shared household app for shopping, meal planning and chores.'
 	},
 
 	/* ── Words that repeat everywhere ──────────────────────────────────────── */
@@ -2373,7 +2373,7 @@ export const en = {
 		/** The wordmark is split so "held" can take the accent colour. */
 		wordmarkLead: 'Haushalts',
 		wordmarkAccent: 'held',
-		tagline: 'Every chore, organized',
+		tagline: 'Little helpers for every day',
 		continueWithGoogle: 'Continue with Google',
 		openingGoogle: 'Opening Google…',
 		failed: 'Sign-in didn’t complete. Please try again.',
@@ -2417,11 +2417,24 @@ export const en = {
 		sendFailed:
 			'The email couldn’t be sent, so no code is on its way. Try again in a moment, or continue with Google.',
 
-		/** The sign-in mail itself — plain text (→ `lib/server/mail.ts`). */
+		/**
+		 * The sign-in mail itself (→ `lib/server/mail.ts`): `body` is the plain-text
+		 * part, the rest is the HTML part (→ `lib/server/sign-in-mail.ts`, DECISIONS #294).
+		 */
 		mail: {
 			subject: (code: string) => `${code} is your Haushaltsheld code`,
 			body: (code: string, minutes: number) =>
-				`Your sign-in code for Haushaltsheld:\n\n${code}\n\nIt works for ${minutes} minutes. If you didn’t ask for it, you can ignore this email. Nobody can sign in without the code.`
+				`Your sign-in code for Haushaltsheld:\n\n${code}\n\nIt works for ${minutes} minutes. If you didn’t ask for it, you can ignore this email. Nobody can sign in without the code.`,
+			/** The inbox preview line, hidden in the mail itself. */
+			preheader: (minutes: number) =>
+				`Type it on the sign-in page to continue. It works for ${minutes} minutes.`,
+			heading: 'Here’s your sign-in code',
+			lead: 'Type it on the sign-in page to continue.',
+			/** The pill under the code. */
+			validFor: (minutes: number) => `Works for ${minutes} ${minutes === 1 ? 'minute' : 'minutes'}`,
+			fine: 'Didn’t ask for this? You can ignore this email. Nobody can sign in without the code.',
+			/** Under the card. */
+			footer: 'You get this because someone asked for a sign-in code on Haushaltsheld.'
 		}
 	},
 

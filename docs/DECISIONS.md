@@ -4343,3 +4343,27 @@ store_id` NULL already means "no memory" (a deleted list), and telling the two a
      soft-deleted state, so there is nothing else to exclude. Hint under the date picker: "Tasks
      that come due while you're away move to after you're back." / "Aufgaben, die in der Zeit
      fällig werden, verschieben sich auf die Tage nach deiner Rückkehr."
+294. **The sign-in code mail is multipart: the same plain text, plus an HTML part** (2026-11-22;
+     → SPEC §1.1, ARCHITECTURE "Email"; amends #179, which sent text only). Lukas wanted a nicer
+     mail and picked the "green banner" layout: a sage band with the app icon, wordmark and
+     tagline, then a white card with the code in a sage-tint box, a terracotta "works for 10
+     minutes" pill and the "didn't ask for this?" line (`lib/server/sign-in-mail.ts`). The
+     plain-text part is unchanged, word for word, so filters and text-only clients see what they
+     saw before. **Colours are literal copies of app.css's tokens**, light and dark, since no mail
+     client reads the app's stylesheet; the file is `.ts`, outside the design-token test's reach,
+     and says so at the top. Tables and inline styles, because Gmail and Outlook drop most of a
+     `<style>` block; that block only holds the `prefers-color-scheme: dark` overrides and the
+     hidden preheader. **The icon is an inline CID attachment**, not a URL to the server: opening
+     the mail loads nothing and tells no one it was opened, and it works before a deploy has a
+     public address. `icon-192.png` is imported with `?inline`, so it is bundled into the server
+     build and there is no path to resolve in the container. With images blocked the band still
+     reads (green, white wordmark). Web fonts are only named: Fraunces and Figtree where
+     installed, else Georgia and the system sans. The code's digits fall back to Palatino rather
+     than Georgia, whose old-style figures make six digits hard to read off. The outbox records
+     the HTML and which attachments went along (not their bytes); the dev console still prints
+     the text part.
+295. **New tagline: "Little helpers for every day." / "Kleine Helfer für deinen Alltag."**
+     (Lukas's call, 2026-11-22; replaces "Every chore, organized", which #211 kept for the time
+     being). A nod to the raccoons, and German gets its own line instead of reusing the English
+     one. It shows on the login page, in the sign-in mail's band, the meta description and the
+     web manifest (English: the manifest isn't localized).

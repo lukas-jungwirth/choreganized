@@ -1,6 +1,6 @@
 # Haushaltsheld
 
-_Every chore, organized._ A warm, minimal household app for two — shared shopping list, weekly
+_Little helpers for every day._ A warm, minimal household app for two — shared shopping list, weekly
 meal plan with a hands-free cook mode, and recurring chores with effort points, a monthly
 podium, and gentle reminders. Installable PWA (Android-first), self-hosted.
 

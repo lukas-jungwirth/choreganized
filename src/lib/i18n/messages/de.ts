@@ -118,7 +118,7 @@ export const de: Messages = {
 	/* ── The document itself ───────────────────────────────────────────────── */
 	meta: {
 		description:
-			'Every chore, organized. Die gemeinsame Haushalts-App für Einkauf, Essensplanung und Aufgaben.'
+			'Kleine Helfer für deinen Alltag. Die gemeinsame Haushalts-App für Einkauf, Essensplanung und Aufgaben.'
 	},
 
 	/* ── Words that repeat everywhere ──────────────────────────────────────── */
@@ -1853,7 +1853,7 @@ export const de: Messages = {
 		/** Der Wortmarke bleibt englisch — sie ist der Produktname. */
 		wordmarkLead: 'Haushalts',
 		wordmarkAccent: 'held',
-		tagline: 'Every chore, organized',
+		tagline: 'Kleine Helfer für deinen Alltag',
 		continueWithGoogle: 'Weiter mit Google',
 		openingGoogle: 'Google wird geöffnet…',
 		failed: 'Die Anmeldung ist nicht durchgegangen. Versuch es nochmal.',
@@ -1893,7 +1893,15 @@ export const de: Messages = {
 		mail: {
 			subject: (code: string) => `${code} ist dein Haushaltsheld-Code`,
 			body: (code: string, minutes: number) =>
-				`Dein Anmeldecode für Haushaltsheld:\n\n${code}\n\nEr gilt ${minutes} Minuten. Wenn du ihn nicht angefordert hast, kannst du diese E-Mail ignorieren. Ohne den Code kann sich niemand anmelden.`
+				`Dein Anmeldecode für Haushaltsheld:\n\n${code}\n\nEr gilt ${minutes} Minuten. Wenn du ihn nicht angefordert hast, kannst du diese E-Mail ignorieren. Ohne den Code kann sich niemand anmelden.`,
+			preheader: (minutes: number) =>
+				`Gib ihn auf der Anmeldeseite ein, um weiterzumachen. Er gilt ${minutes} Minuten.`,
+			heading: 'Hier ist dein Anmeldecode',
+			lead: 'Gib ihn auf der Anmeldeseite ein, um weiterzumachen.',
+			validFor: (minutes: number) => `Gilt ${minutes} ${minutes === 1 ? 'Minute' : 'Minuten'}`,
+			fine: 'Nicht von dir angefordert? Dann kannst du diese E-Mail ignorieren. Ohne den Code kann sich niemand anmelden.',
+			footer:
+				'Du bekommst diese E-Mail, weil jemand auf Haushaltsheld einen Anmeldecode angefordert hat.'
 		}
 	},
 

@@ -1,7 +1,7 @@
 # Haushaltsheld — Product Spec
 
 > Household app for two (Lukas & Elisabeth, works for N members). Warm/minimal design
-> (sage + terracotta, Fraunces + Figtree). Tagline: **Every chore, organized.**
+> (sage + terracotta, Fraunces + Figtree). Tagline: **Little helpers for every day.** (de: **Kleine Helfer für deinen Alltag.**, → DECISIONS #295)
 >
 > Ground truth for visuals: [`design/Hearth.dc.html`](../design/Hearth.dc.html) — open it in a
 > browser. Screens are referenced below by their anchor badges (e.g. **[5a]** = `#5a` in that file).
@@ -51,9 +51,11 @@ and the title, the line and the header's buttons all stand on the raccoon's feet
 - No password field and no Apple button (→ [DECISIONS.md #1](DECISIONS.md)). Password sign-in
   exists only as a test door behind `E2E_MODE`, never on a deploy
   (→ [DECISIONS #139](DECISIONS.md), TESTING.md).
-- **The code mail** is plain text in the login page's language. Subject: "{code} is your
-  Haushaltsheld code". The body has the code, how long it works, and "if you didn't ask for it,
-  ignore this".
+- **The code mail** is in the login page's language, as plain text plus an HTML version
+  (→ DECISIONS #294). Subject: "{code} is your Haushaltsheld code". The body has the code, how
+  long it works, and "if you didn't ask for it, ignore this". The HTML version puts a sage band
+  on top (app icon, wordmark, tagline), the code in a large sage box and the validity in a
+  terracotta pill, and follows a dark mail app.
 - Signed-in users with a household land on Home; without one, on the create-or-join step.
 
 ### 1.2 Create or join [5b]

@@ -2,7 +2,7 @@
 
 Household PWA for two (shopping list, meal plan + cook mode, recurring chores with points,
 shared expenses).
-SvelteKit + SQLite, single process, single container. Tagline: _Every chore, organized._
+SvelteKit + SQLite, single process, single container. Tagline: _Little helpers for every day._ (de: _Kleine Helfer für deinen Alltag._)
 
 ## This is an agent-built repo, and you own the git history
 
