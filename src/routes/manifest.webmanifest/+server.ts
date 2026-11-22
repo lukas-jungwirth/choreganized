@@ -38,7 +38,7 @@ import type { RequestHandler } from './$types';
  */
 const MANIFEST = {
 	id: '/',
-	description: 'Every chore, organized. Shopping, meal plan and chores for your household.',
+	description: 'Little helpers for every day. Shopping, meal plan and chores for your household.',
 	start_url: '/home',
 	scope: '/',
 	display: 'standalone',
