@@ -22,9 +22,20 @@
 	}: Props = $props();
 
 	const m = messages();
+
+	/**
+	 * Two even rows: eight swatches in one line run past the edge of a 390px
+	 * phone beside the avatar preview (→ DECISIONS #296).
+	 */
+	const COLUMNS = Math.ceil(MEMBER_COLORS.length / 2);
 </script>
 
-<div class="swatches" role="radiogroup" aria-label={label ?? m.ui.yourColour}>
+<div
+	class="swatches"
+	style:--columns={COLUMNS}
+	role="radiogroup"
+	aria-label={label ?? m.ui.yourColour}
+>
 	{#each MEMBER_COLORS as color (color.value)}
 		{@const unavailable = taken.includes(color.value)}
 		{@const colorName = m.ui.colours[color.key]}
@@ -44,7 +55,8 @@
 
 <style>
 	.swatches {
-		display: flex;
+		display: grid;
+		grid-template-columns: repeat(var(--columns), 34px);
 		gap: 12px;
 	}
 

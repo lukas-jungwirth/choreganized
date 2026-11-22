@@ -148,7 +148,10 @@ export const de: Messages = {
 			terracotta: 'Terrakotta',
 			blue: 'Blau',
 			amber: 'Bernstein',
-			plum: 'Pflaume'
+			plum: 'Pflaume',
+			teal: 'Petrol',
+			indigo: 'Indigo',
+			rose: 'Altrosa'
 		},
 		colourTaken: (colour: string) => `${colour}, schon vergeben`
 	},
@@ -1957,7 +1960,9 @@ export const de: Messages = {
 			code: 'Einladungscode',
 			submit: 'Beitreten',
 			badCode: 'Zu diesem Code gibt es keinen Haushalt. Frag nach, wer dich eingeladen hat.',
-			nameTooLong: (max: number) => `Dein Name darf höchstens ${max} Zeichen haben.`
+			nameTooLong: (max: number) => `Dein Name darf höchstens ${max} Zeichen haben.`,
+			full: (max: number) =>
+				`Dieser Haushalt ist voll: Er hat schon ${max} Mitglieder, eins pro Farbe. Frag, wer dich eingeladen hat, ob jemand Platz machen kann.`
 		},
 
 		landing: {
@@ -2156,6 +2161,7 @@ export const de: Messages = {
 
 		household: {
 			'color-taken': 'Die Farbe hat schon jemand im Haus.',
+			'household-full': 'Dieser Haushalt ist voll.',
 			'not-owner': 'Das kann nur die Besitzer:in.',
 			'not-member': 'Du bist nicht mehr Mitglied dieses Haushalts.',
 			'transfer-first': 'Mach zuerst jemand anderen zur Besitzer:in. Ein Haushalt braucht eine.',

@@ -16,7 +16,14 @@ export const SEED_HOUSEMATE_NAME = 'Elisabeth';
  */
 export const SEED_GUEST_TOKEN = 'seed-guest-jonas-weekend-in-suedtirol-0000a';
 /** The stub housemates `--full-house` adds, one per member colour still free. */
-export const SEED_EXTRA_MEMBER_NAMES = ['Jakob', 'Mira', 'Theo'] as const;
+export const SEED_EXTRA_MEMBER_NAMES = [
+	'Jakob',
+	'Mira',
+	'Theo',
+	'Annika',
+	'Maximilian',
+	'Sophie'
+] as const;
 export const SEED_STORE_NAMES = ['Grocery', 'Drugstore', 'Hardware store'] as const;
 /** The demo checklist (plan 36 step 2), after the shopping lists, and its rows in order. */
 export const SEED_CHECKLIST_NAME = 'Vacation packing';

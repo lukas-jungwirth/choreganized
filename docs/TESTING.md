@@ -198,7 +198,9 @@ household a developer looks at); `e2e` runs the journeys as the `owner` househol
 mutate it; `visual` screenshots the `visual` household, which nothing mutates. A third
 account, `guests`, is seeded with `--guests` (the weekend with Jonas, a guest, → plan 38,
 DECISIONS #287) and screenshotted, unmutated, for the screens a `visual/screens.ts` row marks
-`account: 'guests'`. Tests are
+`account: 'guests'`. A fourth, `fullhouse`, is seeded with `--full-house` (a member per
+colour, eight, → DECISIONS #296) for the screens marked `account: 'fullhouse'`; only
+`e2e/full-house.spec.ts` touches it, and it undoes what it does. Tests are
 serial (`workers: 1`) because they share a server and, within `e2e`, a household.
 
 Find things the way a user does — `getByRole`, `getByLabel`, `getByPlaceholder` — with the

@@ -10,7 +10,8 @@
  * reaches the column. Only the value is data — "Sage" and "Salbei" are two
  * names for the same hex.
  */
-export type MemberColorKey = 'sage' | 'terracotta' | 'blue' | 'amber' | 'plum';
+export type MemberColorKey =
+	'sage' | 'terracotta' | 'blue' | 'amber' | 'plum' | 'teal' | 'indigo' | 'rose';
 
 export type MemberColor = { key: MemberColorKey; value: string };
 
@@ -19,8 +20,19 @@ export const MEMBER_COLORS: MemberColor[] = [
 	{ key: 'terracotta', value: '#C67C51' },
 	{ key: 'blue', value: '#5C7FA3' },
 	{ key: 'amber', value: '#D69B4A' },
-	{ key: 'plum', value: '#9A6B8F' }
+	{ key: 'plum', value: '#9A6B8F' },
+	// The three a larger household needed (→ DECISIONS #296): appended, so the first
+	// five keep their place in `firstFreeColor` and a guest's pick.
+	{ key: 'teal', value: '#478A8C' },
+	{ key: 'indigo', value: '#6E70A8' },
+	{ key: 'rose', value: '#B9666F' }
 ];
+
+/**
+ * How many people a household holds: one per colour, since no two members
+ * share one (SPEC §1.5). Raised from five to eight by adding colours.
+ */
+export const MAX_MEMBERS = MEMBER_COLORS.length;
 
 export function isMemberColor(value: string): boolean {
 	return MEMBER_COLORS.some((color) => color.value === value);

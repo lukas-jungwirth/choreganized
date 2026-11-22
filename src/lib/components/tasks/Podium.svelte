@@ -34,7 +34,7 @@
 	 */
 	const NUMERALS = [28, 22, 20, 20, 20];
 
-	/** Ranks past the fifth keep the smallest column — SPEC tops out at five. */
+	/** Ranks past the fifth keep the smallest column (a household holds eight). */
 	function step(sizes: number[], rank: number): number {
 		return sizes[rank - 1] ?? sizes[sizes.length - 1];
 	}
