@@ -186,3 +186,41 @@ test('the Tasks swipe reaches below a short page, down to the tab bar (#87)', as
 	await finger(page)({ x: 195, y }, 150);
 	await expect(page).toHaveURL(/\/tasks$/);
 });
+
+test('a monthly chore keeps to the first Sunday, and says so (plan 39)', async ({ page }) => {
+	const name = `Deep clean ${Date.now()}`;
+	await page.goto('/tasks');
+	await page.getByRole('button', { name: 'New task' }).click();
+
+	const sheet = page.getByRole('dialog');
+	await sheet.getByLabel('Task').fill(name);
+	await sheet.getByLabel('Repeat').selectOption({ label: 'Every month' });
+	// Sunday 6 July 2036, the first after the run's fixed clock (18 June 2036).
+	await sheet.getByLabel('First due').fill('2036-07-06');
+
+	const keep = sheet.getByRole('checkbox', { name: 'Keep to the schedule' });
+	await expect(keep).not.toBeChecked();
+	await expect(sheet.getByText(/^First on Sun 6 Jul, then a month after/)).toBeVisible();
+	await keep.check({ force: true });
+
+	await expect(sheet.getByRole('radio', { name: 'On the first Sunday' })).toBeChecked();
+	await expect(sheet.getByRole('radio', { name: 'On the 6th' })).toBeVisible();
+	await expect(sheet.getByText('Sun 6 Jul · Sun 3 Aug · Sun 7 Sep')).toBeVisible();
+	await sheet.getByRole('button', { name: 'Create task' }).click();
+	await expect(sheet).toBeHidden();
+
+	await expect(page.getByText(/Monthly, first Sunday/).last()).toBeVisible();
+
+	// Done today, early: the next one is the schedule's next date, not a month from today.
+	await page.getByRole('button', { name: `Mark ${name} done` }).click();
+	const modal = page.getByRole('dialog');
+	await expect(modal.getByText('Next due Aug 3')).toBeVisible();
+	await expect(modal.getByText(/^On schedule · /)).toBeVisible();
+
+	await modal.getByRole('button', { name: 'Undo' }).click();
+	await expect(modal).toBeHidden();
+	await page.getByRole('button', { name: `Open ${name}` }).click();
+	await page.getByRole('dialog').getByRole('button', { name: 'Delete task' }).click();
+	await page.getByRole('dialog').getByRole('button', { name: 'Delete task' }).last().click();
+	await expect(page.getByRole('button', { name: `Open ${name}` })).toBeHidden();
+});

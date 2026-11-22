@@ -1,7 +1,7 @@
 # Haushaltsheld — Product Spec
 
 > Household app for two (Lukas & Elisabeth, works for N members). Warm/minimal design
-> (sage + terracotta, Fraunces + Figtree). Tagline: **Every chore, organized.**
+> (sage + terracotta, Fraunces + Figtree). Tagline: **Little helpers for every day.** (de: **Kleine Helfer für deinen Alltag.**, → DECISIONS #295)
 >
 > Ground truth for visuals: [`design/Hearth.dc.html`](../design/Hearth.dc.html) — open it in a
 > browser. Screens are referenced below by their anchor badges (e.g. **[5a]** = `#5a` in that file).
@@ -51,9 +51,11 @@ and the title, the line and the header's buttons all stand on the raccoon's feet
 - No password field and no Apple button (→ [DECISIONS.md #1](DECISIONS.md)). Password sign-in
   exists only as a test door behind `E2E_MODE`, never on a deploy
   (→ [DECISIONS #139](DECISIONS.md), TESTING.md).
-- **The code mail** is plain text in the login page's language. Subject: "{code} is your
-  Haushaltsheld code". The body has the code, how long it works, and "if you didn't ask for it,
-  ignore this".
+- **The code mail** is in the login page's language, as plain text plus an HTML version
+  (→ DECISIONS #294). Subject: "{code} is your Haushaltsheld code". The body has the code, how
+  long it works, and "if you didn't ask for it, ignore this". The HTML version puts a sage band
+  on top (app icon, wordmark, tagline), the code in a large sage box and the validity in a
+  terracotta pill, and follows a dark mail app.
 - Signed-in users with a household land on Home; without one, on the create-or-join step.
 
 ### 1.2 Create or join [5b]
@@ -71,8 +73,10 @@ and the title, the line and the header's buttons all stand on the raccoon's feet
 
 - Fields: **Household name** (e.g. "Sonnengasse 12", up to 60 characters), **Your display
   name** (prefilled from Google given name, up to 20 characters, the same limit as the profile
-  sheet's, → [DECISIONS #267](DECISIONS.md)), **Your colour** — swatch row from the member palette (sage, terracotta,
-  blue, amber, plum); preview avatar shows the initial on the chosen colour.
+  sheet's, → [DECISIONS #267](DECISIONS.md)), **Your colour** — swatches from the member palette (sage, terracotta,
+  blue, amber, plum, teal, indigo, rose) in two rows of four; preview avatar shows the initial on
+  the chosen colour. No two members share a colour, so the palette is the household's size:
+  **at most 8 members** (→ [DECISIONS #296](DECISIONS.md)).
 - Creates household (creator becomes **owner**), stores timezone from the browser
   (`Intl.DateTimeFormat().resolvedOptions().timeZone`), seeds default stores
   (Grocery, Drugstore, Hardware store) and generates an invite code.
@@ -94,7 +98,10 @@ and the title, the line and the header's buttons all stand on the raccoon's feet
   **Sonnengasse 12**", then Google sign-in, then join.
 - Via code: 6-box code input (letters/digits, dash ignored, case-insensitive).
 - After joining, the joiner sets **display name + colour** (same fields as 1.3, minus household
-  name; colours already taken by other members are shown as unavailable).
+  name; colours already taken by other members are shown as unavailable). A household that
+  already has 8 members shows "This household is full: it already has 8 people, one for each
+  colour. Ask whoever invited you to make room." instead of the form, and the join is refused
+  server-side too (`household-full`).
 - Invalid/revoked code → inline error, stay on screen.
 - The landing has the same **Privacy · Imprint** pair at the bottom as sign-in (→ §13).
 
@@ -107,7 +114,8 @@ and the title, the line and the header's buttons all stand on the raccoon's feet
 
 ## 2. Home tab [8b is the canonical variant]
 
-Top: household name (small caps), "Good {morning|afternoon|evening}, {name}", and under the
+Top: household name (small caps), "Good {morning|afternoon|evening}, {name}" (morning 05:00–12:00,
+afternoon to 18:00, evening until 05:00 — never "morning" after midnight), and under the
 greeting the stacked member avatars (28px, rings cut from the page). The faces are a picture of
 the household, not a button; a screen reader hears "Household: {names}", and Home is the only
 screen that names the housemates. **Settings** is the round gear in the header's top-right
@@ -290,7 +298,8 @@ pose, first match wins, top to bottom (`lib/utils/raccoon.ts`, by the household'
    returns to Settings. With reduced motion the card doesn't pop in, it is just there.
 
 6. **Standings strip** — "You're 1st this month" / "240 pts · 30 ahead of Elisabeth" + stacked
-   avatars → Tasks → History. (Ties: "You're tied this month".)
+   avatars → Tasks → History. (Ties: "You're tied this month".) At most five discs: past five
+   members the first four and a "+N" disc, so the text keeps its room.
 7. **Recent activity card** — the 2 most recent completed tasks (check circle in the member's
    colour, task name, "{member} · {time}", `+{points}` in the member's colour). Header links
    "All →" to Tasks → History. Hidden when there are no completions yet. Last on the screen:
@@ -1017,7 +1026,7 @@ actually need is the chore this replaces (→ [DECISIONS #123](DECISIONS.md)).
   - "Anyone" tasks show a neutral avatar (dashed circle).
 - **Holiday banner** [4a]: "{member} is away until {date} — their tasks are paused, nothing
   counts as overdue" when any member has `awayUntil` ≥ today. Away members' tasks render
-  dimmed/paused instead of overdue.
+  dimmed/paused instead of overdue, and move to after the return when it comes (→ §5.5).
 - FAB (+) → new task sheet. Under the list, a single summary link across to History —
   "{n} done this week · See history" (just "See history" when the week is empty). It replaces
   the old points tiles and "Recent history" preview (→ DECISIONS #117).
@@ -1034,6 +1043,20 @@ actually need is the chore this replaces (→ [DECISIONS #123](DECISIONS.md)).
   - **Repeat**: One-off · Every day · Every week · Every 2 weeks · Every month · custom
     interval (unit + count picker).
   - **First due** (date picker; "Today"/"Tomorrow" shortcuts). Optional for one-offs.
+  - **Keep to the schedule** (de "Fester Termin", → plan 39, DECISIONS #297–#299, sketch
+    `design/sketches/task-schedule.html` [S1]): a switch in a `--field` box under the date,
+    shown only for week and month repeats (any interval), **off by default**. Off, the next
+    date counts from the day it's done, as below; the sub line says so. On, it comes from the
+    calendar: a weekly task keeps its weekday ("Always on a Sunday, even if it's done late"); a
+    monthly one keeps either **the same weekday of the same week** ("On the first Sunday",
+    "On the last Sunday" for a date in the month's last seven days, never a fifth) or **the
+    same day** ("On the 6th", "On the 31st (or the last day)", clamped like a recurring
+    expense, §11.9). The two radio rows are read off the date, the weekday row is the default.
+    The box ends with "Coming up: Sun 6 Dec · Sun 3 Jan · Sun 7 Feb" when on, "First on Sun 6
+    Dec, then a month after each time it's done." when off. Editing a task whose date wasn't
+    touched keeps its schedule, so a snoozed date never becomes the new schedule.
+  - The meta line names a schedule everywhere the cadence shows (list row, detail sheet,
+    Home's next chore): "Monthly, first Sunday", "Monthly, on the 6th", "Weekly, Sundays".
   - **Effort → points**: chips None · 0, Small · 5, Medium · 10, Large · 20, Very large · 40
     (None · 0 = a chore worth tracking but not scoring — → DECISIONS #115).
 - CTA "Create task" / "Save changes".
@@ -1059,13 +1082,17 @@ actually need is the chore this replaces (→ [DECISIONS #123](DECISIONS.md)).
   choice — **I did it** (credit yourself) or **{name} did it** (credit the assignee). Your own
   tasks and "Anyone" tasks skip the choice; the tapper is credited (→ DECISIONS #116).
 - Marks done: logs a completion crediting the chosen member (+points to them), then for
-  recurring tasks reschedules (`next due = completion day + interval`) and, if it alternates,
+  recurring tasks reschedules (`next due = completion day + interval`; with **Keep to the
+  schedule**, the schedule's first date after both today and the date it was due, so lateness
+  doesn't move it, an early tick doesn't bring it back the next day, and missed dates don't
+  pile up) and, if it alternates,
   advances the rotation **from whoever did it** — so doing a turn that was your housemate's
   hands the next one back to them, while "{name} did it" alternates on as if they'd ticked it.
   One-offs remove the task row (history remains). A 0-point task logs a 0-point completion just
   the same.
 - Celebration modal: "Nice work, {name}!" (the doer), "{task} · logged to history", `+{points}`
-  chip, "Next due {date} · Rescheduled · {next member}'s turn next" (recurring only), the
+  chip, "Next due {date} · Rescheduled · {next member}'s turn next" (recurring only; "On
+  schedule · …" when the date came from the task's schedule), the
   **Who did it?** row (below), the reader's own standings line, **Undo** (reverts the
   completion, every doer's share at once, and restores due date/assignee/reminder flags).
 - **Standings line**: the gap to the rival, not the two totals: "You're 5 points ahead of
@@ -1073,7 +1100,8 @@ actually need is the chore this replaces (→ [DECISIONS #123](DECISIONS.md)).
   household, "{n} points this month". It is always the reader's line, with the reader's avatar,
   whoever was credited (→ DECISIONS #277).
 - **Who did it? · Tap to change** [T1–T3]: one face per member in join order (the reader's
-  says "You"), the credited ones ringed and ticked. It is how the credit is corrected after
+  says "You"), the credited ones ringed and ticked. Up to five share one row; past five they
+  wrap into rows of four, the last row centred, so every name stays whole. It is how the credit is corrected after
   the tick, on Tasks and on Home alike, in a household of two or more:
   - Tap a face **on** to share the task; tap one **off** to take that person out. So "done
     together", "somebody else did it" and "my own task, done by my housemate" are the same
@@ -1113,10 +1141,22 @@ actually need is the chore this replaces (→ [DECISIONS #123](DECISIONS.md)).
     later · Pick a date. Title "Reschedule to…", CTA "Move to {date}".
 - The date picker's minimum is **today** in both, so a chore can still be deliberately brought
   forward — only the presets are one-way.
+- A task that keeps to the schedule (§5.2): snooze, reschedule and the return shift after a
+  holiday move **this time only**; the time after is back on the schedule. Snoozing past the
+  next scheduled date skips that one.
 - Either way: sets `dueDate`, clears reminder flags (they re-fire for the new date).
 - **Going away?** toggle in the same sheet: pauses **all my tasks** until a picked return date
   (`member.awayUntil`) — no overdue, no reminders; banner appears for the household. Turning it
   off clears the date. Also accessible from Settings.
+- **The holiday is cut out of the calendar** (→ DECISIONS #293): on the first day home, every
+  task assigned to the returning member that fell due while they were away moves to after the
+  return, as far past it as it fell into the holiday, capped at a week (due on day 2 of the
+  holiday → due 2 days after coming back). The order is kept and nothing comes back red.
+  Reminder flags reset, as with a snooze. The first day home is the day after the return date,
+  or today when the pause is switched off early. Not moved: "Anyone" tasks (the others had them
+  all along), undated one-offs, tasks already overdue before the holiday began, and tasks due
+  from the first day home on. Changing the return date while away keeps the day it began.
+  Under the date picker: "Tasks that come due while you're away move to after you're back."
 
 ### 5.6 Reminders [4e] (full lifecycle — "a quiet nudge, never a red-alert storm")
 

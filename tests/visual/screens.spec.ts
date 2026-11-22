@@ -60,3 +60,10 @@ test.describe('as the guests household', () => {
 	test.use({ storageState: storageStateFor('guests') });
 	for (const screen of SCREENS.filter((screen) => screen.account === 'guests')) screenshot(screen);
 });
+
+test.describe('as the full house', () => {
+	test.use({ storageState: storageStateFor('fullhouse') });
+	for (const screen of SCREENS.filter((screen) => screen.account === 'fullhouse')) {
+		screenshot(screen);
+	}
+});

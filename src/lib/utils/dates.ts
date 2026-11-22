@@ -133,6 +133,92 @@ export function addRepeat(
 	return `${String(nextYear).padStart(4, '0')}-${String(nextMonth).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
 }
 
+/* ── Keeping to the schedule (→ SPEC §5.2, plan 39) ───────────────────────── */
+
+/**
+ * How a monthly task that keeps to the schedule finds its day: the same day of
+ * the month ("on the 6th") or the same weekday in the same week of it ("on the
+ * first Sunday"). A weekly task keeps its weekday either way.
+ */
+export type ScheduleBy = 'day' | 'weekday';
+
+/** Which week of its month a date sits in: 0–3 for the first to the fourth, or the last. */
+export type WeekOfMonth = 0 | 1 | 2 | 3 | 'last';
+
+/**
+ * The week of the month `date` names. A date in the month's last seven days is
+ * the **last** one, never a fifth, so the schedule has a date in every month
+ * (→ DECISIONS). The 22nd–28th of a 31-day month stays the fourth.
+ */
+export function weekOfMonth(date: CalendarDate): WeekOfMonth {
+	const [year, month, day] = date.split('-').map(Number);
+	if (day + 7 > daysInMonth(year, month)) return 'last';
+	return Math.floor((day - 1) / 7) as 0 | 1 | 2 | 3;
+}
+
+/**
+ * The first date on a task's schedule strictly after `after`: the anchor, then
+ * every `interval` weeks or months from it. Months either keep the anchor's day
+ * (clamped to a shorter month's end and never moved, the way `addRepeat` keeps a
+ * recurring expense) or its weekday in the same week of the month.
+ *
+ * Done or skipped, the next date is this with `after` = the later of today and
+ * the date it was due: lateness doesn't move the schedule, and nothing piles up
+ * (→ `services/tasks.ts`).
+ */
+export function nextOnSchedule(
+	anchor: CalendarDate,
+	unit: 'week' | 'month',
+	interval: number,
+	by: ScheduleBy,
+	after: CalendarDate
+): CalendarDate {
+	const step = Math.max(1, Math.round(interval));
+	if (anchor > after) return anchor;
+
+	if (unit === 'week') {
+		const days = step * 7;
+		return addDays(anchor, (Math.floor(daysBetween(anchor, after) / days) + 1) * days);
+	}
+
+	const months = monthIndex(after) - monthIndex(anchor);
+	let k = Math.max(0, Math.floor(months / step));
+	let candidate = monthOnSchedule(anchor, k * step, by);
+	while (candidate <= after) candidate = monthOnSchedule(anchor, ++k * step, by);
+	return candidate;
+}
+
+/** The anchor's day, `offset` months on, the schedule's way. */
+function monthOnSchedule(anchor: CalendarDate, offset: number, by: ScheduleBy): CalendarDate {
+	const index = monthIndex(anchor) + offset;
+	const year = Math.floor(index / 12);
+	const month = (index % 12) + 1;
+	const last = daysInMonth(year, month);
+
+	if (by === 'day') return ymd(year, month, Math.min(Number(anchor.slice(8, 10)), last));
+
+	const weekday = weekdayIndex(anchor);
+	const week = weekOfMonth(anchor);
+	if (week === 'last') {
+		return ymd(year, month, last - ((weekdayIndex(ymd(year, month, last)) - weekday + 7) % 7));
+	}
+	const first = weekdayIndex(ymd(year, month, 1));
+	return ymd(year, month, 1 + ((weekday - first + 7) % 7) + 7 * week);
+}
+
+function monthIndex(date: CalendarDate): number {
+	return Number(date.slice(0, 4)) * 12 + Number(date.slice(5, 7)) - 1;
+}
+
+/** `month` is 1–12. Day 0 of the following month is the last day of this one. */
+function daysInMonth(year: number, month: number): number {
+	return new Date(Date.UTC(year, month, 0)).getUTCDate();
+}
+
+function ymd(year: number, month: number, day: number): CalendarDate {
+	return `${String(year).padStart(4, '0')}-${String(month).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
+}
+
 export function addDays(date: CalendarDate, days: number): CalendarDate {
 	return addInterval(date, days, 'day');
 }

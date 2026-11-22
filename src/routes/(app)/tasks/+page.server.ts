@@ -31,7 +31,7 @@ import {
 	type TaskInput
 } from '$lib/server/services/tasks';
 import { isCalendarDate, startOfWeek, todayIn, zonedStartOfDay } from '$lib/utils/dates';
-import { DEFAULT_POINTS, TASK_NAME_MAX, isRecurUnit } from '$lib/utils/tasks';
+import { DEFAULT_POINTS, TASK_NAME_MAX, isRecurUnit, isScheduleBy } from '$lib/utils/tasks';
 import type { Actions, PageServerLoad } from './$types';
 
 export const load: PageServerLoad = async (event) => {
@@ -105,6 +105,7 @@ function readTaskInput(form: FormData, m: Messages): { input: TaskInput } | { er
 	if (name.length > TASK_NAME_MAX) return { error: m.errors.keepUnder(TASK_NAME_MAX) };
 
 	const unit = form.get('recurUnit');
+	const by = form.get('scheduleBy');
 
 	return {
 		input: {
@@ -117,7 +118,9 @@ function readTaskInput(form: FormData, m: Messages): { input: TaskInput } | { er
 			// becomes "Anyone".
 			assigneeMemberId: String(form.get('assigneeMemberId') ?? '') || null,
 			// An unchecked checkbox posts nothing at all — that's the "off".
-			rotate: form.get('rotate') !== null
+			rotate: form.get('rotate') !== null,
+			keepSchedule: form.get('keepSchedule') !== null,
+			scheduleBy: isScheduleBy(by) ? by : null
 		}
 	};
 }

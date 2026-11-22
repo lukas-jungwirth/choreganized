@@ -1,9 +1,9 @@
 /**
  * Outgoing email (→ docs/ARCHITECTURE.md "Email", plan 31).
  *
- * One message today: the sign-in code (→ `auth.ts`). Plain text on purpose —
- * a six-digit code needs no layout, a text mail is the one spam filters trust
- * most, and it keeps colours out of a place the design tokens can't reach.
+ * One message today: the sign-in code (→ `auth.ts`). Multipart: the plain-text
+ * part spam filters and text-only clients read, and an HTML part with the app's
+ * look (→ `sign-in-mail.ts`, DECISIONS #294, amending #179).
  *
  * Where a message goes is decided per send from the environment, in this order:
  *
@@ -25,8 +25,17 @@ import { dev } from '$app/environment';
 import { env } from '$env/dynamic/private';
 import { catalog, type Locale } from '$lib/i18n';
 import { e2eMode } from './e2e-mode';
+import { iconAttachment, signInCodeHtml, type MailAttachment } from './sign-in-mail';
 
-export type MailMessage = { to: string; subject: string; text: string };
+export type MailMessage = {
+	to: string;
+	subject: string;
+	/** Always there: the whole message for a client or filter that reads text only. */
+	text: string;
+	html?: string;
+	/** Inline images the HTML points at by `cid:`. */
+	attachments?: MailAttachment[];
+};
 
 export type MailRoute =
 	| { kind: 'outbox'; path: string }
@@ -97,7 +106,15 @@ export async function sendMail(message: MailMessage): Promise<void> {
 				throw new Error(`outbox: ${OUTBOX_FAILING_DOMAIN} refuses mail, on purpose`);
 			}
 			mkdirSync(dirname(route.path), { recursive: true });
-			appendFileSync(route.path, JSON.stringify({ ...message, at: Date.now() }) + '\n');
+			appendFileSync(
+				route.path,
+				JSON.stringify({
+					...message,
+					// The bytes would bloat every line; which image went along is enough.
+					attachments: message.attachments?.map(({ filename, cid }) => ({ filename, cid })),
+					at: Date.now()
+				}) + '\n'
+			);
 			return;
 		case 'smtp':
 			await smtpTransport(route).sendMail({ from: route.from, ...message });
@@ -119,10 +136,18 @@ export const SIGN_IN_CODE_MINUTES = 10;
 
 /** The sign-in code mail, in the language the login page was shown in. */
 export function signInCodeMail(to: string, code: string, locale: Locale): MailMessage {
-	const m = catalog(locale).auth.mail;
+	const auth = catalog(locale).auth;
+	const m = auth.mail;
 	return {
 		to,
 		subject: m.subject(code),
-		text: m.body(code, SIGN_IN_CODE_MINUTES)
+		text: m.body(code, SIGN_IN_CODE_MINUTES),
+		html: signInCodeHtml(code, SIGN_IN_CODE_MINUTES, {
+			locale,
+			wordmark: auth.wordmarkLead + auth.wordmarkAccent,
+			tagline: auth.tagline,
+			m
+		}),
+		attachments: [iconAttachment()]
 	};
 }

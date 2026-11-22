@@ -8,7 +8,7 @@
  */
 import assert from 'node:assert/strict';
 import { describe, it } from 'vitest';
-import { MEMBER_COLORS } from '$lib/member-colors';
+import { MAX_MEMBERS, MEMBER_COLORS } from '$lib/member-colors';
 import {
 	createHousehold,
 	getHousehold,
@@ -97,6 +97,23 @@ describe('joinHousehold', () => {
 		assert.throws(
 			() => joinHousehold(owner.userId, inviteCode, profile),
 			(error) => codeOf(error) === 'already-member'
+		);
+	});
+
+	it('holds eight people, one per colour, and turns the ninth away as full', () => {
+		const housemates = ['A', 'B', 'C', 'D', 'E', 'F', 'G'];
+		const { inviteCode, members } = makeHousehold({ housemates });
+
+		assert.equal(MAX_MEMBERS, 8);
+		assert.equal(members.length, MAX_MEMBERS);
+		assert.equal(new Set(members.map((member) => member.color)).size, MAX_MEMBERS);
+		assert.throws(
+			() =>
+				joinHousehold(insertUser(), inviteCode, {
+					displayName: 'Ninth',
+					color: MEMBER_COLORS[0].value
+				}),
+			(error) => codeOf(error) === 'household-full'
 		);
 	});
 

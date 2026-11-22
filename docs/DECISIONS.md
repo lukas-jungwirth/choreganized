@@ -1017,6 +1017,11 @@ reload`) so it can't silently regress.
        tick pulls a row into "recently bought", quick-add appends one) — on everything except
        the drag in hand and the order still saving.
 
+119. **"Good morning" starts at 05:00, not midnight** (Lukas, 2026-11-22). Between 00:00 and
+     05:00 Home still says "Good evening": up at one in the morning is a late evening, not a
+     morning. 05:00 is when the raccoon wakes up (#260), so greeting and raccoon agree.
+     `utils/greeting.ts` owns the hours.
+
 ## Open questions (non-blocking, defaults chosen)
 
 - **Production domain** — invite links & OAuth redirect need the final origin (design shows
@@ -2695,7 +2700,7 @@ units | null, name}`, written back as editor lines in the reader's unit spelling
      in a household and lands there signed in with the wrong account, and the way back is signing
      out, not "Join".
 
-186. **`db:seed --full-house` fills the household to five members, opt-in** (`scripts/seed.ts`).
+186. **`db:seed --full-house` fills the household to one member per colour, opt-in** (`scripts/seed.ts`).
      The household's real ceiling is the member palette: joining refuses a colour someone has
      (`color-taken`), and there are five. The flag adds a stub member per free colour (Jakob,
      Mira, Theo after Elisabeth), each with a ledger person and one task done at different
@@ -4317,3 +4322,98 @@ store_id` NULL already means "no memory" (a deleted list), and telling the two a
      closes; and the guest page's error screen now tells a dead link (404) from the server
      failing. Kept as they are: a member may still rename themselves to a guest's name (#285),
      and the service worker still registers on the guest page (#289).
+293. **Coming back from a holiday cuts the holiday out of the calendar** (2026-11-22; → SPEC §5.5,
+     DATA-MODEL `members`; amends #33/#47/#78, which only hid overdue while away). Before, the
+     day after the return date every task that fell due during the holiday was overdue with its
+     old date: a wall of red and a morning of overdue nudges. Now a new `members.awaySince`
+     (stamped when the pause goes from off to on, kept while the return date changes) marks the
+     start, and on the first day home R (`awayUntil + 1`, or today when the pause is switched off
+     early) the returning member's own tasks due in `[awaySince, R)` move to
+     `R + min(dueDate − awaySince, 7)`: order kept, nothing pushed more than a week out, reminder
+     flags reset as with a snooze. "Anyone" tasks don't move (the others had them all along, as
+     #33 says), nor do undated one-offs, tasks already overdue when the holiday began, or tasks
+     due from R on. **Where it runs:** a natural return has no event, so `settleReturns` runs
+     lazily wherever a return could first be seen: at the top of `sendTaskReminders` (before any
+     nudge is judged, rather than as a separate cron job that could run after it on the same
+     tick) and at the start of the `(app)` layout load. That one covers the pages too: every
+     task screen's load awaits `parent()`, and SvelteKit runs the layout's server load for it
+     even on a client-side navigation whose response skips the layout's data (its data
+     handler, `runtime/server/data/index.js`), so the page reads the settled rows on a fresh
+     clock. A first build also settled again in the Home and Tasks loads on that wrong premise;
+     the review removed it. It costs one small read when nobody is coming home, and it is idempotent: the
+     member's columns are cleared first, conditionally on the `awayUntil` that was read, so only
+     one caller ever shifts. `setAway` settles a pause that ran out before it touches the row.
+     **Legacy pauses** (set before this column existed, `awaySince` NULL) have no start to measure
+     from: they move nothing and are only cleared, as before. Tasks have no archived or
+     soft-deleted state, so there is nothing else to exclude. Hint under the date picker: "Tasks
+     that come due while you're away move to after you're back." / "Aufgaben, die in der Zeit
+     fällig werden, verschieben sich auf die Tage nach deiner Rückkehr."
+294. **The sign-in code mail is multipart: the same plain text, plus an HTML part** (2026-11-22;
+     → SPEC §1.1, ARCHITECTURE "Email"; amends #179, which sent text only). Lukas wanted a nicer
+     mail and picked the "green banner" layout: a sage band with the app icon, wordmark and
+     tagline, then a white card with the code in a sage-tint box, a terracotta "works for 10
+     minutes" pill and the "didn't ask for this?" line (`lib/server/sign-in-mail.ts`). The
+     plain-text part is unchanged, word for word, so filters and text-only clients see what they
+     saw before. **Colours are literal copies of app.css's tokens**, light and dark, since no mail
+     client reads the app's stylesheet; the file is `.ts`, outside the design-token test's reach,
+     and says so at the top. Tables and inline styles, because Gmail and Outlook drop most of a
+     `<style>` block; that block only holds the `prefers-color-scheme: dark` overrides and the
+     hidden preheader. **The icon is an inline CID attachment**, not a URL to the server: opening
+     the mail loads nothing and tells no one it was opened, and it works before a deploy has a
+     public address. `icon-192.png` is imported with `?inline`, so it is bundled into the server
+     build and there is no path to resolve in the container. With images blocked the band still
+     reads (green, white wordmark). Web fonts are only named: Fraunces and Figtree where
+     installed, else Georgia and the system sans. The code's digits fall back to Palatino rather
+     than Georgia, whose old-style figures make six digits hard to read off. The outbox records
+     the HTML and which attachments went along (not their bytes); the dev console still prints
+     the text part.
+295. **New tagline: "Little helpers for every day." / "Kleine Helfer für deinen Alltag."**
+     (Lukas's call, 2026-11-22; replaces "Every chore, organized", which #211 kept for the time
+     being). A nod to the raccoons, and German gets its own line instead of reusing the English
+     one. It shows on the login page, in the sign-in mail's band, the meta description and the
+     web manifest (English: the manifest isn't localized).
+296. **A household holds eight people, not five: three more member colours** (2026-11-22;
+     → SPEC §1.3–1.4, DESIGN-SYSTEM "Members"; amends #186). The cap was never a number: no two
+     members share a colour (`color-taken`), so the palette _is_ the household's size, and five
+     was tight for a shared flat or a bigger family. Added **teal `#478A8C`, indigo `#6E70A8`,
+     rose `#B9666F`** — the hue gaps between the five earthy ones, the same muted weight, white
+     initials at 3.98 / 4.62 / 4.04 : 1 (sage is 3.79). Appended, so `firstFreeColor` and a guest's
+     `leastUsedColor` still reach for the first five first. **Why eight and not more:** every
+     screen that lists the whole household was walked at eight on a 390px phone (a new
+     `fullhouse` e2e/visual account, `--full-house` now seeds six stubs). Rows and sheets
+     (assignee picker, split sheet, roster, leaderboard, chore split, cook chips) take any count;
+     three things broke and were fixed — the **colour picker** ran off the screen (now two rows of
+     four), **"Who did it?"** squeezed names to "Elis…" (past five it wraps into rows of four),
+     and the **standings strip**'s stack of eight left its text four lines tall (`AvatarStack`
+     `max={5}`: four faces and "+4"). Past eight, the palette stops being tellable apart at a
+     glance — blue/indigo and sage/teal are already the closest pairs — so a ninth colour would
+     cost more than it gives. A **full household** now says so on the join screen and refuses
+     the join as `household-full`, instead of greying every swatch and answering "colour taken".
+     The podium (`tasks/Podium`, only on `/dev/kit` today) already handles any count.
+     Colour names: Teal/Petrol, Indigo/Indigo, Rose/Altrosa.
+297. **Keep to the schedule: a recurring task can take its dates from the calendar** (plan 39,
+     asked for by Lukas 2026-11-22). Two nullable columns on `tasks`, `schedule_anchor` and
+     `schedule_by`, and one pure function, `utils/dates.ts` `nextOnSchedule`. Done or skipped,
+     the next date is the schedule's first date **strictly after both today and the date it
+     was due**: one rule covers late (the schedule doesn't move), very late (skips ahead, no
+     pile of missed ones) and early (Saturday's tick for Sunday's date doesn't make it due on
+     Monday). Off by default, so every existing task and every new one behaves as before until
+     someone turns it on; weekly tasks get it too (it keeps the weekday). Names: "Keep to the
+     schedule" / "Fester Termin". All three were the plan's defaults; Lukas may change them.
+298. **"The last Sunday", never "the fifth"**: a date in its month's last seven days anchors to
+     the month's last such weekday, so the schedule has a date in every month. The 22nd–28th
+     of a long month stays "the fourth". By-day schedules clamp the 29th–31st to a shorter
+     month's end and go back, the way recurring expenses do (#175).
+299. **Snooze moves one date, never the schedule**; the anchor changes only when the sheet is
+     saved with a new date. Saving with the date untouched keeps the anchor, because a snoozed
+     date sits off the schedule and renaming the task mustn't move the schedule onto it. The
+     sheet reads its labels from the same anchor for the same reason. The done pop-up says "On
+     schedule · {who's next}" ("Nach Plan") instead of "Rescheduled", keeping the turn half
+     rather than repeating the day as the sketch had it.
+300. **The colour picker fills its row: six 38px dots, then two** (2026-11-22; → DESIGN-SYSTEM
+     "ColorPicker"; amends #296). Four to a row left a third of the width beside the avatar
+     empty in the profile sheet and onboarding. Lukas picked six-and-two over keeping 34px dots
+     (which stop 14px short of the edge) and over one row of eight (28px dots, touch targets
+     overlapping). At 390px the 278px beside the avatar takes six 38px dots with 10px gaps, so
+     each dot still sits in a 44px target; `space-between` lines the last dot up with the name
+     field, and a `max-width` stops the gaps at 16px on wider phones.

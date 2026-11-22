@@ -22,9 +22,21 @@
 	}: Props = $props();
 
 	const m = messages();
+
+	/**
+	 * Six to a row, spread across the width beside the avatar preview: eight in
+	 * one line shrink below a touch target at 390px, and four left a third of
+	 * the row empty (→ DECISIONS #296, #300).
+	 */
+	const COLUMNS = 6;
 </script>
 
-<div class="swatches" role="radiogroup" aria-label={label ?? m.ui.yourColour}>
+<div
+	class="swatches"
+	style:--columns={COLUMNS}
+	role="radiogroup"
+	aria-label={label ?? m.ui.yourColour}
+>
 	{#each MEMBER_COLORS as color (color.value)}
 		{@const unavailable = taken.includes(color.value)}
 		{@const colorName = m.ui.colours[color.key]}
@@ -44,21 +56,28 @@
 
 <style>
 	.swatches {
-		display: flex;
-		gap: 12px;
+		display: grid;
+		grid-template-columns: repeat(var(--columns), 38px);
+		/* The row ends where the fields above it end; on a wider phone the
+		   gaps stop growing at 16px rather than spreading the dots apart. */
+		justify-content: space-between;
+		row-gap: 12px;
+		flex: 1;
+		max-width: calc(var(--columns) * 38px + (var(--columns) - 1) * 16px);
+		min-width: 0;
 	}
 
 	.swatch {
 		display: inline-flex;
 		cursor: pointer;
-		/* Keeps the 34px dot inside a 44px touch target. */
-		padding: 5px;
-		margin: -5px;
+		/* Keeps the 38px dot inside a 44px touch target. */
+		padding: 3px;
+		margin: -3px;
 	}
 
 	.dot {
-		width: 34px;
-		height: 34px;
+		width: 38px;
+		height: 38px;
 		border-radius: 50%;
 		background: var(--swatch);
 		transition: box-shadow 120ms ease-out;

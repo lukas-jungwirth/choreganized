@@ -33,6 +33,7 @@ import {
 	formatWeekdayShort,
 	formatWeekdays,
 	needsYear,
+	weekOfMonth,
 	type CalendarDate
 } from '$lib/utils/dates';
 import type { AlbumName } from '$lib/assets/mascot/album';
@@ -44,7 +45,7 @@ import { formatAmount, formatIngredient } from '$lib/utils/ingredients';
 import { currencyAfter, currencySymbol, formatMoney } from '$lib/utils/money';
 import type { MealSlot } from '$lib/utils/meals';
 import { formatQuantity, type UnitLabels } from '$lib/utils/shopping';
-import type { RecurUnit } from '$lib/utils/tasks';
+import type { RecurUnit, TaskSchedule } from '$lib/utils/tasks';
 
 /**
  * A sentence with an emphasised run inside it. Expressed as parts rather than
@@ -145,6 +146,20 @@ function ordinal(day: number): string {
 	return `${day}${suffix}`;
 }
 
+/** "first" … "fourth", or "last": which week of its month a date is in. */
+function weekName(date: CalendarDate): string {
+	const week = weekOfMonth(date);
+	return week === 'last' ? 'last' : ['first', 'second', 'third', 'fourth'][week];
+}
+
+/** The day a task keeps to (→ SPEC §5.2): "Sundays", "first Sunday", "on the 6th". */
+function scheduleDay(unit: RecurUnit, schedule: TaskSchedule): string {
+	const weekday = formatWeekdayLong(schedule.anchor, L);
+	if (unit === 'week') return `${weekday}s`;
+	if (schedule.by === 'day') return `on the ${ordinal(Number(schedule.anchor.slice(8, 10)))}`;
+	return `${weekName(schedule.anchor)} ${weekday}`;
+}
+
 function shoppingDay(lastOpenDay: CalendarDate, today: CalendarDate): string {
 	const days = daysBetween(today, lastOpenDay);
 	if (days <= 0) return 'today';
@@ -157,7 +172,7 @@ export const en = {
 	meta: {
 		/** `<meta name="description">`, set in the root layout (→ app.html). */
 		description:
-			'Every chore, organized. A shared household app for shopping, meal planning and chores.'
+			'Little helpers for every day. A shared household app for shopping, meal planning and chores.'
 	},
 
 	/* ── Words that repeat everywhere ──────────────────────────────────────── */
@@ -196,7 +211,10 @@ export const en = {
 			terracotta: 'Terracotta',
 			blue: 'Blue',
 			amber: 'Amber',
-			plum: 'Plum'
+			plum: 'Plum',
+			teal: 'Teal',
+			indigo: 'Indigo',
+			rose: 'Rose'
 		},
 		colourTaken: (colour: string) => `${colour}, already taken`
 	},
@@ -371,10 +389,18 @@ export const en = {
 		 * weeks", "Monthly" [05] [4a]. The three every-one cadences get their own
 		 * word because that's what the design writes; everything else counts.
 		 */
-		repeat: (unit: RecurUnit, interval: number) => {
+		repeat: (unit: RecurUnit, interval: number, schedule: TaskSchedule | null = null) => {
 			if (unit === 'none') return 'One-off';
-			if (interval === 1) return unit === 'day' ? 'Daily' : unit === 'week' ? 'Weekly' : 'Monthly';
-			return `Every ${interval} ${unit}s`;
+			const cadence =
+				interval === 1
+					? unit === 'day'
+						? 'Daily'
+						: unit === 'week'
+							? 'Weekly'
+							: 'Monthly'
+					: `Every ${interval} ${unit}s`;
+			// A task that keeps to the schedule names its day: "Monthly, first Sunday".
+			return schedule && unit !== 'day' ? `${cadence}, ${scheduleDay(unit, schedule)}` : cadence;
 		},
 
 		/** "+10" — a task's worth, wherever points are a badge. */
@@ -912,9 +938,13 @@ export const en = {
 			whoFailed: 'Couldn’t change that.',
 			nextDue: (date: string) => `Next due ${date}`,
 			/** Where the chore went next — or the truth, when nothing changed hands. */
-			handoverAnyone: 'Rescheduled · anyone can take it',
-			handoverNext: (name: string) => `Rescheduled · ${name}'s turn next`,
-			handoverSame: (name: string) => `Rescheduled · still ${name}'s`,
+			/** `kept`: the date came from the task's schedule, not from today (→ SPEC §5.2). */
+			handoverAnyone: (kept: boolean) =>
+				`${kept ? 'On schedule' : 'Rescheduled'} · anyone can take it`,
+			handoverNext: (name: string, kept: boolean) =>
+				`${kept ? 'On schedule' : 'Rescheduled'} · ${name}'s turn next`,
+			handoverSame: (name: string, kept: boolean) =>
+				`${kept ? 'On schedule' : 'Rescheduled'} · still ${name}'s`,
 			/** The month's standings, in one line (→ SPEC §5.4). */
 			standingsSolo: (points: number) => `${points} points this month`,
 			standingsAhead: (gap: number, name: string) =>
@@ -972,6 +1002,33 @@ export const en = {
 			unit: 'Unit',
 			firstDue: 'First due',
 			nextDue: 'Next due',
+			/** Keep to the schedule (→ SPEC §5.2, plan 39). */
+			keepSchedule: 'Keep to the schedule',
+			scheduleOff: 'The next one counts from the day it’s done.',
+			scheduleWeekly: (date: CalendarDate) =>
+				`Always on a ${formatWeekdayLong(date, L)}, even if it’s done late.`,
+			scheduleMonthly: 'Done late? The next one stays on its date.',
+			/** Names the two choices for a screen reader. */
+			scheduleWhich: 'Which day of the month',
+			scheduleByWeekday: (date: CalendarDate) =>
+				`On the ${weekName(date)} ${formatWeekdayLong(date, L)}`,
+			scheduleByDay: (date: CalendarDate) => {
+				const day = Number(date.slice(8, 10));
+				return day >= 29 ? `On the ${ordinal(day)} (or the last day)` : `On the ${ordinal(day)}`;
+			},
+			/** "Coming up: Sun 6 Dec · Sun 3 Jan · Sun 7 Feb". */
+			comingUp: (dates: string[]): RichText => [
+				{ text: 'Coming up: ' },
+				{ text: dates.join(' · '), strong: true }
+			],
+			/** "First on Sun 6 Dec, then a month after each time it's done." */
+			countsFrom: (first: string, unit: 'week' | 'month', interval: number): RichText => [
+				{ text: 'First on ' },
+				{ text: first, strong: true },
+				{
+					text: `, then ${interval === 1 ? `a ${unit}` : `${interval} ${unit}s`} after each time it’s done.`
+				}
+			],
 			dueShortcuts: 'Due date shortcuts',
 			today: 'Today',
 			tomorrow: 'Tomorrow',
@@ -2373,7 +2430,7 @@ export const en = {
 		/** The wordmark is split so "held" can take the accent colour. */
 		wordmarkLead: 'Haushalts',
 		wordmarkAccent: 'held',
-		tagline: 'Every chore, organized',
+		tagline: 'Little helpers for every day',
 		continueWithGoogle: 'Continue with Google',
 		openingGoogle: 'Opening Google…',
 		failed: 'Sign-in didn’t complete. Please try again.',
@@ -2417,11 +2474,24 @@ export const en = {
 		sendFailed:
 			'The email couldn’t be sent, so no code is on its way. Try again in a moment, or continue with Google.',
 
-		/** The sign-in mail itself — plain text (→ `lib/server/mail.ts`). */
+		/**
+		 * The sign-in mail itself (→ `lib/server/mail.ts`): `body` is the plain-text
+		 * part, the rest is the HTML part (→ `lib/server/sign-in-mail.ts`, DECISIONS #294).
+		 */
 		mail: {
 			subject: (code: string) => `${code} is your Haushaltsheld code`,
 			body: (code: string, minutes: number) =>
-				`Your sign-in code for Haushaltsheld:\n\n${code}\n\nIt works for ${minutes} minutes. If you didn’t ask for it, you can ignore this email. Nobody can sign in without the code.`
+				`Your sign-in code for Haushaltsheld:\n\n${code}\n\nIt works for ${minutes} minutes. If you didn’t ask for it, you can ignore this email. Nobody can sign in without the code.`,
+			/** The inbox preview line, hidden in the mail itself. */
+			preheader: (minutes: number) =>
+				`Type it on the sign-in page to continue. It works for ${minutes} minutes.`,
+			heading: 'Here’s your sign-in code',
+			lead: 'Type it on the sign-in page to continue.',
+			/** The pill under the code. */
+			validFor: (minutes: number) => `Works for ${minutes} ${minutes === 1 ? 'minute' : 'minutes'}`,
+			fine: 'Didn’t ask for this? You can ignore this email. Nobody can sign in without the code.',
+			/** Under the card. */
+			footer: 'You get this because someone asked for a sign-in code on Haushaltsheld.'
 		}
 	},
 
@@ -2486,7 +2556,10 @@ export const en = {
 			code: 'Invite code',
 			submit: 'Join household',
 			badCode: 'That code doesn’t match a household. Check it with whoever invited you.',
-			nameTooLong: (max: number) => `Keep your name under ${max} characters.`
+			nameTooLong: (max: number) => `Keep your name under ${max} characters.`,
+			/** Every colour is worn, so nobody else fits (→ `MAX_MEMBERS`). */
+			full: (max: number) =>
+				`This household is full: it already has ${max} people, one for each colour. Ask whoever invited you to make room.`
 		},
 
 		/** The public invite landing, `/j/{code}`. */
@@ -2748,6 +2821,7 @@ export const en = {
 		/** `HouseholdError`, keyed by its own codes (→ `services/household.ts`). */
 		household: {
 			'color-taken': 'A housemate already has that colour.',
+			'household-full': 'This household is full.',
 			'not-owner': 'Only the owner can do that.',
 			'not-member': 'You’re not a member of this household any more.',
 			'transfer-first': 'Make someone else the owner first. A household needs one.',
@@ -3222,6 +3296,8 @@ export const en = {
 		/** The switch itself, named for a screen reader. */
 		toggle: 'Going away',
 		backOn: 'Back on',
+		/** Under the picker: the holiday is cut out of the calendar (→ SPEC §5.5). */
+		shiftHint: "Tasks that come due while you're away move to after you're back.",
 		/** The CTA under the picker: "Pause my tasks until Jul 24". */
 		pauseUntil: (date: string) => `Pause my tasks until ${date}`,
 		updateUntil: (date: string) => `Update my tasks until ${date}`

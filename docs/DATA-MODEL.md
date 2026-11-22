@@ -81,9 +81,19 @@ user ─┬─ session / account / verification        (Better Auth)
 - `role`: `'owner' | 'member'`. Exactly one owner per household (app-enforced; "Make owner"
   transfers).
 - `awayUntil`: holiday pause end date (inclusive). Away = `today(household) <= awayUntil`.
-  Affects: overdue rendering, due/overdue reminders (skipped entirely — flags stay unset so
-  nudges fire only if it becomes due again after return; simpler: reminders check away at send
-  time), Home banner.
+  Affects: overdue rendering, due/overdue reminders (checked at send time; an away member's
+  nudge stays unclaimed), Home banner.
+- `awaySince`: the household-local day the current pause began, stamped by `setAway` when the
+  pause goes from off to on and kept while the return date changes; NULL whenever `awayUntil`
+  is. **The return shift** (`settleReturns` / `returnHome` in `services/tasks.ts`,
+  → [DECISIONS #293](DECISIONS.md), SPEC §5.5): on the first day home R (`awayUntil + 1`, or
+  today when the pause is ended early) the member's own tasks with
+  `awaySince <= dueDate < R` get `dueDate = R + min(dueDate − awaySince, 7)` and both reminder
+  flags reset, then both columns clear, in one transaction. Anyone tasks, undated tasks, tasks
+  overdue before `awaySince` and tasks due from R on don't move. A natural return has no
+  event, so `settleReturns(householdId, today)` runs at the start of the morning reminder sweep
+  and of the `(app)` layout load (pages reach it through `parent()`); it is idempotent (the clear wins once). A
+  pause from before the column (`awaySince` NULL) moves nothing and is only cleared.
 - `birthday`: optional `MM-DD` — day and month, never a year, so no age is kept. Set in the
   profile sheet; its only reader is Home's raccoon (`lib/utils/raccoon.ts`). Your own only:
   `listMembers` doesn't select it, so housemates never receive it.
@@ -217,11 +227,18 @@ user ─┬─ session / account / verification        (Better Auth)
 
 There is no occurrences table. `dueDate` is the _current_ due date; per-occurrence state
 (`dueReminderSentAt`, `overdueReminderSentAt`) lives on the row and is reset whenever the
-occurrence changes (done, skip, snooze, edit of due date).
+occurrence changes (done, skip, snooze, edit of due date, the return shift after a holiday).
 
 - `recurUnit 'none'` = one-off (optionally undated). Otherwise every `recurInterval` ×
   `recurUnit` (Weekly = 1×week, Every 2 weeks = 2×week, Monthly = 1×month).
 - `assigneeMemberId NULL` = **Anyone**. `rotate` only meaningful with an assignee.
+- `scheduleAnchor` / `scheduleBy` (plan 39): **Keep to the schedule**. NULL anchor = the next
+  date counts from the completion day (step 2 below). Set, the task's dates are the anchor and
+  every `recurInterval` weeks or months from it; a month keeps the anchor's day (`'day'`,
+  clamped) or its weekday in the same week of the month (`'weekday'`, the month's last seven
+  days = "the last"). Only on week/month recurrences, `scheduleBy` only on months; the service
+  clears both otherwise. Saving the sheet sets the anchor to the due date **unless** the date
+  wasn't touched and an anchor exists. Snooze and the holiday return move `dueDate` only.
 - Overdue = `dueDate < today(household)` and assignee not away. Days overdue = date diff.
 
 **Completion algorithm** (single transaction; service `completeTask`):
@@ -232,6 +249,9 @@ occurrence changes (done, skip, snooze, edit of due date).
 2. If recurring: `dueDate = addInterval(today, recurInterval, recurUnit)` (date-fns `addWeeks`/
    `addMonths`/`addDays` on the calendar date — _today-based_, not dueDate-based, so an overdue
    weekly task completed today is next due in a week, matching [4d] "Next due Aug 14").
+   With a `scheduleAnchor`, `utils/dates.ts` `nextOnSchedule` instead: the first schedule
+   date strictly after the latest of today, `dueDate` and the anchor.
+   The anchor never changes here, so Undo has nothing of the schedule to restore.
    If `rotate`: assignee ← the member after **the doer** in `joinedAt` order (wrapping, skipping
    departed) — so doing a housemate's turn hands the next one back to them. Reset both reminder
    flags to NULL.
@@ -461,6 +481,7 @@ idempotent via the flags):
 ```
 localNow, localToday = now in household.timezone
 if localNow >= today 08:00:
+  settleReturns: holidays that ended before localToday move their tasks first (→ members)
   due today:   tasks where dueDate == localToday and dueReminderSentAt IS NULL  → push, set flag
   overdue:     tasks where dueDate <  localToday and overdueReminderSentAt IS NULL → push, set flag
 (skip away assignees; Anyone → all members; respect per-member toggles)

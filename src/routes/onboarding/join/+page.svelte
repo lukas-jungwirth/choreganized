@@ -14,7 +14,7 @@
 	import ColorPicker from '$lib/components/ui/ColorPicker.svelte';
 	import TextField from '$lib/components/ui/TextField.svelte';
 	import { messages } from '$lib/i18n';
-	import { firstFreeColor } from '$lib/member-colors';
+	import { firstFreeColor, MAX_MEMBERS } from '$lib/member-colors';
 	import { DISPLAY_NAME_MAX } from '$lib/utils/household';
 	import { INVITE_CODE_LENGTH } from '$lib/utils/invite-code';
 	import { untrack } from 'svelte';
@@ -44,6 +44,9 @@
 
 	const error = $derived(form?.error ?? data.error);
 
+	/** Every colour worn: say so instead of a form that can only fail. */
+	const full = $derived((data.preview?.takenColors.length ?? 0) >= MAX_MEMBERS);
+
 	const trackSubmit: SubmitFunction = () => {
 		submitting = true;
 		return async ({ update }) => {
@@ -71,35 +74,39 @@
 
 		<InvitePreviewCard householdName={data.preview.householdName} inviter={data.preview.inviter} />
 
-		<form method="POST" action="?/join" use:enhance={trackSubmit}>
-			<input type="hidden" name="code" value={data.preview.code} />
+		{#if full}
+			<p class="error full" role="alert">{m.onboarding.join.full(MAX_MEMBERS)}</p>
+		{:else}
+			<form method="POST" action="?/join" use:enhance={trackSubmit}>
+				<input type="hidden" name="code" value={data.preview.code} />
 
-			<TextField
-				label={m.onboarding.create.displayName}
-				name="displayName"
-				bind:value={displayName}
-				maxlength={DISPLAY_NAME_MAX}
-				autocomplete="given-name"
-				required
-			/>
+				<TextField
+					label={m.onboarding.create.displayName}
+					name="displayName"
+					bind:value={displayName}
+					maxlength={DISPLAY_NAME_MAX}
+					autocomplete="given-name"
+					required
+				/>
 
-			<div class="colour">
-				<p class="label">{m.ui.yourColour}</p>
-				<div class="row">
-					<Avatar name={displayName} {color} size={52} />
-					<ColorPicker
-						bind:value={() => color, (next) => (pickedColor = next)}
-						taken={data.preview.takenColors}
-					/>
+				<div class="colour">
+					<p class="label">{m.ui.yourColour}</p>
+					<div class="row">
+						<Avatar name={displayName} {color} size={52} />
+						<ColorPicker
+							bind:value={() => color, (next) => (pickedColor = next)}
+							taken={data.preview.takenColors}
+						/>
+					</div>
 				</div>
-			</div>
 
-			{#if error}<p class="error" role="alert">{error}</p>{/if}
+				{#if error}<p class="error" role="alert">{error}</p>{/if}
 
-			<div class="cta">
-				<Button type="submit" disabled={submitting}>{m.onboarding.join.submit}</Button>
-			</div>
-		</form>
+				<div class="cta">
+					<Button type="submit" disabled={submitting}>{m.onboarding.join.submit}</Button>
+				</div>
+			</form>
+		{/if}
 	{:else}
 		<StepHeader step={1} back="/onboarding" backLabel={m.onboarding.backToStart} />
 
@@ -166,6 +173,10 @@
 		display: flex;
 		align-items: center;
 		gap: 16px;
+	}
+
+	.error.full {
+		margin-top: 24px;
 	}
 
 	.error {

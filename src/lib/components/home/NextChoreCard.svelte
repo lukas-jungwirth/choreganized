@@ -43,7 +43,7 @@
 	const meta = $derived(
 		m.home.nextChore.meta(
 			m.date.dueMeta(chore.dueDate, today),
-			m.task.repeat(chore.recurUnit, chore.recurInterval),
+			m.task.repeat(chore.recurUnit, chore.recurInterval, chore.schedule),
 			chore.points
 		)
 	);

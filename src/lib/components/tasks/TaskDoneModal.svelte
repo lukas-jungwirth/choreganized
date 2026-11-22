@@ -119,8 +119,11 @@
 	/** "Rescheduled · Lukas's turn next" — or the truth, when nothing changed hands. */
 	const handover = $derived.by(() => {
 		const name = completion.nextAssigneeName;
-		if (!name) return m.tasks.done.handoverAnyone;
-		return completion.rotated ? m.tasks.done.handoverNext(name) : m.tasks.done.handoverSame(name);
+		const kept = completion.onSchedule;
+		if (!name) return m.tasks.done.handoverAnyone(kept);
+		return completion.rotated
+			? m.tasks.done.handoverNext(name, kept)
+			: m.tasks.done.handoverSame(name, kept);
 	});
 
 	/** The gap to the rival, not the two totals: "5 points ahead of Elisabeth". */
@@ -176,7 +179,7 @@
 				<span id="who-label">{m.tasks.done.who}</span>
 				<span class="hint">{m.tasks.done.whoHint}</span>
 			</p>
-			<div class="faces">
+			<div class="faces" class:many={members.length > 5}>
 				{#each members as member (member.id)}
 					{@const on = doerIds.includes(member.id)}
 					{@const next = toggled(member.id)}
@@ -354,6 +357,17 @@
 	.faces form {
 		flex: 0 1 76px;
 		min-width: 0;
+	}
+
+	/* Past five, one row squeezed every name to its first letters: rows of
+	   four instead, the last one centred. */
+	.faces.many {
+		flex-wrap: wrap;
+		row-gap: 8px;
+	}
+
+	.faces.many form {
+		flex: 0 0 25%;
 	}
 
 	.face {

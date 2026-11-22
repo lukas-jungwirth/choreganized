@@ -22,7 +22,7 @@ import {
 export const DATABASE_PATH = process.env.E2E_DATABASE_PATH ?? 'data/e2e/choreganized.db';
 
 export type Account = {
-	key: 'owner' | 'visual' | 'guests';
+	key: 'owner' | 'visual' | 'guests' | 'fullhouse';
 	name: string;
 	email: string;
 	password: string;
@@ -43,6 +43,17 @@ export const ACCOUNTS: Account[] = [
 		email: 'guests@e2e.test',
 		password: 'e2e-password-guests',
 		seed: ['--guests']
+	},
+	/**
+	 * As many members as there are colours (`--full-house`): the screens that
+	 * list everybody, screenshotted at their widest. Unmutated, like `visual`.
+	 */
+	{
+		key: 'fullhouse',
+		name: 'Lukas Full House',
+		email: 'fullhouse@e2e.test',
+		password: 'e2e-password-fullhouse',
+		seed: ['--full-house']
 	}
 ];
 

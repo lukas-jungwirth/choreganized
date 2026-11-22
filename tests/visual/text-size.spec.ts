@@ -82,6 +82,14 @@ function walk(screens: Screen[]) {
 			});
 		}
 	});
+	test.describe('as the full house', () => {
+		test.use({ storageState: storageStateFor('fullhouse') });
+		for (const screen of screens.filter((screen) => screen.account === 'fullhouse')) {
+			test(`${screen.name} at 200% text`, async ({ page, context }) => {
+				await atTwiceTheTextSize(page, context, screen);
+			});
+		}
+	});
 }
 
 walk(SCREENS.filter((screen) => !screen.theme));

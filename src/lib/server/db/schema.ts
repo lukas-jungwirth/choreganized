@@ -229,6 +229,14 @@ export const members = sqliteTable(
 		 */
 		awayUntil: text('away_until'),
 		/**
+		 * The household-local day the current pause began (`YYYY-MM-DD`), set
+		 * when the pause goes from off to on and kept while the return date
+		 * changes. On return, tasks that fell due in `[awaySince, return)` are
+		 * moved to after it (→ `settleReturns`, DECISIONS #293). NULL whenever
+		 * `awayUntil` is, and on pauses older than the column.
+		 */
+		awaySince: text('away_since'),
+		/**
 		 * Optional birthday, `MM-DD` — day and month, never a year, so no age is
 		 * kept. Its only reader is Home's raccoon, which brings a cake that day
 		 * (→ `$lib/utils/raccoon`). `02-29` is shown on 28 February otherwise.
@@ -583,6 +591,14 @@ export const tasks = sqliteTable(
 		assigneeMemberId: text('assignee_member_id').references(() => members.id, {
 			onDelete: 'set null'
 		}),
+		/**
+		 * Keep to the schedule (→ plan 39, SPEC §5.2): the date the schedule counts
+		 * from. NULL = the next date counts from the day it was done, as always.
+		 * Only ever set on a week or month recurrence; snooze never moves it.
+		 */
+		scheduleAnchor: text('schedule_anchor'),
+		/** A monthly schedule's day: the same date ('day') or weekday of the same week ('weekday'). */
+		scheduleBy: text('schedule_by', { enum: ['day', 'weekday'] }),
 		/** Alternate each time: advance assignee through members (join order) on done/skip. */
 		rotate: integer('rotate', { mode: 'boolean' }).notNull().default(false),
 		/** Reminder idempotency for the CURRENT occurrence; reset on completion/reschedule. */

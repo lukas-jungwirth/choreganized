@@ -26,9 +26,10 @@ export type Screen = {
 	bottom?: boolean;
 	/**
 	 * Another seeded household than `visual` (→ tests/e2e/accounts.ts): `guests`
-	 * spent the sketch's weekend with Jonas (→ plan 38). Unmutated, like `visual`.
+	 * spent the sketch's weekend with Jonas (→ plan 38); `fullhouse` has a member
+	 * per colour, eight. Both unmutated, like `visual`.
 	 */
-	account?: 'guests';
+	account?: 'guests' | 'fullhouse';
 };
 
 export async function openRecipe(page: Page): Promise<void> {
@@ -367,6 +368,20 @@ export const SCREENS: Screen[] = [
 		account: 'guests',
 		theme: 'dark'
 	},
+	// The task sheet with "Keep to the schedule" on: a monthly chore's two days and
+	// what's coming up (→ SPEC §5.2, plan 39).
+	{
+		name: 'tasks-schedule-sheet',
+		route: '/(app)/tasks',
+		path: '',
+		navigate: async (page) => {
+			await page.goto('/tasks');
+			await page.getByRole('button', { name: 'Open Clean the fridge' }).click();
+			await page.getByRole('button', { name: 'Edit task' }).click();
+			const sheet = page.getByRole('dialog', { name: 'Edit task' });
+			await sheet.getByText(/^Coming up: /).scrollIntoViewIfNeeded();
+		}
+	},
 	{
 		name: 'expenses-guest-sheet',
 		route: '/(app)/expenses',
@@ -478,6 +493,41 @@ export const SCREENS: Screen[] = [
 		path: '/settings',
 		theme: 'dark',
 		bottom: true
+	},
+	// A member per colour (`--full-house`): every place that lists the whole
+	// household, at its widest — the standings strip's "+4", the leaderboard,
+	// the roster, and the colour picker with seven of eight taken.
+	{
+		name: 'home-full-house',
+		route: '/(app)/home',
+		path: '/home',
+		account: 'fullhouse',
+		bottom: true
+	},
+	{
+		name: 'tasks-history-full-house',
+		route: '/(app)/tasks/history',
+		path: '/tasks/history',
+		account: 'fullhouse',
+		fullPage: true
+	},
+	{
+		name: 'members-full-house',
+		route: '/(app)/settings/members',
+		path: '/settings/members',
+		account: 'fullhouse',
+		mask: ['.invite .pending']
+	},
+	{
+		name: 'profile-full-house',
+		route: '/(app)/settings',
+		path: '',
+		account: 'fullhouse',
+		navigate: async (page) => {
+			await page.goto('/settings');
+			await page.getByRole('button', { name: 'Edit' }).first().click();
+			await page.getByRole('dialog').getByRole('radiogroup').waitFor();
+		}
 	},
 	// The AI features sheet as a household first meets it: nothing set up yet,
 	// the free-tier note above the two slots (→ plan 20).

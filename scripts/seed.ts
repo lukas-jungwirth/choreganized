@@ -267,7 +267,7 @@ const seeded = db.transaction((tx) => {
 
 	// --full-house: a stub member per colour nobody has taken yet, up to the
 	// palette's size. Keyed by colour, so a re-run (or a real housemate who
-	// took one of them meanwhile) never adds a sixth.
+	// took one of them meanwhile) never adds a ninth.
 	if (fullHouse) {
 		const taken = tx
 			.select({ color: members.color })
@@ -793,6 +793,10 @@ const seeded = db.transaction((tx) => {
 				recurUnit: 'month',
 				recurInterval: 1,
 				dueDate: addDays(today, -1),
+				// Keeps to the schedule, the same weekday of the same week every month
+				// (→ SPEC §5.2, plan 39), so the list and the sheet show one.
+				scheduleAnchor: addDays(today, -1),
+				scheduleBy: 'weekday',
 				// "Anyone", so the overdue nudge goes to every opted-in member.
 				dueReminderSentAt: daysAgo(1, 8),
 				// Stamped as sent, like every seeded nudge that is already due: the
@@ -920,7 +924,7 @@ const seeded = db.transaction((tx) => {
 					householdId,
 					taskId: sid('task', 'plants'),
 					taskName: 'Water the plants',
-					points: 15 - index * 5,
+					points: 20 - index * 3,
 					memberId: member.id,
 					memberName: member.displayName,
 					completedAt: daysAgo(index + 1, 9 + index)
