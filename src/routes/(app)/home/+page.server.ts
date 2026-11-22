@@ -12,6 +12,7 @@ import {
 	monthPointsByMember,
 	parseSnapshot,
 	setAway,
+	settleReturns,
 	snoozeTask,
 	setCompletionDoers,
 	undoCompletion,
@@ -36,6 +37,11 @@ import type { Actions, PageServerLoad } from './$types';
 export const load: PageServerLoad = async (event) => {
 	const { member, householdId } = requireMember(event);
 	const { household, today, members, overdue, adminMode } = await event.parent();
+	// Again here, not only in the layout, and on a clock read now rather than the
+	// layout's: client-side navigation reuses the layout's data, and a holiday can
+	// end while the app sits open overnight (→ DECISIONS #293). Idempotent, and
+	// one read when nobody is coming home.
+	settleReturns(householdId, todayIn(household.timezone));
 
 	const summary = getHomeSummary(householdId, {
 		member,

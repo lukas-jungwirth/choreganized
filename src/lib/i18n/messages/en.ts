@@ -3222,6 +3222,8 @@ export const en = {
 		/** The switch itself, named for a screen reader. */
 		toggle: 'Going away',
 		backOn: 'Back on',
+		/** Under the picker: the holiday is cut out of the calendar (→ SPEC §5.5). */
+		shiftHint: "Tasks that come due while you're away move to after you're back.",
 		/** The CTA under the picker: "Pause my tasks until Jul 24". */
 		pauseUntil: (date: string) => `Pause my tasks until ${date}`,
 		updateUntil: (date: string) => `Update my tasks until ${date}`

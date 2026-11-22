@@ -16,7 +16,9 @@ import { and, asc, eq, gt, gte, isNull, lt, or, sql, type SQL } from 'drizzle-or
 import { alias } from 'drizzle-orm/sqlite-core';
 import { type Locale } from '$lib/i18n';
 import {
+	addDays,
 	addInterval,
+	daysBetween,
 	isCalendarDate,
 	startOfMonth,
 	toCalendarDate,
@@ -994,6 +996,11 @@ export function reassignTask(
 /**
  * The holiday pause (→ SPEC §5.5). A return date already in the past is the
  * same as no holiday at all, so it clears rather than being stored as a lie.
+ *
+ * Switching it on stamps `awaySince = today`; moving the return date while
+ * away keeps that stamp, so the holiday still starts where it started. Ending
+ * it early (no date, or a past one, while away) is a return *today*: the tasks
+ * that fell due in the meantime move to after today (→ `returnHome`).
  */
 export function setAway(
 	householdId: string,
@@ -1003,13 +1010,153 @@ export function setAway(
 ): boolean {
 	const awayUntil = until && isCalendarDate(until) && until >= today ? until : null;
 
-	const result = db
+	return db.transaction((tx) => {
+		// A pause that ran out while nobody looked is settled first, on its own
+		// return day, so what follows only ever sees a current pause or none.
+		settleMember(tx, householdId, memberId, today);
+
+		const current = tx
+			.select({ awayUntil: members.awayUntil, awaySince: members.awaySince })
+			.from(members)
+			.where(and(eq(members.id, memberId), eq(members.householdId, householdId)))
+			.get();
+		if (!current) return false;
+
+		const wasAway = isAway(current, today);
+
+		if (awayUntil === null) {
+			if (wasAway) returnHome(tx, householdId, memberId, current, today);
+			else clearAway(tx, householdId, memberId);
+			return true;
+		}
+
+		tx.update(members)
+			.set({ awayUntil, awaySince: wasAway ? current.awaySince : today })
+			.where(and(eq(members.id, memberId), eq(members.householdId, householdId)))
+			.run();
+		return true;
+	});
+}
+
+/** The longest a returning member's task is pushed past their return day. */
+export const RETURN_SHIFT_MAX_DAYS = 7;
+
+/**
+ * Settle every pause in this household that has run out — `awayUntil` before
+ * `today` — by moving the tasks that fell due during it to after the return
+ * (→ `returnHome`). The natural return has no event of its own, so this runs
+ * wherever a return could first be seen: the reminder sweep and the loads that
+ * show tasks (→ DECISIONS #293). Idempotent: a settled member has no
+ * `awayUntil` left to settle. Returns how many members came home.
+ */
+export function settleReturns(householdId: string, today: CalendarDate): number {
+	// The common case — nobody's holiday ended — is this one read and no transaction.
+	const returning = db
+		.select({ id: members.id })
+		.from(members)
+		.where(and(eq(members.householdId, householdId), lt(members.awayUntil, today)))
+		.all();
+	if (returning.length === 0) return 0;
+
+	return db.transaction((tx) => {
+		let settled = 0;
+		for (const { id } of returning) {
+			if (settleMember(tx, householdId, id, today)) settled++;
+		}
+		return settled;
+	});
+}
+
+/** One member's run-out pause, settled on its natural return day (`awayUntil + 1`). */
+function settleMember(
+	tx: Transaction,
+	householdId: string,
+	memberId: string,
+	today: CalendarDate
+): boolean {
+	const current = tx
+		.select({ awayUntil: members.awayUntil, awaySince: members.awaySince })
+		.from(members)
+		.where(and(eq(members.id, memberId), eq(members.householdId, householdId)))
+		.get();
+	if (!current?.awayUntil || current.awayUntil >= today) return false;
+
+	return returnHome(tx, householdId, memberId, current, addDays(current.awayUntil, 1));
+}
+
+/**
+ * Cut the holiday out of the calendar (→ SPEC §5.5, DECISIONS #293). Every task
+ * assigned to this member that fell due on a day of the holiday,
+ * `awaySince <= dueDate < returnDay`, moves to `returnDay` plus however far into
+ * the holiday it fell, capped at a week — so the order is kept and nothing lands
+ * months out. Each moved task is a new occurrence for the reminders, as with a
+ * snooze. "Anyone" tasks stay put: they were the others' to do (→ DECISIONS #33).
+ * Tasks already overdue before the holiday, and those due from `returnDay` on,
+ * don't move. Then the pause is cleared.
+ *
+ * A pause stamped before `awaySince` existed has no start to measure from, so it
+ * is only cleared, as before. The clear comes first and only wins once, which is
+ * what makes a second call shift nothing.
+ */
+function returnHome(
+	tx: Transaction,
+	householdId: string,
+	memberId: string,
+	pause: { awayUntil: CalendarDate | null; awaySince: CalendarDate | null },
+	returnDay: CalendarDate
+): boolean {
+	const cleared = tx
 		.update(members)
-		.set({ awayUntil })
+		.set({ awayUntil: null, awaySince: null })
+		.where(
+			and(
+				eq(members.id, memberId),
+				eq(members.householdId, householdId),
+				pause.awayUntil === null
+					? isNull(members.awayUntil)
+					: eq(members.awayUntil, pause.awayUntil)
+			)
+		)
+		.run();
+	if (cleared.changes === 0) return false;
+
+	const since = pause.awaySince;
+	if (since === null || since >= returnDay) return true;
+
+	const fellDue = tx
+		.select({ id: tasks.id, dueDate: sql<CalendarDate>`${tasks.dueDate}` })
+		.from(tasks)
+		.where(
+			and(
+				eq(tasks.householdId, householdId),
+				eq(tasks.assigneeMemberId, memberId),
+				gte(tasks.dueDate, since),
+				lt(tasks.dueDate, returnDay)
+			)
+		)
+		.all();
+
+	const now = new Date();
+	for (const task of fellDue) {
+		const into = Math.min(daysBetween(since, task.dueDate), RETURN_SHIFT_MAX_DAYS);
+		tx.update(tasks)
+			.set({
+				dueDate: addDays(returnDay, into),
+				dueReminderSentAt: null,
+				overdueReminderSentAt: null,
+				updatedAt: now
+			})
+			.where(and(eq(tasks.id, task.id), eq(tasks.householdId, householdId)))
+			.run();
+	}
+	return true;
+}
+
+function clearAway(tx: Transaction, householdId: string, memberId: string): void {
+	tx.update(members)
+		.set({ awayUntil: null, awaySince: null })
 		.where(and(eq(members.id, memberId), eq(members.householdId, householdId)))
 		.run();
-
-	return result.changes > 0;
 }
 
 /* ── Points ───────────────────────────────────────────────────────────────── */

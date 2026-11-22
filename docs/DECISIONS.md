@@ -4317,3 +4317,27 @@ store_id` NULL already means "no memory" (a deleted list), and telling the two a
      closes; and the guest page's error screen now tells a dead link (404) from the server
      failing. Kept as they are: a member may still rename themselves to a guest's name (#285),
      and the service worker still registers on the guest page (#289).
+293. **Coming back from a holiday cuts the holiday out of the calendar** (2026-11-22; → SPEC §5.5,
+     DATA-MODEL `members`; amends #33/#47/#78, which only hid overdue while away). Before, the
+     day after the return date every task that fell due during the holiday was overdue with its
+     old date: a wall of red and a morning of overdue nudges. Now a new `members.awaySince`
+     (stamped when the pause goes from off to on, kept while the return date changes) marks the
+     start, and on the first day home R (`awayUntil + 1`, or today when the pause is switched off
+     early) the returning member's own tasks due in `[awaySince, R)` move to
+     `R + min(dueDate − awaySince, 7)`: order kept, nothing pushed more than a week out, reminder
+     flags reset as with a snooze. "Anyone" tasks don't move (the others had them all along, as
+     #33 says), nor do undated one-offs, tasks already overdue when the holiday began, or tasks
+     due from R on. **Where it runs:** a natural return has no event, so `settleReturns` runs
+     lazily wherever a return could first be seen: at the top of `sendTaskReminders` (before any
+     nudge is judged, rather than as a separate cron job that could run after it on the same
+     tick) and at the start of the `(app)` layout load and of the Home and Tasks loads (the
+     layout covers every full load; the two pages again because client-side navigation reuses
+     the layout's data, and a phone left open overnight would otherwise show yesterday's
+     verdict). It costs one small read when nobody is coming home, and it is idempotent: the
+     member's columns are cleared first, conditionally on the `awayUntil` that was read, so only
+     one caller ever shifts. `setAway` settles a pause that ran out before it touches the row.
+     **Legacy pauses** (set before this column existed, `awaySince` NULL) have no start to measure
+     from: they move nothing and are only cleared, as before. Tasks have no archived or
+     soft-deleted state, so there is nothing else to exclude. Hint under the date picker: "Tasks
+     that come due while you're away move to after you're back." / "Aufgaben, die in der Zeit
+     fällig werden, verschieben sich auf die Tage nach deiner Rückkehr."

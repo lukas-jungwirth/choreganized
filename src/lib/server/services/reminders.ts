@@ -18,7 +18,7 @@ import type { CalendarDate } from '$lib/utils/dates';
 import { db } from '../db';
 import { members, tasks } from '../db/schema';
 import { sendToUser, type NotificationPref, type PayloadFor } from '../push';
-import { isAway } from './tasks';
+import { isAway, settleReturns } from './tasks';
 
 /** The two nudges of [4e], in the order they go out. */
 type ReminderKind = 'due' | 'overdue';
@@ -72,6 +72,11 @@ export async function sendTaskReminders(
 	today: CalendarDate,
 	now: Date = new Date()
 ): Promise<ReminderSweep> {
+	// A holiday that ended yesterday moves its tasks before anything is judged
+	// overdue, so the returning member isn't greeted by a pile of nudges for the
+	// days they were away (→ DECISIONS #293). One cheap read when nobody returned.
+	settleReturns(householdId, today);
+
 	// Asked first, and on most ticks the only question asked: past the morning's
 	// first sweep every flag is set, so this comes back empty and there is nobody
 	// to look up.

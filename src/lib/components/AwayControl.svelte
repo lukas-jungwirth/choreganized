@@ -116,6 +116,7 @@
 				caption={returnDate ? m.date.dateLabel(returnDate, today) : undefined}
 				min={today}
 			/>
+			<p class="hint">{m.away.shiftHint}</p>
 			<Button type="submit" variant="secondary" disabled={pausing || !returnDate}>
 				{awayUntil ? m.away.updateUntil(until) : m.away.pauseUntil(until)}
 			</Button>
@@ -183,6 +184,13 @@
 
 	.until {
 		margin-top: 14px;
+	}
+
+	.hint {
+		margin: 10px 2px 0;
+		font-size: var(--fs-13);
+		line-height: 1.4;
+		color: var(--text-4);
 	}
 
 	.row .until {
