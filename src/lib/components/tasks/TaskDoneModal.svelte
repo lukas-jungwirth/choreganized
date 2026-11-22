@@ -176,7 +176,7 @@
 				<span id="who-label">{m.tasks.done.who}</span>
 				<span class="hint">{m.tasks.done.whoHint}</span>
 			</p>
-			<div class="faces">
+			<div class="faces" class:many={members.length > 5}>
 				{#each members as member (member.id)}
 					{@const on = doerIds.includes(member.id)}
 					{@const next = toggled(member.id)}
@@ -354,6 +354,17 @@
 	.faces form {
 		flex: 0 1 76px;
 		min-width: 0;
+	}
+
+	/* Past five, one row squeezed every name to its first letters: rows of
+	   four instead, the last one centred. */
+	.faces.many {
+		flex-wrap: wrap;
+		row-gap: 8px;
+	}
+
+	.faces.many form {
+		flex: 0 0 25%;
 	}
 
 	.face {

@@ -133,8 +133,11 @@
 	--member-blue: #5c7fa3;
 	--member-amber: #d69b4a;
 	--member-plum: #9a6b8f;
+	--member-teal: #478a8c;
+	--member-indigo: #6e70a8;
+	--member-rose: #b9666f;
 	/* What goes *on* one of those — an avatar's initial, the winner's plinth.
-	   Theme-independent for the same reason they are: these five hues don't lift
+	   Theme-independent for the same reason they are: these hues don't lift
 	   in dark mode, so the white that reads on them in light mode is still the
 	   white that reads on them at night. Deliberately not `--on-sage`, which
 	   answers a different question — what goes on the app's sage, and that one

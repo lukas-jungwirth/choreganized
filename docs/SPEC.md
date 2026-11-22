@@ -73,8 +73,10 @@ and the title, the line and the header's buttons all stand on the raccoon's feet
 
 - Fields: **Household name** (e.g. "Sonnengasse 12", up to 60 characters), **Your display
   name** (prefilled from Google given name, up to 20 characters, the same limit as the profile
-  sheet's, → [DECISIONS #267](DECISIONS.md)), **Your colour** — swatch row from the member palette (sage, terracotta,
-  blue, amber, plum); preview avatar shows the initial on the chosen colour.
+  sheet's, → [DECISIONS #267](DECISIONS.md)), **Your colour** — swatches from the member palette (sage, terracotta,
+  blue, amber, plum, teal, indigo, rose) in two rows of four; preview avatar shows the initial on
+  the chosen colour. No two members share a colour, so the palette is the household's size:
+  **at most 8 members** (→ [DECISIONS #296](DECISIONS.md)).
 - Creates household (creator becomes **owner**), stores timezone from the browser
   (`Intl.DateTimeFormat().resolvedOptions().timeZone`), seeds default stores
   (Grocery, Drugstore, Hardware store) and generates an invite code.
@@ -96,7 +98,10 @@ and the title, the line and the header's buttons all stand on the raccoon's feet
   **Sonnengasse 12**", then Google sign-in, then join.
 - Via code: 6-box code input (letters/digits, dash ignored, case-insensitive).
 - After joining, the joiner sets **display name + colour** (same fields as 1.3, minus household
-  name; colours already taken by other members are shown as unavailable).
+  name; colours already taken by other members are shown as unavailable). A household that
+  already has 8 members shows "This household is full: it already has 8 people, one for each
+  colour. Ask whoever invited you to make room." instead of the form, and the join is refused
+  server-side too (`household-full`).
 - Invalid/revoked code → inline error, stay on screen.
 - The landing has the same **Privacy · Imprint** pair at the bottom as sign-in (→ §13).
 
@@ -293,7 +298,8 @@ pose, first match wins, top to bottom (`lib/utils/raccoon.ts`, by the household'
    returns to Settings. With reduced motion the card doesn't pop in, it is just there.
 
 6. **Standings strip** — "You're 1st this month" / "240 pts · 30 ahead of Elisabeth" + stacked
-   avatars → Tasks → History. (Ties: "You're tied this month".)
+   avatars → Tasks → History. (Ties: "You're tied this month".) At most five discs: past five
+   members the first four and a "+N" disc, so the text keeps its room.
 7. **Recent activity card** — the 2 most recent completed tasks (check circle in the member's
    colour, task name, "{member} · {time}", `+{points}` in the member's colour). Header links
    "All →" to Tasks → History. Hidden when there are no completions yet. Last on the screen:
@@ -1076,7 +1082,8 @@ actually need is the chore this replaces (→ [DECISIONS #123](DECISIONS.md)).
   household, "{n} points this month". It is always the reader's line, with the reader's avatar,
   whoever was credited (→ DECISIONS #277).
 - **Who did it? · Tap to change** [T1–T3]: one face per member in join order (the reader's
-  says "You"), the credited ones ringed and ticked. It is how the credit is corrected after
+  says "You"), the credited ones ringed and ticked. Up to five share one row; past five they
+  wrap into rows of four, the last row centred, so every name stays whole. It is how the credit is corrected after
   the tick, on Tasks and on Home alike, in a household of two or more:
   - Tap a face **on** to share the task; tap one **off** to take that person out. So "done
     together", "somebody else did it" and "my own task, done by my housemate" are the same

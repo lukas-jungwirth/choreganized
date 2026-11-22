@@ -16,7 +16,7 @@
 import { and, asc, eq, inArray, isNull, ne, or, sql } from 'drizzle-orm';
 import type { ListIcon } from '$lib/utils/lists';
 import type { Locale } from '$lib/i18n';
-import { isMemberColor } from '$lib/member-colors';
+import { isMemberColor, MAX_MEMBERS } from '$lib/member-colors';
 import { isBirthday } from '$lib/utils/birthday';
 import { toCalendarDate, type CalendarDate } from '$lib/utils/dates';
 import type { RecipeWording } from '$lib/utils/wording';
@@ -46,6 +46,8 @@ export type HouseholdErrorCode =
 	| 'already-member'
 	/** Another member already uses that avatar colour. */
 	| 'color-taken'
+	/** Every colour is worn: the household holds `MAX_MEMBERS` people. */
+	| 'household-full'
 	/** Renaming, revoking, transferring and removing are the owner's (→ #10). */
 	| 'not-owner'
 	/** The member id doesn't belong to this household — or to anyone. */
@@ -234,7 +236,9 @@ export function joinHousehold(
 
 		if (!household) throw new HouseholdError('invalid-code');
 		if (membershipOf(tx, userId)) throw new HouseholdError('already-member');
-		if (colorsTakenIn(tx, household.id).includes(profile.color)) {
+		const taken = colorsTakenIn(tx, household.id);
+		if (taken.length >= MAX_MEMBERS) throw new HouseholdError('household-full');
+		if (taken.includes(profile.color)) {
 			throw new HouseholdError('color-taken');
 		}
 
