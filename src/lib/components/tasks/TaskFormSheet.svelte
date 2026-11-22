@@ -150,14 +150,22 @@
 			: m.tasks.form.scheduleMonthly;
 	});
 
-	/** "Coming up: …" — the date in the field, then the schedule's next two after it. */
+	/**
+	 * "Coming up: …" — the date in the field, then the schedule's next two after
+	 * it. An overdue date has already gone by, so the list starts at the
+	 * schedule's first date from today instead.
+	 */
 	const scheduleLine = $derived.by(() => {
 		const unit = recurrence.unit;
 		if (!canSchedule || !schedulable(unit)) return null;
 		const label = (date: CalendarDate) => m.date.dayLabel(date, today);
 		if (!keepSchedule) return m.tasks.form.countsFrom(label(dueDate), unit, recurrence.interval);
 
-		const dates = [dueDate];
+		const dates = [
+			dueDate >= today
+				? dueDate
+				: nextOnSchedule(anchor, unit, recurrence.interval, scheduleBy, addDays(today, -1))
+		];
 		while (dates.length < 3) {
 			dates.push(nextOnSchedule(anchor, unit, recurrence.interval, scheduleBy, dates.at(-1)!));
 		}
@@ -171,7 +179,6 @@
 	const assigneeLabelId = `${uid}-assignee`;
 	const effortLabelId = `${uid}-effort`;
 	const dueLabelId = `${uid}-due`;
-	const scheduleLabelId = `${uid}-schedule`;
 </script>
 
 <BottomSheet bind:open title={task ? m.tasks.form.edit : m.tasks.form.new}>
@@ -310,8 +317,8 @@
 				</div>
 
 				{#if keepSchedule && recurrence.unit === 'month'}
-					<fieldset class="choices" aria-labelledby={scheduleLabelId}>
-						<span class="sr-only" id={scheduleLabelId}>{m.tasks.form.scheduleWhich}</span>
+					<fieldset class="choices">
+						<legend class="sr-only">{m.tasks.form.scheduleWhich}</legend>
 						{#each SCHEDULE_BYS as by (by)}
 							<label class="choice">
 								<input type="radio" name="scheduleBy" value={by} bind:group={scheduleBy} />

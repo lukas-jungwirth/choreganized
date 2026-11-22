@@ -121,3 +121,24 @@ describe('nextOnSchedule, weekly', () => {
 		assert.equal(nextOnSchedule('2026-12-06', 'week', 2, 'day', '2026-12-14'), '2026-12-20');
 	});
 });
+
+describe('the schedule in words', () => {
+	it('names the week of the month in German in the nominative: "erster Sonntag"', async () => {
+		const { de } = await import('../i18n/messages/de');
+		const first = { anchor: '2026-12-06', by: 'weekday' as const };
+		const last = { anchor: '2026-12-27', by: 'weekday' as const };
+		assert.equal(de.task.repeat('month', 1, first), 'Monatlich, erster Sonntag');
+		assert.equal(de.task.repeat('month', 1, last), 'Monatlich, letzter Sonntag');
+		assert.equal(de.task.repeat('week', 1, first), 'Wöchentlich, sonntags');
+		assert.equal(de.task.repeat('month', 1, { ...first, by: 'day' }), 'Monatlich, am 6.');
+	});
+
+	it('and in English: "first Sunday", "Sundays", "on the 6th"', async () => {
+		const { en } = await import('../i18n/messages/en');
+		const first = { anchor: '2026-12-06', by: 'weekday' as const };
+		assert.equal(en.task.repeat('month', 1, first), 'Monthly, first Sunday');
+		assert.equal(en.task.repeat('week', 2, first), 'Every 2 weeks, Sundays');
+		assert.equal(en.task.repeat('month', 1, { ...first, by: 'day' }), 'Monthly, on the 6th');
+		assert.equal(en.task.repeat('month', 1, null), 'Monthly');
+	});
+});

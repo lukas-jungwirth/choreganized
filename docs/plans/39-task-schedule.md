@@ -38,7 +38,8 @@ Off by default, so every existing task behaves exactly as today.
    reads as today ("monthly"). Everywhere `m.task.repeat(...)` is called today: `TaskRow`,
    `TaskDetailSheet`, `NextChoreCard` on Home, the custom-repeat hint in `TaskFormSheet`.
 5. **The done pop-up** [S2]: "Next due Sun 3 Jan", sub line "On schedule · first Sunday"
-   instead of "Rescheduled".
+   instead of "Rescheduled". As built it keeps the turn half instead: "On schedule ·
+   Lukas's turn next" (→ DECISIONS #299).
 
 ## The rules
 
@@ -75,7 +76,7 @@ scheduled date means that one is skipped. Accepted; say so in SPEC.
 **Rotation, points, reminders, the chore split** are unchanged. The split weighs by unit and
 interval as before.
 
-**Undo** of a completion restores the anchor and the "by" with the rest of the snapshot
+**Undo** (as built: the anchor never changes on a completion, so the snapshot carries nothing of the schedule and Undo has nothing to restore; → DATA-MODEL "Completion algorithm") was planned to restore the anchor and the "by" with the rest of the snapshot
 (`TaskSnapshot`, `parseSnapshot`).
 
 ## The model
@@ -144,7 +145,7 @@ No em dashes in copy (→ DECISIONS #205).
 - [x] Snoozed to 8 Dec, then done that day → Sun 3 Jan.
 - [x] Existing tasks unchanged (no anchor after the migration), and their meta line reads as
       before.
-- [x] [S2] says "On schedule · first Sunday"; [S3] and Home's next-chore card say "monthly,
+- [x] [S2] says "On schedule · …" (#299); [S3] and Home's next-chore card say "monthly,
       first Sunday".
 - [x] German walked through at 200% text size.
 - [x] SPEC §5.2–§5.4, §5.8, DATA-MODEL "Completion algorithm" updated; DECISIONS entries for

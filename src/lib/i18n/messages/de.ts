@@ -119,8 +119,8 @@ function scheduleDay(unit: RecurUnit, schedule: TaskSchedule): string {
 	const weekday = formatWeekdayLong(schedule.anchor, L);
 	if (unit === 'week') return `${weekday.toLowerCase()}s`;
 	if (schedule.by === 'day') return `am ${Number(schedule.anchor.slice(8, 10))}.`;
-	// Nominativ, ohne Artikel: "erster Sonntag", "letzter Sonntag".
-	return `${weekName(schedule.anchor).slice(0, -1)} ${weekday}`;
+	// Nominativ ohne Artikel, also stark: "ersten" → "erster Sonntag", "letzter Sonntag".
+	return `${weekName(schedule.anchor).slice(0, -1)}r ${weekday}`;
 }
 
 function shoppingDay(lastOpenDay: CalendarDate, today: CalendarDate): string {
