@@ -196,7 +196,10 @@ export const en = {
 			terracotta: 'Terracotta',
 			blue: 'Blue',
 			amber: 'Amber',
-			plum: 'Plum'
+			plum: 'Plum',
+			teal: 'Teal',
+			indigo: 'Indigo',
+			rose: 'Rose'
 		},
 		colourTaken: (colour: string) => `${colour}, already taken`
 	},
@@ -2499,7 +2502,10 @@ export const en = {
 			code: 'Invite code',
 			submit: 'Join household',
 			badCode: 'That code doesn’t match a household. Check it with whoever invited you.',
-			nameTooLong: (max: number) => `Keep your name under ${max} characters.`
+			nameTooLong: (max: number) => `Keep your name under ${max} characters.`,
+			/** Every colour is worn, so nobody else fits (→ `MAX_MEMBERS`). */
+			full: (max: number) =>
+				`This household is full: it already has ${max} people, one for each colour. Ask whoever invited you to make room.`
 		},
 
 		/** The public invite landing, `/j/{code}`. */
@@ -2761,6 +2767,7 @@ export const en = {
 		/** `HouseholdError`, keyed by its own codes (→ `services/household.ts`). */
 		household: {
 			'color-taken': 'A housemate already has that colour.',
+			'household-full': 'This household is full.',
 			'not-owner': 'Only the owner can do that.',
 			'not-member': 'You’re not a member of this household any more.',
 			'transfer-first': 'Make someone else the owner first. A household needs one.',

@@ -267,7 +267,7 @@ const seeded = db.transaction((tx) => {
 
 	// --full-house: a stub member per colour nobody has taken yet, up to the
 	// palette's size. Keyed by colour, so a re-run (or a real housemate who
-	// took one of them meanwhile) never adds a sixth.
+	// took one of them meanwhile) never adds a ninth.
 	if (fullHouse) {
 		const taken = tx
 			.select({ color: members.color })
@@ -920,7 +920,7 @@ const seeded = db.transaction((tx) => {
 					householdId,
 					taskId: sid('task', 'plants'),
 					taskName: 'Water the plants',
-					points: 15 - index * 5,
+					points: 20 - index * 3,
 					memberId: member.id,
 					memberName: member.displayName,
 					completedAt: daysAgo(index + 1, 9 + index)

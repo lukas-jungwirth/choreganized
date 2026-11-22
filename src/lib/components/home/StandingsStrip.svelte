@@ -35,7 +35,7 @@
 			<span class="title">{title}</span>
 			<span class="detail">{detail}</span>
 		</span>
-		<AvatarStack {members} size={26} ringColor="var(--card)" />
+		<AvatarStack {members} size={26} ringColor="var(--card)" max={5} />
 	</div>
 </Card>
 

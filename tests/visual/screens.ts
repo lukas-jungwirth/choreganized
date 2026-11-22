@@ -26,9 +26,10 @@ export type Screen = {
 	bottom?: boolean;
 	/**
 	 * Another seeded household than `visual` (→ tests/e2e/accounts.ts): `guests`
-	 * spent the sketch's weekend with Jonas (→ plan 38). Unmutated, like `visual`.
+	 * spent the sketch's weekend with Jonas (→ plan 38); `fullhouse` has a member
+	 * per colour, eight. Both unmutated, like `visual`.
 	 */
-	account?: 'guests';
+	account?: 'guests' | 'fullhouse';
 };
 
 export async function openRecipe(page: Page): Promise<void> {
@@ -478,6 +479,41 @@ export const SCREENS: Screen[] = [
 		path: '/settings',
 		theme: 'dark',
 		bottom: true
+	},
+	// A member per colour (`--full-house`): every place that lists the whole
+	// household, at its widest — the standings strip's "+4", the leaderboard,
+	// the roster, and the colour picker with seven of eight taken.
+	{
+		name: 'home-full-house',
+		route: '/(app)/home',
+		path: '/home',
+		account: 'fullhouse',
+		bottom: true
+	},
+	{
+		name: 'tasks-history-full-house',
+		route: '/(app)/tasks/history',
+		path: '/tasks/history',
+		account: 'fullhouse',
+		fullPage: true
+	},
+	{
+		name: 'members-full-house',
+		route: '/(app)/settings/members',
+		path: '/settings/members',
+		account: 'fullhouse',
+		mask: ['.invite .pending']
+	},
+	{
+		name: 'profile-full-house',
+		route: '/(app)/settings',
+		path: '',
+		account: 'fullhouse',
+		navigate: async (page) => {
+			await page.goto('/settings');
+			await page.getByRole('button', { name: 'Edit' }).first().click();
+			await page.getByRole('dialog').getByRole('radiogroup').waitFor();
+		}
 	},
 	// The AI features sheet as a household first meets it: nothing set up yet,
 	// the free-tier note above the two slots (→ plan 20).

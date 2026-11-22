@@ -21,11 +21,20 @@
 		 * names are already on screen as text.
 		 */
 		label?: string;
+		/**
+		 * The most discs drawn, counting a "+N" disc for the rest. Unset draws
+		 * everybody; the standings strip sets it, because its text shares the
+		 * row and a full house left it four lines tall.
+		 */
+		max?: number;
 	};
 
-	let { members, size = 36, ringColor = 'var(--bg)', label }: Props = $props();
+	let { members, size = 36, ringColor = 'var(--bg)', label, max }: Props = $props();
 
 	const overlap = $derived(Math.round(size / 3));
+	const overflowing = $derived(max !== undefined && members.length > max);
+	const shown = $derived(overflowing ? members.slice(0, Math.max(max! - 1, 0)) : members);
+	const rest = $derived(members.length - shown.length);
 	const names = $derived(members.map((member) => member.displayName).join(', '));
 </script>
 
@@ -36,7 +45,7 @@
 	aria-label={label ? `${label}: ${names}` : undefined}
 	aria-hidden={label ? undefined : 'true'}
 >
-	{#each members as member (member.id)}
+	{#each shown as member (member.id)}
 		<Avatar
 			name={member.displayName}
 			color={member.color}
@@ -46,12 +55,34 @@
 			ring
 		/>
 	{/each}
+	{#if overflowing}
+		<span class="more" style:--more-size="{size}px" style:--more-ring={ringColor}>+{rest}</span>
+	{/if}
 </span>
 
 <style>
 	.stack {
 		display: inline-flex;
 		align-items: center;
+	}
+
+	/* The rest, counted: a disc the size of the others, on the sunken fill
+	   rather than a member's colour, so it is never read as one more person. */
+	.more {
+		display: inline-flex;
+		align-items: center;
+		justify-content: center;
+		flex: none;
+		width: var(--more-size);
+		height: var(--more-size);
+		border-radius: 50%;
+		background: var(--sunken);
+		box-shadow: 0 0 0 2px var(--more-ring);
+		color: var(--text-4);
+		/* Inside a disc that cannot grow. */
+		font-size: min(var(--fs-12), 12px);
+		font-weight: 700;
+		line-height: 1;
 	}
 
 	.stack > :global(* + *) {

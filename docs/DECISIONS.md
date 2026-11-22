@@ -2695,7 +2695,7 @@ units | null, name}`, written back as editor lines in the reader's unit spelling
      in a household and lands there signed in with the wrong account, and the way back is signing
      out, not "Join".
 
-186. **`db:seed --full-house` fills the household to five members, opt-in** (`scripts/seed.ts`).
+186. **`db:seed --full-house` fills the household to one member per colour, opt-in** (`scripts/seed.ts`).
      The household's real ceiling is the member palette: joining refuses a colour someone has
      (`color-taken`), and there are five. The flag adds a stub member per free colour (Jakob,
      Mira, Theo after Elisabeth), each with a ledger person and one task done at different
@@ -4367,3 +4367,22 @@ store_id` NULL already means "no memory" (a deleted list), and telling the two a
      being). A nod to the raccoons, and German gets its own line instead of reusing the English
      one. It shows on the login page, in the sign-in mail's band, the meta description and the
      web manifest (English: the manifest isn't localized).
+296. **A household holds eight people, not five: three more member colours** (2026-11-22;
+     → SPEC §1.3–1.4, DESIGN-SYSTEM "Members"; amends #186). The cap was never a number: no two
+     members share a colour (`color-taken`), so the palette _is_ the household's size, and five
+     was tight for a shared flat or a bigger family. Added **teal `#478A8C`, indigo `#6E70A8`,
+     rose `#B9666F`** — the hue gaps between the five earthy ones, the same muted weight, white
+     initials at 3.98 / 4.62 / 4.04 : 1 (sage is 3.79). Appended, so `firstFreeColor` and a guest's
+     `leastUsedColor` still reach for the first five first. **Why eight and not more:** every
+     screen that lists the whole household was walked at eight on a 390px phone (a new
+     `fullhouse` e2e/visual account, `--full-house` now seeds six stubs). Rows and sheets
+     (assignee picker, split sheet, roster, leaderboard, chore split, cook chips) take any count;
+     three things broke and were fixed — the **colour picker** ran off the screen (now two rows of
+     four), **"Who did it?"** squeezed names to "Elis…" (past five it wraps into rows of four),
+     and the **standings strip**'s stack of eight left its text four lines tall (`AvatarStack`
+     `max={5}`: four faces and "+4"). Past eight, the palette stops being tellable apart at a
+     glance — blue/indigo and sage/teal are already the closest pairs — so a ninth colour would
+     cost more than it gives. A **full household** now says so on the join screen and refuses
+     the join as `household-full`, instead of greying every swatch and answering "colour taken".
+     The podium (`tasks/Podium`, only on `/dev/kit` today) already handles any count.
+     Colour names: Teal/Petrol, Indigo/Indigo, Rose/Altrosa.

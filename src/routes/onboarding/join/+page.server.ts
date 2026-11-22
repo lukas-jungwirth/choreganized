@@ -1,6 +1,6 @@
 import { fail, redirect } from '@sveltejs/kit';
 import { catalog } from '$lib/i18n';
-import { isMemberColor } from '$lib/member-colors';
+import { isMemberColor, MAX_MEMBERS } from '$lib/member-colors';
 import { requireUser } from '$lib/server/guards';
 import { getInvitePreview, HouseholdError, joinHousehold } from '$lib/server/services/household';
 import { DISPLAY_NAME_MAX } from '$lib/utils/household';
@@ -68,7 +68,11 @@ export const actions: Actions = {
 				if (error.code === 'already-member') redirect(303, '/home');
 				return fail(400, {
 					error:
-						error.code === 'color-taken' ? m.errors.colourTakenJoin : m.onboarding.join.badCode,
+						error.code === 'color-taken'
+							? m.errors.colourTakenJoin
+							: error.code === 'household-full'
+								? m.onboarding.join.full(MAX_MEMBERS)
+								: m.onboarding.join.badCode,
 					code
 				});
 			}
