@@ -92,7 +92,7 @@ user ─┬─ session / account / verification        (Better Auth)
   flags reset, then both columns clear, in one transaction. Anyone tasks, undated tasks, tasks
   overdue before `awaySince` and tasks due from R on don't move. A natural return has no
   event, so `settleReturns(householdId, today)` runs at the start of the morning reminder sweep
-  and of the `(app)` layout, Home and Tasks loads; it is idempotent (the clear wins once). A
+  and of the `(app)` layout load (pages reach it through `parent()`); it is idempotent (the clear wins once). A
   pause from before the column (`awaySince` NULL) moves nothing and is only cleared.
 - `birthday`: optional `MM-DD` — day and month, never a year, so no age is kept. Set in the
   profile sheet; its only reader is Home's raccoon (`lib/utils/raccoon.ts`). Your own only:

@@ -169,6 +169,22 @@ describe('coming back from a holiday', () => {
 		assert.equal(row.awayUntil, addDays(TODAY, 12));
 	});
 
+	it('a new pause set after a run-out one settles the old holiday first', () => {
+		const fixture = makeHousehold();
+		away(fixture);
+		const fell = task(fixture, addDays(TODAY, 3));
+
+		// Nobody opened the app on the return day; the first thing they do is go
+		// away again, two days after they came back.
+		const later = addDays(HOME, 2);
+		assert.equal(setAway(fixture.householdId, fixture.owner.id, addDays(later, 5), later), true);
+
+		assert.equal(dueOf(fell), addDays(HOME, 3));
+		const row = memberRow(fixture.owner.id);
+		assert.equal(row.awaySince, later);
+		assert.equal(row.awayUntil, addDays(later, 5));
+	});
+
 	it('runs once: settling twice moves a task once', () => {
 		const fixture = makeHousehold();
 		const due = task(fixture, addDays(TODAY, 1));

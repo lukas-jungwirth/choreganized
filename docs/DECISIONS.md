@@ -4330,10 +4330,12 @@ store_id` NULL already means "no memory" (a deleted list), and telling the two a
      due from R on. **Where it runs:** a natural return has no event, so `settleReturns` runs
      lazily wherever a return could first be seen: at the top of `sendTaskReminders` (before any
      nudge is judged, rather than as a separate cron job that could run after it on the same
-     tick) and at the start of the `(app)` layout load and of the Home and Tasks loads (the
-     layout covers every full load; the two pages again because client-side navigation reuses
-     the layout's data, and a phone left open overnight would otherwise show yesterday's
-     verdict). It costs one small read when nobody is coming home, and it is idempotent: the
+     tick) and at the start of the `(app)` layout load. That one covers the pages too: every
+     task screen's load awaits `parent()`, and SvelteKit runs the layout's server load for it
+     even on a client-side navigation whose response skips the layout's data (its data
+     handler, `runtime/server/data/index.js`), so the page reads the settled rows on a fresh
+     clock. A first build also settled again in the Home and Tasks loads on that wrong premise;
+     the review removed it. It costs one small read when nobody is coming home, and it is idempotent: the
      member's columns are cleared first, conditionally on the `awayUntil` that was read, so only
      one caller ever shifts. `setAway` settles a pause that ran out before it touches the row.
      **Legacy pauses** (set before this column existed, `awaySince` NULL) have no start to measure
