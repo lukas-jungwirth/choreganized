@@ -33,6 +33,7 @@ import {
 	formatWeekdayShort,
 	formatWeekdays,
 	needsYear,
+	weekOfMonth,
 	type CalendarDate
 } from '$lib/utils/dates';
 import type { AlbumName } from '$lib/assets/mascot/album';
@@ -44,7 +45,7 @@ import { formatAmount, formatIngredient } from '$lib/utils/ingredients';
 import { currencyAfter, currencySymbol, formatMoney } from '$lib/utils/money';
 import type { MealSlot } from '$lib/utils/meals';
 import { formatQuantity, type UnitLabels } from '$lib/utils/shopping';
-import type { RecurUnit } from '$lib/utils/tasks';
+import type { RecurUnit, TaskSchedule } from '$lib/utils/tasks';
 
 /**
  * A sentence with an emphasised run inside it. Expressed as parts rather than
@@ -143,6 +144,20 @@ function ordinal(day: number): string {
 	const teen = day % 100 >= 11 && day % 100 <= 13;
 	const suffix = teen ? 'th' : (['th', 'st', 'nd', 'rd'][day % 10] ?? 'th');
 	return `${day}${suffix}`;
+}
+
+/** "first" … "fourth", or "last": which week of its month a date is in. */
+function weekName(date: CalendarDate): string {
+	const week = weekOfMonth(date);
+	return week === 'last' ? 'last' : ['first', 'second', 'third', 'fourth'][week];
+}
+
+/** The day a task keeps to (→ SPEC §5.2): "Sundays", "first Sunday", "on the 6th". */
+function scheduleDay(unit: RecurUnit, schedule: TaskSchedule): string {
+	const weekday = formatWeekdayLong(schedule.anchor, L);
+	if (unit === 'week') return `${weekday}s`;
+	if (schedule.by === 'day') return `on the ${ordinal(Number(schedule.anchor.slice(8, 10)))}`;
+	return `${weekName(schedule.anchor)} ${weekday}`;
 }
 
 function shoppingDay(lastOpenDay: CalendarDate, today: CalendarDate): string {
@@ -374,10 +389,18 @@ export const en = {
 		 * weeks", "Monthly" [05] [4a]. The three every-one cadences get their own
 		 * word because that's what the design writes; everything else counts.
 		 */
-		repeat: (unit: RecurUnit, interval: number) => {
+		repeat: (unit: RecurUnit, interval: number, schedule: TaskSchedule | null = null) => {
 			if (unit === 'none') return 'One-off';
-			if (interval === 1) return unit === 'day' ? 'Daily' : unit === 'week' ? 'Weekly' : 'Monthly';
-			return `Every ${interval} ${unit}s`;
+			const cadence =
+				interval === 1
+					? unit === 'day'
+						? 'Daily'
+						: unit === 'week'
+							? 'Weekly'
+							: 'Monthly'
+					: `Every ${interval} ${unit}s`;
+			// A task that keeps to the schedule names its day: "Monthly, first Sunday".
+			return schedule && unit !== 'day' ? `${cadence}, ${scheduleDay(unit, schedule)}` : cadence;
 		},
 
 		/** "+10" — a task's worth, wherever points are a badge. */
@@ -915,9 +938,13 @@ export const en = {
 			whoFailed: 'Couldn’t change that.',
 			nextDue: (date: string) => `Next due ${date}`,
 			/** Where the chore went next — or the truth, when nothing changed hands. */
-			handoverAnyone: 'Rescheduled · anyone can take it',
-			handoverNext: (name: string) => `Rescheduled · ${name}'s turn next`,
-			handoverSame: (name: string) => `Rescheduled · still ${name}'s`,
+			/** `kept`: the date came from the task's schedule, not from today (→ SPEC §5.2). */
+			handoverAnyone: (kept: boolean) =>
+				`${kept ? 'On schedule' : 'Rescheduled'} · anyone can take it`,
+			handoverNext: (name: string, kept: boolean) =>
+				`${kept ? 'On schedule' : 'Rescheduled'} · ${name}'s turn next`,
+			handoverSame: (name: string, kept: boolean) =>
+				`${kept ? 'On schedule' : 'Rescheduled'} · still ${name}'s`,
 			/** The month's standings, in one line (→ SPEC §5.4). */
 			standingsSolo: (points: number) => `${points} points this month`,
 			standingsAhead: (gap: number, name: string) =>
@@ -975,6 +1002,33 @@ export const en = {
 			unit: 'Unit',
 			firstDue: 'First due',
 			nextDue: 'Next due',
+			/** Keep to the schedule (→ SPEC §5.2, plan 39). */
+			keepSchedule: 'Keep to the schedule',
+			scheduleOff: 'The next one counts from the day it’s done.',
+			scheduleWeekly: (date: CalendarDate) =>
+				`Always on a ${formatWeekdayLong(date, L)}, even if it’s done late.`,
+			scheduleMonthly: 'Done late? The next one stays on its date.',
+			/** Names the two choices for a screen reader. */
+			scheduleWhich: 'Which day of the month',
+			scheduleByWeekday: (date: CalendarDate) =>
+				`On the ${weekName(date)} ${formatWeekdayLong(date, L)}`,
+			scheduleByDay: (date: CalendarDate) => {
+				const day = Number(date.slice(8, 10));
+				return day >= 29 ? `On the ${ordinal(day)} (or the last day)` : `On the ${ordinal(day)}`;
+			},
+			/** "Coming up: Sun 6 Dec · Sun 3 Jan · Sun 7 Feb". */
+			comingUp: (dates: string[]): RichText => [
+				{ text: 'Coming up: ' },
+				{ text: dates.join(' · '), strong: true }
+			],
+			/** "First on Sun 6 Dec, then a month after each time it's done." */
+			countsFrom: (first: string, unit: 'week' | 'month', interval: number): RichText => [
+				{ text: 'First on ' },
+				{ text: first, strong: true },
+				{
+					text: `, then ${interval === 1 ? `a ${unit}` : `${interval} ${unit}s`} after each time it’s done.`
+				}
+			],
 			dueShortcuts: 'Due date shortcuts',
 			today: 'Today',
 			tomorrow: 'Tomorrow',

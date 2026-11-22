@@ -177,7 +177,7 @@
 		<p class="facts">
 			<span class="fact">
 				<RotateCw size={13} strokeWidth={2} aria-hidden="true" />
-				{m.task.repeat(task.recurUnit, task.recurInterval)}
+				{m.task.repeat(task.recurUnit, task.recurInterval, task.schedule)}
 			</span>
 			<span class="fact">
 				{#if task.assignee}

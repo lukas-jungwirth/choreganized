@@ -48,7 +48,7 @@
 	const overdue = $derived(!task.paused && days !== null && days < 0);
 	const dueToday = $derived(!task.paused && days === 0);
 
-	const repeat = $derived(m.task.repeat(task.recurUnit, task.recurInterval));
+	const repeat = $derived(m.task.repeat(task.recurUnit, task.recurInterval, task.schedule));
 
 	/**
 	 * The half after the cadence. A paused task says so instead of counting the

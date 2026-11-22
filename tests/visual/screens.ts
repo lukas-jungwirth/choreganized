@@ -368,6 +368,20 @@ export const SCREENS: Screen[] = [
 		account: 'guests',
 		theme: 'dark'
 	},
+	// The task sheet with "Keep to the schedule" on: a monthly chore's two days and
+	// what's coming up (→ SPEC §5.2, plan 39).
+	{
+		name: 'tasks-schedule-sheet',
+		route: '/(app)/tasks',
+		path: '',
+		navigate: async (page) => {
+			await page.goto('/tasks');
+			await page.getByRole('button', { name: 'Open Clean the fridge' }).click();
+			await page.getByRole('button', { name: 'Edit task' }).click();
+			const sheet = page.getByRole('dialog', { name: 'Edit task' });
+			await sheet.getByText(/^Coming up: /).scrollIntoViewIfNeeded();
+		}
+	},
 	{
 		name: 'expenses-guest-sheet',
 		route: '/(app)/expenses',
