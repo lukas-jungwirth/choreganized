@@ -4410,3 +4410,10 @@ store_id` NULL already means "no memory" (a deleted list), and telling the two a
      sheet reads its labels from the same anchor for the same reason. The done pop-up says "On
      schedule · {who's next}" ("Nach Plan") instead of "Rescheduled", keeping the turn half
      rather than repeating the day as the sketch had it.
+300. **The colour picker fills its row: six 38px dots, then two** (2026-11-22; → DESIGN-SYSTEM
+     "ColorPicker"; amends #296). Four to a row left a third of the width beside the avatar
+     empty in the profile sheet and onboarding. Lukas picked six-and-two over keeping 34px dots
+     (which stop 14px short of the edge) and over one row of eight (28px dots, touch targets
+     overlapping). At 390px the 278px beside the avatar takes six 38px dots with 10px gaps, so
+     each dot still sits in a 44px target; `space-between` lines the last dot up with the name
+     field, and a `max-width` stops the gaps at 16px on wider phones.
