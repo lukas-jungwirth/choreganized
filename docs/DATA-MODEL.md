@@ -232,6 +232,13 @@ occurrence changes (done, skip, snooze, edit of due date, the return shift after
 - `recurUnit 'none'` = one-off (optionally undated). Otherwise every `recurInterval` ×
   `recurUnit` (Weekly = 1×week, Every 2 weeks = 2×week, Monthly = 1×month).
 - `assigneeMemberId NULL` = **Anyone**. `rotate` only meaningful with an assignee.
+- `scheduleAnchor` / `scheduleBy` (plan 39): **Keep to the schedule**. NULL anchor = the next
+  date counts from the completion day (step 2 below). Set, the task's dates are the anchor and
+  every `recurInterval` weeks or months from it; a month keeps the anchor's day (`'day'`,
+  clamped) or its weekday in the same week of the month (`'weekday'`, the month's last seven
+  days = "the last"). Only on week/month recurrences, `scheduleBy` only on months; the service
+  clears both otherwise. Saving the sheet sets the anchor to the due date **unless** the date
+  wasn't touched and an anchor exists. Snooze and the holiday return move `dueDate` only.
 - Overdue = `dueDate < today(household)` and assignee not away. Days overdue = date diff.
 
 **Completion algorithm** (single transaction; service `completeTask`):
@@ -242,6 +249,10 @@ occurrence changes (done, skip, snooze, edit of due date, the return shift after
 2. If recurring: `dueDate = addInterval(today, recurInterval, recurUnit)` (date-fns `addWeeks`/
    `addMonths`/`addDays` on the calendar date — _today-based_, not dueDate-based, so an overdue
    weekly task completed today is next due in a week, matching [4d] "Next due Aug 14").
+   With a `scheduleAnchor`: `dueDate = nextOnSchedule(anchor, unit, interval, by,
+max(today, dueDate, anchor))` (`utils/dates.ts`) instead, the first schedule date strictly
+   after it.
+   The anchor never changes here, so Undo has nothing of the schedule to restore.
    If `rotate`: assignee ← the member after **the doer** in `joinedAt` order (wrapping, skipping
    departed) — so doing a housemate's turn hands the next one back to them. Reset both reminder
    flags to NULL.

@@ -19,7 +19,7 @@ import { DEFAULT_LOCALE } from '$lib/i18n';
 import { addDays, formatTimeIn, hourIn, type CalendarDate } from '$lib/utils/dates';
 import { homeRaccoon, homeSlot, WOKEN_RACCOON } from '$lib/utils/raccoon';
 import { mealSlotOrder, type MealSlot } from '$lib/utils/meals';
-import type { RecurUnit } from '$lib/utils/tasks';
+import { scheduleOf, type RecurUnit, type TaskSchedule } from '$lib/utils/tasks';
 import { db } from '../db';
 import {
 	meals,
@@ -83,6 +83,8 @@ export type NextChore = {
 	recurInterval: number;
 	/** Never null: an undated one-off is never "coming up" (→ `choresInWindow`). */
 	dueDate: CalendarDate;
+	/** Keeps to the schedule ("monthly, first Sunday"); null = counts from the last time. */
+	schedule: TaskSchedule | null;
 };
 
 export type OverdueSummary = {
@@ -236,7 +238,9 @@ function choresInWindow(householdId: string, member: Member, today: CalendarDate
 				recurUnit: tasks.recurUnit,
 				recurInterval: tasks.recurInterval,
 				// NULL is excluded by the `lte` below; the cast saves cloning the row.
-				dueDate: sql<CalendarDate>`${tasks.dueDate}`
+				dueDate: sql<CalendarDate>`${tasks.dueDate}`,
+				scheduleAnchor: tasks.scheduleAnchor,
+				scheduleBy: tasks.scheduleBy
 			})
 			.from(tasks)
 			.where(
@@ -252,6 +256,10 @@ function choresInWindow(householdId: string, member: Member, today: CalendarDate
 			// banner agree on which overdue chores come first.
 			.orderBy(asc(tasks.dueDate), asc(tasks.id))
 			.all()
+			.map(({ scheduleAnchor, scheduleBy, ...chore }) => ({
+				...chore,
+				schedule: scheduleOf({ recurUnit: chore.recurUnit, scheduleAnchor, scheduleBy })
+			}))
 	);
 }
 

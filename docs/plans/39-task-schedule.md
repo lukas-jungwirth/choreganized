@@ -1,6 +1,6 @@
 # 39 · Keep to the schedule: recurring tasks on a fixed day
 
-**Status: todo.** Asked for by Lukas on 2026-11-22: "a checkbox 'always on the day' … for
+**Status: done (2026-11-22, v0.7.0).** DECISIONS #297–#299. Asked for by Lukas on 2026-11-22: "a checkbox 'always on the day' … for
 once a month it could be helpful to have it always on the first Sunday". Depends on: 04, 10
 (both done), and the away-return shift from PR #165 (DECISIONS #293).
 SPEC: §5.2 (the task sheet), §5.3/§5.4 (done, skip, snooze), §5.8 (the done pop-up) and the
@@ -136,16 +136,16 @@ No em dashes in copy (→ DECISIONS #205).
 
 ## Acceptance
 
-- [ ] [S1] matches the sketch: the switch under the date, only for week and month repeats; the
+- [x] [S1] matches the sketch: the switch under the date, only for week and month repeats; the
       two rows for monthly, relabelled by the date; "Coming up" for both states.
-- [ ] Due Sun 6 Dec 2026 monthly on the first Sunday: done 8 Dec → Sun 3 Jan; done 15 Jan →
+- [x] Due Sun 6 Dec 2026 monthly on the first Sunday: done 8 Dec → Sun 3 Jan; done 15 Jan →
       Sun 7 Feb; done 5 Dec → Sun 3 Jan.
-- [ ] By day on the 31st: 31 Jan → 28 Feb → 31 Mar.
-- [ ] Snoozed to 8 Dec, then done that day → Sun 3 Jan.
-- [ ] Existing tasks unchanged (no anchor after the migration), and their meta line reads as
+- [x] By day on the 31st: 31 Jan → 28 Feb → 31 Mar.
+- [x] Snoozed to 8 Dec, then done that day → Sun 3 Jan.
+- [x] Existing tasks unchanged (no anchor after the migration), and their meta line reads as
       before.
-- [ ] [S2] says "On schedule · first Sunday"; [S3] and Home's next-chore card say "monthly,
+- [x] [S2] says "On schedule · first Sunday"; [S3] and Home's next-chore card say "monthly,
       first Sunday".
-- [ ] German walked through at 200% text size.
-- [ ] SPEC §5.2–§5.4, §5.8, DATA-MODEL "Completion algorithm" updated; DECISIONS entries for
+- [x] German walked through at 200% text size.
+- [x] SPEC §5.2–§5.4, §5.8, DATA-MODEL "Completion algorithm" updated; DECISIONS entries for
       the rule (strictly after both dates), "last" instead of a fifth week, off by default.

@@ -33,6 +33,7 @@ import {
 	formatWeekdayShort,
 	formatWeekdays,
 	needsYear,
+	weekOfMonth,
 	type CalendarDate
 } from '$lib/utils/dates';
 import { INTL_LOCALE } from '$lib/i18n/locale';
@@ -42,7 +43,7 @@ import { formatAmount, formatIngredient } from '$lib/utils/ingredients';
 import { currencyAfter, currencySymbol, formatMoney } from '$lib/utils/money';
 import type { MealSlot } from '$lib/utils/meals';
 import { formatQuantity, type UnitLabels } from '$lib/utils/shopping';
-import type { RecurUnit } from '$lib/utils/tasks';
+import type { RecurUnit, TaskSchedule } from '$lib/utils/tasks';
 import type { DaySlot, Weekday } from '$lib/assets/mascot/everyday';
 import type { Messages, RichText, SentencePart } from './en';
 
@@ -107,6 +108,21 @@ function list(items: string[]): string {
 }
 
 /** Der letzte Einkaufstag, so benannt, wie man ihn ausspricht. */
+/** "ersten" … "vierten", oder "letzten": in welcher Woche seines Monats ein Datum liegt. */
+function weekName(date: CalendarDate): string {
+	const week = weekOfMonth(date);
+	return week === 'last' ? 'letzten' : ['ersten', 'zweiten', 'dritten', 'vierten'][week];
+}
+
+/** Der Tag, an den sich eine Aufgabe hält: "sonntags", "erster Sonntag", "am 6.". */
+function scheduleDay(unit: RecurUnit, schedule: TaskSchedule): string {
+	const weekday = formatWeekdayLong(schedule.anchor, L);
+	if (unit === 'week') return `${weekday.toLowerCase()}s`;
+	if (schedule.by === 'day') return `am ${Number(schedule.anchor.slice(8, 10))}.`;
+	// Nominativ, ohne Artikel: "erster Sonntag", "letzter Sonntag".
+	return `${weekName(schedule.anchor).slice(0, -1)} ${weekday}`;
+}
+
 function shoppingDay(lastOpenDay: CalendarDate, today: CalendarDate): string {
 	const days = daysBetween(today, lastOpenDay);
 	if (days <= 0) return 'heute';
@@ -277,13 +293,18 @@ export const de: Messages = {
 		},
 
 		/** "Einmalig", "Täglich", "Wöchentlich", "Alle 2 Wochen", "Monatlich". */
-		repeat: (unit: RecurUnit, interval: number) => {
+		repeat: (unit: RecurUnit, interval: number, schedule: TaskSchedule | null = null) => {
 			if (unit === 'none') return 'Einmalig';
-			if (interval === 1) {
-				return unit === 'day' ? 'Täglich' : unit === 'week' ? 'Wöchentlich' : 'Monatlich';
-			}
 			const plural = unit === 'day' ? 'Tage' : unit === 'week' ? 'Wochen' : 'Monate';
-			return `Alle ${interval} ${plural}`;
+			const cadence =
+				interval === 1
+					? unit === 'day'
+						? 'Täglich'
+						: unit === 'week'
+							? 'Wöchentlich'
+							: 'Monatlich'
+					: `Alle ${interval} ${plural}`;
+			return schedule && unit !== 'day' ? `${cadence}, ${scheduleDay(unit, schedule)}` : cadence;
 		},
 
 		points: (points: number) => `+${points}`,
@@ -687,9 +708,12 @@ export const de: Messages = {
 			whoLast: 'Jemand muss es gemacht haben. Mit Rückgängig nimmst du es zurück.',
 			whoFailed: 'Das ließ sich nicht ändern.',
 			nextDue: (date: string) => `Nächste Fälligkeit ${date}`,
-			handoverAnyone: 'Neu geplant · kann jemand übernehmen',
-			handoverNext: (name: string) => `Neu geplant · als Nächstes ist ${name} dran`,
-			handoverSame: (name: string) => `Neu geplant · weiterhin ${name}`,
+			handoverAnyone: (kept: boolean) =>
+				`${kept ? 'Nach Plan' : 'Neu geplant'} · kann jemand übernehmen`,
+			handoverNext: (name: string, kept: boolean) =>
+				`${kept ? 'Nach Plan' : 'Neu geplant'} · als Nächstes ist ${name} dran`,
+			handoverSame: (name: string, kept: boolean) =>
+				`${kept ? 'Nach Plan' : 'Neu geplant'} · weiterhin ${name}`,
 			standingsSolo: (points: number) => `${points} Punkte diesen Monat`,
 			standingsAhead: (gap: number, name: string) =>
 				`Du liegst ${gap} ${gap === 1 ? 'Punkt' : 'Punkte'} vor ${name}`,
@@ -730,6 +754,37 @@ export const de: Messages = {
 			unit: 'Einheit',
 			firstDue: 'Erstmals fällig',
 			nextDue: 'Nächste Fälligkeit',
+			keepSchedule: 'Fester Termin',
+			scheduleOff: 'Der nächste Termin zählt ab dem Tag der Erledigung.',
+			scheduleWeekly: (date: CalendarDate) =>
+				`Immer am ${formatWeekdayLong(date, L)}, auch wenn es mal später wird.`,
+			scheduleMonthly: 'Später erledigt? Der nächste Termin bleibt, wo er ist.',
+			scheduleWhich: 'Welcher Tag im Monat',
+			scheduleByWeekday: (date: CalendarDate) =>
+				`Am ${weekName(date)} ${formatWeekdayLong(date, L)}`,
+			scheduleByDay: (date: CalendarDate) => {
+				const day = Number(date.slice(8, 10));
+				return day >= 29 ? `Am ${day}. (oder am Monatsletzten)` : `Am ${day}.`;
+			},
+			comingUp: (dates: string[]): RichText => [
+				{ text: 'Als Nächstes: ' },
+				{ text: dates.join(' · '), strong: true }
+			],
+			countsFrom: (first: string, unit: 'week' | 'month', interval: number): RichText => [
+				{ text: 'Zuerst am ' },
+				{ text: first, strong: true },
+				{
+					text: `, danach jeweils ${
+						unit === 'week'
+							? interval === 1
+								? 'eine Woche'
+								: `${interval} Wochen`
+							: interval === 1
+								? 'einen Monat'
+								: `${interval} Monate`
+					} nach dem Erledigen.`
+				}
+			],
 			dueShortcuts: 'Schnellauswahl für das Datum',
 			today: 'Heute',
 			tomorrow: 'Morgen',

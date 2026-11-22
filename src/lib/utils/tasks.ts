@@ -9,7 +9,7 @@
  * no label: "Small" and "Klein" are both names for `points: 5`, and they live
  * in `$lib/i18n/messages/*` under `task.*` where a translator can reach them.
  */
-import type { IntervalUnit } from '$lib/utils/dates';
+import type { CalendarDate, IntervalUnit, ScheduleBy } from '$lib/utils/dates';
 
 /** `tasks.recurUnit`; mirrors the enum in `server/db/schema.ts`. */
 export const RECUR_UNITS = ['none', 'day', 'week', 'month'] as const;
@@ -110,6 +110,36 @@ export function repeatKey(unit: RecurUnit, interval: number): string {
 		(option) => option.unit === unit && option.interval === interval
 	);
 	return preset?.value ?? CUSTOM_REPEAT;
+}
+
+/* ── Keep to the schedule (→ plan 39) ─────────────────────────────────────── */
+
+/**
+ * A task that keeps to the schedule: the date it counts from and, for a
+ * monthly one, whether it keeps the day ("on the 6th") or the weekday ("on the
+ * first Sunday"). Null = it counts from the day it was done (→ SPEC §5.2).
+ */
+export type TaskSchedule = { anchor: CalendarDate; by: ScheduleBy };
+
+export const SCHEDULE_BYS = ['weekday', 'day'] as const satisfies readonly ScheduleBy[];
+
+export function isScheduleBy(value: unknown): value is ScheduleBy {
+	return typeof value === 'string' && (SCHEDULE_BYS as readonly string[]).includes(value);
+}
+
+/** Only weeks and months can keep to a schedule: a day is a day, and a one-off doesn't repeat. */
+export function schedulable(unit: RecurUnit): unit is 'week' | 'month' {
+	return unit === 'week' || unit === 'month';
+}
+
+/** The two columns, read as one value. A weekly task's `by` is moot; it reads as 'weekday'. */
+export function scheduleOf(row: {
+	recurUnit: RecurUnit;
+	scheduleAnchor: CalendarDate | null;
+	scheduleBy: ScheduleBy | null;
+}): TaskSchedule | null {
+	if (!row.scheduleAnchor || !schedulable(row.recurUnit)) return null;
+	return { anchor: row.scheduleAnchor, by: row.scheduleBy ?? 'weekday' };
 }
 
 /* ── Snooze [4c] ──────────────────────────────────────────────────────────── */

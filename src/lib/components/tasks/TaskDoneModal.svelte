@@ -119,8 +119,11 @@
 	/** "Rescheduled · Lukas's turn next" — or the truth, when nothing changed hands. */
 	const handover = $derived.by(() => {
 		const name = completion.nextAssigneeName;
-		if (!name) return m.tasks.done.handoverAnyone;
-		return completion.rotated ? m.tasks.done.handoverNext(name) : m.tasks.done.handoverSame(name);
+		const kept = completion.onSchedule;
+		if (!name) return m.tasks.done.handoverAnyone(kept);
+		return completion.rotated
+			? m.tasks.done.handoverNext(name, kept)
+			: m.tasks.done.handoverSame(name, kept);
 	});
 
 	/** The gap to the rival, not the two totals: "5 points ahead of Elisabeth". */
