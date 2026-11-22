@@ -114,7 +114,8 @@ and the title, the line and the header's buttons all stand on the raccoon's feet
 
 ## 2. Home tab [8b is the canonical variant]
 
-Top: household name (small caps), "Good {morning|afternoon|evening}, {name}", and under the
+Top: household name (small caps), "Good {morning|afternoon|evening}, {name}" (morning 05:00–12:00,
+afternoon to 18:00, evening until 05:00 — never "morning" after midnight), and under the
 greeting the stacked member avatars (28px, rings cut from the page). The faces are a picture of
 the household, not a button; a screen reader hears "Household: {names}", and Home is the only
 screen that names the housemates. **Settings** is the round gear in the header's top-right

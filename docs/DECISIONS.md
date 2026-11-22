@@ -1017,6 +1017,11 @@ reload`) so it can't silently regress.
        tick pulls a row into "recently bought", quick-add appends one) — on everything except
        the drag in hand and the order still saving.
 
+119. **"Good morning" starts at 05:00, not midnight** (Lukas, 2026-11-22). Between 00:00 and
+     05:00 Home still says "Good evening": up at one in the morning is a late evening, not a
+     morning. 05:00 is when the raccoon wakes up (#260), so greeting and raccoon agree.
+     `utils/greeting.ts` owns the hours.
+
 ## Open questions (non-blocking, defaults chosen)
 
 - **Production domain** — invite links & OAuth redirect need the final origin (design shows
