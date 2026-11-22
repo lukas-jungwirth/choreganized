@@ -27,9 +27,10 @@ export type Screen = {
 	/**
 	 * Another seeded household than `visual` (→ tests/e2e/accounts.ts): `guests`
 	 * spent the sketch's weekend with Jonas (→ plan 38); `fullhouse` has a member
-	 * per colour, eight. Both unmutated, like `visual`.
+	 * per colour, eight; `cookbook` has the recipe-filters sketch's tagged
+	 * library (→ plan 40). All unmutated, like `visual`.
 	 */
-	account?: 'guests' | 'fullhouse';
+	account?: 'guests' | 'fullhouse' | 'cookbook';
 };
 
 export async function openRecipe(page: Page): Promise<void> {
@@ -44,6 +45,14 @@ export async function openRecipe(page: Page): Promise<void> {
 	// a 404.)
 	await page.waitForURL(/\/cooking\/recipes\/(?!new$|import)[^/?]+(?:\?.*)?$/);
 	await page.getByRole('heading', { level: 1 }).waitFor();
+}
+
+/** The cookbook's pumpkin soup (→ plan 40): lunch, dinner, soup, vegan, a heart. */
+export async function openPumpkinSoup(page: Page): Promise<void> {
+	await page.goto('/cooking/recipes?kind=soup');
+	await page.getByRole('link', { name: /Pumpkin soup/ }).click();
+	await page.waitForURL(/\/cooking\/recipes\/(?!new$|import)[^/?]+(?:\?.*)?$/);
+	await page.getByRole('heading', { level: 1, name: 'Pumpkin soup' }).waitFor();
 }
 
 /** The first list, opened from its card's corner button (plan 36 [L5]). */
@@ -573,6 +582,56 @@ export const SCREENS: Screen[] = [
 		route: '/(app)/cooking/recipes/new',
 		path: '/cooking/recipes/new',
 		bottom: true
+	},
+	// The recipe filters (→ plan 40), on the sketch's tagged library
+	// (`--cookbook`): the row at rest, a filtered grid, the sheet, the ways out
+	// of "nothing fits", a recipe's tags and heart, and the form's Tags block.
+	{
+		name: 'recipes-cookbook',
+		route: '/(app)/cooking/recipes',
+		path: '/cooking/recipes',
+		account: 'cookbook'
+	},
+	{
+		name: 'recipes-filtered',
+		route: '/(app)/cooking/recipes',
+		path: '/cooking/recipes?meal=dinner&diet=vegetarian&sort=quick',
+		account: 'cookbook'
+	},
+	{
+		name: 'recipes-filter-sheet',
+		route: '/(app)/cooking/recipes',
+		path: '',
+		account: 'cookbook',
+		navigate: async (page) => {
+			await page.goto('/cooking/recipes?meal=dinner');
+			await page.getByRole('button', { name: 'Filter, 1 on' }).click();
+			await page.getByRole('dialog', { name: 'Filter recipes' }).waitFor();
+		}
+	},
+	{
+		name: 'recipes-nothing-fits',
+		route: '/(app)/cooking/recipes',
+		path: '/cooking/recipes?meal=dinner&diet=vegan&max=30',
+		account: 'cookbook'
+	},
+	{
+		name: 'recipe-tags',
+		route: '/(app)/cooking/recipes/[id]',
+		path: '',
+		account: 'cookbook',
+		navigate: openPumpkinSoup
+	},
+	{
+		name: 'recipe-edit-tags',
+		route: '/(app)/cooking/recipes/[id]/edit',
+		path: '',
+		account: 'cookbook',
+		navigate: async (page) => {
+			await openPumpkinSoup(page);
+			await page.goto(`${new URL(page.url()).pathname}/edit`);
+			await page.getByText('Tags', { exact: true }).scrollIntoViewIfNeeded();
+		}
 	},
 	{ name: 'stores', route: '/(app)/shopping/stores', path: '/shopping/stores' },
 	// Onboarding [5a]–[5d], each as a fresh sign-up meets it. The invite step's

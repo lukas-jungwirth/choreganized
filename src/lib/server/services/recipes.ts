@@ -16,8 +16,10 @@
  * that reach the children through their recipe — a forged recipe id from
  * another household finds nothing (→ docs/ARCHITECTURE.md "Server patterns").
  */
-import { and, asc, count, desc, eq, inArray, isNotNull, sql } from 'drizzle-orm';
+import { and, asc, count, desc, eq, inArray, isNotNull, lte, max, or, sql } from 'drizzle-orm';
+import type { CalendarDate } from '$lib/utils/dates';
 import { parseIngredient, RECIPE_QUANTITY_MAX } from '$lib/utils/ingredients';
+import { readRecipeTags, type RecipeDiet, type RecipeTag } from '$lib/utils/recipe-tags';
 import {
 	INGREDIENTS_MAX,
 	INGREDIENT_LINE_MAX,
@@ -39,6 +41,7 @@ import {
 	recipeIngredients,
 	recipeStepIngredients,
 	recipeSteps,
+	recipeTags,
 	recipes
 } from '../db/schema';
 import { copyImage, deleteUpload, readUpload, uploadContentType, uploadExists } from '../uploads';
@@ -56,6 +59,18 @@ export type RecipeSummary = {
 	createdAt: number;
 	/** Whether "add ingredients to the list" has anything to add (→ SPEC §4.2). */
 	hasIngredients: boolean;
+	/** Meal, kind and free-from, in list order (→ plan 40, `utils/recipe-tags`). */
+	tags: RecipeTag[];
+	/** Null = nobody said yet. */
+	diet: RecipeDiet | null;
+	/** The heart [7a]. */
+	favourite: boolean;
+	/**
+	 * The last day up to today it was on the plan — "Not cooked lately"
+	 * (→ plan 40). Null when it never was, or when the caller didn't ask
+	 * (`ListOptions.today`).
+	 */
+	lastPlanned: CalendarDate | null;
 };
 
 export type RecipeIngredientRow = {
@@ -96,13 +111,24 @@ const summaryColumns = {
 	imagePath: recipes.imagePath,
 	timeMinutes: recipes.timeMinutes,
 	servings: recipes.servings,
-	createdAt: recipes.createdAt
+	createdAt: recipes.createdAt,
+	diet: recipes.diet,
+	favourite: recipes.favourite
 };
 
 export type ListOptions = {
-	/** Case-insensitive substring of the name — the library's search field. */
+	/**
+	 * Case-insensitive substring of the name **or of an ingredient's name** —
+	 * the library's search field, so "lemon" finds the salmon (→ plan 40).
+	 */
 	search?: string | null;
 	limit?: number;
+	/**
+	 * Household-local today. Given, each summary carries `lastPlanned` — the
+	 * library's "Not cooked lately" — counting days up to and including today;
+	 * a dinner planned for Thursday hasn't been cooked yet.
+	 */
+	today?: CalendarDate;
 };
 
 /**
@@ -117,7 +143,7 @@ export function listRecipes(householdId: string, options: ListOptions = {}): Rec
 	const rows = db
 		.select(summaryColumns)
 		.from(recipes)
-		.where(and(eq(recipes.householdId, householdId), search ? nameMatches(search) : undefined))
+		.where(and(eq(recipes.householdId, householdId), search ? searchMatches(search) : undefined))
 		// `id` breaks ties for a bulk insert (the seed writes both recipes in the
 		// same millisecond), so the order never flickers between renders.
 		.orderBy(desc(recipes.createdAt), desc(recipes.id))
@@ -126,8 +152,58 @@ export function listRecipes(householdId: string, options: ListOptions = {}): Rec
 		.all();
 
 	const stocked = idsWithIngredients(householdId);
+	const tags = tagsByRecipe(householdId);
+	const planned = options.today ? lastPlannedByRecipe(householdId, options.today) : new Map();
 
-	return rows.map((row) => toSummary(row, stocked.has(row.id)));
+	return rows.map((row) =>
+		toSummary(row, stocked.has(row.id), tags.get(row.id) ?? [], planned.get(row.id) ?? null)
+	);
+}
+
+/**
+ * Every tag in the household, by recipe — one query for the whole library,
+ * in list order (→ `readRecipeTags`), so the recipe view lists meals before
+ * kinds however they were ticked.
+ */
+function tagsByRecipe(householdId: string, recipeId?: string): Map<string, RecipeTag[]> {
+	const rows = db
+		.select({ recipeId: recipeTags.recipeId, tag: recipeTags.tag })
+		.from(recipeTags)
+		.innerJoin(recipes, eq(recipeTags.recipeId, recipes.id))
+		.where(
+			and(eq(recipes.householdId, householdId), recipeId ? eq(recipes.id, recipeId) : undefined)
+		)
+		.all();
+
+	const raw = new Map<string, string[]>();
+	for (const row of rows) {
+		const list = raw.get(row.recipeId);
+		if (list) list.push(row.tag);
+		else raw.set(row.recipeId, [row.tag]);
+	}
+
+	return new Map([...raw].map(([id, list]) => [id, readRecipeTags(list)]));
+}
+
+/**
+ * The last day up to `today` each recipe was on this household's plan
+ * (→ plan 40, "Not cooked lately"). Planned is close enough to cooked: the
+ * plan is the record the app has, and it is never pruned. A meal whose recipe
+ * was deleted points at nothing and so counts for nothing.
+ */
+function lastPlannedByRecipe(householdId: string, today: CalendarDate): Map<string, CalendarDate> {
+	const rows = db
+		.select({ recipeId: meals.recipeId, last: max(meals.date) })
+		.from(meals)
+		.where(
+			and(eq(meals.householdId, householdId), isNotNull(meals.recipeId), lte(meals.date, today))
+		)
+		.groupBy(meals.recipeId)
+		.all();
+
+	return new Map(
+		rows.flatMap((row) => (row.recipeId && row.last ? [[row.recipeId, row.last]] : []))
+	);
 }
 
 /**
@@ -156,9 +232,18 @@ function idsWithIngredients(householdId: string): Set<string> {
  * requirement. The escape clause is what stops a name containing `%` from
  * matching everything.
  */
-function nameMatches(search: string) {
+function searchMatches(search: string) {
 	const pattern = `%${search.replace(/[\\%_]/g, (char) => `\\${char}`)}%`;
-	return sql`${recipes.name} like ${pattern} escape '\\'`;
+	// A plain subquery rather than a correlated `exists`, for the reason
+	// `idsWithIngredients` gives: Drizzle doesn't qualify the column names of a
+	// hand-written correlated one. The outer query is household-scoped, so the
+	// inner one needn't be.
+	const byIngredient = db
+		.select({ id: recipeIngredients.recipeId })
+		.from(recipeIngredients)
+		.where(sql`${recipeIngredients.name} like ${pattern} escape '\\'`);
+
+	return or(sql`${recipes.name} like ${pattern} escape '\\'`, inArray(recipes.id, byIngredient));
 }
 
 /**
@@ -264,7 +349,12 @@ export function getRecipe(householdId: string, recipeId: string): RecipeDetail |
 	const ingredients = listIngredients(recipeId);
 
 	return {
-		...toSummary(row, ingredients.length > 0),
+		...toSummary(
+			row,
+			ingredients.length > 0,
+			tagsByRecipe(householdId, recipeId).get(recipeId) ?? [],
+			null
+		),
 		ingredients,
 		steps: listSteps(recipeId),
 		createdBy:
@@ -348,10 +438,26 @@ function toSummary(
 		timeMinutes: number | null;
 		servings: number | null;
 		createdAt: Date;
+		diet: RecipeDiet | null;
+		favourite: boolean;
 	},
-	hasIngredients: boolean
+	hasIngredients: boolean,
+	tags: RecipeTag[],
+	lastPlanned: CalendarDate | null
 ): RecipeSummary {
-	return { ...row, createdAt: row.createdAt.getTime(), hasIngredients };
+	return {
+		id: row.id,
+		name: row.name,
+		imagePath: row.imagePath,
+		timeMinutes: row.timeMinutes,
+		servings: row.servings,
+		createdAt: row.createdAt.getTime(),
+		hasIngredients,
+		tags,
+		diet: row.diet,
+		favourite: row.favourite,
+		lastPlanned
+	};
 }
 
 /* ── Writing ──────────────────────────────────────────────────────────────── */
@@ -458,10 +564,15 @@ export function duplicateRecipe(
 				imagePath,
 				timeMinutes: source.timeMinutes,
 				servings: source.servings,
+				// What it is travels with it; the heart doesn't — the copy is
+				// a draft to change, not the recipe the household loves.
+				diet: source.diet,
 				createdByMemberId: memberId
 			})
 			.returning({ id: recipes.id })
 			.get();
+
+		writeTags(tx, copy.id, source.tags);
 
 		// The copy's own ids, minted here so the steps can be pinned to *its*
 		// ingredients rather than to the original's.
@@ -570,8 +681,34 @@ function normalize(input: RecipeInput) {
 	return {
 		name: input.name.trim().slice(0, RECIPE_NAME_MAX),
 		timeMinutes: normalizeCount(input.timeMinutes, RECIPE_TIME_MAX),
-		servings: normalizeCount(input.servings, RECIPE_SERVINGS_MAX)
+		servings: normalizeCount(input.servings, RECIPE_SERVINGS_MAX),
+		// Absent = the caller has no opinion (an older importer): leave it be.
+		...(input.diet === undefined ? {} : { diet: input.diet })
 	};
+}
+
+/**
+ * The recipe's tags, replaced: unknown keys dropped rather than refused, so a
+ * stale form still saves (→ `readRecipeTags`).
+ */
+function writeTags(tx: Transaction, recipeId: string, tags: readonly string[]): void {
+	tx.delete(recipeTags).where(eq(recipeTags.recipeId, recipeId)).run();
+
+	const rows = readRecipeTags(tags).map((tag) => ({ recipeId, tag }));
+	if (rows.length) tx.insert(recipeTags).values(rows).run();
+}
+
+/**
+ * The heart [7a] (→ plan 40). False when the recipe isn't this household's.
+ */
+export function setFavourite(householdId: string, recipeId: string, favourite: boolean): boolean {
+	return (
+		db
+			.update(recipes)
+			.set({ favourite })
+			.where(and(eq(recipes.id, recipeId), eq(recipes.householdId, householdId)))
+			.run().changes > 0
+	);
 }
 
 /** Whole, positive, capped — or nothing at all, which both fields allow. */
@@ -588,6 +725,8 @@ function normalizeCount(value: number | null, max: number): number | null {
  * column default — a pin has to name the row it was saved beside.
  */
 function writeChildren(tx: Transaction, recipeId: string, input: RecipeInput): void {
+	if (input.tags !== undefined) writeTags(tx, recipeId, input.tags);
+
 	tx.delete(recipeIngredients).where(eq(recipeIngredients.recipeId, recipeId)).run();
 	tx.delete(recipeSteps).where(eq(recipeSteps.recipeId, recipeId)).run();
 

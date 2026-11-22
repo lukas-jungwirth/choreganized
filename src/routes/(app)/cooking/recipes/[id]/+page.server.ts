@@ -15,7 +15,8 @@ import {
 	deleteRecipe,
 	duplicateRecipe,
 	getRecipe,
-	listRecipes
+	listRecipes,
+	setFavourite
 } from '$lib/server/services/recipes';
 import type { Actions, PageServerLoad } from './$types';
 
@@ -63,6 +64,18 @@ export const actions: Actions = {
 		// Land on the copy: it's the one being worked on now, and its "(copy)"
 		// name says plainly what happened.
 		redirect(303, `/cooking/recipes/${copyId}`);
+	},
+
+	/** The heart [7a] (→ plan 40): the form says which way, so a double tap can't flip it back. */
+	favourite: async (event) => {
+		const { householdId } = requireMember(event);
+		const form = await event.request.formData();
+
+		if (!setFavourite(householdId, event.params.id, form.get('favourite') === '1')) {
+			error(404, catalog(event.locals.locale).errors.recipes.gone);
+		}
+
+		return { favourite: true };
 	},
 
 	delete: async (event) => {

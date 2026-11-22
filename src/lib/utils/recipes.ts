@@ -11,6 +11,7 @@
 import type { Messages } from '$lib/i18n';
 import { isCalendarDate, type CalendarDate } from './dates';
 import { readMealSlot, type MealSlot } from './meals';
+import { readRecipeDiet, readRecipeTags, type RecipeDiet, type RecipeTag } from './recipe-tags';
 import { MAX_TIMER_SECONDS, MIN_TIMER_SECONDS, TIMER_LABEL_MAX } from './timer-parse';
 
 /* ── Field limits ─────────────────────────────────────────────────────────── */
@@ -104,6 +105,13 @@ export type RecipeInput = {
 	servings: number | null;
 	ingredientLines: string[];
 	steps: StepInput[];
+	/**
+	 * Meal, kind, free-from (→ plan 40). Absent leaves a saved recipe's tags as
+	 * they are — the form always sends them; a caller with no opinion doesn't.
+	 */
+	tags?: RecipeTag[];
+	/** One diet or null for "not set"; absent leaves it be, like `tags`. */
+	diet?: RecipeDiet | null;
 };
 
 /**
@@ -190,7 +198,9 @@ export function readRecipeForm(
 				text: String(text),
 				uses: readStepUses(uses[index]),
 				timer: readStepTimer(timers[index])
-			}))
+			})),
+			tags: readRecipeTags(form.getAll('tag')),
+			diet: readRecipeDiet(form.get('diet'))
 		}
 	};
 }

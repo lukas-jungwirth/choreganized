@@ -52,6 +52,7 @@
 	import { untrack } from 'svelte';
 	import IngredientSheet from './IngredientSheet.svelte';
 	import RecipeImage from './RecipeImage.svelte';
+	import RecipeTagsField from './RecipeTagsField.svelte';
 	import StepIngredientsSheet from './StepIngredientsSheet.svelte';
 	import StepTimerSheet from './StepTimerSheet.svelte';
 
@@ -501,6 +502,8 @@
 			max={RECIPE_SERVINGS_MAX}
 		/>
 	</div>
+
+	<RecipeTagsField tags={recipe?.tags ?? []} diet={recipe?.diet ?? null} />
 
 	<h2 class="label">{m.cooking.form.ingredients}</h2>
 	<ul class="rows">

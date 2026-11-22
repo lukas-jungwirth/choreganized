@@ -37,6 +37,11 @@
 		tone?: 'light' | 'dark';
 		/** Replaces the × in the header — "Clear all" in All filters [9f]. Escape and the scrim still close. */
 		action?: Snippet;
+		/**
+		 * A bar pinned to the bottom of the panel while the content above it
+		 * scrolls — the recipe filter sheet's live "Show 6 recipes" (→ plan 40).
+		 */
+		footer?: Snippet;
 		children: Snippet;
 	};
 
@@ -48,6 +53,7 @@
 		lead,
 		tone = 'light',
 		action,
+		footer,
 		children
 	}: Props = $props();
 
@@ -311,6 +317,7 @@
 				</header>
 			</div>
 			{@render children()}
+			{#if footer}<div class="footer">{@render footer()}</div>{/if}
 		</div>
 	{/if}
 </dialog>
@@ -356,6 +363,26 @@
 		color: var(--ink);
 		/* Inputs are white on the paper background but sunken on a white sheet. */
 		--input-surface: var(--field);
+	}
+
+	/*
+	 * Sticky to the panel's bottom edge, not to the inside of its padding: the
+	 * offset reaches down through the padding, the bar's own padding fills it,
+	 * and the negative margin hands the space back so the panel isn't taller.
+	 */
+	.footer {
+		--below: calc(28px + env(safe-area-inset-bottom) + var(--stretch, 0px));
+		position: sticky;
+		bottom: calc(var(--below) * -1);
+		margin: 4px -22px calc(var(--below) * -1);
+		padding: 12px 22px var(--below);
+		border-top: 1px solid var(--divider-sheet);
+		background: var(--card);
+	}
+
+	.panel.dark .footer {
+		border-top-color: var(--cook-surface);
+		background: var(--cook-sheet);
 	}
 
 	/* Where a drag starts. `touch-action` keeps the browser from scrolling it. */

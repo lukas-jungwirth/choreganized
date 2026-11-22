@@ -1209,12 +1209,84 @@ export const en = {
 			title: 'Recipes',
 			saved: (count: number) => (count === 1 ? '1 saved' : `${count} saved`),
 			back: 'Back to the week',
-			search: 'Search recipes',
 			emptyTitle: 'Build your cookbook',
 			emptyCopy: 'Save the meals you cook often. Then drop them onto any day of the week in a tap.',
 			emptyCta: 'Add a recipe',
-			noMatch: (query: string) => `Nothing matches “${query}”.`,
 			newRecipe: 'New recipe'
+		},
+
+		/**
+		 * What a recipe is tagged with (→ plan 40, `utils/recipe-tags`). Meal
+		 * names are `slots` above — the same four words as the plan.
+		 */
+		tags: {
+			label: 'Tags',
+			/** The folded block's hint: what's inside. */
+			folded: 'Meal, kind, diet',
+			meal: 'Meal',
+			kind: 'Kind',
+			diet: 'Diet',
+			free: 'Free from',
+			/** Beside "Diet" in the form: it takes one. */
+			pickOne: 'pick one',
+			kinds: {
+				main: 'Main',
+				soup: 'Soup',
+				salad: 'Salad',
+				side: 'Side',
+				dessert: 'Dessert',
+				baking: 'Baking'
+			},
+			diets: {
+				meat: 'Meat',
+				fish: 'Fish',
+				vegetarian: 'Vegetarian',
+				vegan: 'Vegan'
+			},
+			freeFrom: {
+				gluten: 'Gluten-free',
+				lactose: 'Lactose-free'
+			}
+		},
+
+		/** The library's filters (→ plan 40, SPEC §4.3). */
+		filters: {
+			search: 'Search recipes or ingredients',
+			open: 'Filter',
+			/** The Filter chip's name with its count, for a screen reader. */
+			openCount: (count: number) => `Filter, ${count} on`,
+			favourites: 'Favourites',
+			under: (minutes: number) => `Under ${minutes} min`,
+			remove: (name: string) => `Remove ${name}`,
+			count: (shown: number, total: number) => `${shown} of ${total} recipes`,
+			clear: 'Clear',
+			sorts: {
+				new: 'Newest first',
+				az: 'A–Z',
+				quick: 'Quickest',
+				stale: 'Not cooked lately'
+			},
+			noneTitle: 'Nothing fits all of these',
+			noneCopy: 'Drop one filter to see more:',
+			without: (name: string) => `Without “${name}”`,
+			recipes: (count: number) => (count === 1 ? '1 recipe' : `${count} recipes`),
+			noMatch: (query: string) => `No recipe or ingredient matches “${query}”.`,
+			sheet: {
+				title: 'Filter recipes',
+				onlyFavourites: 'Only favourites',
+				hearted: (count: number) =>
+					count === 1 ? '1 recipe has a heart' : `${count} recipes have a heart`,
+				anyOf: 'any of',
+				allOf: 'all of',
+				vegetarianIncludesVegan: 'vegetarian includes vegan',
+				readyIn: 'Ready in',
+				atMost: 'minutes, at most',
+				any: 'Any',
+				sortBy: 'Sort by',
+				show: (count: number) => (count === 1 ? 'Show 1 recipe' : `Show ${count} recipes`),
+				nothingFits: 'Nothing fits',
+				clearAll: 'Clear all'
+			}
 		},
 
 		/** The "Add a recipe" chooser [plan 14] the New button opens — one door to
@@ -1255,7 +1327,12 @@ export const en = {
 			/** Split so the middle run can be the link to the edit screen. */
 			noStepsLead: 'No steps written down yet. ',
 			noStepsLink: 'Add them',
-			noStepsRest: ' and cook mode can walk you through it.'
+			noStepsRest: ' and cook mode can walk you through it.',
+			/** The heart in the photo's bar [7a] (→ plan 40). */
+			favourite: 'Favourite',
+			/** The tag pills under the meta line — each one opens the library filtered by it. */
+			tags: 'Tags',
+			showTagged: (name: string) => `Show recipes tagged ${name}`
 		},
 
 		/** The ••• menu [7c]. */

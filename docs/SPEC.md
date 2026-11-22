@@ -687,7 +687,39 @@ item sheet [3a]; what differs is what a tick does and what counts as shopping.
 
 ### 4.3 Recipe library (Browse all)
 
-- Grid of recipe cards (photo, name, time). Search by name.
+- Grid of recipe cards (photo, name, time). A favourite wears a small heart on its photo, a
+  vegetarian or vegan recipe a leaf (→ plan 40).
+- **Search** matches the recipe's name **or any of its ingredient names**, so "lemon" finds the
+  salmon with lemon potatoes ("Search recipes or ingredients").
+- **Filters** (→ plan 40, [DECISIONS #302–#306](DECISIONS.md)), sketched in
+  `design/sketches/recipe-filters.html`. A recipe carries a few **fixed tags** — meal
+  (breakfast · lunch · dinner · snack, the plan's four slots), kind (main · soup · salad · side ·
+  dessert · baking) and free from (gluten · lactose) — one **diet** or none yet (meat · fish ·
+  vegetarian · vegan) and a **heart**, one per household. The library filters by those and by
+  the time recipes already have:
+  - **The row under the search**: a **Filter** chip (with the number of filters on), then each
+    active filter as a filled chip with × that takes it off, then up to three **quick chips** —
+    Favourites · Under 30 min · Vegetarian — each only when it could find something here.
+  - **Under the row**, while anything narrows the list: "{n} of {total} recipes", the sort's
+    name when it isn't Newest, and **Clear** (filters off; search and sort stay).
+  - **The Filter sheet**: Only favourites (toggle), Meal, Kind, Diet, Free from (chips), Ready
+    in (Any · 20 · 30 · 45 · 60 minutes, at most), Sort by (Newest · A–Z · Quickest · Not cooked
+    lately). Within a group the chips are **any of** (lunch or dinner), across groups they
+    **narrow** (dinner and vegetarian); Free from is **all of**. **Vegetarian includes vegan.**
+    A recipe with no time drops out once a time is set; one with no diet matches no diet. **A
+    group no recipe in the library uses isn't shown**, so a household that never tags sees time
+    and sort only. The button counts the draft live ("Show 6 recipes", "Nothing fits" at 0);
+    **Clear all** resets the draft but keeps the sort.
+  - **Not cooked lately** sorts by the last day up to today each recipe was on the plan, never
+    planned first. It means _planned_: a skipped dinner counts, a recipe cooked without planning
+    doesn't, and the history starts when the household started planning.
+  - **It's all in the URL**, like the search: `?q=&meal=dinner&kind=soup&diet=vegetarian&free=gluten&max=30&fav=1&sort=quick`
+    (meal, kind, diet and free repeat). Reload, back and a shared link give the same grid; the
+    chips are links, so the row works without JavaScript. Anything the app didn't write is
+    ignored.
+  - **Nothing fits**: "Nothing fits all of these", and one row per active filter — "Without
+    “Dinner” · 2 recipes" — that drops it; rows that would still find nothing are left out. A
+    search with no filters says "No recipe or ingredient matches “…”.".
 - The FAB (and the empty state's **Add a recipe** button) open the **"Add a recipe" chooser**
   (→ plan 14, a bottom sheet): **From a link** and **Enter by hand** always, plus **From a photo**
   and **Paste text** (each "AI"-tagged) **only when AI features are set up** — with no provider
@@ -699,6 +731,10 @@ item sheet [3a]; what differs is what a tick does and what counts as shopping.
 - Top bar: Cancel · "New recipe"/"Edit recipe" · **Save**.
 - Photo picker (optional; stored resized to ≤1200px WebP under `UPLOADS_DIR`).
 - Fields: name (required), time (minutes), servings.
+- **Tags** (→ plan 40), between servings and ingredients: Meal, Kind and Free from as chips you
+  tick any number of, Diet as one chip or none (tapping the chosen one clears it). **Folded
+  while nothing is set** — one row, "Tags · Meal, kind, diet" — and open whenever something is,
+  so an edit shows what's there. Saved with the recipe, replaced wholesale like its children.
 - **Ingredients**: one typed row each, written the way you'd write them on paper ("400 g pasta")
   and parsed leniently to (quantity, unit, name); unparsed input becomes name-only, and a range
   keeps its first value with its unit ("2-3 EL Öl" → 2 tbsp Öl, DECISIONS #159). Each row
@@ -740,6 +776,10 @@ item sheet [3a]; what differs is what a tick does and what counts as shopping.
 
 - Hero photo (placeholder art when none), name, meta row (⏱ {time} min · 👥 Serves {n} ·
   Added by {member initial}).
+- A **heart** beside the ••• in the photo's bar (→ plan 40): filled = a household favourite;
+  a tap sets or clears it.
+- The recipe's **tags** under the meta row as small pills — meals, kinds, the diet (with a leaf
+  when meat-free), free-from — each a link to the library filtered by it. No tags, no row.
 - Actions: **Add to plan** (day picker → plan sheet flow), basket button + per-section
   **"Add to list"** → both open the **ingredient picker [3e]** (§4.8). Neither appears when the
   recipe has no ingredients.
