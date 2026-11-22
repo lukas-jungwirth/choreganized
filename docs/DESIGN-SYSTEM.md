@@ -205,9 +205,10 @@ background at all when there is nothing to measure.
   (the sign-in code [5a]). One real input laid invisibly over the boxes, so iOS code autofill,
   pasting "123 456" and screen readers all see one field; digits only; `oncomplete` fires on the
   last digit; `invalid` outlines every box (→ DECISIONS #184).
-- **ColorPicker** — the member palette (`$lib/member-colors`) as a radio group, in two rows
-  (eight swatches don't fit one line beside the preview at 390px); `taken` colours render
-  disabled. Pair it with a 52px Avatar preview [5c].
+- **ColorPicker** — the member palette (`$lib/member-colors`) as a radio group: 38px dots, six
+  to a row, spread so the row ends where the fields above end (gaps capped at 16px on wider
+  phones), the rest below from the left (→ DECISIONS #297); `taken` colours render disabled.
+  Pair it with a 52px Avatar preview [5c].
 - **RowGroup** — the white block a settings-style list sits in: `--r-card`, `--shadow-card`, a
   `--divider` hairline between every direct child, corners clipped. Settings' sections [6a] and
   the members list [6b] are that shape; `surface="sunken"` is the same block _inside_ a white

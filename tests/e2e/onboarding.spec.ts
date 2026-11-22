@@ -4,6 +4,7 @@
  */
 import { expect, request, test } from '@playwright/test';
 import { ALPHABET } from '../../src/lib/utils/invite-code';
+import { freshAccount } from '../visual/screens';
 
 test.use({ storageState: { cookies: [], origins: [] } });
 
@@ -132,4 +133,25 @@ test('every invite code stays on one line, however wide its letters', async ({
 		expect(tooWide, `codes that don't fit at ${width}px`).toEqual([]);
 	}
 	await context.close();
+});
+
+test('the colour picker fills the row: six 38px dots, then the rest', async ({ page }) => {
+	// → DECISIONS #297: the last dot of the first row ends where the name field
+	// ends, instead of four to a row leaving a third of it empty.
+	await freshAccount(page);
+	await page.goto('/onboarding/create');
+	const dots = page.getByRole('radiogroup', { name: 'Your colour' }).locator('.dot');
+	await expect(dots).toHaveCount(8);
+	const boxes = await dots.evaluateAll((all) =>
+		all.map((dot) => {
+			const { left, right, top, width } = dot.getBoundingClientRect();
+			return { left, right, top: Math.round(top), width };
+		})
+	);
+	expect(boxes.every((box) => box.width === 38)).toBe(true);
+	const rows = [...new Set(boxes.map((box) => box.top))];
+	expect(rows.map((top) => boxes.filter((box) => box.top === top).length)).toEqual([6, 2]);
+	const field = (await page.getByLabel('Your display name').boundingBox())!;
+	expect(Math.abs(boxes[5].right - (field.x + field.width))).toBeLessThanOrEqual(1);
+	expect(boxes[6].left).toBe(boxes[0].left);
 });
