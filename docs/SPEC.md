@@ -98,7 +98,8 @@ and the title, the line and the header's buttons all stand on the raccoon's feet
   **Sonnengasse 12**", then Google sign-in, then join.
 - Via code: 6-box code input (letters/digits, dash ignored, case-insensitive).
 - After joining, the joiner sets **display name + colour** (same fields as 1.3, minus household
-  name; colours already taken by other members are shown as unavailable). A household that
+  name; a colour another member already wears keeps its colour, carries their initial like their
+  avatar, and can't be picked; the same in Settings → profile, → DECISIONS #301). A household that
   already has 8 members shows "This household is full: it already has 8 people, one for each
   colour. Ask whoever invited you to make room." instead of the form, and the join is refused
   server-side too (`household-full`).

@@ -1,15 +1,18 @@
 <!--
-	Avatar colour picker [5c]: a radio group of swatches. Colours another member
-	already uses are disabled (SPEC §1.5) — the server re-checks on submit.
+	Avatar colour picker [5c]: a radio group of swatches. A colour another member
+	already wears keeps its colour and carries their initial, like their avatar,
+	and can't be picked (SPEC §1.5, DECISIONS #301) — the server re-checks on
+	submit.
 -->
 <script lang="ts">
+	import Avatar from '$lib/components/ui/Avatar.svelte';
 	import { messages } from '$lib/i18n';
 	import { MEMBER_COLORS } from '$lib/member-colors';
 
 	type Props = {
 		value?: string;
-		/** Hex values already used in the household. */
-		taken?: string[];
+		/** Colours already worn in the household, with the wearer's initial. */
+		taken?: { color: string; initial: string }[];
 		name?: string;
 		label?: string;
 	};
@@ -38,7 +41,8 @@
 	aria-label={label ?? m.ui.yourColour}
 >
 	{#each MEMBER_COLORS as color (color.value)}
-		{@const unavailable = taken.includes(color.value)}
+		{@const wearer = taken.find((member) => member.color === color.value)}
+		{@const unavailable = wearer !== undefined}
 		{@const colorName = m.ui.colours[color.key]}
 		<label class="swatch" class:unavailable style:--swatch={color.value}>
 			<input
@@ -49,7 +53,11 @@
 				disabled={unavailable}
 				aria-label={unavailable ? m.ui.colourTaken(colorName) : colorName}
 			/>
-			<span class="dot"></span>
+			{#if wearer}
+				<Avatar name={wearer.initial} color={color.value} size={38} />
+			{:else}
+				<span class="dot"></span>
+			{/if}
 		</label>
 	{/each}
 </div>
@@ -105,10 +113,6 @@
 
 	.unavailable {
 		cursor: not-allowed;
-	}
-
-	.unavailable .dot {
-		opacity: 0.3;
 	}
 
 	@media (prefers-reduced-motion: reduce) {

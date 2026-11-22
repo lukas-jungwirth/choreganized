@@ -117,6 +117,17 @@ describe('joinHousehold', () => {
 		);
 	});
 
+	it('the invite preview marks taken colours with an initial, never a name', () => {
+		// → DECISIONS #301: the preview goes to anyone holding the code.
+		const { inviteCode, owner, members } = makeHousehold({ housemates: ['élise'] });
+		const preview = getInvitePreview(inviteCode)!;
+		assert.deepEqual(preview.taken, [
+			{ color: owner.color, initial: 'O' },
+			{ color: members[1].color, initial: 'É' }
+		]);
+		assert.ok(!JSON.stringify(preview.taken).includes('lise'));
+	});
+
 	it('a revoked code stops working; a regenerated one is the only one that works', () => {
 		const { householdId, owner, inviteCode } = makeHousehold();
 

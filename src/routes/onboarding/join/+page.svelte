@@ -38,14 +38,14 @@
 	 */
 	let pickedColor = $state<string | null>(null);
 	const color = $derived.by(() => {
-		const taken = data.preview?.takenColors ?? [];
+		const taken = data.preview?.taken.map((member) => member.color) ?? [];
 		return pickedColor && !taken.includes(pickedColor) ? pickedColor : firstFreeColor(taken);
 	});
 
 	const error = $derived(form?.error ?? data.error);
 
 	/** Every colour worn: say so instead of a form that can only fail. */
-	const full = $derived((data.preview?.takenColors.length ?? 0) >= MAX_MEMBERS);
+	const full = $derived((data.preview?.taken.length ?? 0) >= MAX_MEMBERS);
 
 	const trackSubmit: SubmitFunction = () => {
 		submitting = true;
@@ -95,7 +95,7 @@
 						<Avatar name={displayName} {color} size={52} />
 						<ColorPicker
 							bind:value={() => color, (next) => (pickedColor = next)}
-							taken={data.preview.takenColors}
+							taken={data.preview.taken}
 						/>
 					</div>
 				</div>
