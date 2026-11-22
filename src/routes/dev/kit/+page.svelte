@@ -212,7 +212,8 @@
 		points: 10,
 		recurUnit: 'week',
 		recurInterval: 1,
-		dueDate: untrack(() => data.today)
+		dueDate: untrack(() => data.today),
+		schedule: null
 	};
 
 	const NEXT_CHORE_LATE: NextChore = {

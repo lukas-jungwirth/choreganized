@@ -26,7 +26,7 @@
 	/**
 	 * Six to a row, spread across the width beside the avatar preview: eight in
 	 * one line shrink below a touch target at 390px, and four left a third of
-	 * the row empty (→ DECISIONS #296, #297).
+	 * the row empty (→ DECISIONS #296, #300).
 	 */
 	const COLUMNS = 6;
 </script>

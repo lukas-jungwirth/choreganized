@@ -20,18 +20,23 @@ import {
 	addInterval,
 	daysBetween,
 	isCalendarDate,
+	nextOnSchedule,
 	startOfMonth,
 	toCalendarDate,
 	zonedStartOfDay,
-	type CalendarDate
+	type CalendarDate,
+	type ScheduleBy
 } from '$lib/utils/dates';
 import {
 	isRecurUnit,
+	schedulable,
+	scheduleOf,
 	POINTS_MAX,
 	RECUR_INTERVAL_MAX,
 	splitPoints,
 	TASK_NAME_MAX,
-	type RecurUnit
+	type RecurUnit,
+	type TaskSchedule
 } from '$lib/utils/tasks';
 import { db } from '../db';
 import { members, taskCompletions, tasks, type Member } from '../db/schema';
@@ -150,6 +155,8 @@ export type TaskListItem = {
 	/** NULL = an undated one-off — it sits at the bottom of the list forever. */
 	dueDate: CalendarDate | null;
 	rotate: boolean;
+	/** Keeps to the schedule (→ SPEC §5.2); null = counts from the day it was done. */
+	schedule: TaskSchedule | null;
 	/** NULL = "Anyone" (→ docs/DATA-MODEL.md). */
 	assignee: TaskAssignee | null;
 	/** For "One-off · added by Elisabeth"; null once that housemate has left. */
@@ -242,6 +249,8 @@ export function getTaskList(householdId: string, context: TaskContext): TaskList
 			recurInterval: tasks.recurInterval,
 			dueDate: tasks.dueDate,
 			rotate: tasks.rotate,
+			scheduleAnchor: tasks.scheduleAnchor,
+			scheduleBy: tasks.scheduleBy,
 			dueReminderSentAt: tasks.dueReminderSentAt,
 			overdueReminderSentAt: tasks.overdueReminderSentAt,
 			assigneeId: assignee.id,
@@ -280,6 +289,7 @@ export function getTaskList(householdId: string, context: TaskContext): TaskList
 			recurInterval: row.recurInterval,
 			dueDate: row.dueDate,
 			rotate: row.rotate,
+			schedule: scheduleOf(row),
 			assignee: assigned,
 			createdByName: row.createdByName,
 			dueRemindedOn: localDateOf(row.dueReminderSentAt, context.timezone),
@@ -324,6 +334,10 @@ export type TaskInput = {
 	/** NULL = "Anyone". An id from another household is treated as one. */
 	assigneeMemberId: string | null;
 	rotate: boolean;
+	/** Keep to the schedule (→ SPEC §5.2). Ignored for one-offs and daily tasks. */
+	keepSchedule?: boolean;
+	/** A monthly schedule's day; the weekday when missing. */
+	scheduleBy?: ScheduleBy | null;
 };
 
 /**
@@ -331,18 +345,47 @@ export type TaskInput = {
  * relies on: a recurring task always has a due date to recur from, and `rotate`
  * always has somebody to rotate away from.
  */
-function normalize(householdId: string, input: TaskInput, today: CalendarDate) {
+function normalize(
+	householdId: string,
+	input: TaskInput,
+	today: CalendarDate,
+	current: { dueDate: CalendarDate | null; scheduleAnchor: CalendarDate | null } | null = null
+) {
 	const oneOff = input.recurUnit === 'none';
 	const assigneeMemberId = resolveMemberId(householdId, input.assigneeMemberId);
+	const dueDate = isCalendarDate(input.dueDate) ? input.dueDate : oneOff ? null : today;
 
 	return {
 		name: input.name.trim().slice(0, TASK_NAME_MAX),
 		points: clamp(input.points, 0, POINTS_MAX),
 		recurUnit: input.recurUnit,
 		recurInterval: oneOff ? 1 : clamp(input.recurInterval, 1, RECUR_INTERVAL_MAX),
-		dueDate: isCalendarDate(input.dueDate) ? input.dueDate : oneOff ? null : today,
+		dueDate,
 		assigneeMemberId,
-		rotate: input.rotate && assigneeMemberId !== null
+		rotate: input.rotate && assigneeMemberId !== null,
+		...scheduleColumns(input, dueDate, current)
+	};
+}
+
+/**
+ * The schedule's two columns (→ SPEC §5.2). The anchor is the due date being
+ * saved, **unless** the date wasn't touched and the task already had one: a
+ * snoozed task's date is off its schedule, and renaming it mustn't move the
+ * schedule onto that date. Anything that can't keep a schedule clears both.
+ */
+function scheduleColumns(
+	input: TaskInput,
+	dueDate: CalendarDate | null,
+	current: { dueDate: CalendarDate | null; scheduleAnchor: CalendarDate | null } | null
+): { scheduleAnchor: CalendarDate | null; scheduleBy: ScheduleBy | null } {
+	if (!input.keepSchedule || !schedulable(input.recurUnit) || !dueDate) {
+		return { scheduleAnchor: null, scheduleBy: null };
+	}
+
+	const kept = current?.scheduleAnchor && current.dueDate === dueDate;
+	return {
+		scheduleAnchor: kept ? current.scheduleAnchor : dueDate,
+		scheduleBy: input.recurUnit === 'month' ? (input.scheduleBy ?? 'weekday') : null
 	};
 }
 
@@ -404,14 +447,14 @@ export function updateTask(
 ): boolean {
 	return db.transaction((tx) => {
 		const current = tx
-			.select({ dueDate: tasks.dueDate })
+			.select({ dueDate: tasks.dueDate, scheduleAnchor: tasks.scheduleAnchor })
 			.from(tasks)
 			.where(and(eq(tasks.id, taskId), eq(tasks.householdId, householdId)))
 			.get();
 
 		if (!current) return false;
 
-		const values = normalize(householdId, input, today);
+		const values = normalize(householdId, input, today, current);
 		const rescheduled = values.dueDate !== current.dueDate;
 
 		tx.update(tasks)
@@ -533,6 +576,8 @@ export type CompletionResult = {
 	nextAssigneeName: string | null;
 	/** It changed hands — the difference between "their turn next" and "still theirs". */
 	rotated: boolean;
+	/** The next date came from the task's schedule, not from today (→ SPEC §5.2). */
+	onSchedule: boolean;
 	snapshot: TaskSnapshot;
 };
 
@@ -663,7 +708,15 @@ export function setCompletionDoers(
 					.get()
 			: undefined;
 
-		if (!task) return { ...result, nextDueDate: null, nextAssigneeName: null, rotated: false };
+		if (!task) {
+			return {
+				...result,
+				nextDueDate: null,
+				nextAssigneeName: null,
+				rotated: false,
+				onSchedule: false
+			};
+		}
 
 		// Whose turn is next follows who did it (→ `nextAssigneeAfter`), so a new
 		// answer can move it. Only while the task is where this completion left
@@ -708,7 +761,8 @@ export function setCompletionDoers(
 			...result,
 			nextDueDate: task.recurUnit === 'none' ? null : task.dueDate,
 			nextAssigneeName: roster.find((member) => member.id === nextAssigneeId)?.displayName ?? null,
-			rotated: nextAssigneeId !== snapshot.assigneeMemberId
+			rotated: nextAssigneeId !== snapshot.assigneeMemberId,
+			onSchedule: scheduleOf(task) !== null
 		};
 	});
 }
@@ -831,13 +885,35 @@ function logTaskAction(
 			.where(and(eq(tasks.id, task.id), eq(tasks.householdId, householdId)))
 			.run();
 
-		return { ...result, nextDueDate: null, nextAssigneeName: null, rotated: false };
+		return {
+			...result,
+			nextDueDate: null,
+			nextAssigneeName: null,
+			rotated: false,
+			onSchedule: false
+		};
 	}
 
 	// Counted from the day it was actually done, not from the date it missed,
 	// so an overdue weekly task gets a full week rather than reappearing
-	// tomorrow (→ DECISIONS #6).
-	const nextDueDate = addInterval(today, task.recurInterval, task.recurUnit);
+	// tomorrow (→ DECISIONS #6). A task that keeps to the schedule takes the
+	// schedule's next date after the later of today and the date it was due:
+	// lateness doesn't move it, an early tick doesn't bring it back tomorrow, and
+	// missed dates don't pile up (→ SPEC §5.2, plan 39). The anchor itself never
+	// changes here, which is why Undo has nothing of the schedule to restore.
+	const schedule = scheduleOf(task);
+	const nextDueDate =
+		schedule && schedulable(task.recurUnit)
+			? nextOnSchedule(
+					schedule.anchor,
+					task.recurUnit,
+					task.recurInterval,
+					schedule.by,
+					// The anchor too: a first date that was brought forward by a snooze
+					// and then done must not come straight back on the anchor itself.
+					[today, task.dueDate ?? today, schedule.anchor].sort().at(-1)!
+				)
+			: addInterval(today, task.recurInterval, task.recurUnit);
 
 	const nextAssigneeId = nextAssigneeAfter(
 		roster,
@@ -862,7 +938,8 @@ function logTaskAction(
 		...result,
 		nextDueDate,
 		nextAssigneeName: roster.find((member) => member.id === nextAssigneeId)?.displayName ?? null,
-		rotated: nextAssigneeId !== task.assigneeMemberId
+		rotated: nextAssigneeId !== task.assigneeMemberId,
+		onSchedule: schedule !== null
 	};
 }
 

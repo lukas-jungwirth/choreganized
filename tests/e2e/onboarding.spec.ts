@@ -136,7 +136,7 @@ test('every invite code stays on one line, however wide its letters', async ({
 });
 
 test('the colour picker fills the row: six 38px dots, then the rest', async ({ page }) => {
-	// → DECISIONS #297: the last dot of the first row ends where the name field
+	// → DECISIONS #300: the last dot of the first row ends where the name field
 	// ends, instead of four to a row leaving a third of it empty.
 	await freshAccount(page);
 	await page.goto('/onboarding/create');

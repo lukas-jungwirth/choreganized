@@ -793,6 +793,10 @@ const seeded = db.transaction((tx) => {
 				recurUnit: 'month',
 				recurInterval: 1,
 				dueDate: addDays(today, -1),
+				// Keeps to the schedule, the same weekday of the same week every month
+				// (→ SPEC §5.2, plan 39), so the list and the sheet show one.
+				scheduleAnchor: addDays(today, -1),
+				scheduleBy: 'weekday',
 				// "Anyone", so the overdue nudge goes to every opted-in member.
 				dueReminderSentAt: daysAgo(1, 8),
 				// Stamped as sent, like every seeded nudge that is already due: the

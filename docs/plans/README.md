@@ -50,7 +50,7 @@ plus your session date). Note deviations in the plan file and in DECISIONS.md.
 | 36  | [Lists: shopping lists you can open, checklists to run again](36-lists.md)                       | done (2026-11-20)         | 03, 15                   |
 | 37  | [Quick add reads the amount wherever it is typed](37-quick-add-amounts.md)                       | done (2026-11-20)         | 36                       |
 | 38  | [Guests in Expenses: share a cost with someone outside the household](38-expense-guests.md)      | done (2026-11-21, v0.6.0) | 29, 30                   |
-| 39  | [Keep to the schedule: recurring tasks on a fixed day](39-task-schedule.md)                      | todo                      | 04, 10                   |
+| 39  | [Keep to the schedule: recurring tasks on a fixed day](39-task-schedule.md)                      | done (2026-11-22, v0.7.0) | 04, 10                   |
 
 Work done after the twelve plans, tracked here so the queue stays the whole story:
 

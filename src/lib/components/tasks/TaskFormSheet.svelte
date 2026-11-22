@@ -8,6 +8,7 @@
 -->
 <script lang="ts">
 	import { enhance } from '$app/forms';
+	import CalendarDays from '@lucide/svelte/icons/calendar-days';
 	import Avatar from '$lib/components/ui/Avatar.svelte';
 	import BottomSheet from '$lib/components/ui/BottomSheet.svelte';
 	import Button from '$lib/components/ui/Button.svelte';
@@ -20,7 +21,13 @@
 	import { messages } from '$lib/i18n';
 	import type { HouseholdMember } from '$lib/server/services/household';
 	import type { TaskListItem } from '$lib/server/services/tasks';
-	import { addDays, type CalendarDate, type IntervalUnit } from '$lib/utils/dates';
+	import {
+		addDays,
+		nextOnSchedule,
+		type CalendarDate,
+		type IntervalUnit,
+		type ScheduleBy
+	} from '$lib/utils/dates';
 	import {
 		CUSTOM_REPEAT,
 		CUSTOM_UNITS,
@@ -28,8 +35,10 @@
 		EFFORTS,
 		RECUR_INTERVAL_MAX,
 		REPEAT_PRESETS,
+		SCHEDULE_BYS,
 		TASK_NAME_MAX,
 		repeatKey,
+		schedulable,
 		type RecurUnit
 	} from '$lib/utils/tasks';
 	import { untrack } from 'svelte';
@@ -64,6 +73,9 @@
 	// (→ DECISIONS #22), and the two shouldn't disagree.
 	let dueDate = $state(untrack(() => (task ? (task.dueDate ?? '') : today)));
 	let points = $state(untrack(() => task?.points ?? DEFAULT_POINTS));
+	// Off for a new task: counting from the day it's done stays the default (→ SPEC §5.2).
+	let keepSchedule = $state(untrack(() => Boolean(task?.schedule)));
+	let scheduleBy = $state<ScheduleBy>(untrack(() => task?.schedule?.by ?? 'weekday'));
 	let submitting = $state(false);
 	/**
 	 * This form's own rejection, not `$page.form` — the page-wide one belongs to
@@ -116,6 +128,48 @@
 		);
 
 		return m.tasks.form.rotation(names);
+	});
+
+	/** Only weeks and months can keep to a schedule, and only from a date. */
+	const canSchedule = $derived(schedulable(recurrence.unit) && dueDate !== '');
+
+	/**
+	 * The date the schedule counts from — what the service will store. The date
+	 * in the field, unless it is the task's own, untouched, and the task already
+	 * keeps to a schedule: a snoozed date sits off it, and the labels must name
+	 * the schedule, not the snooze (→ `services/tasks.ts` `scheduleColumns`).
+	 */
+	const anchor = $derived(
+		task?.schedule && dueDate === task.dueDate ? task.schedule.anchor : dueDate
+	);
+
+	const scheduleSub = $derived.by(() => {
+		if (!keepSchedule) return m.tasks.form.scheduleOff;
+		return recurrence.unit === 'week'
+			? m.tasks.form.scheduleWeekly(anchor)
+			: m.tasks.form.scheduleMonthly;
+	});
+
+	/**
+	 * "Coming up: …" — the date in the field, then the schedule's next two after
+	 * it. An overdue date has already gone by, so the list starts at the
+	 * schedule's first date from today instead.
+	 */
+	const scheduleLine = $derived.by(() => {
+		const unit = recurrence.unit;
+		if (!canSchedule || !schedulable(unit)) return null;
+		const label = (date: CalendarDate) => m.date.dayLabel(date, today);
+		if (!keepSchedule) return m.tasks.form.countsFrom(label(dueDate), unit, recurrence.interval);
+
+		const dates = [
+			dueDate >= today
+				? dueDate
+				: nextOnSchedule(anchor, unit, recurrence.interval, scheduleBy, addDays(today, -1))
+		];
+		while (dates.length < 3) {
+			dates.push(nextOnSchedule(anchor, unit, recurrence.interval, scheduleBy, dates.at(-1)!));
+		}
+		return m.tasks.form.comingUp(dates.map(label));
 	});
 
 	const dueCaption = $derived(dueDate ? m.date.dateLabel(dueDate, today) : undefined);
@@ -248,6 +302,49 @@
 			</div>
 		</div>
 
+		{#if canSchedule}
+			<div class="schedule">
+				<div class="pref">
+					<div class="pref-text">
+						<span class="pref-title">{m.tasks.form.keepSchedule}</span>
+						<span class="pref-sub">{scheduleSub}</span>
+					</div>
+					<Toggle
+						name="keepSchedule"
+						bind:checked={keepSchedule}
+						label={m.tasks.form.keepSchedule}
+					/>
+				</div>
+
+				{#if keepSchedule && recurrence.unit === 'month'}
+					<fieldset class="choices">
+						<legend class="sr-only">{m.tasks.form.scheduleWhich}</legend>
+						{#each SCHEDULE_BYS as by (by)}
+							<label class="choice">
+								<input type="radio" name="scheduleBy" value={by} bind:group={scheduleBy} />
+								<span>
+									{by === 'weekday'
+										? m.tasks.form.scheduleByWeekday(anchor)
+										: m.tasks.form.scheduleByDay(anchor)}
+								</span>
+							</label>
+						{/each}
+					</fieldset>
+				{/if}
+
+				{#if scheduleLine}
+					<p class="coming">
+						<CalendarDays size={17} strokeWidth={2} aria-hidden="true" />
+						<span>
+							{#each scheduleLine as part, index (index)}
+								{#if part.strong}<strong>{part.text}</strong>{:else}{part.text}{/if}
+							{/each}
+						</span>
+					</p>
+				{/if}
+			</div>
+		{/if}
+
 		<p class="label" id={effortLabelId}>{m.tasks.form.effort}</p>
 		<div class="chips" role="group" aria-labelledby={effortLabelId}>
 			{#each EFFORTS as effort (effort.points)}
@@ -323,6 +420,76 @@
 
 	.block {
 		margin-top: 18px;
+	}
+
+	/* Keep to the schedule: the switch, the day, and what's coming, in one box. */
+	.schedule {
+		margin-top: 18px;
+		border-radius: var(--r-input);
+		background: var(--field);
+		overflow: hidden;
+	}
+
+	.schedule .pref {
+		margin-top: 0;
+		border-radius: 0;
+		background: none;
+	}
+
+	.choices {
+		margin: 0;
+		padding: 0;
+		border: 0;
+		border-top: 1px solid var(--divider-sheet);
+	}
+
+	.choice {
+		display: flex;
+		align-items: center;
+		gap: 12px;
+		padding: 12px 14px;
+		font-size: var(--fs-16);
+		color: var(--text-2);
+		cursor: pointer;
+	}
+
+	.choice + .choice {
+		border-top: 1px solid var(--divider-sheet);
+	}
+
+	.choice:has(input:checked) {
+		color: var(--ink);
+		font-weight: 600;
+	}
+
+	.choice input {
+		flex: none;
+		width: 22px;
+		height: 22px;
+		margin: 0;
+		accent-color: var(--sage);
+	}
+
+	.coming {
+		display: flex;
+		align-items: flex-start;
+		gap: 10px;
+		margin: 0;
+		padding: 11px 14px 12px;
+		border-top: 1px solid var(--divider-sheet);
+		font-size: var(--fs-14);
+		color: var(--text-4);
+	}
+
+	.coming :global(svg) {
+		flex: none;
+		margin-top: 1px;
+		color: var(--sage);
+	}
+
+	.coming strong {
+		font-weight: 600;
+		color: var(--ink);
 	}
 
 	.custom {

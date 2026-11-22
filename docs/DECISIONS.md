@@ -4391,7 +4391,26 @@ store_id` NULL already means "no memory" (a deleted list), and telling the two a
      the join as `household-full`, instead of greying every swatch and answering "colour taken".
      The podium (`tasks/Podium`, only on `/dev/kit` today) already handles any count.
      Colour names: Teal/Petrol, Indigo/Indigo, Rose/Altrosa.
-297. **The colour picker fills its row: six 38px dots, then two** (2026-11-22; → DESIGN-SYSTEM
+297. **Keep to the schedule: a recurring task can take its dates from the calendar** (plan 39,
+     asked for by Lukas 2026-11-22). Two nullable columns on `tasks`, `schedule_anchor` and
+     `schedule_by`, and one pure function, `utils/dates.ts` `nextOnSchedule`. Done or skipped,
+     the next date is the schedule's first date **strictly after both today and the date it
+     was due**: one rule covers late (the schedule doesn't move), very late (skips ahead, no
+     pile of missed ones) and early (Saturday's tick for Sunday's date doesn't make it due on
+     Monday). Off by default, so every existing task and every new one behaves as before until
+     someone turns it on; weekly tasks get it too (it keeps the weekday). Names: "Keep to the
+     schedule" / "Fester Termin". All three were the plan's defaults; Lukas may change them.
+298. **"The last Sunday", never "the fifth"**: a date in its month's last seven days anchors to
+     the month's last such weekday, so the schedule has a date in every month. The 22nd–28th
+     of a long month stays "the fourth". By-day schedules clamp the 29th–31st to a shorter
+     month's end and go back, the way recurring expenses do (#175).
+299. **Snooze moves one date, never the schedule**; the anchor changes only when the sheet is
+     saved with a new date. Saving with the date untouched keeps the anchor, because a snoozed
+     date sits off the schedule and renaming the task mustn't move the schedule onto it. The
+     sheet reads its labels from the same anchor for the same reason. The done pop-up says "On
+     schedule · {who's next}" ("Nach Plan") instead of "Rescheduled", keeping the turn half
+     rather than repeating the day as the sketch had it.
+300. **The colour picker fills its row: six 38px dots, then two** (2026-11-22; → DESIGN-SYSTEM
      "ColorPicker"; amends #296). Four to a row left a third of the width beside the avatar
      empty in the profile sheet and onboarding. Lukas picked six-and-two over keeping 34px dots
      (which stop 14px short of the edge) and over one row of eight (28px dots, touch targets
