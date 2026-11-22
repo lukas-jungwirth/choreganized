@@ -249,9 +249,8 @@ occurrence changes (done, skip, snooze, edit of due date, the return shift after
 2. If recurring: `dueDate = addInterval(today, recurInterval, recurUnit)` (date-fns `addWeeks`/
    `addMonths`/`addDays` on the calendar date — _today-based_, not dueDate-based, so an overdue
    weekly task completed today is next due in a week, matching [4d] "Next due Aug 14").
-   With a `scheduleAnchor`: `dueDate = nextOnSchedule(anchor, unit, interval, by,
-max(today, dueDate, anchor))` (`utils/dates.ts`) instead, the first schedule date strictly
-   after it.
+   With a `scheduleAnchor`, `utils/dates.ts` `nextOnSchedule` instead: the first schedule
+   date strictly after the latest of today, `dueDate` and the anchor.
    The anchor never changes here, so Undo has nothing of the schedule to restore.
    If `rotate`: assignee ← the member after **the doer** in `joinedAt` order (wrapping, skipping
    departed) — so doing a housemate's turn hands the next one back to them. Reset both reminder
