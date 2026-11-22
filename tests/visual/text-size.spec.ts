@@ -90,6 +90,14 @@ function walk(screens: Screen[]) {
 			});
 		}
 	});
+	test.describe('as the cookbook household', () => {
+		test.use({ storageState: storageStateFor('cookbook') });
+		for (const screen of screens.filter((screen) => screen.account === 'cookbook')) {
+			test(`${screen.name} at 200% text`, async ({ page, context }) => {
+				await atTwiceTheTextSize(page, context, screen);
+			});
+		}
+	});
 }
 
 walk(SCREENS.filter((screen) => !screen.theme));

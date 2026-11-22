@@ -87,6 +87,9 @@
 	--terracotta-tint: light-dark(#f7ede6, #2c211a);
 	--terracotta-tint-2: light-dark(#fbeee7, #30241c);
 	--terracotta-deep: light-dark(#8a4b29, #e8b592);
+	/* A favourite recipe's heart (→ plan 40): warmer than --danger, so a loved
+	   recipe never reads as an error. Lifted in dark like the brand hues. */
+	--heart: light-dark(#c95a4a, #e58370);
 
 	/* ── Danger (overdue, destructive) ────────────────────────── */
 	/* Money [9a] (→ SPEC §11): sage when you are owed, terracotta when you owe —

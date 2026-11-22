@@ -41,6 +41,7 @@ Dark is not an inversion. Three rules decide a value:
 | Terracotta | `--terracotta` `--terracotta-tint(-2)` `--terracotta-deep`                                                                                                          | points (`+10`), second member, "due today" meta                                                                                                                                                                                                                                                                                                                                  |
 | Money      | `--owed` `--owed-tint` `--owe` `--owe-tint`                                                                                                                         | the expenses balance [9a]: sage = you are owed, terracotta = you owe — deepened for text in light, lifted in dark, each on a tint of itself                                                                                                                                                                                                                                      |
 | Danger     | `--danger` `--danger-tint` `--danger-border` `--danger-deep` `--danger-soft`                                                                                        | overdue, destructive actions, badges; `-soft` = subtitle copy on a danger tint                                                                                                                                                                                                                                                                                                   |
+| Heart      | `--heart`                                                                                                                                                           | a favourite recipe's heart (→ plan 40): warmer than `--danger`, so a loved recipe never reads as an error                                                                                                                                                                                                                                                                        |
 | Info       | `--info-tint` `--info-border` `--info-soft`                                                                                                                         | the holiday banner [4a]; its title uses `--sage-deep`                                                                                                                                                                                                                                                                                                                            |
 | Accents    | `--gold` `--gold-tint`                                                                                                                                              | crown / 1st place                                                                                                                                                                                                                                                                                                                                                                |
 | Members    | `--member-sage/-terracotta/-blue/-amber/-plum/-teal/-indigo/-rose` `--on-member` `--member-shade`                                                                   | avatar palette (onboarding colour picker); the last two are theme-independent — the initial _on_ a member colour, and the deepening at the foot of the winner's plinth [8a]                                                                                                                                                                                                      |
@@ -228,7 +229,9 @@ background at all when there is nothing to measure.
   fields inside it sink. Padding belongs to the caller, because it varies card by card;
   internal rows split by `--divider` (13–14px vertical, 15–16px horizontal).
 - **BottomSheet** — `bind:open`, `title`, optional `eyebrow` (uppercase, above), `subtitle`
-  (under the title) and a `lead` snippet (an avatar beside it, [6c]); white, top radius
+  (under the title), a `lead` snippet (an avatar beside it, [6c]) and a `footer` snippet — a bar
+  pinned to the panel's bottom edge while the content scrolls (the recipe filter sheet's live
+  "Show 6 recipes", → plan 40); white, top radius
   `--r-sheet`, drag handle (38×5 pill `--border`), `--shadow-sheet`, `--scrim`. Native
   `<dialog>`: focus trap and Escape included, closes on scrim tap. Content is only mounted
   while open, so each opening starts from a clean form. While open it is sized to the
@@ -252,7 +255,9 @@ background at all when there is nothing to measure.
 - **Chip** — pill `--r-chip`, 1.5px border; selected = sage bg/white. Pass a member `color` and
   selection switches to that member's tint + hairline + darkened label. Stores, effort,
   assignees, snooze presets. Extra attributes are forwarded, and `class` is merged rather than
-  replacing the base class.
+  replacing the base class. Give it an `href` and it renders a **link** drawn as a chip — the
+  recipe library's filter row (→ plan 40), where each chip is the address of the next list;
+  `selected` then only paints it.
 - **SegmentedControl** — `--sunken-2` track r13, active segment white r10 + `--shadow-card`;
   `bind:value` over `{value,label}` options. Give the options an `href` and it becomes real
   navigation instead (`<nav>` + `<a aria-current="page">`) — that's the Tasks tab's To do /

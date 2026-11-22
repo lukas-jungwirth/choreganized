@@ -4424,3 +4424,42 @@ store_id` NULL already means "no memory" (a deleted list), and telling the two a
      (disabled radio, "Teal, already taken" to a screen reader). Free colours stay plain dots, so
      a letter means "somebody's". The join screen gets only each wearer's **initial** from the
      invite preview, not the name: it goes to anyone holding the code before they have joined.
+302. **Recipes get a fixed tag list, a diet and a heart** (2026-11-22; → plan 40, SPEC §4.3–4.5,
+     DATA-MODEL). Meal (the plan's four slots), kind (main · soup · salad · side · dessert ·
+     baking) and free from (gluten · lactose) are tags in `recipe_tags`; diet is one column
+     (`meat | fish | vegetarian | vegan`, NULL = not set) because a recipe has one and
+     "vegetarian includes vegan" is a rule on that value, which also means a recipe nobody set a
+     diet on matches no diet filter. A fixed list rather than household-made tags: fixed words
+     translate, fit one row of chips and give plan 41's importer and AI something to map onto.
+     Cuisine is left out to keep the sheet short; the heart is one per household, not per member.
+     Those two and the quick chips (Favourites · Under 30 min · Vegetarian) were the plan's
+     defaults, open to Lukas.
+303. **A filter group appears once a recipe uses it; the form's Tags block folds while empty**
+     (2026-11-22; Lukas). A household that never tags meals never sees a Meal question, in the
+     sheet or as a quick chip (`recipeFacets` over the whole library), so tagging stays optional
+     without a setting to switch it off. The form shows one row, "Tags · Meal, kind, diet", until
+     something is set, and opens whenever something is: an import that brought tags or an edit
+     always shows them. Lukas weighed hiding against forgetting; folding plus the groups that
+     appear on use was the answer.
+304. **The filters are the URL; one pure function filters the grid and counts the sheet**
+     (2026-11-22; → `utils/recipe-filter.ts`). `?meal=&kind=&diet=&free=&max=&fav=&sort=` beside
+     `?q=`, parsed leniently (unknown values ignored). The load filters the grid with
+     `applyRecipeFilter` and also sends the searched library unfiltered, against which the sheet
+     counts its draft with `matchesRecipeFilter`, so "Show 6 recipes" always opens six. The
+     chips in the row are links (`Chip` gained `href`), so the row works without JavaScript; only
+     the sheet needs it. The sheet's live count needed its button in sight while the groups
+     scroll, so `BottomSheet` gained a `footer` snippet, sticky to the panel's edge rather than
+     inside its padding.
+305. **"Not cooked lately" means not planned lately** (2026-11-22; Lukas). The plan is the
+     record the app has and it's never pruned: `max(meals.date)` per recipe over days up to and
+     including today, a future dinner not counting, never planned first. A skipped dinner still
+     counts and a recipe cooked without planning doesn't; close enough, and cook-mode opens can
+     sharpen it later if it isn't.
+306. **The library search also reads ingredient names, by substring** (2026-11-22; → plan 40,
+     amends the plan's "same key the shopping list uses"). A `LIKE` over `recipe_ingredients.name`
+     beside the name match, as a plain subquery for the reason `idsWithIngredients` gives. A
+     substring is the more forgiving of the two for a search box ("lemon" finds "Lemons");
+     the shopping list's `name_key` is an equality key and would have found less. A card's heart
+     and leaf are drawn on the photo but read after the recipe's name ("Shakshuka, 30 min,
+     Favourite, Vegetarian"), and the heart has its own token, `--heart`, warmer than
+     `--danger`.

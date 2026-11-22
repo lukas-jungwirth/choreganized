@@ -39,6 +39,7 @@ import {
 	REPEAT_UNITS,
 	SPLIT_MODES
 } from '../../utils/expenses.ts';
+import { RECIPE_DIETS, RECIPE_TAGS } from '../../utils/recipe-tags.ts';
 import { RECIPE_WORDINGS } from '../../utils/wording.ts';
 
 const id = () =>
@@ -434,6 +435,14 @@ export const recipes = sqliteTable(
 		imagePath: text('image_path'),
 		timeMinutes: integer('time_minutes'),
 		servings: integer('servings'),
+		/**
+		 * One diet or none yet (→ plan 40, `utils/recipe-tags`). A column rather
+		 * than a tag: it is one value, and "vegetarian includes vegan" is a rule
+		 * on that value. NULL = nobody said, which matches no diet filter.
+		 */
+		diet: text('diet', { enum: RECIPE_DIETS }),
+		/** The heart [7a]. One per household, not per member (→ plan 40). */
+		favourite: integer('favourite', { mode: 'boolean' }).notNull().default(false),
 		createdByMemberId: text('created_by_member_id').references(() => members.id, {
 			onDelete: 'set null'
 		}),
@@ -443,6 +452,24 @@ export const recipes = sqliteTable(
 			.$defaultFn(() => new Date())
 	},
 	(t) => [index('recipes_household_idx').on(t.householdId)]
+);
+
+/**
+ * What a recipe is for — meal, kind, free-from — from the fixed list in
+ * `utils/recipe-tags` (→ plan 40). Replaced wholesale with the recipe's other
+ * children on every save, and gone with it. The pair is the key, so a tag is
+ * there once or not at all, and the key's first column indexes "this recipe's
+ * tags".
+ */
+export const recipeTags = sqliteTable(
+	'recipe_tags',
+	{
+		recipeId: text('recipe_id')
+			.notNull()
+			.references(() => recipes.id, { onDelete: 'cascade' }),
+		tag: text('tag', { enum: RECIPE_TAGS }).notNull()
+	},
+	(t) => [primaryKey({ columns: [t.recipeId, t.tag] })]
 );
 
 export const recipeIngredients = sqliteTable(
@@ -1107,6 +1134,7 @@ export type ShoppingSuggestion = typeof shoppingSuggestions.$inferSelect;
 export type PantryStaple = typeof pantryStaples.$inferSelect;
 export type Recipe = typeof recipes.$inferSelect;
 export type RecipeIngredient = typeof recipeIngredients.$inferSelect;
+export type RecipeTagRow = typeof recipeTags.$inferSelect;
 export type RecipeStep = typeof recipeSteps.$inferSelect;
 export type RecipeStepIngredient = typeof recipeStepIngredients.$inferSelect;
 export type Meal = typeof meals.$inferSelect;

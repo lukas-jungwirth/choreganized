@@ -1,6 +1,6 @@
 # 40 · Recipe tags and library filters
 
-**Status: todo.** Asked for by Lukas on 2026-11-22: "right now there is only the list with a
+**Status: done (2026-11-22, v0.8.0).** DECISIONS #302–#306. Asked for by Lukas on 2026-11-22: "right now there is only the list with a
 search but no filter at all … type of meal, diet types". Depends on: 07, 12, 14 (all done).
 Followed by plan 41 (the tags fill themselves in). SPEC: §4.3 (library), §4.4 (form), §4.5
 (recipe view) change as described below; DATA-MODEL gains the new table and columns.
@@ -116,6 +116,19 @@ chips), Diet (one chip or none; tapping the chosen one clears it), Free from (mu
 every group. The e2e/visual fixtures get the sketch's 14 recipes (names, times, tags, hearts)
 and a few past meals for "Not cooked lately".
 
+## As built
+
+- **Search** by ingredient is a substring `LIKE`, not the shopping list's name key: more
+  forgiving for a search box (→ DECISIONS #306).
+- The sheet's live count is a `BottomSheet` **`footer`** snippet, new, sticky to the panel's
+  edge (#304). `Chip` gained **`href`** for the row's link chips.
+- The Tags block's chips are `Chip` buttons with hidden `tag` / `diet` inputs (the form already
+  needs JavaScript to add rows); the fold is a native `<details>`.
+- The e2e and visual suites got a fifth household, **`cookbook`** (`npm run db:seed -- … --cookbook`),
+  the sketch's library: 15 recipes, tagged, six hearted, ten planned before. The base demo seed
+  tags its two recipes and hearts the curry.
+- A heart has its own token, `--heart`.
+
 ## Choices made in this plan (Lukas may change them)
 
 - Fixed list only; no household-made tags. Cuisine left out to keep the sheet short.
@@ -142,15 +155,15 @@ and a few past meals for "Not cooked lately".
 
 ## Acceptance
 
-- [ ] Phones 1–5 of the sketch, built with the kit (`Chip`, `BottomSheet`, `Toggle`,
+- [x] Phones 1–5 of the sketch, built with the kit (`Chip`, `BottomSheet`, `Toggle`,
       `SegmentedControl`, `SearchField`), tokens only, `--fs-N` type.
-- [ ] A household with no tags sees the chip row with just **Filter** and what its data allows
+- [x] A household with no tags sees the chip row with just **Filter** and what its data allows
       (Under 30 min), and a sheet without the Meal / Kind / Diet / Free from groups.
-- [ ] Every filter and the sort live in the URL; reload, back and a shared link reproduce the
+- [x] Every filter and the sort live in the URL; reload, back and a shared link reproduce the
       grid; it works with JavaScript off (Enter submits, chips are links).
-- [ ] The sheet's count always equals the grid it navigates to.
-- [ ] Searching "lemon" finds a recipe whose ingredients name a lemon.
-- [ ] SPEC §4.3–§4.5 and DATA-MODEL updated; DECISIONS entries for the fixed vocabulary, diet
+- [x] The sheet's count always equals the grid it navigates to.
+- [x] Searching "lemon" finds a recipe whose ingredients name a lemon.
+- [x] SPEC §4.3–§4.5 and DATA-MODEL updated; DECISIONS entries for the fixed vocabulary, diet
       as one column with the ladder, groups that appear once used, the folded block, one heart
       per household, and "not cooked lately" from the plan.
-- [ ] Version: next minor.
+- [x] Version: next minor.

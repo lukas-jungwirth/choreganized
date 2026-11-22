@@ -55,6 +55,7 @@ import {
 	recipeIngredients,
 	recipeStepIngredients,
 	recipeSteps,
+	recipeTags,
 	recipes,
 	shoppingItems,
 	shoppingSuggestions,
@@ -66,6 +67,7 @@ import {
 // Relative and extensioned for the same reason the schema import is, and worth
 // importing rather than retyping: it is the key the unique index is built on.
 import { suggestionKey } from '../src/lib/utils/shopping.ts';
+import { readRecipeTags } from '../src/lib/utils/recipe-tags.ts';
 import { addRepeat } from '../src/lib/utils/dates.ts';
 import { MEMBER_COLORS } from '../src/lib/member-colors.ts';
 import {
@@ -73,6 +75,7 @@ import {
 	SEED_HOUSEHOLD_NAME,
 	SEED_GUEST_TOKEN,
 	SEED_HOUSEMATE_NAME,
+	SEED_COOKBOOK,
 	SEED_RECIPE_NAMES,
 	SEED_CHECKLIST_ITEMS,
 	SEED_CHECKLIST_NAME,
@@ -122,10 +125,13 @@ const args = process.argv.slice(2);
 const fullHouse = args.includes('--full-house');
 const history = args.includes('--history');
 const guests = args.includes('--guests');
+const cookbook = args.includes('--cookbook');
 const email = args.find((arg) => !arg.startsWith('--'));
 
 if (!email) {
-	console.error('Usage: npm run db:seed -- you@example.com [--full-house] [--history] [--guests]');
+	console.error(
+		'Usage: npm run db:seed -- you@example.com [--full-house] [--history] [--guests] [--cookbook]'
+	);
 	process.exit(1);
 }
 
@@ -590,6 +596,7 @@ const seeded = db.transaction((tx) => {
 				name: SEED_RECIPE_NAMES.pasta,
 				timeMinutes: 30,
 				servings: 4,
+				diet: 'vegetarian',
 				createdByMemberId: housemateMemberId,
 				createdAt: daysAgo(12, 19)
 			},
@@ -599,12 +606,91 @@ const seeded = db.transaction((tx) => {
 				name: SEED_RECIPE_NAMES.curry,
 				timeMinutes: 40,
 				servings: 4,
+				diet: 'vegan',
+				favourite: true,
 				createdByMemberId: ownerMemberId,
 				createdAt: daysAgo(20, 18)
 			}
 		])
 		.onConflictDoNothing()
 		.run();
+
+	// Tagged (→ plan 40), so a fresh dev database shows the library's filters.
+	tx.insert(recipeTags)
+		.values([
+			{ recipeId: pastaId, tag: 'meal:dinner' },
+			{ recipeId: pastaId, tag: 'kind:main' },
+			{ recipeId: curryId, tag: 'meal:dinner' },
+			{ recipeId: curryId, tag: 'kind:main' },
+			{ recipeId: curryId, tag: 'free:gluten' },
+			{ recipeId: curryId, tag: 'free:lactose' }
+		])
+		.onConflictDoNothing()
+		.run();
+
+	// --cookbook: the recipe-filters sketch's library (→ plan 40, seed-data.ts).
+	if (cookbook) {
+		for (const entry of SEED_COOKBOOK) {
+			const recipeId = sid('recipe', `cookbook-${entry.key}`);
+
+			tx.insert(recipes)
+				.values({
+					id: recipeId,
+					householdId,
+					name: entry.name,
+					timeMinutes: entry.time,
+					servings: 2,
+					diet: entry.diet,
+					favourite: entry.favourite,
+					createdByMemberId: ownerMemberId,
+					createdAt: daysAgo(entry.added, 18)
+				})
+				.onConflictDoNothing()
+				.run();
+
+			tx.insert(recipeTags)
+				.values(readRecipeTags(entry.tags).map((tag) => ({ recipeId, tag })))
+				.onConflictDoNothing()
+				.run();
+
+			tx.insert(recipeIngredients)
+				.values(
+					entry.ingredients.map((name, sortOrder) => ({
+						id: sid('ing', `cookbook-${entry.key}-${sortOrder}`),
+						recipeId,
+						name,
+						sortOrder
+					}))
+				)
+				.onConflictDoNothing()
+				.run();
+
+			tx.insert(recipeSteps)
+				.values({
+					id: sid('step', `cookbook-${entry.key}`),
+					recipeId,
+					text: entry.step,
+					sortOrder: 0
+				})
+				.onConflictDoNothing()
+				.run();
+
+			if (entry.cooked !== null) {
+				const date = addDays(today, -entry.cooked);
+				tx.insert(meals)
+					.values({
+						id: sid('meal', `${date}:lunch`),
+						householdId,
+						date,
+						slot: 'lunch',
+						recipeId,
+						createdByMemberId: ownerMemberId
+					})
+					.onConflictDoNothing()
+					.run();
+			}
+		}
+	}
 
 	tx.insert(recipeIngredients)
 		.values([
@@ -1171,6 +1257,7 @@ console.log(`Seeded ${databasePath} for ${email}`);
 console.log(`  household  ${seeded.householdName} — ${seeded.members}`);
 console.log('  shopping   3 stores · 10 items (2 already checked off)');
 console.log('  cooking    2 recipes · meals planned for today, tomorrow and the day after');
+if (cookbook) console.log('  cookbook   13 more tagged recipes, 5 with a heart, 10 planned before');
 console.log('  tasks      7 tasks (overdue · today · upcoming · undated) · 8 history entries');
 console.log(
 	guests

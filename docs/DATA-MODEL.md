@@ -9,7 +9,7 @@ user ─┬─ session / account / verification        (Better Auth)
       ├─ push_subscriptions                      (per device)
       └─ members ─┬─→ households
                   │      ├─ stores ──→ shopping_items
-                  │      ├─ recipes ──→ recipe_ingredients / recipe_steps
+                  │      ├─ recipes ──→ recipe_ingredients / recipe_steps / recipe_tags
                   │      │                     └─ recipe_step_ingredients ─┘
                   │      ├─ meals (→ recipes, one per date × slot)
                   │      ├─ tasks ──→ task_completions (snapshots)
@@ -171,7 +171,7 @@ user ─┬─ session / account / verification        (Better Auth)
   (→ [DECISIONS #97](DECISIONS.md)). A unit somebody typed that isn't in the table is kept and
   shown exactly as typed.
 
-### `recipes` / `recipe_ingredients` / `recipe_steps` / `recipe_step_ingredients`
+### `recipes` / `recipe_ingredients` / `recipe_steps` / `recipe_step_ingredients` / `recipe_tags`
 
 - Ingredients are structured (name, quantity?, unit?) but _entered_ freeform ("400 g pasta")
   and parsed leniently (`src/lib/utils/ingredients.ts`, plan 07): `/^([\d.,½¼¾\/]+)?\s*([a-zA-Z]+)?\s+(.+)$/`-ish
@@ -200,6 +200,19 @@ user ─┬─ session / account / verification        (Better Auth)
   posts a step's pins as **indices into the posted ingredient lines**, not ids: the ids it was
   opened on no longer exist by the time the save writes. Blank lines drop out and shift those
   indices, which is why `writeChildren` keeps a posted-index → new-id map.
+- **Tags, diet, heart** (migration 0028, → plan 40, DECISIONS #302–#303). `recipe_tags` is
+  `(recipe_id, tag)`, the pair the primary key, cascading with the recipe; `tag` is a key from
+  the fixed list in `src/lib/utils/recipe-tags.ts` (`meal:dinner`, `kind:soup`,
+  `free:gluten`), and the service drops a key that isn't on it rather than refusing the save.
+  Tags are **replaced with the other children** on every save that sends them
+  (`RecipeInput.tags`; a caller that sends none — an older importer — leaves them be).
+  `recipes.diet` is one of `meat | fish | vegetarian | vegan` or NULL for "not set", a column
+  rather than a tag because a recipe has one and "vegetarian includes vegan" is a rule on that
+  value. `recipes.favourite` (boolean, default false) is the heart, one per household.
+  Duplicate copies tags and diet, not the heart.
+- **"Last planned"** (the library's "Not cooked lately") isn't stored: `listRecipes` with a
+  `today` reads `max(meals.date)` per recipe over this household's days up to and including
+  today. Meals are never pruned, so that history is whole.
 - `imagePath` is relative to `UPLOADS_DIR` and is a UUID filename, not a derivable one:
   replacing a photo writes a new file and deletes the old, so a stored URL never changes
   content and can be cached immutably (→ DECISIONS #63). Files are served through

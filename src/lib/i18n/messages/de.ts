@@ -914,13 +914,77 @@ export const de: Messages = {
 			title: 'Rezepte',
 			saved: (count: number) => (count === 1 ? '1 gespeichert' : `${count} gespeichert`),
 			back: 'Zurück zur Woche',
-			search: 'Rezepte suchen',
 			emptyTitle: 'Bau dein Kochbuch auf',
 			emptyCopy:
 				'Speichere, was ihr oft kocht. Danach landet es mit einem Tipp auf jedem Tag der Woche.',
 			emptyCta: 'Rezept hinzufügen',
-			noMatch: (query: string) => `Nichts passt zu „${query}“.`,
 			newRecipe: 'Neues Rezept'
+		},
+
+		tags: {
+			label: 'Tags',
+			folded: 'Mahlzeit, Art, Ernährung',
+			meal: 'Mahlzeit',
+			kind: 'Art',
+			diet: 'Ernährung',
+			free: 'Frei von',
+			pickOne: 'eins wählen',
+			kinds: {
+				main: 'Hauptspeise',
+				soup: 'Suppe',
+				salad: 'Salat',
+				side: 'Beilage',
+				dessert: 'Nachspeise',
+				baking: 'Backen'
+			},
+			diets: {
+				meat: 'Fleisch',
+				fish: 'Fisch',
+				vegetarian: 'Vegetarisch',
+				vegan: 'Vegan'
+			},
+			freeFrom: {
+				gluten: 'Glutenfrei',
+				lactose: 'Laktosefrei'
+			}
+		},
+
+		filters: {
+			search: 'Rezepte oder Zutaten suchen',
+			open: 'Filter',
+			openCount: (count: number) => `Filter, ${count} aktiv`,
+			favourites: 'Favoriten',
+			under: (minutes: number) => `Bis ${minutes} Min.`,
+			remove: (name: string) => `${name} entfernen`,
+			count: (shown: number, total: number) => `${shown} von ${total} Rezepten`,
+			clear: 'Zurücksetzen',
+			sorts: {
+				new: 'Neueste zuerst',
+				az: 'A–Z',
+				quick: 'Schnellste',
+				stale: 'Länger nicht gekocht'
+			},
+			noneTitle: 'Nichts passt zu allem',
+			noneCopy: 'Lass einen Filter weg, um mehr zu sehen:',
+			without: (name: string) => `Ohne „${name}“`,
+			recipes: (count: number) => (count === 1 ? '1 Rezept' : `${count} Rezepte`),
+			noMatch: (query: string) => `Kein Rezept und keine Zutat passt zu „${query}“.`,
+			sheet: {
+				title: 'Rezepte filtern',
+				onlyFavourites: 'Nur Favoriten',
+				hearted: (count: number) =>
+					count === 1 ? '1 Rezept hat ein Herz' : `${count} Rezepte haben ein Herz`,
+				anyOf: 'eins davon',
+				allOf: 'alle',
+				vegetarianIncludesVegan: 'vegetarisch schließt vegan ein',
+				readyIn: 'Fertig in',
+				atMost: 'höchstens, in Minuten',
+				any: 'Egal',
+				sortBy: 'Sortieren nach',
+				show: (count: number) => (count === 1 ? '1 Rezept zeigen' : `${count} Rezepte zeigen`),
+				nothingFits: 'Nichts passt',
+				clearAll: 'Zurücksetzen'
+			}
 		},
 
 		add: {
@@ -953,7 +1017,10 @@ export const de: Messages = {
 			startCookMode: 'Kochmodus starten',
 			noStepsLead: 'Noch keine Schritte notiert. ',
 			noStepsLink: 'Trag sie ein',
-			noStepsRest: ', dann führt dich der Kochmodus durch.'
+			noStepsRest: ', dann führt dich der Kochmodus durch.',
+			favourite: 'Favorit',
+			tags: 'Tags',
+			showTagged: (name: string) => `Rezepte mit „${name}“ zeigen`
 		},
 
 		menu: {
