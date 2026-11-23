@@ -895,6 +895,15 @@ export const de: Messages = {
 			eyebrow: 'Essen planen',
 			searchRecipes: 'Rezepte durchsuchen',
 			recipeGroup: 'Rezept',
+			quick: 'Nur zeigen',
+			forSlot: {
+				breakfast: 'Zum Frühstück',
+				lunch: 'Zum Mittagessen',
+				dinner: 'Zum Abendessen',
+				snack: 'Als Snack'
+			},
+			everythingElse: 'Alles andere',
+			quickNone: 'Kein Rezept passt dazu. Tipp einen Chip an, um ihn wegzunehmen.',
 			noMatch: 'Kein Rezept mit dem Namen. Lieber etwas Ungespeichertes kochen?',
 			moreMatches: (count: number) => `${count} weitere Treffer. Tipp weiter, um einzugrenzen.`,
 			mostRecent: (rest: number) => `Deine neuesten. Such nach den anderen ${rest}.`,
@@ -929,6 +938,13 @@ export const de: Messages = {
 			diet: 'Ernährung',
 			free: 'Frei von',
 			pickOne: 'eins wählen',
+			suggestedMark: (name: string) => `${name}, vorgeschlagen`,
+			suggestedFrom: {
+				page: 'Die markierten kommen von der Webseite. Tipp eins an, um es zu ändern.',
+				ai: 'Die markierten schlägt die KI vor. Tipp eins an, um es zu ändern.',
+				both: 'Die markierten kommen von der Webseite und der KI. Tipp eins an, um es zu ändern.',
+				guess: 'Markiert: unsere Vermutung aus den Zutaten.'
+			},
 			kinds: {
 				main: 'Hauptspeise',
 				soup: 'Suppe',
@@ -947,6 +963,31 @@ export const de: Messages = {
 				gluten: 'Glutenfrei',
 				lactose: 'Laktosefrei'
 			}
+		},
+
+		sort: {
+			title: 'Rezepte sortieren',
+			back: 'Zurück zu den Rezepten',
+			progress: (done: number, total: number) =>
+				`${done} von ${total} erledigt · jederzeit aufhören`,
+			progressLabel: (done: number, total: number) => `${done} von ${total} Rezepten sortiert`,
+			row: (count: number) =>
+				count === 1 ? '1 Rezept hat noch keine Tags' : `${count} Rezepte haben noch keine Tags`,
+			rowSub: 'In einer Minute sortiert',
+			rowCta: 'Sortieren',
+			ingredients: (count: number, first: string) =>
+				`${count === 1 ? '1 Zutat' : `${count} Zutaten`}: ${first}`,
+			skip: 'Überspringen',
+			next: 'Weiter',
+			ai: 'Tags von der KI vorschlagen lassen',
+			aiSub: 'Schickt Namen und Zutaten der noch offenen Rezepte. Du prüfst jedes einzelne.',
+			aiBusy: 'Die KI wird gefragt…',
+			aiDone: (count: number) =>
+				count === 0
+					? 'Die KI hatte keine Vorschläge.'
+					: count === 1
+						? 'Die KI hat für 1 Rezept Tags vorgeschlagen. Prüf sie beim Durchgehen.'
+						: `Die KI hat für ${count} Rezepte Tags vorgeschlagen. Prüf jedes beim Durchgehen.`
 		},
 
 		filters: {

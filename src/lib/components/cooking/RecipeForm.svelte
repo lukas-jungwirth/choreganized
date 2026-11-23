@@ -503,7 +503,11 @@
 		/>
 	</div>
 
-	<RecipeTagsField tags={recipe?.tags ?? []} diet={recipe?.diet ?? null} />
+	<RecipeTagsField
+		tags={recipe?.tags ?? []}
+		diet={recipe?.diet ?? null}
+		suggested={prefill?.suggested}
+	/>
 
 	<h2 class="label">{m.cooking.form.ingredients}</h2>
 	<ul class="rows">

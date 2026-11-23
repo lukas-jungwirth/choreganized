@@ -7,6 +7,7 @@ import assert from 'node:assert/strict';
 import { createServer } from 'node:http';
 import { describe, it } from 'vitest';
 import {
+	draftFromCard,
 	failureCode,
 	fetchRecipePage,
 	htmlToReadableText,
@@ -188,5 +189,33 @@ describe('failureCode', () => {
 		for (const status of [404, 410, 500, 502, 503]) {
 			assert.equal(answer(status), 'unreachable', `${status}`);
 		}
+	});
+});
+
+describe('draftFromCard — suggested tags (→ plan 41)', () => {
+	const card = {
+		name: 'Kürbissuppe',
+		timeMinutes: 40,
+		servings: 4,
+		ingredientLines: ['1 Kürbis'],
+		steps: ['Kochen.'],
+		image: null
+	};
+
+	it('suggests what the page’s category, keywords and diet name', () => {
+		const draft = draftFromCard(
+			{ ...card, labels: ['Suppe', 'vegan, schnell', 'https://schema.org/GlutenFreeDiet'] },
+			null
+		);
+		assert.deepEqual(draft.suggested, {
+			tags: ['kind:soup', 'free:gluten'],
+			diet: 'vegan',
+			from: 'page'
+		});
+	});
+
+	it('suggests nothing when the page names nothing on the list', () => {
+		assert.equal(draftFromCard({ ...card, labels: ['Herbst', 'schnell'] }, null).suggested, null);
+		assert.equal(draftFromCard({ ...card, labels: [] }, null).suggested, null);
 	});
 });

@@ -8,7 +8,12 @@
 import assert from 'node:assert/strict';
 import { describe, it } from 'vitest';
 import { INGREDIENTS_MAX, STEP_TEXT_MAX, STEPS_MAX } from './recipes';
-import { cleanText, validateRecipeDraft, type SourceRecipe } from './recipe-draft';
+import {
+	cleanText,
+	validateRecipeDraft,
+	validateTagSuggestions,
+	type SourceRecipe
+} from './recipe-draft';
 
 const good = {
 	name: 'Palatschinken',
@@ -320,5 +325,58 @@ describe('validateRecipeDraft — fidelity', () => {
 		const draft = draftOf(adapted, { source, instructed: true });
 		assert.equal(draft.name, 'Vegane Palatschinken');
 		assert.equal(draft.ingredientLines.length, 2);
+	});
+});
+
+describe('validateRecipeDraft — tags (→ plan 41)', () => {
+	it('keeps the tags and diet the app knows, as a suggestion from the AI', () => {
+		const draft = draftOf({
+			...good,
+			tags: ['meal:breakfast', 'kind:dessert', 'cuisine:austrian', 'kind:dessert', 7],
+			diet: 'vegetarian'
+		});
+		assert.deepEqual(draft.suggested, {
+			tags: ['meal:breakfast', 'kind:dessert'],
+			diet: 'vegetarian',
+			from: 'ai'
+		});
+	});
+
+	it('suggests nothing when nothing it said is on the list', () => {
+		assert.equal(draftOf({ ...good, tags: ['dish:pancake'], diet: 'pescatarian' }).suggested, null);
+		assert.equal(draftOf(good).suggested, null);
+	});
+});
+
+describe('validateTagSuggestions (→ plan 41)', () => {
+	it('keeps one known suggestion per recipe asked about', () => {
+		const map = validateTagSuggestions(
+			{
+				recipes: [
+					{ index: 0, tags: ['meal:dinner', 'kind:main'], diet: 'meat' },
+					{ index: 0, tags: ['kind:soup'], diet: null },
+					{ index: 1, tags: ['spicy'], diet: 'vegan' },
+					{ index: 2, tags: [], diet: null },
+					{ index: 7, tags: ['kind:soup'], diet: null },
+					{ index: -1, tags: ['kind:soup'], diet: null },
+					{ index: 1.5, tags: ['kind:soup'], diet: null },
+					'nonsense'
+				]
+			},
+			3
+		);
+		assert.deepEqual(
+			[...map!],
+			[
+				[0, { tags: ['meal:dinner', 'kind:main'], diet: 'meat' }],
+				[1, { tags: [], diet: 'vegan' }]
+			]
+		);
+	});
+
+	it('is null for an answer that is not the shape asked for', () => {
+		assert.equal(validateTagSuggestions(null, 2), null);
+		assert.equal(validateTagSuggestions({ recipes: 'all of them' }, 2), null);
+		assert.deepEqual([...validateTagSuggestions({ recipes: [] }, 2)!], []);
 	});
 });

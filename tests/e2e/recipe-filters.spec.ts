@@ -16,12 +16,13 @@ test.describe('on the cookbook', () => {
 
 	test('a quick chip narrows the grid, and the URL keeps it', async ({ page }) => {
 		await page.goto('/cooking/recipes');
-		await expect(results(page)).toHaveCount(15);
+		await expect(results(page)).toHaveCount(18);
 
 		await page.getByRole('link', { name: 'Vegetarian', exact: true }).click();
 		await expect(page).toHaveURL(/\?diet=vegetarian$/);
-		// Pasta, curry, and the sketch's nine meat-free ones; vegan counts.
-		await expect(page.getByText('11 of 15 recipes')).toBeVisible();
+		// Pasta, curry, and the sketch's nine meat-free ones; vegan counts. The three
+		// untagged recipes (→ plan 41) have no diet, so no filter finds them.
+		await expect(page.getByText('11 of 18 recipes')).toBeVisible();
 		await expect(results(page)).toHaveCount(11);
 
 		await page.reload();
@@ -30,7 +31,7 @@ test.describe('on the cookbook', () => {
 		// The active chip takes itself off again.
 		await page.getByRole('link', { name: 'Remove Vegetarian' }).click();
 		await expect(page).toHaveURL(/\/cooking\/recipes$/);
-		await expect(results(page)).toHaveCount(15);
+		await expect(results(page)).toHaveCount(18);
 	});
 
 	test('a time cap that is on leaves no second time chip to replace it', async ({ page }) => {
@@ -62,7 +63,7 @@ test.describe('on the cookbook', () => {
 		await expect(page).toHaveURL(/meal=dinner/);
 		await expect(page).toHaveURL(/diet=vegetarian/);
 		await expect(results(page)).toHaveCount(4);
-		await expect(page.getByText('4 of 15 recipes')).toBeVisible();
+		await expect(page.getByText('4 of 18 recipes')).toBeVisible();
 	});
 
 	test('nothing fits offers a way out per filter, with what it brings back', async ({ page }) => {
@@ -97,8 +98,8 @@ test.describe('on the cookbook', () => {
 	test('not cooked lately puts the never-planned first', async ({ page }) => {
 		await page.goto('/cooking/recipes?sort=stale');
 		const first = await results(page).first().textContent();
-		// Never on the plan up to today: banana bread, Greek salad, the bruschetta, and the
-		// curry (planned for tomorrow, not cooked yet). A–Z among them.
+		// Never on the plan up to today: banana bread, the beef goulash, Greek salad, the
+		// bruschetta, the curry (planned for tomorrow, not cooked yet)… A–Z among them.
 		expect(first).toContain('Banana bread');
 	});
 });
@@ -153,4 +154,95 @@ test.describe('on the owner household', () => {
 		await page.getByRole('button', { name: 'Delete recipe' }).last().click();
 		await expect(page).toHaveURL(/\/cooking\/recipes$/);
 	});
+});
+
+test.describe('sorting untagged recipes (→ plan 41)', () => {
+	test('the cookbook offers its three untagged recipes, and the pass shows a guessed diet', async ({
+		browser
+	}) => {
+		// Read-only on the cookbook: look, never press Next.
+		const context = await browser.newContext({ storageState: storageStateFor('cookbook') });
+		const page = await context.newPage();
+		await page.goto('/cooking/recipes');
+		await page.getByRole('link', { name: /3 recipes have no tags yet/ }).click();
+
+		await expect(page).toHaveURL(/\/cooking\/recipes\/sort$/);
+		await expect(page.getByText('0 of 3 done · stop any time')).toBeVisible();
+		await expect(page.getByRole('heading', { name: 'Mushroom risotto', level: 2 })).toBeVisible();
+		// Parmesan and butter: vegetarian, dotted as a guess, not yet anybody's choice.
+		await expect(page.getByRole('button', { name: 'Vegetarian, suggested' })).toHaveAttribute(
+			'aria-pressed',
+			'true'
+		);
+		await expect(page.getByText('Dotted: our guess from the ingredients.')).toBeVisible();
+
+		await page.getByRole('link', { name: 'Skip', exact: true }).click();
+		await expect(page.getByRole('heading', { name: 'Beef goulash', level: 2 })).toBeVisible();
+		// A skip isn't done: the bar waits for a card that's actually sorted.
+		await expect(page.getByText('0 of 3 done · stop any time')).toBeVisible();
+		await expect(page.getByRole('button', { name: 'Meat, suggested' })).toHaveAttribute(
+			'aria-pressed',
+			'true'
+		);
+		await context.close();
+	});
+
+	test('Next saves the card and moves on', async ({ page }) => {
+		await page.goto('/cooking/recipes/new');
+		await page.getByRole('textbox', { name: 'Recipe name' }).fill('Sorting test stew');
+		await page.getByRole('textbox', { name: 'Ingredient 1' }).fill('500 g Rindfleisch');
+		await page.getByRole('button', { name: 'Save', exact: true }).click();
+		await expect(page.getByRole('heading', { name: 'Sorting test stew', level: 1 })).toBeVisible();
+		const recipeUrl = page.url();
+
+		// Other journeys leave untagged recipes behind; the newest card comes first.
+		await page.goto('/cooking/recipes');
+		await page.getByRole('link', { name: /no tags yet/ }).click();
+		await expect(page.getByRole('heading', { name: 'Sorting test stew', level: 2 })).toBeVisible();
+		const total = (await page.getByText(/^0 of \d+ done/).textContent())!.match(/of (\d+)/)![1];
+		await page.getByRole('button', { name: 'Dinner', exact: true }).click();
+		await page.getByRole('button', { name: 'Main', exact: true }).click();
+		await page.getByRole('button', { name: 'Next', exact: true }).click();
+
+		// Saved: the card moves on (or, with none left, back to the library).
+		await expect(page.getByRole('heading', { name: 'Sorting test stew', level: 2 })).toHaveCount(0);
+		// …and the bar counts on from where it was, even from a bare /sort address.
+		if (page.url().includes('/sort')) {
+			await expect(page.getByText(`1 of ${total} done · stop any time`)).toBeVisible();
+		}
+
+		await page.goto(recipeUrl);
+		await expect(page.getByRole('list', { name: 'Tags' }).getByRole('link')).toHaveText([
+			'Dinner',
+			'Main',
+			'Meat'
+		]);
+
+		await page.getByRole('button', { name: 'Recipe options' }).click();
+		await page.getByRole('button', { name: 'Delete recipe' }).click();
+		await page.getByRole('button', { name: 'Delete recipe' }).last().click();
+		await expect(page).toHaveURL(/\/cooking\/recipes$/);
+	});
+});
+
+test('the plan sheet lists the chosen meal’s recipes first (→ plan 41)', async ({ page }) => {
+	await page.goto('/cooking');
+	await page
+		.getByRole('button', { name: /^Plan a meal on / })
+		.first()
+		.click();
+	const sheet = page.getByRole('dialog');
+
+	// Both seeded recipes are dinners.
+	await sheet.getByRole('button', { name: 'Dinner', exact: true }).click();
+	await expect(sheet.getByText('For dinner', { exact: true })).toBeVisible();
+
+	// Nothing is tagged as a snack: the list is the plain one, unlabelled.
+	await sheet.getByRole('button', { name: 'Snack', exact: true }).click();
+	await expect(sheet.getByText('For a snack', { exact: true })).toHaveCount(0);
+
+	// A quick chip narrows the list in place.
+	await sheet.getByRole('button', { name: 'Favourites', exact: true }).click();
+	await expect(sheet.getByRole('radio', { name: /Creamy mushroom pasta/ })).toHaveCount(0);
+	await expect(sheet.getByRole('radio', { name: /Lentil curry/ })).toBeVisible();
 });

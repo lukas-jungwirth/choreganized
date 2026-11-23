@@ -77,6 +77,11 @@ function answerFor(provider: Provider, schema: Record<string, unknown> | null): 
 	const properties = (schema?.properties ?? {}) as Record<string, Record<string, unknown>>;
 	if ('ok' in properties) return { ok: true };
 
+	// Plan 41's sorting pass: one suggestion, for the first recipe asked about.
+	if ('recipes' in properties) {
+		return { recipes: [{ index: 0, tags: ['meal:dinner', 'kind:main'], diet: 'vegetarian' }] };
+	}
+
 	const name = `${NAMES[provider]} pancakes`;
 	const stepItems = properties.steps?.items as Record<string, unknown> | undefined;
 	const structured = String(stepItems?.type ?? '').toLowerCase() === 'object';
@@ -91,7 +96,11 @@ function answerFor(provider: Provider, schema: Record<string, unknown> | null): 
 		};
 	}
 
+	// Plan 41's schema asks what the dish is as well.
+	const tagged = 'tags' in properties ? { tags: ['meal:breakfast', 'kind:dessert'], diet: 'vegetarian' } : {}; // prettier-ignore
+
 	return {
+		...tagged,
 		name,
 		timeMinutes: 20,
 		servings: 4,

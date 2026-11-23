@@ -11,6 +11,12 @@
 	replaces whatever holds that slot — said out loud under the chips before it
 	happens, because "add" quietly overwriting someone's plan is the one thing
 	this sheet must not do (→ SPEC §4.2, DECISIONS #126).
+
+	With tags (→ plan 41) the list puts the recipes tagged for the chosen meal
+	first, under "For breakfast", and everything else after — ordering, never
+	hiding, because Saturday's lunch is often last night's soup. Three quick
+	chips (Favourites · Under 30 min · Vegetarian, each only when it could find
+	something) narrow it, in the browser, by the library's own filter rules.
 -->
 <script lang="ts">
 	import { enhance } from '$app/forms';
@@ -27,7 +33,18 @@
 	import type { RecipeSummary } from '$lib/server/services/recipes';
 	import type { CalendarDate } from '$lib/utils/dates';
 	import { MEAL_SLOTS, type MealSlot } from '$lib/utils/meals';
+	import {
+		emptyFilter,
+		matchesRecipeFilter,
+		QUICK_ATOMS,
+		quickAtomUseful,
+		recipeFacets,
+		atomKey,
+		withAtom,
+		type FilterAtom
+	} from '$lib/utils/recipe-filter';
 	import { MEAL_TITLE_MAX } from '$lib/utils/recipes';
+	import { atomName } from './tag-names';
 	import Check from '@lucide/svelte/icons/check';
 	import Plus from '@lucide/svelte/icons/plus';
 	import { untrack } from 'svelte';
@@ -93,10 +110,33 @@
 	const weekday = $derived(m.date.weekdayLong(date));
 	const selected = $derived(recipes.find((recipe) => recipe.id === selectedId) ?? null);
 
+	/** The quick chips this library could use, and which of them are on. */
+	const quickOffered = $derived(
+		QUICK_ATOMS.filter((atom) => quickAtomUseful(atom, recipeFacets(recipes)))
+	);
+	let quickOn = $state<string[]>([]);
+	const quickFilter = $derived(
+		quickOffered
+			.filter((atom) => quickOn.includes(atomKey(atom)))
+			.reduce(
+				(filter: ReturnType<typeof emptyFilter>, atom: FilterAtom) => withAtom(filter, atom),
+				emptyFilter()
+			)
+	);
+
+	/** Tagged for the meal being planned — those come first. */
+	const fitsSlot = (recipe: RecipeSummary) => recipe.tags.includes(`meal:${slot}`);
+
+	/** The library after the quick chips, the chosen meal's recipes first, each half newest first. */
+	const pool = $derived.by(() => {
+		const narrowed = recipes.filter((recipe) => matchesRecipeFilter(recipe, quickFilter));
+		return [...narrowed.filter(fitsSlot), ...narrowed.filter((recipe) => !fitsSlot(recipe))];
+	});
+
 	const matches = $derived.by(() => {
 		const needle = search.trim().toLowerCase();
-		if (!needle) return recipes.slice(0, RECENTS);
-		return recipes.filter((recipe) => recipe.name.toLowerCase().includes(needle));
+		if (!needle) return pool.slice(0, RECENTS);
+		return pool.filter((recipe) => recipe.name.toLowerCase().includes(needle));
 	});
 
 	/**
@@ -114,6 +154,20 @@
 	});
 
 	const hiddenMatches = $derived(Math.max(matches.length - shown.length, 0));
+
+	/**
+	 * The rows in their two halves. Labelled only while something is tagged for
+	 * this meal: with nothing tagged, the list is the one it always was.
+	 */
+	const halves = $derived.by(() => {
+		const fit = shown.filter(fitsSlot);
+		return { fit, rest: shown.filter((recipe) => !fitsSlot(recipe)), labelled: fit.length > 0 };
+	});
+
+	function toggleQuick(atom: FilterAtom) {
+		const key = atomKey(atom);
+		quickOn = quickOn.includes(key) ? quickOn.filter((on) => on !== key) : [...quickOn, key];
+	}
 
 	/** Only a recipe that has ingredients can put any on the list (→ SPEC §4.2). */
 	const offersShopping = $derived(!custom && !!selected?.hasIngredients);
@@ -186,39 +240,68 @@
 				/>
 			</div>
 
-			<ul class="recipes" role="radiogroup" aria-label={m.cooking.plan.recipeGroup}>
-				{#each shown as recipe (recipe.id)}
-					{@const on = !custom && selectedId === recipe.id}
-					{@const time = recipe.timeMinutes ? m.cooking.cookTime(recipe.timeMinutes) : null}
-					<li>
-						<button
-							type="button"
-							class="recipe"
-							class:on
-							role="radio"
-							aria-checked={on}
-							aria-label={recipe.name}
-							onclick={() => pick(recipe)}
-						>
-							<span class="thumb"><RecipeImage imagePath={recipe.imagePath} stripe={5} /></span>
-							<span class="text">
-								<span class="name">{recipe.name}</span>
-								{#if time}<span class="time">{time}</span>{/if}
-							</span>
-							<span class="radio" aria-hidden="true">
-								{#if on}<Check size={12} strokeWidth={3.5} />{/if}
-							</span>
-						</button>
-					</li>
-				{/each}
-			</ul>
+			{#if quickOffered.length}
+				<div class="chips quick" role="group" aria-label={m.cooking.plan.quick}>
+					{#each quickOffered as atom (atomKey(atom))}
+						<Chip selected={quickOn.includes(atomKey(atom))} onclick={() => toggleQuick(atom)}>
+							{atomName(atom, m)}
+						</Chip>
+					{/each}
+				</div>
+			{/if}
+
+			{#snippet row(recipe: RecipeSummary)}
+				{@const on = !custom && selectedId === recipe.id}
+				{@const time = recipe.timeMinutes ? m.cooking.cookTime(recipe.timeMinutes) : null}
+				<li>
+					<button
+						type="button"
+						class="recipe"
+						class:on
+						role="radio"
+						aria-checked={on}
+						aria-label={recipe.name}
+						onclick={() => pick(recipe)}
+					>
+						<span class="thumb"><RecipeImage imagePath={recipe.imagePath} stripe={5} /></span>
+						<span class="text">
+							<span class="name">{recipe.name}</span>
+							{#if time}<span class="time">{time}</span>{/if}
+						</span>
+						<span class="radio" aria-hidden="true">
+							{#if on}<Check size={12} strokeWidth={3.5} />{/if}
+						</span>
+					</button>
+				</li>
+			{/snippet}
+
+			<div role="radiogroup" aria-label={m.cooking.plan.recipeGroup}>
+				{#if halves.labelled}
+					<p class="half">{m.cooking.plan.forSlot[slot]}</p>
+					<ul class="recipes">
+						{#each halves.fit as recipe (recipe.id)}{@render row(recipe)}{/each}
+					</ul>
+					{#if halves.rest.length}
+						<p class="half rest">{m.cooking.plan.everythingElse}</p>
+						<ul class="recipes">
+							{#each halves.rest as recipe (recipe.id)}{@render row(recipe)}{/each}
+						</ul>
+					{/if}
+				{:else}
+					<ul class="recipes">
+						{#each shown as recipe (recipe.id)}{@render row(recipe)}{/each}
+					</ul>
+				{/if}
+			</div>
 
 			{#if search.trim() && matches.length === 0}
 				<p class="note">{m.cooking.plan.noMatch}</p>
 			{:else if hiddenMatches > 0}
 				<p class="note">{m.cooking.plan.moreMatches(hiddenMatches)}</p>
-			{:else if !search.trim() && recipes.length > shown.length}
-				<p class="note">{m.cooking.plan.mostRecent(recipes.length - shown.length)}</p>
+			{:else if !search.trim() && pool.length === 0}
+				<p class="note">{m.cooking.plan.quickNone}</p>
+			{:else if !search.trim() && pool.length > shown.length}
+				<p class="note">{m.cooking.plan.mostRecent(pool.length - shown.length)}</p>
 			{/if}
 		{/if}
 
@@ -309,6 +392,29 @@
 <style>
 	.search {
 		margin-bottom: 14px;
+	}
+
+	.quick {
+		margin: -4px 0 14px;
+	}
+
+	.quick :global(.chip) {
+		padding: 6px 12px;
+		font-size: var(--fs-14);
+	}
+
+	/* "For breakfast" / "Everything else" over the two halves of the list. */
+	.half {
+		margin: 0 4px 8px;
+		font-size: var(--fs-13);
+		font-weight: 700;
+		letter-spacing: 0.1em;
+		text-transform: uppercase;
+		color: var(--sage-deep);
+	}
+
+	.half.rest {
+		color: var(--text-4);
 	}
 
 	.recipes {

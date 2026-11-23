@@ -24,7 +24,9 @@
  * 5. **Timers** — only where the step's own text states that duration
  *    (`stepDurations`). A timer the text doesn't name is a timer the model
  *    invented.
- * 6. **Fidelity** — improving a page's own recipe card without instructions
+ * 6. **Tags** — only keys on the app's list (→ plan 41); anything else is
+ *    dropped, and what's left is a suggestion the form shows dotted.
+ * 7. **Fidelity** — improving a page's own recipe card without instructions
  *    must keep its rows: the same number of ingredients and steps, and the
  *    card's name, servings and time. Anything else is a rewrite nobody asked
  *    for, and the card is used as written instead.
@@ -50,6 +52,7 @@ import {
 	type StepInput,
 	type StepTimer
 } from './recipes';
+import { readRecipeDiet, readRecipeTags, type RecipeDiet, type RecipeTag } from './recipe-tags';
 import type { UnitLabels } from './shopping';
 import {
 	MAX_TIMER_SECONDS,
@@ -153,6 +156,9 @@ export function validateRecipeDraft(raw: unknown, context: DraftContext): DraftC
 		servings = clampCount(source.servings, RECIPE_SERVINGS_MAX) ?? servings;
 	}
 
+	const tags = readRecipeTags(Array.isArray(raw.tags) ? raw.tags : []);
+	const diet = readRecipeDiet(raw.diet);
+
 	return {
 		ok: true,
 		dropped,
@@ -163,7 +169,8 @@ export function validateRecipeDraft(raw: unknown, context: DraftContext): DraftC
 			ingredientLines: rows.map((row) =>
 				formatIngredient(row, context.labels).slice(0, INGREDIENT_LINE_MAX)
 			),
-			steps
+			steps,
+			suggested: tags.length || diet ? { tags, diet, from: 'ai' } : null
 		}
 	};
 }
@@ -262,6 +269,34 @@ export function cleanText(
 	if (options.numbering) text = text.replace(NUMBERING, '');
 
 	return text.slice(0, max).trim();
+}
+
+/** One recipe's suggested tags and diet, as the sorting pass's AI pre-fill gives them. */
+export type TagGuess = { tags: RecipeTag[]; diet: RecipeDiet | null };
+
+/**
+ * A model's tag suggestions for `count` saved recipes (→ plan 41), kept only
+ * where they are real: an index that names one of the recipes asked about,
+ * once; tags and a diet from the app's list. Null when the answer isn't the
+ * shape asked for at all — the provider's failure, so the backup gets a turn.
+ * A recipe with nothing left to suggest is simply missing from the map.
+ */
+export function validateTagSuggestions(raw: unknown, count: number): Map<number, TagGuess> | null {
+	if (!isRecord(raw) || !Array.isArray(raw.recipes)) return null;
+
+	const guesses = new Map<number, TagGuess>();
+	for (const entry of raw.recipes.slice(0, count * 2)) {
+		if (!isRecord(entry)) continue;
+		const { index } = entry;
+		if (typeof index !== 'number' || !Number.isInteger(index) || index < 0 || index >= count)
+			continue;
+		if (guesses.has(index)) continue;
+
+		const tags = readRecipeTags(Array.isArray(entry.tags) ? entry.tags : []);
+		const diet = readRecipeDiet(entry.diet);
+		if (tags.length || diet) guesses.set(index, { tags, diet });
+	}
+	return guesses;
 }
 
 function isRecord(value: unknown): value is Record<string, unknown> {

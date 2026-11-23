@@ -676,6 +676,13 @@ item sheet [3a]; what differs is what a tick does and what counts as shopping.
   than refusing — replacing is what this sheet does, it just has four places to do it in now.
   Changing the slot of an existing meal **moves** it (the old row is not left behind).
 - Search field over the household's recipes; recent recipes listed with radio selection.
+- **The chosen meal's recipes first** (→ plan 41): when any recipe is tagged for the slot in
+  **Which meal?**, the list splits into **For breakfast** (lunch, dinner, "For a snack") and
+  **Everything else**, each newest first, and switching the slot reorders it at once. Nothing
+  is hidden — Saturday's lunch is often last night's soup — and with nothing tagged for that
+  slot the list is the plain one, unlabelled. Under the search, the library's **quick chips**
+  (Favourites · Under 30 min · Vegetarian, each only when it could find something) narrow the
+  list in the browser by the library's own rules.
 - **"Cook something not saved"** → free-text title input instead of a recipe (custom meal).
 - **Who's cooking?** — member chips, optional (none = no cook shown).
 - Toggle: **Add ingredients to shopping list** ("You'll pick which ones" — only when a recipe
@@ -725,6 +732,21 @@ item sheet [3a]; what differs is what a tick does and what counts as shopping.
   and **Paste text** (each "AI"-tagged) **only when AI features are set up** — with no provider
   there's nothing to offer, and the AI features row in Settings (§6) is where it's turned on.
 - Empty state [7e]: "Build your cookbook" + **Add a recipe** (opens the same chooser).
+- **Sort your recipes** (→ plan 41, [DECISIONS #307–#310](DECISIONS.md)). While any recipe has
+  neither a tag nor a diet, a dashed row ends the unfiltered grid: "{n} recipes have no tags
+  yet · Sort". It opens `/cooking/recipes/sort`: one untagged recipe per card (photo, name,
+  time, the first ingredients), the form's tag questions, **Skip** and **Next**, and a bar
+  "{done} of {total} done · stop any time". Next saves that card's tags and diet and moves on;
+  Next with nothing ticked is a skip. A skipped recipe comes back next visit. With none left
+  the pass ends on the library, whose row is gone.
+  - Each card opens with the **diet guessed from its ingredient names** ticked and dotted
+    ("Dotted: our guess from the ingredients."): a meat word → meat, else a fish word → fish,
+    else an egg, dairy or honey word → vegetarian, else vegan; German compounds count
+    ("Rinderhackfleisch", "Lachsfilet"), plant milks and butters don't, gelatine without meat
+    makes no guess.
+  - With AI set up, **Let the AI suggest tags** asks once about every recipe still to sort
+    (at most 50; names and ingredient names only) and dots its answers on the cards as they
+    come. It is a button, never automatic, and nothing is saved before each card's Next.
 
 ### 4.4 New/edit recipe [3c] (full-screen route, not a sheet)
 
@@ -1004,6 +1026,15 @@ item sheet [3a]; what differs is what a tick does and what counts as shopping.
 - Household content is never translated by the app: a card imported without AI passes through
   verbatim (→ §9). With AI, the recipe keeps its own language unless the household's
   instructions ask otherwise; units are converted to metric.
+- **Tags arrive with the recipe** (→ plan 41). The card's `recipeCategory`, `keywords` and
+  `suitableForDiet` are mapped onto the tag list (§4.3) through an English and German word list,
+  whole words only ("Suppe" → soup, "Hauptspeise" → main, "Frühstück" → breakfast,
+  `VeganDiet` → vegan, "glutenfrei" → gluten-free); meat and fish are never read off a page. An
+  AI import picks tags and a diet from the same list (the schema allows nothing else). Either
+  way they open **ticked and dotted** in the editor's Tags block, which opens unfolded, with a
+  line saying where they came from; touching a chip clears its dot, and Save saves what is
+  ticked. With **Improve with AI** on a page that has a card, the page's own word stands group
+  by group and the AI's fills only the groups the page left empty.
 
 ### 4.8 Ingredient picker [3e] — which ingredients actually need buying
 

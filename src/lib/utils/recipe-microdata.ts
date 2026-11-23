@@ -19,6 +19,7 @@ import { parse, type HTMLElement } from 'node-html-parser';
 import {
 	cardSize,
 	isoDurationToMinutes,
+	mapLabels,
 	mapYield,
 	tidyIngredientLines,
 	tidySteps,
@@ -59,7 +60,12 @@ export function parseRecipeMicrodata(html: string): RecipeJsonLd | null {
 				? props.get('recipeInstructions')!.flatMap(stepsOf)
 				: markedUpSteps(scope)
 		),
-		image: first('image') ? valueOf(first('image')!) || null : null
+		image: first('image') ? valueOf(first('image')!) || null : null,
+		labels: mapLabels(
+			['recipeCategory', 'keywords', 'suitableForDiet'].flatMap((name) =>
+				(props.get(name) ?? []).map(valueOf)
+			)
+		)
 	};
 
 	// A Recipe scope with no rows is a template stub or a teaser, not a recipe.
