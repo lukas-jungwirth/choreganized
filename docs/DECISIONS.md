@@ -4658,9 +4658,10 @@ store_id` NULL already means "no memory" (a deleted list), and telling the two a
        client that does not talk like Chrome (Node's TLS, no client hints). Cloudflare's bot
        check challenges exactly that mismatch: sallysbakingaddiction.com answered `403` with
        `cf-mitigated: challenge` to the app's request, and `200` to the same request with an
-       honest client name. The importer now says what it is, `Mozilla/5.0 (compatible;
-Haushaltsheld; recipe import)` (`IMPORT_UA`): the `Mozilla/5.0 (compatible; …)` form
-       crawlers use, because a bare `node` string is still refused by some sites. With it the
+       honest client name. The importer now sends a generic `Mozilla/5.0 (compatible;
+recipe-importer)` (`IMPORT_UA`): the `Mozilla/5.0 (compatible; …)` form crawlers use,
+       because a bare `node` string is still refused by some sites, and no app name, so the
+       project's name does not travel in requests to outside sites (coordinator, 2026-11-23). With it the
        three pages the plan names import (sallysbakingaddiction.com, budgetbytes.com,
        whereismyspoon.co), and all 18 corpus pages still do. Five sites refuse every client
        and keep the "copy the text" answer: allrecipes.com and seriouseats.com (Dotdash's pay

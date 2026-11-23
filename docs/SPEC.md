@@ -1031,7 +1031,7 @@ item sheet [3a]; what differs is what a tick does and what counts as shopping.
   loopback / private / link-local hosts refused _before any request_ — including an IPv4 one
   wrapped in IPv6 (`[::ffff:127.0.0.1]`, NAT64, 6to4) — and re-checked on every redirect hop,
   redirects capped (~5), ~10 s timeout, ~3 MB page cap, `text/html` only. The request says
-  what it is (`Mozilla/5.0 (compatible; Haushaltsheld; recipe import)`, DECISIONS #322): claiming
+  what it is (a generic `Mozilla/5.0 (compatible; recipe-importer)`, DECISIONS #322): claiming
   to be Chrome is what Cloudflare challenged. Each failure has its
   own translated message — unreachable · blocked · **refused** (the site turns apps away:
   401/402/403/429 or a Cloudflare challenge — "open it in your browser and copy the recipe", with

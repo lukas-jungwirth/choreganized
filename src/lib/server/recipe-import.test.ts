@@ -197,12 +197,11 @@ describe('fetchRecipePage', () => {
 });
 
 describe('IMPORT_UA (→ plan 44, DECISIONS #322)', () => {
-	it('says what it is and does not claim to be a browser', () => {
+	it('is generic: claims no browser and names no app', () => {
 		// Cloudflare challenged "Chrome" that did not talk like Chrome
-		// (sallysbakingaddiction.com, 2026-11-23); the same request saying what it
-		// is was let through.
-		assert.match(IMPORT_UA, /^Mozilla\/5\.0 \(compatible; Haushaltsheld/);
-		assert.doesNotMatch(IMPORT_UA, /Chrome|Safari|Firefox|Gecko/);
+		// (sallysbakingaddiction.com, 2026-11-23); an honest client was let through.
+		assert.equal(IMPORT_UA, 'Mozilla/5.0 (compatible; recipe-importer)');
+		assert.doesNotMatch(IMPORT_UA, /Chrome|Safari|Firefox|Gecko|Haushaltsheld|choreganized/i);
 	});
 });
 

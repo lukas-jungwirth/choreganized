@@ -58,14 +58,14 @@ const MAX_IMAGE_BYTES = 10 * 1024 * 1024;
 const MAX_READABLE_CHARS = 40_000;
 
 /**
- * An honest User-Agent in the `compatible` form crawlers use (→ DECISIONS #322).
- * A bare `node`/`undici` string gets a 403 from a share of recipe sites, so it
- * still starts with `Mozilla/5.0`. It no longer claims to be Chrome: Cloudflare
- * challenges a client that says Chrome and does not talk like one (TLS, client
- * hints), which turned sallysbakingaddiction.com and others away; the same
- * request saying what it is gets the page.
+ * An honest, generic User-Agent in the `compatible` form crawlers use
+ * (→ DECISIONS #322). A bare `node`/`undici` string gets a 403 from a share of
+ * recipe sites, so it still starts with `Mozilla/5.0`. It no longer claims to be
+ * Chrome: Cloudflare challenges a client that says Chrome and does not talk like
+ * one (TLS, client hints), which turned sallysbakingaddiction.com and others
+ * away. It names no app: the project's name does not travel to outside sites.
  */
-export const IMPORT_UA = 'Mozilla/5.0 (compatible; Haushaltsheld; recipe import)';
+export const IMPORT_UA = 'Mozilla/5.0 (compatible; recipe-importer)';
 
 const REDIRECT_STATUSES = new Set([301, 302, 303, 307, 308]);
 
