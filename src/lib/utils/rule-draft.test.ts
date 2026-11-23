@@ -8,7 +8,7 @@ import { readdirSync, readFileSync } from 'node:fs';
 import { describe, it } from 'vitest';
 import { readFetchedPage } from '../server/recipe-import';
 import { parseIngredient } from './ingredients';
-import { ruleDraft, ruleRow, splitNote } from './rule-draft';
+import { ruleDraft, ruleRow, splitLongStep, splitNote } from './rule-draft';
 
 describe('splitNote', () => {
 	it('takes what follows the first comma as the note', () => {
@@ -94,12 +94,13 @@ describe('ruleDraft on every corpus page with a card', () => {
 				draft.ingredientDetails?.map((one) => one?.section ?? null),
 				card.ingredientSections.slice(0, 60)
 			);
-			// A long step may become several (split at sentence ends): the parts, in order, stay.
-			const runs = (list: (string | null | undefined)[]) =>
-				list.filter((one, at) => at === 0 || list[at - 1] !== one);
+			// A long step may become several (split at sentence ends), each with its step's part.
+			const expected = card.steps
+				.flatMap((step, at) => splitLongStep(step).map(() => card.stepSections[at]))
+				.slice(0, 40);
 			assert.deepEqual(
-				runs(draft.steps.map((step) => step.section)),
-				runs(card.stepSections.slice(0, 40))
+				draft.steps.map((step) => step.section),
+				expected
 			);
 			assert.ok(draft.steps.every((step) => step.text.length <= 600));
 			// Without AI: no links, and the draft says so.

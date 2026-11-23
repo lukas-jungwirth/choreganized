@@ -137,6 +137,18 @@ export function validateRecipeDraft(raw: unknown, context: DraftContext): DraftC
 	const method = card ? card.steps : context.text ? [context.text] : [];
 	const checkSteps = !context.photos && !context.instructed && method.length > 0;
 	const haystack = tokens(method.join(' ')).map((token) => token.word);
+	// Where each card step starts among those words: a found step knows its card step.
+	const cardStarts: number[] = [];
+	if (card) {
+		let count = 0;
+		for (const one of card.steps) {
+			cardStarts.push(count);
+			count += tokens(one).length;
+		}
+	}
+	const cardStepAt = (word: number) => cardStarts.findLastIndex((start) => start <= word);
+	/** The card step each draft step was found in, or -1. */
+	const fromCard: number[] = [];
 	let cursor = 0;
 	let reworded = 0;
 
@@ -148,9 +160,11 @@ export function validateRecipeDraft(raw: unknown, context: DraftContext): DraftC
 		const whole = isRecord(item)
 			? cleanText(item.text, STEP_TEXT_MAX * 10, { numbering: true })
 			: cleanText(item, STEP_TEXT_MAX * 10, { numbering: true });
-		return whole ? splitLongStep(whole).map((text) => ({ item, text })) : [{ item, text: '' }];
+		if (!whole) return [{ item, text: '', piece: 0, pieces: [] as string[] }];
+		const pieces = splitLongStep(whole);
+		return pieces.map((text, piece) => ({ item, text, piece, pieces }));
 	});
-	for (const { item, text } of answered) {
+	for (const { item, text, piece, pieces } of answered) {
 		if (!text || steps.length >= STEPS_MAX) {
 			dropped++;
 			continue;
@@ -161,6 +175,7 @@ export function validateRecipeDraft(raw: unknown, context: DraftContext): DraftC
 			// Word for word: the same words in the same order, punctuation and spacing aside.
 			const words = tokens(text).map((token) => token.word);
 			const found = words.length ? runAt(haystack, words, cursor) : -1;
+			fromCard.push(found >= 0 && card ? cardStepAt(found) : -1);
 			if (found >= 0) {
 				cursor = found + words.length;
 			} else {
@@ -175,10 +190,16 @@ export function validateRecipeDraft(raw: unknown, context: DraftContext): DraftC
 		}
 
 		const record = isRecord(item) ? item : {};
+		// A step split into pieces: each link and the timer go to one piece only, the
+		// first that names it (or the first piece), so no share is counted twice.
+		const mine = (one: unknown) => pieceOf(one, pieces) === piece;
+		const uses = Array.isArray(record.uses) ? record.uses.filter(mine) : record.uses;
+		const timerPiece =
+			pieces.length > 1 ? pieces.findIndex((one) => readTimer(record.timer, one) !== null) : 0;
 		steps.push({
 			text,
-			uses: readLinks(record.uses, text, rows, finalIndex, known),
-			timer: readTimer(record.timer, text),
+			uses: readLinks(uses, text, rows, finalIndex, known),
+			timer: timerPiece === piece ? readTimer(record.timer, text) : null,
 			section: readSection(record.section, sent)
 		});
 	}
@@ -217,10 +238,10 @@ export function validateRecipeDraft(raw: unknown, context: DraftContext): DraftC
 		}
 	}
 	if (card) {
+		// A step takes the part of the card step it was found in.
 		steps.forEach((step, at) => {
-			if (!step.section && steps.length === card.steps.length) {
-				step.section = card.stepSections?.[at] ?? null;
-			}
+			const source = fromCard[at] ?? -1;
+			if (!step.section && source >= 0) step.section = card.stepSections?.[source] ?? null;
 		});
 	}
 
@@ -490,13 +511,20 @@ function leftOut(method: readonly string[], steps: readonly StepInput[]): string
  */
 export function tokens(text: string): { word: string; start: number; end: number }[] {
 	const found: { word: string; start: number; end: number }[] = [];
-	for (const match of text.matchAll(/[\p{L}\p{M}\p{N}]+/gu)) {
-		for (const part of match[0].matchAll(/\p{N}+|[\p{L}\p{M}]+/gu)) {
-			const start = match.index + part.index;
-			found.push({ word: part[0].toLowerCase(), start, end: start + part[0].length });
-		}
+	// A number keeps what makes it that number ("1/2", "1,5" is "1.5"), so "1-2" or
+	// "1 5" for "1/2" is a changed word; a unit glued to it is a word of its own.
+	for (const match of text.matchAll(/\d+(?:[.,/]\d+)*|\p{N}+|[\p{L}\p{M}]+/gu)) {
+		const word = match[0].toLowerCase().replace(/(\d),(\d)/g, '$1.$2');
+		found.push({ word, start: match.index, end: match.index + match[0].length });
 	}
 	return found;
+}
+
+/** Which piece of a split step a link belongs to: the first that names it, else the first. */
+function pieceOf(use: unknown, pieces: readonly string[]): number {
+	if (pieces.length < 2 || !isRecord(use) || typeof use.phrase !== 'string') return 0;
+	const at = pieces.findIndex((piece) => spansIn(piece, use.phrase as string).length > 0);
+	return at < 0 ? 0 : at;
 }
 
 /** Where `needle` stands as one contiguous run in `hay`, at or after `from`; -1 when it does not. */
@@ -513,15 +541,20 @@ function runAt(hay: readonly string[], needle: readonly string[], from: number):
  * phrase "200 g", "Zwiebel-Würfel" for "Zwiebel Würfel". Null when they do not.
  */
 function spanIn(text: string, words: string): string | null {
+	return spansIn(text, words)[0] ?? null;
+}
+
+/** Every place the words stand in a step, as the step writes them. */
+function spansIn(text: string, words: string): string[] {
 	const step = tokens(text);
+	const hay = step.map((token) => token.word);
 	const wanted = tokens(words).map((token) => token.word);
-	if (!wanted.length) return null;
-	const at = runAt(
-		step.map((token) => token.word),
-		wanted,
-		0
-	);
-	return at < 0 ? null : text.slice(step[at].start, step[at + wanted.length - 1].end);
+	if (!wanted.length) return [];
+	const spans: string[] = [];
+	for (let at = runAt(hay, wanted, 0); at >= 0; at = runAt(hay, wanted, at + 1)) {
+		spans.push(text.slice(step[at].start, step[at + wanted.length - 1].end));
+	}
+	return spans;
 }
 
 /** A part's name, kept only where the page names it: "parts only where the page names them". */
@@ -582,11 +615,13 @@ function readLinks(
 		if (phrase) phrase = spanIn(text, phrase);
 		if (phrase && !occurrences(text, phrase).length) phrase = null;
 
-		let amountPhrase = cleanText(use.amountPhrase, AMOUNT_PHRASE_MAX) || null;
-		if (amountPhrase) amountPhrase = spanIn(text, amountPhrase);
-		if (amountPhrase && !(phrase && amountFits(text, phrase, amountPhrase, row, known))) {
-			amountPhrase = null;
-		}
+		// The amount as the step writes it, where it stands beside the phrase: "200g"
+		// beside Zucker and "200 g" beside Mehl are two places for one answered "200 g".
+		const asked = cleanText(use.amountPhrase, AMOUNT_PHRASE_MAX) || null;
+		const amountPhrase =
+			asked && phrase
+				? (spansIn(text, asked).find((span) => amountFits(text, phrase!, span, row, known)) ?? null)
+				: null;
 
 		const key = `${at}\u0000${phrase ?? ''}`;
 		if (seen.has(key)) continue;

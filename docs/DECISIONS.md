@@ -4788,21 +4788,29 @@ recipe-importer)` (`IMPORT_UA`): the `Mozilla/5.0 (compatible; …)` form crawle
        2026-11-23; the plan's "°F → °C, as today", SPEC §4.7 since plan 22).
        `utils/fahrenheit.ts` runs after the gate on imported drafts only (AI and rule-based,
        never a typed recipe): "350°F", "350 °F", "350° F", "350 degrees F(ahrenheit)" and a
-       range "350-375°F" get Celsius in front, rounded to the nearest 5, with the page's own
+       range ("350-375°F", "350 to 375 degrees F") get Celsius in front, rounded to the nearest 5, with the page's own
        text kept in brackets: "175 °C (350°F)". (The coordinator's example said 180 °C for
        350 °F; 176.7 rounds to 175 at the nearest 5, and the rule was followed.) A bare
-       "350 F", anything in °C, and a °F the page already gave beside a °C ("180°C/350°F")
-       are left alone. A converted step gets an `info` item (`converted`, at the step).
+       "350 F", anything in °C, and a °F the page already gave right beside a °C
+       ("180°C/350°F", "350°F (175°C)") are left alone; a °C further away is another
+       temperature and does not stop the conversion. A step that Celsius would push past the
+       editor's 600 characters keeps its °F rather than lose its tail. A converted step gets an
+       `info` item (`converted`, at the step).
      - **"The page's own words" means its words** (coordinator, 2026-11-23). The step check,
        the order cursor, `reworded`, both fidelity refusals and `leftOut` compare **word
        tokens**: runs of letters and digits, lowercased, a number and a unit glued together
-       split apart ("200g" = "200 g"). A dropped or added full stop, "erhitzen.Hackfleisch",
+       split apart ("200g" = "200 g"), a number keeping what makes it that number ("1/2",
+       "1,5" = "1.5"; "1-2" or "1 5" for "1/2" is a changed word). A dropped or added full stop, "erhitzen.Hackfleisch",
        typographic quotes and doubled spaces are the page's words; a changed, swapped or added
        word is not. A link's `phrase` and `amountPhrase` are found the same way and kept as
        the step writes them ("200g" for an answered "200 g"), so cook mode finds them
-       character for character before `locateAmounts` is asked.
+       character for character before `locateAmounts` is asked; where the same amount stands
+       twice, the one beside the phrase is taken.
      - **A step longer than the editor's 600 characters is several**, cut at sentence ends,
        in the gate and in the rule-based draft (`splitLongStep`). Both used to cut it at 600,
        which lost a one-paragraph method's tail (bonappetit.com's steps run to 1 068
        characters, chefkoch's Schnitzel to 775); the token check showed it, because the lost
-       sentences counted as left out.
+       sentences counted as left out. The pieces of a split model step take its links and its
+       timer once each, on the first piece that names them, so no share is counted twice; a
+       step takes the part of the card step its words were found in (not "the card step at
+       the same index", which a split shifts).

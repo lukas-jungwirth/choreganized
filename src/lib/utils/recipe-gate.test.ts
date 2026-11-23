@@ -414,6 +414,84 @@ describe('the gate compares words, not punctuation', () => {
 	});
 });
 
+describe('the token view, after the second code review', () => {
+	const gate = (card: SourceRecipe, raw: unknown) => {
+		const result = validateRecipeDraft(raw, { source: card, text: null, instructed: false });
+		assert.ok(result.ok, JSON.stringify(result));
+		return result.draft;
+	};
+
+	it('keeps what makes a number that number: "1-2 TL" for "1/2 TL" is reworded', () => {
+		const card: SourceRecipe = {
+			name: 'x',
+			servings: 2,
+			timeMinutes: null,
+			ingredientLines: ['1 TL Salz'],
+			steps: ['1/2 TL Salz einrühren.', 'Ruhen lassen.', 'Servieren.', 'Genießen.']
+		};
+		const draft = gate(card, {
+			name: 'x',
+			ingredients: [{ source: 0, quantity: 1, unit: 'tsp', name: 'Salz' }],
+			steps: ['1-2 TL Salz einrühren.', 'Ruhen lassen.', 'Servieren.', 'Genießen.'].map((text) => ({
+				text,
+				uses: []
+			}))
+		});
+		assert.deepEqual(draft.checks?.find((check) => check.kind === 'reworded')?.at, { step: 0 });
+	});
+
+	it('takes the amount that stands beside the phrase, where the same amount stands twice', () => {
+		const text = '200g Zucker und 200 g Mehl verrühren.';
+		const card: SourceRecipe = {
+			name: 'x',
+			servings: 2,
+			timeMinutes: null,
+			ingredientLines: ['200 g Zucker', '400 g Mehl'],
+			steps: [text]
+		};
+		const draft = gate(card, {
+			name: 'x',
+			ingredients: [
+				{ source: 0, quantity: 200, unit: 'g', name: 'Zucker' },
+				{ source: 1, quantity: 400, unit: 'g', name: 'Mehl' }
+			],
+			steps: [{ text, uses: [{ ingredient: 1, phrase: 'Mehl', amountPhrase: '200 g' }] }]
+		});
+		assert.equal(draft.steps[0].uses?.find((use) => use.ingredient === 1)?.amountPhrase, '200 g');
+	});
+
+	it('gives a long step’s pieces each link once, and each its card step’s part', () => {
+		const long = `${'Die Butter rühren und warten. '.repeat(21)}Den Teig ruhen lassen.`;
+		const card: SourceRecipe = {
+			name: 'x',
+			servings: 2,
+			timeMinutes: null,
+			ingredientLines: ['100 g Butter'],
+			steps: [long, 'Backen.', 'Servieren.'],
+			stepSections: ['Teig', 'Ofen', 'Tisch']
+		};
+		const draft = gate(card, {
+			name: 'x',
+			ingredients: [{ source: 0, quantity: 100, unit: 'g', name: 'Butter' }],
+			// The long step comes back whole (the gate splits it); the last step is dropped.
+			steps: [
+				{ text: long, uses: [{ ingredient: 0, phrase: 'Butter', quantity: 50 }] },
+				{ text: 'Backen.', uses: [] }
+			]
+		});
+		assert.equal(draft.steps.length, 3);
+		assert.deepEqual(
+			draft.steps.map((step) => step.section),
+			['Teig', 'Teig', 'Ofen']
+		);
+		const shares = draft.steps.flatMap((step) =>
+			(step.uses ?? []).filter((use) => use.quantity !== null)
+		);
+		assert.equal(shares.length, 1);
+		assert.ok(!(draft.checks ?? []).some((check) => check.kind === 'shares-exceed'));
+	});
+});
+
 describe('the gate, after code review', () => {
 	it('knows a household word in its plural ("Ring" added, the page says "Ringe")', () => {
 		const card: SourceRecipe = {

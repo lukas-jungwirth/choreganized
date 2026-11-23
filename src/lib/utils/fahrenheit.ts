@@ -19,7 +19,7 @@ import { STEP_TEXT_MAX, type ImportCheck } from './recipes.ts';
 const NUMBER = String.raw`\d{2,3}(?:[.,]\d+)?`;
 
 const FAHRENHEIT = new RegExp(
-	String.raw`(?<![\p{L}\p{N}])(${NUMBER})(?:\s*[-–]\s*(${NUMBER}))?\s*(?:°\s*F(?:ahrenheit)?|degrees?\s+F(?:ahrenheit)?)(?![\p{L}])`,
+	String.raw`(?<![\p{L}\p{N}])(${NUMBER})(?:\s*(?:[-–]|to|or|and|bis|oder|und)\s*(${NUMBER}))?\s*(?:°\s*F(?:ahrenheit)?|degrees?\s+F(?:ahrenheit)?)(?![\p{L}])`,
 	'giu'
 );
 
@@ -39,9 +39,11 @@ export function draftInCelsius<T extends { steps: { text: string }[]; checks?: I
 	const converted: ImportCheck[] = [];
 	const steps = draft.steps.map((step, at) => {
 		const { text, changed } = withCelsius(step.text);
-		if (!changed) return step;
+		// Past what the editor holds the °F stays: cutting the step would lose its tail,
+		// and a link or timer may stand there.
+		if (!changed || text.length > STEP_TEXT_MAX) return step;
 		converted.push({ kind: 'converted', level: 'info', at: { step: at } });
-		return { ...step, text: text.slice(0, STEP_TEXT_MAX) };
+		return { ...step, text };
 	});
 	if (!converted.length) return draft;
 	return { ...draft, steps, checks: [...(draft.checks ?? []), ...converted] };
@@ -54,8 +56,13 @@ export function withCelsius(text: string): { text: string; changed: boolean } {
 		FAHRENHEIT,
 		(whole: string, low: string, high: string | undefined, offset: number) => {
 			const before = text.slice(Math.max(0, offset - 16), offset);
-			// Already in °C beside it ("180°C/350°F", "180 °C (350 °F)"): nothing to add.
-			if (/°\s*C\b|celsius/i.test(before)) return whole;
+			const after = text.slice(offset + whole.length, offset + whole.length + 16);
+			// Already in °C right beside it ("180°C/350°F", "180 °C (350 °F)", "350°F (175°C)"):
+			// nothing to add. A °C further away is another temperature.
+			if (/(?:°\s*C|celsius)\s*[/(,]?\s*$/i.test(before)) return whole;
+			if (/^\s*[/(,]?\s*\d{2,3}(?:[.,]\d+)?\s*(?:°\s*C|degrees?\s+c(?:elsius)?)/i.test(after)) {
+				return whole;
+			}
 			changed = true;
 			const value = high ? `${celsius(low)}–${celsius(high)}` : `${celsius(low)}`;
 			return `${value} °C (${whole})`;

@@ -19,8 +19,26 @@ describe('withCelsius', () => {
 		);
 	});
 
-	it('converts a range, both ends', () => {
+	it('converts a range, both ends, written with a dash or a word', () => {
 		assert.equal(text('Bake at 350-375°F.'), 'Bake at 175–190 °C (350-375°F).');
+		assert.equal(
+			text('Bake at 350 to 375 degrees F.'),
+			'Bake at 175–190 °C (350 to 375 degrees F).'
+		);
+	});
+
+	it('leaves a °F with its °C after it, and converts one with an unrelated °C before it', () => {
+		for (const step of ['Preheat oven to 350°F (175°C).', 'Preheat to 350°F/180°C.']) {
+			assert.deepEqual(withCelsius(step), { text: step, changed: false }, step);
+		}
+		assert.equal(text('Bake at 180°C, then at 400°F.'), 'Bake at 180°C, then at 205 °C (400°F).');
+	});
+
+	it('leaves a step alone when Celsius would push it past what the editor holds', () => {
+		const long = `${'Rühren. '.repeat(73)}Bake at 350°F.`;
+		assert.ok(long.length <= 600);
+		const draft = { steps: [{ text: long }] };
+		assert.equal(draftInCelsius(draft), draft);
 	});
 
 	it('says whether it changed anything', () => {
