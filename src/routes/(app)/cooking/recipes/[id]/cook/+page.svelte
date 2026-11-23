@@ -29,8 +29,8 @@
 	import { keepScreenAwake } from '$lib/wake-lock';
 	import { scaleIngredients, servingsFactor } from '$lib/utils/ingredients';
 	import { readServings } from '$lib/utils/recipes';
-	import { scaleStepAmounts } from '$lib/utils/step-amounts';
-	import { plainName, readStep, scaleStepUses } from '$lib/utils/step-highlight';
+	import { plainName } from '$lib/utils/step-highlight';
+	import { renderStep } from '$lib/utils/step-links';
 	import { messages } from '$lib/i18n';
 	import { formatDuration, parseStepDuration, TIMERS_MAX } from '$lib/utils/timer-parse';
 	import Check from '@lucide/svelte/icons/check';
@@ -118,24 +118,16 @@
 	);
 
 	/**
-	 * Underlines, and the list under the step — the ingredients pinned to this
-	 * step in the recipe form, or the ones its text names (→ SPEC §4.4).
+	 * Underlines, the list under the step, and the amounts rewritten for
+	 * tonight's count: from the step's stored links and the words they name
+	 * (→ plan 43), else — a step nobody has linked, or one pinned before the
+	 * links carried words — read out of the text and the number before an
+	 * underlined word, as before (→ `$lib/utils/step-links`, SPEC §4.4).
 	 */
 	const read = $derived(
-		readStep(
-			{ text: step?.text ?? '', uses: scaleStepUses(step?.uses ?? null, factor) },
-			ingredients
-		)
+		renderStep({ text: step?.text ?? '', uses: step?.uses ?? null }, ingredients, factor)
 	);
-
-	/**
-	 * The step as it's drawn: the reading above, with every amount the sentence
-	 * gives an ingredient rewritten for tonight's count — where it's certain
-	 * (→ `$lib/utils/step-amounts`, plan 23).
-	 */
-	const segments = $derived(
-		scaleStepAmounts(read.segments, factor, ingredients, (step?.uses ?? null) !== null)
-	);
+	const segments = $derived(read.segments);
 
 	/**
 	 * How long the chip's timer runs: the step's own timer, set in the form or by
@@ -247,7 +239,12 @@
 		</ol>
 
 		<div class="body">
-			<p class="eyebrow">{m.cooking.cook.step(index + 1, steps.length)}</p>
+			<!-- The step's part beside its number [C2] (→ plan 43). -->
+			<p class="eyebrow">
+				{m.cooking.cook.step(index + 1, steps.length)}{#if step.section}<span class="part"
+						>{m.cooking.cook.stepPart(step.section)}</span
+					>{/if}
+			</p>
 
 			<CookStepText {segments} {ingredients} />
 
@@ -449,6 +446,11 @@
 		letter-spacing: 0.16em;
 		text-transform: uppercase;
 		color: var(--cook-amber);
+	}
+
+	/* "· Béchamel": the part, quieter than the count it follows [C2]. */
+	.eyebrow .part {
+		color: var(--cook-muted);
 	}
 
 	.chips {

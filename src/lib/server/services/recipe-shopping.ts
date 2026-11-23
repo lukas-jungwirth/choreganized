@@ -14,20 +14,31 @@
  * The sheet gets the open list itself and re-runs `planAdds` on whatever is
  * *ticked*, which is the only way a preview can stay true while somebody is
  * still deciding.
+ *
+ * What a row becomes on the way — the name without its note, a container as a
+ * pack, a spoon or a clove as the name alone, one line per name across the
+ * recipe's parts — is `shoppingLines` (→ `$lib/utils/recipe-shopping`, plan
+ * 43), which the sheet runs too, on the same rows.
  */
 import { scaleIngredients, servingsFactor } from '$lib/utils/ingredients';
+import { shoppingLines, type ShoppingSource } from '$lib/utils/recipe-shopping';
 import { itemName, planAdds, suggestionKey, type NamedAmount } from '$lib/utils/shopping';
 import { listStapleKeys, rememberStaples } from './pantry';
 import { getRecipe, type RecipeDetail } from './recipes';
 import { addIngredients, listOpenItems, type IngredientAddResult } from './shopping';
 
-/** One line of the picker: the ingredient, and how it opens. */
+/** One line of the picker: one name the list would get, and how it opens. */
 export type IngredientPickRow = {
-	/** `recipe_ingredients.id` — what the sheet ticks and posts back. */
+	/**
+	 * The first `recipe_ingredients.id` gathered into the line — what the sheet
+	 * ticks and posts back (→ `shoppingLines`).
+	 */
 	id: string;
 	name: string;
 	quantity: number | null;
 	unit: string | null;
+	/** The parts of the dish the line gathers, when there are any (→ plan 43). */
+	parts: string[];
 	/** The household keeps leaving this off, so it opens unticked (→ `pantry`). */
 	staple: boolean;
 	/** Ticked when the sheet opens. */
@@ -45,6 +56,12 @@ export type IngredientPick = {
 	 */
 	writtenFor: number | null;
 	rows: IngredientPickRow[];
+	/**
+	 * The recipe's own rows, unscaled and without their notes: the sheet runs
+	 * `shoppingLines` over them for whatever count its stepper says, exactly as
+	 * the submit will.
+	 */
+	ingredients: ShoppingSource[];
 	/**
 	 * The open shopping rows this recipe can actually land on, in walking order —
 	 * the sheet re-runs `planAdds` against them on every tick, so each row's
@@ -74,20 +91,29 @@ export function buildIngredientPick(householdId: string, recipeId: string): Ingr
 export function pickFor(householdId: string, recipe: RecipeDetail): IngredientPick | null {
 	if (!recipe.ingredients.length) return null;
 
-	const wanted = new Set(recipe.ingredients.map((ingredient) => suggestionKey(ingredient.name)));
+	const ingredients = recipe.ingredients.map(({ id, name, quantity, unit, section }) => ({
+		id,
+		name,
+		quantity,
+		unit,
+		section
+	}));
+	const lines = shoppingLines(ingredients);
+	const wanted = new Set(lines.map((line) => suggestionKey(line.name)));
 	const open = listOpenItems(householdId).filter((item) => wanted.has(suggestionKey(item.name)));
 
-	const plan = planAdds(open, recipe.ingredients);
+	const plan = planAdds(open, lines);
 	const staples = listStapleKeys(householdId);
 
-	const rows = recipe.ingredients.map((ingredient, index) => {
-		const staple = staples.has(suggestionKey(ingredient.name));
+	const rows = lines.map((line, index) => {
+		const staple = staples.has(suggestionKey(line.name));
 
 		return {
-			id: ingredient.id,
-			name: ingredient.name,
-			quantity: ingredient.quantity,
-			unit: ingredient.unit,
+			id: line.id,
+			name: line.name,
+			quantity: line.quantity,
+			unit: line.unit,
+			parts: line.parts,
 			staple,
 			// Everything that would change the list, minus what the cupboard
 			// already holds. Something already on the list opens unticked too:
@@ -102,13 +128,14 @@ export function pickFor(householdId: string, recipe: RecipeDetail): IngredientPi
 		recipeName: recipe.name,
 		writtenFor: recipe.servings,
 		rows,
+		ingredients,
 		open
 	};
 }
 
 export type IngredientPickSubmission = {
 	recipeId: string;
-	/** The rows that were ticked. */
+	/** The lines that were ticked, by any of their rows' ids. */
 	chosen: string[];
 	/**
 	 * The rows the sheet opened *with* ticked. An untick only means "we have
@@ -140,12 +167,17 @@ export function addRecipeIngredients(
 	const offered = new Set(submission.offered);
 
 	// Six people need more grams of the same pasta, so the amounts are scaled
-	// and the names are not — which is why the cupboard below still learns from
-	// the unscaled list (→ `utils/ingredients` `scaleIngredients`).
-	const wanted = scaleIngredients(
-		recipe.ingredients.filter((ingredient) => chosen.has(ingredient.id)),
-		servingsFactor(recipe.servings, submission.cookingFor ?? recipe.servings ?? 0)
+	// and the names are not (→ `utils/ingredients` `scaleIngredients`). Each row
+	// is scaled on its own, then gathered into its line: the order the sheet
+	// computed its preview in.
+	const lines = shoppingLines(
+		scaleIngredients(
+			recipe.ingredients,
+			servingsFactor(recipe.servings, submission.cookingFor ?? recipe.servings ?? 0)
+		)
 	);
+	const ticked = (line: { ids: string[] }, set: Set<string>) => line.ids.some((id) => set.has(id));
+	const wanted = lines.filter((line) => ticked(line, chosen));
 
 	// What the add is about to do, worked out before anything is written. It is
 	// pure and cannot fail, which is what lets the cupboard be taught *first*:
@@ -166,9 +198,9 @@ export function addRecipeIngredients(
 		bought: wanted
 			.filter((_, index) => effects[index].effect !== 'have')
 			.map((ingredient) => ingredient.name),
-		left: recipe.ingredients
-			.filter((ingredient) => offered.has(ingredient.id) && !chosen.has(ingredient.id))
-			.map((ingredient) => ingredient.name)
+		left: lines
+			.filter((line) => ticked(line, offered) && !ticked(line, chosen))
+			.map((line) => line.name)
 	});
 
 	// No `storeId`: ingredients land where quick-add sends things, the topmost

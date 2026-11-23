@@ -27,9 +27,8 @@
 	import { scaleIngredients, servingsFactor } from '$lib/utils/ingredients';
 	import { emptyFilter, recipeFilterHref, type RecipeFilter } from '$lib/utils/recipe-filter';
 	import { isMeatFree, splitTag, type RecipeTag } from '$lib/utils/recipe-tags';
-	import { readServings } from '$lib/utils/recipes';
-	import { scaleStepAmounts } from '$lib/utils/step-amounts';
-	import { readStep, scaleStepUses } from '$lib/utils/step-highlight';
+	import { groupByPart, readServings } from '$lib/utils/recipes';
+	import { renderStep } from '$lib/utils/step-links';
 	import { formatDuration } from '$lib/utils/timer-parse';
 	import CalendarDays from '@lucide/svelte/icons/calendar-days';
 	import ChefHat from '@lucide/svelte/icons/chef-hat';
@@ -123,17 +122,28 @@
 
 	/**
 	 * A step's text as runs, its ingredient amounts rewritten for the count being
-	 * read for (→ `$lib/utils/step-amounts`, plan 23). No underlines here — that
-	 * is cook mode's job; only the numbers change. As written, it's one run.
+	 * read for (→ `$lib/utils/step-links`, plans 23 and 43). A step with stored
+	 * links underlines the words they name, as cook mode does; one read by the
+	 * matcher is not underlined here (that stays cook mode's job), so a recipe
+	 * saved before plan 43 looks exactly as it did. As written, it's one run.
 	 */
-	function stepRuns(step: (typeof recipe.steps)[number]): { text: string; scaledFrom?: string }[] {
-		if (factor === 1) return [{ text: step.text }];
-		const read = readStep({ text: step.text, uses: scaleStepUses(step.uses, factor) }, ingredients);
-		return scaleStepAmounts(read.segments, factor, ingredients, step.uses !== null).map((run) => ({
+	function stepRuns(
+		step: (typeof recipe.steps)[number]
+	): { text: string; scaledFrom?: string; linked?: boolean }[] {
+		const drawn = renderStep(step, ingredients, factor);
+		if (!drawn.linked && factor === 1) return [{ text: step.text }];
+		return drawn.segments.map((run) => ({
 			text: run.text,
-			scaledFrom: run.scaledFrom
+			scaledFrom: run.scaledFrom,
+			linked: drawn.linked && run.ingredient !== null
 		}));
 	}
+
+	/** The ingredients and the steps under their parts (→ plan 43), numbered straight through. */
+	const ingredientParts = $derived(groupByPart(ingredients));
+	const stepParts = $derived(
+		groupByPart(recipe.steps.map((step, index) => ({ ...step, number: index + 1 })))
+	);
 
 	/** Cook mode inherits the count rather than asking again with wet hands. */
 	const cookHref = $derived(
@@ -330,48 +340,60 @@
 			<ServingsField bind:value={serves} writtenFor={recipe.servings} />
 		{/if}
 
-		<Card radius="md">
-			<ul class="ingredients">
-				{#each ingredients as ingredient (ingredient.id)}
-					{@const amount = m.units.amount(ingredient.quantity, ingredient.unit)}
-					<li>
-						<span class="dot" aria-hidden="true"></span>
-						<span class="ingredient-name">{ingredient.name}</span>
-						{#if amount}<span class="amount">{amount}</span>{/if}
-					</li>
-				{/each}
-			</ul>
-		</Card>
+		{#each ingredientParts as part, at (at)}
+			{#if part.section}<h3 class="part">{part.section}</h3>{/if}
+			<Card radius="md">
+				<ul class="ingredients">
+					{#each part.rows as ingredient (ingredient.id)}
+						{@const amount = m.units.amount(ingredient.quantity, ingredient.unit)}
+						<li>
+							<span class="dot" aria-hidden="true"></span>
+							<span class="ingredient-name"
+								>{ingredient.name}{#if ingredient.note}<span class="ingredient-note"
+										>{ingredient.note}</span
+									>{/if}</span
+							>
+							{#if amount}<span class="amount">{amount}</span>{/if}
+						</li>
+					{/each}
+				</ul>
+			</Card>
+		{/each}
 	{/if}
 
 	{#if recipe.steps.length > 0}
 		<h2 class="steps-head">{m.cooking.recipe.steps}</h2>
-		<ol class="steps">
-			{#each recipe.steps as step, index (step.id)}
-				<li>
-					<span class="number" aria-hidden="true">{index + 1}</span>
-					<div class="step-body">
-						<!-- No line breaks inside: whitespace here would be text (→ CookStepText). -->
-						<span class="step-text"
-							>{#each stepRuns(step) as run, at (at)}{#if run.scaledFrom}<span class="scaled"
-										>{run.text}<span class="said">{m.cooking.cook.scaledFrom(run.scaledFrom)}</span
-										></span
-									>{:else}{run.text}{/if}{/each}</span
-						>
-						<!-- The step's own timer (→ plan 21), so it is no surprise in cook mode. -->
-						{#if step.timer}
-							<span class="step-timer">
-								<Timer size={13} strokeWidth={2.2} aria-hidden="true" />
-								{m.cooking.form.timerChip(
-									step.timer.label ?? m.cooking.cook.timerForStep(index + 1),
-									formatDuration(step.timer.seconds)
-								)}
-							</span>
-						{/if}
-					</div>
-				</li>
-			{/each}
-		</ol>
+		{#each stepParts as part, at (at)}
+			{#if part.section}<h3 class="part">{part.section}</h3>{/if}
+			<ol class="steps" start={part.rows[0].number}>
+				{#each part.rows as step (step.id)}
+					<li>
+						<span class="number" aria-hidden="true">{step.number}</span>
+						<div class="step-body">
+							<!-- No line breaks inside: whitespace here would be text (→ CookStepText). -->
+							<span class="step-text"
+								>{#each stepRuns(step) as run, at (at)}{#if run.scaledFrom}<span class="scaled"
+											>{run.text}<span class="said"
+												>{m.cooking.cook.scaledFrom(run.scaledFrom)}</span
+											></span
+										>{:else if run.linked}<span class="linked">{run.text}</span
+										>{:else}{run.text}{/if}{/each}</span
+							>
+							<!-- The step's own timer (→ plan 21), so it is no surprise in cook mode. -->
+							{#if step.timer}
+								<span class="step-timer">
+									<Timer size={13} strokeWidth={2.2} aria-hidden="true" />
+									{m.cooking.form.timerChip(
+										step.timer.label ?? m.cooking.cook.timerForStep(step.number),
+										formatDuration(step.timer.seconds)
+									)}
+								</span>
+							{/if}
+						</div>
+					</li>
+				{/each}
+			</ol>
+		{/each}
 
 		<Button variant="dark" href={cookHref}>
 			<ChefHat size={18} strokeWidth={2} />{m.cooking.recipe.startCookMode}
@@ -618,6 +640,36 @@
 	/* Typed as "400 g pasta", read back as "Pasta · 400 g" [7a]. */
 	.ingredient-name::first-letter {
 		text-transform: uppercase;
+	}
+
+	/* Everything the line said besides what you buy (→ plan 43, [V1]). */
+	.ingredient-note {
+		display: block;
+		margin-top: 2px;
+		font-size: var(--fs-14);
+		line-height: 1.35;
+		color: var(--text-4);
+	}
+
+	/* A part of the dish over its ingredients and its steps [V1] [V2]. */
+	.part {
+		margin: 18px 4px 8px;
+		font-family: var(--font-display);
+		font-size: var(--fs-18);
+		font-weight: 600;
+	}
+
+	.steps-head + .part,
+	.steps + .part {
+		margin-top: 0;
+	}
+
+	/* A word a stored link names (→ plan 43): cook mode's underline, quieter. */
+	.linked {
+		text-decoration: underline;
+		text-decoration-color: var(--gold);
+		text-decoration-thickness: 2px;
+		text-underline-offset: 4px;
 	}
 
 	.amount {

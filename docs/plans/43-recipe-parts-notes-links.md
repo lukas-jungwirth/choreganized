@@ -1,6 +1,6 @@
 # 43 · Recipes with parts, clean ingredients and stored links
 
-**Status: todo.** Agreed with Lukas on 2026-11-23 (DECISIONS #312–#315). Depends on: 42.
+**Status: done (2026-11-23, v0.8.0, DECISIONS #320).** Agreed with Lukas on 2026-11-23 (DECISIONS #312–#315). Depends on: 42.
 Closes issue #176. SPEC: §4.4, §4.5, §4.6, §4.8. Design: `design/sketches/recipe-rebuild.html`
 (the recipe view frames).
 
@@ -123,12 +123,17 @@ Every other counting word, and tbsp and tsp, put the name on the list with no am
 
 ## Acceptance
 
-- [ ] The seeded lasagne shows "Bolognese" and "Béchamel" over its ingredients and its steps.
-- [ ] "Faschiertes" with note "gemischt" shows both in the recipe and only "Faschiertes" on the
+- [x] The seeded lasagne shows "Bolognese" and "Béchamel" over its ingredients and its steps.
+- [x] "Faschiertes" with note "gemischt" shows both in the recipe and only "Faschiertes" on the
       shopping list.
-- [ ] A step whose text says "Zwiebelwürfel" underlines it and a tap shows the onion's amount.
-- [ ] Cooking for twice as many turns "1 - 2 EL Olivenöl" into "2 - 4 EL Olivenöl" in the step
+- [x] A step whose text says "Zwiebelwürfel" underlines it and a tap shows the onion's amount.
+- [x] Cooking for twice as many turns "1 - 2 EL Olivenöl" into "2 - 4 EL Olivenöl" in the step
       and leaves "180 °C" and "5 - 7 Min." alone.
-- [ ] A recipe saved before this plan looks and cooks exactly as before.
-- [ ] Editing and saving any recipe in the old editor loses no note, part or link.
-- [ ] `npm run verify` and `npm run test:visual` clean.
+- [x] A recipe saved before this plan looks and cooks exactly as before.
+- [x] Editing and saving any recipe in the old editor loses no note, part or link.
+- [x] `npm run verify` and `npm run test:visual` clean.
+
+As built: DECISIONS #320 (stored-link rendering is chosen by "the pins carry words", so steps
+pinned by hand before this plan read as before; the picker groups by name across the whole
+recipe; the seeded lasagne has a third part, "Schichten"). Walked by the e2e journeys in
+`tests/e2e/cooking.spec.ts` against the production build with the seeded lasagne.

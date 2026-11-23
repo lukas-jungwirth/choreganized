@@ -204,6 +204,13 @@
       "when": 1795372179221,
       "tag": "0028_brown_namorita",
       "breakpoints": true
+    },
+    {
+      "idx": 29,
+      "version": "6",
+      "when": 1795452825948,
+      "tag": "0029_clumsy_bloodscream",
+      "breakpoints": true
     }
   ]
 }

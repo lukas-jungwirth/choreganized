@@ -173,9 +173,9 @@
 
 	/** The design's own step [7b], so the underlines can be checked against it. */
 	const COOK_INGREDIENTS = [
-		{ id: 'p', name: 'Pasta', quantity: 400, unit: 'g' },
-		{ id: 'm', name: 'Mushrooms', quantity: 250, unit: 'g' },
-		{ id: 'b', name: 'Butter', quantity: 30, unit: 'g' }
+		{ id: 'p', name: 'Pasta', quantity: 400, unit: 'g', note: null, section: null },
+		{ id: 'm', name: 'Mushrooms', quantity: 250, unit: 'g', note: null, section: null },
+		{ id: 'b', name: 'Butter', quantity: 30, unit: 'g', note: null, section: null }
 	];
 
 	const COOK_STEP = highlightStep(

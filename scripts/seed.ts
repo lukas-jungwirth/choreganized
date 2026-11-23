@@ -76,6 +76,7 @@ import {
 	SEED_GUEST_TOKEN,
 	SEED_HOUSEMATE_NAME,
 	SEED_COOKBOOK,
+	SEED_LASAGNE,
 	SEED_RECIPE_NAMES,
 	SEED_UNTAGGED,
 	SEED_CHECKLIST_ITEMS,
@@ -821,6 +822,76 @@ const seeded = db.transaction((tx) => {
 		.where(inArray(recipeSteps.id, [sid('step', 'pasta-2'), sid('step', 'pasta-3')]))
 		.run();
 
+	// The two-part recipe (→ plan 43, seed-data.ts): parts, notes and links
+	// stored with the words that name them. Older than the other two, so "Recently
+	// added" [04] still shows those.
+	const lasagneId = sid('recipe', 'lasagne');
+
+	tx.insert(recipes)
+		.values({
+			id: lasagneId,
+			householdId,
+			name: SEED_RECIPE_NAMES.lasagne,
+			timeMinutes: SEED_LASAGNE.time,
+			servings: SEED_LASAGNE.servings,
+			diet: 'meat',
+			createdByMemberId: ownerMemberId,
+			createdAt: daysAgo(40, 18)
+		})
+		.onConflictDoNothing()
+		.run();
+
+	tx.insert(recipeTags)
+		.values([
+			{ recipeId: lasagneId, tag: 'meal:dinner' },
+			{ recipeId: lasagneId, tag: 'kind:main' }
+		])
+		.onConflictDoNothing()
+		.run();
+
+	tx.insert(recipeIngredients)
+		.values(
+			SEED_LASAGNE.ingredients.map((ingredient, sortOrder) => ({
+				id: sid('ing', `lasagne-${ingredient.key}`),
+				recipeId: lasagneId,
+				name: ingredient.name,
+				quantity: ingredient.quantity,
+				unit: ingredient.unit,
+				note: ingredient.note,
+				section: ingredient.section,
+				sortOrder
+			}))
+		)
+		.onConflictDoNothing()
+		.run();
+
+	tx.insert(recipeSteps)
+		.values(
+			SEED_LASAGNE.steps.map((step, sortOrder) => ({
+				id: sid('step', `lasagne-${sortOrder}`),
+				recipeId: lasagneId,
+				text: step.text,
+				section: step.section,
+				ingredientsSet: true,
+				sortOrder
+			}))
+		)
+		.onConflictDoNothing()
+		.run();
+
+	const lasagneLinks = SEED_LASAGNE.steps.flatMap((step, at) =>
+		step.links.map((link, sortOrder) => ({
+			id: sid('uses', `lasagne-${at}:${link.ingredient}:${link.phrase ?? ''}`),
+			stepId: sid('step', `lasagne-${at}`),
+			ingredientId: sid('ing', `lasagne-${link.ingredient}`),
+			quantity: null,
+			phrase: link.phrase,
+			amountPhrase: link.amountPhrase ?? null,
+			sortOrder
+		}))
+	);
+	tx.insert(recipeStepIngredients).values(lasagneLinks).onConflictDoNothing().run();
+
 	// Keyed by date and slot, not by "today": re-running next week plans that
 	// week's meals instead of skipping every insert and leaving the plan in the
 	// past. (`UNIQUE(householdId, date, slot)` keeps a meal you planned yourself
@@ -1297,7 +1368,9 @@ const seeded = db.transaction((tx) => {
 console.log(`Seeded ${databasePath} for ${email}`);
 console.log(`  household  ${seeded.householdName} — ${seeded.members}`);
 console.log('  shopping   3 stores · 10 items (2 already checked off)');
-console.log('  cooking    2 recipes · meals planned for today, tomorrow and the day after');
+console.log(
+	'  cooking    3 recipes (one in parts) · meals planned for today, tomorrow and the day after'
+);
 if (cookbook)
 	console.log(
 		'  cookbook   13 more tagged recipes (5 with a heart, 10 planned before) · 3 untagged'

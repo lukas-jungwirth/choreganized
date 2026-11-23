@@ -139,9 +139,10 @@ function rewrite<T>(
 /**
  * The scaled number in the style it was written: a fraction stays a fraction
  * ("½" doubled is "1", "¼" doubled is "½"), a decimal stays a decimal — with
- * its comma, if it had one ("0,25" doubled is "0,5", not "½").
+ * its comma, if it had one ("0,25" doubled is "0,5", not "½"). Shared with
+ * the stored amount runs of `step-links.ts` (plan 43).
  */
-function formatLike(written: string, value: number): string {
+export function formatLike(written: string, value: number): string {
 	if (/[½¼¾⅓⅔⅛/]/.test(written)) return formatQuantityValue(value);
 	const plain = String(Number(value.toFixed(2)));
 	return written.includes(',') ? plain.replace('.', ',') : plain;

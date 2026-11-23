@@ -33,6 +33,24 @@ export const INGREDIENTS_MAX = 60;
 export const STEPS_MAX = 40;
 /** "Cook something not saved" [3d]. */
 export const MEAL_TITLE_MAX = 80;
+/**
+ * What an ingredient's note, a part's name and a step link's words may hold
+ * (→ plan 43): "in Scheiben geschnitten", "Béchamel", "Zwiebelwürfel", "1 - 2 EL".
+ */
+export const INGREDIENT_NOTE_MAX = 120;
+export const RECIPE_SECTION_MAX = 40;
+export const LINK_PHRASE_MAX = 80;
+export const AMOUNT_PHRASE_MAX = 30;
+
+/**
+ * A short free-text field as stored: one line, trimmed, capped, and null when
+ * nothing is left. Anything that is not a string is nothing. The form reader
+ * and the service both run it, the second for callers that are not the form.
+ */
+export function cleanText(value: unknown, max: number): string | null {
+	if (typeof value !== 'string') return null;
+	return value.replace(/\s+/g, ' ').trim().slice(0, max).trim() || null;
+}
 
 /* ── Rendering ────────────────────────────────────────────────────────────── */
 
@@ -61,10 +79,31 @@ export function uploadUrl(imagePath: string): string {
  */
 export type StepInput = {
 	text: string;
-	uses: { ingredient: number; quantity: number | null }[] | null;
+	uses: StepLinkInput[] | null;
 	/** The step's own timer (→ plan 21), or null for one that reads its text. */
 	timer: StepTimer | null;
+	/** The part of the dish it belongs to (→ plan 43); absent or null for none. */
+	section?: string | null;
 };
+
+/**
+ * One ingredient a step uses (→ plan 43): which line, the step's share of it,
+ * and the words of the step text that name it and give its amount, exactly as
+ * written. The words are absent on everything that predates them.
+ */
+export type StepLinkInput = {
+	ingredient: number;
+	quantity: number | null;
+	phrase?: string | null;
+	amountPhrase?: string | null;
+};
+
+/**
+ * What an ingredient line carries besides the line itself (→ plan 43): its
+ * note and the part of the dish it belongs to. Index for index with
+ * `ingredientLines`; absent or null means neither.
+ */
+export type IngredientDetails = { note: string | null; section: string | null };
 
 /**
  * A step's own timer (→ plan 21, DECISIONS #147): whole seconds, and the name
@@ -80,9 +119,15 @@ export type StepTimer = { seconds: number; label: string | null };
  * `ingredient` is the *form row's* key rather than an index or an id: rows get
  * added, reordered and removed while the form is open, and a key is the only one
  * of the three that survives all of it. The indices `StepInput` wants are worked
- * out at submit time, from where the rows ended up.
+ * out at submit time, from where the rows ended up. The stored words (→ plan
+ * 43) ride along untouched, so the old editor saves them back as they were.
  */
-export type StepUseDraft = { ingredient: string; quantity: number | null };
+export type StepUseDraft = {
+	ingredient: string;
+	quantity: number | null;
+	phrase?: string | null;
+	amountPhrase?: string | null;
+};
 
 /** One ingredient row as the sheet offers it — the form's reading of the line. */
 export type StepChoice = {
@@ -104,6 +149,8 @@ export type RecipeInput = {
 	timeMinutes: number | null;
 	servings: number | null;
 	ingredientLines: string[];
+	/** Each line's note and part (→ plan 43); absent for a caller that has none. */
+	ingredientDetails?: (IngredientDetails | null)[];
 	steps: StepInput[];
 	/**
 	 * Meal, kind, free-from (→ plan 40). Absent leaves a saved recipe's tags as
@@ -223,6 +270,12 @@ export function readRecipeForm(
 	// for position.
 	const uses = form.getAll('stepUses').map(String);
 	const timers = form.getAll('stepTimer').map(String);
+	const stepSections = form.getAll('stepSection');
+	// Plan 43: one note and one part per ingredient row, one part per step, all
+	// hidden and lined up by position like the pins. A form that posts none
+	// (an older page still open) saves none.
+	const notes = form.getAll('ingredientNote');
+	const sections = form.getAll('ingredientSection');
 
 	return {
 		input: {
@@ -230,10 +283,15 @@ export function readRecipeForm(
 			timeMinutes: readOptionalNumber(form.get('timeMinutes')),
 			servings: readOptionalNumber(form.get('servings')),
 			ingredientLines: form.getAll('ingredient').map(String),
+			ingredientDetails: form.getAll('ingredient').map((_, index) => ({
+				note: cleanText(notes[index], INGREDIENT_NOTE_MAX),
+				section: cleanText(sections[index], RECIPE_SECTION_MAX)
+			})),
 			steps: form.getAll('step').map((text, index) => ({
 				text: String(text),
 				uses: readStepUses(uses[index]),
-				timer: readStepTimer(timers[index])
+				timer: readStepTimer(timers[index]),
+				section: cleanText(stepSections[index], RECIPE_SECTION_MAX)
 			})),
 			tags: readRecipeTags(form.getAll('tag')),
 			diet: readRecipeDiet(form.get('diet'))
@@ -243,8 +301,8 @@ export function readRecipeForm(
 
 /**
  * A step's pinned ingredients, off the hidden field the form keeps beside it:
- * `[{"ingredient":0,"quantity":1.5}]`, an empty string for a step that reads its
- * own text.
+ * `[{"ingredient":0,"quantity":1.5,"phrase":"Zwiebelwürfel","amountPhrase":null}]`,
+ * an empty string for a step that reads its own text.
  *
  * Hand-rolled rather than trusted, because this is a POST body like any other:
  * anything unreadable becomes "read the text", and any entry that isn't a row
@@ -267,10 +325,17 @@ function readStepUses(value: string | undefined): StepInput['uses'] {
 	// caps the write anyway; this keeps a pasted-in megabyte from being walked.
 	return parsed.slice(0, INGREDIENTS_MAX).flatMap((entry) => {
 		if (typeof entry !== 'object' || entry === null) return [];
-		const { ingredient, quantity } = entry as Record<string, unknown>;
+		const { ingredient, quantity, phrase, amountPhrase } = entry as Record<string, unknown>;
 		if (typeof ingredient !== 'number' || !Number.isInteger(ingredient) || ingredient < 0)
 			return [];
-		return [{ ingredient, quantity: typeof quantity === 'number' ? quantity : null }];
+		return [
+			{
+				ingredient,
+				quantity: typeof quantity === 'number' ? quantity : null,
+				phrase: cleanText(phrase, LINK_PHRASE_MAX),
+				amountPhrase: cleanText(amountPhrase, AMOUNT_PHRASE_MAX)
+			}
+		];
 	});
 }
 
@@ -335,14 +400,22 @@ export type ShareableRecipe = {
 	name: string;
 	timeMinutes: number | null;
 	servings: number | null;
-	ingredients: { name: string; quantity: number | null; unit: string | null }[];
-	steps: string[];
+	ingredients: {
+		name: string;
+		quantity: number | null;
+		unit: string | null;
+		note?: string | null;
+		section?: string | null;
+	}[];
+	steps: { text: string; section?: string | null }[];
 };
 
 /**
  * A recipe as plain text for the OS share sheet [7c]. v1 shares the recipe
  * itself rather than a link, because a link would have to be a public route
  * with a token and this app has no public data (→ DECISIONS "Open questions").
+ * Parts head their rows and notes follow their line (→ plan 43); the steps are
+ * numbered straight through, as on the screen.
  */
 export function recipeShareText(recipe: ShareableRecipe, m: Messages): string {
 	const meta = [
@@ -358,18 +431,49 @@ export function recipeShareText(recipe: ShareableRecipe, m: Messages): string {
 		blocks.push(
 			[
 				m.cooking.recipe.ingredients,
-				...recipe.ingredients.map((row) => `• ${m.units.ingredient(row)}`)
+				...groupByPart(recipe.ingredients).flatMap((part) => [
+					...(part.section ? [part.section] : []),
+					...part.rows.map((row) => {
+						const line = m.units.ingredient(row);
+						return `• ${row.note ? m.cooking.recipe.withNote(line, row.note) : line}`;
+					})
+				])
 			].join('\n')
 		);
 	}
 
 	if (recipe.steps.length) {
+		let number = 0;
 		blocks.push(
-			[m.cooking.recipe.steps, ...recipe.steps.map((text, i) => `${i + 1}. ${text}`)].join('\n')
+			[
+				m.cooking.recipe.steps,
+				...groupByPart(recipe.steps).flatMap((part) => [
+					...(part.section ? [part.section] : []),
+					...part.rows.map((step) => `${++number}. ${step.text}`)
+				])
+			].join('\n')
 		);
 	}
 
 	return blocks.filter(Boolean).join('\n\n');
+}
+
+/**
+ * Rows in their parts (→ plan 43, DECISIONS #312): consecutive rows with the
+ * same `section` are one part, in the order they stand. Rows without one come
+ * as a part with a null name, which the screens draw without a heading.
+ */
+export function groupByPart<T extends { section?: string | null }>(
+	rows: readonly T[]
+): { section: string | null; rows: T[] }[] {
+	const parts: { section: string | null; rows: T[] }[] = [];
+	for (const row of rows) {
+		const section = row.section ?? null;
+		const last = parts.at(-1);
+		if (last && last.section === section) last.rows.push(row);
+		else parts.push({ section, rows: [row] });
+	}
+	return parts;
 }
 
 /* ── The plan-a-meal payload ──────────────────────────────────────────────── */

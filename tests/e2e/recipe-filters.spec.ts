@@ -16,13 +16,13 @@ test.describe('on the cookbook', () => {
 
 	test('a quick chip narrows the grid, and the URL keeps it', async ({ page }) => {
 		await page.goto('/cooking/recipes');
-		await expect(results(page)).toHaveCount(18);
+		await expect(results(page)).toHaveCount(19);
 
 		await page.getByRole('link', { name: 'Vegetarian', exact: true }).click();
 		await expect(page).toHaveURL(/\?diet=vegetarian$/);
-		// Pasta, curry, and the sketch's nine meat-free ones; vegan counts. The three
+		// Pasta, curry (the lasagne is meat), and the sketch's nine meat-free ones; vegan counts. The three
 		// untagged recipes (→ plan 41) have no diet, so no filter finds them.
-		await expect(page.getByText('11 of 18 recipes')).toBeVisible();
+		await expect(page.getByText('11 of 19 recipes')).toBeVisible();
 		await expect(results(page)).toHaveCount(11);
 
 		await page.reload();
@@ -31,7 +31,7 @@ test.describe('on the cookbook', () => {
 		// The active chip takes itself off again.
 		await page.getByRole('link', { name: 'Remove Vegetarian' }).click();
 		await expect(page).toHaveURL(/\/cooking\/recipes$/);
-		await expect(results(page)).toHaveCount(18);
+		await expect(results(page)).toHaveCount(19);
 	});
 
 	test('a time cap that is on leaves no second time chip to replace it', async ({ page }) => {
@@ -55,7 +55,7 @@ test.describe('on the cookbook', () => {
 		const sheet = page.getByRole('dialog', { name: 'Filter recipes' });
 
 		await sheet.getByRole('button', { name: 'Dinner', exact: true }).click();
-		await expect(sheet.getByRole('button', { name: 'Show 8 recipes' })).toBeVisible();
+		await expect(sheet.getByRole('button', { name: 'Show 9 recipes' })).toBeVisible();
 		await sheet.getByRole('button', { name: 'Vegetarian', exact: true }).click();
 		await expect(sheet.getByRole('button', { name: 'Show 4 recipes' })).toBeVisible();
 
@@ -63,7 +63,7 @@ test.describe('on the cookbook', () => {
 		await expect(page).toHaveURL(/meal=dinner/);
 		await expect(page).toHaveURL(/diet=vegetarian/);
 		await expect(results(page)).toHaveCount(4);
-		await expect(page.getByText('4 of 18 recipes')).toBeVisible();
+		await expect(page.getByText('4 of 19 recipes')).toBeVisible();
 	});
 
 	test('nothing fits offers a way out per filter, with what it brings back', async ({ page }) => {

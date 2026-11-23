@@ -4560,3 +4560,49 @@ store_id` NULL already means "no memory" (a deleted list), and telling the two a
        assumed tbsp and tsp were already dropped on the way to the list; they are not, the
        unit column there is free text and merges only with its own spelling.
      - `timer-parse.ts` keeps its own patterns: a duration is not an amount.
+320. **Plan 43 as built: parts, notes and stored links, and what reads as before** (2026-11-23).
+     `recipe_ingredients.note` / `.section`, `recipe_steps.section`, and `phrase` /
+     `amount_phrase` on `recipe_step_ingredients`, unique on (step, ingredient, phrase)
+     (migration 0029, plain `ALTER TABLE ADD` plus the index swap; existing rows survive, pinned
+     by a migration test). Judgment calls and deviations from the plan:
+     - **What picks the stored-link rendering is "the step's pins carry words", not the
+       `ingredients_set` flag alone.** Steps pinned by hand in the old editor (the seeded pasta
+       has two) have the flag set and pins without phrases; drawn from stored links they would
+       lose every underline, which breaks "a recipe saved before this plan looks and cooks
+       exactly as before". So `renderStep` (`utils/step-links.ts`, the one entry point for cook
+       mode and the recipe view) draws from stored links when any pin of the step carries a
+       phrase or an amount phrase, and otherwise does exactly what the screens did before:
+       `readStep` plus plan 23's `scaleStepAmounts`. `readStep` itself is unchanged. Cost: a
+       new-model step whose links all have no words (rare: the import stores the word whenever
+       the text names it) is read by the matcher against its pinned list.
+     - **The recipe view underlines only stored links.** A step read by the matcher stays
+       without underlines there, as before (the matcher's underlines stay cook mode's); the
+       stored ones are certain enough to show, as sketch V2 does. Mustard in the sketch is
+       `--gold` here.
+     - **An amount phrase is found near its phrase**: the occurrence directly in front of one
+       of the link's phrase occurrences (only spaces between), else the first occurrence in the
+       step; bounded so "2 EL" is never read inside "12 EL". Every number in the run is scaled
+       on its own (`scaleQuantity`, then `formatLike` from `step-amounts.ts`), so a range moves
+       both ends and the words in the run never change. Phrases match case-blind.
+     - **The picker groups by name across the whole recipe**, not only across parts: a flat
+       recipe that names "Salz" twice also gets one row now. A line's id is its first row's id;
+       the submit accepts any of the line's row ids, so a sheet opened before a deploy still
+       posts something it understands. `shoppingLines` (`utils/recipe-shopping.ts`) scales each
+       row first and then adds them, on both sides. The parts line appears only when a name is
+       gathered from two or more parts.
+     - **tbsp and tsp leave the list with no amount even on recipes saved before**, and a
+       counting word other than a container too (#313 applied to every recipe, as the plan
+       says; #319's interim "Knoblauch · 2 Zehen" is gone).
+     - **The old editor keeps everything without showing it**: hidden `ingredientNote`,
+       `ingredientSection`, `stepSection`, and the words inside `stepUses`. A row's note is
+       posted only while the line still parses to the name it was opened with. Re-ticking a
+       step in the ingredients sheet keeps every phrase a still-ticked ingredient was linked
+       by; the sheet's share goes onto the first. `RecipeInput.ingredientDetails` and
+       `StepInput.section` are optional, so the import (plan 44) keeps its contract untouched.
+     - **Part headings** are Fraunces at `--fs-18` (sketch 19 px), one step under the 20 px
+       "Ingredients" / "Steps" titles they sit beneath, so the hierarchy holds. The peek sheet
+       heads its parts with the sheets' small uppercase label instead.
+     - **The seeded lasagne has a third part, "Schichten"** (the layering), so the Butter for
+       the form shows one name gathered from two parts in the picker. It is in the base seed
+       (every e2e and visual household), tagged dinner · main · meat and older than the other
+       two, so "Recently added" is unchanged; the cookbook's counts move by one.

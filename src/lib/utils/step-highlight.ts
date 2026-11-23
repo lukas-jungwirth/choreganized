@@ -59,6 +59,13 @@ export type StepUse = {
 	ingredientId: string;
 	/** In the ingredient's own unit; null = whatever the ingredient row says. */
 	quantity: number | null;
+	/**
+	 * The words of the step text that name it ("Zwiebelwürfel"), and the amount
+	 * the text gives it ("1 - 2 EL"), exactly as written (→ plan 43,
+	 * `step-links.ts`). Absent or null on every pin written before them.
+	 */
+	phrase?: string | null;
+	amountPhrase?: string | null;
 };
 
 /**

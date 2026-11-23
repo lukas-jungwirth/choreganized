@@ -180,6 +180,15 @@ user ─┬─ session / account / verification        (Better Auth)
   `tsp`) **or a counting word as the line wrote it** ("Zehen", "Bund", "Dose", "Prise";
   → [DECISIONS #313](DECISIONS.md)). A counting word is shown as stored, never translated,
   and compared by its key (`measureKey`: "Zehe" and "Zehen" are the same measure).
+- **`name` is what you buy; `note` is the rest** (migration 0029, → plan 43, DECISIONS #314):
+  `recipe_ingredients.note` (nullable, ≤ 120 characters) holds "in Scheiben geschnitten",
+  "zum Würzen", "oder veganes Hack". The shopping list, the cupboard, the diet guess and the
+  tag pre-fill read `name` only.
+- **Parts** (migration 0029, → DECISIONS #312): `recipe_ingredients.section` and
+  `recipe_steps.section` (nullable, ≤ 40 characters) hold the part's name as written
+  ("Bolognese", "Béchamel"). Consecutive rows with the same value form one part; NULL rows have
+  no heading. No table of their own: a part has no data besides its name and its place, and
+  the two lists may name the same part differently ("Ragu Bolognese:" / "Ragu:").
 - Steps are plain text, ordered by `sortOrder`. A step **may carry its own timer**
   (`timer_seconds` + an optional `timer_label`, migration 0014, → plan 21, DECISIONS #147) —
   one per step, set in the form or by an import. `NULL` (every step written before it, and the
@@ -192,8 +201,16 @@ user ─┬─ session / account / verification        (Better Auth)
   (`src/lib/utils/step-highlight.ts`) to the rows in `recipe_step_ingredients`. The flag is what
   makes "this step uses nothing" sayable: an empty list on its own is indistinguishable from a
   step nobody has looked at.
-- `recipe_step_ingredients` is `(stepId, ingredientId, quantity?, sortOrder)` with
-  `UNIQUE(step_id, ingredient_id)` — a step names an ingredient once. `quantity` is a **share of
+- `recipe_step_ingredients` is `(stepId, ingredientId, quantity?, phrase?, amountPhrase?,
+sortOrder)` with `UNIQUE(step_id, ingredient_id, phrase)` (migration 0029, → plan 43; it was
+  `(step_id, ingredient_id)` before): a step may name one ingredient by two phrases ("Karotte
+  schälen … zu den Möhren"). SQLite lets two NULL phrases past the index, so `writeChildren`
+  dedupes on (ingredient, phrase) itself. `phrase` is the words of the step text that name the
+  ingredient, exactly as written ("Zwiebelwürfel"; NULL: used without being named, nothing is
+  underlined); `amount_phrase` is the amount the text gives it ("1 - 2 EL"; the run a different
+  count rewrites, → `src/lib/utils/step-links.ts`). Pins written before 0029 carry neither, and
+  a step whose pins carry no words is drawn exactly as before, by the matcher (→ DECISIONS
+  #320). `quantity` is a **share of
   the ingredient row**, in that row's own unit (1 of the 3 tbsp of olive oil here, 2 at the end);
   NULL means all of it, which is what a plain tick stores. Written in recipe-as-written terms, so
   `?serves=` scales a share with exactly the same arithmetic as the ingredient above it

@@ -91,8 +91,9 @@ describe('an ingredient counted in a counting word', () => {
 
 		const garlic = listOpenItems(householdId).find((item) => item.name === 'Knoblauch');
 		assert.ok(garlic, 'the list has "Knoblauch", not "Zehen Knoblauch"');
-		assert.equal(garlic.quantity, 2);
-		assert.equal(garlic.unit, 'Zehen');
+		// Plan 43 (DECISIONS #313): nobody buys two cloves, so the name goes alone.
+		assert.equal(garlic.quantity, null);
+		assert.equal(garlic.unit, null);
 	});
 });
 

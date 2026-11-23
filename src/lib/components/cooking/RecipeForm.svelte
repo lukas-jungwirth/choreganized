@@ -90,25 +90,48 @@
 	/** A row keeps its own key so reordering moves the DOM node, not the text. */
 	type Row = { key: string; text: string };
 	/**
+	 * An ingredient row also keeps what plan 43 stores beside the line — its
+	 * note and its part — so a save in this editor loses neither. No control
+	 * shows them (plan 46 rebuilds the editor); `named` is the name the note was
+	 * written for, and a line retyped to another name leaves the note behind.
+	 */
+	type IngredientRow = Row & { note: string | null; section: string | null; named: string | null };
+	/**
 	 * A step also carries what it uses (→ SPEC §4.4): null while it reads its own
 	 * text, a list — possibly empty — once someone has said. Pins name ingredient
 	 * *rows*, so they survive a reorder and go away with a removal. And it may
 	 * carry a timer of its own (→ plan 21): null while cook mode reads the
 	 * duration out of the text.
 	 */
-	type StepRow = Row & { uses: StepUseDraft[] | null; timer: StepTimer | null };
+	type StepRow = Row & {
+		uses: StepUseDraft[] | null;
+		timer: StepTimer | null;
+		/** The step's part (→ plan 43), posted back as it came. */
+		section: string | null;
+	};
 
 	let nextKey = 0;
 	/** A counter rather than randomness: the server and the browser agree on it. */
 	const row = (text = ''): Row => ({ key: `r${nextKey++}`, text });
+	const ingredientRow = (
+		text = '',
+		details: { note: string | null; section: string | null; name: string } | null = null
+	): IngredientRow => ({
+		...row(text),
+		note: details?.note ?? null,
+		section: details?.section ?? null,
+		named: details?.name ?? null
+	});
 	const stepRow = (
 		text = '',
 		uses: StepUseDraft[] | null = null,
-		timer: StepTimer | null = null
+		timer: StepTimer | null = null,
+		section: string | null = null
 	): StepRow => ({
 		...row(text),
 		uses,
-		timer
+		timer,
+		section
 	});
 
 	/**
@@ -132,22 +155,22 @@
 		untrack(() => numberField(prefill ? prefill.timeMinutes : recipe?.timeMinutes))
 	);
 	let servings = $state(untrack(() => numberField(prefill ? prefill.servings : recipe?.servings)));
-	let ingredients = $state<Row[]>(
+	let ingredients = $state<IngredientRow[]>(
 		untrack(() => {
 			if (prefill) {
 				return prefill.ingredientLines.length
 					? prefill.ingredientLines.map((line) => {
-							const created = row(line);
+							const created = ingredientRow(line);
 							rowForDraftIndex.push(created.key);
 							return created;
 						})
-					: [row()];
+					: [ingredientRow()];
 			}
 
-			if (!recipe?.ingredients.length) return [row()];
+			if (!recipe?.ingredients.length) return [ingredientRow()];
 
 			return recipe.ingredients.map((ingredient) => {
-				const created = row(m.units.ingredient(ingredient));
+				const created = ingredientRow(m.units.ingredient(ingredient), ingredient);
 				rowForIngredientId.set(ingredient.id, created.key);
 				return created;
 			});
@@ -167,7 +190,7 @@
 						return key ? [{ ingredient: key, quantity: use.quantity }] : [];
 					});
 					// Nothing left to pin reads the text — "uses nothing" is a person's call.
-					return stepRow(step.text, uses?.length ? uses : null, step.timer);
+					return stepRow(step.text, uses?.length ? uses : null, step.timer, step.section ?? null);
 				});
 			}
 
@@ -180,9 +203,19 @@
 					// the save and this load) is dropped rather than shown as a blank.
 					step.uses?.flatMap((use) => {
 						const key = rowForIngredientId.get(use.ingredientId);
-						return key ? [{ ingredient: key, quantity: use.quantity }] : [];
+						return key
+							? [
+									{
+										ingredient: key,
+										quantity: use.quantity,
+										phrase: use.phrase ?? null,
+										amountPhrase: use.amountPhrase ?? null
+									}
+								]
+							: [];
 					}) ?? null,
-					step.timer
+					step.timer,
+					step.section
 				)
 			);
 		})
@@ -323,9 +356,12 @@
 
 	/** The chips under one step: its pins, or its reading, as name + amount. */
 	function chips(step: StepRow): { key: string; name: string; amount: string }[] {
+		// One chip per ingredient, though a stored link may name it twice (→ plan 43).
+		const seen = new Set<string>();
 		return (step.uses ?? suggest(step.text)).flatMap((use) => {
 			const choice = choices.find((item) => item.key === use.ingredient);
-			if (!choice) return [];
+			if (!choice || seen.has(choice.key)) return [];
+			seen.add(choice.key);
 
 			return [
 				{
@@ -351,9 +387,45 @@
 		return JSON.stringify(
 			step.uses.flatMap((use) => {
 				const at = positions.get(use.ingredient);
-				return at === undefined ? [] : [{ ingredient: at, quantity: use.quantity }];
+				return at === undefined
+					? []
+					: [
+							{
+								ingredient: at,
+								quantity: use.quantity,
+								phrase: use.phrase ?? null,
+								amountPhrase: use.amountPhrase ?? null
+							}
+						];
 			})
 		);
+	}
+
+	/**
+	 * The sheet's answer, with the words the stored links carried (→ plan 43):
+	 * an ingredient still ticked keeps every phrase it was linked by, the first
+	 * one taking the share the sheet set. The sheet knows nothing of phrases, and
+	 * reopening it must not be what loses them.
+	 */
+	function keepWords(before: StepUseDraft[] | null, after: StepUseDraft[]): StepUseDraft[] {
+		return after.flatMap((use) => {
+			const linked = (before ?? []).filter((old) => old.ingredient === use.ingredient);
+			if (!linked.length) return [use];
+			return linked.map((old, at) => ({
+				...old,
+				quantity: at === 0 ? use.quantity : old.quantity
+			}));
+		});
+	}
+
+	/**
+	 * The note a row posts: the one it was opened with while the line still names
+	 * the same thing. Retyped to another name, the note was about something else.
+	 */
+	function postedNote(item: IngredientRow): string {
+		if (!item.note || item.named === null) return '';
+		const parsed = item.text.trim() ? parseIngredient(item.text) : null;
+		return parsed?.name === item.named ? item.note : '';
 	}
 
 	/** Which step's timer sheet is open, by row key. */
@@ -532,10 +604,13 @@
 						// walking to the next ingredient is what's meant here.
 						event.preventDefault();
 						if (ingredients.length < INGREDIENTS_MAX) {
-							ingredients = add(ingredients, 'ingredient', () => row(), index);
+							ingredients = add(ingredients, 'ingredient', () => ingredientRow(), index);
 						}
 					}}
 				/>
+				<!-- Plan 43's note and part, carried through unseen (→ `readRecipeForm`). -->
+				<input type="hidden" name="ingredientNote" value={postedNote(item)} />
+				<input type="hidden" name="ingredientSection" value={item.section ?? ''} />
 				{#if item.text.trim()}
 					<!-- The receipt: what the line was understood to measure, rendered
 						 by the same `m.units.amount` the recipe [7a] and the peek sheet
@@ -566,7 +641,7 @@
 					// chips would outlive it on every step that named it.
 					if (ingredients[index].key === editing) editing = null;
 					unpin(ingredients[index].key);
-					ingredients = remove(ingredients, index, () => row());
+					ingredients = remove(ingredients, index, () => ingredientRow());
 				})}
 			</li>
 		{/each}
@@ -576,7 +651,7 @@
 		<button
 			type="button"
 			class="add"
-			onclick={() => (ingredients = add(ingredients, 'ingredient', () => row()))}
+			onclick={() => (ingredients = add(ingredients, 'ingredient', () => ingredientRow()))}
 		>
 			<Plus size={16} strokeWidth={2.2} />{m.cooking.form.addIngredient}
 		</button>
@@ -657,6 +732,7 @@
 						 position, so a step that reads its own text still has to post. -->
 					<input type="hidden" name="stepUses" value={postedUses(step)} />
 					<input type="hidden" name="stepTimer" value={postedTimer(step)} />
+					<input type="hidden" name="stepSection" value={step.section ?? ''} />
 				</div>
 				<span class="step-controls">
 					{@render controls(index, steps.length, 'step', (direction) => {
@@ -708,9 +784,11 @@
 		<StepIngredientsSheet
 			index={at + 1}
 			ingredients={choices}
-			uses={steps[at].uses}
+			uses={steps[at].uses?.filter(
+				(use, first, all) => all.findIndex((other) => other.ingredient === use.ingredient) === first
+			) ?? null}
 			suggested={suggest(steps[at].text)}
-			onsave={(uses) => (steps[at].uses = uses)}
+			onsave={(uses) => (steps[at].uses = keepWords(steps[at].uses, uses))}
 			onauto={() => (steps[at].uses = null)}
 			onclose={() => (pinning = null)}
 		/>
