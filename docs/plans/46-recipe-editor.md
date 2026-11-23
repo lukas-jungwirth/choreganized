@@ -19,48 +19,33 @@ is a textarea with three 16 px icons beside it and two rows of small chips under
   empty name dissolves the part into the one above.
 - A row shows amount and unit (or counting word), the **name**, and the note in a second,
   smaller line. Tapping it opens the ingredient sheet [E2]: name, amount, note, part.
-  **The amount is one typed field whose chip opens the units** (Lukas, 2026-11-23, after two
-  rejected drafts: a tall number field beside wrapped unit chips, then a number field with
-  chips in a scrolling row; his own proposal: "you write 500g and when detected it is possible
-  to change the unit"). "500 g", "2 EL", "1 Dose", "2 Zehen" are typed into one field and read
-  by plan 42's reader. A chip in the field shows what was read, the way the add field on Lists
-  shows "×3" (plan 37). **The chip is a button**: it opens a small menu of the eight units and
-  "No unit", with the current one marked and the row's own counting word listed when it has
-  one; picking a unit rewrites the field ("500 g" → "500 kg"). No amount typed, no chip. A
-  line of examples sits under the field.
-  **A word that is no unit becomes the row's own unit** (Lukas, 2026-11-23: "what would happen
-  if I type 2 Zehen?"). In this field everything after the number is the unit, because the
-  name has a field of its own: "2 Zehen" is read as 2 with the unit "Zehen", the chip says
-  "2 Zehen", and the menu lists "Zehen" marked as current beside the eight. That holds for a
-  word the app has never seen too ("2 Kugeln", "1 Ring"): it is kept as written (letters and a
-  dot, up to 16 characters). The one-line add field is stricter: there a word after the
-  number is only taken for a unit when it is one of plan 42's known counting words, because
-  "2 Zehen Knoblauch" and "2 Eier" look alike and the second word of "2 rote Zwiebeln" is the
-  name.
-  **The field is not limited to the known words** (Lukas asked on 2026-11-23 whether it should
-  be, and what happens to a word that is not on the list). It is not, because a closed list
-  keeps failing: 24 of the 31 pages in the probe counted in a word the app did not know, and a
-  word with nowhere to go ends up in the name again, which is the problem this rebuild is
-  about. But an unknown word is never taken silently:
-  - a unit or a known counting word: the chip is plain, "2 Zehen";
-  - a word the household has not used before: the chip is dashed and says so, "2 Kugeln · new
-    unit". It is saved as typed. A typo ("2 Zeehn") is therefore visible before Done, and the
-    menu behind the chip offers the known words to switch to.
-    Nothing downstream needs the word to be known: the number scales, the shopping list takes
-    the name only (DECISIONS #313), and a step's amount is compared by the word itself.
-    **A word used once is known from then on** (Lukas, 2026-11-23: "should we make the input
-    also one of those counting words?"). The add field's known counting words are plan 42's
-    list **plus every unit this household's recipes already use** that is not one of the eight.
-    So after "Kugeln" was set as a unit once, in the amount field or by an import, "2 Kugeln
-    Mozzarella" typed into the add field reads as 2 Kugeln of Mozzarella. It is derived from
-    the stored rows (`SELECT DISTINCT unit` over the household's recipe ingredients), not kept
-    in a table of its own: a word no row uses any more is forgotten, which is also how a
-    mistake ("2 rote" saved as a unit) heals once the row is fixed. Per household, never
-    shared. `parseIngredient(line, known?)` takes the set, the way `parseQuickAdd` takes the
-    household's names (plan 37); the editor's load hands it to the form.
-- **Typing stays the fast way in**: an add field at the foot of each part takes a line
-  ("400 g Nudeln", "1 Karotte, in Scheiben") and reads it with plan 42's reader; what follows
-  a comma or stands in brackets becomes the note. The row shows what was understood.
+  **The amount is a number and a unit, kept apart** [E2, E2b] (agreed with Lukas on
+  2026-11-23 after three drafts he turned down: a tall number box beside wrapped unit chips,
+  a number box with a scrolling chip row, and one typed field with a chip. His reasons: a
+  typed field has to guess what is number and what is unit, auto-suggest and adding words are
+  hard to make free of frustration, and an open field where anything goes overwhelms people):
+  - **Number**: numbers only ("500", "1,5", "½", "1/2"), the number keyboard, nothing else
+    accepted.
+  - **Unit**: a button showing the current unit ("g", or "No unit"). It opens a panel [E2b]
+    with **everything visible, nothing to type or scroll**: the eight units; about twelve
+    everyday counting words (Zehe, Bund, Dose, Prise, Scheibe, Becher, Glas, Stange, Zweig,
+    Blatt, Msp., Würfel; the English ones when the app is in English); the household's own
+    words after those, outlined; "No unit"; and **"Add your own"**, the only way a new word
+    comes in. The row's current word is always in the panel, also when it is one the reader
+    knows but the panel does not list ("Tasse").
+  - **One list for everyone** (this amends DECISIONS #313, which let a row keep any word): a
+    unit is one of the eight, one of the counting words the reader knows (plan 42, about 40,
+    of which the panel shows the everyday dozen), or a word the household added. The AI import
+    picks from the same list (plan 44). Own words are per household, kept in the table plan 44
+    adds, and listed in Settings where one can be removed.
+- **Typing a whole line stays the fast way in**: an add field at the foot of each part takes
+  a line ("400 g Nudeln", "1 Karotte, in Scheiben") and reads it with plan 42's reader; what
+  follows a comma or stands in brackets becomes the note. The rule is fixed and simple: the
+  number comes first, then a unit **only if the next word is on the list** (the household's
+  own words included), and everything else is the name. "500 rote Zwiebeln" is 500 of "rote
+  Zwiebeln"; "Mehl 500 g" is 500 g Mehl; "Salz 2 Prisen fein" has its number in the middle and
+  stays a name. The row shows what was understood, and a line read wrongly is fixed by tapping
+  the row, in the two fields above.
 - Reorder by **dragging the grip** (`svelte-dnd-action`, already a dependency), also from one
   part into another; the ingredient sheet's Part row does the same without a drag. The arrows
   of DECISIONS #67 go.
@@ -115,12 +100,21 @@ is a textarea with three 16 px icons beside it and two rows of small chips under
 **The rest** (photo, name, time, servings, tags) keeps its behaviour and takes the larger
 controls of the sketch.
 
+## Open, to settle with Lukas before building
+
+- **Singular and plural.** The panel says "Zehe"; a recipe for two reads better as "2 Zehen".
+  Proposal, not agreed: a built-in word is shown in the number that fits the amount, an own
+  word as it was added.
+- **Where "Add your own" asks for the word**: in the panel itself, or a small sheet over it.
+
 ## Build
 
 - `RecipeForm.svelte` (1190 lines) is split: `RecipeBasics`, `IngredientList`,
   `IngredientSheet` (rebuilt), `StepList`, `StepCard`, `StepLinkSheet`, `StepTimerSheet`
   (kept). The form still posts through one action with `use:enhance`; `readRecipeForm` reads
   structured fields per row, no longer a typed line (the line is only the add field's input).
+- `UnitPanel.svelte` (new, `lib/components/cooking`): the panel of [E2b]; the Settings row and
+  sheet for the household's own unit words (the table is plan 44's).
 - `utils/step-links.ts` (plan 43) gains `suggestLinks(text, ingredients, links)` on top of the
   matcher, and `tokens(text)` for the tappable words.
 - Removed: the amount chip + "reading" preview of DECISIONS #100–101 (the row is structured
@@ -145,15 +139,15 @@ controls of the sketch.
 - [ ] A step that says "400 g Karotten" links the amount with the word; "Show for 8" in the
       link sheet and cook mode for 8 both read "800 g Karotten". Switching the amount off
       leaves it at 400 g in both.
-- [ ] Typing "2 Zehen" into the amount field shows the chip "2 Zehen" and saves the unit
-      "Zehen". Typing "2 Kugeln" in a household that never used the word shows the dashed chip
-      "2 Kugeln · new unit" and saves the unit "Kugeln"; the next time the chip is plain. Typing "2 Kugeln Mozzarella" into the add
-      field saves 2 of "Kugeln Mozzarella".
-- [ ] After one recipe has an ingredient with the unit "Kugeln", typing "2 Kugeln Mozzarella"
-      into the add field of any recipe of this household saves 2 Kugeln of "Mozzarella";
-      another household still gets 2 of "Kugeln Mozzarella".
-- [ ] Typing "500 g" into the amount field shows the chip "500 g"; tapping the chip and
-      picking kg makes the field and the chip read "500 kg", and the row is saved as 500 kg.
+- [ ] The number field takes "500", "1,5" and "½" and refuses letters; the unit button opens
+      the panel with the eight units, the everyday counting words, the household's own words,
+      "No unit" and "Add your own", all visible without scrolling at 390 × 844.
+- [ ] Picking "Zehe" in the panel saves the row with that unit; "Add your own" with "Kugel"
+      adds it for this household only, shows it in the panel from then on, and Settings lists
+      it with a way to remove it.
+- [ ] In the add field, "2 Kugel Mozzarella" saves 2 Kugel of "Mozzarella" for the household
+      that added the word and 2 of "Kugel Mozzarella" for one that did not; "500 rote
+      Zwiebeln" saves 500 of "rote Zwiebeln"; "Salz 2 Prisen fein" stays a name.
 - [ ] A step that says "200 g Karotten" in a recipe with 400 g shows "200 g of 400 g" in the
       link sheet and in cook mode, and "400 g of 800 g" for twice as many.
 - [ ] A word in a step can be linked to an ingredient in two taps, and cook mode underlines it.
