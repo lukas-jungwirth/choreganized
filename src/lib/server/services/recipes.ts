@@ -31,8 +31,15 @@ import {
 	sql
 } from 'drizzle-orm';
 import type { CalendarDate } from '$lib/utils/dates';
+import {
+	countingBase,
+	countingWord,
+	householdUnitKey,
+	unitFromWord,
+	UNIT_WORD_MAX
+} from '$lib/utils/amounts';
 import { parseIngredient, RECIPE_QUANTITY_MAX } from '$lib/utils/ingredients';
-import { knownUnitWords } from './units';
+import { unitSpellings } from './units';
 import { readRecipeTags, type RecipeDiet, type RecipeTag } from '$lib/utils/recipe-tags';
 import {
 	AMOUNT_PHRASE_MAX,
@@ -521,7 +528,7 @@ export function createRecipe(
 			.returning({ id: recipes.id })
 			.get();
 
-		writeChildren(tx, recipe.id, input, knownUnitWords(householdId));
+		writeChildren(tx, recipe.id, input, unitSpellings(householdId));
 		return recipe.id;
 	});
 }
@@ -562,7 +569,7 @@ export function updateRecipe(
 			.where(and(eq(recipes.id, recipeId), eq(recipes.householdId, householdId)))
 			.run();
 
-		writeChildren(tx, recipeId, input, knownUnitWords(householdId));
+		writeChildren(tx, recipeId, input, unitSpellings(householdId));
 		return current.imagePath;
 	});
 
@@ -870,9 +877,13 @@ function writeChildren(
 	tx: Transaction,
 	recipeId: string,
 	input: RecipeInput,
-	/** The household's own unit words (→ plan 44): "2 Ringe Fleischwurst" keeps its Ring. */
-	known: ReadonlySet<string>
+	/**
+	 * The household's own unit words, lowercased → as added (→ plans 44, 46):
+	 * "2 Ringe Fleischwurst" keeps its Ring.
+	 */
+	spellings: ReadonlyMap<string, string>
 ): void {
+	const known = new Set(spellings.keys());
 	if (input.tags !== undefined) writeTags(tx, recipeId, input.tags);
 
 	tx.delete(recipeIngredients).where(eq(recipeIngredients.recipeId, recipeId)).run();
@@ -889,25 +900,51 @@ function writeChildren(
 	const kept = new Map<number, string>();
 	const ingredients: (typeof recipeIngredients.$inferInsert)[] = [];
 
-	input.ingredientLines.forEach((line, posted) => {
+	// The editor's rows, as fields (→ plan 46): nothing to parse, only to hold
+	// to the rules a parsed line keeps anyway.
+	input.ingredients?.forEach((row, posted) => {
 		if (ingredients.length >= INGREDIENTS_MAX) return;
 
-		const parsed = parseIngredient(line, known);
-		if (!parsed) return;
+		const name = cleanText(row.name, INGREDIENT_LINE_MAX);
+		if (!name) return;
 
+		const quantity = normalizeShare(row.quantity);
 		const id = crypto.randomUUID();
-		const details = input.ingredientDetails?.[posted];
 		kept.set(posted, id);
 		ingredients.push({
 			id,
 			recipeId,
-			...parsed,
-			name: parsed.name.slice(0, INGREDIENT_LINE_MAX),
-			note: cleanText(details?.note, INGREDIENT_NOTE_MAX),
-			section: cleanText(details?.section, RECIPE_SECTION_MAX),
+			name,
+			quantity,
+			// A unit measures a quantity: without one it would print nothing and be
+			// lost on the next save anyway (the rule `parseIngredient` keeps).
+			unit: quantity === null ? null : storedUnit(row.unit, spellings),
+			note: cleanText(row.note, INGREDIENT_NOTE_MAX),
+			section: cleanText(row.section, RECIPE_SECTION_MAX),
 			sortOrder: ingredients.length
 		});
 	});
+
+	if (!input.ingredients)
+		input.ingredientLines.forEach((line, posted) => {
+			if (ingredients.length >= INGREDIENTS_MAX) return;
+
+			const parsed = parseIngredient(line, known);
+			if (!parsed) return;
+
+			const id = crypto.randomUUID();
+			const details = input.ingredientDetails?.[posted];
+			kept.set(posted, id);
+			ingredients.push({
+				id,
+				recipeId,
+				...parsed,
+				name: parsed.name.slice(0, INGREDIENT_LINE_MAX),
+				note: cleanText(details?.note, INGREDIENT_NOTE_MAX),
+				section: cleanText(details?.section, RECIPE_SECTION_MAX),
+				sortOrder: ingredients.length
+			});
+		});
 
 	if (ingredients.length) tx.insert(recipeIngredients).values(ingredients).run();
 
@@ -937,6 +974,26 @@ function writeChildren(
 
 	if (steps.length) tx.insert(recipeSteps).values(steps).run();
 	if (pins.length) tx.insert(recipeStepIngredients).values(pins).run();
+}
+
+/**
+ * A unit as a row stores it (→ plan 46, DECISIONS #321, #324): one of the eight
+ * by its canonical key ("EL" → `tbsp`), a counting word the reader knows in its
+ * one stored form ("Zehen" → "Zehe"), a household's own word as the household
+ * added it ("Ringe" → "Ring"). A word on none of those lists is kept when it is
+ * a plain word: the editor offers only the list and the word a row was opened
+ * with, so it is a word a row already had (one the household has since removed
+ * from its list), and opening and saving a recipe must not lose it.
+ */
+function storedUnit(unit: string | null, spellings: ReadonlyMap<string, string>): string | null {
+	const word = unit?.trim();
+	if (!word) return null;
+	const measured = unitFromWord(word);
+	if (measured) return measured;
+	if (countingWord(word)) return countingBase(word);
+	const own = householdUnitKey(word, new Set(spellings.keys()));
+	if (own) return spellings.get(own) ?? word;
+	return word.length <= UNIT_WORD_MAX && /^\p{L}[\p{L}.-]*$/u.test(word) ? word : null;
 }
 
 /**

@@ -214,6 +214,75 @@ export const COUNTING_WORDS: readonly string[] = [...COUNTING.keys()].sort(
 /** One spelling per counting word, as a list for a person or a prompt: "zehe", "bund", … */
 export const COUNTING_KEYS: readonly string[] = [...new Set(COUNTING.values())];
 
+/**
+ * How a counting word is shown, in the number that fits its amount (→ plan 46,
+ * DECISIONS #324): "1 Zehe", "2 Zehen", "1 clove", "2 cloves". One entry per
+ * key above, singular then plural, written the way the language writes it (a
+ * German noun with its capital). A row stores one form, the singular; one
+ * stored before keeps the form it was written in, and both read the same here.
+ */
+const COUNTING_FORMS = new Map<string, readonly [string, string]>(
+	Object.entries({
+		zehe: ['Zehe', 'Zehen'],
+		bund: ['Bund', 'Bund'],
+		dose: ['Dose', 'Dosen'],
+		becher: ['Becher', 'Becher'],
+		glas: ['Glas', 'Gläser'],
+		flasche: ['Flasche', 'Flaschen'],
+		prise: ['Prise', 'Prisen'],
+		msp: ['Msp.', 'Msp.'],
+		schuss: ['Schuss', 'Schuss'],
+		spritzer: ['Spritzer', 'Spritzer'],
+		scheibe: ['Scheibe', 'Scheiben'],
+		stange: ['Stange', 'Stangen'],
+		zweig: ['Zweig', 'Zweige'],
+		blatt: ['Blatt', 'Blätter'],
+		würfel: ['Würfel', 'Würfel'],
+		handvoll: ['Handvoll', 'Handvoll'],
+		tasse: ['Tasse', 'Tassen'],
+		kopf: ['Kopf', 'Köpfe'],
+		knolle: ['Knolle', 'Knollen'],
+		stiel: ['Stiel', 'Stiele'],
+		tropfen: ['Tropfen', 'Tropfen'],
+		beutel: ['Beutel', 'Beutel'],
+		tafel: ['Tafel', 'Tafeln'],
+		clove: ['clove', 'cloves'],
+		bunch: ['bunch', 'bunches'],
+		can: ['can', 'cans'],
+		tin: ['tin', 'tins'],
+		jar: ['jar', 'jars'],
+		bottle: ['bottle', 'bottles'],
+		pinch: ['pinch', 'pinches'],
+		dash: ['dash', 'dashes'],
+		slice: ['slice', 'slices'],
+		stick: ['stick', 'sticks'],
+		stalk: ['stalk', 'stalks'],
+		sprig: ['sprig', 'sprigs'],
+		leaf: ['leaf', 'leaves'],
+		cube: ['cube', 'cubes'],
+		handful: ['handful', 'handfuls'],
+		head: ['head', 'heads'],
+		bag: ['bag', 'bags']
+	})
+);
+
+/**
+ * A counting word in the number that fits `quantity`: the plural above one,
+ * the singular otherwise. A word the reader does not know as a counting word
+ * (a household's own, "Kugel") comes back exactly as given.
+ */
+export function countingForm(word: string, quantity: number | null): string {
+	const key = countingWord(word);
+	const forms = key ? COUNTING_FORMS.get(key) : undefined;
+	if (!forms) return word;
+	return quantity !== null && quantity > 1 ? forms[1] : forms[0];
+}
+
+/** A counting word as a row stores it: its singular ("Zehen" → "Zehe"), or the word itself. */
+export function countingBase(word: string): string {
+	return countingForm(word, 1);
+}
+
 /** A household's own unit word as stored for comparing: lowercased (→ plan 44). */
 export function unitWordKey(word: string): string {
 	return word.trim().toLowerCase();

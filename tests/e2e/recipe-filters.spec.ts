@@ -190,7 +190,8 @@ test.describe('sorting untagged recipes (→ plan 41)', () => {
 	test('Next saves the card and moves on', async ({ page }) => {
 		await page.goto('/cooking/recipes/new');
 		await page.getByRole('textbox', { name: 'Recipe name' }).fill('Sorting test stew');
-		await page.getByRole('textbox', { name: 'Ingredient 1' }).fill('500 g Rindfleisch');
+		await page.getByRole('textbox', { name: 'Add an ingredient' }).fill('500 g Rindfleisch');
+		await page.getByRole('textbox', { name: 'Add an ingredient' }).press('Enter');
 		await page.getByRole('button', { name: 'Save', exact: true }).click();
 		await expect(page.getByRole('heading', { name: 'Sorting test stew', level: 1 })).toBeVisible();
 		const recipeUrl = page.url();

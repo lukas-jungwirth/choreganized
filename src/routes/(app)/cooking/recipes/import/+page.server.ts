@@ -69,7 +69,10 @@ export const load: PageServerLoad = (event) => {
 		// Only whether AI import is available — never the key itself (→ SPEC §4.7).
 		aiEnabled: isAiEnabled(householdId),
 		// Shown beside the instructions field, so nobody is surprised by them.
-		aiInstructions: getAiInstructions(householdId)
+		aiInstructions: getAiInstructions(householdId),
+		// The household's own unit words: the draft's lines are read with them,
+		// and the unit panel offers them (→ plan 46).
+		units: listUnits(householdId).map((unit) => unit.word)
 	};
 };
 

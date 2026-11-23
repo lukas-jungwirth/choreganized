@@ -7,11 +7,16 @@ import { describe, it } from 'vitest';
 import { scaleIngredients } from './ingredients';
 import type { StepUse } from './step-highlight';
 import {
+	amountFits,
 	hasStoredLinks,
+	linkWord,
 	locateAmounts,
 	renderStep,
 	scaleAmountPhrase,
-	stepShare
+	stepShare,
+	suggestLinks,
+	tokens,
+	type LinkTarget
 } from './step-links';
 
 type Row = { id: string; name: string; quantity: number | null; unit: string | null };
@@ -318,5 +323,151 @@ describe('the fallback for steps without stored words', () => {
 			show('2 EL Olivenöl erhitzen.', null, 1.5),
 			'{3 EL|2 EL} [Olivenöl→oel] erhitzen.'
 		);
+	});
+});
+
+/* ── The editor's side (→ plan 46) ─────────────────────────────────────────── */
+
+const targets: LinkTarget[] = rows.map((row) => ({ ...row, key: row.id }));
+const target = (id: string) => targets.find((row) => row.key === id)!;
+
+describe('tokens', () => {
+	const kinds = (text: string) => tokens(text).map((token) => `${token.kind}:${token.text}`);
+
+	it('cuts a step into words, amounts with their unit, and times that are no amount', () => {
+		assert.deepEqual(kinds('Zwiebelwürfel und 200 g Karotten 2 - 3 Min. mitbraten.'), [
+			'word:Zwiebelwürfel',
+			'word:und',
+			'amount:200 g',
+			'word:Karotten',
+			'fixed:2 - 3 Min.',
+			'word:mitbraten'
+		]);
+	});
+
+	it('keeps a range with its unit, and a temperature and a length out of the amounts', () => {
+		assert.deepEqual(kinds('1 - 2 EL Olivenöl bei 180 °C, 2 cm Würfel'), [
+			'amount:1 - 2 EL',
+			'word:Olivenöl',
+			'word:bei',
+			'fixed:180 °C',
+			'fixed:2 cm',
+			'word:Würfel'
+		]);
+	});
+
+	it('reads a counting word and a household’s own word as the amount’s unit', () => {
+		assert.deepEqual(kinds('2 Zehen Knoblauch'), ['amount:2 Zehen', 'word:Knoblauch']);
+		assert.deepEqual(kinds('2 Kugel Eis'), ['amount:2', 'word:Kugel', 'word:Eis']);
+		assert.deepEqual(
+			tokens('2 Kugel Eis', new Set(['kugel'])).map((token) => token.text),
+			['2 Kugel', 'Eis']
+		);
+	});
+
+	it('gives every token its place in the text', () => {
+		const text = 'Mit ½ TL Zimt bestreuen.';
+		for (const token of tokens(text)) assert.equal(text.slice(token.start, token.end), token.text);
+	});
+});
+
+describe('linkWord', () => {
+	const linkAt = (text: string, word: string, id: string) => {
+		const start = text.indexOf(word);
+		return linkWord(text, tokens(text), start, start + word.length, target(id));
+	};
+
+	it('links the amount in front of the word with it, as the step’s share', () => {
+		assert.deepEqual(linkAt('200 g Karotten schälen.', 'Karotten', 'karotten'), {
+			ingredient: 'karotten',
+			phrase: 'Karotten',
+			amountPhrase: '200 g',
+			quantity: 200
+		});
+	});
+
+	it('takes the whole row as no share, and a range as no share either', () => {
+		assert.equal(linkAt('400 g Karotten schälen.', 'Karotten', 'karotten').quantity, null);
+		assert.equal(linkAt('400 g Karotten schälen.', 'Karotten', 'karotten').amountPhrase, '400 g');
+		const oil = linkAt('1 - 2 EL Olivenöl erhitzen.', 'Olivenöl', 'oel');
+		assert.equal(oil.amountPhrase, '1 - 2 EL');
+		assert.equal(oil.quantity, null);
+	});
+
+	it('leaves an amount above the row’s total, or in another unit, unlinked', () => {
+		assert.equal(linkAt('600 g Karotten schälen.', 'Karotten', 'karotten').amountPhrase, null);
+		assert.equal(linkAt('2 EL Karotten schälen.', 'Karotten', 'karotten').amountPhrase, null);
+	});
+
+	it('finds the amount after the word in brackets, and none in another sentence', () => {
+		assert.equal(linkAt('Karotten (200 g) schälen.', 'Karotten', 'karotten').amountPhrase, '200 g');
+		assert.equal(
+			linkAt('Nimm 200 g. Karotten schälen.', 'Karotten', 'karotten').amountPhrase,
+			null
+		);
+	});
+
+	it('links a word that is not the ingredient’s name, with its amount', () => {
+		assert.deepEqual(linkAt('1 Zwiebelwürfel anbraten.', 'Zwiebelwürfel', 'zwiebel'), {
+			ingredient: 'zwiebel',
+			phrase: 'Zwiebelwürfel',
+			amountPhrase: '1',
+			quantity: null
+		});
+	});
+
+	it('stores an amount cook mode then rewrites for twice as many', () => {
+		const text = '200 g Karotten schälen.';
+		const made = linkAt(text, 'Karotten', 'karotten');
+		const use = link('karotten', made.phrase, made.amountPhrase, made.quantity);
+		assert.equal(show(text, [use], 2), '{400 g|200 g} [Karotten→karotten] schälen.');
+	});
+});
+
+describe('amountFits', () => {
+	it('compares a unit by what it measures', () => {
+		assert.deepEqual(amountFits('1 Esslöffel', target('oel')), { fits: true, share: 1 });
+		assert.deepEqual(amountFits('2', target('eier')), { fits: true, share: null });
+		assert.equal(amountFits('2 Stk.', target('eier')).fits, true);
+	});
+});
+
+describe('suggestLinks', () => {
+	it('suggests an exact name, and nothing for a compound', () => {
+		assert.deepEqual(
+			suggestLinks('Die Zwiebel und die Zwiebelwürfel.', targets, []).map((one) => one.phrase),
+			['Zwiebel']
+		);
+		assert.deepEqual(suggestLinks('Die Zwiebelwürfel anbraten.', targets, []), []);
+	});
+
+	it('never suggests a row the step already links', () => {
+		const linked = [{ ingredient: 'zwiebel', phrase: 'Zwiebelwürfel' }];
+		assert.deepEqual(suggestLinks('Zwiebelwürfel und Zwiebel.', targets, linked), []);
+	});
+
+	it('never suggests a word inside a linked phrase, nor a dismissed one', () => {
+		const linked = [{ ingredient: 'hack', phrase: 'Butter und Mehl' }];
+		assert.deepEqual(suggestLinks('Butter und Mehl verrühren.', targets, linked), []);
+		assert.deepEqual(suggestLinks('Butter schmelzen.', targets, [], ['butter']), []);
+	});
+
+	it('says where the suggested word stands', () => {
+		const [one] = suggestLinks('Das Mehl sieben.', targets, []);
+		assert.deepEqual(one, { ingredient: 'mehl', phrase: 'Mehl', start: 4, end: 8 });
+	});
+});
+
+describe('a household’s own word in a step (plan 46 review)', () => {
+	it('reads its plural as the amount’s unit, and as the row’s', () => {
+		const known = new Set(['ring']);
+		assert.deepEqual(
+			tokens('2 Ringe Fleischwurst würfeln.', known).map((token) => token.text),
+			['2 Ringe', 'Fleischwurst', 'würfeln']
+		);
+		assert.deepEqual(amountFits('2 Ringe', { quantity: 2, unit: 'Ring' }), {
+			fits: true,
+			share: null
+		});
 	});
 });

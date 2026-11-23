@@ -9,6 +9,7 @@
  * set of rules, two thin actions (→ docs/ARCHITECTURE.md "Server patterns").
  */
 import type { Messages } from '$lib/i18n';
+import { clampAmount, parseQuantity, UNIT_WORD_MAX } from './amounts';
 import { isCalendarDate, type CalendarDate } from './dates';
 import { readMealSlot, type MealSlot } from './meals';
 import { readRecipeDiet, readRecipeTags, type RecipeDiet, type RecipeTag } from './recipe-tags';
@@ -113,33 +114,23 @@ export type IngredientDetails = { note: string | null; section: string | null };
 export type StepTimer = { seconds: number; label: string | null };
 
 /**
- * The same pin while the form still holds it, before anything is posted
- * (→ `cooking/StepIngredientsSheet`).
- *
- * `ingredient` is the *form row's* key rather than an index or an id: rows get
- * added, reordered and removed while the form is open, and a key is the only one
- * of the three that survives all of it. The indices `StepInput` wants are worked
- * out at submit time, from where the rows ended up. The stored words (→ plan
- * 43) ride along untouched, so the old editor saves them back as they were.
+ * One ingredient as the editor posts it (→ plan 46): the fields kept apart, as
+ * they are stored. `unit` is one of the eight, a counting word the reader
+ * knows, or one of the household's own words (→ DECISIONS #321); the service
+ * holds it to that.
  */
-export type StepUseDraft = {
-	ingredient: string;
-	quantity: number | null;
-	phrase?: string | null;
-	amountPhrase?: string | null;
-};
-
-/** One ingredient row as the sheet offers it — the form's reading of the line. */
-export type StepChoice = {
-	key: string;
+export type IngredientInput = {
 	name: string;
 	quantity: number | null;
 	unit: string | null;
+	note: string | null;
+	section: string | null;
 };
 
 /**
- * What [3c] posts: lines and text, not columns. Ingredients stay freeform all
- * the way to the service, which parses them (→ `$lib/utils/ingredients`).
+ * What a recipe is saved from. The editor [3c] posts each ingredient as its
+ * fields (`ingredients`, → plan 46); the import and the seed hand over lines,
+ * which the service parses (→ `$lib/utils/ingredients`).
  *
  * Declared here rather than beside the service so the reader below — and the
  * form itself — can name it without importing anything from `$lib/server`.
@@ -151,6 +142,12 @@ export type RecipeInput = {
 	ingredientLines: string[];
 	/** Each line's note and part (→ plan 43); absent for a caller that has none. */
 	ingredientDetails?: (IngredientDetails | null)[];
+	/**
+	 * The rows as fields (→ plan 46), what the editor posts. When present they
+	 * are the ingredients and `ingredientLines` is not read; a step's link then
+	 * names a row by its index here.
+	 */
+	ingredients?: IngredientInput[];
 	steps: StepInput[];
 	/**
 	 * Meal, kind, free-from (→ plan 40). Absent leaves a saved recipe's tags as
@@ -331,17 +328,34 @@ export function readRecipeForm(
 	// (an older page still open) saves none.
 	const notes = form.getAll('ingredientNote');
 	const sections = form.getAll('ingredientSection');
+	// Plan 46: each row as its fields, lined up by position. A page from before
+	// it (still open on a phone) posts typed lines, read as they always were.
+	const names = form.getAll('ingredientName');
+	const quantities = form.getAll('ingredientQuantity');
+	const units = form.getAll('ingredientUnit');
+	const structured = names.length > 0;
 
 	return {
 		input: {
 			name,
 			timeMinutes: readOptionalNumber(form.get('timeMinutes')),
 			servings: readOptionalNumber(form.get('servings')),
-			ingredientLines: form.getAll('ingredient').map(String),
-			ingredientDetails: form.getAll('ingredient').map((_, index) => ({
-				note: cleanText(notes[index], INGREDIENT_NOTE_MAX),
-				section: cleanText(sections[index], RECIPE_SECTION_MAX)
-			})),
+			ingredientLines: structured ? [] : form.getAll('ingredient').map(String),
+			ingredientDetails: structured
+				? undefined
+				: form.getAll('ingredient').map((_, index) => ({
+						note: cleanText(notes[index], INGREDIENT_NOTE_MAX),
+						section: cleanText(sections[index], RECIPE_SECTION_MAX)
+					})),
+			ingredients: structured
+				? names.map((value, index) => ({
+						name: cleanText(value, INGREDIENT_LINE_MAX) ?? '',
+						quantity: readQuantity(quantities[index]),
+						unit: cleanText(units[index], UNIT_WORD_MAX),
+						note: cleanText(notes[index], INGREDIENT_NOTE_MAX),
+						section: cleanText(sections[index], RECIPE_SECTION_MAX)
+					}))
+				: undefined,
 			steps: form.getAll('step').map((text, index) => ({
 				text: String(text),
 				uses: readStepUses(uses[index]),
@@ -442,6 +456,16 @@ export function readServings(value: unknown): number | null {
 
 	const whole = Math.trunc(Number(value));
 	return Number.isFinite(whole) && whole >= 1 && whole <= RECIPE_SERVINGS_MAX ? whole : null;
+}
+
+/**
+ * An ingredient's amount field: a bare amount ("500", "1,5", "½", "1/2"),
+ * anything else none. Clamped like every stored amount.
+ */
+function readQuantity(value: FormDataEntryValue | undefined): number | null {
+	if (typeof value !== 'string') return null;
+	const read = parseQuantity(value);
+	return read === null ? null : clampAmount(read);
 }
 
 /** Empty means "not stated", which both fields allow; nonsense means the same. */

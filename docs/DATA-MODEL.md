@@ -172,13 +172,18 @@ user ─┬─ session / account / verification        (Better Auth)
 
 ### `recipes` / `recipe_ingredients` / `recipe_steps` / `recipe_step_ingredients` / `recipe_tags`
 
-- Ingredients are structured (name, quantity?, unit?) but _entered_ freeform ("400 g pasta")
-  and parsed leniently (`src/lib/utils/ingredients.ts` on top of the shared reader
-  `src/lib/utils/amounts.ts`, plans 07 and 42); on no match, everything is the name.
-  `unit` holds one of the eight canonical units (`g`, `kg`, `ml`, `L`, `pcs`, `pack`, `tbsp`,
-  `tsp`) **or a counting word as the line wrote it** ("Zehen", "Bund", "Dose", "Prise";
-  → [DECISIONS #313](DECISIONS.md)). A counting word is shown as stored, never translated,
-  and compared by its key (`measureKey`: "Zehe" and "Zehen" are the same measure).
+- Ingredients are structured (name, quantity?, unit?). The editor posts them **as fields**
+  (plan 46: a number field and a unit picked from one list); the import, the seed and the
+  editor's add field still read a typed line ("400 g pasta") with the shared reader
+  (`src/lib/utils/ingredients.ts` on `src/lib/utils/amounts.ts`, plans 07 and 42); on no
+  match, everything is the name. `unit` holds one of the eight canonical units (`g`, `kg`,
+  `ml`, `L`, `pcs`, `pack`, `tbsp`, `tsp`), **a counting word the reader knows**, or **one of
+  the household's own words** (→ [DECISIONS #313, #321, #324](DECISIONS.md)). A save from the
+  editor stores a counting word in its one form, the singular ("Zehe"); rows written before
+  keep the form their line had ("Zehen"). Either is _shown_ in the number that fits the amount
+  ("1 Zehe", "2 Zehen", `countingForm`), never translated, and compared by its key
+  (`measureKey`). A household word is stored as the household added it; a word since removed
+  from the household's list stays on the rows that use it.
 - **`name` is what you buy; `note` is the rest** (migration 0029, → plan 43, DECISIONS #314):
   `recipe_ingredients.note` (nullable, ≤ 120 characters) holds "in Scheiben geschnitten",
   "zum Würzen", "oder veganes Hack". The shopping list, the cupboard, the diet guess and the

@@ -1399,7 +1399,7 @@ export const en = {
 			keep: 'Keep it'
 		},
 
-		/** New / edit recipe [3c]. */
+		/** New / edit recipe [3c], rebuilt around parts and links (→ plan 46). */
 		form: {
 			new: 'New recipe',
 			edit: 'Edit recipe',
@@ -1413,70 +1413,143 @@ export const en = {
 			time: 'Time (min)',
 			servingsLabel: 'Servings',
 			ingredients: 'Ingredients',
-			ingredientPlaceholder: '400 g pasta',
-			ingredientLabel: (index: number) => `Ingredient ${index}`,
-			addIngredient: 'Add ingredient',
-			/**
-			 * The parser still reads the line; this says so, lists what it knows,
-			 * and points at the sheet for the times it reads a line wrong.
-			 */
-			ingredientsNote: (units: string) =>
-				`Write them however you like: “400 g pasta”, “2 eggs”, “salt”. Units we know: ${units}. Tap an amount to set the number and unit yourself.`,
-			/**
-			 * The chip beside each row. No row number: the input beside it already
-			 * announces "Ingredient 3", and this is its description.
-			 */
-			amountLabel: (amount: string) => (amount ? `${amount}, edit` : 'No amount, add one'),
-			/** The row taken apart [3c], with [3a]'s unit list. */
-			ingredientNamePlaceholder: 'pasta',
-			quantity: 'Amount',
-			quantityPlaceholder: '400',
-			unit: 'Unit',
-			/**
-			 * Salt is not measured in pieces, so "none" has to be offered — [3a]
-			 * has no such option because `pcs` is its default.
-			 */
-			unitNone: 'No unit',
-			/** A unit measures a quantity (→ DECISIONS #42), so it waits for one. */
-			unitHint: 'Only saved with an amount',
-			/** What the composed line will actually be read as (→ DECISIONS #101). */
-			savedAsLead: 'Saved as ',
-			savedAsNothing: 'nothing yet',
-			/** Writes the three fields back into the row's line; nothing is saved yet. */
-			amountDone: 'Done',
+			/** A row of the list [E1]: tapping it opens the ingredient sheet. */
+			ingredientRow: (line: string) => `${line}, edit`,
+			/** The drag grip beside a row: it moves the row, also into another part. */
+			reorder: (name: string) => `Move ${name}`,
+			/** The add field at the foot of each part [E1]: a whole line, read as you'd write it. */
+			addLine: 'Add an ingredient',
+			addLineExample: 'Add, e.g. “2 tbsp olive oil”',
+			addLineTo: (part: string) => `Add an ingredient to ${part}`,
 			steps: 'Steps',
 			stepPlaceholder: 'Boil the pasta until al dente, about 9 min.',
 			stepLabel: (index: number) => `Step ${index}`,
 			addStep: 'Add step',
 
 			/**
-			 * What a step uses [3c] (→ SPEC §4.4, DECISIONS #127). The row under
-			 * each step opens the sheet; `usesAuto` is the marker on a step still
-			 * reading its own text, so "these came from the words you typed" is
-			 * visible before cook mode is the one saying it.
+			 * Parts of the dish (→ plan 43). A recipe without one never says the
+			 * word: only "Add part" at the end of each list.
 			 */
-			usesAuto: 'auto',
-			usesNone: 'Ingredients for this step',
-			usesNothing: 'nothing',
-			usesLabel: (index: number) => `Ingredients for step ${index}`,
-			usesTitle: 'What this step uses',
-			usesSubtitle: 'Cook mode shows these while you’re on the step.',
-			/** Under a ticked ingredient: the amount the whole recipe asks for. */
-			usesShare: (amount: string) => `of ${amount}`,
-			usesAmount: (name: string) => `Amount of ${name} for this step`,
-			/** The amount field left empty means the row's whole amount. */
-			usesAll: 'all',
-			usesBackToAuto: 'Read the step text instead',
-			usesEmpty: 'Add the ingredients first, then you can say which ones this step needs.',
+			part: {
+				add: 'Add part',
+				name: 'Name of the part',
+				namePlaceholder: 'Sauce',
+				confirm: 'Add',
+				rename: (name: string) => `Rename ${name}`,
+				/** Emptied, the part's rows join the part above it. */
+				renameHint: 'Leave it empty to join the part above.'
+			},
 
-			/**
-			 * A step's own timer [3c] (→ plan 21, DECISIONS #147). The chip under a
-			 * step names it; a step without one shows what cook mode will read out of
-			 * its text ("auto"), or the invitation.
-			 */
-			timerAdd: 'Add a timer',
-			timerLabel: (index: number) => `Timer for step ${index}`,
-			/** "Nudeln · 10:00" — the name, then the clock. */
+			/** One ingredient [E2]: name, a number and a unit kept apart, note, part. */
+			ingredientSheet: {
+				eyebrow: 'Ingredient',
+				name: 'Name',
+				nameHint: 'what goes on the list',
+				namePlaceholder: 'pasta',
+				amount: 'Amount',
+				number: 'Number',
+				numberPlaceholder: '500',
+				/** Numbers only: the field refuses a letter, and says so. */
+				numberOnly: 'Numbers only, like 500, 1,5 or ½.',
+				unitButton: (unit: string) => `Unit: ${unit}`,
+				note: 'Note',
+				noteHint: 'shown in the recipe',
+				notePlaceholder: 'finely chopped',
+				part: 'Part',
+				noPart: 'none',
+				done: 'Done',
+				remove: 'Remove ingredient'
+			},
+
+			/** The unit panel [E2b]: every unit visible, nothing to type but your own. */
+			units: {
+				eyebrow: (name: string, number: string) => (number ? `${name} · ${number}` : name),
+				title: 'Unit',
+				units: 'Units',
+				counted: 'Counted in',
+				none: 'No unit',
+				/** The everyday counting words the panel shows, in this language. */
+				everyday: [
+					'clove',
+					'bunch',
+					'can',
+					'pinch',
+					'slice',
+					'jar',
+					'bottle',
+					'stick',
+					'sprig',
+					'leaf',
+					'cube',
+					'handful'
+				],
+				addOwn: 'Add your own',
+				ownLabel: 'Your own unit',
+				ownPlaceholder: 'scoop',
+				ownAdd: 'Add',
+				ownMark: (word: string) => `${word}, your own`
+			},
+
+			/** A step's two rows [E3a]: each says what it holds. */
+			stepRow: {
+				ingredients: 'Ingredients',
+				ingredientsNone: 'Link the words that name them',
+				ingredientsLabel: (index: number) => `Ingredients for step ${index}`,
+				/** A suggested link, not made yet (→ plan 46): dotted, and said. */
+				suggested: (name: string) => `${name}, suggested`,
+				timer: 'Timer',
+				timerAdd: 'Add a timer',
+				timerLabel: (index: number) => `Timer for step ${index}`
+			},
+
+			/** The ⋯ menu on a step. */
+			stepMenu: {
+				label: (index: number) => `More for step ${index}`,
+				up: 'Move up',
+				down: 'Move down',
+				toPart: 'Move to part…',
+				remove: 'Delete step'
+			},
+
+			/** Move to part [E3b]: every part, the current one marked. */
+			movePart: {
+				title: 'Move to part',
+				eyebrow: (index: number) => `Step ${index}`,
+				steps: (from: number, to: number) =>
+					from === to ? `step ${from}` : `steps ${from} to ${to}`,
+				none: 'No part',
+				add: 'New part'
+			},
+
+			/** The link sheet [E3]: tap a word to link it, an amount goes with its word. */
+			links: {
+				eyebrow: (index: number) => `Step ${index} · ingredients`,
+				title: 'Tap a word to link it',
+				showFor: 'Show for',
+				people: 'people',
+				linkTo: (word: string) => `Link “${word}” to`,
+				linked: 'Linked in this step',
+				nothing: 'Nothing linked yet. Tap a word in the text.',
+				/** A stored link whose words were edited out of the step. */
+				gone: 'no longer in the text',
+				remove: (words: string) => `Remove the link of ${words}`,
+				/** "200 g of 400 g · follows the number of people" */
+				follows: (amount: string) => `${amount} · follows the number of people`,
+				of: (amount: string, total: string) => `${amount} of ${total}`,
+				stays: (amount: string) => `${amount} stays as written`,
+				notBeside: 'Not next to its ingredient, so it stays as written.',
+				help: 'Underlined is what cook mode underlines. An amount next to a linked word follows the number of people.',
+				suggested: 'Suggested',
+				suggest: (word: string, name: string) => `Link “${word}” to ${name}?`,
+				dismiss: (word: string) => `Don’t link ${word}`,
+				unnamed: 'Used without being named',
+				addIngredient: 'Add ingredient',
+				pickIngredient: 'Which ingredient?',
+				done: 'Done',
+				back: 'Back'
+			},
+
+			/** "Nudeln · 10:00": the timer's name, then the clock. */
 			timerChip: (name: string, duration: string) => `${name} · ${duration}`,
 			timerSheet: {
 				title: 'Step timer',
@@ -1486,14 +1559,7 @@ export const en = {
 				remove: 'Remove timer'
 			},
 			save: 'Save',
-			saveRecipe: 'Save recipe',
-			/** The reorder/remove controls beside each row. */
-			moveIngredientUp: (index: number) => `Move ingredient ${index} up`,
-			moveIngredientDown: (index: number) => `Move ingredient ${index} down`,
-			removeIngredient: (index: number) => `Remove ingredient ${index}`,
-			moveStepUp: (index: number) => `Move step ${index} up`,
-			moveStepDown: (index: number) => `Move step ${index} down`,
-			removeStep: (index: number) => `Remove step ${index}`
+			saveRecipe: 'Save recipe'
 		},
 
 		/**
@@ -2418,6 +2484,19 @@ export const en = {
 			note: 'Everyone in the house sees this name.'
 		},
 
+		/**
+		 * The household's own unit words (→ plan 46): added from a recipe's unit
+		 * panel, listed here where one can be removed.
+		 */
+		units: {
+			row: 'Units',
+			title: 'Your own units',
+			subtitle:
+				'Words your household added to the unit list. Removing one leaves the recipes that use it as they are.',
+			empty: 'None yet. Add one from the unit list of an ingredient.',
+			remove: (word: string) => `Remove ${word}`
+		},
+
 		/** AI features [6a] — the household's own provider keys (→ plan 20, SPEC §6).
 		 *  The keys stay server-side; this screen only ever sees a masked hint. */
 		ai: {
@@ -2944,6 +3023,12 @@ export const en = {
 		shopping: {
 			itemName: 'Give the item a name.',
 			storeName: 'Give the list a name.'
+		},
+
+		/** "Add your own" in the unit panel (→ plan 46, `services/units.ts`). */
+		units: {
+			invalid: (max: number) => `One word of letters, up to ${max} characters.`,
+			known: () => 'That one is on the list already.'
 		},
 
 		recipes: {

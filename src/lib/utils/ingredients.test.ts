@@ -12,7 +12,7 @@
 import assert from 'node:assert/strict';
 import { describe, it } from 'vitest';
 import {
-	composeIngredientLine,
+	formatAmount,
 	formatIngredient,
 	parseIngredient,
 	parseQuantity,
@@ -20,6 +20,7 @@ import {
 	scaleIngredients,
 	servingsFactor
 } from './ingredients.ts';
+import { measureKey } from './amounts.ts';
 
 describe('formatIngredient → parseIngredient', () => {
 	it('reads every label the app shows back to the unit it labels', () => {
@@ -254,49 +255,30 @@ describe('parseIngredient — the contract (plan 42)', () => {
 			const row = parseIngredient(typed);
 			assert.ok(row);
 			for (const written of [formatIngredient(row), formatIngredient(row, labels)]) {
-				assert.deepEqual(parseIngredient(written), row, `${typed} → ${written}`);
+				// A counting word is written in the number that fits (plan 46: "4 Prisen"),
+				// so it reads back as the same word in that number.
+				const again = parseIngredient(written);
+				assert.deepEqual(
+					{ ...again, unit: measureKey(again?.unit) ?? again?.unit },
+					{ ...row, unit: measureKey(row.unit) ?? row.unit },
+					`${typed} → ${written}`
+				);
 			}
 		}
 	});
 });
 
-describe('composeIngredientLine', () => {
-	it('writes a line the parser reads back the same way', () => {
-		const { line, reading } = composeIngredientLine('pasta', '400', 'g');
-
-		assert.equal(line, '400 g pasta');
-		assert.deepEqual(reading, { quantity: 400, unit: 'g', name: 'pasta' });
+describe('formatAmount with a counting word (plan 46)', () => {
+	it('writes the word in the number that fits the amount', () => {
+		assert.equal(formatAmount(1, 'Zehen'), '1 Zehe');
+		assert.equal(formatAmount(2, 'Zehe'), '2 Zehen');
+		assert.equal(formatAmount(0.5, 'Dose'), '½ Dose');
+		assert.equal(formatAmount(3, 'clove'), '3 cloves');
 	});
 
-	it('leaves out the parts that were not filled in', () => {
-		assert.equal(composeIngredientLine('salt', '', '').line, 'salt');
-		assert.equal(composeIngredientLine('eggs', '2', '').line, '2 eggs');
-	});
-
-	it('reports the reading a name it cannot escape will get', () => {
-		// Not a bug to fix — a limit to show (→ DECISIONS #101). The sheet prints
-		// each of these under the fields before anything is committed.
-		assert.deepEqual(composeIngredientLine('Nudeln', '1', 'Packung').reading, {
-			quantity: 1,
-			unit: 'pack',
-			name: 'Nudeln'
-		});
-		assert.deepEqual(composeIngredientLine('Packung Nudeln', '1', '').reading, {
-			quantity: 1,
-			unit: 'pack',
-			name: 'Nudeln'
-		});
-		assert.deepEqual(composeIngredientLine('Musketiere', '3', '').reading, {
-			quantity: 3,
-			unit: null,
-			name: 'Musketiere'
-		});
-		// A word glued to its number is a name, as on a list (plan 42).
-		assert.deepEqual(composeIngredientLine('7up', '', '').reading, {
-			quantity: null,
-			unit: null,
-			name: '7up'
-		});
+	it('leaves a household’s own word and a labelled unit as they are', () => {
+		assert.equal(formatAmount(2, 'Kugel'), '2 Kugel');
+		assert.equal(formatAmount(2, 'tbsp', { tbsp: 'EL' }), '2 EL');
 	});
 });
 

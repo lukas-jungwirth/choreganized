@@ -121,6 +121,7 @@
 	<RecipeForm
 		recipe={null}
 		prefill={draft}
+		units={data.units}
 		back="/cooking/recipes"
 		error={saveError}
 		field={saveField}

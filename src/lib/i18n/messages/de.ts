@@ -1091,41 +1091,123 @@ export const de: Messages = {
 			time: 'Dauer (Min.)',
 			servingsLabel: 'Portionen',
 			ingredients: 'Zutaten',
-			ingredientPlaceholder: '400 g Nudeln',
-			ingredientLabel: (index: number) => `Zutat ${index}`,
-			addIngredient: 'Zutat hinzufügen',
-			ingredientsNote: (units: string) =>
-				`Schreib sie, wie du magst: „400 g Nudeln“, „2 Eier“, „Salz“. Bekannte Einheiten: ${units}. Tipp auf eine Menge, um Zahl und Einheit selbst zu wählen.`,
-			amountLabel: (amount: string) =>
-				amount ? `${amount}, bearbeiten` : 'Keine Menge, eintragen',
-			ingredientNamePlaceholder: 'Nudeln',
-			quantity: 'Menge',
-			quantityPlaceholder: '400',
-			unit: 'Einheit',
-			unitNone: 'Ohne Einheit',
-			unitHint: 'Wird nur mit einer Menge gespeichert',
-			savedAsLead: 'Wird gespeichert als ',
-			savedAsNothing: 'noch nichts',
-			amountDone: 'Fertig',
+			ingredientRow: (line: string) => `${line}, bearbeiten`,
+			reorder: (name: string) => `${name} verschieben`,
+			addLine: 'Zutat hinzufügen',
+			addLineExample: 'Hinzufügen, z. B. „2 EL Olivenöl“',
+			addLineTo: (part: string) => `Zutat zu ${part} hinzufügen`,
 			steps: 'Schritte',
 			stepPlaceholder: 'Die Nudeln bissfest kochen, etwa 9 Min.',
 			stepLabel: (index: number) => `Schritt ${index}`,
 			addStep: 'Schritt hinzufügen',
 
-			usesAuto: 'auto',
-			usesNone: 'Zutaten für diesen Schritt',
-			usesNothing: 'nichts',
-			usesLabel: (index: number) => `Zutaten für Schritt ${index}`,
-			usesTitle: 'Was dieser Schritt braucht',
-			usesSubtitle: 'Der Kochmodus zeigt sie an, während du bei diesem Schritt bist.',
-			usesShare: (amount: string) => `von ${amount}`,
-			usesAmount: (name: string) => `Menge von ${name} für diesen Schritt`,
-			usesAll: 'alles',
-			usesBackToAuto: 'Lieber aus dem Text lesen',
-			usesEmpty: 'Trag zuerst die Zutaten ein, dann kannst du sie den Schritten zuordnen.',
+			part: {
+				add: 'Teil hinzufügen',
+				name: 'Name des Teils',
+				namePlaceholder: 'Béchamel',
+				confirm: 'Hinzufügen',
+				rename: (name: string) => `${name} umbenennen`,
+				renameHint: 'Leer lassen, um ihn mit dem Teil darüber zusammenzulegen.'
+			},
 
-			timerAdd: 'Timer hinzufügen',
-			timerLabel: (index: number) => `Timer für Schritt ${index}`,
+			ingredientSheet: {
+				eyebrow: 'Zutat',
+				name: 'Name',
+				nameHint: 'was auf die Liste kommt',
+				namePlaceholder: 'Nudeln',
+				amount: 'Menge',
+				number: 'Zahl',
+				numberPlaceholder: '500',
+				numberOnly: 'Nur Zahlen, etwa 500, 1,5 oder ½.',
+				unitButton: (unit: string) => `Einheit: ${unit}`,
+				note: 'Notiz',
+				noteHint: 'steht im Rezept',
+				notePlaceholder: 'fein gehackt',
+				part: 'Teil',
+				noPart: 'keiner',
+				done: 'Fertig',
+				remove: 'Zutat entfernen'
+			},
+
+			units: {
+				eyebrow: (name: string, number: string) => (number ? `${name} · ${number}` : name),
+				title: 'Einheit',
+				units: 'Einheiten',
+				counted: 'Gezählt in',
+				none: 'Ohne Einheit',
+				everyday: [
+					'Zehe',
+					'Bund',
+					'Dose',
+					'Prise',
+					'Scheibe',
+					'Becher',
+					'Glas',
+					'Stange',
+					'Zweig',
+					'Blatt',
+					'Msp.',
+					'Würfel'
+				],
+				addOwn: 'Eigene hinzufügen',
+				ownLabel: 'Eigene Einheit',
+				ownPlaceholder: 'Kugel',
+				ownAdd: 'Hinzufügen',
+				ownMark: (word: string) => `${word}, eigene`
+			},
+
+			stepRow: {
+				ingredients: 'Zutaten',
+				ingredientsNone: 'Wörter verknüpfen, die sie nennen',
+				ingredientsLabel: (index: number) => `Zutaten für Schritt ${index}`,
+				suggested: (name: string) => `${name}, vorgeschlagen`,
+				timer: 'Timer',
+				timerAdd: 'Timer hinzufügen',
+				timerLabel: (index: number) => `Timer für Schritt ${index}`
+			},
+
+			stepMenu: {
+				label: (index: number) => `Mehr zu Schritt ${index}`,
+				up: 'Nach oben',
+				down: 'Nach unten',
+				toPart: 'In anderen Teil…',
+				remove: 'Schritt löschen'
+			},
+
+			movePart: {
+				title: 'In anderen Teil',
+				eyebrow: (index: number) => `Schritt ${index}`,
+				steps: (from: number, to: number) =>
+					from === to ? `Schritt ${from}` : `Schritte ${from} bis ${to}`,
+				none: 'Kein Teil',
+				add: 'Neuer Teil'
+			},
+
+			links: {
+				eyebrow: (index: number) => `Schritt ${index} · Zutaten`,
+				title: 'Tipp auf ein Wort, um es zu verknüpfen',
+				showFor: 'Zeigen für',
+				people: 'Personen',
+				linkTo: (word: string) => `„${word}“ verknüpfen mit`,
+				linked: 'In diesem Schritt verknüpft',
+				nothing: 'Noch nichts verknüpft. Tipp auf ein Wort im Text.',
+				gone: 'steht nicht mehr im Text',
+				remove: (words: string) => `Verknüpfung von ${words} entfernen`,
+				follows: (amount: string) => `${amount} · passt sich der Personenzahl an`,
+				of: (amount: string, total: string) => `${amount} von ${total}`,
+				stays: (amount: string) => `${amount} bleibt, wie es dasteht`,
+				notBeside: 'Steht nicht neben seiner Zutat, deshalb bleibt es, wie es dasteht.',
+				help: 'Unterstrichen ist, was der Kochmodus unterstreicht. Eine Menge neben einem verknüpften Wort passt sich der Personenzahl an.',
+				suggested: 'Vorschläge',
+				suggest: (word: string, name: string) => `„${word}“ mit ${name} verknüpfen?`,
+				dismiss: (word: string) => `${word} nicht verknüpfen`,
+				unnamed: 'Verwendet, ohne genannt zu werden',
+				addIngredient: 'Zutat hinzufügen',
+				pickIngredient: 'Welche Zutat?',
+				done: 'Fertig',
+				back: 'Zurück'
+			},
+
 			timerChip: (name: string, duration: string) => `${name} · ${duration}`,
 			timerSheet: {
 				title: 'Timer für den Schritt',
@@ -1135,13 +1217,7 @@ export const de: Messages = {
 				remove: 'Timer entfernen'
 			},
 			save: 'Speichern',
-			saveRecipe: 'Rezept speichern',
-			moveIngredientUp: (index: number) => `Zutat ${index} nach oben`,
-			moveIngredientDown: (index: number) => `Zutat ${index} nach unten`,
-			removeIngredient: (index: number) => `Zutat ${index} entfernen`,
-			moveStepUp: (index: number) => `Schritt ${index} nach oben`,
-			moveStepDown: (index: number) => `Schritt ${index} nach unten`,
-			removeStep: (index: number) => `Schritt ${index} entfernen`
+			saveRecipe: 'Rezept speichern'
 		},
 
 		pick: {
@@ -1897,6 +1973,15 @@ export const de: Messages = {
 			note: 'Alle im Haus sehen diesen Namen.'
 		},
 
+		units: {
+			row: 'Einheiten',
+			title: 'Eigene Einheiten',
+			subtitle:
+				'Wörter, die euer Haushalt zur Liste der Einheiten hinzugefügt hat. Entfernen lässt die Rezepte, die sie verwenden, wie sie sind.',
+			empty: 'Noch keine. Füg eine in der Einheitenliste einer Zutat hinzu.',
+			remove: (word: string) => `${word} entfernen`
+		},
+
 		ai: {
 			row: 'KI-Funktionen',
 			notSet: 'Nicht eingerichtet',
@@ -2319,6 +2404,11 @@ export const de: Messages = {
 		shopping: {
 			itemName: 'Gib dem Eintrag einen Namen.',
 			storeName: 'Gib der Liste einen Namen.'
+		},
+
+		units: {
+			invalid: (max: number) => `Ein Wort aus Buchstaben, höchstens ${max} Zeichen.`,
+			known: () => 'Die steht schon auf der Liste.'
 		},
 
 		recipes: {

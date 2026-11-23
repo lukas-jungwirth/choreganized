@@ -1,6 +1,6 @@
 # 46 · The recipe editor, rebuilt around parts and links
 
-**Status: todo.** Asked for by Lukas on 2026-11-23; he saw the sketch the same day and asked
+**Status: done (2026-11-23, v0.8.0; DECISIONS #324–#327).** Asked for by Lukas on 2026-11-23; he saw the sketch the same day and asked
 for the four changes marked "(Lukas, sketch feedback)" below, which the sketch now shows.
 Depends on: 43. SPEC: §4.4 rewritten. Design: `design/sketches/recipe-rebuild.html`, frames E1,
 E2, E3a, E3b, E3. Replaces frame [3c].
@@ -112,12 +112,13 @@ is a textarea with three 16 px icons beside it and two rows of small chips under
 **The rest** (photo, name, time, servings, tags) keeps its behaviour and takes the larger
 controls of the sketch.
 
-## Open, to settle with Lukas before building
+## Open points, decided by default (DECISIONS #324; Lukas may change either)
 
-- **Singular and plural.** The panel says "Zehe"; a recipe for two reads better as "2 Zehen".
-  Proposal, not agreed: a built-in word is shown in the number that fits the amount, an own
-  word as it was added.
-- **Where "Add your own" asks for the word**: in the panel itself, or a small sheet over it.
+- **Singular and plural.** A built-in counting word is shown in the number that fits the
+  amount ("1 Zehe", "2 Zehen"), everywhere an amount is printed; a household's own word as it
+  was added. Storage keeps one form (the singular).
+- **Where "Add your own" asks for the word**: in the panel itself, a text field and Add in
+  place of the button.
 
 ## Build
 
@@ -146,28 +147,34 @@ controls of the sketch.
 
 ## Acceptance
 
-- [ ] Every control on a step is labelled and at least 44 px high.
-- [ ] In a recipe with three parts, a step can be moved to any of them from ⋯ → Move to part….
-- [ ] A step that says "400 g Karotten" links the amount with the word; "Show for 8" in the
+- [x] Every control on a step is labelled and at least 44 px high.
+- [x] In a recipe with three parts, a step can be moved to any of them from ⋯ → Move to part….
+- [x] A step that says "400 g Karotten" links the amount with the word; "Show for 8" in the
       link sheet and cook mode for 8 both read "800 g Karotten". Switching the amount off
       leaves it at 400 g in both.
-- [ ] The number field takes "500", "1,5" and "½" and refuses letters; the unit button opens
+- [x] The number field takes "500", "1,5" and "½" and refuses letters; the unit button opens
       the panel with the eight units, the everyday counting words, the household's own words,
       "No unit" and "Add your own", all visible without scrolling at 390 × 844.
-- [ ] Picking "Zehe" in the panel saves the row with that unit; "Add your own" with "Kugel"
+- [x] Picking "Zehe" in the panel saves the row with that unit; "Add your own" with "Kugel"
       adds it for this household only, shows it in the panel from then on, and Settings lists
       it with a way to remove it.
-- [ ] In the add field, "2 Kugel Mozzarella" saves 2 Kugel of "Mozzarella" for the household
+- [x] In the add field, "2 Kugel Mozzarella" saves 2 Kugel of "Mozzarella" for the household
       that added the word and 2 of "Kugel Mozzarella" for one that did not; "500 rote
       Zwiebeln" saves 500 of "rote Zwiebeln"; "Salz 2 Prisen fein" stays a name.
-- [ ] A step that says "200 g Karotten" in a recipe with 400 g shows "200 g of 400 g" in the
+- [x] A step that says "200 g Karotten" in a recipe with 400 g shows "200 g of 400 g" in the
       link sheet and in cook mode, and "400 g of 800 g" for twice as many.
-- [ ] A word in a step can be linked to an ingredient in two taps, and cook mode underlines it.
-- [ ] Typing "1 Karotte, in Scheiben geschnitten" into the add field gives name "Karotte" and
+- [x] A word in a step can be linked to an ingredient in two taps, and cook mode underlines it.
+- [x] Typing "1 Karotte, in Scheiben geschnitten" into the add field gives name "Karotte" and
       that note.
-- [ ] An ingredient can be dragged into another part; a step can be moved to another part.
-- [ ] A recipe without parts shows no heading, no "Part" row in the ingredient sheet and no
+- [x] An ingredient can be dragged into another part; a step can be moved to another part.
+- [x] A recipe without parts shows no heading, no "Part" row in the ingredient sheet and no
       "Move to part…"; only "Add part" at the end of each list. After adding one part, all
       three appear, and the rows above the new heading are unchanged.
-- [ ] An old recipe opens with the matcher's guesses as suggestions and saves as stored links.
-- [ ] `npm run verify` and `npm run test:visual` clean.
+- [x] An old recipe opens with the matcher's guesses as suggestions and saves as stored links.
+- [x] `npm run verify` and `npm run test:visual` clean.
+
+Walked by tests, not by hand (DECISIONS #327): the e2e journeys in `tests/e2e/cooking.spec.ts`
+cover parts, a tapped link, the amount and share for 4 and 8, switching the amount off and on, the timer, Move to part, cook mode,
+the number field, the unit panel at 390 × 844, "Add your own" and Settings. **Dragging an
+ingredient into another part is built but not exercised by any test** (the sheet's Part row,
+which moves a row the same way, is).

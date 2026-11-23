@@ -15,6 +15,7 @@
 
 <RecipeForm
 	recipe={data.recipe}
+	units={data.units}
 	back="/cooking/recipes/{data.recipe.id}"
 	error={form?.error}
 	field={form?.field}

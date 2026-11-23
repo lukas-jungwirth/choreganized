@@ -339,7 +339,8 @@ test('the sorting pass asks the AI once and dots what it suggests (→ plan 41)'
 }) => {
 	await page.goto('/cooking/recipes/new');
 	await page.getByRole('textbox', { name: 'Recipe name' }).fill('AI sorting test');
-	await page.getByRole('textbox', { name: 'Ingredient 1' }).fill('2 Karotten');
+	await page.getByRole('textbox', { name: 'Add an ingredient' }).fill('2 Karotten');
+	await page.getByRole('textbox', { name: 'Add an ingredient' }).press('Enter');
 	await page.getByRole('button', { name: 'Save', exact: true }).click();
 	await expect(page.getByRole('heading', { name: 'AI sorting test', level: 1 })).toBeVisible();
 	const recipeUrl = page.url();

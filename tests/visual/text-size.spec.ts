@@ -18,7 +18,14 @@
  */
 import { expect, test, type BrowserContext, type Page } from '@playwright/test';
 import { storageStateFor } from '../e2e/accounts';
-import { SCREENS, scrolledToBottom, settle, type Screen } from './screens';
+import {
+	EDITOR_WORDS,
+	editorShots,
+	SCREENS,
+	scrolledToBottom,
+	settle,
+	type Screen
+} from './screens';
 
 const ROOT_SCALE = 2;
 const BODY_PX = 17;
@@ -105,4 +112,19 @@ walk(SCREENS.filter((screen) => !screen.theme));
 test.describe('in German', () => {
 	test.use({ locale: 'de-AT' });
 	walk(SCREENS.filter((screen) => !screen.theme && !screen.navigate));
+});
+
+/** The recipe editor's screens and sheets (→ plan 46), reached by their German names. */
+test.describe('the recipe editor in German', () => {
+	test.use({ locale: 'de-AT' });
+	for (const shot of editorShots(EDITOR_WORDS.de)) {
+		test(`${shot.name} at 200% text, in German`, async ({ page, context }) => {
+			await atTwiceTheTextSize(page, context, {
+				name: `${shot.name}-de`,
+				route: '/(app)/cooking/recipes/[id]/edit',
+				path: '',
+				navigate: shot.navigate
+			});
+		});
+	}
 });

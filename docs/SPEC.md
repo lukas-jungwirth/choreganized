@@ -757,59 +757,92 @@ item sheet [3a]; what differs is what a tick does and what counts as shopping.
   tick any number of, Diet as one chip or none (tapping the chosen one clears it). **Folded
   while nothing is set** — one row, "Tags · Meal, kind, diet" — and open whenever something is,
   so an edit shows what's there. Saved with the recipe, replaced wholesale like its children.
-- **Ingredients**: one typed row each, written the way you'd write them on paper ("400 g pasta")
-  and parsed leniently to (quantity, unit, name); unparsed input becomes name-only, and a range
-  keeps its first value with its unit ("2-3 EL Öl" → 2 tbsp Öl, DECISIONS #159). The line is
-  read by the same amount reader as a shopping line (§3.1; → plan 42, DECISIONS #313, #319):
-  the same spellings of numbers and units, the Deka ("20 dag" → 200 g), an amount at the end
-  ("Mehl 500g"), a rough amount ("ca. 200 g"). Besides the eight units a recipe line may count
-  in a **counting word**, kept as written: "2 Zehen Knoblauch" is 2 Zehen of Knoblauch, "1 Bund
-  Petersilie" one Bund of Petersilie, so the name is the thing itself. A plural a site left
-  open is settled by the amount ("2 Zwiebel(n)" → 2 Zwiebeln, "1 Ei(er)" → 1 Ei). Cups, oz and
-  lb are not read (the AI import converts them). Each row
-  shows what the parse made of it as a quiet amount chip; tapping the chip opens a sheet with
-  the name, the amount and the units of §3.2 plus tbsp · tsp, the row's own counting word when it
-  has one, and "no unit", which writes the row
-  back as a line and shows the reading that line will get (→ DECISIONS #100–101). Reorder with
-  the arrows (→ DECISIONS #67), remove per row.
-- **Notes, parts and links** (→ plan 43): an ingredient row may carry a **note** (everything the
-  line said besides what you buy: "in Scheiben geschnitten", "zum Würzen") and a **part**
-  ("Bolognese"); a step its part and links that name the words of its text an ingredient is
-  called by. This editor has no controls for them yet (plan 46 rebuilds it) but **never loses
-  them**: each row posts its note and part as hidden fields, each step its part and its links
-  with their words, so a save changes only what was edited. A line retyped to another name
-  leaves its note behind (the note was about the old thing); one reformatted or given a new
-  amount keeps it. Re-ticking a step's ingredients in the sheet below keeps the words each
-  still-ticked ingredient was linked by.
-- **Steps**: numbered textareas, add/remove/reorder. Under each one, **what that step uses** —
-  a row of chips that opens a sheet (→ [DECISIONS #127](DECISIONS.md)):
-  - Until somebody says otherwise the chips are **read out of the step text**, live as you type,
-    by the same matcher cook mode runs, and are marked `auto`. The matching forgives what an
-    ingredient list and a sentence disagree about: the note in a name ("Olive oil (extra
-    virgin)", "Chicken breast, diced"), the descriptors in front of it ("1 small red onion" is
-    "the onion", "Prise Muskat" is "Muskat"), and number in both languages ("Zwiebeln" ⇄
-    "Zwiebel", "berries" ⇄ "berry", and the German plurals no ending reaches: "Ei" ⇄ "Eier",
-    "Apfel" ⇄ "Äpfel", "Nuss" ⇄ "Nüsse"). Where a shortened name would name two different
-    ingredients it names neither — a recipe with "olive oil" **and** "sunflower oil" gets no
-    "oil", and one with "red pepper" beside plain "pepper" gives the word to the ingredient
-    actually called that. It matches **whole words only**: "egg-white" names the egg, but
-    "Ober- und Unterhitze" is not the Obers, and a compound ("Sahnemischung", "Lachswürfel")
-    is not its ingredient; pinning is how a cook links one (DECISIONS #154).
-  - The sheet opens **already ticked the way the text was read** — adjusting a guess, not
-    filling in a form — and what leaves it is the step's own list from then on, including an
-    empty one ("this step uses nothing"). **Read the step text instead** hands it back to the
-    matcher.
-  - A ticked ingredient may carry **how much of it goes in here**, in that row's own unit and
-    with the row's total beside it ("of 3 tbsp"). Empty means the whole row. Shares are written
-    in recipe-as-written terms, so **Cooking for {n}** (§4.5) scales them exactly like the
-    ingredient list: 1 tsp and 2 tsp for two people are 2 tsp and 4 tsp for four.
-- Under the ingredient chips, each step has **a timer chip** (→ plan 21, DECISIONS #147): the
-  step's own timer by name ("Nudeln · 10:00"), else the duration cook mode will read out of the
-  text, marked `auto` ("9:00 auto"), else **Add a timer**. It opens a sheet with the minute
-  stepper and the optional **What for?** name of cook mode's Set-timer sheet (§4.6), seeded
-  from the saved timer, else the text's duration, else 5 minutes, with **Save timer** and
-  **Remove timer**. A saved timer keeps its exact seconds ("90 Sekunden") unless the stepper is
-  moved. One timer per step; removing it hands the step back to its text.
+- **Parts** (→ plans 43, 46; design `design/sketches/recipe-rebuild.html` E1, E3a, E3b):
+  ingredients and steps stand under part headings ("Bolognese", "Béchamel"). **A recipe
+  without parts never shows the word**: no heading, no "Part" row in the ingredient sheet, no
+  "Move to part…"; only a quiet **Add part** at the end of each list. It asks for a name in
+  place and puts the new heading below what is there; the rows above stay without one. From
+  the first part on, the Part row and "Move to part…" appear. A heading's ✎ edits the name in
+  place, over ingredients and steps alike (a part is one thing in the recipe); emptied, the
+  part joins the one above.
+- **Ingredients** [E1]: a row shows the name, the amount on the right and the **note** in a
+  smaller second line. Tapping it opens the **ingredient sheet** [E2]: Name ("what goes on the
+  list"), **Amount as a number and a unit kept apart**, Note ("shown in the recipe"), and Part
+  when the recipe has parts (the row lands at the end of the part picked), with Done and
+  Remove ingredient.
+  - The number field takes numbers only ("500", "1,5", "½", "1/2"), with the number keyboard;
+    a letter is refused as it is typed, and the field says so.
+  - The unit is a button showing the unit ("g", "No unit"); it opens the **unit panel** [E2b]
+    with everything visible, nothing to type or scroll: the eight units, the everyday counting
+    words of the app's language (de: Zehe, Bund, Dose, Prise, Scheibe, Becher, Glas, Stange,
+    Zweig, Blatt, Msp., Würfel; en: clove, bunch, can, pinch, slice, jar, bottle, stick,
+    sprig, leaf, cube, handful), the household's own words after those (outlined), **No unit**
+    and **Add your own**. The row's current word is always in the panel, also one the reader
+    knows that the panel doesn't list ("Tasse"). A built-in counting word is shown in the
+    number that fits the amount ("1 Zehe", "2 Zehen") and stored in its one form; an own word
+    as it was added (→ DECISIONS #324).
+  - **One list for everyone** (→ DECISIONS #321): a unit is one of the eight, a counting word
+    the reader knows, or a word the household added. **Add your own** is the only way a new
+    word comes in: it asks for the word in a field in the panel itself, and the household has
+    it at once, in every recipe and in the reader. Settings → Household → **Units** lists the
+    household's own words, each with a way to remove it; a removed word stays on the rows that
+    use it.
+  - **Typing a line stays the fast way in**: an add field at the foot of each part ("Add, e.g.
+    “2 EL Olivenöl”") reads a whole line with the shared reader (§3.1; → plan 42, DECISIONS
+    #319): the number first, then a unit **only if the next word is on the list** (the
+    household's words included), everything else the name; what follows a comma or stands in
+    brackets is the note. "500 rote Zwiebeln" is 500 of "rote Zwiebeln", "Mehl 500 g" is 500 g
+    Mehl, "Salz 2 Prisen fein" stays a name, "1 Karotte, in Scheiben geschnitten" is Karotte
+    with that note. A range keeps its first value ("2-3 EL Öl" → 2 tbsp, DECISIONS #159), the
+    Deka is ten grams, a plural a site left open is settled by the amount. A line read wrongly
+    is fixed by tapping its row.
+  - **Reorder by dragging the grip**, also from one part into another.
+- **Steps** [E3a]: cards under part headings, numbered straight through. The text is a
+  textarea at reading size, growing with its content. Under it **two rows that say what they
+  hold**, each at least 48px high: **Ingredients** (the linked names; names only suggested so
+  far dotted; else "Link the words that name them") and **Timer** (its name and time, else "Add
+  a timer"). A **⋯** button holds Move up, Move down, **Move to part…** (when the recipe has
+  parts) and Delete step. **Move to part…** [E3b] lists every part with the steps it holds, the
+  current one marked, "No part" and "New part"; the step lands at the end of the part picked.
+  Steps are not dragged.
+- **Linking a step's words** [E3]: **Ingredients** opens the link sheet.
+  - The step's text on top, every word tappable, drawn **as cook mode will draw it**: a linked
+    word underlined in gold, a linked amount in gold. **Show for {servings} / {twice that}
+    people** rewrites it the way cook mode will; absent without servings. A time ("2 - 3
+    Min."), a temperature ("180 °C") or a length ("2 cm") is never an amount and not tappable.
+  - Tap a word → "Link “…” to" with the ingredients, the likely one first → linked. Tap a
+    linked word → pick another. **Linked in this step** lists each link ("“Zwiebelwürfel” →
+    Zwiebel") with ✕; a link whose words are no longer in the text says so until it is
+    re-linked or removed.
+  - **An amount is linked with its word**: a number, with or without a unit, standing beside
+    the linked word (before it with at most three words between, else right after it, never
+    across a sentence end: `locateAmounts`, the rule cook mode rewrites by) becomes the link's
+    amount automatically when its unit is the ingredient's and it is not more than the
+    ingredient's total. It then also stores the step's share: "200 g of 400 g", and for twice
+    as many "400 g of 800 g". Its row carries a switch, "follows the number of people" or
+    "stays as written", and tapping the amount in the text flips it. An amount beside the word
+    that doesn't fit is linked by tapping it; a number anywhere else says "Not next to its
+    ingredient, so it stays as written" and offers nothing.
+  - **Suggestions**: a step that came without stored links (a recipe from before plan 46, a
+    page's card), or whose text was edited, is offered the word matcher's reading (§4.6: whole
+    words, plurals, a note in a name forgiven, a compound is no ingredient, DECISIONS #154):
+    the words dotted, "Link “Zwiebel” to Zwiebel?" under the links, a tap accepts, ✕ turns one
+    down. For a step that came without links, **what is still suggested at Save is saved as
+    links**, so an old recipe opened and saved keeps every underline it had, now stored; for a
+    step that had its own, an offer after an edit is saved only when tapped (→ DECISIONS #325).
+  - **Used without being named**: links without words (one pinned by hand before plan 43, or
+    added here with **Add ingredient**), with ✕.
+  - Saving from this editor stores every step's links (`ingredients_set`, an empty list
+    included): from then on cook mode shows exactly what the editor showed.
+- **The step's timer** (→ plan 21, DECISIONS #147): the Timer row opens a sheet with the
+  minute stepper and the optional **What for?** name of cook mode's Set-timer sheet (§4.6),
+  seeded from the saved timer, else the text's duration, else 5 minutes, the step's
+  ingredients (linked or suggested) as one-tap names, with **Save timer** and **Remove
+  timer**. A saved timer keeps its exact seconds unless the stepper is moved. One timer per
+  step; removing it hands the step back to its text (cook mode still offers the duration it
+  reads there).
+- **Nothing about a recipe is lost by opening and saving it**: notes, parts, links with and
+  without words, amounts and shares, timers. Opened and saved again, nothing changes.
 
 ### 4.5 Recipe view [7a]
 

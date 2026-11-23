@@ -29,7 +29,15 @@
  *
  * Pure, no `$lib`, relative imports with their extension (→ `ingredients.ts`).
  */
-import { FRACTION_CHARS, NUMBER_PATTERN, parseQuantity } from './amounts.ts';
+import {
+	COUNTING_WORDS,
+	FRACTION_CHARS,
+	measureKey,
+	NUMBER_PATTERN,
+	parseQuantity,
+	unitStem,
+	UNIT_WORDS
+} from './amounts.ts';
 import { scaleQuantity } from './ingredients.ts';
 import { formatLike, rewrite, scaleStepAmounts } from './step-amounts.ts';
 import {
@@ -353,10 +361,213 @@ function amountsBeside(
 }
 
 /** Whether what stands between an amount and its word lets them belong together. */
-function beside(between: string, after: boolean): boolean {
+export function beside(between: string, after: boolean): boolean {
 	const allowed = after ? /^[\p{L}\s,(-]*$/u : /^[\p{L}\s,-]*$/u;
 	if (!allowed.test(between)) return false;
 	return (between.match(/\p{L}+/gu) ?? []).length <= 3;
+}
+
+/* ── The editor's side: tappable words, suggestions, an amount with its word ── */
+
+/**
+ * One piece of a step's text as the link sheet shows it (→ plan 46): a word
+ * that can be linked, an amount that can follow the number of people, or a
+ * time, temperature or length ("2 - 3 Min.", "180 °C", "2 cm"), which is never
+ * an amount and is not tappable. Everything between tokens is plain text.
+ */
+export type StepToken = {
+	start: number;
+	end: number;
+	text: string;
+	kind: 'word' | 'amount' | 'fixed';
+};
+
+/** A number with an optional range tail: "200", "1,5", "½", "1 - 2", "2 bis 3". */
+const RANGE = String.raw`(?:${NUMBER_PATTERN})(?:\s*(?:[-–—]|bis|to)\s*(?:${NUMBER_PATTERN}))?`;
+
+/** What makes a number a time, a temperature or a length rather than an amount. */
+const FIXED_WORDS = String.raw`°\s*[CF]?|grad|degrees?|min(?:uten?|utes?|s)?\.?|std\.?|stunden?|hours?|hrs?|h|sek(?:unden?)?\.?|seconds?|secs?|cm|mm`;
+
+/** Unit and counting-word spellings, longest first, escaped ("stk." has a dot). */
+function unitAlternation(known: ReadonlySet<string> | undefined): string {
+	// A household's word in its plural too ("Ringe" for "Ring"), as the reader takes it.
+	const own = [...(known ?? [])].map((word) => `${escape(word)}(?:en|e|n|s)?`);
+	const words = [...UNIT_WORDS, ...COUNTING_WORDS].sort((a, b) => b.length - a.length).map(escape);
+	return [...own, ...words].join('|');
+}
+
+/**
+ * A step's text cut into what the link sheet can tap. `known` is the
+ * household's own unit words, lowercased, so "2 Kugel" is one amount.
+ */
+export function tokens(text: string, known?: ReadonlySet<string>): StepToken[] {
+	const pattern = new RegExp(
+		String.raw`(?<fixed>(?<![\p{L}\p{N}.,/])${RANGE}\s*(?:${FIXED_WORDS})(?![\p{L}]))` +
+			String.raw`|(?<amount>(?<![\p{L}\p{N}.,/])${RANGE}(?:\s?(?:${unitAlternation(known)})(?![\p{L}]))?)` +
+			String.raw`|(?<word>\p{L}[\p{L}\p{M}]*(?:-\p{L}[\p{L}\p{M}]*)*)`,
+		'giu'
+	);
+	return [...text.matchAll(pattern)].map((match) => {
+		const groups = match.groups ?? {};
+		const kind = groups.fixed ? 'fixed' : groups.amount ? 'amount' : 'word';
+		return { start: match.index, end: match.index + match[0].length, text: match[0], kind };
+	});
+}
+
+/** An amount token read: its first and its largest number, and its unit word. */
+export type ReadAmount = { first: number | null; most: number | null; unit: string | null };
+
+/** "1 - 2 EL" → 1, 2, "EL"; "200 g" → 200, 200, "g"; "3" → 3, 3, null. */
+export function readAmount(written: string): ReadAmount {
+	const numbers = [...written.matchAll(NUMBERS)].map((match) => parseQuantity(match[0]));
+	const unit = written
+		.replace(NUMBERS, ' ')
+		.replace(/[-–—]|(?<![\p{L}])(?:bis|to)(?![\p{L}])/giu, ' ')
+		.trim();
+	const values = numbers.filter((value): value is number => value !== null);
+	return {
+		first: numbers[0] ?? null,
+		most: values.length ? Math.max(...values) : null,
+		unit: unit || null
+	};
+}
+
+/** What a unit word measures, for comparing: the reader's key, else the word itself. */
+function unitKey(word: string | null | undefined): string | null {
+	if (!word) return null;
+	// A word on no built-in list (a household's own) compares by its stem: "Ringe" is "Ring".
+	const key = measureKey(word) ?? unitStem(word);
+	// "2 Eier" counts pieces as surely as "2 Stk. Eier" does.
+	return key === 'pcs' ? null : key;
+}
+
+/**
+ * The amount token standing **beside** the word at `[start, end)` by the rule
+ * cook mode rewrites by (`locateAmounts`): the nearest one before it with at
+ * most three words between, else the first after it. Null when there is none.
+ */
+export function amountBeside(
+	text: string,
+	all: readonly StepToken[],
+	start: number,
+	end: number
+): StepToken | null {
+	const amounts = all.filter((token) => token.kind === 'amount');
+	const before = amounts
+		.filter((token) => token.end <= start && beside(text.slice(token.end, start), false))
+		.at(-1);
+	if (before) return before;
+	return (
+		amounts.find((token) => token.start >= end && beside(text.slice(end, token.start), true)) ??
+		null
+	);
+}
+
+/** A row the editor links to: the form's own key, and what the row says. */
+export type LinkTarget = {
+	key: string;
+	name: string;
+	quantity: number | null;
+	unit: string | null;
+};
+
+/** A link as the editor holds it (→ plan 43's columns): which row, the words, the share. */
+export type EditorLink = {
+	ingredient: string;
+	phrase: string | null;
+	amountPhrase: string | null;
+	quantity: number | null;
+};
+
+/**
+ * What an amount in the text says about a row it stands beside: whether it
+ * may follow the number of people on its own (its unit is the row's, and it
+ * is not more than the row's total), and the step's share it stands for (null
+ * when it is all of the row, or a range, or another unit).
+ */
+export function amountFits(
+	written: string,
+	row: Pick<LinkTarget, 'quantity' | 'unit'>
+): { fits: boolean; share: number | null } {
+	const read = readAmount(written);
+	if (read.most === null || row.quantity === null) return { fits: false, share: null };
+	if (unitKey(read.unit) !== unitKey(row.unit)) return { fits: false, share: null };
+	if (read.most > row.quantity * 1.005) return { fits: false, share: null };
+	const single = read.first !== null && read.first === read.most;
+	return { fits: true, share: single && read.most < row.quantity ? read.most : null };
+}
+
+/**
+ * Whether `amount` is the run cook mode will rewrite for the link `phrase`:
+ * `locateAmounts` finds it beside one of the phrase's occurrences.
+ */
+export function amountFollows(text: string, phrase: string, amount: StepToken): boolean {
+	return locateAmounts(text, phrase, amount.text).some(([at]) => at === amount.start);
+}
+
+/**
+ * A new link for the word at `[start, end)`: the word as written, and the
+ * amount beside it when that amount fits the row (→ plan 46: "400 g Karotten"
+ * links the 400 g with the word). An amount that does not fit is left for a
+ * person to link by hand. The amount is kept only where cook mode will find it.
+ */
+export function linkWord(
+	text: string,
+	all: readonly StepToken[],
+	start: number,
+	end: number,
+	row: LinkTarget
+): EditorLink {
+	const phrase = text.slice(start, end);
+	const amount = amountBeside(text, all, start, end);
+	const fit = amount ? amountFits(amount.text, row) : null;
+	const found = amount !== null && fit !== null && fit.fits && amountFollows(text, phrase, amount);
+	return {
+		ingredient: row.key,
+		phrase,
+		amountPhrase: found ? amount.text : null,
+		quantity: found ? fit.share : null
+	};
+}
+
+/** A word the matcher would link, offered rather than linked (→ plan 46). */
+export type LinkSuggestion = {
+	ingredient: string;
+	phrase: string;
+	start: number;
+	end: number;
+};
+
+/**
+ * The words of a step the matcher recognises (`highlightStep`), as
+ * suggestions: one per row, the first place the text names it. A row this
+ * step already links is never suggested again, nor is a word inside a linked
+ * phrase, nor a phrase in `dismissed` (compared without case). A compound
+ * ("Zwiebelwürfel") is suggested for nothing: the matcher reads whole words.
+ */
+export function suggestLinks(
+	text: string,
+	ingredients: readonly LinkTarget[],
+	links: readonly Pick<EditorLink, 'ingredient' | 'phrase'>[],
+	dismissed: readonly string[] = []
+): LinkSuggestion[] {
+	const linked = new Set(links.map((link) => link.ingredient));
+	const taken = links.flatMap((link) => (link.phrase ? occurrences(text, link.phrase) : []));
+	const skip = new Set(dismissed.map((phrase) => phrase.toLowerCase()));
+	const open = ingredients.filter((row) => !linked.has(row.key));
+
+	const found: LinkSuggestion[] = [];
+	let at = 0;
+	for (const segment of highlightStep(text, open).segments) {
+		const start = at;
+		at += segment.text.length;
+		const row = segment.ingredient;
+		if (!row || found.some((one) => one.ingredient === row.key)) continue;
+		if (taken.some(([from, to]) => from < at && to > start)) continue;
+		if (skip.has(segment.text.toLowerCase())) continue;
+		found.push({ ingredient: row.key, phrase: segment.text, start, end: at });
+	}
+	return found;
 }
 
 /** Neighbouring plain runs as one, so the screens render what they did before. */

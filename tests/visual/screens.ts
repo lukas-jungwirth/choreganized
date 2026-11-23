@@ -47,6 +47,111 @@ export async function openRecipe(page: Page): Promise<void> {
 	await page.getByRole('heading', { level: 1 }).waitFor();
 }
 
+/** The lasagne in the editor (→ plan 46), scrolled so `heading` is at the top. */
+export async function openLasagneEditor(
+	page: Page,
+	nameField: string,
+	heading?: string
+): Promise<void> {
+	await openLasagne(page);
+	await page.goto(`${new URL(page.url()).pathname}/edit`);
+	await page.getByRole('textbox', { name: nameField }).waitFor();
+	if (heading) {
+		await page.evaluate((name) => {
+			const found = [...document.querySelectorAll('h2, h3')].find(
+				(el) => el.textContent?.trim().toLowerCase() === name.toLowerCase()
+			);
+			window.scrollTo(0, (found?.getBoundingClientRect().top ?? 0) + window.scrollY - 12);
+		}, heading);
+	}
+}
+
+/** The words the editor's shots find things by, in each language the walk uses. */
+export const EDITOR_WORDS = {
+	en: {
+		name: 'Recipe name',
+		ingredients: 'Ingredients',
+		steps: 'Steps',
+		more: (step: number) => `More for step ${step}`,
+		unit: /^Unit:/,
+		unitTitle: 'Unit',
+		part: 'Part',
+		toPart: 'Move to part…',
+		moveTitle: 'Move to part',
+		links: (step: number) => `Ingredients for step ${step}`,
+		linksTitle: 'Tap a word to link it'
+	},
+	de: {
+		name: 'Rezeptname',
+		ingredients: 'Zutaten',
+		steps: 'Schritte',
+		more: (step: number) => `Mehr zu Schritt ${step}`,
+		unit: /^Einheit:/,
+		unitTitle: 'Einheit',
+		part: 'Teil',
+		toPart: 'In anderen Teil…',
+		moveTitle: 'In anderen Teil',
+		links: (step: number) => `Zutaten für Schritt ${step}`,
+		linksTitle: 'Tipp auf ein Wort, um es zu verknüpfen'
+	}
+};
+
+/**
+ * The editor's screens and sheets (→ plan 46). Each opens the lasagne's editor
+ * and gets to its frame by the words of `words`; `text-size.spec.ts` walks the
+ * German twins by their German names.
+ */
+export function editorShots(
+	words: (typeof EDITOR_WORDS)['en']
+): { name: string; navigate: (page: Page) => Promise<void> }[] {
+	const open = (page: Page, heading: string) => openLasagneEditor(page, words.name, heading);
+	const ingredient = async (page: Page) => {
+		await open(page, words.ingredients);
+		await page.getByRole('button', { name: /^500 g Faschiertes/ }).click();
+		await page.getByRole('dialog').getByText(words.part, { exact: true }).waitFor();
+	};
+	return [
+		{ name: 'recipe-edit-part', navigate: (page) => open(page, words.ingredients) },
+		{
+			name: 'recipe-edit-step',
+			navigate: async (page) => {
+				await open(page, words.steps);
+				await page.getByRole('button', { name: words.more(1) }).click();
+			}
+		},
+		{ name: 'recipe-edit-ingredient', navigate: ingredient },
+		{
+			name: 'recipe-edit-unit',
+			navigate: async (page) => {
+				await ingredient(page);
+				await page.getByRole('button', { name: words.unit }).click();
+				await page.getByRole('dialog', { name: words.unitTitle, exact: true }).waitFor();
+				await page.waitForTimeout(300);
+			}
+		},
+		{
+			name: 'recipe-edit-move',
+			navigate: async (page) => {
+				await open(page, words.steps);
+				await page.getByRole('button', { name: words.more(3) }).click();
+				await page.getByRole('menuitem', { name: words.toPart }).click();
+				await page.getByRole('dialog', { name: words.moveTitle }).waitFor();
+				await page.waitForTimeout(300);
+			}
+		},
+		{
+			name: 'recipe-edit-links',
+			navigate: async (page) => {
+				await open(page, words.steps);
+				await page.getByRole('button', { name: words.links(2) }).click();
+				await page.getByRole('dialog', { name: words.linksTitle }).waitFor();
+				await page.getByRole('button', { name: '8', exact: true }).click();
+				await page.waitForTimeout(300);
+			}
+		}
+	];
+}
+
 /** The seeded lasagne (→ plan 43): parts, notes, steps linked by their words. */
 export async function openLasagne(page: Page): Promise<void> {
 	await page.goto('/cooking/recipes');
@@ -300,6 +405,18 @@ export const SCREENS: Screen[] = [
 		},
 		bottom: true
 	},
+	// The rebuilt editor (→ plan 46) on the lasagne: an open part [E1], a step
+	// card with its two rows [E3a], the ingredient sheet [E2], the unit panel
+	// [E2b], Move to part [E3b] and the link sheet [E3]; light and dark.
+	...editorShots(EDITOR_WORDS.en).flatMap((shot) =>
+		(['light', 'dark'] as const).map((theme) => ({
+			name: theme === 'dark' ? `${shot.name}-dark` : shot.name,
+			route: '/(app)/cooking/recipes/[id]/edit',
+			path: '',
+			navigate: shot.navigate,
+			...(theme === 'dark' ? { theme } : {})
+		}))
+	),
 	{
 		name: 'cook-mode',
 		route: '/(app)/cooking/recipes/[id]/cook',
