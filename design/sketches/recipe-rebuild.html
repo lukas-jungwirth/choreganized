@@ -233,7 +233,21 @@
 	.typed .read { height: 32px; padding: 0 12px; border-radius: 999px; background: var(--sage-tint); color: var(--sage-deep); font-weight: 700; font-size: 14.5px; display: inline-flex; align-items: center; }
 	.typed .caret { width: 2px; height: 20px; background: var(--sage); margin-left: 1px; display: inline-block; vertical-align: -4px; }
 	.eg { font-size: 13.5px; color: var(--text-4); margin: 7px 2px 0; }
-	/* The chip is a button: it opens the units, and picking one rewrites the field. */
+	/* Number and unit kept apart: a numbers-only field, and a button that opens the unit panel. */
+	.nu { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+	.numf, .unitf { height: 50px; border-radius: 14px; border: 1px solid var(--border); background: var(--card); padding: 0 14px; display: flex; align-items: center; font-size: 17px; font-weight: 600; font-variant-numeric: tabular-nums; }
+	.phone .unitf { justify-content: space-between; width: 100%; }
+	.unitf i { font-style: normal; color: var(--text-4); font-weight: 400; }
+	.ugrid { display: grid; gap: 8px; }
+	.ugrid.four { grid-template-columns: repeat(4, 1fr); }
+	.ugrid.three { grid-template-columns: repeat(3, 1fr); }
+	.ugrid button, .uopt { height: 46px; border-radius: 12px; background: var(--sunken); font-size: 15.5px; font-weight: 600; }
+	.phone .ugrid button, .phone .uopt { text-align: center; }
+	.ugrid button[aria-pressed='true'], .uopt[aria-pressed='true'] { background: var(--sage); color: var(--on-sage); }
+	.ugrid button.own { box-shadow: inset 0 0 0 1.5px var(--border-dashed); background: none; }
+	.urow { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-top: 14px; }
+	.uopt.add { background: none; box-shadow: inset 0 0 0 1.5px var(--border-dashed); color: var(--sage-deep); }
+	/* (Earlier draft, kept for the unit menu's look.) */
 	.amtwrap { position: relative; }
 	.unitmenu { position: absolute; right: 0; top: 56px; width: 190px; background: var(--card); border-radius: 16px; box-shadow: 0 12px 30px -8px rgba(0, 0, 0, 0.35), 0 0 0 1px var(--border); z-index: 5; display: grid; grid-template-columns: 1fr 1fr; padding: 6px; gap: 2px; }
 	.unitmenu button { height: 44px; border-radius: 10px; font-size: 15.5px; font-weight: 600; text-align: center; }
@@ -460,17 +474,13 @@
 			</figure>
 			<figure>
 				<div class="phone"><div class="scrim"></div>
-					<div class="sheet" style="--top:226px"><div class="grab"></div>
+					<div class="sheet" style="--top:196px"><div class="grab"></div>
 						<div class="sheet-top"><span class="eyebrow">Ingredient</span><h4>Faschiertes</h4></div>
 						<div class="sheet-body">
 							<div class="flbl" style="margin-top:4px">Name <span style="letter-spacing:0;text-transform:none;font-weight:500">· what goes on the list</span></div>
 							<div class="field">Faschiertes</div>
 							<div class="flbl">Amount</div>
-							<div class="amtwrap">
-								<div class="typed new"><span><span id="amtText">500 g</span><i class="caret"></i></span><button class="read" id="amtChip" aria-haspopup="true">500 g ▾</button></div>
-								<div class="unitmenu" id="unitMenu" hidden></div>
-							</div>
-							<p class="eg">Type it as you would say it: 500 g · 2 EL · 1 Dose · 2 Zehen</p>
+							<div class="nu new" style="padding-left:10px"><div class="numf">500</div><button class="unitf"><span class="unitNow">g</span><i>▾</i></button></div>
 							<div class="flbl">Note <span style="letter-spacing:0;text-transform:none;font-weight:500">· shown in the recipe</span></div>
 							<div class="field">gemischt</div>
 							<div class="flbl">Part</div>
@@ -479,7 +489,22 @@
 						<div class="sheet-foot"><button class="primary">Done</button></div>
 					</div>
 				</div>
-				<figcaption><b><span class="tag">E2</span>One ingredient: type the amount, tap the chip to change the unit</b>Your idea, both versions in one. You type "500 g" and the chip shows what was read. Tap the chip and it opens the units; picking one rewrites the field. Works here: tap the chip. A counting word you typed (Dose, Zehen) appears in the menu too.</figcaption>
+				<figcaption><b><span class="tag">E2</span>One ingredient: a number and a unit, kept apart</b>The amount is two controls on one line. The left one takes numbers only (500 · 1,5 · ½) and opens the number keyboard. The right one shows the unit and opens the panel in E2b. Nothing is guessed.</figcaption>
+			</figure>
+			<figure>
+				<div class="phone" id="e2b"><div class="scrim"></div>
+					<div class="sheet" style="--top:150px"><div class="grab"></div>
+						<div class="sheet-top"><span class="eyebrow">Faschiertes · 500</span><h4>Unit</h4></div>
+						<div class="sheet-body">
+							<div class="flbl" style="margin-top:2px">Units</div>
+							<div class="ugrid four" id="ug1"></div>
+							<div class="flbl">Counted in</div>
+							<div class="ugrid three" id="ug2"></div>
+							<div class="urow"><button class="uopt" data-u="">No unit</button><button class="uopt add">+ Add your own</button></div>
+						</div>
+					</div>
+				</div>
+				<figcaption><b><span class="tag">E2b</span>Pick the unit</b>Everything visible, nothing to type or scroll: the eight units, about twelve everyday counting words, your own words after those, and "Add your own" as the only way a new word comes in. Works here: tap one and E2 follows.</figcaption>
 			</figure>
 			<figure>
 				<div class="phone"><div class="scroll">
@@ -672,22 +697,26 @@
 	el0('cplus').addEventListener('click', () => { people = Math.min(24, people + 1); drawAmts(); });
 	drawAmts();
 
-	// E2: the chip shows what was read; tapping it opens the units, picking one rewrites the field.
+	// E2b: every unit visible; picking one updates the unit button in E2.
 	const UNITS = ['g', 'kg', 'ml', 'L', 'Stk', 'Pkg', 'EL', 'TL'];
-	const amtText = el0('amtText'), amtChip = el0('amtChip'), unitMenu = el0('unitMenu');
+	const WORDS = ['Zehe', 'Bund', 'Dose', 'Prise', 'Scheibe', 'Becher', 'Glas', 'Stange', 'Zweig', 'Blatt', 'Msp.', 'Würfel'];
+	const OWN = ['Kugel']; // a word this household added
 	let unitNow = 'g';
 	function drawUnits() {
-		unitMenu.textContent = '';
-		UNITS.forEach((u) => {
-			const b = document.createElement('button'); b.textContent = u; b.setAttribute('aria-pressed', u === unitNow);
-			b.addEventListener('click', () => { unitNow = u; amtText.textContent = '500 ' + u; amtChip.textContent = '500 ' + u + ' ▾'; unitMenu.hidden = true; });
-			unitMenu.append(b);
+		[['ug1', UNITS], ['ug2', [...WORDS, ...OWN]]].forEach(([id, list]) => {
+			const box = el0(id); box.textContent = '';
+			list.forEach((u) => {
+				const b = document.createElement('button'); b.textContent = u; b.setAttribute('aria-pressed', u === unitNow);
+				if (OWN.includes(u)) b.className = 'own';
+				b.addEventListener('click', () => { unitNow = u; drawUnits(); });
+				box.append(b);
+			});
 		});
-		const none = document.createElement('button'); none.className = 'wide'; none.textContent = 'No unit';
-		none.addEventListener('click', () => { unitNow = ''; amtText.textContent = '500'; amtChip.textContent = '500 ▾'; unitMenu.hidden = true; });
-		unitMenu.append(none);
+		const none = document.querySelector('#e2b .uopt[data-u]'); none.setAttribute('aria-pressed', unitNow === '');
+		document.querySelectorAll('.unitNow').forEach((s) => { s.textContent = unitNow || 'No unit'; });
 	}
-	amtChip.addEventListener('click', () => { drawUnits(); unitMenu.hidden = !unitMenu.hidden; });
+	document.querySelector('#e2b .uopt[data-u]').addEventListener('click', () => { unitNow = ''; drawUnits(); });
+	drawUnits();
 
 	// E3: tap a word to link it; an amount right before a linked word goes with it.
 	const ings = [['Zwiebel', '1'], ['Karotten', '400 g'], ['Faschiertes', '500 g'], ['Tomatenmark', '1 EL'], ['Knoblauch', '2 Zehen']];

@@ -26,6 +26,7 @@ between the import and the save.
    | `name-differs`   | the row with the page's line under it  | keep · edit                     |
    | `line-added`     | "Also on the page: …"                  | keep · remove                   |
    | `reworded`       | the step, the page's sentence under it | use the page's text             |
+   | `new-unit`       | "New unit: Ring"                       | add it · keep it in the note    |
    | `servings`       | "For how many people?" with a stepper  | set it                          |
    | `no-steps`       | "This page has no method"              | add steps (opens the editor)    |
 
