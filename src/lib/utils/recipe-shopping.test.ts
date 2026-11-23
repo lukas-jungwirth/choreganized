@@ -56,6 +56,24 @@ describe('shoppingLines', () => {
 		assert.equal(line.unit, 'g');
 	});
 
+	it('never lets a row taken by name alone erase an amount, whatever the order', () => {
+		const spoonFirst = shoppingLines([
+			row('a', 'Butter', 2, 'tbsp'),
+			row('b', 'Butter', 30, 'g'),
+			row('c', 'Butter', 50, 'g')
+		]);
+		const spoonLast = shoppingLines([
+			row('b', 'Butter', 30, 'g'),
+			row('c', 'Butter', 50, 'g'),
+			row('a', 'Butter', 2, 'tbsp')
+		]);
+		for (const [line] of [spoonFirst, spoonLast]) {
+			assert.equal(line.quantity, 80);
+			assert.equal(line.unit, 'g');
+		}
+		assert.deepEqual(spoonFirst[0].ids, ['a', 'b', 'c']);
+	});
+
 	it('names no parts for a recipe without any', () => {
 		assert.deepEqual(shoppingLines([row('a', 'Salz', null, null)])[0].parts, []);
 	});

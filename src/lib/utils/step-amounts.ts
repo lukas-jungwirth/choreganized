@@ -96,8 +96,11 @@ export function scaleStepAmounts<T extends Row>(
 	return out;
 }
 
-/** The prose before one ingredient, its trailing amount split out and rewritten — or null. */
-function rewrite<T>(
+/**
+ * The prose before one ingredient, its trailing amount split out and rewritten — or null.
+ * Exported for `step-links.ts`: a link stored without words keeps plan 23's rule.
+ */
+export function rewrite<T>(
 	prose: string,
 	ingredient: Row,
 	total: number | null,

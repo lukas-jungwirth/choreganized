@@ -73,11 +73,13 @@ export function shoppingLines(ingredients: readonly ShoppingSource[]): ShoppingL
 		const [first] = group;
 		const name = itemName(first.name);
 		// The list's own merge: amounts in agreeing units add up, and one that
-		// can't be added leaves the line as the first row had it.
-		const merged = planAdds(
-			[],
-			group.map((row) => ({ name, ...shoppingAmount(row.quantity, row.unit) }))
-		).inserts[0] ?? { name, quantity: null, unit: null };
+		// can't be added leaves the line as the first amount had it. A row the
+		// list takes by name alone ("2 EL Butter") never erases another row's
+		// amount, so "Butter · 80 g" doesn't depend on which row came first.
+		const amounts = group
+			.map((row) => ({ name, ...shoppingAmount(row.quantity, row.unit) }))
+			.filter((amount) => amount.quantity !== null);
+		const merged = planAdds([], amounts).inserts[0] ?? { name, quantity: null, unit: null };
 
 		return {
 			id: first.id,

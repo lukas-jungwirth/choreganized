@@ -275,6 +275,40 @@ test('saving the lasagne in the old editor loses no note, part or link (plan 43)
 	await expect(page.locator('.step-text').nth(1).locator('.scaled')).toContainText('2 - 4 EL');
 });
 
+test('a row added or moved in the old editor joins the part it lands in (plan 43)', async ({
+	page
+}) => {
+	await page.goto('/cooking/recipes');
+	await page
+		.getByRole('link', { name: new RegExp(SEED.recipes.lasagne) })
+		.first()
+		.click();
+	await page.waitForURL(/\/cooking\/recipes\/[^/?]+$/);
+	const recipeUrl = page.url();
+	await page.goto(`${recipeUrl}/edit`);
+
+	// Enter in the third Bolognese row adds a fourth, in the Bolognese.
+	await page.getByLabel('Ingredient 3', { exact: true }).press('Enter');
+	await page.getByLabel('Ingredient 4', { exact: true }).fill('1 Karotte');
+	// The last Bolognese row (Pfeffer, now 9th) moved down lands in the Béchamel.
+	await expect(page.getByLabel('Ingredient 9', { exact: true })).toHaveValue('Pfeffer');
+	await page.getByRole('button', { name: 'Move ingredient 9 down' }).click();
+	await page.getByRole('button', { name: 'Save changes' }).click();
+	await page.waitForURL(recipeUrl);
+
+	await expect(page.getByRole('heading', { name: 'Bolognese', level: 3 })).toHaveCount(2);
+	await expect(page.getByRole('heading', { name: 'Béchamel', level: 3 })).toHaveCount(2);
+	const [bolognese, bechamel] = [
+		page.locator('.ingredients').nth(0),
+		page.locator('.ingredients').nth(1)
+	];
+	await expect(bolognese).toContainText('Karotte');
+	await expect(bolognese).not.toContainText('Pfeffer');
+	await expect(bechamel.locator('li').first()).toContainText('Butter');
+	await expect(bechamel).toContainText('Pfeffer');
+	await expect(page.locator('.ingredients')).toHaveCount(3);
+});
+
 test('a timer counts on past zero, and is still there after the app was closed (→ DECISIONS #251)', async ({
 	page
 }) => {

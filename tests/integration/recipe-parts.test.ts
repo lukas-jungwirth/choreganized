@@ -16,7 +16,7 @@ import {
 	updateRecipe
 } from '$lib/server/services/recipes';
 import { listOpenItems } from '$lib/server/services/shopping';
-import { readRecipeForm, type RecipeInput } from '$lib/utils/recipes';
+import { readRecipeForm, recipeShareText, type RecipeInput } from '$lib/utils/recipes';
 import { makeHousehold } from '../helpers/db';
 
 const m = catalog('en');
@@ -200,6 +200,35 @@ describe('a recipe with parts, notes and links', () => {
 		assert.equal(getRecipe(b.householdId, id), null);
 		assert.equal(updateRecipe(b.householdId, id, { ...lasagne(), ingredientDetails: [] }), false);
 		assert.equal(getRecipe(a.householdId, id)!.ingredients[2].note, 'gemischt');
+	});
+});
+
+describe('the shared text of a recipe with parts', () => {
+	it('heads each part, keeps each note, and numbers the steps straight through', () => {
+		const { householdId, owner } = makeHousehold();
+		const recipe = getRecipe(householdId, createRecipe(householdId, owner.id, lasagne()))!;
+
+		const text = recipeShareText(recipe, m);
+		assert.match(text, /Ingredients\nBolognese\n• 1 Zwiebel\n/);
+		assert.match(text, /• 500 g Faschiertes, gemischt\n/);
+		assert.match(text, /\nBéchamel\n• 30 g Butter\n/);
+		assert.match(text, /• 50 g Butter, für die Form$/m);
+		assert.match(text, /Steps\nBolognese\n1\. Zwiebel schälen/);
+		assert.match(text, /\nBéchamel\n3\. Butter schmelzen, Mehl einrühren\.$/);
+	});
+
+	it('reads as before for a recipe without parts or notes', () => {
+		const text = recipeShareText(
+			{
+				name: 'Toast',
+				timeMinutes: null,
+				servings: null,
+				ingredients: [{ name: 'Brot', quantity: 2, unit: null }],
+				steps: [{ text: 'Toasten.' }]
+			},
+			m
+		);
+		assert.equal(text, 'Toast\n\nIngredients\n• 2 Brot\n\nSteps\n1. Toasten.');
 	});
 });
 

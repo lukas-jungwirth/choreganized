@@ -4579,11 +4579,20 @@ store_id` NULL already means "no memory" (a deleted list), and telling the two a
        without underlines there, as before (the matcher's underlines stay cook mode's); the
        stored ones are certain enough to show, as sketch V2 does. Mustard in the sketch is
        `--gold` here.
-     - **An amount phrase is found near its phrase**: the occurrence directly in front of one
-       of the link's phrase occurrences (only spaces between), else the first occurrence in the
-       step; bounded so "2 EL" is never read inside "12 EL". Every number in the run is scaled
-       on its own (`scaleQuantity`, then `formatLike` from `step-amounts.ts`), so a range moves
-       both ends and the words in the run never change. Phrases match case-blind.
+     - **An amount phrase is rewritten only beside its phrase** (`locateAmounts`, exported for
+       plan 44's gate). First built as "directly in front of the phrase, else the first
+       occurrence in the step"; review found the fallback doubling the wrong number ("Nach 5
+       Min. die 5 reifen Tomaten" doubled the minutes, "Stufe 2 … 2 große Eier" the oven,
+       two "100 g" links both took the first). Now, for each phrase occurrence: the nearest
+       amount before it with at most three letter-words between (spaces, hyphens, commas; no
+       digit, no `. ! ? ; :`), else after it by the same test with an opening bracket allowed
+       ("Karotten (400 g)"); one amount to the nearest occurrence; every occurrence with its
+       amount is rewritten; nothing beside any occurrence rewrites nothing. An unscaled number
+       is acceptable, a wrong one is not. Bounded so "2 EL" is never read inside "12 EL".
+       Every number in the run is scaled on its own (`scaleQuantity`, then `formatLike` from
+       `step-amounts.ts`), so a range moves both ends. Phrases match case-blind.
+     - **A link stored without words is still underlined** where the word matcher, restricted
+       to those links' ingredients, finds the name, never across a run a worded link claimed.
      - **The picker groups by name across the whole recipe**, not only across parts: a flat
        recipe that names "Salz" twice also gets one row now. A line's id is its first row's id;
        the submit accepts any of the line's row ids, so a sheet opened before a deploy still
@@ -4602,6 +4611,25 @@ store_id` NULL already means "no memory" (a deleted list), and telling the two a
      - **Part headings** are Fraunces at `--fs-18` (sketch 19 px), one step under the 20 px
        "Ingredients" / "Steps" titles they sit beneath, so the hierarchy holds. The peek sheet
        heads its parts with the sheets' small uppercase label instead.
+     - **A row the list takes by name alone never erases another row's amount** in
+       `shoppingLines`: "2 EL Butter" + "30 g" + "50 g" is Butter · 80 g in any order (review
+       found the spoon row first blanking the line).
+     - **A row added in the old editor joins the part it lands in** (the row above's, the row
+       below's when first; ingredients and steps alike): a new row without one split its part
+       in two, each half under the same heading. **A moved row joins a part only when it lands
+       between two of its rows**, and is otherwise back in the part it came with, so one arrow
+       across a boundary moves it into the next part and the arrow back returns it. "Always the
+       row above's" (the first rule) let a part's only row be renamed out of existence, with
+       no control to set it back before plan 46 (code review).
+     - **Review fixes from the code-review pass**: a link without words keeps plan 23's "number
+       before the underline" rule when it has no amount phrase, and has its amount phrase
+       located beside the matcher's underline when it has one; one ingredient linked twice
+       shows the shares of both links added up (`stepShare`; the old editor's sheet sets the
+       whole share on the first link and none on the others); an untouched line keeps its note
+       whatever it parses to; "0,250" is a decimal (a leading 0 is never a thousands group).
+       Left as they are: the 60-pins-per-step cap now counts (ingredient, phrase) pairs, and an
+       amount in a unit that cannot be added to the line's first stays off the list, both as
+       before this plan (`planAdds`).
      - **The seeded lasagne has a third part, "Schichten"** (the layering), so the Butter for
        the form shows one name gathered from two parts in the picker. It is in the base seed
        (every e2e and visual household), tagged dinner · main · meat and older than the other

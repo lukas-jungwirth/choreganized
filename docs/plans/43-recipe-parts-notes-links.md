@@ -55,7 +55,14 @@ This plan changes the model and the two read-only screens. The editor (plan 46) 
   occurrence of the phrase in that step. Null: the step uses the ingredient without naming it
   ("restliche Zutaten unterheben"); it is listed under the step and nothing is underlined.
 - `amount_phrase` (nullable): the amount the step text gives it, exactly as it stands there:
-  "1 - 2 EL", "200 g", "2". Cooking for a different number rewrites this run and nothing else.
+  "1 - 2 EL", "200 g", "2". Cooking for a different number rewrites this run and nothing else,
+  **only where it stands beside the phrase** (as built, DECISIONS #320, `locateAmounts`): for
+  each occurrence of the phrase, the nearest occurrence of the amount before it with at most
+  three words of letters between (spaces, hyphens, commas; no digit, no `. ! ? ; :`), else
+  after it by the same test (an opening bracket allowed too). One amount goes to one
+  occurrence, the nearest; every occurrence with its amount beside it is rewritten; none beside
+  any occurrence rewrites nothing. Never "the first one in the step": "Nach 5 Min. die 5
+  reifen Tomaten" must not double the minutes.
   It replaces the "number directly before an underlined word" guess of plan 23.
 - The unique index on (step, ingredient) goes: a step may name one ingredient by two phrases
   ("Karotte schälen … die Schale zu den Möhren reiben"). Unique on (step, ingredient, phrase).

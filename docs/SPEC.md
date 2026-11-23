@@ -847,7 +847,11 @@ item sheet [3a]; what differs is what a tick does and what counts as shopping.
     for twice as many says "**4** Tomaten würfeln", marked, with what the recipe says there
     for a screen reader. **A step with stored links** (→ plan 43) rewrites exactly the amount
     run each link stored, "1 - 2 EL" → "2 - 4 EL", every number in it scaled and nothing else in
-    the sentence ("180 °C", "5 - 7 Min."). **A step without** keeps plan 23's rule, only where
+    the sentence ("180 °C", "5 - 7 Min."), and only **where it stands beside its words**: before
+    them with at most three words of letters between ("2 große Eier", "100 g weiche Butter";
+    no digit, no `. ! ? ; :`), else after them ("Karotten (400 g)", "Karotten, etwa 400 g").
+    "Nach 5 Min. die 5 reifen Tomaten" doubles the second 5 only; every occurrence of the words
+    with its amount beside it is rewritten; an amount beside none stays as written. **A step without** keeps plan 23's rule, only where
     it is certain: the amount must sit directly before an
     ingredient the step names, in that ingredient's unit, and agree with the recipe (the share
     pinned to the step, or the whole row; otherwise no more than the row's total). Every other
@@ -868,7 +872,9 @@ item sheet [3a]; what differs is what a tick does and what counts as shopping.
   The ingredients the step uses — **its stored links, else the ones pinned to it in the form,
   else the ones its text names** (§4.4) — are underlined in amber where the text names them: a
   stored link underlines every whole-word occurrence of its own words ("Zwiebelwürfel"), never
-  inside a longer word, and a link stored without words is listed but underlines nothing, and the "This step uses {…}" line beneath lists them all,
+  inside a longer word, and a link stored without words is underlined wherever the word matcher
+  finds its ingredient's name (never inside a run another link claimed). The "This step uses
+  {…}" line beneath lists them all,
   including any the text never mentions. A step pinned to nothing shows neither.
 - **Tapping an underlined ingredient says how much of it** (→ [DECISIONS #133](DECISIONS.md)) —
   the amount in amber with the name behind it, and the row's total behind that when the step

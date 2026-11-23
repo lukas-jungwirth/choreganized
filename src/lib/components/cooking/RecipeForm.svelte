@@ -93,9 +93,17 @@
 	 * An ingredient row also keeps what plan 43 stores beside the line — its
 	 * note and its part — so a save in this editor loses neither. No control
 	 * shows them (plan 46 rebuilds the editor); `named` is the name the note was
-	 * written for, and a line retyped to another name leaves the note behind.
+	 * written for and `opened` the line as the row was opened, so a line retyped
+	 * to another name leaves the note behind and an untouched one never does.
+	 * `home` is the part the row came with (see `move`).
 	 */
-	type IngredientRow = Row & { note: string | null; section: string | null; named: string | null };
+	type IngredientRow = Row & {
+		note: string | null;
+		section: string | null;
+		home: string | null;
+		named: string | null;
+		opened: string;
+	};
 	/**
 	 * A step also carries what it uses (→ SPEC §4.4): null while it reads its own
 	 * text, a list — possibly empty — once someone has said. Pins name ingredient
@@ -106,8 +114,9 @@
 	type StepRow = Row & {
 		uses: StepUseDraft[] | null;
 		timer: StepTimer | null;
-		/** The step's part (→ plan 43), posted back as it came. */
+		/** The step's part (→ plan 43), posted back as it came, and the one it came with. */
 		section: string | null;
+		home: string | null;
 	};
 
 	let nextKey = 0;
@@ -120,7 +129,9 @@
 		...row(text),
 		note: details?.note ?? null,
 		section: details?.section ?? null,
-		named: details?.name ?? null
+		home: details?.section ?? null,
+		named: details?.name ?? null,
+		opened: text
 	});
 	const stepRow = (
 		text = '',
@@ -131,7 +142,8 @@
 		...row(text),
 		uses,
 		timer,
-		section
+		section,
+		home: section
 	});
 
 	/**
@@ -285,15 +297,50 @@
 	let editing = $state<string | null>(null);
 	let pinning = $state<string | null>(null);
 
+	/** A row that carries a part (→ plan 43), and the part it came with. */
+	type Parted = Row & { section: string | null; home: string | null };
+
+	/**
+	 * A new row joins the part it lands in: the one of the row above it, or of
+	 * the row below when it is first. A new row with none of its own would split
+	 * its part in two, each half under the same heading.
+	 */
+	function joinPart<T extends Parted>(rows: T[], at: number): T[] {
+		const neighbour = rows[at - 1] ?? rows[at + 1];
+		if (neighbour && rows[at].section !== neighbour.section) {
+			rows[at] = { ...rows[at], section: neighbour.section, home: neighbour.section };
+		}
+		return rows;
+	}
+
+	/**
+	 * A moved row joins a part only when it lands **inside** it, between two of
+	 * its rows; anywhere else it is back in the part it came with. So one arrow
+	 * across a boundary moves a row into the next part, and the arrow back
+	 * returns it, without ever renaming a part's only row out of existence (the
+	 * form has no control to set a part again until plan 46).
+	 */
+	function settlePart<T extends Parted>(rows: T[], at: number): T[] {
+		const above = rows[at - 1];
+		const below = rows[at + 1];
+		const inside = above && below && above.section === below.section;
+		const section = inside ? above.section : rows[at].home;
+		if (rows[at].section !== section) rows[at] = { ...rows[at], section };
+		return rows;
+	}
+
 	/** Insert after `index`, then put the caret in it — Enter walks down the list. */
-	function add<T extends Row>(
+	function add<T extends Parted>(
 		rows: T[],
 		kind: 'ingredient' | 'step',
 		make: () => T,
 		index = rows.length - 1
 	): T[] {
 		const fresh = make();
-		const next = [...rows.slice(0, index + 1), fresh, ...rows.slice(index + 1)];
+		const next = joinPart(
+			[...rows.slice(0, index + 1), fresh, ...rows.slice(index + 1)],
+			index + 1
+		);
 
 		// After the DOM has the new row: focus is the whole point of adding one.
 		requestAnimationFrame(() => document.getElementById(fieldId(kind, fresh.key))?.focus());
@@ -307,13 +354,13 @@
 		return next.length ? next : [make()];
 	}
 
-	function move<T extends Row>(rows: T[], index: number, direction: -1 | 1): T[] {
+	function move<T extends Parted>(rows: T[], index: number, direction: -1 | 1): T[] {
 		const to = index + direction;
 		if (to < 0 || to >= rows.length) return rows;
 
 		const next = [...rows];
 		[next[index], next[to]] = [next[to], next[index]];
-		return next;
+		return settlePart(next, to);
 	}
 
 	/**
@@ -354,14 +401,28 @@
 		}));
 	}
 
+	/**
+	 * One pin per ingredient, its share the shares of all its links added up:
+	 * a stored link may name one ingredient twice (→ plan 43), and the chips and
+	 * the sheet speak per ingredient. Null when none of them says.
+	 */
+	function perIngredient(uses: StepUseDraft[]): StepUseDraft[] {
+		const byKey = new Map<string, StepUseDraft>();
+		for (const use of uses) {
+			const held = byKey.get(use.ingredient);
+			if (!held) byKey.set(use.ingredient, { ingredient: use.ingredient, quantity: use.quantity });
+			else if (use.quantity !== null) {
+				held.quantity = Math.round(((held.quantity ?? 0) + use.quantity) * 100) / 100;
+			}
+		}
+		return [...byKey.values()];
+	}
+
 	/** The chips under one step: its pins, or its reading, as name + amount. */
 	function chips(step: StepRow): { key: string; name: string; amount: string }[] {
-		// One chip per ingredient, though a stored link may name it twice (→ plan 43).
-		const seen = new Set<string>();
-		return (step.uses ?? suggest(step.text)).flatMap((use) => {
+		return perIngredient(step.uses ?? suggest(step.text)).flatMap((use) => {
 			const choice = choices.find((item) => item.key === use.ingredient);
-			if (!choice || seen.has(choice.key)) return [];
-			seen.add(choice.key);
+			if (!choice) return [];
 
 			return [
 				{
@@ -403,9 +464,11 @@
 
 	/**
 	 * The sheet's answer, with the words the stored links carried (→ plan 43):
-	 * an ingredient still ticked keeps every phrase it was linked by, the first
-	 * one taking the share the sheet set. The sheet knows nothing of phrases, and
-	 * reopening it must not be what loses them.
+	 * an ingredient still ticked keeps every phrase it was linked by. The share
+	 * the sheet set is the ingredient's whole share in this step, so it goes on
+	 * the first link and the others say none: added up, they are what the sheet
+	 * said. The sheet knows nothing of phrases, and reopening it must not be what
+	 * loses them.
 	 */
 	function keepWords(before: StepUseDraft[] | null, after: StepUseDraft[]): StepUseDraft[] {
 		return after.flatMap((use) => {
@@ -413,7 +476,7 @@
 			if (!linked.length) return [use];
 			return linked.map((old, at) => ({
 				...old,
-				quantity: at === 0 ? use.quantity : old.quantity
+				quantity: at === 0 ? use.quantity : null
 			}));
 		});
 	}
@@ -424,6 +487,8 @@
 	 */
 	function postedNote(item: IngredientRow): string {
 		if (!item.note || item.named === null) return '';
+		// Untouched, it keeps its note whatever the line parses to.
+		if (item.text === item.opened) return item.note;
 		const parsed = item.text.trim() ? parseIngredient(item.text) : null;
 		return parsed?.name === item.named ? item.note : '';
 	}
@@ -784,9 +849,7 @@
 		<StepIngredientsSheet
 			index={at + 1}
 			ingredients={choices}
-			uses={steps[at].uses?.filter(
-				(use, first, all) => all.findIndex((other) => other.ingredient === use.ingredient) === first
-			) ?? null}
+			uses={steps[at].uses ? perIngredient(steps[at].uses) : null}
 			suggested={suggest(steps[at].text)}
 			onsave={(uses) => (steps[at].uses = keepWords(steps[at].uses, uses))}
 			onauto={() => (steps[at].uses = null)}
