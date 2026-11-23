@@ -27,6 +27,8 @@ export type RecipeJsonLd = {
 	/** Minutes, from `totalTime` (else `prepTime` + `cookTime`). */
 	timeMinutes: number | null;
 	servings: number | null;
+	/** `recipeYield` as written ("4 Portionen", "1 Kuchen"): whether a 1 is a portion (→ plan 44). */
+	servingsText: string | null;
 	/** Raw ingredient lines ("500 g Mehl"), decoded and trimmed — the editor parses them. */
 	ingredientLines: string[];
 	/**
@@ -173,6 +175,7 @@ function mapRecipe(node: Record<string, unknown>): RecipeJsonLd {
 		name: cleanText(asString(node.name) ?? ''),
 		timeMinutes: mapTime(node),
 		servings: mapYield(node.recipeYield),
+		servingsText: yieldText(node.recipeYield),
 		ingredientLines: ingredients.lines,
 		ingredientSections: ingredients.sections,
 		steps: steps.steps,
@@ -295,6 +298,13 @@ export function mapYield(value: unknown): number | null {
 		}
 	}
 	return null;
+}
+
+/** The first yield as text, for a person or a check to read. */
+export function yieldText(value: unknown): string | null {
+	const first = Array.isArray(value) ? value.find((one) => one != null) : value;
+	if (typeof first === 'number') return String(first);
+	return typeof first === 'string' ? cleanText(first) || null : null;
 }
 
 /* ── Ingredients ──────────────────────────────────────────────────────────── */
@@ -497,6 +507,7 @@ export function tidyIngredients(lines: string[]): {
 	const tidy: string[] = [];
 	const sections: (string | null)[] = [];
 	let section: string | null = null;
+	const shoutedLines = lines.filter(isShouted).length;
 
 	for (let at = 0; at < lines.length; at++) {
 		let line = lines[at];
@@ -507,7 +518,7 @@ export function tidyIngredients(lines: string[]): {
 			// A decimal comma has no space after it; a list comma does.
 			line = /\d$/.test(line) && /^\d/.test(next) ? `${line},${next}` : `${line}, ${next}`;
 		}
-		if (isIngredientHeading(line)) {
+		if (isIngredientHeading(line, shoutedLines)) {
 			section = sectionName(line);
 			continue;
 		}
@@ -521,16 +532,25 @@ export function tidyIngredients(lines: string[]): {
 }
 
 /** "Für den Teig:", "KATSU CURRY SAUCE", "Für die Füllung": a title, not a thing to buy. */
-function isIngredientHeading(line: string): boolean {
+function isIngredientHeading(line: string, shoutedLines: number): boolean {
 	if (/^[\d½¼¾⅓⅔⅛]/.test(line)) return false;
 	if (line.endsWith(':')) return true;
 	if (/\d/.test(line)) return false;
-	const letters = line.replace(/[^\p{L}]/gu, '');
-	const shouted =
-		letters.length >= 4 && letters === letters.toUpperCase() && letters !== letters.toLowerCase();
+	// A lone shouted word ("BUTTER") is an ingredient; one among other shouted
+	// headings ("KATSU CURRY SAUCE", "PICKLE") is one of them.
+	const shouted = isShouted(line) && (/\s/.test(line.trim()) || shoutedLines >= 2);
 	// "Für die Form: Butter" is butter, not a heading: a colon inside names the thing after it.
+	// "Für die Deko Puderzucker" is sugar: a title is "Für den Teig", three words at most.
 	const titled = /^(?:für|for)\s/i.test(line) && !line.includes(':');
-	return shouted || (titled && line.split(/\s+/).length <= 5);
+	return shouted || (titled && line.split(/\s+/).length <= 3);
+}
+
+function isShouted(line: string): boolean {
+	if (/\d/.test(line)) return false;
+	const letters = line.replace(/[^\p{L}]/gu, '');
+	return (
+		letters.length >= 4 && letters === letters.toUpperCase() && letters !== letters.toLowerCase()
+	);
 }
 
 /**

@@ -7,7 +7,7 @@ import assert from 'node:assert/strict';
 import { createServer } from 'node:http';
 import { describe, it } from 'vitest';
 import {
-	draftFromCard,
+	cardSuggestion,
 	failureCode,
 	fetchRecipePage,
 	htmlToReadableText,
@@ -221,56 +221,16 @@ describe('failureCode', () => {
 	});
 });
 
-describe('draftFromCard — suggested tags (→ plan 41)', () => {
-	const card = {
-		name: 'Kürbissuppe',
-		timeMinutes: 40,
-		servings: 4,
-		ingredientLines: ['1 Kürbis'],
-		ingredientSections: [null],
-		steps: ['Kochen.'],
-		stepSections: [null],
-		image: null
-	};
-
+describe('cardSuggestion (→ plan 41)', () => {
 	it('suggests what the page’s category, keywords and diet name', () => {
-		const draft = draftFromCard(
-			{ ...card, labels: ['Suppe', 'vegan, schnell', 'https://schema.org/GlutenFreeDiet'] },
-			null
+		assert.deepEqual(
+			cardSuggestion({ labels: ['Suppe', 'vegan, schnell', 'https://schema.org/GlutenFreeDiet'] }),
+			{ tags: ['kind:soup', 'free:gluten'], diet: 'vegan', from: 'page' }
 		);
-		assert.deepEqual(draft.suggested, {
-			tags: ['kind:soup', 'free:gluten'],
-			diet: 'vegan',
-			from: 'page'
-		});
 	});
 
 	it('suggests nothing when the page names nothing on the list', () => {
-		assert.equal(draftFromCard({ ...card, labels: ['Herbst', 'schnell'] }, null).suggested, null);
-		assert.equal(draftFromCard({ ...card, labels: [] }, null).suggested, null);
-	});
-});
-
-describe('draftFromCard — parts (→ plan 44)', () => {
-	it('carries the parts the readers found into the draft', () => {
-		const draft = draftFromCard(
-			{
-				name: 'Lasagne',
-				timeMinutes: null,
-				servings: 4,
-				ingredientLines: ['1 Zwiebel', '50 g Butter'],
-				ingredientSections: ['Bolognese', 'Béchamel'],
-				steps: ['Anbraten.', 'Butter schmelzen.'],
-				stepSections: ['Bolognese', 'Béchamel'],
-				image: null,
-				labels: []
-			},
-			null
-		);
-		assert.deepEqual(draft.ingredientSections, ['Bolognese', 'Béchamel']);
-		assert.deepEqual(
-			draft.steps.map((step) => step.section),
-			['Bolognese', 'Béchamel']
-		);
+		assert.equal(cardSuggestion({ labels: ['Herbst', 'schnell'] }), null);
+		assert.equal(cardSuggestion({ labels: [] }), null);
 	});
 });

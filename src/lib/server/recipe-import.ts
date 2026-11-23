@@ -31,19 +31,7 @@ import {
 import { markedUpSteps, parseRecipeMicrodata } from '$lib/utils/recipe-microdata';
 import { pageIngredientSections } from '$lib/utils/recipe-plugins';
 import { tagsFromLabels } from '$lib/utils/recipe-tag-words';
-import {
-	clampCount,
-	INGREDIENTS_MAX,
-	INGREDIENT_LINE_MAX,
-	plainStep,
-	RECIPE_NAME_MAX,
-	RECIPE_SERVINGS_MAX,
-	RECIPE_TIME_MAX,
-	STEPS_MAX,
-	STEP_TEXT_MAX,
-	type RecipePrefill,
-	type TagSuggestion
-} from '$lib/utils/recipes';
+import { type RecipePrefill, type TagSuggestion } from '$lib/utils/recipes';
 import { storePhotoFromBytes } from './uploads';
 
 /** Enough hops for the usual `http → https → www` shuffle, not enough to loop. */
@@ -170,33 +158,6 @@ function withPageSections(card: RecipeJsonLd | null, html: string): RecipeJsonLd
 	if (!card || card.ingredientSections.some(Boolean)) return card;
 	const sections = pageIngredientSections(html, card.ingredientLines);
 	return sections ? { ...card, ingredientSections: sections } : card;
-}
-
-/**
- * A card as the editor's draft, capped the way `writeChildren` caps at insert —
- * so a paste-bomb page never fills the editor with hundreds of rows (→ plan 07).
- * Its steps read their own text: a card knows nothing about which ingredient
- * goes where, or for how long.
- */
-export function draftFromCard(card: RecipeJsonLd, photo: RecipePrefill['photo']): RecipePrefill {
-	return {
-		name: card.name.slice(0, RECIPE_NAME_MAX),
-		timeMinutes: clampCount(card.timeMinutes, RECIPE_TIME_MAX),
-		servings: clampCount(card.servings, RECIPE_SERVINGS_MAX),
-		ingredientLines: card.ingredientLines
-			.map((line) => line.slice(0, INGREDIENT_LINE_MAX))
-			.slice(0, INGREDIENTS_MAX),
-		// The parts the readers found (→ plan 44); the editor keeps them as it keeps a saved one's.
-		ingredientSections: card.ingredientSections.slice(0, INGREDIENTS_MAX),
-		steps: card.steps
-			.map((step, at) => ({
-				...plainStep(step.slice(0, STEP_TEXT_MAX)),
-				section: card.stepSections[at] ?? null
-			}))
-			.slice(0, STEPS_MAX),
-		photo,
-		suggested: cardSuggestion(card)
-	};
 }
 
 /**

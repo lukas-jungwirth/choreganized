@@ -1,0 +1,119 @@
+{
+	"tags": ["meal:breakfast", "kind:dessert"],
+	"diet": "vegetarian",
+	"name": "Gemini pancakes",
+	"timeMinutes": 20,
+	"servings": 4,
+	"ingredients": [
+		{
+			"source": null,
+			"quantity": 200,
+			"unit": "g",
+			"countingWord": null,
+			"newUnit": null,
+			"name": "flour",
+			"note": null,
+			"alternative": null,
+			"section": "Batter"
+		},
+		{
+			"source": null,
+			"quantity": 2,
+			"unit": null,
+			"countingWord": null,
+			"newUnit": null,
+			"name": "eggs",
+			"note": null,
+			"alternative": null,
+			"section": "Batter"
+		},
+		{
+			"source": null,
+			"quantity": 300,
+			"unit": "ml",
+			"countingWord": null,
+			"newUnit": null,
+			"name": "milk",
+			"note": "cold",
+			"alternative": null,
+			"section": "Batter"
+		},
+		{
+			"source": null,
+			"quantity": 150,
+			"unit": "g",
+			"countingWord": null,
+			"newUnit": null,
+			"name": "berries",
+			"note": null,
+			"alternative": "cherries",
+			"section": "Sauce"
+		},
+		{
+			"source": null,
+			"quantity": 1,
+			"unit": "tbsp",
+			"countingWord": null,
+			"newUnit": null,
+			"name": "sugar",
+			"note": null,
+			"alternative": null,
+			"section": "Sauce"
+		}
+	],
+	"steps": [
+		{
+			"text": "Whisk 200 g flour, 2 eggs and 300 ml milk.",
+			"section": "Batter",
+			"timer": null,
+			"uses": [
+				{
+					"ingredient": 0,
+					"phrase": "flour",
+					"amountPhrase": "200 g",
+					"quantity": null
+				},
+				{
+					"ingredient": 1,
+					"phrase": "eggs",
+					"amountPhrase": "2",
+					"quantity": null
+				},
+				{
+					"ingredient": 2,
+					"phrase": "milk",
+					"amountPhrase": "300 ml",
+					"quantity": null
+				}
+			]
+		},
+		{
+			"text": "Fry each pancake for 2 minutes per side.",
+			"section": "Batter",
+			"timer": {
+				"seconds": 120,
+				"label": "Pancake"
+			},
+			"uses": []
+		},
+		{
+			"text": "Simmer the berries with the sugar for 5 minutes.",
+			"section": "Sauce",
+			"timer": null,
+			"uses": [
+				{
+					"ingredient": 3,
+					"phrase": "berries",
+					"amountPhrase": null,
+					"quantity": null
+				},
+				{
+					"ingredient": 4,
+					"phrase": "sugar",
+					"amountPhrase": null,
+					"quantity": null
+				}
+			]
+		}
+	]
+}

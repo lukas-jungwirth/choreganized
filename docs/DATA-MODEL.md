@@ -239,6 +239,19 @@ sortOrder)` with `UNIQUE(step_id, ingredient_id, phrase)` (migration 0029, → p
   `/api/uploads/[...path]`, which only answers when the path is a recipe's `imagePath` **in
   the caller's household** — the lookup is the authorisation (→ #64).
 
+### `household_units` (→ plan 44, DECISIONS #321)
+
+- The words a household counts in besides the eight units and the counting words the shared
+  reader knows (`utils/amounts.ts`): "Ring", "Kugel". Added on purpose, never by a guess (the
+  import's "New unit: Ring. Add it?" of plan 45, the editor's unit panel of plan 46);
+  `services/units.ts` lists, adds and removes them, `householdId` first.
+- `word` as the person wrote it; `wordKey` its lowercase, `UNIQUE(householdId, wordKey)`, so
+  "Ring" and "RING" are one word. A word that is already a unit or a counting word is refused.
+- `addedBy` (member, `SET NULL` when they leave) and `addedAt`.
+- Read as the reader's `known` set (`parseIngredient(line, known)`): every recipe save of that
+  household reads "2 Ringe Fleischwurst" as 2 · Ringe · Fleischwurst; another household's save
+  reads it as before. The AI import lists the words in its prompt and its gate accepts them.
+
 ### `meals`
 
 - `UNIQUE(householdId, date, slot)` — a day holds **one meal per slot**, `slot` being

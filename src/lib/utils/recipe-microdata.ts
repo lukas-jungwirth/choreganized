@@ -24,6 +24,7 @@ import {
 	mapYield,
 	tidyIngredients,
 	tidySteps,
+	yieldText,
 	type RecipeJsonLd
 } from './recipe-jsonld';
 
@@ -62,6 +63,7 @@ export function parseRecipeMicrodata(html: string): RecipeJsonLd | null {
 		name: clean(first('name') ? valueOf(first('name')!) : ''),
 		timeMinutes: time(props),
 		servings: mapYield(first('recipeYield') ? valueOf(first('recipeYield')!) : null),
+		servingsText: yieldText(first('recipeYield') ? valueOf(first('recipeYield')!) : null),
 		ingredientLines: ingredients.lines,
 		ingredientSections: ingredients.sections,
 		steps: steps.steps,

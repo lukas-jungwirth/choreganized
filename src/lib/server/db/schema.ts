@@ -413,6 +413,32 @@ export const pantryStaples = sqliteTable(
 	(t) => [uniqueIndex('pantry_staples_key_unique').on(t.householdId, t.nameKey)]
 );
 
+/**
+ * The words this household counts in besides the eight units and the counting
+ * words the reader knows (→ plan 44, DECISIONS #321): "Ring", "Kugel". Added on
+ * purpose (the import's "New unit: Ring. Add it?", the editor's unit panel of
+ * plan 46), never by a guess. `wordKey` is the word lowercased: one per
+ * household however it is capitalised.
+ */
+export const householdUnits = sqliteTable(
+	'household_units',
+	{
+		id: id(),
+		householdId: text('household_id')
+			.notNull()
+			.references(() => households.id, { onDelete: 'cascade' }),
+		/** As the person wrote it: "Ring". */
+		word: text('word').notNull(),
+		wordKey: text('word_key').notNull(),
+		/** Who added it; NULL once they have left. */
+		addedBy: text('added_by').references(() => members.id, { onDelete: 'set null' }),
+		addedAt: integer('added_at', { mode: 'timestamp_ms' })
+			.notNull()
+			.$defaultFn(() => new Date())
+	},
+	(t) => [uniqueIndex('household_units_word_unique').on(t.householdId, t.wordKey)]
+);
+
 /* ────────────────────────────────────────────────────────────────────────────
  * Recipes & meal plan
  * ──────────────────────────────────────────────────────────────────────────── */

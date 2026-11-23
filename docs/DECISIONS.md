@@ -4715,3 +4715,102 @@ recipe-importer)` (`IMPORT_UA`): the `Mozilla/5.0 (compatible; …)` form crawle
        plan's "about 150 KB" because their markup itself is that large. Blank lines are kept:
        collapsing them changed chefkoch's readable text. `recipe-corpus.test.ts` pins each
        page's reader, name, time, line and step counts and parts.
+323. **Plan 44, second PR as built: one call, the gate, the unit list, the rule-based draft**
+     (2026-11-23). **The prompt is untested against a real model** (no key, #318); every
+     number `import:eval` has printed so far is the fake provider's.
+     - **One call, one fallback.** `extractRecipe` and `improveRecipe` are one `importRecipe`
+       (`services/ai-import.ts`): a card goes in as JSON with each line's index and part, and
+       the page's readable text beside it; a paste or a no-card page as text; photos as images.
+       `importPage` is the link path: the model when a provider is set up, else (or when both
+       providers failed) `ruleDraft` on the card. The route's "Try AI extraction" button and
+       its `extractPage` action are gone: with a provider, a page with no card goes to the
+       model at once; without one the screen points at Settings. `countingWord` is a free
+       string in the schema, not an enum, because the list differs per household; the gate
+       checks it. The output budget is 24 000 tokens (was 16 000) for the larger contract.
+     - **Gate calls the plan left open**: a name "stands in" the page line when each of its
+       words, plural brackets and endings aside, is a substring of the line ("Hackfleisch" in
+       "Rinderhackfleisch" passes, "Schinken" for "Speck" does not). Steps are compared
+       without case and with typographic quotes and dashes as plain ones; a step found
+       earlier than the one before it counts as reworded. `leftOut` is kept only for pages
+       with a card (a paste or a page's text holds more than its method). A part name must
+       appear in what was sent; when the model names none, a row takes its card line's part,
+       and steps take the card's step parts when the counts match. Household instructions
+       switch the page checks off (rows and steps may then rightly differ). A model that put
+       the unit into the name ("Bund Suppengrün") loses it there when the page's amount
+       wins. A `newUnit` counts only when the word stands in the page line (or the text sent);
+       "oder {alternative}" takes the line's own word ("oder"/"or"), else "oder". `unused` is
+       info, `converted` is info, everything else the plan lists is `check`. The `servings`
+       item reads the card's `recipeYield` text (new `servingsText` on the reader's card):
+       1 with "Portion", "serving" or "Personen" is not asked about.
+     - **Links are the import's answer**: a step's list is kept even when empty (`[]`, not
+       `null` as plan 22's gate had it); the old editor still opens an empty list as "reads
+       its text" until plan 46. Each link carries its `phrase` and `amountPhrase` into the
+       editor's hidden fields (plan 43) and so into the saved recipe.
+     - **The household's units** (`household_units`, migration 0031, `services/units.ts`):
+       `parseIngredient(line, known)` reads them like counting words, plural endings allowed
+       ("Ringe" for "Ring"); every recipe save of that household reads its lines with them
+       (`writeChildren`), so an imported "2 Ringe Fleischwurst" keeps its unit once the word
+       is added. Nothing adds a word yet: the question is plan 45's, the panel plan 46's.
+     - **The rule-based draft**: brackets in what stays the name go to the note even when a
+       comma also splits the line ("pancetta (Italian bacon) or slab bacon, chopped").
+     - **Until plan 45**, `ImportChecks.svelte` lists the items above the editor, `check`
+       items counted in its title, `info` ones quieter, left-out sentences folded. PR 1's
+       `RecipePrefill.ingredientSections` and the route's `withCardParts` are gone:
+       `ingredientDetails` (note and part, as `RecipeInput` has them) carries both, and
+       `draftFromCard` / `plainStep` went with the old card path.
+     - **Tests without loosening the fetch guard** (coordinator, 2026-11-23): the link path is
+       an integration test from a saved page through `readFetchedPage` and `importPage` with
+       scripted and fake answers; the e2e journey uses the pasted-text mode. `fake-ai.ts`
+       echoes a card it is sent (rows by line, steps word for word, a link where a row's first
+       word stands) and answers text or photos with `FAKE_PANCAKE_TEXT`'s recipe (two parts, a
+       note, an either/or, links). `chefkoch-lasagne.json` in `tests/fixtures/ai-answers/` is
+       written by hand as a careful model would answer; the `fake-*.json` beside it are the
+       fake's recorded answers (`import:eval -- --fake --record`).
+     - **The Chefkoch acceptance line** in the plan named words the saved page does not have
+       ("Faschiertes", "gemischt"); it was rewritten to the fixture's own words, testing the
+       same things.
+     - **Review fixes from the code-review pass**: a household word matches in its plural in
+       the parser, the gate and `addUnit` alike (`householdUnitKey`: "Ringe" is the "Ring" a
+       household added, and cannot be added twice); an answer that kept less than half of a
+       card's sentences is refused for fidelity too, since only reworded steps counted and an
+       answer with no steps passed; the model leaves temperatures as the page wrote them (a step
+       it converted would be a reworded one); a "Für …" / "For …" row is a
+       heading only at three words or fewer ("Für die Deko Puderzucker" is sugar), and a lone
+       shouted word only beside another shouted heading ("BUTTER" alone is butter, jamieoliver's
+       "PICKLE" beside "KATSU CURRY SAUCE" is a part; this tightens #322); a name is checked
+       against the line read both ways ("3 Ei(er)" says Ei and Eier); "oder"/"or" for a choice
+       is taken from just before the alternative; check items carry the row's name from the
+       gate, which knows the household's units (the client's parse does not). Left as it is:
+       a card with more lines than the editor's 60 rows loses the tail without an item, as
+       every import did before; with the model splitting lines the cap is reached a little
+       sooner.
+     - **Fahrenheit is converted by code, not by the model, and not dropped** (coordinator,
+       2026-11-23; the plan's "°F → °C, as today", SPEC §4.7 since plan 22).
+       `utils/fahrenheit.ts` runs after the gate on imported drafts only (AI and rule-based,
+       never a typed recipe): "350°F", "350 °F", "350° F", "350 degrees F(ahrenheit)" and a
+       range ("350-375°F", "350 to 375 degrees F") get Celsius in front, rounded to the nearest 5, with the page's own
+       text kept in brackets: "175 °C (350°F)". (The coordinator's example said 180 °C for
+       350 °F; 176.7 rounds to 175 at the nearest 5, and the rule was followed.) A bare
+       "350 F", anything in °C, and a °F the page already gave right beside a °C
+       ("180°C/350°F", "350°F (175°C)") are left alone; a °C further away is another
+       temperature and does not stop the conversion. A step that Celsius would push past the
+       editor's 600 characters keeps its °F rather than lose its tail. A converted step gets an
+       `info` item (`converted`, at the step).
+     - **"The page's own words" means its words** (coordinator, 2026-11-23). The step check,
+       the order cursor, `reworded`, both fidelity refusals and `leftOut` compare **word
+       tokens**: runs of letters and digits, lowercased, a number and a unit glued together
+       split apart ("200g" = "200 g"), a number keeping what makes it that number ("1/2",
+       "1,5" = "1.5"; "1-2" or "1 5" for "1/2" is a changed word). A dropped or added full stop, "erhitzen.Hackfleisch",
+       typographic quotes and doubled spaces are the page's words; a changed, swapped or added
+       word is not. A link's `phrase` and `amountPhrase` are found the same way and kept as
+       the step writes them ("200g" for an answered "200 g"), so cook mode finds them
+       character for character before `locateAmounts` is asked; where the same amount stands
+       twice, the one beside the phrase is taken.
+     - **A step longer than the editor's 600 characters is several**, cut at sentence ends,
+       in the gate and in the rule-based draft (`splitLongStep`). Both used to cut it at 600,
+       which lost a one-paragraph method's tail (bonappetit.com's steps run to 1 068
+       characters, chefkoch's Schnitzel to 775); the token check showed it, because the lost
+       sentences counted as left out. The pieces of a split model step take its links and its
+       timer once each, on the first piece that names them, so no share is counted twice; a
+       step takes the part of the card step its words were found in (not "the card step at
+       the same index", which a split shifts).

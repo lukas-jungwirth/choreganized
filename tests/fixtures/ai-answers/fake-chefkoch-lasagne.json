@@ -1,0 +1,350 @@
+{
+	"name": "Lasagne alla Bolognese mit Béchamelsoße von Callista",
+	"servings": 6,
+	"timeMinutes": 100,
+	"ingredients": [
+		{
+			"source": 0,
+			"quantity": 1,
+			"unit": null,
+			"countingWord": null,
+			"newUnit": null,
+			"name": "Bund Suppengrün",
+			"note": null,
+			"alternative": null,
+			"section": "Sauce (Bolognesesoße)"
+		},
+		{
+			"source": 1,
+			"quantity": 1,
+			"unit": null,
+			"countingWord": null,
+			"newUnit": null,
+			"name": "Zwiebel(n)",
+			"note": null,
+			"alternative": null,
+			"section": "Sauce (Bolognesesoße)"
+		},
+		{
+			"source": 2,
+			"quantity": 2,
+			"unit": null,
+			"countingWord": null,
+			"newUnit": null,
+			"name": "Zehe/n Knoblauch",
+			"note": null,
+			"alternative": null,
+			"section": "Sauce (Bolognesesoße)"
+		},
+		{
+			"source": 3,
+			"quantity": 100,
+			"unit": "g",
+			"countingWord": null,
+			"newUnit": null,
+			"name": "Speck (geräuchert, durchwachsen)",
+			"note": null,
+			"alternative": null,
+			"section": "Sauce (Bolognesesoße)"
+		},
+		{
+			"source": 4,
+			"quantity": 3,
+			"unit": "tbsp",
+			"countingWord": null,
+			"newUnit": null,
+			"name": "Olivenöl",
+			"note": null,
+			"alternative": null,
+			"section": "Sauce (Bolognesesoße)"
+		},
+		{
+			"source": 5,
+			"quantity": 500,
+			"unit": "g",
+			"countingWord": null,
+			"newUnit": null,
+			"name": "Rinderhackfleisch",
+			"note": null,
+			"alternative": null,
+			"section": "Sauce (Bolognesesoße)"
+		},
+		{
+			"source": 6,
+			"quantity": null,
+			"unit": null,
+			"countingWord": null,
+			"newUnit": null,
+			"name": "Salz",
+			"note": null,
+			"alternative": null,
+			"section": "Sauce (Bolognesesoße)"
+		},
+		{
+			"source": 7,
+			"quantity": null,
+			"unit": null,
+			"countingWord": null,
+			"newUnit": null,
+			"name": "Pfeffer",
+			"note": null,
+			"alternative": null,
+			"section": "Sauce (Bolognesesoße)"
+		},
+		{
+			"source": 8,
+			"quantity": 125,
+			"unit": "ml",
+			"countingWord": null,
+			"newUnit": null,
+			"name": "Rotwein (oder Gemüsebrühe)",
+			"note": null,
+			"alternative": null,
+			"section": "Sauce (Bolognesesoße)"
+		},
+		{
+			"source": 9,
+			"quantity": 600,
+			"unit": "g",
+			"countingWord": null,
+			"newUnit": null,
+			"name": "Tomate(n) (stückig, aus der Dose)",
+			"note": null,
+			"alternative": null,
+			"section": "Sauce (Bolognesesoße)"
+		},
+		{
+			"source": 10,
+			"quantity": 5,
+			"unit": "tbsp",
+			"countingWord": null,
+			"newUnit": null,
+			"name": "Tomatenmark",
+			"note": null,
+			"alternative": null,
+			"section": "Sauce (Bolognesesoße)"
+		},
+		{
+			"source": 11,
+			"quantity": 1,
+			"unit": null,
+			"countingWord": null,
+			"newUnit": null,
+			"name": "Bund Thymian",
+			"note": null,
+			"alternative": null,
+			"section": "Sauce (Bolognesesoße)"
+		},
+		{
+			"source": 12,
+			"quantity": null,
+			"unit": null,
+			"countingWord": null,
+			"newUnit": null,
+			"name": "Zucker",
+			"note": null,
+			"alternative": null,
+			"section": "Sauce (Bolognesesoße)"
+		},
+		{
+			"source": 13,
+			"quantity": 2,
+			"unit": null,
+			"countingWord": null,
+			"newUnit": null,
+			"name": "Zwiebel(n)",
+			"note": null,
+			"alternative": null,
+			"section": "Sauce (Béchamelsoße)"
+		},
+		{
+			"source": 14,
+			"quantity": 75,
+			"unit": "g",
+			"countingWord": null,
+			"newUnit": null,
+			"name": "Butter",
+			"note": null,
+			"alternative": null,
+			"section": "Sauce (Béchamelsoße)"
+		},
+		{
+			"source": 15,
+			"quantity": 60,
+			"unit": "g",
+			"countingWord": null,
+			"newUnit": null,
+			"name": "Mehl",
+			"note": null,
+			"alternative": null,
+			"section": "Sauce (Béchamelsoße)"
+		},
+		{
+			"source": 16,
+			"quantity": 0.5,
+			"unit": "L",
+			"countingWord": null,
+			"newUnit": null,
+			"name": "Gemüsebrühe",
+			"note": null,
+			"alternative": null,
+			"section": "Sauce (Béchamelsoße)"
+		},
+		{
+			"source": 17,
+			"quantity": 0.5,
+			"unit": "L",
+			"countingWord": null,
+			"newUnit": null,
+			"name": "Milch",
+			"note": null,
+			"alternative": null,
+			"section": "Sauce (Béchamelsoße)"
+		},
+		{
+			"source": 18,
+			"quantity": 100,
+			"unit": "g",
+			"countingWord": null,
+			"newUnit": null,
+			"name": "Gouda",
+			"note": null,
+			"alternative": null,
+			"section": "Sauce (Béchamelsoße)"
+		},
+		{
+			"source": 19,
+			"quantity": null,
+			"unit": null,
+			"countingWord": null,
+			"newUnit": null,
+			"name": "Muskat (gerieben)",
+			"note": null,
+			"alternative": null,
+			"section": "Sauce (Béchamelsoße)"
+		},
+		{
+			"source": 20,
+			"quantity": 250,
+			"unit": "g",
+			"countingWord": null,
+			"newUnit": null,
+			"name": "Lasagneplatte(n) (ohne Vorkochen)",
+			"note": null,
+			"alternative": null,
+			"section": "Sauce (Béchamelsoße)"
+		},
+		{
+			"source": 21,
+			"quantity": 100,
+			"unit": "g",
+			"countingWord": null,
+			"newUnit": null,
+			"name": "Gouda",
+			"note": null,
+			"alternative": null,
+			"section": "Sauce (Béchamelsoße)"
+		}
+	],
+	"steps": [
+		{
+			"text": "Für die Hackfleischsoße: Das Suppengrün putzen und sehr fein würfeln. Zwiebel und Knoblauch hacken. Den Speck würfeln. Das Olivenöl in einer Pfanne erhitzen. Speck, Suppengrün, Zwiebel und Knoblauch anbraten, bis es glasig ist. Das Hackfleisch dazugeben und krümelig und braun anbraten. Mit Salz und Pfeffer würzen. Mit Rotwein oder Brühe ablöschen und verdampfen lassen. Die Tomatenstückchen und das Tomatenmark in die Pfanne geben und ca. 10 Minuten köcheln lassen. Thymian unterrrühren und die Soße mit Salz, Pfeffer und einer Prise Zucker abschmecken. Für die Béchamelsoße: Die Zwiebel hacken. Die Butter in einem Topf erhitzen und die Zwiebelwürfel und das Mehl darin unter Rühren andünsten. Nach und nach Brühe und Milch in kleinen Portionen zugießen. Zwischendurch mit einem Schneebesen kräftig rühren, damit keine Klümpchen bleiben, die Soße aufkochen lassen. Den Käse grob raspeln und in der Soße schmelzen lassen. Mit Salz, Pfeffer und Muskatnuss abschmecken.",
+			"section": null,
+			"timer": null,
+			"uses": [
+				{
+					"ingredient": 1,
+					"phrase": "Zwiebel",
+					"amountPhrase": null,
+					"quantity": null
+				},
+				{
+					"ingredient": 3,
+					"phrase": "Speck",
+					"amountPhrase": null,
+					"quantity": null
+				},
+				{
+					"ingredient": 4,
+					"phrase": "Olivenöl",
+					"amountPhrase": null,
+					"quantity": null
+				},
+				{
+					"ingredient": 6,
+					"phrase": "Salz",
+					"amountPhrase": null,
+					"quantity": null
+				},
+				{
+					"ingredient": 7,
+					"phrase": "Pfeffer",
+					"amountPhrase": null,
+					"quantity": null
+				},
+				{
+					"ingredient": 8,
+					"phrase": "Rotwein",
+					"amountPhrase": null,
+					"quantity": null
+				},
+				{
+					"ingredient": 10,
+					"phrase": "Tomatenmark",
+					"amountPhrase": null,
+					"quantity": null
+				},
+				{
+					"ingredient": 12,
+					"phrase": "Zucker",
+					"amountPhrase": null,
+					"quantity": null
+				},
+				{
+					"ingredient": 13,
+					"phrase": "Zwiebel",
+					"amountPhrase": null,
+					"quantity": null
+				},
+				{
+					"ingredient": 14,
+					"phrase": "Butter",
+					"amountPhrase": null,
+					"quantity": null
+				},
+				{
+					"ingredient": 15,
+					"phrase": "Mehl",
+					"amountPhrase": null,
+					"quantity": null
+				},
+				{
+					"ingredient": 17,
+					"phrase": "Milch",
+					"amountPhrase": null,
+					"quantity": null
+				}
+			]
+		},
+		{
+			"text": "Etwas Béchamelsoße auf den Boden einer Auflaufform streichen. Eine Schicht Lasagneblätter darauf geben. Darauf eine Schicht Bolognesesoße geben, mit Lasagneblättern bedecken. So weiter machen, bis die Zutaten verbraucht sind. Mit einer dicken Schicht Béchamelsoße abschließen, damit die Lasagneblätter Feuchtigkeit zum Garen haben. Käse grob raspeln und über die Lasagne geben. Im vorgeheizten Backofen bei 175° (Umluft 150°) etwa 50 – 60 Minuten backen.",
+			"section": null,
+			"timer": null,
+			"uses": []
+		},
+		{
+			"text": "Variationen: Vegetarisch wird es, wenn man anstatt Hackfleisch Champignons und 10 g getrocknete Steinpilze nimmt.",
+			"section": null,
+			"timer": null,
+			"uses": []
+		},
+		{
+			"text": "Anstelle der Hackfleischsoße dünn geschnittene Fischfilets (Lachs, Lengfisch, Scholle) einschichten. Die Béchamelsoße dann ohne Käse zubereiten und mit Zitronensaft abschmecken. In die Béchamelsoße gekochten Brokkoli geben, dann ist es eine Brokkoli-Lasagne.",
+			"section": null,
+			"timer": null,
+			"uses": []
+		}
+	],
+	"tags": [],
+	"diet": null
+}

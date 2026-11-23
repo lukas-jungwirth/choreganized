@@ -43,6 +43,7 @@ describe('parseRecipeMicrodata', () => {
 			name: 'Kaiserschmarrn',
 			timeMinutes: 35,
 			servings: 4,
+			servingsText: '4 Portionen',
 			ingredientLines: ['250 g Mehl', '4 & ein halbes Ei', '500 ml Milch'],
 			ingredientSections: [null, null, null],
 			steps: ['Teig rühren und 10 Minuten rasten lassen.', 'In Butter herausbacken und zerreißen.'],

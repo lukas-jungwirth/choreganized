@@ -1,0 +1,92 @@
+{
+	"chefkoch-lasagne": {
+		"url": "https://www.chefkoch.de/rezepte/120181051167042/Lasagne-alla-Bolognese-mit-Bechamelsosse.html",
+		"parts": ["Bolognese", "Béchamel"],
+		"unused": []
+	},
+	"chefkoch-schnitzel": {
+		"url": "https://www.chefkoch.de/rezepte/248561098872718/Wiener-Schnitzel-mit-Kartoffelsalat.html",
+		"parts": [],
+		"unused": []
+	},
+	"emmikochteinfach-lasagne": {
+		"url": "https://emmikochteinfach.de/lasagne-rezept/",
+		"parts": ["Bolognese", "Béchamel", "Lasagne"],
+		"unused": []
+	},
+	"recipetineats-lasagna": {
+		"url": "https://www.recipetineats.com/lasagna/",
+		"parts": ["Ragu", "Cheese Sauce", "Lasagna"],
+		"unused": ["basil"]
+	},
+	"zuckerjagdwurst-lasagne": {
+		"url": "https://www.zuckerjagdwurst.com/de/rezepte/vegane-lasagne-mit-bechamelsosse",
+		"parts": ["Hack", "Béchamel"],
+		"unused": []
+	},
+	"jamieoliver-katsu-curry": {
+		"url": "https://www.jamieoliver.com/recipes/chicken/chicken-katsu-curry/",
+		"parts": ["Katsu", "Pickle"],
+		"unused": []
+	},
+	"servus-gansl": {
+		"url": "https://www.servus.com/r/gebratenes-gansl-mit-rotkraut-erdaepfelknoedel-glasierten-maroni-gasthaus-krenn",
+		"parts": ["Gansl", "Rotkraut", "Knödel", "Maroni"],
+		"unused": []
+	},
+	"billa-schnitzel": {
+		"url": "https://www.billa.at/frischgekocht/rezept/wiener-schnitzel-vom-schwein-mit-erdaepfelsalat-und-wiener-garnitur-bi-33426",
+		"parts": ["Salat", "Schnitzel"],
+		"unused": []
+	},
+	"gutekueche-lasagne": {
+		"url": "https://www.gutekueche.at/lasagne-bolognese-rezept-3999",
+		"parts": ["Bechamel", "Bolognese"],
+		"unused": []
+	},
+	"ichkoche-topfenstrudel": {
+		"url": "https://www.ichkoche.at/topfenstrudel-rezept-1836",
+		"parts": ["Teig", "Fülle"],
+		"unused": []
+	},
+	"cookingcatrin-erdaepfelsalat": {
+		"url": "https://cookingcatrin.at/klassischer-wiener-erdaepfelsalat-mit-senfschnitzel/",
+		"parts": [],
+		"unused": []
+	},
+	"kochbar-karottenkuchen": {
+		"url": "https://www.kochbar.de/rezept/514838/Karottenkuchen-mit-Frischkaese-Limetten-Frosting.html",
+		"parts": ["Karottenkuchen", "Frosting"],
+		"unused": []
+	},
+	"backenmachtgluecklich-carrot-cake": {
+		"url": "https://www.backenmachtgluecklich.de/rezepte/carrot-cake-cheesecake.html",
+		"parts": ["Streusel", "Carrot Cake", "Cheesecake"],
+		"unused": []
+	},
+	"hellofresh-haehnchen": {
+		"url": "https://www.hellofresh.at/recipes/hahnchenbrust-mit-pflaumen-sriracha-sosse-656468972d94ad532d61fa71",
+		"parts": [],
+		"unused": []
+	},
+	"bonappetit-lasagna": {
+		"url": "https://www.bonappetit.com/recipe/ba-best-lasagna",
+		"parts": ["Ragù", "Béchamel"],
+		"unused": []
+	},
+	"eat-this-good-life-bowl": {
+		"url": "https://www.eat-this.org/good-life-bowl-mit-ofengemuese-kurkumadressing/",
+		"parts": [],
+		"unused": []
+	},
+	"ziiikocht-krautfleckerl": {
+		"url": "https://www.ziiikocht.at/2014/05/krautfleckerl-auf-neumodische-art.html",
+		"parts": [],
+		"unused": []
+	},
+	"sallysbakingaddiction-carrot-cake": {
+		"url": "https://sallysbakingaddiction.com/my-favorite-carrot-cake-recipe/",
+		"parts": ["Frosting"],
+		"unused": []
+	}
+}

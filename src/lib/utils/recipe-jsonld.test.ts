@@ -594,6 +594,28 @@ describe('parseRecipeJsonLd — tidying what sites send', () => {
 		assert.deepEqual(recipe?.ingredientLines, ['200 g Mehl', 'Für die Form: Butter', '1 EL Öl']);
 	});
 
+	it('keeps a "Für …" line with a thing after the title, and a lone shouted word, as rows', () => {
+		const recipe = parseRecipeJsonLd(
+			page({
+				'@type': 'Recipe',
+				name: 'x',
+				recipeIngredient: [
+					'200 g Mehl',
+					'Für die Deko Puderzucker',
+					'For frying vegetable oil',
+					'BUTTER'
+				]
+			})
+		);
+		assert.deepEqual(recipe?.ingredientLines, [
+			'200 g Mehl',
+			'Für die Deko Puderzucker',
+			'For frying vegetable oil',
+			'BUTTER'
+		]);
+		assert.deepEqual(recipe?.ingredientSections, [null, null, null, null]);
+	});
+
 	it('puts back an ingredient the site split on its own comma', () => {
 		assert.deepEqual(lines(['200 ml Milch (1', '8 % Fett)', '1 Zwiebel (rot', 'fein gehackt)']), [
 			'200 ml Milch (1,8 % Fett)',

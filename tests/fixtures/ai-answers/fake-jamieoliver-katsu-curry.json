@@ -1,0 +1,395 @@
+{
+	"name": "Chicken katsu curry",
+	"servings": 4,
+	"timeMinutes": 90,
+	"ingredients": [
+		{
+			"source": 0,
+			"quantity": 4,
+			"unit": null,
+			"countingWord": null,
+			"newUnit": null,
+			"name": "x 150g skinless boneless free-range chicken breasts",
+			"note": null,
+			"alternative": null,
+			"section": null
+		},
+		{
+			"source": 1,
+			"quantity": null,
+			"unit": null,
+			"countingWord": null,
+			"newUnit": null,
+			"name": "250ml buttermilk",
+			"note": null,
+			"alternative": null,
+			"section": null
+		},
+		{
+			"source": 2,
+			"quantity": 2,
+			"unit": null,
+			"countingWord": null,
+			"newUnit": null,
+			"name": "heaped teaspoons medium curry powder",
+			"note": null,
+			"alternative": null,
+			"section": null
+		},
+		{
+			"source": 3,
+			"quantity": 2,
+			"unit": null,
+			"countingWord": null,
+			"newUnit": null,
+			"name": "cloves of garlic",
+			"note": null,
+			"alternative": null,
+			"section": null
+		},
+		{
+			"source": 4,
+			"quantity": null,
+			"unit": null,
+			"countingWord": null,
+			"newUnit": null,
+			"name": "120g panko breadcrumbs",
+			"note": null,
+			"alternative": null,
+			"section": null
+		},
+		{
+			"source": 5,
+			"quantity": 1,
+			"unit": null,
+			"countingWord": null,
+			"newUnit": null,
+			"name": "mug of basmati rice (300g)",
+			"note": null,
+			"alternative": null,
+			"section": null
+		},
+		{
+			"source": 6,
+			"quantity": null,
+			"unit": null,
+			"countingWord": null,
+			"newUnit": null,
+			"name": "25g creamed coconut",
+			"note": null,
+			"alternative": null,
+			"section": null
+		},
+		{
+			"source": 7,
+			"quantity": 2,
+			"unit": null,
+			"countingWord": null,
+			"newUnit": null,
+			"name": "litres vegetable oil, for frying",
+			"note": null,
+			"alternative": null,
+			"section": null
+		},
+		{
+			"source": 8,
+			"quantity": 1,
+			"unit": null,
+			"countingWord": null,
+			"newUnit": null,
+			"name": "onion",
+			"note": null,
+			"alternative": null,
+			"section": "Katsu curry sauce"
+		},
+		{
+			"source": 9,
+			"quantity": 2,
+			"unit": null,
+			"countingWord": null,
+			"newUnit": null,
+			"name": "cloves of garlic",
+			"note": null,
+			"alternative": null,
+			"section": "Katsu curry sauce"
+		},
+		{
+			"source": 10,
+			"quantity": null,
+			"unit": null,
+			"countingWord": null,
+			"newUnit": null,
+			"name": "5cm piece of ginger",
+			"note": null,
+			"alternative": null,
+			"section": "Katsu curry sauce"
+		},
+		{
+			"source": 11,
+			"quantity": 1,
+			"unit": null,
+			"countingWord": null,
+			"newUnit": null,
+			"name": "medium carrot",
+			"note": null,
+			"alternative": null,
+			"section": "Katsu curry sauce"
+		},
+		{
+			"source": 12,
+			"quantity": 1,
+			"unit": null,
+			"countingWord": null,
+			"newUnit": null,
+			"name": "bunch of fresh coriander (30g)",
+			"note": null,
+			"alternative": null,
+			"section": "Katsu curry sauce"
+		},
+		{
+			"source": 13,
+			"quantity": null,
+			"unit": null,
+			"countingWord": null,
+			"newUnit": null,
+			"name": "olive oil",
+			"note": null,
+			"alternative": null,
+			"section": "Katsu curry sauce"
+		},
+		{
+			"source": 14,
+			"quantity": 1,
+			"unit": null,
+			"countingWord": null,
+			"newUnit": null,
+			"name": "teaspoon each garam masala, medium curry powder, ground turmeric",
+			"note": null,
+			"alternative": null,
+			"section": "Katsu curry sauce"
+		},
+		{
+			"source": 15,
+			"quantity": 2,
+			"unit": null,
+			"countingWord": null,
+			"newUnit": null,
+			"name": "heaped tablespoons plain flour",
+			"note": null,
+			"alternative": null,
+			"section": "Katsu curry sauce"
+		},
+		{
+			"source": 16,
+			"quantity": 1,
+			"unit": null,
+			"countingWord": null,
+			"newUnit": null,
+			"name": "heaped teaspoon mango chutney",
+			"note": null,
+			"alternative": null,
+			"section": "Katsu curry sauce"
+		},
+		{
+			"source": 17,
+			"quantity": 1,
+			"unit": null,
+			"countingWord": null,
+			"newUnit": null,
+			"name": "red onion",
+			"note": null,
+			"alternative": null,
+			"section": "Pickle"
+		},
+		{
+			"source": 18,
+			"quantity": 1,
+			"unit": null,
+			"countingWord": null,
+			"newUnit": null,
+			"name": "lemon",
+			"note": null,
+			"alternative": null,
+			"section": "Pickle"
+		},
+		{
+			"source": 19,
+			"quantity": 1,
+			"unit": null,
+			"countingWord": null,
+			"newUnit": null,
+			"name": "fresh red chilli",
+			"note": null,
+			"alternative": null,
+			"section": "Pickle"
+		}
+	],
+	"steps": [
+		{
+			"text": "Press down firmly with the palm of your hand to slightly flatten each chicken breast. Place them in a bowl, pour over the buttermilk, add the curry powder and a pinch of sea salt, crush in the garlic, then toss to coat. Cover and marinate in the fridge for at least 2 hours, but preferably overnight.",
+			"section": null,
+			"timer": null,
+			"uses": [
+				{
+					"ingredient": 1,
+					"phrase": "buttermilk",
+					"amountPhrase": null,
+					"quantity": null
+				}
+			]
+		},
+		{
+			"text": "When the time’s up, sprinkle the breadcrumbs on to a tray. Remove the chicken from the buttermilk, shake off the excess, then turn in the breadcrumbs, pressing down to make them stick and flatten them a little more. Keep in the fridge until you’re ready to cook.",
+			"section": null,
+			"timer": null,
+			"uses": [
+				{
+					"ingredient": 1,
+					"phrase": "buttermilk",
+					"amountPhrase": null,
+					"quantity": null
+				}
+			]
+		},
+		{
+			"text": "For the sauce, peel the onion, garlic, ginger and carrot, then finely chop with the coriander stalks (reserving the leaves).",
+			"section": null,
+			"timer": null,
+			"uses": [
+				{
+					"ingredient": 8,
+					"phrase": "onion",
+					"amountPhrase": null,
+					"quantity": null
+				}
+			]
+		},
+		{
+			"text": "Fry in a large pan on a medium low heat with 1 tablespoon of olive oil and the spices for 15 minutes, or until starting to caramelize, stirring regularly.",
+			"section": null,
+			"timer": null,
+			"uses": [
+				{
+					"ingredient": 11,
+					"phrase": "medium",
+					"amountPhrase": null,
+					"quantity": null
+				},
+				{
+					"ingredient": 13,
+					"phrase": "olive",
+					"amountPhrase": null,
+					"quantity": null
+				}
+			]
+		},
+		{
+			"text": "Stir in the flour, then the mango chutney. Pour in 800ml of boiling water and leave to blip away for 15 minutes, or until reduced to a nice sauce consistency, stirring occasionally. Taste, season and add more mango chutney, if needed.",
+			"section": null,
+			"timer": null,
+			"uses": []
+		},
+		{
+			"text": "Meanwhile, place 1 mug of rice in a medium pan with 2 mugs of boiling water and a good pinch of salt. Break in the creamed coconut and mix together. Bring to the boil, stir, then put the lid on and simmer for 10 minutes, or until the water has evaporated. Turn the heat off and leave with the lid on.",
+			"section": null,
+			"timer": null,
+			"uses": [
+				{
+					"ingredient": 5,
+					"phrase": "mug",
+					"amountPhrase": null,
+					"quantity": null
+				},
+				{
+					"ingredient": 6,
+					"phrase": "creamed",
+					"amountPhrase": null,
+					"quantity": null
+				},
+				{
+					"ingredient": 11,
+					"phrase": "medium",
+					"amountPhrase": null,
+					"quantity": null
+				}
+			]
+		},
+		{
+			"text": "Make a quick pickle by peeling and very finely slicing the red onion. Place in a bowl, finely grate in the lemon zest, squeeze in the juice and add a good pinch of salt. Deseed and finely slice the chilli and add to the bowl, then mix up.",
+			"section": null,
+			"timer": null,
+			"uses": [
+				{
+					"ingredient": 8,
+					"phrase": "onion",
+					"amountPhrase": null,
+					"quantity": null
+				},
+				{
+					"ingredient": 17,
+					"phrase": "red",
+					"amountPhrase": null,
+					"quantity": null
+				},
+				{
+					"ingredient": 18,
+					"phrase": "lemon",
+					"amountPhrase": null,
+					"quantity": null
+				}
+			]
+		},
+		{
+			"text": "Just under half fill a large sturdy pan with vegetable oil – the oil should be 8cm deep, but never fill your pan more than half full – and place on a medium-high heat. Use a thermometer to tell when it’s ready (170°C), or add a piece of potato and wait until it turns golden – that’s the sign that it’s ready to go.",
+			"section": null,
+			"timer": null,
+			"uses": [
+				{
+					"ingredient": 10,
+					"phrase": "piece",
+					"amountPhrase": null,
+					"quantity": null
+				},
+				{
+					"ingredient": 11,
+					"phrase": "medium",
+					"amountPhrase": null,
+					"quantity": null
+				}
+			]
+		},
+		{
+			"text": "Carefully lower the chicken into the oil, fry for 8 minutes, or until golden and cooked through, then drain on kitchen paper.",
+			"section": null,
+			"timer": null,
+			"uses": []
+		},
+		{
+			"text": "Alternatively, drizzle 2 tablespoons of olive oil into a large, cold non-stick frying pan on a medium heat. Cook the chicken for 10 minutes, or until golden and cooked through, turning after 6 minutes and drizzling with an extra 2 tablespoons of oil as you turn.",
+			"section": null,
+			"timer": null,
+			"uses": [
+				{
+					"ingredient": 11,
+					"phrase": "medium",
+					"amountPhrase": null,
+					"quantity": null
+				},
+				{
+					"ingredient": 13,
+					"phrase": "olive",
+					"amountPhrase": null,
+					"quantity": null
+				}
+			]
+		},
+		{
+			"text": "To serve, put a quarter of the rice into a small bowl, press to compact and turn out on to a plate, then repeat with the other portions. Place the chicken next to the rice, cover with the sauce, then sprinkle over the pickle and the coriander leaves.",
+			"section": null,
+			"timer": null,
+			"uses": []
+		}
+	],
+	"tags": [],
+	"diet": null
+}

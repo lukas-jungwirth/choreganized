@@ -32,6 +32,7 @@ import {
 } from 'drizzle-orm';
 import type { CalendarDate } from '$lib/utils/dates';
 import { parseIngredient, RECIPE_QUANTITY_MAX } from '$lib/utils/ingredients';
+import { knownUnitWords } from './units';
 import { readRecipeTags, type RecipeDiet, type RecipeTag } from '$lib/utils/recipe-tags';
 import {
 	AMOUNT_PHRASE_MAX,
@@ -520,7 +521,7 @@ export function createRecipe(
 			.returning({ id: recipes.id })
 			.get();
 
-		writeChildren(tx, recipe.id, input);
+		writeChildren(tx, recipe.id, input, knownUnitWords(householdId));
 		return recipe.id;
 	});
 }
@@ -561,7 +562,7 @@ export function updateRecipe(
 			.where(and(eq(recipes.id, recipeId), eq(recipes.householdId, householdId)))
 			.run();
 
-		writeChildren(tx, recipeId, input);
+		writeChildren(tx, recipeId, input, knownUnitWords(householdId));
 		return current.imagePath;
 	});
 
@@ -865,7 +866,13 @@ function normalizeCount(value: number | null, max: number): number | null {
  * too, which is why the ids are minted in this function rather than left to the
  * column default — a pin has to name the row it was saved beside.
  */
-function writeChildren(tx: Transaction, recipeId: string, input: RecipeInput): void {
+function writeChildren(
+	tx: Transaction,
+	recipeId: string,
+	input: RecipeInput,
+	/** The household's own unit words (→ plan 44): "2 Ringe Fleischwurst" keeps its Ring. */
+	known: ReadonlySet<string>
+): void {
 	if (input.tags !== undefined) writeTags(tx, recipeId, input.tags);
 
 	tx.delete(recipeIngredients).where(eq(recipeIngredients.recipeId, recipeId)).run();
@@ -885,7 +892,7 @@ function writeChildren(tx: Transaction, recipeId: string, input: RecipeInput): v
 	input.ingredientLines.forEach((line, posted) => {
 		if (ingredients.length >= INGREDIENTS_MAX) return;
 
-		const parsed = parseIngredient(line);
+		const parsed = parseIngredient(line, known);
 		if (!parsed) return;
 
 		const id = crypto.randomUUID();

@@ -1,0 +1,555 @@
+{
+	"name": "Lasagna",
+	"servings": 10,
+	"timeMinutes": 260,
+	"ingredients": [
+		{
+			"source": 0,
+			"quantity": 1,
+			"unit": "tbsp",
+			"countingWord": null,
+			"newUnit": null,
+			"name": "olive oil",
+			"note": null,
+			"alternative": null,
+			"section": "Ragu Bolognese"
+		},
+		{
+			"source": 1,
+			"quantity": 1,
+			"unit": null,
+			"countingWord": null,
+			"newUnit": null,
+			"name": "onion, finely chopped (white, yellow or brown)",
+			"note": null,
+			"alternative": null,
+			"section": "Ragu Bolognese"
+		},
+		{
+			"source": 2,
+			"quantity": 1,
+			"unit": null,
+			"countingWord": null,
+			"newUnit": null,
+			"name": "medium carrot, peeled and very finely diced",
+			"note": null,
+			"alternative": null,
+			"section": "Ragu Bolognese"
+		},
+		{
+			"source": 3,
+			"quantity": 1,
+			"unit": null,
+			"countingWord": null,
+			"newUnit": null,
+			"name": "celery stick, very finely diced",
+			"note": null,
+			"alternative": null,
+			"section": "Ragu Bolognese"
+		},
+		{
+			"source": 4,
+			"quantity": 2,
+			"unit": null,
+			"countingWord": null,
+			"newUnit": null,
+			"name": "garlic cloves, minced",
+			"note": null,
+			"alternative": null,
+			"section": "Ragu Bolognese"
+		},
+		{
+			"source": 5,
+			"quantity": 1,
+			"unit": "kg",
+			"countingWord": null,
+			"newUnit": null,
+			"name": "/ 2 lb beef mince (ground beef)",
+			"note": null,
+			"alternative": null,
+			"section": "Ragu Bolognese"
+		},
+		{
+			"source": 6,
+			"quantity": null,
+			"unit": null,
+			"countingWord": null,
+			"newUnit": null,
+			"name": "800g / 28 oz canned crushed tomato",
+			"note": null,
+			"alternative": null,
+			"section": "Ragu Bolognese"
+		},
+		{
+			"source": 7,
+			"quantity": null,
+			"unit": null,
+			"countingWord": null,
+			"newUnit": null,
+			"name": "1/4 cup tomato paste",
+			"note": null,
+			"alternative": null,
+			"section": "Ragu Bolognese"
+		},
+		{
+			"source": 8,
+			"quantity": 1,
+			"unit": null,
+			"countingWord": null,
+			"newUnit": null,
+			"name": "cup pinot noir red wine, or other dry red wine",
+			"note": null,
+			"alternative": null,
+			"section": "Ragu Bolognese"
+		},
+		{
+			"source": 9,
+			"quantity": 3,
+			"unit": null,
+			"countingWord": null,
+			"newUnit": null,
+			"name": "beef bouillon cubes, crumbled",
+			"note": null,
+			"alternative": null,
+			"section": "Ragu Bolognese"
+		},
+		{
+			"source": 10,
+			"quantity": 2,
+			"unit": null,
+			"countingWord": null,
+			"newUnit": null,
+			"name": "bay leaves, dried or fresh",
+			"note": null,
+			"alternative": null,
+			"section": "Ragu Bolognese"
+		},
+		{
+			"source": 11,
+			"quantity": null,
+			"unit": null,
+			"countingWord": null,
+			"newUnit": null,
+			"name": "1/2 tsp EACH dried thyme and oregano",
+			"note": null,
+			"alternative": null,
+			"section": "Ragu Bolognese"
+		},
+		{
+			"source": 12,
+			"quantity": 2,
+			"unit": "tsp",
+			"countingWord": null,
+			"newUnit": null,
+			"name": "Worcestershire Sauce",
+			"note": null,
+			"alternative": null,
+			"section": "Ragu Bolognese"
+		},
+		{
+			"source": 13,
+			"quantity": 1,
+			"unit": null,
+			"countingWord": null,
+			"newUnit": null,
+			"name": "- 2 tsp sugar (if needed)",
+			"note": null,
+			"alternative": null,
+			"section": "Ragu Bolognese"
+		},
+		{
+			"source": 14,
+			"quantity": null,
+			"unit": null,
+			"countingWord": null,
+			"newUnit": null,
+			"name": "1/2 tsp salt and black pepper",
+			"note": null,
+			"alternative": null,
+			"section": "Ragu Bolognese"
+		},
+		{
+			"source": 15,
+			"quantity": null,
+			"unit": null,
+			"countingWord": null,
+			"newUnit": null,
+			"name": "60g / 4 tbsp butter",
+			"note": null,
+			"alternative": null,
+			"section": "Cheese Sauce (Besciamella)"
+		},
+		{
+			"source": 16,
+			"quantity": null,
+			"unit": null,
+			"countingWord": null,
+			"newUnit": null,
+			"name": "1/2 cup flour",
+			"note": null,
+			"alternative": null,
+			"section": "Cheese Sauce (Besciamella)"
+		},
+		{
+			"source": 17,
+			"quantity": 4,
+			"unit": null,
+			"countingWord": null,
+			"newUnit": null,
+			"name": "cups milk, preferably full fat but low fat ok",
+			"note": null,
+			"alternative": null,
+			"section": "Cheese Sauce (Besciamella)"
+		},
+		{
+			"source": 18,
+			"quantity": 2,
+			"unit": null,
+			"countingWord": null,
+			"newUnit": null,
+			"name": "cups gruyere or Colby cheese, shred yourself (or cheddar, Monterey Jack, OR 1 cup / 100g shredded parmesan)",
+			"note": null,
+			"alternative": null,
+			"section": "Cheese Sauce (Besciamella)"
+		},
+		{
+			"source": 19,
+			"quantity": null,
+			"unit": null,
+			"countingWord": null,
+			"newUnit": null,
+			"name": "Pinch of freshly ground nutmeg",
+			"note": null,
+			"alternative": null,
+			"section": "Cheese Sauce (Besciamella)"
+		},
+		{
+			"source": 20,
+			"quantity": null,
+			"unit": null,
+			"countingWord": null,
+			"newUnit": null,
+			"name": "Salt and pepper",
+			"note": null,
+			"alternative": null,
+			"section": "Cheese Sauce (Besciamella)"
+		},
+		{
+			"source": 21,
+			"quantity": null,
+			"unit": null,
+			"countingWord": null,
+			"newUnit": null,
+			"name": "350g/ 12 oz fresh lasagna sheets (or 250g/8oz dried)",
+			"note": null,
+			"alternative": null,
+			"section": "Lasagna"
+		},
+		{
+			"source": 22,
+			"quantity": 1,
+			"unit": null,
+			"countingWord": null,
+			"newUnit": null,
+			"name": "1/2 cups (tightly packed) mozzarella cheese, shred yourself",
+			"note": null,
+			"alternative": null,
+			"section": "Lasagna"
+		},
+		{
+			"source": 23,
+			"quantity": null,
+			"unit": null,
+			"countingWord": null,
+			"newUnit": null,
+			"name": "Finely chopped basil or parsley, for garnish (optional)",
+			"note": null,
+			"alternative": null,
+			"section": "Lasagna"
+		}
+	],
+	"steps": [
+		{
+			"text": "Heat oil in a large heavy based pot over medium heat. Add garlic, onion, celery and carrots. Cook for 10 minutes until softened and sweet - they should not brown (if they do, turn heat down).",
+			"section": null,
+			"timer": null,
+			"uses": [
+				{
+					"ingredient": 1,
+					"phrase": "onion",
+					"amountPhrase": null,
+					"quantity": null
+				},
+				{
+					"ingredient": 2,
+					"phrase": "medium",
+					"amountPhrase": null,
+					"quantity": null
+				},
+				{
+					"ingredient": 3,
+					"phrase": "celery",
+					"amountPhrase": null,
+					"quantity": null
+				},
+				{
+					"ingredient": 4,
+					"phrase": "garlic",
+					"amountPhrase": null,
+					"quantity": null
+				}
+			]
+		},
+		{
+			"text": "Add beef, turn heat up and cook the beef, breaking it up as you go.",
+			"section": null,
+			"timer": null,
+			"uses": [
+				{
+					"ingredient": 5,
+					"phrase": "beef",
+					"amountPhrase": null,
+					"quantity": null
+				},
+				{
+					"ingredient": 9,
+					"phrase": "beef",
+					"amountPhrase": null,
+					"quantity": null
+				}
+			]
+		},
+		{
+			"text": "Once the beef has all turned brown, add the remaining Ragu ingredients EXCEPT the sugar.",
+			"section": null,
+			"timer": null,
+			"uses": [
+				{
+					"ingredient": 5,
+					"phrase": "beef",
+					"amountPhrase": null,
+					"quantity": null
+				},
+				{
+					"ingredient": 9,
+					"phrase": "beef",
+					"amountPhrase": null,
+					"quantity": null
+				}
+			]
+		},
+		{
+			"text": "Stir then adjust the heat so it is bubbling very gently. Place the lid on and cook for 1.5 - 2 hours, stirring every now and then, then remove the lid and simmer for 30 minutes.",
+			"section": null,
+			"timer": null,
+			"uses": []
+		},
+		{
+			"text": "The ragu is ready when the meat is really tender and the sauce has thickened and is rich - see video for consistency (Note 6). Adjust salt and pepper to taste, and add sugar if required (Note 3)",
+			"section": null,
+			"timer": null,
+			"uses": [
+				{
+					"ingredient": 20,
+					"phrase": "salt",
+					"amountPhrase": null,
+					"quantity": null
+				}
+			]
+		},
+		{
+			"text": "Warm milk up in a saucepan (optional - just makes sauce thicken faster).",
+			"section": null,
+			"timer": null,
+			"uses": []
+		},
+		{
+			"text": "In a large saucepan, melt butter over medium low heat. Add flour and mix constantly for 1 minute.",
+			"section": null,
+			"timer": null,
+			"uses": [
+				{
+					"ingredient": 2,
+					"phrase": "medium",
+					"amountPhrase": null,
+					"quantity": null
+				}
+			]
+		},
+		{
+			"text": "Pour about 1 cup of the milk in, mixing as you go to incorporate into the flour mixture. Once mostly lump free, add remaining milk. Use a whisk if needed to make it lump free.",
+			"section": null,
+			"timer": null,
+			"uses": [
+				{
+					"ingredient": 7,
+					"phrase": "cup",
+					"amountPhrase": null,
+					"quantity": null
+				},
+				{
+					"ingredient": 8,
+					"phrase": "cup",
+					"amountPhrase": null,
+					"quantity": null
+				},
+				{
+					"ingredient": 16,
+					"phrase": "cup",
+					"amountPhrase": null,
+					"quantity": null
+				}
+			]
+		},
+		{
+			"text": "Turn heat up to medium high. Stir occasionally at first then regularly after a few minutes until sauce thickens - about 5 - 8 minutes. It should coat the back of the wooden spoon.",
+			"section": null,
+			"timer": null,
+			"uses": [
+				{
+					"ingredient": 2,
+					"phrase": "medium",
+					"amountPhrase": null,
+					"quantity": null
+				}
+			]
+		},
+		{
+			"text": "Remove from heat, add cheese, nutmeg, salt and pepper. Mix until the cheese is melted. The Sauce should be thick but still easily pourable - the consistency of heavy cream (you need to be able to drizzle it over the Ragu when layering - see video). If it's too thick, add a splash of water or milk.",
+			"section": null,
+			"timer": null,
+			"uses": [
+				{
+					"ingredient": 20,
+					"phrase": "salt",
+					"amountPhrase": null,
+					"quantity": null
+				}
+			]
+		},
+		{
+			"text": "Preheat oven to 180°C/350°F.",
+			"section": null,
+			"timer": null,
+			"uses": []
+		},
+		{
+			"text": "Use a 33 x 22 x 7 cm / 13 x 9 x 2.5\" baking dish.",
+			"section": null,
+			"timer": null,
+			"uses": []
+		},
+		{
+			"text": "Smear a bit of Ragu on the base, then cover with lasagna sheets. Tear sheets to fit.",
+			"section": null,
+			"timer": null,
+			"uses": []
+		},
+		{
+			"text": "Spread over 2 1/2 cups of Ragu (enough to cover sheets), then drizzle over 1 cup of Cheese Sauce.",
+			"section": null,
+			"timer": null,
+			"uses": [
+				{
+					"ingredient": 7,
+					"phrase": "cup",
+					"amountPhrase": null,
+					"quantity": null
+				},
+				{
+					"ingredient": 8,
+					"phrase": "cup",
+					"amountPhrase": null,
+					"quantity": null
+				},
+				{
+					"ingredient": 16,
+					"phrase": "cup",
+					"amountPhrase": null,
+					"quantity": null
+				},
+				{
+					"ingredient": 17,
+					"phrase": "cups",
+					"amountPhrase": null,
+					"quantity": null
+				},
+				{
+					"ingredient": 18,
+					"phrase": "cups",
+					"amountPhrase": null,
+					"quantity": null
+				},
+				{
+					"ingredient": 22,
+					"phrase": "cups",
+					"amountPhrase": null,
+					"quantity": null
+				}
+			]
+		},
+		{
+			"text": "Top with lasagna sheets (Note 7). Spread with another 2 1/2 cups of Ragu, then 1 cup of Cheese Sauce. Top with lasagna sheets then repeat 1 more time.",
+			"section": null,
+			"timer": null,
+			"uses": [
+				{
+					"ingredient": 7,
+					"phrase": "cup",
+					"amountPhrase": null,
+					"quantity": null
+				},
+				{
+					"ingredient": 8,
+					"phrase": "cup",
+					"amountPhrase": null,
+					"quantity": null
+				},
+				{
+					"ingredient": 16,
+					"phrase": "cup",
+					"amountPhrase": null,
+					"quantity": null
+				},
+				{
+					"ingredient": 17,
+					"phrase": "cups",
+					"amountPhrase": null,
+					"quantity": null
+				},
+				{
+					"ingredient": 18,
+					"phrase": "cups",
+					"amountPhrase": null,
+					"quantity": null
+				},
+				{
+					"ingredient": 22,
+					"phrase": "cups",
+					"amountPhrase": null,
+					"quantity": null
+				}
+			]
+		},
+		{
+			"text": "Top with a 4th layer of lasagna sheets, then pour over the remaining Cheese Sauce.",
+			"section": null,
+			"timer": null,
+			"uses": []
+		},
+		{
+			"text": "Sprinkle with Mozzarella, then bake for 25 minutes or until golden and bubbling.",
+			"section": null,
+			"timer": null,
+			"uses": []
+		},
+		{
+			"text": "Stand for 5 to 10 minutes before cutting and serving, garnished with basil or parsley if desired.",
+			"section": null,
+			"timer": null,
+			"uses": []
+		}
+	],
+	"tags": [],
+	"diet": null
+}

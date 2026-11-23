@@ -1,0 +1,576 @@
+{
+	"name": "Lasagne Rezept - klassisch & einfach",
+	"servings": 6,
+	"timeMinutes": 75,
+	"ingredients": [
+		{
+			"source": 0,
+			"quantity": null,
+			"unit": null,
+			"countingWord": null,
+			"newUnit": null,
+			"name": "8-12 Stück Lasagneplatten, ungekocht (Menge je nach Größe der Auflaufform)",
+			"note": null,
+			"alternative": null,
+			"section": "Lasagne"
+		},
+		{
+			"source": 1,
+			"quantity": 150,
+			"unit": "g",
+			"countingWord": null,
+			"newUnit": null,
+			"name": "Parmesan, frisch gerieben",
+			"note": null,
+			"alternative": null,
+			"section": "Lasagne"
+		},
+		{
+			"source": 2,
+			"quantity": null,
+			"unit": null,
+			"countingWord": null,
+			"newUnit": null,
+			"name": "Butter (für die Form und das Topping)",
+			"note": null,
+			"alternative": null,
+			"section": "Lasagne"
+		},
+		{
+			"source": 3,
+			"quantity": 500,
+			"unit": "g",
+			"countingWord": null,
+			"newUnit": null,
+			"name": "gemischtes Hackfleisch (sprich halb Rind und halb Schwein)",
+			"note": null,
+			"alternative": null,
+			"section": "Bolognesesauce"
+		},
+		{
+			"source": 4,
+			"quantity": 400,
+			"unit": "g",
+			"countingWord": null,
+			"newUnit": null,
+			"name": "passierte Tomaten",
+			"note": null,
+			"alternative": null,
+			"section": "Bolognesesauce"
+		},
+		{
+			"source": 5,
+			"quantity": 50,
+			"unit": "g",
+			"countingWord": null,
+			"newUnit": null,
+			"name": "Bauchspeck (idealerweise Pancetta, wenn möglich)",
+			"note": null,
+			"alternative": null,
+			"section": "Bolognesesauce"
+		},
+		{
+			"source": 6,
+			"quantity": null,
+			"unit": null,
+			"countingWord": null,
+			"newUnit": null,
+			"name": "2-3 Zwiebeln (ca. 150 g)",
+			"note": null,
+			"alternative": null,
+			"section": "Bolognesesauce"
+		},
+		{
+			"source": 7,
+			"quantity": 1,
+			"unit": null,
+			"countingWord": null,
+			"newUnit": null,
+			"name": "Möhre (ca. 50 g)",
+			"note": null,
+			"alternative": null,
+			"section": "Bolognesesauce"
+		},
+		{
+			"source": 8,
+			"quantity": 1,
+			"unit": null,
+			"countingWord": null,
+			"newUnit": null,
+			"name": "Stangensellerie (geputzt) (ca. 50 g)",
+			"note": null,
+			"alternative": null,
+			"section": "Bolognesesauce"
+		},
+		{
+			"source": 9,
+			"quantity": 200,
+			"unit": "ml",
+			"countingWord": null,
+			"newUnit": null,
+			"name": "Vollmilch",
+			"note": null,
+			"alternative": null,
+			"section": "Bolognesesauce"
+		},
+		{
+			"source": 10,
+			"quantity": 40,
+			"unit": "g",
+			"countingWord": null,
+			"newUnit": null,
+			"name": "Butter",
+			"note": null,
+			"alternative": null,
+			"section": "Bolognesesauce"
+		},
+		{
+			"source": 11,
+			"quantity": 1,
+			"unit": "tbsp",
+			"countingWord": null,
+			"newUnit": null,
+			"name": "Pflanzenöl, neutral (z.B. Sonnenblumen oder Rapsöl)",
+			"note": null,
+			"alternative": null,
+			"section": "Bolognesesauce"
+		},
+		{
+			"source": 12,
+			"quantity": 1,
+			"unit": "tbsp",
+			"countingWord": null,
+			"newUnit": null,
+			"name": "Tomatenmark",
+			"note": null,
+			"alternative": null,
+			"section": "Bolognesesauce"
+		},
+		{
+			"source": 13,
+			"quantity": 1,
+			"unit": null,
+			"countingWord": null,
+			"newUnit": null,
+			"name": "Lorbeerblatt, getrocknet",
+			"note": null,
+			"alternative": null,
+			"section": "Bolognesesauce"
+		},
+		{
+			"source": 14,
+			"quantity": 1,
+			"unit": null,
+			"countingWord": null,
+			"newUnit": null,
+			"name": "Msp. Muskatnuss, gerieben",
+			"note": null,
+			"alternative": null,
+			"section": "Bolognesesauce"
+		},
+		{
+			"source": 15,
+			"quantity": null,
+			"unit": null,
+			"countingWord": null,
+			"newUnit": null,
+			"name": "Salz und schwarzer Pfeffer aus der Mühle",
+			"note": null,
+			"alternative": null,
+			"section": "Bolognesesauce"
+		},
+		{
+			"source": 16,
+			"quantity": 500,
+			"unit": "ml",
+			"countingWord": null,
+			"newUnit": null,
+			"name": "Milch",
+			"note": null,
+			"alternative": null,
+			"section": "Béchamelsauce"
+		},
+		{
+			"source": 17,
+			"quantity": 25,
+			"unit": "g",
+			"countingWord": null,
+			"newUnit": null,
+			"name": "Mehl",
+			"note": null,
+			"alternative": null,
+			"section": "Béchamelsauce"
+		},
+		{
+			"source": 18,
+			"quantity": 25,
+			"unit": "g",
+			"countingWord": null,
+			"newUnit": null,
+			"name": "Butter",
+			"note": null,
+			"alternative": null,
+			"section": "Béchamelsauce"
+		},
+		{
+			"source": 19,
+			"quantity": null,
+			"unit": null,
+			"countingWord": null,
+			"newUnit": null,
+			"name": "Salz",
+			"note": null,
+			"alternative": null,
+			"section": "Béchamelsauce"
+		},
+		{
+			"source": 20,
+			"quantity": null,
+			"unit": null,
+			"countingWord": null,
+			"newUnit": null,
+			"name": "schwarzer Pfeffer aus der Mühle",
+			"note": null,
+			"alternative": null,
+			"section": "Béchamelsauce"
+		},
+		{
+			"source": 21,
+			"quantity": null,
+			"unit": null,
+			"countingWord": null,
+			"newUnit": null,
+			"name": "Muskatnuss, frisch gerieben",
+			"note": null,
+			"alternative": null,
+			"section": "Béchamelsauce"
+		}
+	],
+	"steps": [
+		{
+			"text": "Den Backofen rechtzeitig auf 200°C Ober- / Unterhitze vorheizen. 150 g Parmesan reiben und im Kühlschrank beiseite stellen.",
+			"section": null,
+			"timer": null,
+			"uses": [
+				{
+					"ingredient": 1,
+					"phrase": "Parmesan",
+					"amountPhrase": null,
+					"quantity": null
+				}
+			]
+		},
+		{
+			"text": "Die 50 g Bauchspeck (Pancetta) in sehr kleine Würfel schneiden. 2-3 Zwiebeln und 1 Möhre schälen und in feine Würfel schneiden. Von 1 Selleriestange das Grün entfernen, waschen und in sehr feine Würfel schneiden.",
+			"section": null,
+			"timer": null,
+			"uses": [
+				{
+					"ingredient": 5,
+					"phrase": "Bauchspeck",
+					"amountPhrase": null,
+					"quantity": null
+				},
+				{
+					"ingredient": 6,
+					"phrase": "Zwiebeln",
+					"amountPhrase": null,
+					"quantity": null
+				},
+				{
+					"ingredient": 7,
+					"phrase": "Möhre",
+					"amountPhrase": null,
+					"quantity": null
+				}
+			]
+		},
+		{
+			"text": "Nun erhitzt Du 1 EL Pflanzenöl in einem Topf und dünstest darin zuerst die Bauchspeck-Würfel (Pancetta) alleine für 1-2 Minuten an. Im Anschluss gibst Du die 40 g Butter, die Zwiebel-, Möhren- und Sellerie-Würfel in den Topf und lässt alles auf mittlerer Stufe ca. 3 Minuten dünsten. Gut umrühren, damit das Gemüse gut mit Fett überzogen wird.",
+			"section": null,
+			"timer": null,
+			"uses": [
+				{
+					"ingredient": 2,
+					"phrase": "Butter",
+					"amountPhrase": null,
+					"quantity": null
+				},
+				{
+					"ingredient": 5,
+					"phrase": "Bauchspeck",
+					"amountPhrase": null,
+					"quantity": null
+				},
+				{
+					"ingredient": 10,
+					"phrase": "Butter",
+					"amountPhrase": null,
+					"quantity": null
+				},
+				{
+					"ingredient": 11,
+					"phrase": "Pflanzenöl",
+					"amountPhrase": null,
+					"quantity": null
+				},
+				{
+					"ingredient": 18,
+					"phrase": "Butter",
+					"amountPhrase": null,
+					"quantity": null
+				}
+			]
+		},
+		{
+			"text": "500 g gemischtes Hackfleisch dazu geben sowie 1 TL Salz und 1/4 TL schwarzer Pfeffer aus der Mühle. Das Fleisch zerkrümelst Du mit einem Holzlöffel und lässt es so lange auf mittlerer Stufe garen, bis es nicht mehr roh und rot aussieht, nicht scharf anbraten sonst wird es trocken.",
+			"section": null,
+			"timer": null,
+			"uses": [
+				{
+					"ingredient": 3,
+					"phrase": "gemischtes",
+					"amountPhrase": null,
+					"quantity": null
+				},
+				{
+					"ingredient": 15,
+					"phrase": "Salz",
+					"amountPhrase": null,
+					"quantity": null
+				},
+				{
+					"ingredient": 19,
+					"phrase": "Salz",
+					"amountPhrase": null,
+					"quantity": null
+				},
+				{
+					"ingredient": 20,
+					"phrase": "schwarzer",
+					"amountPhrase": null,
+					"quantity": null
+				}
+			]
+		},
+		{
+			"text": "Im Anschluss rührst Du 1 EL Tomatenmark unter, löschst mit 200 ml Vollmilch ab und lässt die Milch nahezu verkochen / verdampfen. Dabei 1 Messerspitze geriebene Muskatnuss hinzufügen und ab und zu umrühren.",
+			"section": null,
+			"timer": null,
+			"uses": [
+				{
+					"ingredient": 9,
+					"phrase": "Vollmilch",
+					"amountPhrase": null,
+					"quantity": null
+				},
+				{
+					"ingredient": 12,
+					"phrase": "Tomatenmark",
+					"amountPhrase": null,
+					"quantity": null
+				},
+				{
+					"ingredient": 16,
+					"phrase": "Milch",
+					"amountPhrase": null,
+					"quantity": null
+				},
+				{
+					"ingredient": 21,
+					"phrase": "Muskatnuss",
+					"amountPhrase": null,
+					"quantity": null
+				}
+			]
+		},
+		{
+			"text": "400 g passierte Tomaten sowie 1 Lorbeerblatt dazugeben. Im Anschluss alles gut miteinander verrühren und bei mittlerer Hitze, mit halb geöffnetem Deckel mindestens für 20 Minuten köcheln lassen, dabei ab und zu umrühren und eventuell einen Schluck Milch oder Wasser hinzugeben. Zum Schluss noch mit Salz und schwarzem Pfeffer aus der Mühle abschmecken. HINWEIS: Wenn Du die Zeit hast kannst Du sie auch länger köcheln lassen. In der italienischen Küche wird eine Bolognesesauce, weil sie ein Schmorgericht ist, mindestens 3 Stunden geköchelt. Denn je länger es köchelt umso mehr Geschmacksaromen entwickeln sich. Dabei ab und zu umrühren und gegebenenfalls immer mal etwas Milch oder Wasser hinzufügen.",
+			"section": null,
+			"timer": null,
+			"uses": [
+				{
+					"ingredient": 4,
+					"phrase": "passierte",
+					"amountPhrase": null,
+					"quantity": null
+				},
+				{
+					"ingredient": 13,
+					"phrase": "Lorbeerblatt",
+					"amountPhrase": null,
+					"quantity": null
+				},
+				{
+					"ingredient": 15,
+					"phrase": "Salz",
+					"amountPhrase": null,
+					"quantity": null
+				},
+				{
+					"ingredient": 16,
+					"phrase": "Milch",
+					"amountPhrase": null,
+					"quantity": null
+				},
+				{
+					"ingredient": 19,
+					"phrase": "Salz",
+					"amountPhrase": null,
+					"quantity": null
+				}
+			]
+		},
+		{
+			"text": "In einem (idealerweise beschichteten) Topf 25 g Butter schmelzen lassen. 25 g Mehl hinzugeben und unter ständigem Rühren mit einem Schneebesen oder Holzlöffel etwa 2 Minuten anschwitzen.",
+			"section": null,
+			"timer": null,
+			"uses": [
+				{
+					"ingredient": 2,
+					"phrase": "Butter",
+					"amountPhrase": null,
+					"quantity": null
+				},
+				{
+					"ingredient": 10,
+					"phrase": "Butter",
+					"amountPhrase": null,
+					"quantity": null
+				},
+				{
+					"ingredient": 17,
+					"phrase": "Mehl",
+					"amountPhrase": null,
+					"quantity": null
+				},
+				{
+					"ingredient": 18,
+					"phrase": "Butter",
+					"amountPhrase": null,
+					"quantity": null
+				}
+			]
+		},
+		{
+			"text": "Im Anschluss gießt Du nach und nach unter ständigem und schnellen Rühren die 500 ml Milch hinein und stellst die Herdplatte direkt etwas höher, kurz aufkochen und köcheln lassen bis die Soße eindickt. Ab und zu umrühren! Mit Salz, Pfeffer und frisch geriebener Muskatnuss kräftig abschmecken.HINWEIS: Laut Koch-Lehrbuch sollte fürs Gelingen einer Béchamel die Milch erwärmt und lauwarm sein. Ich verwende sie dennoch meist aus dem Kühlschrank, nach meiner Erfahrung funktioniert es ebenfalls, dauert nur etwas länger bis sie eindickt.",
+			"section": null,
+			"timer": null,
+			"uses": [
+				{
+					"ingredient": 15,
+					"phrase": "Salz",
+					"amountPhrase": null,
+					"quantity": null
+				},
+				{
+					"ingredient": 16,
+					"phrase": "Milch",
+					"amountPhrase": null,
+					"quantity": null
+				},
+				{
+					"ingredient": 19,
+					"phrase": "Salz",
+					"amountPhrase": null,
+					"quantity": null
+				},
+				{
+					"ingredient": 21,
+					"phrase": "Muskatnuss",
+					"amountPhrase": null,
+					"quantity": null
+				}
+			]
+		},
+		{
+			"text": "Deine Auflaufform fettest Du mit etwas Butter ein und verteilst auf dem Boden ungefähr 1 bis 2 EL Béchamelsauce.",
+			"section": null,
+			"timer": null,
+			"uses": [
+				{
+					"ingredient": 2,
+					"phrase": "Butter",
+					"amountPhrase": null,
+					"quantity": null
+				},
+				{
+					"ingredient": 10,
+					"phrase": "Butter",
+					"amountPhrase": null,
+					"quantity": null
+				},
+				{
+					"ingredient": 18,
+					"phrase": "Butter",
+					"amountPhrase": null,
+					"quantity": null
+				}
+			]
+		},
+		{
+			"text": "Dann beginnt das Einschichten: Die ungekochten Lasagneplatten auf dem Boden verteilen und gegebenfalls die Lücken mit abgebrochenen Stücken füllen.",
+			"section": null,
+			"timer": null,
+			"uses": []
+		},
+		{
+			"text": "Darauf einen vollen Schöpflöffel Bolognesesauce geben und verstreichen so dass alle Nudelplatten damit abgedeckt sind.",
+			"section": null,
+			"timer": null,
+			"uses": []
+		},
+		{
+			"text": "Auf die Bolognese Sauce 2 bis 3 EL Béchamelsauce geben und verstreichen sowie gleichmäßig dünn mit Parmesan bestreuen. Auf diese Weise weiter einschichten, bei der genannten Größe der Auflaufform werden es ungefähr 4 Schichten.",
+			"section": null,
+			"timer": null,
+			"uses": [
+				{
+					"ingredient": 1,
+					"phrase": "Parmesan",
+					"amountPhrase": null,
+					"quantity": null
+				}
+			]
+		},
+		{
+			"text": "Mit reichlich Béchamelsauce abschließen, den restlichen Parmesankäse darüber verstreuen und 1 EL Butter in Flöckchen darauf verteilen. In den vorgeheizten Backofen auf der zweiten Schiene von unten für ca. 30 Minuten backen.",
+			"section": null,
+			"timer": null,
+			"uses": [
+				{
+					"ingredient": 2,
+					"phrase": "Butter",
+					"amountPhrase": null,
+					"quantity": null
+				},
+				{
+					"ingredient": 10,
+					"phrase": "Butter",
+					"amountPhrase": null,
+					"quantity": null
+				},
+				{
+					"ingredient": 18,
+					"phrase": "Butter",
+					"amountPhrase": null,
+					"quantity": null
+				}
+			]
+		},
+		{
+			"text": "Die Lasagne in der Form aus dem Ofen nehmen und etwa 10 Minuten ruhen lassen, dann lässt sie sich auch besser schneiden.",
+			"section": null,
+			"timer": null,
+			"uses": []
+		},
+		{
+			"text": "Ich wünsche Dir mit meinem Lasagne Rezept viel Freude und einen guten Appetit!",
+			"section": null,
+			"timer": null,
+			"uses": []
+		}
+	],
+	"tags": [],
+	"diet": null
+}

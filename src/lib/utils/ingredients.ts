@@ -20,6 +20,7 @@ import {
 	clampAmount,
 	countingWord,
 	fusedOf,
+	householdUnitKey,
 	isTimes,
 	leadingAmount,
 	measureOf,
@@ -94,7 +95,10 @@ function trimName(name: string): string {
  * one, then the name. An amount at the very end is read too ("Mehl 500g"),
  * because that is how a list is typed and people type recipes the same way.
  */
-export function parseIngredient(input: string): ParsedIngredient | null {
+export function parseIngredient(
+	input: string,
+	known?: ReadonlySet<string>
+): ParsedIngredient | null {
 	const line = input.trim().replace(/\s+/g, ' ');
 	if (!line) return null;
 
@@ -125,7 +129,9 @@ export function parseIngredient(input: string): ParsedIngredient | null {
 
 	const first = words[0].replace(/[,;:]$/, '');
 	const measure = measureOf(first);
-	const counting = measure ? null : countingWord(settlePlural(first, null));
+	const counting = measure
+		? null
+		: (countingWord(settlePlural(first, null)) ?? householdWord(first, known));
 
 	// "7up", "2in1": a word glued to the number that is no unit is part of a name.
 	// (The amount's own pattern may have taken the space, hence both checks.)
@@ -150,6 +156,14 @@ export function parseIngredient(input: string): ParsedIngredient | null {
 	// without one, so a surviving "kg" would be silently dropped the next time the
 	// edit screen saved the line back.
 	return { quantity, unit: quantity === null ? null : unit, name };
+}
+
+/**
+ * A word the household added as its own unit (→ plan 44, DECISIONS #321),
+ * `known` holding them lowercased: "Ring" reads "2 Ringe Fleischwurst" too.
+ */
+function householdWord(word: string, known: ReadonlySet<string> | undefined): string | null {
+	return householdUnitKey(word, known);
 }
 
 /** A line with no amount in it: the whole of it is the name. */

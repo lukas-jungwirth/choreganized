@@ -1,0 +1,742 @@
+{
+	"name": "Gebratenes Gansl mit Rotkraut, Erdäpfelknödel & glasierten Maroni nach Marc Zach vom Gasthaus Krenn",
+	"servings": 5,
+	"timeMinutes": 240,
+	"ingredients": [
+		{
+			"source": 0,
+			"quantity": 3.5,
+			"unit": "kg",
+			"countingWord": null,
+			"newUnit": null,
+			"name": "Gans",
+			"note": null,
+			"alternative": null,
+			"section": "Gansl"
+		},
+		{
+			"source": 1,
+			"quantity": null,
+			"unit": null,
+			"countingWord": null,
+			"newUnit": null,
+			"name": "Salz",
+			"note": null,
+			"alternative": null,
+			"section": "Gansl"
+		},
+		{
+			"source": 2,
+			"quantity": null,
+			"unit": null,
+			"countingWord": null,
+			"newUnit": null,
+			"name": "Pfeffer",
+			"note": null,
+			"alternative": null,
+			"section": "Gansl"
+		},
+		{
+			"source": 3,
+			"quantity": null,
+			"unit": null,
+			"countingWord": null,
+			"newUnit": null,
+			"name": "Beifuß",
+			"note": null,
+			"alternative": null,
+			"section": "Gansl"
+		},
+		{
+			"source": 4,
+			"quantity": null,
+			"unit": null,
+			"countingWord": null,
+			"newUnit": null,
+			"name": "Kümmel, gemahlen",
+			"note": null,
+			"alternative": null,
+			"section": "Gansl"
+		},
+		{
+			"source": 5,
+			"quantity": null,
+			"unit": null,
+			"countingWord": null,
+			"newUnit": null,
+			"name": "Rosmarin",
+			"note": null,
+			"alternative": null,
+			"section": "Gansl"
+		},
+		{
+			"source": 6,
+			"quantity": null,
+			"unit": null,
+			"countingWord": null,
+			"newUnit": null,
+			"name": "Ingwer",
+			"note": null,
+			"alternative": null,
+			"section": "Gansl"
+		},
+		{
+			"source": 7,
+			"quantity": null,
+			"unit": null,
+			"countingWord": null,
+			"newUnit": null,
+			"name": "Zwiebel, getrocknet",
+			"note": null,
+			"alternative": null,
+			"section": "Gansl"
+		},
+		{
+			"source": 8,
+			"quantity": 4,
+			"unit": null,
+			"countingWord": null,
+			"newUnit": null,
+			"name": "Äpfel",
+			"note": null,
+			"alternative": null,
+			"section": "Gansl"
+		},
+		{
+			"source": 9,
+			"quantity": 1,
+			"unit": null,
+			"countingWord": null,
+			"newUnit": null,
+			"name": "Orange",
+			"note": null,
+			"alternative": null,
+			"section": "Gansl"
+		},
+		{
+			"source": 10,
+			"quantity": 3,
+			"unit": "tbsp",
+			"countingWord": null,
+			"newUnit": null,
+			"name": "Preiselbeermarmelade",
+			"note": null,
+			"alternative": null,
+			"section": "Gansl"
+		},
+		{
+			"source": 11,
+			"quantity": 6,
+			"unit": null,
+			"countingWord": null,
+			"newUnit": null,
+			"name": "Zwetschken, entkernt",
+			"note": null,
+			"alternative": null,
+			"section": "Gansl"
+		},
+		{
+			"source": 12,
+			"quantity": null,
+			"unit": null,
+			"countingWord": null,
+			"newUnit": null,
+			"name": "Honig",
+			"note": null,
+			"alternative": null,
+			"section": "Gansl"
+		},
+		{
+			"source": 13,
+			"quantity": 1,
+			"unit": "kg",
+			"countingWord": null,
+			"newUnit": null,
+			"name": "Rotkraut",
+			"note": null,
+			"alternative": null,
+			"section": "Rotkraut"
+		},
+		{
+			"source": 14,
+			"quantity": null,
+			"unit": null,
+			"countingWord": null,
+			"newUnit": null,
+			"name": "Salz",
+			"note": null,
+			"alternative": null,
+			"section": "Rotkraut"
+		},
+		{
+			"source": 15,
+			"quantity": null,
+			"unit": null,
+			"countingWord": null,
+			"newUnit": null,
+			"name": "1/8 l Orangensaft",
+			"note": null,
+			"alternative": null,
+			"section": "Rotkraut"
+		},
+		{
+			"source": 16,
+			"quantity": null,
+			"unit": null,
+			"countingWord": null,
+			"newUnit": null,
+			"name": "Schuss Zitronensaft",
+			"note": null,
+			"alternative": null,
+			"section": "Rotkraut"
+		},
+		{
+			"source": 17,
+			"quantity": null,
+			"unit": null,
+			"countingWord": null,
+			"newUnit": null,
+			"name": "Öl zum Anbraten",
+			"note": null,
+			"alternative": null,
+			"section": "Rotkraut"
+		},
+		{
+			"source": 18,
+			"quantity": 80,
+			"unit": "g",
+			"countingWord": null,
+			"newUnit": null,
+			"name": "Zwiebel, fein geschnitten",
+			"note": null,
+			"alternative": null,
+			"section": "Rotkraut"
+		},
+		{
+			"source": 19,
+			"quantity": 1,
+			"unit": "tbsp",
+			"countingWord": null,
+			"newUnit": null,
+			"name": "Zucker",
+			"note": null,
+			"alternative": null,
+			"section": "Rotkraut"
+		},
+		{
+			"source": 20,
+			"quantity": 200,
+			"unit": "ml",
+			"countingWord": null,
+			"newUnit": null,
+			"name": "Rotwein",
+			"note": null,
+			"alternative": null,
+			"section": "Rotkraut"
+		},
+		{
+			"source": 21,
+			"quantity": null,
+			"unit": null,
+			"countingWord": null,
+			"newUnit": null,
+			"name": "Wasser oder Suppe zum Aufgießen",
+			"note": null,
+			"alternative": null,
+			"section": "Rotkraut"
+		},
+		{
+			"source": 22,
+			"quantity": 150,
+			"unit": "g",
+			"countingWord": null,
+			"newUnit": null,
+			"name": "Äpfel, geschält und gerieben",
+			"note": null,
+			"alternative": null,
+			"section": "Rotkraut"
+		},
+		{
+			"source": 23,
+			"quantity": 1,
+			"unit": "tbsp",
+			"countingWord": null,
+			"newUnit": null,
+			"name": "Preiselbeermarmelade",
+			"note": null,
+			"alternative": null,
+			"section": "Rotkraut"
+		},
+		{
+			"source": 24,
+			"quantity": 1,
+			"unit": null,
+			"countingWord": null,
+			"newUnit": null,
+			"name": "Prise Zimt",
+			"note": null,
+			"alternative": null,
+			"section": "Rotkraut"
+		},
+		{
+			"source": 25,
+			"quantity": null,
+			"unit": null,
+			"countingWord": null,
+			"newUnit": null,
+			"name": "Stärke zum Binden",
+			"note": null,
+			"alternative": null,
+			"section": "Rotkraut"
+		},
+		{
+			"source": 26,
+			"quantity": 500,
+			"unit": "g",
+			"countingWord": null,
+			"newUnit": null,
+			"name": "Kartoffel, mehlig",
+			"note": null,
+			"alternative": null,
+			"section": "Kartoffelknödel"
+		},
+		{
+			"source": 27,
+			"quantity": null,
+			"unit": null,
+			"countingWord": null,
+			"newUnit": null,
+			"name": "Salz",
+			"note": null,
+			"alternative": null,
+			"section": "Kartoffelknödel"
+		},
+		{
+			"source": 28,
+			"quantity": 3,
+			"unit": null,
+			"countingWord": null,
+			"newUnit": null,
+			"name": "Dotter",
+			"note": null,
+			"alternative": null,
+			"section": "Kartoffelknödel"
+		},
+		{
+			"source": 29,
+			"quantity": 200,
+			"unit": "g",
+			"countingWord": null,
+			"newUnit": null,
+			"name": "Mehl, griffig",
+			"note": null,
+			"alternative": null,
+			"section": "Kartoffelknödel"
+		},
+		{
+			"source": 30,
+			"quantity": 40,
+			"unit": "g",
+			"countingWord": null,
+			"newUnit": null,
+			"name": "Gries",
+			"note": null,
+			"alternative": null,
+			"section": "Kartoffelknödel"
+		},
+		{
+			"source": 31,
+			"quantity": 40,
+			"unit": "g",
+			"countingWord": null,
+			"newUnit": null,
+			"name": "Butter, flüssig",
+			"note": null,
+			"alternative": null,
+			"section": "Kartoffelknödel"
+		},
+		{
+			"source": 32,
+			"quantity": 200,
+			"unit": "g",
+			"countingWord": null,
+			"newUnit": null,
+			"name": "Maroni, gebraten oder gekocht, nicht zu weich",
+			"note": null,
+			"alternative": null,
+			"section": "Glasierten Maroni"
+		},
+		{
+			"source": 33,
+			"quantity": 50,
+			"unit": "g",
+			"countingWord": null,
+			"newUnit": null,
+			"name": "Zucker",
+			"note": null,
+			"alternative": null,
+			"section": "Glasierten Maroni"
+		},
+		{
+			"source": 34,
+			"quantity": 60,
+			"unit": "ml",
+			"countingWord": null,
+			"newUnit": null,
+			"name": "Wasser",
+			"note": null,
+			"alternative": null,
+			"section": "Glasierten Maroni"
+		},
+		{
+			"source": 35,
+			"quantity": 1,
+			"unit": "tbsp",
+			"countingWord": null,
+			"newUnit": null,
+			"name": "kalte Butter",
+			"note": null,
+			"alternative": null,
+			"section": "Glasierten Maroni"
+		}
+	],
+	"steps": [
+		{
+			"text": "Gans waschen und abtupfen, innen und außen mit den Gewürzen einreiben, Äpfel und Orange in Würfel schneiden mit Preiselbeeren und einer Handvoll Zwetschken vermischen und in den Bauchraum füllen.",
+			"section": null,
+			"timer": null,
+			"uses": [
+				{
+					"ingredient": 0,
+					"phrase": "Gans",
+					"amountPhrase": null,
+					"quantity": null
+				},
+				{
+					"ingredient": 8,
+					"phrase": "Äpfel",
+					"amountPhrase": null,
+					"quantity": null
+				},
+				{
+					"ingredient": 9,
+					"phrase": "Orange",
+					"amountPhrase": null,
+					"quantity": null
+				},
+				{
+					"ingredient": 11,
+					"phrase": "Zwetschken",
+					"amountPhrase": null,
+					"quantity": null
+				},
+				{
+					"ingredient": 22,
+					"phrase": "Äpfel",
+					"amountPhrase": null,
+					"quantity": null
+				}
+			]
+		},
+		{
+			"text": "In einer Bratpfanne fingerhoch Wasser einfüllen, Gans mit der Brust nach unten einlegen. Ca. 40 Minuten lang bei 160°C im vorgeheizten Backrohr dämpfen. Bei Bedarf Wasser zugießen. Während des Bratens mehrmals übergießen. Bei ausreichender Bräunung auf 150°C reduzieren und mit warmem Honig einstreichen. Mit einer Gabel zwischen Keulen und Brust mehrmals anstechen damit Fett abfließen kann. Gut zu wissen: Nach der halben Bratzeit die Gans auf den Rücken drehen.",
+			"section": null,
+			"timer": null,
+			"uses": [
+				{
+					"ingredient": 0,
+					"phrase": "Gans",
+					"amountPhrase": null,
+					"quantity": null
+				},
+				{
+					"ingredient": 12,
+					"phrase": "Honig",
+					"amountPhrase": null,
+					"quantity": null
+				},
+				{
+					"ingredient": 21,
+					"phrase": "Wasser",
+					"amountPhrase": null,
+					"quantity": null
+				},
+				{
+					"ingredient": 34,
+					"phrase": "Wasser",
+					"amountPhrase": null,
+					"quantity": null
+				}
+			]
+		},
+		{
+			"text": "Nach ca. 3,5 Stunden aus der Pfanne heben. Etwas abkühlen lassen und dann tranchieren. Keulen abtrennen und Brust von der Karkasse lösen und halbieren, anschließend warmhalten. Überschüssiges Fett abgießen und Bratenrückstände mit etwas Wasser lösen und anschließend zur Sauce geben.",
+			"section": null,
+			"timer": null,
+			"uses": [
+				{
+					"ingredient": 21,
+					"phrase": "Wasser",
+					"amountPhrase": null,
+					"quantity": null
+				},
+				{
+					"ingredient": 34,
+					"phrase": "Wasser",
+					"amountPhrase": null,
+					"quantity": null
+				}
+			]
+		},
+		{
+			"text": "Großen Topf aufstellen und heiß werden lassen, die Fülle aus der Karkasse nehmen und ca. die Hälfte in den Topf geben und etwas rösten. Anschließend zerkleinerte Karkasse mit 0,5 Liter Rotwein ablöschen und in die gewünschte Konsistenz einkochen lassen, abseihen. Eventuell mit etwas kalter Butter montieren. Gut zu wissen: Die Karkasse ist das Gerippe der Gans. Der Begriff stammt ursprünglich aus dem Französischen von carcasse . Es bezeichnet das Gerippe mit anhaftenden Fleisch- und Hautresten nach dem Tranchieren von kleineren Tieren, wie Geflügel (Hühner, Enten, Pute) und Hasen.",
+			"section": null,
+			"timer": null,
+			"uses": [
+				{
+					"ingredient": 0,
+					"phrase": "Gans",
+					"amountPhrase": null,
+					"quantity": null
+				},
+				{
+					"ingredient": 20,
+					"phrase": "Rotwein",
+					"amountPhrase": null,
+					"quantity": null
+				},
+				{
+					"ingredient": 31,
+					"phrase": "Butter",
+					"amountPhrase": null,
+					"quantity": null
+				}
+			]
+		},
+		{
+			"text": "Der Rest der Fülle (außer der Orange) kann zur Gans serviert werden.",
+			"section": null,
+			"timer": null,
+			"uses": [
+				{
+					"ingredient": 0,
+					"phrase": "Gans",
+					"amountPhrase": null,
+					"quantity": null
+				},
+				{
+					"ingredient": 9,
+					"phrase": "Orange",
+					"amountPhrase": null,
+					"quantity": null
+				}
+			]
+		},
+		{
+			"text": "Rotkraut säubern, Kopf halbieren Strunk ausschneiden. Kraut fein hobeln oder in feine Streifen schneiden. Mit Salz, Orangen und Zitronensaft vermischen, einige Stunden marinieren lassen.",
+			"section": null,
+			"timer": null,
+			"uses": [
+				{
+					"ingredient": 1,
+					"phrase": "Salz",
+					"amountPhrase": null,
+					"quantity": null
+				},
+				{
+					"ingredient": 13,
+					"phrase": "Rotkraut",
+					"amountPhrase": null,
+					"quantity": null
+				},
+				{
+					"ingredient": 14,
+					"phrase": "Salz",
+					"amountPhrase": null,
+					"quantity": null
+				},
+				{
+					"ingredient": 27,
+					"phrase": "Salz",
+					"amountPhrase": null,
+					"quantity": null
+				}
+			]
+		},
+		{
+			"text": "Öl erhitzen, Zwiebel farblos dünsten, Zucker einrühren. Mit Wein ablöschen, Rotkraut einrühren. Mit wenig Wasser oder Suppe begießen. Geriebene Äpfel, Preiselbeeren und Zimt einrühren und einige Minuten dünsten. Stärke mit kaltem Wasser vermischen, unter das Rotkraut rühren und aufkochen. 60 Minuten garen lassen.",
+			"section": null,
+			"timer": null,
+			"uses": [
+				{
+					"ingredient": 7,
+					"phrase": "Zwiebel",
+					"amountPhrase": null,
+					"quantity": null
+				},
+				{
+					"ingredient": 8,
+					"phrase": "Äpfel",
+					"amountPhrase": null,
+					"quantity": null
+				},
+				{
+					"ingredient": 13,
+					"phrase": "Rotkraut",
+					"amountPhrase": null,
+					"quantity": null
+				},
+				{
+					"ingredient": 18,
+					"phrase": "Zwiebel",
+					"amountPhrase": null,
+					"quantity": null
+				},
+				{
+					"ingredient": 19,
+					"phrase": "Zucker",
+					"amountPhrase": null,
+					"quantity": null
+				},
+				{
+					"ingredient": 21,
+					"phrase": "Wasser",
+					"amountPhrase": null,
+					"quantity": null
+				},
+				{
+					"ingredient": 22,
+					"phrase": "Äpfel",
+					"amountPhrase": null,
+					"quantity": null
+				},
+				{
+					"ingredient": 25,
+					"phrase": "Stärke",
+					"amountPhrase": null,
+					"quantity": null
+				},
+				{
+					"ingredient": 33,
+					"phrase": "Zucker",
+					"amountPhrase": null,
+					"quantity": null
+				},
+				{
+					"ingredient": 34,
+					"phrase": "Wasser",
+					"amountPhrase": null,
+					"quantity": null
+				}
+			]
+		},
+		{
+			"text": "Geschälte Kartoffeln in gleichmäßige Stücke schneiden, in Salzwasser kochen, abseihen und dann im Backrohr bei ca. 60 Grad ausdampfen lassen. Mit einer Kartoffelpresse oder durch ein Passiersieb passieren.",
+			"section": null,
+			"timer": null,
+			"uses": []
+		},
+		{
+			"text": "Erkaltete passierte Kartoffeln mit Dotter vermischen. Restliche Zutaten daruntermischen, sofort verarbeiten.",
+			"section": null,
+			"timer": null,
+			"uses": [
+				{
+					"ingredient": 28,
+					"phrase": "Dotter",
+					"amountPhrase": null,
+					"quantity": null
+				}
+			]
+		},
+		{
+			"text": "Mit bemehlter Handfläche zu Knödel formen. Reichlich Salzwasser aufkochen, Knödel einlegen ca. 10-12 Minuten kochen.",
+			"section": null,
+			"timer": null,
+			"uses": []
+		},
+		{
+			"text": "Kurz vor dem Servieren mit Butter und Semmelbröseln eine Bolognese zubereiten. Dafür Butter in einer schmelzen lassen und die Bröseln hinzufügen. Knödeln am Teller damit übergießen.",
+			"section": null,
+			"timer": null,
+			"uses": [
+				{
+					"ingredient": 31,
+					"phrase": "Butter",
+					"amountPhrase": null,
+					"quantity": null
+				}
+			]
+		},
+		{
+			"text": "In einer trockenen Pfanne Zucker langsam goldgelb schmelzen. Mit Wasser aufgießen, aber nicht umrühren, sondern einkochen lassen. Vorgegarte und geschälte Maroni zugeben, kurz erwärmen und ein großes Stück kalte Butter zugeben. Einkochen lassen und dadurch glacieren.",
+			"section": null,
+			"timer": null,
+			"uses": [
+				{
+					"ingredient": 19,
+					"phrase": "Zucker",
+					"amountPhrase": null,
+					"quantity": null
+				},
+				{
+					"ingredient": 21,
+					"phrase": "Wasser",
+					"amountPhrase": null,
+					"quantity": null
+				},
+				{
+					"ingredient": 31,
+					"phrase": "Butter",
+					"amountPhrase": null,
+					"quantity": null
+				},
+				{
+					"ingredient": 32,
+					"phrase": "Maroni",
+					"amountPhrase": null,
+					"quantity": null
+				},
+				{
+					"ingredient": 33,
+					"phrase": "Zucker",
+					"amountPhrase": null,
+					"quantity": null
+				},
+				{
+					"ingredient": 34,
+					"phrase": "Wasser",
+					"amountPhrase": null,
+					"quantity": null
+				},
+				{
+					"ingredient": 35,
+					"phrase": "kalte",
+					"amountPhrase": null,
+					"quantity": null
+				}
+			]
+		},
+		{
+			"text": "Gansl mit der Soße übergießen und mit dem Rotkraut, den Kartoffelknödel und den glasierten Maroni servieren. Wir wünschen gutes Gelingen.",
+			"section": null,
+			"timer": null,
+			"uses": [
+				{
+					"ingredient": 13,
+					"phrase": "Rotkraut",
+					"amountPhrase": null,
+					"quantity": null
+				},
+				{
+					"ingredient": 32,
+					"phrase": "Maroni",
+					"amountPhrase": null,
+					"quantity": null
+				}
+			]
+		}
+	],
+	"tags": [],
+	"diet": null
+}

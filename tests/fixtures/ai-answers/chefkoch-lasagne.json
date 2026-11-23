@@ -1,0 +1,352 @@
+{
+	"_comment": "Written by hand on 2026-11-23 as a careful model would answer plan 44's contract for src/lib/utils/fixtures/chefkoch-lasagne.html. No real model produced it (no session has a provider key).",
+	"name": "Lasagne alla Bolognese mit Béchamelsoße",
+	"servings": 6,
+	"timeMinutes": 100,
+	"ingredients": [
+		{
+			"source": 0,
+			"quantity": 1,
+			"unit": null,
+			"countingWord": "Bund",
+			"newUnit": null,
+			"name": "Suppengrün",
+			"note": null,
+			"alternative": null,
+			"section": "Bolognesesoße"
+		},
+		{
+			"source": 1,
+			"quantity": 1,
+			"unit": null,
+			"countingWord": null,
+			"newUnit": null,
+			"name": "Zwiebel",
+			"note": null,
+			"alternative": null,
+			"section": "Bolognesesoße"
+		},
+		{
+			"source": 2,
+			"quantity": 2,
+			"unit": null,
+			"countingWord": "Zehen",
+			"newUnit": null,
+			"name": "Knoblauch",
+			"note": null,
+			"alternative": null,
+			"section": "Bolognesesoße"
+		},
+		{
+			"source": 3,
+			"quantity": 100,
+			"unit": "g",
+			"countingWord": null,
+			"newUnit": null,
+			"name": "Speck",
+			"note": "geräuchert, durchwachsen",
+			"alternative": null,
+			"section": "Bolognesesoße"
+		},
+		{
+			"source": 4,
+			"quantity": 3,
+			"unit": "tbsp",
+			"countingWord": null,
+			"newUnit": null,
+			"name": "Olivenöl",
+			"note": null,
+			"alternative": null,
+			"section": "Bolognesesoße"
+		},
+		{
+			"source": 5,
+			"quantity": 500,
+			"unit": "g",
+			"countingWord": null,
+			"newUnit": null,
+			"name": "Rinderhackfleisch",
+			"note": null,
+			"alternative": null,
+			"section": "Bolognesesoße"
+		},
+		{
+			"source": 6,
+			"quantity": null,
+			"unit": null,
+			"countingWord": null,
+			"newUnit": null,
+			"name": "Salz",
+			"note": null,
+			"alternative": null,
+			"section": "Bolognesesoße"
+		},
+		{
+			"source": 7,
+			"quantity": null,
+			"unit": null,
+			"countingWord": null,
+			"newUnit": null,
+			"name": "Pfeffer",
+			"note": null,
+			"alternative": null,
+			"section": "Bolognesesoße"
+		},
+		{
+			"source": 8,
+			"quantity": 125,
+			"unit": "ml",
+			"countingWord": null,
+			"newUnit": null,
+			"name": "Rotwein",
+			"note": null,
+			"alternative": "Gemüsebrühe",
+			"section": "Bolognesesoße"
+		},
+		{
+			"source": 9,
+			"quantity": 600,
+			"unit": "g",
+			"countingWord": null,
+			"newUnit": null,
+			"name": "Tomaten",
+			"note": "stückig, aus der Dose",
+			"alternative": null,
+			"section": "Bolognesesoße"
+		},
+		{
+			"source": 10,
+			"quantity": 5,
+			"unit": "tbsp",
+			"countingWord": null,
+			"newUnit": null,
+			"name": "Tomatenmark",
+			"note": null,
+			"alternative": null,
+			"section": "Bolognesesoße"
+		},
+		{
+			"source": 11,
+			"quantity": 1,
+			"unit": null,
+			"countingWord": "Bund",
+			"newUnit": null,
+			"name": "Thymian",
+			"note": null,
+			"alternative": null,
+			"section": "Bolognesesoße"
+		},
+		{
+			"source": 12,
+			"quantity": null,
+			"unit": null,
+			"countingWord": null,
+			"newUnit": null,
+			"name": "Zucker",
+			"note": null,
+			"alternative": null,
+			"section": "Bolognesesoße"
+		},
+		{
+			"source": 13,
+			"quantity": 2,
+			"unit": null,
+			"countingWord": null,
+			"newUnit": null,
+			"name": "Zwiebeln",
+			"note": null,
+			"alternative": null,
+			"section": "Béchamelsoße"
+		},
+		{
+			"source": 14,
+			"quantity": 75,
+			"unit": "g",
+			"countingWord": null,
+			"newUnit": null,
+			"name": "Butter",
+			"note": null,
+			"alternative": null,
+			"section": "Béchamelsoße"
+		},
+		{
+			"source": 15,
+			"quantity": 60,
+			"unit": "g",
+			"countingWord": null,
+			"newUnit": null,
+			"name": "Mehl",
+			"note": null,
+			"alternative": null,
+			"section": "Béchamelsoße"
+		},
+		{
+			"source": 16,
+			"quantity": 0.5,
+			"unit": "L",
+			"countingWord": null,
+			"newUnit": null,
+			"name": "Gemüsebrühe",
+			"note": null,
+			"alternative": null,
+			"section": "Béchamelsoße"
+		},
+		{
+			"source": 17,
+			"quantity": 0.5,
+			"unit": "L",
+			"countingWord": null,
+			"newUnit": null,
+			"name": "Milch",
+			"note": null,
+			"alternative": null,
+			"section": "Béchamelsoße"
+		},
+		{
+			"source": 18,
+			"quantity": 100,
+			"unit": "g",
+			"countingWord": null,
+			"newUnit": null,
+			"name": "Gouda",
+			"note": null,
+			"alternative": null,
+			"section": "Béchamelsoße"
+		},
+		{
+			"source": 19,
+			"quantity": null,
+			"unit": null,
+			"countingWord": null,
+			"newUnit": null,
+			"name": "Muskat",
+			"note": "gerieben",
+			"alternative": null,
+			"section": "Béchamelsoße"
+		},
+		{
+			"source": 20,
+			"quantity": 250,
+			"unit": "g",
+			"countingWord": null,
+			"newUnit": null,
+			"name": "Lasagneplatten",
+			"note": "ohne Vorkochen",
+			"alternative": null,
+			"section": "Béchamelsoße"
+		},
+		{
+			"source": 21,
+			"quantity": 100,
+			"unit": "g",
+			"countingWord": null,
+			"newUnit": null,
+			"name": "Gouda",
+			"note": null,
+			"alternative": null,
+			"section": "Béchamelsoße"
+		}
+	],
+	"steps": [
+		{
+			"text": "Das Suppengrün putzen und sehr fein würfeln. Zwiebel und Knoblauch hacken. Den Speck würfeln.",
+			"section": "Bolognesesoße",
+			"timer": null,
+			"uses": [
+				{ "ingredient": 0, "phrase": "Suppengrün", "amountPhrase": null, "quantity": null },
+				{ "ingredient": 1, "phrase": "Zwiebel", "amountPhrase": null, "quantity": null },
+				{ "ingredient": 2, "phrase": "Knoblauch", "amountPhrase": null, "quantity": null },
+				{ "ingredient": 3, "phrase": "Speck", "amountPhrase": null, "quantity": null }
+			]
+		},
+		{
+			"text": "Das Olivenöl in einer Pfanne erhitzen. Speck, Suppengrün, Zwiebel und Knoblauch anbraten, bis es glasig ist.",
+			"section": "Bolognesesoße",
+			"timer": null,
+			"uses": [
+				{ "ingredient": 4, "phrase": "Olivenöl", "amountPhrase": null, "quantity": null },
+				{ "ingredient": 3, "phrase": "Speck", "amountPhrase": null, "quantity": null },
+				{ "ingredient": 0, "phrase": "Suppengrün", "amountPhrase": null, "quantity": null },
+				{ "ingredient": 1, "phrase": "Zwiebel", "amountPhrase": null, "quantity": null },
+				{ "ingredient": 2, "phrase": "Knoblauch", "amountPhrase": null, "quantity": null }
+			]
+		},
+		{
+			"text": "Das Hackfleisch dazugeben und krümelig und braun anbraten. Mit Salz und Pfeffer würzen.",
+			"section": "Bolognesesoße",
+			"timer": null,
+			"uses": [
+				{ "ingredient": 5, "phrase": "Hackfleisch", "amountPhrase": null, "quantity": null },
+				{ "ingredient": 6, "phrase": "Salz", "amountPhrase": null, "quantity": null },
+				{ "ingredient": 7, "phrase": "Pfeffer", "amountPhrase": null, "quantity": null }
+			]
+		},
+		{
+			"text": "Mit Rotwein oder Brühe ablöschen und verdampfen lassen. Die Tomatenstückchen und das Tomatenmark in die Pfanne geben und ca. 10 Minuten köcheln lassen.",
+			"section": "Bolognesesoße",
+			"timer": { "seconds": 600, "label": "Soße köcheln" },
+			"uses": [
+				{ "ingredient": 8, "phrase": "Rotwein", "amountPhrase": null, "quantity": null },
+				{ "ingredient": 9, "phrase": "Tomatenstückchen", "amountPhrase": null, "quantity": null },
+				{ "ingredient": 10, "phrase": "Tomatenmark", "amountPhrase": null, "quantity": null }
+			]
+		},
+		{
+			"text": "Thymian unterrrühren und die Soße mit Salz, Pfeffer und einer Prise Zucker abschmecken.",
+			"section": "Bolognesesoße",
+			"timer": null,
+			"uses": [
+				{ "ingredient": 11, "phrase": "Thymian", "amountPhrase": null, "quantity": null },
+				{ "ingredient": 6, "phrase": "Salz", "amountPhrase": null, "quantity": null },
+				{ "ingredient": 7, "phrase": "Pfeffer", "amountPhrase": null, "quantity": null },
+				{ "ingredient": 12, "phrase": "Zucker", "amountPhrase": null, "quantity": null }
+			]
+		},
+		{
+			"text": "Die Zwiebel hacken. Die Butter in einem Topf erhitzen und die Zwiebelwürfel und das Mehl darin unter Rühren andünsten.",
+			"section": "Béchamelsoße",
+			"timer": null,
+			"uses": [
+				{ "ingredient": 13, "phrase": "Zwiebel", "amountPhrase": null, "quantity": null },
+				{ "ingredient": 13, "phrase": "Zwiebelwürfel", "amountPhrase": null, "quantity": null },
+				{ "ingredient": 14, "phrase": "Butter", "amountPhrase": null, "quantity": null },
+				{ "ingredient": 15, "phrase": "Mehl", "amountPhrase": null, "quantity": null }
+			]
+		},
+		{
+			"text": "Nach und nach Brühe und Milch in kleinen Portionen zugießen. Zwischendurch mit einem Schneebesen kräftig rühren, damit keine Klümpchen bleiben, die Soße aufkochen lassen.",
+			"section": "Béchamelsoße",
+			"timer": null,
+			"uses": [
+				{ "ingredient": 16, "phrase": "Brühe", "amountPhrase": null, "quantity": null },
+				{ "ingredient": 17, "phrase": "Milch", "amountPhrase": null, "quantity": null }
+			]
+		},
+		{
+			"text": "Den Käse grob raspeln und in der Soße schmelzen lassen. Mit Salz, Pfeffer und Muskatnuss abschmecken.",
+			"section": "Béchamelsoße",
+			"timer": null,
+			"uses": [
+				{ "ingredient": 18, "phrase": "Käse", "amountPhrase": null, "quantity": null },
+				{ "ingredient": 19, "phrase": "Muskatnuss", "amountPhrase": null, "quantity": null }
+			]
+		},
+		{
+			"text": "Etwas Béchamelsoße auf den Boden einer Auflaufform streichen. Eine Schicht Lasagneblätter darauf geben. Darauf eine Schicht Bolognesesoße geben, mit Lasagneblättern bedecken. So weiter machen, bis die Zutaten verbraucht sind. Mit einer dicken Schicht Béchamelsoße abschließen, damit die Lasagneblätter Feuchtigkeit zum Garen haben.",
+			"section": null,
+			"timer": null,
+			"uses": [
+				{ "ingredient": 20, "phrase": "Lasagneblätter", "amountPhrase": null, "quantity": null },
+				{ "ingredient": 20, "phrase": "Lasagneblättern", "amountPhrase": null, "quantity": null }
+			]
+		},
+		{
+			"text": "Käse grob raspeln und über die Lasagne geben. Im vorgeheizten Backofen bei 175° (Umluft 150°) etwa 50 – 60 Minuten backen.",
+			"section": null,
+			"timer": { "seconds": 3000, "label": "Lasagne" },
+			"uses": [{ "ingredient": 21, "phrase": "Käse", "amountPhrase": null, "quantity": null }]
+		}
+	],
+	"tags": ["meal:dinner", "kind:main"],
+	"diet": "meat"
+}

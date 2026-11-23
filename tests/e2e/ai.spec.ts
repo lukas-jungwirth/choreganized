@@ -8,6 +8,7 @@
  * afterwards — the other journeys expect AI to be off.
  */
 import { expect, test, type Page } from '@playwright/test';
+import { FAKE_PANCAKE_TEXT } from '../../scripts/fake-ai';
 
 async function openAiSheet(page: Page) {
 	await page.goto('/settings');
@@ -69,9 +70,8 @@ test('a pasted key loads the provider’s own models, and the backup answers whe
 
 	// An import: Gemini answers 429, Claude answers instead — and the draft says so.
 	await page.goto('/cooking/recipes/import?mode=text');
-	await page
-		.getByLabel('Recipe text')
-		.fill('Pancakes. 200 g flour, 2 eggs, 300 ml milk. Whisk, fry.');
+	// The fake's pancakes, word for word: the gate checks every step against the paste.
+	await page.getByLabel('Recipe text').fill(FAKE_PANCAKE_TEXT);
 	await page.getByRole('button', { name: 'Extract recipe' }).click();
 
 	await expect(page.getByLabel('Recipe name')).toHaveValue('Claude pancakes');
@@ -154,9 +154,7 @@ test('an AI import arrives pinned and timed, adapted as asked, and saves into co
 	await page.goto('/cooking/recipes/import?mode=text');
 	await page.getByRole('button', { name: 'Add instructions for the AI' }).click();
 	await page.getByLabel('Instructions for the AI').fill('mit Tofu statt Ei');
-	await page
-		.getByLabel('Recipe text')
-		.fill('Pancakes: flour, eggs, milk. Whisk; fry 2 minutes a side.');
+	await page.getByLabel('Recipe text').fill(FAKE_PANCAKE_TEXT);
 	await page.getByRole('button', { name: 'Extract recipe' }).click();
 
 	// The draft says what made it, and what it was asked.
@@ -200,25 +198,54 @@ test('an AI import arrives pinned and timed, adapted as asked, and saves into co
 	await expect(page.getByRole('button', { name: 'Start Pancake · 2:00' })).toBeVisible();
 });
 
-test('"Improve with AI" is off until turned on, then remembered on this device', async ({
+/** AI is the import when it is set up (→ plan 44, DECISIONS #315): no switch to turn on. */
+test('the link screen has no AI switch; with AI set up, the instructions are one tap away', async ({
+	page,
+	baseURL
+}) => {
+	await page.goto('/cooking/recipes/import');
+	await expect(page.getByRole('button', { name: 'Fetch recipe' })).toBeVisible();
+	await expect(page.getByRole('checkbox')).toHaveCount(0);
+	await expect(page.getByRole('button', { name: 'Add instructions for the AI' })).toHaveCount(0);
+
+	await setUpGemini(page, baseURL!);
+	await page.reload();
+	await expect(page.getByRole('button', { name: 'Add instructions for the AI' })).toBeVisible();
+	await expect(page.getByRole('checkbox')).toHaveCount(0);
+});
+
+/**
+ * A checked import (→ plan 44), through the pasted-text mode, which needs no
+ * fetch: the draft opens with its parts, a note, links and the gate's one
+ * question, and Save stores all of it.
+ */
+test('a pasted recipe opens with parts, a note, links and what to check, and saves them', async ({
 	page,
 	baseURL
 }) => {
 	await setUpGemini(page, baseURL!);
-	await page.goto('/cooking/recipes/import');
+	await page.goto('/cooking/recipes/import?mode=text');
+	await page.getByLabel('Recipe text').fill(FAKE_PANCAKE_TEXT);
+	await page.getByRole('button', { name: 'Extract recipe' }).click();
 
-	const toggle = page.getByRole('checkbox', { name: 'Improve with AI' });
-	await expect(toggle).not.toBeChecked();
-	await expect(page.getByRole('button', { name: 'Add instructions for the AI' })).toHaveCount(0);
+	// The gate's list, until plan 45's review screen: one thing to check, the choice.
+	const checks = page.getByRole('region', { name: 'What the import found' });
+	await expect(checks.getByRole('heading', { name: '1 thing to check' })).toBeVisible();
+	await expect(checks).toContainText('Choose: berries or cherries.');
 
-	await toggle.check();
-	await expect(page.getByRole('button', { name: 'Add instructions for the AI' })).toBeVisible();
+	// Step 1 arrives linked to what it names.
+	await expect(page.getByRole('button', { name: 'Ingredients for step 1' })).toContainText('flour');
 
-	await page.reload();
-	await expect(page.getByRole('checkbox', { name: 'Improve with AI' })).toBeChecked();
+	await page.getByRole('button', { name: 'Save recipe' }).click();
+	await expect(page.getByRole('heading', { name: 'Gemini pancakes', level: 1 })).toBeVisible();
 
-	// Off again for whoever comes next on this browser profile.
-	await page.getByRole('checkbox', { name: 'Improve with AI' }).uncheck();
+	// The parts head their ingredients and steps; the note sits under its name.
+	await expect(page.getByRole('heading', { name: 'Batter' }).first()).toBeVisible();
+	await expect(page.getByRole('heading', { name: 'Sauce' }).first()).toBeVisible();
+	await expect(page.getByText('cold', { exact: true })).toBeVisible();
+	await expect(page.getByText('or cherries', { exact: true })).toBeVisible();
+	// The stored link underlines the step's own word.
+	await expect(page.locator('main').getByText('flour').first()).toBeVisible();
 });
 
 test('standing instructions are the owner’s, and every import shows them', async ({
@@ -242,13 +269,14 @@ test('standing instructions are the owner’s, and every import shows them', asy
 	expect(cleared.ok()).toBe(true);
 });
 
-test('a remembered "Improve with AI" after AI was removed just imports without it', async ({
+test('a link without AI set up still fetches, and an old screen’s `ai=1` changes nothing', async ({
 	page,
 	baseURL
 }) => {
-	// No connection (afterEach removed them). The toggle's `ai=1` may still be
-	// remembered on the phone; the fetch must carry on, not ask for Settings.
-	// A blocked address proves it got as far as fetching — no network needed.
+	// No connection (afterEach removed them). A screen from before plan 44 may
+	// still post the old switch's `ai=1`; the fetch must carry on, not ask for
+	// Settings. A blocked address proves it got as far as fetching (the guard
+	// refuses it before any request), so no network is needed.
 	const response = await page.request.post('/cooking/recipes/import?/fetch', {
 		form: { url: 'http://127.0.0.1/rezept', ai: '1' },
 		headers: { origin: baseURL!, 'x-sveltekit-action': 'true' }
