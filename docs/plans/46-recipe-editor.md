@@ -19,10 +19,16 @@ is a textarea with three 16 px icons beside it and two rows of small chips under
   empty name dissolves the part into the one above.
 - A row shows amount and unit (or counting word), the **name**, and the note in a second,
   smaller line. Tapping it opens the ingredient sheet [E2]: name, amount, note, part.
-  **The amount is one line** (Lukas, sketch feedback: "it's only a number, it can be smaller"):
-  a number field about 76 px wide and 44 px high, then the units as chips in a row that scrolls
-  sideways (the eight, then "other…" for a counting word). Not a tall field beside a block of
-  wrapped chips.
+  **The amount is still open** (Lukas, sketch feedback, twice: first "it's only a number, it
+  can be smaller", then, of a number field with unit chips in a scrolling row, "still not
+  happy with amount and units"). The sketch shows two candidates and he picks one before this
+  is built:
+  - **E2 · A, one typed field** (recommended): no unit picker. "500 g", "2 EL", "1 Dose",
+    "2 Zehen" typed into one field, read by plan 42's reader, with a chip in the field showing
+    what was read, the way the add field on Lists shows "×3" (plan 37). A line of examples
+    under it.
+  - **E2 · B, a number field and the platform's own menu** for the unit (the eight, then
+    "other…" for a counting word), as the item sheet on Lists does today.
 - **Typing stays the fast way in**: an add field at the foot of each part takes a line
   ("400 g Nudeln", "1 Karotte, in Scheiben") and reads it with plan 42's reader; what follows
   a comma or stands in brackets becomes the note. The row shows what was understood.
@@ -60,6 +66,12 @@ is a textarea with three 16 px icons beside it and two rows of small chips under
     "400 g follows the number of people" / "400 g stays as written"; tapping the amount in the
     text flips the same switch. A number that stands elsewhere ("Karotten, etwa 400 g") is
     linked by tapping it and picking the ingredient.
+  - **A step may use part of an ingredient** (Lukas: "the step says 200 g of carrots but in
+    total there are 400"). Nothing extra to do: the step's "200 g" is linked like any amount,
+    the link also stores 200 g as the step's share (`quantity`, plan 43), and its row reads
+    "200 g of 400 g". For twice as many both move: the text says 400 g, cook mode's list says
+    "400 g of 800 g". The automatic link is only made while the amount is not more than the
+    ingredient's total; an amount above it is left unlinked and can be linked by hand.
   - **"Show for 4 / 8 people"** at the top rewrites the text the way cook mode will, so the
     effect of a linked amount is visible before saving. The two numbers are the recipe's
     servings and twice that; the control is absent when the recipe has no servings.
@@ -104,7 +116,9 @@ controls of the sketch.
 - [ ] A step that says "400 g Karotten" links the amount with the word; "Show for 8" in the
       link sheet and cook mode for 8 both read "800 g Karotten". Switching the amount off
       leaves it at 400 g in both.
-- [ ] The amount row of the ingredient sheet is one line, 44 px high.
+- [ ] The amount in the ingredient sheet is built as the variant Lukas picked (E2 · A or B).
+- [ ] A step that says "200 g Karotten" in a recipe with 400 g shows "200 g of 400 g" in the
+      link sheet and in cook mode, and "400 g of 800 g" for twice as many.
 - [ ] A word in a step can be linked to an ingredient in two taps, and cook mode underlines it.
 - [ ] Typing "1 Karotte, in Scheiben geschnitten" into the add field gives name "Karotte" and
       that note.

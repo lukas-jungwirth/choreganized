@@ -131,6 +131,9 @@ All of it is plain code and unit-tested. `source` is what the model was sent.
   unit (or none where the row has none) and not exceed the row's amount. Otherwise cleared.
 - Cross-check: where the step's text contains an ingredient's exact name as a whole word and
   the model linked nothing to it, the link is added (the old matcher, exact names only).
+- The amounts the steps give one ingredient may add up to its total at most ("200 g Karotten"
+  in two steps of a recipe with 400 g). If they add up to more, the links stay and the
+  ingredient is flagged `shares-exceed`, so a person looks at it.
 - An ingredient no step uses is flagged `unused` (quiet: "Fett für die Form" is often right).
 
 **Recipe:**

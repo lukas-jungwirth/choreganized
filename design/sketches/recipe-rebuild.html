@@ -227,11 +227,16 @@
 	.unit { height: 44px; min-width: 46px; padding: 0 12px; border-radius: 999px; border: 1.5px solid var(--border); font-weight: 600; font-size: 15px; display: inline-grid; place-items: center; flex: none; }
 	.unit.on { background: var(--sage); border-color: var(--sage); color: var(--on-sage); }
 	.unit.word { border-style: dashed; }
-	/* One line: a small number field, then the units in a row that scrolls sideways. */
-	.amount { display: flex; align-items: center; gap: 10px; }
-	.amount .num { flex: none; width: 76px; height: 44px; padding: 0 12px; border-radius: 12px; border: 1px solid var(--border); background: var(--card); font-size: 17px; font-weight: 600; display: flex; align-items: center; font-variant-numeric: tabular-nums; }
-	.amount .units { flex: 1; min-width: 0; flex-wrap: nowrap; overflow-x: auto; scrollbar-width: none; margin-right: -20px; padding-right: 20px; }
-	.amount .units::-webkit-scrollbar { display: none; }
+	/* Amount, variant A: one typed field, with a chip that shows what was read (as on Lists). */
+	.typed { display: flex; align-items: center; gap: 10px; background: var(--card); border: 1px solid var(--border); border-radius: 14px; padding: 0 8px 0 14px; height: 50px; font-size: 16px; }
+	.typed span:first-child { flex: 1; }
+	.typed .read { height: 32px; padding: 0 12px; border-radius: 999px; background: var(--sage-tint); color: var(--sage-deep); font-weight: 700; font-size: 14.5px; display: inline-flex; align-items: center; }
+	.typed .caret { width: 2px; height: 20px; background: var(--sage); margin-left: 1px; display: inline-block; vertical-align: -4px; }
+	.eg { font-size: 13.5px; color: var(--text-4); margin: 7px 2px 0; }
+	/* Amount, variant B: a number and a unit menu on one line (as the list's item sheet). */
+	.pair { display: grid; grid-template-columns: 110px 1fr; gap: 10px; }
+	.pair .field { height: 50px; padding: 0 14px; display: flex; align-items: center; justify-content: space-between; }
+	.pair .field i { font-style: normal; color: var(--text-4); }
 	.flbl { font-size: 12px; font-weight: 700; letter-spacing: 0.1em; text-transform: uppercase; color: var(--text-4); margin: 14px 2px 6px; }
 
 	/* cook mode */
@@ -447,13 +452,14 @@
 			</figure>
 			<figure>
 				<div class="phone"><div class="scrim"></div>
-					<div class="sheet" style="--top:190px"><div class="grab"></div>
+					<div class="sheet" style="--top:226px"><div class="grab"></div>
 						<div class="sheet-top"><span class="eyebrow">Ingredient</span><h4>Faschiertes</h4></div>
 						<div class="sheet-body">
 							<div class="flbl" style="margin-top:4px">Name <span style="letter-spacing:0;text-transform:none;font-weight:500">· what goes on the list</span></div>
 							<div class="field">Faschiertes</div>
 							<div class="flbl">Amount</div>
-							<div class="amount new" style="padding-left:10px"><div class="num">500</div><div class="units"><span class="unit on">g</span><span class="unit">kg</span><span class="unit">ml</span><span class="unit">L</span><span class="unit">Stk</span><span class="unit">Pkg</span><span class="unit">EL</span><span class="unit">TL</span><span class="unit word">other…</span></div></div>
+							<div class="typed new"><span>500 g<i class="caret"></i></span><span class="read">500 g</span></div>
+							<p class="eg">Type it as you would say it: 500 g · 2 EL · 1 Dose · 2 Zehen</p>
 							<div class="flbl">Note <span style="letter-spacing:0;text-transform:none;font-weight:500">· shown in the recipe</span></div>
 							<div class="field">gemischt</div>
 							<div class="flbl">Part</div>
@@ -462,7 +468,26 @@
 						<div class="sheet-foot"><button class="primary">Done</button></div>
 					</div>
 				</div>
-				<figcaption><b><span class="tag">E2</span>One ingredient</b>Changed after your feedback: the amount is one line, a small number field and the units in a row that scrolls sideways. "other…" takes a counting word such as Dose, Bund or Zehen, kept as written.</figcaption>
+				<figcaption><b><span class="tag">E2 · A</span>Amount as one typed field (my pick)</b>No unit picker at all. You type "500 g" or "2 Zehen" and the chip shows what was read, the same way the add field on Lists shows "×3". It uses the shared amount reader, so every spelling that works on a list works here.</figcaption>
+			</figure>
+			<figure>
+				<div class="phone"><div class="scrim"></div>
+					<div class="sheet" style="--top:250px"><div class="grab"></div>
+						<div class="sheet-top"><span class="eyebrow">Ingredient</span><h4>Faschiertes</h4></div>
+						<div class="sheet-body">
+							<div class="flbl" style="margin-top:4px">Name <span style="letter-spacing:0;text-transform:none;font-weight:500">· what goes on the list</span></div>
+							<div class="field">Faschiertes</div>
+							<div class="flbl">Amount</div>
+							<div class="pair new" style="padding-left:10px"><div class="field">500</div><div class="field">g <i>▾</i></div></div>
+							<div class="flbl">Note <span style="letter-spacing:0;text-transform:none;font-weight:500">· shown in the recipe</span></div>
+							<div class="field">gemischt</div>
+							<div class="flbl">Part</div>
+							<div class="units"><span class="unit on">Bolognese</span><span class="unit">Béchamel</span><span class="unit">Schichten</span><span class="unit">none</span></div>
+						</div>
+						<div class="sheet-foot"><button class="primary">Done</button></div>
+					</div>
+				</div>
+				<figcaption><b><span class="tag">E2 · B</span>Number and unit menu</b>A number field and the phone's own menu for the unit: g, kg, ml, L, Stk, Pkg, EL, TL, "other…". Close to the item sheet on Lists today. Two taps more than A for a unit, and a counting word needs "other…".</figcaption>
 			</figure>
 			<figure>
 				<div class="phone"><div class="scroll">
@@ -476,7 +501,7 @@
 							<button class="srow"><span class="k">Timer</span><span class="v">Anbraten · 5:00</span><span class="go">›</span></button>
 						</div>
 						<div class="scard" style="position:relative">
-							<div class="txt"><span class="no">3</span><span>Zwiebelwürfel und 400 g Karotten zu dem angebratenen Hackfleisch geben und 2 - 3 Min. mitbraten.</span><button class="more" aria-label="More">⋯</button></div>
+							<div class="txt"><span class="no">3</span><span>Zwiebelwürfel und 200 g Karotten zu dem angebratenen Hackfleisch geben und 2 - 3 Min. mitbraten.</span><button class="more" aria-label="More">⋯</button></div>
 							<button class="srow new"><span class="k">Ingredients</span><span class="v">Karotten, Faschiertes</span><span class="go">›</span></button>
 							<button class="srow"><span class="k">Timer</span><span class="v none">Add a timer</span><span class="go">›</span></button>
 							<div class="menu" style="top:46px;right:8px">
@@ -525,7 +550,7 @@
 						<div class="sheet-foot"><button class="primary">Done</button></div>
 					</div>
 				</div>
-				<figcaption><b><span class="tag">E3</span>Linking words and amounts</b>Changed after your feedback. The text looks as cook mode will show it, and the links are listed underneath. "400 g" is linked with "Karotten": switch to 8 people and it reads 800 g. Try it: link "Zwiebelwürfel", tap "400 g" to stop it scaling, remove a link with ✕.</figcaption>
+				<figcaption><b><span class="tag">E3</span>Linking words and amounts</b>Changed after your feedback. The text looks as cook mode will show it, and the links are listed underneath. The recipe has 400 g Karotten; this step uses 200 g of them. "200 g" is linked with "Karotten", so for 8 people it reads 400 g (of 800 g). Try it: switch to 8, link "Zwiebelwürfel", tap "200 g" to stop it scaling, remove a link with ✕.</figcaption>
 			</figure>
 		</div>
 	</section>
@@ -644,7 +669,8 @@
 	// E3: tap a word to link it; an amount right before a linked word goes with it.
 	const ings = [['Zwiebel', '1'], ['Karotten', '400 g'], ['Faschiertes', '500 g'], ['Tomatenmark', '1 EL'], ['Knoblauch', '2 Zehen']];
 	// n = an amount (value, unit); fixed = a number the app never touches (a time).
-	const toks = [{ t: 'Zwiebelwürfel' }, { t: 'und' }, { n: 400, u: 'g' }, { t: 'Karotten' }, { t: 'zu' }, { t: 'dem' }, { t: 'angebratenen' }, { t: 'Hackfleisch' }, { t: 'geben' }, { t: 'und' }, { t: '2 - 3 Min.', fixed: true }, { t: 'mitbraten.' }, { t: 'Tomatenmark' }, { t: 'einrühren.' }];
+	const totals = { Karotten: 400 }; // what the whole recipe asks for, in the same unit
+	const toks = [{ t: 'Zwiebelwürfel' }, { t: 'und' }, { n: 200, u: 'g' }, { t: 'Karotten' }, { t: 'zu' }, { t: 'dem' }, { t: 'angebratenen' }, { t: 'Hackfleisch' }, { t: 'geben' }, { t: 'und' }, { t: '2 - 3 Min.', fixed: true }, { t: 'mitbraten.' }, { t: 'Tomatenmark' }, { t: 'einrühren.' }];
 	const links = { 3: 'Karotten', 7: 'Faschiertes', 12: 'Tomatenmark' };
 	const scales = { 2: true }; // amount token → follows the number of people
 	const el = (id) => document.getElementById(id);
@@ -679,7 +705,8 @@
 			main.append(line);
 			if (a !== null) {
 				const sc = document.createElement('button'); sc.className = 'sc' + (scales[a] ? '' : ' off');
-				sc.textContent = scales[a] ? toks[a].n + ' ' + toks[a].u + ' follows the number of people' : toks[a].n + ' ' + toks[a].u + ' stays as written';
+				const total = totals[links[i]];
+				sc.textContent = scales[a] ? shown(a) + (total ? ' of ' + total * factor + ' ' + toks[a].u : '') + ' · follows the number of people' : toks[a].n + ' ' + toks[a].u + ' stays as written';
 				sc.addEventListener('click', () => { scales[a] = !scales[a]; draw(); }); main.append(sc);
 			}
 			const rm = document.createElement('button'); rm.className = 'rm'; rm.textContent = '✕'; rm.setAttribute('aria-label', 'Remove link');
