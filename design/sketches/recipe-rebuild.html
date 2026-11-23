@@ -233,10 +233,18 @@
 	.typed .read { height: 32px; padding: 0 12px; border-radius: 999px; background: var(--sage-tint); color: var(--sage-deep); font-weight: 700; font-size: 14.5px; display: inline-flex; align-items: center; }
 	.typed .caret { width: 2px; height: 20px; background: var(--sage); margin-left: 1px; display: inline-block; vertical-align: -4px; }
 	.eg { font-size: 13.5px; color: var(--text-4); margin: 7px 2px 0; }
-	/* Amount, variant B: a number and a unit menu on one line (as the list's item sheet). */
-	.pair { display: grid; grid-template-columns: 110px 1fr; gap: 10px; }
-	.pair .field { height: 50px; padding: 0 14px; display: flex; align-items: center; justify-content: space-between; }
-	.pair .field i { font-style: normal; color: var(--text-4); }
+	/* The chip is a button: it opens the units, and picking one rewrites the field. */
+	.amtwrap { position: relative; }
+	.unitmenu { position: absolute; right: 0; top: 56px; width: 190px; background: var(--card); border-radius: 16px; box-shadow: 0 12px 30px -8px rgba(0, 0, 0, 0.35), 0 0 0 1px var(--border); z-index: 5; display: grid; grid-template-columns: 1fr 1fr; padding: 6px; gap: 2px; }
+	.unitmenu button { height: 44px; border-radius: 10px; font-size: 15.5px; font-weight: 600; text-align: center; }
+	.unitmenu button[aria-pressed='true'] { background: var(--sage-tint); color: var(--sage-deep); }
+	.unitmenu .wide { grid-column: 1 / -1; color: var(--text-2); font-weight: 500; }
+	/* Get ready: the number cooked for, decided before the hands are wet. */
+	.cfor { display: flex; align-items: center; justify-content: space-between; margin-top: 16px; padding: 10px 12px 10px 16px; border-radius: 16px; background: var(--cook-surface); font-size: 16px; font-weight: 600; }
+	.cfor small { display: block; font-size: 13px; font-weight: 500; color: var(--cook-muted); }
+	.cstep { display: flex; align-items: center; gap: 4px; }
+	.cstep button { width: 44px; height: 44px; border-radius: 12px; background: var(--cook-surface); display: grid; place-items: center; font-size: 22px; color: var(--cook-text); }
+	.cstep b { min-width: 34px; text-align: center; font-size: 20px; font-variant-numeric: tabular-nums; }
 	.flbl { font-size: 12px; font-weight: 700; letter-spacing: 0.1em; text-transform: uppercase; color: var(--text-4); margin: 14px 2px 6px; }
 
 	/* cook mode */
@@ -458,7 +466,10 @@
 							<div class="flbl" style="margin-top:4px">Name <span style="letter-spacing:0;text-transform:none;font-weight:500">· what goes on the list</span></div>
 							<div class="field">Faschiertes</div>
 							<div class="flbl">Amount</div>
-							<div class="typed new"><span>500 g<i class="caret"></i></span><span class="read">500 g</span></div>
+							<div class="amtwrap">
+								<div class="typed new"><span><span id="amtText">500 g</span><i class="caret"></i></span><button class="read" id="amtChip" aria-haspopup="true">500 g ▾</button></div>
+								<div class="unitmenu" id="unitMenu" hidden></div>
+							</div>
 							<p class="eg">Type it as you would say it: 500 g · 2 EL · 1 Dose · 2 Zehen</p>
 							<div class="flbl">Note <span style="letter-spacing:0;text-transform:none;font-weight:500">· shown in the recipe</span></div>
 							<div class="field">gemischt</div>
@@ -468,26 +479,7 @@
 						<div class="sheet-foot"><button class="primary">Done</button></div>
 					</div>
 				</div>
-				<figcaption><b><span class="tag">E2 · A</span>Amount as one typed field (my pick)</b>No unit picker at all. You type "500 g" or "2 Zehen" and the chip shows what was read, the same way the add field on Lists shows "×3". It uses the shared amount reader, so every spelling that works on a list works here.</figcaption>
-			</figure>
-			<figure>
-				<div class="phone"><div class="scrim"></div>
-					<div class="sheet" style="--top:250px"><div class="grab"></div>
-						<div class="sheet-top"><span class="eyebrow">Ingredient</span><h4>Faschiertes</h4></div>
-						<div class="sheet-body">
-							<div class="flbl" style="margin-top:4px">Name <span style="letter-spacing:0;text-transform:none;font-weight:500">· what goes on the list</span></div>
-							<div class="field">Faschiertes</div>
-							<div class="flbl">Amount</div>
-							<div class="pair new" style="padding-left:10px"><div class="field">500</div><div class="field">g <i>▾</i></div></div>
-							<div class="flbl">Note <span style="letter-spacing:0;text-transform:none;font-weight:500">· shown in the recipe</span></div>
-							<div class="field">gemischt</div>
-							<div class="flbl">Part</div>
-							<div class="units"><span class="unit on">Bolognese</span><span class="unit">Béchamel</span><span class="unit">Schichten</span><span class="unit">none</span></div>
-						</div>
-						<div class="sheet-foot"><button class="primary">Done</button></div>
-					</div>
-				</div>
-				<figcaption><b><span class="tag">E2 · B</span>Number and unit menu</b>A number field and the phone's own menu for the unit: g, kg, ml, L, Stk, Pkg, EL, TL, "other…". Close to the item sheet on Lists today. Two taps more than A for a unit, and a counting word needs "other…".</figcaption>
+				<figcaption><b><span class="tag">E2</span>One ingredient: type the amount, tap the chip to change the unit</b>Your idea, both versions in one. You type "500 g" and the chip shows what was read. Tap the chip and it opens the units; picking one rewrites the field. Works here: tap the chip. A counting word you typed (Dose, Zehen) appears in the menu too.</figcaption>
 			</figure>
 			<figure>
 				<div class="phone"><div class="scroll">
@@ -563,25 +555,26 @@
 		<div class="row">
 			<figure>
 				<div class="phone cook ready" id="c1p"><div class="scroll">
-					<div class="hd"><span>Lasagne · for 4</span><span class="x">✕</span></div>
+					<div class="hd"><span>Lasagne</span><span class="x">✕</span></div>
 					<div class="segs"><i></i><i></i><i></i><i class="gap"></i><i></i><i></i><i class="gap"></i><i></i><i></i></div>
 					<div class="body" style="padding-bottom:110px">
 						<div class="eb">Before you start</div>
 						<h5>Get ready</h5>
+						<div class="cfor"><span>Cooking for<small>written for 4</small></span><span class="cstep"><button id="cminus" aria-label="One fewer">−</button><b id="cnum">4</b><button id="cplus" aria-label="One more">+</button></span></div>
 						<div class="ph">Bolognese</div>
-						<button class="tick" aria-pressed="true"><span class="box">✓</span><span class="n">Zwiebel</span><span class="a">1</span></button>
-						<button class="tick" aria-pressed="false"><span class="box"></span><span class="n">Knoblauch</span><span class="a">2 Zehen</span></button>
-						<button class="tick" aria-pressed="false"><span class="box"></span><span class="n">Faschiertes</span><span class="a">500 g</span><span class="note">gemischt</span></button>
-						<button class="tick" aria-pressed="false"><span class="box"></span><span class="n">Tomaten</span><span class="a">1 Dose</span><span class="note">geschält, 800 g</span></button>
+						<button class="tick" aria-pressed="true"><span class="box">✓</span><span class="n">Zwiebel</span><span class="a" data-q="1"></span></button>
+						<button class="tick" aria-pressed="false"><span class="box"></span><span class="n">Knoblauch</span><span class="a" data-q="2" data-u="Zehen"></span></button>
+						<button class="tick" aria-pressed="false"><span class="box"></span><span class="n">Faschiertes</span><span class="a" data-q="500" data-u="g"></span><span class="note">gemischt</span></button>
+						<button class="tick" aria-pressed="false"><span class="box"></span><span class="n">Tomaten</span><span class="a" data-q="1" data-u="Dose"></span><span class="note">geschält</span></button>
 						<div class="ph">Béchamel</div>
-						<button class="tick" aria-pressed="false"><span class="box"></span><span class="n">Butter</span><span class="a">30 g</span></button>
-						<button class="tick" aria-pressed="false"><span class="box"></span><span class="n">Mehl</span><span class="a">40 g</span></button>
-						<button class="tick" aria-pressed="false"><span class="box"></span><span class="n">Milch</span><span class="a">0,5 L</span></button>
+						<button class="tick" aria-pressed="false"><span class="box"></span><span class="n">Butter</span><span class="a" data-q="30" data-u="g"></span></button>
+						<button class="tick" aria-pressed="false"><span class="box"></span><span class="n">Mehl</span><span class="a" data-q="40" data-u="g"></span></button>
+						<button class="tick" aria-pressed="false"><span class="box"></span><span class="n">Milch</span><span class="a" data-q="0.5" data-u="L"></span></button>
 					</div>
 				</div>
 					<div class="nav"><button class="next">Start cooking ›</button></div>
 				</div>
-				<figcaption><b><span class="tag">C1</span>Get ready (new, optional)</b>Everything by part, tickable while you set it out. Next skips it. The progress bar shows where a part ends.</figcaption>
+				<figcaption><b><span class="tag">C1</span>Get ready, with the number of people</b>Your idea: the "Cooking for" stepper sits here, so the count is set right before cooking, and every amount in the list and in the steps follows. Works here: press + and −. Everything by part, tickable while you set it out. Hidden for a recipe that never said how many it serves.</figcaption>
 			</figure>
 			<figure>
 				<div class="phone cook">
@@ -665,6 +658,36 @@
 	document.querySelectorAll('.tick').forEach((t) => t.addEventListener('click', () => {
 		const on = t.getAttribute('aria-pressed') !== 'true'; t.setAttribute('aria-pressed', on); t.querySelector('.box').textContent = on ? '✓' : '';
 	}));
+
+	// C1: the number cooked for rewrites every amount (whole from 10 up, fractions below).
+	const amts = document.querySelectorAll('#c1p .a[data-q]'), cnum = el0('cnum');
+	function el0(id) { return document.getElementById(id); }
+	let people = 4;
+	function fmt(q) { const v = q >= 10 ? Math.round(q) : Math.round(q * 100) / 100; return String(v).replace('.', ','); }
+	function drawAmts() {
+		cnum.textContent = people;
+		amts.forEach((a) => { a.textContent = fmt(Number(a.dataset.q) * people / 4) + (a.dataset.u ? ' ' + a.dataset.u : ''); });
+	}
+	el0('cminus').addEventListener('click', () => { people = Math.max(1, people - 1); drawAmts(); });
+	el0('cplus').addEventListener('click', () => { people = Math.min(24, people + 1); drawAmts(); });
+	drawAmts();
+
+	// E2: the chip shows what was read; tapping it opens the units, picking one rewrites the field.
+	const UNITS = ['g', 'kg', 'ml', 'L', 'Stk', 'Pkg', 'EL', 'TL'];
+	const amtText = el0('amtText'), amtChip = el0('amtChip'), unitMenu = el0('unitMenu');
+	let unitNow = 'g';
+	function drawUnits() {
+		unitMenu.textContent = '';
+		UNITS.forEach((u) => {
+			const b = document.createElement('button'); b.textContent = u; b.setAttribute('aria-pressed', u === unitNow);
+			b.addEventListener('click', () => { unitNow = u; amtText.textContent = '500 ' + u; amtChip.textContent = '500 ' + u + ' ▾'; unitMenu.hidden = true; });
+			unitMenu.append(b);
+		});
+		const none = document.createElement('button'); none.className = 'wide'; none.textContent = 'No unit';
+		none.addEventListener('click', () => { unitNow = ''; amtText.textContent = '500'; amtChip.textContent = '500 ▾'; unitMenu.hidden = true; });
+		unitMenu.append(none);
+	}
+	amtChip.addEventListener('click', () => { drawUnits(); unitMenu.hidden = !unitMenu.hidden; });
 
 	// E3: tap a word to link it; an amount right before a linked word goes with it.
 	const ings = [['Zwiebel', '1'], ['Karotten', '400 g'], ['Faschiertes', '500 g'], ['Tomatenmark', '1 EL'], ['Knoblauch', '2 Zehen']];

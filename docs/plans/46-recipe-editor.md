@@ -19,16 +19,15 @@ is a textarea with three 16 px icons beside it and two rows of small chips under
   empty name dissolves the part into the one above.
 - A row shows amount and unit (or counting word), the **name**, and the note in a second,
   smaller line. Tapping it opens the ingredient sheet [E2]: name, amount, note, part.
-  **The amount is still open** (Lukas, sketch feedback, twice: first "it's only a number, it
-  can be smaller", then, of a number field with unit chips in a scrolling row, "still not
-  happy with amount and units"). The sketch shows two candidates and he picks one before this
-  is built:
-  - **E2 · A, one typed field** (recommended): no unit picker. "500 g", "2 EL", "1 Dose",
-    "2 Zehen" typed into one field, read by plan 42's reader, with a chip in the field showing
-    what was read, the way the add field on Lists shows "×3" (plan 37). A line of examples
-    under it.
-  - **E2 · B, a number field and the platform's own menu** for the unit (the eight, then
-    "other…" for a counting word), as the item sheet on Lists does today.
+  **The amount is one typed field whose chip opens the units** (Lukas, 2026-11-23, after two
+  rejected drafts: a tall number field beside wrapped unit chips, then a number field with
+  chips in a scrolling row; his own proposal: "you write 500g and when detected it is possible
+  to change the unit"). "500 g", "2 EL", "1 Dose", "2 Zehen" are typed into one field and read
+  by plan 42's reader. A chip in the field shows what was read, the way the add field on Lists
+  shows "×3" (plan 37). **The chip is a button**: it opens a small menu of the eight units and
+  "No unit", with the current one marked and the row's own counting word listed when it has
+  one; picking a unit rewrites the field ("500 g" → "500 kg"). No amount typed, no chip. A
+  line of examples sits under the field.
 - **Typing stays the fast way in**: an add field at the foot of each part takes a line
   ("400 g Nudeln", "1 Karotte, in Scheiben") and reads it with plan 42's reader; what follows
   a comma or stands in brackets becomes the note. The row shows what was understood.
@@ -116,7 +115,8 @@ controls of the sketch.
 - [ ] A step that says "400 g Karotten" links the amount with the word; "Show for 8" in the
       link sheet and cook mode for 8 both read "800 g Karotten". Switching the amount off
       leaves it at 400 g in both.
-- [ ] The amount in the ingredient sheet is built as the variant Lukas picked (E2 · A or B).
+- [ ] Typing "500 g" into the amount field shows the chip "500 g"; tapping the chip and
+      picking kg makes the field and the chip read "500 kg", and the row is saved as 500 kg.
 - [ ] A step that says "200 g Karotten" in a recipe with 400 g shows "200 g of 400 g" in the
       link sheet and in cook mode, and "400 g of 800 g" for twice as many.
 - [ ] A word in a step can be linked to an ingredient in two taps, and cook mode underlines it.
