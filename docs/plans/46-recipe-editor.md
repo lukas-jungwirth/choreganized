@@ -37,16 +37,27 @@ is a textarea with three 16 px icons beside it and two rows of small chips under
   number is only taken for a unit when it is one of plan 42's known counting words, because
   "2 Zehen Knoblauch" and "2 Eier" look alike and the second word of "2 rote Zwiebeln" is the
   name.
-  **A word used once is known from then on** (Lukas, 2026-11-23: "should we make the input
-  also one of those counting words?"). The add field's known counting words are plan 42's
-  list **plus every unit this household's recipes already use** that is not one of the eight.
-  So after "Kugeln" was set as a unit once, in the amount field or by an import, "2 Kugeln
-  Mozzarella" typed into the add field reads as 2 Kugeln of Mozzarella. It is derived from
-  the stored rows (`SELECT DISTINCT unit` over the household's recipe ingredients), not kept
-  in a table of its own: a word no row uses any more is forgotten, which is also how a
-  mistake ("2 rote" saved as a unit) heals once the row is fixed. Per household, never
-  shared. `parseIngredient(line, known?)` takes the set, the way `parseQuickAdd` takes the
-  household's names (plan 37); the editor's load hands it to the form.
+  **The field is not limited to the known words** (Lukas asked on 2026-11-23 whether it should
+  be, and what happens to a word that is not on the list). It is not, because a closed list
+  keeps failing: 24 of the 31 pages in the probe counted in a word the app did not know, and a
+  word with nowhere to go ends up in the name again, which is the problem this rebuild is
+  about. But an unknown word is never taken silently:
+  - a unit or a known counting word: the chip is plain, "2 Zehen";
+  - a word the household has not used before: the chip is dashed and says so, "2 Kugeln · new
+    unit". It is saved as typed. A typo ("2 Zeehn") is therefore visible before Done, and the
+    menu behind the chip offers the known words to switch to.
+    Nothing downstream needs the word to be known: the number scales, the shopping list takes
+    the name only (DECISIONS #313), and a step's amount is compared by the word itself.
+    **A word used once is known from then on** (Lukas, 2026-11-23: "should we make the input
+    also one of those counting words?"). The add field's known counting words are plan 42's
+    list **plus every unit this household's recipes already use** that is not one of the eight.
+    So after "Kugeln" was set as a unit once, in the amount field or by an import, "2 Kugeln
+    Mozzarella" typed into the add field reads as 2 Kugeln of Mozzarella. It is derived from
+    the stored rows (`SELECT DISTINCT unit` over the household's recipe ingredients), not kept
+    in a table of its own: a word no row uses any more is forgotten, which is also how a
+    mistake ("2 rote" saved as a unit) heals once the row is fixed. Per household, never
+    shared. `parseIngredient(line, known?)` takes the set, the way `parseQuickAdd` takes the
+    household's names (plan 37); the editor's load hands it to the form.
 - **Typing stays the fast way in**: an add field at the foot of each part takes a line
   ("400 g Nudeln", "1 Karotte, in Scheiben") and reads it with plan 42's reader; what follows
   a comma or stands in brackets becomes the note. The row shows what was understood.
@@ -135,7 +146,8 @@ controls of the sketch.
       link sheet and cook mode for 8 both read "800 g Karotten". Switching the amount off
       leaves it at 400 g in both.
 - [ ] Typing "2 Zehen" into the amount field shows the chip "2 Zehen" and saves the unit
-      "Zehen"; so does "2 Kugeln" with "Kugeln". Typing "2 Kugeln Mozzarella" into the add
+      "Zehen". Typing "2 Kugeln" in a household that never used the word shows the dashed chip
+      "2 Kugeln · new unit" and saves the unit "Kugeln"; the next time the chip is plain. Typing "2 Kugeln Mozzarella" into the add
       field saves 2 of "Kugeln Mozzarella".
 - [ ] After one recipe has an ingredient with the unit "Kugeln", typing "2 Kugeln Mozzarella"
       into the add field of any recipe of this household saves 2 Kugeln of "Mozzarella";
