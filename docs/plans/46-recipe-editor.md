@@ -17,6 +17,14 @@ is a textarea with three 16 px icons beside it and two rows of small chips under
 
 - Rows under **part headings**. "Add part" names one; a part's name is edited in place; an
   empty name dissolves the part into the one above.
+- **A recipe with one part never shows the word "part"** (agreed with Lukas on 2026-11-23:
+  most recipes have none). No heading over the ingredients or the steps, no "Part" row in the
+  ingredient sheet, no "Move to part…" in a step's menu. The only hint is a quiet **"Add
+  part"** button at the end of each list. Tapping it asks for a name ("Béchamel") and puts a
+  new heading below what is already there; the rows above stay as they are, without a
+  heading, until they are given a name too. From the first part on, the "Part" row and "Move
+  to part…" appear. The recipe view and cook mode already show no heading and no part name
+  for such a recipe (plan 43).
 - A row shows amount and unit (or counting word), the **name**, and the note in a second,
   smaller line. Tapping it opens the ingredient sheet [E2]: name, amount, note, part.
   **The amount is a number and a unit, kept apart** [E2, E2b] (agreed with Lukas on
@@ -154,5 +162,8 @@ controls of the sketch.
 - [ ] Typing "1 Karotte, in Scheiben geschnitten" into the add field gives name "Karotte" and
       that note.
 - [ ] An ingredient can be dragged into another part; a step can be moved to another part.
+- [ ] A recipe without parts shows no heading, no "Part" row in the ingredient sheet and no
+      "Move to part…"; only "Add part" at the end of each list. After adding one part, all
+      three appear, and the rows above the new heading are unchanged.
 - [ ] An old recipe opens with the matcher's guesses as suggestions and saves as stored links.
 - [ ] `npm run verify` and `npm run test:visual` clean.
