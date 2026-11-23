@@ -82,12 +82,16 @@ is a textarea with three 16 px icons beside it and two rows of small chips under
     first → linked. Tap a linked word → pick another.
   - **An amount is linked with its word** (Lukas: "400 grams of carrots … when I adjust the
     portions it should become 800 grams, can I link the value and the ingredient"). When a
-    number, with or without a unit, stands directly before the linked word, it becomes the
-    link's `amount_phrase` (plan 43) automatically, provided the unit is the ingredient's own
-    and the amount is not more than the ingredient's. The link's row then carries a switch,
+    number, with or without a unit, stands beside the linked word, it becomes the link's
+    `amount_phrase` (plan 43) automatically, provided the unit is the ingredient's own and the
+    amount is not more than the ingredient's. "Beside" is the rule cook mode rewrites by (the
+    review of plan 43): before the word with at most three words and no other number or
+    sentence end in between ("400 g geschälte Karotten"), else right after it ("Karotten
+    (400 g)"). The link's row then carries a switch,
     "400 g follows the number of people" / "400 g stays as written"; tapping the amount in the
-    text flips the same switch. A number that stands elsewhere ("Karotten, etwa 400 g") is
-    linked by tapping it and picking the ingredient.
+    text flips the same switch. A number that stands further away, or in another
+    sentence, cannot follow the number of people: tapping it says so ("Not next to its
+    ingredient, so it stays as written") and offers nothing to pick.
   - **A step may use part of an ingredient** (Lukas: "the step says 200 g of carrots but in
     total there are 400"). Nothing extra to do: the step's "200 g" is linked like any amount,
     the link also stores 200 g as the step's share (`quantity`, plan 43), and its row reads
