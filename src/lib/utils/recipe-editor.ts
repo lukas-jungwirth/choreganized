@@ -59,6 +59,14 @@ export type EditorState = {
 	steps: EditorPart<EditorStep>[];
 };
 
+/** What the editor opens on besides its rows: an import's review, in full (→ plan 45). */
+export type EditorOpening = {
+	name: string;
+	timeMinutes: number | null;
+	servings: number | null;
+	editor: EditorState;
+};
+
 /** Keys from a counter, so the server render and the browser agree on them. */
 export function keyMaker(prefix = 'k'): () => string {
 	let next = 0;
@@ -172,6 +180,19 @@ export function fromPrefill(
 	key: () => string,
 	known?: ReadonlySet<string>
 ): EditorState {
+	return openPrefill(prefill, key, known).state;
+}
+
+/**
+ * `fromPrefill`, and which row and step each of the draft's indexes became:
+ * the import's check items name them by index (→ plan 45). A line the reader
+ * could not read has no row (null).
+ */
+export function openPrefill(
+	prefill: Pick<RecipePrefill, 'ingredientLines' | 'ingredientDetails' | 'steps'>,
+	key: () => string,
+	known?: ReadonlySet<string>
+): { state: EditorState; rows: (string | null)[]; steps: string[] } {
 	const byIndex = new Map<number, string>();
 	const rows = prefill.ingredientLines.flatMap((line, at) => {
 		const parsed = parseIngredient(line, known);
@@ -222,8 +243,12 @@ export function fromPrefill(
 	);
 
 	return {
-		ingredients: toParts(rows, key),
-		steps: steps.length ? steps : [part(key, [newStep(key)])]
+		state: {
+			ingredients: toParts(rows, key),
+			steps: steps.length ? steps : [part(key, [newStep(key)])]
+		},
+		rows: prefill.ingredientLines.map((_, at) => byIndex.get(at) ?? null),
+		steps: steps.flatMap((one) => one.rows.map((row) => row.id))
 	};
 }
 

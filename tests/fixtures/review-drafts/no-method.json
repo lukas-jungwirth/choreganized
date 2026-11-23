@@ -1,0 +1,324 @@
+{
+	"prefill": {
+		"name": "Lasagne alla Bolognese mit Béchamelsoße",
+		"timeMinutes": 100,
+		"servings": null,
+		"ingredientLines": [
+			"1 Bund Suppengrün",
+			"1 Zwiebel",
+			"2 Zehen Knoblauch",
+			"100 g Speck",
+			"3 EL Olivenöl",
+			"500 g Rinderhackfleisch",
+			"Salz",
+			"Pfeffer",
+			"125 ml Rotwein",
+			"600 g Tomaten",
+			"5 EL Tomatenmark",
+			"1 Bund Thymian",
+			"Zucker",
+			"2 Zwiebeln",
+			"75 g Butter",
+			"60 g Mehl",
+			"½ L Gemüsebrühe",
+			"½ L Milch",
+			"100 g Gouda",
+			"Muskat",
+			"250 g Lasagneplatten",
+			"100 g Gouda"
+		],
+		"ingredientDetails": [
+			{
+				"note": null,
+				"section": "Bolognesesoße"
+			},
+			{
+				"note": null,
+				"section": "Bolognesesoße"
+			},
+			{
+				"note": null,
+				"section": "Bolognesesoße"
+			},
+			{
+				"note": "geräuchert, durchwachsen",
+				"section": "Bolognesesoße"
+			},
+			{
+				"note": null,
+				"section": "Bolognesesoße"
+			},
+			{
+				"note": null,
+				"section": "Bolognesesoße"
+			},
+			{
+				"note": null,
+				"section": "Bolognesesoße"
+			},
+			{
+				"note": null,
+				"section": "Bolognesesoße"
+			},
+			{
+				"note": "oder Gemüsebrühe",
+				"section": "Bolognesesoße"
+			},
+			{
+				"note": "stückig, aus der Dose",
+				"section": "Bolognesesoße"
+			},
+			{
+				"note": null,
+				"section": "Bolognesesoße"
+			},
+			{
+				"note": null,
+				"section": "Bolognesesoße"
+			},
+			{
+				"note": null,
+				"section": "Bolognesesoße"
+			},
+			{
+				"note": null,
+				"section": "Béchamelsoße"
+			},
+			{
+				"note": null,
+				"section": "Béchamelsoße"
+			},
+			{
+				"note": null,
+				"section": "Béchamelsoße"
+			},
+			{
+				"note": null,
+				"section": "Béchamelsoße"
+			},
+			{
+				"note": null,
+				"section": "Béchamelsoße"
+			},
+			{
+				"note": null,
+				"section": "Béchamelsoße"
+			},
+			{
+				"note": "gerieben",
+				"section": "Béchamelsoße"
+			},
+			{
+				"note": "ohne Vorkochen",
+				"section": "Béchamelsoße"
+			},
+			{
+				"note": null,
+				"section": "Béchamelsoße"
+			}
+		],
+		"steps": [],
+		"suggested": null,
+		"checks": [
+			{
+				"kind": "servings",
+				"level": "check",
+				"at": "recipe"
+			},
+			{
+				"kind": "no-steps",
+				"level": "check",
+				"at": "recipe"
+			},
+			{
+				"kind": "choice",
+				"level": "check",
+				"alternative": "Gemüsebrühe",
+				"name": "Rotwein",
+				"at": {
+					"ingredient": 8
+				}
+			},
+			{
+				"kind": "unused",
+				"level": "info",
+				"name": "Suppengrün",
+				"at": {
+					"ingredient": 0
+				}
+			},
+			{
+				"kind": "unused",
+				"level": "info",
+				"name": "Zwiebel",
+				"at": {
+					"ingredient": 1
+				}
+			},
+			{
+				"kind": "unused",
+				"level": "info",
+				"name": "Knoblauch",
+				"at": {
+					"ingredient": 2
+				}
+			},
+			{
+				"kind": "unused",
+				"level": "info",
+				"name": "Speck",
+				"at": {
+					"ingredient": 3
+				}
+			},
+			{
+				"kind": "unused",
+				"level": "info",
+				"name": "Olivenöl",
+				"at": {
+					"ingredient": 4
+				}
+			},
+			{
+				"kind": "unused",
+				"level": "info",
+				"name": "Rinderhackfleisch",
+				"at": {
+					"ingredient": 5
+				}
+			},
+			{
+				"kind": "unused",
+				"level": "info",
+				"name": "Salz",
+				"at": {
+					"ingredient": 6
+				}
+			},
+			{
+				"kind": "unused",
+				"level": "info",
+				"name": "Pfeffer",
+				"at": {
+					"ingredient": 7
+				}
+			},
+			{
+				"kind": "unused",
+				"level": "info",
+				"name": "Rotwein",
+				"at": {
+					"ingredient": 8
+				}
+			},
+			{
+				"kind": "unused",
+				"level": "info",
+				"name": "Tomaten",
+				"at": {
+					"ingredient": 9
+				}
+			},
+			{
+				"kind": "unused",
+				"level": "info",
+				"name": "Tomatenmark",
+				"at": {
+					"ingredient": 10
+				}
+			},
+			{
+				"kind": "unused",
+				"level": "info",
+				"name": "Thymian",
+				"at": {
+					"ingredient": 11
+				}
+			},
+			{
+				"kind": "unused",
+				"level": "info",
+				"name": "Zucker",
+				"at": {
+					"ingredient": 12
+				}
+			},
+			{
+				"kind": "unused",
+				"level": "info",
+				"name": "Zwiebeln",
+				"at": {
+					"ingredient": 13
+				}
+			},
+			{
+				"kind": "unused",
+				"level": "info",
+				"name": "Butter",
+				"at": {
+					"ingredient": 14
+				}
+			},
+			{
+				"kind": "unused",
+				"level": "info",
+				"name": "Mehl",
+				"at": {
+					"ingredient": 15
+				}
+			},
+			{
+				"kind": "unused",
+				"level": "info",
+				"name": "Gemüsebrühe",
+				"at": {
+					"ingredient": 16
+				}
+			},
+			{
+				"kind": "unused",
+				"level": "info",
+				"name": "Milch",
+				"at": {
+					"ingredient": 17
+				}
+			},
+			{
+				"kind": "unused",
+				"level": "info",
+				"name": "Gouda",
+				"at": {
+					"ingredient": 18
+				}
+			},
+			{
+				"kind": "unused",
+				"level": "info",
+				"name": "Muskat",
+				"at": {
+					"ingredient": 19
+				}
+			},
+			{
+				"kind": "unused",
+				"level": "info",
+				"name": "Lasagneplatten",
+				"at": {
+					"ingredient": 20
+				}
+			},
+			{
+				"kind": "unused",
+				"level": "info",
+				"name": "Gouda",
+				"at": {
+					"ingredient": 21
+				}
+			}
+		],
+		"leftOut": [],
+		"photo": null
+	},
+	"notice": "Made with AI. Check it over before saving.",
+	"site": "chefkoch.de"
+}

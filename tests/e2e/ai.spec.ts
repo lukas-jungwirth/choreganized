@@ -74,7 +74,10 @@ test('a pasted key loads the provider’s own models, and the backup answers whe
 	await page.getByLabel('Recipe text').fill(FAKE_PANCAKE_TEXT);
 	await page.getByRole('button', { name: 'Extract recipe' }).click();
 
-	await expect(page.getByLabel('Recipe name')).toHaveValue('Claude pancakes');
+	// The draft opens on the review (→ plan 45), the name as the recipe will show it.
+	await expect(page.getByRole('button', { name: 'Edit name, time and servings' })).toContainText(
+		'Claude pancakes'
+	);
 	await expect(
 		page.getByText(/Gemini couldn’t answer, so your backup \(Claude\) did/)
 	).toBeVisible();
@@ -157,8 +160,9 @@ test('an AI import arrives pinned and timed, adapted as asked, and saves into co
 	await page.getByLabel('Recipe text').fill(FAKE_PANCAKE_TEXT);
 	await page.getByRole('button', { name: 'Extract recipe' }).click();
 
-	// The draft says what made it, and what it was asked.
+	// The draft says what made it, and what it was asked; the editor is one tap away.
 	await expect(page.getByText(/Made with AI. Check it over before saving\./)).toBeVisible();
+	await page.getByRole('button', { name: 'Edit everything' }).click();
 	await expect(page.getByText(/Adapted: “mit Tofu statt Ei”\./)).toBeVisible();
 
 	// Step 1 arrives with its ingredients pinned (no "auto" marker), step 2 with a named timer.
@@ -228,12 +232,14 @@ test('a pasted recipe opens with parts, a note, links and what to check, and sav
 	await page.getByLabel('Recipe text').fill(FAKE_PANCAKE_TEXT);
 	await page.getByRole('button', { name: 'Extract recipe' }).click();
 
-	// The gate's list, until plan 45's review screen: one thing to check, the choice.
-	const checks = page.getByRole('region', { name: 'What the import found' });
-	await expect(checks.getByRole('heading', { name: '1 thing to check' })).toBeVisible();
-	await expect(checks).toContainText('Choose: berries or cherries.');
+	// The review (→ plan 45): one thing to check, the choice, on its row.
+	await expect(page.getByRole('button', { name: '1 thing to check' })).toBeVisible();
+	await expect(page.locator('[data-open-check]')).toContainText(
+		'The page offers berries or cherries. Which do you use?'
+	);
 
-	// Step 1 arrives linked to what it names.
+	// Step 1 arrives linked to what it names, in the editor too.
+	await page.getByRole('button', { name: 'Edit everything' }).click();
 	await expect(page.getByRole('button', { name: 'Ingredients for step 1' })).toContainText('flour');
 
 	await page.getByRole('button', { name: 'Save recipe' }).click();

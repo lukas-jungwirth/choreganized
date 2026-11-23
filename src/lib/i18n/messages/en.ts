@@ -1788,41 +1788,98 @@ export const en = {
 			},
 
 			/**
-			 * What the import's gate found (→ plan 44), listed at the top of the
-			 * editor until plan 45's review screen shows them. `name` is the
-			 * ingredient's name, `step` a step's number.
+			 * The import's review [R1]–[R3] (→ plan 45, SPEC §4.7): the recipe as
+			 * it will look, what the gate could not vouch for marked on the thing
+			 * itself, each with its one-tap answers. `name` is an ingredient's
+			 * name, `amount` an amount as printed ("500 g").
 			 */
-			checks: {
-				title: (count: number) =>
+			review: {
+				title: 'Check recipe',
+				discard: 'Discard',
+				save: 'Save',
+				/** The banner: how many questions are open, and what that means. */
+				count: (count: number) =>
 					count === 0
 						? 'Nothing to check'
 						: count === 1
 							? '1 thing to check'
 							: `${count} things to check`,
-				/** Names the list for a screen reader. */
-				label: 'What the import found',
-				lineAdded: (line: string) => `Added from the page: “${line}”. The AI had left it out.`,
-				amountDiffers: (name: string, line: string) =>
-					`${name}: the amount is the page’s (“${line}”).`,
-				converted: (name: string) => `${name}: converted to metric.`,
-				/** A step whose °F the import wrote in °C too (→ plan 44). */
-				convertedStep: (step: number) => `Step ${step}: the temperature is also given in °C.`,
-				nameDiffers: (name: string, line: string) =>
-					`${name}: named as the page wrote it (“${line}”).`,
+				/** Some were open and every one is answered now. */
+				allChecked: 'Nothing left to check',
+				ready: 'Ready to save.',
+				restMatches: 'Everything else matches the page.',
+				/** A clean import: nothing was ever open. */
+				allMatch: (ingredients: number, steps: number) =>
+					`All ${ingredients === 1 ? '1 ingredient' : `${ingredients} ingredients`} and ${steps === 1 ? '1 step' : `${steps} steps`} match the page.`,
+				noAi: 'Imported without AI. Links are a guess.',
+				fromPhoto: 'Read from photos. Check it against the cookbook.',
+				/** Tapping the banner goes to the first open question. */
+				showFirst: 'Go to the first thing to check',
+				recipe: 'Recipe',
+				ingredients: 'Ingredients',
+				steps: 'Steps',
+				also: 'Also',
+				editEverything: 'Edit everything',
+				/** A row's or step's button name: tapping it edits that one thing. */
+				editIngredient: (name: string) => `Edit ${name}`,
+				editStep: (number: number) => `Edit step ${number}`,
+				editBasics: 'Edit name, time and servings',
+				/** An answered question, in its place. */
+				checked: 'Checked',
+
+				choice: (name: string, alternative: string) =>
+					`The page offers ${name} or ${alternative}. Which do you use?`,
+				amountDiffers: (page: string, answer: string) =>
+					`The page says “${page}”. The AI read ${answer}.`,
+				keepAmount: (amount: string) => `Keep ${amount}`,
+				useAmount: (amount: string) => `Use ${amount}`,
+				noAmount: 'no amount',
+				nameDiffers: (page: string) => `The page says “${page}”.`,
+				lineAdded: (page: string) => `Also on the page: “${page}”. The AI had left it out.`,
+				reworded: (page: string) => `The page says: “${page}”`,
+				rewordedUnknown: 'This step is not the page’s own words.',
+				usePageText: 'Use the page’s text',
 				newUnit: (word: string) => `New unit: ${word}. Add it?`,
-				choice: (name: string, alternative: string) => `Choose: ${name} or ${alternative}.`,
-				reworded: (step: number) => `Step ${step} is not the page’s own words.`,
-				pageSays: (text: string) => `The page says: “${text}”`,
-				fromPhoto: 'Read from photos. Check it against the page.',
-				sharesExceed: (name: string) => `${name}: the steps use more than the recipe lists.`,
+				addUnit: 'Add it',
+				keepInNote: 'Keep it in the note',
+				servingsQuestion: 'For how many people?',
+				servingsPage: (page: string) =>
+					`The page says “${page}”. Every amount scales from this number.`,
+				servingsWhy: 'Every amount scales from this number.',
+				servingsKeep: (count: number) => `Keep ${count}`,
+				noSteps: 'This page has no method.',
+				addSteps: 'Add steps',
+				saveWithout: 'Save without',
+				sharesExceed: (name: string) => `The steps use more ${name} than the recipe lists.`,
+				keep: 'Keep',
+				edit: 'Edit',
+				remove: 'Remove',
+
+				/** The folded lists at the bottom. */
+				leftOut: 'Left out of the steps',
+				leftOutCount: (count: number) => (count === 1 ? '1 sentence' : `${count} sentences`),
+				putBack: 'Put back',
+				notes: 'Notes from the import',
+				noteCount: (count: number) => (count === 1 ? '1 note' : `${count} notes`),
+				converted: (name: string) => `${name}: converted to metric.`,
 				unused: (name: string) => `${name}: no step uses it.`,
-				servings: 'How many servings? Every amount scales from it.',
-				noSteps: 'The page has no method.',
-				noAi: 'Imported without AI: parts and notes by rule, which step uses what is a guess.',
-				leftOut: (count: number) =>
-					count === 1
-						? 'Left out of the method: 1 sentence'
-						: `Left out of the method: ${count} sentences`
+
+				/** The step sheet: one step's text, its links one tap further. */
+				stepSheet: (number: number) => `Step ${number}`,
+				stepText: 'Text',
+				stepLinks: 'Link ingredients',
+				removeStep: 'Remove step',
+				done: 'Done',
+				/** The basics sheet: name, time and servings. */
+				basics: 'Recipe',
+				name: 'Name',
+				time: 'Time in minutes',
+				servings: 'Servings',
+
+				/** `?draft=` names an import this tab no longer holds. */
+				gone: 'This import is no longer here.',
+				goneHint: 'It was saved, discarded or opened in another tab. Import it again.',
+				again: 'Import again'
 			}
 		}
 	},

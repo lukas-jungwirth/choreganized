@@ -14,7 +14,9 @@
 	import MealPlanSheet from '$lib/components/cooking/MealPlanSheet.svelte';
 	import ServingsField from '$lib/components/cooking/ServingsField.svelte';
 	import RecipeImage from '$lib/components/cooking/RecipeImage.svelte';
+	import RecipeIngredientRow from '$lib/components/cooking/RecipeIngredientRow.svelte';
 	import RecipeMenuSheet from '$lib/components/cooking/RecipeMenuSheet.svelte';
+	import RecipeStepRow from '$lib/components/cooking/RecipeStepRow.svelte';
 	import { dietName, tagName } from '$lib/components/cooking/tag-names';
 	import ShoppingResultBanner from '$lib/components/cooking/ShoppingResultBanner.svelte';
 	import BasketIcon from '$lib/components/icons/BasketIcon.svelte';
@@ -28,7 +30,7 @@
 	import { emptyFilter, recipeFilterHref, type RecipeFilter } from '$lib/utils/recipe-filter';
 	import { isMeatFree, splitTag, type RecipeTag } from '$lib/utils/recipe-tags';
 	import { groupByPart, readServings } from '$lib/utils/recipes';
-	import { renderStep } from '$lib/utils/step-links';
+	import { viewRuns } from '$lib/utils/step-links';
 	import { formatDuration } from '$lib/utils/timer-parse';
 	import CalendarDays from '@lucide/svelte/icons/calendar-days';
 	import ChefHat from '@lucide/svelte/icons/chef-hat';
@@ -37,7 +39,6 @@
 	import Heart from '@lucide/svelte/icons/heart';
 	import Leaf from '@lucide/svelte/icons/leaf';
 	import MoreHorizontal from '@lucide/svelte/icons/more-horizontal';
-	import Timer from '@lucide/svelte/icons/timer';
 	import Users from '@lucide/svelte/icons/users';
 	import { untrack } from 'svelte';
 	import type { PageProps } from './$types';
@@ -119,25 +120,6 @@
 	const factor = $derived(servingsFactor(recipe.servings, serves ?? 0));
 	/** The amounts as this reader needs them — the whole point of the stepper. */
 	const ingredients = $derived(scaleIngredients(recipe.ingredients, factor));
-
-	/**
-	 * A step's text as runs, its ingredient amounts rewritten for the count being
-	 * read for (→ `$lib/utils/step-links`, plans 23 and 43). A step with stored
-	 * links underlines the words they name, as cook mode does; one read by the
-	 * matcher is not underlined here (that stays cook mode's job), so a recipe
-	 * saved before plan 43 looks exactly as it did. As written, it's one run.
-	 */
-	function stepRuns(
-		step: (typeof recipe.steps)[number]
-	): { text: string; scaledFrom?: string; linked?: boolean }[] {
-		const drawn = renderStep(step, ingredients, factor);
-		if (!drawn.linked && factor === 1) return [{ text: step.text }];
-		return drawn.segments.map((run) => ({
-			text: run.text,
-			scaledFrom: run.scaledFrom,
-			linked: drawn.linked && run.ingredient !== null
-		}));
-	}
 
 	/** The ingredients and the steps under their parts (→ plan 43), numbered straight through. */
 	const ingredientParts = $derived(groupByPart(ingredients));
@@ -345,16 +327,11 @@
 			<Card radius="md">
 				<ul class="ingredients">
 					{#each part.rows as ingredient (ingredient.id)}
-						{@const amount = m.units.amount(ingredient.quantity, ingredient.unit)}
-						<li>
-							<span class="dot" aria-hidden="true"></span>
-							<span class="ingredient-name"
-								>{ingredient.name}{#if ingredient.note}<span class="ingredient-note"
-										>{ingredient.note}</span
-									>{/if}</span
-							>
-							{#if amount}<span class="amount">{amount}</span>{/if}
-						</li>
+						<RecipeIngredientRow
+							name={ingredient.name}
+							note={ingredient.note}
+							amount={m.units.amount(ingredient.quantity, ingredient.unit)}
+						/>
 					{/each}
 				</ul>
 			</Card>
@@ -367,30 +344,16 @@
 			{#if part.section}<h3 class="part">{part.section}</h3>{/if}
 			<ol class="steps" start={part.rows[0].number}>
 				{#each part.rows as step (step.id)}
-					<li>
-						<span class="number" aria-hidden="true">{step.number}</span>
-						<div class="step-body">
-							<!-- No line breaks inside: whitespace here would be text (→ CookStepText). -->
-							<span class="step-text"
-								>{#each stepRuns(step) as run, at (at)}{#if run.scaledFrom}<span class="scaled"
-											>{run.text}<span class="said"
-												>{m.cooking.cook.scaledFrom(run.scaledFrom)}</span
-											></span
-										>{:else if run.linked}<span class="linked">{run.text}</span
-										>{:else}{run.text}{/if}{/each}</span
-							>
-							<!-- The step's own timer (→ plan 21), so it is no surprise in cook mode. -->
-							{#if step.timer}
-								<span class="step-timer">
-									<Timer size={13} strokeWidth={2.2} aria-hidden="true" />
-									{m.cooking.form.timerChip(
-										step.timer.label ?? m.cooking.cook.timerForStep(step.number),
-										formatDuration(step.timer.seconds)
-									)}
-								</span>
-							{/if}
-						</div>
-					</li>
+					<RecipeStepRow
+						number={step.number}
+						runs={viewRuns(step, ingredients, factor)}
+						timer={step.timer
+							? m.cooking.form.timerChip(
+									step.timer.label ?? m.cooking.cook.timerForStep(step.number),
+									formatDuration(step.timer.seconds)
+								)
+							: null}
+					/>
 				{/each}
 			</ol>
 		{/each}
@@ -611,46 +574,6 @@
 		list-style: none;
 	}
 
-	.ingredients li {
-		display: flex;
-		align-items: center;
-		gap: 11px;
-		padding: 13px 16px;
-	}
-
-	.ingredients li + li {
-		border-top: 1px solid var(--divider);
-	}
-
-	.dot {
-		flex: none;
-		width: 6px;
-		height: 6px;
-		border-radius: 50%;
-		background: var(--border-dashed);
-	}
-
-	.ingredient-name {
-		flex: 1;
-		min-width: 0;
-		font-size: var(--fs-16);
-		overflow-wrap: anywhere;
-	}
-
-	/* Typed as "400 g pasta", read back as "Pasta · 400 g" [7a]. */
-	.ingredient-name::first-letter {
-		text-transform: uppercase;
-	}
-
-	/* Everything the line said besides what you buy (→ plan 43, [V1]). */
-	.ingredient-note {
-		display: block;
-		margin-top: 2px;
-		font-size: var(--fs-14);
-		line-height: 1.35;
-		color: var(--text-4);
-	}
-
 	/* A part of the dish over its ingredients and its steps [V1] [V2]. */
 	.part {
 		margin: 18px 4px 8px;
@@ -664,20 +587,6 @@
 		margin-top: 0;
 	}
 
-	/* A word a stored link names (→ plan 43): cook mode's underline, quieter. */
-	.linked {
-		text-decoration: underline;
-		text-decoration-color: var(--gold);
-		text-decoration-thickness: 2px;
-		text-underline-offset: 4px;
-	}
-
-	.amount {
-		flex: none;
-		font-size: var(--fs-15);
-		color: var(--text-4);
-	}
-
 	.steps-head {
 		margin: 26px 0 14px;
 	}
@@ -686,71 +595,6 @@
 		margin: 0 0 24px;
 		padding: 0;
 		list-style: none;
-	}
-
-	.steps li {
-		display: flex;
-		gap: 13px;
-		margin-bottom: 16px;
-	}
-
-	.number {
-		display: flex;
-		align-items: center;
-		justify-content: center;
-		flex: none;
-		width: 26px;
-		height: 26px;
-		border-radius: 50%;
-		background: var(--sage);
-		font-size: var(--fs-15);
-		font-weight: 700;
-		color: var(--on-sage);
-	}
-
-	.step-body {
-		flex: 1;
-		min-width: 0;
-		padding-top: 2px;
-	}
-
-	.step-timer {
-		display: inline-flex;
-		align-items: center;
-		gap: 5px;
-		margin-top: 6px;
-		padding: 3px 10px;
-		border-radius: var(--r-chip);
-		background: var(--sage-tint);
-		font-size: var(--fs-14);
-		font-weight: 600;
-		color: var(--sage-deep);
-		font-variant-numeric: tabular-nums;
-	}
-
-	/* An amount rewritten for the count being read for (→ plan 23). */
-	.scaled {
-		font-weight: 600;
-		color: var(--sage-deep);
-	}
-
-	/* What the recipe itself says there, for a screen reader. */
-	.said {
-		position: absolute;
-		width: 1px;
-		height: 1px;
-		overflow: hidden;
-		clip-path: inset(50%);
-		white-space: nowrap;
-	}
-
-	.step-text {
-		display: block;
-		font-size: var(--fs-16);
-		line-height: 1.5;
-		color: var(--ink);
-		white-space: pre-wrap;
-		overflow-wrap: anywhere;
 	}
 
 	.no-steps {

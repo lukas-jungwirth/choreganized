@@ -9,13 +9,18 @@
 	  - photo — 1–3 cookbook photos, read by AI.
 	  - text  — paste the recipe text, read by AI (the answer for 403 sites).
 	Every AI path takes a line of instructions ("with tofu instead of meat") on
-	top of the household's standing ones. Every success lands in the ordinary
-	editor [3c] with a notice from the server; the AI never saves on its own. The
-	share target lands in link mode with the URL prefilled and auto-fetched.
+	top of the household's standing ones. Every success opens the review
+	[R1]–[R3] (→ plan 45): the draft is kept in `sessionStorage` under a new id
+	and the address becomes `?draft=<id>` (in place of the entry screen, so Back
+	never fetches a shared link twice); the AI never saves on its own. Without
+	JS the result still opens in the ordinary editor [3c]. The share target
+	lands in link mode with the URL prefilled and auto-fetched.
 -->
 <script lang="ts">
 	import { enhance } from '$app/forms';
+	import { goto } from '$app/navigation';
 	import AiCookingLoader from '$lib/components/cooking/AiCookingLoader.svelte';
+	import ImportReview from '$lib/components/cooking/review/ImportReview.svelte';
 	import MultiPhotoField from '$lib/components/cooking/MultiPhotoField.svelte';
 	import RecipeForm from '$lib/components/cooking/RecipeForm.svelte';
 	import SubHeader from '$lib/components/shell/SubHeader.svelte';
@@ -24,7 +29,9 @@
 	import TextField from '$lib/components/ui/TextField.svelte';
 	import { AI_INSTRUCTIONS_MAX } from '$lib/ai';
 	import { messages } from '$lib/i18n';
+	import { draftKey, newDraftId, type StoredImport } from '$lib/utils/recipe-review';
 	import type { RecipePrefill } from '$lib/utils/recipes';
+	import type { ActionResult } from '@sveltejs/kit';
 	import Camera from '@lucide/svelte/icons/camera';
 	import CircleAlert from '@lucide/svelte/icons/circle-alert';
 	import FileText from '@lucide/svelte/icons/file-text';
@@ -86,11 +93,53 @@
 	let instructions = $state('');
 	let showInstructions = $state(false);
 
+	/**
+	 * A draft from any import, kept in this tab under a new id and opened for
+	 * review (→ plan 45). The review takes the entry screen's place in history,
+	 * so Back never lands on a shared link that fetches itself again. False when
+	 * there is no draft, or nowhere to keep it: the form's own update then shows
+	 * what came back (the editor, for a draft).
+	 */
+	async function openReview(result: ActionResult, site: string | null): Promise<boolean> {
+		if (result.type !== 'success' || !result.data?.draft) return false;
+		const id = newDraftId();
+		const value: StoredImport = {
+			v: 1,
+			draft: {
+				prefill: result.data.draft as RecipePrefill,
+				notice: typeof result.data.notice === 'string' ? result.data.notice : null,
+				site
+			}
+		};
+		try {
+			sessionStorage.setItem(draftKey(id), JSON.stringify(value));
+		} catch {
+			return false;
+		}
+		await goto(`?draft=${id}`, { replaceState: true });
+		return true;
+	}
+
+	/** The page's host for the line under the review's name: "chefkoch.de". */
+	function siteOf(link: string): string | null {
+		try {
+			return new URL(link).hostname.replace(/^www\./, '') || null;
+		} catch {
+			return null;
+		}
+	}
+
 	/** The shared pending flag for the AI forms — only one submits at a time. */
 	function aiEnhance() {
 		extracting = true;
-		return async ({ update }: { update: (opts?: { reset?: boolean }) => Promise<void> }) => {
-			await update({ reset: false });
+		return async ({
+			result,
+			update
+		}: {
+			result: ActionResult;
+			update: (opts?: { reset?: boolean }) => Promise<void>;
+		}) => {
+			if (!(await openReview(result, null))) await update({ reset: false });
 			extracting = false;
 		};
 	}
@@ -105,11 +154,13 @@
 	});
 
 	const headTitle = $derived(
-		mode === 'photo'
-			? m.cooking.add.photo
-			: mode === 'text'
-				? m.cooking.add.text
-				: m.cooking.import.title
+		data.draft
+			? m.cooking.import.review.title
+			: mode === 'photo'
+				? m.cooking.add.photo
+				: mode === 'text'
+					? m.cooking.add.text
+					: m.cooking.import.title
 	);
 </script>
 
@@ -117,7 +168,19 @@
 	<title>{m.common.pageTitle(headTitle)}</title>
 </svelte:head>
 
-{#if draft}
+{#if data.draft}
+	<!-- Keyed: another import's id is another review, from scratch. -->
+	{#key data.draft}
+		<ImportReview
+			id={data.draft}
+			edit={data.edit}
+			units={data.units}
+			error={saveError}
+			field={saveField}
+		/>
+	{/key}
+{:else if draft}
+	<!-- Without JS there is no review to keep a draft in: the editor, as before. -->
 	<RecipeForm
 		recipe={null}
 		prefill={draft}
@@ -203,8 +266,8 @@
 			fetching = true;
 			// With AI it's a model call, not a page load: the cooking loader says so.
 			if (data.aiEnabled) extracting = true;
-			return async ({ update }) => {
-				await update({ reset: false });
+			return async ({ result, update }) => {
+				if (!(await openReview(result, siteOf(url)))) await update({ reset: false });
 				fetching = false;
 				extracting = false;
 			};

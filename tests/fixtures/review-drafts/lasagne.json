@@ -1,0 +1,443 @@
+{
+	"prefill": {
+		"name": "Lasagne alla Bolognese mit Béchamelsoße",
+		"timeMinutes": 100,
+		"servings": 6,
+		"ingredientLines": [
+			"1 Bund Suppengrün",
+			"1 Zwiebel",
+			"2 Zehen Knoblauch",
+			"100 g Speck",
+			"3 EL Olivenöl",
+			"500 g Rinderhackfleisch",
+			"Salz",
+			"Pfeffer",
+			"125 ml Rotwein",
+			"600 g Tomaten",
+			"5 EL Tomatenmark",
+			"1 Bund Thymian",
+			"Zucker",
+			"2 Zwiebeln",
+			"75 g Butter",
+			"60 g Mehl",
+			"½ L Gemüsebrühe",
+			"½ L Milch",
+			"100 g Gouda",
+			"Muskat",
+			"250 g Lasagneplatten",
+			"100 g Gouda"
+		],
+		"ingredientDetails": [
+			{
+				"note": null,
+				"section": "Bolognesesoße"
+			},
+			{
+				"note": null,
+				"section": "Bolognesesoße"
+			},
+			{
+				"note": null,
+				"section": "Bolognesesoße"
+			},
+			{
+				"note": "geräuchert, durchwachsen",
+				"section": "Bolognesesoße"
+			},
+			{
+				"note": null,
+				"section": "Bolognesesoße"
+			},
+			{
+				"note": null,
+				"section": "Bolognesesoße"
+			},
+			{
+				"note": null,
+				"section": "Bolognesesoße"
+			},
+			{
+				"note": null,
+				"section": "Bolognesesoße"
+			},
+			{
+				"note": "oder Gemüsebrühe",
+				"section": "Bolognesesoße"
+			},
+			{
+				"note": "stückig, aus der Dose",
+				"section": "Bolognesesoße"
+			},
+			{
+				"note": null,
+				"section": "Bolognesesoße"
+			},
+			{
+				"note": null,
+				"section": "Bolognesesoße"
+			},
+			{
+				"note": null,
+				"section": "Bolognesesoße"
+			},
+			{
+				"note": null,
+				"section": "Béchamelsoße"
+			},
+			{
+				"note": null,
+				"section": "Béchamelsoße"
+			},
+			{
+				"note": null,
+				"section": "Béchamelsoße"
+			},
+			{
+				"note": null,
+				"section": "Béchamelsoße"
+			},
+			{
+				"note": null,
+				"section": "Béchamelsoße"
+			},
+			{
+				"note": null,
+				"section": "Béchamelsoße"
+			},
+			{
+				"note": "gerieben",
+				"section": "Béchamelsoße"
+			},
+			{
+				"note": "ohne Vorkochen",
+				"section": "Béchamelsoße"
+			},
+			{
+				"note": null,
+				"section": "Béchamelsoße"
+			}
+		],
+		"steps": [
+			{
+				"text": "Das Suppengrün putzen und sehr fein würfeln. Zwiebel und Knoblauch hacken. Den Speck würfeln.",
+				"uses": [
+					{
+						"ingredient": 0,
+						"quantity": null,
+						"phrase": "Suppengrün",
+						"amountPhrase": null
+					},
+					{
+						"ingredient": 1,
+						"quantity": null,
+						"phrase": "Zwiebel",
+						"amountPhrase": null
+					},
+					{
+						"ingredient": 2,
+						"quantity": null,
+						"phrase": "Knoblauch",
+						"amountPhrase": null
+					},
+					{
+						"ingredient": 3,
+						"quantity": null,
+						"phrase": "Speck",
+						"amountPhrase": null
+					}
+				],
+				"timer": null,
+				"section": "Bolognesesoße"
+			},
+			{
+				"text": "Das Olivenöl in einer Pfanne erhitzen. Speck, Suppengrün, Zwiebel und Knoblauch anbraten, bis es glasig ist.",
+				"uses": [
+					{
+						"ingredient": 0,
+						"quantity": null,
+						"phrase": "Suppengrün",
+						"amountPhrase": null
+					},
+					{
+						"ingredient": 1,
+						"quantity": null,
+						"phrase": "Zwiebel",
+						"amountPhrase": null
+					},
+					{
+						"ingredient": 2,
+						"quantity": null,
+						"phrase": "Knoblauch",
+						"amountPhrase": null
+					},
+					{
+						"ingredient": 3,
+						"quantity": null,
+						"phrase": "Speck",
+						"amountPhrase": null
+					},
+					{
+						"ingredient": 4,
+						"quantity": null,
+						"phrase": "Olivenöl",
+						"amountPhrase": null
+					}
+				],
+				"timer": null,
+				"section": "Bolognesesoße"
+			},
+			{
+				"text": "Das Hackfleisch dazugeben und krümelig und braun anbraten. Mit Salz und Pfeffer würzen.",
+				"uses": [
+					{
+						"ingredient": 5,
+						"quantity": null,
+						"phrase": "Hackfleisch",
+						"amountPhrase": null
+					},
+					{
+						"ingredient": 6,
+						"quantity": null,
+						"phrase": "Salz",
+						"amountPhrase": null
+					},
+					{
+						"ingredient": 7,
+						"quantity": null,
+						"phrase": "Pfeffer",
+						"amountPhrase": null
+					}
+				],
+				"timer": null,
+				"section": "Bolognesesoße"
+			},
+			{
+				"text": "Mit Rotwein oder Brühe ablöschen und verdampfen lassen. Die Tomatenstückchen und das Tomatenmark in die Pfanne geben und ca. 10 Minuten köcheln lassen.",
+				"uses": [
+					{
+						"ingredient": 8,
+						"quantity": null,
+						"phrase": "Rotwein",
+						"amountPhrase": null
+					},
+					{
+						"ingredient": 9,
+						"quantity": null,
+						"phrase": "Tomatenstückchen",
+						"amountPhrase": null
+					},
+					{
+						"ingredient": 10,
+						"quantity": null,
+						"phrase": "Tomatenmark",
+						"amountPhrase": null
+					}
+				],
+				"timer": {
+					"seconds": 600,
+					"label": "Soße köcheln"
+				},
+				"section": "Bolognesesoße"
+			},
+			{
+				"text": "Thymian unterrrühren und die Soße mit Salz, Pfeffer und einer Prise Zucker abschmecken.",
+				"uses": [
+					{
+						"ingredient": 6,
+						"quantity": null,
+						"phrase": "Salz",
+						"amountPhrase": null
+					},
+					{
+						"ingredient": 7,
+						"quantity": null,
+						"phrase": "Pfeffer",
+						"amountPhrase": null
+					},
+					{
+						"ingredient": 11,
+						"quantity": null,
+						"phrase": "Thymian",
+						"amountPhrase": null
+					},
+					{
+						"ingredient": 12,
+						"quantity": null,
+						"phrase": "Zucker",
+						"amountPhrase": null
+					}
+				],
+				"timer": null,
+				"section": "Bolognesesoße"
+			},
+			{
+				"text": "Die Zwiebel hacken. Die Butter in einem Topf erhitzen und die Zwiebelwürfel und das Mehl darin unter Rühren andünsten.",
+				"uses": [
+					{
+						"ingredient": 1,
+						"quantity": null,
+						"phrase": "Zwiebel",
+						"amountPhrase": null
+					},
+					{
+						"ingredient": 13,
+						"quantity": null,
+						"phrase": "Zwiebel",
+						"amountPhrase": null
+					},
+					{
+						"ingredient": 13,
+						"quantity": null,
+						"phrase": "Zwiebelwürfel",
+						"amountPhrase": null
+					},
+					{
+						"ingredient": 14,
+						"quantity": null,
+						"phrase": "Butter",
+						"amountPhrase": null
+					},
+					{
+						"ingredient": 15,
+						"quantity": null,
+						"phrase": "Mehl",
+						"amountPhrase": null
+					}
+				],
+				"timer": null,
+				"section": "Béchamelsoße"
+			},
+			{
+				"text": "Nach und nach Brühe und Milch in kleinen Portionen zugießen. Zwischendurch mit einem Schneebesen kräftig rühren, damit keine Klümpchen bleiben, die Soße aufkochen lassen.",
+				"uses": [
+					{
+						"ingredient": 16,
+						"quantity": null,
+						"phrase": "Brühe",
+						"amountPhrase": null
+					},
+					{
+						"ingredient": 17,
+						"quantity": null,
+						"phrase": "Milch",
+						"amountPhrase": null
+					}
+				],
+				"timer": null,
+				"section": "Béchamelsoße"
+			},
+			{
+				"text": "Den Käse grob raspeln und in der Soße schmelzen lassen. Mit Salz, Pfeffer und Muskatnuss abschmecken.",
+				"uses": [
+					{
+						"ingredient": 6,
+						"quantity": null,
+						"phrase": "Salz",
+						"amountPhrase": null
+					},
+					{
+						"ingredient": 7,
+						"quantity": null,
+						"phrase": "Pfeffer",
+						"amountPhrase": null
+					},
+					{
+						"ingredient": 18,
+						"quantity": null,
+						"phrase": "Käse",
+						"amountPhrase": null
+					},
+					{
+						"ingredient": 19,
+						"quantity": null,
+						"phrase": "Muskatnuss",
+						"amountPhrase": null
+					}
+				],
+				"timer": null,
+				"section": "Béchamelsoße"
+			},
+			{
+				"text": "Etwas Béchamelsoße auf den Boden einer Auflaufform streichen. Eine Schicht Lasagneblätter darauf geben. Darauf eine Schicht Bolognesesoße geben, mit Lasagneblättern bedecken. So weiter machen, bis die Zutaten verbraucht sind. Mit einer dicken Schicht Béchamelsoße abschließen, damit die Lasagneblätter Feuchtigkeit zum Garen haben.",
+				"uses": [
+					{
+						"ingredient": 20,
+						"quantity": null,
+						"phrase": "Lasagneblätter",
+						"amountPhrase": null
+					},
+					{
+						"ingredient": 20,
+						"quantity": null,
+						"phrase": "Lasagneblättern",
+						"amountPhrase": null
+					}
+				],
+				"timer": null,
+				"section": null
+			},
+			{
+				"text": "Käse grob raspeln und über die Lasagne geben. Im vorgeheizten Backofen bei 175° (Umluft 150°) etwa 50 – 60 Minuten backen.",
+				"uses": [
+					{
+						"ingredient": 21,
+						"quantity": null,
+						"phrase": "Käse",
+						"amountPhrase": null
+					}
+				],
+				"timer": {
+					"seconds": 3000,
+					"label": "Lasagne"
+				},
+				"section": null
+			}
+		],
+		"suggested": null,
+		"checks": [
+			{
+				"kind": "amount-differs",
+				"level": "check",
+				"page": "500 g Rinderhackfleisch",
+				"answer": {
+					"quantity": 50,
+					"unit": "g"
+				},
+				"name": "Rinderhackfleisch",
+				"at": {
+					"ingredient": 5
+				}
+			},
+			{
+				"kind": "choice",
+				"level": "check",
+				"alternative": "Gemüsebrühe",
+				"name": "Rotwein",
+				"at": {
+					"ingredient": 8
+				}
+			}
+		],
+		"leftOut": [
+			{
+				"text": "Variationen: Vegetarisch wird es, wenn man anstatt Hackfleisch Champignons und 10 g getrocknete Steinpilze nimmt.",
+				"after": 9
+			},
+			{
+				"text": "Anstelle der Hackfleischsoße dünn geschnittene Fischfilets (Lachs, Lengfisch, Scholle) einschichten.",
+				"after": 9
+			},
+			{
+				"text": "Die Béchamelsoße dann ohne Käse zubereiten und mit Zitronensaft abschmecken.",
+				"after": 9
+			},
+			{
+				"text": "In die Béchamelsoße gekochten Brokkoli geben, dann ist es eine Brokkoli-Lasagne.",
+				"after": 9
+			}
+		],
+		"photo": null
+	},
+	"notice": "Made with AI. Check it over before saving.",
+	"site": "chefkoch.de"
+}

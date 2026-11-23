@@ -4898,3 +4898,78 @@ recipe-importer)` (`IMPORT_UA`): the `Mozilla/5.0 (compatible; …)` form crawle
        ("2 Ringe" is one amount of a "Ring" row); the panel hands a redirect or a server error to
        the page (`applyAction`) instead of doing nothing; the Settings action comments sat on
        the wrong function.
+328. **Plan 45's two open points, decided by default** (coordinator, 2026-11-23; Lukas may
+     change either). (a) **The review does not ask "1 Dose or 800 g".** A row keeps the amount
+     the gate produced, the other measure stays in the note as the import wrote it; the sketch's
+     R1 amount question is not built. (b) **Tips and other sentences the import dropped go to
+     the folded "Left out of the steps" list with "Put back"**; they are not shown as notes
+     under a step.
+329. **The review is a state of the import route, `?draft=<id>`, and the draft lives in the
+     tab's `sessionStorage`** (2026-11-23; → plan 45). The plan left "a route or a state" open.
+     A state keeps one save action and one page for every way in; the id in the address is what
+     survives a reload, and the draft itself (`StoredImport`: the gate's draft, the server's
+     line, the page's site, and the review once opened) is written back on every change. The
+     import page goes to the review with `replaceState`, so Back never lands on a shared link
+     that fetches itself again. Without JS (no storage, no `goto`) an import still opens in the
+     ordinary editor. **The review works on the editor's own state** (`EditorState`, plan 46):
+     "Edit everything" (`&edit=1`) opens `RecipeForm` on it (`opened`), reports every change
+     back (`onchange`), and Save posts what `postedFields` posts. Keys get a random prefix per
+     opening (`freshKeys`), because a reload restarts the counter while the stored keys remain.
+     An item names its row or step by that key, not by the draft's index, so it stays put while
+     rows are edited, removed or put back. `ImportChecks` (the list at the top of the editor,
+     plan 44) is gone.
+330. **The recipe view's rows are components the review shares** (2026-11-23; → plan 45).
+     `RecipeIngredientRow` and `RecipeStepRow` (and `viewRuns` in `step-links.ts`, the view's
+     `stepRuns` moved out) draw both the saved recipe and the review, with the same classes and
+     styles, so "the saved recipe looks like the review did" holds by construction. In the
+     review a row is a button and its question stands under it (`children`).
+331. **What the gate now hands the review** (2026-11-23; → plans 44, 45). An `amount-differs`
+     item keeps the model's amount (`answer`), so "Use 50 g" can offer it. A `servings` item
+     says what the page wrote (`page`, "1 Kuchen"). A left-out sentence says where it goes back
+     (`leftOut[].after`: the last draft step a kept sentence before it stood in, -1 before the
+     first), so "Put back" restores the page's order. A reworded step offers **every** sentence
+     of the page it most likely was, one per sentence of the step (plan 44 offered only the
+     closest single sentence, so "Use the page's text" on a two-sentence step would have lost
+     the second). Those sentences stay under "Left out" until a step holds them (a weak match must
+     not hide a tip for good: the code review's finding).
+332. **How each item is answered, where the plan left it open** (2026-11-23; → plan 45).
+     Every item's first answer is what the draft already has, so an item left alone saves
+     exactly that, and Save never waits for one. Choosing the other of an either/or names the
+     row after it and writes "oder {the first}" into the note in place of the gate's
+     "oder {the other}", the rest of the note kept. "Add it" on a new unit posts the word to
+     Settings' `addUnit` (the one thing the review stores before Save, on that tap only) and
+     answers every row asking about the same word. Editing a row in its sheet answers whatever
+     was asked about that row; editing a step's text, whatever was asked about that step; "Use
+     the page's text" clears a link's words that are no longer in the text and keeps the link.
+     `reworded` also offers **Keep**, `no-steps` **Save without**, and `shares-exceed` (not in
+     the plan's table) **Keep**: the steps can be fixed by tapping them. The servings stepper
+     stays on screen once answered, so a count can be stepped through. A put-back step joins
+     the part of the step it follows and is open to link suggestions, like a typed one;
+     removing it from its sheet lists the sentence under "Left out" again.
+333. **The sketch's R3 suggestions are not built** (2026-11-23; → plan 45). R3 also draws "Is
+     'Möhren' the Karotten?" and "No ingredient is linked to this step". The gate makes no such
+     items and the plan's table does not list them; the no-AI import's steps are open to the
+     matcher's suggestions anyway (DECISIONS #325), which save with the recipe, and the step's
+     link sheet shows them. The banner says "Links are a guess" for such an import.
+334. **Plan 45 as built: the smaller calls** (2026-11-23). The count's number sits on `--gold`
+     in a new token, `--on-gold` (dark ink in both themes: both golds are light, and white on
+     the light one fails contrast). The name line ("100 min · Serves 4 · chefkoch.de") is one
+     button that opens a small sheet for name, time and servings; a step opens a sheet with its
+     text, **Link ingredients** (plan 46's link sheet) and **Remove step**. A Save with no name
+     opens that sheet instead of failing. The header (Discard · Check recipe · Save) stays at
+     the top while the page scrolls. The quiet items (`converted`, `unused`) fold under "Notes
+     from the import", beside "Left out". **Tests**: the drafts the journeys and screenshots
+     open are the gate's own output for the Chefkoch fixture page, saved in
+     `tests/fixtures/review-drafts/` and held to the gate by
+     `tests/integration/review-drafts.test.ts`, because a link import cannot reach a page the
+     test run serves (the fetch guard refuses local addresses and is not loosened for tests);
+     the pasted-text journeys go through the fake AI end to end. **Review fixes from the
+     code-review pass**: a row or step opened and closed unchanged answers nothing (looking is
+     not deciding); the editor's empty step to type into does not come back into the review
+     after "Edit everything"; a new unit word reads a step's share of the row again
+     (`recheckLinks`), as an edit in the sheet does; "Use 1" on a model that wrote its unit
+     into the name ("Bund Suppengrün") gives that name back (`answer.name`); a word Settings
+     refuses says why under the question; "Edit everything" and its Cancel replace each other
+     in history; the banner focuses the first button that can take focus; and "Link
+     ingredients" in the step sheet no longer reads the closed step (it threw, found by the
+     hand walk).

@@ -118,7 +118,9 @@ export function recipeChecks(
 	const checks: ImportCheck[] = [];
 	const portions = /portion|serving|person|pers\.|people|personen|stück|pieces/i;
 	if (servings === null || (servings === 1 && !portions.test(servingsText ?? ''))) {
-		checks.push({ kind: 'servings', level: 'check', at: 'recipe' });
+		// What the page said instead ("1 Kuchen"), for the review's question (→ plan 45).
+		const page = servingsText?.trim().slice(0, 60);
+		checks.push({ kind: 'servings', level: 'check', at: 'recipe', ...(page ? { page } : {}) });
 	}
 	if (steps === 0) checks.push({ kind: 'no-steps', level: 'check', at: 'recipe' });
 	return checks;

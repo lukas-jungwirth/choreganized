@@ -95,9 +95,9 @@ describe('the gate on the Chefkoch lasagne (a recorded answer)', () => {
 	});
 
 	it('keeps the variations it left out, and asks about nothing else', () => {
-		assert.ok(draft.leftOut?.some((sentence) => sentence.startsWith('Variationen:')));
+		assert.ok(draft.leftOut?.some((sentence) => sentence.text.startsWith('Variationen:')));
 		assert.ok(
-			draft.leftOut?.some((sentence) => sentence.startsWith('Anstelle der Hackfleischsoße'))
+			draft.leftOut?.some((sentence) => sentence.text.startsWith('Anstelle der Hackfleischsoße'))
 		);
 		assert.deepEqual(
 			draft.checks?.filter((check) => check.level === 'check').map((check) => check.kind),
@@ -132,10 +132,35 @@ describe('the gate on hostile answers', () => {
 				kind: 'amount-differs',
 				level: 'check',
 				page: '500 g Rinderhackfleisch',
+				// What the model said, for the review's "Use 50 g" (→ plan 45).
+				answer: { quantity: 50, unit: 'g' },
 				name: 'Rinderhackfleisch',
 				at: { ingredient: 5 }
 			}
 		);
+	});
+
+	it('keeps the model’s name with its amount when its unit stood in the name (→ plan 45)', () => {
+		const raw = copy();
+		Object.assign(raw.ingredients[0], { quantity: 2, countingWord: null, name: 'Bund Suppengrün' });
+		const draft = draftOf(raw);
+		assert.equal(draft.ingredientLines[0], '1 Bund Suppengrün');
+		assert.deepEqual(draft.checks?.find((check) => check.kind === 'amount-differs')?.answer, {
+			quantity: 2,
+			unit: null,
+			name: 'Bund Suppengrün'
+		});
+	});
+
+	it('says where each left-out sentence stood: after the step before it (→ plan 45)', () => {
+		const draft = draftOf(answer);
+		const variations = draft.leftOut?.find((one) => one.text.startsWith('Variationen:'));
+		assert.ok(variations);
+		// The last step the page had before its variations is the draft's last.
+		assert.equal(variations.after, draft.steps.length - 1);
+		for (const one of draft.leftOut ?? []) {
+			assert.ok(one.after >= -1 && one.after < draft.steps.length, JSON.stringify(one));
+		}
 	});
 
 	it('takes the page’s words over a name that says something else', () => {

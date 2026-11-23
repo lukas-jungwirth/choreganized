@@ -85,6 +85,29 @@ export function renderStep<T extends Row>(
 	return { ...linkStep(step.text, uses, ingredients, factor), linked: true };
 }
 
+/** A run of a step's text as the recipe view draws it. */
+export type ViewRun = { text: string; scaledFrom?: string; linked?: boolean };
+
+/**
+ * A step's text as runs for the recipe view and the import's review (→ plans
+ * 43, 45), so the two cannot drift apart: a step with stored links underlines
+ * the words they name, as cook mode does; one read by the matcher is not
+ * underlined here (that stays cook mode's job). As written, it is one run.
+ */
+export function viewRuns<T extends Row>(
+	step: { text: string; uses: readonly StepUse[] | null },
+	ingredients: readonly T[],
+	factor: number
+): ViewRun[] {
+	const drawn = renderStep(step, ingredients, factor);
+	if (!drawn.linked && factor === 1) return [{ text: step.text }];
+	return drawn.segments.map((run) => ({
+		text: run.text,
+		scaledFrom: run.scaledFrom,
+		linked: drawn.linked && run.ingredient !== null
+	}));
+}
+
 /**
  * A run of the text that one link claims: the words naming it, or its amount.
  * `unnamed` marks an underline the matcher found for a link stored without

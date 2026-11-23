@@ -13,8 +13,8 @@
  *   - `extractPhotos`— 1–3 photos of a cookbook / magazine page.
  * The AI paths need the household's own AI connection (→ services/ai.ts) and
  * take its standing instructions plus a line typed for this import. Every
- * draft carries the gate's check items; until plan 45's review screen they
- * are listed at the top of the editor.
+ * draft carries the gate's check items, which the review screen (plan 45,
+ * `?draft=`) marks on the recipe; the page keeps the draft in the browser.
  *
  * `save` is the recipe editor's usual create, plus attaching whatever photo the
  * import produced. Nothing is persisted before Save but the temp photo file; an
@@ -72,9 +72,20 @@ export const load: PageServerLoad = (event) => {
 		aiInstructions: getAiInstructions(householdId),
 		// The household's own unit words: the draft's lines are read with them,
 		// and the unit panel offers them (→ plan 46).
-		units: listUnits(householdId).map((unit) => unit.word)
+		units: listUnits(householdId).map((unit) => unit.word),
+		// An import under review (→ plan 45): its id names the draft this tab keeps
+		// in `sessionStorage`, so the address survives a reload; `edit` opens it in
+		// the full editor.
+		draft: readDraftId(event.url.searchParams),
+		edit: event.url.searchParams.get('edit') === '1'
 	};
 };
+
+/** `?draft=` as the import page writes it (`newDraftId`); anything else is no draft. */
+function readDraftId(params: URLSearchParams): string | null {
+	const id = params.get('draft');
+	return id && /^[a-z0-9]{4,40}$/.test(id) ? id : null;
+}
 
 /** The chooser lands here with `?mode=`; anything else (incl. the share target) is a link. */
 function readMode(params: URLSearchParams): 'link' | 'photo' | 'text' {
