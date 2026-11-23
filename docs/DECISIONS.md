@@ -4491,3 +4491,53 @@ store_id` NULL already means "no memory" (a deleted list), and telling the two a
      photos or steps leaving the house. The answer is kept in the page while the cards go by
      and saved card by card by Next. The plan sheet orders by the chosen meal's tag and never
      hides a recipe; its quick chips use the library's own filter rules in the browser.
+311. **The recipe rebuild: the model structures, code verifies, screens render what was
+     stored** (Lukas, 2026-11-23; → plans 42–48). A probe of 41 real recipe pages that day
+     showed what rules cannot do: 25 of 36 pages show ingredient sections and no card carries
+     them; 25 of 31 imports had a preparation note inside an ingredient name; 26 of 29 had a
+     step naming an ingredient by another word ("Zwiebelwürfel"); on a Chefkoch lasagne the
+     word matcher never linked 5 of 19 ingredients. A model reads these; a model alone is not
+     trusted. So the import is one model call, a gate in plain code checks every row, amount
+     and sentence against the page, and what fails becomes a thing for a person to check.
+     This supersedes #127 (the matcher is now only the fallback for steps nobody has linked,
+     and the editor's suggestion engine) and #149 (a scaled amount in a step comes from a
+     stored phrase, not from "the number before an underlined word"). #133 and #148 stand.
+312. **A dish with two ingredient lists is one recipe with parts** (Lukas, 2026-11-23;
+     → plan 43, issue #176). `section` on ingredients and on steps, consecutive rows with the
+     same name forming a part. Not sub-headings on ingredients only (cook mode could not say
+     which part a step belongs to) and not two linked recipes (servings, the plan and the
+     shopping picker would span two things for one dinner).
+313. **Eight units and a free counting word** (Lukas, 2026-11-23; → plans 42, 43). g, kg, ml,
+     L, pcs, pack, tbsp, tsp stay the only units the app calculates with. Whatever else a
+     recipe counts in ("2 Zehen", "1 Bund", "1 Dose", "1 Prise") is kept as written in the
+     same `unit` column, so the name stays the thing you buy. No longer list of named units:
+     each would need a picker entry and a translation, and Lukas asked not to. In the recipe a
+     Dose stays a Dose. On the shopping list a container word (Dose, Becher, Glas, Flasche,
+     Beutel) becomes Packung with its number; every other counting word, and tbsp and tsp, put
+     only the name on the list. Lukas left Dose-or-Packung to the session; reading the recipe
+     as the site wrote it won.
+314. **An ingredient's name is what you buy; the rest is its note** (Lukas, 2026-11-23;
+     → plan 43). "1 Karotte, in Scheiben geschnitten" is Karotte with a note. Purposes ("zum
+     Würzen"), hints ("ein Teil kann durch Gemüsebrühe ersetzt werden") and examples ("z. B.
+     Paprika") are notes too, shown in the recipe and in cook mode, never on the list. One
+     line naming two things is two rows. An either/or keeps the first one named with the other
+     in the note, and the import's review offers the choice in one tap; alternatives are not
+     modelled as data.
+315. **AI is the import when a provider is set up** (Lukas, 2026-11-23; → plan 44). The
+     "Improve with AI" switch of plan 22, off until turned on per device, goes: it left most
+     imports at the rule-based quality. Setting up a provider is the go-ahead for one call per
+     import. Without a provider, or when both fail, the rule-based import still works.
+316. **The import may split and drop a site's steps, never reword them** (Lukas, 2026-11-23;
+     → plan 44). Chosen over "rewrite for clarity" because it can be verified: every kept
+     sentence must be found in the page word for word, and what was dropped is kept on the
+     draft so a person can put it back. Chosen over "exactly as written" because 13 of 29
+     pages had tips, sign-offs or teasers among the steps and two had the whole method as one
+     paragraph.
+317. **Austrian wording is removed** (Lukas, 2026-11-23; → plan 44; reverses #150). It
+     rewrote ingredient names after the import, so "Obers" in the list stood beside "Sahne" in
+     the steps and needed a synonym table to be found again. Saved recipes keep their names.
+318. **The import is scored against a real model, with a key that lives in `.env` only**
+     (2026-11-23; → plan 44). `npm run import:eval` runs the saved pages through the real
+     pipeline and prints coverage, agreement and link numbers; `--record` keeps the answers as
+     fixtures, so CI stays offline. Never a key in CI or on a deploy. Until a key exists the
+     prompt is tested against the fake provider only and every handoff says so.
