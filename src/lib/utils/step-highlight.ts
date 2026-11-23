@@ -1,7 +1,7 @@
 /**
  * "Sauté the mushrooms in butter" + the recipe's ingredient list → the two
- * words cook mode underlines in amber, and the "This step uses 250 g mushrooms ·
- * butter" line under them [7b].
+ * words cook mode underlines in amber, and the list of what the step needs
+ * under them [C2] (→ plan 47).
  *
  * There are two ways a step knows what it uses (→ SPEC §4.4, DECISIONS #127):
  *
@@ -89,7 +89,7 @@ const MAX_DROPPED_WORDS = 3;
  *
  * A pinned ingredient that no longer exists (deleted from the list on another
  * phone) is dropped rather than rendered as a gap, and one with its own amount
- * comes back carrying it — so "This step uses 1 tbsp olive oil" and the peek
+ * comes back carrying it — so the list under the step ("1 tbsp of 3 tbsp") and the peek
  * sheet both say the step's share rather than the recipe's total.
  */
 export function readStep<T extends { id: string; name: string; quantity: number | null }>(

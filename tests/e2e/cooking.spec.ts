@@ -4,8 +4,15 @@
  */
 import Database from 'better-sqlite3';
 import { expect, test } from '@playwright/test';
-import { ACCOUNTS, DATABASE_PATH, SEED } from './accounts';
+import { ACCOUNTS, DATABASE_PATH, SEED, storageStateFor } from './accounts';
 import { finger } from './touch';
+
+/** The same address at step `n` (cook mode opens on Get ready, → plan 47). */
+function withStep(address: string, n: number): string {
+	const url = new URL(address);
+	url.searchParams.set('step', String(n));
+	return url.href;
+}
 
 /**
  * Every timer a test started is stopped after it, passed or failed (→ DECISIONS #263).
@@ -42,7 +49,11 @@ test('open a recipe and step through cook mode', async ({ page }) => {
 
 	await page.getByRole('link', { name: 'Start cook mode' }).click();
 	await expect(page).toHaveURL(/\/cook$/);
+	// Get ready comes first (→ plan 47); Start cooking is step 1.
+	await expect(page.getByRole('heading', { name: 'Get ready', level: 1 })).toBeVisible();
+	await page.getByRole('button', { name: 'Start cooking' }).click();
 	await expect(page.getByText(/^Step 1 of \d+$/)).toBeVisible();
+	await expect(page).toHaveURL(/\/cook\?step=1$/);
 
 	await page.getByRole('button', { name: 'Next' }).click();
 	await expect(page.getByText(/^Step 2 of \d+$/)).toBeVisible();
@@ -120,14 +131,16 @@ test('a step’s own timer, set in the form, is the one cook mode offers by name
 	await expect(page.getByText('Nudeln · 10:00')).toBeVisible();
 
 	await page.getByRole('link', { name: 'Start cook mode' }).click();
+	await page.getByRole('button', { name: 'Start cooking' }).click();
 	await expect(page.getByRole('button', { name: 'Start Nudeln · 10:00' })).toBeVisible();
 
 	// And taken away again, the step goes back to reading its own text.
-	await page.goto(page.url().replace(/\/cook$/, '/edit'));
+	await page.goto(new URL(page.url()).pathname.replace(/\/cook$/, '/edit'));
 	await page.getByRole('button', { name: 'Timer for step 1' }).click();
 	await page.getByRole('dialog').getByRole('button', { name: 'Remove timer' }).click();
 	await page.getByRole('button', { name: 'Save changes' }).click();
 	await page.getByRole('link', { name: 'Start cook mode' }).click();
+	await page.getByRole('button', { name: 'Start cooking' }).click();
 	await expect(page.getByRole('button', { name: 'Start 9:00 timer' })).toBeVisible();
 });
 
@@ -198,6 +211,7 @@ test('cooking for more people rewrites the amounts a step names, and nothing els
 
 	// Cook mode, inheriting the count, says the same.
 	await page.getByRole('link', { name: 'Start cook mode' }).click();
+	await page.getByRole('button', { name: 'Start cooking' }).click();
 	await expect(page.locator('.scaled').first()).toContainText('4');
 });
 
@@ -244,6 +258,7 @@ test('the seeded lasagne reads in parts, with its notes and its stored links (pl
 
 	// Cook mode: the part beside the step's number, and the same rewritten run.
 	await page.getByRole('link', { name: 'Start cook mode' }).click();
+	await page.getByRole('button', { name: 'Start cooking' }).click();
 	await page.getByRole('button', { name: 'Next' }).click();
 	await expect(page.locator('.eyebrow')).toHaveText('Step 2 of 7 · Bolognese');
 	await expect(page.locator('.scaled')).toContainText('2 - 4 EL');
@@ -365,7 +380,7 @@ test('a recipe built in the editor: parts, a tapped link, an amount that follows
 	await expect(page.getByRole('heading', { name: 'Béchamel', level: 3 })).toHaveCount(2);
 
 	// Cook mode for 8: the word underlined, the amount and the share doubled.
-	await page.goto(`${new URL(page.url()).pathname}/cook?serves=8`);
+	await page.goto(`${new URL(page.url()).pathname}/cook?serves=8&step=1`);
 	await expect(page.locator('.scaled').first()).toContainText('400 g');
 	await page.getByRole('button', { name: /^Zwiebelwürfel/ }).click();
 	await expect(page.locator('.bubble')).toContainText('Zwiebel');
@@ -443,7 +458,7 @@ test('a timer counts on past zero, and is still there after the app was closed (
 		data: { seconds: 5, label: 'Rice', recipeId, stepIndex: 0, replaces: null }
 	});
 	expect(started.ok()).toBe(true);
-	await page.reload();
+	await page.goto(withStep(page.url(), 1));
 
 	const ring = page.getByRole('timer');
 	await expect(ring).toContainText(/\b0:0\d/);
@@ -482,7 +497,9 @@ test('tapping a finished timer’s bar goes to look at it, and doesn’t stop it
 	await page.request.post('/api/timers', {
 		data: { seconds: 5, label: 'Rice', recipeId, stepIndex: 1, replaces: null }
 	});
+	// On Get ready, which is no step: the timer is a bar, and it leads to its step.
 	await page.reload();
+	await expect(page.getByRole('heading', { name: 'Get ready', level: 1 })).toBeVisible();
 
 	await page.getByRole('button', { name: /Rice is done/ }).click({ timeout: 15_000 });
 
@@ -522,6 +539,7 @@ test.describe('on an Android phone', () => {
 			.first()
 			.click();
 		await page.getByRole('link', { name: 'Start cook mode' }).click();
+		await page.getByRole('button', { name: 'Start cooking' }).click();
 		await page.getByRole('button', { name: 'Start 2:00 timer' }).click();
 
 		// Two minutes of silence, and the minute the alarm rings for. The silence is
@@ -566,7 +584,7 @@ test.describe('on an Android phone', () => {
 		await page.request.post('/api/timers', {
 			data: { seconds: 6, label: 'Rice', recipeId, stepIndex: 0, replaces: null }
 		});
-		await page.reload();
+		await page.goto(withStep(page.url(), 1));
 
 		// A timer that came back with the page gets its track from the next tap.
 		await page.getByText(/^Step 1 of \d+$/).click();
@@ -576,5 +594,147 @@ test.describe('on an Android phone', () => {
 
 		await page.getByRole('button', { name: 'Stop', exact: true }).click();
 		await expect(page.getByRole('timer')).toHaveCount(0);
+	});
+});
+
+/** Get ready, and what each step needs, at reading size (→ plan 47). */
+test('Get ready keeps its ticks, sets the count, and the steps show what they need (plan 47)', async ({
+	page
+}) => {
+	await page.goto('/cooking/recipes');
+	await page
+		.getByRole('link', { name: new RegExp(SEED.recipes.lasagne) })
+		.first()
+		.click();
+	await page.getByRole('heading', { name: SEED.recipes.lasagne, level: 1 }).waitFor();
+	await page.getByRole('link', { name: 'Start cook mode' }).click();
+
+	// Every ingredient under its part, with its note, tickable.
+	await expect(page.getByRole('heading', { name: 'Get ready', level: 1 })).toBeVisible();
+	for (const part of ['Bolognese', 'Béchamel', 'Schichten']) {
+		await expect(page.getByRole('heading', { name: part, level: 2 })).toBeVisible();
+	}
+	const zwiebel = page.getByRole('button', { name: /^Zwiebel/ });
+	const milch = page.getByRole('button', { name: /^Milch/ });
+	const hack = page.getByRole('button', { name: /^Faschiertes/ });
+	await expect(hack).toContainText('gemischt');
+	await zwiebel.click();
+	await milch.click();
+	await expect(zwiebel).toHaveAttribute('aria-pressed', 'true');
+
+	// Kept through Next and Prev, and through a reload.
+	await page.getByRole('button', { name: 'Start cooking' }).click();
+	await expect(page.locator('.eyebrow')).toHaveText('Step 1 of 7 · Bolognese');
+	await page.getByRole('button', { name: 'Previous step' }).click();
+	await expect(milch).toHaveAttribute('aria-pressed', 'true');
+	await page.reload();
+	await expect(zwiebel).toHaveAttribute('aria-pressed', 'true');
+	await expect(milch).toHaveAttribute('aria-pressed', 'true');
+	await expect(page.getByRole('button', { name: /^Mehl/ })).toHaveAttribute(
+		'aria-pressed',
+		'false'
+	);
+
+	// Cooking for 8: every amount here doubles at once, and the address keeps it.
+	await expect(page.getByText('written for 4')).toBeVisible();
+	await expect(milch).toContainText('½ L');
+	const more = page.getByRole('button', { name: 'Increase cooking for' });
+	for (let i = 0; i < 4; i++) await more.click();
+	await expect(page.getByLabel('Cooking for', { exact: true })).toHaveValue('8');
+	await expect(milch).toContainText('1 L');
+	await expect(hack).toContainText('1000 g');
+	await expect(page).toHaveURL(/[?&]serves=8/);
+	await page.reload();
+	const field = page.getByLabel('Cooking for', { exact: true });
+	await expect(field).toHaveValue('8');
+	await expect(milch).toContainText('1 L');
+
+	// A field half typed is not a count: emptied or 0, the amounts and the address stay at 8.
+	await field.fill('');
+	await field.fill('0');
+	await expect(milch).toContainText('1 L');
+	await expect(page).toHaveURL(/[?&]serves=8/);
+	await field.fill('8');
+	await field.blur();
+	await expect(field).toHaveValue('8');
+
+	// Step 5 says its part and lists its three ingredients, doubled.
+	await page.getByRole('button', { name: 'Start cooking' }).click();
+	for (let i = 0; i < 4; i++) await page.getByRole('button', { name: 'Next' }).click();
+	await expect(page.locator('.eyebrow')).toHaveText('Step 5 of 7 · Béchamel');
+	await expect(page.locator('header .recipe')).toHaveText('Lasagne · for 8');
+	const needs = page.getByRole('list', { name: 'What this step needs' });
+	await expect(needs.getByRole('listitem')).toHaveText([
+		/^1 L ?Milch$/,
+		/^2 Msp\. ?Muskatnuss ?frisch gerieben$/,
+		/^ ?Salz$/
+	]);
+
+	// A running timer leaves the list where it is.
+	const recipeId = new URL(page.url()).pathname.split('/')[3];
+	const started = await page.request.post('/api/timers', {
+		data: { seconds: 600, label: 'Milch', recipeId, stepIndex: 4, replaces: null }
+	});
+	expect(started.ok()).toBe(true);
+	await page.reload();
+	await expect(page.getByRole('timer')).toBeVisible();
+	await expect(needs.getByRole('listitem')).toHaveCount(3);
+	await expect(needs).toBeInViewport();
+
+	// The ingredients sheet leads back to Get ready, and Get ready back to the step.
+	await page.getByRole('button', { name: 'Ingredients', exact: true }).click();
+	await page.getByRole('button', { name: 'Back to Get ready' }).click();
+	await expect(page.getByRole('heading', { name: 'Get ready', level: 1 })).toBeVisible();
+	await page.getByRole('button', { name: 'Back to step 5', exact: true }).click();
+	await expect(page.locator('.eyebrow')).toHaveText('Step 5 of 7 · Béchamel');
+
+	// Finish ends the cook, and its ticks with it.
+	await page.getByRole('button', { name: 'Next' }).click();
+	await page.getByRole('button', { name: 'Next' }).click();
+	await page.getByRole('link', { name: 'Finish' }).click();
+	await page.getByRole('heading', { name: SEED.recipes.lasagne, level: 1 }).waitFor();
+	await page.getByRole('link', { name: 'Start cook mode' }).click();
+	await expect(zwiebel).toHaveAttribute('aria-pressed', 'false');
+});
+
+test('a step read by the matcher lists what it names; one part says no part (plan 47)', async ({
+	page
+}) => {
+	await page.goto('/cooking/recipes');
+	await page
+		.getByRole('link', { name: new RegExp(SEED.recipes.curry) })
+		.first()
+		.click();
+	await page.getByRole('link', { name: 'Start cook mode' }).click();
+	await expect(page.getByRole('heading', { name: 'Get ready', level: 1 })).toBeVisible();
+	await expect(page.getByRole('heading', { level: 2 })).toHaveCount(0);
+	await page.getByRole('button', { name: 'Start cooking' }).click();
+	await expect(page.locator('.eyebrow')).toHaveText(/^Step 1 of \d+$/);
+	await expect(
+		page.getByRole('list', { name: 'What this step needs' }).getByRole('listitem')
+	).toHaveText([/^2 tbsp ?Curry paste$/]);
+});
+
+test.describe('a 400-character step', () => {
+	test.use({ storageState: storageStateFor('cook') });
+
+	test('fits a phone screen with its ingredients, without a scroll (plan 47)', async ({ page }) => {
+		await page.goto('/cooking/recipes');
+		await page
+			.getByRole('link', { name: /Risotto/ })
+			.first()
+			.click();
+		await page.getByRole('heading', { name: 'Risotto', level: 1 }).waitFor();
+		await page.goto(`${new URL(page.url()).pathname}/cook?step=2`);
+
+		const needs = page.getByRole('list', { name: 'What this step needs' });
+		await expect(needs.getByRole('listitem')).toHaveCount(5);
+		// The Butter goes in twice, half each time.
+		await expect(needs.getByRole('listitem').first()).toHaveText(/^20 g ?of 40 g ?Butter$/);
+
+		const body = page.locator('.body');
+		const fits = await body.evaluate((el) => el.scrollHeight <= el.clientHeight + 1);
+		expect(fits, 'the step and its list scroll on a 390 × 844 screen').toBe(true);
+		await expect(page.getByRole('button', { name: 'Next' })).toBeInViewport();
 	});
 });

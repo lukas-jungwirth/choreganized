@@ -1619,8 +1619,18 @@ export const en = {
 			/** A step's own timer, by its name (→ plan 21): "Start Nudeln · 10:00". */
 			startNamedTimer: (name: string, duration: string) => `Start ${name} · ${duration}`,
 			ingredients: 'Ingredients',
-			/** "This step uses **250 g mushrooms**" — the bold is the list. */
-			usesLead: 'This step uses ',
+			/** The list under a step [C2], for a screen reader (→ plan 47). */
+			stepNeeds: 'What this step needs',
+			/** The header on a step when the count is known: "Lasagne · for 8" [C2]. */
+			titleFor: (recipe: string, servings: number) => `${recipe} · for ${servings}`,
+			/** "Get ready", the screen before step 1 [C1] (→ plan 47). */
+			readyEyebrow: 'Before you start',
+			readyTitle: 'Get ready',
+			startCooking: 'Start cooking',
+			/** Get ready opened from a step's ingredients sheet goes back to that step. */
+			backToStep: (step: number) => `Back to step ${step}`,
+			/** In the ingredients sheet: the list to tick off, again. */
+			peekToReady: 'Back to Get ready',
 			previous: 'Previous step',
 			next: 'Next step',
 			finish: 'Finish',

@@ -44,7 +44,9 @@
 	import TextField from '$lib/components/ui/TextField.svelte';
 	import CodeInput from '$lib/components/ui/CodeInput.svelte';
 	import Toggle from '$lib/components/ui/Toggle.svelte';
+	import CookStepIngredients from '$lib/components/cooking/CookStepIngredients.svelte';
 	import CookStepText from '$lib/components/cooking/CookStepText.svelte';
+	import { stepIngredientLines } from '$lib/utils/cook';
 	import type { NextChore } from '$lib/server/services/home';
 	import type { FeedEntry, Podium as PodiumData } from '$lib/server/services/history';
 	import { messages } from '$lib/i18n';
@@ -550,9 +552,7 @@
 		</p>
 		<div class="cook-panel">
 			<CookStepText segments={COOK_STEP.segments} ingredients={COOK_INGREDIENTS} />
-			<p class="cook-uses">
-				This step uses <b>{COOK_STEP.used.map((i) => i.name).join(' · ')}</b>
-			</p>
+			<CookStepIngredients lines={stepIngredientLines(COOK_STEP.used, COOK_INGREDIENTS)} />
 		</div>
 		<div class="sheet-cta">
 			<Button variant="secondary" onclick={() => (darkSheetOpen = true)}>Open dark sheet</Button>
@@ -810,17 +810,6 @@
 		padding: 22px;
 		border-radius: var(--r-card);
 		background: var(--cook-bg);
-	}
-
-	.cook-uses {
-		margin: 14px 0 0;
-		font-size: var(--fs-14);
-		color: var(--cook-faint);
-	}
-
-	.cook-uses b {
-		font-weight: 600;
-		color: var(--cook-text-2);
 	}
 
 	.pop {

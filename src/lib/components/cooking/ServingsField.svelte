@@ -2,10 +2,11 @@
 	"Cooking for {n}", with what the recipe was written for beside it
 	(→ SPEC §4.5).
 
-	One control, two surfaces: the recipe screen [7a], where it sits above the
-	ingredient list on a card, and the ingredient picker [3e], where it sits on
-	the sunken field the sheets ask questions on. The caller owns the arithmetic
-	— this only asks the number.
+	One control, three surfaces: the recipe screen [7a], where it sits above the
+	ingredient list on a card, the ingredient picker [3e], where it sits on
+	the sunken field the sheets ask questions on, and cook mode's Get ready [C1]
+	(→ plan 47), dark like the rest of that screen. The caller owns the
+	arithmetic — this only asks the number.
 -->
 <script lang="ts">
 	import Stepper from '$lib/components/ui/Stepper.svelte';
@@ -19,8 +20,8 @@
 		writtenFor: number;
 		/** Set when the field posts as part of a form (the picker's submit). */
 		name?: string;
-		/** `field` for the sunken block inside a sheet, `card` on a page. */
-		surface?: 'card' | 'field';
+		/** `field` for the sunken block inside a sheet, `card` on a page, `cook` in cook mode. */
+		surface?: 'card' | 'field' | 'cook';
 	};
 
 	let { value = $bindable(null), writtenFor, name, surface = 'card' }: Props = $props();
@@ -28,13 +29,14 @@
 	const m = messages();
 </script>
 
-<div class="serves" class:field={surface === 'field'}>
+<div class="serves" class:field={surface === 'field'} class:cook={surface === 'cook'}>
 	<Stepper
 		label={m.cooking.recipe.cookingFor}
 		{name}
 		bind:value
 		min={1}
 		max={RECIPE_SERVINGS_MAX}
+		tone={surface === 'cook' ? 'dark' : 'light'}
 	/>
 	<p class="written">{m.cooking.recipe.writtenFor(writtenFor)}</p>
 </div>
@@ -62,10 +64,21 @@
 		background: var(--field);
 	}
 
+	/* Cook mode's Get ready [C1]: a raised block on the dark screen. */
+	.cook {
+		margin-bottom: 0;
+		border-color: transparent;
+		background: var(--cook-surface);
+	}
+
 	.written {
 		margin: 0 0 7px;
 		font-size: var(--fs-14);
 		text-align: right;
 		color: var(--text-5);
+	}
+
+	.cook .written {
+		color: var(--cook-muted);
 	}
 </style>

@@ -5,6 +5,10 @@
  *   npm run db:seed -- you@example.com --full-house
  *   npm run db:seed -- you@example.com --history
  *   npm run db:seed -- you@example.com --guests
+ *   npm run db:seed -- you@example.com --long-step
+ *
+ * `--long-step` adds a risotto whose second step is a 400-character paragraph,
+ * the longest step cook mode is built to fit on one screen (→ plan 47).
  *
  * `--full-house` fills the household to as many members as the app allows —
  * one per colour in the member palette, since two members can't share one —
@@ -77,6 +81,7 @@ import {
 	SEED_HOUSEMATE_NAME,
 	SEED_COOKBOOK,
 	SEED_LASAGNE,
+	SEED_LONG_STEP,
 	SEED_RECIPE_NAMES,
 	SEED_UNTAGGED,
 	SEED_CHECKLIST_ITEMS,
@@ -128,11 +133,12 @@ const fullHouse = args.includes('--full-house');
 const history = args.includes('--history');
 const guests = args.includes('--guests');
 const cookbook = args.includes('--cookbook');
+const longStep = args.includes('--long-step');
 const email = args.find((arg) => !arg.startsWith('--'));
 
 if (!email) {
 	console.error(
-		'Usage: npm run db:seed -- you@example.com [--full-house] [--history] [--guests] [--cookbook]'
+		'Usage: npm run db:seed -- you@example.com [--full-house] [--history] [--guests] [--cookbook] [--long-step]'
 	);
 	process.exit(1);
 }
@@ -891,6 +897,70 @@ const seeded = db.transaction((tx) => {
 		}))
 	);
 	tx.insert(recipeStepIngredients).values(lasagneLinks).onConflictDoNothing().run();
+
+	// --long-step: a risotto with one long imported step (→ plan 47, seed-data.ts).
+	if (longStep) {
+		const risottoId = sid('recipe', 'risotto');
+
+		tx.insert(recipes)
+			.values({
+				id: risottoId,
+				householdId,
+				name: SEED_LONG_STEP.name,
+				timeMinutes: 35,
+				servings: SEED_LONG_STEP.servings,
+				diet: 'vegetarian',
+				createdByMemberId: ownerMemberId,
+				createdAt: daysAgo(50, 18)
+			})
+			.onConflictDoNothing()
+			.run();
+
+		tx.insert(recipeIngredients)
+			.values(
+				SEED_LONG_STEP.ingredients.map((ingredient, sortOrder) => ({
+					id: sid('ing', `risotto-${ingredient.key}`),
+					recipeId: risottoId,
+					name: ingredient.name,
+					quantity: ingredient.quantity,
+					unit: ingredient.unit,
+					note: ingredient.note,
+					sortOrder
+				}))
+			)
+			.onConflictDoNothing()
+			.run();
+
+		tx.insert(recipeSteps)
+			.values(
+				SEED_LONG_STEP.steps.map((step, sortOrder) => ({
+					id: sid('step', `risotto-${sortOrder}`),
+					recipeId: risottoId,
+					text: step.text,
+					ingredientsSet: true,
+					sortOrder
+				}))
+			)
+			.onConflictDoNothing()
+			.run();
+
+		tx.insert(recipeStepIngredients)
+			.values(
+				SEED_LONG_STEP.steps.flatMap((step, at) =>
+					step.links.map((link, sortOrder) => ({
+						id: sid('uses', `risotto-${at}:${link.ingredient}:${link.phrase}`),
+						stepId: sid('step', `risotto-${at}`),
+						ingredientId: sid('ing', `risotto-${link.ingredient}`),
+						quantity: link.quantity ?? null,
+						phrase: link.phrase,
+						amountPhrase: null,
+						sortOrder
+					}))
+				)
+			)
+			.onConflictDoNothing()
+			.run();
+	}
 
 	// Keyed by date and slot, not by "today": re-running next week plans that
 	// week's meals instead of skipping every insert and leaving the plan in the

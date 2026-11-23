@@ -158,6 +158,58 @@ export const SEED_LASAGNE: {
 };
 
 /**
+ * `--long-step` (→ plan 47): a risotto whose second step is a long imported
+ * paragraph (over 400 characters), so cook mode's smallest step size, with its
+ * ingredient list under it, is seen on a phone screen. The Butter goes in twice,
+ * half each time, so a step shows "20 g of 40 g". Its own household (the `cook`
+ * test account), so the library every other screenshot shows is unchanged.
+ */
+export const SEED_LONG_STEP: {
+	name: string;
+	servings: number;
+	ingredients: Omit<SeedLasagneIngredient, 'section'>[];
+	steps: {
+		text: string;
+		links: { ingredient: string; phrase: string; quantity?: number }[];
+	}[];
+} = {
+	name: 'Risotto',
+	servings: 4,
+	ingredients: [
+		{ key: 'reis', name: 'Risottoreis', quantity: 320, unit: 'g', note: null },
+		{ key: 'zwiebel', name: 'Zwiebel', quantity: 1, unit: null, note: null },
+		{ key: 'butter', name: 'Butter', quantity: 40, unit: 'g', note: null },
+		{ key: 'wein', name: 'Weißwein', quantity: 125, unit: 'ml', note: 'trocken' },
+		{ key: 'bruehe', name: 'Gemüsebrühe', quantity: 1, unit: 'L', note: 'heiß' },
+		{ key: 'parmesan', name: 'Parmesan', quantity: 60, unit: 'g', note: 'gerieben' }
+	], // prettier-ignore
+	steps: [
+		{
+			text: 'Zwiebel schälen und fein würfeln.',
+			links: [{ ingredient: 'zwiebel', phrase: 'Zwiebel' }]
+		},
+		{
+			text: 'Die Butter in einem breiten Topf bei mittlerer Hitze schmelzen und die Zwiebelwürfel darin glasig anschwitzen, ohne dass sie Farbe nehmen. Den Risottoreis dazugeben und unter Rühren etwa 2 Minuten mitrösten, bis die Körner glänzen und am Rand durchscheinend werden. Mit dem Weißwein ablöschen und rühren, bis er fast ganz verkocht ist. Dann einen Schöpfer heiße Brühe angießen und weiterrühren, bis der Reis sie aufgenommen hat.',
+			links: [
+				{ ingredient: 'butter', phrase: 'Butter', quantity: 20 },
+				{ ingredient: 'zwiebel', phrase: 'Zwiebelwürfel' },
+				{ ingredient: 'reis', phrase: 'Risottoreis' },
+				{ ingredient: 'wein', phrase: 'Weißwein' },
+				{ ingredient: 'bruehe', phrase: 'Brühe' }
+			]
+		},
+		{
+			text: 'Nach und nach die restliche Brühe angießen und 18 Min. köcheln lassen. Die übrige Butter und den Parmesan unterrühren.',
+			links: [
+				{ ingredient: 'bruehe', phrase: 'Brühe' },
+				{ ingredient: 'butter', phrase: 'Butter', quantity: 20 },
+				{ ingredient: 'parmesan', phrase: 'Parmesan' }
+			]
+		}
+	]
+};
+
+/**
  * `--cookbook` (→ plan 40): the recipe-filters sketch's library, tagged, some
  * hearted, some planned in the past — enough for every filter group, the
  * sheet's counts, the "nothing fits" ways out and "Not cooked lately" to have
