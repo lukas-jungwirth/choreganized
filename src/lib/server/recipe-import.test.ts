@@ -11,6 +11,7 @@ import {
 	failureCode,
 	fetchRecipePage,
 	htmlToReadableText,
+	IMPORT_UA,
 	isBlockedAddress,
 	readFetchedPage,
 	RecipeImportError
@@ -176,6 +177,16 @@ describe('fetchRecipePage', () => {
 	});
 });
 
+describe('IMPORT_UA (→ plan 44, DECISIONS #322)', () => {
+	it('says what it is and does not claim to be a browser', () => {
+		// Cloudflare challenged "Chrome" that did not talk like Chrome
+		// (sallysbakingaddiction.com, 2026-11-23); the same request saying what it
+		// is was let through.
+		assert.match(IMPORT_UA, /^Mozilla\/5\.0 \(compatible; Haushaltsheld/);
+		assert.doesNotMatch(IMPORT_UA, /Chrome|Safari|Firefox|Gecko/);
+	});
+});
+
 describe('failureCode', () => {
 	const answer = (status: number, headers: Record<string, string> = {}) =>
 		failureCode(new Response(null, { status, headers }));
@@ -198,7 +209,9 @@ describe('draftFromCard — suggested tags (→ plan 41)', () => {
 		timeMinutes: 40,
 		servings: 4,
 		ingredientLines: ['1 Kürbis'],
+		ingredientSections: [null],
 		steps: ['Kochen.'],
+		stepSections: [null],
 		image: null
 	};
 
@@ -217,5 +230,29 @@ describe('draftFromCard — suggested tags (→ plan 41)', () => {
 	it('suggests nothing when the page names nothing on the list', () => {
 		assert.equal(draftFromCard({ ...card, labels: ['Herbst', 'schnell'] }, null).suggested, null);
 		assert.equal(draftFromCard({ ...card, labels: [] }, null).suggested, null);
+	});
+});
+
+describe('draftFromCard — parts (→ plan 44)', () => {
+	it('carries the parts the readers found into the draft', () => {
+		const draft = draftFromCard(
+			{
+				name: 'Lasagne',
+				timeMinutes: null,
+				servings: 4,
+				ingredientLines: ['1 Zwiebel', '50 g Butter'],
+				ingredientSections: ['Bolognese', 'Béchamel'],
+				steps: ['Anbraten.', 'Butter schmelzen.'],
+				stepSections: ['Bolognese', 'Béchamel'],
+				image: null,
+				labels: []
+			},
+			null
+		);
+		assert.deepEqual(draft.ingredientSections, ['Bolognese', 'Béchamel']);
+		assert.deepEqual(
+			draft.steps.map((step) => step.section),
+			['Bolognese', 'Béchamel']
+		);
 	});
 });

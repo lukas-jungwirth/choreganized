@@ -28,6 +28,7 @@ import {
 	type RecipeJsonLd
 } from '$lib/utils/recipe-jsonld';
 import { markedUpSteps, parseRecipeMicrodata } from '$lib/utils/recipe-microdata';
+import { pageIngredientSections } from '$lib/utils/recipe-plugins';
 import { tagsFromLabels } from '$lib/utils/recipe-tag-words';
 import {
 	clampCount,
@@ -56,12 +57,14 @@ const MAX_IMAGE_BYTES = 10 * 1024 * 1024;
 const MAX_READABLE_CHARS = 40_000;
 
 /**
- * A browser-like User-Agent: a bare `node`/`undici` string gets a 403 from a
- * good share of recipe sites. Honest about being a bot in the comment, ordinary
- * on the wire.
+ * An honest User-Agent in the `compatible` form crawlers use (→ DECISIONS #322).
+ * A bare `node`/`undici` string gets a 403 from a share of recipe sites, so it
+ * still starts with `Mozilla/5.0`. It no longer claims to be Chrome: Cloudflare
+ * challenges a client that says Chrome and does not talk like one (TLS, client
+ * hints), which turned sallysbakingaddiction.com and others away; the same
+ * request saying what it is gets the page.
  */
-const BROWSER_UA =
-	'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36';
+export const IMPORT_UA = 'Mozilla/5.0 (compatible; Haushaltsheld; recipe import)';
 
 const REDIRECT_STATUSES = new Set([301, 302, 303, 307, 308]);
 
@@ -136,7 +139,7 @@ export function readFetchedPage({
 	finalUrl: string;
 }): RecipePage {
 	const jsonLd = withMarkedUpSteps(parseRecipeJsonLd(html), html);
-	const card = jsonLd ?? parseRecipeMicrodata(html);
+	const card = withPageSections(jsonLd ?? parseRecipeMicrodata(html), html);
 	const reader = jsonLd ? 'json-ld' : card ? 'microdata' : null;
 	const { text, ogImage } = readableParts(html);
 
@@ -150,7 +153,19 @@ export function readFetchedPage({
  */
 function withMarkedUpSteps(card: RecipeJsonLd | null, html: string): RecipeJsonLd | null {
 	if (!card || card.steps.length) return card;
-	return { ...card, steps: tidySteps(markedUpSteps(html)) };
+	const { steps, sections } = tidySteps(markedUpSteps(html));
+	return { ...card, steps, stepSections: sections };
+}
+
+/**
+ * A card whose ingredient list names no parts, on a page that shows them in
+ * its plugin's markup or in a table per part: the parts are read from there
+ * (→ `$lib/utils/recipe-plugins`, plan 44). A card's own headings win.
+ */
+function withPageSections(card: RecipeJsonLd | null, html: string): RecipeJsonLd | null {
+	if (!card || card.ingredientSections.some(Boolean)) return card;
+	const sections = pageIngredientSections(html, card.ingredientLines);
+	return sections ? { ...card, ingredientSections: sections } : card;
 }
 
 /**
@@ -167,7 +182,14 @@ export function draftFromCard(card: RecipeJsonLd, photo: RecipePrefill['photo'])
 		ingredientLines: card.ingredientLines
 			.map((line) => line.slice(0, INGREDIENT_LINE_MAX))
 			.slice(0, INGREDIENTS_MAX),
-		steps: card.steps.map((step) => plainStep(step.slice(0, STEP_TEXT_MAX))).slice(0, STEPS_MAX),
+		// The parts the readers found (→ plan 44); the editor keeps them as it keeps a saved one's.
+		ingredientSections: card.ingredientSections.slice(0, INGREDIENTS_MAX),
+		steps: card.steps
+			.map((step, at) => ({
+				...plainStep(step.slice(0, STEP_TEXT_MAX)),
+				section: card.stepSections[at] ?? null
+			}))
+			.slice(0, STEPS_MAX),
 		photo,
 		suggested: cardSuggestion(card)
 	};
@@ -352,7 +374,7 @@ async function fetchGuarded(
 				redirect: 'manual',
 				signal: AbortSignal.timeout(options.timeoutMs),
 				headers: {
-					'User-Agent': BROWSER_UA,
+					'User-Agent': IMPORT_UA,
 					Accept: options.accept,
 					'Accept-Language': 'en,de;q=0.8'
 				}

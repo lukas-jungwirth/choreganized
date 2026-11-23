@@ -1,6 +1,8 @@
 # 44 · A checked import: the model structures, the app verifies
 
-**Status: todo.** Agreed with Lukas on 2026-11-23 (DECISIONS #311, #314–#318). Depends on: 42, 43. Replaces the import half of plans 22 and 23 and removes plan 24. SPEC: §4.7, §6, §9.
+**Status: in progress.** First PR (Austrian wording removed, reader fixes, the corpus, refused
+fetches; DECISIONS #321, #322) built 2026-11-23; the contract, gate, unit list, rule-based draft,
+import screen and eval script follow in a second PR. Agreed with Lukas on 2026-11-23 (DECISIONS #311, #314–#318). Depends on: 42, 43. Replaces the import half of plans 22 and 23 and removes plan 24. SPEC: §4.7, §6, §9.
 Design: none of its own; the check list it produces is shown by plan 45.
 
 **Goal:** Lukas, 2026-11-23: "I'm not really satisfied how reliable it is … I just want at the
@@ -292,8 +294,8 @@ the fake provider only, the prompt is untested against real models, and the hand
       `amount-differs` item.
 - [ ] With the provider switched off in the fake server, the same link opens the rule-based
       draft and says it was imported without AI.
-- [ ] Settings has no "Recipe wording" row; the column is gone.
-- [ ] The three refused pages import, or DECISIONS says why they cannot.
+- [x] Settings has no "Recipe wording" row; the column is gone.
+- [x] The three refused pages import, or DECISIONS says why they cannot.
 - [ ] `npm run import:eval` runs; its table is in the PR description (real model if a key
       exists, otherwise the fake one, labelled).
 - [ ] `npm run verify` and `npm run test:visual` clean.

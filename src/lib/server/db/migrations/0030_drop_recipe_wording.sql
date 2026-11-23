@@ -1,0 +1,1 @@
+ALTER TABLE `households` DROP COLUMN `recipe_wording`;

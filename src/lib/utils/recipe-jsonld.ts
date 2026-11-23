@@ -29,7 +29,15 @@ export type RecipeJsonLd = {
 	servings: number | null;
 	/** Raw ingredient lines ("500 g Mehl"), decoded and trimmed — the editor parses them. */
 	ingredientLines: string[];
+	/**
+	 * The part each ingredient line belongs to, by index ("Bolognese"), or null
+	 * (→ plan 44): a heading row in the list, or the page's plugin markup
+	 * (`recipe-plugins.ts`). As long as `ingredientLines`.
+	 */
+	ingredientSections: (string | null)[];
 	steps: string[];
+	/** The part each step belongs to: a `HowToSection`'s name or a heading step. As long as `steps`. */
+	stepSections: (string | null)[];
 	/** The first usable image candidate, **unresolved** — the caller makes it
 	 *  absolute and decides whether it's safe to fetch. */
 	image: string | null;
@@ -73,6 +81,7 @@ export function parseRecipeJsonLd(html: string): RecipeJsonLd | null {
 		for (const node of ldNodes(data)) {
 			if (!isType(node, 'Recipe')) continue;
 			const recipe = mapRecipe(node);
+			if (isBlobCard(recipe)) continue;
 			if (cardSize(recipe) > (best ? cardSize(best) : 0)) best = recipe;
 		}
 	}
@@ -84,6 +93,24 @@ export function parseRecipeJsonLd(html: string): RecipeJsonLd | null {
 export function cardSize(card: Pick<RecipeJsonLd, 'ingredientLines' | 'steps'>): number {
 	return card.ingredientLines.length + card.steps.length;
 }
+
+/**
+ * A card that is no card: no steps and the whole recipe in one long
+ * "ingredient" (cookingcatrin.at marks its entire recipe box as one
+ * `recipeIngredient`). Read as a card it would open as one row of 1,500
+ * characters; without it the page goes down the no-card road, where a model
+ * reads its text (→ plan 44). Exported for the Microdata reader.
+ */
+export function isBlobCard(card: Pick<RecipeJsonLd, 'ingredientLines' | 'steps'>): boolean {
+	return (
+		card.steps.length === 0 &&
+		card.ingredientLines.length === 1 &&
+		card.ingredientLines[0].length > BLOB_LINE_CHARS
+	);
+}
+
+/** Longer than any real ingredient line, shorter than any recipe. */
+const BLOB_LINE_CHARS = 200;
 
 function* jsonLdBlocks(html: string): Generator<string> {
 	// A fresh index each call — the regex is a module-level (stateful) `g` regex.
@@ -140,13 +167,17 @@ function isType(node: Record<string, unknown>, type: string): boolean {
 }
 
 function mapRecipe(node: Record<string, unknown>): RecipeJsonLd {
+	// `ingredients` is the deprecated spelling some older sites still emit.
+	const ingredients = tidyIngredients(mapLines(node.recipeIngredient ?? node.ingredients));
+	const steps = tidySteps(mapInstructions(node.recipeInstructions));
 	return {
 		name: cleanText(asString(node.name) ?? ''),
 		timeMinutes: mapTime(node),
 		servings: mapYield(node.recipeYield),
-		// `ingredients` is the deprecated spelling some older sites still emit.
-		ingredientLines: tidyIngredientLines(mapLines(node.recipeIngredient ?? node.ingredients)),
-		steps: tidySteps(mapInstructions(node.recipeInstructions)),
+		ingredientLines: ingredients.lines,
+		ingredientSections: ingredients.sections,
+		steps: steps.steps,
+		stepSections: steps.sections,
 		image: mapImage(node.image),
 		labels: mapLabels([node.recipeCategory, node.keywords, node.suitableForDiet])
 	};
@@ -190,15 +221,41 @@ const ISO_DURATION =
 	/^P(?:(\d+)W)?(?:(\d+)D)?(?:T(?:(\d+(?:\.\d+)?)H)?(?:(\d+(?:\.\d+)?)M)?(?:(\d+(?:\.\d+)?)S)?)?$/i;
 
 function mapTime(node: Record<string, unknown>): number | null {
-	const total = isoDurationToMinutes(asString(node.totalTime));
+	const total = durationToMinutes(asString(node.totalTime));
 	if (total) return total;
 
 	// No total given: the sum of the two halves is what the header would show.
 	const parts =
-		(isoDurationToMinutes(asString(node.prepTime)) ?? 0) +
-		(isoDurationToMinutes(asString(node.cookTime)) ?? 0);
+		(durationToMinutes(asString(node.prepTime)) ?? 0) +
+		(durationToMinutes(asString(node.cookTime)) ?? 0);
 	return parts > 0 ? parts : null;
 }
+
+/**
+ * A duration as the spec writes it, or as a site writes it in words instead:
+ * bonappetit.com sends `"totalTime": "5 hours 45 minutes"` (→ plan 44).
+ * Exported for the Microdata reader.
+ */
+export function durationToMinutes(value: string | null): number | null {
+	return isoDurationToMinutes(value) ?? wordsDurationToMinutes(value);
+}
+
+/** "5 hours 45 minutes", "1 Std. 30 Min.", "90 min": every number with its unit, summed. */
+function wordsDurationToMinutes(value: string | null): number | null {
+	if (!value) return null;
+	let total = 0;
+	let read = false;
+	for (const [, amount, unit] of value.matchAll(DURATION_WORD)) {
+		const number = Number(amount.replace(',', '.'));
+		total += /^(?:h|hours?|hrs?|std|stunden?)/i.test(unit) ? number * 60 : number;
+		read = true;
+	}
+	const minutes = Math.round(total);
+	return read && minutes > 0 ? minutes : null;
+}
+
+const DURATION_WORD =
+	/(\d+(?:[.,]\d+)?)\s*(hours?|hrs?|h|stunden?|std|minutes?|mins?|minuten?|m)\b\.?/gi;
 
 /** Exported for the Microdata reader, which writes durations the same way (→ plan 22). */
 export function isoDurationToMinutes(value: string | null): number | null {
@@ -250,14 +307,18 @@ function mapLines(value: unknown): string[] {
 
 /* ── Steps ────────────────────────────────────────────────────────────────── */
 
+/** A step or a line with the part it was found under. */
+export type SectionedText = { text: string; section: string | null };
+
 /**
  * `recipeInstructions` comes in every shape the spec allows: one string, an array
  * of strings, an array of `HowToStep` objects, or `HowToSection`s each wrapping
- * their own `itemListElement` of steps. Flatten them all, in order, to step texts.
+ * their own `itemListElement` of steps. Flatten them all, in order, to step texts,
+ * each with the name of the `HowToSection` it was in (→ plan 44).
  */
-function mapInstructions(value: unknown): string[] {
-	const steps: string[] = [];
-	collectSteps(value, steps);
+function mapInstructions(value: unknown): SectionedText[] {
+	const steps: SectionedText[] = [];
+	collectSteps(value, steps, null);
 	return steps;
 }
 
@@ -271,7 +332,7 @@ function isFragment(line: string): boolean {
 	return /^(\d|etwas\b|eine? (prise|handvoll)\b)/i.test(line) && line.split(' ').length <= 8;
 }
 
-function collectSteps(value: unknown, into: string[]): void {
+function collectSteps(value: unknown, into: SectionedText[], section: string | null): void {
 	if (value == null) return;
 
 	if (typeof value === 'string') {
@@ -287,22 +348,23 @@ function collectSteps(value: unknown, into: string[]): void {
 			// those fragments belong to the step that follows, not to steps of their own.
 			pending = pending ? `${pending} ${text}` : text;
 			if (!isFragment(text)) {
-				into.push(pending);
+				into.push({ text: pending, section });
 				pending = '';
 			}
 		}
-		if (pending) into.push(pending);
+		if (pending) into.push({ text: pending, section });
 		return;
 	}
 
 	if (Array.isArray(value)) {
-		for (const item of value) collectSteps(item, into);
+		for (const item of value) collectSteps(item, into, section);
 		return;
 	}
 
 	if (isObject(value)) {
 		if (isType(value, 'HowToSection')) {
-			collectSteps(value.itemListElement, into);
+			const title = asString(value.name);
+			collectSteps(value.itemListElement, into, (title && sectionName(title)) ?? section);
 			return;
 		}
 		// `name` is a step's title ("Eier"), not its instruction — a lone word is no step.
@@ -310,11 +372,11 @@ function collectSteps(value: unknown, into: string[]): void {
 		const text = stepText(value.text) ?? (name && /\s/.test(name.trim()) ? name : null);
 		if (text) {
 			const cleaned = cleanText(text);
-			if (cleaned) into.push(cleaned);
+			if (cleaned) into.push({ text: cleaned, section });
 			return;
 		}
 		// An untyped wrapper that still holds a list of steps.
-		if (value.itemListElement !== undefined) collectSteps(value.itemListElement, into);
+		if (value.itemListElement !== undefined) collectSteps(value.itemListElement, into, section);
 	}
 }
 
@@ -335,50 +397,96 @@ function stepText(value: unknown): string | null {
 
 /**
  * A card's steps as the editor wants them, whichever reader found them:
- * leftover numbering off ("1. ", "Schritt 2:"), and a heading — a short line
- * ending on a colon, "Orangensalat:" — joined to the step it heads instead of
- * standing as a step that says nothing to do. Exported for the Microdata reader.
+ * leftover numbering off ("1. ", "Schritt 2:"), template leftovers out
+ * (`stripTemplateLeftovers`), and a heading (a short line ending on a colon,
+ * "Orangensalat:", or a title of a few words, "Karottenkuchen") made the part
+ * of the steps after it instead of a step that says nothing to do (→ plan 44;
+ * before, it was glued to the next step's text). A part that covers every step
+ * is no part ("Zubereitung"). Exported for the Microdata reader.
  */
-export function tidySteps(steps: string[]): string[] {
-	const tidy: string[] = [];
-	let heading = '';
+export function tidySteps(steps: (string | SectionedText)[]): {
+	steps: string[];
+	sections: (string | null)[];
+} {
+	const rows = steps
+		.map((one) => (typeof one === 'string' ? { text: one, section: null } : one))
+		.map((one) => ({
+			text: stripTemplateLeftovers(one.text.replace(STEP_NUMBER, '')).trim(),
+			section: one.section
+		}))
+		.filter((one) => one.text);
 
-	for (const raw of steps) {
-		const text = raw.replace(STEP_NUMBER, '').trim();
-		if (!text) continue;
-		if (isHeading(text)) {
-			heading = heading ? `${heading} ${text}` : text;
-			continue;
+	const tidy: SectionedText[] = [];
+	// A heading names the steps after it until the card's own part changes.
+	let heading: { name: string | null; under: string | null } | null = null;
+
+	rows.forEach((row, at) => {
+		if (heading && heading.under !== row.section) heading = null;
+		if (at < rows.length - 1 && isHeading(row.text)) {
+			heading = { name: sectionName(row.text), under: row.section };
+			return;
 		}
-		tidy.push(heading ? `${heading} ${text}` : text);
-		heading = '';
-	}
+		tidy.push({ text: row.text, section: heading?.name ?? row.section });
+	});
 
-	if (heading) tidy.push(heading);
-	return tidy;
+	return {
+		steps: tidy.map((row) => row.text),
+		sections: loneSectionOff(tidy.map((row) => row.section))
+	};
 }
 
 /** "1. ", "2) ", "Schritt 3:", "Step 4 –" — a list's numbering, not the instruction. */
 const STEP_NUMBER = /^(?:(?:schritt|step)\s*\d{1,2}\s*[:.)–-]?\s*|\d{1,2}[.)]\s+)/i;
 
-/** A section title: ends on a colon and is short enough to be a label, not an instruction. */
+/**
+ * A section title: ends on a colon and is short enough to be a label, not an
+ * instruction; or a few words with no number and no sentence end
+ * ("Karottenkuchen", "Frischkäse-Frosting und Finish", kochbar.de).
+ */
 function isHeading(line: string): boolean {
-	return line.endsWith(':') && line.split(/\s+/).length <= HEADING_MAX_WORDS;
+	const words = line.split(/\s+/).length;
+	if (line.endsWith(':')) return words <= HEADING_MAX_WORDS;
+	return words <= TITLE_MAX_WORDS && !/\d/.test(line) && !/[.!?;,)]$/.test(line);
 }
 
 const HEADING_MAX_WORDS = 15;
+const TITLE_MAX_WORDS = 4;
 
 /**
- * A card's ingredient lines as rows: a section title ("Für den Teig:") is no
- * ingredient and is dropped — the rows have no groups to put it in, and on the
- * shopping list it would be a thing to buy — and a line the site split on its
- * own comma is put back together. einfachkochen.de sends "200 ml Milch (1,8 %
- * Fett)" as "200 ml Milch (1" and "8 % Fett)", the same split as #31's steps:
- * a line that opens a bracket it doesn't close takes the next line in.
+ * Template code a site left in its text (→ plan 44): gutekueche.at writes
+ * `{{ link("RZT", 43664, "Lasagneblätter") }}` (the link's words stay),
+ * hellofresh writes each portion size's amount, `1 EL [1,5 EL | 2 EL] Öl*`
+ * (the first stays; the others, and the asterisk marking what you have at
+ * home, go). Exported for the tests.
+ */
+export function stripTemplateLeftovers(text: string): string {
+	return text
+		.replace(/\{\{\s*\w+\(([^)]*)\)\s*\}\}/g, (_, args: string) => {
+			const quoted = [...args.matchAll(/["']([^"']*)["']/g)].map((match) => match[1]);
+			return quoted.at(-1) ?? '';
+		})
+		.replace(/\s*\[[^\]|]*\|[^\]]*\]/g, '')
+		.replace(/(\p{L})\*+/gu, '$1')
+		.replace(/\s{2,}/g, ' ');
+}
+
+/**
+ * A card's ingredient lines as rows: a section title ("Für den Teig:",
+ * "KATSU CURRY SAUCE") is no ingredient: it names the part of the rows after it
+ * (→ plan 44; before, it was dropped). A line the site split on its own comma is
+ * put back together: einfachkochen.de sends "200 ml Milch (1,8 % Fett)" as
+ * "200 ml Milch (1" and "8 % Fett)", the same split as #31's steps, so a line
+ * that opens a bracket it doesn't close takes the next line in. And what sites
+ * leave in a line that is no part of it goes (`tidyIngredientLine`).
  * Exported for the Microdata reader.
  */
-export function tidyIngredientLines(lines: string[]): string[] {
+export function tidyIngredients(lines: string[]): {
+	lines: string[];
+	sections: (string | null)[];
+} {
 	const tidy: string[] = [];
+	const sections: (string | null)[] = [];
+	let section: string | null = null;
 
 	for (let at = 0; at < lines.length; at++) {
 		let line = lines[at];
@@ -389,11 +497,93 @@ export function tidyIngredientLines(lines: string[]): string[] {
 			// A decimal comma has no space after it; a list comma does.
 			line = /\d$/.test(line) && /^\d/.test(next) ? `${line},${next}` : `${line}, ${next}`;
 		}
-		if (line.endsWith(':') && !/^[\d½¼¾⅓⅔⅛]/.test(line)) continue;
-		tidy.push(line);
+		if (isIngredientHeading(line)) {
+			section = sectionName(line);
+			continue;
+		}
+		const cleaned = tidyIngredientLine(line);
+		if (!cleaned) continue;
+		tidy.push(cleaned);
+		sections.push(section);
 	}
 
-	return tidy;
+	return { lines: tidy, sections: loneSectionOff(sections) };
+}
+
+/** "Für den Teig:", "KATSU CURRY SAUCE", "Für die Füllung": a title, not a thing to buy. */
+function isIngredientHeading(line: string): boolean {
+	if (/^[\d½¼¾⅓⅔⅛]/.test(line)) return false;
+	if (line.endsWith(':')) return true;
+	if (/\d/.test(line)) return false;
+	const letters = line.replace(/[^\p{L}]/gu, '');
+	const shouted =
+		letters.length >= 4 && letters === letters.toUpperCase() && letters !== letters.toLowerCase();
+	return shouted || (/^(?:für|for)\s/i.test(line) && line.split(/\s+/).length <= 5);
+}
+
+/**
+ * What a recipe plugin leaves in an ingredient line that is not the line
+ * (→ plan 44): a price, "($0.36)" (Budget Bytes); a footnote, "(Note 1)" or
+ * "- Note 3" (recipetineats.com); WP Recipe Maker's notes in brackets that open
+ * on their own comma, "1 onion (, finely chopped)" for "1 onion, finely
+ * chopped"; a bracket doubled once the footnote is gone; an asterisk.
+ * Exported for the tests.
+ */
+export function tidyIngredientLine(line: string): string {
+	let text = line
+		.replace(/\s*\((?:[$€£]\s?\d+(?:[.,]\d{1,2})?|\d+(?:[.,]\d{1,2})?\s?[$€£])\)/g, '')
+		.replace(/\s*\((?:see\s+)?notes?\s*\d+\)/gi, '')
+		.replace(/\s*[-–]\s*notes?\s*\d+\b/gi, '')
+		.replace(/\*+/g, '')
+		.replace(/\s{2,}/g, ' ')
+		.trim();
+	// "((ground beef))" → "(ground beef)", "()" → "".
+	for (let pass = 0; pass < 3; pass++) {
+		text = text
+			.replace(/\(\s*\(([^()]*)\)\s*\)/g, '($1)')
+			.replace(/\s*\(\s*\)/g, '')
+			.trim();
+	}
+	return text.replace(/\s*\(\s*,\s*(.*)\)$/, ', $1').trim();
+}
+
+/**
+ * A part's name as the screens show it (→ plan 43: as written, at most 40
+ * characters): no closing colon, no "Für die" / "For the" in front, shouting
+ * lowered ("FÜR DIE BOLOGNESESAUCE" → "Bolognesesauce"), a remark in brackets
+ * dropped when the name is too long. Null for a heading that names no part
+ * ("Zutaten", "Zubereitung", "Instructions"). Exported for the plugin reader.
+ */
+export function sectionName(raw: string): string | null {
+	let name = cleanText(raw)
+		.replace(/\s*:\s*$/, '')
+		.replace(/\s*:\s*/g, ' ');
+	const letters = name.replace(/[^\p{L}]/gu, '');
+	if (letters && letters === letters.toUpperCase()) name = name.toLowerCase();
+	name = name
+		.replace(/^(?:zutaten\s+)?f(?:ü|ue)r\s+(?:den|die|das|dem)\s+/i, '')
+		.replace(/^(?:zutaten\s+)?f(?:ü|ue)r\s+/i, '')
+		.replace(/^for\s+(?:the\s+)?/i, '')
+		.trim();
+	if (name.length > SECTION_MAX) name = name.replace(/\s*\([^)]*\)/g, '').trim();
+	if (name.length > SECTION_MAX) name = name.slice(0, SECTION_MAX).replace(/\s+\S*$/, '');
+	if (!name || /^\d/.test(name) || GENERIC_HEADING.test(name)) return null;
+	return name[0].toUpperCase() + name.slice(1);
+}
+
+/** As `recipe_ingredients.section` caps it (→ plan 43). */
+const SECTION_MAX = 40;
+
+const GENERIC_HEADING =
+	/^(?:zutaten|zubereitung|anleitung|so geht'?s|ingredients?|instructions?|method|directions?|steps?|preparation)$/i;
+
+/**
+ * One part that every row is in is no part: a card's "Zubereitung" around all
+ * its steps. Exported for the plugin reader.
+ */
+export function loneSectionOff(sections: (string | null)[]): (string | null)[] {
+	if (new Set(sections).size === 1 && sections[0] !== null) return sections.map(() => null);
+	return sections;
 }
 
 function unclosed(line: string): boolean {
@@ -453,6 +643,10 @@ const NAMED_ENTITIES: Record<string, string> = {
 	auml: 'ä',
 	ouml: 'ö',
 	uuml: 'ü',
+	Auml: 'Ä',
+	Ouml: 'Ö',
+	Uuml: 'Ü',
+	Eacute: 'É',
 	szlig: 'ß',
 	eacute: 'é',
 	egrave: 'è',

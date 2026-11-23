@@ -413,18 +413,144 @@ describe('parseRecipeJsonLd — tidying what sites send', () => {
 		);
 	});
 
-	it('joins a heading step to the step it heads', () => {
+	it('makes a heading step the part of the steps after it (→ plan 44)', () => {
+		const recipe = parseRecipeJsonLd(
+			page({
+				'@type': 'Recipe',
+				name: 'x',
+				recipeInstructions: [
+					'Wasser aufsetzen.',
+					'Für die Soße:',
+					'Butter schmelzen.',
+					'Mehl einrühren.',
+					'Karottenkuchen',
+					'Backen.',
+					'Zum Servieren:'
+				]
+			})
+		);
+		assert.deepEqual(recipe?.steps, [
+			'Wasser aufsetzen.',
+			'Butter schmelzen.',
+			'Mehl einrühren.',
+			'Backen.',
+			'Zum Servieren:'
+		]);
+		assert.deepEqual(recipe?.stepSections, [
+			null,
+			'Soße',
+			'Soße',
+			'Karottenkuchen',
+			'Karottenkuchen'
+		]);
+	});
+
+	it('makes a section title in the ingredients the part of the rows after it (→ plan 44)', () => {
+		const recipe = parseRecipeJsonLd(
+			page({
+				'@type': 'Recipe',
+				name: 'x',
+				recipeIngredient: [
+					'Für den Teig:',
+					'250 g Mehl',
+					'KATSU CURRY SAUCE',
+					'1 onion',
+					'PICKLE',
+					'1 lemon'
+				]
+			})
+		);
+		assert.deepEqual(recipe?.ingredientLines, ['250 g Mehl', '1 onion', '1 lemon']);
+		assert.deepEqual(recipe?.ingredientSections, ['Teig', 'Katsu curry sauce', 'Pickle']);
+	});
+
+	it('keeps a HowToSection’s name as the part of its steps (→ plan 44)', () => {
+		const recipe = parseRecipeJsonLd(
+			page({
+				'@type': 'Recipe',
+				name: 'x',
+				...ROWS,
+				recipeInstructions: [
+					{
+						'@type': 'HowToSection',
+						name: 'FÜR DIE BOLOGNESESAUCE',
+						itemListElement: [{ '@type': 'HowToStep', text: 'Anbraten.' }]
+					},
+					{
+						'@type': 'HowToSection',
+						name: 'Cheese Sauce:',
+						itemListElement: [{ '@type': 'HowToStep', text: 'Melt butter.' }]
+					}
+				]
+			})
+		);
+		assert.deepEqual(recipe?.stepSections, ['Bolognesesauce', 'Cheese Sauce']);
+	});
+
+	it('names no part when one covers everything ("Zubereitung")', () => {
+		const recipe = parseRecipeJsonLd(
+			page({
+				'@type': 'Recipe',
+				name: 'x',
+				...ROWS,
+				recipeInstructions: [
+					{
+						'@type': 'HowToSection',
+						name: 'Schichten',
+						itemListElement: ['Schichten.', 'Backen.']
+					}
+				]
+			})
+		);
+		assert.deepEqual(recipe?.stepSections, [null, null]);
+	});
+
+	it('takes template leftovers out of a step (gutekueche.at, hellofresh)', () => {
 		assert.deepEqual(
-			steps(['Für die Soße:', 'Butter schmelzen.', 'Mehl einrühren.', 'Zum Servieren:']),
-			['Für die Soße: Butter schmelzen.', 'Mehl einrühren.', 'Zum Servieren:']
+			steps([
+				'Abwechselnd die {{ link("RZT", 43664, "Lasagneblätter") }} und die Sauce schichten.',
+				'Mit 1 EL [1,5 EL | 2 EL] Öl*, einer Prise Salz* und die Hälfte [drei Viertel | alles] der Sriracha marinieren.'
+			]),
+			[
+				'Abwechselnd die Lasagneblätter und die Sauce schichten.',
+				'Mit 1 EL Öl, einer Prise Salz und die Hälfte der Sriracha marinieren.'
+			]
 		);
 	});
 
-	it('drops a section title from the ingredients', () => {
-		assert.deepEqual(lines(['Für den Teig:', '250 g Mehl', 'Für die Fülle:', '500 g Topfen']), [
-			'250 g Mehl',
-			'500 g Topfen'
-		]);
+	it('takes prices, footnotes and WP Recipe Maker’s comma brackets out of a line', () => {
+		assert.deepEqual(
+			lines([
+				'1 onion (, finely chopped (white, yellow or brown))',
+				'1 kg / 2 lb beef mince ((ground beef) (Note 1))',
+				'1 - 2 tsp sugar ((if needed - Note 3))',
+				'2 cups rice ($0.36)',
+				'2 cups (260g) chopped pecans (1 cup for cake)*'
+			]),
+			[
+				'1 onion, finely chopped (white, yellow or brown)',
+				'1 kg / 2 lb beef mince (ground beef)',
+				'1 - 2 tsp sugar (if needed)',
+				'2 cups rice',
+				'2 cups (260g) chopped pecans (1 cup for cake)'
+			]
+		);
+	});
+
+	it('reads a total time written in words (bonappetit.com)', () => {
+		const time = (totalTime: string) =>
+			parseRecipeJsonLd(page({ '@type': 'Recipe', name: 'x', ...ROWS, totalTime }))?.timeMinutes;
+		assert.equal(time('5 hours 45 minutes'), 345);
+		assert.equal(time('1 Std. 30 Min.'), 90);
+		assert.equal(time('soon'), null);
+	});
+
+	it('reads a card with no steps and the whole recipe in one row as no card (cookingcatrin.at)', () => {
+		const blob = `Zutaten ${'1 kg speckige Erdäpfel 50 ml Essig 500 ml heißes Wasser '.repeat(6)}`;
+		assert.equal(
+			parseRecipeJsonLd(page({ '@type': 'Recipe', name: 'x', recipeIngredient: [blob] })),
+			null
+		);
 	});
 
 	it('puts back an ingredient the site split on its own comma', () => {
@@ -469,10 +595,12 @@ describe('parseRecipeJsonLd — zuckerjagdwurst.com (section titles, numbered st
 		assert.equal(recipe!.ingredientLines[0], '3 Orangen (z. B. von gebana)');
 	});
 
-	it('numbers no step, and heads the first with its section', () => {
+	it('numbers no step, and puts each under its part', () => {
 		assert.ok(recipe!.steps.every((step) => !/^\d+\.\s/.test(step)));
-		assert.match(recipe!.steps[0], /^Orangensalat \(.*\): Orangen schälen/);
+		assert.match(recipe!.steps[0], /^Orangen schälen/);
 		assert.equal(recipe!.steps.length, 13);
+		assert.equal(recipe!.stepSections[0], 'Orangensalat');
+		assert.equal(recipe!.stepSections[4], 'Kürbis-Curry');
 	});
 });
 

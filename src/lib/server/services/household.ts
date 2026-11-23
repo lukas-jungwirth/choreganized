@@ -19,7 +19,6 @@ import type { Locale } from '$lib/i18n';
 import { isMemberColor, MAX_MEMBERS } from '$lib/member-colors';
 import { isBirthday } from '$lib/utils/birthday';
 import { toCalendarDate, type CalendarDate } from '$lib/utils/dates';
-import type { RecipeWording } from '$lib/utils/wording';
 import {
 	generateInviteCode,
 	INVITE_CODE_LENGTH,
@@ -478,32 +477,6 @@ export function renameHousehold(householdId: string, actorMemberId: string, name
 	db.transaction((tx) => {
 		requireOwner(tx, householdId, actorMemberId);
 		tx.update(households).set({ name: name.trim() }).where(eq(households.id, householdId)).run();
-	});
-}
-
-/** How imported German recipes are worded (→ plan 24); null = as the site wrote them. */
-export function getRecipeWording(householdId: string): RecipeWording | null {
-	return (
-		db
-			.select({ wording: households.recipeWording })
-			.from(households)
-			.where(eq(households.id, householdId))
-			.get()?.wording ?? null
-	);
-}
-
-/** The owner's to change, like the house's name — it shapes everyone's imports (→ #10). */
-export function setRecipeWording(
-	householdId: string,
-	actorMemberId: string,
-	wording: RecipeWording | null
-): void {
-	db.transaction((tx) => {
-		requireOwner(tx, householdId, actorMemberId);
-		tx.update(households)
-			.set({ recipeWording: wording })
-			.where(eq(households.id, householdId))
-			.run();
 	});
 }
 

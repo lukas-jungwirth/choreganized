@@ -35,7 +35,7 @@ plus your session date). Note deviations in the plan file and in DECISIONS.md.
 | 21  | [Named step timers & German durations](21-step-timers.md)                                        | done (2026-10-18)         | 08                       |
 | 22  | [Smarter import: link + AI, Microdata, enriched drafts](22-smarter-import.md)                    | done (2026-10-18)         | 20, 21                   |
 | 23  | [Amounts in step text follow servings](23-step-amounts.md)                                       | done (2026-10-18)         | 07                       |
-| 24  | [Austrian wording (fixed word list)](24-austrian-wording.md)                                     | done (2026-10-18)         | 22                       |
+| 24  | [Austrian wording (fixed word list)](24-austrian-wording.md)                                     | removed by 44             | 22                       |
 | 25  | [Agent lane: no silent refusals, runs you can check](25-agent-evidence.md)                       | done (2026-10-26)         | 18                       |
 | 26  | [Agent lane: reproduce first, review second](26-agent-reproduce-review.md)                       | done (2026-10-26)         | 25                       |
 | 27  | [Agent lane: ideas as proposals, a hardened lane](27-agent-ideas-safety.md)                      | todo                      | 26                       |
@@ -55,7 +55,7 @@ plus your session date). Note deviations in the plan file and in DECISIONS.md.
 | 41  | [Recipe tags fill themselves in](41-recipe-tags-fill-in.md)                                      | done (2026-11-23, v0.8.0) | 40, 13, 22               |
 | 42  | [One amount reader for lists, recipes and steps](42-one-amount-reader.md)                        | done (2026-11-23, v0.8.0) | 37                       |
 | 43  | [Recipes with parts, clean ingredients and stored links](43-recipe-parts-notes-links.md)         | done (2026-11-23, v0.8.0) | 42                       |
-| 44  | [A checked import: the model structures, the app verifies](44-checked-import.md)                 | todo                      | 42, 43                   |
+| 44  | [A checked import: the model structures, the app verifies](44-checked-import.md)                 | in progress               | 42, 43                   |
 | 45  | [Import review: the recipe as it will look, with what to check](45-import-review.md)             | todo (sketch first)       | 43, 44                   |
 | 46  | [The recipe editor, rebuilt around parts and links](46-recipe-editor.md)                         | todo (sketch first)       | 43                       |
 | 47  | [Cook mode: what this step needs, at reading size](47-cook-mode-step-ingredients.md)             | todo (sketch first)       | 43                       |

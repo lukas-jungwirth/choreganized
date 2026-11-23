@@ -7,7 +7,6 @@ import { describe, it } from 'vitest';
 import { parseIngredient } from './ingredients.ts';
 import { parseRecipeJsonLd } from './recipe-jsonld.ts';
 import { highlightStep, plainName, readStep, scaleStepUses } from './step-highlight.ts';
-import { applyWording } from './wording.ts';
 
 /** Shorthand: the step text rebuilt with the underlined runs marked with `«»`. */
 function marked(text: string, names: string[]): string {
@@ -191,25 +190,21 @@ describe('highlightStep', () => {
 });
 
 /**
- * Issue #31, from the real page: what the quiche's steps underline once imported in
- * Austrian wording (→ recipe-jsonld.test.ts for the import itself).
+ * Issue #31, from the real page: what the quiche's steps underline once imported
+ * (→ recipe-jsonld.test.ts for the import itself).
  */
 describe('highlightStep — the einfachkochen.de quiche', () => {
 	const recipe = parseRecipeJsonLd(
 		readFileSync(new URL('./fixtures/einfachkochen-quiche.html', import.meta.url), 'utf8')
 	);
 	assert.ok(recipe);
-	const rows = applyWording(recipe.ingredientLines, recipe.steps, 'austrian')
+	const rows = recipe.ingredientLines
 		.map((line) => parseIngredient(line))
 		.filter((row) => row !== null && row.name !== '') as { name: string }[];
 	const underlined = (step: number) =>
 		highlightStep(recipe.steps[step - 1], rows)
 			.segments.filter((segment) => segment.ingredient)
 			.map((segment) => segment.text);
-
-	it('does not take Oberhitze for the Obers (step 3)', () => {
-		assert.ok(!underlined(3).includes('Ober'));
-	});
 
 	it('links the eggs and the cream in step 4', () => {
 		assert.deepEqual(underlined(4).slice(0, 2), ['Eier', 'Sahne']);

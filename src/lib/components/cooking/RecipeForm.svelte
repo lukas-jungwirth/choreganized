@@ -171,8 +171,13 @@
 		untrack(() => {
 			if (prefill) {
 				return prefill.ingredientLines.length
-					? prefill.ingredientLines.map((line) => {
-							const created = ingredientRow(line);
+					? prefill.ingredientLines.map((line, at) => {
+							// The page's part, when the reader found one (→ plan 44).
+							const section = prefill.ingredientSections?.[at] ?? null;
+							const created = ingredientRow(
+								line,
+								section ? { note: null, section, name: '' } : null
+							);
 							rowForDraftIndex.push(created.key);
 							return created;
 						})

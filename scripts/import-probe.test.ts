@@ -7,7 +7,7 @@ import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
 import { describe, it } from 'vitest';
 import { readFetchedPage } from '../src/lib/server/recipe-import';
-import { fixtureFile, probeReport } from './import-probe';
+import { fixtureFile, probeReport, trimPage } from './import-probe';
 
 const url = 'https://www.einfachkochen.de/rezepte/quiche-mit-lachs-genial-einfach-so-lecker';
 const html = readFileSync(
@@ -71,5 +71,44 @@ describe('fixtureFile', () => {
 
 	it('puts the note first when there is no doctype', () => {
 		assert.ok(fixtureFile(url, '<html></html>', '2026-10-25').startsWith('<!--'));
+	});
+});
+
+describe('trimPage (→ plan 44)', () => {
+	const page = `<!doctype html><html><head><!-- a comment -->
+<link rel="stylesheet" href="/a.css"><style>.x{color:red}</style>
+<script>window.ads = 1;</script><script src="/app.js"></script>
+<script type="application/ld+json">{"@type":"Recipe","name":"Strudel","recipeIngredient":["1 Ei"]}</script>
+</head><body><svg viewBox="0 0 1 1"><path d="M0"/></svg>
+<img src="a.jpg" srcset="a.jpg 1x, b.jpg 2x" style="width:1px"><p>Zutaten</p></body></html>`;
+	const trimmed = trimPage(page);
+
+	it('drops scripts, styles, stylesheets, SVG and comments, and keeps the JSON-LD', () => {
+		const gone = ['comment', 'a.css', 'color:red', 'window.ads', 'app.js', '<svg', 'srcset'];
+		for (const text of [...gone, 'width:1px']) assert.ok(!trimmed.includes(text), text);
+		assert.ok(trimmed.includes('"name":"Strudel"'));
+		assert.ok(trimmed.includes('<p>Zutaten</p>'));
+	});
+
+	it('reads the same as the full page', () => {
+		const full = readFetchedPage({ html: page, finalUrl: url });
+		assert.deepEqual(readFetchedPage({ html: trimmed, finalUrl: url }), full);
+	});
+
+	it('says so in the fixture note', () => {
+		assert.ok(fixtureFile(url, trimmed, '2026-11-23', true).includes('Trimmed by --trim'));
+	});
+});
+
+describe('probeReport parts (→ plan 44)', () => {
+	it('puts a [Part] line where a part starts', () => {
+		const html = `<script type="application/ld+json">${JSON.stringify({
+			'@type': 'Recipe',
+			name: 'Lasagne',
+			recipeIngredient: ['Für die Soße:', '1 Zwiebel', 'Für die Béchamel:', '50 g Butter'],
+			recipeInstructions: ['Anbraten.']
+		})}</script>`;
+		const report = probeReport(url, readFetchedPage({ html, finalUrl: url }));
+		assert.match(report, /^ {2}\[Soße\]\n {2}- 1 Zwiebel\n {2}\[Béchamel\]\n {2}- 50 g Butter$/m);
 	});
 });

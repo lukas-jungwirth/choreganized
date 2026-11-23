@@ -33,7 +33,6 @@ import {
 	type RecipePage
 } from '$lib/server/recipe-import';
 import { getAiConnections, getAiInstructions, isAiEnabled } from '$lib/server/services/ai';
-import { getRecipeWording } from '$lib/server/services/household';
 import {
 	aiImportErrorMessage,
 	extractRecipe,
@@ -53,7 +52,6 @@ import {
 	uploadErrorMessage
 } from '$lib/server/uploads';
 import { mergeSuggestions, readRecipeForm, type RecipePrefill } from '$lib/utils/recipes';
-import { applyWording, type RecipeWording } from '$lib/utils/wording';
 import type { Actions, PageServerLoad } from './$types';
 
 /** A cookbook spread is a page or two — more than three photos is a different job. */
@@ -100,24 +98,28 @@ function contextFor(householdId: string, form: FormData, m: Messages): ImportCon
 			household: getAiInstructions(householdId),
 			now: cleanInstructions(form.get('instructions'))
 		},
-		labels: m.units.labels,
-		wording: getRecipeWording(householdId)
+		labels: m.units.labels
 	};
 }
 
 /**
- * A page's card as written — in the household's wording, when it chose one
- * and the card is German: the ingredient names only, since without a model a
- * word swap inside a sentence would break its grammar (→ plan 24).
+ * An improved card with the card's parts (→ plan 44) — only where the model
+ * kept its rows one for one, which the gate holds it to unless household
+ * instructions let it change them; then the parts would land on the wrong rows.
  */
-function cardDraft(
-	card: NonNullable<RecipePage['card']>,
-	photo: RecipePrefill['photo'],
-	wording: RecipeWording | null
-): RecipePrefill {
-	const draft = draftFromCard(card, photo);
-	const steps = draft.steps.map((step) => step.text);
-	return { ...draft, ingredientLines: applyWording(draft.ingredientLines, steps, wording) };
+function withCardParts<T extends Omit<RecipePrefill, 'photo'>>(
+	improved: T,
+	card: RecipePrefill
+): T {
+	const sameRows =
+		improved.ingredientLines.length === card.ingredientLines.length &&
+		improved.steps.length === card.steps.length;
+	if (!sameRows) return improved;
+	return {
+		...improved,
+		ingredientSections: card.ingredientSections,
+		steps: improved.steps.map((step, at) => ({ ...step, section: card.steps[at].section ?? null }))
+	};
 }
 
 /**
@@ -181,13 +183,13 @@ async function importLink(event: RequestEvent, ai: 'off' | 'if-set-up' | 'ask') 
 	if (page.card) {
 		// The photo downloads while the model works; the card opens with it either way.
 		const photo = importPagePhoto(page);
-		if (!withAi) return { draft: cardDraft(page.card, await photo, context.wording ?? null) };
+		if (!withAi) return { draft: draftFromCard(page.card, await photo) };
 
 		try {
 			const result = await improveRecipe(connections, page.card, context);
 			return {
 				draft: {
-					...result.value,
+					...withCardParts(result.value, draftFromCard(page.card, null)),
 					photo: await photo,
 					// The page's own word first; the model's fills what it left out (→ plan 41).
 					suggested: mergeSuggestions(cardSuggestion(page.card), result.value.suggested)
@@ -196,7 +198,7 @@ async function importLink(event: RequestEvent, ai: 'off' | 'if-set-up' | 'ask') 
 			};
 		} catch (cause) {
 			return {
-				draft: cardDraft(page.card, await photo, context.wording ?? null),
+				draft: draftFromCard(page.card, await photo),
 				notice: m.cooking.import.ai.withoutAi(aiImportErrorMessage(cause, m))
 			};
 		}
