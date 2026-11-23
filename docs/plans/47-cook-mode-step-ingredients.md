@@ -1,6 +1,7 @@
 # 47 · Cook mode: what this step needs, at reading size
 
-**Status: todo. The sketch has to be agreed first.** Asked for by Lukas on 2026-11-23.
+**Status: todo.** Asked for by Lukas on 2026-11-23; he saw the sketch the same day ("Cook mode
+looks good"), so frames C1–C3 are agreed, the "Get ready" screen and the 27 px step text included.
 Depends on: 43. SPEC: §4.6. Design: `design/sketches/recipe-rebuild.html`, frames C1–C3.
 Changes frame [7b].
 

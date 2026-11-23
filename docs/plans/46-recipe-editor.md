@@ -1,8 +1,9 @@
 # 46 · The recipe editor, rebuilt around parts and links
 
-**Status: todo. The sketch has to be agreed first.** Asked for by Lukas on 2026-11-23.
-Depends on: 43. SPEC: §4.4 rewritten. Design: `design/sketches/recipe-rebuild.html`, frames
-E1–E5. Replaces frame [3c].
+**Status: todo.** Asked for by Lukas on 2026-11-23; he saw the sketch the same day and asked
+for the four changes marked "(Lukas, sketch feedback)" below, which the sketch now shows.
+Depends on: 43. SPEC: §4.4 rewritten. Design: `design/sketches/recipe-rebuild.html`, frames E1,
+E2, E3a, E3b, E3. Replaces frame [3c].
 
 **Goal:** Lukas: "the UI is also a little bit too small sometimes to really work it out and
 not that easy to understand what to add, like timer, ingredients, move, delete." Today a step
@@ -17,26 +18,53 @@ is a textarea with three 16 px icons beside it and two rows of small chips under
 - Rows under **part headings**. "Add part" names one; a part's name is edited in place; an
   empty name dissolves the part into the one above.
 - A row shows amount and unit (or counting word), the **name**, and the note in a second,
-  smaller line. Tapping it opens the ingredient sheet: amount, unit (the eight, or "other" with
-  a free word), name, note, part.
+  smaller line. Tapping it opens the ingredient sheet [E2]: name, amount, note, part.
+  **The amount is one line** (Lukas, sketch feedback: "it's only a number, it can be smaller"):
+  a number field about 76 px wide and 44 px high, then the units as chips in a row that scrolls
+  sideways (the eight, then "other…" for a counting word). Not a tall field beside a block of
+  wrapped chips.
 - **Typing stays the fast way in**: an add field at the foot of each part takes a line
   ("400 g Nudeln", "1 Karotte, in Scheiben") and reads it with plan 42's reader; what follows
   a comma or stands in brackets becomes the note. The row shows what was understood.
 - Reorder by **dragging the grip** (`svelte-dnd-action`, already a dependency), also from one
-  part into another. The arrows of DECISIONS #67 go.
+  part into another; the ingredient sheet's Part row does the same without a drag. The arrows
+  of DECISIONS #67 go.
 
 **Steps**
 
 - Cards under part headings, numbered straight through. The text is a textarea at reading size
   (`--fs-17`), growing with its content.
-- Under the text, **one labelled row of actions**, each at least 44 px high, with an icon and
-  a word: **Ingredients** (count), **Timer** (its time when set), and a **⋯** menu with Move
-  up, Move down, Move to part, Delete. A grip on the card drags it.
-- **Ingredients** opens the link sheet: the step's text with every word tappable. Linked words
-  are underlined in amber with the ingredient's name beside them. Tap a word (or drag across
-  several) → pick the ingredient → linked. Tap a linked word → change or unlink. Below the
-  text: the ingredients this step uses without naming them, with "Add ingredient". An amount
-  the text gives an ingredient is shown as part of the link and can be switched off.
+- Under the text, **two rows that say what they hold** [E3a] (Lukas, sketch feedback: it was
+  not clear how to get from a step to its links), each at least 48 px high, label left, value
+  right, a chevron: **Ingredients** with the linked names ("Karotten, Faschiertes", or "Link
+  the words that name them" when there are none) and **Timer** with its name and time (or "Add
+  a timer"). Tapping the text edits the text; tapping a row opens its sheet.
+- A **⋯** button on the card holds Move up, Move down, **Move to part…** and Delete.
+  **Move to part… opens a list of every part** [E3b] (Lukas, sketch feedback: "what if there
+  are three different parts?"), with the current one marked, "No part" and "New part"; the
+  step lands at the end of the part picked. The same list moves an ingredient from its sheet.
+  Steps are not dragged; ingredients are.
+- **Ingredients** opens the link sheet [E3] (Lukas, sketch feedback: the superscript names
+  beside linked words read badly):
+  - The step's text on top, every word tappable, shown **as cook mode will show it**: a linked
+    word underlined in amber, a linked amount in amber.
+  - Under it, **"Linked in this step"**: one row per link, the words as they stand in the text,
+    an arrow, the ingredient ("“Zwiebelwürfel” → Zwiebel"), and ✕ to remove it.
+  - Tap a word → the list gives way to "Link “…” to" with the ingredients, the likely one
+    first → linked. Tap a linked word → pick another.
+  - **An amount is linked with its word** (Lukas: "400 grams of carrots … when I adjust the
+    portions it should become 800 grams, can I link the value and the ingredient"). When a
+    number, with or without a unit, stands directly before the linked word, it becomes the
+    link's `amount_phrase` (plan 43) automatically, provided the unit is the ingredient's own
+    and the amount is not more than the ingredient's. The link's row then carries a switch,
+    "400 g follows the number of people" / "400 g stays as written"; tapping the amount in the
+    text flips the same switch. A number that stands elsewhere ("Karotten, etwa 400 g") is
+    linked by tapping it and picking the ingredient.
+  - **"Show for 4 / 8 people"** at the top rewrites the text the way cook mode will, so the
+    effect of a linked amount is visible before saving. The two numbers are the recipe's
+    servings and twice that; the control is absent when the recipe has no servings.
+  - A time ("2 - 3 Min.") or a temperature is never an amount and is not tappable.
+  - Below the list: the ingredients this step uses without naming them, with "Add ingredient".
 - **Suggestions, not silence**: when the text changes, the matcher proposes links for words it
   recognises (dotted underline, "Link Zwiebel?"); a tap accepts. A stored link whose phrase is
   no longer in the text is shown as "no longer in the text" until it is re-linked or removed.
@@ -72,6 +100,11 @@ controls of the sketch.
 ## Acceptance
 
 - [ ] Every control on a step is labelled and at least 44 px high.
+- [ ] In a recipe with three parts, a step can be moved to any of them from ⋯ → Move to part….
+- [ ] A step that says "400 g Karotten" links the amount with the word; "Show for 8" in the
+      link sheet and cook mode for 8 both read "800 g Karotten". Switching the amount off
+      leaves it at 400 g in both.
+- [ ] The amount row of the ingredient sheet is one line, 44 px high.
 - [ ] A word in a step can be linked to an ingredient in two taps, and cook mode underlines it.
 - [ ] Typing "1 Karotte, in Scheiben geschnitten" into the add field gives name "Karotte" and
       that note.

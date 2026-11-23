@@ -166,12 +166,14 @@
 	/* editor */
 	.field { background: var(--card); border: 1px solid var(--border); border-radius: 14px; padding: 13px 14px; font-size: 16px; }
 	.scard { background: var(--card); border-radius: 18px; box-shadow: var(--shadow-card); margin-top: 10px; }
-	.scard .txt { display: grid; grid-template-columns: 26px 1fr 22px; gap: 10px; padding: 14px 14px 10px; font-size: 17px; line-height: 1.45; }
+	.scard .txt { display: grid; grid-template-columns: 26px 1fr 30px; gap: 10px; padding: 14px 14px 10px; font-size: 17px; line-height: 1.45; }
 	.scard .no { width: 26px; height: 26px; border-radius: 50%; background: var(--sunken); display: grid; place-items: center; font-size: 13px; font-weight: 700; color: var(--text-2); }
-	.acts { display: flex; gap: 8px; padding: 0 12px 12px; }
-	.act { display: inline-flex; align-items: center; gap: 7px; height: 44px; padding: 0 13px; border-radius: 12px; background: var(--sunken); font-size: 14.5px; font-weight: 600; color: var(--text-2); }
-	.act.on { background: var(--sage-tint); color: var(--sage-deep); }
-	.act.more { margin-left: auto; padding: 0 12px; }
+	.scard .more { width: 44px; height: 44px; margin: -9px -8px 0 -6px; display: grid; place-items: center; color: var(--text-4); font-size: 20px; border-radius: 12px; }
+	.srow { display: grid; grid-template-columns: 92px 1fr 14px; gap: 10px; align-items: center; width: 100%; min-height: 48px; padding: 8px 14px; border-top: 1px solid var(--divider); font-size: 15px; }
+	.srow .k { font-weight: 600; color: var(--text-2); }
+	.srow .v { color: var(--ink); min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+	.srow .v.none { color: var(--sage); font-weight: 600; }
+	.srow .go { color: var(--text-5); }
 	.menu { position: absolute; right: 26px; width: 208px; background: var(--card); border-radius: 16px; box-shadow: 0 12px 30px -8px rgba(0, 0, 0, 0.35), 0 0 0 1px var(--border); z-index: 5; overflow: hidden; }
 	.menu button { display: flex; align-items: center; gap: 11px; width: 100%; height: 48px; padding: 0 14px; font-size: 15.5px; font-weight: 500; border-top: 1px solid var(--divider); }
 	.menu button:first-child { border-top: 0; }
@@ -189,21 +191,47 @@
 	.primary { flex: 1; height: 50px; border-radius: 16px; background: var(--sage); color: var(--on-sage); font-weight: 700; font-size: 16.5px; box-shadow: var(--shadow-button); }
 	.phone .primary { text-align: center; }
 	.words { font-size: 19px; line-height: 2.1; }
-	.w { padding: 5px 3px; border-radius: 8px; }
-	.w.linked { background: var(--mustard-tint); box-shadow: inset 0 -2px 0 var(--mustard); }
-	.w.sel { background: var(--sage); color: var(--on-sage); }
-	.w.sug { box-shadow: inset 0 -2px 0 var(--border-dashed); }
-	.w sup { font-size: 11px; font-weight: 700; color: var(--mustard-deep); margin-left: 3px; letter-spacing: 0.02em; }
+	.w { padding: 5px 2px; border-radius: 8px; }
+	.w.linked { box-shadow: inset 0 -2.5px 0 var(--mustard); border-radius: 0; }
+	.w.amt { box-shadow: inset 0 -2.5px 0 var(--mustard); border-radius: 0; color: var(--mustard-deep); font-weight: 700; }
+	.w.num { color: var(--text-2); }
+	.w.sel { background: var(--sage); color: var(--on-sage); box-shadow: none; border-radius: 8px; }
+	.w.fixed { cursor: default; }
+	.portions { display: flex; align-items: center; gap: 10px; font-size: 14px; color: var(--text-4); margin: 2px 0 6px; }
+	.pseg { display: flex; background: var(--sunken-2); border-radius: 10px; padding: 3px; }
+	.pseg button { height: 32px; min-width: 44px; padding: 0 10px; border-radius: 8px; font-size: 14px; font-weight: 600; color: var(--text-2); text-align: center; }
+	.pseg button[aria-pressed='true'] { background: var(--card); color: var(--ink); box-shadow: var(--shadow-card); }
+	.links { display: grid; margin-top: 4px; border: 1px solid var(--divider-sheet); border-radius: 14px; overflow: hidden; }
+	.lrow { display: grid; grid-template-columns: 1fr 44px; align-items: center; border-top: 1px solid var(--divider-sheet); padding: 9px 2px 9px 12px; font-size: 15px; }
+	.lrow:first-child { border-top: 0; }
+	.lrow .ph { color: var(--text-4); }
+	.lrow b { font-weight: 600; }
+	.lrow .sc { display: inline-flex; align-items: center; gap: 6px; margin-top: 5px; height: 30px; padding: 0 10px; border-radius: 999px; background: var(--mustard-tint); color: var(--mustard-deep); font-size: 13px; font-weight: 600; }
+	.lrow .sc.off { background: var(--sunken); color: var(--text-4); text-decoration: line-through; }
+	.lrow .rm { width: 44px; height: 44px; display: grid; place-items: center; color: var(--text-4); }
+	.lrow.empty { grid-template-columns: 1fr; padding: 12px; color: var(--text-4); font-size: 14.5px; }
+	.plist { display: grid; }
+	.plist button { display: flex; align-items: center; gap: 12px; min-height: 52px; padding: 0 4px; border-top: 1px solid var(--divider-sheet); font-size: 16.5px; font-weight: 500; }
+	.plist button:first-child { border-top: 0; }
+	.plist small { margin-left: auto; color: var(--text-4); font-size: 14px; }
+	.plist .radio { width: 22px; height: 22px; border-radius: 50%; border: 1.7px solid var(--border-dashed); display: grid; place-items: center; flex: none; }
+	.plist .radio.on { border-color: var(--sage); }
+	.plist .radio.on::after { content: ''; width: 12px; height: 12px; border-radius: 50%; background: var(--sage); }
+	.plist .new { box-shadow: none; color: var(--sage-deep); font-weight: 600; }
 	.pick { display: grid; gap: 8px; margin-top: 8px; }
 	.pick button { display: flex; justify-content: space-between; align-items: center; height: 48px; padding: 0 14px; border-radius: 14px; background: var(--sunken); font-size: 16px; font-weight: 500; }
 	.pick button span { color: var(--text-4); font-size: 14.5px; }
 	.pick button.best { background: var(--sage-tint); color: var(--sage-deep); font-weight: 600; }
 	.help { font-size: 14px; color: var(--text-4); margin: 2px 0 10px; line-height: 1.4; }
 	.units { display: flex; flex-wrap: wrap; gap: 7px; }
-	.unit { height: 40px; min-width: 46px; padding: 0 12px; border-radius: 999px; border: 1.5px solid var(--border); font-weight: 600; font-size: 15px; display: inline-grid; place-items: center; }
+	.unit { height: 44px; min-width: 46px; padding: 0 12px; border-radius: 999px; border: 1.5px solid var(--border); font-weight: 600; font-size: 15px; display: inline-grid; place-items: center; flex: none; }
 	.unit.on { background: var(--sage); border-color: var(--sage); color: var(--on-sage); }
 	.unit.word { border-style: dashed; }
-	.two { display: grid; grid-template-columns: 96px 1fr; gap: 9px; }
+	/* One line: a small number field, then the units in a row that scrolls sideways. */
+	.amount { display: flex; align-items: center; gap: 10px; }
+	.amount .num { flex: none; width: 76px; height: 44px; padding: 0 12px; border-radius: 12px; border: 1px solid var(--border); background: var(--card); font-size: 17px; font-weight: 600; display: flex; align-items: center; font-variant-numeric: tabular-nums; }
+	.amount .units { flex: 1; min-width: 0; flex-wrap: nowrap; overflow-x: auto; scrollbar-width: none; margin-right: -20px; padding-right: 20px; }
+	.amount .units::-webkit-scrollbar { display: none; }
 	.flbl { font-size: 12px; font-weight: 700; letter-spacing: 0.1em; text-transform: uppercase; color: var(--text-4); margin: 14px 2px 6px; }
 
 	/* cook mode */
@@ -419,22 +447,22 @@
 			</figure>
 			<figure>
 				<div class="phone"><div class="scrim"></div>
-					<div class="sheet" style="--top:150px"><div class="grab"></div>
+					<div class="sheet" style="--top:190px"><div class="grab"></div>
 						<div class="sheet-top"><span class="eyebrow">Ingredient</span><h4>Faschiertes</h4></div>
 						<div class="sheet-body">
-							<div class="flbl" style="margin-top:4px">Amount</div>
-							<div class="two"><div class="field">500</div><div class="units"><span class="unit on">g</span><span class="unit">kg</span><span class="unit">ml</span><span class="unit">L</span><span class="unit">Stk</span><span class="unit">Pkg</span><span class="unit">EL</span><span class="unit">TL</span><span class="unit word">other…</span></div></div>
-							<div class="flbl">Name <span style="letter-spacing:0;text-transform:none;font-weight:500">· what goes on the list</span></div>
+							<div class="flbl" style="margin-top:4px">Name <span style="letter-spacing:0;text-transform:none;font-weight:500">· what goes on the list</span></div>
 							<div class="field">Faschiertes</div>
+							<div class="flbl">Amount</div>
+							<div class="amount new" style="padding-left:10px"><div class="num">500</div><div class="units"><span class="unit on">g</span><span class="unit">kg</span><span class="unit">ml</span><span class="unit">L</span><span class="unit">Stk</span><span class="unit">Pkg</span><span class="unit">EL</span><span class="unit">TL</span><span class="unit word">other…</span></div></div>
 							<div class="flbl">Note <span style="letter-spacing:0;text-transform:none;font-weight:500">· shown in the recipe</span></div>
 							<div class="field">gemischt</div>
 							<div class="flbl">Part</div>
-							<div class="units"><span class="unit on">Bolognese</span><span class="unit">Béchamel</span><span class="unit">none</span></div>
+							<div class="units"><span class="unit on">Bolognese</span><span class="unit">Béchamel</span><span class="unit">Schichten</span><span class="unit">none</span></div>
 						</div>
 						<div class="sheet-foot"><button class="primary">Done</button></div>
 					</div>
 				</div>
-				<figcaption><b><span class="tag">E2</span>One ingredient</b>Name and note are separate fields. "other…" takes a counting word such as Dose, Bund or Zehen, kept as written.</figcaption>
+				<figcaption><b><span class="tag">E2</span>One ingredient</b>Changed after your feedback: the amount is one line, a small number field and the units in a row that scrolls sideways. "other…" takes a counting word such as Dose, Bund or Zehen, kept as written.</figcaption>
 			</figure>
 			<figure>
 				<div class="phone"><div class="scroll">
@@ -443,39 +471,61 @@
 						<div class="lbl" style="margin-top:6px">Steps</div>
 						<div class="parthead">Bolognese</div>
 						<div class="scard">
-							<div class="txt"><span class="no">2</span><span>1 - 2 EL Olivenöl in einem breiten Topf stark erhitzen. Hackfleisch hineingeben und 5 - 7 Min. krümelig anbraten.</span><span style="color:var(--text-5)">⠿</span></div>
-							<div class="acts"><button class="act on">◍ 2 ingredients</button><button class="act on">◷ 5:00</button><button class="act more" aria-label="More">⋯</button></div>
+							<div class="txt"><span class="no">2</span><span>1 - 2 EL Olivenöl in einem breiten Topf stark erhitzen. Hackfleisch hineingeben und 5 - 7 Min. krümelig anbraten.</span><button class="more" aria-label="More">⋯</button></div>
+							<button class="srow"><span class="k">Ingredients</span><span class="v">Olivenöl, Faschiertes</span><span class="go">›</span></button>
+							<button class="srow"><span class="k">Timer</span><span class="v">Anbraten · 5:00</span><span class="go">›</span></button>
 						</div>
 						<div class="scard" style="position:relative">
-							<div class="txt"><span class="no">3</span><span>Zwiebelwürfel zu dem angebratenen Hackfleisch geben und 2 - 3 Min. mitbraten.</span><span style="color:var(--text-5)">⠿</span></div>
-							<div class="acts"><button class="act on">◍ 2 ingredients</button><button class="act">◷ Timer</button><button class="act more" aria-label="More">⋯</button></div>
+							<div class="txt"><span class="no">3</span><span>Zwiebelwürfel und 400 g Karotten zu dem angebratenen Hackfleisch geben und 2 - 3 Min. mitbraten.</span><button class="more" aria-label="More">⋯</button></div>
+							<button class="srow new"><span class="k">Ingredients</span><span class="v">Karotten, Faschiertes</span><span class="go">›</span></button>
+							<button class="srow"><span class="k">Timer</span><span class="v none">Add a timer</span><span class="go">›</span></button>
+							<div class="menu" style="top:46px;right:8px">
+								<button>↑ Move up</button><button>↓ Move down</button><button>⇄ Move to part…</button><button class="del">✕ Delete step</button>
+							</div>
 						</div>
-						<div class="menu" style="top:524px">
-							<button>↑ Move up</button><button>↓ Move down</button><button>⇄ Move to Béchamel</button><button class="del">✕ Delete step</button>
-						</div>
-						<button class="dashed" style="margin-top:210px">+ Add step</button>
+						<button class="dashed">+ Add step</button>
 					</div>
 				</div></div>
-				<figcaption><b><span class="tag">E3a</span>Steps</b>Text at reading size. Under it two labelled buttons, 44 px high, and one menu for move and delete. Today these are three 16 px icons and two rows of small chips marked "auto".</figcaption>
+				<figcaption><b><span class="tag">E3a</span>Steps</b>Changed after your feedback. Each step has two rows that say what they hold: tap <b style="font-size:inherit">Ingredients</b> to link words (E3), tap <b style="font-size:inherit">Timer</b> to set one. ⋯ holds move and delete. Tapping the text edits the text.</figcaption>
+			</figure>
+			<figure>
+				<div class="phone"><div class="scrim"></div>
+					<div class="sheet" style="--top:330px"><div class="grab"></div>
+						<div class="sheet-top"><span class="eyebrow">Step 3</span><h4>Move to part</h4></div>
+						<div class="sheet-body">
+							<div class="plist">
+								<button><span class="radio on"></span>Bolognese<small>steps 1 to 3</small></button>
+								<button><span class="radio"></span>Béchamel<small>steps 4 to 5</small></button>
+								<button><span class="radio"></span>Schichten<small>steps 6 to 8</small></button>
+								<button><span class="radio"></span>No part</button>
+								<button class="new">+ New part</button>
+							</div>
+						</div>
+					</div>
+				</div>
+				<figcaption><b><span class="tag">E3b</span>Move to part</b>New after your feedback. "Move to part…" lists every part, however many there are. The step lands at the end of the part you pick. The same list moves an ingredient.</figcaption>
 			</figure>
 			<figure>
 				<div class="phone" id="e3"><div class="scrim"></div>
-					<div class="sheet" style="--top:96px"><div class="grab"></div>
+					<div class="sheet" style="--top:64px"><div class="grab"></div>
 						<div class="sheet-top"><span class="eyebrow">Step 3 · ingredients</span><h4>Tap a word to link it</h4></div>
 						<div class="sheet-body">
+							<div class="portions">Show for <div class="pseg" id="pseg"><button aria-pressed="true" data-f="1">4</button><button aria-pressed="false" data-f="2">8</button></div> people</div>
 							<p class="words" id="words"></p>
 							<div id="picker" hidden>
 								<div class="flbl" id="pl">Link "…" to</div>
 								<div class="pick" id="pick"></div>
 							</div>
-							<p class="help" id="hint">Underlined words are linked. Dotted ones are suggestions.</p>
-							<div class="flbl">Also used, not named in the text</div>
-							<div class="pick"><button>Salz <span>remove</span></button></div>
+							<div id="linked">
+								<div class="flbl">Linked in this step</div>
+								<div class="links" id="links"></div>
+								<p class="help" style="margin-top:10px">Underlined is what cook mode underlines. An amount in the text is linked with its word, so it follows the number of people.</p>
+							</div>
 						</div>
 						<div class="sheet-foot"><button class="primary">Done</button></div>
 					</div>
 				</div>
-				<figcaption><b><span class="tag">E3</span>Linking</b>Tap "Zwiebelwürfel", pick Zwiebel. Cook mode then underlines that word and knows its amount. Works here: try a plain word, a dotted one and a linked one.</figcaption>
+				<figcaption><b><span class="tag">E3</span>Linking words and amounts</b>Changed after your feedback. The text looks as cook mode will show it, and the links are listed underneath. "400 g" is linked with "Karotten": switch to 8 people and it reads 800 g. Try it: link "Zwiebelwürfel", tap "400 g" to stop it scaling, remove a link with ✕.</figcaption>
 			</figure>
 		</div>
 	</section>
@@ -552,8 +602,9 @@
 			<tr><th>Today</th><th>After</th></tr>
 			<tr><td>"Improve with AI" switch</td><td>Gone. With a provider set up, every import uses it. Without one the rule-based import still works and shows more to check.</td></tr>
 			<tr><td>Import opens the full form</td><td>Import opens the review. The form is one tap away.</td></tr>
-			<tr><td>Chips marked "auto" under a step</td><td>Links are stored. The matcher only suggests (dotted) while you edit.</td></tr>
-			<tr><td>Arrows to reorder</td><td>A drag grip, as on the shopping list.</td></tr>
+			<tr><td>Chips marked "auto" under a step</td><td>An "Ingredients" row that names them. Links are stored; the app suggests, you confirm.</td></tr>
+			<tr><td>Arrows to reorder</td><td>Ingredients: a drag grip, as on the shopping list. Steps: the ⋯ menu (up, down, to part).</td></tr>
+			<tr><td>A number in a step that doesn't follow the portions</td><td>An amount standing before a linked word is linked with it and follows the number of people. One tap in the link sheet keeps it as written.</td></tr>
 			<tr><td>"This step uses…" line</td><td>The ingredient list under the step.</td></tr>
 			<tr><td>Recipe wording (Austrian)</td><td>Removed. Recipes keep the words of the page.</td></tr>
 		</table></div>
@@ -562,8 +613,6 @@
 	<section class="part">
 		<div class="head"><h2>Questions for you</h2></div>
 		<ul class="asks">
-			<li><b>Get ready (C1)</b><span>A screen before step 1 with every ingredient to tick off. Useful, or one tap too many?</span></li>
-			<li><b>Step text size (C2)</b><span>27 px here so a long imported step and its ingredient list fit one screen. Today it is 33 px. Short steps could keep 33.</span></li>
 			<li><b>Amount choices (R1)</b><span>"1 Dose" or "800 g": worth asking, or always keep what the page put first and the other in the note?</span></li>
 			<li><b>Left out</b><span>Tips are dropped from the steps and kept under "Left out". Would you rather keep tips in the recipe as a note under the step they belong to?</span></li>
 		</ul>
@@ -592,33 +641,64 @@
 		const on = t.getAttribute('aria-pressed') !== 'true'; t.setAttribute('aria-pressed', on); t.querySelector('.box').textContent = on ? '✓' : '';
 	}));
 
-	// E3: tap a word, pick an ingredient.
-	const ings = [['Zwiebel', '1'], ['Faschiertes', '500 g'], ['Tomatenmark', '1 EL'], ['Knoblauch', '2 Zehen'], ['Petersilie', '1 Bund']];
-	const words = 'Zwiebelwürfel zu dem angebratenen Hackfleisch geben und 2 - 3 Min. mitbraten, bis sie glasig sind. Gehackten Knoblauch dazugeben. Tomatenmark einrühren.'.split(' ');
-	const links = { 4: 'Faschiertes', 19: 'Tomatenmark' }, sugg = { 0: 'Zwiebel', 17: 'Knoblauch' };
-	const wEl = document.getElementById('words'), picker = document.getElementById('picker'), pick = document.getElementById('pick'), pl = document.getElementById('pl'), hint = document.getElementById('hint');
-	let sel = null;
+	// E3: tap a word to link it; an amount right before a linked word goes with it.
+	const ings = [['Zwiebel', '1'], ['Karotten', '400 g'], ['Faschiertes', '500 g'], ['Tomatenmark', '1 EL'], ['Knoblauch', '2 Zehen']];
+	// n = an amount (value, unit); fixed = a number the app never touches (a time).
+	const toks = [{ t: 'Zwiebelwürfel' }, { t: 'und' }, { n: 400, u: 'g' }, { t: 'Karotten' }, { t: 'zu' }, { t: 'dem' }, { t: 'angebratenen' }, { t: 'Hackfleisch' }, { t: 'geben' }, { t: 'und' }, { t: '2 - 3 Min.', fixed: true }, { t: 'mitbraten.' }, { t: 'Tomatenmark' }, { t: 'einrühren.' }];
+	const links = { 3: 'Karotten', 7: 'Faschiertes', 12: 'Tomatenmark' };
+	const scales = { 2: true }; // amount token → follows the number of people
+	const el = (id) => document.getElementById(id);
+	const wEl = el('words'), picker = el('picker'), pick = el('pick'), pl = el('pl'), linked = el('linked'), list = el('links');
+	let sel = null, factor = 1;
+	const plain = (i) => toks[i].t.replace(/[.,]$/, '');
+	const amountOf = (i) => (toks[i - 1] && toks[i - 1].n ? i - 1 : null); // the amount standing before word i
+	const shown = (a) => toks[a].n * (scales[a] ? factor : 1) + ' ' + toks[a].u;
 	function draw() {
 		wEl.textContent = '';
-		words.forEach((w, i) => {
-			const b = document.createElement('button'); b.className = 'w' + (links[i] ? ' linked' : sugg[i] ? ' sug' : '') + (sel === i ? ' sel' : '');
-			b.textContent = w;
-			if (links[i] && sel !== i) { const s = document.createElement('sup'); s.textContent = links[i]; b.append(s); }
-			b.addEventListener('click', () => { sel = sel === i ? null : i; draw(); });
+		toks.forEach((k, i) => {
+			const b = document.createElement('button');
+			if (k.n) {
+				const on = links[i + 1] && scales[i];
+				b.className = 'w ' + (on ? 'amt' : 'num'); b.textContent = shown(i);
+				b.addEventListener('click', () => { if (links[i + 1]) { scales[i] = !scales[i]; draw(); } });
+			} else {
+				b.className = 'w' + (k.fixed ? ' fixed' : '') + (links[i] ? ' linked' : '') + (sel === i ? ' sel' : ''); b.textContent = k.t;
+				if (!k.fixed) b.addEventListener('click', () => { sel = sel === i ? null : i; draw(); });
+			}
 			wEl.append(b, ' ');
 		});
-		picker.hidden = sel === null; hint.hidden = sel !== null;
+		picker.hidden = sel === null; linked.hidden = sel !== null;
+		list.textContent = '';
+		const ids = Object.keys(links).map(Number).sort((a, b) => a - b);
+		if (!ids.length) { const d = document.createElement('div'); d.className = 'lrow empty'; d.textContent = 'Nothing linked yet. Tap a word in the text.'; list.append(d); }
+		ids.forEach((i) => {
+			const a = amountOf(i), row = document.createElement('div'); row.className = 'lrow';
+			const main = document.createElement('div');
+			const line = document.createElement('div'); line.innerHTML = '<span class="ph"></span> → <b></b>';
+			line.firstChild.textContent = '“' + (a !== null ? toks[a].n + ' ' + toks[a].u + ' ' : '') + plain(i) + '”'; line.lastChild.textContent = links[i];
+			main.append(line);
+			if (a !== null) {
+				const sc = document.createElement('button'); sc.className = 'sc' + (scales[a] ? '' : ' off');
+				sc.textContent = scales[a] ? toks[a].n + ' ' + toks[a].u + ' follows the number of people' : toks[a].n + ' ' + toks[a].u + ' stays as written';
+				sc.addEventListener('click', () => { scales[a] = !scales[a]; draw(); }); main.append(sc);
+			}
+			const rm = document.createElement('button'); rm.className = 'rm'; rm.textContent = '✕'; rm.setAttribute('aria-label', 'Remove link');
+			rm.addEventListener('click', () => { delete links[i]; draw(); });
+			row.append(main, rm); list.append(row);
+		});
 		if (sel === null) return;
-		pl.textContent = 'Link "' + words[sel].replace(/[.,]$/, '') + '" to';
+		pl.textContent = 'Link "' + plain(sel) + '" to';
 		pick.textContent = '';
-		const best = links[sel] || sugg[sel];
+		const best = links[sel] || (plain(sel).startsWith('Zwiebel') ? 'Zwiebel' : null);
 		[...ings].sort((a, b) => (b[0] === best) - (a[0] === best)).forEach(([name, amt]) => {
 			const b = document.createElement('button'); if (name === best) b.className = 'best';
 			b.innerHTML = '<b style="font-weight:inherit"></b><span></span>'; b.firstChild.textContent = name; b.lastChild.textContent = amt;
-			b.addEventListener('click', () => { links[sel] = name; delete sugg[sel]; sel = null; draw(); });
+			b.addEventListener('click', () => { links[sel] = name; const a = amountOf(sel); if (a !== null && scales[a] === undefined) scales[a] = true; sel = null; draw(); });
 			pick.append(b);
 		});
-		if (links[sel]) { const b = document.createElement('button'); b.textContent = 'Remove link'; b.style.color = 'var(--terracotta)'; b.addEventListener('click', () => { delete links[sel]; sel = null; draw(); }); pick.append(b); }
 	}
+	el('pseg').querySelectorAll('button').forEach((b) => b.addEventListener('click', () => {
+		factor = Number(b.dataset.f); el('pseg').querySelectorAll('button').forEach((o) => o.setAttribute('aria-pressed', o === b)); draw();
+	}));
 	draw();
 </script>
