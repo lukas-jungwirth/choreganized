@@ -206,7 +206,7 @@ function trailingAmount(line: string): ParsedIngredient | null {
 
 /**
  * The amount on its own — the right-aligned column of the recipe view [7a] and
- * the "This step uses 250 g mushrooms" line in cook mode. Empty when there is
+ * the amber column of the list under a step in cook mode. Empty when there is
  * no amount to speak of.
  */
 export function formatAmount(

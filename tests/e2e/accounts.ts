@@ -22,7 +22,7 @@ import {
 export const DATABASE_PATH = process.env.E2E_DATABASE_PATH ?? 'data/e2e/choreganized.db';
 
 export type Account = {
-	key: 'owner' | 'visual' | 'guests' | 'fullhouse' | 'cookbook';
+	key: 'owner' | 'visual' | 'guests' | 'fullhouse' | 'cookbook' | 'cook';
 	name: string;
 	email: string;
 	password: string;
@@ -66,6 +66,19 @@ export const ACCOUNTS: Account[] = [
 		email: 'cookbook@e2e.test',
 		password: 'e2e-password-cookbook',
 		seed: ['--cookbook']
+	},
+	/**
+	 * Cook mode's long step (→ plan 47, `--long-step`): a risotto with a
+	 * 400-character step, in a household of its own so the library every other
+	 * screenshot shows is unchanged. Only read, by the visual shot and the e2e
+	 * check that it fits a phone screen.
+	 */
+	{
+		key: 'cook',
+		name: 'Lukas Cook',
+		email: 'cook@e2e.test',
+		password: 'e2e-password-cook',
+		seed: ['--long-step']
 	}
 ];
 

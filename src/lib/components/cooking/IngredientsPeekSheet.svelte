@@ -7,12 +7,14 @@
 	(→ `ui/BottomSheet` `tone`).
 
 	Grouped by the recipe's parts, each row with its note under the name
-	(→ plan 43); a recipe without parts is one list, as before.
+	(→ plan 43); a recipe without parts, or with only one, is one list
+	(→ plan 47). At the bottom, the way back to Get ready's list to tick off.
 -->
 <script lang="ts">
 	import BottomSheet from '$lib/components/ui/BottomSheet.svelte';
 	import { messages } from '$lib/i18n';
 	import type { RecipeIngredientRow } from '$lib/server/services/recipes';
+	import { showsParts } from '$lib/utils/cook';
 	import { groupByPart } from '$lib/utils/recipes';
 
 	type Props = {
@@ -24,10 +26,12 @@
 		 * step takes a share of it (→ SPEC §4.4).
 		 */
 		used: RecipeIngredientRow[];
+		/** Back to Get ready (→ plan 47); absent where there is none. */
+		onready?: () => void;
 		onclose: () => void;
 	};
 
-	let { ingredients, servings, used, onclose }: Props = $props();
+	let { ingredients, servings, used, onready, onclose }: Props = $props();
 
 	const m = messages();
 
@@ -39,6 +43,7 @@
 
 	const highlighted = $derived(new Map(used.map((ingredient) => [ingredient.id, ingredient])));
 	const parts = $derived(groupByPart(ingredients));
+	const named = $derived(showsParts(ingredients));
 	const title = $derived(
 		servings ? m.cooking.cook.peekTitleServes(servings) : m.cooking.cook.peekTitle
 	);
@@ -49,7 +54,7 @@
 		<p class="empty">{m.cooking.cook.peekEmpty}</p>
 	{:else}
 		{#each parts as part, at (at)}
-			{#if part.section}<p class="part">{part.section}</p>{/if}
+			{#if named && part.section}<p class="part">{part.section}</p>{/if}
 			<ul class="list">
 				{#each part.rows as ingredient (ingredient.id)}
 					{@const step = highlighted.get(ingredient.id)}
@@ -76,6 +81,9 @@
 				{/each}
 			</ul>
 		{/each}
+		{#if onready}
+			<button type="button" class="ready" onclick={onready}>{m.cooking.cook.peekToReady}</button>
+		{/if}
 	{/if}
 </BottomSheet>
 
@@ -181,6 +189,18 @@
 		margin-left: 5px;
 		font-weight: 400;
 		color: var(--cook-muted);
+	}
+
+	.ready {
+		display: block;
+		width: 100%;
+		margin-top: 16px;
+		padding: 13px 18px;
+		border: 1px solid var(--cook-amber-line);
+		border-radius: var(--r-input);
+		font-size: var(--fs-17);
+		font-weight: 600;
+		color: var(--cook-text);
 	}
 
 	.empty {

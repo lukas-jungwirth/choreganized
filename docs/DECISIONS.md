@@ -4973,3 +4973,63 @@ recipe-importer)` (`IMPORT_UA`): the `Mozilla/5.0 (compatible; …)` form crawle
      in history; the banner focuses the first button that can take focus; and "Link
      ingredients" in the step sheet no longer reads the closed step (it threw, found by the
      hand walk).
+335. **Plan 47: Get ready is position 0 of cook mode, and only exists when there is something
+     to set out** (2026-11-23; → SPEC §4.6). No `?step=` (how the recipe screen's button opens
+     cook mode) or `?step=0` is Get ready; `?step=n` is still step n, so every timer, dock bar
+     and notification link (all built as `?step=stepIndex + 1`) keeps pointing at a real step.
+     Going back to Get ready drops `step` from the address rather than writing `step=0`, so
+     the bare link and the screen agree. A recipe with no ingredients has no Get ready and opens
+     on step 1, as before. A timer set from the header on Get ready has no step (`stepIndex`
+     null, named "Timer"); a running timer shows there as a bar that leads to its step. A
+     timer without a step links to cook mode without `?step=`, which is now Get ready rather
+     than step 1: the only such timers are the ones set on Get ready, so that is where they
+     belong.
+     **Get ready is reached again from the ingredients sheet** ("Back to Get ready"), not from
+     the Ingredients chip itself, because the chip's sheet still answers "how much of that?"
+     for the step on screen; Get ready opened that way says **Back to step {n}** and returns
+     there. Prev from step 1 also lands on it.
+336. **Get ready's ticks live in `localStorage`, per recipe, for twelve hours** (2026-11-23;
+     → plan 47 "kept on the device for this cook"). `sessionStorage` would lose them when a
+     phone kills a backgrounded PWA, which is the reload a kitchen sees. A cook is over at
+     **Finish** (which clears them) or twelve hours after the last tick (`readTicks` drops
+     older ones), so tomorrow's lasagne starts clean. Wrapped in try/catch: in a private window
+     the ticks last as long as the screen. A tick is kept by the row's part and name
+     (`tickKey`), not its id, because saving a recipe writes its rows anew and a housemate's
+     typo fix mid-cook would otherwise clear the counter (code review). Get ready's stepper
+     field may hold a half-typed value; only a count `readServings` accepts moves the amounts
+     and the address (code review: an emptied field or a 0 wrote `?serves=0`).
+337. **The step's text steps down in four sizes, not two, and one more while a ring runs**
+     (2026-11-23; → plan 47, deviation). The plan said "33 px, and about 26 px past 220
+     characters"; the sketch (which Lukas accepted) draws ordinary steps at 27 px; and the
+     acceptance wants a 400-character step and its list on a 390 × 844 screen. Measured in the
+     running app, 26 px leaves the seeded 428-character risotto step (five ingredients) about
+     a third of a screen too tall. So `stepTextSize`: up to 100 characters `--fs-36` (today's
+     33 px), up to 220 `--fs-30` (the sketch's 27 px), up to 320 `--fs-24`, longer `--fs-18`
+     (16 px design, still a size up from body text). The two smaller sizes also get a tighter
+     ingredient list (`compactList`: 18 px rows, the share on the amount's line) and the two
+     chips on one row. While the step's timer ring runs, the text goes one size down, because
+     the ring takes the lower half and the list must stay in view [7h]. Every size is a type
+     scale step, so the reader's text size still moves it (#201).
+338. **What the step needs: cook mode's own rows, amount-less ingredients on one line, and a
+     part named only when there are two** (2026-11-23; → plan 47). `CookStepIngredients` is not
+     `RecipeIngredientRow` (plan 45): that one is a light card row with the amount on the right;
+     here the amount leads in amber on the dark screen, as in C2. Rows with no amount and no
+     note share the last line ("Salz · Pfeffer", C3); one with a note keeps its own row so the
+     note is not lost. The share is "of 400 g" under the amount, `peekShare`'s words, so the
+     list, the bubble and the peek say it alike. **"A recipe with one part never shows a part
+     name"** is `showsParts`: two or more distinct sections (a run of unnamed rows counts as
+     one). It applies to the step's eyebrow, the progress bar's gaps, Get ready's headings and
+     the peek sheet; the recipe view and the editor are left as plans 45 and 46 built them. The
+     header says "Lasagne · for 8" on a step, as C2 draws it.
+339. **The long step is screenshotted in its own household, and the running timer is not
+     screenshotted** (2026-11-23; → plan 47, TESTING.md; deviation). A new e2e account, `cook`,
+     seeded with `--long-step` (a risotto whose second step is 428 characters, with Butter in
+     two halves so a step shows "20 g of 40 g"), so the base seed's recipes and every other
+     screenshot stay as they are. The visual `cook-long-step` is taken there. Get ready
+     (`cook-get-ready`) and step 5 for 8 (`cook-mode-part`, was step 2) use the lasagne in
+     `visual`; all three are walked in German at 200 % too. **The plan's fourth shot, a step
+     with a running timer, is left out**: with a ring running, `settle`'s wait for an idle
+     network timed out every time, and the timer the shot left behind spoiled the long step's
+     shot that ran after it. The e2e journey covers it instead (a running timer on step 5: the
+     list keeps its three rows and stays in view), and so did the hand walk's screenshot. The
+     e2e journey also checks that the 400-character step's body does not scroll.

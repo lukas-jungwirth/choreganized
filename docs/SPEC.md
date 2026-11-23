@@ -899,23 +899,45 @@ item sheet [3a]; what differs is what a tick does and what counts as shopping.
 ### 4.6 Cook mode [7b, 7h] (dark, hands-free)
 
 - Full-screen dark UI (`--cook-*` tokens), screen wake-lock while open.
-- Header: recipe name, close ×. Segmented progress bar (one segment per step, done = sage).
+- Header: recipe name, close ×; on a step with a known count, "Lasagne · for 8" [C2].
+  Segmented progress bar (one segment per step, done = sage), with a wider gap where one part
+  ends and the next begins (→ plan 47).
+- **Get ready** [C1] (→ plan 47) comes before step 1, as position 0 (no `?step=`, or
+  `?step=0`; the recipe screen's button opens it): "BEFORE YOU START", every ingredient under
+  its part with its note and amount, each a tick button. **Ticks are kept on the device for
+  this cook**: Prev, Next and a reload keep them, Finish clears them, and they are dropped
+  twelve hours after the last tick. It carries the **"Cooking for" stepper** (the recipe
+  screen's, §4.5, with "written for {n}" beside it): moving it rewrites every amount on the
+  screen at once and writes `?serves=`, so the steps, the peek sheet and the timers' labels
+  follow and a reload keeps it. Hidden for a recipe that never recorded its servings. Its
+  button is **Start cooking**, or **Back to step {n}** when it was opened from a step's
+  ingredients sheet. A recipe without ingredients has no Get ready and opens on step 1. Get ready
+  is no step: no timer, dock bar or notification points at it, and a timer set there from the
+  header has no step.
 - "STEP {i} OF {n}" in amber, and beside it the step's **part** in the quieter grey when the
-  recipe has parts ("STEP 5 OF 10 · BÉCHAMEL", → plan 43); the step text huge (Fraunces ~33px).
+  recipe has two or more parts ("STEP 5 OF 10 · BÉCHAMEL", → plans 43, 47; a recipe whose
+  steps are all in one part never names it); the step text in Fraunces, **sized by its
+  length** (→ plan 47): up to 100 characters ~33px, up to 220 the sketch's 27px, up to 320
+  ~22px, longer ~16px, one size down while the step's timer ring runs, so a 400-character
+  imported step, its ingredient list and its chips fit a 390 × 844 phone without a scroll.
   The ingredients the step uses — **its stored links, else the ones pinned to it in the form,
   else the ones its text names** (§4.4) — are underlined in amber where the text names them: a
   stored link underlines every whole-word occurrence of its own words ("Zwiebelwürfel"), never
   inside a longer word, and a link stored without words is underlined wherever the word matcher
-  finds its ingredient's name (never inside a run another link claimed). The "This step uses
-  {…}" line beneath lists them all,
-  including any the text never mentions. A step pinned to nothing shows neither.
+  finds its ingredient's name (never inside a run another link claimed).
+- **What the step needs** [C2, C3] (→ plan 47) is a list under the text, one row per
+  ingredient the step uses, including any the text never mentions: the amount in amber, the
+  name, the note in a smaller line, and "of 500 g" under the amount when the step takes only a
+  share. Scaled for the count. The ones with no amount and no note share one last row
+  ("Salz · Pfeffer"). It **stays while a timer runs**. A long step gets tighter rows. A step
+  pinned to nothing shows no list. Tips the import left out (plan 44) are never stored, so they
+  never appear here.
 - **Tapping an underlined ingredient says how much of it** (→ [DECISIONS #133](DECISIONS.md)) —
   the amount in amber with the name behind it, and the row's total behind that when the step
   takes only a share of it ("200 g mushrooms of 500 g"), in a bubble against the word itself. It
   sits above the word wherever the step has a line to spare, so what it covers is a line already
   read; any tap, Escape or the next step closes it. An underline with **no** amount to give
-  ("Salt", "a splash of oil") is not a button — there is nothing for a tap to reveal. This is
-  the one amount that survives a running timer, which clears the "This step uses…" line [7h].
+  ("Salt", "a splash of oil") is not a button — there is nothing for a tap to reveal.
 - **Timer chip** — the step's own timer when it has one, by name: "Start Nudeln · 10:00"
   (→ §4.4, plan 21). Otherwise shown when a duration is parsed from the step text, in English or
   German ("8 min", "8:00", "8–10 minutes", "10 Minuten", "1 Std. 30 Min.", "1½ Std.", "5 bis
@@ -930,15 +952,17 @@ item sheet [3a]; what differs is what a tick does and what counts as shopping.
   first ingredient — which is how a 20-minute bake ended up called after the butter the dish was
   greased with.
 - **Ingredients chip** → bottom peek sheet listing all ingredients, under their parts' names when
-  the recipe has parts, each note under its name (→ plan 43); the current step's are
+  the recipe has two or more parts, each note under its name (→ plans 43, 47), and at the
+  bottom **Back to Get ready** (→ plan 47); the current step's are
   highlighted in amber [7b]. One the step takes only a share of shows that share in amber with
   the row's total behind it — "20 g of 30 g" — so "how much of that was it again?" is answered
   for _now_ without losing what the recipe holds.
-- **Inherits "cooking for {n}"** from the recipe screen through `?serves=` (§4.5) — the peek
-  sheet, the "This step uses…" line, a step's own shares of an ingredient (§4.4), the amounts
-  the step's sentence gives its ingredients (in amber, → §4.5, plan 23) and the timer labels all
-  show the scaled amounts. Cook mode offers no stepper of its own: the count is
-  decided before the hands are wet, and the underlines still land on the same words because only
+- **Inherits "cooking for {n}"** from the recipe screen through `?serves=` (§4.5) — Get ready,
+  the peek sheet, the list under each step, a step's own shares of an ingredient (§4.4), the
+  amounts the step's sentence gives its ingredients (in amber, → §4.5, plan 23) and the timer
+  labels all show the scaled amounts. The count is changed **only on Get ready** (→ plan 47,
+  which replaced "no stepper in cook mode"): that is the moment before the hands are wet; the
+  steps themselves have no stepper. The underlines still land on the same words because only
   the numbers move. The count **stays** in the address as Prev/Next rewrite `?step=`, and rides
   the close × and Finish back to the recipe — a reload mid-cook (a backgrounded PWA waking up is
   the usual one) comes back cooking for the same number of people, not for what the recipe was

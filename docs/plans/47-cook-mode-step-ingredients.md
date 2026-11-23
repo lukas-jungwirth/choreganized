@@ -1,6 +1,6 @@
 # 47 · Cook mode: what this step needs, at reading size
 
-**Status: todo.** Asked for by Lukas on 2026-11-23; he saw the sketch the same day ("Cook mode
+**Status: done (2026-11-24).** Asked for by Lukas on 2026-11-23; he saw the sketch the same day ("Cook mode
 looks good"), so frames C1–C3 are agreed, the "Get ready" screen and the 27 px step text included.
 Depends on: 43. SPEC: §4.6. Design: `design/sketches/recipe-rebuild.html`, frames C1–C3.
 Changes frame [7b].
@@ -59,11 +59,11 @@ links reliable; this plan makes them the second thing on the screen.
 
 ## Acceptance
 
-- [ ] On every step the ingredients and their amounts can be read without a tap.
-- [ ] The part name is on screen for a recipe with parts and absent for one without.
-- [ ] On Get ready, the number of people can be changed, every amount there follows at once,
+- [x] On every step the ingredients and their amounts can be read without a tap.
+- [x] The part name is on screen for a recipe with parts and absent for one without.
+- [x] On Get ready, the number of people can be changed, every amount there follows at once,
       and the steps after it use the new number. A reload keeps it.
-- [ ] A 400-character step and its ingredient list fit a 390 × 844 screen without scrolling,
+- [x] A 400-character step and its ingredient list fit a 390 × 844 screen without scrolling,
       at normal text size.
-- [ ] Old recipes (matcher fallback) show the same list from the matcher's reading.
-- [ ] `npm run verify` and `npm run test:visual` clean.
+- [x] Old recipes (matcher fallback) show the same list from the matcher's reading.
+- [x] `npm run verify` and `npm run test:visual` clean.

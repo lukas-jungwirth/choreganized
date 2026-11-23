@@ -74,3 +74,8 @@ test.describe('as the cookbook household', () => {
 		screenshot(screen);
 	}
 });
+
+test.describe('as the cook household', () => {
+	test.use({ storageState: storageStateFor('cook') });
+	for (const screen of SCREENS.filter((screen) => screen.account === 'cook')) screenshot(screen);
+});

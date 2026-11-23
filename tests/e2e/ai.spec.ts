@@ -198,6 +198,7 @@ test('an AI import arrives pinned and timed, adapted as asked, and saves into co
 		'Vegetarian'
 	]);
 	await page.getByRole('link', { name: 'Start cook mode' }).click();
+	await page.getByRole('button', { name: 'Start cooking' }).click();
 	await page.getByRole('button', { name: 'Next' }).click();
 	await expect(page.getByRole('button', { name: 'Start Pancake · 2:00' })).toBeVisible();
 });

@@ -213,7 +213,10 @@ colour, eight, → DECISIONS #296) for the screens marked `account: 'fullhouse'`
 seeded with `--cookbook` (the recipe-filters sketch's tagged library and three untagged recipes
 for the sorting pass, → plans 40, 41) for the screens
 marked `account: 'cookbook'`; `e2e/recipe-filters.spec.ts` only reads it — a filter is a URL —
-and does its writing on `owner`. Tests are
+and does its writing on `owner`. A sixth, `cook`, is seeded with `--long-step` (a risotto
+with a 400-character step, → plan 47, DECISIONS #339) for the cook-mode screens marked
+`account: 'cook'` (the long step), and read by `e2e/cooking.spec.ts`. No screenshot has a
+running timer: `settle` waits for an idle network and timed out with a ring running. Tests are
 serial (`workers: 1`) because they share a server and, within `e2e`, a household.
 
 Find things the way a user does — `getByRole`, `getByLabel`, `getByPlaceholder` — with the

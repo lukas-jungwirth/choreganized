@@ -31,7 +31,7 @@ export type Screen = {
 	 * per colour, eight; `cookbook` has the recipe-filters sketch's tagged
 	 * library (→ plan 40). All unmutated, like `visual`.
 	 */
-	account?: 'guests' | 'fullhouse' | 'cookbook';
+	account?: 'guests' | 'fullhouse' | 'cookbook' | 'cook';
 };
 
 export async function openRecipe(page: Page): Promise<void> {
@@ -65,6 +65,64 @@ export async function openLasagneEditor(
 			window.scrollTo(0, (found?.getBoundingClientRect().top ?? 0) + window.scrollY - 12);
 		}, heading);
 	}
+}
+
+/** The words cook mode's shots find things by (→ plan 47). */
+export const COOK_WORDS = {
+	en: { start: 'Start cooking', more: 'Increase cooking for', next: 'Next', step: /^Step \d+ of/ },
+	de: {
+		start: 'Los geht’s',
+		more: 'Für wie viele erhöhen',
+		next: 'Nächster Schritt',
+		step: /^Schritt \d+ von/
+	}
+};
+
+/** The risotto's cook mode (`--long-step`, the `cook` account), at `step`. */
+async function openRisottoCook(page: Page, step: number): Promise<void> {
+	await page.goto('/cooking/recipes');
+	await page
+		.getByRole('link', { name: /Risotto/ })
+		.first()
+		.click();
+	await page.waitForURL(/\/cooking\/recipes\/(?!new$|import)[^/?]+(?:\?.*)?$/);
+	await page.getByRole('heading', { level: 1, name: 'Risotto' }).waitFor();
+	await page.goto(`${new URL(page.url()).pathname}/cook?step=${step}`);
+	await page.locator('.eyebrow').waitFor();
+}
+
+/**
+ * Cook mode with plan 47's Get ready and the list under a step: the lasagne's
+ * Get ready for 8, its step 5 for 8 (C3), and the risotto's 400-character step,
+ * which belongs to the `cook` household. A step with its timer running is not
+ * here: with a ring running, `settle`'s wait for an idle network timed out, and
+ * a household left with a timer spoiled the long step's shot after it; the e2e
+ * journey holds that the list stays in view (→ DECISIONS #339).
+ */
+export function cookShots(
+	words: (typeof COOK_WORDS)['en']
+): (Omit<Screen, 'route' | 'path'> & { navigate: (page: Page) => Promise<void> })[] {
+	const ready = async (page: Page) => {
+		await openLasagne(page);
+		await page.goto(`${new URL(page.url()).pathname}/cook`);
+		await page.getByRole('button', { name: words.start }).waitFor();
+		for (let i = 0; i < 4; i++) await page.getByRole('button', { name: words.more }).click();
+		// The stepper's focus ring is the tap, not the screen.
+		await page.evaluate(() => (document.activeElement as HTMLElement | null)?.blur());
+	};
+	return [
+		{ name: 'cook-get-ready', navigate: ready },
+		{
+			name: 'cook-mode-part',
+			navigate: async (page) => {
+				await ready(page);
+				await page.getByRole('button', { name: words.start }).click();
+				for (let i = 0; i < 4; i++) await page.getByRole('button', { name: words.next }).click();
+				await page.getByText(words.step).waitFor();
+			}
+		},
+		{ name: 'cook-long-step', account: 'cook', navigate: (page) => openRisottoCook(page, 2) }
+	];
 }
 
 /** The words the editor's shots find things by, in each language the walk uses. */
@@ -479,6 +537,7 @@ export const SCREENS: Screen[] = [
 		navigate: async (page) => {
 			await openRecipe(page);
 			await page.getByRole('link', { name: 'Start cook mode' }).click();
+			await page.getByRole('button', { name: 'Start cooking' }).click();
 			await page.getByText(/^Step 1 of/).waitFor();
 		}
 	},
@@ -492,16 +551,12 @@ export const SCREENS: Screen[] = [
 		navigate: openLasagne,
 		bottom: true
 	},
-	{
-		name: 'cook-mode-part',
+	// Get ready, the list under a step, a long step, a running timer (→ plan 47).
+	...cookShots(COOK_WORDS.en).map((shot) => ({
+		...shot,
 		route: '/(app)/cooking/recipes/[id]/cook',
-		path: '',
-		navigate: async (page) => {
-			await openLasagne(page);
-			await page.goto(`${new URL(page.url()).pathname}/cook?serves=8&step=2`);
-			await page.getByText(/^Step 2 of/).waitFor();
-		}
-	},
+		path: ''
+	})),
 	{ name: 'expenses', route: '/(app)/expenses', path: '/expenses', bottom: true },
 	{ name: 'expenses-dark', route: '/(app)/expenses', path: '/expenses', theme: 'dark' },
 	{ name: 'expenses-add', route: '/(app)/expenses', path: '', navigate: openAddExpense },

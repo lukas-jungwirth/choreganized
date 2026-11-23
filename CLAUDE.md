@@ -86,6 +86,7 @@ npm run db:seed -- you@example.com   # demo data for a signed-in user (idempoten
 npm run db:seed -- you@example.com --full-house   # …plus stub members up to the max (8)
 npm run db:seed -- you@example.com --cookbook     # …plus 13 tagged + 3 untagged recipes (filters, sorting)
 npm run db:seed -- you@example.com --history      # …plus ~14 months of older expenses
+npm run db:seed -- you@example.com --long-step    # …plus a risotto with a 400-character step (cook mode)
 npm run db:studio      # inspect the DB
 npm run import:probe -- <url> [--save <name> [--trim]]  # what the recipe importer reads on a page
 npm run import:eval -- [--fake] [--record]  # the import scored on the fixture pages (key in .env)

@@ -19,6 +19,8 @@
 import { expect, test, type BrowserContext, type Page } from '@playwright/test';
 import { storageStateFor } from '../e2e/accounts';
 import {
+	COOK_WORDS,
+	cookShots,
 	EDITOR_WORDS,
 	editorShots,
 	REVIEW_WORDS,
@@ -107,7 +109,39 @@ function walk(screens: Screen[]) {
 			});
 		}
 	});
+	test.describe('as the cook household', () => {
+		test.use({ storageState: storageStateFor('cook') });
+		for (const screen of screens.filter((screen) => screen.account === 'cook')) {
+			test(`${screen.name} at 200% text`, async ({ page, context }) => {
+				await atTwiceTheTextSize(page, context, screen);
+			});
+		}
+	});
 }
+
+/** Cook mode's Get ready and steps (→ plan 47), reached by their German names. */
+test.describe('cook mode in German', () => {
+	test.use({ locale: 'de-AT' });
+	const shots = cookShots(COOK_WORDS.de).map((shot) => ({
+		...shot,
+		name: `${shot.name}-de`,
+		route: '/(app)/cooking/recipes/[id]/cook',
+		path: ''
+	}));
+	for (const shot of shots.filter((shot) => !shot.account)) {
+		test(`${shot.name} at 200% text, in German`, async ({ page, context }) => {
+			await atTwiceTheTextSize(page, context, shot);
+		});
+	}
+	test.describe('as the cook household', () => {
+		test.use({ storageState: storageStateFor('cook') });
+		for (const shot of shots.filter((shot) => shot.account === 'cook')) {
+			test(`${shot.name} at 200% text, in German`, async ({ page, context }) => {
+				await atTwiceTheTextSize(page, context, shot);
+			});
+		}
+	});
+});
 
 walk(SCREENS.filter((screen) => !screen.theme));
 
