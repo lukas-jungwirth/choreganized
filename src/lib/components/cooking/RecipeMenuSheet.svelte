@@ -58,7 +58,7 @@
 				timeMinutes: recipe.timeMinutes,
 				servings: recipe.servings,
 				ingredients: recipe.ingredients,
-				steps: recipe.steps.map((step) => step.text)
+				steps: recipe.steps
 			},
 			m
 		)

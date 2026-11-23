@@ -90,25 +90,60 @@
 	/** A row keeps its own key so reordering moves the DOM node, not the text. */
 	type Row = { key: string; text: string };
 	/**
+	 * An ingredient row also keeps what plan 43 stores beside the line — its
+	 * note and its part — so a save in this editor loses neither. No control
+	 * shows them (plan 46 rebuilds the editor); `named` is the name the note was
+	 * written for and `opened` the line as the row was opened, so a line retyped
+	 * to another name leaves the note behind and an untouched one never does.
+	 * `home` is the part the row came with (see `move`).
+	 */
+	type IngredientRow = Row & {
+		note: string | null;
+		section: string | null;
+		home: string | null;
+		named: string | null;
+		opened: string;
+	};
+	/**
 	 * A step also carries what it uses (→ SPEC §4.4): null while it reads its own
 	 * text, a list — possibly empty — once someone has said. Pins name ingredient
 	 * *rows*, so they survive a reorder and go away with a removal. And it may
 	 * carry a timer of its own (→ plan 21): null while cook mode reads the
 	 * duration out of the text.
 	 */
-	type StepRow = Row & { uses: StepUseDraft[] | null; timer: StepTimer | null };
+	type StepRow = Row & {
+		uses: StepUseDraft[] | null;
+		timer: StepTimer | null;
+		/** The step's part (→ plan 43), posted back as it came, and the one it came with. */
+		section: string | null;
+		home: string | null;
+	};
 
 	let nextKey = 0;
 	/** A counter rather than randomness: the server and the browser agree on it. */
 	const row = (text = ''): Row => ({ key: `r${nextKey++}`, text });
+	const ingredientRow = (
+		text = '',
+		details: { note: string | null; section: string | null; name: string } | null = null
+	): IngredientRow => ({
+		...row(text),
+		note: details?.note ?? null,
+		section: details?.section ?? null,
+		home: details?.section ?? null,
+		named: details?.name ?? null,
+		opened: text
+	});
 	const stepRow = (
 		text = '',
 		uses: StepUseDraft[] | null = null,
-		timer: StepTimer | null = null
+		timer: StepTimer | null = null,
+		section: string | null = null
 	): StepRow => ({
 		...row(text),
 		uses,
-		timer
+		timer,
+		section,
+		home: section
 	});
 
 	/**
@@ -132,22 +167,22 @@
 		untrack(() => numberField(prefill ? prefill.timeMinutes : recipe?.timeMinutes))
 	);
 	let servings = $state(untrack(() => numberField(prefill ? prefill.servings : recipe?.servings)));
-	let ingredients = $state<Row[]>(
+	let ingredients = $state<IngredientRow[]>(
 		untrack(() => {
 			if (prefill) {
 				return prefill.ingredientLines.length
 					? prefill.ingredientLines.map((line) => {
-							const created = row(line);
+							const created = ingredientRow(line);
 							rowForDraftIndex.push(created.key);
 							return created;
 						})
-					: [row()];
+					: [ingredientRow()];
 			}
 
-			if (!recipe?.ingredients.length) return [row()];
+			if (!recipe?.ingredients.length) return [ingredientRow()];
 
 			return recipe.ingredients.map((ingredient) => {
-				const created = row(m.units.ingredient(ingredient));
+				const created = ingredientRow(m.units.ingredient(ingredient), ingredient);
 				rowForIngredientId.set(ingredient.id, created.key);
 				return created;
 			});
@@ -167,7 +202,7 @@
 						return key ? [{ ingredient: key, quantity: use.quantity }] : [];
 					});
 					// Nothing left to pin reads the text — "uses nothing" is a person's call.
-					return stepRow(step.text, uses?.length ? uses : null, step.timer);
+					return stepRow(step.text, uses?.length ? uses : null, step.timer, step.section ?? null);
 				});
 			}
 
@@ -180,9 +215,19 @@
 					// the save and this load) is dropped rather than shown as a blank.
 					step.uses?.flatMap((use) => {
 						const key = rowForIngredientId.get(use.ingredientId);
-						return key ? [{ ingredient: key, quantity: use.quantity }] : [];
+						return key
+							? [
+									{
+										ingredient: key,
+										quantity: use.quantity,
+										phrase: use.phrase ?? null,
+										amountPhrase: use.amountPhrase ?? null
+									}
+								]
+							: [];
 					}) ?? null,
-					step.timer
+					step.timer,
+					step.section
 				)
 			);
 		})
@@ -252,15 +297,50 @@
 	let editing = $state<string | null>(null);
 	let pinning = $state<string | null>(null);
 
+	/** A row that carries a part (→ plan 43), and the part it came with. */
+	type Parted = Row & { section: string | null; home: string | null };
+
+	/**
+	 * A new row joins the part it lands in: the one of the row above it, or of
+	 * the row below when it is first. A new row with none of its own would split
+	 * its part in two, each half under the same heading.
+	 */
+	function joinPart<T extends Parted>(rows: T[], at: number): T[] {
+		const neighbour = rows[at - 1] ?? rows[at + 1];
+		if (neighbour && rows[at].section !== neighbour.section) {
+			rows[at] = { ...rows[at], section: neighbour.section, home: neighbour.section };
+		}
+		return rows;
+	}
+
+	/**
+	 * A moved row joins a part only when it lands **inside** it, between two of
+	 * its rows; anywhere else it is back in the part it came with. So one arrow
+	 * across a boundary moves a row into the next part, and the arrow back
+	 * returns it, without ever renaming a part's only row out of existence (the
+	 * form has no control to set a part again until plan 46).
+	 */
+	function settlePart<T extends Parted>(rows: T[], at: number): T[] {
+		const above = rows[at - 1];
+		const below = rows[at + 1];
+		const inside = above && below && above.section === below.section;
+		const section = inside ? above.section : rows[at].home;
+		if (rows[at].section !== section) rows[at] = { ...rows[at], section };
+		return rows;
+	}
+
 	/** Insert after `index`, then put the caret in it — Enter walks down the list. */
-	function add<T extends Row>(
+	function add<T extends Parted>(
 		rows: T[],
 		kind: 'ingredient' | 'step',
 		make: () => T,
 		index = rows.length - 1
 	): T[] {
 		const fresh = make();
-		const next = [...rows.slice(0, index + 1), fresh, ...rows.slice(index + 1)];
+		const next = joinPart(
+			[...rows.slice(0, index + 1), fresh, ...rows.slice(index + 1)],
+			index + 1
+		);
 
 		// After the DOM has the new row: focus is the whole point of adding one.
 		requestAnimationFrame(() => document.getElementById(fieldId(kind, fresh.key))?.focus());
@@ -274,13 +354,13 @@
 		return next.length ? next : [make()];
 	}
 
-	function move<T extends Row>(rows: T[], index: number, direction: -1 | 1): T[] {
+	function move<T extends Parted>(rows: T[], index: number, direction: -1 | 1): T[] {
 		const to = index + direction;
 		if (to < 0 || to >= rows.length) return rows;
 
 		const next = [...rows];
 		[next[index], next[to]] = [next[to], next[index]];
-		return next;
+		return settlePart(next, to);
 	}
 
 	/**
@@ -321,9 +401,26 @@
 		}));
 	}
 
+	/**
+	 * One pin per ingredient, its share the shares of all its links added up:
+	 * a stored link may name one ingredient twice (→ plan 43), and the chips and
+	 * the sheet speak per ingredient. Null when none of them says.
+	 */
+	function perIngredient(uses: StepUseDraft[]): StepUseDraft[] {
+		const byKey = new Map<string, StepUseDraft>();
+		for (const use of uses) {
+			const held = byKey.get(use.ingredient);
+			if (!held) byKey.set(use.ingredient, { ingredient: use.ingredient, quantity: use.quantity });
+			else if (use.quantity !== null) {
+				held.quantity = Math.round(((held.quantity ?? 0) + use.quantity) * 100) / 100;
+			}
+		}
+		return [...byKey.values()];
+	}
+
 	/** The chips under one step: its pins, or its reading, as name + amount. */
 	function chips(step: StepRow): { key: string; name: string; amount: string }[] {
-		return (step.uses ?? suggest(step.text)).flatMap((use) => {
+		return perIngredient(step.uses ?? suggest(step.text)).flatMap((use) => {
 			const choice = choices.find((item) => item.key === use.ingredient);
 			if (!choice) return [];
 
@@ -351,9 +448,49 @@
 		return JSON.stringify(
 			step.uses.flatMap((use) => {
 				const at = positions.get(use.ingredient);
-				return at === undefined ? [] : [{ ingredient: at, quantity: use.quantity }];
+				return at === undefined
+					? []
+					: [
+							{
+								ingredient: at,
+								quantity: use.quantity,
+								phrase: use.phrase ?? null,
+								amountPhrase: use.amountPhrase ?? null
+							}
+						];
 			})
 		);
+	}
+
+	/**
+	 * The sheet's answer, with the words the stored links carried (→ plan 43):
+	 * an ingredient still ticked keeps every phrase it was linked by. The share
+	 * the sheet set is the ingredient's whole share in this step, so it goes on
+	 * the first link and the others say none: added up, they are what the sheet
+	 * said. The sheet knows nothing of phrases, and reopening it must not be what
+	 * loses them.
+	 */
+	function keepWords(before: StepUseDraft[] | null, after: StepUseDraft[]): StepUseDraft[] {
+		return after.flatMap((use) => {
+			const linked = (before ?? []).filter((old) => old.ingredient === use.ingredient);
+			if (!linked.length) return [use];
+			return linked.map((old, at) => ({
+				...old,
+				quantity: at === 0 ? use.quantity : null
+			}));
+		});
+	}
+
+	/**
+	 * The note a row posts: the one it was opened with while the line still names
+	 * the same thing. Retyped to another name, the note was about something else.
+	 */
+	function postedNote(item: IngredientRow): string {
+		if (!item.note || item.named === null) return '';
+		// Untouched, it keeps its note whatever the line parses to.
+		if (item.text === item.opened) return item.note;
+		const parsed = item.text.trim() ? parseIngredient(item.text) : null;
+		return parsed?.name === item.named ? item.note : '';
 	}
 
 	/** Which step's timer sheet is open, by row key. */
@@ -532,10 +669,13 @@
 						// walking to the next ingredient is what's meant here.
 						event.preventDefault();
 						if (ingredients.length < INGREDIENTS_MAX) {
-							ingredients = add(ingredients, 'ingredient', () => row(), index);
+							ingredients = add(ingredients, 'ingredient', () => ingredientRow(), index);
 						}
 					}}
 				/>
+				<!-- Plan 43's note and part, carried through unseen (→ `readRecipeForm`). -->
+				<input type="hidden" name="ingredientNote" value={postedNote(item)} />
+				<input type="hidden" name="ingredientSection" value={item.section ?? ''} />
 				{#if item.text.trim()}
 					<!-- The receipt: what the line was understood to measure, rendered
 						 by the same `m.units.amount` the recipe [7a] and the peek sheet
@@ -566,7 +706,7 @@
 					// chips would outlive it on every step that named it.
 					if (ingredients[index].key === editing) editing = null;
 					unpin(ingredients[index].key);
-					ingredients = remove(ingredients, index, () => row());
+					ingredients = remove(ingredients, index, () => ingredientRow());
 				})}
 			</li>
 		{/each}
@@ -576,7 +716,7 @@
 		<button
 			type="button"
 			class="add"
-			onclick={() => (ingredients = add(ingredients, 'ingredient', () => row()))}
+			onclick={() => (ingredients = add(ingredients, 'ingredient', () => ingredientRow()))}
 		>
 			<Plus size={16} strokeWidth={2.2} />{m.cooking.form.addIngredient}
 		</button>
@@ -657,6 +797,7 @@
 						 position, so a step that reads its own text still has to post. -->
 					<input type="hidden" name="stepUses" value={postedUses(step)} />
 					<input type="hidden" name="stepTimer" value={postedTimer(step)} />
+					<input type="hidden" name="stepSection" value={step.section ?? ''} />
 				</div>
 				<span class="step-controls">
 					{@render controls(index, steps.length, 'step', (direction) => {
@@ -708,9 +849,9 @@
 		<StepIngredientsSheet
 			index={at + 1}
 			ingredients={choices}
-			uses={steps[at].uses}
+			uses={steps[at].uses ? perIngredient(steps[at].uses) : null}
 			suggested={suggest(steps[at].text)}
-			onsave={(uses) => (steps[at].uses = uses)}
+			onsave={(uses) => (steps[at].uses = keepWords(steps[at].uses, uses))}
 			onauto={() => (steps[at].uses = null)}
 			onclose={() => (pinning = null)}
 		/>

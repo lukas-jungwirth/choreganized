@@ -34,8 +34,13 @@ import type { CalendarDate } from '$lib/utils/dates';
 import { parseIngredient, RECIPE_QUANTITY_MAX } from '$lib/utils/ingredients';
 import { readRecipeTags, type RecipeDiet, type RecipeTag } from '$lib/utils/recipe-tags';
 import {
+	AMOUNT_PHRASE_MAX,
+	cleanText,
 	INGREDIENTS_MAX,
 	INGREDIENT_LINE_MAX,
+	INGREDIENT_NOTE_MAX,
+	LINK_PHRASE_MAX,
+	RECIPE_SECTION_MAX,
 	RECIPE_NAME_MAX,
 	RECIPE_SERVINGS_MAX,
 	RECIPE_TIME_MAX,
@@ -88,18 +93,27 @@ export type RecipeSummary = {
 
 export type RecipeIngredientRow = {
 	id: string;
+	/** What you buy (→ DECISIONS #314). */
 	name: string;
 	quantity: number | null;
 	unit: string | null;
+	/** Everything else the line said, shown under the name, never on the list (→ plan 43). */
+	note: string | null;
+	/** The part of the dish ("Béchamel"), or null (→ DECISIONS #312). */
+	section: string | null;
 };
 
 export type RecipeStepRow = {
 	id: string;
 	text: string;
+	/** The part of the dish the step belongs to, or null (→ plan 43). */
+	section: string | null;
 	/**
 	 * The ingredients pinned to this step, or null for one that reads its own
 	 * text (→ `$lib/utils/step-highlight`). An empty array is a real answer:
-	 * "this step uses nothing", said by hand.
+	 * "this step uses nothing", said by hand. A pin may carry the words that
+	 * name it and its amount (→ plan 43, `$lib/utils/step-links`), and one
+	 * ingredient may be pinned twice under two phrases.
 	 */
 	uses: StepUse[] | null;
 	/** The step's own timer (→ plan 21), or null for one that reads its text. */
@@ -383,7 +397,9 @@ function listIngredients(recipeId: string): RecipeIngredientRow[] {
 			id: recipeIngredients.id,
 			name: recipeIngredients.name,
 			quantity: recipeIngredients.quantity,
-			unit: recipeIngredients.unit
+			unit: recipeIngredients.unit,
+			note: recipeIngredients.note,
+			section: recipeIngredients.section
 		})
 		.from(recipeIngredients)
 		.where(eq(recipeIngredients.recipeId, recipeId))
@@ -398,7 +414,8 @@ function listSteps(recipeId: string): RecipeStepRow[] {
 			text: recipeSteps.text,
 			set: recipeSteps.ingredientsSet,
 			timerSeconds: recipeSteps.timerSeconds,
-			timerLabel: recipeSteps.timerLabel
+			timerLabel: recipeSteps.timerLabel,
+			section: recipeSteps.section
 		})
 		.from(recipeSteps)
 		.where(eq(recipeSteps.recipeId, recipeId))
@@ -410,6 +427,7 @@ function listSteps(recipeId: string): RecipeStepRow[] {
 	return steps.map((step) => ({
 		id: step.id,
 		text: step.text,
+		section: step.section,
 		// The flag decides, not the count: a step whose list is empty on purpose
 		// must not fall back to reading its own text (→ DECISIONS #127).
 		uses: step.set ? (pinned.get(step.id) ?? []) : null,
@@ -426,7 +444,9 @@ function pinsByStep(stepIds: string[]): Map<string, StepUse[]> {
 		.select({
 			stepId: recipeStepIngredients.stepId,
 			ingredientId: recipeStepIngredients.ingredientId,
-			quantity: recipeStepIngredients.quantity
+			quantity: recipeStepIngredients.quantity,
+			phrase: recipeStepIngredients.phrase,
+			amountPhrase: recipeStepIngredients.amountPhrase
 		})
 		.from(recipeStepIngredients)
 		.where(inArray(recipeStepIngredients.stepId, stepIds))
@@ -434,7 +454,12 @@ function pinsByStep(stepIds: string[]): Map<string, StepUse[]> {
 		.all();
 
 	for (const row of rows) {
-		const use = { ingredientId: row.ingredientId, quantity: row.quantity };
+		const use: StepUse = {
+			ingredientId: row.ingredientId,
+			quantity: row.quantity,
+			phrase: row.phrase,
+			amountPhrase: row.amountPhrase
+		};
 		const list = byStep.get(row.stepId);
 		if (list) list.push(use);
 		else byStep.set(row.stepId, [use]);
@@ -603,6 +628,8 @@ export function duplicateRecipe(
 							name: ingredient.name,
 							quantity: ingredient.quantity,
 							unit: ingredient.unit,
+							note: ingredient.note,
+							section: ingredient.section,
 							sortOrder
 						};
 					})
@@ -622,7 +649,14 @@ export function duplicateRecipe(
 						step.uses?.forEach((use) => {
 							const ingredientId = ingredientIds.get(use.ingredientId);
 							if (!ingredientId) return;
-							pins.push({ stepId: id, ingredientId, quantity: use.quantity, sortOrder: pinned++ });
+							pins.push({
+								stepId: id,
+								ingredientId,
+								quantity: use.quantity,
+								phrase: use.phrase ?? null,
+								amountPhrase: use.amountPhrase ?? null,
+								sortOrder: pinned++
+							});
 						});
 
 						return {
@@ -632,6 +666,7 @@ export function duplicateRecipe(
 							ingredientsSet: step.uses !== null,
 							timerSeconds: step.timer?.seconds ?? null,
 							timerLabel: step.timer?.label ?? null,
+							section: step.section,
 							sortOrder
 						};
 					})
@@ -854,12 +889,15 @@ function writeChildren(tx: Transaction, recipeId: string, input: RecipeInput): v
 		if (!parsed) return;
 
 		const id = crypto.randomUUID();
+		const details = input.ingredientDetails?.[posted];
 		kept.set(posted, id);
 		ingredients.push({
 			id,
 			recipeId,
 			...parsed,
 			name: parsed.name.slice(0, INGREDIENT_LINE_MAX),
+			note: cleanText(details?.note, INGREDIENT_NOTE_MAX),
+			section: cleanText(details?.section, RECIPE_SECTION_MAX),
 			sortOrder: ingredients.length
 		});
 	});
@@ -884,6 +922,7 @@ function writeChildren(tx: Transaction, recipeId: string, input: RecipeInput): v
 			ingredientsSet: step.uses !== null,
 			timerSeconds: timer?.seconds ?? null,
 			timerLabel: timer?.label ?? null,
+			section: cleanText(step.section, RECIPE_SECTION_MAX),
 			sortOrder: steps.length
 		});
 		if (step.uses) pins.push(...pinRows(id, step.uses, kept));
@@ -910,7 +949,8 @@ function normalizeTimer(timer: StepTimer | null | undefined): StepTimer | null {
  * One step's pins as rows. A pin whose ingredient was blanked out in the same
  * save points at nothing and is dropped — the step keeps the rest of its list
  * rather than falling back to reading its text, because the rest is still what
- * the cook said.
+ * the cook said. One ingredient may be pinned under two phrases (plan 43:
+ * "Karotte schälen … zu den Möhren"), never twice under the same one.
  */
 function pinRows(
 	stepId: string,
@@ -924,15 +964,19 @@ function pinRows(
 		if (rows.length >= INGREDIENTS_MAX) break;
 
 		const ingredientId = kept.get(use.ingredient);
-		// The unique index would refuse a repeat anyway; this makes it a no-op
-		// rather than a lost save.
-		if (!ingredientId || seen.has(ingredientId)) continue;
+		const phrase = cleanText(use.phrase, LINK_PHRASE_MAX);
+		// The unique index would refuse a repeat anyway (and SQLite lets two NULL
+		// phrases through it); this makes it a no-op rather than a lost save.
+		const key = `${ingredientId}\u0000${phrase ?? ''}`;
+		if (!ingredientId || seen.has(key)) continue;
 
-		seen.add(ingredientId);
+		seen.add(key);
 		rows.push({
 			stepId,
 			ingredientId,
 			quantity: normalizeShare(use.quantity),
+			phrase,
+			amountPhrase: cleanText(use.amountPhrase, AMOUNT_PHRASE_MAX),
 			sortOrder: rows.length
 		});
 	}

@@ -479,9 +479,23 @@ export const recipeIngredients = sqliteTable(
 		recipeId: text('recipe_id')
 			.notNull()
 			.references(() => recipes.id, { onDelete: 'cascade' }),
+		/** What you buy: "Karotte", not "Karotte, in Scheiben geschnitten" (→ DECISIONS #314). */
 		name: text('name').notNull(),
 		quantity: real('quantity'),
 		unit: text('unit'),
+		/**
+		 * Everything else the line said: "in Scheiben geschnitten", "zum Würzen",
+		 * "oder veganes Hack" (→ plan 43, DECISIONS #314). Shown under the name in
+		 * the recipe and in cook mode; never reaches the shopping list, the
+		 * cupboard or the diet guess, which read `name` only. NULL = no note.
+		 */
+		note: text('note'),
+		/**
+		 * The part of the dish this row belongs to, as written ("Bolognese",
+		 * "Béchamel"; → plan 43, DECISIONS #312). Consecutive rows with the same
+		 * value form one part; NULL rows come first and have no heading.
+		 */
+		section: text('section'),
 		sortOrder: integer('sort_order').notNull()
 	},
 	(t) => [index('recipe_ingredients_recipe_idx').on(t.recipeId)]
@@ -516,6 +530,12 @@ export const recipeSteps = sqliteTable(
 		 * on its own is indistinguishable from a step nobody has looked at.
 		 */
 		ingredientsSet: integer('ingredients_set', { mode: 'boolean' }).notNull().default(false),
+		/**
+		 * The part of the dish this step belongs to (→ plan 43, DECISIONS #312),
+		 * named independently of the ingredients' parts: sites write "Ragu
+		 * Bolognese:" over the list and "Ragu:" over the method. NULL = no part.
+		 */
+		section: text('section'),
 		sortOrder: integer('sort_order').notNull()
 	},
 	(t) => [index('recipe_steps_recipe_idx').on(t.recipeId)]
@@ -548,12 +568,26 @@ export const recipeStepIngredients = sqliteTable(
 			.references(() => recipeIngredients.id, { onDelete: 'cascade' }),
 		/** In the ingredient's unit; NULL = all of it. */
 		quantity: real('quantity'),
+		/**
+		 * The words of the step text that name the ingredient, exactly as they
+		 * stand there: "Zwiebelwürfel" for the Zwiebel (→ plan 43). Cook mode
+		 * underlines every whole-word occurrence in this step. NULL = the step uses
+		 * the ingredient without naming it; nothing is underlined.
+		 */
+		phrase: text('phrase'),
+		/**
+		 * The amount the step text gives it, exactly as written ("1 - 2 EL",
+		 * "200 g"). Cooking for a different number rewrites this run and nothing
+		 * else (→ `utils/step-links.ts`). NULL = the text gives no amount.
+		 */
+		amountPhrase: text('amount_phrase'),
 		sortOrder: integer('sort_order').notNull()
 	},
 	(t) => [
 		index('recipe_step_ingredients_step_idx').on(t.stepId),
-		// A step names an ingredient once — twice would render two identical chips.
-		uniqueIndex('recipe_step_ingredients_pair_unique').on(t.stepId, t.ingredientId)
+		// A step may name one ingredient by two phrases ("Karotte schälen … zu den
+		// Möhren"), never by the same one twice (→ plan 43).
+		uniqueIndex('recipe_step_ingredients_link_unique').on(t.stepId, t.ingredientId, t.phrase)
 	]
 );
 

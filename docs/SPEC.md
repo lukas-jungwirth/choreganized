@@ -772,6 +772,15 @@ item sheet [3a]; what differs is what a tick does and what counts as shopping.
   has one, and "no unit", which writes the row
   back as a line and shows the reading that line will get (→ DECISIONS #100–101). Reorder with
   the arrows (→ DECISIONS #67), remove per row.
+- **Notes, parts and links** (→ plan 43): an ingredient row may carry a **note** (everything the
+  line said besides what you buy: "in Scheiben geschnitten", "zum Würzen") and a **part**
+  ("Bolognese"); a step its part and links that name the words of its text an ingredient is
+  called by. This editor has no controls for them yet (plan 46 rebuilds it) but **never loses
+  them**: each row posts its note and part as hidden fields, each step its part and its links
+  with their words, so a save changes only what was edited. A line retyped to another name
+  leaves its note behind (the note was about the old thing); one reformatted or given a new
+  amount keeps it. Re-ticking a step's ingredients in the sheet below keeps the words each
+  still-ticked ingredient was linked by.
 - **Steps**: numbered textareas, add/remove/reorder. Under each one, **what that step uses** —
   a row of chips that opens a sheet (→ [DECISIONS #127](DECISIONS.md)):
   - Until somebody says otherwise the chips are **read out of the step text**, live as you type,
@@ -813,7 +822,15 @@ item sheet [3a]; what differs is what a tick does and what counts as shopping.
 - Actions: **Add to plan** (day picker → plan sheet flow), basket button + per-section
   **"Add to list"** → both open the **ingredient picker [3e]** (§4.8). Neither appears when the
   recipe has no ingredients.
-- Ingredients list (name + amount right-aligned), numbered steps.
+- Ingredients list (name + amount right-aligned), numbered steps. **A recipe in parts**
+  (→ plan 43, DECISIONS #312) shows each part's name as a heading over its own card of
+  ingredients, and again over its steps, which are **numbered straight through** (Bolognese 1–3,
+  Béchamel 4–5). Consecutive rows with the same part are one part; rows without one come first
+  with no heading, so a recipe without parts looks exactly as before. An ingredient's **note**
+  sits in a smaller grey line under its name ("Faschiertes" · "gemischt"). In a step whose links
+  are stored with their words, those words are **underlined**, as in cook mode
+  ("Zwiebelwürfel" is the Zwiebel, "Hackfleisch" the Faschiertes); a step read by the matcher
+  is not underlined here, as before.
 - **Cooking for {n}** — a stepper above the ingredient list that writes the amounts out for a
   different number of people. The recipe keeps what it was written for (shown beside the
   stepper as "written for 4"); the amounts, the meta row's "Serves {n}", the picker [3e] and
@@ -828,7 +845,14 @@ item sheet [3a]; what differs is what a tick does and what counts as shopping.
     unknown, so there is nothing honest to offer (→ [DECISIONS #124](DECISIONS.md)).
   - **The steps' own amounts follow too** (→ plan 23, DECISIONS #149): "2 Tomaten würfeln" read
     for twice as many says "**4** Tomaten würfeln", marked, with what the recipe says there
-    for a screen reader. Only where it is certain: the amount must sit directly before an
+    for a screen reader. **A step with stored links** (→ plan 43) rewrites exactly the amount
+    run each link stored, "1 - 2 EL" → "2 - 4 EL", every number in it scaled and nothing else in
+    the sentence ("180 °C", "5 - 7 Min."), and only **where it stands beside its words**: before
+    them with at most three words of letters between ("2 große Eier", "100 g weiche Butter";
+    no digit, no `. ! ? ; :`), else after them ("Karotten (400 g)", "Karotten, etwa 400 g").
+    "Nach 5 Min. die 5 reifen Tomaten" doubles the second 5 only; every occurrence of the words
+    with its amount beside it is rewritten; an amount beside none stays as written. **A step without** keeps plan 23's rule, only where
+    it is certain: the amount must sit directly before an
     ingredient the step names, in that ingredient's unit, and agree with the recipe (the share
     pinned to the step, or the whole row; otherwise no more than the row's total). Every other
     number — "180 °C", "2 cm", "10 Minuten", "in 4 Portionen" — stays exactly as written, as do
@@ -843,9 +867,14 @@ item sheet [3a]; what differs is what a tick does and what counts as shopping.
 
 - Full-screen dark UI (`--cook-*` tokens), screen wake-lock while open.
 - Header: recipe name, close ×. Segmented progress bar (one segment per step, done = sage).
-- "STEP {i} OF {n}" in amber; the step text huge (Fraunces ~33px). The ingredients the step uses
-  — **the ones pinned to it in the form, else the ones its text names** (§4.4) — are underlined
-  in amber where the text names them, and the "This step uses {…}" line beneath lists them all,
+- "STEP {i} OF {n}" in amber, and beside it the step's **part** in the quieter grey when the
+  recipe has parts ("STEP 5 OF 10 · BÉCHAMEL", → plan 43); the step text huge (Fraunces ~33px).
+  The ingredients the step uses — **its stored links, else the ones pinned to it in the form,
+  else the ones its text names** (§4.4) — are underlined in amber where the text names them: a
+  stored link underlines every whole-word occurrence of its own words ("Zwiebelwürfel"), never
+  inside a longer word, and a link stored without words is underlined wherever the word matcher
+  finds its ingredient's name (never inside a run another link claimed). The "This step uses
+  {…}" line beneath lists them all,
   including any the text never mentions. A step pinned to nothing shows neither.
 - **Tapping an underlined ingredient says how much of it** (→ [DECISIONS #133](DECISIONS.md)) —
   the amount in amber with the name behind it, and the row's total behind that when the step
@@ -867,7 +896,8 @@ item sheet [3a]; what differs is what a tick does and what counts as shopping.
   parsed chip stays one tap and takes the step's name. Naming used to be a guess — the step's
   first ingredient — which is how a 20-minute bake ended up called after the butter the dish was
   greased with.
-- **Ingredients chip** → bottom peek sheet listing all ingredients; the current step's are
+- **Ingredients chip** → bottom peek sheet listing all ingredients, under their parts' names when
+  the recipe has parts, each note under its name (→ plan 43); the current step's are
   highlighted in amber [7b]. One the step takes only a share of shows that share in amber with
   the row's total behind it — "20 g of 30 g" — so "how much of that was it again?" is answered
   for _now_ without losing what the recipe holds.
@@ -1053,9 +1083,18 @@ in the cupboard, and reading the whole list back against the recipe to find the 
 actually need is the chore this replaces (→ [DECISIONS #123](DECISIONS.md)).
 
 - Title = the recipe's name, eyebrow "Add to shopping list", subtitle "Tick what you need to
-  buy." One row per ingredient in the recipe's own order: check circle, name, and the recipe's
-  amount right-aligned like the recipe view. The list scrolls inside the sheet so the count and
-  the button stay put.
+  buy." **One row per name** in the recipe's own order: check circle, name, and the amount right-
+  aligned like the recipe view. What reaches the list (→ plan 43, DECISIONS #313, #314):
+  - **the name only, never the note**: "Faschiertes", not "Faschiertes, gemischt";
+  - **a container counting word becomes a pack** with its number ("1 Dose Tomaten" → Tomaten ·
+    1 pack); **every other counting word, and tbsp and tsp, put the name alone** ("2 Zehen
+    Knoblauch" → Knoblauch; "2 EL Olivenöl" → Olivenöl): nobody buys two cloves;
+  - **the same name in two parts is one row**, its amounts added where the units agree by the
+    list's own merge rules (Butter 30 g in the Béchamel + 10 g for the form → Butter · 40 g), and
+    the parts it gathers named in the quiet line ("Béchamel · Schichten").
+    The sheet works this out with the same function the submit runs, so it promises exactly what
+    the list receives. The list scrolls inside the sheet so the count and
+    the button stay put.
 - **Cooking for {n}** at the top, the same stepper the recipe screen has (§4.5) and seeded from
   it when the sheet was raised there. Moving it rewrites every amount in the list _and_ every
   "becomes {x}" beneath it, and the count is what the server scales to on submit — so what the

@@ -47,6 +47,17 @@ export async function openRecipe(page: Page): Promise<void> {
 	await page.getByRole('heading', { level: 1 }).waitFor();
 }
 
+/** The seeded lasagne (→ plan 43): parts, notes, steps linked by their words. */
+export async function openLasagne(page: Page): Promise<void> {
+	await page.goto('/cooking/recipes');
+	await page
+		.getByRole('link', { name: new RegExp(SEED.recipes.lasagne) })
+		.first()
+		.click();
+	await page.waitForURL(/\/cooking\/recipes\/(?!new$|import)[^/?]+(?:\?.*)?$/);
+	await page.getByRole('heading', { level: 1, name: SEED.recipes.lasagne }).waitFor();
+}
+
 /** The cookbook's pumpkin soup (→ plan 40): lunch, dinner, soup, vegan, a heart. */
 export async function openPumpkinSoup(page: Page): Promise<void> {
 	await page.goto('/cooking/recipes?kind=soup');
@@ -297,6 +308,26 @@ export const SCREENS: Screen[] = [
 			await openRecipe(page);
 			await page.getByRole('link', { name: 'Start cook mode' }).click();
 			await page.getByText(/^Step 1 of/).waitFor();
+		}
+	},
+	// A recipe in parts (→ plan 43): part headings over the ingredients and the
+	// steps, notes under names, linked words underlined; and in cook mode the
+	// part beside the step's number, cooking for twice as many.
+	{
+		name: 'recipe-parts',
+		route: '/(app)/cooking/recipes/[id]',
+		path: '',
+		navigate: openLasagne,
+		bottom: true
+	},
+	{
+		name: 'cook-mode-part',
+		route: '/(app)/cooking/recipes/[id]/cook',
+		path: '',
+		navigate: async (page) => {
+			await openLasagne(page);
+			await page.goto(`${new URL(page.url()).pathname}/cook?serves=8&step=2`);
+			await page.getByText(/^Step 2 of/).waitFor();
 		}
 	},
 	{ name: 'expenses', route: '/(app)/expenses', path: '/expenses', bottom: true },

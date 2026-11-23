@@ -42,7 +42,120 @@ export const SEED_ITEM_NAMES = [
 	'Olive oil',
 	'Avocado'
 ] as const;
-export const SEED_RECIPE_NAMES = { pasta: 'Creamy mushroom pasta', curry: 'Lentil curry' } as const;
+export const SEED_RECIPE_NAMES = {
+	pasta: 'Creamy mushroom pasta',
+	curry: 'Lentil curry',
+	lasagne: 'Lasagne'
+} as const;
+
+/**
+ * The two-part recipe (→ plan 43): ingredients and steps under their parts,
+ * notes under names, and steps whose links are stored with the words that name
+ * them, so every recipe screen has one to show. "Zwiebelwürfel" names the
+ * Zwiebel and "Hackfleisch" the Faschiertes; "1 - 2 EL" is the amount run a
+ * different count rewrites, and "180 °C" and "5 - 7 Min." are not.
+ *
+ * `links` name ingredients by their `key`; a link without a phrase is used
+ * without being named. Written as the AI import (plan 44) will write one.
+ */
+export type SeedLasagneIngredient = {
+	key: string;
+	name: string;
+	quantity: number | null;
+	unit: string | null;
+	note: string | null;
+	section: string;
+};
+
+export const SEED_LASAGNE: {
+	time: number;
+	servings: number;
+	ingredients: SeedLasagneIngredient[];
+	steps: {
+		section: string;
+		text: string;
+		links: { ingredient: string; phrase: string | null; amountPhrase?: string }[];
+	}[];
+} = {
+	time: 100,
+	servings: 4,
+	ingredients: [
+		{ key: 'zwiebel', name: 'Zwiebel', quantity: 1, unit: null, note: null, section: 'Bolognese' },
+		{ key: 'knoblauch', name: 'Knoblauch', quantity: 2, unit: 'Zehen', note: null, section: 'Bolognese' },
+		{ key: 'oel', name: 'Olivenöl', quantity: 2, unit: 'tbsp', note: null, section: 'Bolognese' },
+		{ key: 'hack', name: 'Faschiertes', quantity: 500, unit: 'g', note: 'gemischt', section: 'Bolognese' },
+		{ key: 'mark', name: 'Tomatenmark', quantity: 2, unit: 'tbsp', note: null, section: 'Bolognese' },
+		{ key: 'tomaten', name: 'Tomaten', quantity: 1, unit: 'Dose', note: 'geschält, 800 g', section: 'Bolognese' },
+		{ key: 'salz', name: 'Salz', quantity: null, unit: null, note: 'zum Würzen', section: 'Bolognese' },
+		{ key: 'pfeffer', name: 'Pfeffer', quantity: null, unit: null, note: 'zum Würzen', section: 'Bolognese' },
+		{ key: 'butter', name: 'Butter', quantity: 30, unit: 'g', note: null, section: 'Béchamel' },
+		{ key: 'mehl', name: 'Mehl', quantity: 40, unit: 'g', note: null, section: 'Béchamel' },
+		{ key: 'milch', name: 'Milch', quantity: 0.5, unit: 'L', note: null, section: 'Béchamel' },
+		{ key: 'muskat', name: 'Muskatnuss', quantity: 1, unit: 'Msp.', note: 'frisch gerieben', section: 'Béchamel' },
+		{ key: 'salz-b', name: 'Salz', quantity: null, unit: null, note: null, section: 'Béchamel' },
+		{ key: 'platten', name: 'Nudelplatten', quantity: 250, unit: 'g', note: null, section: 'Schichten' },
+		{ key: 'parmesan', name: 'Parmesan', quantity: 50, unit: 'g', note: 'gerieben', section: 'Schichten' },
+		{ key: 'butter-form', name: 'Butter', quantity: 10, unit: 'g', note: 'für die Form', section: 'Schichten' }
+	], // prettier-ignore
+	steps: [
+		{
+			section: 'Bolognese',
+			text: 'Zwiebel schälen und fein würfeln. Knoblauch schälen und fein hacken.',
+			links: [
+				{ ingredient: 'zwiebel', phrase: 'Zwiebel' },
+				{ ingredient: 'knoblauch', phrase: 'Knoblauch' }
+			]
+		},
+		{
+			section: 'Bolognese',
+			text: '1 - 2 EL Olivenöl in einem breiten Topf stark erhitzen. Hackfleisch hineingeben und 5 - 7 Min. krümelig anbraten.',
+			links: [
+				{ ingredient: 'oel', phrase: 'Olivenöl', amountPhrase: '1 - 2 EL' },
+				{ ingredient: 'hack', phrase: 'Hackfleisch' }
+			]
+		},
+		{
+			section: 'Bolognese',
+			text: 'Zwiebelwürfel und Knoblauch zum Hackfleisch geben und 2 - 3 Min. mitbraten. Tomatenmark einrühren, Tomaten dazugeben, mit Salz und Pfeffer würzen und 30 Min. köcheln lassen.',
+			links: [
+				{ ingredient: 'zwiebel', phrase: 'Zwiebelwürfel' },
+				{ ingredient: 'knoblauch', phrase: 'Knoblauch' },
+				{ ingredient: 'hack', phrase: 'Hackfleisch' },
+				{ ingredient: 'mark', phrase: 'Tomatenmark' },
+				{ ingredient: 'tomaten', phrase: 'Tomaten' },
+				{ ingredient: 'salz', phrase: 'Salz' },
+				{ ingredient: 'pfeffer', phrase: 'Pfeffer' }
+			]
+		},
+		{
+			section: 'Béchamel',
+			text: 'Butter in einem Topf bei mittlerer Hitze schmelzen. Mehl schnell einrühren.',
+			links: [
+				{ ingredient: 'butter', phrase: 'Butter' },
+				{ ingredient: 'mehl', phrase: 'Mehl' }
+			]
+		},
+		{
+			section: 'Béchamel',
+			text: 'Milch in 3 - 4 Portionen zugeben und glatt rühren. Mit Salz und Muskat abschmecken.',
+			links: [
+				{ ingredient: 'milch', phrase: 'Milch' },
+				{ ingredient: 'salz-b', phrase: 'Salz' },
+				{ ingredient: 'muskat', phrase: 'Muskat' }
+			]
+		},
+		{
+			section: 'Schichten',
+			text: 'Eine Form mit Butter ausstreichen. Nudelplatten, Bolognese und Béchamel abwechselnd einschichten, mit Parmesan bestreuen.',
+			links: [
+				{ ingredient: 'butter-form', phrase: 'Butter' },
+				{ ingredient: 'platten', phrase: 'Nudelplatten' },
+				{ ingredient: 'parmesan', phrase: 'Parmesan' }
+			]
+		},
+		{ section: 'Schichten', text: 'Im Ofen bei 180 °C etwa 40 Min. backen.', links: [] }
+	]
+};
 
 /**
  * `--cookbook` (→ plan 40): the recipe-filters sketch's library, tagged, some

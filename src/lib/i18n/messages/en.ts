@@ -1380,7 +1380,9 @@ export const en = {
 			favourite: 'Favourite',
 			/** The tag pills under the meta line — each one opens the library filtered by it. */
 			tags: 'Tags',
-			showTagged: (name: string) => `Show recipes tagged ${name}`
+			showTagged: (name: string) => `Show recipes tagged ${name}`,
+			/** An ingredient line and its note in the shared text (→ plan 43). */
+			withNote: (line: string, note: string) => `${line}, ${note}`
 		},
 
 		/** The ••• menu [7c]. */
@@ -1512,6 +1514,11 @@ export const en = {
 			merge: (amount: string) => `On the list already, becomes ${amount}`,
 			/** Why a row opens unticked (→ `services/pantry`). */
 			staple: 'You usually have this',
+			/**
+			 * The parts of the dish one row is gathered from (→ plan 43): "Butter"
+			 * in the Bolognese and in the Béchamel is one row on the list.
+			 */
+			parts: (parts: string[]) => parts.join(' · '),
 			submit: (count: number) => (count === 1 ? 'Add 1 to the list' : `Add ${count} to the list`),
 			nothing: 'Nothing selected'
 		},
@@ -1539,6 +1546,8 @@ export const en = {
 			setTimer: 'Set a timer',
 			close: 'Close cook mode',
 			step: (index: number, total: number) => `Step ${index} of ${total}`,
+			/** The step's part beside its number: "Step 5 of 10 · Béchamel" (→ plan 43). */
+			stepPart: (part: string) => ` · ${part}`,
 			startTimer: 'Set timer',
 			startParsedTimer: (duration: string) => `Start ${duration} timer`,
 			/** A step's own timer, by its name (→ plan 21): "Start Nudeln · 10:00". */

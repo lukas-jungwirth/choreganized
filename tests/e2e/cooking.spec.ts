@@ -196,6 +196,119 @@ test('cooking for more people rewrites the amounts a step names, and nothing els
 	await expect(page.locator('.scaled').first()).toContainText('4');
 });
 
+test('the seeded lasagne reads in parts, with its notes and its stored links (plan 43)', async ({
+	page
+}) => {
+	await page.goto('/cooking/recipes');
+	await page
+		.getByRole('link', { name: new RegExp(SEED.recipes.lasagne) })
+		.first()
+		.click();
+	await expect(page.getByRole('heading', { name: SEED.recipes.lasagne, level: 1 })).toBeVisible();
+
+	// The parts head the ingredients and the steps alike.
+	for (const part of ['Bolognese', 'Béchamel']) {
+		await expect(page.getByRole('heading', { name: part, level: 3 })).toHaveCount(2);
+	}
+	// The name is what you buy; the note sits under it.
+	const hack = page.locator('.ingredients li', { hasText: 'Faschiertes' });
+	await expect(hack.locator('.ingredient-note')).toHaveText('gemischt');
+
+	// A stored phrase is underlined though it isn't the ingredient's name.
+	const steps = page.locator('.step-text');
+	await expect(steps.nth(2).locator('.linked', { hasText: 'Zwiebelwürfel' })).toHaveCount(1);
+
+	// Cooking for twice as many rewrites the stored amount run and nothing else.
+	await page.goto(`${page.url()}?serves=8`);
+	await expect(steps.nth(1)).toHaveText(
+		'2 - 4 EL (recipe says 1 - 2 EL) Olivenöl in einem breiten Topf stark erhitzen. Hackfleisch hineingeben und 5 - 7 Min. krümelig anbraten.'
+	);
+	await expect(steps.last()).toHaveText('Im Ofen bei 180 °C etwa 40 Min. backen.');
+
+	// The picker: one Butter row, gathered from both parts that use it.
+	await page.getByRole('button', { name: 'Add to list' }).click();
+	const sheet = page.getByRole('dialog');
+	const butter = sheet
+		.locator('li')
+		.filter({ has: page.locator('.name', { hasText: /^Butter$/ }) });
+	await expect(butter).toHaveCount(1);
+	await expect(butter).toContainText('Béchamel · Schichten');
+	await expect(butter).toContainText('80 g');
+	await page.keyboard.press('Escape');
+	await expect(sheet).toHaveCount(0);
+
+	// Cook mode: the part beside the step's number, and the same rewritten run.
+	await page.getByRole('link', { name: 'Start cook mode' }).click();
+	await page.getByRole('button', { name: 'Next' }).click();
+	await expect(page.locator('.eyebrow')).toHaveText('Step 2 of 7 · Bolognese');
+	await expect(page.locator('.scaled')).toContainText('2 - 4 EL');
+
+	// "Zwiebelwürfel" is the onion: a tap says how much of it.
+	await page.getByRole('button', { name: 'Next' }).click();
+	await page.getByRole('button', { name: /^Zwiebelwürfel/ }).click();
+	await expect(page.locator('.bubble')).toContainText('Zwiebel');
+	await expect(page.locator('.bubble .amount')).toHaveText('2');
+});
+
+test('saving the lasagne in the old editor loses no note, part or link (plan 43)', async ({
+	page
+}) => {
+	await page.goto('/cooking/recipes');
+	await page
+		.getByRole('link', { name: new RegExp(SEED.recipes.lasagne) })
+		.first()
+		.click();
+	await page.waitForURL(/\/cooking\/recipes\/[^/?]+$/);
+	await page.goto(`${page.url()}/edit`);
+	await page.getByRole('button', { name: 'Save changes' }).click();
+	await expect(page.getByRole('heading', { name: SEED.recipes.lasagne, level: 1 })).toBeVisible();
+	await expect(page).toHaveURL(/\/cooking\/recipes\/[^/?]+$/);
+
+	await expect(page.getByRole('heading', { name: 'Béchamel', level: 3 })).toHaveCount(2);
+	await expect(
+		page.locator('.ingredients li', { hasText: 'Faschiertes' }).locator('.ingredient-note')
+	).toHaveText('gemischt');
+	await expect(
+		page.locator('.step-text').nth(2).locator('.linked', { hasText: 'Zwiebelwürfel' })
+	).toHaveCount(1);
+	await page.goto(`${page.url()}?serves=8`);
+	await expect(page.locator('.step-text').nth(1).locator('.scaled')).toContainText('2 - 4 EL');
+});
+
+test('a row added or moved in the old editor joins the part it lands in (plan 43)', async ({
+	page
+}) => {
+	await page.goto('/cooking/recipes');
+	await page
+		.getByRole('link', { name: new RegExp(SEED.recipes.lasagne) })
+		.first()
+		.click();
+	await page.waitForURL(/\/cooking\/recipes\/[^/?]+$/);
+	const recipeUrl = page.url();
+	await page.goto(`${recipeUrl}/edit`);
+
+	// Enter in the third Bolognese row adds a fourth, in the Bolognese.
+	await page.getByLabel('Ingredient 3', { exact: true }).press('Enter');
+	await page.getByLabel('Ingredient 4', { exact: true }).fill('1 Karotte');
+	// The last Bolognese row (Pfeffer, now 9th) moved down lands in the Béchamel.
+	await expect(page.getByLabel('Ingredient 9', { exact: true })).toHaveValue('Pfeffer');
+	await page.getByRole('button', { name: 'Move ingredient 9 down' }).click();
+	await page.getByRole('button', { name: 'Save changes' }).click();
+	await page.waitForURL(recipeUrl);
+
+	await expect(page.getByRole('heading', { name: 'Bolognese', level: 3 })).toHaveCount(2);
+	await expect(page.getByRole('heading', { name: 'Béchamel', level: 3 })).toHaveCount(2);
+	const [bolognese, bechamel] = [
+		page.locator('.ingredients').nth(0),
+		page.locator('.ingredients').nth(1)
+	];
+	await expect(bolognese).toContainText('Karotte');
+	await expect(bolognese).not.toContainText('Pfeffer');
+	await expect(bechamel.locator('li').first()).toContainText('Butter');
+	await expect(bechamel).toContainText('Pfeffer');
+	await expect(page.locator('.ingredients')).toHaveCount(3);
+});
+
 test('a timer counts on past zero, and is still there after the app was closed (→ DECISIONS #251)', async ({
 	page
 }) => {

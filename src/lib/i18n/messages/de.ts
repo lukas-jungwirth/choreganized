@@ -1061,7 +1061,8 @@ export const de: Messages = {
 			noStepsRest: ', dann führt dich der Kochmodus durch.',
 			favourite: 'Favorit',
 			tags: 'Tags',
-			showTagged: (name: string) => `Rezepte mit „${name}“ zeigen`
+			showTagged: (name: string) => `Rezepte mit „${name}“ zeigen`,
+			withNote: (line: string, note: string) => `${line}, ${note}`
 		},
 
 		menu: {
@@ -1152,6 +1153,7 @@ export const de: Messages = {
 			have: (amount: string) => (amount ? `Steht schon drauf · ${amount}` : 'Steht schon drauf'),
 			merge: (amount: string) => `Steht schon drauf, wird ${amount}`,
 			staple: 'Habt ihr sonst immer da',
+			parts: (parts: string[]) => parts.join(' · '),
 			submit: (count: number) =>
 				count === 1 ? '1 auf die Liste' : `${count} auf die Liste setzen`,
 			nothing: 'Nichts ausgewählt'
@@ -1174,6 +1176,7 @@ export const de: Messages = {
 			setTimer: 'Timer stellen',
 			close: 'Kochmodus schließen',
 			step: (index: number, total: number) => `Schritt ${index} von ${total}`,
+			stepPart: (part: string) => ` · ${part}`,
 			startTimer: 'Timer stellen',
 			startParsedTimer: (duration: string) => `${duration}-Timer starten`,
 			startNamedTimer: (name: string, duration: string) => `${name} · ${duration} starten`,

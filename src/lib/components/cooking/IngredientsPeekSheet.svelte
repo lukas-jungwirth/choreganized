@@ -5,11 +5,15 @@
 	A dark `BottomSheet` rather than a second sheet component: the focus trap,
 	Escape, the scrim and the scroll lock are the same problem on any background
 	(→ `ui/BottomSheet` `tone`).
+
+	Grouped by the recipe's parts, each row with its note under the name
+	(→ plan 43); a recipe without parts is one list, as before.
 -->
 <script lang="ts">
 	import BottomSheet from '$lib/components/ui/BottomSheet.svelte';
 	import { messages } from '$lib/i18n';
 	import type { RecipeIngredientRow } from '$lib/server/services/recipes';
+	import { groupByPart } from '$lib/utils/recipes';
 
 	type Props = {
 		ingredients: RecipeIngredientRow[];
@@ -34,6 +38,7 @@
 	});
 
 	const highlighted = $derived(new Map(used.map((ingredient) => [ingredient.id, ingredient])));
+	const parts = $derived(groupByPart(ingredients));
 	const title = $derived(
 		servings ? m.cooking.cook.peekTitleServes(servings) : m.cooking.cook.peekTitle
 	);
@@ -43,28 +48,34 @@
 	{#if ingredients.length === 0}
 		<p class="empty">{m.cooking.cook.peekEmpty}</p>
 	{:else}
-		<ul class="list">
-			{#each ingredients as ingredient (ingredient.id)}
-				{@const step = highlighted.get(ingredient.id)}
-				{@const amount = m.units.amount((step ?? ingredient).quantity, ingredient.unit)}
-				<!-- "1 tbsp of 3 tbsp": the step's share in amber, what the row holds
+		{#each parts as part, at (at)}
+			{#if part.section}<p class="part">{part.section}</p>{/if}
+			<ul class="list">
+				{#each part.rows as ingredient (ingredient.id)}
+					{@const step = highlighted.get(ingredient.id)}
+					{@const amount = m.units.amount((step ?? ingredient).quantity, ingredient.unit)}
+					<!-- "1 tbsp of 3 tbsp": the step's share in amber, what the row holds
 					 behind it, so the answer to "how much of that was it again?" is the
 					 amount for *now* without losing the total. -->
-				{@const total =
-					step && step.quantity !== ingredient.quantity
-						? m.units.amount(ingredient.quantity, ingredient.unit)
-						: ''}
-				<li class:here={step !== undefined}>
-					<span class="dot" aria-hidden="true"></span>
-					<span class="name">{ingredient.name}</span>
-					{#if amount}
-						<span class="amount">
-							{amount}{#if total}<span class="of">{m.cooking.cook.peekShare(total)}</span>{/if}
-						</span>
-					{/if}
-				</li>
-			{/each}
-		</ul>
+					{@const total =
+						step && step.quantity !== ingredient.quantity
+							? m.units.amount(ingredient.quantity, ingredient.unit)
+							: ''}
+					<li class:here={step !== undefined}>
+						<span class="dot" aria-hidden="true"></span>
+						<span class="name"
+							>{ingredient.name}{#if ingredient.note}<span class="note">{ingredient.note}</span
+								>{/if}</span
+						>
+						{#if amount}
+							<span class="amount">
+								{amount}{#if total}<span class="of">{m.cooking.cook.peekShare(total)}</span>{/if}
+							</span>
+						{/if}
+					</li>
+				{/each}
+			</ul>
+		{/each}
 	{/if}
 </BottomSheet>
 
@@ -123,6 +134,30 @@
 	/* Typed as "250 g mushrooms", read back as "Mushrooms · 250 g" [7b]. */
 	.name::first-letter {
 		text-transform: uppercase;
+	}
+
+	/* What the line said besides the name (→ plan 43). */
+	.note {
+		display: block;
+		margin-top: 2px;
+		font-size: var(--fs-14);
+		font-weight: 400;
+		line-height: 1.35;
+		color: var(--cook-muted);
+	}
+
+	/* A part of the dish over its rows, the sheet's own small label. */
+	.part {
+		margin: 16px 0 4px;
+		font-size: var(--fs-13);
+		font-weight: 700;
+		letter-spacing: 0.1em;
+		text-transform: uppercase;
+		color: var(--cook-muted);
+	}
+
+	.part:first-child {
+		margin-top: 0;
 	}
 
 	.here .name {
