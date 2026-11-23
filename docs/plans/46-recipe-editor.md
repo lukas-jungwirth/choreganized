@@ -1,8 +1,9 @@
 # 46 · The recipe editor, rebuilt around parts and links
 
-**Status: todo. The sketch has to be agreed first.** Asked for by Lukas on 2026-11-23.
-Depends on: 43. SPEC: §4.4 rewritten. Design: `design/sketches/recipe-rebuild.html`, frames
-E1–E5. Replaces frame [3c].
+**Status: todo.** Asked for by Lukas on 2026-11-23; he saw the sketch the same day and asked
+for the four changes marked "(Lukas, sketch feedback)" below, which the sketch now shows.
+Depends on: 43. SPEC: §4.4 rewritten. Design: `design/sketches/recipe-rebuild.html`, frames E1,
+E2, E3a, E3b, E3. Replaces frame [3c].
 
 **Goal:** Lukas: "the UI is also a little bit too small sometimes to really work it out and
 not that easy to understand what to add, like timer, ingredients, move, delete." Today a step
@@ -17,26 +18,94 @@ is a textarea with three 16 px icons beside it and two rows of small chips under
 - Rows under **part headings**. "Add part" names one; a part's name is edited in place; an
   empty name dissolves the part into the one above.
 - A row shows amount and unit (or counting word), the **name**, and the note in a second,
-  smaller line. Tapping it opens the ingredient sheet: amount, unit (the eight, or "other" with
-  a free word), name, note, part.
+  smaller line. Tapping it opens the ingredient sheet [E2]: name, amount, note, part.
+  **The amount is one typed field whose chip opens the units** (Lukas, 2026-11-23, after two
+  rejected drafts: a tall number field beside wrapped unit chips, then a number field with
+  chips in a scrolling row; his own proposal: "you write 500g and when detected it is possible
+  to change the unit"). "500 g", "2 EL", "1 Dose", "2 Zehen" are typed into one field and read
+  by plan 42's reader. A chip in the field shows what was read, the way the add field on Lists
+  shows "×3" (plan 37). **The chip is a button**: it opens a small menu of the eight units and
+  "No unit", with the current one marked and the row's own counting word listed when it has
+  one; picking a unit rewrites the field ("500 g" → "500 kg"). No amount typed, no chip. A
+  line of examples sits under the field.
+  **A word that is no unit becomes the row's own unit** (Lukas, 2026-11-23: "what would happen
+  if I type 2 Zehen?"). In this field everything after the number is the unit, because the
+  name has a field of its own: "2 Zehen" is read as 2 with the unit "Zehen", the chip says
+  "2 Zehen", and the menu lists "Zehen" marked as current beside the eight. That holds for a
+  word the app has never seen too ("2 Kugeln", "1 Ring"): it is kept as written (letters and a
+  dot, up to 16 characters). The one-line add field is stricter: there a word after the
+  number is only taken for a unit when it is one of plan 42's known counting words, because
+  "2 Zehen Knoblauch" and "2 Eier" look alike and the second word of "2 rote Zwiebeln" is the
+  name.
+  **The field is not limited to the known words** (Lukas asked on 2026-11-23 whether it should
+  be, and what happens to a word that is not on the list). It is not, because a closed list
+  keeps failing: 24 of the 31 pages in the probe counted in a word the app did not know, and a
+  word with nowhere to go ends up in the name again, which is the problem this rebuild is
+  about. But an unknown word is never taken silently:
+  - a unit or a known counting word: the chip is plain, "2 Zehen";
+  - a word the household has not used before: the chip is dashed and says so, "2 Kugeln · new
+    unit". It is saved as typed. A typo ("2 Zeehn") is therefore visible before Done, and the
+    menu behind the chip offers the known words to switch to.
+    Nothing downstream needs the word to be known: the number scales, the shopping list takes
+    the name only (DECISIONS #313), and a step's amount is compared by the word itself.
+    **A word used once is known from then on** (Lukas, 2026-11-23: "should we make the input
+    also one of those counting words?"). The add field's known counting words are plan 42's
+    list **plus every unit this household's recipes already use** that is not one of the eight.
+    So after "Kugeln" was set as a unit once, in the amount field or by an import, "2 Kugeln
+    Mozzarella" typed into the add field reads as 2 Kugeln of Mozzarella. It is derived from
+    the stored rows (`SELECT DISTINCT unit` over the household's recipe ingredients), not kept
+    in a table of its own: a word no row uses any more is forgotten, which is also how a
+    mistake ("2 rote" saved as a unit) heals once the row is fixed. Per household, never
+    shared. `parseIngredient(line, known?)` takes the set, the way `parseQuickAdd` takes the
+    household's names (plan 37); the editor's load hands it to the form.
 - **Typing stays the fast way in**: an add field at the foot of each part takes a line
   ("400 g Nudeln", "1 Karotte, in Scheiben") and reads it with plan 42's reader; what follows
   a comma or stands in brackets becomes the note. The row shows what was understood.
 - Reorder by **dragging the grip** (`svelte-dnd-action`, already a dependency), also from one
-  part into another. The arrows of DECISIONS #67 go.
+  part into another; the ingredient sheet's Part row does the same without a drag. The arrows
+  of DECISIONS #67 go.
 
 **Steps**
 
 - Cards under part headings, numbered straight through. The text is a textarea at reading size
   (`--fs-17`), growing with its content.
-- Under the text, **one labelled row of actions**, each at least 44 px high, with an icon and
-  a word: **Ingredients** (count), **Timer** (its time when set), and a **⋯** menu with Move
-  up, Move down, Move to part, Delete. A grip on the card drags it.
-- **Ingredients** opens the link sheet: the step's text with every word tappable. Linked words
-  are underlined in amber with the ingredient's name beside them. Tap a word (or drag across
-  several) → pick the ingredient → linked. Tap a linked word → change or unlink. Below the
-  text: the ingredients this step uses without naming them, with "Add ingredient". An amount
-  the text gives an ingredient is shown as part of the link and can be switched off.
+- Under the text, **two rows that say what they hold** [E3a] (Lukas, sketch feedback: it was
+  not clear how to get from a step to its links), each at least 48 px high, label left, value
+  right, a chevron: **Ingredients** with the linked names ("Karotten, Faschiertes", or "Link
+  the words that name them" when there are none) and **Timer** with its name and time (or "Add
+  a timer"). Tapping the text edits the text; tapping a row opens its sheet.
+- A **⋯** button on the card holds Move up, Move down, **Move to part…** and Delete.
+  **Move to part… opens a list of every part** [E3b] (Lukas, sketch feedback: "what if there
+  are three different parts?"), with the current one marked, "No part" and "New part"; the
+  step lands at the end of the part picked. The same list moves an ingredient from its sheet.
+  Steps are not dragged; ingredients are.
+- **Ingredients** opens the link sheet [E3] (Lukas, sketch feedback: the superscript names
+  beside linked words read badly):
+  - The step's text on top, every word tappable, shown **as cook mode will show it**: a linked
+    word underlined in amber, a linked amount in amber.
+  - Under it, **"Linked in this step"**: one row per link, the words as they stand in the text,
+    an arrow, the ingredient ("“Zwiebelwürfel” → Zwiebel"), and ✕ to remove it.
+  - Tap a word → the list gives way to "Link “…” to" with the ingredients, the likely one
+    first → linked. Tap a linked word → pick another.
+  - **An amount is linked with its word** (Lukas: "400 grams of carrots … when I adjust the
+    portions it should become 800 grams, can I link the value and the ingredient"). When a
+    number, with or without a unit, stands directly before the linked word, it becomes the
+    link's `amount_phrase` (plan 43) automatically, provided the unit is the ingredient's own
+    and the amount is not more than the ingredient's. The link's row then carries a switch,
+    "400 g follows the number of people" / "400 g stays as written"; tapping the amount in the
+    text flips the same switch. A number that stands elsewhere ("Karotten, etwa 400 g") is
+    linked by tapping it and picking the ingredient.
+  - **A step may use part of an ingredient** (Lukas: "the step says 200 g of carrots but in
+    total there are 400"). Nothing extra to do: the step's "200 g" is linked like any amount,
+    the link also stores 200 g as the step's share (`quantity`, plan 43), and its row reads
+    "200 g of 400 g". For twice as many both move: the text says 400 g, cook mode's list says
+    "400 g of 800 g". The automatic link is only made while the amount is not more than the
+    ingredient's total; an amount above it is left unlinked and can be linked by hand.
+  - **"Show for 4 / 8 people"** at the top rewrites the text the way cook mode will, so the
+    effect of a linked amount is visible before saving. The two numbers are the recipe's
+    servings and twice that; the control is absent when the recipe has no servings.
+  - A time ("2 - 3 Min.") or a temperature is never an amount and is not tappable.
+  - Below the list: the ingredients this step uses without naming them, with "Add ingredient".
 - **Suggestions, not silence**: when the text changes, the matcher proposes links for words it
   recognises (dotted underline, "Link Zwiebel?"); a tap accepts. A stored link whose phrase is
   no longer in the text is shown as "no longer in the text" until it is re-linked or removed.
@@ -72,6 +141,21 @@ controls of the sketch.
 ## Acceptance
 
 - [ ] Every control on a step is labelled and at least 44 px high.
+- [ ] In a recipe with three parts, a step can be moved to any of them from ⋯ → Move to part….
+- [ ] A step that says "400 g Karotten" links the amount with the word; "Show for 8" in the
+      link sheet and cook mode for 8 both read "800 g Karotten". Switching the amount off
+      leaves it at 400 g in both.
+- [ ] Typing "2 Zehen" into the amount field shows the chip "2 Zehen" and saves the unit
+      "Zehen". Typing "2 Kugeln" in a household that never used the word shows the dashed chip
+      "2 Kugeln · new unit" and saves the unit "Kugeln"; the next time the chip is plain. Typing "2 Kugeln Mozzarella" into the add
+      field saves 2 of "Kugeln Mozzarella".
+- [ ] After one recipe has an ingredient with the unit "Kugeln", typing "2 Kugeln Mozzarella"
+      into the add field of any recipe of this household saves 2 Kugeln of "Mozzarella";
+      another household still gets 2 of "Kugeln Mozzarella".
+- [ ] Typing "500 g" into the amount field shows the chip "500 g"; tapping the chip and
+      picking kg makes the field and the chip read "500 kg", and the row is saved as 500 kg.
+- [ ] A step that says "200 g Karotten" in a recipe with 400 g shows "200 g of 400 g" in the
+      link sheet and in cook mode, and "400 g of 800 g" for twice as many.
 - [ ] A word in a step can be linked to an ingredient in two taps, and cook mode underlines it.
 - [ ] Typing "1 Karotte, in Scheiben geschnitten" into the add field gives name "Karotte" and
       that note.

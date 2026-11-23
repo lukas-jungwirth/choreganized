@@ -1,6 +1,7 @@
 # 47 · Cook mode: what this step needs, at reading size
 
-**Status: todo. The sketch has to be agreed first.** Asked for by Lukas on 2026-11-23.
+**Status: todo.** Asked for by Lukas on 2026-11-23; he saw the sketch the same day ("Cook mode
+looks good"), so frames C1–C3 are agreed, the "Get ready" screen and the 27 px step text included.
 Depends on: 43. SPEC: §4.6. Design: `design/sketches/recipe-rebuild.html`, frames C1–C3.
 Changes frame [7b].
 
@@ -23,6 +24,14 @@ links reliable; this plan makes them the second thing on the screen.
 4. **A first screen before step 1, "Get ready"**: every ingredient under its part, with its
    note, tickable. Ticks are kept on the device for this cook. Skippable with Next; reachable
    again from the Ingredients button.
+   **It carries the "Cooking for" stepper** (Lukas, 2026-11-23: "should we put directly in the
+   cooking mode that we can adjust the amount of portions in the before-we-start part"): the
+   same stepper as the recipe screen (§4.5), with "written for {n}" beside it. Moving it
+   rewrites every amount on this screen at once and writes `?serves=`, so the steps, the peek
+   sheet and the timers' labels follow as they do today. Hidden for a recipe that never
+   recorded its servings. This changes SPEC §4.6, which says cook mode offers no stepper
+   because the count is decided before the hands are wet: Get ready is that moment. The steps
+   themselves still have no stepper.
 5. **Text size follows the step's length**: a short step keeps `--fs-33`; one of more than
    about 220 characters steps down to `--fs-26`, so a long imported step fits without
    scrolling past its ingredients.
@@ -41,7 +50,8 @@ links reliable; this plan makes them the second thing on the screen.
 ## Tests
 
 - Unit: the size step; the rows a step shows (share, note, scaled).
-- e2e: the seeded two-part recipe: Get ready ticks survive Prev/Next and a reload; step 5
+- e2e: the seeded two-part recipe: Get ready ticks survive Prev/Next and a reload; setting
+  "Cooking for" to 8 on Get ready doubles its amounts and the amounts of step 5; step 5
   shows its part and its three ingredients with amounts; cooking for 8 doubles them; a running
   timer leaves the list in place.
 - Visual: Get ready, a step with ingredients, a long step, a step with a running timer; German
@@ -51,6 +61,8 @@ links reliable; this plan makes them the second thing on the screen.
 
 - [ ] On every step the ingredients and their amounts can be read without a tap.
 - [ ] The part name is on screen for a recipe with parts and absent for one without.
+- [ ] On Get ready, the number of people can be changed, every amount there follows at once,
+      and the steps after it use the new number. A reload keeps it.
 - [ ] A 400-character step and its ingredient list fit a 390 × 844 screen without scrolling,
       at normal text size.
 - [ ] Old recipes (matcher fallback) show the same list from the matcher's reading.
