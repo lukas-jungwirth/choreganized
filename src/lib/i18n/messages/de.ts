@@ -1380,38 +1380,86 @@ export const de: Messages = {
 				}
 			},
 
-			checks: {
-				title: (count: number) =>
+			review: {
+				title: 'Rezept prüfen',
+				discard: 'Verwerfen',
+				save: 'Speichern',
+				count: (count: number) =>
 					count === 0
 						? 'Nichts zu prüfen'
 						: count === 1
 							? '1 Sache zu prüfen'
 							: `${count} Sachen zu prüfen`,
-				label: 'Was der Import gefunden hat',
-				lineAdded: (line: string) =>
-					`Von der Seite ergänzt: „${line}“. Die KI hatte es ausgelassen.`,
-				amountDiffers: (name: string, line: string) =>
-					`${name}: die Menge ist die der Seite („${line}“).`,
-				converted: (name: string) => `${name}: in metrische Einheiten umgerechnet.`,
-				convertedStep: (step: number) =>
-					`Schritt ${step}: die Temperatur steht jetzt auch in °C da.`,
-				nameDiffers: (name: string, line: string) =>
-					`${name}: so benannt, wie die Seite es schreibt („${line}“).`,
+				allChecked: 'Alles geprüft',
+				ready: 'Bereit zum Speichern.',
+				restMatches: 'Alles andere stimmt mit der Seite überein.',
+				allMatch: (ingredients: number, steps: number) =>
+					`${ingredients === 1 ? '1 Zutat' : `Alle ${ingredients} Zutaten`} und ${steps === 1 ? '1 Schritt' : `${steps} Schritte`} stimmen mit der Seite überein.`,
+				noAi: 'Ohne KI importiert. Die Verknüpfungen sind geraten.',
+				fromPhoto: 'Aus Fotos gelesen. Vergleich es mit dem Kochbuch.',
+				showFirst: 'Zur ersten offenen Frage',
+				recipe: 'Rezept',
+				ingredients: 'Zutaten',
+				steps: 'Schritte',
+				also: 'Außerdem',
+				editEverything: 'Alles bearbeiten',
+				editIngredient: (name: string) => `${name} bearbeiten`,
+				editStep: (number: number) => `Schritt ${number} bearbeiten`,
+				editBasics: 'Name, Zeit und Portionen bearbeiten',
+				checked: 'Geprüft',
+
+				choice: (name: string, alternative: string) =>
+					`Die Seite nennt ${name} oder ${alternative}. Was nimmst du?`,
+				amountDiffers: (page: string, answer: string) =>
+					`Auf der Seite steht „${page}“. Die KI hat ${answer} gelesen.`,
+				keepAmount: (amount: string) => `${amount} lassen`,
+				useAmount: (amount: string) => `${amount} nehmen`,
+				noAmount: 'keine Menge',
+				nameDiffers: (page: string) => `Auf der Seite steht „${page}“.`,
+				lineAdded: (page: string) =>
+					`Steht auch auf der Seite: „${page}“. Die KI hatte es ausgelassen.`,
+				reworded: (page: string) => `Auf der Seite steht: „${page}“`,
+				rewordedUnknown: 'Dieser Schritt steht so nicht auf der Seite.',
+				usePageText: 'Text der Seite nehmen',
 				newUnit: (word: string) => `Neue Einheit: ${word}. Hinzufügen?`,
-				choice: (name: string, alternative: string) => `Auswahl: ${name} oder ${alternative}.`,
-				reworded: (step: number) => `Schritt ${step} steht so nicht auf der Seite.`,
-				pageSays: (text: string) => `Auf der Seite: „${text}“`,
-				fromPhoto: 'Aus Fotos gelesen. Mit der Vorlage vergleichen.',
-				sharesExceed: (name: string) =>
-					`${name}: die Schritte brauchen mehr, als das Rezept angibt.`,
-				unused: (name: string) => `${name}: kein Schritt verwendet es.`,
-				servings: 'Für wie viele Portionen? Alle Mengen rechnen damit.',
+				addUnit: 'Hinzufügen',
+				keepInNote: 'In der Notiz lassen',
+				servingsQuestion: 'Für wie viele Personen?',
+				servingsPage: (page: string) =>
+					`Auf der Seite steht „${page}“. Alle Mengen rechnen mit dieser Zahl.`,
+				servingsWhy: 'Alle Mengen rechnen mit dieser Zahl.',
+				servingsKeep: (count: number) => `${count} lassen`,
 				noSteps: 'Die Seite hat keine Zubereitung.',
-				noAi: 'Ohne KI importiert: Teile und Notizen nach Regeln, welcher Schritt was braucht, ist geraten.',
-				leftOut: (count: number) =>
-					count === 1
-						? 'Aus der Zubereitung ausgelassen: 1 Satz'
-						: `Aus der Zubereitung ausgelassen: ${count} Sätze`
+				addSteps: 'Schritte dazuschreiben',
+				saveWithout: 'Ohne speichern',
+				sharesExceed: (name: string) =>
+					`Die Schritte brauchen mehr ${name}, als das Rezept angibt.`,
+				keep: 'Lassen',
+				edit: 'Bearbeiten',
+				remove: 'Entfernen',
+
+				leftOut: 'Aus den Schritten ausgelassen',
+				leftOutCount: (count: number) => (count === 1 ? '1 Satz' : `${count} Sätze`),
+				putBack: 'Zurückholen',
+				notes: 'Hinweise vom Import',
+				noteCount: (count: number) => (count === 1 ? '1 Hinweis' : `${count} Hinweise`),
+				converted: (name: string) => `${name}: in metrische Einheiten umgerechnet.`,
+				unused: (name: string) => `${name}: kein Schritt verwendet es.`,
+
+				stepSheet: (number: number) => `Schritt ${number}`,
+				stepText: 'Text',
+				stepLinks: 'Zutaten verknüpfen',
+				removeStep: 'Schritt entfernen',
+				done: 'Fertig',
+				basics: 'Rezept',
+				name: 'Name',
+				time: 'Zeit in Minuten',
+				servings: 'Portionen',
+
+				gone: 'Dieser Import ist nicht mehr da.',
+				goneHint:
+					'Er wurde gespeichert, verworfen oder in einem anderen Tab geöffnet. Importier ihn noch einmal.',
+				again: 'Noch einmal importieren'
 			}
 		}
 	},

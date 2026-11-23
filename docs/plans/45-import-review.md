@@ -1,8 +1,8 @@
 # 45 · Import review: the recipe as it will look, with what to check
 
-**Status: todo. The sketch has to be agreed first.** Asked for by Lukas on 2026-11-23
+**Status: done (2026-11-23, v0.8.0; DECISIONS #328–#334).** Asked for by Lukas on 2026-11-23
 (DECISIONS #311, #314). Depends on: 43, 44. SPEC: §4.7 gains the review screen. Design:
-`design/sketches/recipe-rebuild.html`, frames R1–R4. No frame in `Hearth.dc.html`.
+`design/sketches/recipe-rebuild.html`, frames R1–R3 (the sketch has no R4). No frame in `Hearth.dc.html`.
 
 **Goal:** Lukas: "I send a recipe to the app. Ideally, most part is done automatically and
 perfectly aligned, but if it's not possible reliably, there should be an easy-to-follow flow to
@@ -64,7 +64,17 @@ between the import and the save.
 ## Acceptance
 
 - [ ] Sharing a link from the browser ends on the review screen; a clean one saves in one tap.
-- [ ] Every row of the table above can be reached with a fixture and settled in one tap.
-- [ ] "Put back" restores a dropped sentence as a step at its place in the page's order.
-- [ ] The saved recipe looks like the review did.
-- [ ] `npm run verify` and `npm run test:visual` clean.
+      (Half walked: a pasted import and a clean draft both end on the review and save in one
+      tap; a link shared from a phone's browser was not, see below.)
+- [x] Every row of the table above can be reached with a fixture and settled in one tap.
+- [x] "Put back" restores a dropped sentence as a step at its place in the page's order.
+- [x] The saved recipe looks like the review did.
+- [x] `npm run verify` and `npm run test:visual` clean.
+
+As built: DECISIONS #328–#334. The review is a state of the import route (`?draft=<id>`, the
+draft in the tab's `sessionStorage`). The drafts with a page behind them are the gate's own
+output for the Chefkoch fixture page (`tests/fixtures/review-drafts/`), because a link import
+cannot reach a page the test run serves. **Not walked: a link shared from a phone's browser**
+(no phone and no real page in the loop); the step from a fetched draft to the review is the
+same code the pasted-text journey runs end to end through the fake AI. The rest is walked by
+`tests/e2e/import-review.spec.ts` and `src/lib/utils/recipe-review.test.ts`.

@@ -253,6 +253,16 @@ provider at it. Below the e2e layer, each adapter is unit-tested against canned 
 injected `fetch` (`src/lib/server/ai/providers/providers.test.ts`), and the backup logic against
 fake adapters (`run.test.ts`).
 
+**Import review drafts** (→ plan 45, DECISIONS #334). A link import cannot reach a page the
+test run serves: the fetch guard refuses local addresses, and is never loosened for tests. So
+the review's journeys and screenshots open drafts the real gate made of the Chefkoch fixture
+page and a hand-written answer, saved in `tests/fixtures/review-drafts/` and put where the
+import page puts a fresh draft (the tab's `sessionStorage`, then `?draft=<id>`).
+`tests/integration/review-drafts.test.ts` holds the files to the gate; after a gate change,
+write them again with `UPDATE_REVIEW_DRAFTS=1 npx vitest run
+tests/integration/review-drafts.test.ts`. The pasted-text journeys go through the fake AI end to
+end.
+
 **A live provider is never in the loop**, in CI or in a session's own checks. One live call per
 provider needs a real key in the running app, and only Lukas has those. A handoff says plainly
 whether that happened.

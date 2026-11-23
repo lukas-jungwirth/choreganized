@@ -21,6 +21,8 @@ import { storageStateFor } from '../e2e/accounts';
 import {
 	EDITOR_WORDS,
 	editorShots,
+	REVIEW_WORDS,
+	reviewShots,
 	SCREENS,
 	scrolledToBottom,
 	settle,
@@ -112,6 +114,16 @@ walk(SCREENS.filter((screen) => !screen.theme));
 test.describe('in German', () => {
 	test.use({ locale: 'de-AT' });
 	walk(SCREENS.filter((screen) => !screen.theme && !screen.navigate));
+});
+
+/** The import's review (→ plan 45), reached by its German names. */
+test.describe('the import review in German', () => {
+	test.use({ locale: 'de-AT' });
+	for (const shot of reviewShots(REVIEW_WORDS.de)) {
+		test(`${shot.name} at 200% text, in German`, async ({ page, context }) => {
+			await atTwiceTheTextSize(page, context, { ...shot, name: `${shot.name}-de` });
+		});
+	}
 });
 
 /** The recipe editor's screens and sheets (→ plan 46), reached by their German names. */

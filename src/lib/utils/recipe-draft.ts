@@ -50,6 +50,7 @@ import {
 	STEP_TEXT_MAX,
 	STEPS_MAX,
 	type ImportCheck,
+	type LeftOut,
 	type RecipePrefill,
 	type StepInput,
 	type StepLinkInput,
@@ -184,7 +185,7 @@ export function validateRecipeDraft(raw: unknown, context: DraftContext): DraftC
 					kind: 'reworded',
 					level: 'check',
 					at: { step: at },
-					page: closestSentence(text, method)
+					page: closestRun(text, method)
 				});
 			}
 		}
@@ -324,14 +325,21 @@ function readRow(
 		// The page's amount, where the reader reads a number and a unit, stands.
 		if (page && page.quantity !== null && page.unit !== null) {
 			if (!sameAmount(quantity, unit, page.quantity, page.unit)) {
+				// What the model said, so the review can offer it (→ plan 45).
+				const answer: NonNullable<ImportCheck['answer']> = {
+					quantity,
+					unit: quantity === null ? null : unit
+				};
 				quantity = page.quantity;
 				unit = page.unit;
-				// A model that put the unit into the name ("Bund Suppengrün") loses it there.
+				// A model that put the unit into the name ("Bund Suppengrün") loses it there,
+				// and the review's "Use 1" gives it back with the model's amount.
 				const [first, ...rest] = name.split(' ');
 				if (rest.length && measureKey(first) && measureKey(first) === measureKey(unit)) {
+					answer.name = name;
 					name = rest.join(' ');
 				}
-				checks.push({ kind: 'amount-differs', level: 'check', page: line });
+				checks.push({ kind: 'amount-differs', level: 'check', page: line, answer });
 			}
 		}
 		// The page's words, where the model's name says something the line does not.
@@ -486,21 +494,38 @@ function closestSentence(text: string, method: readonly string[]): string | unde
 }
 
 /**
+ * The page's words for a reworded step, sentence by sentence: the review
+ * offers them in its place (→ plan 45), so a step of two sentences must not
+ * come back as one.
+ */
+function closestRun(text: string, method: readonly string[]): string | undefined {
+	const found = sentences([text]).flatMap((one) => closestSentence(one, method) ?? []);
+	return found.length ? [...new Set(found)].join(' ').slice(0, STEP_TEXT_MAX) : undefined;
+}
+
+/**
  * The page's sentences no step kept: what the model left out, for the review
  * to show and put back with a tap. A heading in front of a sentence ("Für die
  * Béchamelsoße: Die Zwiebel hacken.") does not make it left out.
  */
-function leftOut(method: readonly string[], steps: readonly StepInput[]): string[] {
+function leftOut(method: readonly string[], steps: readonly StepInput[]): LeftOut[] {
 	const kept = steps.map((step) => tokens(step.text).map((token) => token.word));
 	const words = (text: string) => tokens(text).map((token) => token.word);
-	return sentences(method).filter((sentence) => {
+	const omitted: LeftOut[] = [];
+	// The last step a kept sentence stood in: a dropped one goes back after it,
+	// so "Put back" restores the page's order (→ plan 45).
+	let last = -1;
+	for (const sentence of sentences(method)) {
 		const plain = words(sentence);
 		const bare = words(sentence.replace(/^[^.!?:]{1,60}:\s*/, ''));
-		if (!plain.length) return false;
-		return !kept.some(
+		if (!plain.length) continue;
+		const at = kept.findIndex(
 			(step) => runAt(step, plain, 0) >= 0 || (bare.length > 0 && runAt(step, bare, 0) >= 0)
 		);
-	});
+		if (at >= 0) last = Math.max(last, at);
+		else omitted.push({ text: sentence, after: last });
+	}
+	return omitted;
 }
 
 /**

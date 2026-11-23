@@ -42,6 +42,7 @@
 		suggestionsFor,
 		updateRow,
 		type EditorIngredient,
+		type EditorOpening,
 		type EditorPart,
 		type EditorState,
 		type EditorStep
@@ -53,11 +54,11 @@
 		type RecipeFormField,
 		type RecipePrefill
 	} from '$lib/utils/recipes';
+	import { freshKeys } from '$lib/utils/recipe-review';
 	import { ruleRow } from '$lib/utils/rule-draft';
 	import { plainName } from '$lib/utils/step-highlight';
 	import { formatDuration, parseStepDuration } from '$lib/utils/timer-parse';
 	import { tick, untrack } from 'svelte';
-	import ImportChecks from './ImportChecks.svelte';
 	import IngredientList from './IngredientList.svelte';
 	import IngredientSheet from './IngredientSheet.svelte';
 	import PartPickerSheet from './PartPickerSheet.svelte';
@@ -84,9 +85,30 @@
 		field?: RecipeFormField;
 		/** A one-line notice above the form: the AI import's "check before saving". */
 		notice?: string;
+		/**
+		 * An import's review, opened in full ("Edit everything", → plan 45): the
+		 * state to start from instead of reading `prefill` again, so nothing
+		 * settled or edited in the review is lost.
+		 */
+		opened?: EditorOpening;
+		/** Every change, so the review's draft survives a reload (→ plan 45). */
+		onchange?: (state: EditorOpening) => void;
+		/** A save that went through, just before the recipe opens. */
+		onsaved?: () => void;
 	};
 
-	let { recipe, prefill, units, back, error, field, notice }: Props = $props();
+	let {
+		recipe,
+		prefill,
+		units,
+		back,
+		error,
+		field,
+		notice,
+		opened: start,
+		onchange,
+		onsaved
+	}: Props = $props();
 
 	const m = messages();
 
@@ -94,28 +116,34 @@
 	const nameError = $derived(field === 'photo' ? undefined : error);
 	const photoError = $derived(field === 'photo' ? error : undefined);
 
-	/** Keys from a counter: the server render and the browser agree on them. */
-	const key = keyMaker('r');
+	/**
+	 * Keys from a counter: the server render and the browser agree on them. A
+	 * review's state (only ever drawn in the browser) brings keys of its own, so
+	 * new ones take a prefix of their own (→ `freshKeys`).
+	 */
+	const key = untrack(() => (start ? freshKeys() : keyMaker('r')));
 
 	/** The household's own unit words: seeded, and grown by "Add your own". */
 	let own = $state<string[]>(untrack(() => [...units]));
 	const known = $derived(new Set(own.map(unitWordKey)));
 
-	let name = $state(untrack(() => prefill?.name ?? recipe?.name ?? ''));
-	let time = $state(
-		untrack(() => numberField(prefill ? prefill.timeMinutes : recipe?.timeMinutes))
-	);
-	let servings = $state(untrack(() => numberField(prefill ? prefill.servings : recipe?.servings)));
+	const basics = untrack(() => start ?? prefill ?? recipe);
+	let name = $state(untrack(() => basics?.name ?? ''));
+	let time = $state(untrack(() => numberField(basics?.timeMinutes)));
+	let servings = $state(untrack(() => numberField(basics?.servings)));
 
 	let editor = $state<EditorState>(
 		untrack(() => {
-			const opened = prefill
-				? fromPrefill(prefill, key, new Set(units.map(unitWordKey)))
-				: recipe
-					? fromRecipe(recipe, key)
-					: emptyState(key);
-			// Always somewhere to type the first ingredient into.
+			const opened = start
+				? ($state.snapshot(start.editor) as EditorState)
+				: prefill
+					? fromPrefill(prefill, key, new Set(units.map(unitWordKey)))
+					: recipe
+						? fromRecipe(recipe, key)
+						: emptyState(key);
+			// Always somewhere to type the first ingredient into, and the first step.
 			if (!opened.ingredients.length) opened.ingredients = [{ id: key(), name: null, rows: [] }];
+			if (!opened.steps.length) opened.steps = [{ id: key(), name: null, rows: [newStep(key)] }];
 			return opened;
 		})
 	);
@@ -124,6 +152,24 @@
 	function numberField(value: number | null | undefined): string {
 		return value?.toString() ?? '';
 	}
+
+	/** A field's text as a count again: empty or unreadable is "not stated". */
+	function countOf(value: string): number | null {
+		const read = Math.trunc(Number(value));
+		return value.trim() && Number.isFinite(read) && read > 0 ? read : null;
+	}
+
+	// The review's draft follows every change, so a reload keeps it (→ plan 45).
+	$effect(() => {
+		if (!onchange) return;
+		const state: EditorOpening = {
+			name,
+			timeMinutes: countOf(time),
+			servings: countOf(servings),
+			editor: $state.snapshot(editor)
+		};
+		untrack(() => onchange(state));
+	});
 
 	const showParts = $derived(hasParts(editor));
 	const targets = $derived(linkTargets(editor.ingredients));
@@ -318,16 +364,20 @@
 	enctype="multipart/form-data"
 	use:enhance={() => {
 		submitting = true;
-		return async ({ update }) => {
+		return async ({ result, update }) => {
 			// A successful save redirects; a rejected one comes back with `error`
 			// and everything typed still on screen.
+			if (result.type === 'redirect') onsaved?.();
 			await update({ reset: false });
 			submitting = false;
 		};
 	}}
 >
 	<header>
-		<a class="cancel" href={back}>{m.common.cancel}</a>
+		<!-- From an import's review, back to it in place: the two are one screen in history. -->
+		<a class="cancel" href={back} data-sveltekit-replacestate={start ? true : undefined}
+			>{m.common.cancel}</a
+		>
 		<h1>{recipe ? m.cooking.form.edit : m.cooking.form.new}</h1>
 		<button type="submit" class="save" disabled={submitting || !name.trim()}>
 			{m.cooking.form.save}
@@ -337,15 +387,6 @@
 	{#if notice}
 		<!-- The AI import's quiet reminder [plan 13]: a starting point, not a saved recipe. -->
 		<p class="notice">{notice}</p>
-	{/if}
-
-	{#if prefill?.checks?.length || prefill?.leftOut?.length}
-		<!-- The import gate's items (→ plan 44) until plan 45's review screen. -->
-		<ImportChecks
-			checks={prefill.checks ?? []}
-			lines={prefill.ingredientLines}
-			leftOut={prefill.leftOut}
-		/>
 	{/if}
 
 	<RecipeBasics

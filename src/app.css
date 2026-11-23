@@ -116,6 +116,9 @@
 	/* Text on --gold-tint, and a linked amount in the recipe editor's link sheet
 	   (→ plan 46): the sketch's mustard-deep, AA on both tints. */
 	--gold-deep: light-dark(#7a5a14, #e6c67e);
+	/* A number on a --gold disc (the import review's count, → plan 45). Deliberately
+	   theme-independent: both golds are light, so the ink is dark in both themes. */
+	--on-gold: #22201c;
 
 	/* ── The "Start cook mode" button [4d] ────────────────────── */
 	/* `Button variant="dark"` — a swatch of the screen it opens, which is why it

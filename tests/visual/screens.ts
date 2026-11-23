@@ -5,6 +5,7 @@
  * names its `route`, which tests/conventions/visual-coverage.test.ts holds
  * against `src/routes`.
  */
+import { readFileSync } from 'node:fs';
 import { expect, type Page } from '@playwright/test';
 import { SEED } from '../e2e/accounts';
 import { SEED_GUEST_TOKEN } from '../../scripts/seed-data';
@@ -147,6 +148,60 @@ export function editorShots(
 				await page.getByRole('dialog', { name: words.linksTitle }).waitFor();
 				await page.getByRole('button', { name: '8', exact: true }).click();
 				await page.waitForTimeout(300);
+			}
+		}
+	];
+}
+
+/**
+ * One of the review's saved drafts (`tests/fixtures/review-drafts/`, → plan 45)
+ * put where the import page puts a fresh one, and opened. Nothing is saved, so
+ * the household stays as seeded.
+ */
+export async function openReviewDraft(page: Page, name: string, title: string): Promise<void> {
+	const draft = JSON.parse(readFileSync(`tests/fixtures/review-drafts/${name}.json`, 'utf8'));
+	const id = `visual${name.replace(/[^a-z]/g, '')}`;
+	await page.goto('/cooking/recipes/import');
+	await page.evaluate(({ key, value }) => sessionStorage.setItem(key, value), {
+		key: `recipe-import:${id}`,
+		value: JSON.stringify({ v: 1, draft })
+	});
+	await page.goto(`/cooking/recipes/import?draft=${id}`);
+	await page.getByRole('heading', { name: title, level: 1 }).waitFor();
+}
+
+/** The words the review's shots find things by, in each language the walk uses. */
+export const REVIEW_WORDS = {
+	en: { title: 'Check recipe', leftOut: /^Left out of the steps/ },
+	de: { title: 'Rezept prüfen', leftOut: /^Aus den Schritten ausgelassen/ }
+};
+
+/** The review's shots (→ plan 45): with questions [R1], clean [R2], the left-out list open. */
+export function reviewShots(words: (typeof REVIEW_WORDS)['en']): Screen[] {
+	const route = '/(app)/cooking/recipes/import';
+	return [
+		{
+			name: 'recipe-review',
+			route,
+			path: '',
+			navigate: (page) => openReviewDraft(page, 'lasagne', words.title)
+		},
+		{
+			name: 'recipe-review-clean',
+			route,
+			path: '',
+			navigate: (page) => openReviewDraft(page, 'clean', words.title)
+		},
+		{
+			name: 'recipe-review-left-out',
+			route,
+			path: '',
+			navigate: async (page) => {
+				await openReviewDraft(page, 'lasagne', words.title);
+				await page.getByRole('button', { name: words.leftOut }).click();
+				await page.waitForTimeout(150);
+				await page.evaluate(() => window.scrollTo(0, document.documentElement.scrollHeight));
+				await page.waitForTimeout(250);
 			}
 		}
 	];
@@ -725,6 +780,10 @@ export const SCREENS: Screen[] = [
 		route: '/(app)/cooking/recipes/import',
 		path: '/cooking/recipes/import'
 	},
+	// The import's review (→ plan 45) [R1] [R2]: the gate's drafts of the
+	// Chefkoch page, opened the way the import page opens a fresh one.
+	...reviewShots(REVIEW_WORDS.en),
+	{ ...reviewShots(REVIEW_WORDS.en)[0], name: 'recipe-review-dark', theme: 'dark' },
 	{
 		name: 'recipe-new',
 		route: '/(app)/cooking/recipes/new',

@@ -189,7 +189,7 @@ export type RecipePrefill = {
 	 */
 	checks?: ImportCheck[];
 	/** Sentences of the page's method no step kept (→ plan 44), so one can be put back. */
-	leftOut?: string[];
+	leftOut?: LeftOut[];
 	/**
 	 * Tags and a diet the import suggests (→ plan 41): read off the page's own
 	 * card, picked by the AI, or both. They open ticked, marked as suggestions,
@@ -215,7 +215,15 @@ export type ImportCheck = {
 	word?: string;
 	/** The other half of an either/or ("veganes Hack"). */
 	alternative?: string;
+	/** For `amount-differs`: the amount the model gave, which the review offers (→ plan 45). */
+	answer?: { quantity: number | null; unit: string | null; name?: string };
 };
+
+/**
+ * A sentence of the page's method no step kept (→ plans 44, 45), and where it
+ * goes back: after the draft step at index `after` (-1: before the first).
+ */
+export type LeftOut = { text: string; after: number };
 
 export const IMPORT_CHECK_KINDS = [
 	// A page line no row came from: added from the rule-based reading.

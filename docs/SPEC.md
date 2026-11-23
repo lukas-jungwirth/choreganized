@@ -995,7 +995,7 @@ item sheet [3a]; what differs is what a tick does and what counts as shopping.
   that came back with a reload until the next tap in the app. iPhones and computers keep the live
   alarm and the notification: it has only been tried on Android.
 
-### 4.7 Recipe import from a link (→ plan 12, reuses the [3c] editor as its preview)
+### 4.7 Recipe import from a link (→ plans 12, 44, 45: opens on the review, the [3c] editor one tap away)
 
 - **Entry points**: the **"Add a recipe" chooser** (§4.3) routes here with a focused `mode` —
   `link` (default), `photo`, or `text` — so each method is its own clean screen rather than one
@@ -1083,13 +1083,66 @@ item sheet [3a]; what differs is what a tick does and what counts as shopping.
     real model until a key exists (`npm run import:eval`, DECISIONS #318).
   - The loader shows while the model works, and **Instructions for the AI** (below) are one tap
     away under the link field.
-- On success the ordinary **recipe editor [3c] opens prefilled**, with its parts, notes and links,
-  the photo already downloaded and re-encoded to WebP like any upload (a missing or unfetchable
-  photo is non-fatal — the draft just has none). Until plan 45's review screen, the check items
-  are listed at the top of the editor ("2 things to check"), the page's left-out sentences
-  folded under them. The preview _is_ the editor, so every imperfect parse is a two-second fix.
-  **Save** creates the recipe through the normal path and attaches the photo; nothing is stored
-  before Save but the temp photo, and an abandoned import's photo is swept nightly.
+- On success the import opens on the **review** [R1]–[R3] (→ plan 45, DECISIONS #328–#334),
+  with the photo already downloaded and re-encoded to WebP like any upload (a missing or
+  unfetchable photo is non-fatal — the draft just has none). **Save** creates the recipe through
+  the normal path and attaches the photo; nothing is stored before Save but the temp photo (and a
+  unit word the household adds there on purpose), and an abandoned import's photo is swept
+  nightly.
+- **The review: the recipe as it will look, with what to check** (`components/cooking/review/`,
+  `utils/recipe-review.ts`). Not a form: the photo, the name and "100 min · Serves 4 ·
+  chefkoch.de", the server's line ("Made with AI. Check it over before saving."), then the
+  ingredients under their part headings with notes and the steps with their linked words
+  underlined, drawn by the recipe view's own row components (`RecipeIngredientRow`,
+  `RecipeStepRow`, `viewRuns`), so the saved recipe looks like the review did. A recipe with one
+  part never shows the word "part".
+  - **Discard · Check recipe · Save** at the top. **Save always works**: an open question is saved
+    as the draft has it (the page's amount, the page's words, the first of an either/or, a new
+    unit word left in the note); a draft without a name asks for one first. A clean import is one
+    tap.
+  - **The banner** counts the check items still open ("2 things to check · Everything else
+    matches the page"), gold; a tap goes to the first. None open: sage, "Nothing to check · All
+    22 ingredients and 10 steps match the page", or "Nothing left to check · Ready to save." An
+    import without AI says "Links are a guess"; one from photos "Check it against the cookbook".
+  - **Each check item stands under the row or step it is about**, in a gold box, with its
+    answers, one tap each; answered, it gives way to "✓ Checked":
+
+    | Item             | Shown as                                             | Answers                               |
+    | ---------------- | ---------------------------------------------------- | ------------------------------------- |
+    | `choice`         | "The page offers Rotwein or Gemüsebrühe."            | the first · the other (→ note)        |
+    | `amount-differs` | "The page says “500 g …”. The AI read 50 g."         | Keep 500 g · Use 50 g                 |
+    | `name-differs`   | "The page says “1 Zwiebel(n)”."                      | Keep · Edit (the row's sheet)         |
+    | `line-added`     | "Also on the page: “1 Bund Thymian”."                | Keep · Remove                         |
+    | `reworded`       | "The page says: “…”" (every sentence of the step)    | Use the page's text · Keep            |
+    | `new-unit`       | "New unit: Kugeln. Add it?"                          | Add it · Keep it in the note          |
+    | `servings`       | "For how many people?" with − n +                    | the stepper · Keep n                  |
+    | `no-steps`       | "This page has no method."                           | Add steps (the editor) · Save without |
+    | `shares-exceed`  | "The steps use more Karotten than the recipe lists." | Keep                                  |
+
+    The other one of an either/or names the row and the first goes to the note ("oder
+    Rotwein"). "Use 50 g" takes the model's amount, which the gate keeps on the item. "Add it"
+    posts the word to Settings' `addUnit` (as the unit panel does); the row then counts in it,
+    the note loses it, and every other row asking about the same word is answered with it. The
+    servings stepper stays to hand once answered. Editing a row in its sheet answers what was
+    asked about that row; editing a step's text, what was asked about that step.
+
+  - **Folded at the bottom, under "Also"**: **Left out of the steps · 4 sentences**, the page's
+    sentences the import dropped (tips, variations, sign-offs), quoted, each with **Put back**,
+    which makes it a step after the step it followed on the page (the gate says which,
+    `leftOut[].after`), in the page's order whichever goes back first; and **Notes from the
+    import** (converted amounts, ingredients no step uses). A sentence is listed only while no
+    step holds it (a reworded step that took the page's text takes it off the list).
+  - **Tapping anything else edits that one thing** in a sheet: an ingredient row opens plan
+    46's ingredient sheet (name, number, unit, note, part); a step opens its text, with **Link
+    ingredients** (plan 46's link sheet) and **Remove step**; the name line opens name, time and
+    servings. **Edit everything** (dashed, at the end) opens the full editor [3c] on the same
+    draft (`?draft=<id>&edit=1`); its Cancel goes back to the review, with what was changed.
+  - **The draft survives a reload and the app going to the background**: the import page keeps
+    it in the tab's `sessionStorage` under a new id and the address becomes `?draft=<id>` (in
+    place of the entry screen, so Back never fetches a shared link twice); every change is
+    written back; Save and Discard drop it. An address whose draft this tab no longer has says
+    "This import is no longer here." with **Import again**. Without JS the import opens in the
+    ordinary editor, as before.
 - **Fetching is guarded** (the server fetches a user-supplied URL): `http(s)` only,
   loopback / private / link-local hosts refused _before any request_ — including an IPv4 one
   wrapped in IPv6 (`[::ffff:127.0.0.1]`, NAT64, 6to4) — and re-checked on every redirect hop,
@@ -1106,8 +1159,8 @@ item sheet [3a]; what differs is what a tick does and what counts as shopping.
   OpenRouter, on a model it picked. Nothing reaches any model without one. When the main provider
   can't answer (limit reached, out of credit, key refused, down), the household's **backup**
   provider, if it has one, gets the same request, and the draft says so ("Gemini couldn't
-  answer, so your backup (Claude) did"). Every path lands in the same
-  [3c] editor with a quiet "Made with AI — check it over before saving" note (**the AI never
+  answer, so your backup (Claude) did"). Every path lands on the same
+  review with a quiet "Made with AI — check it over before saving" note (**the AI never
   saves on its own**). Ways in besides a link (photo and text are their own focused modes off
   the chooser §4.3); a fetched page the model could not read offers them too:
   - **Pasted text** — the text mode: paste the recipe into a box, the answer for sites that block
