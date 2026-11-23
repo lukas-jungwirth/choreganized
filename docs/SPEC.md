@@ -827,8 +827,9 @@ item sheet [3a]; what differs is what a tick does and what counts as shopping.
     page's card), or whose text was edited, is offered the word matcher's reading (§4.6: whole
     words, plurals, a note in a name forgiven, a compound is no ingredient, DECISIONS #154):
     the words dotted, "Link “Zwiebel” to Zwiebel?" under the links, a tap accepts, ✕ turns one
-    down. **What is still suggested at Save is saved as links**, so an old recipe opened and
-    saved keeps every underline it had, now stored (→ DECISIONS #324).
+    down. For a step that came without links, **what is still suggested at Save is saved as
+    links**, so an old recipe opened and saved keeps every underline it had, now stored; for a
+    step that had its own, an offer after an edit is saved only when tapped (→ DECISIONS #325).
   - **Used without being named**: links without words (one pinned by hand before plan 43, or
     added here with **Add ingredient**), with ✕.
   - Saving from this editor stores every step's links (`ingredients_set`, an empty list

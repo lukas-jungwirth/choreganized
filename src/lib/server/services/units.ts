@@ -9,7 +9,15 @@
  * Every function takes `householdId` first and stays inside it.
  */
 import { and, asc, eq } from 'drizzle-orm';
-import { householdUnitKey, isKnownUnitWord, unitWordKey, UNIT_WORD_MAX } from '$lib/utils/amounts';
+import {
+	countingBase,
+	countingWord,
+	householdUnitKey,
+	isKnownUnitWord,
+	unitFromWord,
+	unitWordKey,
+	UNIT_WORD_MAX
+} from '$lib/utils/amounts';
 import { db } from '../db';
 import { householdUnits } from '../db/schema';
 
@@ -46,6 +54,25 @@ export function knownUnitWords(householdId: string): Set<string> {
 /** The household's words by their lowercased key, each as it was added ("ring" → "Ring"). */
 export function unitSpellings(householdId: string): Map<string, string> {
 	return new Map(listUnits(householdId).map((unit) => [unitWordKey(unit.word), unit.word]));
+}
+
+/**
+ * A word that is on the list already, as a row stores it: one of the eight by
+ * its key, a counting word in its one form, or the household's own word as
+ * added (`own`). Null for a word on no list (→ plan 46, "Add your own").
+ */
+export function existingUnit(
+	householdId: string,
+	raw: string
+): { word: string; own: boolean } | null {
+	const word = raw.replace(/\s+/g, ' ').trim();
+	if (!word) return null;
+	const unit = unitFromWord(word);
+	if (unit) return { word: unit, own: false };
+	if (countingWord(word)) return { word: countingBase(word), own: false };
+	const key = householdUnitKey(word, knownUnitWords(householdId));
+	const spelling = key ? unitSpellings(householdId).get(key) : undefined;
+	return spelling ? { word: spelling, own: true } : null;
 }
 
 /** Add a word; refuses one that is no word or that the list already has. */

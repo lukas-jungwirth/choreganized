@@ -35,6 +35,7 @@ import {
 	measureKey,
 	NUMBER_PATTERN,
 	parseQuantity,
+	unitStem,
 	UNIT_WORDS
 } from './amounts.ts';
 import { scaleQuantity } from './ingredients.ts';
@@ -389,10 +390,10 @@ const FIXED_WORDS = String.raw`°\s*[CF]?|grad|degrees?|min(?:uten?|utes?|s)?\.?
 
 /** Unit and counting-word spellings, longest first, escaped ("stk." has a dot). */
 function unitAlternation(known: ReadonlySet<string> | undefined): string {
-	return [...UNIT_WORDS, ...COUNTING_WORDS, ...(known ?? [])]
-		.sort((a, b) => b.length - a.length)
-		.map(escape)
-		.join('|');
+	// A household's word in its plural too ("Ringe" for "Ring"), as the reader takes it.
+	const own = [...(known ?? [])].map((word) => `${escape(word)}(?:en|e|n|s)?`);
+	const words = [...UNIT_WORDS, ...COUNTING_WORDS].sort((a, b) => b.length - a.length).map(escape);
+	return [...own, ...words].join('|');
 }
 
 /**
@@ -434,7 +435,8 @@ export function readAmount(written: string): ReadAmount {
 /** What a unit word measures, for comparing: the reader's key, else the word itself. */
 function unitKey(word: string | null | undefined): string | null {
 	if (!word) return null;
-	const key = measureKey(word) ?? word.trim().toLowerCase();
+	// A word on no built-in list (a household's own) compares by its stem: "Ringe" is "Ring".
+	const key = measureKey(word) ?? unitStem(word);
 	// "2 Eier" counts pieces as surely as "2 Stk. Eier" does.
 	return key === 'pcs' ? null : key;
 }

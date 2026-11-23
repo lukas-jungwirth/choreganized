@@ -22,7 +22,14 @@
  */
 import { parseIngredient } from './ingredients.ts';
 import type { RecipePrefill, StepTimer } from './recipes.ts';
-import { linkWord, suggestLinks, tokens, type EditorLink, type LinkTarget } from './step-links.ts';
+import {
+	amountFits,
+	linkWord,
+	suggestLinks,
+	tokens,
+	type EditorLink,
+	type LinkTarget
+} from './step-links.ts';
 
 export type EditorIngredient = {
 	id: string;
@@ -400,12 +407,18 @@ export function suggestionsFor(
 	});
 }
 
-/** A step's links as they will be saved: its own, and what is still suggested. */
+/**
+ * A step's links as they will be saved: its own, and, for a step that came
+ * without stored links, what is still suggested (→ DECISIONS #325). A step that
+ * had its own answer keeps it: what an edit of its text offers waits for a tap,
+ * so a link turned down in an earlier session never comes back unasked.
+ */
 export function savedLinks(
 	step: EditorStep,
 	targets: readonly LinkTarget[],
 	known?: ReadonlySet<string>
 ): EditorLink[] {
+	if (!step.suggest) return [...step.links];
 	const offered = suggestionsFor(step, targets, known).map(
 		({ ingredient, phrase, amountPhrase, quantity }) => ({
 			ingredient,
@@ -415,6 +428,32 @@ export function savedLinks(
 		})
 	);
 	return [...step.links, ...offered];
+}
+
+/**
+ * The links to one row, checked again after its amount or unit changed: a
+ * share is counted in the row's unit and may not exceed it, so an amount in
+ * the text gives the share it now fits as (or none), and a share without one
+ * is kept only while it is still no more than the row.
+ */
+export function recheckLinks(
+	parts: readonly EditorPart<EditorStep>[],
+	row: Pick<LinkTarget, 'key' | 'quantity' | 'unit'>
+): EditorPart<EditorStep>[] {
+	return parts.map((one) => ({
+		...one,
+		rows: one.rows.map((step) => ({
+			...step,
+			links: step.links.map((link) => {
+				if (link.ingredient !== row.key) return link;
+				if (link.amountPhrase)
+					return { ...link, quantity: amountFits(link.amountPhrase, row).share };
+				const fits =
+					link.quantity !== null && row.quantity !== null && link.quantity < row.quantity;
+				return fits ? link : { ...link, quantity: null };
+			})
+		}))
+	}));
 }
 
 /* ── The wire ─────────────────────────────────────────────────────────────── */

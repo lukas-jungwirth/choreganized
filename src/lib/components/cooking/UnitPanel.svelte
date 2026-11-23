@@ -16,7 +16,7 @@
 	picking it stores its one form. Mounted per opening, like every sheet.
 -->
 <script lang="ts">
-	import { enhance } from '$app/forms';
+	import { applyAction, enhance } from '$app/forms';
 	import BottomSheet from '$lib/components/ui/BottomSheet.svelte';
 	import { messages } from '$lib/i18n';
 	import {
@@ -159,11 +159,14 @@
 				return async ({ result }) => {
 					pending = false;
 					if (result.type === 'success' && result.data?.unit) {
-						const added = (result.data.unit as { word: string }).word;
-						onadded(added);
-						pick(added);
+						const added = result.data.unit as { word: string; own: boolean };
+						if (added.own) onadded(added.word);
+						pick(added.word);
 					} else if (result.type === 'failure') {
 						error = String(result.data?.unitError ?? '');
+					} else {
+						// Signed out meanwhile, or the server failed: the page says so.
+						await applyAction(result);
 					}
 				};
 			}}

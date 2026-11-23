@@ -13,7 +13,7 @@ import {
 	updateRecipe,
 	type RecipeDetail
 } from '$lib/server/services/recipes';
-import { addUnit, removeUnit, unitSpellings } from '$lib/server/services/units';
+import { addUnit, existingUnit, removeUnit, unitSpellings } from '$lib/server/services/units';
 import { unitWordKey } from '$lib/utils/amounts';
 import { fromRecipe, keyMaker, postedFields } from '$lib/utils/recipe-editor';
 import { readRecipeForm, type RecipeInput } from '$lib/utils/recipes';
@@ -215,5 +215,16 @@ describe('units in the editor', () => {
 			saved.ingredients.map(({ name, quantity, unit }) => [name, quantity, unit]),
 			[['Mozzarella', 2, 'Kugel']]
 		);
+	});
+});
+
+describe('"Add your own" with a word already on the list', () => {
+	it('answers with the word as a row stores it, own or built in', () => {
+		const { householdId, owner } = makeHousehold();
+		addUnit(householdId, owner.id, 'Ring');
+		assert.deepEqual(existingUnit(householdId, 'Tassen'), { word: 'Tasse', own: false });
+		assert.deepEqual(existingUnit(householdId, 'EL'), { word: 'tbsp', own: false });
+		assert.deepEqual(existingUnit(householdId, 'ringe'), { word: 'Ring', own: true });
+		assert.equal(existingUnit(householdId, 'Kugel'), null);
 	});
 });

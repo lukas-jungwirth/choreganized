@@ -15,6 +15,8 @@ import {
 	keyMaker,
 	moveToPart,
 	postedFields,
+	recheckLinks,
+	savedLinks,
 	renamePart,
 	shiftRow,
 	suggestionsFor,
@@ -159,5 +161,32 @@ describe('what the editor posts', () => {
 		state.ingredients[0].rows.splice(0, 1);
 		const input = read(postedFields(state));
 		assert.deepEqual(input.steps[0].uses, []);
+	});
+});
+
+describe('after the review (plan 46)', () => {
+	it('saves nothing unasked for a linked step whose text was edited', () => {
+		const state = fromRecipe(lasagne, keyMaker());
+		const step = state.steps[0].rows[0];
+		const edited = { ...step, text: `${step.text} Dann die Karotten dazu.` };
+		assert.deepEqual(savedLinks(edited, linkTargets(state.ingredients)), step.links);
+	});
+
+	it('checks a row’s links again when its amount changes', () => {
+		const state = fromRecipe(lasagne, keyMaker());
+		const karotten = state.ingredients[0].rows[1];
+		const step = state.steps[0].rows[0];
+		step.links.push({
+			ingredient: karotten.id,
+			phrase: 'Karotten',
+			amountPhrase: '200 g',
+			quantity: 200
+		});
+		const halved = recheckLinks(state.steps, { key: karotten.id, quantity: 100, unit: 'g' });
+		assert.equal(halved[0].rows[0].links.at(-1)?.quantity, null);
+		const kilo = recheckLinks(state.steps, { key: karotten.id, quantity: 1, unit: 'kg' });
+		assert.equal(kilo[0].rows[0].links.at(-1)?.quantity, null);
+		const more = recheckLinks(state.steps, { key: karotten.id, quantity: 800, unit: 'g' });
+		assert.equal(more[0].rows[0].links.at(-1)?.quantity, 200);
 	});
 });

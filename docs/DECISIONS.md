@@ -4826,18 +4826,19 @@ recipe-importer)` (`IMPORT_UA`): the `Mozilla/5.0 (compatible; …)` form crawle
      panel itself**: a text field and Add take the button's place. It posts to Settings'
      `addUnit` action from the editor's page, so the word is the household's at once (in every
      recipe and in the reader), not only after Save.
-325. **What is still suggested at Save is saved as links** (2026-11-23; → plan 46). The plan
-     asks both "a tap accepts" a suggestion and "an old recipe opens with the matcher's guesses
-     as suggestions and saves as stored links". Built so both hold: a step that came without
-     stored links (`ingredients_set` false: a recipe from before, a page's card) **or whose text
-     was edited in this session** is offered the matcher's reading (`suggestLinks`), dotted in
-     the link sheet and in the step's Ingredients row; a tap makes one a link, ✕ turns it down
-     (remembered for the session); what is still offered at Save is saved as stored links, its
+325. **What is still suggested at Save is saved as links, for a step that had none**
+     (2026-11-23; → plan 46). The plan asks both "a tap accepts" a suggestion and "an old
+     recipe opens with the matcher's guesses as suggestions and saves as stored links". Built so
+     both hold: a step that came without stored links (`ingredients_set` false: a recipe from
+     before, a page's card, a step added in this session) is offered the matcher's reading
+     (`suggestLinks`), dotted in the link sheet and in the step's Ingredients row; a tap makes
+     one a link, ✕ turns it down; what is still offered at Save is saved as stored links, its
      amount and share by the same rule as a tapped word. A step that came with stored links
-     (even an empty list) and whose text is unchanged is offered nothing, so a second save
-     changes nothing (`tests/integration/recipe-editor.test.ts`). Saving any step from the
-     editor writes `ingredients_set` with its list. A new step a person never opens therefore
-     still underlines what the matcher reads, as before.
+     (even an empty list) is offered the matcher's reading again only once its text is edited,
+     and then **only a tap saves an offer**: first built as "edited steps save their offers
+     too", the code review found that a link removed in one session came back unasked after a
+     typo fix in the next. Saving from the editor writes `ingredients_set` with each step's
+     list, and a second save changes nothing (`tests/integration/recipe-editor.test.ts`).
 326. **What replaces #67, #100, #101 and #127** (2026-11-23; → plan 46, SPEC §4.4).
      - **#67** (arrows to reorder): ingredients are dragged by the grip (`svelte-dnd-action`, one
        zone per part, one shared type, so a row crosses into another part); steps move from
@@ -4889,3 +4890,11 @@ recipe-importer)` (`IMPORT_UA`): the `Mozilla/5.0 (compatible; …)` form crawle
        `StepCard`.
      - **Settings → Household → Units** lists the household's words with ✕ (`UnitsSheet`,
        `removeUnit` action); the count stands in the row.
+     - **Review fixes from the code-review pass**: "Add your own" with a word already on the
+       list (a counting word the panel doesn't show, "Tasse", or a word another phone just
+       added) picks that word instead of refusing it (`existingUnit`); a row whose amount or
+       unit is changed in its sheet has its links checked again (`recheckLinks`: a share that
+       no longer fits is dropped); a household's word is read in its plural inside a step
+       ("2 Ringe" is one amount of a "Ring" row); the panel hands a redirect or a server error to
+       the page (`applyAction`) instead of doing nothing; the Settings action comments sat on
+       the wrong function.

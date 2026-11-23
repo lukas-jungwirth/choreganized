@@ -34,6 +34,7 @@
 		newStep,
 		partNames,
 		postedFields,
+		recheckLinks,
 		removeRow,
 		renamePart,
 		shiftRow,
@@ -212,6 +213,9 @@
 		let parts = updateRow(editor.ingredients, { id, ...fields });
 		if (showParts && part !== found.part.name) parts = moveToPart(parts, id, part, key);
 		editor.ingredients = parts;
+		if (fields.quantity !== found.row.quantity || fields.unit !== found.row.unit) {
+			editor.steps = recheckLinks(editor.steps, { key: id, ...fields });
+		}
 	}
 
 	/** A removed ingredient takes its links with it: a link to nothing is a lie on screen. */
@@ -423,7 +427,9 @@
 			{own}
 			onsave={(fields, part) => saveIngredient(id, fields, part)}
 			onremove={() => removeIngredient(id)}
-			onadded={(word) => (own = [...own, word])}
+			onadded={(word) => {
+				if (!own.some((one) => unitWordKey(one) === unitWordKey(word))) own = [...own, word];
+			}}
 			onclose={() => (editing = null)}
 		/>
 	{/if}

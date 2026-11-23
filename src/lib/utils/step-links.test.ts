@@ -457,3 +457,17 @@ describe('suggestLinks', () => {
 		assert.deepEqual(one, { ingredient: 'mehl', phrase: 'Mehl', start: 4, end: 8 });
 	});
 });
+
+describe('a household’s own word in a step (plan 46 review)', () => {
+	it('reads its plural as the amount’s unit, and as the row’s', () => {
+		const known = new Set(['ring']);
+		assert.deepEqual(
+			tokens('2 Ringe Fleischwurst würfeln.', known).map((token) => token.text),
+			['2 Ringe', 'Fleischwurst', 'würfeln']
+		);
+		assert.deepEqual(amountFits('2 Ringe', { quantity: 2, unit: 'Ring' }), {
+			fits: true,
+			share: null
+		});
+	});
+});

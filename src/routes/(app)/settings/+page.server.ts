@@ -62,7 +62,13 @@ import {
 	updateProfile
 } from '$lib/server/services/household';
 import { countSightings } from '$lib/server/services/raccoons';
-import { addUnit, listUnits, removeUnit, UnitError } from '$lib/server/services/units';
+import {
+	addUnit,
+	existingUnit,
+	listUnits,
+	removeUnit,
+	UnitError
+} from '$lib/server/services/units';
 import { UNIT_WORD_MAX } from '$lib/utils/amounts';
 import { setAway } from '$lib/server/services/tasks';
 import { appVersion } from '$lib/server/version';
@@ -473,27 +479,25 @@ export const actions: Actions = {
 	},
 
 	/**
-	 * The household's standing instructions for every AI import (→ plan 22).
-	 * Owner-only like the connections — they shape every member's imports — and
-	 * cleaned in the service, whatever arrives here. Empty clears them.
-	 */
-	/**
 	 * A household's own unit word (→ plan 46, DECISIONS #321): "Add your own" in
 	 * the recipe editor's unit panel posts here from the editor's page, so the
-	 * word is the household's at once; the answer is the word as stored.
+	 * word is the household's at once; the answer is the word as stored. A word
+	 * already on the list (a counting word the panel doesn't show, "Tasse", or
+	 * one another phone just added) is answered with that word, to be picked.
 	 */
 	addUnit: async (event) => {
 		const { householdId, member } = requireMember(event);
 		const form = await event.request.formData();
 		const m = catalog(event.locals.locale);
+		const word = String(form.get('word') ?? '');
 
 		try {
-			return { unit: addUnit(householdId, member.id, String(form.get('word') ?? '')) };
+			return { unit: { word: addUnit(householdId, member.id, word).word, own: true } };
 		} catch (cause) {
-			if (cause instanceof UnitError) {
-				return fail(400, { unitError: m.errors.units[cause.code](UNIT_WORD_MAX) });
-			}
-			throw cause;
+			if (!(cause instanceof UnitError)) throw cause;
+			const known = cause.code === 'known' ? existingUnit(householdId, word) : null;
+			if (known) return { unit: known };
+			return fail(400, { unitError: m.errors.units[cause.code](UNIT_WORD_MAX) });
 		}
 	},
 
@@ -505,6 +509,11 @@ export const actions: Actions = {
 		return { unitRemoved: true };
 	},
 
+	/**
+	 * The household's standing instructions for every AI import (→ plan 22).
+	 * Owner-only like the connections — they shape every member's imports — and
+	 * cleaned in the service, whatever arrives here. Empty clears them.
+	 */
 	saveAiInstructions: async (event) => {
 		const { householdId, member } = requireMember(event);
 		const form = await event.request.formData();
