@@ -4773,9 +4773,8 @@ recipe-importer)` (`IMPORT_UA`): the `Mozilla/5.0 (compatible; …)` form crawle
        the parser, the gate and `addUnit` alike (`householdUnitKey`: "Ringe" is the "Ring" a
        household added, and cannot be added twice); an answer that kept less than half of a
        card's sentences is refused for fidelity too, since only reworded steps counted and an
-       answer with no steps passed; **temperatures stay as the page wrote them**, °F too (the
-       plan said "°F → °C, as today", but a converted step is a reworded one and would push
-       US recipes over the one-third line; cook mode reads both); a "Für …" / "For …" row is a
+       answer with no steps passed; the model leaves temperatures as the page wrote them (a step
+       it converted would be a reworded one); a "Für …" / "For …" row is a
        heading only at three words or fewer ("Für die Deko Puderzucker" is sugar), and a lone
        shouted word only beside another shouted heading ("BUTTER" alone is butter, jamieoliver's
        "PICKLE" beside "KATSU CURRY SAUCE" is a part; this tightens #322); a name is checked
@@ -4785,3 +4784,25 @@ recipe-importer)` (`IMPORT_UA`): the `Mozilla/5.0 (compatible; …)` form crawle
        a card with more lines than the editor's 60 rows loses the tail without an item, as
        every import did before; with the model splitting lines the cap is reached a little
        sooner.
+     - **Fahrenheit is converted by code, not by the model, and not dropped** (coordinator,
+       2026-11-23; the plan's "°F → °C, as today", SPEC §4.7 since plan 22).
+       `utils/fahrenheit.ts` runs after the gate on imported drafts only (AI and rule-based,
+       never a typed recipe): "350°F", "350 °F", "350° F", "350 degrees F(ahrenheit)" and a
+       range "350-375°F" get Celsius in front, rounded to the nearest 5, with the page's own
+       text kept in brackets: "175 °C (350°F)". (The coordinator's example said 180 °C for
+       350 °F; 176.7 rounds to 175 at the nearest 5, and the rule was followed.) A bare
+       "350 F", anything in °C, and a °F the page already gave beside a °C ("180°C/350°F")
+       are left alone. A converted step gets an `info` item (`converted`, at the step).
+     - **"The page's own words" means its words** (coordinator, 2026-11-23). The step check,
+       the order cursor, `reworded`, both fidelity refusals and `leftOut` compare **word
+       tokens**: runs of letters and digits, lowercased, a number and a unit glued together
+       split apart ("200g" = "200 g"). A dropped or added full stop, "erhitzen.Hackfleisch",
+       typographic quotes and doubled spaces are the page's words; a changed, swapped or added
+       word is not. A link's `phrase` and `amountPhrase` are found the same way and kept as
+       the step writes them ("200g" for an answered "200 g"), so cook mode finds them
+       character for character before `locateAmounts` is asked.
+     - **A step longer than the editor's 600 characters is several**, cut at sentence ends,
+       in the gate and in the rule-based draft (`splitLongStep`). Both used to cut it at 600,
+       which lost a one-paragraph method's tail (bonappetit.com's steps run to 1 068
+       characters, chefkoch's Schnitzel to 775); the token check showed it, because the lost
+       sentences counted as left out.

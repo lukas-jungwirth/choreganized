@@ -325,6 +325,95 @@ describe('the gate on hostile answers', () => {
 	});
 });
 
+/**
+ * "The page's own words" means its words, not its punctuation (→ plan 44,
+ * coordinator 2026-11-23): a real model adds or drops a full stop, writes
+ * "200 g" for "200g", or mends "erhitzen.Hackfleisch". The gate compares
+ * word tokens, so those are the page's words and a changed word is not.
+ */
+describe('the gate compares words, not punctuation', () => {
+	const page = [
+		'Das Olivenöl in einer Pfanne erhitzen.Hackfleisch dazugeben und „scharf“ anbraten.',
+		'200g Mehl  einrühren und 10 Minuten köcheln lassen.',
+		'Mit Salz würzen.',
+		'Heiß servieren.'
+	];
+	const card: SourceRecipe = {
+		name: 'Soße',
+		servings: 4,
+		timeMinutes: null,
+		ingredientLines: ['200 g Mehl', '2 EL Olivenöl', '500 g Hackfleisch'],
+		steps: page
+	};
+	const rows = [
+		{ source: 0, quantity: 200, unit: 'g', name: 'Mehl' },
+		{ source: 1, quantity: 2, unit: 'tbsp', name: 'Olivenöl' },
+		{ source: 2, quantity: 500, unit: 'g', name: 'Hackfleisch' }
+	];
+	const answer = (first: string, second: string) => ({
+		name: 'Soße',
+		ingredients: rows,
+		steps: [
+			{ text: first, uses: [] },
+			{ text: second, uses: [{ ingredient: 0, phrase: 'Mehl', amountPhrase: '200 g' }] },
+			{ text: 'Mit Salz würzen.', uses: [] },
+			{ text: 'Heiß servieren.', uses: [] }
+		]
+	});
+	const reworded = (first: string, second: string) => {
+		const result = validateRecipeDraft(answer(first, second), {
+			source: card,
+			text: null,
+			instructed: false
+		});
+		return result.ok
+			? (result.draft.checks ?? [])
+					.filter((check) => check.kind === 'reworded')
+					.map((check) => (check.at as { step: number }).step)
+			: result.reason;
+	};
+	const faithful =
+		'Das Olivenöl in einer Pfanne erhitzen. Hackfleisch dazugeben und "scharf" anbraten';
+
+	it('takes a dropped full stop, a mended space, plain quotes, "200 g" for "200g", one space for two', () => {
+		assert.deepEqual(reworded(faithful, '200 g Mehl einrühren und 10 Minuten köcheln lassen'), []);
+	});
+
+	it('still flags one changed word, two swapped words, or one added word', () => {
+		const second = '200 g Mehl einrühren und 10 Minuten köcheln lassen.';
+		assert.deepEqual(reworded(faithful.replace('Pfanne', 'Kasserolle'), second), [0]);
+		assert.deepEqual(
+			reworded(faithful.replace('scharf" anbraten', 'anbraten "scharf'), second),
+			[0]
+		);
+		assert.deepEqual(reworded(faithful.replace('Pfanne', 'großen Pfanne'), second), [0]);
+	});
+
+	it('finds an amount phrase written apart in a step that writes it together, as the step writes it', () => {
+		const result = validateRecipeDraft(answer(faithful, page[1]), {
+			source: card,
+			text: null,
+			instructed: false
+		});
+		assert.ok(result.ok);
+		assert.deepEqual(result.draft.steps[1].uses?.[0], {
+			ingredient: 0,
+			quantity: null,
+			phrase: 'Mehl',
+			amountPhrase: '200g'
+		});
+	});
+
+	it('keeps nothing left out for a step that only lost its punctuation', () => {
+		const result = validateRecipeDraft(
+			answer(faithful, '200 g Mehl einrühren und 10 Minuten köcheln lassen'),
+			{ source: card, text: null, instructed: false }
+		);
+		assert.ok(result.ok);
+		assert.deepEqual(result.draft.leftOut, []);
+	});
+});
+
 describe('the gate, after code review', () => {
 	it('knows a household word in its plural ("Ring" added, the page says "Ringe")', () => {
 		const card: SourceRecipe = {

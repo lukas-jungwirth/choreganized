@@ -30,6 +30,7 @@ import {
 } from '$lib/utils/recipe-draft';
 import { RECIPE_DIETS, RECIPE_TAGS } from '$lib/utils/recipe-tags';
 import { INGREDIENTS_MAX, STEPS_MAX, type RecipePrefill } from '$lib/utils/recipes';
+import { draftInCelsius } from '$lib/utils/fahrenheit';
 import { ruleDraft } from '$lib/utils/rule-draft';
 import type { UnitLabels } from '$lib/utils/shopping';
 import { generateWithFallback, type Answered, type Connection, type RunOptions } from '../ai/run';
@@ -280,7 +281,8 @@ export async function importRecipe(
 				labels: context.labels,
 				known
 			});
-			if (check.ok) return check.draft;
+			// Fahrenheit by code, after the gate: the model leaves the page's words alone.
+			if (check.ok) return draftInCelsius(check.draft);
 
 			// "Nothing here" from a photo or a paste is the answer — the backup would
 			// only be asked the same question. Anything else (the wrong shape, steps
@@ -333,7 +335,8 @@ export async function importPage(
 			cause = failure;
 		}
 	}
-	return { by: 'rules', draft: ruleDraft(card, { known, labels: context.labels }), cause };
+	const draft = draftInCelsius(ruleDraft(card, { known, labels: context.labels }));
+	return { by: 'rules', draft, cause };
 }
 
 /** A card cut to what the editor holds, so every `source` index the model sees is a row it may keep. */

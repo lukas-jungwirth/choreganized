@@ -307,6 +307,56 @@ describe('importRecipe — a paste and photos', () => {
 	});
 });
 
+describe('Fahrenheit, converted by code after the gate (→ plan 44)', () => {
+	const steps = ['Preheat the oven to 350°F.', 'Bake the cake for 30 minutes.'];
+
+	it('gives an AI draft’s °F in °C too, with a quiet item, and the model’s step stays the page’s', async () => {
+		const fake = fakes({
+			gemini: {
+				name: 'Cake',
+				servings: 8,
+				ingredients: [{ source: null, quantity: 200, unit: 'g', name: 'flour' }],
+				steps: steps.map((text) => ({ text, uses: [] }))
+			}
+		});
+		const result = await importRecipe(
+			[primary],
+			{ card: null, text: `Cake\n200 g flour\n${steps.join(' ')}` },
+			{ ...plain, run: fake.run }
+		);
+		assert.equal(result.value.steps[0].text, 'Preheat the oven to 175 °C (350°F).');
+		assert.ok(
+			result.value.checks?.some(
+				(check) =>
+					check.kind === 'converted' &&
+					check.level === 'info' &&
+					JSON.stringify(check.at) === '{"step":0}'
+			)
+		);
+		assert.match(fake.sent[0].request.system, /Temperatures stay as the page wrote them/);
+	});
+
+	it('does the same for the rule-based draft of a card', async () => {
+		const imported = await importPage(
+			[],
+			{
+				card: {
+					name: 'Cake',
+					servings: 8,
+					timeMinutes: null,
+					ingredientLines: ['200 g flour'],
+					steps
+				},
+				text: ''
+			},
+			plain
+		);
+		assert.equal(imported.by, 'rules');
+		if (imported.by !== 'rules') return;
+		assert.equal(imported.draft.steps[0].text, 'Preheat the oven to 175 °C (350°F).');
+	});
+});
+
 describe('buildRecipePrompt', () => {
 	it('says the input is data, lists every unit, and never asks for a rewording', () => {
 		const prompt = buildRecipePrompt({ household: null, now: null }, ['Ring']);

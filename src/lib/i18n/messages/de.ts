@@ -1317,6 +1317,8 @@ export const de: Messages = {
 				amountDiffers: (name: string, line: string) =>
 					`${name}: die Menge ist die der Seite („${line}“).`,
 				converted: (name: string) => `${name}: in metrische Einheiten umgerechnet.`,
+				convertedStep: (step: number) =>
+					`Schritt ${step}: die Temperatur steht jetzt auch in °C da.`,
 				nameDiffers: (name: string, line: string) =>
 					`${name}: so benannt, wie die Seite es schreibt („${line}“).`,
 				newUnit: (word: string) => `Neue Einheit: ${word}. Hinzufügen?`,

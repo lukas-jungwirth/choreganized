@@ -1023,10 +1023,16 @@ item sheet [3a]; what differs is what a tick does and what counts as shopping.
     unit: Ringe. Add it?"); until it is answered the draft keeps the number with no unit and
     the word in the note.
   - **steps against the page**: split and drop, never reword (DECISIONS #316). Every step must
-    be found in the page's method word for word (whitespace, typographic quotes and dashes, and
-    case aside) and in order, else it is flagged with the page's sentence beside it; more than
-    a third not found refuses the answer (the backup gets a turn, then the rule-based draft).
-    The page's sentences no step kept are kept on the draft (`leftOut`).
+    be found in the page's method word for word and in order, compared as word tokens
+    (letters and digits, case, punctuation and spacing aside, "200g" the same as "200 g"),
+    else it is flagged with the page's sentence beside it; more than a third not found, or
+    less than half of the method kept, refuses the answer (the backup gets a turn, then the
+    rule-based draft). The page's sentences no step kept are kept on the draft (`leftOut`).
+    A step longer than the editor's 600 characters becomes several, cut at sentence ends.
+  - **Fahrenheit by code**: the model leaves temperatures as the page wrote them; after the
+    gate, every imported draft (AI or rules, never a typed recipe) gets Celsius in front of a
+    °F, rounded to the nearest 5, the page's value kept in brackets ("175 °C (350°F)"), and
+    a quiet item on that step. A bare "350 F", a °C, and a °F beside a °C are left alone.
   - **links**: a step names its ingredients and the words that do so (`phrase`, plan 43): a
     phrase must stand in the step's text, an amount phrase beside it by the rule cook mode
     rewrites by (`locateAmounts`), in the row's unit and not more than the row; a failed one is

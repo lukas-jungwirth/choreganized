@@ -94,10 +94,14 @@ describe('ruleDraft on every corpus page with a card', () => {
 				draft.ingredientDetails?.map((one) => one?.section ?? null),
 				card.ingredientSections.slice(0, 60)
 			);
+			// A long step may become several (split at sentence ends): the parts, in order, stay.
+			const runs = (list: (string | null | undefined)[]) =>
+				list.filter((one, at) => at === 0 || list[at - 1] !== one);
 			assert.deepEqual(
-				draft.steps.map((step) => step.section),
-				card.stepSections.slice(0, 40)
+				runs(draft.steps.map((step) => step.section)),
+				runs(card.stepSections.slice(0, 40))
 			);
+			assert.ok(draft.steps.every((step) => step.text.length <= 600));
 			// Without AI: no links, and the draft says so.
 			assert.ok(draft.steps.every((step) => step.uses === null));
 			assert.equal(draft.checks?.[0]?.kind, 'no-ai');

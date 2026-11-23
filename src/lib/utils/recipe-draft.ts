@@ -56,7 +56,7 @@ import {
 	type StepTimer
 } from './recipes';
 import { readRecipeDiet, readRecipeTags, type RecipeDiet, type RecipeTag } from './recipe-tags';
-import { recipeChecks, ruleRow, type SourceRecipe } from './rule-draft';
+import { recipeChecks, ruleRow, splitLongStep, type SourceRecipe } from './rule-draft';
 import type { UnitLabels } from './shopping';
 import { locateAmounts, occurrences } from './step-links';
 import {
@@ -136,16 +136,21 @@ export function validateRecipeDraft(raw: unknown, context: DraftContext): DraftC
 	// ── Steps ──
 	const method = card ? card.steps : context.text ? [context.text] : [];
 	const checkSteps = !context.photos && !context.instructed && method.length > 0;
-	const haystack = normalize(method.join(' '));
+	const haystack = tokens(method.join(' ')).map((token) => token.word);
 	let cursor = 0;
 	let reworded = 0;
 
 	const steps: StepInput[] = [];
 	const stepChecks: ImportCheck[] = [];
-	for (const item of Array.isArray(raw.steps) ? raw.steps : []) {
-		const text = isRecord(item)
-			? cleanText(item.text, STEP_TEXT_MAX, { numbering: true })
-			: cleanText(item, STEP_TEXT_MAX, { numbering: true });
+	// A step longer than the editor holds is several, cut at sentence ends, so a
+	// long paragraph keeps its tail (each piece is checked like any step).
+	const answered = (Array.isArray(raw.steps) ? raw.steps : []).flatMap((item: unknown) => {
+		const whole = isRecord(item)
+			? cleanText(item.text, STEP_TEXT_MAX * 10, { numbering: true })
+			: cleanText(item, STEP_TEXT_MAX * 10, { numbering: true });
+		return whole ? splitLongStep(whole).map((text) => ({ item, text })) : [{ item, text: '' }];
+	});
+	for (const { item, text } of answered) {
 		if (!text || steps.length >= STEPS_MAX) {
 			dropped++;
 			continue;
@@ -153,9 +158,11 @@ export function validateRecipeDraft(raw: unknown, context: DraftContext): DraftC
 
 		const at = steps.length;
 		if (checkSteps) {
-			const found = haystack.indexOf(normalize(text), cursor);
+			// Word for word: the same words in the same order, punctuation and spacing aside.
+			const words = tokens(text).map((token) => token.word);
+			const found = words.length ? runAt(haystack, words, cursor) : -1;
 			if (found >= 0) {
-				cursor = found + normalize(text).length;
+				cursor = found + words.length;
 			} else {
 				reworded++;
 				stepChecks.push({
@@ -463,12 +470,58 @@ function closestSentence(text: string, method: readonly string[]): string | unde
  * Béchamelsoße: Die Zwiebel hacken.") does not make it left out.
  */
 function leftOut(method: readonly string[], steps: readonly StepInput[]): string[] {
-	const kept = steps.map((step) => normalize(step.text));
+	const kept = steps.map((step) => tokens(step.text).map((token) => token.word));
+	const words = (text: string) => tokens(text).map((token) => token.word);
 	return sentences(method).filter((sentence) => {
-		const plain = normalize(sentence);
-		const bare = normalize(sentence.replace(/^[^.!?:]{1,60}:\s*/, ''));
-		return !kept.some((step) => step.includes(plain) || (bare && step.includes(bare)));
+		const plain = words(sentence);
+		const bare = words(sentence.replace(/^[^.!?:]{1,60}:\s*/, ''));
+		if (!plain.length) return false;
+		return !kept.some(
+			(step) => runAt(step, plain, 0) >= 0 || (bare.length > 0 && runAt(step, bare, 0) >= 0)
+		);
 	});
+}
+
+/**
+ * A text as the words a person reads (→ plan 44): runs of letters and digits,
+ * lowercased, a number and the unit glued to it apart ("200g" is "200" "g"),
+ * with where each stands in the text. Punctuation, quotes, dashes and spacing
+ * are no words, so "erhitzen.Hackfleisch" and "erhitzen. Hackfleisch" agree.
+ */
+export function tokens(text: string): { word: string; start: number; end: number }[] {
+	const found: { word: string; start: number; end: number }[] = [];
+	for (const match of text.matchAll(/[\p{L}\p{M}\p{N}]+/gu)) {
+		for (const part of match[0].matchAll(/\p{N}+|[\p{L}\p{M}]+/gu)) {
+			const start = match.index + part.index;
+			found.push({ word: part[0].toLowerCase(), start, end: start + part[0].length });
+		}
+	}
+	return found;
+}
+
+/** Where `needle` stands as one contiguous run in `hay`, at or after `from`; -1 when it does not. */
+function runAt(hay: readonly string[], needle: readonly string[], from: number): number {
+	outer: for (let at = from; at + needle.length <= hay.length; at++) {
+		for (let k = 0; k < needle.length; k++) if (hay[at + k] !== needle[k]) continue outer;
+		return at;
+	}
+	return -1;
+}
+
+/**
+ * Where words stand in a step, as the step writes them: "200g" for an amount
+ * phrase "200 g", "Zwiebel-Würfel" for "Zwiebel Würfel". Null when they do not.
+ */
+function spanIn(text: string, words: string): string | null {
+	const step = tokens(text);
+	const wanted = tokens(words).map((token) => token.word);
+	if (!wanted.length) return null;
+	const at = runAt(
+		step.map((token) => token.word),
+		wanted,
+		0
+	);
+	return at < 0 ? null : text.slice(step[at].start, step[at + wanted.length - 1].end);
 }
 
 /** A part's name, kept only where the page names it: "parts only where the page names them". */
@@ -523,10 +576,14 @@ function readLinks(
 		if (at === undefined) continue;
 		const row = rows[at];
 
+		// A phrase stands in the step when its words do (the token view), and is
+		// kept as the step writes it, so cook mode finds it character for character.
 		let phrase = cleanText(use.phrase, LINK_PHRASE_MAX) || null;
+		if (phrase) phrase = spanIn(text, phrase);
 		if (phrase && !occurrences(text, phrase).length) phrase = null;
 
 		let amountPhrase = cleanText(use.amountPhrase, AMOUNT_PHRASE_MAX) || null;
+		if (amountPhrase) amountPhrase = spanIn(text, amountPhrase);
 		if (amountPhrase && !(phrase && amountFits(text, phrase, amountPhrase, row, known))) {
 			amountPhrase = null;
 		}

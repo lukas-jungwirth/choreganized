@@ -1739,6 +1739,8 @@ export const en = {
 				amountDiffers: (name: string, line: string) =>
 					`${name}: the amount is the page’s (“${line}”).`,
 				converted: (name: string) => `${name}: converted to metric.`,
+				/** A step whose °F the import wrote in °C too (→ plan 44). */
+				convertedStep: (step: number) => `Step ${step}: the temperature is also given in °C.`,
 				nameDiffers: (name: string, line: string) =>
 					`${name}: named as the page wrote it (“${line}”).`,
 				newUnit: (word: string) => `New unit: ${word}. Add it?`,

@@ -147,12 +147,16 @@ export function ruleDraft(
 		details.push({ note: row.note, section: section(card.ingredientSections?.[at]) });
 	});
 
-	const steps = card.steps.slice(0, STEPS_MAX).map((text, at) => ({
-		text: text.slice(0, STEP_TEXT_MAX),
-		uses: null,
-		timer: null,
-		section: section(card.stepSections?.[at])
-	}));
+	const steps = card.steps
+		.flatMap((text, at) =>
+			splitLongStep(text).map((piece) => ({
+				text: piece,
+				uses: null,
+				timer: null,
+				section: section(card.stepSections?.[at])
+			}))
+		)
+		.slice(0, STEPS_MAX);
 
 	const servings = clampCount(card.servings, RECIPE_SERVINGS_MAX);
 	return {
@@ -168,6 +172,28 @@ export function ruleDraft(
 		],
 		leftOut: []
 	};
+}
+
+/**
+ * A step longer than the editor holds (600 characters), as several, cut at
+ * sentence ends (→ plan 44): a page's one-paragraph method used to lose its
+ * tail to the cap. A single sentence longer than that is cut, as before.
+ */
+export function splitLongStep(text: string): string[] {
+	if (text.length <= STEP_TEXT_MAX) return [text];
+	const pieces: string[] = [];
+	let current = '';
+	for (const sentence of text.split(/(?<=[.!?])\s+/)) {
+		const joined = current ? `${current} ${sentence}` : sentence;
+		if (joined.length <= STEP_TEXT_MAX) {
+			current = joined;
+			continue;
+		}
+		if (current) pieces.push(current);
+		current = sentence.slice(0, STEP_TEXT_MAX);
+	}
+	if (current) pieces.push(current);
+	return pieces;
 }
 
 function section(value: string | null | undefined): string | null {

@@ -42,7 +42,9 @@
 			case 'amount-differs':
 				return t.amountDiffers(name, check.page ?? '');
 			case 'converted':
-				return t.converted(name);
+				return typeof check.at === 'object' && 'step' in check.at
+					? t.convertedStep(check.at.step + 1)
+					: t.converted(name);
 			case 'name-differs':
 				return t.nameDiffers(name, check.page ?? '');
 			case 'new-unit':
