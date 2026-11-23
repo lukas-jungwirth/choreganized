@@ -43,6 +43,11 @@ export function knownUnitWords(householdId: string): Set<string> {
 	return new Set(listUnits(householdId).map((unit) => unitWordKey(unit.word)));
 }
 
+/** The household's words by their lowercased key, each as it was added ("ring" → "Ring"). */
+export function unitSpellings(householdId: string): Map<string, string> {
+	return new Map(listUnits(householdId).map((unit) => [unitWordKey(unit.word), unit.word]));
+}
+
 /** Add a word; refuses one that is no word or that the list already has. */
 export function addUnit(householdId: string, memberId: string | null, raw: string): HouseholdUnit {
 	const word = raw.replace(/\s+/g, ' ').trim();

@@ -6,6 +6,7 @@ import { error, fail, redirect } from '@sveltejs/kit';
 import { catalog } from '$lib/i18n';
 import { requireMember } from '$lib/server/guards';
 import { getRecipe, updateRecipe, type ImageChange } from '$lib/server/services/recipes';
+import { listUnits } from '$lib/server/services/units';
 import { deleteUpload, storePhotoFromForm, uploadErrorMessage } from '$lib/server/uploads';
 import { readRecipeForm } from '$lib/utils/recipes';
 import type { Actions, PageServerLoad } from './$types';
@@ -16,7 +17,8 @@ export const load: PageServerLoad = (event) => {
 	const recipe = getRecipe(householdId, event.params.id);
 	if (!recipe) error(404, catalog(event.locals.locale).errors.recipes.gone);
 
-	return { recipe };
+	// The household's own unit words, for the unit panel (→ plan 46).
+	return { recipe, units: listUnits(householdId).map((unit) => unit.word) };
 };
 
 export const actions: Actions = {

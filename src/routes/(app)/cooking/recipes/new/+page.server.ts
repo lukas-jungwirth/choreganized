@@ -10,9 +10,16 @@ import { fail, redirect } from '@sveltejs/kit';
 import { catalog } from '$lib/i18n';
 import { requireMember } from '$lib/server/guards';
 import { createRecipe } from '$lib/server/services/recipes';
+import { listUnits } from '$lib/server/services/units';
 import { storePhotoFromForm, uploadErrorMessage } from '$lib/server/uploads';
 import { readRecipeForm } from '$lib/utils/recipes';
-import type { Actions } from './$types';
+import type { Actions, PageServerLoad } from './$types';
+
+/** The household's own unit words, for the unit panel (→ plan 46). */
+export const load: PageServerLoad = (event) => {
+	const { householdId } = requireMember(event);
+	return { units: listUnits(householdId).map((unit) => unit.word) };
+};
 
 export const actions: Actions = {
 	save: async (event) => {

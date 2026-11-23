@@ -4814,3 +4814,78 @@ recipe-importer)` (`IMPORT_UA`): the `Mozilla/5.0 (compatible; …)` form crawle
        timer once each, on the first piece that names them, so no share is counted twice; a
        step takes the part of the card step its words were found in (not "the card step at
        the same index", which a split shifts).
+324. **Plan 46's two open points, decided by default** (coordinator, 2026-11-23; Lukas may
+     change either). (a) **A built-in counting word is shown in the number that fits the
+     amount** ("1 Zehe", "2 Zehen", "1 clove", "2 cloves"; `countingForm` in `amounts.ts`, a
+     table of singular and plural per counting word), everywhere an amount is printed
+     (`formatAmount`: the editor, the recipe, cook mode, the share text), so cooking for fewer
+     reads "1 Zehe" too. **A household's own word is shown as it was added.** Storage keeps one
+     form: a save from the editor stores a counting word as its singular ("Zehen" → "Zehe") and
+     a household word as the household added it ("Ringe" → "Ring"); rows saved before keep
+     their form and read the same. (b) **"Add your own" asks for the word inside the unit
+     panel itself**: a text field and Add take the button's place. It posts to Settings'
+     `addUnit` action from the editor's page, so the word is the household's at once (in every
+     recipe and in the reader), not only after Save.
+325. **What is still suggested at Save is saved as links** (2026-11-23; → plan 46). The plan
+     asks both "a tap accepts" a suggestion and "an old recipe opens with the matcher's guesses
+     as suggestions and saves as stored links". Built so both hold: a step that came without
+     stored links (`ingredients_set` false: a recipe from before, a page's card) **or whose text
+     was edited in this session** is offered the matcher's reading (`suggestLinks`), dotted in
+     the link sheet and in the step's Ingredients row; a tap makes one a link, ✕ turns it down
+     (remembered for the session); what is still offered at Save is saved as stored links, its
+     amount and share by the same rule as a tapped word. A step that came with stored links
+     (even an empty list) and whose text is unchanged is offered nothing, so a second save
+     changes nothing (`tests/integration/recipe-editor.test.ts`). Saving any step from the
+     editor writes `ingredients_set` with its list. A new step a person never opens therefore
+     still underlines what the matcher reads, as before.
+326. **What replaces #67, #100, #101 and #127** (2026-11-23; → plan 46, SPEC §4.4).
+     - **#67** (arrows to reorder): ingredients are dragged by the grip (`svelte-dnd-action`, one
+       zone per part, one shared type, so a row crosses into another part); steps move from
+       their ⋯ menu (Move up, Move down, Move to part…). Up and down cross a part's edge: the
+       first step of a part moves up to the end of the part above.
+     - **#100 and #101** (one typed line per row, the amount chip, the "Saved as" reading):
+       gone with `composeIngredientLine`. The row is its fields; the form posts
+       `ingredientName`, `ingredientQuantity`, `ingredientUnit`, `ingredientNote`,
+       `ingredientSection` by position (`postedFields` in `utils/recipe-editor.ts`), read into
+       `RecipeInput.ingredients`. A page from before (posting `ingredient` lines) is still read
+       the old way. The import, the seed and the add field keep reading lines.
+     - **#127** (a step's ingredients read out of its text, chips marked "auto", "Read the step
+       text instead"): replaced by stored links (#311, #320), the Ingredients row naming them,
+       and #325's suggestions. `StepIngredientsSheet` is gone; the link sheet sets a share only
+       through an amount in the text.
+327. **Plan 46 as built: the editor's judgment calls** (2026-11-23).
+     - **A unit word on no list is kept, not refused.** `storedUnit` (services/recipes.ts)
+       canonicalises the eight, the counting words and the household's words; any other plain
+       word (letters, at most 20) is stored as posted. The editor only ever posts a list word or
+       the word a row was opened with, which is a word the row already had: a household word
+       since removed in Settings must not vanish from recipes by opening and saving them. A
+       unit without a number is dropped, as `parseIngredient` always did.
+     - **A part's name changes over the ingredients and the steps alike** (a part is one thing
+       in the recipe), from a ✎ on either heading. An emptied name dissolves the part into the
+       one above; the first part, with nothing above, just loses its name.
+     - **"No part" is the top of the list.** Rows without a part render with no heading, so one
+       under a named part would read as that part's: "No part" moves a row to the end of the
+       first nameless part, made at the top when there is none. A part named in the picker that
+       a list doesn't have yet is made at its end.
+     - **The ingredient sheet's Part row is chips**, as frame E2 draws it, not the radio list of
+       E3b the plan says ingredients share; same behaviour (the row lands at the end of the part
+       picked), no "New part" there (Add part under the list does that). **Remove ingredient**
+       sits in the sheet, since the row itself is one tap target.
+     - **An amount's switch is offered only where the amount could follow on its own** (its unit
+       is the row's). In "Zwiebelwürfel und 200 g Karotten", the 200 g stands beside both words;
+       the switch would otherwise sit on the Zwiebel row. Tapping an amount links it with the
+       word it stands beside, the one whose unit it is first, also when it does not fit (the
+       plan's "can be linked by hand"). Switching an amount off keeps the step's share.
+     - **The link sheet's gold** is `--gold` (the sketch's mustard), and a linked amount's text
+       and the switch use a new token, `--gold-deep` (the sketch's mustard-deep), light and dark.
+     - **The Timer row shows only the step's own timer**, or "Add a timer"; the old "9:00 auto"
+       is gone with the other "auto" marks. Cook mode still offers the duration the text names,
+       and the timer sheet still opens on it.
+     - **Components**: `RecipeForm` (state and the wire) split into `RecipeBasics`,
+       `IngredientList`, `IngredientSheet` (rebuilt), `UnitPanel`, `StepList`, `StepCard`,
+       `StepLinkSheet`, `PartPickerSheet`, `PartName`, `AddPart`; `StepTimerSheet` kept. The two
+       sheets plan 45 reuses (`IngredientSheet`, `StepLinkSheet`) take plain fields and hand them
+       back, so they mount on their own. No `ui/` primitive: the step's action rows live in
+       `StepCard`.
+     - **Settings → Household → Units** lists the household's words with ✕ (`UnitsSheet`,
+       `removeUnit` action); the count stands in the row.

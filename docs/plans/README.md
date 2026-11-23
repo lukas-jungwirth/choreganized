@@ -57,7 +57,7 @@ plus your session date). Note deviations in the plan file and in DECISIONS.md.
 | 43  | [Recipes with parts, clean ingredients and stored links](43-recipe-parts-notes-links.md)         | done (2026-11-23, v0.8.0) | 42                       |
 | 44  | [A checked import: the model structures, the app verifies](44-checked-import.md)                 | done (2026-11-23, v0.8.0) | 42, 43                   |
 | 45  | [Import review: the recipe as it will look, with what to check](45-import-review.md)             | todo (sketch first)       | 43, 44                   |
-| 46  | [The recipe editor, rebuilt around parts and links](46-recipe-editor.md)                         | todo (sketch first)       | 43                       |
+| 46  | [The recipe editor, rebuilt around parts and links](46-recipe-editor.md)                         | done (2026-11-23, v0.8.0) | 43                       |
 | 47  | [Cook mode: what this step needs, at reading size](47-cook-mode-step-ingredients.md)             | todo (sketch first)       | 43                       |
 | 48  | [Tidy a saved recipe](48-tidy-saved-recipes.md)                                                  | todo                      | 44, 45                   |
 

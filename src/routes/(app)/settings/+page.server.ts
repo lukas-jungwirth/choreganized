@@ -62,6 +62,8 @@ import {
 	updateProfile
 } from '$lib/server/services/household';
 import { countSightings } from '$lib/server/services/raccoons';
+import { addUnit, listUnits, removeUnit, UnitError } from '$lib/server/services/units';
+import { UNIT_WORD_MAX } from '$lib/utils/amounts';
 import { setAway } from '$lib/server/services/tasks';
 import { appVersion } from '$lib/server/version';
 import { isTheme, THEME_COOKIE, THEME_COOKIE_MAX_AGE } from '$lib/theme';
@@ -122,6 +124,8 @@ export const load: PageServerLoad = (event) => {
 	return {
 		/** The raccoon album row under the profile card: "17 of 39" (→ plan 35). */
 		album: { found: countSightings(householdId, member.id), total: ALBUM_SIZE },
+		/** Settings → Units: the words the household added to the unit list (→ plan 46). */
+		units: listUnits(householdId),
 		email: user.email,
 		/** About → Privacy and Imprint, each only if the deploy set its text (→ SPEC §13). */
 		legal: legalLinks(),
@@ -473,6 +477,34 @@ export const actions: Actions = {
 	 * Owner-only like the connections — they shape every member's imports — and
 	 * cleaned in the service, whatever arrives here. Empty clears them.
 	 */
+	/**
+	 * A household's own unit word (→ plan 46, DECISIONS #321): "Add your own" in
+	 * the recipe editor's unit panel posts here from the editor's page, so the
+	 * word is the household's at once; the answer is the word as stored.
+	 */
+	addUnit: async (event) => {
+		const { householdId, member } = requireMember(event);
+		const form = await event.request.formData();
+		const m = catalog(event.locals.locale);
+
+		try {
+			return { unit: addUnit(householdId, member.id, String(form.get('word') ?? '')) };
+		} catch (cause) {
+			if (cause instanceof UnitError) {
+				return fail(400, { unitError: m.errors.units[cause.code](UNIT_WORD_MAX) });
+			}
+			throw cause;
+		}
+	},
+
+	/** Settings → Units: one of the household's own words taken off the list. */
+	removeUnit: async (event) => {
+		const { householdId } = requireMember(event);
+		const form = await event.request.formData();
+		removeUnit(householdId, String(form.get('id') ?? ''));
+		return { unitRemoved: true };
+	},
+
 	saveAiInstructions: async (event) => {
 		const { householdId, member } = requireMember(event);
 		const form = await event.request.formData();

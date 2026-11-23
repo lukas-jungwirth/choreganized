@@ -30,6 +30,7 @@
 	import PrefRow from '$lib/components/settings/PrefRow.svelte';
 	import ProfileSheet from '$lib/components/settings/ProfileSheet.svelte';
 	import ThemeSheet from '$lib/components/settings/ThemeSheet.svelte';
+	import UnitsSheet from '$lib/components/settings/UnitsSheet.svelte';
 	import SubHeader from '$lib/components/shell/SubHeader.svelte';
 	import Avatar from '$lib/components/ui/Avatar.svelte';
 	import Card from '$lib/components/ui/Card.svelte';
@@ -43,6 +44,7 @@
 	import PawPrint from '@lucide/svelte/icons/paw-print';
 	import Scale from '@lucide/svelte/icons/scale';
 	import Lock from '@lucide/svelte/icons/lock';
+	import Ruler from '@lucide/svelte/icons/ruler';
 	import LogOut from '@lucide/svelte/icons/log-out';
 	import MessageSquareText from '@lucide/svelte/icons/message-square-text';
 	import Send from '@lucide/svelte/icons/send';
@@ -62,6 +64,7 @@
 	let renamingHousehold = $state(false);
 	let editingAi = $state(false);
 	let expenseSettings = $state(false);
+	let editingUnits = $state(false);
 	let sendingFeedback = $state(false);
 	let leaving = $state(false);
 	let sending = $state(false);
@@ -413,6 +416,17 @@
 			<ChevronRight size={15} strokeWidth={2} class="chevron" />
 		</span>
 	</button>
+
+	<!-- The household's own unit words (→ plan 46): added in a recipe's unit
+		 panel, removed here. -->
+	<button type="button" class="row" onclick={() => (editingUnits = true)}>
+		<span class="tile" aria-hidden="true"><Ruler size={18} strokeWidth={1.9} /></span>
+		<span class="label">{m.settings.units.row}</span>
+		<span class="end">
+			<span class="value">{data.units.length}</span>
+			<ChevronRight size={15} strokeWidth={2} class="chevron" />
+		</span>
+	</button>
 </RowGroup>
 
 <!-- The app itself, under the house: reporting a bug is not a household
@@ -542,6 +556,10 @@
 
 {#if editingAi}
 	<AiFeaturesSheet status={data.ai} onclose={() => (editingAi = false)} />
+{/if}
+
+{#if editingUnits}
+	<UnitsSheet units={data.units} onclose={() => (editingUnits = false)} />
 {/if}
 
 {#if expenseSettings}

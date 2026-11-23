@@ -1,556 +1,311 @@
 <!--
-	New / edit recipe [3c] — a full-screen route rather than a sheet, because
-	it's the one form in the app you might spend five minutes in and want to be
-	able to link to (→ docs/ARCHITECTURE.md "Conventions").
+	New / edit recipe [3c], rebuilt around parts and links (→ plan 46, SPEC
+	§4.4). A full-screen route rather than a sheet: it is the one form in the
+	app you might spend five minutes in (→ docs/ARCHITECTURE.md "Conventions").
 
-	Ingredients are typed the way you'd write them on paper ("400 g pasta") and
-	parsed on the server (→ `$lib/utils/ingredients`), so this form posts plain
-	lines: one `ingredient` field per row, one `step` per step, in DOM order.
-	That also makes reordering nothing more than reordering an array.
+	This component owns the state and the wire; the screen is its parts:
+	`RecipeBasics` (photo, name, time, servings, tags), `IngredientList` [E1]
+	with `IngredientSheet` [E2] and `UnitPanel` [E2b], `StepList` of
+	`StepCard`s [E3a] with `PartPickerSheet` [E3b], `StepLinkSheet` [E3] and
+	`StepTimerSheet`. The sheets are mounted outside the <form>: nothing in them
+	carries a field `name`, and forms do not nest.
 
-	Each row shows what that parse made of it, in the column [7a] prints the
-	amount in — and after hydration that chip opens `IngredientSheet`, which
-	takes the line apart and hands one back. Structured entry without a
-	structured wire: the line is still the only thing that posts
-	(→ DECISIONS #100).
-
-	The design draws a drag grip on each row. This ships the arrows plan 03 chose
-	for the store list (→ DECISIONS #36): they work on touch, with a keyboard and
-	without JavaScript-level pointer maths.
+	The state is parts of rows (`utils/recipe-editor.ts`): what the screen draws
+	and what a drag moves across. What posts is computed from it in one place,
+	`postedFields`, as hidden fields `readRecipeForm` reads back by position:
+	each ingredient as its fields, each step with its links (an empty list
+	included, so a save from here always says what a step uses).
 -->
 <script lang="ts">
 	import { enhance } from '$app/forms';
 	import Button from '$lib/components/ui/Button.svelte';
-	import TextField from '$lib/components/ui/TextField.svelte';
 	import { messages } from '$lib/i18n';
 	import type { RecipeDetail } from '$lib/server/services/recipes';
-	import { parseIngredient, RECIPE_UNITS } from '$lib/utils/ingredients';
-	import { unitLabel } from '$lib/utils/shopping';
+	import { unitWordKey } from '$lib/utils/amounts';
+	import {
+		addPart,
+		emptyState,
+		fromPrefill,
+		fromRecipe,
+		hasParts,
+		keyMaker,
+		linkTargets,
+		moveToPart,
+		newStep,
+		partNames,
+		postedFields,
+		removeRow,
+		renamePart,
+		shiftRow,
+		suggesting,
+		suggestionsFor,
+		updateRow,
+		type EditorIngredient,
+		type EditorPart,
+		type EditorState,
+		type EditorStep
+	} from '$lib/utils/recipe-editor';
 	import {
 		INGREDIENTS_MAX,
-		INGREDIENT_LINE_MAX,
-		RECIPE_NAME_MAX,
-		RECIPE_SERVINGS_MAX,
-		RECIPE_TIME_MAX,
 		STEPS_MAX,
-		STEP_TEXT_MAX,
 		uploadUrl,
 		type RecipeFormField,
-		type RecipePrefill,
-		type StepChoice,
-		type StepTimer,
-		type StepUseDraft
+		type RecipePrefill
 	} from '$lib/utils/recipes';
-	import { highlightStep, plainName } from '$lib/utils/step-highlight';
+	import { ruleRow } from '$lib/utils/rule-draft';
+	import { plainName } from '$lib/utils/step-highlight';
 	import { formatDuration, parseStepDuration } from '$lib/utils/timer-parse';
-	import Camera from '@lucide/svelte/icons/camera';
-	import ChevronDown from '@lucide/svelte/icons/chevron-down';
-	import ChevronUp from '@lucide/svelte/icons/chevron-up';
-	import Plus from '@lucide/svelte/icons/plus';
-	import TimerIcon from '@lucide/svelte/icons/timer';
-	import X from '@lucide/svelte/icons/x';
-	import { untrack } from 'svelte';
+	import { tick, untrack } from 'svelte';
 	import ImportChecks from './ImportChecks.svelte';
+	import IngredientList from './IngredientList.svelte';
 	import IngredientSheet from './IngredientSheet.svelte';
-	import RecipeImage from './RecipeImage.svelte';
-	import RecipeTagsField from './RecipeTagsField.svelte';
-	import StepIngredientsSheet from './StepIngredientsSheet.svelte';
+	import PartPickerSheet from './PartPickerSheet.svelte';
+	import RecipeBasics from './RecipeBasics.svelte';
+	import StepLinkSheet from './StepLinkSheet.svelte';
+	import StepList from './StepList.svelte';
 	import StepTimerSheet from './StepTimerSheet.svelte';
 
 	type Props = {
 		/** The recipe being edited; null when creating or importing. */
 		recipe: RecipeDetail | null;
 		/**
-		 * An imported draft to open on [plan 12] — name, raw ingredient/step text
-		 * and an already-downloaded photo, seeded over a null `recipe`. The preview
-		 * _is_ the editor, so every imperfect parse is a two-second fix (→ SPEC §4.7).
+		 * An imported draft to open on [plan 12]: name, ingredient lines with
+		 * their notes and parts, steps with their links, an already-downloaded
+		 * photo. Seeded over a null `recipe`; nothing is saved before Save.
 		 */
 		prefill?: RecipePrefill;
-		/** Where Cancel returns to — the recipe, or wherever "New" was pressed. */
+		/** The household's own unit words, as added (→ plan 46, `services/units.ts`). */
+		units: string[];
+		/** Where Cancel returns to: the recipe, or wherever "New" was pressed. */
 		back: string;
 		/** Message from a rejected save, and which field it is about. */
 		error?: string;
 		field?: RecipeFormField;
-		/**
-		 * A one-line notice above the form — the AI import's "check before saving"
-		 * reminder (→ plan 13). Absent for the new/edit routes.
-		 */
+		/** A one-line notice above the form: the AI import's "check before saving". */
 		notice?: string;
 	};
 
-	let { recipe, prefill, back, error, field, notice }: Props = $props();
+	let { recipe, prefill, units, back, error, field, notice }: Props = $props();
 
 	const m = messages();
 
-	// A rejected photo must not redden the name field: they sit a screen apart,
-	// and marking a perfectly good name `aria-invalid` sends a screen reader
-	// after the wrong thing.
+	// A rejected photo must not redden the name field: they sit a screen apart.
 	const nameError = $derived(field === 'photo' ? undefined : error);
 	const photoError = $derived(field === 'photo' ? error : undefined);
 
-	/** A row keeps its own key so reordering moves the DOM node, not the text. */
-	type Row = { key: string; text: string };
-	/**
-	 * An ingredient row also keeps what plan 43 stores beside the line — its
-	 * note and its part — so a save in this editor loses neither. No control
-	 * shows them (plan 46 rebuilds the editor); `named` is the name the note was
-	 * written for and `opened` the line as the row was opened, so a line retyped
-	 * to another name leaves the note behind and an untouched one never does.
-	 * `home` is the part the row came with (see `move`).
-	 */
-	type IngredientRow = Row & {
-		note: string | null;
-		section: string | null;
-		home: string | null;
-		named: string | null;
-		opened: string;
-	};
-	/**
-	 * A step also carries what it uses (→ SPEC §4.4): null while it reads its own
-	 * text, a list — possibly empty — once someone has said. Pins name ingredient
-	 * *rows*, so they survive a reorder and go away with a removal. And it may
-	 * carry a timer of its own (→ plan 21): null while cook mode reads the
-	 * duration out of the text.
-	 */
-	type StepRow = Row & {
-		uses: StepUseDraft[] | null;
-		timer: StepTimer | null;
-		/** The step's part (→ plan 43), posted back as it came, and the one it came with. */
-		section: string | null;
-		home: string | null;
-	};
+	/** Keys from a counter: the server render and the browser agree on them. */
+	const key = keyMaker('r');
 
-	let nextKey = 0;
-	/** A counter rather than randomness: the server and the browser agree on it. */
-	const row = (text = ''): Row => ({ key: `r${nextKey++}`, text });
-	const ingredientRow = (
-		text = '',
-		details: { note: string | null; section: string | null; name: string } | null = null
-	): IngredientRow => ({
-		...row(text),
-		note: details?.note ?? null,
-		section: details?.section ?? null,
-		home: details?.section ?? null,
-		named: details?.name ?? null,
-		opened: text
-	});
-	const stepRow = (
-		text = '',
-		uses: StepUseDraft[] | null = null,
-		timer: StepTimer | null = null,
-		section: string | null = null
-	): StepRow => ({
-		...row(text),
-		uses,
-		timer,
-		section,
-		home: section
-	});
+	/** The household's own unit words: seeded, and grown by "Add your own". */
+	let own = $state<string[]>(untrack(() => [...units]));
+	const known = $derived(new Set(own.map(unitWordKey)));
 
-	/**
-	 * Which row each *stored* ingredient became, filled while the rows below are
-	 * seeded — the one moment a saved step's pins (which name ids) can be
-	 * translated into the keys this form works in.
-	 */
-	const rowForIngredientId = new Map<string, string>();
-	/**
-	 * The same for an import draft, whose pins name ingredients by their *index*
-	 * in `ingredientLines` (→ plan 22): row keys in line order.
-	 */
-	const rowForDraftIndex: string[] = [];
-
-	// Seeded from the import draft when there is one, else from the recipe being
-	// edited, else empty. An imported ingredient stays the *raw line* the site
-	// wrote — the editor parses it for the amount chip exactly as it parses a
-	// typed line, so an imperfect parse is visible and fixable (→ SPEC §4.7).
 	let name = $state(untrack(() => prefill?.name ?? recipe?.name ?? ''));
 	let time = $state(
 		untrack(() => numberField(prefill ? prefill.timeMinutes : recipe?.timeMinutes))
 	);
 	let servings = $state(untrack(() => numberField(prefill ? prefill.servings : recipe?.servings)));
-	let ingredients = $state<IngredientRow[]>(
+
+	let editor = $state<EditorState>(
 		untrack(() => {
-			if (prefill) {
-				return prefill.ingredientLines.length
-					? prefill.ingredientLines.map((line, at) => {
-							// The import's note and part (→ plan 44), kept like a saved row's.
-							const details = prefill.ingredientDetails?.[at];
-							const created = ingredientRow(
-								line,
-								details ? { ...details, name: parseIngredient(line)?.name ?? line } : null
-							);
-							rowForDraftIndex.push(created.key);
-							return created;
-						})
-					: [ingredientRow()];
-			}
-
-			if (!recipe?.ingredients.length) return [ingredientRow()];
-
-			return recipe.ingredients.map((ingredient) => {
-				const created = ingredientRow(m.units.ingredient(ingredient), ingredient);
-				rowForIngredientId.set(ingredient.id, created.key);
-				return created;
-			});
-		})
-	);
-	let steps = $state<StepRow[]>(
-		untrack(() => {
-			// A page's own recipe card has text and nothing else, which is exactly what
-			// the matcher is for: its steps arrive reading themselves. An AI draft may
-			// also know what each step uses and its timer (→ plan 22) — those arrive
-			// pinned, and a pin to a line that isn't there is dropped.
-			if (prefill) {
-				if (!prefill.steps.length) return [stepRow()];
-				return prefill.steps.map((step) => {
-					const uses = step.uses?.flatMap((use) => {
-						const key = rowForDraftIndex[use.ingredient];
-						// The words that name it and its amount ride along (→ plan 44).
-						const words = { phrase: use.phrase ?? null, amountPhrase: use.amountPhrase ?? null };
-						return key ? [{ ingredient: key, quantity: use.quantity, ...words }] : [];
-					});
-					// Nothing left to pin reads the text — "uses nothing" is a person's call.
-					return stepRow(step.text, uses?.length ? uses : null, step.timer, step.section ?? null);
-				});
-			}
-
-			if (!recipe?.steps.length) return [stepRow()];
-
-			return recipe.steps.map((step) =>
-				stepRow(
-					step.text,
-					// A pin whose ingredient is gone (deleted on the other phone between
-					// the save and this load) is dropped rather than shown as a blank.
-					step.uses?.flatMap((use) => {
-						const key = rowForIngredientId.get(use.ingredientId);
-						return key
-							? [
-									{
-										ingredient: key,
-										quantity: use.quantity,
-										phrase: use.phrase ?? null,
-										amountPhrase: use.amountPhrase ?? null
-									}
-								]
-							: [];
-					}) ?? null,
-					step.timer,
-					step.section
-				)
-			);
+			const opened = prefill
+				? fromPrefill(prefill, key, new Set(units.map(unitWordKey)))
+				: recipe
+					? fromRecipe(recipe, key)
+					: emptyState(key);
+			// Always somewhere to type the first ingredient into.
+			if (!opened.ingredients.length) opened.ingredients = [{ id: key(), name: null, rows: [] }];
+			return opened;
 		})
 	);
 
-	/** A stored count as the text its field shows — empty for "not stated". */
+	/** A stored count as the text its field shows: empty for "not stated". */
 	function numberField(value: number | null | undefined): string {
 		return value?.toString() ?? '';
 	}
 
-	let fileInput: HTMLInputElement | undefined = $state();
+	const showParts = $derived(hasParts(editor));
+	const targets = $derived(linkTargets(editor.ingredients));
+	const byKey = $derived(new Map(targets.map((row) => [row.key, row])));
+	const ingredientCount = $derived(
+		editor.ingredients.reduce((sum, part) => sum + part.rows.length, 0)
+	);
+	const stepCount = $derived(editor.steps.reduce((sum, part) => sum + part.rows.length, 0));
+	const fields = $derived(postedFields(editor, known));
+	/** Servings as a number, for "Show for 4 / 8 people"; null when not stated. */
+	const people = $derived.by(() => {
+		const read = Math.trunc(Number(servings));
+		return Number.isFinite(read) && read > 0 ? read : null;
+	});
+
+	/* ── The photo ── */
+
 	let picked = $state<File | null>(null);
 	let previewUrl = $state<string | null>(null);
-	/** The stored photo is on its way out — posted as `removePhoto`. */
+	/** The stored photo is on its way out: posted as `removePhoto`. */
 	let removed = $state(false);
 	let submitting = $state(false);
 
-	/**
-	 * The chosen file, shown before it's uploaded. The object URL is revoked when
-	 * it's replaced or the form leaves — a few megabytes of image per pick that
-	 * the browser would otherwise hold until a reload.
-	 */
+	// The chosen file, shown before it's uploaded; the object URL is revoked when
+	// it's replaced or the form leaves.
 	$effect(() => {
 		if (!picked) {
 			previewUrl = null;
 			return;
 		}
-
 		const url = URL.createObjectURL(picked);
 		previewUrl = url;
-
 		return () => URL.revokeObjectURL(url);
 	});
 
-	/** The imported photo's preview [plan 12], shown until a pick or a removal. */
-	const initialPhoto = $derived(prefill?.photo?.preview ?? null);
-
 	const photo = $derived(
-		previewUrl ?? (removed ? null : recipe?.imagePath ? uploadUrl(recipe.imagePath) : initialPhoto)
+		previewUrl ??
+			(removed
+				? null
+				: recipe?.imagePath
+					? uploadUrl(recipe.imagePath)
+					: (prefill?.photo?.preview ?? null))
 	);
 
-	/**
-	 * Read out of the event rather than `bind:files`: clearing a file input means
-	 * writing its `value`, and a two-way binding would then try to write the
-	 * FileList back.
-	 */
-	function pickPhoto(event: Event & { currentTarget: HTMLInputElement }) {
-		picked = event.currentTarget.files?.[0] ?? null;
-		if (picked) removed = false;
-	}
+	/* ── Which sheet is up, by row id ── */
 
-	function dropPhoto() {
-		if (fileInput) fileInput.value = '';
-		picked = null;
-		removed = true;
-	}
-
-	const uid = $props.id();
-	const fieldId = (kind: 'ingredient' | 'step', key: string) => `${uid}-${kind}-${key}`;
-	const amountId = (key: string) => `${uid}-amount-${key}`;
-
-	/**
-	 * Which row's sheet is up — `null` for none. Keyed rather than indexed, so
-	 * reordering a row while its sheet is open can't retarget it. One per sheet:
-	 * an ingredient's amount, and a step's ingredients.
-	 */
 	let editing = $state<string | null>(null);
-	let pinning = $state<string | null>(null);
+	let linking = $state<string | null>(null);
+	let timing = $state<string | null>(null);
+	let moving = $state<string | null>(null);
 
-	/** A row that carries a part (→ plan 43), and the part it came with. */
-	type Parted = Row & { section: string | null; home: string | null };
-
-	/**
-	 * A new row joins the part it lands in: the one of the row above it, or of
-	 * the row below when it is first. A new row with none of its own would split
-	 * its part in two, each half under the same heading.
-	 */
-	function joinPart<T extends Parted>(rows: T[], at: number): T[] {
-		const neighbour = rows[at - 1] ?? rows[at + 1];
-		if (neighbour && rows[at].section !== neighbour.section) {
-			rows[at] = { ...rows[at], section: neighbour.section, home: neighbour.section };
+	/** A row and the part it is in, by id. */
+	function find<T extends { id: string }>(
+		parts: EditorPart<T>[],
+		id: string | null
+	): { row: T; part: EditorPart<T>; number: number } | null {
+		let number = 0;
+		for (const part of parts) {
+			for (const row of part.rows) {
+				number += 1;
+				if (row.id === id) return { row, part, number };
+			}
 		}
-		return rows;
+		return null;
 	}
 
-	/**
-	 * A moved row joins a part only when it lands **inside** it, between two of
-	 * its rows; anywhere else it is back in the part it came with. So one arrow
-	 * across a boundary moves a row into the next part, and the arrow back
-	 * returns it, without ever renaming a part's only row out of existence (the
-	 * form has no control to set a part again until plan 46).
-	 */
-	function settlePart<T extends Parted>(rows: T[], at: number): T[] {
-		const above = rows[at - 1];
-		const below = rows[at + 1];
-		const inside = above && below && above.section === below.section;
-		const section = inside ? above.section : rows[at].home;
-		if (rows[at].section !== section) rows[at] = { ...rows[at], section };
-		return rows;
-	}
+	/* ── Ingredients ── */
 
-	/** Insert after `index`, then put the caret in it — Enter walks down the list. */
-	function add<T extends Parted>(
-		rows: T[],
-		kind: 'ingredient' | 'step',
-		make: () => T,
-		index = rows.length - 1
-	): T[] {
-		const fresh = make();
-		const next = joinPart(
-			[...rows.slice(0, index + 1), fresh, ...rows.slice(index + 1)],
-			index + 1
+	function setRows(partId: string, rows: EditorIngredient[]) {
+		editor.ingredients = editor.ingredients.map((part) =>
+			part.id === partId ? { ...part, rows } : part
 		);
-
-		// After the DOM has the new row: focus is the whole point of adding one.
-		requestAnimationFrame(() => document.getElementById(fieldId(kind, fresh.key))?.focus());
-
-		return next;
 	}
 
-	/** Never leave the list empty — an empty list has nothing to type into. */
-	function remove<T extends Row>(rows: T[], index: number, make: () => T): T[] {
-		const next = rows.filter((_, at) => at !== index);
-		return next.length ? next : [make()];
+	function addLine(partId: string, line: string) {
+		const read = ruleRow(line, known);
+		if (!read) return;
+		const row: EditorIngredient = { id: key(), ...read };
+		editor.ingredients = editor.ingredients.map((part) =>
+			part.id === partId ? { ...part, rows: [...part.rows, row] } : part
+		);
 	}
 
-	function move<T extends Parted>(rows: T[], index: number, direction: -1 | 1): T[] {
-		const to = index + direction;
-		if (to < 0 || to >= rows.length) return rows;
-
-		const next = [...rows];
-		[next[index], next[to]] = [next[to], next[index]];
-		return settlePart(next, to);
+	function saveIngredient(id: string, fields: Omit<EditorIngredient, 'id'>, part: string | null) {
+		const found = find(editor.ingredients, id);
+		if (!found) return;
+		let parts = updateRow(editor.ingredients, { id, ...fields });
+		if (showParts && part !== found.part.name) parts = moveToPart(parts, id, part, key);
+		editor.ingredients = parts;
 	}
 
-	/**
-	 * A removed ingredient takes its pins with it. Not strictly required — the
-	 * save drops a pin whose row is gone either way — but a chip for a line that
-	 * is no longer on screen is a lie while you're still looking at it.
-	 */
-	function unpin(key: string) {
-		for (const step of steps) {
-			if (step.uses) step.uses = step.uses.filter((use) => use.ingredient !== key);
-		}
-	}
-
-	/**
-	 * The ingredient rows as they'd be stored — what the sheet offers and what the
-	 * matcher reads steps against. Blank lines are left out: they aren't
-	 * ingredients yet, and the save drops them.
-	 */
-	const choices = $derived<StepChoice[]>(
-		ingredients.flatMap((item) => {
-			const parsed = item.text.trim() ? parseIngredient(item.text) : null;
-			return parsed ? [{ key: item.key, ...parsed }] : [];
-		})
-	);
-
-	/** Where each row currently sits — the index the pins post as. */
-	const positions = $derived(new Map(ingredients.map((item, at) => [item.key, at])));
-
-	/**
-	 * What a step's text reads as, for a step nobody has pinned. The same
-	 * `highlightStep` cook mode runs, so the chips under the field are the
-	 * underlines you'll get — and the seed the sheet opens on.
-	 */
-	function suggest(text: string): StepUseDraft[] {
-		return highlightStep(text, choices).used.map((choice) => ({
-			ingredient: choice.key,
-			quantity: null
+	/** A removed ingredient takes its links with it: a link to nothing is a lie on screen. */
+	function removeIngredient(id: string) {
+		editor.ingredients = removeRow(editor.ingredients, id);
+		editor.steps = editor.steps.map((part) => ({
+			...part,
+			rows: part.rows.map((step) => ({
+				...step,
+				links: step.links.filter((link) => link.ingredient !== id)
+			}))
 		}));
 	}
 
-	/**
-	 * One pin per ingredient, its share the shares of all its links added up:
-	 * a stored link may name one ingredient twice (→ plan 43), and the chips and
-	 * the sheet speak per ingredient. Null when none of them says.
-	 */
-	function perIngredient(uses: StepUseDraft[]): StepUseDraft[] {
-		const byKey = new Map<string, StepUseDraft>();
-		for (const use of uses) {
-			const held = byKey.get(use.ingredient);
-			if (!held) byKey.set(use.ingredient, { ingredient: use.ingredient, quantity: use.quantity });
-			else if (use.quantity !== null) {
-				held.quantity = Math.round(((held.quantity ?? 0) + use.quantity) * 100) / 100;
-			}
-		}
-		return [...byKey.values()];
+	/** A part is one thing in the recipe: its name changes over both lists. */
+	function rename(from: string, to: string) {
+		editor.ingredients = renamePart(editor.ingredients, from, to);
+		editor.steps = renamePart(editor.steps, from, to);
 	}
 
-	/** The chips under one step: its pins, or its reading, as name + amount. */
-	function chips(step: StepRow): { key: string; name: string; amount: string }[] {
-		return perIngredient(step.uses ?? suggest(step.text)).flatMap((use) => {
-			const choice = choices.find((item) => item.key === use.ingredient);
-			if (!choice) return [];
+	/* ── Steps ── */
 
-			return [
-				{
-					key: choice.key,
-					name: choice.name,
-					// Only a share worth saying: a pin that takes the whole row says
-					// nothing, because the ingredient list already does.
-					amount: use.quantity === null ? '' : m.units.amount(use.quantity, choice.unit)
-				}
-			];
-		});
+	function setStep(id: string, change: Partial<EditorStep>) {
+		editor.steps = editor.steps.map((part) => ({
+			...part,
+			rows: part.rows.map((step) => (step.id === id ? { ...step, ...change } : step))
+		}));
 	}
 
-	/**
-	 * One step's pins on the wire: row keys become the indices the save maps back
-	 * to ingredients, and an empty string means "read the text" (→
-	 * `readRecipeForm`). A pin whose row was deleted just after the sheet closed
-	 * is dropped here rather than posted as a dangling index.
-	 */
-	function postedUses(step: StepRow): string {
-		if (!step.uses) return '';
-
-		return JSON.stringify(
-			step.uses.flatMap((use) => {
-				const at = positions.get(use.ingredient);
-				return at === undefined
-					? []
-					: [
-							{
-								ingredient: at,
-								quantity: use.quantity,
-								phrase: use.phrase ?? null,
-								amountPhrase: use.amountPhrase ?? null
-							}
-						];
-			})
+	async function addStep() {
+		const step = newStep(key);
+		const parts = editor.steps.length ? editor.steps : [{ id: key(), name: null, rows: [] }];
+		const last = parts.length - 1;
+		editor.steps = parts.map((part, at) =>
+			at === last ? { ...part, rows: [...part.rows, step] } : part
 		);
+		await tick();
+		document.querySelector<HTMLTextAreaElement>(`[data-step="${step.id}"] textarea`)?.focus();
 	}
 
-	/**
-	 * The sheet's answer, with the words the stored links carried (→ plan 43):
-	 * an ingredient still ticked keeps every phrase it was linked by. The share
-	 * the sheet set is the ingredient's whole share in this step, so it goes on
-	 * the first link and the others say none: added up, they are what the sheet
-	 * said. The sheet knows nothing of phrases, and reopening it must not be what
-	 * loses them.
-	 */
-	function keepWords(before: StepUseDraft[] | null, after: StepUseDraft[]): StepUseDraft[] {
-		return after.flatMap((use) => {
-			const linked = (before ?? []).filter((old) => old.ingredient === use.ingredient);
-			if (!linked.length) return [use];
-			return linked.map((old, at) => ({
-				...old,
-				quantity: at === 0 ? use.quantity : null
-			}));
-		});
+	function removeStep(id: string) {
+		if (linking === id) linking = null;
+		if (timing === id) timing = null;
+		editor.steps = removeRow(editor.steps, id);
+		// Never an empty list: an empty list has nothing to type into.
+		if (!editor.steps.some((part) => part.rows.length)) void addStep();
 	}
 
-	/**
-	 * The note a row posts: the one it was opened with while the line still names
-	 * the same thing. Retyped to another name, the note was about something else.
-	 */
-	function postedNote(item: IngredientRow): string {
-		if (!item.note || item.named === null) return '';
-		// Untouched, it keeps its note whatever the line parses to.
-		if (item.text === item.opened) return item.note;
-		const parsed = item.text.trim() ? parseIngredient(item.text) : null;
-		return parsed?.name === item.named ? item.note : '';
-	}
-
-	/** Which step's timer sheet is open, by row key. */
-	let timing = $state<string | null>(null);
-
-	/**
-	 * What the timer chip under a step says: its own timer by name, else the
-	 * duration cook mode will read out of the text (marked "auto", like the
-	 * ingredients above it), else an invitation.
-	 */
-	function timerChip(step: StepRow, index: number): { set: boolean; auto: boolean; text: string } {
-		if (step.timer) {
-			return {
-				set: true,
-				auto: false,
-				text: m.cooking.form.timerChip(
-					step.timer.label ?? m.cooking.cook.timerForStep(index + 1),
+	/** What a step's two rows say. */
+	function describe(step: EditorStep, number: number) {
+		const linked = [
+			...new Set(step.links.flatMap((link) => byKey.get(link.ingredient)?.name ?? []))
+		];
+		const suggested = suggesting(step)
+			? [
+					...new Set(
+						suggestionsFor(step, targets, known).flatMap(
+							(offer) => byKey.get(offer.ingredient)?.name ?? []
+						)
+					)
+				].filter((one) => !linked.includes(one))
+			: [];
+		const timer = step.timer
+			? m.cooking.form.timerChip(
+					step.timer.label ?? m.cooking.cook.timerForStep(number),
 					formatDuration(step.timer.seconds)
 				)
-			};
+			: null;
+		return { linked, suggested, timer };
+	}
+
+	/** The step's ingredients by their short names: the timer sheet's one-tap names. */
+	function timerNames(step: EditorStep, number: number): string[] {
+		const said = describe(step, number);
+		return [...new Set([...said.linked, ...said.suggested].map(plainName))];
+	}
+
+	/** The parts the step picker lists, each with the steps it holds now. */
+	const pickerParts = $derived.by(() => {
+		const ranges = new Map<string, [number, number]>();
+		let number = 0;
+		for (const part of editor.steps) {
+			for (const _ of part.rows) {
+				number += 1;
+				if (!part.name) continue;
+				const held = ranges.get(part.name);
+				ranges.set(part.name, held ? [held[0], number] : [number, number]);
+			}
 		}
-		const read = parseStepDuration(step.text);
-		return read === null
-			? { set: false, auto: false, text: m.cooking.form.timerAdd }
-			: { set: false, auto: true, text: formatDuration(read) };
-	}
-
-	/** The step's timer on the wire — empty for "read the text" (→ `readRecipeForm`). */
-	function postedTimer(step: StepRow): string {
-		return step.timer ? JSON.stringify(step.timer) : '';
-	}
-
-	/** The step's ingredients by their short names: the timer sheet's one-tap suggestions. */
-	function timerNames(step: StepRow): string[] {
-		const names = (step.uses ?? suggest(step.text)).flatMap((use) => {
-			const choice = choices.find((item) => item.key === use.ingredient);
-			return choice ? [plainName(choice.name)] : [];
+		return partNames(editor).map((one) => {
+			const range = ranges.get(one);
+			return { name: one, holds: range ? m.cooking.form.movePart.steps(...range) : null };
 		});
-		return [...new Set(names)];
-	}
-
-	/** Textareas grow with their step instead of scrolling inside two lines. */
-	function autogrow(node: HTMLTextAreaElement) {
-		const resize = () => {
-			node.style.height = 'auto';
-			node.style.height = `${node.scrollHeight}px`;
-		};
-
-		resize();
-		node.addEventListener('input', resize);
-		return { destroy: () => node.removeEventListener('input', resize) };
-	}
+	});
 </script>
 
 <form
@@ -576,8 +331,7 @@
 	</header>
 
 	{#if notice}
-		<!-- The AI import's quiet reminder [plan 13]: extraction is a starting point,
-			 not a saved recipe. Not a Banner — it's a note, not a failure. -->
+		<!-- The AI import's quiet reminder [plan 13]: a starting point, not a saved recipe. -->
 		<p class="notice">{notice}</p>
 	{/if}
 
@@ -590,253 +344,66 @@
 		/>
 	{/if}
 
-	<label class="photo">
-		<input
-			bind:this={fileInput}
-			type="file"
-			name="photo"
-			accept="image/*"
-			aria-label={m.cooking.form.photo}
-			onchange={pickPhoto}
-		/>
-		<!-- The same striped placeholder every other missing photo gets [3c]. -->
-		<span class="art"><RecipeImage imagePath={null} stripe={7} /></span>
-		{#if photo}
-			<img src={photo} alt="" />
-			<span class="change">{m.cooking.form.changePhoto}</span>
-		{:else}
-			<span class="lens" aria-hidden="true"><Camera size={20} strokeWidth={1.9} /></span>
-			<span class="hint">{m.cooking.form.addPhoto}</span>
-		{/if}
-	</label>
-
-	<div class="photo-foot">
-		{#if photoError}<p class="photo-error">{photoError}</p>{/if}
-		{#if photo}
-			<button type="button" class="drop" onclick={dropPhoto}>{m.cooking.form.removePhoto}</button>
-		{/if}
-	</div>
-	<input type="hidden" name="removePhoto" value={removed ? '1' : ''} />
-	{#if prefill?.photo}
-		<!-- The already-downloaded photo's temp path — the save action attaches it
-			 unless a fresh pick or a removal supersedes it (→ plan 12). -->
-		<input type="hidden" name="importedPhoto" value={prefill.photo.path} />
-	{/if}
-
-	<TextField
-		label={m.cooking.form.name}
-		name="name"
-		bind:value={name}
-		error={nameError}
-		placeholder={m.cooking.form.namePlaceholder}
-		maxlength={RECIPE_NAME_MAX}
-		autocomplete="off"
-		required
-	/>
-
-	<div class="pair">
-		<TextField
-			label={m.cooking.form.time}
-			name="timeMinutes"
-			type="number"
-			bind:value={time}
-			placeholder="30"
-			inputmode="numeric"
-			min={0}
-			max={RECIPE_TIME_MAX}
-		/>
-		<TextField
-			label={m.cooking.form.servingsLabel}
-			name="servings"
-			type="number"
-			bind:value={servings}
-			placeholder="4"
-			inputmode="numeric"
-			min={0}
-			max={RECIPE_SERVINGS_MAX}
-		/>
-	</div>
-
-	<RecipeTagsField
+	<RecipeBasics
+		bind:name
+		bind:time
+		bind:servings
+		{photo}
+		{nameError}
+		{photoError}
 		tags={recipe?.tags ?? []}
 		diet={recipe?.diet ?? null}
 		suggested={prefill?.suggested}
+		onpick={(file) => {
+			picked = file;
+			if (file) removed = false;
+		}}
+		ondrop={() => {
+			picked = null;
+			removed = true;
+		}}
 	/>
+	<input type="hidden" name="removePhoto" value={removed ? '1' : ''} />
+	{#if prefill?.photo}
+		<!-- The already-downloaded photo's temp path: the save attaches it unless a
+			 fresh pick or a removal supersedes it (→ plan 12). -->
+		<input type="hidden" name="importedPhoto" value={prefill.photo.path} />
+	{/if}
 
 	<h2 class="label">{m.cooking.form.ingredients}</h2>
-	<ul class="rows">
-		{#each ingredients as item, index (item.key)}
-			{@const parsed = item.text.trim() ? parseIngredient(item.text) : null}
-			{@const amount = parsed ? m.units.amount(parsed.quantity, parsed.unit) : ''}
-			<li class="row">
-				<input
-					id={fieldId('ingredient', item.key)}
-					class="line"
-					type="text"
-					name="ingredient"
-					bind:value={item.text}
-					placeholder={m.cooking.form.ingredientPlaceholder}
-					aria-label={m.cooking.form.ingredientLabel(index + 1)}
-					aria-describedby={item.text.trim() ? amountId(item.key) : undefined}
-					maxlength={INGREDIENT_LINE_MAX}
-					autocomplete="off"
-					onkeydown={(event) => {
-						if (event.key !== 'Enter') return;
-						// Enter in a single-line field would submit the whole form;
-						// walking to the next ingredient is what's meant here.
-						event.preventDefault();
-						if (ingredients.length < INGREDIENTS_MAX) {
-							ingredients = add(ingredients, 'ingredient', () => ingredientRow(), index);
-						}
-					}}
-				/>
-				<!-- Plan 43's note and part, carried through unseen (→ `readRecipeForm`). -->
-				<input type="hidden" name="ingredientNote" value={postedNote(item)} />
-				<input type="hidden" name="ingredientSection" value={item.section ?? ''} />
-				{#if item.text.trim()}
-					<!-- The receipt: what the line was understood to measure, rendered
-						 by the same `m.units.amount` the recipe [7a] and the peek sheet
-						 [7b] use — so the form says what the recipe will say.
-
-						 A plain button, not one gated on hydration: the reorder and remove
-						 controls beside it, and "Add ingredient" below, all need a script
-						 too, and none of them pretends otherwise. -->
-					<button
-						type="button"
-						id={amountId(item.key)}
-						class="amount"
-						class:empty={!amount}
-						aria-label={m.cooking.form.amountLabel(amount)}
-						onclick={() => (editing = item.key)}
-					>
-						<!-- The em dash a Stepper shows for "no quantity", same reason. -->
-						{amount || '-'}
-					</button>
-				{/if}
-				{@render controls(index, ingredients.length, 'ingredient', (direction) => {
-					if (direction) {
-						ingredients = move(ingredients, index, direction);
-						return;
-					}
-
-					// A row removed under an open sheet would strand `editing`, and its
-					// chips would outlive it on every step that named it.
-					if (ingredients[index].key === editing) editing = null;
-					unpin(ingredients[index].key);
-					ingredients = remove(ingredients, index, () => ingredientRow());
-				})}
-			</li>
-		{/each}
-	</ul>
-
-	{#if ingredients.length < INGREDIENTS_MAX}
-		<button
-			type="button"
-			class="add"
-			onclick={() => (ingredients = add(ingredients, 'ingredient', () => ingredientRow()))}
-		>
-			<Plus size={16} strokeWidth={2.2} />{m.cooking.form.addIngredient}
-		</button>
-	{/if}
-
-	<p class="units">
-		{m.cooking.form.ingredientsNote(
-			RECIPE_UNITS.map((unit) => unitLabel(unit, m.units.labels)).join(' · ')
-		)}
-	</p>
+	<IngredientList
+		parts={editor.ingredients}
+		{showParts}
+		canAdd={ingredientCount < INGREDIENTS_MAX}
+		onrows={setRows}
+		onaddline={addLine}
+		onedit={(id) => (editing = id)}
+		onrename={rename}
+		onaddpart={(part) => (editor.ingredients = addPart(editor.ingredients, part, key))}
+	/>
 
 	<h2 class="label">{m.cooking.form.steps}</h2>
-	<ol class="steps">
-		{#each steps as step, index (step.key)}
-			{@const uses = chips(step)}
-			{@const timer = timerChip(step, index)}
-			<li class="step">
-				<span class="number" aria-hidden="true">{index + 1}</span>
-				<div class="field">
-					<textarea
-						id={fieldId('step', step.key)}
-						name="step"
-						bind:value={step.text}
-						use:autogrow
-						rows="2"
-						placeholder={m.cooking.form.stepPlaceholder}
-						aria-label={m.cooking.form.stepLabel(index + 1)}
-						maxlength={STEP_TEXT_MAX}></textarea>
+	<StepList
+		parts={editor.steps}
+		{showParts}
+		canAdd={stepCount < STEPS_MAX}
+		{describe}
+		ontext={(id, text) => setStep(id, { text })}
+		onlinks={(id) => (linking = id)}
+		ontimer={(id) => (timing = id)}
+		onmove={(id, direction) => (editor.steps = shiftRow(editor.steps, id, direction))}
+		onmovepart={(id) => (moving = id)}
+		onremove={removeStep}
+		onadd={addStep}
+		onrename={rename}
+		onaddpart={(part) => (editor.steps = addPart(editor.steps, part, key))}
+	/>
 
-					<!-- What cook mode will show while you're on this step. Read out of
-						 the text until it's pinned (→ SPEC §4.4, DECISIONS #127), which
-						 is what the "auto" marker says — and why the whole row is one
-						 button rather than a chip apiece: the sheet does the editing, and
-						 a wet thumb wants one target, not six. -->
-					<button
-						type="button"
-						class="uses"
-						class:pinned={step.uses !== null}
-						aria-label={m.cooking.form.usesLabel(index + 1)}
-						onclick={() => (pinning = step.key)}
-					>
-						{#if uses.length}
-							{#each uses as use (use.key)}
-								<span class="chip">
-									{use.name}{#if use.amount}<b>{use.amount}</b>{/if}
-								</span>
-							{/each}
-						{:else}
-							<span class="chip empty">
-								{step.uses ? m.cooking.form.usesNothing : m.cooking.form.usesNone}
-							</span>
-						{/if}
-						<!-- Only where there is a reading to explain: on an empty step it
-							 would be labelling the invitation. -->
-						{#if step.uses === null && uses.length}
-							<span class="auto">{m.cooking.form.usesAuto}</span>
-						{/if}
-					</button>
-
-					<!-- The step's own timer (→ plan 21): named and timed here, or —
-						 marked "auto" — whatever cook mode will read out of the text. -->
-					<button
-						type="button"
-						class="timer"
-						class:set={timer.set}
-						aria-label={m.cooking.form.timerLabel(index + 1)}
-						onclick={() => (timing = step.key)}
-					>
-						<span class="chip" class:empty={!timer.set && !timer.auto}>
-							<TimerIcon size={13} strokeWidth={2.2} aria-hidden="true" />{timer.text}
-						</span>
-						{#if timer.auto}
-							<span class="auto">{m.cooking.form.usesAuto}</span>
-						{/if}
-					</button>
-
-					<!-- One each per step, always — `readRecipeForm` lines the lists up by
-						 position, so a step that reads its own text still has to post. -->
-					<input type="hidden" name="stepUses" value={postedUses(step)} />
-					<input type="hidden" name="stepTimer" value={postedTimer(step)} />
-					<input type="hidden" name="stepSection" value={step.section ?? ''} />
-				</div>
-				<span class="step-controls">
-					{@render controls(index, steps.length, 'step', (direction) => {
-						if (direction) {
-							steps = move(steps, index, direction);
-							return;
-						}
-
-						if (steps[index].key === pinning) pinning = null;
-						if (steps[index].key === timing) timing = null;
-						steps = remove(steps, index, () => stepRow());
-					})}
-				</span>
-			</li>
-		{/each}
-	</ol>
-
-	{#if steps.length < STEPS_MAX}
-		<button type="button" class="add" onclick={() => (steps = add(steps, 'step', () => stepRow()))}>
-			<Plus size={16} strokeWidth={2.2} />{m.cooking.form.addStep}
-		</button>
-	{/if}
+	<!-- What posts: each ingredient as its fields, each step with its links, all
+		 lined up by position (→ `postedFields`, `readRecipeForm`). -->
+	{#each fields as [fieldName, value], at (at)}
+		<input type="hidden" name={fieldName} {value} />
+	{/each}
 
 	<div class="submit">
 		<Button type="submit" disabled={submitting || !name.trim()}>
@@ -845,99 +412,71 @@
 	</div>
 </form>
 
-<!-- Outside the <form> on purpose: nothing in the sheet carries a `name`, so no
-	 field of it can reach `form.getAll('ingredient')` and Enter inside it cannot
-	 submit the recipe (→ DECISIONS #100). -->
 {#if editing}
-	{@const at = ingredients.findIndex((item) => item.key === editing)}
-	{#if at >= 0}
+	{@const found = find(editor.ingredients, editing)}
+	{#if found}
+		{@const id = found.row.id}
 		<IngredientSheet
-			line={ingredients[at].text}
-			index={at + 1}
-			onsave={(line) => (ingredients[at].text = line)}
+			ingredient={found.row}
+			part={found.part.name}
+			parts={showParts ? partNames(editor) : []}
+			{own}
+			onsave={(fields, part) => saveIngredient(id, fields, part)}
+			onremove={() => removeIngredient(id)}
+			onadded={(word) => (own = [...own, word])}
 			onclose={() => (editing = null)}
 		/>
 	{/if}
 {/if}
 
-{#if pinning}
-	{@const at = steps.findIndex((step) => step.key === pinning)}
-	{#if at >= 0}
-		<StepIngredientsSheet
-			index={at + 1}
-			ingredients={choices}
-			uses={steps[at].uses ? perIngredient(steps[at].uses) : null}
-			suggested={suggest(steps[at].text)}
-			onsave={(uses) => (steps[at].uses = keepWords(steps[at].uses, uses))}
-			onauto={() => (steps[at].uses = null)}
-			onclose={() => (pinning = null)}
+{#if linking}
+	{@const found = find(editor.steps, linking)}
+	{#if found}
+		{@const id = found.row.id}
+		<StepLinkSheet
+			index={found.number}
+			text={found.row.text}
+			links={found.row.links}
+			dismissed={found.row.dismissed}
+			suggesting={suggesting(found.row)}
+			{targets}
+			servings={people}
+			{known}
+			onsave={(links, dismissed) => setStep(id, { links, dismissed })}
+			onclose={() => (linking = null)}
 		/>
 	{/if}
 {/if}
 
 {#if timing}
-	{@const at = steps.findIndex((step) => step.key === timing)}
-	{#if at >= 0}
+	{@const found = find(editor.steps, timing)}
+	{#if found}
+		{@const id = found.row.id}
 		<StepTimerSheet
-			index={at + 1}
-			timer={steps[at].timer}
-			suggestedSeconds={parseStepDuration(steps[at].text)}
-			names={timerNames(steps[at])}
-			onsave={(timer) => (steps[at].timer = timer)}
-			onremove={() => (steps[at].timer = null)}
+			index={found.number}
+			timer={found.row.timer}
+			suggestedSeconds={parseStepDuration(found.row.text)}
+			names={timerNames(found.row, found.number)}
+			onsave={(timer) => setStep(id, { timer })}
+			onremove={() => setStep(id, { timer: null })}
 			onclose={() => (timing = null)}
 		/>
 	{/if}
 {/if}
 
-<!-- The reorder/remove trio beside every ingredient and every step. Each label
-	 names the row it acts on, because thirty identical chevrons read out as
-	 thirty identical chevrons. -->
-{#snippet controls(
-	index: number,
-	total: number,
-	kind: 'ingredient' | 'step',
-	act: (direction: -1 | 1 | 0) => void
-)}
-	{@const labels =
-		kind === 'ingredient'
-			? {
-					up: m.cooking.form.moveIngredientUp,
-					down: m.cooking.form.moveIngredientDown,
-					remove: m.cooking.form.removeIngredient
-				}
-			: {
-					up: m.cooking.form.moveStepUp,
-					down: m.cooking.form.moveStepDown,
-					remove: m.cooking.form.removeStep
-				}}
-	<button
-		type="button"
-		class="control"
-		disabled={index === 0}
-		aria-label={labels.up(index + 1)}
-		onclick={() => act(-1)}
-	>
-		<ChevronUp size={15} strokeWidth={2.2} />
-	</button>
-	<button
-		type="button"
-		class="control"
-		disabled={index === total - 1}
-		aria-label={labels.down(index + 1)}
-		onclick={() => act(1)}
-	>
-		<ChevronDown size={15} strokeWidth={2.2} />
-	</button>
-	<button
-		type="button"
-		class="control"
-		aria-label={labels.remove(index + 1)}
-		onclick={() => act(0)}
-	>
-		<X size={15} strokeWidth={2.2} />
-	</button>
-{/snippet}
+{#if moving}
+	{@const found = find(editor.steps, moving)}
+	{#if found}
+		{@const id = found.row.id}
+		<PartPickerSheet
+			eyebrow={m.cooking.form.movePart.eyebrow(found.number)}
+			current={found.part.name}
+			parts={pickerParts}
+			onpick={(part) => (editor.steps = moveToPart(editor.steps, id, part, key))}
+			onclose={() => (moving = null)}
+		/>
+	{/if}
+{/if}
 
 <style>
 	header {
@@ -949,9 +488,11 @@
 	}
 
 	/* A navigation bar: Cancel, the title and Save share one line, so like a
-	   native one they stop growing early — the buttons at 22px, the title at
-	   26px (→ DESIGN-SYSTEM "Type scale") — and the title wraps between them. */
+	   native one they stop growing early (→ DESIGN-SYSTEM "Type scale"). */
 	.cancel {
+		display: flex;
+		align-items: center;
+		min-height: 44px;
 		font-size: min(var(--fs-17), 22px);
 		font-weight: 600;
 		color: var(--text-4);
@@ -964,6 +505,7 @@
 	}
 
 	.save {
+		min-height: 44px;
 		font-size: min(var(--fs-17), 22px);
 		font-weight: 700;
 		color: var(--sage);
@@ -984,362 +526,14 @@
 		color: var(--text-4);
 	}
 
-	.photo {
-		position: relative;
-		display: flex;
-		flex-direction: column;
-		align-items: center;
-		justify-content: center;
-		gap: 8px;
-		height: 140px;
-		overflow: hidden;
-		border-radius: var(--r-card-lg);
-		cursor: pointer;
-	}
-
-	.art {
-		position: absolute;
-		inset: 0;
-	}
-
-	.photo input {
-		position: absolute;
-		width: 1px;
-		height: 1px;
-		opacity: 0;
-	}
-
-	.photo:focus-within {
-		outline: 2px solid var(--sage);
-		outline-offset: 2px;
-	}
-
-	.photo img {
-		position: absolute;
-		inset: 0;
-		width: 100%;
-		height: 100%;
-		object-fit: cover;
-	}
-
-	.lens {
-		display: flex;
-		align-items: center;
-		justify-content: center;
-		width: 44px;
-		height: 44px;
-		border-radius: 50%;
-		background: var(--card);
-		box-shadow: var(--shadow-card);
-		color: var(--sage);
-	}
-
-	.hint {
-		font-size: var(--fs-14);
-		font-weight: 600;
-		color: var(--text-4);
-	}
-
-	/* Sits on the photo, so it needs its own surface to stay readable. */
-	.change {
-		position: relative;
-		align-self: flex-end;
-		margin: auto 12px 12px auto;
-		padding: 7px 12px;
-		border-radius: var(--r-chip);
-		background: var(--tabbar-bg);
-		backdrop-filter: blur(6px);
-		font-size: var(--fs-14);
-		font-weight: 700;
-		color: var(--ink);
-	}
-
-	.photo-foot {
-		display: flex;
-		align-items: baseline;
-		justify-content: space-between;
-		gap: 12px;
-		min-height: 12px;
-		margin-bottom: 12px;
-	}
-
-	.photo-error {
-		margin: 0;
-		padding-left: 4px;
-		font-size: var(--fs-15);
-		color: var(--danger-deep);
-	}
-
-	.drop {
-		margin-left: auto;
-		padding: 4px;
-		font-size: var(--fs-14);
-		font-weight: 600;
-		color: var(--danger);
-	}
-
-	.pair {
-		display: flex;
-		gap: 14px;
-		margin-top: 18px;
-	}
-
-	.pair > :global(*) {
-		flex: 1;
-		min-width: 0;
-	}
-
 	.label {
-		margin: 24px 0 8px;
+		margin: 26px 4px 8px;
 		font-family: var(--font-body);
 		font-size: var(--fs-13);
 		font-weight: 700;
 		letter-spacing: 0.1em;
 		text-transform: uppercase;
 		color: var(--text-5);
-	}
-
-	.rows {
-		margin: 0;
-		padding: 0;
-		overflow: hidden;
-		border-radius: var(--r-block);
-		background: var(--card);
-		list-style: none;
-	}
-
-	.row {
-		display: flex;
-		align-items: center;
-		gap: 2px;
-		padding: 4px 8px 4px 14px;
-	}
-
-	.row + .row {
-		border-top: 1px solid var(--divider);
-	}
-
-	.line {
-		flex: 1;
-		min-width: 0;
-		padding: 12px 0;
-		border: none;
-		background: none;
-		font-size: var(--fs-16);
-		font-weight: 500;
-		color: var(--ink);
-	}
-
-	.line:focus {
-		outline: none;
-	}
-
-	.line::placeholder {
-		color: var(--text-disabled);
-	}
-
-	/* Sits where [7a] prints the amount. Quiet — it confirms, it doesn't ask. */
-	.amount {
-		flex: none;
-		max-width: 76px;
-		overflow: hidden;
-		margin-left: 8px;
-		padding: 5px 9px;
-		border-radius: var(--r-chip);
-		background: var(--sunken);
-		font-size: var(--fs-14);
-		font-weight: 600;
-		white-space: nowrap;
-		text-overflow: ellipsis;
-		/* The digits must not jitter while the reading updates under a thumb. */
-		font-variant-numeric: tabular-nums;
-		color: var(--text-4);
-	}
-
-	.amount.empty {
-		background: none;
-		color: var(--text-disabled);
-	}
-
-	.amount:active {
-		background: var(--sunken-2);
-	}
-
-	.control {
-		display: flex;
-		align-items: center;
-		justify-content: center;
-		flex: none;
-		width: 28px;
-		height: 28px;
-		border-radius: 8px;
-		color: var(--text-5);
-	}
-
-	.control:disabled {
-		opacity: 0.3;
-		cursor: default;
-	}
-
-	.control:not(:disabled):active {
-		background: var(--sunken);
-	}
-
-	.add {
-		display: flex;
-		align-items: center;
-		gap: 8px;
-		margin: 12px 0 0 4px;
-		padding: 4px;
-		font-size: var(--fs-16);
-		font-weight: 600;
-		color: var(--sage);
-	}
-
-	.units {
-		margin: 10px 4px 0;
-		font-size: var(--fs-14);
-		line-height: 1.5;
-		color: var(--text-5);
-	}
-
-	.steps {
-		margin: 0;
-		padding: 0;
-		list-style: none;
-	}
-
-	.step {
-		display: flex;
-		align-items: flex-start;
-		gap: 11px;
-		margin-bottom: 10px;
-	}
-
-	/* The step's text and what it uses are one field with two parts, so the
-	   controls beside them stay a column against the pair. */
-	.field {
-		display: flex;
-		flex-direction: column;
-		flex: 1;
-		min-width: 0;
-	}
-
-	.number {
-		display: flex;
-		align-items: center;
-		justify-content: center;
-		flex: none;
-		width: 24px;
-		height: 24px;
-		margin-top: 10px;
-		border-radius: 50%;
-		background: var(--sunken);
-		font-size: var(--fs-14);
-		font-weight: 700;
-		color: var(--text-4);
-	}
-
-	textarea {
-		/* Grown by `autogrow`; this is the floor, not the ceiling — and it's the
-		   height of the three controls beside it, so a one-line step doesn't
-		   leave them dangling below the field. */
-		min-height: 84px;
-		padding: 12px 14px;
-		border: none;
-		border-radius: var(--r-input);
-		background: var(--card);
-		font-size: var(--fs-17);
-		line-height: 1.4;
-		color: var(--text-2);
-		resize: none;
-	}
-
-	textarea:focus {
-		outline: 1.5px solid var(--sage);
-	}
-
-	textarea::placeholder {
-		color: var(--text-disabled);
-	}
-
-	/* Under the step, indented to its text: the same left edge, so the chips read
-	   as belonging to the sentence above them rather than to the list. */
-	.uses {
-		display: flex;
-		align-items: center;
-		flex-wrap: wrap;
-		gap: 6px;
-		margin-top: 6px;
-		padding: 4px 6px 2px;
-		text-align: left;
-	}
-
-	.chip {
-		display: inline-flex;
-		align-items: baseline;
-		gap: 5px;
-		padding: 4px 10px;
-		border-radius: var(--r-chip);
-		background: var(--sunken);
-		font-size: var(--fs-14);
-		font-weight: 600;
-		color: var(--text-4);
-		overflow-wrap: anywhere;
-	}
-
-	/* Pinned by hand — the same sage the app uses everywhere for "chosen". */
-	.pinned .chip {
-		background: var(--sage-tint);
-		color: var(--sage-deep);
-	}
-
-	.chip b {
-		font-weight: 700;
-		font-variant-numeric: tabular-nums;
-	}
-
-	.chip.empty {
-		background: none;
-		padding-left: 0;
-		font-weight: 500;
-		color: var(--text-disabled);
-	}
-
-	/* The step's timer, under its ingredients: the same chip, one target. */
-	.timer {
-		display: flex;
-		align-items: center;
-		gap: 6px;
-		margin-top: 2px;
-		padding: 2px 6px;
-		text-align: left;
-	}
-
-	.timer .chip {
-		align-items: center;
-	}
-
-	.timer.set .chip {
-		background: var(--sage-tint);
-		color: var(--sage-deep);
-	}
-
-	/* Says where the chips came from, quietly. It disappears the moment the list
-	   is the cook's own. */
-	.auto {
-		font-size: var(--fs-12);
-		font-weight: 700;
-		letter-spacing: 0.1em;
-		text-transform: uppercase;
-		color: var(--text-5);
-	}
-
-	.step-controls {
-		display: flex;
-		flex-direction: column;
-		flex: none;
-		margin-top: 6px;
 	}
 
 	.submit {
