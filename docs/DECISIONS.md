@@ -4634,3 +4634,84 @@ store_id` NULL already means "no memory" (a deleted list), and telling the two a
        the form shows one name gathered from two parts in the picker. It is in the base seed
        (every e2e and visual household), tagged dinner · main · meat and older than the other
        two, so "Recently added" is unchanged; the cookbook's counts move by one.
+321. **A unit comes from one list: the eight, the counting words, and the household's own**
+     (Lukas, 2026-11-23; → plans 44, 46; amends #313). A unit is one of the eight units (g, kg,
+     ml, L, pcs, pack, tbsp, tsp), a counting word the shared reader knows (`amounts.ts`:
+     "Zehe", "Bund", "Dose", "Prise", …), or a word the household added on purpose
+     (`household_units`). Nothing else is a unit. The ingredient sheet gets a numbers-only
+     field and a unit button that opens a panel with every unit visible (plan 46). The AI
+     import picks from the same list, which is part of its prompt; a word the page counts in
+     that is not on it ("Ring") becomes a question on the review screen ("New unit: Ring. Add
+     it?"), and until it is answered the draft keeps the number with no unit and the word in
+     the note. Lukas's reasons: a typed field has to guess what is number and what is unit, and
+     an open field where anything goes overwhelms people. #313's "free counting word" is
+     therefore no longer free: it is one the reader knows or one the household added.
+322. **Plan 44, first PR as built: the wording goes, the readers keep parts, the corpus, and an
+     honest User-Agent** (2026-11-23).
+     - **Austrian wording removed** as #317 says: `utils/wording.ts`, `WordingSheet`, the
+       Settings row and action, the prompt paragraph, `applyWording`, the matcher's synonyms,
+       their tests; migration 0030 drops `households.recipe_wording` (a plain `DROP COLUMN`,
+       pinned by `tests/integration/recipe-wording-removed.test.ts`). The quiche test in
+       `step-highlight.test.ts` now reads the rows as written; its "Oberhitze is not the Obers"
+       case went with the Obers.
+     - **Refused fetches: the cause was ours.** The importer sent a Chrome User-Agent from a
+       client that does not talk like Chrome (Node's TLS, no client hints). Cloudflare's bot
+       check challenges exactly that mismatch: sallysbakingaddiction.com answered `403` with
+       `cf-mitigated: challenge` to the app's request, and `200` to the same request with an
+       honest client name. The importer now sends a generic `Mozilla/5.0 (compatible;
+recipe-importer)` (`IMPORT_UA`): the `Mozilla/5.0 (compatible; …)` form crawlers use,
+       because a bare `node` string is still refused by some sites, and no app name, so the
+       project's name does not travel in requests to outside sites (coordinator, 2026-11-23). With it the
+       three pages the plan names import (sallysbakingaddiction.com, budgetbytes.com,
+       whereismyspoon.co), and all 18 corpus pages still do. Five sites refuse every client
+       and keep the "copy the text" answer: allrecipes.com and seriouseats.com (Dotdash's pay
+       per crawl), rewe.de, falstaff.com and spar.at. Nothing here gets around a challenge; the
+       request only stopped claiming to be a browser.
+     - **Parts are read, not dropped.** `RecipeJsonLd` gains `ingredientSections` and
+       `stepSections`, one entry per line and per step. Steps: a `HowToSection`'s name, and a
+       heading step names the steps after it. Before, a heading step was glued to the next
+       step's text ("Orangensalat: Orangen schälen …", #159); now it leaves the text, which is
+       what plan 44 asks of the model too. A heading step is a line ending on a colon (at most
+       15 words, as before), or a bare title of at most four words with no digit and no
+       sentence end ("Karottenkuchen", kochbar.de) but only when the card opens on one and has
+       a second (code review: "Teig kneten" alone in the middle is a step). A row that ends
+       its card or its `HowToSection` is a step, never a heading. Ingredients: a row ending on
+       a colon, a shouted row ("KATSU CURRY SAUCE") or "Für …"/"For …" of at most five words
+       with no digit and no colon inside ("Für die Form: Butter" is butter) starts a part. Names are tidied by `sectionName`: no colon, no leading "Für die" /
+       "Zutaten für" / "For the", shouting lowered to sentence case (a word-by-word capital
+       would make German verbs nouns), a bracketed remark dropped only when the name is over
+       40 characters; "Zutaten", "Zubereitung", "Instructions" and the like are no part, and
+       one part that covers every row is none ("Zubereitung" around all of chefkoch's steps).
+     - **`recipe-plugins.ts` reads parts from the page, only where they agree with the card.**
+       The plan named WP Recipe Maker and Tasty; the probe showed the same need on chefkoch.de
+       (a table per part, the heading in its head), gutekueche.at and servus.com (a heading
+       just before each table) and kochbar.de, so a third shape, "a run of tables", is read
+       too. Whatever the shape, the markup is used only when its rows add up to exactly the
+       card's lines and every row shares a word with the lines of its part (gutekueche.at sorts
+       its card alphabetically inside each part, so order within a part is not checked). The
+       card's lines stay the lines: the plan also asked for WPRM's amounts and notes, but on
+       the corpus they say nothing the card's lines do not once WPRM's "(, finely chopped)" is
+       unwrapped, and the import's `source` index has to point at one list.
+     - **A card imported without AI keeps its parts already** (`draftFromCard` →
+       `RecipePrefill.ingredientSections` and `StepInput.section`, posted by the editor's hidden
+       fields of plan 43). Without this, a heading step that now leaves the text would be lost
+       until the second PR. An "Improve with AI" draft gets the card's parts too, by index, when
+       the model kept the card's rows one for one (always, unless household instructions let it
+       change them); a page with no card read by the model has none until the second PR.
+     - **Reader fixes from the probe**: `totalTime` in words ("5 hours 45 minutes",
+       bonappetit.com); a card with no steps and one row over 200 characters is no card
+       (cookingcatrin.at), in both readers, judged after a plugin's marked-up method has been
+       added (so a long-lined card whose steps are in the markup stays a card); template
+       leftovers out of steps and ingredient lines (gutekueche.at's
+       `{{ link(…, "Lasagneblätter") }}`, hellofresh's `[1,5 EL | 2 EL]` variants and the
+       pantry asterisk); prices, "(Note 1)", "- Note 3", WPRM's "(, …)" brackets, brackets
+       doubled once a footnote is gone, and asterisks out of ingredient lines; `&Uuml;`,
+       `&Ouml;`, `&Auml;`, `&Eacute;` decode to capitals (they decoded to "ü" before).
+     - **The corpus**: the plan's 18 pages saved with the probe's new `--trim` (scripts other
+       than JSON-LD, styles, stylesheet links, SVG, comments, `style`/`srcset`/`sizes`
+       attributes out; the probe refuses to save a trim whose card, reader, image or readable
+       text differ from the full page's). Most land between 45 and 180 KB; jamieoliver.com
+       (241 KB), hellofresh.at (227 KB) and backenmachtgluecklich.de (203 KB) stay over the
+       plan's "about 150 KB" because their markup itself is that large. Blank lines are kept:
+       collapsing them changed chefkoch's readable text. `recipe-corpus.test.ts` pins each
+       page's reader, name, time, line and step counts and parts.

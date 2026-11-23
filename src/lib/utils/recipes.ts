@@ -181,6 +181,8 @@ export type RecipePrefill = {
 	timeMinutes: number | null;
 	servings: number | null;
 	ingredientLines: string[];
+	/** The part each line belongs to, by index (→ plan 44); absent: none. */
+	ingredientSections?: (string | null)[];
 	steps: StepInput[];
 	photo: { path: string; preview: string } | null;
 	/**

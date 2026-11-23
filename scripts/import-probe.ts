@@ -3,6 +3,7 @@
  *
  *   npm run import:probe -- <url>                 which reader matched, the steps, the ingredients
  *   npm run import:probe -- <url> --save <name>   …and keep the raw page as a reader fixture
+ *   npm run import:probe -- <url> --save <name> --trim   …without scripts, styles, SVG and comments
  *
  * Recipe-import bugs live in someone else's page, and a page summary (WebFetch)
  * drops the raw JSON-LD the importer actually reads — issue #31 was a
@@ -44,25 +45,77 @@ export function probeReport(url: string, page: RecipePage): string {
 		`Image: ${page.image ?? '—'}`,
 		'',
 		`Ingredients (${card.ingredientLines.length}):`,
-		...card.ingredientLines.map((line) => `  - ${line}`),
+		...withParts(card.ingredientLines, card.ingredientSections, (line) => `  - ${line}`),
 		'',
 		`Steps (${card.steps.length}):`,
-		...card.steps.map((step, index) => `  ${index + 1}. ${step}`)
+		...withParts(card.steps, card.stepSections, (step, index) => `  ${index + 1}. ${step}`)
 	);
 	return lines.join('\n');
 }
 
+/** Rows with a `[Part]` line wherever a new part starts (→ plan 44). */
+function withParts(
+	rows: string[],
+	sections: (string | null)[],
+	row: (text: string, index: number) => string
+): string[] {
+	return rows.flatMap((text, index) => {
+		const part = sections[index] ?? null;
+		const starts = part !== null && (index === 0 || sections[index - 1] !== part);
+		return starts ? [`  [${part}]`, row(text, index)] : [row(text, index)];
+	});
+}
+
+/**
+ * A page without what no reader reads (→ plan 44): scripts other than JSON-LD,
+ * styles, inline SVG and comments. A recipe page is 300 KB to 2 MB of that and
+ * 20 to 150 KB of the rest. Regexes, not a parser, so what stays is the page's
+ * own bytes; the probe refuses to save a trim that reads differently.
+ */
+export function trimPage(html: string): string {
+	return html
+		.replace(/<!--[\s\S]*?-->/g, '')
+		.replace(/<script\b([^>]*)>[\s\S]*?<\/script>/gi, (whole, attributes: string) =>
+			/application\/ld\+json/i.test(attributes) ? whole : ''
+		)
+		.replace(/<style\b[^>]*>[\s\S]*?<\/style>/gi, '')
+		.replace(/<svg\b[^>]*>[\s\S]*?<\/svg>/gi, '')
+		.replace(
+			/<link\b[^>]*\brel\s*=\s*["']?(?:stylesheet|preload|prefetch|preconnect|dns-prefetch|modulepreload)[^>]*>/gi,
+			''
+		)
+		.replace(/\s(?:style|srcset|data-srcset|sizes|data-sizes)\s*=\s*"[^"]*"/gi, '');
+}
+
 /** The raw page with a provenance comment, kept after the doctype so it stays first. */
-export function fixtureFile(url: string, html: string, fetchedOn: string): string {
-	const note = `<!--\n  ${url},\n  saved ${fetchedOn} by \`npm run import:probe\`. Kept byte for byte: do not reformat.\n-->\n`;
+export function fixtureFile(url: string, html: string, fetchedOn: string, trimmed = false): string {
+	const how = trimmed
+		? 'Trimmed by --trim (no scripts but JSON-LD, no styles, SVG or comments); the rest byte for byte'
+		: 'Kept byte for byte';
+	const note = `<!--\n  ${url},\n  saved ${fetchedOn} by \`npm run import:probe\`. ${how}: do not reformat.\n-->\n`;
 	const doctype = /^\s*<!doctype[^>]*>\s*/i.exec(html)?.[0];
 	return doctype ? `${doctype}${note}${html.slice(doctype.length)}` : `${note}${html}`;
 }
 
+/** Whether the trimmed page gives the same card, reader and image as the full one. */
+function sameReading(
+	importer: typeof import('../src/lib/server/recipe-import'),
+	fetched: { html: string; finalUrl: string },
+	trimmed: string
+): boolean {
+	const full = importer.readFetchedPage(fetched);
+	const trim = importer.readFetchedPage({ ...fetched, html: trimmed });
+	return (
+		JSON.stringify([full.card, full.reader, full.image, full.text]) ===
+		JSON.stringify([trim.card, trim.reader, trim.image, trim.text])
+	);
+}
+
 async function main(argv: string[]) {
-	const [url, flag, name] = argv;
-	if (!url || (flag !== undefined && (flag !== '--save' || !name))) {
-		console.error('Usage: npm run import:probe -- <url> [--save <name>]');
+	const trim = argv.includes('--trim');
+	const [url, flag, name] = argv.filter((arg) => arg !== '--trim');
+	if (!url || (flag !== undefined && (flag !== '--save' || !name)) || (trim && !name)) {
+		console.error('Usage: npm run import:probe -- <url> [--save <name> [--trim]]');
 		process.exit(2);
 	}
 	if (name !== undefined && !/^[a-z0-9][a-z0-9-]*$/.test(name)) {
@@ -90,8 +143,15 @@ async function main(argv: string[]) {
 		console.log(probeReport(url, importer.readFetchedPage(fetched)));
 
 		if (target) {
-			writeFileSync(target, fixtureFile(url, fetched.html, new Date().toISOString().slice(0, 10)));
-			console.log(`\nSaved the raw page to ${target}.`);
+			const html = trim ? trimPage(fetched.html) : fetched.html;
+			if (trim && !sameReading(importer, fetched, html)) {
+				console.error('\nThe trimmed page reads differently from the full one; not saved.');
+				process.exitCode = 1;
+				return;
+			}
+			writeFileSync(target, fixtureFile(url, html, new Date().toISOString().slice(0, 10), trim));
+			const kb = Math.round(Buffer.byteLength(html) / 1024);
+			console.log(`\nSaved the ${trim ? 'trimmed' : 'raw'} page (${kb} KB) to ${target}.`);
 		}
 	} catch (error) {
 		// The importer's own refusal (blocked, unreachable, not-html, …) is the answer.

@@ -40,7 +40,6 @@ import {
 	SPLIT_MODES
 } from '../../utils/expenses.ts';
 import { RECIPE_DIETS, RECIPE_TAGS } from '../../utils/recipe-tags.ts';
-import { RECIPE_WORDINGS } from '../../utils/wording.ts';
 
 const id = () =>
 	text('id')
@@ -145,12 +144,7 @@ export const households = sqliteTable('households', {
 	 * NULL = none. At most `AI_INSTRUCTIONS_MAX` characters.
 	 */
 	aiInstructions: text('ai_instructions'),
-	/**
-	 * How imported German recipes are worded (→ plan 24, SPEC §6): NULL = as the
-	 * site wrote them; `'austrian'` = Austrian German (Obers, Topfen, Erdäpfel),
-	 * from the fixed list in `utils/wording.ts`. Owner sets it.
-	 */
-	recipeWording: text('recipe_wording', { enum: RECIPE_WORDINGS }),
+	// `recipe_wording` (plan 24) was dropped by plan 44 (migration 0030, DECISIONS #317).
 	/**
 	 * The one currency every expense amount is in (→ plan 29, SPEC §11.10). The
 	 * amounts carry none of their own, so the owner can change this only while

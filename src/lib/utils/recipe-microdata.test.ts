@@ -44,7 +44,9 @@ describe('parseRecipeMicrodata', () => {
 			timeMinutes: 35,
 			servings: 4,
 			ingredientLines: ['250 g Mehl', '4 & ein halbes Ei', '500 ml Milch'],
+			ingredientSections: [null, null, null],
 			steps: ['Teig rühren und 10 Minuten rasten lassen.', 'In Butter herausbacken und zerreißen.'],
+			stepSections: [null, null],
 			image: '/img/schmarrn.jpg',
 			labels: []
 		});

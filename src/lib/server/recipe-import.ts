@@ -23,11 +23,13 @@ import { isIPv4, isIPv6 } from 'node:net';
 import type { Messages } from '$lib/i18n';
 import {
 	decodeEntities,
+	isBlobCard,
 	parseRecipeJsonLd,
 	tidySteps,
 	type RecipeJsonLd
 } from '$lib/utils/recipe-jsonld';
 import { markedUpSteps, parseRecipeMicrodata } from '$lib/utils/recipe-microdata';
+import { pageIngredientSections } from '$lib/utils/recipe-plugins';
 import { tagsFromLabels } from '$lib/utils/recipe-tag-words';
 import {
 	clampCount,
@@ -56,12 +58,14 @@ const MAX_IMAGE_BYTES = 10 * 1024 * 1024;
 const MAX_READABLE_CHARS = 40_000;
 
 /**
- * A browser-like User-Agent: a bare `node`/`undici` string gets a 403 from a
- * good share of recipe sites. Honest about being a bot in the comment, ordinary
- * on the wire.
+ * An honest, generic User-Agent in the `compatible` form crawlers use
+ * (→ DECISIONS #322). A bare `node`/`undici` string gets a 403 from a share of
+ * recipe sites, so it still starts with `Mozilla/5.0`. It no longer claims to be
+ * Chrome: Cloudflare challenges a client that says Chrome and does not talk like
+ * one (TLS, client hints), which turned sallysbakingaddiction.com and others
+ * away. It names no app: the project's name does not travel to outside sites.
  */
-const BROWSER_UA =
-	'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36';
+export const IMPORT_UA = 'Mozilla/5.0 (compatible; recipe-importer)';
 
 const REDIRECT_STATUSES = new Set([301, 302, 303, 307, 308]);
 
@@ -135,8 +139,11 @@ export function readFetchedPage({
 	html: string;
 	finalUrl: string;
 }): RecipePage {
-	const jsonLd = withMarkedUpSteps(parseRecipeJsonLd(html), html);
-	const card = jsonLd ?? parseRecipeMicrodata(html);
+	// The blob test after the plugin's steps are in: a one-row card whose method
+	// is in the markup is a real card with a long line, not a recipe box in one row.
+	const read = withMarkedUpSteps(parseRecipeJsonLd(html), html);
+	const jsonLd = read && !isBlobCard(read) ? read : null;
+	const card = withPageSections(jsonLd ?? parseRecipeMicrodata(html), html);
 	const reader = jsonLd ? 'json-ld' : card ? 'microdata' : null;
 	const { text, ogImage } = readableParts(html);
 
@@ -150,7 +157,19 @@ export function readFetchedPage({
  */
 function withMarkedUpSteps(card: RecipeJsonLd | null, html: string): RecipeJsonLd | null {
 	if (!card || card.steps.length) return card;
-	return { ...card, steps: tidySteps(markedUpSteps(html)) };
+	const { steps, sections } = tidySteps(markedUpSteps(html));
+	return { ...card, steps, stepSections: sections };
+}
+
+/**
+ * A card whose ingredient list names no parts, on a page that shows them in
+ * its plugin's markup or in a table per part: the parts are read from there
+ * (→ `$lib/utils/recipe-plugins`, plan 44). A card's own headings win.
+ */
+function withPageSections(card: RecipeJsonLd | null, html: string): RecipeJsonLd | null {
+	if (!card || card.ingredientSections.some(Boolean)) return card;
+	const sections = pageIngredientSections(html, card.ingredientLines);
+	return sections ? { ...card, ingredientSections: sections } : card;
 }
 
 /**
@@ -167,7 +186,14 @@ export function draftFromCard(card: RecipeJsonLd, photo: RecipePrefill['photo'])
 		ingredientLines: card.ingredientLines
 			.map((line) => line.slice(0, INGREDIENT_LINE_MAX))
 			.slice(0, INGREDIENTS_MAX),
-		steps: card.steps.map((step) => plainStep(step.slice(0, STEP_TEXT_MAX))).slice(0, STEPS_MAX),
+		// The parts the readers found (→ plan 44); the editor keeps them as it keeps a saved one's.
+		ingredientSections: card.ingredientSections.slice(0, INGREDIENTS_MAX),
+		steps: card.steps
+			.map((step, at) => ({
+				...plainStep(step.slice(0, STEP_TEXT_MAX)),
+				section: card.stepSections[at] ?? null
+			}))
+			.slice(0, STEPS_MAX),
 		photo,
 		suggested: cardSuggestion(card)
 	};
@@ -352,7 +378,7 @@ async function fetchGuarded(
 				redirect: 'manual',
 				signal: AbortSignal.timeout(options.timeoutMs),
 				headers: {
-					'User-Agent': BROWSER_UA,
+					'User-Agent': IMPORT_UA,
 					Accept: options.accept,
 					'Accept-Language': 'en,de;q=0.8'
 				}

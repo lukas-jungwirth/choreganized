@@ -67,7 +67,8 @@ src/
                                # expenses.ts, expense-recurrences.ts, expense-notify.ts
     utils/                     # dates.ts (household-local helpers), holidays.ts (Austrian
                                # shop closures), ingredients.ts, invite-code.ts, timer-parse.ts,
-                               # recipe-jsonld.ts (the import's page reader)
+                               # recipe-jsonld.ts + recipe-microdata.ts (the import's page
+                               # readers), recipe-plugins.ts (parts from plugin markup)
   routes/                      # see routing map below
 static/                        # icons/ (placeholders [05]), manifest.webmanifest [plan 11]
 design/Hearth.dc.html          # the design mockups (open in a browser)

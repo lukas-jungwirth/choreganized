@@ -11,6 +11,7 @@ import {
 	failureCode,
 	fetchRecipePage,
 	htmlToReadableText,
+	IMPORT_UA,
 	isBlockedAddress,
 	readFetchedPage,
 	RecipeImportError
@@ -78,6 +79,25 @@ describe('htmlToReadableText', () => {
 });
 
 /** Which reader found the card — what `npm run import:probe` reports (→ plan 25). */
+describe('readFetchedPage — a card with the whole recipe in one row (→ plan 44)', () => {
+	const blob = `Zutaten ${'1 kg speckige Erdäpfel 50 ml Essig 500 ml heißes Wasser '.repeat(6)}`;
+	const card = `<script type="application/ld+json">${JSON.stringify({
+		'@type': 'Recipe',
+		name: 'Erdäpfelsalat',
+		recipeIngredient: [blob]
+	})}</script>`;
+
+	it('is no card, so a model reads the page (cookingcatrin.at)', () => {
+		assert.equal(readFetchedPage({ html: card, finalUrl: 'https://x.test/' }).card, null);
+	});
+
+	it('is a card when the plugin markup has its method', () => {
+		const html = `${card}<div class="wprm-recipe-instructions"><li>Erdäpfel kochen.</li></div>`;
+		const page = readFetchedPage({ html, finalUrl: 'https://x.test/' });
+		assert.deepEqual(page.card?.steps, ['Erdäpfel kochen.']);
+	});
+});
+
 describe('readFetchedPage', () => {
 	const read = (body: string) =>
 		readFetchedPage({ html: `<html><body>${body}</body></html>`, finalUrl: 'https://x.test/r' });
@@ -176,6 +196,15 @@ describe('fetchRecipePage', () => {
 	});
 });
 
+describe('IMPORT_UA (→ plan 44, DECISIONS #322)', () => {
+	it('is generic: claims no browser and names no app', () => {
+		// Cloudflare challenged "Chrome" that did not talk like Chrome
+		// (sallysbakingaddiction.com, 2026-11-23); an honest client was let through.
+		assert.equal(IMPORT_UA, 'Mozilla/5.0 (compatible; recipe-importer)');
+		assert.doesNotMatch(IMPORT_UA, /Chrome|Safari|Firefox|Gecko|Haushaltsheld|choreganized/i);
+	});
+});
+
 describe('failureCode', () => {
 	const answer = (status: number, headers: Record<string, string> = {}) =>
 		failureCode(new Response(null, { status, headers }));
@@ -198,7 +227,9 @@ describe('draftFromCard — suggested tags (→ plan 41)', () => {
 		timeMinutes: 40,
 		servings: 4,
 		ingredientLines: ['1 Kürbis'],
+		ingredientSections: [null],
 		steps: ['Kochen.'],
+		stepSections: [null],
 		image: null
 	};
 
@@ -217,5 +248,29 @@ describe('draftFromCard — suggested tags (→ plan 41)', () => {
 	it('suggests nothing when the page names nothing on the list', () => {
 		assert.equal(draftFromCard({ ...card, labels: ['Herbst', 'schnell'] }, null).suggested, null);
 		assert.equal(draftFromCard({ ...card, labels: [] }, null).suggested, null);
+	});
+});
+
+describe('draftFromCard — parts (→ plan 44)', () => {
+	it('carries the parts the readers found into the draft', () => {
+		const draft = draftFromCard(
+			{
+				name: 'Lasagne',
+				timeMinutes: null,
+				servings: 4,
+				ingredientLines: ['1 Zwiebel', '50 g Butter'],
+				ingredientSections: ['Bolognese', 'Béchamel'],
+				steps: ['Anbraten.', 'Butter schmelzen.'],
+				stepSections: ['Bolognese', 'Béchamel'],
+				image: null,
+				labels: []
+			},
+			null
+		);
+		assert.deepEqual(draft.ingredientSections, ['Bolognese', 'Béchamel']);
+		assert.deepEqual(
+			draft.steps.map((step) => step.section),
+			['Bolognese', 'Béchamel']
+		);
 	});
 });

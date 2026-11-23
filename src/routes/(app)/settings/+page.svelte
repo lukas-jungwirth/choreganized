@@ -30,7 +30,6 @@
 	import PrefRow from '$lib/components/settings/PrefRow.svelte';
 	import ProfileSheet from '$lib/components/settings/ProfileSheet.svelte';
 	import ThemeSheet from '$lib/components/settings/ThemeSheet.svelte';
-	import WordingSheet from '$lib/components/settings/WordingSheet.svelte';
 	import SubHeader from '$lib/components/shell/SubHeader.svelte';
 	import Avatar from '$lib/components/ui/Avatar.svelte';
 	import Card from '$lib/components/ui/Card.svelte';
@@ -41,7 +40,6 @@
 	import { legalHref } from '$lib/utils/legal';
 	import ChevronRight from '@lucide/svelte/icons/chevron-right';
 	import Info from '@lucide/svelte/icons/info';
-	import Languages from '@lucide/svelte/icons/languages';
 	import PawPrint from '@lucide/svelte/icons/paw-print';
 	import Scale from '@lucide/svelte/icons/scale';
 	import Lock from '@lucide/svelte/icons/lock';
@@ -63,7 +61,6 @@
 	let choosingTheme = $state(false);
 	let renamingHousehold = $state(false);
 	let editingAi = $state(false);
-	let choosingWording = $state(false);
 	let expenseSettings = $state(false);
 	let sendingFeedback = $state(false);
 	let leaving = $state(false);
@@ -98,10 +95,6 @@
 		data.ai.primary
 			? m.settings.ai.value(m.ai.providers[data.ai.primary.provider].short, data.ai.primary.model)
 			: m.settings.ai.notSet
-	);
-
-	const wordingValue = $derived(
-		data.recipeWording === 'austrian' ? m.settings.wording.austrian : m.settings.wording.asWritten
 	);
 
 	const feedbackSent = $derived(!!form && 'feedbackSent' in form && form.feedbackSent);
@@ -410,25 +403,6 @@
 		</div>
 	{/if}
 
-	<!-- How imported German recipes are worded (→ plan 24) — the owner's, like
-		 the name; a plain fact for everyone else. -->
-	{#if owner}
-		<button type="button" class="row" onclick={() => (choosingWording = true)}>
-			<span class="tile" aria-hidden="true"><Languages size={18} strokeWidth={1.9} /></span>
-			<span class="label">{m.settings.wording.row}</span>
-			<span class="end">
-				<span class="value">{wordingValue}</span>
-				<ChevronRight size={15} strokeWidth={2} class="chevron" />
-			</span>
-		</button>
-	{:else}
-		<div class="row">
-			<span class="tile" aria-hidden="true"><Languages size={18} strokeWidth={1.9} /></span>
-			<span class="label">{m.settings.wording.row}</span>
-			<span class="value">{wordingValue}</span>
-		</div>
-	{/if}
-
 	<!-- The currency (owner, before the first expense) and the default split
 		 (anyone) — one sheet, shared with the Expenses tab (→ SPEC §11.10). -->
 	<button type="button" class="row" onclick={() => (expenseSettings = true)}>
@@ -568,10 +542,6 @@
 
 {#if editingAi}
 	<AiFeaturesSheet status={data.ai} onclose={() => (editingAi = false)} />
-{/if}
-
-{#if choosingWording}
-	<WordingSheet chosen={data.recipeWording} onclose={() => (choosingWording = false)} />
 {/if}
 
 {#if expenseSettings}

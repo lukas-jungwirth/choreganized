@@ -63,25 +63,11 @@ test('tapping the version copies it, then reverts', async ({ page, context }) =>
 	await expect(page.getByText('e2e', { exact: true })).toBeVisible();
 });
 
-test('recipe wording is chosen in a sheet and named on its row', async ({ page }) => {
+/** Austrian wording is gone (→ plan 44, DECISIONS #317): no row, for the owner or anyone. */
+test('Settings has no recipe wording row', async ({ page }) => {
 	await page.goto('/settings');
-	const row = page.getByRole('button', { name: /^Recipe wording/ });
-	await expect(row).toContainText('As written');
-
-	await row.click();
-	await page
-		.getByRole('dialog')
-		.getByRole('button', { name: /^Austrian German/ })
-		.click();
-	await expect(row).toContainText('Austrian German');
-
-	// Back to the default, so other journeys import as written.
-	await row.click();
-	await page
-		.getByRole('dialog')
-		.getByRole('button', { name: /^As written/ })
-		.click();
-	await expect(row).toContainText('As written');
+	await expect(page.getByRole('button', { name: /^Version/ })).toBeVisible();
+	await expect(page.getByText('Recipe wording')).toHaveCount(0);
 });
 
 /**

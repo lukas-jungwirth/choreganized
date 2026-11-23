@@ -985,12 +985,27 @@ item sheet [3a]; what differs is what a tick does and what counts as shopping.
   `og:image`. A step that lists its own ingredients stays one step with them in its text
   (DECISIONS #151); a one-word step title with no text is not a step. A step whose text arrives
   in pieces (an array, as einfachkochen.de sends it) is one step with its pieces joined by
-  commas (DECISIONS #152). Either reader tidies what it found (DECISIONS #159): a method sent as
-  one HTML string splits at its `<li>`, `<p>` and `<br>`; leftover numbering ("1. ", "Schritt
-  2:") comes off; a heading step ("Für die Soße:") joins the step it heads; a section title among
-  the ingredients is dropped; an ingredient the site split on its own comma ("200 ml Milch (1" ·
+  commas (DECISIONS #152). Either reader tidies what it found (DECISIONS #159, #322): a method
+  sent as one HTML string splits at its `<li>`, `<p>` and `<br>`; leftover numbering ("1. ",
+  "Schritt 2:") comes off; template code a site left in a step goes (`{{ link(…, "Lasagneblätter")
+}}` → "Lasagneblätter"; hellofresh's portion variants "1 EL [1,5 EL | 2 EL] Öl*" → "1 EL Öl");
+  prices ("($0.36)"), footnotes ("(Note 1)") and WP Recipe Maker's "(, finely chopped)" come out
+  of an ingredient line; an ingredient the site split on its own comma ("200 ml Milch (1" ·
   "8 % Fett)") is one line again. A card without a method takes it from the recipe plugin's own
-  markup on the page (`e-instructions`, Jetpack, WP Recipe Maker, Tasty, Mediavine).
+  markup on the page (`e-instructions`, Jetpack, WP Recipe Maker, Tasty, Mediavine). A
+  `totalTime` written in words ("5 hours 45 minutes") is read. A card with no steps and the
+  whole recipe in one "ingredient" (cookingcatrin.at) is no card: the page takes the no-card road.
+- **Parts** (→ plans 43, 44): the readers keep where a dish's parts start, as each line's and
+  each step's `section`. Steps: a `HowToSection`'s name, or a heading step ("Für die Soße:",
+  "Karottenkuchen") that names the steps after it instead of being one. Ingredients: a heading
+  row in the card ("Für den Teig:", "KATSU CURRY SAUCE"), else the page's own markup when it
+  agrees row for row with the card: WP Recipe Maker and Tasty Recipes groups, or a table per
+  part with its heading (chefkoch.de, gutekueche.at, servus.com, kochbar.de). A name is tidied
+  ("FÜR DIE BOLOGNESESAUCE" → "Bolognesesauce", at most 40 characters), and one part around
+  everything ("Zubereitung") is no part. A card opens in the editor with its parts, which Save
+  keeps (the editor's hidden fields of plan 43), with or without Improve with AI (unless
+  household instructions changed its rows); a page read by the model without a card gets parts
+  from plan 44's second PR.
 - **Improve with AI** (→ plan 22) — a switch under the link field, shown only when AI features are
   set up. **Off until someone turns it on**, then remembered on that device (turning it on is the
   go-ahead a paid call needs; a first shared link never spends one). The share sheet honours it
@@ -1015,7 +1030,9 @@ item sheet [3a]; what differs is what a tick does and what counts as shopping.
 - **Fetching is guarded** (the server fetches a user-supplied URL): `http(s)` only,
   loopback / private / link-local hosts refused _before any request_ — including an IPv4 one
   wrapped in IPv6 (`[::ffff:127.0.0.1]`, NAT64, 6to4) — and re-checked on every redirect hop,
-  redirects capped (~5), ~10 s timeout, ~3 MB page cap, `text/html` only. Each failure has its
+  redirects capped (~5), ~10 s timeout, ~3 MB page cap, `text/html` only. The request says
+  what it is (a generic `Mozilla/5.0 (compatible; recipe-importer)`, DECISIONS #322): claiming
+  to be Chrome is what Cloudflare challenged. Each failure has its
   own translated message — unreachable · blocked · **refused** (the site turns apps away:
   401/402/403/429 or a Cloudflare challenge — "open it in your browser and copy the recipe", with
   links to the text and photo modes when AI is set up) · not a page · too large · no recipe
@@ -1394,16 +1411,9 @@ Reached from Home's gear (→ §2), and its back chevron returns to Home.
   - **Household instructions** (→ plan 22, once a provider is set up): one standing line, up to
     300 characters ("we're vegetarian; use metric units"), applied to every AI import on top of
     whatever is typed for one recipe. Owner sets it; the import screen shows it.
-- **Recipe wording** (→ plan 24, owner sets; members see the row read-only): **As written**
-  (default) or **Austrian German**. With Austrian German, a German recipe imported from then on
-  uses the Austrian words — Sahne → Obers, saure Sahne → Sauerrahm, Quark → Topfen, Hackfleisch
-  → Faschiertes, Kartoffeln → Erdäpfel, Tomaten → Paradeiser, Aprikosen → Marillen, … — from a
-  **fixed list** in the app (not editable in v1). With AI the model rewrites the whole recipe in
-  Austrian German and gets the grammar right ("das Obers"); without AI only the **ingredient
-  names** are swapped, whole words only ("Sahnejoghurt" stays), because a word swap inside a
-  sentence would break its articles. Recipes in other languages, and saved recipes, are never
-  touched. Either way cook mode still underlines a step's "Sahne" for an "Obers" row: each pair
-  is a synonym for the step matcher (§4.4), whatever the setting.
+- ~~**Recipe wording**~~ (plan 24) was **removed by plan 44** (DECISIONS #317): it rewrote
+  ingredient names after the import, so the list said "Obers" where the steps said "Sahne". An
+  import keeps the site's words. Recipes saved with it keep their names.
 - **About**: **Send feedback** → sheet — a **bug** or an **idea**, in your own words, in any
   language, up to 2000 characters. The sheet says what travels with it _before_ you send, and
   says it accurately: **the repository is public**, so the issue carries the words, the app
@@ -1475,8 +1485,8 @@ timezone, so January reads "Jänner" (→ [DECISIONS #93](DECISIONS.md)). Every 
   added (→ [DECISIONS #136](DECISIONS.md)). The three starter stores and the three "popular
   starters" are written in the language of whoever created them, and are theirs to rename.
   The language switch never rewrites any of it. What a household **chooses** for its own
-  imports is a different thing: its recipe wording (§6, plan 24) and its AI instructions (§4.7)
-  shape a recipe once, as it is imported — never one already saved.
+  imports is a different thing: its AI instructions (§4.7) shape a recipe once, as it is
+  imported — never one already saved. (Plan 24's recipe wording is gone, → §6.)
 - **Units are stored canonically and shown per language** — `tbsp` reads "tbsp" or "EL", `pcs`
   reads "pcs" or "Stk.". A recipe typed in either language parses to the same rows.
 - **Notifications** go to a device, so they use the recipient's own language: their explicit
