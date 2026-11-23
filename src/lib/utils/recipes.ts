@@ -136,7 +136,43 @@ export type RecipePrefill = {
 	ingredientLines: string[];
 	steps: StepInput[];
 	photo: { path: string; preview: string } | null;
+	/**
+	 * Tags and a diet the import suggests (→ plan 41): read off the page's own
+	 * card, picked by the AI, or both. They open ticked, marked as suggestions,
+	 * and are saved only by Save. Absent or null: nothing suggested.
+	 */
+	suggested?: TagSuggestion | null;
 };
+
+/** Suggested tags and diet, and where they came from — the form says which. */
+export type TagSuggestion = {
+	tags: RecipeTag[];
+	diet: RecipeDiet | null;
+	from: 'page' | 'ai' | 'both';
+};
+
+/**
+ * A page's suggestion and the AI's, together: the page's word stands, group by
+ * group, and the AI's fills only the groups the page said nothing about
+ * (→ plan 41). Null when neither suggests anything.
+ */
+export function mergeSuggestions(
+	page: TagSuggestion | null | undefined,
+	ai: TagSuggestion | null | undefined
+): TagSuggestion | null {
+	if (!page) return ai ?? null;
+	if (!ai) return page;
+
+	const group = (tags: RecipeTag[], prefix: string) => tags.filter((tag) => tag.startsWith(prefix));
+	const pick = (prefix: string) =>
+		group(page.tags, prefix).length ? group(page.tags, prefix) : group(ai.tags, prefix);
+	const tags = readRecipeTags([...pick('meal:'), ...pick('kind:'), ...pick('free:')]);
+	const diet = page.diet ?? ai.diet;
+
+	const fromAi = tags.some((tag) => !page.tags.includes(tag)) || (!page.diet && diet !== null);
+	const fromPage = page.tags.length > 0 || page.diet !== null;
+	return { tags, diet, from: fromAi && fromPage ? 'both' : fromAi ? 'ai' : 'page' };
+}
 
 /** A step as a page's recipe card gives it: text, and nothing worked out about it. */
 export function plainStep(text: string): StepInput {

@@ -13,7 +13,9 @@ import {
 	duplicateRecipe,
 	getRecipe,
 	listRecipes,
+	listUntaggedRecipes,
 	setFavourite,
+	setRecipeTags,
 	updateRecipe
 } from '$lib/server/services/recipes';
 import type { RecipeTag } from '$lib/utils/recipe-tags';
@@ -193,5 +195,64 @@ describe('the library list', () => {
 		plan(householdId, owner.id, TODAY, id);
 
 		assert.equal(listRecipes(householdId, { today: TODAY })[0].lastPlanned, TODAY);
+	});
+});
+
+describe('the sorting pass (→ plan 41)', () => {
+	it('lists recipes with no tag and no diet, newest first, with their ingredient names', () => {
+		const { householdId, owner } = makeHousehold();
+		createRecipe(householdId, owner.id, soup());
+		createRecipe(householdId, owner.id, soup({ name: 'Diet only', tags: [], diet: 'meat' }));
+		createRecipe(
+			householdId,
+			owner.id,
+			soup({ name: 'Tag only', tags: ['kind:soup'], diet: null })
+		);
+		const bare = createRecipe(householdId, owner.id, soup({ name: 'Bare', tags: [], diet: null }));
+
+		assert.deepEqual(listUntaggedRecipes(householdId), [
+			{
+				id: bare,
+				name: 'Bare',
+				imagePath: null,
+				timeMinutes: 40,
+				ingredients: ['Hokkaido pumpkin', 'coconut milk', 'lemon']
+			}
+		]);
+	});
+
+	it('never lists another household’s', () => {
+		const a = makeHousehold();
+		const b = makeHousehold();
+		createRecipe(b.householdId, b.owner.id, soup({ tags: [], diet: null }));
+		assert.deepEqual(listUntaggedRecipes(a.householdId), []);
+	});
+
+	it('saves one recipe’s tags and diet, and only in its own household', () => {
+		const a = makeHousehold();
+		const b = makeHousehold();
+		const id = createRecipe(a.householdId, a.owner.id, soup({ tags: [], diet: null }));
+
+		assert.equal(setRecipeTags(b.householdId, id, ['kind:soup'], 'vegan'), 'gone');
+		assert.deepEqual(getRecipe(a.householdId, id)!.tags, []);
+
+		assert.equal(setRecipeTags(a.householdId, id, ['kind:soup', 'nope'], 'vegan'), 'saved');
+		const recipe = getRecipe(a.householdId, id)!;
+		assert.deepEqual(recipe.tags, ['kind:soup']);
+		assert.equal(recipe.diet, 'vegan');
+		assert.deepEqual(listUntaggedRecipes(a.householdId), []);
+	});
+});
+
+describe('two people sorting at once (→ plan 41)', () => {
+	it('keeps a housemate’s tags when the card was already tagged', () => {
+		const { householdId, owner } = makeHousehold();
+		const id = createRecipe(householdId, owner.id, soup({ tags: [], diet: null }));
+
+		setRecipeTags(householdId, id, ['meal:dinner', 'kind:main'], null, { onlyUntagged: true });
+		assert.equal(setRecipeTags(householdId, id, [], 'vegetarian', { onlyUntagged: true }), 'kept');
+		const recipe = getRecipe(householdId, id)!;
+		assert.deepEqual(recipe.tags, ['meal:dinner', 'kind:main']);
+		assert.equal(recipe.diet, null);
 	});
 });

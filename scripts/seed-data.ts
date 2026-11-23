@@ -79,3 +79,18 @@ export const SEED_COOKBOOK: SeedCookbookRecipe[] = [
 	{ key: 'bruschetta', name: 'Tomato bruschetta', time: 15, tags: ['meal:snack', 'kind:side', 'free:lactose'], diet: 'vegan', favourite: false, added: 44, cooked: null, ingredients: ['Baguette', 'Tomatoes', 'Garlic', 'Basil'], step: 'Toast the bread 3 min and top with the tomatoes.' }, // prettier-ignore
 	{ key: 'kaiserschmarrn', name: 'Kaiserschmarrn', time: 30, tags: ['meal:lunch', 'meal:snack', 'kind:dessert'], diet: 'vegetarian', favourite: true, added: 50, cooked: 25, ingredients: ['Eggs', 'Flour', 'Milk', 'Raisins'], step: 'Fry the batter, tear it up, caramelise 2 min.' } // prettier-ignore
 ];
+
+/**
+ * Three more `--cookbook` recipes nobody has tagged yet (→ plan 41): what the
+ * library's "Sort your recipes" row counts and the sorting pass shows, one
+ * meat, one vegetarian and one the guess reads as vegetarian (the eggs).
+ * Older than the tagged ones, so they sit at the end of the grid.
+ */
+export const SEED_UNTAGGED: Pick<
+	SeedCookbookRecipe,
+	'key' | 'name' | 'time' | 'added' | 'ingredients' | 'step'
+>[] = [
+	{ key: 'risotto', name: 'Mushroom risotto', time: 40, added: 60, ingredients: ['Risotto rice', 'Mushrooms', 'Parmesan', 'Butter', 'White wine'], step: 'Stir in the stock a ladle at a time, 18 minutes.' }, // prettier-ignore
+	{ key: 'goulash', name: 'Beef goulash', time: 120, added: 62, ingredients: ['Beef shoulder', 'Onions', 'Paprika', 'Tomato paste'], step: 'Braise the beef with the onions for 2 hours.' }, // prettier-ignore
+	{ key: 'fried-rice', name: 'Fried rice', time: 20, added: 64, ingredients: ['Rice', 'Eggs', 'Peas', 'Soy sauce'], step: 'Fry the cold rice 5 min, push aside, scramble the eggs.' } // prettier-ignore
+];

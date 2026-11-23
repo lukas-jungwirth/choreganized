@@ -4463,3 +4463,31 @@ store_id` NULL already means "no memory" (a deleted list), and telling the two a
      and leaf are drawn on the photo but read after the recipe's name ("Shakshuka, 30 min,
      Favourite, Vegetarian"), and the heart has its own token, `--heart`, warmer than
      `--danger`.
+307. **Tags come from the page, the AI, or a guess, and always as a dotted suggestion**
+     (2026-11-23; → plan 41, SPEC §4.3, §4.7). A link import maps the card's `recipeCategory`,
+     `keywords` and `suitableForDiet` through a fixed English + German word list
+     (`utils/recipe-tag-words.ts`), whole words with umlauts folded, so "Salatgurke" is no
+     salad. Meat and fish are never read off a page: sites rarely say so, and "fish" in a
+     keyword list is as often fish sauce. The AI import's schema gets the tag list as an enum,
+     the way units already are. Whatever the source, the chips open ticked with a gold dot and
+     a line naming where they came from, and only Save stores them; the dot itself is never
+     stored. With Improve with AI, the page's word stands per group and the AI fills the rest.
+308. **The sorting pass keeps its state in the URL and stores nothing about itself**
+     (2026-11-23; → plan 41). `?total=` holds how many there were when it started, so the bar
+     fills rather than shrinks; `?skip=` the ids passed over this visit. A skipped recipe is
+     back next visit (the plan said "after the rest"; a URL can't remember across visits, and
+     a stored skip list would be state for a convenience). Next with nothing ticked is a skip,
+     since saving "no tags" would show the same card again.
+309. **The diet guess is a word list, German compounds included, and only a suggestion**
+     (2026-11-23; → `utils/diet-guess.ts`). Meat beats fish beats egg/dairy/honey beats vegan.
+     Most stems match at either end of a word ("Rinderhackfleisch", "Lachsfilet",
+     "Hühnerbrühe"); short or ambiguous ones only whole ("ei", "ham"). Plant milks and butters,
+     "Fleischtomate", lamb's lettuce and shell pasta are named and taken out first; gelatine
+     without meat makes no guess. Wrong guesses cost a tap, so the list stays short and
+     readable rather than complete.
+310. **The AI pre-fill is one button, one call, names and ingredients only** (2026-11-23;
+     → plan 41). It sends the recipes still to sort (at most 50) and nothing else of the
+     household's, so a household that turned AI on for imports isn't surprised by its recipe
+     photos or steps leaving the house. The answer is kept in the page while the cards go by
+     and saved card by card by Next. The plan sheet orders by the chosen meal's tag and never
+     hides a recipe; its quick chips use the library's own filter rules in the browser.

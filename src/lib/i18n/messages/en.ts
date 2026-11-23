@@ -1186,6 +1186,18 @@ export const en = {
 			searchRecipes: 'Search your recipes',
 			/** The radio group of recipes, named for a screen reader. */
 			recipeGroup: 'Recipe',
+			/** The quick chips under the search (→ plan 41). */
+			quick: 'Show only',
+			/** Above the recipes tagged for the chosen meal, and above the rest. */
+			forSlot: {
+				breakfast: 'For breakfast',
+				lunch: 'For lunch',
+				dinner: 'For dinner',
+				snack: 'For a snack'
+			},
+			everythingElse: 'Everything else',
+			/** The quick chips left no recipe. */
+			quickNone: 'No recipe fits these. Tap a chip to take it off.',
 			noMatch: 'No recipe by that name. Cook something not saved instead?',
 			moreMatches: (count: number) => `${count} more match. Keep typing to narrow it down.`,
 			mostRecent: (rest: number) => `Your most recent. Search to reach the other ${rest}.`,
@@ -1229,6 +1241,15 @@ export const en = {
 			free: 'Free from',
 			/** Beside "Diet" in the form: it takes one. */
 			pickOne: 'pick one',
+			/** A dotted chip's name: it was suggested, nobody chose it yet (→ plan 41). */
+			suggestedMark: (name: string) => `${name}, suggested`,
+			/** Under the chips: where the dotted ones came from. */
+			suggestedFrom: {
+				page: 'The dotted ones came from the website. Tap one to change it.',
+				ai: 'The dotted ones are the AI’s suggestion. Tap one to change it.',
+				both: 'The dotted ones came from the website and the AI. Tap one to change it.',
+				guess: 'Dotted: our guess from the ingredients.'
+			},
 			kinds: {
 				main: 'Main',
 				soup: 'Soup',
@@ -1247,6 +1268,33 @@ export const en = {
 				gluten: 'Gluten-free',
 				lactose: 'Lactose-free'
 			}
+		},
+
+		/** "Sort your recipes" — tagging the library one card at a time (→ plan 41). */
+		sort: {
+			title: 'Sort your recipes',
+			back: 'Back to recipes',
+			progress: (done: number, total: number) => `${done} of ${total} done · stop any time`,
+			progressLabel: (done: number, total: number) => `${done} of ${total} recipes sorted`,
+			/** The dashed row at the end of the library. */
+			row: (count: number) =>
+				count === 1 ? '1 recipe has no tags yet' : `${count} recipes have no tags yet`,
+			rowSub: 'Sort them in a minute',
+			rowCta: 'Sort',
+			/** The card's meta: how many ingredients, then the first few by name. */
+			ingredients: (count: number, first: string) =>
+				`${count === 1 ? '1 ingredient' : `${count} ingredients`}: ${first}`,
+			skip: 'Skip',
+			next: 'Next',
+			ai: 'Let the AI suggest tags',
+			aiSub: 'Sends the names and ingredients of the recipes still to sort. You check each one.',
+			aiBusy: 'Asking the AI…',
+			aiDone: (count: number) =>
+				count === 0
+					? 'The AI had nothing to suggest.'
+					: count === 1
+						? 'The AI suggested tags for 1 recipe. Check it as you go.'
+						: `The AI suggested tags for ${count} recipes. Check each as you go.`
 		},
 
 		/** The library's filters (→ plan 40, SPEC §4.3). */

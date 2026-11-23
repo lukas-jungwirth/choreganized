@@ -175,8 +175,26 @@ test('an AI import arrives pinned and timed, adapted as asked, and saves into co
 	const log = await (await page.request.get(`${FAKE_AI}/__requests`)).json();
 	expect(JSON.stringify(log.at(-1).body)).toContain('mit Tofu statt Ei');
 
+	// The AI said what the dish is (→ plan 41): ticked and dotted, from the list only.
+	await expect(page.getByRole('button', { name: 'Breakfast, suggested' })).toHaveAttribute(
+		'aria-pressed',
+		'true'
+	);
+	await expect(page.getByRole('button', { name: 'Vegetarian, suggested' })).toHaveAttribute(
+		'aria-pressed',
+		'true'
+	);
+	await expect(
+		page.getByText('The dotted ones are the AI’s suggestion. Tap one to change it.')
+	).toBeVisible();
+
 	await page.getByRole('button', { name: 'Save recipe' }).click();
 	await expect(page.getByRole('heading', { name: 'Gemini pancakes', level: 1 })).toBeVisible();
+	await expect(page.getByRole('list', { name: 'Tags' }).getByRole('link')).toHaveText([
+		'Breakfast',
+		'Dessert',
+		'Vegetarian'
+	]);
 	await page.getByRole('link', { name: 'Start cook mode' }).click();
 	await page.getByRole('button', { name: 'Next' }).click();
 	await expect(page.getByRole('button', { name: 'Start Pancake · 2:00' })).toBeVisible();
@@ -285,4 +303,44 @@ test.describe('the Settings row in German (#56)', () => {
 		await page.setViewportSize({ width: 360, height: 800 });
 		expect(await labelLines(page, 'Nicht eingerichtet')).toBe(1);
 	});
+});
+
+test('the sorting pass asks the AI once and dots what it suggests (→ plan 41)', async ({
+	page,
+	baseURL
+}) => {
+	await page.goto('/cooking/recipes/new');
+	await page.getByRole('textbox', { name: 'Recipe name' }).fill('AI sorting test');
+	await page.getByRole('textbox', { name: 'Ingredient 1' }).fill('2 Karotten');
+	await page.getByRole('button', { name: 'Save', exact: true }).click();
+	await expect(page.getByRole('heading', { name: 'AI sorting test', level: 1 })).toBeVisible();
+	const recipeUrl = page.url();
+
+	await setUpGemini(page, baseURL!);
+	await page.goto('/cooking/recipes/sort');
+	await page.getByRole('button', { name: /Let the AI suggest tags/ }).click();
+	await expect(
+		page.getByText('The AI suggested tags for 1 recipe. Check it as you go.')
+	).toBeVisible();
+	await expect(page.getByRole('button', { name: 'Dinner, suggested' })).toHaveAttribute(
+		'aria-pressed',
+		'true'
+	);
+	await expect(
+		page.getByText('The dotted ones are the AI’s suggestion. Tap one to change it.')
+	).toBeVisible();
+
+	await page.getByRole('button', { name: 'Next', exact: true }).click();
+	await expect(page.getByRole('heading', { name: 'AI sorting test', level: 2 })).toHaveCount(0);
+
+	await page.goto(recipeUrl);
+	await expect(page.getByRole('list', { name: 'Tags' }).getByRole('link')).toHaveText([
+		'Dinner',
+		'Main',
+		'Vegetarian'
+	]);
+	await page.getByRole('button', { name: 'Recipe options' }).click();
+	await page.getByRole('button', { name: 'Delete recipe' }).click();
+	await page.getByRole('button', { name: 'Delete recipe' }).last().click();
+	await expect(page).toHaveURL(/\/cooking\/recipes$/);
 });

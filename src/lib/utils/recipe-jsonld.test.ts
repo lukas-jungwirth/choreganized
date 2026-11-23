@@ -499,3 +499,41 @@ describe('parseRecipeJsonLd — nothing to import', () => {
 		assert.equal(parseRecipeJsonLd('<script type="application/ld+json">{oops</script>'), null);
 	});
 });
+
+describe('parseRecipeJsonLd — what the page says the dish is (→ plan 41)', () => {
+	it('reads category, keywords and diet, strings, arrays and @id objects alike', () => {
+		const recipe = parseRecipeJsonLd(
+			page({
+				'@type': 'Recipe',
+				name: 'Kürbissuppe',
+				recipeCategory: ['Suppe', 'Hauptspeise'],
+				keywords: 'vegan, schnell, Herbst',
+				suitableForDiet: [
+					{ '@id': 'https://schema.org/VeganDiet' },
+					'https://schema.org/GlutenFreeDiet'
+				],
+				recipeIngredient: ['1 Kürbis'],
+				recipeInstructions: 'Kochen.'
+			})
+		);
+		assert.deepEqual(recipe?.labels, [
+			'Suppe',
+			'Hauptspeise',
+			'vegan, schnell, Herbst',
+			'https://schema.org/VeganDiet',
+			'https://schema.org/GlutenFreeDiet'
+		]);
+	});
+
+	it('is an empty list on a page that says nothing', () => {
+		const recipe = parseRecipeJsonLd(
+			page({
+				'@type': 'Recipe',
+				name: 'X',
+				recipeIngredient: ['1 Ei'],
+				recipeInstructions: 'Kochen.'
+			})
+		);
+		assert.deepEqual(recipe?.labels, []);
+	});
+});

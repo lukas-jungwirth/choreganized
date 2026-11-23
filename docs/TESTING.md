@@ -201,7 +201,8 @@ DECISIONS #287) and screenshotted, unmutated, for the screens a `visual/screens.
 `account: 'guests'`. A fourth, `fullhouse`, is seeded with `--full-house` (a member per
 colour, eight, → DECISIONS #296) for the screens marked `account: 'fullhouse'`; only
 `e2e/full-house.spec.ts` touches it, and it undoes what it does. A fifth, `cookbook`, is
-seeded with `--cookbook` (the recipe-filters sketch's tagged library, → plan 40) for the screens
+seeded with `--cookbook` (the recipe-filters sketch's tagged library and three untagged recipes
+for the sorting pass, → plans 40, 41) for the screens
 marked `account: 'cookbook'`; `e2e/recipe-filters.spec.ts` only reads it — a filter is a URL —
 and does its writing on `owner`. Tests are
 serial (`workers: 1`) because they share a server and, within `e2e`, a household.

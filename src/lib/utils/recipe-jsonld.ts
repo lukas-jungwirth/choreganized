@@ -33,6 +33,12 @@ export type RecipeJsonLd = {
 	/** The first usable image candidate, **unresolved** — the caller makes it
 	 *  absolute and decides whether it's safe to fetch. */
 	image: string | null;
+	/**
+	 * What the page says the dish is — `recipeCategory`, `keywords` and
+	 * `suitableForDiet`, as written — for `tagsFromLabels` to map onto our tags
+	 * (→ plan 41). Decoded and trimmed; a keyword string stays one label.
+	 */
+	labels: string[];
 };
 
 /**
@@ -141,9 +147,37 @@ function mapRecipe(node: Record<string, unknown>): RecipeJsonLd {
 		// `ingredients` is the deprecated spelling some older sites still emit.
 		ingredientLines: tidyIngredientLines(mapLines(node.recipeIngredient ?? node.ingredients)),
 		steps: tidySteps(mapInstructions(node.recipeInstructions)),
-		image: mapImage(node.image)
+		image: mapImage(node.image),
+		labels: mapLabels([node.recipeCategory, node.keywords, node.suitableForDiet])
 	};
 }
+
+/* ── Labels ───────────────────────────────────────────────────────────────── */
+
+/**
+ * Every string in the label fields: plain strings, arrays of them, and the
+ * `{ "@id": "https://schema.org/VeganDiet" }` objects a diet sometimes is.
+ * Capped, because a keyword field is where SEO goes to be long.
+ */
+export function mapLabels(values: unknown[]): string[] {
+	const labels: string[] = [];
+	const walk = (value: unknown, depth: number) => {
+		if (depth > 3 || labels.length >= MAX_LABELS) return;
+		if (typeof value === 'string') {
+			const text = cleanText(value).slice(0, MAX_LABEL_CHARS);
+			if (text) labels.push(text);
+		} else if (Array.isArray(value)) {
+			for (const one of value) walk(one, depth + 1);
+		} else if (isObject(value)) {
+			walk(value['@id'] ?? value.name ?? value['@value'], depth + 1);
+		}
+	};
+	for (const value of values) walk(value, 0);
+	return labels;
+}
+
+const MAX_LABELS = 40;
+const MAX_LABEL_CHARS = 400;
 
 /* ── Time ─────────────────────────────────────────────────────────────────── */
 

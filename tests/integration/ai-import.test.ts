@@ -18,6 +18,8 @@ import {
 	buildRecipePrompt,
 	extractRecipe,
 	improveRecipe,
+	suggestRecipeTags,
+	TAG_SUGGESTION_MAX,
 	type ImportContext
 } from '$lib/server/services/ai-import';
 import type { SourceRecipe } from '$lib/utils/recipe-draft';
@@ -274,5 +276,65 @@ describe('buildRecipePrompt', () => {
 		assert.match(prompt, /°C/);
 		assert.match(prompt, /Keep the recipe in its own language/);
 		assert.doesNotMatch(prompt, /Household instructions/);
+	});
+});
+
+describe('tags for saved recipes (→ plan 41)', () => {
+	const recipes = [
+		{ name: 'Beef goulash', ingredients: ['Beef shoulder', 'Onions'] },
+		{ name: 'Fried rice', ingredients: ['Rice', 'Eggs'] }
+	];
+
+	it('sends names and ingredients only, and keeps the suggestions on the list', async () => {
+		const fake = fakes({
+			gemini: {
+				recipes: [
+					{ index: 0, tags: ['meal:dinner', 'kind:main', 'kind:stew'], diet: 'meat' },
+					{ index: 1, tags: ['meal:lunch'], diet: 'vegetarian' }
+				]
+			}
+		});
+		const result = await suggestRecipeTags([primary], recipes, fake.run);
+
+		assert.deepEqual(
+			[...result.value],
+			[
+				[0, { tags: ['meal:dinner', 'kind:main'], diet: 'meat' }],
+				[1, { tags: ['meal:lunch'], diet: 'vegetarian' }]
+			]
+		);
+		const sent = JSON.stringify(fake.sent[0].request.parts);
+		assert.match(sent, /Beef goulash/);
+		assert.match(sent, /Beef shoulder/);
+		assert.equal(fake.sent[0].request.schemaName, 'recipe_tags');
+	});
+
+	it('hands the backup a turn when the answer is the wrong shape', async () => {
+		const fake = fakes({
+			gemini: 'not an object',
+			anthropic: { recipes: [{ index: 1, tags: [], diet: 'vegan' }] }
+		});
+		const result = await suggestRecipeTags([primary, backup], recipes, fake.run);
+		assert.deepEqual([...result.value], [[1, { tags: [], diet: 'vegan' }]]);
+	});
+
+	it('asks about at most one batch at a time', async () => {
+		const fake = fakes({ gemini: { recipes: [] } });
+		const many = Array.from({ length: TAG_SUGGESTION_MAX + 5 }, (_, i) => ({
+			name: `Recipe ${i}`,
+			ingredients: []
+		}));
+		await suggestRecipeTags([primary], many, fake.run);
+		const asked = JSON.parse(
+			String((fake.sent[0].request.parts[0] as { text: string }).text).replace(
+				'The recipes:\n\n',
+				''
+			)
+		);
+		assert.equal(asked.length, TAG_SUGGESTION_MAX);
+	});
+
+	it('refuses without a connection', async () => {
+		await assert.rejects(suggestRecipeTags([], recipes), AiImportError);
 	});
 });

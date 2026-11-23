@@ -622,6 +622,14 @@ export const SCREENS: Screen[] = [
 		account: 'cookbook',
 		navigate: openPumpkinSoup
 	},
+	// The sorting pass (→ plan 41): the cookbook's first untagged recipe, its
+	// diet guessed from the ingredients and dotted.
+	{
+		name: 'recipe-sort',
+		route: '/(app)/cooking/recipes/sort',
+		path: '/cooking/recipes/sort',
+		account: 'cookbook'
+	},
 	{
 		name: 'recipe-edit-tags',
 		route: '/(app)/cooking/recipes/[id]/edit',

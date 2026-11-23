@@ -24,6 +24,7 @@ import { cleanInstructions } from '$lib/ai';
 import { catalog, type Messages } from '$lib/i18n';
 import { requireMember } from '$lib/server/guards';
 import {
+	cardSuggestion,
 	draftFromCard,
 	importErrorMessage,
 	importPagePhoto,
@@ -51,7 +52,7 @@ import {
 	storeRecipePhoto,
 	uploadErrorMessage
 } from '$lib/server/uploads';
-import { readRecipeForm, type RecipePrefill } from '$lib/utils/recipes';
+import { mergeSuggestions, readRecipeForm, type RecipePrefill } from '$lib/utils/recipes';
 import { applyWording, type RecipeWording } from '$lib/utils/wording';
 import type { Actions, PageServerLoad } from './$types';
 
@@ -185,7 +186,12 @@ async function importLink(event: RequestEvent, ai: 'off' | 'if-set-up' | 'ask') 
 		try {
 			const result = await improveRecipe(connections, page.card, context);
 			return {
-				draft: { ...result.value, photo: await photo },
+				draft: {
+					...result.value,
+					photo: await photo,
+					// The page's own word first; the model's fills what it left out (→ plan 41).
+					suggested: mergeSuggestions(cardSuggestion(page.card), result.value.suggested)
+				},
 				notice: aiNotice(result, context, m)
 			};
 		} catch (cause) {

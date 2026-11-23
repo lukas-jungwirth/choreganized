@@ -16,7 +16,20 @@
  * that reach the children through their recipe — a forged recipe id from
  * another household finds nothing (→ docs/ARCHITECTURE.md "Server patterns").
  */
-import { and, asc, count, desc, eq, inArray, isNotNull, lte, max, or, sql } from 'drizzle-orm';
+import {
+	and,
+	asc,
+	count,
+	desc,
+	eq,
+	inArray,
+	isNotNull,
+	isNull,
+	lte,
+	max,
+	or,
+	sql
+} from 'drizzle-orm';
 import type { CalendarDate } from '$lib/utils/dates';
 import { parseIngredient, RECIPE_QUANTITY_MAX } from '$lib/utils/ingredients';
 import { readRecipeTags, type RecipeDiet, type RecipeTag } from '$lib/utils/recipe-tags';
@@ -696,6 +709,99 @@ function writeTags(tx: Transaction, recipeId: string, tags: readonly string[]): 
 
 	const rows = readRecipeTags(tags).map((tag) => ({ recipeId, tag }));
 	if (rows.length) tx.insert(recipeTags).values(rows).run();
+}
+
+/**
+ * A recipe nobody has tagged yet — no tag and no diet — as the sorting pass
+ * shows it (→ plan 41): enough to recognise it and to guess its diet from.
+ */
+export type UntaggedRecipe = {
+	id: string;
+	name: string;
+	imagePath: string | null;
+	timeMinutes: number | null;
+	/** Ingredient names in recipe order — the diet guess and the AI read these. */
+	ingredients: string[];
+};
+
+/** This household's untagged recipes, newest first like the library. */
+export function listUntaggedRecipes(householdId: string): UntaggedRecipe[] {
+	const tagged = new Set(tagsByRecipe(householdId).keys());
+
+	const rows = db
+		.select({
+			id: recipes.id,
+			name: recipes.name,
+			imagePath: recipes.imagePath,
+			timeMinutes: recipes.timeMinutes
+		})
+		.from(recipes)
+		.where(and(eq(recipes.householdId, householdId), isNull(recipes.diet)))
+		.orderBy(desc(recipes.createdAt), desc(recipes.id))
+		.all()
+		.filter((row) => !tagged.has(row.id));
+
+	if (!rows.length) return [];
+
+	const names = db
+		.select({ recipeId: recipeIngredients.recipeId, name: recipeIngredients.name })
+		.from(recipeIngredients)
+		.where(
+			inArray(
+				recipeIngredients.recipeId,
+				rows.map((row) => row.id)
+			)
+		)
+		.orderBy(asc(recipeIngredients.sortOrder), asc(recipeIngredients.id))
+		.all();
+
+	const byRecipe = new Map<string, string[]>();
+	for (const row of names) {
+		const list = byRecipe.get(row.recipeId);
+		if (list) list.push(row.name);
+		else byRecipe.set(row.recipeId, [row.name]);
+	}
+
+	return rows.map((row) => ({ ...row, ingredients: byRecipe.get(row.id) ?? [] }));
+}
+
+/**
+ * Just the tags and diet of one recipe — the sorting pass's Next (→ plan 41).
+ * `onlyUntagged` leaves a recipe alone that has gained a tag or a diet since
+ * the card was shown (a housemate sorting at the same time): their word stands.
+ * `'gone'` when the recipe isn't this household's.
+ */
+export function setRecipeTags(
+	householdId: string,
+	recipeId: string,
+	tags: readonly string[],
+	diet: RecipeDiet | null,
+	options: { onlyUntagged?: boolean } = {}
+): 'saved' | 'kept' | 'gone' {
+	return db.transaction((tx) => {
+		const recipe = tx
+			.select({ diet: recipes.diet })
+			.from(recipes)
+			.where(and(eq(recipes.id, recipeId), eq(recipes.householdId, householdId)))
+			.get();
+		if (!recipe) return 'gone';
+
+		if (options.onlyUntagged) {
+			const tagged = tx
+				.select({ tag: recipeTags.tag })
+				.from(recipeTags)
+				.where(eq(recipeTags.recipeId, recipeId))
+				.get();
+			if (recipe.diet !== null || tagged) return 'kept';
+		}
+
+		tx.update(recipes)
+			.set({ diet, updatedAt: new Date() })
+			.where(and(eq(recipes.id, recipeId), eq(recipes.householdId, householdId)))
+			.run();
+		writeTags(tx, recipeId, tags);
+		return 'saved';
+	});
 }
 
 /**

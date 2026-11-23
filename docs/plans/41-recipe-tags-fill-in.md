@@ -1,6 +1,6 @@
 # 41 · Recipe tags fill themselves in
 
-**Status: todo.** Second half of Lukas's filter request (2026-11-22). Depends on: **40** (the
+**Status: done (2026-11-23, v0.8.0).** DECISIONS #307–#310. Second half of Lukas's filter request (2026-11-22). Depends on: **40** (the
 tags, the form block and the filters), 13, 20, 22 (AI import), 12 (link import).
 SPEC: §4.2 (plan sheet), §4.3 (library), §4.7 (import) change as described below.
 Design: **`design/sketches/recipe-filters.html`**, phone 4 (the dotted suggestions), phone 6
@@ -97,6 +97,19 @@ learn the two fields; every provider's strict schema mode must still accept the 
   recipe first.
 - **Visual:** the form with suggestions, the sorting pass card, the plan sheet split; en + de.
 
+## As built
+
+- The pass's state is the URL (`?total=` so the bar doesn't shrink, `?skip=`); a skipped
+  recipe simply comes back next visit, not "after the rest" (→ DECISIONS #308).
+- Next with nothing ticked counts as Skip: saving "no tags" would show the card again at once.
+- The chip questions are one component, `RecipeTagChips`, shared by the form's Tags block and
+  the pass; a dotted chip names itself "Vegan, suggested" through `aria-label` (a hidden span
+  inside the flex chip read as "Vegan , suggested").
+- `--cookbook` gained three untagged recipes (risotto, goulash, fried rice) for the pass's
+  screenshot and journeys; the library journeys count 18 now.
+- Link imports with page tags are covered by unit and integration tests, not a journey: the
+  e2e server has no recipe site to fetch.
+
 ## Choices made in this plan (Lukas may change them)
 
 - Suggestions are ticked, not merely offered: an import that says "vegan" usually is.
@@ -105,13 +118,13 @@ learn the two fields; every provider's strict schema mode must still accept the 
 
 ## Acceptance
 
-- [ ] A link import from a page with category and diet data arrives with dotted chips; one
+- [x] A link import from a page with category and diet data arrives with dotted chips; one
       without arrives with none and the block folded.
-- [ ] An AI import (fake provider) arrives with tags from the fixed list only.
-- [ ] The sorting pass tags a library of untagged recipes card by card; the library row
+- [x] An AI import (fake provider) arrives with tags from the fixed list only.
+- [x] The sorting pass tags a library of untagged recipes card by card; the library row
       disappears when it's done; the diet guess is right for the sketch's four examples.
-- [ ] Planning a breakfast lists breakfast recipes first; planning a dinner with no dinner
+- [x] Planning a breakfast lists breakfast recipes first; planning a dinner with no dinner
       tags shows today's list.
-- [ ] SPEC §4.2, §4.3, §4.7 updated; DECISIONS entries for reading page tags (never meat or
+- [x] SPEC §4.2, §4.3, §4.7 updated; DECISIONS entries for reading page tags (never meat or
       fish), the guess's rule, the AI pre-fill as an explicit button, and ordering over hiding.
-- [ ] Version: next minor.
+- [x] Version: next minor.

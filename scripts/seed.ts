@@ -77,6 +77,7 @@ import {
 	SEED_HOUSEMATE_NAME,
 	SEED_COOKBOOK,
 	SEED_RECIPE_NAMES,
+	SEED_UNTAGGED,
 	SEED_CHECKLIST_ITEMS,
 	SEED_CHECKLIST_NAME,
 	SEED_STORE_NAMES,
@@ -690,6 +691,46 @@ const seeded = db.transaction((tx) => {
 					.run();
 			}
 		}
+
+		// …and three nobody has tagged yet, for the sorting pass (→ plan 41).
+		for (const entry of SEED_UNTAGGED) {
+			const recipeId = sid('recipe', `cookbook-${entry.key}`);
+
+			tx.insert(recipes)
+				.values({
+					id: recipeId,
+					householdId,
+					name: entry.name,
+					timeMinutes: entry.time,
+					servings: 4,
+					createdByMemberId: ownerMemberId,
+					createdAt: daysAgo(entry.added, 18)
+				})
+				.onConflictDoNothing()
+				.run();
+
+			tx.insert(recipeIngredients)
+				.values(
+					entry.ingredients.map((name, sortOrder) => ({
+						id: sid('ing', `cookbook-${entry.key}-${sortOrder}`),
+						recipeId,
+						name,
+						sortOrder
+					}))
+				)
+				.onConflictDoNothing()
+				.run();
+
+			tx.insert(recipeSteps)
+				.values({
+					id: sid('step', `cookbook-${entry.key}`),
+					recipeId,
+					text: entry.step,
+					sortOrder: 0
+				})
+				.onConflictDoNothing()
+				.run();
+		}
 	}
 
 	tx.insert(recipeIngredients)
@@ -1257,7 +1298,10 @@ console.log(`Seeded ${databasePath} for ${email}`);
 console.log(`  household  ${seeded.householdName} — ${seeded.members}`);
 console.log('  shopping   3 stores · 10 items (2 already checked off)');
 console.log('  cooking    2 recipes · meals planned for today, tomorrow and the day after');
-if (cookbook) console.log('  cookbook   13 more tagged recipes, 5 with a heart, 10 planned before');
+if (cookbook)
+	console.log(
+		'  cookbook   13 more tagged recipes (5 with a heart, 10 planned before) · 3 untagged'
+	);
 console.log('  tasks      7 tasks (overdue · today · upcoming · undated) · 8 history entries');
 console.log(
 	guests

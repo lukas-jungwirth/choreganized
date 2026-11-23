@@ -43,6 +43,7 @@
 	import Leaf from '@lucide/svelte/icons/leaf';
 	import Plus from '@lucide/svelte/icons/plus';
 	import SlidersHorizontal from '@lucide/svelte/icons/sliders-horizontal';
+	import Tag from '@lucide/svelte/icons/tag';
 	import X from '@lucide/svelte/icons/x';
 	import { untrack } from 'svelte';
 	import type { PageProps } from './$types';
@@ -237,6 +238,18 @@
 			</li>
 		{/each}
 	</ul>
+
+	{#if data.untagged > 0 && !narrowed}
+		<!-- Untagged recipes are invisible to every filter; this is the way in (→ plan 41). -->
+		<a class="sort" href="/cooking/recipes/sort">
+			<Tag size={20} strokeWidth={1.9} aria-hidden="true" />
+			<span class="sort-text">
+				<b>{m.cooking.sort.row(data.untagged)}</b>
+				<small>{m.cooking.sort.rowSub}</small>
+			</span>
+			<span class="sort-cta">{m.cooking.sort.rowCta}</span>
+		</a>
+	{/if}
 {/if}
 
 {#if data.total > 0}
@@ -327,6 +340,46 @@
 	.grid li,
 	.grid li > :global(.card) {
 		height: 100%;
+	}
+
+	/* The last thing on the page, so it keeps clear of the FAB (56px + its 16px gap)
+	   when scrolled to the bottom — its "Sort" sits right under it otherwise. */
+	.sort {
+		display: flex;
+		align-items: center;
+		gap: 11px;
+		margin: 14px 0 72px;
+		padding: 13px 14px;
+		border: 1.5px dashed var(--border-dashed);
+		border-radius: var(--r-block);
+		color: var(--text-2);
+		text-decoration: none;
+	}
+
+	.sort-text {
+		display: flex;
+		flex: 1;
+		flex-direction: column;
+		gap: 2px;
+		min-width: 0;
+	}
+
+	.sort-text b {
+		font-size: var(--fs-15);
+		font-weight: 600;
+		color: var(--ink);
+	}
+
+	.sort-text small {
+		font-size: var(--fs-13);
+		color: var(--text-4);
+	}
+
+	.sort-cta {
+		flex: none;
+		font-size: var(--fs-15);
+		font-weight: 700;
+		color: var(--sage);
 	}
 
 	.nomatch {

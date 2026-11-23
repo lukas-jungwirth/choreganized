@@ -13,7 +13,7 @@
  */
 import { requireMember } from '$lib/server/guards';
 import { isAiEnabled } from '$lib/server/services/ai';
-import { countRecipes, listRecipes } from '$lib/server/services/recipes';
+import { countRecipes, listRecipes, listUntaggedRecipes } from '$lib/server/services/recipes';
 import {
 	applyRecipeFilter,
 	parseRecipeFilter,
@@ -52,6 +52,8 @@ export const load: PageServerLoad = async (event) => {
 		/** Which filters the whole library could use — a group nobody tagged isn't offered. */
 		facets: recipeFacets(library),
 		/** Whether the "Add a recipe" chooser offers the AI options (→ plan 14). */
-		aiEnabled: isAiEnabled(householdId)
+		aiEnabled: isAiEnabled(householdId),
+		/** Recipes with no tag and no diet — the "Sort your recipes" row (→ plan 41). */
+		untagged: listUntaggedRecipes(householdId).length
 	};
 };

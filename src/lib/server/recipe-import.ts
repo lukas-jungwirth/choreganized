@@ -28,6 +28,7 @@ import {
 	type RecipeJsonLd
 } from '$lib/utils/recipe-jsonld';
 import { markedUpSteps, parseRecipeMicrodata } from '$lib/utils/recipe-microdata';
+import { tagsFromLabels } from '$lib/utils/recipe-tag-words';
 import {
 	clampCount,
 	INGREDIENTS_MAX,
@@ -38,7 +39,8 @@ import {
 	RECIPE_TIME_MAX,
 	STEPS_MAX,
 	STEP_TEXT_MAX,
-	type RecipePrefill
+	type RecipePrefill,
+	type TagSuggestion
 } from '$lib/utils/recipes';
 import { storePhotoFromBytes } from './uploads';
 
@@ -166,8 +168,18 @@ export function draftFromCard(card: RecipeJsonLd, photo: RecipePrefill['photo'])
 			.map((line) => line.slice(0, INGREDIENT_LINE_MAX))
 			.slice(0, INGREDIENTS_MAX),
 		steps: card.steps.map((step) => plainStep(step.slice(0, STEP_TEXT_MAX))).slice(0, STEPS_MAX),
-		photo
+		photo,
+		suggested: cardSuggestion(card)
 	};
+}
+
+/**
+ * The tags a page's card names — its category, keywords and diet, mapped
+ * onto our list (→ plan 41). Null when it names none.
+ */
+export function cardSuggestion(card: Pick<RecipeJsonLd, 'labels'>): TagSuggestion | null {
+	const { tags, diet } = tagsFromLabels(card.labels);
+	return tags.length || diet ? { tags, diet, from: 'page' } : null;
 }
 
 /** The page's photo, downloaded and re-encoded — or null, never an error (→ SPEC §4.7). */
