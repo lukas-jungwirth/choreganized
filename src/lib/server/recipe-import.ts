@@ -23,6 +23,7 @@ import { isIPv4, isIPv6 } from 'node:net';
 import type { Messages } from '$lib/i18n';
 import {
 	decodeEntities,
+	isBlobCard,
 	parseRecipeJsonLd,
 	tidySteps,
 	type RecipeJsonLd
@@ -138,7 +139,10 @@ export function readFetchedPage({
 	html: string;
 	finalUrl: string;
 }): RecipePage {
-	const jsonLd = withMarkedUpSteps(parseRecipeJsonLd(html), html);
+	// The blob test after the plugin's steps are in: a one-row card whose method
+	// is in the markup is a real card with a long line, not a recipe box in one row.
+	const read = withMarkedUpSteps(parseRecipeJsonLd(html), html);
+	const jsonLd = read && !isBlobCard(read) ? read : null;
 	const card = withPageSections(jsonLd ?? parseRecipeMicrodata(html), html);
 	const reader = jsonLd ? 'json-ld' : card ? 'microdata' : null;
 	const { text, ogImage } = readableParts(html);

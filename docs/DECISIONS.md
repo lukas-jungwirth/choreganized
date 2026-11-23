@@ -4671,10 +4671,12 @@ Haushaltsheld; recipe import)` (`IMPORT_UA`): the `Mozilla/5.0 (compatible; …)
        heading step names the steps after it. Before, a heading step was glued to the next
        step's text ("Orangensalat: Orangen schälen …", #159); now it leaves the text, which is
        what plan 44 asks of the model too. A heading step is a line ending on a colon (at most
-       15 words, as before) or a title of at most four words with no digit and no sentence end
-       ("Karottenkuchen", kochbar.de); the last step is never a heading. Ingredients: a row
-       ending on a colon, a shouted row ("KATSU CURRY SAUCE") or "Für …"/"For …" with no
-       digit starts a part. Names are tidied by `sectionName`: no colon, no leading "Für die" /
+       15 words, as before), or a bare title of at most four words with no digit and no
+       sentence end ("Karottenkuchen", kochbar.de) but only when the card opens on one and has
+       a second (code review: "Teig kneten" alone in the middle is a step). A row that ends
+       its card or its `HowToSection` is a step, never a heading. Ingredients: a row ending on
+       a colon, a shouted row ("KATSU CURRY SAUCE") or "Für …"/"For …" of at most five words
+       with no digit and no colon inside ("Für die Form: Butter" is butter) starts a part. Names are tidied by `sectionName`: no colon, no leading "Für die" /
        "Zutaten für" / "For the", shouting lowered to sentence case (a word-by-word capital
        would make German verbs nouns), a bracketed remark dropped only when the name is over
        40 characters; "Zutaten", "Zubereitung", "Instructions" and the like are no part, and
@@ -4697,7 +4699,9 @@ Haushaltsheld; recipe import)` (`IMPORT_UA`): the `Mozilla/5.0 (compatible; …)
        change them); a page with no card read by the model has none until the second PR.
      - **Reader fixes from the probe**: `totalTime` in words ("5 hours 45 minutes",
        bonappetit.com); a card with no steps and one row over 200 characters is no card
-       (cookingcatrin.at), in both readers; template leftovers out of steps (gutekueche.at's
+       (cookingcatrin.at), in both readers, judged after a plugin's marked-up method has been
+       added (so a long-lined card whose steps are in the markup stays a card); template
+       leftovers out of steps and ingredient lines (gutekueche.at's
        `{{ link(…, "Lasagneblätter") }}`, hellofresh's `[1,5 EL | 2 EL]` variants and the
        pantry asterisk); prices, "(Note 1)", "- Note 3", WPRM's "(, …)" brackets, brackets
        doubled once a footnote is gone, and asterisks out of ingredient lines; `&Uuml;`,

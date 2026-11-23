@@ -129,7 +129,6 @@ export const load: PageServerLoad = (event) => {
 		// key itself (→ SPEC §6, plan 20). Members see it read-only; only the owner
 		// can change it.
 		ai: getAiStatus(householdId),
-		// How imported German recipes are worded (→ plan 24); null = as written.
 		/**
 		 * Settings → Expenses (→ SPEC §11.10), and the reader's own balance for the
 		 * leave confirm, which says what leaving would leave behind (→ §11.13).

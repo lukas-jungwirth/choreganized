@@ -81,7 +81,6 @@ export function parseRecipeJsonLd(html: string): RecipeJsonLd | null {
 		for (const node of ldNodes(data)) {
 			if (!isType(node, 'Recipe')) continue;
 			const recipe = mapRecipe(node);
-			if (isBlobCard(recipe)) continue;
 			if (cardSize(recipe) > (best ? cardSize(best) : 0)) best = recipe;
 		}
 	}
@@ -364,7 +363,7 @@ function collectSteps(value: unknown, into: SectionedText[], section: string | n
 	if (isObject(value)) {
 		if (isType(value, 'HowToSection')) {
 			const title = asString(value.name);
-			collectSteps(value.itemListElement, into, (title && sectionName(title)) ?? section);
+			collectSteps(value.itemListElement, into, (title ? sectionName(title) : null) ?? section);
 			return;
 		}
 		// `name` is a step's title ("Eier"), not its instruction — a lone word is no step.
@@ -419,10 +418,17 @@ export function tidySteps(steps: (string | SectionedText)[]): {
 	const tidy: SectionedText[] = [];
 	// A heading names the steps after it until the card's own part changes.
 	let heading: { name: string | null; under: string | null } | null = null;
+	// A bare title ("Karottenkuchen") is a heading only when the card opens on one
+	// and has another: one short step alone ("Teig kneten") is an instruction.
+	const titles = rows.filter((row) => isTitle(row.text));
+	const titled = titles.length >= 2 && titles[0] === rows[0];
 
 	rows.forEach((row, at) => {
 		if (heading && heading.under !== row.section) heading = null;
-		if (at < rows.length - 1 && isHeading(row.text)) {
+		// A heading heads something in its own part; the last row of a part is a step.
+		const headsNext = at < rows.length - 1 && rows[at + 1].section === row.section;
+		const isPart = isColonHeading(row.text) || (titled && isTitle(row.text));
+		if (headsNext && isPart) {
 			heading = { name: sectionName(row.text), under: row.section };
 			return;
 		}
@@ -440,13 +446,17 @@ const STEP_NUMBER = /^(?:(?:schritt|step)\s*\d{1,2}\s*[:.)–-]?\s*|\d{1,2}[.)]\
 
 /**
  * A section title: ends on a colon and is short enough to be a label, not an
- * instruction; or a few words with no number and no sentence end
- * ("Karottenkuchen", "Frischkäse-Frosting und Finish", kochbar.de).
+ * instruction. `isTitle`: a few words with no number and no sentence end
+ * ("Karottenkuchen", "Frischkäse-Frosting und Finish", kochbar.de), a heading
+ * only in the company `tidySteps` asks for.
  */
-function isHeading(line: string): boolean {
+function isColonHeading(line: string): boolean {
+	return line.endsWith(':') && line.split(/\s+/).length <= HEADING_MAX_WORDS;
+}
+
+function isTitle(line: string): boolean {
 	const words = line.split(/\s+/).length;
-	if (line.endsWith(':')) return words <= HEADING_MAX_WORDS;
-	return words <= TITLE_MAX_WORDS && !/\d/.test(line) && !/[.!?;,)]$/.test(line);
+	return words <= TITLE_MAX_WORDS && !/\d/.test(line) && !/[.!?:;,)]$/.test(line);
 }
 
 const HEADING_MAX_WORDS = 15;
@@ -518,7 +528,9 @@ function isIngredientHeading(line: string): boolean {
 	const letters = line.replace(/[^\p{L}]/gu, '');
 	const shouted =
 		letters.length >= 4 && letters === letters.toUpperCase() && letters !== letters.toLowerCase();
-	return shouted || (/^(?:für|for)\s/i.test(line) && line.split(/\s+/).length <= 5);
+	// "Für die Form: Butter" is butter, not a heading: a colon inside names the thing after it.
+	const titled = /^(?:für|for)\s/i.test(line) && !line.includes(':');
+	return shouted || (titled && line.split(/\s+/).length <= 5);
 }
 
 /**
@@ -530,7 +542,7 @@ function isIngredientHeading(line: string): boolean {
  * Exported for the tests.
  */
 export function tidyIngredientLine(line: string): string {
-	let text = line
+	let text = stripTemplateLeftovers(line)
 		.replace(/\s*\((?:[$€£]\s?\d+(?:[.,]\d{1,2})?|\d+(?:[.,]\d{1,2})?\s?[$€£])\)/g, '')
 		.replace(/\s*\((?:see\s+)?notes?\s*\d+\)/gi, '')
 		.replace(/\s*[-–]\s*notes?\s*\d+\b/gi, '')

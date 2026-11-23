@@ -13,7 +13,7 @@
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
 import { describe, it } from 'vitest';
-import { parseRecipeJsonLd } from './recipe-jsonld.ts';
+import { isBlobCard, parseRecipeJsonLd } from './recipe-jsonld.ts';
 
 /**
  * One ingredient: a Recipe with no rows at all is no recipe (a teaser card), so
@@ -423,8 +423,6 @@ describe('parseRecipeJsonLd — tidying what sites send', () => {
 					'Für die Soße:',
 					'Butter schmelzen.',
 					'Mehl einrühren.',
-					'Karottenkuchen',
-					'Backen.',
 					'Zum Servieren:'
 				]
 			})
@@ -433,16 +431,21 @@ describe('parseRecipeJsonLd — tidying what sites send', () => {
 			'Wasser aufsetzen.',
 			'Butter schmelzen.',
 			'Mehl einrühren.',
-			'Backen.',
 			'Zum Servieren:'
 		]);
-		assert.deepEqual(recipe?.stepSections, [
-			null,
-			'Soße',
-			'Soße',
-			'Karottenkuchen',
-			'Karottenkuchen'
-		]);
+		assert.deepEqual(recipe?.stepSections, [null, 'Soße', 'Soße', 'Soße']);
+	});
+
+	it('makes bare titles parts when the card opens on one and has another (kochbar.de)', () => {
+		const recipe = parseRecipeJsonLd(
+			page({
+				'@type': 'Recipe',
+				name: 'x',
+				recipeInstructions: ['Karottenkuchen', 'Backen.', 'Frosting und Finish', 'Bestreichen.']
+			})
+		);
+		assert.deepEqual(recipe?.steps, ['Backen.', 'Bestreichen.']);
+		assert.deepEqual(recipe?.stepSections, ['Karottenkuchen', 'Frosting und Finish']);
 	});
 
 	it('makes a section title in the ingredients the part of the rows after it (→ plan 44)', () => {
@@ -545,12 +548,50 @@ describe('parseRecipeJsonLd — tidying what sites send', () => {
 		assert.equal(time('soon'), null);
 	});
 
-	it('reads a card with no steps and the whole recipe in one row as no card (cookingcatrin.at)', () => {
+	it('calls a card with no steps and the whole recipe in one row a blob (cookingcatrin.at)', () => {
 		const blob = `Zutaten ${'1 kg speckige Erdäpfel 50 ml Essig 500 ml heißes Wasser '.repeat(6)}`;
-		assert.equal(
-			parseRecipeJsonLd(page({ '@type': 'Recipe', name: 'x', recipeIngredient: [blob] })),
-			null
+		assert.ok(isBlobCard({ ingredientLines: [blob], steps: [] }));
+		assert.ok(!isBlobCard({ ingredientLines: [blob], steps: ['Kochen.'] }));
+		assert.ok(!isBlobCard({ ingredientLines: ['1 kg Erdäpfel'], steps: [] }));
+	});
+
+	it('keeps a step-shaped short line as a step unless the card opens on titles', () => {
+		const recipe = (recipeInstructions: string[]) =>
+			parseRecipeJsonLd(page({ '@type': 'Recipe', name: 'x', ...ROWS, recipeInstructions }));
+		const one = recipe(['Mehl und Eier verrühren.', 'Teig kneten', '30 Minuten ruhen lassen.']);
+		assert.deepEqual(one?.steps, [
+			'Mehl und Eier verrühren.',
+			'Teig kneten',
+			'30 Minuten ruhen lassen.'
+		]);
+		assert.deepEqual(one?.stepSections, [null, null, null]);
+	});
+
+	it('keeps a heading-shaped row that ends a HowToSection as a step', () => {
+		const recipe = parseRecipeJsonLd(
+			page({
+				'@type': 'Recipe',
+				name: 'x',
+				...ROWS,
+				recipeInstructions: [
+					{ '@type': 'HowToSection', name: 'A', itemListElement: ['Mix.', 'Zum Garnieren:'] },
+					{ '@type': 'HowToSection', name: '', itemListElement: ['Bake.'] }
+				]
+			})
 		);
+		assert.deepEqual(recipe?.steps, ['Mix.', 'Zum Garnieren:', 'Bake.']);
+		assert.deepEqual(recipe?.stepSections, ['A', 'A', null]);
+	});
+
+	it('keeps "Für die Form: Butter" as butter, and takes template code out of a line', () => {
+		const recipe = parseRecipeJsonLd(
+			page({
+				'@type': 'Recipe',
+				name: 'x',
+				recipeIngredient: ['200 g Mehl', 'Für die Form: Butter', '1 EL [1,5 EL | 2 EL] Öl*']
+			})
+		);
+		assert.deepEqual(recipe?.ingredientLines, ['200 g Mehl', 'Für die Form: Butter', '1 EL Öl']);
 	});
 
 	it('puts back an ingredient the site split on its own comma', () => {

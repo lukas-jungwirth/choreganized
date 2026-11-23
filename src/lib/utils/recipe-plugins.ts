@@ -58,7 +58,12 @@ function sectionsFor(groups: IngredientGroup[], lines: string[]): (string | null
 		// Rows inside a part may come in another order than the card's (gutekueche.at
 		// sorts its card alphabetically), so a row is checked against its whole part.
 		const words = wordsOf(lines.slice(at, at + group.rows.length).join(' '));
-		if (!group.rows.every((row) => [...wordsOf(row)].some((word) => words.has(word)))) return null;
+		// A row with no word to compare ("2") cannot disagree.
+		const fits = (row: string) => {
+			const own = [...wordsOf(row)];
+			return own.length === 0 || own.some((word) => words.has(word));
+		};
+		if (!group.rows.every(fits)) return null;
 		sections.push(...group.rows.map(() => group.name));
 		at += group.rows.length;
 	}
@@ -71,7 +76,7 @@ function wordsOf(text: string): Set<string> {
 		text
 			.toLowerCase()
 			.split(/[^\p{L}]+/u)
-			.filter((word) => word.length >= 3)
+			.filter((word) => word.length >= 2)
 	);
 }
 

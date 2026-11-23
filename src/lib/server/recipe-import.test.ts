@@ -79,6 +79,25 @@ describe('htmlToReadableText', () => {
 });
 
 /** Which reader found the card — what `npm run import:probe` reports (→ plan 25). */
+describe('readFetchedPage — a card with the whole recipe in one row (→ plan 44)', () => {
+	const blob = `Zutaten ${'1 kg speckige Erdäpfel 50 ml Essig 500 ml heißes Wasser '.repeat(6)}`;
+	const card = `<script type="application/ld+json">${JSON.stringify({
+		'@type': 'Recipe',
+		name: 'Erdäpfelsalat',
+		recipeIngredient: [blob]
+	})}</script>`;
+
+	it('is no card, so a model reads the page (cookingcatrin.at)', () => {
+		assert.equal(readFetchedPage({ html: card, finalUrl: 'https://x.test/' }).card, null);
+	});
+
+	it('is a card when the plugin markup has its method', () => {
+		const html = `${card}<div class="wprm-recipe-instructions"><li>Erdäpfel kochen.</li></div>`;
+		const page = readFetchedPage({ html, finalUrl: 'https://x.test/' });
+		assert.deepEqual(page.card?.steps, ['Erdäpfel kochen.']);
+	});
+});
+
 describe('readFetchedPage', () => {
 	const read = (body: string) =>
 		readFetchedPage({ html: `<html><body>${body}</body></html>`, finalUrl: 'https://x.test/r' });

@@ -60,6 +60,13 @@ describe('pageIngredientSections', () => {
 		assert.equal(pageIngredientSections(html, LINES), null);
 	});
 
+	it('takes a row of short words ("1 Ei", "2 EL Öl") as fitting its part', () => {
+		const lines = ['200 g Mehl', '1 Ei', '2 EL Öl', '100 g Zucker'];
+		const html = `<h3>Teig</h3><table><tr><td>200 g Mehl</td></tr><tr><td>1 Ei</td></tr></table>
+			<h3>Fülle</h3><table><tr><td>2 EL Öl</td></tr><tr><td>100 g Zucker</td></tr></table>`;
+		assert.deepEqual(pageIngredientSections(html, lines), ['Teig', 'Teig', 'Fülle', 'Fülle']);
+	});
+
 	it('is null when no group has a name', () => {
 		const html = `<table><tr><td>250 g Mehl</td></tr><tr><td>2 Eier</td></tr></table>
 			<table><tr><td>500 g Topfen</td></tr><tr><td>100 g Zucker</td></tr></table>`;
