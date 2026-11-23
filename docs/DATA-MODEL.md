@@ -174,8 +174,12 @@ user ─┬─ session / account / verification        (Better Auth)
 ### `recipes` / `recipe_ingredients` / `recipe_steps` / `recipe_step_ingredients` / `recipe_tags`
 
 - Ingredients are structured (name, quantity?, unit?) but _entered_ freeform ("400 g pasta")
-  and parsed leniently (`src/lib/utils/ingredients.ts`, plan 07): `/^([\d.,½¼¾\/]+)?\s*([a-zA-Z]+)?\s+(.+)$/`-ish
-  with a known-units whitelist; on no match, everything is the name.
+  and parsed leniently (`src/lib/utils/ingredients.ts` on top of the shared reader
+  `src/lib/utils/amounts.ts`, plans 07 and 42); on no match, everything is the name.
+  `unit` holds one of the eight canonical units (`g`, `kg`, `ml`, `L`, `pcs`, `pack`, `tbsp`,
+  `tsp`) **or a counting word as the line wrote it** ("Zehen", "Bund", "Dose", "Prise";
+  → [DECISIONS #313](DECISIONS.md)). A counting word is shown as stored, never translated,
+  and compared by its key (`measureKey`: "Zehe" and "Zehen" are the same measure).
 - Steps are plain text, ordered by `sortOrder`. A step **may carry its own timer**
   (`timer_seconds` + an optional `timer_label`, migration 0014, → plan 21, DECISIONS #147) —
   one per step, set in the form or by an import. `NULL` (every step written before it, and the

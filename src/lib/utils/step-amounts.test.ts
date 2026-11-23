@@ -18,7 +18,8 @@ const rows: Row[] = [
 	{ id: 'mehl', name: 'Mehl', quantity: 500, unit: 'g' },
 	{ id: 'oil', name: 'Olivenöl', quantity: 3, unit: 'tbsp' },
 	{ id: 'milk', name: 'milk', quantity: 0.5, unit: 'L' },
-	{ id: 'salt', name: 'Salz', quantity: null, unit: null }
+	{ id: 'salt', name: 'Salz', quantity: null, unit: null },
+	{ id: 'garlic', name: 'Knoblauch', quantity: 3, unit: 'Zehen' }
 ];
 
 /** What cook mode does: read the step against the scaled rows, then scale its amounts. */
@@ -46,6 +47,14 @@ describe('scaleStepAmounts — what changes', () => {
 	it('scales a pinned share that matches what the step was pinned with', () => {
 		const share: StepUse[] = [{ ingredientId: 'oil', quantity: 1 }];
 		assert.equal(cook('1 EL Olivenöl in die Pfanne.', 2, share), '[2 EL] Olivenöl in die Pfanne.');
+	});
+
+	it('scales an amount counted in a counting word, however the step inflects it', () => {
+		// The row says "3 Zehen" (plan 42); the step may say "Zehe" or "Zehen".
+		assert.equal(cook('2 Zehen Knoblauch hacken.', 2), '[4 Zehen] Knoblauch hacken.');
+		assert.equal(cook('1 Zehe Knoblauch pressen.', 2), '[2 Zehe] Knoblauch pressen.');
+		// A different counting word measures something else: left alone.
+		assert.equal(cook('1 Knolle Knoblauch halbieren.', 2), '1 Knolle Knoblauch halbieren.');
 	});
 
 	it('leaves the recipe as written at the servings it was written for', () => {

@@ -60,9 +60,18 @@
 		if (!open) onclose();
 	});
 
+	/**
+	 * The eight units, and the row's own counting word when it has one ("Zehen",
+	 * "Bund", plan 42): the line wrote it, so the sheet must be able to keep it.
+	 */
+	const countingWord = untrack(() =>
+		parsed?.unit && !(RECIPE_UNITS as readonly string[]).includes(parsed.unit) ? parsed.unit : null
+	);
+
 	const unitOptions = $derived([
 		{ value: '', label: m.cooking.form.unitNone },
-		...RECIPE_UNITS.map((value) => ({ value, label: unitLabel(value, m.units.labels) }))
+		...RECIPE_UNITS.map((value) => ({ value, label: unitLabel(value, m.units.labels) })),
+		...(countingWord ? [{ value: countingWord, label: countingWord }] : [])
 	]);
 
 	/**
