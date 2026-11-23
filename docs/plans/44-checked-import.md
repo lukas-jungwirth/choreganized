@@ -137,8 +137,14 @@ All of it is plain code and unit-tested. `source` is what the model was sent.
 - `ingredient` must point at a row that exists (re-pointed past dropped rows, as today).
 - `phrase` must stand in that step's text as whole words. If it does not, the link stays and
   the phrase is cleared.
-- `amountPhrase` must stand in the step's text, be read by the shared reader, carry the row's
-  unit (or none where the row has none) and not exceed the row's amount. Otherwise cleared.
+- `amountPhrase` must stand **beside the linked phrase**, found by the same function cook mode
+  uses to rewrite it (`step-links.ts`, the review of plan 43, 2026-11-23): the nearest
+  occurrence before the phrase with at most three words and no digit or sentence end in
+  between ("2 große Eier", "100 g weiche Butter"), else the nearest after it ("Karotten
+  (400 g)"). It must also be read by the shared reader, carry the row's unit (or none where
+  the row has none) and not exceed the row's amount. Otherwise cleared: a step whose number
+  stays as written is acceptable, a number rewritten in the wrong place ("Nach 5 Min. die 5
+  reifen Tomaten" doubling the minutes) is not.
 - Cross-check: where the step's text contains an ingredient's exact name as a whole word and
   the model linked nothing to it, the link is added (the old matcher, exact names only).
 - The amounts the steps give one ingredient may add up to its total at most ("200 g Karotten"
