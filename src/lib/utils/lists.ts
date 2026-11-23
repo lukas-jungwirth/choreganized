@@ -14,7 +14,7 @@
  *   the load reads, so a folded card is folded in the first paint too.
  */
 // Written with its extension so `node --test` can load this module (→ ingredients.ts).
-import { unitFromWord } from './ingredients.ts';
+import { fusedOf as fusedParts, isTimes, markerOf, measureOf, numberOf } from './amounts.ts';
 import { QUANTITY_MAX, suggestionKey } from './shopping.ts';
 
 /** The New list sheet's twelve icons [L6], in the order it shows them. */
@@ -149,9 +149,6 @@ export type KnownKeys = { has(key: string): boolean };
 /** The units a shopping row may wear. `tbsp`/`tsp` are recipe units (plan 37). */
 const SHOPPING_UNITS = new Set(['g', 'kg', 'ml', 'L', 'pcs', 'pack']);
 
-/** The Austrian deli counter: a Deka is ten grams ("20 dag Extrawurst" → 200 g). */
-const DEKA = new Set(['dag', 'dkg', 'deka']);
-
 /**
  * Words after which a trailing number is a size, not an amount: "Windeln Gr. 4",
  * "Sonnencreme LSF 30", "Kaffee Nr 3" (plan 37 rule 7).
@@ -176,66 +173,23 @@ const SIZE_WORDS = new Set([
 	'din'
 ]);
 
-const GLYPHS: Record<string, number> = {
-	'½': 0.5,
-	'⅓': 1 / 3,
-	'⅔': 2 / 3,
-	'¼': 0.25,
-	'¾': 0.75,
-	'⅛': 0.125
-};
-const GLYPH = `[${Object.keys(GLYPHS).join('')}]`;
-
-const WHOLE = /^\d+$/;
-const DECIMAL = /^\d+[.,]\d+$/;
-const SLASH = /^(\d+)\/(\d+)$/;
-const MIXED = new RegExp(`^(\\d*)(${GLYPH})$`);
-/** "500g", "2l", "1,5kg", "3stk", "15dkg", "2pkg.": a number fused with a unit. */
-const FUSED = /^(\d+(?:[.,]\d+)?)(\p{L}+\.?)$/u;
-/** "3x", "x3", "3×": a count marker in one token. */
-const MARKER = /^(?:(\d+)[x×]|[x×](\d+))$/i;
-const X = /^[x×]$/i;
-
 type Amount = { quantity: number; unit: string | null };
 
-/** A unit a shopping row may wear, and what the number is multiplied by. */
-function unitOf(word: string): { unit: string; factor: number } | null {
-	const lower = word.toLowerCase();
-	if (DEKA.has(lower.replace(/\.$/, ''))) return { unit: 'g', factor: 10 };
-	if (X.test(lower)) return null;
-	const unit = unitFromWord(lower);
-	return unit && SHOPPING_UNITS.has(unit) ? { unit, factor: 1 } : null;
-}
-
 /**
- * One token as a number, and what kind: a whole number, a decimal ("1,5"), or a
- * fraction ("1/2", "½", "1½"). Null when it isn't one ("1.", "4-Korn", "10er").
+ * A unit a shopping row may wear, and what the number is multiplied by. The
+ * spellings are the shared reader's (→ `amounts.ts`, plan 42); only which of
+ * them a list accepts is decided here.
  */
-function numberOf(token: string): { value: number; kind: 'whole' | 'decimal' | 'fraction' } | null {
-	if (WHOLE.test(token)) return { value: Number(token), kind: 'whole' };
-	if (DECIMAL.test(token)) return { value: Number(token.replace(',', '.')), kind: 'decimal' };
-	const slash = SLASH.exec(token);
-	if (slash && Number(slash[2]) > 0) {
-		return { value: Number(slash[1]) / Number(slash[2]), kind: 'fraction' };
-	}
-	const mixed = MIXED.exec(token);
-	if (mixed) return { value: Number(mixed[1] || 0) + GLYPHS[mixed[2]], kind: 'fraction' };
-	return null;
+function unitOf(word: string): { unit: string; factor: number } | null {
+	const measure = measureOf(word);
+	return measure && SHOPPING_UNITS.has(measure.unit) ? measure : null;
 }
 
 /** "500g", "2l", "15dkg": a number fused with a unit, in one token. */
 function fusedOf(token: string): Amount | null {
-	const match = FUSED.exec(token);
-	if (!match) return null;
-	const unit = unitOf(match[2]);
-	if (!unit) return null;
-	return { quantity: Number(match[1].replace(',', '.')) * unit.factor, unit: unit.unit };
-}
-
-/** "3x", "x3": the count, or null. A count is a whole number. */
-function markerOf(token: string): number | null {
-	const match = MARKER.exec(token);
-	return match ? Number(match[1] ?? match[2]) : null;
+	const parts = fusedParts(token);
+	const unit = parts ? unitOf(parts.word) : null;
+	return parts && unit ? { quantity: parts.value * unit.factor, unit: unit.unit } : null;
 }
 
 /** "Gurken," → "Gurken": separators left at a name's edges go. */
@@ -251,7 +205,7 @@ function trimName(name: string): string {
 function accept(rawName: string, amount: Amount | null): QuickAdd | null {
 	if (!amount) return null;
 	const name = trimName(rawName);
-	if (!/\p{L}/u.test(name) || unitOf(name) || X.test(name)) return null;
+	if (!/\p{L}/u.test(name) || unitOf(name) || isTimes(name)) return null;
 
 	let { quantity, unit } = amount;
 	if (unit === 'g' && quantity >= 1000) [quantity, unit] = [quantity / 1000, 'kg'];
@@ -284,7 +238,7 @@ function bracketOf(inner: string): Amount | null {
 		const number = numberOf(tokens[0]);
 		const unit = unitOf(tokens[1]);
 		if (number && unit) return { quantity: number.value * unit.factor, unit: unit.unit };
-		if (number?.kind === 'whole' && X.test(tokens[1])) return count(number.value);
+		if (number?.kind === 'whole' && isTimes(tokens[1])) return count(number.value);
 	}
 	return null;
 }
@@ -332,7 +286,7 @@ export function parseQuickAdd(text: string, known?: KnownKeys): QuickAdd {
 			if (found) return found;
 		}
 		const number = numberOf(tokens[0]);
-		if (number?.kind === 'whole' && X.test(tokens[1] ?? '') && !isNumber(tokens[2])) {
+		if (number?.kind === 'whole' && isTimes(tokens[1] ?? '') && !isNumber(tokens[2])) {
 			const found = accept(tokens.slice(2).join(' '), count(number.value));
 			if (found) return found;
 		}
@@ -346,14 +300,14 @@ export function parseQuickAdd(text: string, known?: KnownKeys): QuickAdd {
 			const found = accept(tokens.slice(0, last).join(' '), count(fused));
 			if (found) return found;
 		}
-		if (last >= 2 && X.test(tokens[last - 1]) && !isNumber(tokens[last - 2])) {
+		if (last >= 2 && isTimes(tokens[last - 1]) && !isNumber(tokens[last - 2])) {
 			const number = numberOf(tokens[last]);
 			if (number?.kind === 'whole') {
 				const found = accept(tokens.slice(0, last - 1).join(' '), count(number.value));
 				if (found) return found;
 			}
 		}
-		if (last >= 1 && X.test(tokens[last])) {
+		if (last >= 1 && isTimes(tokens[last])) {
 			const number = numberOf(tokens[last - 1]);
 			if (number?.kind === 'whole') {
 				const found = accept(tokens.slice(0, last - 1).join(' '), count(number.value));
@@ -383,7 +337,7 @@ export function parseQuickAdd(text: string, known?: KnownKeys): QuickAdd {
 		const next = tokens[1] ?? '';
 		const guarded =
 			next.startsWith('%') ||
-			((X.test(next) || next.toLowerCase() === 'in') && isNumber(tokens[2]));
+			((isTimes(next) || next.toLowerCase() === 'in') && isNumber(tokens[2]));
 		if (number && number.kind !== 'decimal' && !unit && !guarded) {
 			const amount =
 				number.kind === 'whole' ? count(number.value) : { quantity: number.value, unit: null };
@@ -396,13 +350,13 @@ export function parseQuickAdd(text: string, known?: KnownKeys): QuickAdd {
 	//    1,5 kg". Not right after an x ("Wasser 6 x 1,5l").
 	{
 		const fused = fusedOf(tokens[last]);
-		if (fused && !X.test(tokens[last - 1] ?? '')) {
+		if (fused && !isTimes(tokens[last - 1] ?? '')) {
 			const found = accept(tokens.slice(0, last).join(' '), fused);
 			if (found) return found;
 		}
 		const unit = unitOf(tokens[last]);
 		const number = last >= 1 ? numberOf(tokens[last - 1]) : null;
-		if (unit && number && !X.test(tokens[last - 2] ?? '')) {
+		if (unit && number && !isTimes(tokens[last - 2] ?? '')) {
 			const found = accept(tokens.slice(0, last - 1).join(' '), {
 				quantity: number.value * unit.factor,
 				unit: unit.unit
@@ -415,7 +369,7 @@ export function parseQuickAdd(text: string, known?: KnownKeys): QuickAdd {
 	//    after a size word or an x, and never three digits ("Mehl 480").
 	if (last >= 1 && /^\d{1,2}$/.test(tokens[last])) {
 		const before = tokens[last - 1].toLowerCase();
-		if (!SIZE_WORDS.has(before) && !X.test(before)) {
+		if (!SIZE_WORDS.has(before) && !isTimes(before)) {
 			const found = accept(tokens.slice(0, last).join(' '), count(Number(tokens[last])));
 			if (found) return found;
 		}

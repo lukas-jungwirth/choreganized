@@ -759,9 +759,17 @@ item sheet [3a]; what differs is what a tick does and what counts as shopping.
   so an edit shows what's there. Saved with the recipe, replaced wholesale like its children.
 - **Ingredients**: one typed row each, written the way you'd write them on paper ("400 g pasta")
   and parsed leniently to (quantity, unit, name); unparsed input becomes name-only, and a range
-  keeps its first value with its unit ("2-3 EL Öl" → 2 tbsp Öl, DECISIONS #159). Each row
+  keeps its first value with its unit ("2-3 EL Öl" → 2 tbsp Öl, DECISIONS #159). The line is
+  read by the same amount reader as a shopping line (§3.1; → plan 42, DECISIONS #313, #319):
+  the same spellings of numbers and units, the Deka ("20 dag" → 200 g), an amount at the end
+  ("Mehl 500g"), a rough amount ("ca. 200 g"). Besides the eight units a recipe line may count
+  in a **counting word**, kept as written: "2 Zehen Knoblauch" is 2 Zehen of Knoblauch, "1 Bund
+  Petersilie" one Bund of Petersilie, so the name is the thing itself. A plural a site left
+  open is settled by the amount ("2 Zwiebel(n)" → 2 Zwiebeln, "1 Ei(er)" → 1 Ei). Cups, oz and
+  lb are not read (the AI import converts them). Each row
   shows what the parse made of it as a quiet amount chip; tapping the chip opens a sheet with
-  the name, the amount and the units of §3.2 plus tbsp · tsp and "no unit", which writes the row
+  the name, the amount and the units of §3.2 plus tbsp · tsp, the row's own counting word when it
+  has one, and "no unit", which writes the row
   back as a line and shows the reading that line will get (→ DECISIONS #100–101). Reorder with
   the arrows (→ DECISIONS #67), remove per row.
 - **Steps**: numbered textareas, add/remove/reorder. Under each one, **what that step uses** —

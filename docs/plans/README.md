@@ -53,7 +53,7 @@ plus your session date). Note deviations in the plan file and in DECISIONS.md.
 | 39  | [Keep to the schedule: recurring tasks on a fixed day](39-task-schedule.md)                      | done (2026-11-22, v0.7.0) | 04, 10                   |
 | 40  | [Recipe tags and library filters](40-recipe-filters.md)                                          | done (2026-11-22, v0.8.0) | 07, 12, 14               |
 | 41  | [Recipe tags fill themselves in](41-recipe-tags-fill-in.md)                                      | done (2026-11-23, v0.8.0) | 40, 13, 22               |
-| 42  | [One amount reader for lists, recipes and steps](42-one-amount-reader.md)                        | todo                      | 37                       |
+| 42  | [One amount reader for lists, recipes and steps](42-one-amount-reader.md)                        | done (2026-11-23, v0.8.0) | 37                       |
 | 43  | [Recipes with parts, clean ingredients and stored links](43-recipe-parts-notes-links.md)         | todo                      | 42                       |
 | 44  | [A checked import: the model structures, the app verifies](44-checked-import.md)                 | todo                      | 42, 43                   |
 | 45  | [Import review: the recipe as it will look, with what to check](45-import-review.md)             | todo (sketch first)       | 43, 44                   |

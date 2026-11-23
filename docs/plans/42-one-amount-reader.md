@@ -1,6 +1,6 @@
 # 42 · One amount reader for lists, recipes and steps
 
-**Status: todo.** Agreed with Lukas on 2026-11-23 (DECISIONS #311, #313). Depends on: 37.
+**Status: done (2026-11-23, v0.8.0, DECISIONS #319).** Agreed with Lukas on 2026-11-23 (DECISIONS #311, #313). Depends on: 37.
 First of the recipe rebuild (plans 42–48). SPEC: §3.1, §4.4. Design: no frame.
 
 **Goal:** Lukas, 2026-11-23: "I'm not sure if the detection of the measures for the ingredients
@@ -66,22 +66,26 @@ Packung.
 
 ## Build
 
+As built (deviations from the first draft of this plan are in DECISIONS #319):
+
 - `src/lib/utils/amounts.ts` (new, pure, written with `.ts` import extensions like its
-  neighbours): `readNumber`, `unitFromWord`, `countingWord`, `containerWord`, `UNIT_WORDS`,
-  `parseAmountLine(line, profile, known?)`.
-- `ingredients.ts`: `parseIngredient` becomes a thin call into the recipe profile.
-  `ParsedIngredient.unit` may now hold a counting word; `formatIngredient` prints a known unit
-  through the catalog label and a counting word as stored. Round trip (`parse(format(row))`)
-  must hold for both.
-- `lists.ts`: `parseQuickAdd` keeps its signature and calls the list profile.
-- `step-amounts.ts`: its `NUMBER` and `UNIT` patterns come from `amounts.ts`.
-- `recipe-draft.ts` (`isRecipeUnit`) and `services/recipes.ts` clamps: a unit is one of the
-  eight **or** a counting word (≤ 16 characters, letters and a dot only). Nothing else changes
-  in storage: `recipe_ingredients.unit` is already free text.
-- Shopping: `addIngredients` already drops tbsp and tsp to a name; it must do the same for any
-  counting word until plan 43 teaches it containers. Check and pin with a test.
-- Docs: SPEC §4.4 (the ingredient line), §3.1 (one sentence: same reader), DATA-MODEL
-  (`unit`), DECISIONS.
+  neighbours) owns every spelling: `unitFromWord`, `measureOf` (with the Deka), `countingWord`,
+  `isContainerWord`, `measureKey`, `numberOf`, `fusedOf`, `markerOf`, `isTimes`,
+  `leadingAmount`, `rangeLength`, `parseQuantity`, `NUMBER_PATTERN`, `UNIT_WORDS`,
+  `COUNTING_WORDS`.
+- The rules about where an amount stands stay with each line's parser: `lists.ts`
+  (`parseQuickAdd`, plan 37's seven rules) and `ingredients.ts` (`parseIngredient`, the amount
+  leads). Neither keeps a number or unit pattern of its own.
+- `ParsedIngredient.unit` may hold a counting word; `formatIngredient` prints a known unit
+  through the catalog label and a counting word as stored. The round trip
+  (`parse(format(row))`) holds for both.
+- `step-amounts.ts`: its number and unit patterns come from `amounts.ts`, it reads counting
+  words too, and compares by `measureKey` ("2 Zehen" in the step agrees with a row in "Zehe").
+- `IngredientSheet.svelte` offers the row's own counting word beside the eight units.
+- Storage is unchanged: `recipe_ingredients.unit` is already free text.
+- Shopping is unchanged: a counting word reaches the list as written ("Knoblauch · 2 Zehen")
+  until plan 43 applies DECISIONS #313.
+- Docs: SPEC §4.4, DATA-MODEL (`unit`), DECISIONS #319.
 
 ## Tests
 
@@ -97,11 +101,12 @@ Packung.
 
 ## Acceptance
 
-- [ ] The eight rows of the table above read the same in a recipe line and in a list line,
+- [x] The eight rows of the table above read the same in a recipe line and in a list line,
       apart from the two documented differences (tbsp/tsp and counting words are recipe-only).
-- [ ] No number or unit regular expression is left outside `amounts.ts`
-      (`grep` in the PR description).
-- [ ] In the editor, typing "2 Zehen Knoblauch" shows the chip "2 Zehen" and the name
-      "Knoblauch"; saving and reopening shows the same line.
-- [ ] Adding that recipe to the shopping list puts "Knoblauch" on it, without an amount.
-- [ ] `npm run verify` clean; no screen changed, so no new baselines.
+- [x] No number or unit regular expression is left outside `amounts.ts`, apart from
+      `timer-parse.ts`, whose durations are not amounts.
+- [x] In the editor, typing "2 Zehen Knoblauch" shows the chip "2 Zehen"; the recipe shows
+      "Knoblauch" with "2 Zehen"; reopening the editor shows the same line (e2e).
+- [x] Adding that recipe to the shopping list puts "Knoblauch" on it, with "2 Zehen" as its
+      amount until plan 43 (integration).
+- [x] `npm run verify` clean; no screen changed, so no new baselines.

@@ -4541,3 +4541,22 @@ store_id` NULL already means "no memory" (a deleted list), and telling the two a
      pipeline and prints coverage, agreement and link numbers; `--record` keeps the answers as
      fixtures, so CI stays offline. Never a key in CI or on a deploy. Until a key exists the
      prompt is tested against the fake provider only and every handoff says so.
+319. **Plan 42 as built: what the shared amount reader changed, and what it did not**
+     (2026-11-23). `utils/amounts.ts` owns every spelling of a number, a unit and a counting
+     word. The rules about _where_ in a line an amount may stand stay with each line's parser
+     (`lists.ts`: plan 37's seven rules, 119 cases untouched; `ingredients.ts`: the amount
+     leads), not in one `parseAmountLine` as the plan sketched: the two orders of rules share
+     nothing but the spellings. Changes to how a recipe line reads, each pinned in the
+     contract table of `ingredients.test.ts`:
+     - "x" is "times", not the unit `pcs`: "1 x Backpulver" is 1 Backpulver, as on a list.
+     - A word glued to its number that is no unit is a name ("7up"), and a number with a full
+       stop is an ordinal ("1. Mai Kerzen"), both as on a list. #101's example of a line the
+       sheet cannot escape is now "3 Musketiere".
+     - A measured amount at the end is read ("Mehl 500g", "Salz, 1 TL"); a bare number or a
+       counting word at the end is not.
+     - "⅛" survives being stored as 0.13 (the glyph tolerance is a hair over half a cent).
+     - **A counting word reaches the shopping list as written** ("Knoblauch · 2 Zehen") until
+       plan 43 applies #313's rule (containers become a pack, the rest name only). The plan
+       assumed tbsp and tsp were already dropped on the way to the list; they are not, the
+       unit column there is free text and merges only with its own spelling.
+     - `timer-parse.ts` keeps its own patterns: a duration is not an amount.

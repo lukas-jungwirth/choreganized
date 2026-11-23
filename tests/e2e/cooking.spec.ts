@@ -130,6 +130,36 @@ test('a step’s own timer, set in the form, is the one cook mode offers by name
 	await expect(page.getByRole('button', { name: 'Start 9:00 timer' })).toBeVisible();
 });
 
+test('a counting word belongs to the amount, in the list and in the step', async ({ page }) => {
+	// Plan 42: "2 Zehen Knoblauch" is 2 Zehen of "Knoblauch", not 2 of "Zehen Knoblauch".
+	await page.goto('/cooking/recipes/new');
+	await page.getByLabel('Recipe name').fill('E2E Knoblauchbrot');
+	await page.getByLabel('Servings').fill('2');
+	await page.getByLabel('Ingredient 1', { exact: true }).fill('2 Zehen Knoblauch');
+	// The chip shows what the line was read as, before anything is saved.
+	await expect(page.getByRole('button', { name: '2 Zehen, edit' })).toBeVisible();
+	await page.getByRole('button', { name: 'Add ingredient' }).click();
+	await page.getByLabel('Ingredient 2', { exact: true }).fill('20 dag Butter');
+	await expect(page.getByRole('button', { name: '200 g, edit' })).toBeVisible();
+	await page.getByLabel('Step 1', { exact: true }).fill('2 Zehen Knoblauch fein hacken.');
+	await page.getByRole('button', { name: 'Save recipe' }).click();
+	await expect(page.getByRole('heading', { name: 'E2E Knoblauchbrot', level: 1 })).toBeVisible();
+
+	const garlic = page.locator('.ingredients li', { hasText: 'Knoblauch' });
+	await expect(garlic).toContainText('2 Zehen');
+	await expect(page.locator('.ingredients li', { hasText: 'Butter' })).toContainText('200 g');
+
+	// For four, the step's own amount follows, word and all.
+	await page.goto(`${page.url()}?serves=4`);
+	await expect(page.locator('.step-text').first()).toHaveText(
+		'4 Zehen (recipe says 2 Zehen) Knoblauch fein hacken.'
+	);
+
+	// Editing shows the same line again.
+	await page.goto(page.url().replace(/\?serves=4$/, '/edit'));
+	await expect(page.getByLabel('Ingredient 1', { exact: true })).toHaveValue('2 Zehen Knoblauch');
+});
+
 test('cooking for more people rewrites the amounts a step names, and nothing else', async ({
 	page
 }) => {

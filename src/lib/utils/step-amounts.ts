@@ -25,21 +25,25 @@
  * `scaleQuantity` the rows were, so the two agree exactly.
  */
 import {
-	formatQuantityValue,
+	COUNTING_WORDS,
+	measureKey,
+	NUMBER_PATTERN as NUMBER,
 	parseQuantity,
-	scaleQuantity,
-	unitFromWord,
 	UNIT_WORDS
-} from './ingredients.ts';
+} from './amounts.ts';
+import { formatQuantityValue, scaleQuantity } from './ingredients.ts';
 import type { StepSegment } from './step-highlight.ts';
 
 type Row = { id: string; quantity: number | null; unit: string | null };
 
-/** A number as a step writes one: "2", "1,5", "1.5", "1/2", "1½", "½". */
-const NUMBER = String.raw`\d+\s*\/\s*\d+|\d+(?:[.,]\d+)?(?:\s?[½¼¾⅓⅔⅛])?|[½¼¾⅓⅔⅛]`;
-
-/** Unit spellings, longest first, escaped ("stk." has a dot). */
-const UNIT = UNIT_WORDS.map((word) => word.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')).join('|');
+/**
+ * Unit and counting-word spellings ("EL", "Zehen"), longest first, escaped
+ * ("stk." has a dot). Both come from the shared reader (→ `amounts.ts`).
+ */
+const UNIT = [...UNIT_WORDS, ...COUNTING_WORDS]
+	.sort((a, b) => b.length - a.length)
+	.map((word) => word.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'))
+	.join('|');
 
 /**
  * The end of the prose right before an underlined ingredient: a number, an
@@ -112,8 +116,9 @@ function rewrite<T>(
 
 	// The unit has to be the row's own — "2 EL" for a tbsp row, nothing for a
 	// row without one. Otherwise the number measures something else.
-	const unit = unitWord ? unitFromWord(unitWord) : null;
-	if (unit !== (ingredient.unit ?? null)) return null;
+	// Compared by what they measure, so "Zehen" in the sentence agrees with a
+	// row counted in "Zehe".
+	if (measureKey(unitWord) !== measureKey(ingredient.unit)) return null;
 
 	const scaled = scaleQuantity(value, factor);
 	if (scaled === null || !agrees(scaled, ingredient.quantity, total, pinned)) return null;
