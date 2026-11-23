@@ -28,6 +28,15 @@ is a textarea with three 16 px icons beside it and two rows of small chips under
   "No unit", with the current one marked and the row's own counting word listed when it has
   one; picking a unit rewrites the field ("500 g" → "500 kg"). No amount typed, no chip. A
   line of examples sits under the field.
+  **A word that is no unit becomes the row's own unit** (Lukas, 2026-11-23: "what would happen
+  if I type 2 Zehen?"). In this field everything after the number is the unit, because the
+  name has a field of its own: "2 Zehen" is read as 2 with the unit "Zehen", the chip says
+  "2 Zehen", and the menu lists "Zehen" marked as current beside the eight. That holds for a
+  word the app has never seen too ("2 Kugeln", "1 Ring"): it is kept as written (letters and a
+  dot, up to 16 characters). The one-line add field is stricter: there a word after the
+  number is only taken for a unit when it is one of plan 42's known counting words, because
+  "2 Zehen Knoblauch" and "2 Eier" look alike and the second word of "2 rote Zwiebeln" is the
+  name.
 - **Typing stays the fast way in**: an add field at the foot of each part takes a line
   ("400 g Nudeln", "1 Karotte, in Scheiben") and reads it with plan 42's reader; what follows
   a comma or stands in brackets becomes the note. The row shows what was understood.
@@ -115,6 +124,9 @@ controls of the sketch.
 - [ ] A step that says "400 g Karotten" links the amount with the word; "Show for 8" in the
       link sheet and cook mode for 8 both read "800 g Karotten". Switching the amount off
       leaves it at 400 g in both.
+- [ ] Typing "2 Zehen" into the amount field shows the chip "2 Zehen" and saves the unit
+      "Zehen"; so does "2 Kugeln" with "Kugeln". Typing "2 Kugeln Mozzarella" into the add
+      field saves 2 of "Kugeln Mozzarella".
 - [ ] Typing "500 g" into the amount field shows the chip "500 g"; tapping the chip and
       picking kg makes the field and the chip read "500 kg", and the row is saved as 500 kg.
 - [ ] A step that says "200 g Karotten" in a recipe with 400 g shows "200 g of 400 g" in the
