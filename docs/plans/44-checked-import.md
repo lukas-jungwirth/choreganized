@@ -56,7 +56,8 @@ ingredients[]:
   source        index of the page's ingredient line it came from, or null
   quantity      number or null
   unit          one of g kg ml L pcs pack tbsp tsp, or null
-  countingWord  "Zehen", "Bund", "Dose" … as written, or null     (plan 42)
+  countingWord  a counting word from the list ("Zehen", "Bund", "Dose"), or null
+  newUnit       a word the page counts in that is not on the list ("Ring"), or null
   name          what you buy, nothing else
   note          preparation, purpose, hint, or null
   alternative   the other option of an either/or, or null
@@ -74,6 +75,10 @@ steps[]:
 
 The prompt's rules, in short (the full text lives in `services/ai-import.ts`):
 
+- units come from one fixed list (agreed with Lukas on 2026-11-23; amends DECISIONS #313): the
+  eight units, the counting words the reader knows (plan 42), and the words this household
+  added. The list is part of the prompt. A word the page counts in that is not on it goes
+  into `newUnit`, never into `countingWord` and never into the name.
 - name = the thing on a shopping list. Everything else in the line goes to note. Never drop
   information: what is not name, amount or unit is note.
 - one line naming two things is two rows with the same `source`.
@@ -107,6 +112,11 @@ All of it is plain code and unit-tested. `source` is what the model was sent.
 - The name: every word of `name` must stand in the page line (compared without case, plural
   brackets and endings). Otherwise the page's reading wins and the row is flagged
   `name-differs`.
+- `countingWord` must be on the list (compared by `measureKey`, so "Zehen" is "Zehe");
+  otherwise it is treated as a `newUnit`.
+- `newUnit` set, and the word stands in the page line → `new-unit` item ("New unit: Ring. Add
+  it?"). Until a person answers, the draft keeps the number with no unit and writes the word
+  into the note, so nothing is lost and no unit appears by accident.
 - `alternative` set → `choice` item ("Hackfleisch oder veganes Hack"). The draft keeps the
   first and writes "oder {alternative}" into the note.
 
@@ -131,6 +141,9 @@ All of it is plain code and unit-tested. `source` is what the model was sent.
   unit (or none where the row has none) and not exceed the row's amount. Otherwise cleared.
 - Cross-check: where the step's text contains an ingredient's exact name as a whole word and
   the model linked nothing to it, the link is added (the old matcher, exact names only).
+- The amounts the steps give one ingredient may add up to its total at most ("200 g Karotten"
+  in two steps of a recipe with 400 g). If they add up to more, the links stay and the
+  ingredient is flagged `shares-exceed`, so a person looks at it.
 - An ingredient no step uses is flagged `unused` (quiet: "Fett für die Form" is often right).
 
 **Recipe:**
@@ -190,6 +203,11 @@ The same draft shape from rules, so every screen after it is the same:
 - `utils/recipe-draft.ts`: the gate above; `RecipePrefill` gains notes, sections, links,
   `checks`, `leftOut`.
 - `utils/rule-draft.ts` (new): the rule-based draft.
+- `schema.ts` + `npm run db:generate`: `household_units` (household, word, added by, added
+  at; unique per household on the word's lowercase), `services/units.ts` (list, add, remove,
+  every function `householdId` first). The reader takes the household's words as its `known`
+  set (`parseIngredient(line, known?)`), the way `parseQuickAdd` takes the household's names.
+  The rule-based import leaves a word that is not on the list in the name, as plan 42 does.
 - `routes/(app)/cooking/recipes/import`: no switch; the loader on every AI import; the draft
   goes to the editor with the check list on top until plan 45 lands.
 - `scripts/fake-ai.ts`: answers in the new shape.
