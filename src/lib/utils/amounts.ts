@@ -211,6 +211,22 @@ export const COUNTING_WORDS: readonly string[] = [...COUNTING.keys()].sort(
 	(a, b) => b.length - a.length
 );
 
+/** One spelling per counting word, as a list for a person or a prompt: "zehe", "bund", … */
+export const COUNTING_KEYS: readonly string[] = [...new Set(COUNTING.values())];
+
+/** A household's own unit word as stored for comparing: lowercased (→ plan 44). */
+export function unitWordKey(word: string): string {
+	return word.trim().toLowerCase();
+}
+
+/** The longest unit word a household may add ("Messerspitze" fits). */
+export const UNIT_WORD_MAX = 20;
+
+/** Whether a word is already a unit or a counting word the reader knows (→ DECISIONS #321). */
+export function isKnownUnitWord(word: string): boolean {
+	return measureOf(word) !== null || countingWord(word) !== null;
+}
+
 /**
  * What a unit or counting word measures in, for comparing two spellings: the
  * canonical unit ("EL" → `tbsp`), a counting word's key ("Zehen" → `zehe`),

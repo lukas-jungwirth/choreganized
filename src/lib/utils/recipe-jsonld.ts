@@ -27,6 +27,8 @@ export type RecipeJsonLd = {
 	/** Minutes, from `totalTime` (else `prepTime` + `cookTime`). */
 	timeMinutes: number | null;
 	servings: number | null;
+	/** `recipeYield` as written ("4 Portionen", "1 Kuchen"): whether a 1 is a portion (→ plan 44). */
+	servingsText: string | null;
 	/** Raw ingredient lines ("500 g Mehl"), decoded and trimmed — the editor parses them. */
 	ingredientLines: string[];
 	/**
@@ -173,6 +175,7 @@ function mapRecipe(node: Record<string, unknown>): RecipeJsonLd {
 		name: cleanText(asString(node.name) ?? ''),
 		timeMinutes: mapTime(node),
 		servings: mapYield(node.recipeYield),
+		servingsText: yieldText(node.recipeYield),
 		ingredientLines: ingredients.lines,
 		ingredientSections: ingredients.sections,
 		steps: steps.steps,
@@ -295,6 +298,13 @@ export function mapYield(value: unknown): number | null {
 		}
 	}
 	return null;
+}
+
+/** The first yield as text, for a person or a check to read. */
+export function yieldText(value: unknown): string | null {
+	const first = Array.isArray(value) ? value.find((one) => one != null) : value;
+	if (typeof first === 'number') return String(first);
+	return typeof first === 'string' ? cleanText(first) || null : null;
 }
 
 /* ── Ingredients ──────────────────────────────────────────────────────────── */

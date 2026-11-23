@@ -1680,21 +1680,13 @@ export const en = {
 				note: 'Made with AI. Check it over before saving.',
 				/** The line typed for this import, quoted back on the draft it shaped. */
 				adapted: (instructions: string) => `Adapted: “${instructions}”.`,
-				/** A recipe card the model couldn't improve still opens, as the site wrote it. */
-				withoutAi: (reason: string) => `Imported as the site wrote it: ${reason}`,
-
-				/** The link screen's toggle (→ plan 22) and the line under it. */
-				improve: 'Improve with AI',
-				improveHint:
-					'Sorts out amounts, links ingredients to their steps and sets timers. It also reads pages without recipe data. Uses your AI provider.',
+				/** A recipe card the model couldn't read still opens, read by rules (→ plan 44). */
+				withoutAi: (reason: string) => `Imported without AI: ${reason}`,
 				instructionsToggle: 'Add instructions for the AI',
 				instructionsLabel: 'Instructions for the AI',
 				instructionsPlaceholder: 'e.g. with tofu instead of meat, for 2 people',
 				/** The household's standing line from Settings, shown so it's no surprise. */
 				instructionsHousehold: (instructions: string) => `Always applied: “${instructions}”`,
-				pageLead:
-					'This page has no recipe data we can read directly. Want to try reading it with AI?',
-				tryPage: 'Try AI extraction',
 				extracting: 'Extracting…',
 				/** Playful lines that cycle on the cooking loader while the model works. */
 				loading: [
@@ -1727,6 +1719,42 @@ export const en = {
 					noRecipe: 'Couldn’t find a recipe in that. Try clearer photos or more complete text.',
 					noPhotos: 'Add at least one photo of the recipe.'
 				}
+			},
+
+			/**
+			 * What the import's gate found (→ plan 44), listed at the top of the
+			 * editor until plan 45's review screen shows them. `name` is the
+			 * ingredient's name, `step` a step's number.
+			 */
+			checks: {
+				title: (count: number) =>
+					count === 0
+						? 'Nothing to check'
+						: count === 1
+							? '1 thing to check'
+							: `${count} things to check`,
+				/** Names the list for a screen reader. */
+				label: 'What the import found',
+				lineAdded: (line: string) => `Added from the page: “${line}”. The AI had left it out.`,
+				amountDiffers: (name: string, line: string) =>
+					`${name}: the amount is the page’s (“${line}”).`,
+				converted: (name: string) => `${name}: converted to metric.`,
+				nameDiffers: (name: string, line: string) =>
+					`${name}: named as the page wrote it (“${line}”).`,
+				newUnit: (word: string) => `New unit: ${word}. Add it?`,
+				choice: (name: string, alternative: string) => `Choose: ${name} or ${alternative}.`,
+				reworded: (step: number) => `Step ${step} is not the page’s own words.`,
+				pageSays: (text: string) => `The page says: “${text}”`,
+				fromPhoto: 'Read from photos. Check it against the page.',
+				sharesExceed: (name: string) => `${name}: the steps use more than the recipe lists.`,
+				unused: (name: string) => `${name}: no step uses it.`,
+				servings: 'How many servings? Every amount scales from it.',
+				noSteps: 'The page has no method.',
+				noAi: 'Imported without AI: parts and notes by rule, which step uses what is a guess.',
+				leftOut: (count: number) =>
+					count === 1
+						? 'Left out of the method: 1 sentence'
+						: `Left out of the method: ${count} sentences`
 			}
 		}
 	},

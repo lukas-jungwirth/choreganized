@@ -50,6 +50,7 @@
 	import TimerIcon from '@lucide/svelte/icons/timer';
 	import X from '@lucide/svelte/icons/x';
 	import { untrack } from 'svelte';
+	import ImportChecks from './ImportChecks.svelte';
 	import IngredientSheet from './IngredientSheet.svelte';
 	import RecipeImage from './RecipeImage.svelte';
 	import RecipeTagsField from './RecipeTagsField.svelte';
@@ -172,11 +173,11 @@
 			if (prefill) {
 				return prefill.ingredientLines.length
 					? prefill.ingredientLines.map((line, at) => {
-							// The page's part, when the reader found one (→ plan 44).
-							const section = prefill.ingredientSections?.[at] ?? null;
+							// The import's note and part (→ plan 44), kept like a saved row's.
+							const details = prefill.ingredientDetails?.[at];
 							const created = ingredientRow(
 								line,
-								section ? { note: null, section, name: '' } : null
+								details ? { ...details, name: parseIngredient(line)?.name ?? line } : null
 							);
 							rowForDraftIndex.push(created.key);
 							return created;
@@ -204,7 +205,9 @@
 				return prefill.steps.map((step) => {
 					const uses = step.uses?.flatMap((use) => {
 						const key = rowForDraftIndex[use.ingredient];
-						return key ? [{ ingredient: key, quantity: use.quantity }] : [];
+						// The words that name it and its amount ride along (→ plan 44).
+						const words = { phrase: use.phrase ?? null, amountPhrase: use.amountPhrase ?? null };
+						return key ? [{ ingredient: key, quantity: use.quantity, ...words }] : [];
 					});
 					// Nothing left to pin reads the text — "uses nothing" is a person's call.
 					return stepRow(step.text, uses?.length ? uses : null, step.timer, step.section ?? null);
@@ -576,6 +579,15 @@
 		<!-- The AI import's quiet reminder [plan 13]: extraction is a starting point,
 			 not a saved recipe. Not a Banner — it's a note, not a failure. -->
 		<p class="notice">{notice}</p>
+	{/if}
+
+	{#if prefill?.checks?.length || prefill?.leftOut?.length}
+		<!-- The import gate's items (→ plan 44) until plan 45's review screen. -->
+		<ImportChecks
+			checks={prefill.checks ?? []}
+			lines={prefill.ingredientLines}
+			leftOut={prefill.leftOut}
+		/>
 	{/if}
 
 	<label class="photo">

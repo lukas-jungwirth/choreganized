@@ -1269,16 +1269,11 @@ export const de: Messages = {
 			ai: {
 				note: 'Mit KI erstellt. Vor dem Speichern kurz prüfen.',
 				adapted: (instructions: string) => `Angepasst: „${instructions}“.`,
-				withoutAi: (reason: string) => `So übernommen, wie die Seite es schreibt: ${reason}`,
-				improve: 'Mit KI verbessern',
-				improveHint:
-					'Ordnet Mengen, verknüpft Zutaten mit ihren Schritten und stellt Timer. Liest auch Seiten ohne Rezeptdaten. Nutzt deinen KI-Anbieter.',
+				withoutAi: (reason: string) => `Ohne KI importiert: ${reason}`,
 				instructionsToggle: 'Anweisungen für die KI hinzufügen',
 				instructionsLabel: 'Anweisungen für die KI',
 				instructionsPlaceholder: 'z. B. mit Tofu statt Fleisch, für 2 Personen',
 				instructionsHousehold: (instructions: string) => `Gilt immer: „${instructions}“`,
-				pageLead: 'Diese Seite hat keine direkt lesbaren Rezeptdaten. Mit KI auslesen?',
-				tryPage: 'Mit KI auslesen',
 				extracting: 'Wird ausgelesen…',
 				loading: [
 					'Rezept wird gelesen…',
@@ -1307,6 +1302,38 @@ export const de: Messages = {
 						'Darin war kein Rezept zu finden. Versuch klarere Fotos oder vollständigeren Text.',
 					noPhotos: 'Füg mindestens ein Foto des Rezepts hinzu.'
 				}
+			},
+
+			checks: {
+				title: (count: number) =>
+					count === 0
+						? 'Nichts zu prüfen'
+						: count === 1
+							? '1 Sache zu prüfen'
+							: `${count} Sachen zu prüfen`,
+				label: 'Was der Import gefunden hat',
+				lineAdded: (line: string) =>
+					`Von der Seite ergänzt: „${line}“. Die KI hatte es ausgelassen.`,
+				amountDiffers: (name: string, line: string) =>
+					`${name}: die Menge ist die der Seite („${line}“).`,
+				converted: (name: string) => `${name}: in metrische Einheiten umgerechnet.`,
+				nameDiffers: (name: string, line: string) =>
+					`${name}: so benannt, wie die Seite es schreibt („${line}“).`,
+				newUnit: (word: string) => `Neue Einheit: ${word}. Hinzufügen?`,
+				choice: (name: string, alternative: string) => `Auswahl: ${name} oder ${alternative}.`,
+				reworded: (step: number) => `Schritt ${step} steht so nicht auf der Seite.`,
+				pageSays: (text: string) => `Auf der Seite: „${text}“`,
+				fromPhoto: 'Aus Fotos gelesen. Mit der Vorlage vergleichen.',
+				sharesExceed: (name: string) =>
+					`${name}: die Schritte brauchen mehr, als das Rezept angibt.`,
+				unused: (name: string) => `${name}: kein Schritt verwendet es.`,
+				servings: 'Für wie viele Portionen? Alle Mengen rechnen damit.',
+				noSteps: 'Die Seite hat keine Zubereitung.',
+				noAi: 'Ohne KI importiert: Teile und Notizen nach Regeln, welcher Schritt was braucht, ist geraten.',
+				leftOut: (count: number) =>
+					count === 1
+						? 'Aus der Zubereitung ausgelassen: 1 Satz'
+						: `Aus der Zubereitung ausgelassen: ${count} Sätze`
 			}
 		}
 	},

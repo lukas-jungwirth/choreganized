@@ -1002,29 +1002,53 @@ item sheet [3a]; what differs is what a tick does and what counts as shopping.
   agrees row for row with the card: WP Recipe Maker and Tasty Recipes groups, or a table per
   part with its heading (chefkoch.de, gutekueche.at, servus.com, kochbar.de). A name is tidied
   ("FÜR DIE BOLOGNESESAUCE" → "Bolognesesauce", at most 40 characters), and one part around
-  everything ("Zubereitung") is no part. A card opens in the editor with its parts, which Save
-  keeps (the editor's hidden fields of plan 43), with or without Improve with AI (unless
-  household instructions changed its rows); a page read by the model without a card gets parts
-  from plan 44's second PR.
-- **Improve with AI** (→ plan 22) — a switch under the link field, shown only when AI features are
-  set up. **Off until someone turns it on**, then remembered on that device (turning it on is the
-  go-ahead a paid call needs; a first shared link never spends one). The share sheet honours it
-  too. With it on:
-  - a page **with** a recipe card is sent to the model **as the card** (compact JSON, not the
-    whole page) to be **improved**: each ingredient's amount and unit sorted out, which
-    ingredients each step uses — and how much, when a step takes part of one — and a **named
-    timer** where a step states a duration (→ §4.4). The card's rows stay the card's: the same
-    ingredients and steps in the same order, with its name, servings and time. If the model
-    can't improve it (busy, quota, a rewrite that changed the rows), the card **still opens, as
-    the site wrote it**, with a line saying why ("Imported as the site wrote it — Gemini is at
-    its limit…").
-  - a page **without** a card is read by the model from its text (as "Try AI extraction" below
-    does, one tap sooner).
+  everything ("Zubereitung") is no part.
+- **A checked import** (→ plan 44, DECISIONS #311, #315–#318, #321). **With an AI provider set
+  up, the AI is the import**: no switch (setting up a provider is the go-ahead for one call
+  per import). A fetched link is one model call that gets the page's recipe card as JSON
+  (each ingredient line with its index and part) **and** the page's readable text (the part
+  headings are in the text, not in the card). A page with no card, a paste and photos go in
+  as before. **The model structures, plain code checks** (`utils/recipe-draft.ts`, the gate):
+  - **ingredients against the card**: a row must name the card line it came from, or it is
+    dropped as an invention (unless household instructions asked for changes); every card line
+    must be the source of a row, else it is added from the rule-based reading and flagged; where
+    the shared reader reads a number and a unit in the line, the row must say the same, else the
+    page's amount stands and is flagged; every word of the row's name must stand in the line
+    (case, plural brackets and endings aside), else the page's words stand and are flagged; a
+    line in cups, oz or lb is marked converted. One line naming two things ("Salz und Pfeffer")
+    is two rows; "A oder B" keeps A with "oder B" in the note and asks which.
+  - **units from one list** (DECISIONS #321): the eight units, the counting words the reader
+    knows, and the words this household added (`household_units`); the list is in the prompt.
+    A word the page counts in that is on no list ("2 Ringe Fleischwurst") is a question ("New
+    unit: Ringe. Add it?"); until it is answered the draft keeps the number with no unit and
+    the word in the note.
+  - **steps against the page**: split and drop, never reword (DECISIONS #316). Every step must
+    be found in the page's method word for word (whitespace, typographic quotes and dashes, and
+    case aside) and in order, else it is flagged with the page's sentence beside it; more than
+    a third not found refuses the answer (the backup gets a turn, then the rule-based draft).
+    The page's sentences no step kept are kept on the draft (`leftOut`).
+  - **links**: a step names its ingredients and the words that do so (`phrase`, plan 43): a
+    phrase must stand in the step's text, an amount phrase beside it by the rule cook mode
+    rewrites by (`locateAmounts`), in the row's unit and not more than the row; a failed one is
+    cleared and the link stays. An exact ingredient name in a step nobody linked is linked. Steps
+    that give an ingredient more than the recipe has, and an ingredient no step uses, are said.
+  - **the recipe**: the card's name (or the model's when it only shortens it), servings and
+    time; servings missing, or 1 where the page counted a cake, is asked; no method is said.
+    Parts only where the page names them.
+    Whatever fails becomes a **check item** (`{ kind, level: 'check' | 'info', at }`) for a
+    person, never a saved guess. **Without a provider, or when both fail**, the card is read by
+    rules into the same draft (`utils/rule-draft.ts`): the shared reader for amounts, the note
+    after the first comma or in brackets, the readers' parts, no stored links (the matcher reads
+    the steps, as before), and one item saying it was imported without AI. A page with no card
+    needs the model: without one the screen points at Settings. The prompt is untested against a
+    real model until a key exists (`npm run import:eval`, DECISIONS #318).
   - The loader shows while the model works, and **Instructions for the AI** (below) are one tap
-    away.
-- On success the ordinary **recipe editor [3c] opens prefilled**, the photo already downloaded
-  and re-encoded to WebP like any upload (a missing or unfetchable photo is non-fatal — the draft
-  just has none). The preview _is_ the editor, so every imperfect parse is a two-second fix.
+    away under the link field.
+- On success the ordinary **recipe editor [3c] opens prefilled**, with its parts, notes and links,
+  the photo already downloaded and re-encoded to WebP like any upload (a missing or unfetchable
+  photo is non-fatal — the draft just has none). Until plan 45's review screen, the check items
+  are listed at the top of the editor ("2 things to check"), the page's left-out sentences
+  folded under them. The preview _is_ the editor, so every imperfect parse is a two-second fix.
   **Save** creates the recipe through the normal path and attaches the photo; nothing is stored
   before Save but the temp photo, and an abandoned import's photo is swept nightly.
 - **Fetching is guarded** (the server fetches a user-supplied URL): `http(s)` only,
@@ -1045,13 +1069,8 @@ item sheet [3a]; what differs is what a tick does and what counts as shopping.
   provider, if it has one, gets the same request, and the draft says so ("Gemini couldn't
   answer, so your backup (Claude) did"). Every path lands in the same
   [3c] editor with a quiet "Made with AI — check it over before saving" note (**the AI never
-  saves on its own**). Three ways in besides **Improve with AI** (photo and text are their own
-  focused modes off the chooser §4.3; the first is an in-context escalation off a failed link
-  fetch):
-  - **A fetched page with no recipe data** — in link mode the dead end becomes a **Try AI
-    extraction** button (plus quiet links to the photo/text modes). The tap is deliberate (a paid
-    call is never silent): the URL is re-fetched under the same guards, stripped to readable text
-    server-side, and read by the model. No key → a link to Settings instead.
+  saves on its own**). Ways in besides a link (photo and text are their own focused modes off
+  the chooser §4.3); a fetched page the model could not read offers them too:
   - **Pasted text** — the text mode: paste the recipe into a box, the answer for sites that block
     the server (Cloudflare 403), since the browser can still load them.
   - **Photos** — the photo mode: 1–3 photos of a cookbook/magazine page, validated and re-encoded
@@ -1062,22 +1081,23 @@ item sheet [3a]; what differs is what a tick does and what counts as shopping.
     the AI" link, on top of the household's **standing instructions** from Settings (§6), which
     the screen shows ("Always applied: …"). They may change ingredients, amounts and steps; the
     draft quotes the line it was asked ("Adapted: “mit Tofu statt Fleisch”.").
-  - **What the model returns** is one strict shape: name, servings, time; ingredients as amount
-    - unit (g · kg · ml · L · pcs · pack · tbsp · tsp, or none) + name — cups, oz and lb are
-      converted to metric and °F to °C; steps with the ingredients each uses (and the share) and
-      an optional named timer. The page, text or photos are **data, never instructions** — the
-      prompt says so. Before the editor sees any of it, a gate (→ DECISIONS #148) keeps only what
-      passes: wrong-typed rows dropped and pins re-pointed, control/HTML/markdown/links stripped,
-      every length and count capped by the form's own limits, amounts finite and under the cap,
-      units from the list only, pins only to rows that exist (a share above a row's total is "all
-      of it"), and **a timer only where the step's own text states that duration**. Ingredient
-      lines are written back in the reader's unit spelling ("2 EL Öl") so the editor reads them
-      like typed ones. Save then checks everything again.
-      Recipe content keeps its **source language** unless the instructions ask otherwise (→ §9).
-      Failures are their own
-      messages, naming the provider — key refused (→ Settings) · at its limit · quota or credit used
-      up · model unavailable or unable to read photos · not answering · nothing found — never a raw
-      API error; when the backup failed too, the message says that as well.
+  - **What the model returns** is one strict shape (plan 44's contract): name, servings, time;
+    ingredients as source line, amount, unit (g · kg · ml · L · pcs · pack · tbsp · tsp, or
+    none), counting word, new unit, name, note, alternative and part; steps as text, part,
+    timer and the ingredients each uses with the words that name them and their amount.
+    Cups, oz and lb are converted to metric. The page, text or photos are **data, never
+    instructions** — the prompt says so. Before the editor sees any of it, the gate above (and
+    → DECISIONS #148) keeps only what passes: control/HTML/markdown/links stripped, every length
+    and count capped by the form's own limits, amounts finite and under the cap, units from the
+    list only, links only to rows that exist, and **a timer only where the step's own text
+    states that duration**. A photo import cannot be checked against a page, and says so.
+    Ingredient lines are written back in the reader's unit spelling ("2 EL Öl") so the editor
+    reads them like typed ones. Save then checks everything again.
+    Recipe content keeps its **source language** unless the instructions ask otherwise (→ §9).
+    Failures are their own
+    messages, naming the provider — key refused (→ Settings) · at its limit · quota or credit used
+    up · model unavailable or unable to read photos · not answering · nothing found — never a raw
+    API error; when the backup failed too, the message says that as well.
 - Household content is never translated by the app: a card imported without AI passes through
   verbatim (→ §9). With AI, the recipe keeps its own language unless the household's
   instructions ask otherwise; units are converted to metric.
@@ -1088,7 +1108,7 @@ item sheet [3a]; what differs is what a tick does and what counts as shopping.
   AI import picks tags and a diet from the same list (the schema allows nothing else). Either
   way they open **ticked and dotted** in the editor's Tags block, which opens unfolded, with a
   line saying where they came from; touching a chip clears its dot, and Save saves what is
-  ticked. With **Improve with AI** on a page that has a card, the page's own word stands group
+  ticked. With AI on a page that has a card, the page's own word stands group
   by group and the AI's fills only the groups the page left empty.
 
 ### 4.8 Ingredient picker [3e] — which ingredients actually need buying

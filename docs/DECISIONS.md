@@ -4715,3 +4715,57 @@ recipe-importer)` (`IMPORT_UA`): the `Mozilla/5.0 (compatible; …)` form crawle
        plan's "about 150 KB" because their markup itself is that large. Blank lines are kept:
        collapsing them changed chefkoch's readable text. `recipe-corpus.test.ts` pins each
        page's reader, name, time, line and step counts and parts.
+323. **Plan 44, second PR as built: one call, the gate, the unit list, the rule-based draft**
+     (2026-11-23). **The prompt is untested against a real model** (no key, #318); every
+     number `import:eval` has printed so far is the fake provider's.
+     - **One call, one fallback.** `extractRecipe` and `improveRecipe` are one `importRecipe`
+       (`services/ai-import.ts`): a card goes in as JSON with each line's index and part, and
+       the page's readable text beside it; a paste or a no-card page as text; photos as images.
+       `importPage` is the link path: the model when a provider is set up, else (or when both
+       providers failed) `ruleDraft` on the card. The route's "Try AI extraction" button and
+       its `extractPage` action are gone: with a provider, a page with no card goes to the
+       model at once; without one the screen points at Settings. `countingWord` is a free
+       string in the schema, not an enum, because the list differs per household; the gate
+       checks it. The output budget is 24 000 tokens (was 16 000) for the larger contract.
+     - **Gate calls the plan left open**: a name "stands in" the page line when each of its
+       words, plural brackets and endings aside, is a substring of the line ("Hackfleisch" in
+       "Rinderhackfleisch" passes, "Schinken" for "Speck" does not). Steps are compared
+       without case and with typographic quotes and dashes as plain ones; a step found
+       earlier than the one before it counts as reworded. `leftOut` is kept only for pages
+       with a card (a paste or a page's text holds more than its method). A part name must
+       appear in what was sent; when the model names none, a row takes its card line's part,
+       and steps take the card's step parts when the counts match. Household instructions
+       switch the page checks off (rows and steps may then rightly differ). A model that put
+       the unit into the name ("Bund Suppengrün") loses it there when the page's amount
+       wins. A `newUnit` counts only when the word stands in the page line (or the text sent);
+       "oder {alternative}" takes the line's own word ("oder"/"or"), else "oder". `unused` is
+       info, `converted` is info, everything else the plan lists is `check`. The `servings`
+       item reads the card's `recipeYield` text (new `servingsText` on the reader's card):
+       1 with "Portion", "serving" or "Personen" is not asked about.
+     - **Links are the import's answer**: a step's list is kept even when empty (`[]`, not
+       `null` as plan 22's gate had it); the old editor still opens an empty list as "reads
+       its text" until plan 46. Each link carries its `phrase` and `amountPhrase` into the
+       editor's hidden fields (plan 43) and so into the saved recipe.
+     - **The household's units** (`household_units`, migration 0031, `services/units.ts`):
+       `parseIngredient(line, known)` reads them like counting words, plural endings allowed
+       ("Ringe" for "Ring"); every recipe save of that household reads its lines with them
+       (`writeChildren`), so an imported "2 Ringe Fleischwurst" keeps its unit once the word
+       is added. Nothing adds a word yet: the question is plan 45's, the panel plan 46's.
+     - **The rule-based draft**: brackets in what stays the name go to the note even when a
+       comma also splits the line ("pancetta (Italian bacon) or slab bacon, chopped").
+     - **Until plan 45**, `ImportChecks.svelte` lists the items above the editor, `check`
+       items counted in its title, `info` ones quieter, left-out sentences folded. PR 1's
+       `RecipePrefill.ingredientSections` and the route's `withCardParts` are gone:
+       `ingredientDetails` (note and part, as `RecipeInput` has them) carries both, and
+       `draftFromCard` / `plainStep` went with the old card path.
+     - **Tests without loosening the fetch guard** (coordinator, 2026-11-23): the link path is
+       an integration test from a saved page through `readFetchedPage` and `importPage` with
+       scripted and fake answers; the e2e journey uses the pasted-text mode. `fake-ai.ts`
+       echoes a card it is sent (rows by line, steps word for word, a link where a row's first
+       word stands) and answers text or photos with `FAKE_PANCAKE_TEXT`'s recipe (two parts, a
+       note, an either/or, links). `chefkoch-lasagne.json` in `tests/fixtures/ai-answers/` is
+       written by hand as a careful model would answer; the `fake-*.json` beside it are the
+       fake's recorded answers (`import:eval -- --fake --record`).
+     - **The Chefkoch acceptance line** in the plan named words the saved page does not have
+       ("Faschiertes", "gemischt"); it was rewritten to the fixture's own words, testing the
+       same things.

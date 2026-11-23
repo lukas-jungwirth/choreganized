@@ -280,7 +280,7 @@ const NUMBERS = new RegExp(
  * side. A hyphen ends a word, except the German one that holds a compound's
  * place ("Ober- und Unterhitze"), as in the matcher.
  */
-function occurrences(text: string, phrase: string): [number, number][] {
+export function occurrences(text: string, phrase: string): [number, number][] {
 	const words = phrase.trim().split(/\s+/).filter(Boolean);
 	if (!words.length) return [];
 

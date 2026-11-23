@@ -1,8 +1,10 @@
 # 44 · A checked import: the model structures, the app verifies
 
-**Status: in progress.** First PR (Austrian wording removed, reader fixes, the corpus, refused
-fetches; DECISIONS #321, #322) built 2026-11-23; the contract, gate, unit list, rule-based draft,
-import screen and eval script follow in a second PR. Agreed with Lukas on 2026-11-23 (DECISIONS #311, #314–#318). Depends on: 42, 43. Replaces the import half of plans 22 and 23 and removes plan 24. SPEC: §4.7, §6, §9.
+**Status: done (2026-11-23, v0.8.0, DECISIONS #321–#323).** Built in two PRs: the wording
+removed, the reader fixes and the corpus (#186); then the contract, the gate, the unit list,
+the rule-based draft, the import screen and `import:eval`. **The prompt is untested against a
+real model**: no session has had a key, so `import:eval` ran against the fake provider only.
+Agreed with Lukas on 2026-11-23 (DECISIONS #311, #314–#318). Depends on: 42, 43. Replaces the import half of plans 22 and 23 and removes plan 24. SPEC: §4.7, §6, §9.
 Design: none of its own; the check list it produces is shown by plan 45.
 
 **Goal:** Lukas, 2026-11-23: "I'm not really satisfied how reliable it is … I just want at the
@@ -286,19 +288,27 @@ the fake provider only, the prompt is untested against real models, and the hand
 
 ## Acceptance
 
-- [ ] The import screen has no AI switch; with a provider set up, a shared link shows the
+- [x] The import screen has no AI switch; with a provider set up, a shared link shows the
       loader and opens a draft with parts, clean names, notes and links.
-- [ ] The Chefkoch lasagne fixture: two parts, "Faschiertes"/"Hackfleisch" with note
-      "gemischt…", one Salz und one Pfeffer row per part, "Zwiebelwürfel" linked to the onion.
-- [ ] A hostile answer that changes "500 g" to "50 g" opens with 500 g and an
+- [x] The Chefkoch lasagne fixture (as saved; this line first named another page's words):
+      two parts, "Bolognesesoße" and "Béchamelsoße"; "Speck" with note "geräuchert,
+      durchwachsen"; one Salz and one Pfeffer row in the Bolognesesoße, where the page lists
+      them; "Zwiebelwürfel" linked to the Béchamel's "Zwiebel(n)".
+- [x] A hostile answer that changes "500 g" to "50 g" opens with 500 g and an
       `amount-differs` item.
-- [ ] With the provider switched off in the fake server, the same link opens the rule-based
+- [x] With the provider switched off in the fake server, the same link opens the rule-based
       draft and says it was imported without AI.
 - [x] Settings has no "Recipe wording" row; the column is gone.
 - [x] The three refused pages import, or DECISIONS says why they cannot.
-- [ ] `npm run import:eval` runs; its table is in the PR description (real model if a key
+- [x] `npm run import:eval` runs; its table is in the PR description (real model if a key
       exists, otherwise the fake one, labelled).
-- [ ] `npm run verify` and `npm run test:visual` clean.
+- [x] `npm run verify` and `npm run test:visual` clean.
+
+As built: DECISIONS #322 (first PR) and #323 (second). Walked by tests: the gate on the
+Chefkoch fixture and the hostile answers (`recipe-gate.test.ts`), the link path from a saved
+page through `readFetchedPage` with fake answers (`tests/integration/ai-import.test.ts`; the
+fetch guard is not loosened for tests), and the pasted-text journey with parts, a note, links
+and a check item being saved (`tests/e2e/ai.spec.ts`).
 
 ## The probe (2026-11-23)
 

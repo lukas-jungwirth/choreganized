@@ -124,8 +124,17 @@ Bash command, and every `npm run verify` with its exit code — no message text.
 a refusal is a line on that page, not a silent guess. For a report that links a recipe page,
 `npm run import:probe -- <url>` is the app's own importer on the real page. It prints the reader
 that matched, the steps and the ingredients, and `--save <name>` keeps the page as a fixture in
-`src/lib/utils/fixtures/` for the test. Triage's `probe` job runs it for triage, since the agent
-has no web; the build agent runs it itself.
+`src/lib/utils/fixtures/` for the test (`--trim` drops what no reader reads, and refuses a trim
+that reads differently). Triage's `probe` job runs it for triage, since the agent has no web;
+the build agent runs it itself.
+
+**How good the import is** (→ plan 44, DECISIONS #318): `npm run import:eval` runs every fixture
+page through the real pipeline with `EVAL_AI_PROVIDER`, `EVAL_AI_MODEL` and `EVAL_AI_KEY` from
+`.env` (never committed, never in CI, never on a deploy) and prints one row per page: lines
+covered, rows invented, amounts agreeing, names clean, parts found, steps word for word,
+ingredients linked, check items. `--fake` runs it against the fake provider's answers instead
+(only the plumbing is measured then), `--record` keeps each answer in `tests/fixtures/ai-answers/`
+for the gate tests. `tests/fixtures/import-expected.json` holds what a person expects per page.
 
 **Branch protection makes the gate real.** It was applied on 2026-09-14 with the command below
 (once, as the repository owner — re-run it to change the required checks). Both branches are

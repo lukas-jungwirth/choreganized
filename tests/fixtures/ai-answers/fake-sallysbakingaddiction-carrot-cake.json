@@ -1,0 +1,549 @@
+{
+	"name": "My Favorite Carrot Cake Recipe",
+	"servings": 12,
+	"timeMinutes": 210,
+	"ingredients": [
+		{
+			"source": 0,
+			"quantity": 2,
+			"unit": null,
+			"countingWord": null,
+			"newUnit": null,
+			"name": "cups (260g) chopped pecans or walnuts (1 cup for cake, 1 cup for garnish)",
+			"note": null,
+			"alternative": null,
+			"section": null
+		},
+		{
+			"source": 1,
+			"quantity": 1,
+			"unit": null,
+			"countingWord": null,
+			"newUnit": null,
+			"name": "and 1/2 cups (300g) packed light or dark brown sugar",
+			"note": null,
+			"alternative": null,
+			"section": null
+		},
+		{
+			"source": 2,
+			"quantity": null,
+			"unit": null,
+			"countingWord": null,
+			"newUnit": null,
+			"name": "1/2 cup (100g) granulated sugar",
+			"note": null,
+			"alternative": null,
+			"section": null
+		},
+		{
+			"source": 3,
+			"quantity": 1,
+			"unit": null,
+			"countingWord": null,
+			"newUnit": null,
+			"name": "cup (226g/240ml) vegetable oil (or melted coconut oil)",
+			"note": null,
+			"alternative": null,
+			"section": null
+		},
+		{
+			"source": 4,
+			"quantity": 4,
+			"unit": null,
+			"countingWord": null,
+			"newUnit": null,
+			"name": "large eggs, at room temperature",
+			"note": null,
+			"alternative": null,
+			"section": null
+		},
+		{
+			"source": 5,
+			"quantity": null,
+			"unit": null,
+			"countingWord": null,
+			"newUnit": null,
+			"name": "3/4 cup (180g) smooth unsweetened applesauce",
+			"note": null,
+			"alternative": null,
+			"section": null
+		},
+		{
+			"source": 6,
+			"quantity": 1,
+			"unit": null,
+			"countingWord": null,
+			"newUnit": null,
+			"name": "teaspoon pure vanilla extract",
+			"note": null,
+			"alternative": null,
+			"section": null
+		},
+		{
+			"source": 7,
+			"quantity": 2,
+			"unit": null,
+			"countingWord": null,
+			"newUnit": null,
+			"name": "and 1/2 cups (313g) all-purpose flour (spooned & leveled)",
+			"note": null,
+			"alternative": null,
+			"section": null
+		},
+		{
+			"source": 8,
+			"quantity": 2,
+			"unit": null,
+			"countingWord": null,
+			"newUnit": null,
+			"name": "teaspoons baking powder",
+			"note": null,
+			"alternative": null,
+			"section": null
+		},
+		{
+			"source": 9,
+			"quantity": 1,
+			"unit": null,
+			"countingWord": null,
+			"newUnit": null,
+			"name": "teaspoon baking soda",
+			"note": null,
+			"alternative": null,
+			"section": null
+		},
+		{
+			"source": 10,
+			"quantity": null,
+			"unit": null,
+			"countingWord": null,
+			"newUnit": null,
+			"name": "1/2 teaspoon salt",
+			"note": null,
+			"alternative": null,
+			"section": null
+		},
+		{
+			"source": 11,
+			"quantity": 1,
+			"unit": null,
+			"countingWord": null,
+			"newUnit": null,
+			"name": "and 1/2 teaspoons ground cinnamon",
+			"note": null,
+			"alternative": null,
+			"section": null
+		},
+		{
+			"source": 12,
+			"quantity": 1,
+			"unit": null,
+			"countingWord": null,
+			"newUnit": null,
+			"name": "teaspoon ground ginger",
+			"note": null,
+			"alternative": null,
+			"section": null
+		},
+		{
+			"source": 13,
+			"quantity": null,
+			"unit": null,
+			"countingWord": null,
+			"newUnit": null,
+			"name": "1/4 teaspoon ground nutmeg",
+			"note": null,
+			"alternative": null,
+			"section": null
+		},
+		{
+			"source": 14,
+			"quantity": null,
+			"unit": null,
+			"countingWord": null,
+			"newUnit": null,
+			"name": "1/4 teaspoon ground cloves",
+			"note": null,
+			"alternative": null,
+			"section": null
+		},
+		{
+			"source": 15,
+			"quantity": 2,
+			"unit": null,
+			"countingWord": null,
+			"newUnit": null,
+			"name": "cups (260g) grated carrots (about 4 large)",
+			"note": null,
+			"alternative": null,
+			"section": null
+		},
+		{
+			"source": 16,
+			"quantity": 16,
+			"unit": null,
+			"countingWord": null,
+			"newUnit": null,
+			"name": "ounces (452g) full-fat brick cream cheese, softened to room temperature",
+			"note": null,
+			"alternative": null,
+			"section": "Cream Cheese Frosting"
+		},
+		{
+			"source": 17,
+			"quantity": null,
+			"unit": null,
+			"countingWord": null,
+			"newUnit": null,
+			"name": "1/2 cup (8 Tbsp; 113g) unsalted butter, softened to room temperature",
+			"note": null,
+			"alternative": null,
+			"section": "Cream Cheese Frosting"
+		},
+		{
+			"source": 18,
+			"quantity": 4,
+			"unit": null,
+			"countingWord": null,
+			"newUnit": null,
+			"name": "cups (480g) confectioners’ sugar",
+			"note": null,
+			"alternative": null,
+			"section": "Cream Cheese Frosting"
+		},
+		{
+			"source": 19,
+			"quantity": 1,
+			"unit": null,
+			"countingWord": null,
+			"newUnit": null,
+			"name": "and 1/2 teaspoons pure vanilla extract",
+			"note": null,
+			"alternative": null,
+			"section": "Cream Cheese Frosting"
+		},
+		{
+			"source": 20,
+			"quantity": null,
+			"unit": null,
+			"countingWord": null,
+			"newUnit": null,
+			"name": "pinch of salt, to taste",
+			"note": null,
+			"alternative": null,
+			"section": "Cream Cheese Frosting"
+		}
+	],
+	"steps": [
+		{
+			"text": "Preheat the oven to 300°F (149°C). Line a large baking sheet with parchment paper or a silicone baking mat. Spread the chopped pecans (or walnuts) on the prepared baking sheet and bake for 6–8 minutes, or until fragrant. Give the pan a shake halfway through baking. Remove from the oven and allow to cool for 10–15 minutes.",
+			"section": null,
+			"timer": null,
+			"uses": [
+				{
+					"ingredient": 1,
+					"phrase": "and",
+					"amountPhrase": null,
+					"quantity": null
+				},
+				{
+					"ingredient": 4,
+					"phrase": "large",
+					"amountPhrase": null,
+					"quantity": null
+				},
+				{
+					"ingredient": 7,
+					"phrase": "and",
+					"amountPhrase": null,
+					"quantity": null
+				},
+				{
+					"ingredient": 11,
+					"phrase": "and",
+					"amountPhrase": null,
+					"quantity": null
+				},
+				{
+					"ingredient": 19,
+					"phrase": "and",
+					"amountPhrase": null,
+					"quantity": null
+				}
+			]
+		},
+		{
+			"text": "Grease two or three 9-inch cake pans with nonstick spray, line with parchment paper rounds, then grease the parchment paper. Parchment paper helps the cakes seamlessly release from the pans. (If it’s helpful, see this parchment paper rounds for cakes video & post.)",
+			"section": null,
+			"timer": null,
+			"uses": []
+		},
+		{
+			"text": "In a large bowl, whisk the brown sugar, granulated sugar, oil, eggs, applesauce, and vanilla until combined and no brown sugar lumps remain.",
+			"section": null,
+			"timer": null,
+			"uses": [
+				{
+					"ingredient": 1,
+					"phrase": "and",
+					"amountPhrase": null,
+					"quantity": null
+				},
+				{
+					"ingredient": 4,
+					"phrase": "large",
+					"amountPhrase": null,
+					"quantity": null
+				},
+				{
+					"ingredient": 7,
+					"phrase": "and",
+					"amountPhrase": null,
+					"quantity": null
+				},
+				{
+					"ingredient": 11,
+					"phrase": "and",
+					"amountPhrase": null,
+					"quantity": null
+				},
+				{
+					"ingredient": 19,
+					"phrase": "and",
+					"amountPhrase": null,
+					"quantity": null
+				}
+			]
+		},
+		{
+			"text": "In another large bowl, whisk the flour, baking powder, baking soda, salt, cinnamon, ginger, nutmeg, and cloves together. Pour the wet ingredients into the dry ingredients and, using a spatula or wooden spoon, fold the ingredients together until just combined. Fold in the carrots and 1 cup (about 120g) of the toasted nuts. (The rest of the nuts are for garnish.) Pour/spoon the batter evenly into the prepared cake pans.",
+			"section": null,
+			"timer": null,
+			"uses": [
+				{
+					"ingredient": 1,
+					"phrase": "and",
+					"amountPhrase": null,
+					"quantity": null
+				},
+				{
+					"ingredient": 2,
+					"phrase": "cup",
+					"amountPhrase": null,
+					"quantity": null
+				},
+				{
+					"ingredient": 3,
+					"phrase": "cup",
+					"amountPhrase": null,
+					"quantity": null
+				},
+				{
+					"ingredient": 4,
+					"phrase": "large",
+					"amountPhrase": null,
+					"quantity": null
+				},
+				{
+					"ingredient": 5,
+					"phrase": "cup",
+					"amountPhrase": null,
+					"quantity": null
+				},
+				{
+					"ingredient": 7,
+					"phrase": "and",
+					"amountPhrase": null,
+					"quantity": null
+				},
+				{
+					"ingredient": 11,
+					"phrase": "and",
+					"amountPhrase": null,
+					"quantity": null
+				},
+				{
+					"ingredient": 17,
+					"phrase": "cup",
+					"amountPhrase": null,
+					"quantity": null
+				},
+				{
+					"ingredient": 19,
+					"phrase": "and",
+					"amountPhrase": null,
+					"quantity": null
+				}
+			]
+		},
+		{
+			"text": "Bake until a toothpick inserted in the center comes out clean. If using three cake pans, this takes about 20–25 minutes. If using two cake pans, this takes about 30–35 minutes. Cool the cakes in the pans set on a cooling rack for 1 hour. Run a knife around the edges to help loosen the sides, remove the cakes from the pans, peel off the parchment, and place on the rack to finish cooling. The cakes must be completely cool before frosting and assembling.",
+			"section": null,
+			"timer": null,
+			"uses": [
+				{
+					"ingredient": 1,
+					"phrase": "and",
+					"amountPhrase": null,
+					"quantity": null
+				},
+				{
+					"ingredient": 7,
+					"phrase": "and",
+					"amountPhrase": null,
+					"quantity": null
+				},
+				{
+					"ingredient": 11,
+					"phrase": "and",
+					"amountPhrase": null,
+					"quantity": null
+				},
+				{
+					"ingredient": 19,
+					"phrase": "and",
+					"amountPhrase": null,
+					"quantity": null
+				}
+			]
+		},
+		{
+			"text": "In a large bowl using a handheld or stand mixer fitted with a paddle attachment, beat the cream cheese and butter together on medium-high speed until smooth, about 2 minutes. Scrape down the sides of the bowl as needed. Add the confectioners’ sugar, vanilla, and a pinch of salt. Beat on low speed for 30 seconds, then increase to high speed and beat for 3 minutes until completely combined and creamy. If the frosting seems a bit thin and runny, refrigerate it for 30 minutes before using.",
+			"section": null,
+			"timer": null,
+			"uses": [
+				{
+					"ingredient": 1,
+					"phrase": "and",
+					"amountPhrase": null,
+					"quantity": null
+				},
+				{
+					"ingredient": 4,
+					"phrase": "large",
+					"amountPhrase": null,
+					"quantity": null
+				},
+				{
+					"ingredient": 7,
+					"phrase": "and",
+					"amountPhrase": null,
+					"quantity": null
+				},
+				{
+					"ingredient": 11,
+					"phrase": "and",
+					"amountPhrase": null,
+					"quantity": null
+				},
+				{
+					"ingredient": 19,
+					"phrase": "and",
+					"amountPhrase": null,
+					"quantity": null
+				},
+				{
+					"ingredient": 20,
+					"phrase": "pinch",
+					"amountPhrase": null,
+					"quantity": null
+				}
+			]
+		},
+		{
+			"text": "(For extra help with this step, see this video & post on how to assemble a layer cake.) First, using a large serrated knife or cake leveler, slice a thin layer off the top of each cake to create a flat surface. Place a cake layer on your cake turntable, cake stand, or serving plate. Evenly cover the top with 3/4 to 1 cup (180–240g) of the frosting. Top with the second cake layer, upside down, and spread the same amount of frosting as on the first layer. Top with the third layer, right side up, and spread the top and sides with the remaining frosting. Garnish with the remaining toasted nuts. Refrigerate the cake for at least 20 minutes before slicing. This helps the cake hold its shape when cutting. If you refrigerated the cake for longer than 4 hours, take it out of the refrigerator 2 hours before serving so it can mostly come to room temperature.",
+			"section": null,
+			"timer": null,
+			"uses": [
+				{
+					"ingredient": 1,
+					"phrase": "and",
+					"amountPhrase": null,
+					"quantity": null
+				},
+				{
+					"ingredient": 2,
+					"phrase": "cup",
+					"amountPhrase": null,
+					"quantity": null
+				},
+				{
+					"ingredient": 3,
+					"phrase": "cup",
+					"amountPhrase": null,
+					"quantity": null
+				},
+				{
+					"ingredient": 4,
+					"phrase": "large",
+					"amountPhrase": null,
+					"quantity": null
+				},
+				{
+					"ingredient": 5,
+					"phrase": "cup",
+					"amountPhrase": null,
+					"quantity": null
+				},
+				{
+					"ingredient": 7,
+					"phrase": "and",
+					"amountPhrase": null,
+					"quantity": null
+				},
+				{
+					"ingredient": 11,
+					"phrase": "and",
+					"amountPhrase": null,
+					"quantity": null
+				},
+				{
+					"ingredient": 17,
+					"phrase": "cup",
+					"amountPhrase": null,
+					"quantity": null
+				},
+				{
+					"ingredient": 19,
+					"phrase": "and",
+					"amountPhrase": null,
+					"quantity": null
+				}
+			]
+		},
+		{
+			"text": "Cover leftover cake tightly and store in the refrigerator for up to 5 days. I like to use a cake carrier for storing and transporting.",
+			"section": null,
+			"timer": null,
+			"uses": [
+				{
+					"ingredient": 1,
+					"phrase": "and",
+					"amountPhrase": null,
+					"quantity": null
+				},
+				{
+					"ingredient": 7,
+					"phrase": "and",
+					"amountPhrase": null,
+					"quantity": null
+				},
+				{
+					"ingredient": 11,
+					"phrase": "and",
+					"amountPhrase": null,
+					"quantity": null
+				},
+				{
+					"ingredient": 19,
+					"phrase": "and",
+					"amountPhrase": null,
+					"quantity": null
+				}
+			]
+		}
+	],
+	"tags": [],
+	"diet": null
+}

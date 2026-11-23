@@ -181,10 +181,18 @@ export type RecipePrefill = {
 	timeMinutes: number | null;
 	servings: number | null;
 	ingredientLines: string[];
-	/** The part each line belongs to, by index (→ plan 44); absent: none. */
-	ingredientSections?: (string | null)[];
+	/** Each line's note and part, by index (→ plans 43, 44); absent: none. */
+	ingredientDetails?: (IngredientDetails | null)[];
 	steps: StepInput[];
 	photo: { path: string; preview: string } | null;
+	/**
+	 * What the import's gate wants a person to look at, and what it only says
+	 * (→ plan 44): the review screen of plan 45 shows them; until then the
+	 * editor lists them at the top. Absent: nothing to say.
+	 */
+	checks?: ImportCheck[];
+	/** Sentences of the page's method no step kept (→ plan 44), so one can be put back. */
+	leftOut?: string[];
 	/**
 	 * Tags and a diet the import suggests (→ plan 41): read off the page's own
 	 * card, picked by the AI, or both. They open ticked, marked as suggestions,
@@ -192,6 +200,54 @@ export type RecipePrefill = {
 	 */
 	suggested?: TagSuggestion | null;
 };
+
+/**
+ * One thing the import's gate found (→ plan 44). `check` items are what the
+ * review counts ("3 things to check"); `info` items only say something.
+ * `at` names the draft's ingredient row or step by index, or the recipe.
+ */
+export type ImportCheck = {
+	kind: ImportCheckKind;
+	level: 'check' | 'info';
+	at: { ingredient: number } | { step: number } | 'recipe';
+	/** What the page said where it differs: the line, or the step's text. */
+	page?: string;
+	/** A word the page counts in that is on no list ("Ring"). */
+	word?: string;
+	/** The other half of an either/or ("veganes Hack"). */
+	alternative?: string;
+};
+
+export const IMPORT_CHECK_KINDS = [
+	// A page line no row came from: added from the rule-based reading.
+	'line-added',
+	// The amount the model gave is not the page's: the page's stands.
+	'amount-differs',
+	// The page measured in cups, oz or lb; the row is metric (said, not a warning).
+	'converted',
+	// The model's name has words the page line does not: the page's reading stands.
+	'name-differs',
+	// A word the page counts in that is on no list: "New unit: Ring. Add it?"
+	'new-unit',
+	// "A oder B": the first is kept, the other offered.
+	'choice',
+	// A step whose text is not the page's, word for word.
+	'reworded',
+	// Read from photos: nothing could be checked against a page.
+	'from-photo',
+	// The steps give an ingredient more than the recipe has.
+	'shares-exceed',
+	// No step uses this ingredient ("Fett für die Form" often rightly).
+	'unused',
+	// No servings, or 1 where the page said a cake: every scaled amount hangs on it.
+	'servings',
+	// The page has no method.
+	'no-steps',
+	// Imported without AI: parts and notes by rule, links a guess.
+	'no-ai'
+] as const;
+
+export type ImportCheckKind = (typeof IMPORT_CHECK_KINDS)[number];
 
 /** Suggested tags and diet, and where they came from — the form says which. */
 export type TagSuggestion = {
@@ -221,11 +277,6 @@ export function mergeSuggestions(
 	const fromAi = tags.some((tag) => !page.tags.includes(tag)) || (!page.diet && diet !== null);
 	const fromPage = page.tags.length > 0 || page.diet !== null;
 	return { tags, diet, from: fromAi && fromPage ? 'both' : fromAi ? 'ai' : 'page' };
-}
-
-/** A step as a page's recipe card gives it: text, and nothing worked out about it. */
-export function plainStep(text: string): StepInput {
-	return { text, uses: null, timer: null };
 }
 
 /**

@@ -64,11 +64,14 @@ src/
       services/                # domain logic: household.ts, home.ts, shopping.ts, tasks.ts,
                                # history.ts, reminders.ts, holidays.ts, recipes.ts, meals.ts,
                                # timers.ts, feedback.ts, ai.ts (connections), ai-import.ts,
-                               # expenses.ts, expense-recurrences.ts, expense-notify.ts
+                               # units.ts (household unit words), expenses.ts,
+                               # expense-recurrences.ts, expense-notify.ts
     utils/                     # dates.ts (household-local helpers), holidays.ts (Austrian
                                # shop closures), ingredients.ts, invite-code.ts, timer-parse.ts,
                                # recipe-jsonld.ts + recipe-microdata.ts (the import's page
-                               # readers), recipe-plugins.ts (parts from plugin markup)
+                               # readers), recipe-plugins.ts (parts from plugin markup),
+                               # recipe-draft.ts (the import's gate), rule-draft.ts (the
+                               # import without a model)
   routes/                      # see routing map below
 static/                        # icons/ (placeholders [05]), manifest.webmanifest [plan 11]
 design/Hearth.dc.html          # the design mockups (open in a browser)
