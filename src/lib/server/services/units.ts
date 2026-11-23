@@ -9,7 +9,7 @@
  * Every function takes `householdId` first and stays inside it.
  */
 import { and, asc, eq } from 'drizzle-orm';
-import { isKnownUnitWord, unitWordKey, UNIT_WORD_MAX } from '$lib/utils/amounts';
+import { householdUnitKey, isKnownUnitWord, unitWordKey, UNIT_WORD_MAX } from '$lib/utils/amounts';
 import { db } from '../db';
 import { householdUnits } from '../db/schema';
 
@@ -50,7 +50,7 @@ export function addUnit(householdId: string, memberId: string | null, raw: strin
 		throw new UnitError('invalid');
 	}
 	const wordKey = unitWordKey(word);
-	if (isKnownUnitWord(word) || knownUnitWords(householdId).has(wordKey)) {
+	if (isKnownUnitWord(word) || householdUnitKey(word, knownUnitWords(householdId))) {
 		throw new UnitError('known');
 	}
 

@@ -20,6 +20,7 @@ import {
 	clampAmount,
 	countingWord,
 	fusedOf,
+	householdUnitKey,
 	isTimes,
 	leadingAmount,
 	measureOf,
@@ -162,10 +163,7 @@ export function parseIngredient(
  * `known` holding them lowercased: "Ring" reads "2 Ringe Fleischwurst" too.
  */
 function householdWord(word: string, known: ReadonlySet<string> | undefined): string | null {
-	if (!known?.size) return null;
-	const lower = word.toLowerCase();
-	const stems = [lower, lower.replace(/(?:en|e|n|s)$/, '')];
-	return stems.find((stem) => known.has(stem)) ?? null;
+	return householdUnitKey(word, known);
 }
 
 /** A line with no amount in it: the whole of it is the name. */

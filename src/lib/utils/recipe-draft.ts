@@ -33,7 +33,7 @@
  * Save then checks everything again (`readRecipeForm`, the service's clamps).
  * Pure, so the whole policy is unit-tested (→ `recipe-draft.test.ts`).
  */
-import { leadingAmount, measureKey, rangeLength, unitWordKey } from './amounts';
+import { householdUnitKey, leadingAmount, measureKey, rangeLength, unitStem } from './amounts';
 import { formatIngredient, RECIPE_QUANTITY_MAX, RECIPE_UNITS } from './ingredients';
 import {
 	clampCount,
@@ -179,6 +179,12 @@ export function validateRecipeDraft(raw: unknown, context: DraftContext): DraftC
 	if (checkSteps && steps.length && reworded * 3 > steps.length) {
 		return { ok: false, reason: 'fidelity' };
 	}
+	// Dropping is allowed (greetings, teasers, variations), dropping the method is not:
+	// an answer that kept less than half of a card's sentences is no answer to that card.
+	const omitted = card && checkSteps ? leftOut(card.steps, steps) : [];
+	if (card && checkSteps && omitted.length * 2 > sentences(card.steps).length) {
+		return { ok: false, reason: 'fidelity' };
+	}
 
 	// ── Recipe ──
 	const modelName = cleanText(raw.name, RECIPE_NAME_MAX);
@@ -218,7 +224,9 @@ export function validateRecipeDraft(raw: unknown, context: DraftContext): DraftC
 		...(context.photos ? [{ kind: 'from-photo', level: 'info', at: 'recipe' } as const] : []),
 		...recipeChecks(servings, card?.servingsText, steps.length),
 		...rows.flatMap((row, at) =>
-			row.checks.map((check) => ({ ...check, at: { ingredient: at } }) as ImportCheck)
+			row.checks.map(
+				(check) => ({ ...check, name: row.name, at: { ingredient: at } }) as ImportCheck
+			)
 		),
 		...stepChecks,
 		...linkChecks(rows, steps, known)
@@ -238,7 +246,7 @@ export function validateRecipeDraft(raw: unknown, context: DraftContext): DraftC
 			steps,
 			suggested: tags.length || diet ? { tags, diet, from: 'ai' } : null,
 			checks,
-			leftOut: card && checkSteps ? leftOut(card.steps, steps) : []
+			leftOut: omitted
 		}
 	};
 }
@@ -309,7 +317,7 @@ function readRow(
 	const alternative = cleanText(item.alternative, INGREDIENT_NAME_MAX) || null;
 	if (alternative && contains(where, alternative)) {
 		checks.push({ kind: 'choice', level: 'check', alternative });
-		const word = /\b(oder|or)\b/i.exec(where)?.[1] ?? 'oder';
+		const word = joinerBefore(where, alternative) ?? 'oder';
 		note = joinNote(`${word} ${alternative}`, note);
 	}
 
@@ -356,8 +364,11 @@ function addMissingLines(rows: Row[], card: SourceRecipe, known: ReadonlySet<str
  * "Rinderhackfleisch").
  */
 export function nameFits(name: string, line: string): boolean {
-	const plural = /\((?:n|en|e|er|s|es|nen|se)\)|\/(?:n|en|s)\b/giu;
-	const page = normalize(line.replace(plural, ''));
+	const plural = /\((n|en|e|er|s|es|nen|se)\)|\/(n|en|s)\b/giu;
+	// The line both ways: "3 Ei(er)" says "Ei" and "Eier", "2 egg(s)" "egg" and "eggs".
+	const page = normalize(
+		`${line.replace(plural, '')} ${line.replace(plural, (_, a?: string, b?: string) => a ?? b ?? '')}`
+	);
 	return words(name.replace(plural, '')).every((word) => page.includes(stem(word)));
 }
 
@@ -388,14 +399,21 @@ function canonical(
 	unit: string | null
 ): { value: number; key: string } | null {
 	if (quantity === null || unit === null) return null;
-	const key = measureKey(unit) ?? unitWordKey(unit);
+	const key = measureKey(unit) ?? unitStem(unit);
 	if (key === 'kg') return { value: quantity * 1000, key: 'g' };
 	if (key === 'L') return { value: quantity * 1000, key: 'ml' };
 	return { value: quantity, key };
 }
 
 function isKnownWord(word: string, known: ReadonlySet<string>): boolean {
-	return measureKey(word) !== null || known.has(unitWordKey(word));
+	return measureKey(word) !== null || householdUnitKey(word, known) !== null;
+}
+
+/** "oder"/"or" as the text writes it just before the alternative: "Hack oder veganes Hack". */
+function joinerBefore(where: string, alternative: string): string | null {
+	const at = normalize(where).indexOf(normalize(alternative));
+	if (at < 0) return null;
+	return /\b(oder|or)\s*$/i.exec(normalize(where).slice(Math.max(0, at - 12), at))?.[1] ?? null;
 }
 
 function joinNote(first: string, note: string | null): string {
@@ -588,7 +606,7 @@ function linkChecks(rows: Row[], steps: StepInput[], known: ReadonlySet<string>)
 	rows.forEach((row, at) => {
 		const links = steps.flatMap((step) => (step.uses ?? []).filter((use) => use.ingredient === at));
 		if (!links.length) {
-			checks.push({ kind: 'unused', level: 'info', at: { ingredient: at } });
+			checks.push({ kind: 'unused', level: 'info', name: row.name, at: { ingredient: at } });
 			return;
 		}
 		const total = canonical(row.quantity, row.unit);
@@ -604,7 +622,12 @@ function linkChecks(rows: Row[], steps: StepInput[], known: ReadonlySet<string>)
 			if (share && share.key === total.key) given += share.value;
 		}
 		if (given > total.value + 0.011) {
-			checks.push({ kind: 'shares-exceed', level: 'check', at: { ingredient: at } });
+			checks.push({
+				kind: 'shares-exceed',
+				level: 'check',
+				name: row.name,
+				at: { ingredient: at }
+			});
 		}
 	});
 	return checks;

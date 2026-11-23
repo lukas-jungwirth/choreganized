@@ -219,6 +219,28 @@ export function unitWordKey(word: string): string {
 	return word.trim().toLowerCase();
 }
 
+/** A unit word without its plural ending: "Ringe" and "Ring" are one word to compare. */
+export function unitStem(word: string): string {
+	return unitWordKey(word).replace(/(?:en|e|n|s)$/, '');
+}
+
+/**
+ * The household's own word a page word is (→ plan 44): `known` holds them
+ * lowercased, and "Ringe" is the "Ring" a household added. Null when it is none.
+ */
+export function householdUnitKey(
+	word: string,
+	known: ReadonlySet<string> | undefined
+): string | null {
+	if (!known?.size) return null;
+	const lower = unitWordKey(word);
+	const stem = unitStem(word);
+	for (const key of known) {
+		if (key === lower || key === stem || unitStem(key) === stem) return key;
+	}
+	return null;
+}
+
 /** The longest unit word a household may add ("Messerspitze" fits). */
 export const UNIT_WORD_MAX = 20;
 

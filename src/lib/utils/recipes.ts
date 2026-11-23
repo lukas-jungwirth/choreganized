@@ -210,6 +210,8 @@ export type ImportCheck = {
 	kind: ImportCheckKind;
 	level: 'check' | 'info';
 	at: { ingredient: number } | { step: number } | 'recipe';
+	/** The ingredient's name, as the draft has it, for an item about a row. */
+	name?: string;
 	/** What the page said where it differs: the line, or the step's text. */
 	page?: string;
 	/** A word the page counts in that is on no list ("Ring"). */

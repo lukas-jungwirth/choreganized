@@ -28,10 +28,14 @@ describe('household units', () => {
 		const { householdId, owner } = makeHousehold();
 		const added = addUnit(householdId, owner.id, ' Ring ');
 		assert.equal(added.word, 'Ring');
-		assert.throws(
-			() => addUnit(householdId, owner.id, 'RING'),
-			(cause: unknown) => cause instanceof UnitError && cause.code === 'known'
-		);
+		// Its plural is the same word (code review): "Ringe" is the household's "Ring".
+		for (const again of ['RING', 'Ringe']) {
+			assert.throws(
+				() => addUnit(householdId, owner.id, again),
+				(cause: unknown) => cause instanceof UnitError && cause.code === 'known',
+				again
+			);
+		}
 		assert.deepEqual(
 			listUnits(householdId).map((unit) => unit.word),
 			['Ring']

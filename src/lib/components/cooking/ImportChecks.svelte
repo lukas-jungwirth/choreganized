@@ -28,6 +28,7 @@
 	const count = $derived(checks.filter((check) => check.level === 'check').length);
 
 	function nameOf(check: ImportCheck): string {
+		if (check.name) return check.name;
 		if (typeof check.at !== 'object' || !('ingredient' in check.at)) return '';
 		const line = lines[check.at.ingredient] ?? '';
 		return parseIngredient(line)?.name ?? line;

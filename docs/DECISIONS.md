@@ -4769,3 +4769,19 @@ recipe-importer)` (`IMPORT_UA`): the `Mozilla/5.0 (compatible; …)` form crawle
      - **The Chefkoch acceptance line** in the plan named words the saved page does not have
        ("Faschiertes", "gemischt"); it was rewritten to the fixture's own words, testing the
        same things.
+     - **Review fixes from the code-review pass**: a household word matches in its plural in
+       the parser, the gate and `addUnit` alike (`householdUnitKey`: "Ringe" is the "Ring" a
+       household added, and cannot be added twice); an answer that kept less than half of a
+       card's sentences is refused for fidelity too, since only reworded steps counted and an
+       answer with no steps passed; **temperatures stay as the page wrote them**, °F too (the
+       plan said "°F → °C, as today", but a converted step is a reworded one and would push
+       US recipes over the one-third line; cook mode reads both); a "Für …" / "For …" row is a
+       heading only at three words or fewer ("Für die Deko Puderzucker" is sugar), and a lone
+       shouted word only beside another shouted heading ("BUTTER" alone is butter, jamieoliver's
+       "PICKLE" beside "KATSU CURRY SAUCE" is a part; this tightens #322); a name is checked
+       against the line read both ways ("3 Ei(er)" says Ei and Eier); "oder"/"or" for a choice
+       is taken from just before the alternative; check items carry the row's name from the
+       gate, which knows the household's units (the client's parse does not). Left as it is:
+       a card with more lines than the editor's 60 rows loses the tail without an item, as
+       every import did before; with the model splitting lines the cap is reached a little
+       sooner.

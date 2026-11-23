@@ -82,7 +82,15 @@ describe('the gate on the Chefkoch lasagne (a recorded answer)', () => {
 		assert.equal(details[wine]?.note, 'oder Gemüsebrühe');
 		assert.deepEqual(
 			draft.checks?.filter((check) => check.kind === 'choice'),
-			[{ kind: 'choice', level: 'check', alternative: 'Gemüsebrühe', at: { ingredient: wine } }]
+			[
+				{
+					kind: 'choice',
+					level: 'check',
+					alternative: 'Gemüsebrühe',
+					name: 'Rotwein',
+					at: { ingredient: wine }
+				}
+			]
 		);
 	});
 
@@ -124,6 +132,7 @@ describe('the gate on hostile answers', () => {
 				kind: 'amount-differs',
 				level: 'check',
 				page: '500 g Rinderhackfleisch',
+				name: 'Rinderhackfleisch',
 				at: { ingredient: 5 }
 			}
 		);
@@ -248,6 +257,7 @@ describe('the gate on hostile answers', () => {
 				kind: 'new-unit',
 				level: 'check',
 				word: 'Ringe',
+				name: 'Fleischwurst',
 				at: { ingredient: 0 }
 			}
 		);
@@ -312,6 +322,75 @@ describe('the gate on hostile answers', () => {
 			{ source: null, text: null, photos: true }
 		);
 		assert.ok(kinds(draft.checks).includes('from-photo'));
+	});
+});
+
+describe('the gate, after code review', () => {
+	it('knows a household word in its plural ("Ring" added, the page says "Ringe")', () => {
+		const card: SourceRecipe = {
+			name: 'Wurstsalat',
+			servings: 2,
+			timeMinutes: null,
+			ingredientLines: ['2 Ringe Fleischwurst'],
+			steps: ['Die Fleischwurst in Streifen schneiden.']
+		};
+		const draft = draftOf(
+			{
+				name: 'Wurstsalat',
+				ingredients: [
+					{ source: 0, quantity: 2, unit: null, countingWord: 'Ringe', name: 'Fleischwurst' }
+				],
+				steps: [{ text: 'Die Fleischwurst in Streifen schneiden.', uses: [] }]
+			},
+			{ source: card, text: null, known: new Set(['ring']) }
+		);
+		assert.equal(draft.ingredientLines[0], '2 Ringe Fleischwurst');
+		assert.deepEqual(
+			kinds(draft.checks).filter((kind) => kind === 'new-unit' || kind === 'amount-differs'),
+			[]
+		);
+	});
+
+	it('refuses an answer that dropped most of the method', () => {
+		const raw = copy();
+		raw.steps = raw.steps.slice(0, 2);
+		assert.deepEqual(validateRecipeDraft(raw, context), { ok: false, reason: 'fidelity' });
+		assert.deepEqual(validateRecipeDraft({ ...copy(), steps: [] }, context), {
+			ok: false,
+			reason: 'fidelity'
+		});
+	});
+
+	it('takes "Eier" for "3 Ei(er)": the line says both', () => {
+		const card: SourceRecipe = {
+			name: 'Schmarrn',
+			servings: 2,
+			timeMinutes: null,
+			ingredientLines: ['3 Ei(er)'],
+			steps: ['Die Eier trennen.']
+		};
+		const draft = draftOf(
+			{
+				name: 'Schmarrn',
+				ingredients: [{ source: 0, quantity: 3, unit: null, name: 'Eier' }],
+				steps: [{ text: 'Die Eier trennen.', uses: [] }]
+			},
+			{ source: card, text: null }
+		);
+		assert.ok(!kinds(draft.checks).includes('name-differs'));
+	});
+
+	it('takes "oder"/"or" from just before the alternative, not from anywhere in a paste', () => {
+		const text = 'Tipp: Brot or Semmeln dazu.\n500 g Hack oder veganes Hack\nDas Hack anbraten.';
+		const draft = draftOf(
+			{
+				name: 'Ragù',
+				ingredients: [{ quantity: 500, unit: 'g', name: 'Hack', alternative: 'veganes Hack' }],
+				steps: [{ text: 'Das Hack anbraten.', uses: [] }]
+			},
+			{ source: null, text }
+		);
+		assert.equal(draft.ingredientDetails?.[0]?.note, 'oder veganes Hack');
 	});
 });
 

@@ -315,6 +315,9 @@ describe('buildRecipePrompt', () => {
 		assert.match(prompt, /zehe, bund, dose/);
 		assert.match(prompt, /, Ring\./);
 		assert.match(prompt, /Never reword/);
+		// The gate wants the page's own words, so a °F stays °F (code review).
+		assert.match(prompt, /Temperatures stay as the page wrote them/);
+		assert.doesNotMatch(prompt, /become °C/);
 		assert.match(prompt, /Keep the recipe in its own language/);
 		assert.doesNotMatch(prompt, /Household instructions/);
 		assert.doesNotMatch(prompt, /Austrian/);
