@@ -1,0 +1,329 @@
+{
+	"name": "Lasagne Bolognese",
+	"servings": 4,
+	"timeMinutes": 55,
+	"ingredients": [
+		{
+			"source": 0,
+			"quantity": 200,
+			"unit": "g",
+			"countingWord": null,
+			"newUnit": null,
+			"name": "Gouda (gerieben, zum Bestreuen)",
+			"note": null,
+			"alternative": null,
+			"section": null
+		},
+		{
+			"source": 1,
+			"quantity": 12,
+			"unit": "pcs",
+			"countingWord": null,
+			"newUnit": null,
+			"name": "Lasagneblätter",
+			"note": null,
+			"alternative": null,
+			"section": null
+		},
+		{
+			"source": 2,
+			"quantity": 1,
+			"unit": null,
+			"countingWord": null,
+			"newUnit": null,
+			"name": "Schuss Olivenöl (für die Form)",
+			"note": null,
+			"alternative": null,
+			"section": null
+		},
+		{
+			"source": 3,
+			"quantity": 80,
+			"unit": "g",
+			"countingWord": null,
+			"newUnit": null,
+			"name": "Butter",
+			"note": null,
+			"alternative": null,
+			"section": "Bechamelsauce"
+		},
+		{
+			"source": 4,
+			"quantity": 700,
+			"unit": "ml",
+			"countingWord": null,
+			"newUnit": null,
+			"name": "Milch",
+			"note": null,
+			"alternative": null,
+			"section": "Bechamelsauce"
+		},
+		{
+			"source": 5,
+			"quantity": 1,
+			"unit": null,
+			"countingWord": null,
+			"newUnit": null,
+			"name": "Prise Muskat (gerieben)",
+			"note": null,
+			"alternative": null,
+			"section": "Bechamelsauce"
+		},
+		{
+			"source": 6,
+			"quantity": 1,
+			"unit": null,
+			"countingWord": null,
+			"newUnit": null,
+			"name": "Prise Pfeffer (weiß, frisch gemahlen)",
+			"note": null,
+			"alternative": null,
+			"section": "Bechamelsauce"
+		},
+		{
+			"source": 7,
+			"quantity": 1,
+			"unit": null,
+			"countingWord": null,
+			"newUnit": null,
+			"name": "Prise Salz",
+			"note": null,
+			"alternative": null,
+			"section": "Bechamelsauce"
+		},
+		{
+			"source": 8,
+			"quantity": 80,
+			"unit": "g",
+			"countingWord": null,
+			"newUnit": null,
+			"name": "Weizenmehl (glatt, W480)",
+			"note": null,
+			"alternative": null,
+			"section": "Bechamelsauce"
+		},
+		{
+			"source": 9,
+			"quantity": 1,
+			"unit": null,
+			"countingWord": null,
+			"newUnit": null,
+			"name": "Prise Basilikum (getrocknet)",
+			"note": null,
+			"alternative": null,
+			"section": "Bolognesesauce"
+		},
+		{
+			"source": 10,
+			"quantity": 1,
+			"unit": "pcs",
+			"countingWord": null,
+			"newUnit": null,
+			"name": "Karotte",
+			"note": null,
+			"alternative": null,
+			"section": "Bolognesesauce"
+		},
+		{
+			"source": 11,
+			"quantity": 1,
+			"unit": "pcs",
+			"countingWord": null,
+			"newUnit": null,
+			"name": "Knoblauchzehe",
+			"note": null,
+			"alternative": null,
+			"section": "Bolognesesauce"
+		},
+		{
+			"source": 12,
+			"quantity": 1,
+			"unit": null,
+			"countingWord": null,
+			"newUnit": null,
+			"name": "Schuss Öl (für die Pfanne)",
+			"note": null,
+			"alternative": null,
+			"section": "Bolognesesauce"
+		},
+		{
+			"source": 13,
+			"quantity": 1,
+			"unit": null,
+			"countingWord": null,
+			"newUnit": null,
+			"name": "Prise Oregano (getrocknet)",
+			"note": null,
+			"alternative": null,
+			"section": "Bolognesesauce"
+		},
+		{
+			"source": 14,
+			"quantity": 1,
+			"unit": null,
+			"countingWord": null,
+			"newUnit": null,
+			"name": "Prise Pfeffer (schwarz, frisch gemahlen)",
+			"note": null,
+			"alternative": null,
+			"section": "Bolognesesauce"
+		},
+		{
+			"source": 15,
+			"quantity": 500,
+			"unit": "g",
+			"countingWord": null,
+			"newUnit": null,
+			"name": "Rinderfaschiertes",
+			"note": null,
+			"alternative": null,
+			"section": "Bolognesesauce"
+		},
+		{
+			"source": 16,
+			"quantity": 1,
+			"unit": null,
+			"countingWord": null,
+			"newUnit": null,
+			"name": "Prise Salz",
+			"note": null,
+			"alternative": null,
+			"section": "Bolognesesauce"
+		},
+		{
+			"source": 17,
+			"quantity": 1,
+			"unit": null,
+			"countingWord": null,
+			"newUnit": null,
+			"name": "Prise Thymian (getrocknet)",
+			"note": null,
+			"alternative": null,
+			"section": "Bolognesesauce"
+		},
+		{
+			"source": 18,
+			"quantity": 1,
+			"unit": null,
+			"countingWord": null,
+			"newUnit": null,
+			"name": "Dose Tomaten (geschält)",
+			"note": null,
+			"alternative": null,
+			"section": "Bolognesesauce"
+		},
+		{
+			"source": 19,
+			"quantity": 5,
+			"unit": "tbsp",
+			"countingWord": null,
+			"newUnit": null,
+			"name": "Tomatenmark",
+			"note": null,
+			"alternative": null,
+			"section": "Bolognesesauce"
+		},
+		{
+			"source": 20,
+			"quantity": 3,
+			"unit": "tbsp",
+			"countingWord": null,
+			"newUnit": null,
+			"name": "Tomatensauce",
+			"note": null,
+			"alternative": null,
+			"section": "Bolognesesauce"
+		},
+		{
+			"source": 21,
+			"quantity": 1,
+			"unit": "pcs",
+			"countingWord": null,
+			"newUnit": null,
+			"name": "Zwiebel (mittelgroß)",
+			"note": null,
+			"alternative": null,
+			"section": "Bolognesesauce"
+		}
+	],
+	"steps": [
+		{
+			"text": "Zuerst die Bolognesesauce zubereiten: Dafür Zwiebeln und Knoblauch schälen und fein hacken. Die Karotten schälen und raspeln.",
+			"section": null,
+			"timer": null,
+			"uses": []
+		},
+		{
+			"text": "Dann Öl in einem Topf erhitzen, Zwiebeln, Knoblauch und Karotten darin glasig andünsten, Faschiertes zugeben und für rund 4-6 Minuten weiter anbraten.",
+			"section": null,
+			"timer": null,
+			"uses": []
+		},
+		{
+			"text": "Nun geschälte Tomaten und Tomatenmark sowie das Ketchup, Basilikum, Oregano, Thymian, Salz und Pfeffer einrühren und auf kleinster Stufe ca. 10 Minuten köcheln lassen.",
+			"section": null,
+			"timer": null,
+			"uses": [
+				{
+					"ingredient": 19,
+					"phrase": "Tomatenmark",
+					"amountPhrase": null,
+					"quantity": null
+				}
+			]
+		},
+		{
+			"text": "Anschließend die Bechamelsauce herstellen: Dafür Butter in einem Topf zerlassen, Mehl zufügen und sofort mit einem Schneebesen umrühren. Jetzt ganz langsam unter ständigem Rühren die Milch zufügen. Langsam aufkochen und rühren bis die Sauce dicklich ist - mit Pfeffer, Salz und Muskat würzen.",
+			"section": null,
+			"timer": null,
+			"uses": [
+				{
+					"ingredient": 3,
+					"phrase": "Butter",
+					"amountPhrase": null,
+					"quantity": null
+				},
+				{
+					"ingredient": 4,
+					"phrase": "Milch",
+					"amountPhrase": null,
+					"quantity": null
+				}
+			]
+		},
+		{
+			"text": "Für die Lasagne eine Auflaufform mit Olivenöl einfetten. Nun abwechselnd die Lasagneblätter und Bolognesesauce einschichten. Mit den Lasagneblättern beginnen, danach die Sauce usw. abwechselnd schichten.",
+			"section": null,
+			"timer": null,
+			"uses": [
+				{
+					"ingredient": 1,
+					"phrase": "Lasagneblätter",
+					"amountPhrase": null,
+					"quantity": null
+				}
+			]
+		},
+		{
+			"text": "Ganz zum Schluss mit der Bechamelsauce abschließen und frisch geriebenen Gouda draufgeben.",
+			"section": null,
+			"timer": null,
+			"uses": [
+				{
+					"ingredient": 0,
+					"phrase": "Gouda",
+					"amountPhrase": null,
+					"quantity": null
+				}
+			]
+		},
+		{
+			"text": "Die Lasagne im vorgeheizten Backofen bei 180° C Heißluft (oder 200 Grad Ober-Unterhitze) für rund 30 Minuten backen.",
+			"section": null,
+			"timer": null,
+			"uses": []
+		}
+	],
+	"tags": [],
+	"diet": null
+}

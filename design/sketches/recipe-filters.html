@@ -1,0 +1,751 @@
+<meta charset="utf-8" />
+<title>Recipe Filters</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link href="https://fonts.googleapis.com/css2?family=Figtree:wght@400;500;600;700&family=Fraunces:opsz,wght@9..144,500;9..144,600&display=swap" rel="stylesheet" />
+<style>
+	/*
+		Sketch (2026-11-22), not built yet. The recipe library [04] gets filters:
+		meal, kind, diet, time, favourites, and a sort. Recipes carry a few fixed tags
+		that the importer, the AI and a quick sorting pass fill in.
+		Layout: a plain presentation page, rows of phones. The library, the filter
+		sheet, the sorting pass and the plan sheet work; they share one sample library.
+		The phones use the token names and values of src/app.css.
+		What's new on a screen carries a sage bar on its left edge.
+	*/
+	:root {
+		--page: light-dark(#f1f0ec, #171613);
+		--page-ink: light-dark(#24231f, #ecebe5);
+		--page-muted: light-dark(#66645c, #a4a298);
+		--page-line: light-dark(#d6d4cc, #35332d);
+		--page-card: light-dark(#fbfaf7, #1f1d19);
+
+		--font-display: 'Fraunces', Georgia, serif;
+		--font-body: 'Figtree', system-ui, sans-serif;
+		--bg: light-dark(#f5f3ee, #191510);
+		--card: light-dark(#ffffff, #221e18);
+		--sunken: light-dark(#efebe3, #15120e);
+		--sunken-2: light-dark(#eae6dd, #110e0a);
+		--field: light-dark(#f5f3ee, #1c1813);
+		--ink: light-dark(#22201c, #efe9de);
+		--text-2: light-dark(#57534c, #cfc7ba);
+		--text-4: light-dark(#8a867e, #a5a096);
+		--text-5: light-dark(#a7a29a, #857f74);
+		--sage: light-dark(#5f8d72, #74a585);
+		--sage-tint: light-dark(#edf3ee, #1e2a22);
+		--sage-deep: light-dark(#3e5d49, #a9cfb6);
+		--on-sage: light-dark(#ffffff, #12100d);
+		--terracotta: light-dark(#c67c51, #d9946b);
+		--terracotta-tint: light-dark(#f8ece3, #2e2219);
+		--mustard: light-dark(#c99a3c, #d8ad57);
+		--heart: light-dark(#c95a4a, #e07a68);
+		--border: light-dark(#e4dfd5, #322c24);
+		--divider: light-dark(#f1eee7, #262019);
+		--divider-sheet: light-dark(#e9e5dc, #2c261e);
+		--border-dashed: light-dark(#d8d3c9, #3d362c);
+		--scrim: light-dark(rgba(34, 32, 28, 0.4), rgba(0, 0, 0, 0.62));
+		--tabbar-bg: light-dark(rgba(255, 255, 255, 0.86), rgba(34, 30, 24, 0.86));
+		--shadow-card: 0 1px 3px light-dark(rgba(40, 34, 24, 0.05), rgba(0, 0, 0, 0.45));
+		--shadow-sheet: 0 -12px 40px light-dark(rgba(40, 34, 24, 0.18), rgba(0, 0, 0, 0.7));
+		--shadow-fab: 0 8px 20px -4px light-dark(rgba(95, 141, 114, 0.6), rgba(0, 0, 0, 0.7));
+		--shadow-button: 0 8px 20px -6px light-dark(rgba(95, 141, 114, 0.5), rgba(0, 0, 0, 0.6));
+		color-scheme: light dark;
+	}
+	:root[data-theme='dark'] { color-scheme: dark; }
+	:root[data-theme='light'] { color-scheme: light; }
+
+	* { box-sizing: border-box; margin: 0; }
+	body {
+		background: var(--page); color: var(--page-ink); font-family: var(--font-body);
+		font-size: 16px; line-height: 1.5;
+		padding-left: max(16px, env(safe-area-inset-left, 0px));
+		padding-right: max(16px, env(safe-area-inset-right, 0px));
+		padding-block: 32px 64px;
+	}
+	.wrap { max-width: 1240px; margin-inline: auto; display: grid; grid-template-columns: minmax(0, 1fr); gap: 52px; }
+	.intro { display: grid; gap: 10px; max-width: 68ch; }
+	.kicker { font-size: 12px; font-weight: 700; letter-spacing: 0.12em; text-transform: uppercase; color: var(--page-muted); }
+	h1 { font-family: var(--font-display); font-size: clamp(30px, 5vw, 40px); font-weight: 600; line-height: 1.1; text-wrap: balance; }
+	h2 { font-family: var(--font-display); font-size: 26px; font-weight: 600; line-height: 1.2; text-wrap: balance; }
+	.intro p, .head p { color: var(--page-muted); }
+	.part { display: grid; gap: 18px; min-width: 0; }
+	.head { display: grid; gap: 6px; max-width: 72ch; }
+	.row { display: grid; grid-auto-flow: column; grid-auto-columns: min(360px, calc(100vw - 40px)); grid-template-rows: auto auto; column-gap: 26px; row-gap: 12px; overflow-x: auto; padding: 4px 2px 18px; scroll-snap-type: x proximity; }
+	figure { display: grid; grid-row: span 2; grid-template-rows: subgrid; scroll-snap-align: center; min-width: 0; }
+	figure .phone { align-self: start; }
+	figcaption { display: grid; gap: 6px; font-size: 14px; line-height: 1.45; color: var(--page-muted); align-content: start; }
+	figcaption b { color: var(--page-ink); font-size: 16px; font-weight: 600; }
+	.tag { font-size: 12px; font-weight: 700; color: var(--page-muted); border: 1px solid var(--page-line); border-radius: 6px; padding: 0 5px; margin-right: 6px; }
+
+	.vocab { display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 12px; padding: 0; list-style: none; }
+	.vocab li { background: var(--page-card); border: 1px solid var(--page-line); border-radius: 14px; padding: 14px 16px; display: grid; gap: 6px; align-content: start; }
+	.vocab b { font-weight: 600; font-size: 17px; }
+	.vocab .words { font-size: 15px; color: var(--page-ink); }
+	.vocab .why { color: var(--page-muted); font-size: 14px; }
+	.vocab .de { color: var(--page-muted); font-size: 13px; font-style: italic; }
+
+	.tablewrap { overflow-x: auto; border: 1px solid var(--page-line); border-radius: 14px; background: var(--page-card); }
+	table { border-collapse: collapse; width: 100%; min-width: 680px; font-size: 15px; line-height: 1.45; }
+	th { text-align: left; font-size: 12px; letter-spacing: 0.1em; text-transform: uppercase; color: var(--page-muted); font-weight: 700; padding: 12px 16px; border-bottom: 1px solid var(--page-line); }
+	td { padding: 12px 16px; vertical-align: top; border-top: 1px solid var(--page-line); color: var(--page-muted); }
+	tr:first-child td { border-top: 0; }
+	td:first-child { color: var(--page-ink); font-weight: 600; width: 22%; }
+	code { font-size: 0.9em; background: var(--sunken); border-radius: 5px; padding: 1px 5px; color: var(--page-ink); }
+	.asks { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 12px; padding: 0; list-style: none; counter-reset: ask; }
+	.asks li { background: var(--page-card); border: 1px solid var(--page-line); border-radius: 14px; padding: 14px 16px; display: grid; gap: 6px; align-content: start; }
+	.asks b { font-weight: 600; font-size: 17px; }
+	.asks span { color: var(--page-muted); font-size: 15px; }
+	.asks em { font-style: normal; color: var(--page-ink); font-weight: 600; }
+
+	/* ── The phone ───────────────────────────────── */
+	.phone {
+		position: relative; width: 100%; height: 760px; overflow: hidden; border-radius: 34px;
+		background: var(--bg); color: var(--ink); font-family: var(--font-body); font-size: 16px; line-height: 1.3;
+		box-shadow: 0 0 0 1px var(--page-line), 0 18px 40px -22px rgba(0, 0, 0, 0.45); isolation: isolate;
+	}
+	.phone :where(button, input) { font: inherit; color: inherit; }
+	.phone :where(button) { background: none; border: 0; padding: 0; cursor: pointer; text-align: left; }
+	.phone :focus-visible { outline: 2px solid var(--sage); outline-offset: 2px; }
+	.ic { flex: none; display: block; }
+	.screen { position: absolute; inset: 0; display: flex; flex-direction: column; padding: 30px 18px 0; }
+	.back { display: flex; align-items: center; gap: 2px; font-size: 15px; font-weight: 600; color: var(--sage); margin: 0 0 8px -4px; }
+	.phone h3 { font-family: var(--font-display); font-weight: 600; font-size: 32px; line-height: 1.05; }
+	.sub { font-size: 14px; color: var(--text-4); font-weight: 500; margin: 4px 0 14px; }
+	.new { box-shadow: inset 3px 0 0 var(--sage); }
+
+	.search { display: flex; align-items: center; gap: 9px; background: var(--card); border: 1px solid var(--border); border-radius: 14px; padding: 11px 13px; color: var(--text-4); font-size: 15.5px; }
+	.search input { flex: 1; min-width: 0; border: 0; background: none; outline: none; font-size: 15.5px; color: var(--ink); }
+	.search input::placeholder { color: var(--text-5); }
+
+	/* chip row */
+	.chiprow { display: flex; gap: 7px; overflow-x: auto; margin: 10px -18px 0; padding: 2px 18px 4px; scrollbar-width: none; }
+	.chiprow::-webkit-scrollbar { display: none; }
+	.chip { flex: none; display: inline-flex; align-items: center; gap: 5px; height: 34px; padding: 0 13px; border-radius: 999px; border: 1.5px solid var(--border); background: var(--card); font-size: 14.5px; font-weight: 600; color: var(--text-2); white-space: nowrap; }
+	.phone .chip { text-align: center; }
+	.chip[aria-pressed='true'] { background: var(--sage); border-color: var(--sage); color: var(--on-sage); }
+	.chip.filter { padding: 0 12px 0 11px; color: var(--ink); }
+	.chip .badge { min-width: 19px; height: 19px; border-radius: 999px; background: var(--sage); color: var(--on-sage); font-size: 12px; display: grid; place-items: center; padding: 0 5px; }
+	.chip.sm { height: 30px; padding: 0 11px; font-size: 14px; }
+	.chip.dot::after { content: ''; width: 6px; height: 6px; border-radius: 50%; background: var(--mustard); margin-left: 2px; }
+	.chip.dot[aria-pressed='true']::after { background: var(--on-sage); opacity: 0.8; }
+
+	.resultline { display: flex; align-items: baseline; justify-content: space-between; gap: 10px; font-size: 13.5px; color: var(--text-4); font-weight: 500; margin: 10px 4px 10px; min-height: 18px; }
+	.resultline button { color: var(--sage); font-weight: 600; font-size: 13.5px; }
+
+	.list { flex: 1; overflow-y: auto; margin: 0 -18px; padding: 0 18px 110px; scrollbar-width: none; }
+	.list::-webkit-scrollbar { display: none; }
+	.grid { display: grid; grid-template-columns: 1fr 1fr; gap: 11px; }
+	.rcard { background: var(--card); border-radius: 16px; box-shadow: var(--shadow-card); overflow: hidden; }
+	.photo { position: relative; height: 74px; background: var(--ph); }
+	.photo::before { content: ''; position: absolute; inset: 0; background: radial-gradient(circle at 70% 120%, color-mix(in oklab, var(--card) 35%, transparent) 0 30%, transparent 31%), radial-gradient(circle at 18% -10%, color-mix(in oklab, var(--card) 22%, transparent) 0 26%, transparent 27%); }
+	.photo .marks { position: absolute; top: 7px; right: 7px; display: flex; gap: 4px; }
+	.mark { width: 22px; height: 22px; border-radius: 50%; display: grid; place-items: center; background: color-mix(in oklab, var(--card) 88%, transparent); }
+	.mark.heart { color: var(--heart); }
+	.mark.leaf { color: var(--sage); }
+	.rbody { padding: 9px 11px 11px; }
+	.rname { display: block; font-size: 15px; font-weight: 600; line-height: 1.2; }
+	.rmeta { display: block; font-size: 13px; color: var(--text-4); margin-top: 3px; }
+
+	.tidy { display: flex; align-items: center; gap: 11px; margin-top: 14px; padding: 12px 14px; border-radius: 16px; border: 1.5px dashed var(--border-dashed); font-size: 14px; color: var(--text-2); width: 100%; }
+	.tidy b { display: block; font-size: 15px; color: var(--ink); }
+	.tidy .go { margin-left: auto; color: var(--sage); font-weight: 700; }
+
+	.fab { position: absolute; right: 18px; bottom: 92px; width: 56px; height: 56px; border-radius: 50%; background: var(--sage); color: var(--on-sage); display: grid; place-items: center; box-shadow: var(--shadow-fab); z-index: 3; }
+	.tabbar { position: absolute; left: 0; right: 0; bottom: 0; height: 76px; background: var(--tabbar-bg); backdrop-filter: blur(14px); border-top: 1px solid var(--divider); display: flex; justify-content: space-around; padding-top: 12px; z-index: 2; }
+	.tabbar i { width: 24px; height: 24px; border-radius: 8px; background: var(--border); display: block; }
+	.tabbar i.on { background: var(--sage); }
+
+	.none { text-align: center; padding: 26px 8px 0; }
+	.none .t { font-family: var(--font-display); font-size: 21px; font-weight: 600; }
+	.none p { color: var(--text-4); font-size: 14.5px; margin-top: 6px; }
+	.loosen { display: grid; gap: 8px; margin-top: 18px; text-align: left; }
+	.loosen button { display: flex; align-items: center; gap: 10px; background: var(--card); box-shadow: var(--shadow-card); border-radius: 14px; padding: 12px 14px; font-size: 15px; }
+	.loosen .n { margin-left: auto; color: var(--text-4); font-size: 13.5px; }
+	.loosen .x { width: 22px; height: 22px; border-radius: 50%; background: var(--sunken); display: grid; place-items: center; color: var(--text-4); }
+
+	/* sheets */
+	.scrim { position: absolute; inset: 0; background: var(--scrim); z-index: 8; }
+	.sheet { position: absolute; left: 0; right: 0; bottom: 0; top: var(--top, 64px); z-index: 9; background: var(--card); border-radius: 28px 28px 0 0; box-shadow: var(--shadow-sheet); display: flex; flex-direction: column; }
+	.grab { width: 38px; height: 5px; border-radius: 3px; background: var(--border); margin: 9px auto 4px; }
+	.sheet-top { display: flex; align-items: flex-start; justify-content: space-between; padding: 6px 20px 8px; }
+	.sheet h4 { font-family: var(--font-display); font-weight: 600; font-size: 25px; line-height: 1.15; }
+	.sheet .eyebrow { font-size: 12px; font-weight: 700; letter-spacing: 0.1em; text-transform: uppercase; color: var(--text-4); }
+	.sheet .close { width: 32px; height: 32px; border-radius: 50%; background: var(--sunken); display: grid; place-items: center; color: var(--text-4); }
+	.sheet-body { flex: 1; overflow-y: auto; padding: 4px 20px 20px; scrollbar-width: thin; }
+	.grp { padding: 12px 0 14px; border-top: 1px solid var(--divider-sheet); }
+	.grp:first-child { border-top: 0; }
+	.grp-h { display: flex; justify-content: space-between; align-items: baseline; font-size: 12px; font-weight: 700; letter-spacing: 0.1em; text-transform: uppercase; color: var(--text-4); margin-bottom: 9px; }
+	.grp-h small { letter-spacing: 0; text-transform: none; font-weight: 500; font-size: 12.5px; color: var(--text-5); }
+	.wrapchips { display: flex; flex-wrap: wrap; gap: 7px; }
+	.seg { display: flex; background: var(--sunken-2); border-radius: 12px; padding: 3px; }
+	.seg button { flex: 1; height: 32px; border-radius: 9px; font-size: 14px; font-weight: 600; color: var(--text-2); text-align: center; }
+	.seg button[aria-pressed='true'] { background: var(--card); color: var(--ink); box-shadow: var(--shadow-card); }
+	.togglerow { display: flex; align-items: center; gap: 10px; font-size: 15.5px; font-weight: 600; }
+	.togglerow small { display: block; font-size: 13px; color: var(--text-4); font-weight: 500; }
+	.toggle { margin-left: auto; width: 46px; height: 28px; border-radius: 999px; background: var(--border); position: relative; flex: none; }
+	.toggle::after { content: ''; position: absolute; top: 3px; left: 3px; width: 22px; height: 22px; border-radius: 50%; background: var(--card); box-shadow: 0 1px 2px rgba(0, 0, 0, 0.2); transition: transform 0.15s; }
+	.toggle[aria-checked='true'] { background: var(--sage); }
+	.toggle[aria-checked='true']::after { transform: translateX(18px); }
+	.sheet-foot { display: flex; gap: 10px; align-items: center; padding: 12px 20px 26px; border-top: 1px solid var(--divider-sheet); }
+	.primary { flex: 1; height: 50px; border-radius: 16px; background: var(--sage); color: var(--on-sage); font-weight: 700; font-size: 16.5px; box-shadow: var(--shadow-button); }
+	.phone .primary { text-align: center; }
+	.primary[disabled] { opacity: 0.45; box-shadow: none; }
+	.ghost { height: 50px; padding: 0 14px; color: var(--text-2); font-weight: 600; font-size: 15.5px; }
+
+	/* recipe edit */
+	.topbar { display: flex; justify-content: space-between; align-items: center; padding: 30px 18px 10px; font-size: 16px; }
+	.topbar b { font-weight: 700; }
+	.topbar .save { color: var(--sage); font-weight: 700; }
+	.form { position: absolute; top: 72px; bottom: 0; left: 0; right: 0; overflow-y: auto; padding: 4px 18px 30px; scrollbar-width: none; }
+	.fieldlbl { font-size: 12px; font-weight: 700; letter-spacing: 0.1em; text-transform: uppercase; color: var(--text-4); margin: 16px 4px 7px; }
+	.field { background: var(--card); border: 1px solid var(--border); border-radius: 14px; padding: 12px 14px; font-size: 16px; }
+	.fields2 { display: grid; grid-template-columns: 1fr 1fr; gap: 9px; }
+	.tagsbox { background: var(--card); border-radius: 18px; box-shadow: var(--shadow-card); padding: 4px 14px 6px; margin-top: 4px; }
+	.tagsbox .grp { padding: 11px 0 12px; border-top-color: var(--divider); }
+	.from { display: flex; gap: 9px; align-items: flex-start; font-size: 13.5px; color: var(--text-2); background: var(--sunken); border-radius: 12px; padding: 10px 12px; margin-top: 10px; }
+	.from .d { width: 7px; height: 7px; border-radius: 50%; background: var(--mustard); margin-top: 6px; flex: none; }
+	.ingr { background: var(--card); border-radius: 18px; box-shadow: var(--shadow-card); }
+	.ingr div { padding: 12px 14px; border-top: 1px solid var(--divider); font-size: 15.5px; }
+	.ingr div:first-child { border-top: 0; }
+
+	/* recipe view */
+	.hero { height: 210px; background: var(--ph); position: relative; }
+	.hero::before { content: ''; position: absolute; inset: 0; background: radial-gradient(circle at 75% 110%, color-mix(in oklab, var(--card) 30%, transparent) 0 34%, transparent 35%); }
+	.herobtns { position: absolute; top: 30px; left: 16px; right: 16px; display: flex; justify-content: space-between; }
+	.rb { width: 38px; height: 38px; border-radius: 50%; background: color-mix(in oklab, var(--card) 90%, transparent); display: grid; place-items: center; color: var(--ink); }
+	.rb.fav { color: var(--heart); }
+	.rv { padding: 18px 20px; }
+	.rv h3 { font-size: 30px; }
+	.rvmeta { display: flex; gap: 14px; font-size: 14.5px; color: var(--text-4); margin: 8px 0 12px; }
+	.rvmeta span { display: flex; align-items: center; gap: 5px; }
+	.tagline { display: flex; flex-wrap: wrap; gap: 6px; padding: 10px 0 2px; }
+	.tagline a { display: inline-flex; align-items: center; height: 28px; padding: 0 11px; border-radius: 999px; background: var(--sunken); color: var(--text-2); font-size: 13.5px; font-weight: 600; text-decoration: none; }
+	.tagline a.leaf { background: var(--sage-tint); color: var(--sage-deep); gap: 4px; }
+	.rvh { font-size: 12px; font-weight: 700; letter-spacing: 0.1em; text-transform: uppercase; color: var(--text-4); margin: 20px 0 8px; }
+	.serv { display: flex; justify-content: space-between; align-items: center; background: var(--card); border-radius: 16px; box-shadow: var(--shadow-card); padding: 12px 14px; font-size: 15px; }
+	.cta { position: absolute; left: 18px; right: 18px; bottom: 26px; }
+	.cta .primary { width: 100%; display: block; }
+
+	/* sorting pass */
+	.pass { position: absolute; inset: 0; display: flex; flex-direction: column; padding: 30px 18px 24px; }
+	.progress { height: 5px; border-radius: 3px; background: var(--sunken-2); margin: 4px 0 16px; overflow: hidden; }
+	.progress i { display: block; height: 100%; background: var(--sage); border-radius: 3px; transition: width 0.2s; }
+	.passcard { background: var(--card); border-radius: 22px; box-shadow: var(--shadow-card); overflow: hidden; flex: 1; display: flex; flex-direction: column; min-height: 0; }
+	.passcard .photo { height: 108px; flex: none; }
+	.passcard .pbody { padding: 12px 16px 8px; overflow-y: auto; flex: 1; }
+	.passcard .pname { font-family: var(--font-display); font-size: 23px; font-weight: 600; line-height: 1.1; }
+	.passcard .pmeta { font-size: 13.5px; color: var(--text-4); margin: 3px 0 2px; }
+	.passcard .grp { padding: 10px 0 11px; border-top-color: var(--divider); }
+	.passfoot { display: flex; gap: 10px; margin-top: 14px; }
+
+	/* plan sheet */
+	.planlist { margin-top: 6px; }
+	.prow { display: flex; align-items: center; gap: 12px; padding: 11px 2px; border-top: 1px solid var(--divider-sheet); width: 100%; }
+	.prow:first-child { border-top: 0; }
+	.radio { width: 22px; height: 22px; border-radius: 50%; border: 1.7px solid var(--border-dashed); flex: none; display: grid; place-items: center; }
+	.radio.on { border-color: var(--sage); }
+	.radio.on::after { content: ''; width: 12px; height: 12px; border-radius: 50%; background: var(--sage); }
+	.pthumb { width: 40px; height: 40px; border-radius: 11px; background: var(--ph); flex: none; }
+	.prow b { display: block; font-weight: 600; font-size: 15.5px; }
+	.prow small { font-size: 13px; color: var(--text-4); }
+	.plabel { font-size: 12px; font-weight: 700; letter-spacing: 0.1em; text-transform: uppercase; color: var(--text-4); margin: 14px 2px 2px; }
+	.plabel.sage { color: var(--sage-deep); }
+
+	@media (prefers-reduced-motion: reduce) { * { transition: none !important; } }
+</style>
+
+<div class="wrap">
+	<header class="intro">
+		<span class="kicker">Sketch · recipes · not built yet</span>
+		<h1>Find the right recipe, not just the one whose name you remember</h1>
+		<p>Today the library is a grid and a name search. This sketch gives every recipe a few fixed tags (meal, kind, diet, free from), a heart, and the time it already has, then lets the library filter and sort by them. The tags mostly fill themselves in: recipe sites already say "vegan" and "soup" in the data our importer reads, and the AI import can pick from the same list.</p>
+		<p>The first three phones share one sample library of 14 recipes. Tap the chips, open the filter sheet with <b>Filter</b>, and press <b>Show</b>.</p>
+	</header>
+
+	<section class="part">
+		<div class="head">
+			<h2>1 · The library</h2>
+			<p>Chips under the search for the three filters you reach for most, one <b>Filter</b> chip for the rest. Everything lives in the URL like the search does today (<code>?q=&amp;meal=dinner&amp;diet=vegetarian&amp;max=30</code>), so a filtered list survives a reload, the back button and a link sent to your partner.</p>
+		</div>
+		<div class="row">
+			<figure>
+				<div class="phone" id="lib"></div>
+				<figcaption><b>Library [04] with filters</b><span>Active filters come first in the row as filled chips you can tap off; the suggestions after them are one tap on. The search now also finds ingredients: try "lemon" or "potato". The line under the row says how many fit and offers <b>Clear</b>. A heart and a leaf on the photo mark favourites and meat-free recipes.</span></figcaption>
+			</figure>
+			<figure>
+				<div class="phone" id="sheet"></div>
+				<figcaption><b>Filter sheet</b><span>Within a group the chips are "any of" (Lunch <i>or</i> Dinner); across groups they narrow (Dinner <i>and</i> vegetarian). The button counts as you tap, so you never land on an empty grid by surprise. "Vegetarian" includes vegan. <b>Not cooked lately</b> sorts by the meal plan's history, which the app already has.</span></figcaption>
+			</figure>
+			<figure>
+				<div class="phone" id="none"></div>
+				<figcaption><b>Nothing fits</b><span>Instead of a dead end, each active filter becomes a way out with the count it would bring back. Here: dinner, vegan, under 30 minutes. Tap one to drop that filter.</span></figcaption>
+			</figure>
+		</div>
+	</section>
+
+	<section class="part">
+		<div class="head">
+			<h2>2 · Where the tags come from</h2>
+			<p>Filters are only as good as the tags, and nobody wants to tag 40 recipes by hand. So: the importer fills them from the page, the AI picks from the same fixed list, the form shows them as a suggestion to check, and existing recipes get a short sorting pass, one card at a time.</p>
+		</div>
+		<div class="row">
+			<figure>
+				<div class="phone" id="edit"></div>
+				<figcaption><b>New / edit recipe [3c]: Tags</b><span>One new block between the fields and the ingredients. This one came from a link: the page said <code>recipeCategory: "Suppe"</code> and <code>suitableForDiet: VeganDiet</code>, so those chips arrive ticked with a yellow dot until you touch them. Diet is one choice (a recipe is vegan <i>or</i> has fish), the other groups take several.</span></figcaption>
+			</figure>
+			<figure>
+				<div class="phone" id="view"></div>
+				<figcaption><b>Recipe view [7a]</b><span>The heart moves into the photo's top bar. The tags sit under the time and servings, and each one is a link: tapping <b>Soup</b> opens the library filtered to soups.</span></figcaption>
+			</figure>
+			<figure>
+				<div class="phone" id="pass"></div>
+				<figcaption><b>Sort your recipes</b><span>Reached from the dashed row at the end of the library ("9 recipes have no tags yet"). One recipe per card, the same chips, <b>Next</b> saves and moves on, <b>Skip</b> leaves it untagged. The diet arrives pre-guessed from the ingredient names (no meat or fish word found → vegetarian), marked as a guess. The row disappears once everything is tagged.</span></figcaption>
+			</figure>
+		</div>
+	</section>
+
+	<section class="part">
+		<div class="head">
+			<h2>3 · Planning a meal</h2>
+			<p>The plan sheet [3d] already asks "Which meal?" first. With tags, that answer can order the list: breakfast recipes first when you plan a breakfast. It orders rather than hides, because Saturday's lunch is often last night's soup.</p>
+		</div>
+		<div class="row">
+			<figure>
+				<div class="phone" id="plan"></div>
+				<figcaption><b>Plan a meal [3d]</b><span>Switch the slot and the list reorders: recipes tagged for that meal on top, everything else below. Untagged recipes count as "everything else". The quick chips under the search are the library's own (favourites, under 30 minutes, vegetarian), filtered in the browser like the sheet's search is today.</span></figcaption>
+			</figure>
+		</div>
+	</section>
+
+	<section class="part">
+		<div class="head">
+			<h2>The vocabulary</h2>
+			<p>A fixed list, not free tags: fixed words can be translated, stay short enough for one chip row, and give the importer and the AI something to map onto. Household content stays untranslated; these are the app's words, like the meal slots.</p>
+		</div>
+		<ul class="vocab">
+			<li><b>Meal</b><span class="words">Breakfast · Lunch · Dinner · Snack</span><span class="why">Several per recipe. Exactly the plan's four slots, so the plan sheet can use them.</span><span class="de">Frühstück · Mittagessen · Abendessen · Snack</span></li>
+			<li><b>Kind</b><span class="words">Main · Soup · Salad · Side · Dessert · Baking</span><span class="why">Several per recipe (strudel is dessert and baking). "Type of meal" in the everyday sense.</span><span class="de">Hauptspeise · Suppe · Salat · Beilage · Nachspeise · Backen</span></li>
+			<li><b>Diet</b><span class="words">Meat · Fish · Vegetarian · Vegan</span><span class="why">One per recipe, or none yet. A ladder: filtering vegetarian also shows vegan.</span><span class="de">Fleisch · Fisch · Vegetarisch · Vegan</span></li>
+			<li><b>Free from</b><span class="words">Gluten · Lactose</span><span class="why">Separate flags, all must hold. Only two, the ones that come up at a table.</span><span class="de">Glutenfrei · Laktosefrei</span></li>
+			<li><b>Time</b><span class="words">Any · 20 · 30 · 45 · 60 min</span><span class="why">From the time field recipes already have. A recipe with no time drops out once a cap is set.</span><span class="de">Egal · bis 20 · 30 · 45 · 60 Min.</span></li>
+			<li><b>Favourite</b><span class="words">♥ on the recipe</span><span class="why">One heart per household (see the questions below).</span><span class="de">Favoriten</span></li>
+			<li><b>Sort</b><span class="words">Newest · A–Z · Quickest · Not cooked lately</span><span class="why">The last one reads the meal plan: when was each recipe last on a day. Never planned sorts first.</span><span class="de">Neueste · A–Z · Schnellste · Länger nicht gekocht</span></li>
+		</ul>
+	</section>
+
+	<section class="part">
+		<div class="head">
+			<h2>How it's wired</h2>
+		</div>
+		<div class="tablewrap">
+			<table>
+				<thead><tr><th>Piece</th><th>What changes</th></tr></thead>
+				<tbody>
+					<tr><td>Data</td><td>A <code>recipe_tags</code> table (<code>recipe_id</code>, <code>tag</code>) with keys from a fixed list in <code>lib/utils/recipe-tags.ts</code> (<code>meal:dinner</code>, <code>kind:soup</code>, <code>free:gluten</code>), cascading with the recipe. <code>recipes</code> gains <code>diet</code> (enum, NULL = not set) and <code>favourite</code>. One migration.</td></tr>
+					<tr><td>URL &amp; load</td><td>The library's GET form grows hidden fields: <code>q</code>, <code>meal</code>, <code>kind</code>, <code>diet</code>, <code>free</code> (repeatable), <code>max</code>, <code>fav</code>, <code>sort</code>. The load parses them into one <code>RecipeFilter</code>, unknown values ignored, and <code>listRecipes</code> builds the <code>where</code>. Chips are links/submits, so it works without JavaScript too.</td></tr>
+					<tr><td>Live count</td><td>The load also returns a small index (id, tags, diet, minutes, favourite) for the whole library. The sheet counts against it in the browser; the grid itself still comes from the server.</td></tr>
+					<tr><td>Search</td><td><code>q</code> matches recipe names <i>or</i> ingredient names (same <code>name_key</code> matching the shopping list uses).</td></tr>
+					<tr><td>Sort "not cooked lately"</td><td><code>max(meals.date)</code> per <code>recipe_id</code>, a left join, NULL first.</td></tr>
+					<tr><td>Link import</td><td><code>recipe-import.ts</code> starts reading <code>recipeCategory</code>, <code>recipeCuisine</code>, <code>suitableForDiet</code> and <code>keywords</code>, mapped through an English + German word list ("Suppe", "Hauptgericht", "Frühstück", "vegan"). Matches arrive as suggested chips; no match, no tag.</td></tr>
+					<tr><td>AI import</td><td>The extraction schema gets the same fixed keys as an enum, so the model can only pick from the list.</td></tr>
+					<tr><td>Diet guess</td><td>For the sorting pass only: no ingredient matches a meat or fish word list → suggest vegetarian; no dairy/egg/honey word either → suggest vegan. Always shown as a guess, never saved without a tap.</td></tr>
+					<tr><td>Plan sheet</td><td>Orders its list by the chosen slot's <code>meal:</code> tag, plus the three quick chips. Client-side, like its search.</td></tr>
+					<tr><td>Copy</td><td>Tag names in <code>en.ts</code>/<code>de.ts</code> under <code>cooking.tags</code>; the keys never show.</td></tr>
+				</tbody>
+			</table>
+		</div>
+	</section>
+
+	<section class="part">
+		<div class="head"><h2>Questions for you</h2></div>
+		<ul class="asks">
+			<li><b>Fixed list or your own tags?</b><span>The sketch uses a <em>fixed list</em> (translatable, maps from imports). Own tags ("Oma's", "Party") could come later as one extra group.</span></li>
+			<li><b>Is the list right?</b><span>Anything missing for your kitchen? Cuisine (Austrian, Italian, Asian…) is the obvious candidate; I left it out to keep the sheet short.</span></li>
+			<li><b>One heart or one per person?</b><span>The sketch has <em>one per household</em>. Per person would let the filter say "Lukas's favourites", at the cost of a second row of faces.</span></li>
+			<li><b>Which three quick chips?</b><span>Sketch: <em>Favourites · Under 30 min · Vegetarian</em>. Could instead follow the clock (Breakfast in the morning, Dinner after 3 pm).</span></li>
+			<li><b>Build order</b><span>Suggest two steps: <em>1)</em> tags + form + filters + sheet, <em>2)</em> importer/AI mapping, sorting pass and plan-sheet ordering.</span></li>
+		</ul>
+	</section>
+</div>
+
+<script>
+	const P = {
+		/* photo placeholder colours, from the tokens */
+		sage: 'color-mix(in oklab, var(--sage) 55%, var(--card))',
+		terra: 'color-mix(in oklab, var(--terracotta) 60%, var(--card))',
+		must: 'color-mix(in oklab, var(--mustard) 60%, var(--card))',
+		heart: 'color-mix(in oklab, var(--heart) 50%, var(--card))',
+		deep: 'color-mix(in oklab, var(--sage-deep) 45%, var(--card))'
+	};
+	/* added = days ago, cooked = days since last on the plan (null = never) */
+	const RECIPES = [
+		{ id: 1, name: 'Shakshuka', time: 30, meals: ['breakfast', 'lunch'], kinds: ['main'], diet: 'veg', free: ['gluten'], fav: true, added: 3, cooked: 12, ph: P.terra, ing: ['eggs', 'tomatoes', 'peppers', 'feta'] },
+		{ id: 2, name: 'Overnight oats', time: 10, meals: ['breakfast'], kinds: [], diet: 'vegan', free: ['lactose'], fav: false, added: 5, cooked: 2, ph: P.must, ing: ['oats', 'oat milk', 'banana', 'berries'] },
+		{ id: 3, name: 'Pumpkin soup', time: 40, meals: ['lunch', 'dinner'], kinds: ['soup'], diet: 'vegan', free: ['gluten', 'lactose'], fav: true, added: 8, cooked: 30, ph: P.terra, ing: ['pumpkin', 'onion', 'coconut milk', 'ginger'] },
+		{ id: 4, name: 'Spaghetti carbonara', time: 25, meals: ['dinner'], kinds: ['main'], diet: 'meat', free: [], fav: true, added: 12, cooked: 6, ph: P.must, ing: ['spaghetti', 'guanciale', 'eggs', 'pecorino'] },
+		{ id: 5, name: 'Greek salad', time: 15, meals: ['lunch'], kinds: ['salad'], diet: 'veg', free: ['gluten'], fav: false, added: 15, cooked: null, ph: P.sage, ing: ['cucumber', 'tomatoes', 'feta', 'olives', 'lemon'] },
+		{ id: 6, name: 'Salmon with lemon potatoes', time: 35, meals: ['dinner'], kinds: ['main'], diet: 'fish', free: ['gluten'], fav: false, added: 18, cooked: 45, ph: P.heart, ing: ['salmon', 'potatoes', 'lemon', 'dill'] },
+		{ id: 7, name: 'Chili sin carne', time: 50, meals: ['dinner'], kinds: ['main'], diet: 'vegan', free: ['gluten', 'lactose'], fav: false, added: 22, cooked: 20, ph: P.terra, ing: ['kidney beans', 'tomatoes', 'peppers', 'corn'] },
+		{ id: 8, name: 'Banana bread', time: 70, meals: ['snack'], kinds: ['baking'], diet: 'veg', free: [], fav: false, added: 25, cooked: null, ph: P.must, ing: ['bananas', 'flour', 'butter', 'eggs'] },
+		{ id: 9, name: 'Schnitzel with potato salad', time: 45, meals: ['lunch', 'dinner'], kinds: ['main'], diet: 'meat', free: [], fav: true, added: 30, cooked: 9, ph: P.must, ing: ['veal', 'breadcrumbs', 'potatoes', 'vinegar'] },
+		{ id: 10, name: 'Apple strudel', time: 90, meals: ['snack'], kinds: ['dessert', 'baking'], diet: 'veg', free: [], fav: false, added: 34, cooked: 60, ph: P.terra, ing: ['apples', 'strudel dough', 'raisins', 'cinnamon'] },
+		{ id: 11, name: 'Chicken pad thai', time: 30, meals: ['dinner'], kinds: ['main'], diet: 'meat', free: ['lactose'], fav: false, added: 40, cooked: 15, ph: P.heart, ing: ['rice noodles', 'chicken', 'peanuts', 'lime'] },
+		{ id: 12, name: 'Tomato bruschetta', time: 15, meals: ['snack'], kinds: ['side'], diet: 'vegan', free: ['lactose'], fav: false, added: 44, cooked: null, ph: P.sage, ing: ['baguette', 'tomatoes', 'garlic', 'basil'] },
+		{ id: 13, name: 'Kaiserschmarrn', time: 30, meals: ['lunch', 'snack'], kinds: ['dessert'], diet: 'veg', free: [], fav: true, added: 50, cooked: 25, ph: P.must, ing: ['eggs', 'flour', 'milk', 'raisins'] },
+		{ id: 14, name: 'Lentil dal', time: 35, meals: ['dinner'], kinds: ['main'], diet: 'vegan', free: ['gluten', 'lactose'], fav: false, added: 58, cooked: 4, ph: P.deep, ing: ['red lentils', 'coconut milk', 'spinach', 'cumin'] }
+	];
+
+	const MEALS = [['breakfast', 'Breakfast'], ['lunch', 'Lunch'], ['dinner', 'Dinner'], ['snack', 'Snack']];
+	const KINDS = [['main', 'Main'], ['soup', 'Soup'], ['salad', 'Salad'], ['side', 'Side'], ['dessert', 'Dessert'], ['baking', 'Baking']];
+	const DIETS = [['meat', 'Meat'], ['fish', 'Fish'], ['veg', 'Vegetarian'], ['vegan', 'Vegan']];
+	const FREE = [['gluten', 'Gluten-free'], ['lactose', 'Lactose-free']];
+	const TIMES = [[null, 'Any'], [20, '20'], [30, '30'], [45, '45'], [60, '60']];
+	const SORTS = [['new', 'Newest'], ['az', 'A–Z'], ['quick', 'Quickest'], ['stale', 'Not cooked lately']];
+	const label = (list, key) => (list.find((x) => x[0] === key) || [, key])[1];
+
+	const ICONS = {
+		search: '<circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/>',
+		sliders: '<path d="M21 4h-7M10 4H3M21 12h-9M8 12H3M21 20h-5M12 20H3M14 2v4M8 10v4M16 18v4"/>',
+		heart: '<path d="M19 14c1.49-1.46 3-3.21 3-5.5A5.5 5.5 0 0 0 16.5 3c-1.76 0-3 .5-4.5 2-1.5-1.5-2.74-2-4.5-2A5.5 5.5 0 0 0 2 8.5c0 2.3 1.5 4.05 3 5.5l7 7Z"/>',
+		leaf: '<path d="M11 20A7 7 0 0 1 9.8 6.1C15.5 5 17 4.48 19 2c1 2 2 4.18 2 8 0 5.5-4.78 10-10 10Z"/><path d="M2 21c0-3 1.85-5.36 5.08-6C9.5 14.52 12 13 13 12"/>',
+		x: '<path d="M18 6 6 18M6 6l12 12"/>',
+		back: '<path d="m15 18-6-6 6-6"/>',
+		clock: '<circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/>',
+		users: '<circle cx="9" cy="8" r="4"/><path d="M2 21v-1a6 6 0 0 1 12 0v1M16 4a4 4 0 0 1 0 8M22 21v-1a6 6 0 0 0-4-5.7"/>',
+		plus: '<path d="M5 12h14M12 5v14"/>',
+		tag: '<path d="M12.6 2.6A2 2 0 0 0 11.2 2H4a2 2 0 0 0-2 2v7.2a2 2 0 0 0 .6 1.4l8.7 8.7a2.4 2.4 0 0 0 3.4 0l6.6-6.6a2.4 2.4 0 0 0 0-3.4Z"/><circle cx="7.5" cy="7.5" r="1.5"/>'
+	};
+	function ic(name, size = 18, fill = false, sw = 2) {
+		return `<svg class="ic" width="${size}" height="${size}" viewBox="0 0 24 24" fill="${fill ? 'currentColor' : 'none'}" stroke="currentColor" stroke-width="${sw}" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${ICONS[name]}</svg>`;
+	}
+	const esc = (s) => String(s).replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' })[c]);
+
+	/* ── filter model ─────────────────────────── */
+	const blank = () => ({ q: '', meals: [], kinds: [], diets: [], free: [], max: null, fav: false, sort: 'new' });
+	const clone = (s) => JSON.parse(JSON.stringify(s));
+
+	function matches(r, s) {
+		if (s.q) {
+			const q = s.q.toLowerCase();
+			if (!r.name.toLowerCase().includes(q) && !r.ing.some((i) => i.includes(q))) return false;
+		}
+		if (s.meals.length && !s.meals.some((m) => r.meals.includes(m))) return false;
+		if (s.kinds.length && !s.kinds.some((k) => r.kinds.includes(k))) return false;
+		if (s.diets.length && !s.diets.some((d) => r.diet === d || (d === 'veg' && r.diet === 'vegan'))) return false;
+		if (s.free.some((f) => !r.free.includes(f))) return false;
+		if (s.max && !(r.time && r.time <= s.max)) return false;
+		if (s.fav && !r.fav) return false;
+		return true;
+	}
+	function results(s) {
+		const out = RECIPES.filter((r) => matches(r, s));
+		const by = {
+			new: (a, b) => a.added - b.added,
+			az: (a, b) => a.name.localeCompare(b.name),
+			quick: (a, b) => (a.time ?? 1e9) - (b.time ?? 1e9),
+			stale: (a, b) => (b.cooked ?? 1e9) - (a.cooked ?? 1e9)
+		}[s.sort];
+		return out.sort(by);
+	}
+	/* Each active filter as one removable atom */
+	function atoms(s) {
+		const a = [];
+		if (s.fav) a.push({ key: 'fav', text: 'Favourites', drop: (t) => (t.fav = false) });
+		if (s.max) a.push({ key: 'max', text: `Under ${s.max} min`, drop: (t) => (t.max = null) });
+		for (const m of s.meals) a.push({ key: 'meal:' + m, text: label(MEALS, m), drop: (t) => (t.meals = t.meals.filter((x) => x !== m)) });
+		for (const k of s.kinds) a.push({ key: 'kind:' + k, text: label(KINDS, k), drop: (t) => (t.kinds = t.kinds.filter((x) => x !== k)) });
+		for (const d of s.diets) a.push({ key: 'diet:' + d, text: label(DIETS, d), drop: (t) => (t.diets = t.diets.filter((x) => x !== d)) });
+		for (const f of s.free) a.push({ key: 'free:' + f, text: label(FREE, f), drop: (t) => (t.free = t.free.filter((x) => x !== f)) });
+		return a;
+	}
+	const QUICK = [
+		{ key: 'fav', text: 'Favourites', icon: 'heart', on: (t) => (t.fav = true) },
+		{ key: 'max', text: 'Under 30 min', icon: 'clock', on: (t) => (t.max = 30) },
+		{ key: 'diet:veg', text: 'Vegetarian', icon: 'leaf', on: (t) => (t.diets = [...t.diets, 'veg']) }
+	];
+
+	function card(r) {
+		const marks = [r.fav ? `<span class="mark heart">${ic('heart', 12, true, 0)}</span>` : '', r.diet === 'veg' || r.diet === 'vegan' ? `<span class="mark leaf">${ic('leaf', 12, false, 2.4)}</span>` : ''].join('');
+		const meta = [r.time ? `${r.time} min` : null, r.added < 7 ? `added ${r.added === 1 ? 'yesterday' : r.added + ' days ago'}` : `added Nov ${Math.max(1, 22 - r.added)}`].filter(Boolean).join(' · ');
+		return `<div class="rcard"><div class="photo" style="--ph:${r.ph}"><span class="marks">${marks}</span></div><div class="rbody"><span class="rname">${esc(r.name)}</span><span class="rmeta">${meta}</span></div></div>`;
+	}
+
+	/* ── shared library state (phones 1 & 2) ─── */
+	let applied = blank();
+	let draft = blank();
+	const UNTAGGED = 9;
+
+	function libraryChrome(s, interactive) {
+		const act = atoms(s);
+		const activeKeys = act.map((a) => a.key);
+		const nFilters = act.length;
+		const chips = [
+			`<button class="chip filter" data-act="open">${ic('sliders', 16)}Filter${nFilters ? `<span class="badge">${nFilters}</span>` : ''}</button>`,
+			...act.map((a, i) => `<button class="chip" aria-pressed="true" data-act="drop" data-i="${i}">${esc(a.text)}${ic('x', 14, false, 2.6)}</button>`),
+			...QUICK.filter((q) => !activeKeys.includes(q.key)).map((q) => `<button class="chip" aria-pressed="false" data-act="quick" data-key="${q.key}">${ic(q.icon, 15, q.icon === 'heart' && false)}${q.text}</button>`)
+		].join('');
+		return `
+			<span class="back">${ic('back', 20, false, 2.4)}Cooking</span>
+			<h3>Recipes</h3>
+			<p class="sub">${RECIPES.length} saved</p>
+			<label class="search">${ic('search', 18)}<input ${interactive ? '' : 'tabindex="-1"'} data-act="q" value="${esc(s.q)}" placeholder="Search recipes or ingredients" aria-label="Search recipes or ingredients" /></label>
+			<div class="chiprow new">${chips}</div>`;
+	}
+
+	function renderLib() {
+		const el = document.getElementById('lib');
+		const list = results(applied);
+		const any = atoms(applied).length || applied.q;
+		const sortNote = applied.sort !== 'new' ? ` · ${label(SORTS, applied.sort).toLowerCase()}` : '';
+		const focus = document.activeElement && document.activeElement.dataset.act === 'q' && el.contains(document.activeElement);
+		el.innerHTML = `
+			<div class="screen">
+				${libraryChrome(applied, true)}
+				<div class="resultline">${any ? `<span>${list.length} of ${RECIPES.length} recipes${sortNote}</span><button data-act="clear">Clear</button>` : `<span>Newest first${sortNote}</span>`}</div>
+				<div class="list">
+					${list.length ? `<div class="grid">${list.map(card).join('')}</div>` : noneBlock(applied)}
+					${!any ? `<button class="tidy new" data-act="tidy">${ic('tag', 20)}<span><b>${UNTAGGED} recipes have no tags yet</b>Sort them in a minute</span><span class="go">Sort</span></button>` : ''}
+				</div>
+			</div>
+			<button class="fab" aria-label="Add a recipe">${ic('plus', 24, false, 2.4)}</button>
+			<div class="tabbar"><i></i><i></i><i class="on"></i><i></i><i></i></div>`;
+		el.querySelectorAll('[data-act]').forEach((b) => {
+			const act = b.dataset.act;
+			if (act === 'q') {
+				b.addEventListener('input', () => { applied.q = b.value; draft = clone(applied); renderLib(); renderSheet(); });
+				return;
+			}
+			b.addEventListener('click', () => {
+				if (act === 'drop') atoms(applied)[+b.dataset.i].drop(applied);
+				if (act === 'quick') QUICK.find((q) => q.key === b.dataset.key).on(applied);
+				if (act === 'clear') applied = blank();
+				if (act === 'open') { draft = clone(applied); renderSheet(); document.getElementById('sheet').scrollIntoView({ behavior: 'smooth', block: 'nearest', inline: 'center' }); return; }
+				if (act === 'tidy') { document.getElementById('pass').scrollIntoView({ behavior: 'smooth', block: 'nearest', inline: 'center' }); return; }
+				if (act.startsWith('loosen')) atoms(applied)[+b.dataset.i].drop(applied);
+				draft = clone(applied);
+				renderLib(); renderSheet();
+			});
+		});
+		if (focus) { const i = el.querySelector('[data-act="q"]'); i.focus(); i.setSelectionRange(i.value.length, i.value.length); }
+	}
+
+	function noneBlock(s) {
+		const act = atoms(s);
+		const ways = act.map((a, i) => {
+			const t = clone(s); a.drop(t);
+			const n = results(t).length;
+			return { a, i, n };
+		}).filter((w) => w.n > 0);
+		return `<div class="none"><div class="t">Nothing fits all of these</div><p>${s.q && !act.length ? `No recipe or ingredient matches “${esc(s.q)}”.` : 'Drop one filter to see more:'}</p>
+			<div class="loosen">${ways.map((w) => `<button data-act="loosen" data-i="${w.i}"><span class="x">${ic('x', 13, false, 2.6)}</span>Without ${esc(w.a.text.toLowerCase().replace(/^under/, '“under') + (w.a.key === 'max' ? '”' : ''))}<span class="n">${w.n} recipe${w.n === 1 ? '' : 's'}</span></button>`).join('')}</div></div>`;
+	}
+
+	function renderSheet() {
+		const el = document.getElementById('sheet');
+		const n = results(draft).length;
+		const chip = (group, key, text) => `<button class="chip sm" aria-pressed="${draft[group].includes(key)}" data-g="${group}" data-k="${key}">${text}</button>`;
+		el.innerHTML = `
+			<div class="screen" aria-hidden="true">${libraryChrome(applied, false)}</div>
+			<div class="scrim"></div>
+			<div class="sheet new" style="--top: 96px" role="dialog" aria-label="Filter recipes">
+				<div class="grab"></div>
+				<div class="sheet-top"><h4>Filter recipes</h4><button class="close" aria-label="Close">${ic('x', 16, false, 2.4)}</button></div>
+				<div class="sheet-body">
+					<div class="grp"><div class="togglerow">${ic('heart', 18, true, 0)}<span>Only favourites<small>${RECIPES.filter((r) => r.fav).length} recipes have a heart</small></span><button class="toggle" role="switch" aria-checked="${draft.fav}" aria-label="Only favourites" data-fav></button></div></div>
+					<div class="grp"><div class="grp-h">Meal<small>any of</small></div><div class="wrapchips">${MEALS.map(([k, t]) => chip('meals', k, t)).join('')}</div></div>
+					<div class="grp"><div class="grp-h">Kind<small>any of</small></div><div class="wrapchips">${KINDS.map(([k, t]) => chip('kinds', k, t)).join('')}</div></div>
+					<div class="grp"><div class="grp-h">Diet<small>vegetarian includes vegan</small></div><div class="wrapchips">${DIETS.map(([k, t]) => chip('diets', k, t)).join('')}</div></div>
+					<div class="grp"><div class="grp-h">Free from<small>all of</small></div><div class="wrapchips">${FREE.map(([k, t]) => chip('free', k, t)).join('')}</div></div>
+					<div class="grp"><div class="grp-h">Ready in<small>minutes, at most</small></div><div class="seg">${TIMES.map(([k, t]) => `<button aria-pressed="${draft.max === k}" data-max="${k ?? ''}">${t}</button>`).join('')}</div></div>
+					<div class="grp"><div class="grp-h">Sort by</div><div class="wrapchips">${SORTS.map(([k, t]) => `<button class="chip sm" aria-pressed="${draft.sort === k}" data-sort="${k}">${t}</button>`).join('')}</div></div>
+				</div>
+				<div class="sheet-foot"><button class="ghost" data-reset>Clear all</button><button class="primary" data-show ${n ? '' : 'disabled'}>${n ? `Show ${n} recipe${n === 1 ? '' : 's'}` : 'Nothing fits'}</button></div>
+			</div>`;
+		el.querySelectorAll('[data-g]').forEach((b) => b.addEventListener('click', () => {
+			const g = b.dataset.g, k = b.dataset.k;
+			draft[g] = draft[g].includes(k) ? draft[g].filter((x) => x !== k) : [...draft[g], k];
+			renderSheet();
+		}));
+		el.querySelector('[data-fav]').addEventListener('click', () => { draft.fav = !draft.fav; renderSheet(); });
+		el.querySelectorAll('[data-max]').forEach((b) => b.addEventListener('click', () => { draft.max = b.dataset.max ? +b.dataset.max : null; renderSheet(); }));
+		el.querySelectorAll('[data-sort]').forEach((b) => b.addEventListener('click', () => { draft.sort = b.dataset.sort; renderSheet(); }));
+		el.querySelector('[data-reset]').addEventListener('click', () => { draft = { ...blank(), q: draft.q }; renderSheet(); });
+		el.querySelector('[data-show]').addEventListener('click', () => {
+			applied = clone(draft); renderLib(); renderSheet();
+			document.getElementById('lib').scrollIntoView({ behavior: 'smooth', block: 'nearest', inline: 'center' });
+		});
+		el.querySelector('.close').addEventListener('click', () => { draft = clone(applied); renderSheet(); });
+	}
+
+	/* ── phone 3: nothing fits (its own fixed state) ── */
+	let noneState = { ...blank(), meals: ['dinner'], diets: ['vegan'], max: 30 };
+	function renderNone() {
+		const el = document.getElementById('none');
+		const list = results(noneState);
+		el.innerHTML = `
+			<div class="screen">
+				${libraryChrome(noneState, true)}
+				<div class="resultline"><span>${list.length} of ${RECIPES.length} recipes</span><button data-reset>Reset example</button></div>
+				<div class="list">${list.length ? `<div class="grid">${list.map(card).join('')}</div>` : noneBlock(noneState)}</div>
+			</div>
+			<div class="tabbar"><i></i><i></i><i class="on"></i><i></i><i></i></div>`;
+		el.querySelectorAll('[data-act="loosen"], [data-act="drop"]').forEach((b) => b.addEventListener('click', () => { atoms(noneState)[+b.dataset.i].drop(noneState); renderNone(); }));
+		el.querySelectorAll('[data-act="quick"]').forEach((b) => b.addEventListener('click', () => { QUICK.find((q) => q.key === b.dataset.key).on(noneState); renderNone(); }));
+		el.querySelector('[data-reset]').addEventListener('click', () => { noneState = { ...blank(), meals: ['dinner'], diets: ['vegan'], max: 30 }; renderNone(); });
+		const q = el.querySelector('[data-act="q"]'); q.readOnly = true;
+	}
+
+	/* ── phone 4: edit form ───────────────────── */
+	const editTags = { meals: ['lunch', 'dinner'], kinds: ['soup'], diet: 'vegan', free: ['gluten', 'lactose'] };
+	const fromPage = new Set(['kinds:soup', 'diet:vegan', 'free:gluten']);
+	function renderEdit() {
+		const el = document.getElementById('edit');
+		const c = (g, k, t) => {
+			const on = g === 'diet' ? editTags.diet === k : editTags[g].includes(k);
+			return `<button class="chip sm${fromPage.has(g + ':' + k) ? ' dot' : ''}" aria-pressed="${on}" data-g="${g}" data-k="${k}">${t}</button>`;
+		};
+		el.innerHTML = `
+			<div class="topbar"><span>Cancel</span><b>New recipe</b><span class="save">Save</span></div>
+			<div class="form">
+				<div class="fieldlbl">Name</div><div class="field">Pumpkin soup</div>
+				<div class="fields2"><div><div class="fieldlbl">Time</div><div class="field">40 min</div></div><div><div class="fieldlbl">Servings</div><div class="field">4</div></div></div>
+				<div class="fieldlbl">Tags</div>
+				<div class="tagsbox new">
+					<div class="grp"><div class="grp-h">Meal</div><div class="wrapchips">${MEALS.map(([k, t]) => c('meals', k, t)).join('')}</div></div>
+					<div class="grp"><div class="grp-h">Kind</div><div class="wrapchips">${KINDS.map(([k, t]) => c('kinds', k, t)).join('')}</div></div>
+					<div class="grp"><div class="grp-h">Diet<small>one</small></div><div class="wrapchips">${DIETS.map(([k, t]) => c('diet', k, t)).join('')}</div></div>
+					<div class="grp"><div class="grp-h">Free from</div><div class="wrapchips">${FREE.map(([k, t]) => c('free', k, t)).join('')}</div></div>
+					${fromPage.size ? `<div class="from"><span class="d"></span><span>The dotted ones came from the website. Tap to change them.</span></div>` : ''}
+					<div style="height:10px"></div>
+				</div>
+				<div class="fieldlbl">Ingredients</div>
+				<div class="ingr"><div>1 Hokkaido pumpkin</div><div>1 onion</div><div>400 ml coconut milk</div><div>1 thumb of ginger</div></div>
+			</div>`;
+		el.querySelectorAll('[data-g]').forEach((b) => b.addEventListener('click', () => {
+			const g = b.dataset.g, k = b.dataset.k;
+			fromPage.delete(g + ':' + k);
+			if (g === 'diet') editTags.diet = editTags.diet === k ? null : k;
+			else editTags[g] = editTags[g].includes(k) ? editTags[g].filter((x) => x !== k) : [...editTags[g], k];
+			renderEdit();
+		}));
+	}
+
+	/* ── phone 5: recipe view ─────────────────── */
+	let viewFav = true;
+	function renderView() {
+		const el = document.getElementById('view');
+		el.innerHTML = `
+			<div class="hero" style="--ph:${P.terra}"><div class="herobtns"><span class="rb">${ic('back', 20, false, 2.4)}</span><button class="rb fav" aria-pressed="${viewFav}" aria-label="Favourite">${ic('heart', 19, viewFav, viewFav ? 0 : 2)}</button></div></div>
+			<div class="rv">
+				<h3>Pumpkin soup</h3>
+				<div class="rvmeta"><span>${ic('clock', 16)}40 min</span><span>${ic('users', 16)}4 servings</span></div>
+				<div class="tagline new">
+					<a href="#lib">Lunch</a><a href="#lib">Dinner</a><a href="#lib">Soup</a><a class="leaf" href="#lib">${ic('leaf', 13, false, 2.4)}Vegan</a><a href="#lib">Gluten-free</a><a href="#lib">Lactose-free</a>
+				</div>
+				<div class="rvh">Cooking for</div>
+				<div class="serv"><span>4 people</span><span style="color:var(--text-4)">−&nbsp;&nbsp;&nbsp;+</span></div>
+				<div class="rvh">Ingredients</div>
+				<div class="ingr"><div>1 Hokkaido pumpkin</div><div>1 onion</div><div>400 ml coconut milk</div></div>
+			</div>
+			<div class="cta"><button class="primary">Start cooking</button></div>`;
+		el.querySelector('.fav').addEventListener('click', () => { viewFav = !viewFav; renderView(); });
+		el.querySelectorAll('.tagline a').forEach((a) => a.addEventListener('click', (e) => {
+			e.preventDefault();
+			const t = a.textContent.trim();
+			applied = blank();
+			const m = MEALS.find((x) => x[1] === t), k = KINDS.find((x) => x[1] === t), d = DIETS.find((x) => x[1] === t), f = FREE.find((x) => x[1] === t);
+			if (m) applied.meals = [m[0]]; if (k) applied.kinds = [k[0]]; if (d) applied.diets = [d[0]]; if (f) applied.free = [f[0]];
+			draft = clone(applied); renderLib(); renderSheet();
+			document.getElementById('lib').scrollIntoView({ behavior: 'smooth', block: 'center', inline: 'center' });
+		}));
+	}
+
+	/* ── phone 6: sorting pass ────────────────── */
+	const PASS = [
+		{ name: 'Mushroom risotto', time: 40, ph: P.must, guess: 'veg', ing: '6 ingredients · no meat or fish found' },
+		{ name: 'Beef goulash', time: 120, ph: P.terra, guess: 'meat', ing: '9 ingredients · beef' },
+		{ name: 'Fried rice', time: 20, ph: P.sage, guess: null, ing: '7 ingredients · bacon or not? Ham is optional' },
+		{ name: 'Linzer cookies', time: 60, ph: P.heart, guess: 'veg', ing: '5 ingredients · no meat or fish found' }
+	];
+	let passI = 0;
+	let passTags = { meals: [], kinds: [], diet: PASS[0].guess, free: [] };
+	let passGuess = true;
+	function renderPass() {
+		const el = document.getElementById('pass');
+		const r = PASS[passI % PASS.length];
+		const done = 2 + passI;
+		const c = (g, k, t) => {
+			const on = g === 'diet' ? passTags.diet === k : passTags[g].includes(k);
+			return `<button class="chip sm${g === 'diet' && passGuess && r.guess === k ? ' dot' : ''}" aria-pressed="${on}" data-g="${g}" data-k="${k}">${t}</button>`;
+		};
+		el.innerHTML = `
+			<div class="pass">
+				<span class="back">${ic('back', 20, false, 2.4)}Recipes</span>
+				<h3>Sort your recipes</h3>
+				<p class="sub">${done} of 9 done · stop any time</p>
+				<div class="progress"><i style="width:${(done / 9) * 100}%"></i></div>
+				<div class="passcard new">
+					<div class="photo" style="--ph:${r.ph}"></div>
+					<div class="pbody">
+						<div class="pname">${esc(r.name)}</div>
+						<div class="pmeta">${r.time} min · ${esc(r.ing)}</div>
+						<div class="grp" style="border-top:0"><div class="grp-h">Meal</div><div class="wrapchips">${MEALS.map(([k, t]) => c('meals', k, t)).join('')}</div></div>
+						<div class="grp"><div class="grp-h">Kind</div><div class="wrapchips">${KINDS.map(([k, t]) => c('kinds', k, t)).join('')}</div></div>
+						<div class="grp"><div class="grp-h">Diet${r.guess ? '<small>dotted = our guess</small>' : ''}</div><div class="wrapchips">${DIETS.map(([k, t]) => c('diet', k, t)).join('')}</div></div>
+					</div>
+				</div>
+				<div class="passfoot"><button class="ghost" data-skip>Skip</button><button class="primary" data-next>Next</button></div>
+			</div>`;
+		el.querySelectorAll('[data-g]').forEach((b) => b.addEventListener('click', () => {
+			const g = b.dataset.g, k = b.dataset.k;
+			if (g === 'diet') { passTags.diet = passTags.diet === k ? null : k; passGuess = false; }
+			else passTags[g] = passTags[g].includes(k) ? passTags[g].filter((x) => x !== k) : [...passTags[g], k];
+			renderPass();
+		}));
+		const next = () => { passI = (passI + 1) % 7; const n = PASS[passI % PASS.length]; passTags = { meals: [], kinds: [], diet: n.guess, free: [] }; passGuess = true; renderPass(); };
+		el.querySelector('[data-next]').addEventListener('click', next);
+		el.querySelector('[data-skip]').addEventListener('click', next);
+	}
+
+	/* ── phone 7: plan sheet ──────────────────── */
+	let planSlot = 'breakfast';
+	let planQuick = [];
+	let planPick = 1;
+	function renderPlan() {
+		const el = document.getElementById('plan');
+		const s = blank();
+		if (planQuick.includes('fav')) s.fav = true;
+		if (planQuick.includes('max')) s.max = 30;
+		if (planQuick.includes('diet:veg')) s.diets = ['veg'];
+		const pool = results(s).sort((a, b) => (a.cooked ?? 1e9) - (b.cooked ?? 1e9));
+		const fits = pool.filter((r) => r.meals.includes(planSlot));
+		const rest = pool.filter((r) => !r.meals.includes(planSlot));
+		const row = (r) => `<button class="prow" data-pick="${r.id}"><span class="radio${planPick === r.id ? ' on' : ''}"></span><span class="pthumb" style="--ph:${r.ph}"></span><span><b>${esc(r.name)}</b><small>${r.time} min${r.cooked != null ? ` · cooked ${r.cooked} days ago` : ' · not cooked yet'}</small></span></button>`;
+		const slotName = label(MEALS, planSlot);
+		el.innerHTML = `
+			<div class="screen" aria-hidden="true"><span class="back">${ic('back', 20, false, 2.4)}Cooking</span><h3>This week</h3></div>
+			<div class="scrim"></div>
+			<div class="sheet" style="--top: 52px" role="dialog" aria-label="Plan a meal">
+				<div class="grab"></div>
+				<div class="sheet-top"><div><h4>Plan a meal</h4><div class="eyebrow" style="margin-top:4px">Saturday · Nov 22</div></div><button class="close" aria-label="Close">${ic('x', 16, false, 2.4)}</button></div>
+				<div class="sheet-body">
+					<div class="grp-h" style="margin-top:6px">Which meal?</div>
+					<div class="wrapchips">${MEALS.map(([k, t]) => `<button class="chip sm" aria-pressed="${planSlot === k}" data-slot="${k}">${t}</button>`).join('')}</div>
+					<label class="search" style="margin-top:14px;background:var(--field)">${ic('search', 18)}<input tabindex="-1" readonly placeholder="Search recipes or ingredients" aria-label="Search recipes" /></label>
+					<div class="chiprow new" style="margin-inline:-20px;padding-inline:20px">${QUICK.map((q) => `<button class="chip sm" aria-pressed="${planQuick.includes(q.key)}" data-quick="${q.key}">${ic(q.icon, 14)}${q.text}</button>`).join('')}</div>
+					<div class="planlist">
+						${fits.length ? `<div class="plabel sage new" style="padding-left:6px">For ${slotName.toLowerCase()} · ${fits.length}</div>${fits.map(row).join('')}` : ''}
+						${rest.length ? `<div class="plabel">${fits.length ? 'Everything else' : 'No recipe is tagged for ' + slotName.toLowerCase() + ' yet'}</div>${rest.map(row).join('')}` : ''}
+					</div>
+				</div>
+				<div class="sheet-foot"><button class="primary">Add to Saturday</button></div>
+			</div>`;
+		el.querySelectorAll('[data-slot]').forEach((b) => b.addEventListener('click', () => { planSlot = b.dataset.slot; renderPlan(); }));
+		el.querySelectorAll('[data-quick]').forEach((b) => b.addEventListener('click', () => {
+			const k = b.dataset.quick; planQuick = planQuick.includes(k) ? planQuick.filter((x) => x !== k) : [...planQuick, k]; renderPlan();
+		}));
+		el.querySelectorAll('[data-pick]').forEach((b) => b.addEventListener('click', () => { planPick = +b.dataset.pick; renderPlan(); }));
+	}
+
+	renderLib(); renderSheet(); renderNone(); renderEdit(); renderView(); renderPass(); renderPlan();
+</script>

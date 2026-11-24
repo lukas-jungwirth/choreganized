@@ -4,7 +4,7 @@
 	import { messages } from '$lib/i18n';
 	import type { PageProps } from './$types';
 
-	let { form }: PageProps = $props();
+	let { data, form }: PageProps = $props();
 
 	const m = messages();
 </script>
@@ -13,4 +13,10 @@
 	<title>{m.common.pageTitle(m.cooking.form.new)}</title>
 </svelte:head>
 
-<RecipeForm recipe={null} back="/cooking/recipes" error={form?.error} field={form?.field} />
+<RecipeForm
+	recipe={null}
+	units={data.units}
+	back="/cooking/recipes"
+	error={form?.error}
+	field={form?.field}
+/>

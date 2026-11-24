@@ -1,0 +1,281 @@
+{
+	"name": "Wiener Schnitzel vom Schwein mit Erdäpfelsalat und Wiener Garnitur",
+	"servings": 4,
+	"timeMinutes": 50,
+	"ingredients": [
+		{
+			"source": 0,
+			"quantity": 800,
+			"unit": "g",
+			"countingWord": null,
+			"newUnit": null,
+			"name": "festkochende Erdäpfel",
+			"note": null,
+			"alternative": null,
+			"section": null
+		},
+		{
+			"source": 1,
+			"quantity": 1,
+			"unit": null,
+			"countingWord": null,
+			"newUnit": null,
+			"name": "kleine rote Zwiebel",
+			"note": null,
+			"alternative": null,
+			"section": null
+		},
+		{
+			"source": 2,
+			"quantity": 100,
+			"unit": "ml",
+			"countingWord": null,
+			"newUnit": null,
+			"name": "kräftige Rindsuppe",
+			"note": null,
+			"alternative": null,
+			"section": null
+		},
+		{
+			"source": 3,
+			"quantity": 4,
+			"unit": "tbsp",
+			"countingWord": null,
+			"newUnit": null,
+			"name": "Weißweinessig",
+			"note": null,
+			"alternative": null,
+			"section": null
+		},
+		{
+			"source": 4,
+			"quantity": 1,
+			"unit": "tsp",
+			"countingWord": null,
+			"newUnit": null,
+			"name": "Estragonsenf",
+			"note": null,
+			"alternative": null,
+			"section": null
+		},
+		{
+			"source": 5,
+			"quantity": 1,
+			"unit": null,
+			"countingWord": null,
+			"newUnit": null,
+			"name": "Prise Kristallzucker",
+			"note": null,
+			"alternative": null,
+			"section": null
+		},
+		{
+			"source": 6,
+			"quantity": 3,
+			"unit": "tbsp",
+			"countingWord": null,
+			"newUnit": null,
+			"name": "Sonnenblumenöl",
+			"note": null,
+			"alternative": null,
+			"section": null
+		},
+		{
+			"source": 7,
+			"quantity": 1,
+			"unit": "tbsp",
+			"countingWord": null,
+			"newUnit": null,
+			"name": "Schnittlauchröllchen",
+			"note": null,
+			"alternative": null,
+			"section": null
+		},
+		{
+			"source": 8,
+			"quantity": null,
+			"unit": null,
+			"countingWord": null,
+			"newUnit": null,
+			"name": "Salz und Pfeffer",
+			"note": null,
+			"alternative": null,
+			"section": null
+		},
+		{
+			"source": 9,
+			"quantity": 1,
+			"unit": "pack",
+			"countingWord": null,
+			"newUnit": null,
+			"name": "Hofstädter „Fair zum Tier!“ STROHwohl Schweinskarree im Ganzen ausgelöst (ca. 1 kg)",
+			"note": null,
+			"alternative": null,
+			"section": null
+		},
+		{
+			"source": 10,
+			"quantity": 100,
+			"unit": "g",
+			"countingWord": null,
+			"newUnit": null,
+			"name": "glattes Weizenmehl",
+			"note": null,
+			"alternative": null,
+			"section": null
+		},
+		{
+			"source": 11,
+			"quantity": 200,
+			"unit": "g",
+			"countingWord": null,
+			"newUnit": null,
+			"name": "Semmelbrösel",
+			"note": null,
+			"alternative": null,
+			"section": null
+		},
+		{
+			"source": 12,
+			"quantity": 3,
+			"unit": null,
+			"countingWord": null,
+			"newUnit": null,
+			"name": "Handvoll Eier (L)",
+			"note": null,
+			"alternative": null,
+			"section": null
+		},
+		{
+			"source": 13,
+			"quantity": 400,
+			"unit": "g",
+			"countingWord": null,
+			"newUnit": null,
+			"name": "Butterschmalz",
+			"note": null,
+			"alternative": null,
+			"section": null
+		},
+		{
+			"source": 14,
+			"quantity": null,
+			"unit": null,
+			"countingWord": null,
+			"newUnit": null,
+			"name": "Salz und Pfeffer",
+			"note": null,
+			"alternative": null,
+			"section": null
+		},
+		{
+			"source": 15,
+			"quantity": 120,
+			"unit": "g",
+			"countingWord": null,
+			"newUnit": null,
+			"name": "Preiselbeerkompott",
+			"note": null,
+			"alternative": null,
+			"section": null
+		},
+		{
+			"source": 16,
+			"quantity": 4,
+			"unit": null,
+			"countingWord": null,
+			"newUnit": null,
+			"name": "Bio-Zitronenscheiben",
+			"note": null,
+			"alternative": null,
+			"section": null
+		},
+		{
+			"source": 17,
+			"quantity": 2,
+			"unit": "tsp",
+			"countingWord": null,
+			"newUnit": null,
+			"name": "Kapern",
+			"note": null,
+			"alternative": null,
+			"section": null
+		},
+		{
+			"source": 18,
+			"quantity": 8,
+			"unit": null,
+			"countingWord": null,
+			"newUnit": null,
+			"name": "Sardellenfilets",
+			"note": null,
+			"alternative": null,
+			"section": null
+		},
+		{
+			"source": 19,
+			"quantity": 4,
+			"unit": null,
+			"countingWord": null,
+			"newUnit": null,
+			"name": "Krauspetersilienspitzen",
+			"note": null,
+			"alternative": null,
+			"section": null
+		}
+	],
+	"steps": [
+		{
+			"text": "Für den Salat die Erdäpfel in Salzwasser 20–30 Min. gar kochen. Noch heiß schälen, in 3–4 mm dicke Scheiben schneiden und in eine Schüssel geben. Zwiebel schälen, fein würfeln und mit Suppe, Essig, Senf, Zucker, etwas Salz und Pfeffer sowie Öl verrühren. Über die warmen Erdäpfel gießen, vorsichtig vermengen und mind. 20 Min. ziehen lassen.",
+			"section": null,
+			"timer": null,
+			"uses": [
+				{
+					"ingredient": 8,
+					"phrase": "Salz",
+					"amountPhrase": null,
+					"quantity": null
+				},
+				{
+					"ingredient": 14,
+					"phrase": "Salz",
+					"amountPhrase": null,
+					"quantity": null
+				}
+			]
+		},
+		{
+			"text": "Inzwischen für die Schnitzel das Fleisch trocken tupfen und 8 ca. 1 cm dicke Schnitzel herunterschneiden. Zwischen Frischhaltefolie vorsichtig auf 4–5 mm Dicke flachklopfen. Auf beiden Seiten salzen und pfeffern. Mehl und Brösel auf je einen Teller geben, Eier in einem tiefen Teller salzen und nur leicht verquirlen.",
+			"section": null,
+			"timer": null,
+			"uses": []
+		},
+		{
+			"text": "Schmalz in einer großen, hohen Pfanne auf 170–180 °C erhitzen (Holzstielprobe). Währenddessen die Schnitzel im Mehl wenden, durch die Eier ziehen und locker in den Bröseln wenden. Die Brösel nur leicht andrücken, damit sie beim Backen schön aufgehen. Schnitzel portionsweise 2–3 Min. pro Seite schwimmend goldgelb ausbacken, dabei die Pfanne immer wieder leicht hin- und herbewegen, sodass heißes Fett über die Schnitzel schwappt und die Panier die typischen „Donauwellen“ bildet. Fertige Schnitzel auf Küchenpapier abtropfen lassen.",
+			"section": null,
+			"timer": null,
+			"uses": []
+		},
+		{
+			"text": "Schnittlauch unter den Erdäpfelsalat mischen und diesen abschmecken. Schnitzel mit Salat und Preiselbeeren anrichten. Als „Wiener Garnitur“ je 1 Zitronenscheibe mit ½ TL Kapern, 2 Sardellenfilets und 1 Petersilienspitze belegen und zum Schnitzel servieren. Tipp: Wenn Fleisch übrig bleibt, können Sie es für Geschnetzeltes, Spieße oder ein Wokgericht verwenden. Es kann auch zunächst portioniert eingefroren werden.",
+			"section": null,
+			"timer": null,
+			"uses": [
+				{
+					"ingredient": 17,
+					"phrase": "Kapern",
+					"amountPhrase": null,
+					"quantity": null
+				},
+				{
+					"ingredient": 18,
+					"phrase": "Sardellenfilets",
+					"amountPhrase": null,
+					"quantity": null
+				}
+			]
+		}
+	],
+	"tags": [],
+	"diet": null
+}

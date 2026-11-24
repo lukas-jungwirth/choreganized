@@ -5,6 +5,7 @@
  * names its `route`, which tests/conventions/visual-coverage.test.ts holds
  * against `src/routes`.
  */
+import { readFileSync } from 'node:fs';
 import { expect, type Page } from '@playwright/test';
 import { SEED } from '../e2e/accounts';
 import { SEED_GUEST_TOKEN } from '../../scripts/seed-data';
@@ -27,9 +28,10 @@ export type Screen = {
 	/**
 	 * Another seeded household than `visual` (→ tests/e2e/accounts.ts): `guests`
 	 * spent the sketch's weekend with Jonas (→ plan 38); `fullhouse` has a member
-	 * per colour, eight. Both unmutated, like `visual`.
+	 * per colour, eight; `cookbook` has the recipe-filters sketch's tagged
+	 * library (→ plan 40). All unmutated, like `visual`.
 	 */
-	account?: 'guests' | 'fullhouse';
+	account?: 'guests' | 'fullhouse' | 'cookbook' | 'cook';
 };
 
 export async function openRecipe(page: Page): Promise<void> {
@@ -44,6 +46,265 @@ export async function openRecipe(page: Page): Promise<void> {
 	// a 404.)
 	await page.waitForURL(/\/cooking\/recipes\/(?!new$|import)[^/?]+(?:\?.*)?$/);
 	await page.getByRole('heading', { level: 1 }).waitFor();
+}
+
+/** The lasagne in the editor (→ plan 46), scrolled so `heading` is at the top. */
+export async function openLasagneEditor(
+	page: Page,
+	nameField: string,
+	heading?: string
+): Promise<void> {
+	await openLasagne(page);
+	await page.goto(`${new URL(page.url()).pathname}/edit`);
+	await page.getByRole('textbox', { name: nameField }).waitFor();
+	if (heading) {
+		await page.evaluate((name) => {
+			const found = [...document.querySelectorAll('h2, h3')].find(
+				(el) => el.textContent?.trim().toLowerCase() === name.toLowerCase()
+			);
+			window.scrollTo(0, (found?.getBoundingClientRect().top ?? 0) + window.scrollY - 12);
+		}, heading);
+	}
+}
+
+/** The words cook mode's shots find things by (→ plan 47). */
+export const COOK_WORDS = {
+	en: { start: 'Start cooking', more: 'Increase cooking for', next: 'Next', step: /^Step \d+ of/ },
+	de: {
+		start: 'Los geht’s',
+		more: 'Für wie viele erhöhen',
+		next: 'Nächster Schritt',
+		step: /^Schritt \d+ von/
+	}
+};
+
+/** The risotto's cook mode (`--long-step`, the `cook` account), at `step`. */
+async function openRisottoCook(page: Page, step: number): Promise<void> {
+	await page.goto('/cooking/recipes');
+	await page
+		.getByRole('link', { name: /Risotto/ })
+		.first()
+		.click();
+	await page.waitForURL(/\/cooking\/recipes\/(?!new$|import)[^/?]+(?:\?.*)?$/);
+	await page.getByRole('heading', { level: 1, name: 'Risotto' }).waitFor();
+	await page.goto(`${new URL(page.url()).pathname}/cook?step=${step}`);
+	await page.locator('.eyebrow').waitFor();
+}
+
+/**
+ * Cook mode with plan 47's Get ready and the list under a step: the lasagne's
+ * Get ready for 8, its step 5 for 8 (C3), and the risotto's 400-character step,
+ * which belongs to the `cook` household. A step with its timer running is not
+ * here: with a ring running, `settle`'s wait for an idle network timed out, and
+ * a household left with a timer spoiled the long step's shot after it; the e2e
+ * journey holds that the list stays in view (→ DECISIONS #339).
+ */
+export function cookShots(
+	words: (typeof COOK_WORDS)['en']
+): (Omit<Screen, 'route' | 'path'> & { navigate: (page: Page) => Promise<void> })[] {
+	const ready = async (page: Page) => {
+		await openLasagne(page);
+		await page.goto(`${new URL(page.url()).pathname}/cook`);
+		await page.getByRole('button', { name: words.start }).waitFor();
+		for (let i = 0; i < 4; i++) await page.getByRole('button', { name: words.more }).click();
+		// The stepper's focus ring is the tap, not the screen.
+		await page.evaluate(() => (document.activeElement as HTMLElement | null)?.blur());
+	};
+	return [
+		{ name: 'cook-get-ready', navigate: ready },
+		{
+			name: 'cook-mode-part',
+			navigate: async (page) => {
+				await ready(page);
+				await page.getByRole('button', { name: words.start }).click();
+				for (let i = 0; i < 4; i++) await page.getByRole('button', { name: words.next }).click();
+				await page.getByText(words.step).waitFor();
+			}
+		},
+		{ name: 'cook-long-step', account: 'cook', navigate: (page) => openRisottoCook(page, 2) }
+	];
+}
+
+/** The words the editor's shots find things by, in each language the walk uses. */
+export const EDITOR_WORDS = {
+	en: {
+		name: 'Recipe name',
+		ingredients: 'Ingredients',
+		steps: 'Steps',
+		more: (step: number) => `More for step ${step}`,
+		unit: /^Unit:/,
+		unitTitle: 'Unit',
+		part: 'Part',
+		toPart: 'Move to part…',
+		moveTitle: 'Move to part',
+		links: (step: number) => `Ingredients for step ${step}`,
+		linksTitle: 'Tap a word to link it'
+	},
+	de: {
+		name: 'Rezeptname',
+		ingredients: 'Zutaten',
+		steps: 'Schritte',
+		more: (step: number) => `Mehr zu Schritt ${step}`,
+		unit: /^Einheit:/,
+		unitTitle: 'Einheit',
+		part: 'Teil',
+		toPart: 'In anderen Teil…',
+		moveTitle: 'In anderen Teil',
+		links: (step: number) => `Zutaten für Schritt ${step}`,
+		linksTitle: 'Tipp auf ein Wort, um es zu verknüpfen'
+	}
+};
+
+/**
+ * The editor's screens and sheets (→ plan 46). Each opens the lasagne's editor
+ * and gets to its frame by the words of `words`; `text-size.spec.ts` walks the
+ * German twins by their German names.
+ */
+export function editorShots(
+	words: (typeof EDITOR_WORDS)['en']
+): { name: string; navigate: (page: Page) => Promise<void> }[] {
+	const open = (page: Page, heading: string) => openLasagneEditor(page, words.name, heading);
+	const ingredient = async (page: Page) => {
+		await open(page, words.ingredients);
+		await page.getByRole('button', { name: /^500 g Faschiertes/ }).click();
+		await page.getByRole('dialog').getByText(words.part, { exact: true }).waitFor();
+	};
+	return [
+		{ name: 'recipe-edit-part', navigate: (page) => open(page, words.ingredients) },
+		{
+			name: 'recipe-edit-step',
+			navigate: async (page) => {
+				await open(page, words.steps);
+				await page.getByRole('button', { name: words.more(1) }).click();
+			}
+		},
+		{ name: 'recipe-edit-ingredient', navigate: ingredient },
+		{
+			name: 'recipe-edit-unit',
+			navigate: async (page) => {
+				await ingredient(page);
+				await page.getByRole('button', { name: words.unit }).click();
+				await page.getByRole('dialog', { name: words.unitTitle, exact: true }).waitFor();
+				await page.waitForTimeout(300);
+			}
+		},
+		{
+			name: 'recipe-edit-move',
+			navigate: async (page) => {
+				await open(page, words.steps);
+				await page.getByRole('button', { name: words.more(3) }).click();
+				await page.getByRole('menuitem', { name: words.toPart }).click();
+				await page.getByRole('dialog', { name: words.moveTitle }).waitFor();
+				await page.waitForTimeout(300);
+			}
+		},
+		{
+			name: 'recipe-edit-links',
+			navigate: async (page) => {
+				await open(page, words.steps);
+				await page.getByRole('button', { name: words.links(2) }).click();
+				await page.getByRole('dialog', { name: words.linksTitle }).waitFor();
+				await page.getByRole('button', { name: '8', exact: true }).click();
+				await page.waitForTimeout(300);
+			}
+		}
+	];
+}
+
+/**
+ * One of the review's saved drafts (`tests/fixtures/review-drafts/`, → plan 45)
+ * put where the import page puts a fresh one, and opened. Nothing is saved, so
+ * the household stays as seeded.
+ */
+export async function openReviewDraft(page: Page, name: string, title: string): Promise<void> {
+	const draft = JSON.parse(readFileSync(`tests/fixtures/review-drafts/${name}.json`, 'utf8'));
+	const id = `visual${name.replace(/[^a-z]/g, '')}`;
+	await page.goto('/cooking/recipes/import');
+	await page.evaluate(({ key, value }) => sessionStorage.setItem(key, value), {
+		key: `recipe-import:${id}`,
+		value: JSON.stringify({ v: 1, draft })
+	});
+	await page.goto(`/cooking/recipes/import?draft=${id}`);
+	await page.getByRole('heading', { name: title, level: 1 }).waitFor();
+}
+
+/**
+ * A saved recipe's tidy (→ plan 48): the saved `tidy` draft opened under the
+ * seeded curry, as the menu opens a fresh one. Nothing is saved.
+ */
+export async function openTidyDraft(page: Page, title: string): Promise<void> {
+	const draft = JSON.parse(readFileSync('tests/fixtures/review-drafts/tidy.json', 'utf8'));
+	await openRecipe(page);
+	const path = new URL(page.url()).pathname;
+	draft.recipeId = path.split('/').at(-1);
+	await page.evaluate(({ key, value }) => sessionStorage.setItem(key, value), {
+		key: 'recipe-import:visualtidy',
+		value: JSON.stringify({ v: 1, draft })
+	});
+	await page.goto(`${path}/tidy?draft=visualtidy`);
+	await page.getByRole('heading', { name: title, level: 1 }).waitFor();
+}
+
+/** The words the review's shots find things by, in each language the walk uses. */
+export const REVIEW_WORDS = {
+	en: { title: 'Check recipe', leftOut: /^Left out of the steps/ },
+	de: { title: 'Rezept prüfen', leftOut: /^Aus den Schritten ausgelassen/ }
+};
+
+/** The review's shots (→ plan 45): with questions [R1], clean [R2], the left-out list open. */
+export function reviewShots(words: (typeof REVIEW_WORDS)['en']): Screen[] {
+	const route = '/(app)/cooking/recipes/import';
+	return [
+		{
+			name: 'recipe-review',
+			route,
+			path: '',
+			navigate: (page) => openReviewDraft(page, 'lasagne', words.title)
+		},
+		{
+			name: 'recipe-review-clean',
+			route,
+			path: '',
+			navigate: (page) => openReviewDraft(page, 'clean', words.title)
+		},
+		{
+			name: 'recipe-review-left-out',
+			route,
+			path: '',
+			navigate: async (page) => {
+				await openReviewDraft(page, 'lasagne', words.title);
+				await page.getByRole('button', { name: words.leftOut }).click();
+				await page.waitForTimeout(150);
+				await page.evaluate(() => window.scrollTo(0, document.documentElement.scrollHeight));
+				await page.waitForTimeout(250);
+			}
+		},
+		{
+			name: 'recipe-tidy',
+			route: '/(app)/cooking/recipes/[id]/tidy',
+			path: '',
+			navigate: (page) => openTidyDraft(page, words.title)
+		}
+	];
+}
+
+/** The seeded lasagne (→ plan 43): parts, notes, steps linked by their words. */
+export async function openLasagne(page: Page): Promise<void> {
+	await page.goto('/cooking/recipes');
+	await page
+		.getByRole('link', { name: new RegExp(SEED.recipes.lasagne) })
+		.first()
+		.click();
+	await page.waitForURL(/\/cooking\/recipes\/(?!new$|import)[^/?]+(?:\?.*)?$/);
+	await page.getByRole('heading', { level: 1, name: SEED.recipes.lasagne }).waitFor();
+}
+
+/** The cookbook's pumpkin soup (→ plan 40): lunch, dinner, soup, vegan, a heart. */
+export async function openPumpkinSoup(page: Page): Promise<void> {
+	await page.goto('/cooking/recipes?kind=soup');
+	await page.getByRole('link', { name: /Pumpkin soup/ }).click();
+	await page.waitForURL(/\/cooking\/recipes\/(?!new$|import)[^/?]+(?:\?.*)?$/);
+	await page.getByRole('heading', { level: 1, name: 'Pumpkin soup' }).waitFor();
 }
 
 /** The first list, opened from its card's corner button (plan 36 [L5]). */
@@ -280,6 +541,18 @@ export const SCREENS: Screen[] = [
 		},
 		bottom: true
 	},
+	// The rebuilt editor (→ plan 46) on the lasagne: an open part [E1], a step
+	// card with its two rows [E3a], the ingredient sheet [E2], the unit panel
+	// [E2b], Move to part [E3b] and the link sheet [E3]; light and dark.
+	...editorShots(EDITOR_WORDS.en).flatMap((shot) =>
+		(['light', 'dark'] as const).map((theme) => ({
+			name: theme === 'dark' ? `${shot.name}-dark` : shot.name,
+			route: '/(app)/cooking/recipes/[id]/edit',
+			path: '',
+			navigate: shot.navigate,
+			...(theme === 'dark' ? { theme } : {})
+		}))
+	),
 	{
 		name: 'cook-mode',
 		route: '/(app)/cooking/recipes/[id]/cook',
@@ -287,9 +560,26 @@ export const SCREENS: Screen[] = [
 		navigate: async (page) => {
 			await openRecipe(page);
 			await page.getByRole('link', { name: 'Start cook mode' }).click();
+			await page.getByRole('button', { name: 'Start cooking' }).click();
 			await page.getByText(/^Step 1 of/).waitFor();
 		}
 	},
+	// A recipe in parts (→ plan 43): part headings over the ingredients and the
+	// steps, notes under names, linked words underlined; and in cook mode the
+	// part beside the step's number, cooking for twice as many.
+	{
+		name: 'recipe-parts',
+		route: '/(app)/cooking/recipes/[id]',
+		path: '',
+		navigate: openLasagne,
+		bottom: true
+	},
+	// Get ready, the list under a step, a long step, a running timer (→ plan 47).
+	...cookShots(COOK_WORDS.en).map((shot) => ({
+		...shot,
+		route: '/(app)/cooking/recipes/[id]/cook',
+		path: ''
+	})),
 	{ name: 'expenses', route: '/(app)/expenses', path: '/expenses', bottom: true },
 	{ name: 'expenses-dark', route: '/(app)/expenses', path: '/expenses', theme: 'dark' },
 	{ name: 'expenses-add', route: '/(app)/expenses', path: '', navigate: openAddExpense },
@@ -568,11 +858,73 @@ export const SCREENS: Screen[] = [
 		route: '/(app)/cooking/recipes/import',
 		path: '/cooking/recipes/import'
 	},
+	// The import's review (→ plan 45) [R1] [R2]: the gate's drafts of the
+	// Chefkoch page, opened the way the import page opens a fresh one.
+	...reviewShots(REVIEW_WORDS.en),
+	{ ...reviewShots(REVIEW_WORDS.en)[0], name: 'recipe-review-dark', theme: 'dark' },
 	{
 		name: 'recipe-new',
 		route: '/(app)/cooking/recipes/new',
 		path: '/cooking/recipes/new',
 		bottom: true
+	},
+	// The recipe filters (→ plan 40), on the sketch's tagged library
+	// (`--cookbook`): the row at rest, a filtered grid, the sheet, the ways out
+	// of "nothing fits", a recipe's tags and heart, and the form's Tags block.
+	{
+		name: 'recipes-cookbook',
+		route: '/(app)/cooking/recipes',
+		path: '/cooking/recipes',
+		account: 'cookbook'
+	},
+	{
+		name: 'recipes-filtered',
+		route: '/(app)/cooking/recipes',
+		path: '/cooking/recipes?meal=dinner&diet=vegetarian&sort=quick',
+		account: 'cookbook'
+	},
+	{
+		name: 'recipes-filter-sheet',
+		route: '/(app)/cooking/recipes',
+		path: '',
+		account: 'cookbook',
+		navigate: async (page) => {
+			await page.goto('/cooking/recipes?meal=dinner');
+			await page.getByRole('button', { name: 'Filter, 1 on' }).click();
+			await page.getByRole('dialog', { name: 'Filter recipes' }).waitFor();
+		}
+	},
+	{
+		name: 'recipes-nothing-fits',
+		route: '/(app)/cooking/recipes',
+		path: '/cooking/recipes?meal=dinner&diet=vegan&max=30',
+		account: 'cookbook'
+	},
+	{
+		name: 'recipe-tags',
+		route: '/(app)/cooking/recipes/[id]',
+		path: '',
+		account: 'cookbook',
+		navigate: openPumpkinSoup
+	},
+	// The sorting pass (→ plan 41): the cookbook's first untagged recipe, its
+	// diet guessed from the ingredients and dotted.
+	{
+		name: 'recipe-sort',
+		route: '/(app)/cooking/recipes/sort',
+		path: '/cooking/recipes/sort',
+		account: 'cookbook'
+	},
+	{
+		name: 'recipe-edit-tags',
+		route: '/(app)/cooking/recipes/[id]/edit',
+		path: '',
+		account: 'cookbook',
+		navigate: async (page) => {
+			await openPumpkinSoup(page);
+			await page.goto(`${new URL(page.url()).pathname}/edit`);
+			await page.getByText('Tags', { exact: true }).scrollIntoViewIfNeeded();
+		}
 	},
 	{ name: 'stores', route: '/(app)/shopping/stores', path: '/shopping/stores' },
 	// Onboarding [5a]–[5d], each as a fresh sign-up meets it. The invite step's

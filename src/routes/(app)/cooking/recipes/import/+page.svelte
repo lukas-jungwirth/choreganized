@@ -2,35 +2,40 @@
 	Recipe import (→ SPEC §4.7, plans 12–14, 22). The "Add a recipe" chooser routes
 	here with a focused `mode`, so each method is its own clean screen rather than
 	one stacked page:
-	  - link  (default) — paste a URL; the page's own recipe card fills the editor.
-	           With **Improve with AI** on (→ plan 22) the model structures it —
-	           amounts, which step uses what, timers — and reads pages that have
-	           no card at all; off, a page with no card offers AI one tap away.
+	  - link  (default) — paste a URL. With an AI provider set up the model reads
+	           the page and the gate checks it (→ plan 44): no switch, the
+	           provider is the go-ahead. Without one the page's recipe card is
+	           read by rules; a page with no card points at Settings.
 	  - photo — 1–3 cookbook photos, read by AI.
 	  - text  — paste the recipe text, read by AI (the answer for 403 sites).
 	Every AI path takes a line of instructions ("with tofu instead of meat") on
-	top of the household's standing ones. Every success lands in the ordinary
-	editor [3c] with a notice from the server; the AI never saves on its own. The
-	share target lands in link mode with the URL prefilled and auto-fetched.
+	top of the household's standing ones. Every success opens the review
+	[R1]–[R3] (→ plan 45): the draft is kept in `sessionStorage` under a new id
+	and the address becomes `?draft=<id>` (in place of the entry screen, so Back
+	never fetches a shared link twice); the AI never saves on its own. Without
+	JS the result still opens in the ordinary editor [3c]. The share target
+	lands in link mode with the URL prefilled and auto-fetched.
 -->
 <script lang="ts">
 	import { enhance } from '$app/forms';
+	import { goto } from '$app/navigation';
 	import AiCookingLoader from '$lib/components/cooking/AiCookingLoader.svelte';
+	import ImportReview from '$lib/components/cooking/review/ImportReview.svelte';
 	import MultiPhotoField from '$lib/components/cooking/MultiPhotoField.svelte';
 	import RecipeForm from '$lib/components/cooking/RecipeForm.svelte';
 	import SubHeader from '$lib/components/shell/SubHeader.svelte';
 	import Banner from '$lib/components/ui/Banner.svelte';
 	import Button from '$lib/components/ui/Button.svelte';
 	import TextField from '$lib/components/ui/TextField.svelte';
-	import Toggle from '$lib/components/ui/Toggle.svelte';
 	import { AI_INSTRUCTIONS_MAX } from '$lib/ai';
 	import { messages } from '$lib/i18n';
-	import type { RecipePrefill } from '$lib/utils/recipes';
+	import { draftKey, newDraftId, type StoredImport } from '$lib/utils/recipe-review';
+	import type { ImportSource, RecipePrefill } from '$lib/utils/recipes';
+	import type { ActionResult } from '@sveltejs/kit';
 	import Camera from '@lucide/svelte/icons/camera';
 	import CircleAlert from '@lucide/svelte/icons/circle-alert';
 	import FileText from '@lucide/svelte/icons/file-text';
-	import Sparkles from '@lucide/svelte/icons/sparkles';
-	import { onMount, tick, untrack } from 'svelte';
+	import { tick, untrack } from 'svelte';
 	import type { PageProps } from './$types';
 
 	let { data, form }: PageProps = $props();
@@ -84,70 +89,83 @@
 	/** The photos picked in photo mode — gates the submit and posts as `photos`. */
 	let photos = $state<File[]>([]);
 
-	/**
-	 * "Improve with AI" on a link (→ plan 22). **Off until someone turns it on**,
-	 * then remembered on this device: turning it on is the explicit go-ahead a
-	 * paid call needs (→ DECISIONS #112), so a first shared link never spends
-	 * one nobody agreed to. Browser storage, because it is one person's habit
-	 * on one phone — and a blocked storage just means "off".
-	 */
-	const IMPROVE_KEY = 'choreganized.import.improve';
-	let improve = $state(false);
-
-	function readImprove(): boolean {
-		try {
-			return localStorage.getItem(IMPROVE_KEY) === '1';
-		} catch {
-			return false;
-		}
-	}
-
-	function rememberImprove(on: boolean) {
-		try {
-			localStorage.setItem(IMPROVE_KEY, on ? '1' : '0');
-		} catch {
-			// Private mode or blocked storage: it works, it just isn't remembered.
-		}
-	}
-
 	/** The optional line for this import — always one tap away, never in the way. */
 	let instructions = $state('');
 	let showInstructions = $state(false);
 
+	/**
+	 * A draft from any import, kept in this tab under a new id and opened for
+	 * review (→ plan 45). The review takes the entry screen's place in history,
+	 * so Back never lands on a shared link that fetches itself again. False when
+	 * there is no draft, or nowhere to keep it: the form's own update then shows
+	 * what came back (the editor, for a draft).
+	 */
+	async function openReview(
+		result: ActionResult,
+		source: ImportSource,
+		site: string | null
+	): Promise<boolean> {
+		if (result.type !== 'success' || !result.data?.draft) return false;
+		const id = newDraftId();
+		const value: StoredImport = {
+			v: 1,
+			draft: {
+				prefill: result.data.draft as RecipePrefill,
+				notice: typeof result.data.notice === 'string' ? result.data.notice : null,
+				site,
+				source
+			}
+		};
+		try {
+			sessionStorage.setItem(draftKey(id), JSON.stringify(value));
+		} catch {
+			return false;
+		}
+		await goto(`?draft=${id}`, { replaceState: true });
+		return true;
+	}
+
+	/** The page's host for the line under the review's name: "chefkoch.de". */
+	function siteOf(link: string): string | null {
+		try {
+			return new URL(link).hostname.replace(/^www\./, '') || null;
+		} catch {
+			return null;
+		}
+	}
+
 	/** The shared pending flag for the AI forms — only one submits at a time. */
-	function aiEnhance() {
+	function aiEnhance(source: ImportSource) {
 		extracting = true;
-		return async ({ update }: { update: (opts?: { reset?: boolean }) => Promise<void> }) => {
-			await update({ reset: false });
+		return async ({
+			result,
+			update
+		}: {
+			result: ActionResult;
+			update: (opts?: { reset?: boolean }) => Promise<void>;
+		}) => {
+			if (!(await openReview(result, source, null))) await update({ reset: false });
 			extracting = false;
 		};
 	}
 
-	// The remembered choice, read once in the browser.
-	onMount(() => {
-		if (data.aiEnabled) improve = readImprove();
-	});
-
-	// A shared link auto-fetches once, so the recipe is on screen without a tap —
-	// honouring the remembered choice too, read here *before* the submit: the
-	// hidden `ai` field has to say so by the time the form goes, not after.
+	// A shared link auto-fetches once, so the recipe is on screen without a tap.
 	let autoSubmitted = false;
 	$effect(() => {
 		if (autoSubmitted || draft || !data.url || !fetchForm) return;
 		autoSubmitted = true;
 		const form = fetchForm;
-		untrack(() => {
-			if (data.aiEnabled) improve = readImprove();
-		});
 		tick().then(() => form.requestSubmit());
 	});
 
 	const headTitle = $derived(
-		mode === 'photo'
-			? m.cooking.add.photo
-			: mode === 'text'
-				? m.cooking.add.text
-				: m.cooking.import.title
+		data.draft
+			? m.cooking.import.review.title
+			: mode === 'photo'
+				? m.cooking.add.photo
+				: mode === 'text'
+					? m.cooking.add.text
+					: m.cooking.import.title
 	);
 </script>
 
@@ -155,10 +173,23 @@
 	<title>{m.common.pageTitle(headTitle)}</title>
 </svelte:head>
 
-{#if draft}
+{#if data.draft}
+	<!-- Keyed: another import's id is another review, from scratch. -->
+	{#key data.draft}
+		<ImportReview
+			id={data.draft}
+			edit={data.edit}
+			units={data.units}
+			error={saveError}
+			field={saveField}
+		/>
+	{/key}
+{:else if draft}
+	<!-- Without JS there is no review to keep a draft in: the editor, as before. -->
 	<RecipeForm
 		recipe={null}
 		prefill={draft}
+		units={data.units}
 		back="/cooking/recipes"
 		error={saveError}
 		field={saveField}
@@ -177,7 +208,7 @@
 			method="POST"
 			action="?/extractPhotos"
 			enctype="multipart/form-data"
-			use:enhance={aiEnhance}
+			use:enhance={() => aiEnhance('photo')}
 		>
 			<MultiPhotoField bind:files={photos} max={3} />
 			<p class="hint">{t.photoHint}</p>
@@ -201,7 +232,7 @@
 	/>
 	{#if data.aiEnabled}
 		{#if aiError}{@render banner(aiError)}{/if}
-		<form method="POST" action="?/extractText" use:enhance={aiEnhance}>
+		<form method="POST" action="?/extractText" use:enhance={() => aiEnhance('text')}>
 			<textarea
 				name="text"
 				bind:value={pasteValue}
@@ -239,9 +270,9 @@
 		use:enhance={() => {
 			fetching = true;
 			// With AI it's a model call, not a page load: the cooking loader says so.
-			if (improve) extracting = true;
-			return async ({ update }) => {
-				await update({ reset: false });
+			if (data.aiEnabled) extracting = true;
+			return async ({ result, update }) => {
+				if (!(await openReview(result, 'page', siteOf(url)))) await update({ reset: false });
 				fetching = false;
 				extracting = false;
 			};
@@ -259,17 +290,7 @@
 			spellcheck={false}
 		/>
 
-		{#if data.aiEnabled}
-			<input type="hidden" name="ai" value={improve ? '1' : ''} />
-			<div class="improve">
-				<div class="improve-copy">
-					<span class="improve-label"><Sparkles size={15} strokeWidth={2} />{t.improve}</span>
-					<span class="improve-hint">{t.improveHint}</span>
-				</div>
-				<Toggle bind:checked={improve} label={t.improve} onchange={rememberImprove} />
-			</div>
-			{#if improve}{@render instructionsField()}{/if}
-		{/if}
+		{#if data.aiEnabled}{@render instructionsField()}{/if}
 
 		<div class="submit">
 			<Button type="submit" disabled={fetching || !url.trim()}>
@@ -287,23 +308,15 @@
 		</p>
 	{/if}
 
+	<!-- A page the model could not read (AI set up), or one with no card and no
+		 provider to read it: the other ways in, or Settings. -->
 	{#if noRecipe}
 		{#if data.aiEnabled}
-			<div class="ai-page">
-				<p class="ai-lead">{t.pageLead}</p>
-				<form method="POST" action="?/extractPage" use:enhance={aiEnhance}>
-					<input type="hidden" name="url" value={url} />
-					<input type="hidden" name="instructions" value={instructions} />
-					<Button type="submit" disabled={extracting || !url.trim()}>
-						<Sparkles size={16} strokeWidth={2} />
-						{extracting ? t.extracting : t.tryPage}
-					</Button>
-				</form>
-				<p class="ai-alt">
-					<a href="?mode=photo"><Camera size={14} strokeWidth={2} />{m.cooking.add.photo}</a>
-					<a href="?mode=text"><FileText size={14} strokeWidth={2} />{m.cooking.add.text}</a>
-				</p>
-			</div>
+			{#if aiError}{@render banner(aiError)}{/if}
+			<p class="ai-alt">
+				<a href="?mode=photo"><Camera size={14} strokeWidth={2} />{m.cooking.add.photo}</a>
+				<a href="?mode=text"><FileText size={14} strokeWidth={2} />{m.cooking.add.text}</a>
+			</p>
 		{:else}
 			<p class="ai-hint-line">
 				{t.hintLead}<a href="/settings">{t.hintLink}</a>{t.hintRest}
@@ -411,45 +424,6 @@
 		color: var(--text-5);
 	}
 
-	/* "Improve with AI": a row like Settings' switches — what it does on the
-	   left, the switch on the right. */
-	.improve {
-		display: flex;
-		align-items: center;
-		gap: 14px;
-		margin-top: 16px;
-		padding: 14px 16px;
-		border-radius: var(--r-block);
-		background: var(--card);
-	}
-
-	.improve-copy {
-		display: flex;
-		flex-direction: column;
-		gap: 3px;
-		flex: 1;
-		min-width: 0;
-	}
-
-	.improve-label {
-		display: inline-flex;
-		align-items: center;
-		gap: 7px;
-		font-size: var(--fs-16);
-		font-weight: 600;
-		color: var(--ink);
-	}
-
-	.improve-label :global(svg) {
-		color: var(--sage);
-	}
-
-	.improve-hint {
-		font-size: var(--fs-14);
-		line-height: 1.45;
-		color: var(--text-4);
-	}
-
 	.instructions {
 		margin-top: 14px;
 	}
@@ -469,21 +443,6 @@
 		font-size: var(--fs-15);
 		font-weight: 600;
 		color: var(--sage);
-	}
-
-	/* "Try AI extraction" on a fetched page with no recipe data. */
-	.ai-page {
-		margin-top: 20px;
-		padding: 16px;
-		border-radius: var(--r-block);
-		background: var(--sunken);
-	}
-
-	.ai-lead {
-		margin: 0 0 12px;
-		font-size: var(--fs-15);
-		line-height: 1.5;
-		color: var(--text-4);
 	}
 
 	.ai-alt {

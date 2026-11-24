@@ -4417,3 +4417,682 @@ store_id` NULL already means "no memory" (a deleted list), and telling the two a
      overlapping). At 390px the 278px beside the avatar takes six 38px dots with 10px gaps, so
      each dot still sits in a 44px target; `space-between` lines the last dot up with the name
      field, and a `max-width` stops the gaps at 16px on wider phones.
+301. **A taken colour shows who wears it, not a faded dot** (2026-11-22; → SPEC §1.5,
+     DESIGN-SYSTEM "ColorPicker"). Lukas found the 30%-opacity swatch in Settings confusing: it
+     looked broken rather than taken. The swatch now keeps its colour and carries the wearer's
+     initial, the same 38px disc as their Avatar everywhere else, and still can't be picked
+     (disabled radio, "Teal, already taken" to a screen reader). Free colours stay plain dots, so
+     a letter means "somebody's". The join screen gets only each wearer's **initial** from the
+     invite preview, not the name: it goes to anyone holding the code before they have joined.
+302. **Recipes get a fixed tag list, a diet and a heart** (2026-11-22; → plan 40, SPEC §4.3–4.5,
+     DATA-MODEL). Meal (the plan's four slots), kind (main · soup · salad · side · dessert ·
+     baking) and free from (gluten · lactose) are tags in `recipe_tags`; diet is one column
+     (`meat | fish | vegetarian | vegan`, NULL = not set) because a recipe has one and
+     "vegetarian includes vegan" is a rule on that value, which also means a recipe nobody set a
+     diet on matches no diet filter. A fixed list rather than household-made tags: fixed words
+     translate, fit one row of chips and give plan 41's importer and AI something to map onto.
+     Cuisine is left out to keep the sheet short; the heart is one per household, not per member.
+     Those two and the quick chips (Favourites · Under 30 min · Vegetarian) were the plan's
+     defaults, open to Lukas.
+303. **A filter group appears once a recipe uses it; the form's Tags block folds while empty**
+     (2026-11-22; Lukas). A household that never tags meals never sees a Meal question, in the
+     sheet or as a quick chip (`recipeFacets` over the whole library), so tagging stays optional
+     without a setting to switch it off. The form shows one row, "Tags · Meal, kind, diet", until
+     something is set, and opens whenever something is: an import that brought tags or an edit
+     always shows them. Lukas weighed hiding against forgetting; folding plus the groups that
+     appear on use was the answer.
+304. **The filters are the URL; one pure function filters the grid and counts the sheet**
+     (2026-11-22; → `utils/recipe-filter.ts`). `?meal=&kind=&diet=&free=&max=&fav=&sort=` beside
+     `?q=`, parsed leniently (unknown values ignored). The load filters the grid with
+     `applyRecipeFilter` and also sends the searched library unfiltered, against which the sheet
+     counts its draft with `matchesRecipeFilter`, so "Show 6 recipes" always opens six. The
+     chips in the row are links (`Chip` gained `href`), so the row works without JavaScript; only
+     the sheet needs it. The sheet's live count needed its button in sight while the groups
+     scroll, so `BottomSheet` gained a `footer` snippet, sticky to the panel's edge rather than
+     inside its padding.
+305. **"Not cooked lately" means not planned lately** (2026-11-22; Lukas). The plan is the
+     record the app has and it's never pruned: `max(meals.date)` per recipe over days up to and
+     including today, a future dinner not counting, never planned first. A skipped dinner still
+     counts and a recipe cooked without planning doesn't; close enough, and cook-mode opens can
+     sharpen it later if it isn't.
+306. **The library search also reads ingredient names, by substring** (2026-11-22; → plan 40,
+     amends the plan's "same key the shopping list uses"). A `LIKE` over `recipe_ingredients.name`
+     beside the name match, as a plain subquery for the reason `idsWithIngredients` gives. A
+     substring is the more forgiving of the two for a search box ("lemon" finds "Lemons");
+     the shopping list's `name_key` is an equality key and would have found less. A card's heart
+     and leaf are drawn on the photo but read after the recipe's name ("Shakshuka, 30 min,
+     Favourite, Vegetarian"), and the heart has its own token, `--heart`, warmer than
+     `--danger`.
+307. **Tags come from the page, the AI, or a guess, and always as a dotted suggestion**
+     (2026-11-23; → plan 41, SPEC §4.3, §4.7). A link import maps the card's `recipeCategory`,
+     `keywords` and `suitableForDiet` through a fixed English + German word list
+     (`utils/recipe-tag-words.ts`), whole words with umlauts folded, so "Salatgurke" is no
+     salad. Meat and fish are never read off a page: sites rarely say so, and "fish" in a
+     keyword list is as often fish sauce. The AI import's schema gets the tag list as an enum,
+     the way units already are. Whatever the source, the chips open ticked with a gold dot and
+     a line naming where they came from, and only Save stores them; the dot itself is never
+     stored. With Improve with AI, the page's word stands per group and the AI fills the rest.
+308. **The sorting pass keeps its state in the URL and stores nothing about itself**
+     (2026-11-23; → plan 41). `?total=` holds how many there were when it started, so the bar
+     fills rather than shrinks; `?skip=` the ids passed over this visit. A skipped recipe is
+     back next visit (the plan said "after the rest"; a URL can't remember across visits, and
+     a stored skip list would be state for a convenience). Next with nothing ticked is a skip,
+     since saving "no tags" would show the same card again.
+309. **The diet guess is a word list, German compounds included, and only a suggestion**
+     (2026-11-23; → `utils/diet-guess.ts`). Meat beats fish beats egg/dairy/honey beats vegan.
+     Most stems match at either end of a word ("Rinderhackfleisch", "Lachsfilet",
+     "Hühnerbrühe"); short or ambiguous ones only whole ("ei", "ham"). Plant milks and butters,
+     "Fleischtomate", lamb's lettuce and shell pasta are named and taken out first; gelatine
+     without meat makes no guess. Wrong guesses cost a tap, so the list stays short and
+     readable rather than complete.
+310. **The AI pre-fill is one button, one call, names and ingredients only** (2026-11-23;
+     → plan 41). It sends the recipes still to sort (at most 50) and nothing else of the
+     household's, so a household that turned AI on for imports isn't surprised by its recipe
+     photos or steps leaving the house. The answer is kept in the page while the cards go by
+     and saved card by card by Next. The plan sheet orders by the chosen meal's tag and never
+     hides a recipe; its quick chips use the library's own filter rules in the browser.
+311. **The recipe rebuild: the model structures, code verifies, screens render what was
+     stored** (Lukas, 2026-11-23; → plans 42–48). A probe of 41 real recipe pages that day
+     showed what rules cannot do: 25 of 36 pages show ingredient sections and no card carries
+     them; 25 of 31 imports had a preparation note inside an ingredient name; 26 of 29 had a
+     step naming an ingredient by another word ("Zwiebelwürfel"); on a Chefkoch lasagne the
+     word matcher never linked 5 of 19 ingredients. A model reads these; a model alone is not
+     trusted. So the import is one model call, a gate in plain code checks every row, amount
+     and sentence against the page, and what fails becomes a thing for a person to check.
+     This supersedes #127 (the matcher is now only the fallback for steps nobody has linked,
+     and the editor's suggestion engine) and #149 (a scaled amount in a step comes from a
+     stored phrase, not from "the number before an underlined word"). #133 and #148 stand.
+312. **A dish with two ingredient lists is one recipe with parts** (Lukas, 2026-11-23;
+     → plan 43, issue #176). `section` on ingredients and on steps, consecutive rows with the
+     same name forming a part. Not sub-headings on ingredients only (cook mode could not say
+     which part a step belongs to) and not two linked recipes (servings, the plan and the
+     shopping picker would span two things for one dinner).
+313. **Eight units and a free counting word** (Lukas, 2026-11-23; → plans 42, 43). g, kg, ml,
+     L, pcs, pack, tbsp, tsp stay the only units the app calculates with. Whatever else a
+     recipe counts in ("2 Zehen", "1 Bund", "1 Dose", "1 Prise") is kept as written in the
+     same `unit` column, so the name stays the thing you buy. No longer list of named units:
+     each would need a picker entry and a translation, and Lukas asked not to. In the recipe a
+     Dose stays a Dose. On the shopping list a container word (Dose, Becher, Glas, Flasche,
+     Beutel) becomes Packung with its number; every other counting word, and tbsp and tsp, put
+     only the name on the list. Lukas left Dose-or-Packung to the session; reading the recipe
+     as the site wrote it won.
+314. **An ingredient's name is what you buy; the rest is its note** (Lukas, 2026-11-23;
+     → plan 43). "1 Karotte, in Scheiben geschnitten" is Karotte with a note. Purposes ("zum
+     Würzen"), hints ("ein Teil kann durch Gemüsebrühe ersetzt werden") and examples ("z. B.
+     Paprika") are notes too, shown in the recipe and in cook mode, never on the list. One
+     line naming two things is two rows. An either/or keeps the first one named with the other
+     in the note, and the import's review offers the choice in one tap; alternatives are not
+     modelled as data.
+315. **AI is the import when a provider is set up** (Lukas, 2026-11-23; → plan 44). The
+     "Improve with AI" switch of plan 22, off until turned on per device, goes: it left most
+     imports at the rule-based quality. Setting up a provider is the go-ahead for one call per
+     import. Without a provider, or when both fail, the rule-based import still works.
+316. **The import may split and drop a site's steps, never reword them** (Lukas, 2026-11-23;
+     → plan 44). Chosen over "rewrite for clarity" because it can be verified: every kept
+     sentence must be found in the page word for word, and what was dropped is kept on the
+     draft so a person can put it back. Chosen over "exactly as written" because 13 of 29
+     pages had tips, sign-offs or teasers among the steps and two had the whole method as one
+     paragraph.
+317. **Austrian wording is removed** (Lukas, 2026-11-23; → plan 44; reverses #150). It
+     rewrote ingredient names after the import, so "Obers" in the list stood beside "Sahne" in
+     the steps and needed a synonym table to be found again. Saved recipes keep their names.
+318. **The import is scored against a real model, with a key that lives in `.env` only**
+     (2026-11-23; → plan 44). `npm run import:eval` runs the saved pages through the real
+     pipeline and prints coverage, agreement and link numbers; `--record` keeps the answers as
+     fixtures, so CI stays offline. Never a key in CI or on a deploy. Until a key exists the
+     prompt is tested against the fake provider only and every handoff says so.
+319. **Plan 42 as built: what the shared amount reader changed, and what it did not**
+     (2026-11-23). `utils/amounts.ts` owns every spelling of a number, a unit and a counting
+     word. The rules about _where_ in a line an amount may stand stay with each line's parser
+     (`lists.ts`: plan 37's seven rules, 119 cases untouched; `ingredients.ts`: the amount
+     leads), not in one `parseAmountLine` as the plan sketched: the two orders of rules share
+     nothing but the spellings. Changes to how a recipe line reads, each pinned in the
+     contract table of `ingredients.test.ts`:
+     - "x" is "times", not the unit `pcs`: "1 x Backpulver" is 1 Backpulver, as on a list.
+     - A word glued to its number that is no unit is a name ("7up"), and a number with a full
+       stop is an ordinal ("1. Mai Kerzen"), both as on a list. #101's example of a line the
+       sheet cannot escape is now "3 Musketiere".
+     - A measured amount at the end is read ("Mehl 500g", "Salz, 1 TL"); a bare number or a
+       counting word at the end is not.
+     - "⅛" survives being stored as 0.13 (the glyph tolerance is a hair over half a cent).
+     - **A counting word reaches the shopping list as written** ("Knoblauch · 2 Zehen") until
+       plan 43 applies #313's rule (containers become a pack, the rest name only). The plan
+       assumed tbsp and tsp were already dropped on the way to the list; they are not, the
+       unit column there is free text and merges only with its own spelling.
+     - `timer-parse.ts` keeps its own patterns: a duration is not an amount.
+320. **Plan 43 as built: parts, notes and stored links, and what reads as before** (2026-11-23).
+     `recipe_ingredients.note` / `.section`, `recipe_steps.section`, and `phrase` /
+     `amount_phrase` on `recipe_step_ingredients`, unique on (step, ingredient, phrase)
+     (migration 0029, plain `ALTER TABLE ADD` plus the index swap; existing rows survive, pinned
+     by a migration test). Judgment calls and deviations from the plan:
+     - **What picks the stored-link rendering is "the step's pins carry words", not the
+       `ingredients_set` flag alone.** Steps pinned by hand in the old editor (the seeded pasta
+       has two) have the flag set and pins without phrases; drawn from stored links they would
+       lose every underline, which breaks "a recipe saved before this plan looks and cooks
+       exactly as before". So `renderStep` (`utils/step-links.ts`, the one entry point for cook
+       mode and the recipe view) draws from stored links when any pin of the step carries a
+       phrase or an amount phrase, and otherwise does exactly what the screens did before:
+       `readStep` plus plan 23's `scaleStepAmounts`. `readStep` itself is unchanged. Cost: a
+       new-model step whose links all have no words (rare: the import stores the word whenever
+       the text names it) is read by the matcher against its pinned list.
+     - **The recipe view underlines only stored links.** A step read by the matcher stays
+       without underlines there, as before (the matcher's underlines stay cook mode's); the
+       stored ones are certain enough to show, as sketch V2 does. Mustard in the sketch is
+       `--gold` here.
+     - **An amount phrase is rewritten only beside its phrase** (`locateAmounts`, exported for
+       plan 44's gate). First built as "directly in front of the phrase, else the first
+       occurrence in the step"; review found the fallback doubling the wrong number ("Nach 5
+       Min. die 5 reifen Tomaten" doubled the minutes, "Stufe 2 … 2 große Eier" the oven,
+       two "100 g" links both took the first). Now, for each phrase occurrence: the nearest
+       amount before it with at most three letter-words between (spaces, hyphens, commas; no
+       digit, no `. ! ? ; :`), else after it by the same test with an opening bracket allowed
+       ("Karotten (400 g)"); one amount to the nearest occurrence; every occurrence with its
+       amount is rewritten; nothing beside any occurrence rewrites nothing. An unscaled number
+       is acceptable, a wrong one is not. Bounded so "2 EL" is never read inside "12 EL".
+       Every number in the run is scaled on its own (`scaleQuantity`, then `formatLike` from
+       `step-amounts.ts`), so a range moves both ends. Phrases match case-blind.
+     - **A link stored without words is still underlined** where the word matcher, restricted
+       to those links' ingredients, finds the name, never across a run a worded link claimed.
+     - **The picker groups by name across the whole recipe**, not only across parts: a flat
+       recipe that names "Salz" twice also gets one row now. A line's id is its first row's id;
+       the submit accepts any of the line's row ids, so a sheet opened before a deploy still
+       posts something it understands. `shoppingLines` (`utils/recipe-shopping.ts`) scales each
+       row first and then adds them, on both sides. The parts line appears only when a name is
+       gathered from two or more parts.
+     - **tbsp and tsp leave the list with no amount even on recipes saved before**, and a
+       counting word other than a container too (#313 applied to every recipe, as the plan
+       says; #319's interim "Knoblauch · 2 Zehen" is gone).
+     - **The old editor keeps everything without showing it**: hidden `ingredientNote`,
+       `ingredientSection`, `stepSection`, and the words inside `stepUses`. A row's note is
+       posted only while the line still parses to the name it was opened with. Re-ticking a
+       step in the ingredients sheet keeps every phrase a still-ticked ingredient was linked
+       by; the sheet's share goes onto the first. `RecipeInput.ingredientDetails` and
+       `StepInput.section` are optional, so the import (plan 44) keeps its contract untouched.
+     - **Part headings** are Fraunces at `--fs-18` (sketch 19 px), one step under the 20 px
+       "Ingredients" / "Steps" titles they sit beneath, so the hierarchy holds. The peek sheet
+       heads its parts with the sheets' small uppercase label instead.
+     - **A row the list takes by name alone never erases another row's amount** in
+       `shoppingLines`: "2 EL Butter" + "30 g" + "50 g" is Butter · 80 g in any order (review
+       found the spoon row first blanking the line).
+     - **A row added in the old editor joins the part it lands in** (the row above's, the row
+       below's when first; ingredients and steps alike): a new row without one split its part
+       in two, each half under the same heading. **A moved row joins a part only when it lands
+       between two of its rows**, and is otherwise back in the part it came with, so one arrow
+       across a boundary moves it into the next part and the arrow back returns it. "Always the
+       row above's" (the first rule) let a part's only row be renamed out of existence, with
+       no control to set it back before plan 46 (code review).
+     - **Review fixes from the code-review pass**: a link without words keeps plan 23's "number
+       before the underline" rule when it has no amount phrase, and has its amount phrase
+       located beside the matcher's underline when it has one; one ingredient linked twice
+       shows the shares of both links added up (`stepShare`; the old editor's sheet sets the
+       whole share on the first link and none on the others); an untouched line keeps its note
+       whatever it parses to; "0,250" is a decimal (a leading 0 is never a thousands group).
+       Left as they are: the 60-pins-per-step cap now counts (ingredient, phrase) pairs, and an
+       amount in a unit that cannot be added to the line's first stays off the list, both as
+       before this plan (`planAdds`).
+     - **The seeded lasagne has a third part, "Schichten"** (the layering), so the Butter for
+       the form shows one name gathered from two parts in the picker. It is in the base seed
+       (every e2e and visual household), tagged dinner · main · meat and older than the other
+       two, so "Recently added" is unchanged; the cookbook's counts move by one.
+321. **A unit comes from one list: the eight, the counting words, and the household's own**
+     (Lukas, 2026-11-23; → plans 44, 46; amends #313). A unit is one of the eight units (g, kg,
+     ml, L, pcs, pack, tbsp, tsp), a counting word the shared reader knows (`amounts.ts`:
+     "Zehe", "Bund", "Dose", "Prise", …), or a word the household added on purpose
+     (`household_units`). Nothing else is a unit. The ingredient sheet gets a numbers-only
+     field and a unit button that opens a panel with every unit visible (plan 46). The AI
+     import picks from the same list, which is part of its prompt; a word the page counts in
+     that is not on it ("Ring") becomes a question on the review screen ("New unit: Ring. Add
+     it?"), and until it is answered the draft keeps the number with no unit and the word in
+     the note. Lukas's reasons: a typed field has to guess what is number and what is unit, and
+     an open field where anything goes overwhelms people. #313's "free counting word" is
+     therefore no longer free: it is one the reader knows or one the household added.
+322. **Plan 44, first PR as built: the wording goes, the readers keep parts, the corpus, and an
+     honest User-Agent** (2026-11-23).
+     - **Austrian wording removed** as #317 says: `utils/wording.ts`, `WordingSheet`, the
+       Settings row and action, the prompt paragraph, `applyWording`, the matcher's synonyms,
+       their tests; migration 0030 drops `households.recipe_wording` (a plain `DROP COLUMN`,
+       pinned by `tests/integration/recipe-wording-removed.test.ts`). The quiche test in
+       `step-highlight.test.ts` now reads the rows as written; its "Oberhitze is not the Obers"
+       case went with the Obers.
+     - **Refused fetches: the cause was ours.** The importer sent a Chrome User-Agent from a
+       client that does not talk like Chrome (Node's TLS, no client hints). Cloudflare's bot
+       check challenges exactly that mismatch: sallysbakingaddiction.com answered `403` with
+       `cf-mitigated: challenge` to the app's request, and `200` to the same request with an
+       honest client name. The importer now sends a generic `Mozilla/5.0 (compatible;
+recipe-importer)` (`IMPORT_UA`): the `Mozilla/5.0 (compatible; …)` form crawlers use,
+       because a bare `node` string is still refused by some sites, and no app name, so the
+       project's name does not travel in requests to outside sites (coordinator, 2026-11-23). With it the
+       three pages the plan names import (sallysbakingaddiction.com, budgetbytes.com,
+       whereismyspoon.co), and all 18 corpus pages still do. Five sites refuse every client
+       and keep the "copy the text" answer: allrecipes.com and seriouseats.com (Dotdash's pay
+       per crawl), rewe.de, falstaff.com and spar.at. Nothing here gets around a challenge; the
+       request only stopped claiming to be a browser.
+     - **Parts are read, not dropped.** `RecipeJsonLd` gains `ingredientSections` and
+       `stepSections`, one entry per line and per step. Steps: a `HowToSection`'s name, and a
+       heading step names the steps after it. Before, a heading step was glued to the next
+       step's text ("Orangensalat: Orangen schälen …", #159); now it leaves the text, which is
+       what plan 44 asks of the model too. A heading step is a line ending on a colon (at most
+       15 words, as before), or a bare title of at most four words with no digit and no
+       sentence end ("Karottenkuchen", kochbar.de) but only when the card opens on one and has
+       a second (code review: "Teig kneten" alone in the middle is a step). A row that ends
+       its card or its `HowToSection` is a step, never a heading. Ingredients: a row ending on
+       a colon, a shouted row ("KATSU CURRY SAUCE") or "Für …"/"For …" of at most five words
+       with no digit and no colon inside ("Für die Form: Butter" is butter) starts a part. Names are tidied by `sectionName`: no colon, no leading "Für die" /
+       "Zutaten für" / "For the", shouting lowered to sentence case (a word-by-word capital
+       would make German verbs nouns), a bracketed remark dropped only when the name is over
+       40 characters; "Zutaten", "Zubereitung", "Instructions" and the like are no part, and
+       one part that covers every row is none ("Zubereitung" around all of chefkoch's steps).
+     - **`recipe-plugins.ts` reads parts from the page, only where they agree with the card.**
+       The plan named WP Recipe Maker and Tasty; the probe showed the same need on chefkoch.de
+       (a table per part, the heading in its head), gutekueche.at and servus.com (a heading
+       just before each table) and kochbar.de, so a third shape, "a run of tables", is read
+       too. Whatever the shape, the markup is used only when its rows add up to exactly the
+       card's lines and every row shares a word with the lines of its part (gutekueche.at sorts
+       its card alphabetically inside each part, so order within a part is not checked). The
+       card's lines stay the lines: the plan also asked for WPRM's amounts and notes, but on
+       the corpus they say nothing the card's lines do not once WPRM's "(, finely chopped)" is
+       unwrapped, and the import's `source` index has to point at one list.
+     - **A card imported without AI keeps its parts already** (`draftFromCard` →
+       `RecipePrefill.ingredientSections` and `StepInput.section`, posted by the editor's hidden
+       fields of plan 43). Without this, a heading step that now leaves the text would be lost
+       until the second PR. An "Improve with AI" draft gets the card's parts too, by index, when
+       the model kept the card's rows one for one (always, unless household instructions let it
+       change them); a page with no card read by the model has none until the second PR.
+     - **Reader fixes from the probe**: `totalTime` in words ("5 hours 45 minutes",
+       bonappetit.com); a card with no steps and one row over 200 characters is no card
+       (cookingcatrin.at), in both readers, judged after a plugin's marked-up method has been
+       added (so a long-lined card whose steps are in the markup stays a card); template
+       leftovers out of steps and ingredient lines (gutekueche.at's
+       `{{ link(…, "Lasagneblätter") }}`, hellofresh's `[1,5 EL | 2 EL]` variants and the
+       pantry asterisk); prices, "(Note 1)", "- Note 3", WPRM's "(, …)" brackets, brackets
+       doubled once a footnote is gone, and asterisks out of ingredient lines; `&Uuml;`,
+       `&Ouml;`, `&Auml;`, `&Eacute;` decode to capitals (they decoded to "ü" before).
+     - **The corpus**: the plan's 18 pages saved with the probe's new `--trim` (scripts other
+       than JSON-LD, styles, stylesheet links, SVG, comments, `style`/`srcset`/`sizes`
+       attributes out; the probe refuses to save a trim whose card, reader, image or readable
+       text differ from the full page's). Most land between 45 and 180 KB; jamieoliver.com
+       (241 KB), hellofresh.at (227 KB) and backenmachtgluecklich.de (203 KB) stay over the
+       plan's "about 150 KB" because their markup itself is that large. Blank lines are kept:
+       collapsing them changed chefkoch's readable text. `recipe-corpus.test.ts` pins each
+       page's reader, name, time, line and step counts and parts.
+323. **Plan 44, second PR as built: one call, the gate, the unit list, the rule-based draft**
+     (2026-11-23). **The prompt is untested against a real model** (no key, #318); every
+     number `import:eval` has printed so far is the fake provider's.
+     - **One call, one fallback.** `extractRecipe` and `improveRecipe` are one `importRecipe`
+       (`services/ai-import.ts`): a card goes in as JSON with each line's index and part, and
+       the page's readable text beside it; a paste or a no-card page as text; photos as images.
+       `importPage` is the link path: the model when a provider is set up, else (or when both
+       providers failed) `ruleDraft` on the card. The route's "Try AI extraction" button and
+       its `extractPage` action are gone: with a provider, a page with no card goes to the
+       model at once; without one the screen points at Settings. `countingWord` is a free
+       string in the schema, not an enum, because the list differs per household; the gate
+       checks it. The output budget is 24 000 tokens (was 16 000) for the larger contract.
+     - **Gate calls the plan left open**: a name "stands in" the page line when each of its
+       words, plural brackets and endings aside, is a substring of the line ("Hackfleisch" in
+       "Rinderhackfleisch" passes, "Schinken" for "Speck" does not). Steps are compared
+       without case and with typographic quotes and dashes as plain ones; a step found
+       earlier than the one before it counts as reworded. `leftOut` is kept only for pages
+       with a card (a paste or a page's text holds more than its method). A part name must
+       appear in what was sent; when the model names none, a row takes its card line's part,
+       and steps take the card's step parts when the counts match. Household instructions
+       switch the page checks off (rows and steps may then rightly differ). A model that put
+       the unit into the name ("Bund Suppengrün") loses it there when the page's amount
+       wins. A `newUnit` counts only when the word stands in the page line (or the text sent);
+       "oder {alternative}" takes the line's own word ("oder"/"or"), else "oder". `unused` is
+       info, `converted` is info, everything else the plan lists is `check`. The `servings`
+       item reads the card's `recipeYield` text (new `servingsText` on the reader's card):
+       1 with "Portion", "serving" or "Personen" is not asked about.
+     - **Links are the import's answer**: a step's list is kept even when empty (`[]`, not
+       `null` as plan 22's gate had it); the old editor still opens an empty list as "reads
+       its text" until plan 46. Each link carries its `phrase` and `amountPhrase` into the
+       editor's hidden fields (plan 43) and so into the saved recipe.
+     - **The household's units** (`household_units`, migration 0031, `services/units.ts`):
+       `parseIngredient(line, known)` reads them like counting words, plural endings allowed
+       ("Ringe" for "Ring"); every recipe save of that household reads its lines with them
+       (`writeChildren`), so an imported "2 Ringe Fleischwurst" keeps its unit once the word
+       is added. Nothing adds a word yet: the question is plan 45's, the panel plan 46's.
+     - **The rule-based draft**: brackets in what stays the name go to the note even when a
+       comma also splits the line ("pancetta (Italian bacon) or slab bacon, chopped").
+     - **Until plan 45**, `ImportChecks.svelte` lists the items above the editor, `check`
+       items counted in its title, `info` ones quieter, left-out sentences folded. PR 1's
+       `RecipePrefill.ingredientSections` and the route's `withCardParts` are gone:
+       `ingredientDetails` (note and part, as `RecipeInput` has them) carries both, and
+       `draftFromCard` / `plainStep` went with the old card path.
+     - **Tests without loosening the fetch guard** (coordinator, 2026-11-23): the link path is
+       an integration test from a saved page through `readFetchedPage` and `importPage` with
+       scripted and fake answers; the e2e journey uses the pasted-text mode. `fake-ai.ts`
+       echoes a card it is sent (rows by line, steps word for word, a link where a row's first
+       word stands) and answers text or photos with `FAKE_PANCAKE_TEXT`'s recipe (two parts, a
+       note, an either/or, links). `chefkoch-lasagne.json` in `tests/fixtures/ai-answers/` is
+       written by hand as a careful model would answer; the `fake-*.json` beside it are the
+       fake's recorded answers (`import:eval -- --fake --record`).
+     - **The Chefkoch acceptance line** in the plan named words the saved page does not have
+       ("Faschiertes", "gemischt"); it was rewritten to the fixture's own words, testing the
+       same things.
+     - **Review fixes from the code-review pass**: a household word matches in its plural in
+       the parser, the gate and `addUnit` alike (`householdUnitKey`: "Ringe" is the "Ring" a
+       household added, and cannot be added twice); an answer that kept less than half of a
+       card's sentences is refused for fidelity too, since only reworded steps counted and an
+       answer with no steps passed; the model leaves temperatures as the page wrote them (a step
+       it converted would be a reworded one); a "Für …" / "For …" row is a
+       heading only at three words or fewer ("Für die Deko Puderzucker" is sugar), and a lone
+       shouted word only beside another shouted heading ("BUTTER" alone is butter, jamieoliver's
+       "PICKLE" beside "KATSU CURRY SAUCE" is a part; this tightens #322); a name is checked
+       against the line read both ways ("3 Ei(er)" says Ei and Eier); "oder"/"or" for a choice
+       is taken from just before the alternative; check items carry the row's name from the
+       gate, which knows the household's units (the client's parse does not). Left as it is:
+       a card with more lines than the editor's 60 rows loses the tail without an item, as
+       every import did before; with the model splitting lines the cap is reached a little
+       sooner.
+     - **Fahrenheit is converted by code, not by the model, and not dropped** (coordinator,
+       2026-11-23; the plan's "°F → °C, as today", SPEC §4.7 since plan 22).
+       `utils/fahrenheit.ts` runs after the gate on imported drafts only (AI and rule-based,
+       never a typed recipe): "350°F", "350 °F", "350° F", "350 degrees F(ahrenheit)" and a
+       range ("350-375°F", "350 to 375 degrees F") get Celsius in front, rounded to the nearest 5, with the page's own
+       text kept in brackets: "175 °C (350°F)". (The coordinator's example said 180 °C for
+       350 °F; 176.7 rounds to 175 at the nearest 5, and the rule was followed.) A bare
+       "350 F", anything in °C, and a °F the page already gave right beside a °C
+       ("180°C/350°F", "350°F (175°C)") are left alone; a °C further away is another
+       temperature and does not stop the conversion. A step that Celsius would push past the
+       editor's 600 characters keeps its °F rather than lose its tail. A converted step gets an
+       `info` item (`converted`, at the step).
+     - **"The page's own words" means its words** (coordinator, 2026-11-23). The step check,
+       the order cursor, `reworded`, both fidelity refusals and `leftOut` compare **word
+       tokens**: runs of letters and digits, lowercased, a number and a unit glued together
+       split apart ("200g" = "200 g"), a number keeping what makes it that number ("1/2",
+       "1,5" = "1.5"; "1-2" or "1 5" for "1/2" is a changed word). A dropped or added full stop, "erhitzen.Hackfleisch",
+       typographic quotes and doubled spaces are the page's words; a changed, swapped or added
+       word is not. A link's `phrase` and `amountPhrase` are found the same way and kept as
+       the step writes them ("200g" for an answered "200 g"), so cook mode finds them
+       character for character before `locateAmounts` is asked; where the same amount stands
+       twice, the one beside the phrase is taken.
+     - **A step longer than the editor's 600 characters is several**, cut at sentence ends,
+       in the gate and in the rule-based draft (`splitLongStep`). Both used to cut it at 600,
+       which lost a one-paragraph method's tail (bonappetit.com's steps run to 1 068
+       characters, chefkoch's Schnitzel to 775); the token check showed it, because the lost
+       sentences counted as left out. The pieces of a split model step take its links and its
+       timer once each, on the first piece that names them, so no share is counted twice; a
+       step takes the part of the card step its words were found in (not "the card step at
+       the same index", which a split shifts).
+324. **Plan 46's two open points, decided by default** (coordinator, 2026-11-23; Lukas may
+     change either). (a) **A built-in counting word is shown in the number that fits the
+     amount** ("1 Zehe", "2 Zehen", "1 clove", "2 cloves"; `countingForm` in `amounts.ts`, a
+     table of singular and plural per counting word), everywhere an amount is printed
+     (`formatAmount`: the editor, the recipe, cook mode, the share text), so cooking for fewer
+     reads "1 Zehe" too. **A household's own word is shown as it was added.** Storage keeps one
+     form: a save from the editor stores a counting word as its singular ("Zehen" → "Zehe") and
+     a household word as the household added it ("Ringe" → "Ring"); rows saved before keep
+     their form and read the same. (b) **"Add your own" asks for the word inside the unit
+     panel itself**: a text field and Add take the button's place. It posts to Settings'
+     `addUnit` action from the editor's page, so the word is the household's at once (in every
+     recipe and in the reader), not only after Save.
+325. **What is still suggested at Save is saved as links, for a step that had none**
+     (2026-11-23; → plan 46). The plan asks both "a tap accepts" a suggestion and "an old
+     recipe opens with the matcher's guesses as suggestions and saves as stored links". Built so
+     both hold: a step that came without stored links (`ingredients_set` false: a recipe from
+     before, a page's card, a step added in this session) is offered the matcher's reading
+     (`suggestLinks`), dotted in the link sheet and in the step's Ingredients row; a tap makes
+     one a link, ✕ turns it down; what is still offered at Save is saved as stored links, its
+     amount and share by the same rule as a tapped word. A step that came with stored links
+     (even an empty list) is offered the matcher's reading again only once its text is edited,
+     and then **only a tap saves an offer**: first built as "edited steps save their offers
+     too", the code review found that a link removed in one session came back unasked after a
+     typo fix in the next. Saving from the editor writes `ingredients_set` with each step's
+     list, and a second save changes nothing (`tests/integration/recipe-editor.test.ts`).
+326. **What replaces #67, #100, #101 and #127** (2026-11-23; → plan 46, SPEC §4.4).
+     - **#67** (arrows to reorder): ingredients are dragged by the grip (`svelte-dnd-action`, one
+       zone per part, one shared type, so a row crosses into another part); steps move from
+       their ⋯ menu (Move up, Move down, Move to part…). Up and down cross a part's edge: the
+       first step of a part moves up to the end of the part above.
+     - **#100 and #101** (one typed line per row, the amount chip, the "Saved as" reading):
+       gone with `composeIngredientLine`. The row is its fields; the form posts
+       `ingredientName`, `ingredientQuantity`, `ingredientUnit`, `ingredientNote`,
+       `ingredientSection` by position (`postedFields` in `utils/recipe-editor.ts`), read into
+       `RecipeInput.ingredients`. A page from before (posting `ingredient` lines) is still read
+       the old way. The import, the seed and the add field keep reading lines.
+     - **#127** (a step's ingredients read out of its text, chips marked "auto", "Read the step
+       text instead"): replaced by stored links (#311, #320), the Ingredients row naming them,
+       and #325's suggestions. `StepIngredientsSheet` is gone; the link sheet sets a share only
+       through an amount in the text.
+327. **Plan 46 as built: the editor's judgment calls** (2026-11-23).
+     - **A unit word on no list is kept, not refused.** `storedUnit` (services/recipes.ts)
+       canonicalises the eight, the counting words and the household's words; any other plain
+       word (letters, at most 20) is stored as posted. The editor only ever posts a list word or
+       the word a row was opened with, which is a word the row already had: a household word
+       since removed in Settings must not vanish from recipes by opening and saving them. A
+       unit without a number is dropped, as `parseIngredient` always did.
+     - **A part's name changes over the ingredients and the steps alike** (a part is one thing
+       in the recipe), from a ✎ on either heading. An emptied name dissolves the part into the
+       one above; the first part, with nothing above, just loses its name.
+     - **"No part" is the top of the list.** Rows without a part render with no heading, so one
+       under a named part would read as that part's: "No part" moves a row to the end of the
+       first nameless part, made at the top when there is none. A part named in the picker that
+       a list doesn't have yet is made at its end.
+     - **The ingredient sheet's Part row is chips**, as frame E2 draws it, not the radio list of
+       E3b the plan says ingredients share; same behaviour (the row lands at the end of the part
+       picked), no "New part" there (Add part under the list does that). **Remove ingredient**
+       sits in the sheet, since the row itself is one tap target.
+     - **An amount's switch is offered only where the amount could follow on its own** (its unit
+       is the row's). In "Zwiebelwürfel und 200 g Karotten", the 200 g stands beside both words;
+       the switch would otherwise sit on the Zwiebel row. Tapping an amount links it with the
+       word it stands beside, the one whose unit it is first, also when it does not fit (the
+       plan's "can be linked by hand"). Switching an amount off keeps the step's share.
+     - **The link sheet's gold** is `--gold` (the sketch's mustard), and a linked amount's text
+       and the switch use a new token, `--gold-deep` (the sketch's mustard-deep), light and dark.
+     - **The Timer row shows only the step's own timer**, or "Add a timer"; the old "9:00 auto"
+       is gone with the other "auto" marks. Cook mode still offers the duration the text names,
+       and the timer sheet still opens on it.
+     - **Components**: `RecipeForm` (state and the wire) split into `RecipeBasics`,
+       `IngredientList`, `IngredientSheet` (rebuilt), `UnitPanel`, `StepList`, `StepCard`,
+       `StepLinkSheet`, `PartPickerSheet`, `PartName`, `AddPart`; `StepTimerSheet` kept. The two
+       sheets plan 45 reuses (`IngredientSheet`, `StepLinkSheet`) take plain fields and hand them
+       back, so they mount on their own. No `ui/` primitive: the step's action rows live in
+       `StepCard`.
+     - **Settings → Household → Units** lists the household's words with ✕ (`UnitsSheet`,
+       `removeUnit` action); the count stands in the row.
+     - **Review fixes from the code-review pass**: "Add your own" with a word already on the
+       list (a counting word the panel doesn't show, "Tasse", or a word another phone just
+       added) picks that word instead of refusing it (`existingUnit`); a row whose amount or
+       unit is changed in its sheet has its links checked again (`recheckLinks`: a share that
+       no longer fits is dropped); a household's word is read in its plural inside a step
+       ("2 Ringe" is one amount of a "Ring" row); the panel hands a redirect or a server error to
+       the page (`applyAction`) instead of doing nothing; the Settings action comments sat on
+       the wrong function.
+328. **Plan 45's two open points, decided by default** (coordinator, 2026-11-23; Lukas may
+     change either). (a) **The review does not ask "1 Dose or 800 g".** A row keeps the amount
+     the gate produced, the other measure stays in the note as the import wrote it; the sketch's
+     R1 amount question is not built. (b) **Tips and other sentences the import dropped go to
+     the folded "Left out of the steps" list with "Put back"**; they are not shown as notes
+     under a step.
+329. **The review is a state of the import route, `?draft=<id>`, and the draft lives in the
+     tab's `sessionStorage`** (2026-11-23; → plan 45). The plan left "a route or a state" open.
+     A state keeps one save action and one page for every way in; the id in the address is what
+     survives a reload, and the draft itself (`StoredImport`: the gate's draft, the server's
+     line, the page's site, and the review once opened) is written back on every change. The
+     import page goes to the review with `replaceState`, so Back never lands on a shared link
+     that fetches itself again. Without JS (no storage, no `goto`) an import still opens in the
+     ordinary editor. **The review works on the editor's own state** (`EditorState`, plan 46):
+     "Edit everything" (`&edit=1`) opens `RecipeForm` on it (`opened`), reports every change
+     back (`onchange`), and Save posts what `postedFields` posts. Keys get a random prefix per
+     opening (`freshKeys`), because a reload restarts the counter while the stored keys remain.
+     An item names its row or step by that key, not by the draft's index, so it stays put while
+     rows are edited, removed or put back. `ImportChecks` (the list at the top of the editor,
+     plan 44) is gone.
+330. **The recipe view's rows are components the review shares** (2026-11-23; → plan 45).
+     `RecipeIngredientRow` and `RecipeStepRow` (and `viewRuns` in `step-links.ts`, the view's
+     `stepRuns` moved out) draw both the saved recipe and the review, with the same classes and
+     styles, so "the saved recipe looks like the review did" holds by construction. In the
+     review a row is a button and its question stands under it (`children`).
+331. **What the gate now hands the review** (2026-11-23; → plans 44, 45). An `amount-differs`
+     item keeps the model's amount (`answer`), so "Use 50 g" can offer it. A `servings` item
+     says what the page wrote (`page`, "1 Kuchen"). A left-out sentence says where it goes back
+     (`leftOut[].after`: the last draft step a kept sentence before it stood in, -1 before the
+     first), so "Put back" restores the page's order. A reworded step offers **every** sentence
+     of the page it most likely was, one per sentence of the step (plan 44 offered only the
+     closest single sentence, so "Use the page's text" on a two-sentence step would have lost
+     the second). Those sentences stay under "Left out" until a step holds them (a weak match must
+     not hide a tip for good: the code review's finding).
+332. **How each item is answered, where the plan left it open** (2026-11-23; → plan 45).
+     Every item's first answer is what the draft already has, so an item left alone saves
+     exactly that, and Save never waits for one. Choosing the other of an either/or names the
+     row after it and writes "oder {the first}" into the note in place of the gate's
+     "oder {the other}", the rest of the note kept. "Add it" on a new unit posts the word to
+     Settings' `addUnit` (the one thing the review stores before Save, on that tap only) and
+     answers every row asking about the same word. Editing a row in its sheet answers whatever
+     was asked about that row; editing a step's text, whatever was asked about that step; "Use
+     the page's text" clears a link's words that are no longer in the text and keeps the link.
+     `reworded` also offers **Keep**, `no-steps` **Save without**, and `shares-exceed` (not in
+     the plan's table) **Keep**: the steps can be fixed by tapping them. The servings stepper
+     stays on screen once answered, so a count can be stepped through. A put-back step joins
+     the part of the step it follows and is open to link suggestions, like a typed one;
+     removing it from its sheet lists the sentence under "Left out" again.
+333. **The sketch's R3 suggestions are not built** (2026-11-23; → plan 45). R3 also draws "Is
+     'Möhren' the Karotten?" and "No ingredient is linked to this step". The gate makes no such
+     items and the plan's table does not list them; the no-AI import's steps are open to the
+     matcher's suggestions anyway (DECISIONS #325), which save with the recipe, and the step's
+     link sheet shows them. The banner says "Links are a guess" for such an import.
+334. **Plan 45 as built: the smaller calls** (2026-11-23). The count's number sits on `--gold`
+     in a new token, `--on-gold` (dark ink in both themes: both golds are light, and white on
+     the light one fails contrast). The name line ("100 min · Serves 4 · chefkoch.de") is one
+     button that opens a small sheet for name, time and servings; a step opens a sheet with its
+     text, **Link ingredients** (plan 46's link sheet) and **Remove step**. A Save with no name
+     opens that sheet instead of failing. The header (Discard · Check recipe · Save) stays at
+     the top while the page scrolls. The quiet items (`converted`, `unused`) fold under "Notes
+     from the import", beside "Left out". **Tests**: the drafts the journeys and screenshots
+     open are the gate's own output for the Chefkoch fixture page, saved in
+     `tests/fixtures/review-drafts/` and held to the gate by
+     `tests/integration/review-drafts.test.ts`, because a link import cannot reach a page the
+     test run serves (the fetch guard refuses local addresses and is not loosened for tests);
+     the pasted-text journeys go through the fake AI end to end. **Review fixes from the
+     code-review pass**: a row or step opened and closed unchanged answers nothing (looking is
+     not deciding); the editor's empty step to type into does not come back into the review
+     after "Edit everything"; a new unit word reads a step's share of the row again
+     (`recheckLinks`), as an edit in the sheet does; "Use 1" on a model that wrote its unit
+     into the name ("Bund Suppengrün") gives that name back (`answer.name`); a word Settings
+     refuses says why under the question; "Edit everything" and its Cancel replace each other
+     in history; the banner focuses the first button that can take focus; and "Link
+     ingredients" in the step sheet no longer reads the closed step (it threw, found by the
+     hand walk).
+335. **Plan 47: Get ready is position 0 of cook mode, and only exists when there is something
+     to set out** (2026-11-23; → SPEC §4.6). No `?step=` (how the recipe screen's button opens
+     cook mode) or `?step=0` is Get ready; `?step=n` is still step n, so every timer, dock bar
+     and notification link (all built as `?step=stepIndex + 1`) keeps pointing at a real step.
+     Going back to Get ready drops `step` from the address rather than writing `step=0`, so
+     the bare link and the screen agree. A recipe with no ingredients has no Get ready and opens
+     on step 1, as before. A timer set from the header on Get ready has no step (`stepIndex`
+     null, named "Timer"); a running timer shows there as a bar that leads to its step. A
+     timer without a step links to cook mode without `?step=`, which is now Get ready rather
+     than step 1: the only such timers are the ones set on Get ready, so that is where they
+     belong.
+     **Get ready is reached again from the ingredients sheet** ("Back to Get ready"), not from
+     the Ingredients chip itself, because the chip's sheet still answers "how much of that?"
+     for the step on screen; Get ready opened that way says **Back to step {n}** and returns
+     there. Prev from step 1 also lands on it.
+336. **Get ready's ticks live in `localStorage`, per recipe, for twelve hours** (2026-11-23;
+     → plan 47 "kept on the device for this cook"). `sessionStorage` would lose them when a
+     phone kills a backgrounded PWA, which is the reload a kitchen sees. A cook is over at
+     **Finish** (which clears them) or twelve hours after the last tick (`readTicks` drops
+     older ones), so tomorrow's lasagne starts clean. Wrapped in try/catch: in a private window
+     the ticks last as long as the screen. A tick is kept by the row's part and name
+     (`tickKey`), not its id, because saving a recipe writes its rows anew and a housemate's
+     typo fix mid-cook would otherwise clear the counter (code review). Get ready's stepper
+     field may hold a half-typed value; only a count `readServings` accepts moves the amounts
+     and the address (code review: an emptied field or a 0 wrote `?serves=0`).
+337. **The step's text steps down in four sizes, not two, and one more while a ring runs**
+     (2026-11-23; → plan 47, deviation). The plan said "33 px, and about 26 px past 220
+     characters"; the sketch (which Lukas accepted) draws ordinary steps at 27 px; and the
+     acceptance wants a 400-character step and its list on a 390 × 844 screen. Measured in the
+     running app, 26 px leaves the seeded 428-character risotto step (five ingredients) about
+     a third of a screen too tall. So `stepTextSize`: up to 100 characters `--fs-36` (today's
+     33 px), up to 220 `--fs-30` (the sketch's 27 px), up to 320 `--fs-24`, longer `--fs-18`
+     (16 px design, still a size up from body text). The two smaller sizes also get a tighter
+     ingredient list (`compactList`: 18 px rows, the share on the amount's line) and the two
+     chips on one row. While the step's timer ring runs, the text goes one size down, because
+     the ring takes the lower half and the list must stay in view [7h]. Every size is a type
+     scale step, so the reader's text size still moves it (#201).
+338. **What the step needs: cook mode's own rows, amount-less ingredients on one line, and a
+     part named only when there are two** (2026-11-23; → plan 47). `CookStepIngredients` is not
+     `RecipeIngredientRow` (plan 45): that one is a light card row with the amount on the right;
+     here the amount leads in amber on the dark screen, as in C2. Rows with no amount and no
+     note share the last line ("Salz · Pfeffer", C3); one with a note keeps its own row so the
+     note is not lost. The share is "of 400 g" under the amount, `peekShare`'s words, so the
+     list, the bubble and the peek say it alike. **"A recipe with one part never shows a part
+     name"** is `showsParts`: two or more distinct sections (a run of unnamed rows counts as
+     one). It applies to the step's eyebrow, the progress bar's gaps, Get ready's headings and
+     the peek sheet; the recipe view and the editor are left as plans 45 and 46 built them. The
+     header says "Lasagne · for 8" on a step, as C2 draws it.
+339. **The long step is screenshotted in its own household, and the running timer is not
+     screenshotted** (2026-11-23; → plan 47, TESTING.md; deviation). A new e2e account, `cook`,
+     seeded with `--long-step` (a risotto whose second step is 428 characters, with Butter in
+     two halves so a step shows "20 g of 40 g"), so the base seed's recipes and every other
+     screenshot stay as they are. The visual `cook-long-step` is taken there. Get ready
+     (`cook-get-ready`) and step 5 for 8 (`cook-mode-part`, was step 2) use the lasagne in
+     `visual`; all three are walked in German at 200 % too. **The plan's fourth shot, a step
+     with a running timer, is left out**: with a ring running, `settle`'s wait for an idle
+     network timed out every time, and the timer the shot left behind spoiled the long step's
+     shot that ran after it. The e2e journey covers it instead (a running timer on step 5: the
+     list keeps its three rows and stays in view), and so did the hand walk's screenshot. The
+     e2e journey also checks that the 400-character step's body does not scroll.
+340. **Plan 48: a saved recipe is tidied as a page's card, with the household's hand work kept**
+     (2026-11-24; → SPEC §4.5). `tidyRecipe` sends each saved row as the line it reads as
+     (`savedCard`: "500 g Hackfleisch, gemischtes", a stored note after a comma), its part and
+     the steps as stored, after its own lead ("A recipe the household saved earlier …"), and
+     holds the answer with the import's gate unchanged, so a dropped row comes back as
+     `line-added` and a reworded method is refused. Three judgment calls: **the household's
+     standing instructions are not sent**, because instructions switch the gate's page checks
+     off and a tidy must never change rows or steps; **no rule-based fallback**, because the
+     saved recipe already is what rules made of it, so a failure is said under the menu row
+     and nothing changes; **no Fahrenheit pass**, the saved words stand. What the household made
+     by hand stays (`keepSaved`): a step saved with its own links (`ingredients_set`) keeps them,
+     carried to the rows its saved line became (a line split into two rows, "Salz und Pfeffer",
+     links both by the same word; the first keeps the share); only steps that read their own
+     text get the model's links; a saved timer goes to the piece of a split step that states
+     its duration (else the first piece), and the other pieces get no timer of the model's; a
+     step the gate kept as reworded is matched to the saved step it shares the most words with,
+     so its links and timer stay too (both from the code review); a step that holds the words of
+     two saved steps (the model merged them, `stepCovers`) carries both steps' hand links. The
+     link items (`unused`, `shares-exceed`) are counted
+     again on the kept links. **A sentence the model left out of a saved recipe is a thing to
+     check** (coordinator's call, 2026-11-24; Lukas may change it): an import's page is still
+     there, but a saved step is the household's own with no other copy. So for a tidy only, each
+     one counts in the banner (`openLeftOut`, `openCount`), and the list stands open at the end
+     of the steps, not folded: "The AI left this out. It is removed when you save." with **Put
+     back** (it goes back at its place) and **Leave it out** (answered, it goes on Save; Put back
+     stays). The second answer is ours: without it a tidy that rightly drops a teaser could never
+     read "Nothing left to check". Imports keep their folded list, unchanged.
+341. **An added line joins the part the model gave its neighbours** (2026-11-24; → plan 44's
+     gate, fix). A page line no row came from took the card's part name ("Sauce
+     (Bolognesesoße)") while the model named the same part "Bolognesesoße", so one part showed
+     under two headings in the review. Now the rows that came from the same card part vote: the
+     added line takes the part most of them are in (the first seen on a tie); with none, or no
+     card part at all, it keeps the card's (or none). `tests/fixtures/review-drafts/kinds.json`
+     changed with it (its Thymian line), and with it the review's "kinds" journey's picture.
+342. **The review names what the draft was read from** (2026-11-24; → plan 45, fix). Every
+     line that said "the page" (the banner's "Everything else matches the page", the check items'
+     "The page says …", "Use the page's text", "This page has no method") now takes the draft's
+     source: page, pasted text ("your text"), photos, or a saved recipe ("the saved recipe").
+     The import page writes `source` on each draft it stores; a draft kept before that is read by
+     `sourceOf` (a site → page, a `from-photo` item → photos, a recipe id → recipe, else text).
+343. **The tidy's review lives under the recipe, `/cooking/recipes/<id>/tidy?draft=<id>`**
+     (2026-11-24; → plan 48). The draft is kept like an import's, in the tab's `sessionStorage`,
+     with `recipeId` and `source: 'recipe'`, so the address survives a reload. The route loads
+     the recipe by the address's id through `getRecipe` (another household's is a 404), and Save
+     posts to that route, which calls `updateRecipe` with the address's id, never one from the
+     draft. The review opens a draft only under the recipe it names, so a tidy cannot be saved
+     over another recipe of the household. The review posts the recipe's own tags and diet and no
+     photo (the photo stays); "Edit everything" opens the editor with the recipe, so its photo,
+     tags and diet are the recipe's and can be changed there as in Edit.
+344. **The recipe rebuild's check-up** (2026-11-24, after plans 42 to 48). Three small things
+     the walk through the running app and the repeated test runs turned up. **A test that
+     failed about one run in six** (`tests/integration/expense-guests.test.ts`, "tells the
+     guest's own payment from their side") expected the payment at the top of the guest's page.
+     The dinner and the payment share a day, the ledger then orders by the millisecond a row was
+     made and last by its random id, and the test makes both in the same millisecond, so the
+     order was a coin toss. The test now finds the payment by its kind; the ledger's order is
+     unchanged (two rows made in one millisecond do not happen by hand). **The link sheet's
+     quote marks** were written in the component, so a German link row read “Zwiebelwürfel”
+     under a heading that said „Topf“ verknüpfen mit: they are the catalog's now
+     (`cooking.form.links.linkedWords`). **Dragging an ingredient into another part** (plan 46)
+     had no test; `tests/e2e/cooking.spec.ts` now carries a row by its grip from one part into
+     the other and checks it is saved there. While a row is carried, the gap the list opens is
+     a hidden row, so a test counts it in the DOM, not by role.

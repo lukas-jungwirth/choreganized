@@ -1,0 +1,260 @@
+{
+	"name": "Karottenkuchen mit Frischkäse Limetten Frosting - einfach - 234 kcal/100g",
+	"servings": 4,
+	"timeMinutes": null,
+	"ingredients": [
+		{
+			"source": 0,
+			"quantity": 125,
+			"unit": "g",
+			"countingWord": null,
+			"newUnit": null,
+			"name": "zimmerwarme Butter",
+			"note": null,
+			"alternative": null,
+			"section": "Karottenkuchen"
+		},
+		{
+			"source": 1,
+			"quantity": 170,
+			"unit": "g",
+			"countingWord": null,
+			"newUnit": null,
+			"name": "Zucker",
+			"note": null,
+			"alternative": null,
+			"section": "Karottenkuchen"
+		},
+		{
+			"source": 2,
+			"quantity": 2,
+			"unit": null,
+			"countingWord": null,
+			"newUnit": null,
+			"name": "Eier",
+			"note": null,
+			"alternative": null,
+			"section": "Karottenkuchen"
+		},
+		{
+			"source": 3,
+			"quantity": 150,
+			"unit": "g",
+			"countingWord": null,
+			"newUnit": null,
+			"name": "geraspelte Karotten",
+			"note": null,
+			"alternative": null,
+			"section": "Karottenkuchen"
+		},
+		{
+			"source": 4,
+			"quantity": 1,
+			"unit": null,
+			"countingWord": null,
+			"newUnit": null,
+			"name": "Vanilleschote, das Mark",
+			"note": null,
+			"alternative": null,
+			"section": "Karottenkuchen"
+		},
+		{
+			"source": 5,
+			"quantity": 315,
+			"unit": "g",
+			"countingWord": null,
+			"newUnit": null,
+			"name": "Mehl",
+			"note": null,
+			"alternative": null,
+			"section": "Karottenkuchen"
+		},
+		{
+			"source": 6,
+			"quantity": 1,
+			"unit": "tsp",
+			"countingWord": null,
+			"newUnit": null,
+			"name": "Natron",
+			"note": null,
+			"alternative": null,
+			"section": "Karottenkuchen"
+		},
+		{
+			"source": 7,
+			"quantity": 1,
+			"unit": "tsp",
+			"countingWord": null,
+			"newUnit": null,
+			"name": "Backpulver",
+			"note": null,
+			"alternative": null,
+			"section": "Karottenkuchen"
+		},
+		{
+			"source": 8,
+			"quantity": 1,
+			"unit": "tsp",
+			"countingWord": null,
+			"newUnit": null,
+			"name": "Zimt",
+			"note": null,
+			"alternative": null,
+			"section": "Karottenkuchen"
+		},
+		{
+			"source": 9,
+			"quantity": 1,
+			"unit": null,
+			"countingWord": null,
+			"newUnit": null,
+			"name": "Prise Salz",
+			"note": null,
+			"alternative": null,
+			"section": "Karottenkuchen"
+		},
+		{
+			"source": 10,
+			"quantity": 50,
+			"unit": "g",
+			"countingWord": null,
+			"newUnit": null,
+			"name": "gemahlene Mandeln",
+			"note": null,
+			"alternative": null,
+			"section": "Karottenkuchen"
+		},
+		{
+			"source": 11,
+			"quantity": 150,
+			"unit": "ml",
+			"countingWord": null,
+			"newUnit": null,
+			"name": "Buttermilch",
+			"note": null,
+			"alternative": null,
+			"section": "Karottenkuchen"
+		},
+		{
+			"source": 12,
+			"quantity": 100,
+			"unit": "g",
+			"countingWord": null,
+			"newUnit": null,
+			"name": "Sahne",
+			"note": null,
+			"alternative": null,
+			"section": "Frischkäse-Frosting"
+		},
+		{
+			"source": 13,
+			"quantity": 200,
+			"unit": "g",
+			"countingWord": null,
+			"newUnit": null,
+			"name": "Frischkäse",
+			"note": null,
+			"alternative": null,
+			"section": "Frischkäse-Frosting"
+		},
+		{
+			"source": 14,
+			"quantity": 50,
+			"unit": "g",
+			"countingWord": null,
+			"newUnit": null,
+			"name": "Puderzucker",
+			"note": null,
+			"alternative": null,
+			"section": "Frischkäse-Frosting"
+		},
+		{
+			"source": 15,
+			"quantity": 1,
+			"unit": null,
+			"countingWord": null,
+			"newUnit": null,
+			"name": "Vanilleschote, das Mark",
+			"note": null,
+			"alternative": null,
+			"section": "Frischkäse-Frosting"
+		},
+		{
+			"source": 16,
+			"quantity": 1,
+			"unit": null,
+			"countingWord": null,
+			"newUnit": null,
+			"name": "Limette, der Abrieb",
+			"note": null,
+			"alternative": null,
+			"section": "Frischkäse-Frosting"
+		}
+	],
+	"steps": [
+		{
+			"text": "Den Backofen auf 180 Grad vorheizen und den Boden einer kleiner Springform mit Backpapier auslegen und die Ränder gut einbuttern.",
+			"section": null,
+			"timer": null,
+			"uses": []
+		},
+		{
+			"text": "Die Butter mit dem Zucker schaumig rühren und die beiden Eier nach und nach unterrühren. Nun die geraspelten Karotten und das Vanillemark dazugeben und unterrühren. Nun die restlichen trockenen Zutaten miteinander vermischen und abwechseln mit der Buttermilch unter den Karottenteig rühren.",
+			"section": null,
+			"timer": null,
+			"uses": [
+				{
+					"ingredient": 1,
+					"phrase": "Zucker",
+					"amountPhrase": null,
+					"quantity": null
+				},
+				{
+					"ingredient": 2,
+					"phrase": "Eier",
+					"amountPhrase": null,
+					"quantity": null
+				},
+				{
+					"ingredient": 11,
+					"phrase": "Buttermilch",
+					"amountPhrase": null,
+					"quantity": null
+				}
+			]
+		},
+		{
+			"text": "Den Teig in gefettete Springform geben und ca. 40 - 50 Minuten backen - Stäbchenprobe. Dann den Kuchen in der Form ca. 20 Minuten auskühlen lassen und dann aus der Form nehmen und auf einen Kuchenteller setzen und vollständig abkühlen lassen.",
+			"section": null,
+			"timer": null,
+			"uses": []
+		},
+		{
+			"text": "Die Sahne, den Frischkäse und den Puderzucker, das Vanillemark und den Limettenabrieb in eine Schüssel geben und cremig aufschlagen - geht am besten mit dem Handmixer. Das Frosting dann auf dem Kuchen verteilen.",
+			"section": null,
+			"timer": null,
+			"uses": [
+				{
+					"ingredient": 12,
+					"phrase": "Sahne",
+					"amountPhrase": null,
+					"quantity": null
+				},
+				{
+					"ingredient": 13,
+					"phrase": "Frischkäse",
+					"amountPhrase": null,
+					"quantity": null
+				},
+				{
+					"ingredient": 14,
+					"phrase": "Puderzucker",
+					"amountPhrase": null,
+					"quantity": null
+				}
+			]
+		}
+	],
+	"tags": [],
+	"diet": null
+}

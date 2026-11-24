@@ -23,23 +23,15 @@ import { isIPv4, isIPv6 } from 'node:net';
 import type { Messages } from '$lib/i18n';
 import {
 	decodeEntities,
+	isBlobCard,
 	parseRecipeJsonLd,
 	tidySteps,
 	type RecipeJsonLd
 } from '$lib/utils/recipe-jsonld';
 import { markedUpSteps, parseRecipeMicrodata } from '$lib/utils/recipe-microdata';
-import {
-	clampCount,
-	INGREDIENTS_MAX,
-	INGREDIENT_LINE_MAX,
-	plainStep,
-	RECIPE_NAME_MAX,
-	RECIPE_SERVINGS_MAX,
-	RECIPE_TIME_MAX,
-	STEPS_MAX,
-	STEP_TEXT_MAX,
-	type RecipePrefill
-} from '$lib/utils/recipes';
+import { pageIngredientSections } from '$lib/utils/recipe-plugins';
+import { tagsFromLabels } from '$lib/utils/recipe-tag-words';
+import { type RecipePrefill, type TagSuggestion } from '$lib/utils/recipes';
 import { storePhotoFromBytes } from './uploads';
 
 /** Enough hops for the usual `http → https → www` shuffle, not enough to loop. */
@@ -54,12 +46,14 @@ const MAX_IMAGE_BYTES = 10 * 1024 * 1024;
 const MAX_READABLE_CHARS = 40_000;
 
 /**
- * A browser-like User-Agent: a bare `node`/`undici` string gets a 403 from a
- * good share of recipe sites. Honest about being a bot in the comment, ordinary
- * on the wire.
+ * An honest, generic User-Agent in the `compatible` form crawlers use
+ * (→ DECISIONS #322). A bare `node`/`undici` string gets a 403 from a share of
+ * recipe sites, so it still starts with `Mozilla/5.0`. It no longer claims to be
+ * Chrome: Cloudflare challenges a client that says Chrome and does not talk like
+ * one (TLS, client hints), which turned sallysbakingaddiction.com and others
+ * away. It names no app: the project's name does not travel to outside sites.
  */
-const BROWSER_UA =
-	'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36';
+export const IMPORT_UA = 'Mozilla/5.0 (compatible; recipe-importer)';
 
 const REDIRECT_STATUSES = new Set([301, 302, 303, 307, 308]);
 
@@ -133,8 +127,11 @@ export function readFetchedPage({
 	html: string;
 	finalUrl: string;
 }): RecipePage {
-	const jsonLd = withMarkedUpSteps(parseRecipeJsonLd(html), html);
-	const card = jsonLd ?? parseRecipeMicrodata(html);
+	// The blob test after the plugin's steps are in: a one-row card whose method
+	// is in the markup is a real card with a long line, not a recipe box in one row.
+	const read = withMarkedUpSteps(parseRecipeJsonLd(html), html);
+	const jsonLd = read && !isBlobCard(read) ? read : null;
+	const card = withPageSections(jsonLd ?? parseRecipeMicrodata(html), html);
 	const reader = jsonLd ? 'json-ld' : card ? 'microdata' : null;
 	const { text, ogImage } = readableParts(html);
 
@@ -148,26 +145,28 @@ export function readFetchedPage({
  */
 function withMarkedUpSteps(card: RecipeJsonLd | null, html: string): RecipeJsonLd | null {
 	if (!card || card.steps.length) return card;
-	return { ...card, steps: tidySteps(markedUpSteps(html)) };
+	const { steps, sections } = tidySteps(markedUpSteps(html));
+	return { ...card, steps, stepSections: sections };
 }
 
 /**
- * A card as the editor's draft, capped the way `writeChildren` caps at insert —
- * so a paste-bomb page never fills the editor with hundreds of rows (→ plan 07).
- * Its steps read their own text: a card knows nothing about which ingredient
- * goes where, or for how long.
+ * A card whose ingredient list names no parts, on a page that shows them in
+ * its plugin's markup or in a table per part: the parts are read from there
+ * (→ `$lib/utils/recipe-plugins`, plan 44). A card's own headings win.
  */
-export function draftFromCard(card: RecipeJsonLd, photo: RecipePrefill['photo']): RecipePrefill {
-	return {
-		name: card.name.slice(0, RECIPE_NAME_MAX),
-		timeMinutes: clampCount(card.timeMinutes, RECIPE_TIME_MAX),
-		servings: clampCount(card.servings, RECIPE_SERVINGS_MAX),
-		ingredientLines: card.ingredientLines
-			.map((line) => line.slice(0, INGREDIENT_LINE_MAX))
-			.slice(0, INGREDIENTS_MAX),
-		steps: card.steps.map((step) => plainStep(step.slice(0, STEP_TEXT_MAX))).slice(0, STEPS_MAX),
-		photo
-	};
+function withPageSections(card: RecipeJsonLd | null, html: string): RecipeJsonLd | null {
+	if (!card || card.ingredientSections.some(Boolean)) return card;
+	const sections = pageIngredientSections(html, card.ingredientLines);
+	return sections ? { ...card, ingredientSections: sections } : card;
+}
+
+/**
+ * The tags a page's card names — its category, keywords and diet, mapped
+ * onto our list (→ plan 41). Null when it names none.
+ */
+export function cardSuggestion(card: Pick<RecipeJsonLd, 'labels'>): TagSuggestion | null {
+	const { tags, diet } = tagsFromLabels(card.labels);
+	return tags.length || diet ? { tags, diet, from: 'page' } : null;
 }
 
 /** The page's photo, downloaded and re-encoded — or null, never an error (→ SPEC §4.7). */
@@ -340,7 +339,7 @@ async function fetchGuarded(
 				redirect: 'manual',
 				signal: AbortSignal.timeout(options.timeoutMs),
 				headers: {
-					'User-Agent': BROWSER_UA,
+					'User-Agent': IMPORT_UA,
 					Accept: options.accept,
 					'Accept-Language': 'en,de;q=0.8'
 				}

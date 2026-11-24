@@ -1,7 +1,7 @@
 /**
  * "Sauté the mushrooms in butter" + the recipe's ingredient list → the two
- * words cook mode underlines in amber, and the "This step uses 250 g mushrooms ·
- * butter" line under them [7b].
+ * words cook mode underlines in amber, and the list of what the step needs
+ * under them [C2] (→ plan 47).
  *
  * There are two ways a step knows what it uses (→ SPEC §4.4, DECISIONS #127):
  *
@@ -34,7 +34,6 @@
 // Written with its extension for the same reason `ingredients.ts` is: `node
 // --test` only strips types, it does not resolve a bare './ingredients'.
 import { scaleQuantity } from './ingredients.ts';
-import { wordingSynonyms } from './wording.ts';
 
 /** What the caller gets back: run these in order and the step reads as typed. */
 export type StepSegment<T> = {
@@ -59,6 +58,13 @@ export type StepUse = {
 	ingredientId: string;
 	/** In the ingredient's own unit; null = whatever the ingredient row says. */
 	quantity: number | null;
+	/**
+	 * The words of the step text that name it ("Zwiebelwürfel"), and the amount
+	 * the text gives it ("1 - 2 EL"), exactly as written (→ plan 43,
+	 * `step-links.ts`). Absent or null on every pin written before them.
+	 */
+	phrase?: string | null;
+	amountPhrase?: string | null;
 };
 
 /**
@@ -83,7 +89,7 @@ const MAX_DROPPED_WORDS = 3;
  *
  * A pinned ingredient that no longer exists (deleted from the list on another
  * phone) is dropped rather than rendered as a gap, and one with its own amount
- * comes back carrying it — so "This step uses 1 tbsp olive oil" and the peek
+ * comes back carrying it — so the list under the step ("1 tbsp of 3 tbsp") and the peek
  * sheet both say the step's share rather than the recipe's total.
  */
 export function readStep<T extends { id: string; name: string; quantity: number | null }>(
@@ -245,12 +251,6 @@ function aliases<T extends { name: string }>(ingredient: T): Candidate<T>[] {
 	for (let dropped = 1; dropped <= Math.min(MAX_DROPPED_WORDS, words.length - 1); dropped++) {
 		offer(words.slice(dropped).join(' '), dropped + 1);
 	}
-
-	// The same thing in the other German (→ `wording.ts`, plan 24): an "Obers" row
-	// is the "Sahne" a step left as the site wrote it, and the other way round.
-	// Ranked after every shortening of the name itself, so it only wins a word
-	// nothing else wants.
-	for (const synonym of wordingSynonyms(plain)) offer(synonym, MAX_DROPPED_WORDS + 2);
 
 	return found;
 }

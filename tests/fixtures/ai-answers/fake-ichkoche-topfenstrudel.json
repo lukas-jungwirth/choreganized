@@ -1,0 +1,489 @@
+{
+	"name": "Topfenstrudel",
+	"servings": 1,
+	"timeMinutes": 75,
+	"ingredients": [
+		{
+			"source": 0,
+			"quantity": 1,
+			"unit": null,
+			"countingWord": null,
+			"newUnit": null,
+			"name": "Eier",
+			"note": null,
+			"alternative": null,
+			"section": null
+		},
+		{
+			"source": 1,
+			"quantity": null,
+			"unit": null,
+			"countingWord": null,
+			"newUnit": null,
+			"name": "Butter",
+			"note": null,
+			"alternative": null,
+			"section": null
+		},
+		{
+			"source": 2,
+			"quantity": 250,
+			"unit": "g",
+			"countingWord": null,
+			"newUnit": null,
+			"name": "Mehl",
+			"note": null,
+			"alternative": null,
+			"section": null
+		},
+		{
+			"source": 3,
+			"quantity": 1,
+			"unit": null,
+			"countingWord": null,
+			"newUnit": null,
+			"name": "Prise Salz",
+			"note": null,
+			"alternative": null,
+			"section": null
+		},
+		{
+			"source": 4,
+			"quantity": 1,
+			"unit": null,
+			"countingWord": null,
+			"newUnit": null,
+			"name": "Eier",
+			"note": null,
+			"alternative": null,
+			"section": null
+		},
+		{
+			"source": 5,
+			"quantity": 60,
+			"unit": "ml",
+			"countingWord": null,
+			"newUnit": null,
+			"name": "Wasser",
+			"note": null,
+			"alternative": null,
+			"section": null
+		},
+		{
+			"source": 6,
+			"quantity": 1,
+			"unit": "tsp",
+			"countingWord": null,
+			"newUnit": null,
+			"name": "Butter",
+			"note": null,
+			"alternative": null,
+			"section": null
+		},
+		{
+			"source": 7,
+			"quantity": 1,
+			"unit": null,
+			"countingWord": null,
+			"newUnit": null,
+			"name": "Schuss Öl",
+			"note": null,
+			"alternative": null,
+			"section": null
+		},
+		{
+			"source": 8,
+			"quantity": 500,
+			"unit": "g",
+			"countingWord": null,
+			"newUnit": null,
+			"name": "Topfen",
+			"note": null,
+			"alternative": null,
+			"section": null
+		},
+		{
+			"source": 9,
+			"quantity": 100,
+			"unit": "g",
+			"countingWord": null,
+			"newUnit": null,
+			"name": "Crème fraîche",
+			"note": null,
+			"alternative": null,
+			"section": null
+		},
+		{
+			"source": 10,
+			"quantity": 100,
+			"unit": "g",
+			"countingWord": null,
+			"newUnit": null,
+			"name": "Butter",
+			"note": null,
+			"alternative": null,
+			"section": null
+		},
+		{
+			"source": 11,
+			"quantity": 100,
+			"unit": "g",
+			"countingWord": null,
+			"newUnit": null,
+			"name": "Staubzucker",
+			"note": null,
+			"alternative": null,
+			"section": null
+		},
+		{
+			"source": 12,
+			"quantity": 1,
+			"unit": null,
+			"countingWord": null,
+			"newUnit": null,
+			"name": "Prise Salz",
+			"note": null,
+			"alternative": null,
+			"section": null
+		},
+		{
+			"source": 13,
+			"quantity": 1,
+			"unit": null,
+			"countingWord": null,
+			"newUnit": null,
+			"name": "Schuss Zitronensaft",
+			"note": null,
+			"alternative": null,
+			"section": null
+		},
+		{
+			"source": 14,
+			"quantity": 1,
+			"unit": null,
+			"countingWord": null,
+			"newUnit": null,
+			"name": "Vanilleschote",
+			"note": null,
+			"alternative": null,
+			"section": null
+		},
+		{
+			"source": 15,
+			"quantity": 6,
+			"unit": null,
+			"countingWord": null,
+			"newUnit": null,
+			"name": "Eidotter",
+			"note": null,
+			"alternative": null,
+			"section": null
+		},
+		{
+			"source": 16,
+			"quantity": 6,
+			"unit": null,
+			"countingWord": null,
+			"newUnit": null,
+			"name": "Eiweiß",
+			"note": null,
+			"alternative": null,
+			"section": null
+		},
+		{
+			"source": 17,
+			"quantity": 1,
+			"unit": "tbsp",
+			"countingWord": null,
+			"newUnit": null,
+			"name": "Vanillepuddingpulver",
+			"note": null,
+			"alternative": null,
+			"section": null
+		},
+		{
+			"source": 18,
+			"quantity": 1,
+			"unit": null,
+			"countingWord": null,
+			"newUnit": null,
+			"name": "Handvoll Rosinen",
+			"note": null,
+			"alternative": null,
+			"section": null
+		},
+		{
+			"source": 19,
+			"quantity": 50,
+			"unit": "g",
+			"countingWord": null,
+			"newUnit": null,
+			"name": "Zucker",
+			"note": null,
+			"alternative": null,
+			"section": null
+		}
+	],
+	"steps": [
+		{
+			"text": "Mehl auf die Arbeitsfläche sieben und in eine kleine Vertiefung das Ei, die Butter, eine Prise Salz, Öl und wenig Wasser hinzugeben. Schnell zu einem glatten Strudelteig verkneten und diesen bei Raumtemperatur ca. eine Stunde rasten lassen.",
+			"section": null,
+			"timer": null,
+			"uses": [
+				{
+					"ingredient": 1,
+					"phrase": "Butter",
+					"amountPhrase": null,
+					"quantity": null
+				},
+				{
+					"ingredient": 2,
+					"phrase": "Mehl",
+					"amountPhrase": null,
+					"quantity": null
+				},
+				{
+					"ingredient": 3,
+					"phrase": "Prise",
+					"amountPhrase": null,
+					"quantity": null
+				},
+				{
+					"ingredient": 5,
+					"phrase": "Wasser",
+					"amountPhrase": null,
+					"quantity": null
+				},
+				{
+					"ingredient": 6,
+					"phrase": "Butter",
+					"amountPhrase": null,
+					"quantity": null
+				},
+				{
+					"ingredient": 10,
+					"phrase": "Butter",
+					"amountPhrase": null,
+					"quantity": null
+				},
+				{
+					"ingredient": 12,
+					"phrase": "Prise",
+					"amountPhrase": null,
+					"quantity": null
+				}
+			]
+		},
+		{
+			"text": "Einstweilen die Topfenfülle zubereiten. Dazu das Eiweiß mit dem Zucker schlagen, bis es steif ist.",
+			"section": null,
+			"timer": null,
+			"uses": [
+				{
+					"ingredient": 16,
+					"phrase": "Eiweiß",
+					"amountPhrase": null,
+					"quantity": null
+				},
+				{
+					"ingredient": 19,
+					"phrase": "Zucker",
+					"amountPhrase": null,
+					"quantity": null
+				}
+			]
+		},
+		{
+			"text": "Den Backofen auf 180 °C vorheizen.",
+			"section": null,
+			"timer": null,
+			"uses": []
+		},
+		{
+			"text": "Die Vanilleschote halbieren und das Vanillemark auskratzen. Zu dem Staubzucker hinzugeben und diesen mit der Butter, einer Prise Salz, dem Vanillepuddingpulver, den Dottern und einem Schuss Zitronensaft gut verrühren. Den Topfen und die Crème fraîche unterrühren, dann den Eischnee vorsichtig unterheben.",
+			"section": null,
+			"timer": null,
+			"uses": [
+				{
+					"ingredient": 1,
+					"phrase": "Butter",
+					"amountPhrase": null,
+					"quantity": null
+				},
+				{
+					"ingredient": 3,
+					"phrase": "Prise",
+					"amountPhrase": null,
+					"quantity": null
+				},
+				{
+					"ingredient": 6,
+					"phrase": "Butter",
+					"amountPhrase": null,
+					"quantity": null
+				},
+				{
+					"ingredient": 7,
+					"phrase": "Schuss",
+					"amountPhrase": null,
+					"quantity": null
+				},
+				{
+					"ingredient": 8,
+					"phrase": "Topfen",
+					"amountPhrase": null,
+					"quantity": null
+				},
+				{
+					"ingredient": 9,
+					"phrase": "Crème",
+					"amountPhrase": null,
+					"quantity": null
+				},
+				{
+					"ingredient": 10,
+					"phrase": "Butter",
+					"amountPhrase": null,
+					"quantity": null
+				},
+				{
+					"ingredient": 11,
+					"phrase": "Staubzucker",
+					"amountPhrase": null,
+					"quantity": null
+				},
+				{
+					"ingredient": 12,
+					"phrase": "Prise",
+					"amountPhrase": null,
+					"quantity": null
+				},
+				{
+					"ingredient": 13,
+					"phrase": "Schuss",
+					"amountPhrase": null,
+					"quantity": null
+				},
+				{
+					"ingredient": 14,
+					"phrase": "Vanilleschote",
+					"amountPhrase": null,
+					"quantity": null
+				},
+				{
+					"ingredient": 17,
+					"phrase": "Vanillepuddingpulver",
+					"amountPhrase": null,
+					"quantity": null
+				}
+			]
+		},
+		{
+			"text": "Butter in einem kleinen Topf schmelzen.",
+			"section": null,
+			"timer": null,
+			"uses": [
+				{
+					"ingredient": 1,
+					"phrase": "Butter",
+					"amountPhrase": null,
+					"quantity": null
+				},
+				{
+					"ingredient": 6,
+					"phrase": "Butter",
+					"amountPhrase": null,
+					"quantity": null
+				},
+				{
+					"ingredient": 10,
+					"phrase": "Butter",
+					"amountPhrase": null,
+					"quantity": null
+				}
+			]
+		},
+		{
+			"text": "Die Arbeitsfläche bemehlen und den Teig dünn auswalken, bis man ihn mit den Händen in alle Richtungen dünn ausziehen kann (das sogenannte \"Strudelziehen\").",
+			"section": null,
+			"timer": null,
+			"uses": []
+		},
+		{
+			"text": "Den Strudelteig auf die bemehlte Arbeitsfläche legen und mit der geschmolzenen Butter bestreichen.",
+			"section": null,
+			"timer": null,
+			"uses": [
+				{
+					"ingredient": 1,
+					"phrase": "Butter",
+					"amountPhrase": null,
+					"quantity": null
+				},
+				{
+					"ingredient": 6,
+					"phrase": "Butter",
+					"amountPhrase": null,
+					"quantity": null
+				},
+				{
+					"ingredient": 10,
+					"phrase": "Butter",
+					"amountPhrase": null,
+					"quantity": null
+				}
+			]
+		},
+		{
+			"text": "Die Topfenfülle im unteren Drittel platzieren und mit den Rosinen bestreuen. Die Enden einschlagen und den Strudel gut zusammenrollen, damit die Fülle während des Backens nicht ausrinnen kann.",
+			"section": null,
+			"timer": null,
+			"uses": []
+		},
+		{
+			"text": "Ein Backblech mit Backpapier belegen und den Topfenstrudel mit der Naht nach unten vorsichtig raufheben.",
+			"section": null,
+			"timer": null,
+			"uses": []
+		},
+		{
+			"text": "Ei verquirlen und mit der übriggebliebenen geschmolzenen Butter vermengen. Den Topfenstrudel damit bestreichen und für ca. 20-25 Minuten bei 180 °C backen.",
+			"section": null,
+			"timer": null,
+			"uses": [
+				{
+					"ingredient": 1,
+					"phrase": "Butter",
+					"amountPhrase": null,
+					"quantity": null
+				},
+				{
+					"ingredient": 6,
+					"phrase": "Butter",
+					"amountPhrase": null,
+					"quantity": null
+				},
+				{
+					"ingredient": 10,
+					"phrase": "Butter",
+					"amountPhrase": null,
+					"quantity": null
+				}
+			]
+		},
+		{
+			"text": "In unserer Topfenstrudel Bildergalerie erklären wir das Rezept Schritt für Schritt.",
+			"section": null,
+			"timer": null,
+			"uses": []
+		},
+		{
+			"text": "Hier sehen Sie eine Videoanleitung für Topfenstrudel.",
+			"section": null,
+			"timer": null,
+			"uses": []
+		}
+	],
+	"tags": [],
+	"diet": null
+}

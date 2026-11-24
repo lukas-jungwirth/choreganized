@@ -1,15 +1,16 @@
 <!--
-	The step itself [7b] — Fraunces 33px, with every ingredient it names
-	underlined in amber.
+	The step itself [7b] — Fraunces, with every ingredient it names underlined
+	in amber. Its size follows its length (→ plan 47, `stepTextSize`): a short
+	step stays at 33px, the sketch's 27px is the ordinary one, and a long
+	imported step steps down so it and its ingredient list fit without a scroll.
 
 	The underlines are the step's own ingredients (→ SPEC §4.4,
 	`$lib/utils/step-highlight`): the ones pinned to it in the form, else the ones
 	its text names.
 
-	**Tapping one says how much.** The amount is already on screen twice — the
-	"This step uses…" line and the ingredients peek — but the first goes away
-	while a timer ring is running and the second is a whole list to read, and the
-	question in a kitchen is always about *one* word: how much of that? So the
+	**Tapping one says how much.** The amount is already on screen in the list
+	under the step (→ plan 47), but that is a list to read, and the question in
+	a kitchen is always about *one* word: how much of that? So the
 	underline is the answer's own button, and the answer appears against the word
 	rather than somewhere else on the screen (→ DECISIONS #133). An underline with
 	no amount to give ("Salt", "a splash of oil") stays plain text — there is
@@ -29,6 +30,7 @@
 <script lang="ts">
 	import { messages } from '$lib/i18n';
 	import type { RecipeIngredientRow } from '$lib/server/services/recipes';
+	import type { StepTextSize } from '$lib/utils/cook';
 	import type { StepSegment } from '$lib/utils/step-highlight';
 	import { untrack } from 'svelte';
 
@@ -40,9 +42,11 @@
 		 * 3 tbsp", the peek sheet's line, on the peek sheet's terms.
 		 */
 		ingredients?: RecipeIngredientRow[];
+		/** By the step's length (→ `stepTextSize`). */
+		size?: StepTextSize;
 	};
 
-	let { segments, ingredients = [] }: Props = $props();
+	let { segments, ingredients = [], size = 'large' }: Props = $props();
 
 	const m = messages();
 
@@ -191,7 +195,7 @@
 />
 
 <div class="block" bind:this={host}>
-	<p class="step">
+	<p class="step {size}">
 		{#each segments as segment, index (index)}{@const row = segment.ingredient}{@const said =
 				row && amountOf(row)}{#if row && said}<button
 					type="button"
@@ -240,6 +244,21 @@
 		line-height: 1.22;
 		color: var(--cook-text);
 		overflow-wrap: anywhere;
+	}
+
+	/* The sketch's 27px [C2], for most steps. */
+	.medium {
+		font-size: var(--fs-30);
+	}
+
+	.small {
+		font-size: var(--fs-24);
+	}
+
+	/* 400 characters and their ingredients on one phone screen (→ plan 47). */
+	.smallest {
+		font-size: var(--fs-18);
+		line-height: 1.25;
 	}
 
 	/* `<mark>` because that is exactly what this is; only the browser's yellow

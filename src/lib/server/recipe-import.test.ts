@@ -7,9 +7,11 @@ import assert from 'node:assert/strict';
 import { createServer } from 'node:http';
 import { describe, it } from 'vitest';
 import {
+	cardSuggestion,
 	failureCode,
 	fetchRecipePage,
 	htmlToReadableText,
+	IMPORT_UA,
 	isBlockedAddress,
 	readFetchedPage,
 	RecipeImportError
@@ -77,6 +79,25 @@ describe('htmlToReadableText', () => {
 });
 
 /** Which reader found the card — what `npm run import:probe` reports (→ plan 25). */
+describe('readFetchedPage — a card with the whole recipe in one row (→ plan 44)', () => {
+	const blob = `Zutaten ${'1 kg speckige Erdäpfel 50 ml Essig 500 ml heißes Wasser '.repeat(6)}`;
+	const card = `<script type="application/ld+json">${JSON.stringify({
+		'@type': 'Recipe',
+		name: 'Erdäpfelsalat',
+		recipeIngredient: [blob]
+	})}</script>`;
+
+	it('is no card, so a model reads the page (cookingcatrin.at)', () => {
+		assert.equal(readFetchedPage({ html: card, finalUrl: 'https://x.test/' }).card, null);
+	});
+
+	it('is a card when the plugin markup has its method', () => {
+		const html = `${card}<div class="wprm-recipe-instructions"><li>Erdäpfel kochen.</li></div>`;
+		const page = readFetchedPage({ html, finalUrl: 'https://x.test/' });
+		assert.deepEqual(page.card?.steps, ['Erdäpfel kochen.']);
+	});
+});
+
 describe('readFetchedPage', () => {
 	const read = (body: string) =>
 		readFetchedPage({ html: `<html><body>${body}</body></html>`, finalUrl: 'https://x.test/r' });
@@ -175,6 +196,15 @@ describe('fetchRecipePage', () => {
 	});
 });
 
+describe('IMPORT_UA (→ plan 44, DECISIONS #322)', () => {
+	it('is generic: claims no browser and names no app', () => {
+		// Cloudflare challenged "Chrome" that did not talk like Chrome
+		// (sallysbakingaddiction.com, 2026-11-23); an honest client was let through.
+		assert.equal(IMPORT_UA, 'Mozilla/5.0 (compatible; recipe-importer)');
+		assert.doesNotMatch(IMPORT_UA, /Chrome|Safari|Firefox|Gecko|Haushaltsheld|choreganized/i);
+	});
+});
+
 describe('failureCode', () => {
 	const answer = (status: number, headers: Record<string, string> = {}) =>
 		failureCode(new Response(null, { status, headers }));
@@ -188,5 +218,19 @@ describe('failureCode', () => {
 		for (const status of [404, 410, 500, 502, 503]) {
 			assert.equal(answer(status), 'unreachable', `${status}`);
 		}
+	});
+});
+
+describe('cardSuggestion (→ plan 41)', () => {
+	it('suggests what the page’s category, keywords and diet name', () => {
+		assert.deepEqual(
+			cardSuggestion({ labels: ['Suppe', 'vegan, schnell', 'https://schema.org/GlutenFreeDiet'] }),
+			{ tags: ['kind:soup', 'free:gluten'], diet: 'vegan', from: 'page' }
+		);
+	});
+
+	it('suggests nothing when the page names nothing on the list', () => {
+		assert.equal(cardSuggestion({ labels: ['Herbst', 'schnell'] }), null);
+		assert.equal(cardSuggestion({ labels: [] }), null);
 	});
 });

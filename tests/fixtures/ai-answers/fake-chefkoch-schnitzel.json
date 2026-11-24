@@ -1,0 +1,287 @@
+{
+	"name": "Wiener Schnitzel mit Kartoffelsalat",
+	"servings": 4,
+	"timeMinutes": 40,
+	"ingredients": [
+		{
+			"source": 0,
+			"quantity": 4,
+			"unit": null,
+			"countingWord": null,
+			"newUnit": null,
+			"name": "Kalbsschnitzel (aus der Oberschale)",
+			"note": null,
+			"alternative": null,
+			"section": null
+		},
+		{
+			"source": 1,
+			"quantity": null,
+			"unit": null,
+			"countingWord": null,
+			"newUnit": null,
+			"name": "Salz",
+			"note": null,
+			"alternative": null,
+			"section": null
+		},
+		{
+			"source": 2,
+			"quantity": null,
+			"unit": null,
+			"countingWord": null,
+			"newUnit": null,
+			"name": "Pfeffer",
+			"note": null,
+			"alternative": null,
+			"section": null
+		},
+		{
+			"source": 3,
+			"quantity": null,
+			"unit": null,
+			"countingWord": null,
+			"newUnit": null,
+			"name": "Mehl",
+			"note": null,
+			"alternative": null,
+			"section": null
+		},
+		{
+			"source": 4,
+			"quantity": 2,
+			"unit": null,
+			"countingWord": null,
+			"newUnit": null,
+			"name": "Ei(er)",
+			"note": null,
+			"alternative": null,
+			"section": null
+		},
+		{
+			"source": 5,
+			"quantity": null,
+			"unit": null,
+			"countingWord": null,
+			"newUnit": null,
+			"name": "Paniermehl",
+			"note": null,
+			"alternative": null,
+			"section": null
+		},
+		{
+			"source": 6,
+			"quantity": null,
+			"unit": null,
+			"countingWord": null,
+			"newUnit": null,
+			"name": "Butter (oder Butterschmalz)",
+			"note": null,
+			"alternative": null,
+			"section": null
+		},
+		{
+			"source": 7,
+			"quantity": 750,
+			"unit": "g",
+			"countingWord": null,
+			"newUnit": null,
+			"name": "Pellkartoffel(n)",
+			"note": null,
+			"alternative": null,
+			"section": null
+		},
+		{
+			"source": 8,
+			"quantity": 50,
+			"unit": "g",
+			"countingWord": null,
+			"newUnit": null,
+			"name": "Speck (fetter)",
+			"note": null,
+			"alternative": null,
+			"section": null
+		},
+		{
+			"source": 9,
+			"quantity": 1,
+			"unit": null,
+			"countingWord": null,
+			"newUnit": null,
+			"name": "Zwiebel(n)",
+			"note": null,
+			"alternative": null,
+			"section": null
+		},
+		{
+			"source": 10,
+			"quantity": 3,
+			"unit": null,
+			"countingWord": null,
+			"newUnit": null,
+			"name": "Gewürzgurke(n)",
+			"note": null,
+			"alternative": null,
+			"section": null
+		},
+		{
+			"source": 11,
+			"quantity": 1,
+			"unit": null,
+			"countingWord": null,
+			"newUnit": null,
+			"name": "Ei(er)",
+			"note": null,
+			"alternative": null,
+			"section": null
+		},
+		{
+			"source": 12,
+			"quantity": 1,
+			"unit": null,
+			"countingWord": null,
+			"newUnit": null,
+			"name": "Becher Fleisch (- Salat vom Metzger)",
+			"note": null,
+			"alternative": null,
+			"section": null
+		},
+		{
+			"source": 13,
+			"quantity": 125,
+			"unit": "g",
+			"countingWord": null,
+			"newUnit": null,
+			"name": "Mayonnaise",
+			"note": null,
+			"alternative": null,
+			"section": null
+		},
+		{
+			"source": 14,
+			"quantity": null,
+			"unit": null,
+			"countingWord": null,
+			"newUnit": null,
+			"name": "Salz",
+			"note": null,
+			"alternative": null,
+			"section": null
+		},
+		{
+			"source": 15,
+			"quantity": null,
+			"unit": null,
+			"countingWord": null,
+			"newUnit": null,
+			"name": "Pfeffer (schwarz aus der Mühle)",
+			"note": null,
+			"alternative": null,
+			"section": null
+		},
+		{
+			"source": 16,
+			"quantity": null,
+			"unit": null,
+			"countingWord": null,
+			"newUnit": null,
+			"name": "Zitronensaft",
+			"note": null,
+			"alternative": null,
+			"section": null
+		},
+		{
+			"source": 17,
+			"quantity": 1,
+			"unit": "tbsp",
+			"countingWord": null,
+			"newUnit": null,
+			"name": "Senf",
+			"note": null,
+			"alternative": null,
+			"section": null
+		},
+		{
+			"source": 18,
+			"quantity": 100,
+			"unit": "g",
+			"countingWord": null,
+			"newUnit": null,
+			"name": "Fleischwurst (gewürfelt)",
+			"note": null,
+			"alternative": null,
+			"section": null
+		}
+	],
+	"steps": [
+		{
+			"text": "Schnitzel am Rand mehrmals einschneiden, vorsichtig dünn ausklopfen, leicht salzen. Eier quirlen und etwas salzen. Das Fleisch in Mehl wenden, in Ei tauchen. Anschließend in Paniermehl wenden und das Paniermehl fest andrücken. In einer Kupferpfanne (ersatzweise eine andere Pfanne) reichlich Butter erhitzen und die Schnitzel darin goldgelb backen, dabei immer wieder das heiße Fett mit einem Metalllöffel über die Schnitzel gießen, auf Küchenpapier abtropfen lassen. Fetten Speck auslassen und beiseite stellen. Mayonnaise herstellen oder fertige Mayonnaise verwenden. Pellkartoffeln in Scheiben schneiden. Zwiebeln reiben und Gurken würfeln. Ei kochen und würfeln. Aus allen Zutaten einen Salat mischen. Mit Salz, Pfeffer und Zitronensaft abschmecken und gut ziehen lassen.",
+			"section": null,
+			"timer": null,
+			"uses": [
+				{
+					"ingredient": 1,
+					"phrase": "Salz",
+					"amountPhrase": null,
+					"quantity": null
+				},
+				{
+					"ingredient": 2,
+					"phrase": "Pfeffer",
+					"amountPhrase": null,
+					"quantity": null
+				},
+				{
+					"ingredient": 3,
+					"phrase": "Mehl",
+					"amountPhrase": null,
+					"quantity": null
+				},
+				{
+					"ingredient": 5,
+					"phrase": "Paniermehl",
+					"amountPhrase": null,
+					"quantity": null
+				},
+				{
+					"ingredient": 6,
+					"phrase": "Butter",
+					"amountPhrase": null,
+					"quantity": null
+				},
+				{
+					"ingredient": 8,
+					"phrase": "Speck",
+					"amountPhrase": null,
+					"quantity": null
+				},
+				{
+					"ingredient": 13,
+					"phrase": "Mayonnaise",
+					"amountPhrase": null,
+					"quantity": null
+				},
+				{
+					"ingredient": 14,
+					"phrase": "Salz",
+					"amountPhrase": null,
+					"quantity": null
+				},
+				{
+					"ingredient": 15,
+					"phrase": "Pfeffer",
+					"amountPhrase": null,
+					"quantity": null
+				},
+				{
+					"ingredient": 16,
+					"phrase": "Zitronensaft",
+					"amountPhrase": null,
+					"quantity": null
+				}
+			]
+		}
+	],
+	"tags": [],
+	"diet": null
+}

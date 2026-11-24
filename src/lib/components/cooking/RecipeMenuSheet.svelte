@@ -1,5 +1,11 @@
 <!--
-	The recipe ••• menu [7c]: edit, duplicate, share, delete.
+	The recipe ••• menu [7c]: edit, tidy with AI, duplicate, share, delete.
+
+	"Tidy with AI" (→ plan 48) is there only when the household has a provider
+	set up. It asks the recipe page's `tidy` action, keeps the draft that comes
+	back in this tab's `sessionStorage` (as an import keeps its own) and opens
+	the review under the recipe, `tidy?draft=<id>`. Nothing is saved until the
+	review's Save; a failure is said in the sheet, and the recipe is untouched.
 
 	Share is the same rule as the invite screen (→ DECISIONS #29): where the OS
 	share sheet exists it's the obvious thing, and where it doesn't the row
@@ -12,26 +18,32 @@
 -->
 <script lang="ts">
 	import { enhance } from '$app/forms';
+	import { goto } from '$app/navigation';
+	import AiCookingLoader from '$lib/components/cooking/AiCookingLoader.svelte';
 	import BottomSheet from '$lib/components/ui/BottomSheet.svelte';
 	import Button from '$lib/components/ui/Button.svelte';
 	import CenterModal from '$lib/components/ui/CenterModal.svelte';
 	import RowGroup from '$lib/components/ui/RowGroup.svelte';
 	import { messages } from '$lib/i18n';
 	import type { RecipeDetail } from '$lib/server/services/recipes';
-	import { recipeShareText } from '$lib/utils/recipes';
+	import { draftKey, newDraftId, type StoredImport } from '$lib/utils/recipe-review';
+	import { recipeShareText, type RecipePrefill } from '$lib/utils/recipes';
 	import Check from '@lucide/svelte/icons/check';
 	import ClipboardCopy from '@lucide/svelte/icons/clipboard-copy';
 	import Copy from '@lucide/svelte/icons/copy';
 	import Pencil from '@lucide/svelte/icons/pencil';
 	import Share from '@lucide/svelte/icons/share';
+	import Sparkles from '@lucide/svelte/icons/sparkles';
 	import Trash2 from '@lucide/svelte/icons/trash-2';
 
 	type Props = {
 		recipe: RecipeDetail;
+		/** Whether the household has an AI provider: "Tidy with AI" is offered only then. */
+		aiEnabled?: boolean;
 		onclose: () => void;
 	};
 
-	let { recipe, onclose }: Props = $props();
+	let { recipe, aiEnabled = false, onclose }: Props = $props();
 
 	const m = messages();
 
@@ -39,6 +51,10 @@
 	let confirming = $state(false);
 	let copied = $state(false);
 	let submitting = $state(false);
+	/** The model is reading the recipe: the cooking loader is up. */
+	let tidying = $state(false);
+	/** Why a tidy did not come back, said under its row. */
+	let tidyError = $state<string | null>(null);
 	let copyTimer: ReturnType<typeof setTimeout>;
 
 	/** Resolved after mount — the server can't know what this phone can do. */
@@ -48,7 +64,11 @@
 	});
 
 	$effect(() => {
-		if (!open) onclose();
+		if (open) return;
+		// Escape mid-tidy would hide the loader and leave the request running, to
+		// jump to the review later out of nowhere (code review): the sheet stays.
+		if (tidying) open = true;
+		else onclose();
 	});
 
 	const text = $derived(
@@ -58,7 +78,7 @@
 				timeMinutes: recipe.timeMinutes,
 				servings: recipe.servings,
 				ingredients: recipe.ingredients,
-				steps: recipe.steps.map((step) => step.text)
+				steps: recipe.steps
 			},
 			m
 		)
@@ -88,6 +108,72 @@
 		<a class="item" href="/cooking/recipes/{recipe.id}/edit">
 			<Pencil size={19} strokeWidth={1.8} aria-hidden="true" />{m.cooking.menu.edit}
 		</a>
+
+		{#if aiEnabled}
+			<form
+				method="POST"
+				action="?/tidy"
+				use:enhance={() => {
+					tidying = true;
+					tidyError = null;
+					return async ({ result, update }) => {
+						if (result.type === 'success' && result.data?.tidy) {
+							const tidy = result.data.tidy as {
+								recipeId: string;
+								draft: RecipePrefill;
+								notice: string;
+							};
+							const id = newDraftId();
+							const value: StoredImport = {
+								v: 1,
+								draft: {
+									prefill: tidy.draft,
+									notice: tidy.notice,
+									site: null,
+									source: 'recipe',
+									recipeId: tidy.recipeId
+								}
+							};
+							let kept = false;
+							try {
+								sessionStorage.setItem(draftKey(id), JSON.stringify(value));
+								kept = true;
+							} catch {
+								// Nowhere to keep the draft (a private window): say so plainly.
+								tidyError = m.cooking.tidy.noStorage;
+							}
+							if (kept) {
+								try {
+									await goto(`/cooking/recipes/${tidy.recipeId}/tidy?draft=${id}`);
+								} catch {
+									// The review did not open (the recipe went meanwhile): not a storage problem.
+									tidyError = m.cooking.tidy.failed;
+									try {
+										sessionStorage.removeItem(draftKey(id));
+									} catch {
+										// Nothing to drop.
+									}
+								}
+							}
+						} else if (result.type === 'failure') {
+							tidyError = String(result.data?.tidyError ?? '') || m.cooking.tidy.failed;
+						} else {
+							await update({ reset: false });
+						}
+						tidying = false;
+					};
+				}}
+			>
+				<button type="submit" class="item" disabled={tidying}>
+					<Sparkles size={19} strokeWidth={1.8} aria-hidden="true" />
+					<span class="words">
+						{m.cooking.menu.tidy}
+						<small>{m.cooking.menu.tidyHint}</small>
+					</span>
+				</button>
+				{#if tidyError}<p class="error" role="alert">{tidyError}</p>{/if}
+			</form>
+		{/if}
 
 		<form
 			method="POST"
@@ -132,6 +218,8 @@
 
 	<button type="button" class="cancel" onclick={() => (open = false)}>{m.common.cancel}</button>
 
+	{#if tidying}<AiCookingLoader />{/if}
+
 	<CenterModal bind:open={confirming} label={m.cooking.menu.delete} dismissible={false}>
 		<div class="well" aria-hidden="true"><Trash2 size={26} strokeWidth={1.9} /></div>
 		<h3>{m.cooking.menu.deleteConfirm(recipe.name)}</h3>
@@ -170,6 +258,26 @@
 
 	.destructive {
 		color: var(--danger);
+	}
+
+	.words {
+		display: grid;
+		gap: 2px;
+	}
+
+	.words small {
+		font-size: var(--fs-14);
+		font-weight: 400;
+		line-height: 1.35;
+		color: var(--text-4);
+	}
+
+	.error {
+		margin: 0;
+		padding: 0 16px 14px 48px;
+		font-size: var(--fs-14);
+		line-height: 1.4;
+		color: var(--danger-deep);
 	}
 
 	.danger {

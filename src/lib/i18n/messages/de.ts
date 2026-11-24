@@ -42,12 +42,39 @@ import type { HolidayKey } from '$lib/utils/holidays';
 import { formatAmount, formatIngredient } from '$lib/utils/ingredients';
 import { currencyAfter, currencySymbol, formatMoney } from '$lib/utils/money';
 import type { MealSlot } from '$lib/utils/meals';
+import type { ImportSource } from '$lib/utils/recipes';
 import { formatQuantity, type UnitLabels } from '$lib/utils/shopping';
 import type { RecurUnit, TaskSchedule } from '$lib/utils/tasks';
 import type { DaySlot, Weekday } from '$lib/assets/mascot/everyday';
 import type { Messages, RichText, SentencePart } from './en';
 
 const L = 'de';
+
+/** Woraus ein Entwurf gelesen wurde, wie die Prüfung es nennt (→ `ImportSource`). */
+const WITH: Record<ImportSource, string> = {
+	page: 'mit der Seite',
+	text: 'mit deinem Text',
+	photo: 'mit den Fotos',
+	recipe: 'mit dem gespeicherten Rezept'
+};
+const SAYS: Record<ImportSource, string> = {
+	page: 'Auf der Seite steht',
+	text: 'In deinem Text steht',
+	photo: 'Auf den Fotos steht',
+	recipe: 'Im gespeicherten Rezept steht'
+};
+const NAMES: Record<ImportSource, string> = {
+	page: 'Die Seite nennt',
+	text: 'Dein Text nennt',
+	photo: 'Die Fotos nennen',
+	recipe: 'Das gespeicherte Rezept nennt'
+};
+const IN: Record<ImportSource, string> = {
+	page: 'auf der Seite',
+	text: 'in deinem Text',
+	photo: 'auf den Fotos',
+	recipe: 'im gespeicherten Rezept'
+};
 
 const COUNTS = [
 	'null',
@@ -895,6 +922,15 @@ export const de: Messages = {
 			eyebrow: 'Essen planen',
 			searchRecipes: 'Rezepte durchsuchen',
 			recipeGroup: 'Rezept',
+			quick: 'Nur zeigen',
+			forSlot: {
+				breakfast: 'Zum Frühstück',
+				lunch: 'Zum Mittagessen',
+				dinner: 'Zum Abendessen',
+				snack: 'Als Snack'
+			},
+			everythingElse: 'Alles andere',
+			quickNone: 'Kein Rezept passt dazu. Tipp einen Chip an, um ihn wegzunehmen.',
 			noMatch: 'Kein Rezept mit dem Namen. Lieber etwas Ungespeichertes kochen?',
 			moreMatches: (count: number) => `${count} weitere Treffer. Tipp weiter, um einzugrenzen.`,
 			mostRecent: (rest: number) => `Deine neuesten. Such nach den anderen ${rest}.`,
@@ -914,13 +950,109 @@ export const de: Messages = {
 			title: 'Rezepte',
 			saved: (count: number) => (count === 1 ? '1 gespeichert' : `${count} gespeichert`),
 			back: 'Zurück zur Woche',
-			search: 'Rezepte suchen',
 			emptyTitle: 'Bau dein Kochbuch auf',
 			emptyCopy:
 				'Speichere, was ihr oft kocht. Danach landet es mit einem Tipp auf jedem Tag der Woche.',
 			emptyCta: 'Rezept hinzufügen',
-			noMatch: (query: string) => `Nichts passt zu „${query}“.`,
 			newRecipe: 'Neues Rezept'
+		},
+
+		tags: {
+			label: 'Tags',
+			folded: 'Mahlzeit, Art, Ernährung',
+			meal: 'Mahlzeit',
+			kind: 'Art',
+			diet: 'Ernährung',
+			free: 'Frei von',
+			pickOne: 'eins wählen',
+			suggestedMark: (name: string) => `${name}, vorgeschlagen`,
+			suggestedFrom: {
+				page: 'Die markierten kommen von der Webseite. Tipp eins an, um es zu ändern.',
+				ai: 'Die markierten schlägt die KI vor. Tipp eins an, um es zu ändern.',
+				both: 'Die markierten kommen von der Webseite und der KI. Tipp eins an, um es zu ändern.',
+				guess: 'Markiert: unsere Vermutung aus den Zutaten.'
+			},
+			kinds: {
+				main: 'Hauptspeise',
+				soup: 'Suppe',
+				salad: 'Salat',
+				side: 'Beilage',
+				dessert: 'Nachspeise',
+				baking: 'Backen'
+			},
+			diets: {
+				meat: 'Fleisch',
+				fish: 'Fisch',
+				vegetarian: 'Vegetarisch',
+				vegan: 'Vegan'
+			},
+			freeFrom: {
+				gluten: 'Glutenfrei',
+				lactose: 'Laktosefrei'
+			}
+		},
+
+		sort: {
+			title: 'Rezepte sortieren',
+			back: 'Zurück zu den Rezepten',
+			progress: (done: number, total: number) =>
+				`${done} von ${total} erledigt · jederzeit aufhören`,
+			progressLabel: (done: number, total: number) => `${done} von ${total} Rezepten sortiert`,
+			row: (count: number) =>
+				count === 1 ? '1 Rezept hat noch keine Tags' : `${count} Rezepte haben noch keine Tags`,
+			rowSub: 'In einer Minute sortiert',
+			rowCta: 'Sortieren',
+			ingredients: (count: number, first: string) =>
+				`${count === 1 ? '1 Zutat' : `${count} Zutaten`}: ${first}`,
+			skip: 'Überspringen',
+			next: 'Weiter',
+			ai: 'Tags von der KI vorschlagen lassen',
+			aiSub: 'Schickt Namen und Zutaten der noch offenen Rezepte. Du prüfst jedes einzelne.',
+			aiBusy: 'Die KI wird gefragt…',
+			aiDone: (count: number) =>
+				count === 0
+					? 'Die KI hatte keine Vorschläge.'
+					: count === 1
+						? 'Die KI hat für 1 Rezept Tags vorgeschlagen. Prüf sie beim Durchgehen.'
+						: `Die KI hat für ${count} Rezepte Tags vorgeschlagen. Prüf jedes beim Durchgehen.`
+		},
+
+		filters: {
+			search: 'Rezepte oder Zutaten suchen',
+			open: 'Filter',
+			openCount: (count: number) => `Filter, ${count} aktiv`,
+			favourites: 'Favoriten',
+			under: (minutes: number) => `Bis ${minutes} Min.`,
+			remove: (name: string) => `${name} entfernen`,
+			count: (shown: number, total: number) => `${shown} von ${total} Rezepten`,
+			clear: 'Zurücksetzen',
+			sorts: {
+				new: 'Neueste zuerst',
+				az: 'A–Z',
+				quick: 'Schnellste',
+				stale: 'Länger nicht gekocht'
+			},
+			noneTitle: 'Nichts passt zu allem',
+			noneCopy: 'Lass einen Filter weg, um mehr zu sehen:',
+			without: (name: string) => `Ohne „${name}“`,
+			recipes: (count: number) => (count === 1 ? '1 Rezept' : `${count} Rezepte`),
+			noMatch: (query: string) => `Kein Rezept und keine Zutat passt zu „${query}“.`,
+			sheet: {
+				title: 'Rezepte filtern',
+				onlyFavourites: 'Nur Favoriten',
+				hearted: (count: number) =>
+					count === 1 ? '1 Rezept hat ein Herz' : `${count} Rezepte haben ein Herz`,
+				anyOf: 'eins davon',
+				allOf: 'alle',
+				vegetarianIncludesVegan: 'vegetarisch schließt vegan ein',
+				readyIn: 'Fertig in',
+				atMost: 'höchstens, in Minuten',
+				any: 'Egal',
+				sortBy: 'Sortieren nach',
+				show: (count: number) => (count === 1 ? '1 Rezept zeigen' : `${count} Rezepte zeigen`),
+				nothingFits: 'Nichts passt',
+				clearAll: 'Zurücksetzen'
+			}
 		},
 
 		add: {
@@ -953,7 +1085,11 @@ export const de: Messages = {
 			startCookMode: 'Kochmodus starten',
 			noStepsLead: 'Noch keine Schritte notiert. ',
 			noStepsLink: 'Trag sie ein',
-			noStepsRest: ', dann führt dich der Kochmodus durch.'
+			noStepsRest: ', dann führt dich der Kochmodus durch.',
+			favourite: 'Favorit',
+			tags: 'Tags',
+			showTagged: (name: string) => `Rezepte mit „${name}“ zeigen`,
+			withNote: (line: string, note: string) => `${line}, ${note}`
 		},
 
 		menu: {
@@ -966,7 +1102,17 @@ export const de: Messages = {
 			deleteConfirm: (name: string) => `${name} löschen?`,
 			deleteCopy:
 				'Zutaten und Schritte gehen mit. Tage, an denen es schon eingeplant ist, behalten den Namen.',
-			keep: 'Doch behalten'
+			keep: 'Doch behalten',
+			tidy: 'Mit KI aufräumen',
+			tidyHint: 'Saubere Namen, Notizen und Verknüpfungen. Du prüfst es, bevor sich etwas ändert.'
+		},
+
+		tidy: {
+			note: 'Mit KI aufgeräumt. Es ändert sich nichts, bis du speicherst.',
+			empty: 'Dieses Rezept hat keine Zutaten oder Schritte zum Aufräumen.',
+			failed: 'Das Aufräumen hat nicht geklappt. Das Rezept ist unverändert.',
+			noStorage:
+				'Dieser Browser hebt nichts für die Prüfung auf. Versuch es außerhalb eines privaten Fensters.'
 		},
 
 		form: {
@@ -982,41 +1128,124 @@ export const de: Messages = {
 			time: 'Dauer (Min.)',
 			servingsLabel: 'Portionen',
 			ingredients: 'Zutaten',
-			ingredientPlaceholder: '400 g Nudeln',
-			ingredientLabel: (index: number) => `Zutat ${index}`,
-			addIngredient: 'Zutat hinzufügen',
-			ingredientsNote: (units: string) =>
-				`Schreib sie, wie du magst: „400 g Nudeln“, „2 Eier“, „Salz“. Bekannte Einheiten: ${units}. Tipp auf eine Menge, um Zahl und Einheit selbst zu wählen.`,
-			amountLabel: (amount: string) =>
-				amount ? `${amount}, bearbeiten` : 'Keine Menge, eintragen',
-			ingredientNamePlaceholder: 'Nudeln',
-			quantity: 'Menge',
-			quantityPlaceholder: '400',
-			unit: 'Einheit',
-			unitNone: 'Ohne Einheit',
-			unitHint: 'Wird nur mit einer Menge gespeichert',
-			savedAsLead: 'Wird gespeichert als ',
-			savedAsNothing: 'noch nichts',
-			amountDone: 'Fertig',
+			ingredientRow: (line: string) => `${line}, bearbeiten`,
+			reorder: (name: string) => `${name} verschieben`,
+			addLine: 'Zutat hinzufügen',
+			addLineExample: 'Hinzufügen, z. B. „2 EL Olivenöl“',
+			addLineTo: (part: string) => `Zutat zu ${part} hinzufügen`,
 			steps: 'Schritte',
 			stepPlaceholder: 'Die Nudeln bissfest kochen, etwa 9 Min.',
 			stepLabel: (index: number) => `Schritt ${index}`,
 			addStep: 'Schritt hinzufügen',
 
-			usesAuto: 'auto',
-			usesNone: 'Zutaten für diesen Schritt',
-			usesNothing: 'nichts',
-			usesLabel: (index: number) => `Zutaten für Schritt ${index}`,
-			usesTitle: 'Was dieser Schritt braucht',
-			usesSubtitle: 'Der Kochmodus zeigt sie an, während du bei diesem Schritt bist.',
-			usesShare: (amount: string) => `von ${amount}`,
-			usesAmount: (name: string) => `Menge von ${name} für diesen Schritt`,
-			usesAll: 'alles',
-			usesBackToAuto: 'Lieber aus dem Text lesen',
-			usesEmpty: 'Trag zuerst die Zutaten ein, dann kannst du sie den Schritten zuordnen.',
+			part: {
+				add: 'Teil hinzufügen',
+				name: 'Name des Teils',
+				namePlaceholder: 'Béchamel',
+				confirm: 'Hinzufügen',
+				rename: (name: string) => `${name} umbenennen`,
+				renameHint: 'Leer lassen, um ihn mit dem Teil darüber zusammenzulegen.'
+			},
 
-			timerAdd: 'Timer hinzufügen',
-			timerLabel: (index: number) => `Timer für Schritt ${index}`,
+			ingredientSheet: {
+				eyebrow: 'Zutat',
+				name: 'Name',
+				nameHint: 'was auf die Liste kommt',
+				namePlaceholder: 'Nudeln',
+				amount: 'Menge',
+				number: 'Zahl',
+				numberPlaceholder: '500',
+				numberOnly: 'Nur Zahlen, etwa 500, 1,5 oder ½.',
+				unitButton: (unit: string) => `Einheit: ${unit}`,
+				note: 'Notiz',
+				noteHint: 'steht im Rezept',
+				notePlaceholder: 'fein gehackt',
+				part: 'Teil',
+				noPart: 'keiner',
+				done: 'Fertig',
+				remove: 'Zutat entfernen'
+			},
+
+			units: {
+				eyebrow: (name: string, number: string) => (number ? `${name} · ${number}` : name),
+				title: 'Einheit',
+				units: 'Einheiten',
+				counted: 'Gezählt in',
+				none: 'Ohne Einheit',
+				everyday: [
+					'Zehe',
+					'Bund',
+					'Dose',
+					'Prise',
+					'Scheibe',
+					'Becher',
+					'Glas',
+					'Stange',
+					'Zweig',
+					'Blatt',
+					'Msp.',
+					'Würfel'
+				],
+				addOwn: 'Eigene hinzufügen',
+				ownLabel: 'Eigene Einheit',
+				ownPlaceholder: 'Kugel',
+				ownAdd: 'Hinzufügen',
+				ownMark: (word: string) => `${word}, eigene`
+			},
+
+			stepRow: {
+				ingredients: 'Zutaten',
+				ingredientsNone: 'Wörter verknüpfen, die sie nennen',
+				ingredientsLabel: (index: number) => `Zutaten für Schritt ${index}`,
+				suggested: (name: string) => `${name}, vorgeschlagen`,
+				timer: 'Timer',
+				timerAdd: 'Timer hinzufügen',
+				timerLabel: (index: number) => `Timer für Schritt ${index}`
+			},
+
+			stepMenu: {
+				label: (index: number) => `Mehr zu Schritt ${index}`,
+				up: 'Nach oben',
+				down: 'Nach unten',
+				toPart: 'In anderen Teil…',
+				remove: 'Schritt löschen'
+			},
+
+			movePart: {
+				title: 'In anderen Teil',
+				eyebrow: (index: number) => `Schritt ${index}`,
+				steps: (from: number, to: number) =>
+					from === to ? `Schritt ${from}` : `Schritte ${from} bis ${to}`,
+				none: 'Kein Teil',
+				add: 'Neuer Teil'
+			},
+
+			links: {
+				eyebrow: (index: number) => `Schritt ${index} · Zutaten`,
+				title: 'Tipp auf ein Wort, um es zu verknüpfen',
+				showFor: 'Zeigen für',
+				people: 'Personen',
+				linkTo: (word: string) => `„${word}“ verknüpfen mit`,
+				linkedWords: (words: string) => `„${words}“`,
+				linked: 'In diesem Schritt verknüpft',
+				nothing: 'Noch nichts verknüpft. Tipp auf ein Wort im Text.',
+				gone: 'steht nicht mehr im Text',
+				remove: (words: string) => `Verknüpfung von ${words} entfernen`,
+				follows: (amount: string) => `${amount} · passt sich der Personenzahl an`,
+				of: (amount: string, total: string) => `${amount} von ${total}`,
+				stays: (amount: string) => `${amount} bleibt, wie es dasteht`,
+				notBeside: 'Steht nicht neben seiner Zutat, deshalb bleibt es, wie es dasteht.',
+				help: 'Unterstrichen ist, was der Kochmodus unterstreicht. Eine Menge neben einem verknüpften Wort passt sich der Personenzahl an.',
+				suggested: 'Vorschläge',
+				suggest: (word: string, name: string) => `„${word}“ mit ${name} verknüpfen?`,
+				dismiss: (word: string) => `${word} nicht verknüpfen`,
+				unnamed: 'Verwendet, ohne genannt zu werden',
+				addIngredient: 'Zutat hinzufügen',
+				pickIngredient: 'Welche Zutat?',
+				done: 'Fertig',
+				back: 'Zurück'
+			},
+
 			timerChip: (name: string, duration: string) => `${name} · ${duration}`,
 			timerSheet: {
 				title: 'Timer für den Schritt',
@@ -1026,13 +1255,7 @@ export const de: Messages = {
 				remove: 'Timer entfernen'
 			},
 			save: 'Speichern',
-			saveRecipe: 'Rezept speichern',
-			moveIngredientUp: (index: number) => `Zutat ${index} nach oben`,
-			moveIngredientDown: (index: number) => `Zutat ${index} nach unten`,
-			removeIngredient: (index: number) => `Zutat ${index} entfernen`,
-			moveStepUp: (index: number) => `Schritt ${index} nach oben`,
-			moveStepDown: (index: number) => `Schritt ${index} nach unten`,
-			removeStep: (index: number) => `Schritt ${index} entfernen`
+			saveRecipe: 'Rezept speichern'
 		},
 
 		pick: {
@@ -1044,6 +1267,7 @@ export const de: Messages = {
 			have: (amount: string) => (amount ? `Steht schon drauf · ${amount}` : 'Steht schon drauf'),
 			merge: (amount: string) => `Steht schon drauf, wird ${amount}`,
 			staple: 'Habt ihr sonst immer da',
+			parts: (parts: string[]) => parts.join(' · '),
 			submit: (count: number) =>
 				count === 1 ? '1 auf die Liste' : `${count} auf die Liste setzen`,
 			nothing: 'Nichts ausgewählt'
@@ -1066,11 +1290,18 @@ export const de: Messages = {
 			setTimer: 'Timer stellen',
 			close: 'Kochmodus schließen',
 			step: (index: number, total: number) => `Schritt ${index} von ${total}`,
+			stepPart: (part: string) => ` · ${part}`,
 			startTimer: 'Timer stellen',
 			startParsedTimer: (duration: string) => `${duration}-Timer starten`,
 			startNamedTimer: (name: string, duration: string) => `${name} · ${duration} starten`,
 			ingredients: 'Zutaten',
-			usesLead: 'Dieser Schritt braucht ',
+			stepNeeds: 'Das braucht dieser Schritt',
+			titleFor: (recipe: string, servings: number) => `${recipe} · für ${servings}`,
+			readyEyebrow: 'Bevor es losgeht',
+			readyTitle: 'Alles bereitlegen',
+			startCooking: 'Los geht’s',
+			backToStep: (step: number) => `Zurück zu Schritt ${step}`,
+			peekToReady: 'Zurück zum Bereitlegen',
 			previous: 'Vorheriger Schritt',
 			next: 'Nächster Schritt',
 			finish: 'Fertig',
@@ -1158,16 +1389,11 @@ export const de: Messages = {
 			ai: {
 				note: 'Mit KI erstellt. Vor dem Speichern kurz prüfen.',
 				adapted: (instructions: string) => `Angepasst: „${instructions}“.`,
-				withoutAi: (reason: string) => `So übernommen, wie die Seite es schreibt: ${reason}`,
-				improve: 'Mit KI verbessern',
-				improveHint:
-					'Ordnet Mengen, verknüpft Zutaten mit ihren Schritten und stellt Timer. Liest auch Seiten ohne Rezeptdaten. Nutzt deinen KI-Anbieter.',
+				withoutAi: (reason: string) => `Ohne KI importiert: ${reason}`,
 				instructionsToggle: 'Anweisungen für die KI hinzufügen',
 				instructionsLabel: 'Anweisungen für die KI',
 				instructionsPlaceholder: 'z. B. mit Tofu statt Fleisch, für 2 Personen',
 				instructionsHousehold: (instructions: string) => `Gilt immer: „${instructions}“`,
-				pageLead: 'Diese Seite hat keine direkt lesbaren Rezeptdaten. Mit KI auslesen?',
-				tryPage: 'Mit KI auslesen',
 				extracting: 'Wird ausgelesen…',
 				loading: [
 					'Rezept wird gelesen…',
@@ -1196,6 +1422,107 @@ export const de: Messages = {
 						'Darin war kein Rezept zu finden. Versuch klarere Fotos oder vollständigeren Text.',
 					noPhotos: 'Füg mindestens ein Foto des Rezepts hinzu.'
 				}
+			},
+
+			review: {
+				title: 'Rezept prüfen',
+				discard: 'Verwerfen',
+				save: 'Speichern',
+				count: (count: number) =>
+					count === 0
+						? 'Nichts zu prüfen'
+						: count === 1
+							? '1 Sache zu prüfen'
+							: `${count} Sachen zu prüfen`,
+				allChecked: 'Alles geprüft',
+				ready: 'Bereit zum Speichern.',
+				restMatches: (from: ImportSource) => `Alles andere stimmt ${WITH[from]} überein.`,
+				allMatch: (from: ImportSource, ingredients: number, steps: number) =>
+					`${ingredients === 1 ? '1 Zutat' : `Alle ${ingredients} Zutaten`} und ${steps === 1 ? '1 Schritt' : `${steps} Schritte`} stimmen ${WITH[from]} überein.`,
+				noAi: 'Ohne KI importiert. Die Verknüpfungen sind geraten.',
+				fromPhoto: 'Aus Fotos gelesen. Vergleich es mit dem Kochbuch.',
+				showFirst: 'Zur ersten offenen Frage',
+				recipe: 'Rezept',
+				ingredients: 'Zutaten',
+				steps: 'Schritte',
+				also: 'Außerdem',
+				editEverything: 'Alles bearbeiten',
+				editIngredient: (name: string) => `${name} bearbeiten`,
+				editStep: (number: number) => `Schritt ${number} bearbeiten`,
+				editBasics: 'Name, Zeit und Portionen bearbeiten',
+				checked: 'Geprüft',
+
+				choice: (from: ImportSource, name: string, alternative: string) =>
+					`${NAMES[from]} ${name} oder ${alternative}. Was nimmst du?`,
+				amountDiffers: (from: ImportSource, page: string, answer: string) =>
+					`${SAYS[from]} „${page}“. Die KI hat ${answer} gelesen.`,
+				keepAmount: (amount: string) => `${amount} lassen`,
+				useAmount: (amount: string) => `${amount} nehmen`,
+				noAmount: 'keine Menge',
+				nameDiffers: (from: ImportSource, page: string) => `${SAYS[from]} „${page}“.`,
+				lineAdded: (from: ImportSource, page: string) =>
+					`Steht auch ${IN[from]}: „${page}“. Die KI hatte es ausgelassen.`,
+				reworded: (from: ImportSource, page: string) => `${SAYS[from]}: „${page}“`,
+				rewordedUnknown: (from: ImportSource) => `Dieser Schritt steht so nicht ${IN[from]}.`,
+				usePageText: (from: ImportSource) =>
+					({
+						page: 'Text der Seite nehmen',
+						text: 'Deinen Text nehmen',
+						photo: 'Text von den Fotos nehmen',
+						recipe: 'Gespeicherten Text nehmen'
+					})[from],
+				newUnit: (word: string) => `Neue Einheit: ${word}. Hinzufügen?`,
+				addUnit: 'Hinzufügen',
+				keepInNote: 'In der Notiz lassen',
+				servingsQuestion: 'Für wie viele Personen?',
+				servingsPage: (from: ImportSource, page: string) =>
+					`${SAYS[from]} „${page}“. Alle Mengen rechnen mit dieser Zahl.`,
+				servingsWhy: 'Alle Mengen rechnen mit dieser Zahl.',
+				servingsKeep: (count: number) => `${count} lassen`,
+				noSteps: (from: ImportSource) =>
+					({
+						page: 'Die Seite hat keine Zubereitung.',
+						text: 'Dein Text hat keine Zubereitung.',
+						photo: 'Auf den Fotos ist keine Zubereitung.',
+						recipe: 'Das Rezept hat keine Schritte.'
+					})[from],
+				addSteps: 'Schritte dazuschreiben',
+				saveWithout: 'Ohne speichern',
+				sharesExceed: (name: string) =>
+					`Die Schritte brauchen mehr ${name}, als das Rezept angibt.`,
+				keep: 'Lassen',
+				edit: 'Bearbeiten',
+				remove: 'Entfernen',
+
+				leftOut: 'Aus den Schritten ausgelassen',
+				leftOutCount: (count: number) => (count === 1 ? '1 Satz' : `${count} Sätze`),
+				putBack: 'Zurückholen',
+				leftOutLine: 'Die KI hat das weggelassen. Beim Speichern fällt es weg.',
+				leaveOut: 'Weglassen',
+				leftOutRemoved: 'Fällt beim Speichern weg.',
+				notes: 'Hinweise vom Import',
+				noteCount: (count: number) => (count === 1 ? '1 Hinweis' : `${count} Hinweise`),
+				converted: (name: string) => `${name}: in metrische Einheiten umgerechnet.`,
+				unused: (name: string) => `${name}: kein Schritt verwendet es.`,
+
+				stepSheet: (number: number) => `Schritt ${number}`,
+				stepText: 'Text',
+				stepLinks: 'Zutaten verknüpfen',
+				removeStep: 'Schritt entfernen',
+				done: 'Fertig',
+				basics: 'Rezept',
+				name: 'Name',
+				time: 'Zeit in Minuten',
+				servings: 'Portionen',
+
+				gone: 'Dieser Import ist nicht mehr da.',
+				goneHint:
+					'Er wurde gespeichert, verworfen oder in einem anderen Tab geöffnet. Importier ihn noch einmal.',
+				again: 'Noch einmal importieren',
+				tidyGone: 'Dieses Aufräumen ist nicht mehr da.',
+				tidyGoneHint:
+					'Es wurde gespeichert, verworfen oder in einem anderen Tab geöffnet. Das Rezept ist unverändert.',
+				backToRecipe: 'Zurück zum Rezept'
 			}
 		}
 	},
@@ -1757,6 +2084,15 @@ export const de: Messages = {
 			note: 'Alle im Haus sehen diesen Namen.'
 		},
 
+		units: {
+			row: 'Einheiten',
+			title: 'Eigene Einheiten',
+			subtitle:
+				'Wörter, die euer Haushalt zur Liste der Einheiten hinzugefügt hat. Entfernen lässt die Rezepte, die sie verwenden, wie sie sind.',
+			empty: 'Noch keine. Füg eine in der Einheitenliste einer Zutat hinzu.',
+			remove: (word: string) => `${word} entfernen`
+		},
+
 		ai: {
 			row: 'KI-Funktionen',
 			notSet: 'Nicht eingerichtet',
@@ -1814,17 +2150,6 @@ export const de: Messages = {
 				save: 'Anweisungen speichern',
 				saved: 'Gespeichert.'
 			}
-		},
-
-		wording: {
-			row: 'Wortwahl in Rezepten',
-			title: 'Wortwahl in Rezepten',
-			asWritten: 'Wie geschrieben',
-			asWrittenDetail: 'Importierte Rezepte behalten die Wörter der Seite.',
-			austrian: 'Österreichisch',
-			austrianDetail:
-				'Aus Sahne wird Obers, aus Quark Topfen, aus Kartoffeln Erdäpfel, in importierten deutschen Rezepten.',
-			note: 'Gilt für Rezepte, die du ab jetzt importierst; gespeicherte bleiben, wie sie sind. Mit KI wird das ganze Rezept umgeschrieben, ohne die Namen der Zutaten.'
 		},
 
 		about: 'Über die App',
@@ -2190,6 +2515,11 @@ export const de: Messages = {
 		shopping: {
 			itemName: 'Gib dem Eintrag einen Namen.',
 			storeName: 'Gib der Liste einen Namen.'
+		},
+
+		units: {
+			invalid: (max: number) => `Ein Wort aus Buchstaben, höchstens ${max} Zeichen.`,
+			known: () => 'Die steht schon auf der Liste.'
 		},
 
 		recipes: {

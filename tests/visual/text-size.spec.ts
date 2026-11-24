@@ -18,7 +18,18 @@
  */
 import { expect, test, type BrowserContext, type Page } from '@playwright/test';
 import { storageStateFor } from '../e2e/accounts';
-import { SCREENS, scrolledToBottom, settle, type Screen } from './screens';
+import {
+	COOK_WORDS,
+	cookShots,
+	EDITOR_WORDS,
+	editorShots,
+	REVIEW_WORDS,
+	reviewShots,
+	SCREENS,
+	scrolledToBottom,
+	settle,
+	type Screen
+} from './screens';
 
 const ROOT_SCALE = 2;
 const BODY_PX = 17;
@@ -90,11 +101,76 @@ function walk(screens: Screen[]) {
 			});
 		}
 	});
+	test.describe('as the cookbook household', () => {
+		test.use({ storageState: storageStateFor('cookbook') });
+		for (const screen of screens.filter((screen) => screen.account === 'cookbook')) {
+			test(`${screen.name} at 200% text`, async ({ page, context }) => {
+				await atTwiceTheTextSize(page, context, screen);
+			});
+		}
+	});
+	test.describe('as the cook household', () => {
+		test.use({ storageState: storageStateFor('cook') });
+		for (const screen of screens.filter((screen) => screen.account === 'cook')) {
+			test(`${screen.name} at 200% text`, async ({ page, context }) => {
+				await atTwiceTheTextSize(page, context, screen);
+			});
+		}
+	});
 }
+
+/** Cook mode's Get ready and steps (→ plan 47), reached by their German names. */
+test.describe('cook mode in German', () => {
+	test.use({ locale: 'de-AT' });
+	const shots = cookShots(COOK_WORDS.de).map((shot) => ({
+		...shot,
+		name: `${shot.name}-de`,
+		route: '/(app)/cooking/recipes/[id]/cook',
+		path: ''
+	}));
+	for (const shot of shots.filter((shot) => !shot.account)) {
+		test(`${shot.name} at 200% text, in German`, async ({ page, context }) => {
+			await atTwiceTheTextSize(page, context, shot);
+		});
+	}
+	test.describe('as the cook household', () => {
+		test.use({ storageState: storageStateFor('cook') });
+		for (const shot of shots.filter((shot) => shot.account === 'cook')) {
+			test(`${shot.name} at 200% text, in German`, async ({ page, context }) => {
+				await atTwiceTheTextSize(page, context, shot);
+			});
+		}
+	});
+});
 
 walk(SCREENS.filter((screen) => !screen.theme));
 
 test.describe('in German', () => {
 	test.use({ locale: 'de-AT' });
 	walk(SCREENS.filter((screen) => !screen.theme && !screen.navigate));
+});
+
+/** The import's review (→ plan 45), reached by its German names. */
+test.describe('the import review in German', () => {
+	test.use({ locale: 'de-AT' });
+	for (const shot of reviewShots(REVIEW_WORDS.de)) {
+		test(`${shot.name} at 200% text, in German`, async ({ page, context }) => {
+			await atTwiceTheTextSize(page, context, { ...shot, name: `${shot.name}-de` });
+		});
+	}
+});
+
+/** The recipe editor's screens and sheets (→ plan 46), reached by their German names. */
+test.describe('the recipe editor in German', () => {
+	test.use({ locale: 'de-AT' });
+	for (const shot of editorShots(EDITOR_WORDS.de)) {
+		test(`${shot.name} at 200% text, in German`, async ({ page, context }) => {
+			await atTwiceTheTextSize(page, context, {
+				name: `${shot.name}-de`,
+				route: '/(app)/cooking/recipes/[id]/edit',
+				path: '',
+				navigate: shot.navigate
+			});
+		});
+	}
 });

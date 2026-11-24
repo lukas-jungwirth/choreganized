@@ -98,7 +98,8 @@ and the title, the line and the header's buttons all stand on the raccoon's feet
   **Sonnengasse 12**", then Google sign-in, then join.
 - Via code: 6-box code input (letters/digits, dash ignored, case-insensitive).
 - After joining, the joiner sets **display name + colour** (same fields as 1.3, minus household
-  name; colours already taken by other members are shown as unavailable). A household that
+  name; a colour another member already wears keeps its colour, carries their initial like their
+  avatar, and can't be picked; the same in Settings → profile, → DECISIONS #301). A household that
   already has 8 members shows "This household is full: it already has 8 people, one for each
   colour. Ask whoever invited you to make room." instead of the form, and the join is refused
   server-side too (`household-full`).
@@ -675,6 +676,13 @@ item sheet [3a]; what differs is what a tick does and what counts as shopping.
   than refusing — replacing is what this sheet does, it just has four places to do it in now.
   Changing the slot of an existing meal **moves** it (the old row is not left behind).
 - Search field over the household's recipes; recent recipes listed with radio selection.
+- **The chosen meal's recipes first** (→ plan 41): when any recipe is tagged for the slot in
+  **Which meal?**, the list splits into **For breakfast** (lunch, dinner, "For a snack") and
+  **Everything else**, each newest first, and switching the slot reorders it at once. Nothing
+  is hidden — Saturday's lunch is often last night's soup — and with nothing tagged for that
+  slot the list is the plain one, unlabelled. Under the search, the library's **quick chips**
+  (Favourites · Under 30 min · Vegetarian, each only when it could find something) narrow the
+  list in the browser by the library's own rules.
 - **"Cook something not saved"** → free-text title input instead of a recipe (custom meal).
 - **Who's cooking?** — member chips, optional (none = no cook shown).
 - Toggle: **Add ingredients to shopping list** ("You'll pick which ones" — only when a recipe
@@ -686,63 +694,176 @@ item sheet [3a]; what differs is what a tick does and what counts as shopping.
 
 ### 4.3 Recipe library (Browse all)
 
-- Grid of recipe cards (photo, name, time). Search by name.
+- Grid of recipe cards (photo, name, time). A favourite wears a small heart on its photo, a
+  vegetarian or vegan recipe a leaf (→ plan 40).
+- **Search** matches the recipe's name **or any of its ingredient names**, so "lemon" finds the
+  salmon with lemon potatoes ("Search recipes or ingredients").
+- **Filters** (→ plan 40, [DECISIONS #302–#306](DECISIONS.md)), sketched in
+  `design/sketches/recipe-filters.html`. A recipe carries a few **fixed tags** — meal
+  (breakfast · lunch · dinner · snack, the plan's four slots), kind (main · soup · salad · side ·
+  dessert · baking) and free from (gluten · lactose) — one **diet** or none yet (meat · fish ·
+  vegetarian · vegan) and a **heart**, one per household. The library filters by those and by
+  the time recipes already have:
+  - **The row under the search**: a **Filter** chip (with the number of filters on), then each
+    active filter as a filled chip with × that takes it off, then up to three **quick chips** —
+    Favourites · Under 30 min · Vegetarian — each only when it could find something here.
+  - **Under the row**, while anything narrows the list: "{n} of {total} recipes", the sort's
+    name when it isn't Newest, and **Clear** (filters off; search and sort stay).
+  - **The Filter sheet**: Only favourites (toggle), Meal, Kind, Diet, Free from (chips), Ready
+    in (Any · 20 · 30 · 45 · 60 minutes, at most), Sort by (Newest · A–Z · Quickest · Not cooked
+    lately). Within a group the chips are **any of** (lunch or dinner), across groups they
+    **narrow** (dinner and vegetarian); Free from is **all of**. **Vegetarian includes vegan.**
+    A recipe with no time drops out once a time is set; one with no diet matches no diet. **A
+    group no recipe in the library uses isn't shown**, so a household that never tags sees time
+    and sort only. The button counts the draft live ("Show 6 recipes", "Nothing fits" at 0);
+    **Clear all** resets the draft but keeps the sort.
+  - **Not cooked lately** sorts by the last day up to today each recipe was on the plan, never
+    planned first. It means _planned_: a skipped dinner counts, a recipe cooked without planning
+    doesn't, and the history starts when the household started planning.
+  - **It's all in the URL**, like the search: `?q=&meal=dinner&kind=soup&diet=vegetarian&free=gluten&max=30&fav=1&sort=quick`
+    (meal, kind, diet and free repeat). Reload, back and a shared link give the same grid; the
+    chips are links, so the row works without JavaScript. Anything the app didn't write is
+    ignored.
+  - **Nothing fits**: "Nothing fits all of these", and one row per active filter — "Without
+    “Dinner” · 2 recipes" — that drops it; rows that would still find nothing are left out. A
+    search with no filters says "No recipe or ingredient matches “…”.".
 - The FAB (and the empty state's **Add a recipe** button) open the **"Add a recipe" chooser**
   (→ plan 14, a bottom sheet): **From a link** and **Enter by hand** always, plus **From a photo**
   and **Paste text** (each "AI"-tagged) **only when AI features are set up** — with no provider
   there's nothing to offer, and the AI features row in Settings (§6) is where it's turned on.
 - Empty state [7e]: "Build your cookbook" + **Add a recipe** (opens the same chooser).
+- **Sort your recipes** (→ plan 41, [DECISIONS #307–#310](DECISIONS.md)). While any recipe has
+  neither a tag nor a diet, a dashed row ends the unfiltered grid: "{n} recipes have no tags
+  yet · Sort". It opens `/cooking/recipes/sort`: one untagged recipe per card (photo, name,
+  time, the first ingredients), the form's tag questions, **Skip** and **Next**, and a bar
+  "{done} of {total} done · stop any time". Next saves that card's tags and diet and moves on;
+  Next with nothing ticked is a skip. A skipped recipe comes back next visit. With none left
+  the pass ends on the library, whose row is gone.
+  - Each card opens with the **diet guessed from its ingredient names** ticked and dotted
+    ("Dotted: our guess from the ingredients."): a meat word → meat, else a fish word → fish,
+    else an egg, dairy or honey word → vegetarian, else vegan; German compounds count
+    ("Rinderhackfleisch", "Lachsfilet"), plant milks and butters don't, gelatine without meat
+    makes no guess.
+  - With AI set up, **Let the AI suggest tags** asks once about every recipe still to sort
+    (at most 50; names and ingredient names only) and dots its answers on the cards as they
+    come. It is a button, never automatic, and nothing is saved before each card's Next.
 
 ### 4.4 New/edit recipe [3c] (full-screen route, not a sheet)
 
 - Top bar: Cancel · "New recipe"/"Edit recipe" · **Save**.
 - Photo picker (optional; stored resized to ≤1200px WebP under `UPLOADS_DIR`).
 - Fields: name (required), time (minutes), servings.
-- **Ingredients**: one typed row each, written the way you'd write them on paper ("400 g pasta")
-  and parsed leniently to (quantity, unit, name); unparsed input becomes name-only, and a range
-  keeps its first value with its unit ("2-3 EL Öl" → 2 tbsp Öl, DECISIONS #159). Each row
-  shows what the parse made of it as a quiet amount chip; tapping the chip opens a sheet with
-  the name, the amount and the units of §3.2 plus tbsp · tsp and "no unit", which writes the row
-  back as a line and shows the reading that line will get (→ DECISIONS #100–101). Reorder with
-  the arrows (→ DECISIONS #67), remove per row.
-- **Steps**: numbered textareas, add/remove/reorder. Under each one, **what that step uses** —
-  a row of chips that opens a sheet (→ [DECISIONS #127](DECISIONS.md)):
-  - Until somebody says otherwise the chips are **read out of the step text**, live as you type,
-    by the same matcher cook mode runs, and are marked `auto`. The matching forgives what an
-    ingredient list and a sentence disagree about: the note in a name ("Olive oil (extra
-    virgin)", "Chicken breast, diced"), the descriptors in front of it ("1 small red onion" is
-    "the onion", "Prise Muskat" is "Muskat"), and number in both languages ("Zwiebeln" ⇄
-    "Zwiebel", "berries" ⇄ "berry", and the German plurals no ending reaches: "Ei" ⇄ "Eier",
-    "Apfel" ⇄ "Äpfel", "Nuss" ⇄ "Nüsse"). Where a shortened name would name two different
-    ingredients it names neither — a recipe with "olive oil" **and** "sunflower oil" gets no
-    "oil", and one with "red pepper" beside plain "pepper" gives the word to the ingredient
-    actually called that. It matches **whole words only**: "egg-white" names the egg, but
-    "Ober- und Unterhitze" is not the Obers, and a compound ("Sahnemischung", "Lachswürfel")
-    is not its ingredient; pinning is how a cook links one (DECISIONS #154).
-  - The sheet opens **already ticked the way the text was read** — adjusting a guess, not
-    filling in a form — and what leaves it is the step's own list from then on, including an
-    empty one ("this step uses nothing"). **Read the step text instead** hands it back to the
-    matcher.
-  - A ticked ingredient may carry **how much of it goes in here**, in that row's own unit and
-    with the row's total beside it ("of 3 tbsp"). Empty means the whole row. Shares are written
-    in recipe-as-written terms, so **Cooking for {n}** (§4.5) scales them exactly like the
-    ingredient list: 1 tsp and 2 tsp for two people are 2 tsp and 4 tsp for four.
-- Under the ingredient chips, each step has **a timer chip** (→ plan 21, DECISIONS #147): the
-  step's own timer by name ("Nudeln · 10:00"), else the duration cook mode will read out of the
-  text, marked `auto` ("9:00 auto"), else **Add a timer**. It opens a sheet with the minute
-  stepper and the optional **What for?** name of cook mode's Set-timer sheet (§4.6), seeded
-  from the saved timer, else the text's duration, else 5 minutes, with **Save timer** and
-  **Remove timer**. A saved timer keeps its exact seconds ("90 Sekunden") unless the stepper is
-  moved. One timer per step; removing it hands the step back to its text.
+- **Tags** (→ plan 40), between servings and ingredients: Meal, Kind and Free from as chips you
+  tick any number of, Diet as one chip or none (tapping the chosen one clears it). **Folded
+  while nothing is set** — one row, "Tags · Meal, kind, diet" — and open whenever something is,
+  so an edit shows what's there. Saved with the recipe, replaced wholesale like its children.
+- **Parts** (→ plans 43, 46; design `design/sketches/recipe-rebuild.html` E1, E3a, E3b):
+  ingredients and steps stand under part headings ("Bolognese", "Béchamel"). **A recipe
+  without parts never shows the word**: no heading, no "Part" row in the ingredient sheet, no
+  "Move to part…"; only a quiet **Add part** at the end of each list. It asks for a name in
+  place and puts the new heading below what is there; the rows above stay without one. From
+  the first part on, the Part row and "Move to part…" appear. A heading's ✎ edits the name in
+  place, over ingredients and steps alike (a part is one thing in the recipe); emptied, the
+  part joins the one above.
+- **Ingredients** [E1]: a row shows the name, the amount on the right and the **note** in a
+  smaller second line. Tapping it opens the **ingredient sheet** [E2]: Name ("what goes on the
+  list"), **Amount as a number and a unit kept apart**, Note ("shown in the recipe"), and Part
+  when the recipe has parts (the row lands at the end of the part picked), with Done and
+  Remove ingredient.
+  - The number field takes numbers only ("500", "1,5", "½", "1/2"), with the number keyboard;
+    a letter is refused as it is typed, and the field says so.
+  - The unit is a button showing the unit ("g", "No unit"); it opens the **unit panel** [E2b]
+    with everything visible, nothing to type or scroll: the eight units, the everyday counting
+    words of the app's language (de: Zehe, Bund, Dose, Prise, Scheibe, Becher, Glas, Stange,
+    Zweig, Blatt, Msp., Würfel; en: clove, bunch, can, pinch, slice, jar, bottle, stick,
+    sprig, leaf, cube, handful), the household's own words after those (outlined), **No unit**
+    and **Add your own**. The row's current word is always in the panel, also one the reader
+    knows that the panel doesn't list ("Tasse"). A built-in counting word is shown in the
+    number that fits the amount ("1 Zehe", "2 Zehen") and stored in its one form; an own word
+    as it was added (→ DECISIONS #324).
+  - **One list for everyone** (→ DECISIONS #321): a unit is one of the eight, a counting word
+    the reader knows, or a word the household added. **Add your own** is the only way a new
+    word comes in: it asks for the word in a field in the panel itself, and the household has
+    it at once, in every recipe and in the reader. Settings → Household → **Units** lists the
+    household's own words, each with a way to remove it; a removed word stays on the rows that
+    use it.
+  - **Typing a line stays the fast way in**: an add field at the foot of each part ("Add, e.g.
+    “2 EL Olivenöl”") reads a whole line with the shared reader (§3.1; → plan 42, DECISIONS
+    #319): the number first, then a unit **only if the next word is on the list** (the
+    household's words included), everything else the name; what follows a comma or stands in
+    brackets is the note. "500 rote Zwiebeln" is 500 of "rote Zwiebeln", "Mehl 500 g" is 500 g
+    Mehl, "Salz 2 Prisen fein" stays a name, "1 Karotte, in Scheiben geschnitten" is Karotte
+    with that note. A range keeps its first value ("2-3 EL Öl" → 2 tbsp, DECISIONS #159), the
+    Deka is ten grams, a plural a site left open is settled by the amount. A line read wrongly
+    is fixed by tapping its row.
+  - **Reorder by dragging the grip**, also from one part into another.
+- **Steps** [E3a]: cards under part headings, numbered straight through. The text is a
+  textarea at reading size, growing with its content. Under it **two rows that say what they
+  hold**, each at least 48px high: **Ingredients** (the linked names; names only suggested so
+  far dotted; else "Link the words that name them") and **Timer** (its name and time, else "Add
+  a timer"). A **⋯** button holds Move up, Move down, **Move to part…** (when the recipe has
+  parts) and Delete step. **Move to part…** [E3b] lists every part with the steps it holds, the
+  current one marked, "No part" and "New part"; the step lands at the end of the part picked.
+  Steps are not dragged.
+- **Linking a step's words** [E3]: **Ingredients** opens the link sheet.
+  - The step's text on top, every word tappable, drawn **as cook mode will draw it**: a linked
+    word underlined in gold, a linked amount in gold. **Show for {servings} / {twice that}
+    people** rewrites it the way cook mode will; absent without servings. A time ("2 - 3
+    Min."), a temperature ("180 °C") or a length ("2 cm") is never an amount and not tappable.
+  - Tap a word → "Link “…” to" with the ingredients, the likely one first → linked. Tap a
+    linked word → pick another. **Linked in this step** lists each link ("“Zwiebelwürfel” →
+    Zwiebel") with ✕; a link whose words are no longer in the text says so until it is
+    re-linked or removed.
+  - **An amount is linked with its word**: a number, with or without a unit, standing beside
+    the linked word (before it with at most three words between, else right after it, never
+    across a sentence end: `locateAmounts`, the rule cook mode rewrites by) becomes the link's
+    amount automatically when its unit is the ingredient's and it is not more than the
+    ingredient's total. It then also stores the step's share: "200 g of 400 g", and for twice
+    as many "400 g of 800 g". Its row carries a switch, "follows the number of people" or
+    "stays as written", and tapping the amount in the text flips it. An amount beside the word
+    that doesn't fit is linked by tapping it; a number anywhere else says "Not next to its
+    ingredient, so it stays as written" and offers nothing.
+  - **Suggestions**: a step that came without stored links (a recipe from before plan 46, a
+    page's card), or whose text was edited, is offered the word matcher's reading (§4.6: whole
+    words, plurals, a note in a name forgiven, a compound is no ingredient, DECISIONS #154):
+    the words dotted, "Link “Zwiebel” to Zwiebel?" under the links, a tap accepts, ✕ turns one
+    down. For a step that came without links, **what is still suggested at Save is saved as
+    links**, so an old recipe opened and saved keeps every underline it had, now stored; for a
+    step that had its own, an offer after an edit is saved only when tapped (→ DECISIONS #325).
+  - **Used without being named**: links without words (one pinned by hand before plan 43, or
+    added here with **Add ingredient**), with ✕.
+  - Saving from this editor stores every step's links (`ingredients_set`, an empty list
+    included): from then on cook mode shows exactly what the editor showed.
+- **The step's timer** (→ plan 21, DECISIONS #147): the Timer row opens a sheet with the
+  minute stepper and the optional **What for?** name of cook mode's Set-timer sheet (§4.6),
+  seeded from the saved timer, else the text's duration, else 5 minutes, the step's
+  ingredients (linked or suggested) as one-tap names, with **Save timer** and **Remove
+  timer**. A saved timer keeps its exact seconds unless the stepper is moved. One timer per
+  step; removing it hands the step back to its text (cook mode still offers the duration it
+  reads there).
+- **Nothing about a recipe is lost by opening and saving it**: notes, parts, links with and
+  without words, amounts and shares, timers. Opened and saved again, nothing changes.
 
 ### 4.5 Recipe view [7a]
 
 - Hero photo (placeholder art when none), name, meta row (⏱ {time} min · 👥 Serves {n} ·
   Added by {member initial}).
+- A **heart** beside the ••• in the photo's bar (→ plan 40): filled = a household favourite;
+  a tap sets or clears it.
+- The recipe's **tags** under the meta row as small pills — meals, kinds, the diet (with a leaf
+  when meat-free), free-from — each a link to the library filtered by it. No tags, no row.
 - Actions: **Add to plan** (day picker → plan sheet flow), basket button + per-section
   **"Add to list"** → both open the **ingredient picker [3e]** (§4.8). Neither appears when the
   recipe has no ingredients.
-- Ingredients list (name + amount right-aligned), numbered steps.
+- Ingredients list (name + amount right-aligned), numbered steps. **A recipe in parts**
+  (→ plan 43, DECISIONS #312) shows each part's name as a heading over its own card of
+  ingredients, and again over its steps, which are **numbered straight through** (Bolognese 1–3,
+  Béchamel 4–5). Consecutive rows with the same part are one part; rows without one come first
+  with no heading, so a recipe without parts looks exactly as before. An ingredient's **note**
+  sits in a smaller grey line under its name ("Faschiertes" · "gemischt"). In a step whose links
+  are stored with their words, those words are **underlined**, as in cook mode
+  ("Zwiebelwürfel" is the Zwiebel, "Hackfleisch" the Faschiertes); a step read by the matcher
+  is not underlined here, as before.
 - **Cooking for {n}** — a stepper above the ingredient list that writes the amounts out for a
   different number of people. The recipe keeps what it was written for (shown beside the
   stepper as "written for 4"); the amounts, the meta row's "Serves {n}", the picker [3e] and
@@ -757,7 +878,14 @@ item sheet [3a]; what differs is what a tick does and what counts as shopping.
     unknown, so there is nothing honest to offer (→ [DECISIONS #124](DECISIONS.md)).
   - **The steps' own amounts follow too** (→ plan 23, DECISIONS #149): "2 Tomaten würfeln" read
     for twice as many says "**4** Tomaten würfeln", marked, with what the recipe says there
-    for a screen reader. Only where it is certain: the amount must sit directly before an
+    for a screen reader. **A step with stored links** (→ plan 43) rewrites exactly the amount
+    run each link stored, "1 - 2 EL" → "2 - 4 EL", every number in it scaled and nothing else in
+    the sentence ("180 °C", "5 - 7 Min."), and only **where it stands beside its words**: before
+    them with at most three words of letters between ("2 große Eier", "100 g weiche Butter";
+    no digit, no `. ! ? ; :`), else after them ("Karotten (400 g)", "Karotten, etwa 400 g").
+    "Nach 5 Min. die 5 reifen Tomaten" doubles the second 5 only; every occurrence of the words
+    with its amount beside it is rewritten; an amount beside none stays as written. **A step without** keeps plan 23's rule, only where
+    it is certain: the amount must sit directly before an
     ingredient the step names, in that ingredient's unit, and agree with the recipe (the share
     pinned to the step, or the whole row; otherwise no more than the row's total). Every other
     number — "180 °C", "2 cm", "10 Minuten", "in 4 Portionen" — stays exactly as written, as do
@@ -765,24 +893,73 @@ item sheet [3a]; what differs is what a tick does and what counts as shopping.
     "4 EL", a decimal comma stays a comma, a fraction stays a fraction. The editor always shows
     the text as written.
 - **Start cook mode** (dark button) → cook mode.
-- ••• menu [7c]: Edit recipe, Duplicate, Share (v1: share plain-text recipe via Web Share API),
-  Delete (confirm; meal-plan entries keep the name via snapshot).
+- ••• menu [7c]: Edit recipe, **Tidy with AI** (only with a provider set up, below), Duplicate,
+  Share (v1: share plain-text recipe via Web Share API), Delete (confirm; meal-plan entries keep
+  the name via snapshot).
+- **Tidy with AI** (→ plan 48, DECISIONS #340): a recipe imported before the rebuild (notes in
+  its names, "Hackfleisch, gemischtes"; no parts; the matcher's links) goes through the import's
+  one model call and **the same gate** as a page's card (`tidyRecipe`, `utils/tidy-draft.ts`):
+  each saved row is sent as the line it reads as ("500 g Hackfleisch, gemischtes", a note after a
+  comma), with its part, and the steps as stored. So no row is invented or lost (a dropped row
+  comes back as `line-added`), no amount changed, no step reworded. The household's standing
+  instructions are not sent (they would let rows and steps change). The loader shows while the
+  model reads; a failure is said under the menu row and the recipe stays as it was (no
+  rule-based fallback: the saved recipe already is what rules made). The answer opens in the
+  import's review (§4.7) at `/cooking/recipes/<id>/tidy?draft=<id>`, the draft in the tab's
+  `sessionStorage` with the recipe's id; the review speaks of "the saved recipe", shows the
+  recipe's own photo, and opens only under that recipe's address. **Save** updates the recipe
+  **in place** (`updateRecipe`, the id from the address, checked against the household): id,
+  photo, tags, diet, heart, plan entries stay. A step with links of its own (`ingredients_set`)
+  keeps them exactly, carried to the rows its lines became; only steps that read their text get
+  the model's links. A step's saved timer stays on the piece of it that states the duration.
+  **A sentence the model left out is a thing to check** in a tidy (not in an import): each one
+  counts in the banner, and they stand open at the end of the steps, "The AI left this out. It
+  is removed when you save.", with **Put back** (at its place) and **Leave it out**.
+  **Discard** goes back to the recipe and changes nothing; nothing is stored before Save. One
+  recipe per tap, no batch: every tidy is looked at by a person.
 
 ### 4.6 Cook mode [7b, 7h] (dark, hands-free)
 
 - Full-screen dark UI (`--cook-*` tokens), screen wake-lock while open.
-- Header: recipe name, close ×. Segmented progress bar (one segment per step, done = sage).
-- "STEP {i} OF {n}" in amber; the step text huge (Fraunces ~33px). The ingredients the step uses
-  — **the ones pinned to it in the form, else the ones its text names** (§4.4) — are underlined
-  in amber where the text names them, and the "This step uses {…}" line beneath lists them all,
-  including any the text never mentions. A step pinned to nothing shows neither.
+- Header: recipe name, close ×; on a step with a known count, "Lasagne · for 8" [C2].
+  Segmented progress bar (one segment per step, done = sage), with a wider gap where one part
+  ends and the next begins (→ plan 47).
+- **Get ready** [C1] (→ plan 47) comes before step 1, as position 0 (no `?step=`, or
+  `?step=0`; the recipe screen's button opens it): "BEFORE YOU START", every ingredient under
+  its part with its note and amount, each a tick button. **Ticks are kept on the device for
+  this cook**: Prev, Next and a reload keep them, Finish clears them, and they are dropped
+  twelve hours after the last tick. It carries the **"Cooking for" stepper** (the recipe
+  screen's, §4.5, with "written for {n}" beside it): moving it rewrites every amount on the
+  screen at once and writes `?serves=`, so the steps, the peek sheet and the timers' labels
+  follow and a reload keeps it. Hidden for a recipe that never recorded its servings. Its
+  button is **Start cooking**, or **Back to step {n}** when it was opened from a step's
+  ingredients sheet. A recipe without ingredients has no Get ready and opens on step 1. Get ready
+  is no step: no timer, dock bar or notification points at it, and a timer set there from the
+  header has no step.
+- "STEP {i} OF {n}" in amber, and beside it the step's **part** in the quieter grey when the
+  recipe has two or more parts ("STEP 5 OF 10 · BÉCHAMEL", → plans 43, 47; a recipe whose
+  steps are all in one part never names it); the step text in Fraunces, **sized by its
+  length** (→ plan 47): up to 100 characters ~33px, up to 220 the sketch's 27px, up to 320
+  ~22px, longer ~16px, one size down while the step's timer ring runs, so a 400-character
+  imported step, its ingredient list and its chips fit a 390 × 844 phone without a scroll.
+  The ingredients the step uses — **its stored links, else the ones pinned to it in the form,
+  else the ones its text names** (§4.4) — are underlined in amber where the text names them: a
+  stored link underlines every whole-word occurrence of its own words ("Zwiebelwürfel"), never
+  inside a longer word, and a link stored without words is underlined wherever the word matcher
+  finds its ingredient's name (never inside a run another link claimed).
+- **What the step needs** [C2, C3] (→ plan 47) is a list under the text, one row per
+  ingredient the step uses, including any the text never mentions: the amount in amber, the
+  name, the note in a smaller line, and "of 500 g" under the amount when the step takes only a
+  share. Scaled for the count. The ones with no amount and no note share one last row
+  ("Salz · Pfeffer"). It **stays while a timer runs**. A long step gets tighter rows. A step
+  pinned to nothing shows no list. Tips the import left out (plan 44) are never stored, so they
+  never appear here.
 - **Tapping an underlined ingredient says how much of it** (→ [DECISIONS #133](DECISIONS.md)) —
   the amount in amber with the name behind it, and the row's total behind that when the step
   takes only a share of it ("200 g mushrooms of 500 g"), in a bubble against the word itself. It
   sits above the word wherever the step has a line to spare, so what it covers is a line already
   read; any tap, Escape or the next step closes it. An underline with **no** amount to give
-  ("Salt", "a splash of oil") is not a button — there is nothing for a tap to reveal. This is
-  the one amount that survives a running timer, which clears the "This step uses…" line [7h].
+  ("Salt", "a splash of oil") is not a button — there is nothing for a tap to reveal.
 - **Timer chip** — the step's own timer when it has one, by name: "Start Nudeln · 10:00"
   (→ §4.4, plan 21). Otherwise shown when a duration is parsed from the step text, in English or
   German ("8 min", "8:00", "8–10 minutes", "10 Minuten", "1 Std. 30 Min.", "1½ Std.", "5 bis
@@ -796,15 +973,18 @@ item sheet [3a]; what differs is what a tick does and what counts as shopping.
   parsed chip stays one tap and takes the step's name. Naming used to be a guess — the step's
   first ingredient — which is how a 20-minute bake ended up called after the butter the dish was
   greased with.
-- **Ingredients chip** → bottom peek sheet listing all ingredients; the current step's are
+- **Ingredients chip** → bottom peek sheet listing all ingredients, under their parts' names when
+  the recipe has two or more parts, each note under its name (→ plans 43, 47), and at the
+  bottom **Back to Get ready** (→ plan 47); the current step's are
   highlighted in amber [7b]. One the step takes only a share of shows that share in amber with
   the row's total behind it — "20 g of 30 g" — so "how much of that was it again?" is answered
   for _now_ without losing what the recipe holds.
-- **Inherits "cooking for {n}"** from the recipe screen through `?serves=` (§4.5) — the peek
-  sheet, the "This step uses…" line, a step's own shares of an ingredient (§4.4), the amounts
-  the step's sentence gives its ingredients (in amber, → §4.5, plan 23) and the timer labels all
-  show the scaled amounts. Cook mode offers no stepper of its own: the count is
-  decided before the hands are wet, and the underlines still land on the same words because only
+- **Inherits "cooking for {n}"** from the recipe screen through `?serves=` (§4.5) — Get ready,
+  the peek sheet, the list under each step, a step's own shares of an ingredient (§4.4), the
+  amounts the step's sentence gives its ingredients (in amber, → §4.5, plan 23) and the timer
+  labels all show the scaled amounts. The count is changed **only on Get ready** (→ plan 47,
+  which replaced "no stepper in cook mode"): that is the moment before the hands are wet; the
+  steps themselves have no stepper. The underlines still land on the same words because only
   the numbers move. The count **stays** in the address as Prev/Next rewrite `?step=`, and rides
   the close × and Finish back to the recipe — a reload mid-cook (a backgrounded PWA waking up is
   the usual one) comes back cooking for the same number of people, not for what the recipe was
@@ -861,7 +1041,7 @@ item sheet [3a]; what differs is what a tick does and what counts as shopping.
   that came back with a reload until the next tap in the app. iPhones and computers keep the live
   alarm and the notification: it has only been tried on Android.
 
-### 4.7 Recipe import from a link (→ plan 12, reuses the [3c] editor as its preview)
+### 4.7 Recipe import from a link (→ plans 12, 44, 45: opens on the review, the [3c] editor one tap away)
 
 - **Entry points**: the **"Add a recipe" chooser** (§4.3) routes here with a focused `mode` —
   `link` (default), `photo`, or `text` — so each method is its own clean screen rather than one
@@ -884,37 +1064,139 @@ item sheet [3a]; what differs is what a tick does and what counts as shopping.
   `og:image`. A step that lists its own ingredients stays one step with them in its text
   (DECISIONS #151); a one-word step title with no text is not a step. A step whose text arrives
   in pieces (an array, as einfachkochen.de sends it) is one step with its pieces joined by
-  commas (DECISIONS #152). Either reader tidies what it found (DECISIONS #159): a method sent as
-  one HTML string splits at its `<li>`, `<p>` and `<br>`; leftover numbering ("1. ", "Schritt
-  2:") comes off; a heading step ("Für die Soße:") joins the step it heads; a section title among
-  the ingredients is dropped; an ingredient the site split on its own comma ("200 ml Milch (1" ·
+  commas (DECISIONS #152). Either reader tidies what it found (DECISIONS #159, #322): a method
+  sent as one HTML string splits at its `<li>`, `<p>` and `<br>`; leftover numbering ("1. ",
+  "Schritt 2:") comes off; template code a site left in a step goes (`{{ link(…, "Lasagneblätter")
+}}` → "Lasagneblätter"; hellofresh's portion variants "1 EL [1,5 EL | 2 EL] Öl*" → "1 EL Öl");
+  prices ("($0.36)"), footnotes ("(Note 1)") and WP Recipe Maker's "(, finely chopped)" come out
+  of an ingredient line; an ingredient the site split on its own comma ("200 ml Milch (1" ·
   "8 % Fett)") is one line again. A card without a method takes it from the recipe plugin's own
-  markup on the page (`e-instructions`, Jetpack, WP Recipe Maker, Tasty, Mediavine).
-- **Improve with AI** (→ plan 22) — a switch under the link field, shown only when AI features are
-  set up. **Off until someone turns it on**, then remembered on that device (turning it on is the
-  go-ahead a paid call needs; a first shared link never spends one). The share sheet honours it
-  too. With it on:
-  - a page **with** a recipe card is sent to the model **as the card** (compact JSON, not the
-    whole page) to be **improved**: each ingredient's amount and unit sorted out, which
-    ingredients each step uses — and how much, when a step takes part of one — and a **named
-    timer** where a step states a duration (→ §4.4). The card's rows stay the card's: the same
-    ingredients and steps in the same order, with its name, servings and time. If the model
-    can't improve it (busy, quota, a rewrite that changed the rows), the card **still opens, as
-    the site wrote it**, with a line saying why ("Imported as the site wrote it — Gemini is at
-    its limit…").
-  - a page **without** a card is read by the model from its text (as "Try AI extraction" below
-    does, one tap sooner).
+  markup on the page (`e-instructions`, Jetpack, WP Recipe Maker, Tasty, Mediavine). A
+  `totalTime` written in words ("5 hours 45 minutes") is read. A card with no steps and the
+  whole recipe in one "ingredient" (cookingcatrin.at) is no card: the page takes the no-card road.
+- **Parts** (→ plans 43, 44): the readers keep where a dish's parts start, as each line's and
+  each step's `section`. Steps: a `HowToSection`'s name, or a heading step ("Für die Soße:",
+  "Karottenkuchen") that names the steps after it instead of being one. Ingredients: a heading
+  row in the card ("Für den Teig:", "KATSU CURRY SAUCE"), else the page's own markup when it
+  agrees row for row with the card: WP Recipe Maker and Tasty Recipes groups, or a table per
+  part with its heading (chefkoch.de, gutekueche.at, servus.com, kochbar.de). A name is tidied
+  ("FÜR DIE BOLOGNESESAUCE" → "Bolognesesauce", at most 40 characters), and one part around
+  everything ("Zubereitung") is no part.
+- **A checked import** (→ plan 44, DECISIONS #311, #315–#318, #321). **With an AI provider set
+  up, the AI is the import**: no switch (setting up a provider is the go-ahead for one call
+  per import). A fetched link is one model call that gets the page's recipe card as JSON
+  (each ingredient line with its index and part) **and** the page's readable text (the part
+  headings are in the text, not in the card). A page with no card, a paste and photos go in
+  as before. **The model structures, plain code checks** (`utils/recipe-draft.ts`, the gate):
+  - **ingredients against the card**: a row must name the card line it came from, or it is
+    dropped as an invention (unless household instructions asked for changes); every card line
+    must be the source of a row, else it is added from the rule-based reading and flagged; where
+    the shared reader reads a number and a unit in the line, the row must say the same, else the
+    page's amount stands and is flagged; every word of the row's name must stand in the line
+    (case, plural brackets and endings aside), else the page's words stand and are flagged; a
+    line in cups, oz or lb is marked converted. One line naming two things ("Salz und Pfeffer")
+    is two rows; "A oder B" keeps A with "oder B" in the note and asks which.
+  - **units from one list** (DECISIONS #321): the eight units, the counting words the reader
+    knows, and the words this household added (`household_units`); the list is in the prompt.
+    A word the page counts in that is on no list ("2 Ringe Fleischwurst") is a question ("New
+    unit: Ringe. Add it?"); until it is answered the draft keeps the number with no unit and
+    the word in the note.
+  - **steps against the page**: split and drop, never reword (DECISIONS #316). Every step must
+    be found in the page's method word for word and in order, compared as word tokens
+    (letters and digits, case, punctuation and spacing aside, "200g" the same as "200 g"),
+    else it is flagged with the page's sentence beside it; more than a third not found, or
+    less than half of the method kept, refuses the answer (the backup gets a turn, then the
+    rule-based draft). The page's sentences no step kept are kept on the draft (`leftOut`).
+    A step longer than the editor's 600 characters becomes several, cut at sentence ends.
+  - **Fahrenheit by code**: the model leaves temperatures as the page wrote them; after the
+    gate, every imported draft (AI or rules, never a typed recipe) gets Celsius in front of a
+    °F, rounded to the nearest 5, the page's value kept in brackets ("175 °C (350°F)"), and
+    a quiet item on that step. A bare "350 F", a °C, and a °F beside a °C are left alone.
+  - **links**: a step names its ingredients and the words that do so (`phrase`, plan 43): a
+    phrase must stand in the step's text, an amount phrase beside it by the rule cook mode
+    rewrites by (`locateAmounts`), in the row's unit and not more than the row; a failed one is
+    cleared and the link stays. An exact ingredient name in a step nobody linked is linked. Steps
+    that give an ingredient more than the recipe has, and an ingredient no step uses, are said.
+  - **the recipe**: the card's name (or the model's when it only shortens it), servings and
+    time; servings missing, or 1 where the page counted a cake, is asked; no method is said.
+    Parts only where the page names them.
+    Whatever fails becomes a **check item** (`{ kind, level: 'check' | 'info', at }`) for a
+    person, never a saved guess. **Without a provider, or when both fail**, the card is read by
+    rules into the same draft (`utils/rule-draft.ts`): the shared reader for amounts, the note
+    after the first comma or in brackets, the readers' parts, no stored links (the matcher reads
+    the steps, as before), and one item saying it was imported without AI. A page with no card
+    needs the model: without one the screen points at Settings. The prompt is untested against a
+    real model until a key exists (`npm run import:eval`, DECISIONS #318).
   - The loader shows while the model works, and **Instructions for the AI** (below) are one tap
-    away.
-- On success the ordinary **recipe editor [3c] opens prefilled**, the photo already downloaded
-  and re-encoded to WebP like any upload (a missing or unfetchable photo is non-fatal — the draft
-  just has none). The preview _is_ the editor, so every imperfect parse is a two-second fix.
-  **Save** creates the recipe through the normal path and attaches the photo; nothing is stored
-  before Save but the temp photo, and an abandoned import's photo is swept nightly.
+    away under the link field.
+- On success the import opens on the **review** [R1]–[R3] (→ plan 45, DECISIONS #328–#334),
+  with the photo already downloaded and re-encoded to WebP like any upload (a missing or
+  unfetchable photo is non-fatal — the draft just has none). **Save** creates the recipe through
+  the normal path and attaches the photo; nothing is stored before Save but the temp photo (and a
+  unit word the household adds there on purpose), and an abandoned import's photo is swept
+  nightly.
+- **The review: the recipe as it will look, with what to check** (`components/cooking/review/`,
+  `utils/recipe-review.ts`). Not a form: the photo, the name and "100 min · Serves 4 ·
+  chefkoch.de", the server's line ("Made with AI. Check it over before saving."), then the
+  ingredients under their part headings with notes and the steps with their linked words
+  underlined, drawn by the recipe view's own row components (`RecipeIngredientRow`,
+  `RecipeStepRow`, `viewRuns`), so the saved recipe looks like the review did. A recipe with one
+  part never shows the word "part".
+  - **Discard · Check recipe · Save** at the top. **Save always works**: an open question is saved
+    as the draft has it (the page's amount, the page's words, the first of an either/or, a new
+    unit word left in the note); a draft without a name asks for one first. A clean import is one
+    tap.
+  - **The banner** counts the check items still open ("2 things to check · Everything else
+    matches the page"), gold. Every line that names the source says what the draft was read
+    from (DECISIONS #342): "the page", "your text" for a paste, "the photos", "the saved recipe"
+    for a tidy (§4.5); the table below shows the page's wording. a tap goes to the first. None open: sage, "Nothing to check · All
+    22 ingredients and 10 steps match the page", or "Nothing left to check · Ready to save." An
+    import without AI says "Links are a guess"; one from photos "Check it against the cookbook".
+  - **Each check item stands under the row or step it is about**, in a gold box, with its
+    answers, one tap each; answered, it gives way to "✓ Checked":
+
+    | Item             | Shown as                                             | Answers                               |
+    | ---------------- | ---------------------------------------------------- | ------------------------------------- |
+    | `choice`         | "The page offers Rotwein or Gemüsebrühe."            | the first · the other (→ note)        |
+    | `amount-differs` | "The page says “500 g …”. The AI read 50 g."         | Keep 500 g · Use 50 g                 |
+    | `name-differs`   | "The page says “1 Zwiebel(n)”."                      | Keep · Edit (the row's sheet)         |
+    | `line-added`     | "Also on the page: “1 Bund Thymian”."                | Keep · Remove                         |
+    | `reworded`       | "The page says: “…”" (every sentence of the step)    | Use the page's text · Keep            |
+    | `new-unit`       | "New unit: Kugeln. Add it?"                          | Add it · Keep it in the note          |
+    | `servings`       | "For how many people?" with − n +                    | the stepper · Keep n                  |
+    | `no-steps`       | "This page has no method."                           | Add steps (the editor) · Save without |
+    | `shares-exceed`  | "The steps use more Karotten than the recipe lists." | Keep                                  |
+
+    The other one of an either/or names the row and the first goes to the note ("oder
+    Rotwein"). "Use 50 g" takes the model's amount, which the gate keeps on the item. "Add it"
+    posts the word to Settings' `addUnit` (as the unit panel does); the row then counts in it,
+    the note loses it, and every other row asking about the same word is answered with it. The
+    servings stepper stays to hand once answered. Editing a row in its sheet answers what was
+    asked about that row; editing a step's text, what was asked about that step.
+
+  - **Folded at the bottom, under "Also"**: **Left out of the steps · 4 sentences**, the page's
+    sentences the import dropped (tips, variations, sign-offs), quoted, each with **Put back**,
+    which makes it a step after the step it followed on the page (the gate says which,
+    `leftOut[].after`), in the page's order whichever goes back first; and **Notes from the
+    import** (converted amounts, ingredients no step uses). A sentence is listed only while no
+    step holds it (a reworded step that took the page's text takes it off the list).
+  - **Tapping anything else edits that one thing** in a sheet: an ingredient row opens plan
+    46's ingredient sheet (name, number, unit, note, part); a step opens its text, with **Link
+    ingredients** (plan 46's link sheet) and **Remove step**; the name line opens name, time and
+    servings. **Edit everything** (dashed, at the end) opens the full editor [3c] on the same
+    draft (`?draft=<id>&edit=1`); its Cancel goes back to the review, with what was changed.
+  - **The draft survives a reload and the app going to the background**: the import page keeps
+    it in the tab's `sessionStorage` under a new id and the address becomes `?draft=<id>` (in
+    place of the entry screen, so Back never fetches a shared link twice); every change is
+    written back; Save and Discard drop it. An address whose draft this tab no longer has says
+    "This import is no longer here." with **Import again**. Without JS the import opens in the
+    ordinary editor, as before.
 - **Fetching is guarded** (the server fetches a user-supplied URL): `http(s)` only,
   loopback / private / link-local hosts refused _before any request_ — including an IPv4 one
   wrapped in IPv6 (`[::ffff:127.0.0.1]`, NAT64, 6to4) — and re-checked on every redirect hop,
-  redirects capped (~5), ~10 s timeout, ~3 MB page cap, `text/html` only. Each failure has its
+  redirects capped (~5), ~10 s timeout, ~3 MB page cap, `text/html` only. The request says
+  what it is (a generic `Mozilla/5.0 (compatible; recipe-importer)`, DECISIONS #322): claiming
+  to be Chrome is what Cloudflare challenged. Each failure has its
   own translated message — unreachable · blocked · **refused** (the site turns apps away:
   401/402/403/429 or a Cloudflare challenge — "open it in your browser and copy the recipe", with
   links to the text and photo modes when AI is set up) · not a page · too large · no recipe
@@ -925,15 +1207,10 @@ item sheet [3a]; what differs is what a tick does and what counts as shopping.
   OpenRouter, on a model it picked. Nothing reaches any model without one. When the main provider
   can't answer (limit reached, out of credit, key refused, down), the household's **backup**
   provider, if it has one, gets the same request, and the draft says so ("Gemini couldn't
-  answer, so your backup (Claude) did"). Every path lands in the same
-  [3c] editor with a quiet "Made with AI — check it over before saving" note (**the AI never
-  saves on its own**). Three ways in besides **Improve with AI** (photo and text are their own
-  focused modes off the chooser §4.3; the first is an in-context escalation off a failed link
-  fetch):
-  - **A fetched page with no recipe data** — in link mode the dead end becomes a **Try AI
-    extraction** button (plus quiet links to the photo/text modes). The tap is deliberate (a paid
-    call is never silent): the URL is re-fetched under the same guards, stripped to readable text
-    server-side, and read by the model. No key → a link to Settings instead.
+  answer, so your backup (Claude) did"). Every path lands on the same
+  review with a quiet "Made with AI — check it over before saving" note (**the AI never
+  saves on its own**). Ways in besides a link (photo and text are their own focused modes off
+  the chooser §4.3); a fetched page the model could not read offers them too:
   - **Pasted text** — the text mode: paste the recipe into a box, the answer for sites that block
     the server (Cloudflare 403), since the browser can still load them.
   - **Photos** — the photo mode: 1–3 photos of a cookbook/magazine page, validated and re-encoded
@@ -944,25 +1221,35 @@ item sheet [3a]; what differs is what a tick does and what counts as shopping.
     the AI" link, on top of the household's **standing instructions** from Settings (§6), which
     the screen shows ("Always applied: …"). They may change ingredients, amounts and steps; the
     draft quotes the line it was asked ("Adapted: “mit Tofu statt Fleisch”.").
-  - **What the model returns** is one strict shape: name, servings, time; ingredients as amount
-    - unit (g · kg · ml · L · pcs · pack · tbsp · tsp, or none) + name — cups, oz and lb are
-      converted to metric and °F to °C; steps with the ingredients each uses (and the share) and
-      an optional named timer. The page, text or photos are **data, never instructions** — the
-      prompt says so. Before the editor sees any of it, a gate (→ DECISIONS #148) keeps only what
-      passes: wrong-typed rows dropped and pins re-pointed, control/HTML/markdown/links stripped,
-      every length and count capped by the form's own limits, amounts finite and under the cap,
-      units from the list only, pins only to rows that exist (a share above a row's total is "all
-      of it"), and **a timer only where the step's own text states that duration**. Ingredient
-      lines are written back in the reader's unit spelling ("2 EL Öl") so the editor reads them
-      like typed ones. Save then checks everything again.
-      Recipe content keeps its **source language** unless the instructions ask otherwise (→ §9).
-      Failures are their own
-      messages, naming the provider — key refused (→ Settings) · at its limit · quota or credit used
-      up · model unavailable or unable to read photos · not answering · nothing found — never a raw
-      API error; when the backup failed too, the message says that as well.
+  - **What the model returns** is one strict shape (plan 44's contract): name, servings, time;
+    ingredients as source line, amount, unit (g · kg · ml · L · pcs · pack · tbsp · tsp, or
+    none), counting word, new unit, name, note, alternative and part; steps as text, part,
+    timer and the ingredients each uses with the words that name them and their amount.
+    Cups, oz and lb are converted to metric. The page, text or photos are **data, never
+    instructions** — the prompt says so. Before the editor sees any of it, the gate above (and
+    → DECISIONS #148) keeps only what passes: control/HTML/markdown/links stripped, every length
+    and count capped by the form's own limits, amounts finite and under the cap, units from the
+    list only, links only to rows that exist, and **a timer only where the step's own text
+    states that duration**. A photo import cannot be checked against a page, and says so.
+    Ingredient lines are written back in the reader's unit spelling ("2 EL Öl") so the editor
+    reads them like typed ones. Save then checks everything again.
+    Recipe content keeps its **source language** unless the instructions ask otherwise (→ §9).
+    Failures are their own
+    messages, naming the provider — key refused (→ Settings) · at its limit · quota or credit used
+    up · model unavailable or unable to read photos · not answering · nothing found — never a raw
+    API error; when the backup failed too, the message says that as well.
 - Household content is never translated by the app: a card imported without AI passes through
   verbatim (→ §9). With AI, the recipe keeps its own language unless the household's
   instructions ask otherwise; units are converted to metric.
+- **Tags arrive with the recipe** (→ plan 41). The card's `recipeCategory`, `keywords` and
+  `suitableForDiet` are mapped onto the tag list (§4.3) through an English and German word list,
+  whole words only ("Suppe" → soup, "Hauptspeise" → main, "Frühstück" → breakfast,
+  `VeganDiet` → vegan, "glutenfrei" → gluten-free); meat and fish are never read off a page. An
+  AI import picks tags and a diet from the same list (the schema allows nothing else). Either
+  way they open **ticked and dotted** in the editor's Tags block, which opens unfolded, with a
+  line saying where they came from; touching a chip clears its dot, and Save saves what is
+  ticked. With AI on a page that has a card, the page's own word stands group
+  by group and the AI's fills only the groups the page left empty.
 
 ### 4.8 Ingredient picker [3e] — which ingredients actually need buying
 
@@ -973,9 +1260,18 @@ in the cupboard, and reading the whole list back against the recipe to find the 
 actually need is the chore this replaces (→ [DECISIONS #123](DECISIONS.md)).
 
 - Title = the recipe's name, eyebrow "Add to shopping list", subtitle "Tick what you need to
-  buy." One row per ingredient in the recipe's own order: check circle, name, and the recipe's
-  amount right-aligned like the recipe view. The list scrolls inside the sheet so the count and
-  the button stay put.
+  buy." **One row per name** in the recipe's own order: check circle, name, and the amount right-
+  aligned like the recipe view. What reaches the list (→ plan 43, DECISIONS #313, #314):
+  - **the name only, never the note**: "Faschiertes", not "Faschiertes, gemischt";
+  - **a container counting word becomes a pack** with its number ("1 Dose Tomaten" → Tomaten ·
+    1 pack); **every other counting word, and tbsp and tsp, put the name alone** ("2 Zehen
+    Knoblauch" → Knoblauch; "2 EL Olivenöl" → Olivenöl): nobody buys two cloves;
+  - **the same name in two parts is one row**, its amounts added where the units agree by the
+    list's own merge rules (Butter 30 g in the Béchamel + 10 g for the form → Butter · 40 g), and
+    the parts it gathers named in the quiet line ("Béchamel · Schichten").
+    The sheet works this out with the same function the submit runs, so it promises exactly what
+    the list receives. The list scrolls inside the sheet so the count and
+    the button stay put.
 - **Cooking for {n}** at the top, the same stepper the recipe screen has (§4.5) and seeded from
   it when the sheet was raised there. Moving it rewrites every amount in the list _and_ every
   "becomes {x}" beneath it, and the count is what the server scales to on submit — so what the
@@ -1275,16 +1571,9 @@ Reached from Home's gear (→ §2), and its back chevron returns to Home.
   - **Household instructions** (→ plan 22, once a provider is set up): one standing line, up to
     300 characters ("we're vegetarian; use metric units"), applied to every AI import on top of
     whatever is typed for one recipe. Owner sets it; the import screen shows it.
-- **Recipe wording** (→ plan 24, owner sets; members see the row read-only): **As written**
-  (default) or **Austrian German**. With Austrian German, a German recipe imported from then on
-  uses the Austrian words — Sahne → Obers, saure Sahne → Sauerrahm, Quark → Topfen, Hackfleisch
-  → Faschiertes, Kartoffeln → Erdäpfel, Tomaten → Paradeiser, Aprikosen → Marillen, … — from a
-  **fixed list** in the app (not editable in v1). With AI the model rewrites the whole recipe in
-  Austrian German and gets the grammar right ("das Obers"); without AI only the **ingredient
-  names** are swapped, whole words only ("Sahnejoghurt" stays), because a word swap inside a
-  sentence would break its articles. Recipes in other languages, and saved recipes, are never
-  touched. Either way cook mode still underlines a step's "Sahne" for an "Obers" row: each pair
-  is a synonym for the step matcher (§4.4), whatever the setting.
+- ~~**Recipe wording**~~ (plan 24) was **removed by plan 44** (DECISIONS #317): it rewrote
+  ingredient names after the import, so the list said "Obers" where the steps said "Sahne". An
+  import keeps the site's words. Recipes saved with it keep their names.
 - **About**: **Send feedback** → sheet — a **bug** or an **idea**, in your own words, in any
   language, up to 2000 characters. The sheet says what travels with it _before_ you send, and
   says it accurately: **the repository is public**, so the issue carries the words, the app
@@ -1356,8 +1645,8 @@ timezone, so January reads "Jänner" (→ [DECISIONS #93](DECISIONS.md)). Every 
   added (→ [DECISIONS #136](DECISIONS.md)). The three starter stores and the three "popular
   starters" are written in the language of whoever created them, and are theirs to rename.
   The language switch never rewrites any of it. What a household **chooses** for its own
-  imports is a different thing: its recipe wording (§6, plan 24) and its AI instructions (§4.7)
-  shape a recipe once, as it is imported — never one already saved.
+  imports is a different thing: its AI instructions (§4.7) shape a recipe once, as it is
+  imported — never one already saved. (Plan 24's recipe wording is gone, → §6.)
 - **Units are stored canonically and shown per language** — `tbsp` reads "tbsp" or "EL", `pcs`
   reads "pcs" or "Stk.". A recipe typed in either language parses to the same rows.
 - **Notifications** go to a device, so they use the recipient's own language: their explicit

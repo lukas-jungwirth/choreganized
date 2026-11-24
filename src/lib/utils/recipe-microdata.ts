@@ -18,10 +18,13 @@
 import { parse, type HTMLElement } from 'node-html-parser';
 import {
 	cardSize,
-	isoDurationToMinutes,
+	durationToMinutes,
+	isBlobCard,
+	mapLabels,
 	mapYield,
-	tidyIngredientLines,
+	tidyIngredients,
 	tidySteps,
+	yieldText,
 	type RecipeJsonLd
 } from './recipe-jsonld';
 
@@ -44,26 +47,38 @@ export function parseRecipeMicrodata(html: string): RecipeJsonLd | null {
 	const props = ownProperties(scope);
 	const first = (name: string) => props.get(name)?.[0] ?? null;
 
+	// `ingredients` is the deprecated spelling, as in JSON-LD.
+	const ingredients = tidyIngredients(
+		[...(props.get('recipeIngredient') ?? []), ...(props.get('ingredients') ?? [])]
+			.map((element) => clean(valueOf(element)))
+			.filter(Boolean)
+	);
+	const steps = tidySteps(
+		props.has('recipeInstructions')
+			? props.get('recipeInstructions')!.flatMap(stepsOf)
+			: markedUpSteps(scope)
+	);
+
 	const recipe: RecipeJsonLd = {
 		name: clean(first('name') ? valueOf(first('name')!) : ''),
 		timeMinutes: time(props),
 		servings: mapYield(first('recipeYield') ? valueOf(first('recipeYield')!) : null),
-		// `ingredients` is the deprecated spelling, as in JSON-LD.
-		ingredientLines: tidyIngredientLines(
-			[...(props.get('recipeIngredient') ?? []), ...(props.get('ingredients') ?? [])]
-				.map((element) => clean(valueOf(element)))
-				.filter(Boolean)
-		),
-		steps: tidySteps(
-			props.has('recipeInstructions')
-				? props.get('recipeInstructions')!.flatMap(stepsOf)
-				: markedUpSteps(scope)
-		),
-		image: first('image') ? valueOf(first('image')!) || null : null
+		servingsText: yieldText(first('recipeYield') ? valueOf(first('recipeYield')!) : null),
+		ingredientLines: ingredients.lines,
+		ingredientSections: ingredients.sections,
+		steps: steps.steps,
+		stepSections: steps.sections,
+		image: first('image') ? valueOf(first('image')!) || null : null,
+		labels: mapLabels(
+			['recipeCategory', 'keywords', 'suitableForDiet'].flatMap((name) =>
+				(props.get(name) ?? []).map(valueOf)
+			)
+		)
 	};
 
-	// A Recipe scope with no rows is a template stub or a teaser, not a recipe.
-	return cardSize(recipe) ? recipe : null;
+	// A Recipe scope with no rows is a template stub or a teaser, not a recipe;
+	// one with the whole recipe in one row is no card either (→ `isBlobCard`).
+	return cardSize(recipe) && !isBlobCard(recipe) ? recipe : null;
 }
 
 /**
@@ -136,7 +151,7 @@ function valueOf(element: HTMLElement): string {
 function time(props: Map<string, HTMLElement[]>): number | null {
 	const minutes = (name: string) => {
 		const element = props.get(name)?.[0];
-		return element ? isoDurationToMinutes(valueOf(element).trim()) : null;
+		return element ? durationToMinutes(valueOf(element).trim()) : null;
 	};
 
 	const total = minutes('totalTime');

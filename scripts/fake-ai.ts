@@ -15,6 +15,17 @@
  *   - a model containing `down`   → 503
  *   - anything else               → a recipe whose name says who answered
  *
+ * The import's answer (→ plan 44) has two forms. Given a page's recipe card,
+ * the fake echoes it the way a careful model would: one row per card line
+ * (amount and unit read off the line's start, the rest as the name), the
+ * card's steps word for word, a link wherever a row's first word stands in a
+ * step. A saved recipe sent to be tidied (→ plan 48) is a card too, and the
+ * fake also does what a tidy is for: what follows a comma in a line is the
+ * note ("Hackfleisch, gemischtes" → Hackfleisch, note "gemischtes"). Given
+ * text or photos, it answers `FAKE_PANCAKES`: two parts, a note,
+ * an either/or and links with their words, for the paste the journeys type in
+ * (`FAKE_PANCAKE_TEXT`).
+ *
  * `GET /__requests` returns what each call asked for (keys stripped), so a test
  * can check what reached the model — the instructions, say — without a real one.
  *
@@ -23,7 +34,7 @@
  */
 import { createServer, type IncomingMessage, type ServerResponse } from 'node:http';
 
-type Provider = 'gemini' | 'openai' | 'anthropic' | 'openrouter';
+export type Provider = 'gemini' | 'openai' | 'anthropic' | 'openrouter';
 
 type Logged = { provider: Provider; path: string; model: string | null; body: unknown };
 
@@ -68,14 +79,193 @@ const MODELS = {
 	]
 };
 
+/** What the journeys paste in text mode: the fake's pancakes, word for word. */
+export const FAKE_PANCAKE_TEXT = [
+	'Pancakes',
+	'Batter: 200 g flour, 2 eggs, 300 ml cold milk.',
+	'Sauce: 150 g berries or cherries, 1 tbsp sugar.',
+	'Whisk 200 g flour, 2 eggs and 300 ml milk. Fry each pancake for 2 minutes per side. Simmer the berries with the sugar for 5 minutes.'
+].join('\n');
+
+/** The import's answer to text or photos (→ plan 44): parts, a note, a choice, links. */
+function fakePancakes(name: string) {
+	return {
+		name,
+		timeMinutes: 20,
+		servings: 4,
+		ingredients: [
+			row(null, 200, 'g', 'flour', { section: 'Batter' }),
+			row(null, 2, null, 'eggs', { section: 'Batter' }),
+			row(null, 300, 'ml', 'milk', { section: 'Batter', note: 'cold' }),
+			row(null, 150, 'g', 'berries', { section: 'Sauce', alternative: 'cherries' }),
+			row(null, 1, 'tbsp', 'sugar', { section: 'Sauce' })
+		],
+		steps: [
+			{
+				text: 'Whisk 200 g flour, 2 eggs and 300 ml milk.',
+				section: 'Batter',
+				timer: null,
+				uses: [use(0, 'flour', '200 g'), use(1, 'eggs', '2'), use(2, 'milk', '300 ml')]
+			},
+			{
+				text: 'Fry each pancake for 2 minutes per side.',
+				section: 'Batter',
+				timer: { seconds: 120, label: 'Pancake' },
+				uses: []
+			},
+			{
+				text: 'Simmer the berries with the sugar for 5 minutes.',
+				section: 'Sauce',
+				timer: null,
+				uses: [use(3, 'berries', null), use(4, 'sugar', null)]
+			}
+		]
+	};
+}
+
+function row(
+	source: number | null,
+	quantity: number | null,
+	unit: string | null,
+	name: string,
+	extra: { section?: string; note?: string; alternative?: string } = {}
+) {
+	return {
+		source,
+		quantity,
+		unit,
+		countingWord: null,
+		newUnit: null,
+		name,
+		note: extra.note ?? null,
+		alternative: extra.alternative ?? null,
+		section: extra.section ?? null
+	};
+}
+
+function use(ingredient: number, phrase: string | null, amountPhrase: string | null) {
+	return { ingredient, phrase, amountPhrase, quantity: null };
+}
+
+type Card = {
+	name: string;
+	servings: number | null;
+	timeMinutes: number | null;
+	ingredients: { source: number; line: string; section: string | null }[];
+	steps: string[];
+};
+
+const UNITS: Record<string, string> = {
+	g: 'g',
+	gramm: 'g',
+	kg: 'kg',
+	ml: 'ml',
+	l: 'L',
+	liter: 'L',
+	el: 'tbsp',
+	tbsp: 'tbsp',
+	tl: 'tsp',
+	tsp: 'tsp',
+	stk: 'pcs',
+	'stk.': 'pcs',
+	pck: 'pack',
+	'pkg.': 'pack'
+};
+
+/** A card echoed the way a careful model reads it: rows by line, steps word for word. */
+function echoCard(card: Card, saved = false) {
+	const ingredients = card.ingredients.map(({ source, line, section }) => {
+		if (!saved) return echoLine(source, line, section);
+		// A tidy (→ plan 48): what follows the first comma is the note.
+		const [head, ...rest] = line.split(',');
+		const echoed = echoLine(source, head.trim(), section);
+		return rest.length ? { ...echoed, note: rest.join(',').trim() } : echoed;
+	});
+
+	// A tidy leaves tips out, as a model may (→ plan 48: the review asks about them).
+	const method = saved ? card.steps.filter((text) => !text.startsWith('Tipp:')) : card.steps;
+	const steps = method.map((text) => ({
+		text,
+		section: null,
+		timer: null,
+		uses: ingredients.flatMap((ingredient, at) => {
+			const word = ingredient.name.split(/[^\p{L}]+/u).find((one) => one.length >= 3);
+			if (!word) return [];
+			const found = new RegExp(`(?<!\\p{L})${word}(?!\\p{L})`, 'iu').exec(text);
+			return found ? [use(at, found[0], null)] : [];
+		})
+	}));
+
+	return {
+		name: card.name,
+		servings: card.servings,
+		timeMinutes: card.timeMinutes,
+		ingredients,
+		steps,
+		tags: [],
+		diet: null
+	};
+}
+
+/** One card line as a row: amount and unit off its start, the rest as the name. */
+function echoLine(source: number, line: string, section: string | null) {
+	const match = /^(\d+(?:[.,]\d+)?)\s+(\S+)\s+(.+)$/.exec(line);
+	const unit = match ? UNITS[match[2].toLowerCase()] : undefined;
+	if (match && unit) {
+		return row(source, Number(match[1].replace(',', '.')), unit, match[3], {
+			section: section ?? undefined
+		});
+	}
+	const bare = /^(\d+(?:[.,]\d+)?)\s+(.+)$/.exec(line);
+	if (bare) {
+		return row(source, Number(bare[1].replace(',', '.')), null, bare[2], {
+			section: section ?? undefined
+		});
+	}
+	return row(source, null, null, line, { section: section ?? undefined });
+}
+
+/** The lead a website's card is sent after, and the one a saved recipe's tidy is (→ plan 48). */
+const CARD_LEAD = 'The recipe card the website published:\n\n';
+const SAVED_LEAD = 'A recipe the household saved earlier, as its recipe card.';
+
+/** The card a request carried, if any: the import sends it as compact JSON after a fixed lead. */
+function cardOf(body: unknown): { card: Card; saved: boolean } | null {
+	const strings: string[] = [];
+	const walk = (value: unknown) => {
+		if (typeof value === 'string') strings.push(value);
+		else if (Array.isArray(value)) value.forEach(walk);
+		else if (value && typeof value === 'object') Object.values(value).forEach(walk);
+	};
+	walk(body);
+	const text = strings.find((one) => one.startsWith(CARD_LEAD) || one.startsWith(SAVED_LEAD));
+	if (!text) return null;
+	try {
+		const saved = text.startsWith(SAVED_LEAD);
+		const json = saved ? text.slice(text.indexOf('{')) : text.slice(CARD_LEAD.length);
+		return { card: JSON.parse(json) as Card, saved };
+	} catch {
+		return null;
+	}
+}
+
 /**
  * The answer to a recipe request, in whatever shape the request's schema asks
- * for: the probe's `{ ok }`, plan 13's flat recipe, or — once plan 22's schema
- * arrives with structured steps — the enriched draft.
+ * for: the probe's `{ ok }`, plan 13's flat recipe, plan 22's enriched draft,
+ * or plan 44's checked import.
  */
-function answerFor(provider: Provider, schema: Record<string, unknown> | null): unknown {
+export function answerFor(
+	provider: Provider,
+	schema: Record<string, unknown> | null,
+	body: unknown = null
+): unknown {
 	const properties = (schema?.properties ?? {}) as Record<string, Record<string, unknown>>;
 	if ('ok' in properties) return { ok: true };
+
+	// Plan 41's sorting pass: one suggestion, for the first recipe asked about.
+	if ('recipes' in properties) {
+		return { recipes: [{ index: 0, tags: ['meal:dinner', 'kind:main'], diet: 'vegetarian' }] };
+	}
 
 	const name = `${NAMES[provider]} pancakes`;
 	const stepItems = properties.steps?.items as Record<string, unknown> | undefined;
@@ -91,7 +281,19 @@ function answerFor(provider: Provider, schema: Record<string, unknown> | null): 
 		};
 	}
 
+	// Plan 44's contract: rows know their source line.
+	const rowItems = (properties.ingredients?.items ?? {}) as Record<string, unknown>;
+	if ('source' in ((rowItems.properties ?? {}) as Record<string, unknown>)) {
+		const card = cardOf(body);
+		const tags = { tags: ['meal:breakfast', 'kind:dessert'], diet: 'vegetarian' };
+		return card ? echoCard(card.card, card.saved) : { ...tags, ...fakePancakes(name) };
+	}
+
+	// Plan 41's schema asks what the dish is as well.
+	const tagged = 'tags' in properties ? { tags: ['meal:breakfast', 'kind:dessert'], diet: 'vegetarian' } : {}; // prettier-ignore
+
 	return {
+		...tagged,
 		name,
 		timeMinutes: 20,
 		servings: 4,
@@ -240,7 +442,11 @@ export async function startFakeAi(port = 0): Promise<{ url: string; close: () =>
 		if (model.includes('down'))
 			return send(res, 503, { error: { message: 'Service unavailable' } });
 
-		return send(res, 200, generationReply(provider, answerFor(provider, schemaOf(provider, body))));
+		return send(
+			res,
+			200,
+			generationReply(provider, answerFor(provider, schemaOf(provider, body), body))
+		);
 	});
 
 	await new Promise<void>((resolve) => server.listen(port, '127.0.0.1', resolve));

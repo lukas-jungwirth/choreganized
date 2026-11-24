@@ -13,7 +13,7 @@
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
 import { describe, it } from 'vitest';
-import { parseRecipeJsonLd } from './recipe-jsonld.ts';
+import { isBlobCard, parseRecipeJsonLd } from './recipe-jsonld.ts';
 
 /**
  * One ingredient: a Recipe with no rows at all is no recipe (a teaser card), so
@@ -413,18 +413,207 @@ describe('parseRecipeJsonLd — tidying what sites send', () => {
 		);
 	});
 
-	it('joins a heading step to the step it heads', () => {
+	it('makes a heading step the part of the steps after it (→ plan 44)', () => {
+		const recipe = parseRecipeJsonLd(
+			page({
+				'@type': 'Recipe',
+				name: 'x',
+				recipeInstructions: [
+					'Wasser aufsetzen.',
+					'Für die Soße:',
+					'Butter schmelzen.',
+					'Mehl einrühren.',
+					'Zum Servieren:'
+				]
+			})
+		);
+		assert.deepEqual(recipe?.steps, [
+			'Wasser aufsetzen.',
+			'Butter schmelzen.',
+			'Mehl einrühren.',
+			'Zum Servieren:'
+		]);
+		assert.deepEqual(recipe?.stepSections, [null, 'Soße', 'Soße', 'Soße']);
+	});
+
+	it('makes bare titles parts when the card opens on one and has another (kochbar.de)', () => {
+		const recipe = parseRecipeJsonLd(
+			page({
+				'@type': 'Recipe',
+				name: 'x',
+				recipeInstructions: ['Karottenkuchen', 'Backen.', 'Frosting und Finish', 'Bestreichen.']
+			})
+		);
+		assert.deepEqual(recipe?.steps, ['Backen.', 'Bestreichen.']);
+		assert.deepEqual(recipe?.stepSections, ['Karottenkuchen', 'Frosting und Finish']);
+	});
+
+	it('makes a section title in the ingredients the part of the rows after it (→ plan 44)', () => {
+		const recipe = parseRecipeJsonLd(
+			page({
+				'@type': 'Recipe',
+				name: 'x',
+				recipeIngredient: [
+					'Für den Teig:',
+					'250 g Mehl',
+					'KATSU CURRY SAUCE',
+					'1 onion',
+					'PICKLE',
+					'1 lemon'
+				]
+			})
+		);
+		assert.deepEqual(recipe?.ingredientLines, ['250 g Mehl', '1 onion', '1 lemon']);
+		assert.deepEqual(recipe?.ingredientSections, ['Teig', 'Katsu curry sauce', 'Pickle']);
+	});
+
+	it('keeps a HowToSection’s name as the part of its steps (→ plan 44)', () => {
+		const recipe = parseRecipeJsonLd(
+			page({
+				'@type': 'Recipe',
+				name: 'x',
+				...ROWS,
+				recipeInstructions: [
+					{
+						'@type': 'HowToSection',
+						name: 'FÜR DIE BOLOGNESESAUCE',
+						itemListElement: [{ '@type': 'HowToStep', text: 'Anbraten.' }]
+					},
+					{
+						'@type': 'HowToSection',
+						name: 'Cheese Sauce:',
+						itemListElement: [{ '@type': 'HowToStep', text: 'Melt butter.' }]
+					}
+				]
+			})
+		);
+		assert.deepEqual(recipe?.stepSections, ['Bolognesesauce', 'Cheese Sauce']);
+	});
+
+	it('names no part when one covers everything ("Zubereitung")', () => {
+		const recipe = parseRecipeJsonLd(
+			page({
+				'@type': 'Recipe',
+				name: 'x',
+				...ROWS,
+				recipeInstructions: [
+					{
+						'@type': 'HowToSection',
+						name: 'Schichten',
+						itemListElement: ['Schichten.', 'Backen.']
+					}
+				]
+			})
+		);
+		assert.deepEqual(recipe?.stepSections, [null, null]);
+	});
+
+	it('takes template leftovers out of a step (gutekueche.at, hellofresh)', () => {
 		assert.deepEqual(
-			steps(['Für die Soße:', 'Butter schmelzen.', 'Mehl einrühren.', 'Zum Servieren:']),
-			['Für die Soße: Butter schmelzen.', 'Mehl einrühren.', 'Zum Servieren:']
+			steps([
+				'Abwechselnd die {{ link("RZT", 43664, "Lasagneblätter") }} und die Sauce schichten.',
+				'Mit 1 EL [1,5 EL | 2 EL] Öl*, einer Prise Salz* und die Hälfte [drei Viertel | alles] der Sriracha marinieren.'
+			]),
+			[
+				'Abwechselnd die Lasagneblätter und die Sauce schichten.',
+				'Mit 1 EL Öl, einer Prise Salz und die Hälfte der Sriracha marinieren.'
+			]
 		);
 	});
 
-	it('drops a section title from the ingredients', () => {
-		assert.deepEqual(lines(['Für den Teig:', '250 g Mehl', 'Für die Fülle:', '500 g Topfen']), [
-			'250 g Mehl',
-			'500 g Topfen'
+	it('takes prices, footnotes and WP Recipe Maker’s comma brackets out of a line', () => {
+		assert.deepEqual(
+			lines([
+				'1 onion (, finely chopped (white, yellow or brown))',
+				'1 kg / 2 lb beef mince ((ground beef) (Note 1))',
+				'1 - 2 tsp sugar ((if needed - Note 3))',
+				'2 cups rice ($0.36)',
+				'2 cups (260g) chopped pecans (1 cup for cake)*'
+			]),
+			[
+				'1 onion, finely chopped (white, yellow or brown)',
+				'1 kg / 2 lb beef mince (ground beef)',
+				'1 - 2 tsp sugar (if needed)',
+				'2 cups rice',
+				'2 cups (260g) chopped pecans (1 cup for cake)'
+			]
+		);
+	});
+
+	it('reads a total time written in words (bonappetit.com)', () => {
+		const time = (totalTime: string) =>
+			parseRecipeJsonLd(page({ '@type': 'Recipe', name: 'x', ...ROWS, totalTime }))?.timeMinutes;
+		assert.equal(time('5 hours 45 minutes'), 345);
+		assert.equal(time('1 Std. 30 Min.'), 90);
+		assert.equal(time('soon'), null);
+	});
+
+	it('calls a card with no steps and the whole recipe in one row a blob (cookingcatrin.at)', () => {
+		const blob = `Zutaten ${'1 kg speckige Erdäpfel 50 ml Essig 500 ml heißes Wasser '.repeat(6)}`;
+		assert.ok(isBlobCard({ ingredientLines: [blob], steps: [] }));
+		assert.ok(!isBlobCard({ ingredientLines: [blob], steps: ['Kochen.'] }));
+		assert.ok(!isBlobCard({ ingredientLines: ['1 kg Erdäpfel'], steps: [] }));
+	});
+
+	it('keeps a step-shaped short line as a step unless the card opens on titles', () => {
+		const recipe = (recipeInstructions: string[]) =>
+			parseRecipeJsonLd(page({ '@type': 'Recipe', name: 'x', ...ROWS, recipeInstructions }));
+		const one = recipe(['Mehl und Eier verrühren.', 'Teig kneten', '30 Minuten ruhen lassen.']);
+		assert.deepEqual(one?.steps, [
+			'Mehl und Eier verrühren.',
+			'Teig kneten',
+			'30 Minuten ruhen lassen.'
 		]);
+		assert.deepEqual(one?.stepSections, [null, null, null]);
+	});
+
+	it('keeps a heading-shaped row that ends a HowToSection as a step', () => {
+		const recipe = parseRecipeJsonLd(
+			page({
+				'@type': 'Recipe',
+				name: 'x',
+				...ROWS,
+				recipeInstructions: [
+					{ '@type': 'HowToSection', name: 'A', itemListElement: ['Mix.', 'Zum Garnieren:'] },
+					{ '@type': 'HowToSection', name: '', itemListElement: ['Bake.'] }
+				]
+			})
+		);
+		assert.deepEqual(recipe?.steps, ['Mix.', 'Zum Garnieren:', 'Bake.']);
+		assert.deepEqual(recipe?.stepSections, ['A', 'A', null]);
+	});
+
+	it('keeps "Für die Form: Butter" as butter, and takes template code out of a line', () => {
+		const recipe = parseRecipeJsonLd(
+			page({
+				'@type': 'Recipe',
+				name: 'x',
+				recipeIngredient: ['200 g Mehl', 'Für die Form: Butter', '1 EL [1,5 EL | 2 EL] Öl*']
+			})
+		);
+		assert.deepEqual(recipe?.ingredientLines, ['200 g Mehl', 'Für die Form: Butter', '1 EL Öl']);
+	});
+
+	it('keeps a "Für …" line with a thing after the title, and a lone shouted word, as rows', () => {
+		const recipe = parseRecipeJsonLd(
+			page({
+				'@type': 'Recipe',
+				name: 'x',
+				recipeIngredient: [
+					'200 g Mehl',
+					'Für die Deko Puderzucker',
+					'For frying vegetable oil',
+					'BUTTER'
+				]
+			})
+		);
+		assert.deepEqual(recipe?.ingredientLines, [
+			'200 g Mehl',
+			'Für die Deko Puderzucker',
+			'For frying vegetable oil',
+			'BUTTER'
+		]);
+		assert.deepEqual(recipe?.ingredientSections, [null, null, null, null]);
 	});
 
 	it('puts back an ingredient the site split on its own comma', () => {
@@ -469,10 +658,12 @@ describe('parseRecipeJsonLd — zuckerjagdwurst.com (section titles, numbered st
 		assert.equal(recipe!.ingredientLines[0], '3 Orangen (z. B. von gebana)');
 	});
 
-	it('numbers no step, and heads the first with its section', () => {
+	it('numbers no step, and puts each under its part', () => {
 		assert.ok(recipe!.steps.every((step) => !/^\d+\.\s/.test(step)));
-		assert.match(recipe!.steps[0], /^Orangensalat \(.*\): Orangen schälen/);
+		assert.match(recipe!.steps[0], /^Orangen schälen/);
 		assert.equal(recipe!.steps.length, 13);
+		assert.equal(recipe!.stepSections[0], 'Orangensalat');
+		assert.equal(recipe!.stepSections[4], 'Kürbis-Curry');
 	});
 });
 
@@ -497,5 +688,43 @@ describe('parseRecipeJsonLd — nothing to import', () => {
 
 	it('is null (not a throw) when every block is malformed', () => {
 		assert.equal(parseRecipeJsonLd('<script type="application/ld+json">{oops</script>'), null);
+	});
+});
+
+describe('parseRecipeJsonLd — what the page says the dish is (→ plan 41)', () => {
+	it('reads category, keywords and diet, strings, arrays and @id objects alike', () => {
+		const recipe = parseRecipeJsonLd(
+			page({
+				'@type': 'Recipe',
+				name: 'Kürbissuppe',
+				recipeCategory: ['Suppe', 'Hauptspeise'],
+				keywords: 'vegan, schnell, Herbst',
+				suitableForDiet: [
+					{ '@id': 'https://schema.org/VeganDiet' },
+					'https://schema.org/GlutenFreeDiet'
+				],
+				recipeIngredient: ['1 Kürbis'],
+				recipeInstructions: 'Kochen.'
+			})
+		);
+		assert.deepEqual(recipe?.labels, [
+			'Suppe',
+			'Hauptspeise',
+			'vegan, schnell, Herbst',
+			'https://schema.org/VeganDiet',
+			'https://schema.org/GlutenFreeDiet'
+		]);
+	});
+
+	it('is an empty list on a page that says nothing', () => {
+		const recipe = parseRecipeJsonLd(
+			page({
+				'@type': 'Recipe',
+				name: 'X',
+				recipeIngredient: ['1 Ei'],
+				recipeInstructions: 'Kochen.'
+			})
+		);
+		assert.deepEqual(recipe?.labels, []);
 	});
 });

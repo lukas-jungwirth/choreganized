@@ -5,11 +5,17 @@
 	A dark `BottomSheet` rather than a second sheet component: the focus trap,
 	Escape, the scrim and the scroll lock are the same problem on any background
 	(→ `ui/BottomSheet` `tone`).
+
+	Grouped by the recipe's parts, each row with its note under the name
+	(→ plan 43); a recipe without parts, or with only one, is one list
+	(→ plan 47). At the bottom, the way back to Get ready's list to tick off.
 -->
 <script lang="ts">
 	import BottomSheet from '$lib/components/ui/BottomSheet.svelte';
 	import { messages } from '$lib/i18n';
 	import type { RecipeIngredientRow } from '$lib/server/services/recipes';
+	import { showsParts } from '$lib/utils/cook';
+	import { groupByPart } from '$lib/utils/recipes';
 
 	type Props = {
 		ingredients: RecipeIngredientRow[];
@@ -20,10 +26,12 @@
 		 * step takes a share of it (→ SPEC §4.4).
 		 */
 		used: RecipeIngredientRow[];
+		/** Back to Get ready (→ plan 47); absent where there is none. */
+		onready?: () => void;
 		onclose: () => void;
 	};
 
-	let { ingredients, servings, used, onclose }: Props = $props();
+	let { ingredients, servings, used, onready, onclose }: Props = $props();
 
 	const m = messages();
 
@@ -34,6 +42,8 @@
 	});
 
 	const highlighted = $derived(new Map(used.map((ingredient) => [ingredient.id, ingredient])));
+	const parts = $derived(groupByPart(ingredients));
+	const named = $derived(showsParts(ingredients));
 	const title = $derived(
 		servings ? m.cooking.cook.peekTitleServes(servings) : m.cooking.cook.peekTitle
 	);
@@ -43,28 +53,37 @@
 	{#if ingredients.length === 0}
 		<p class="empty">{m.cooking.cook.peekEmpty}</p>
 	{:else}
-		<ul class="list">
-			{#each ingredients as ingredient (ingredient.id)}
-				{@const step = highlighted.get(ingredient.id)}
-				{@const amount = m.units.amount((step ?? ingredient).quantity, ingredient.unit)}
-				<!-- "1 tbsp of 3 tbsp": the step's share in amber, what the row holds
+		{#each parts as part, at (at)}
+			{#if named && part.section}<p class="part">{part.section}</p>{/if}
+			<ul class="list">
+				{#each part.rows as ingredient (ingredient.id)}
+					{@const step = highlighted.get(ingredient.id)}
+					{@const amount = m.units.amount((step ?? ingredient).quantity, ingredient.unit)}
+					<!-- "1 tbsp of 3 tbsp": the step's share in amber, what the row holds
 					 behind it, so the answer to "how much of that was it again?" is the
 					 amount for *now* without losing the total. -->
-				{@const total =
-					step && step.quantity !== ingredient.quantity
-						? m.units.amount(ingredient.quantity, ingredient.unit)
-						: ''}
-				<li class:here={step !== undefined}>
-					<span class="dot" aria-hidden="true"></span>
-					<span class="name">{ingredient.name}</span>
-					{#if amount}
-						<span class="amount">
-							{amount}{#if total}<span class="of">{m.cooking.cook.peekShare(total)}</span>{/if}
-						</span>
-					{/if}
-				</li>
-			{/each}
-		</ul>
+					{@const total =
+						step && step.quantity !== ingredient.quantity
+							? m.units.amount(ingredient.quantity, ingredient.unit)
+							: ''}
+					<li class:here={step !== undefined}>
+						<span class="dot" aria-hidden="true"></span>
+						<span class="name"
+							>{ingredient.name}{#if ingredient.note}<span class="note">{ingredient.note}</span
+								>{/if}</span
+						>
+						{#if amount}
+							<span class="amount">
+								{amount}{#if total}<span class="of">{m.cooking.cook.peekShare(total)}</span>{/if}
+							</span>
+						{/if}
+					</li>
+				{/each}
+			</ul>
+		{/each}
+		{#if onready}
+			<button type="button" class="ready" onclick={onready}>{m.cooking.cook.peekToReady}</button>
+		{/if}
 	{/if}
 </BottomSheet>
 
@@ -125,6 +144,30 @@
 		text-transform: uppercase;
 	}
 
+	/* What the line said besides the name (→ plan 43). */
+	.note {
+		display: block;
+		margin-top: 2px;
+		font-size: var(--fs-14);
+		font-weight: 400;
+		line-height: 1.35;
+		color: var(--cook-muted);
+	}
+
+	/* A part of the dish over its rows, the sheet's own small label. */
+	.part {
+		margin: 16px 0 4px;
+		font-size: var(--fs-13);
+		font-weight: 700;
+		letter-spacing: 0.1em;
+		text-transform: uppercase;
+		color: var(--cook-muted);
+	}
+
+	.part:first-child {
+		margin-top: 0;
+	}
+
 	.here .name {
 		font-weight: 600;
 		color: var(--cook-text);
@@ -146,6 +189,18 @@
 		margin-left: 5px;
 		font-weight: 400;
 		color: var(--cook-muted);
+	}
+
+	.ready {
+		display: block;
+		width: 100%;
+		margin-top: 16px;
+		padding: 13px 18px;
+		border: 1px solid var(--cook-amber-line);
+		border-radius: var(--r-input);
+		font-size: var(--fs-17);
+		font-weight: 600;
+		color: var(--cook-text);
 	}
 
 	.empty {

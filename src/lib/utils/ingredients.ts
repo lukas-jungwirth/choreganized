@@ -16,109 +16,30 @@
 // Written with its extension so `node --test` can load this module: the test
 // runner only strips types, it does not resolve a bare './shopping'. tsconfig's
 // `rewriteRelativeImportExtensions` is what keeps `check` and `build` happy.
+import {
+	clampAmount,
+	countingForm,
+	countingWord,
+	fusedOf,
+	householdUnitKey,
+	isTimes,
+	leadingAmount,
+	measureOf,
+	numberOf,
+	rangeLength
+} from './amounts.ts';
 import { unitLabel, type UnitLabels } from './shopping.ts';
 
-/** Units a recipe line may name. `L` is capitalised the way the design writes it. */
-export const RECIPE_UNITS = ['g', 'kg', 'ml', 'L', 'pcs', 'pack', 'tbsp', 'tsp'] as const;
-
-export type RecipeUnit = (typeof RECIPE_UNITS)[number];
-
-/**
- * Everything a unit may be spelled as, lowercased → the canonical form. Written
- * out rather than derived: "l" must become "L" and "x" must become "pcs", and a
- * plural rule that turned "lemons" into a unit would be worse than no rule.
- *
- * Both languages read into the same table, because a household types in
- * whichever one is to hand: "2 EL Öl" and "2 tbsp oil" both store `tbsp`, and
- * the row then *shows* in whatever language the reader has on (→ `formatAmount`).
- * German spellings can be added without ambiguity — no English unit is spelled
- * like a German one meaning something else.
- *
- * A `Map`, not an object literal: a plain object answers `alias['constructor']`
- * with a function and `alias['__proto__']` with `Object.prototype`, neither of
- * which is nullish — so "2 constructor tomatoes" would sail past a `?? null`
- * fallback and reach the driver as a non-bindable value.
- */
-const UNIT_ALIASES = new Map<string, RecipeUnit>(
-	Object.entries({
-		g: 'g',
-		gr: 'g',
-		gram: 'g',
-		grams: 'g',
-		gramm: 'g',
-		kg: 'kg',
-		kilo: 'kg',
-		kilos: 'kg',
-		kilogram: 'kg',
-		kilograms: 'kg',
-		kilogramm: 'kg',
-		ml: 'ml',
-		milliliter: 'ml',
-		milliliters: 'ml',
-		millilitre: 'ml',
-		millilitres: 'ml',
-		l: 'L',
-		liter: 'L',
-		liters: 'L',
-		litre: 'L',
-		litres: 'L',
-		pcs: 'pcs',
-		pc: 'pcs',
-		piece: 'pcs',
-		pieces: 'pcs',
-		x: 'pcs',
-		stk: 'pcs',
-		'stk.': 'pcs',
-		stück: 'pcs',
-		stueck: 'pcs',
-		pack: 'pack',
-		packs: 'pack',
-		packet: 'pack',
-		packets: 'pack',
-		pck: 'pack',
-		'pck.': 'pack',
-		packung: 'pack',
-		packungen: 'pack',
-		pkg: 'pack',
-		'pkg.': 'pack',
-		tbsp: 'tbsp',
-		tbsps: 'tbsp',
-		tablespoon: 'tbsp',
-		tablespoons: 'tbsp',
-		el: 'tbsp',
-		esslöffel: 'tbsp',
-		tsp: 'tsp',
-		tsps: 'tsp',
-		teaspoon: 'tsp',
-		teaspoons: 'tsp',
-		tl: 'tsp',
-		teelöffel: 'tsp'
-	} satisfies Record<string, RecipeUnit>)
-);
-
-/**
- * A word as a unit, the way the parser reads it — "EL" → `tbsp`, "g" → `g` —
- * or null. For the readers that meet an amount somewhere other than the start
- * of a line: a step's "2 EL Öl" (→ `step-amounts.ts`).
- */
-export function unitFromWord(word: string): RecipeUnit | null {
-	return UNIT_ALIASES.get(word.toLowerCase()) ?? null;
-}
-
-/** Every spelling `unitFromWord` knows, longest first — for building a pattern. */
-export const UNIT_WORDS: readonly string[] = [...UNIT_ALIASES.keys()].sort(
-	(a, b) => b.length - a.length
-);
-
-/** The vulgar fractions a keyboard offers, and the ones recipes actually use. */
-const FRACTIONS: Record<string, number> = {
-	'½': 0.5,
-	'⅓': 1 / 3,
-	'⅔': 2 / 3,
-	'¼': 0.25,
-	'¾': 0.75,
-	'⅛': 0.125
-};
+// The reading of numbers and units lives in `amounts.ts` (→ plan 42); these are
+// handed on so the recipe code keeps one place to import from.
+export {
+	parseQuantity,
+	RECIPE_QUANTITY_MAX,
+	RECIPE_UNITS,
+	UNIT_WORDS,
+	unitFromWord,
+	type RecipeUnit
+} from './amounts.ts';
 
 /** Written back out for the few values that have a glyph — see `formatAmount`. */
 const FRACTION_GLYPHS: [number, string][] = [
@@ -130,59 +51,103 @@ const FRACTION_GLYPHS: [number, string][] = [
 	[0.125, '⅛']
 ];
 
-/** A recipe asking for more than this is a typo, not an amount. */
-export const RECIPE_QUANTITY_MAX = 9999;
-
-const FRACTION_CHARS = Object.keys(FRACTIONS).join('');
-
-/**
- * A leading amount: "1 1/2", "1/2", "1.5", "1,5", "1½", "½", "400".
- * Everything is optional except that *something* numeric has to match, which
- * the caller checks by looking at the matched length.
- */
-const AMOUNT = new RegExp(
-	`^(?:(\\d+)\\s+(\\d+)\\s*/\\s*(\\d+)` + // 1 1/2
-		`|(\\d+)\\s*/\\s*(\\d+)` + // 1/2
-		`|(\\d+(?:[.,]\\d+)?)\\s*([${FRACTION_CHARS}])?` + // 1.5 · 1½ · 400
-		`|([${FRACTION_CHARS}]))` // ½
-);
-
-/** The rest of a range after its first amount: "-3", "– 3", "bis 3", "-½". */
-const RANGE_REST = new RegExp(
-	`^(?:[-–—]|bis\\b)\\s*(?:\\d+(?:[.,]\\d+)?\\s*[${FRACTION_CHARS}]?|[${FRACTION_CHARS}])(?=\\s|$)`,
-	'i'
-);
-
 export type ParsedIngredient = {
 	quantity: number | null;
+	/**
+	 * One of the eight units (`RECIPE_UNITS`), or a counting word as the line
+	 * wrote it ("Zehen", "Bund", "Dose"), or null (→ DECISIONS #313).
+	 */
 	unit: string | null;
 	name: string;
 };
 
+/** "ca. 200 g", "about 2 cups": the word says the amount is rough, the amount stands. */
+const APPROX =
+	/^(?:ca\.?|circa|etwa|ungefähr|about|approx\.?|approximately|around)\s+(?=[\d½⅓⅔¼¾⅛])/i;
+
+/** "1 and 1/2 cups", "1 und 1/2 TL": a mixed number written out. */
+const AND_FRACTION = /^(\d+)\s+(?:and|und|&)\s+(\d+\s*\/\s*\d+)/i;
+
+/**
+ * A plural a site leaves open: "Zwiebel(n)", "Ei(er)", "Zehe/n". Settled by the
+ * amount in front of it.
+ */
+const OPEN_PLURAL = /(\p{L})(?:\((n|en|e|er|s|es|nen|se)\)|\/(n|en|s)(?![\p{L}\p{N}]))/gu;
+
+/** "Zwiebel(n)" → "Zwiebeln" for more than one, "Zwiebel" otherwise. */
+function settlePlural(text: string, quantity: number | null): string {
+	const many = quantity !== null && quantity > 1;
+	return text.replace(OPEN_PLURAL, (_, last: string, bracket?: string, slash?: string) =>
+		many ? last + (bracket ?? slash ?? '') : last
+	);
+}
+
+/** Separators a split leaves at a name's edges: "TL, gestr. Backpulver" → the name. */
+function trimName(name: string): string {
+	return name.replace(/^[\s,;:]+|[\s,;:]+$/gu, '');
+}
+
 /**
  * One typed line → the columns it's stored in. `null` for a line with nothing
  * but whitespace, so callers can drop empty rows without a second check.
+ *
+ * The recipe profile of the shared amount reader (→ `amounts.ts`, plan 42): the
+ * amount leads the line, then a unit or a counting word if the next word is
+ * one, then the name. An amount at the very end is read too ("Mehl 500g"),
+ * because that is how a list is typed and people type recipes the same way.
  */
-export function parseIngredient(input: string): ParsedIngredient | null {
+export function parseIngredient(
+	input: string,
+	known?: ReadonlySet<string>
+): ParsedIngredient | null {
 	const line = input.trim().replace(/\s+/g, ' ');
 	if (!line) return null;
 
-	const amount = AMOUNT.exec(line);
-	// No leading number at all: the whole line is the name ("salt", "olive oil").
-	if (!amount) return { quantity: null, unit: null, name: line };
+	const text = line.replace(APPROX, '').replace(AND_FRACTION, '$1 $2');
+	const amount = leadingAmount(text);
 
-	const quantity = amountValue(amount);
+	// No leading number at all: an amount at the end ("Mehl 500g"), or the whole
+	// line is the name ("salt", "olive oil").
+	if (!amount) return trailingAmount(line) ?? nameOnly(line);
+
+	const after = text.slice(amount.length);
+	// "1. Mai Kerzen": a number with a full stop and a space is an ordinal.
+	if (/^[.,](?:\s|$)/.test(after)) return nameOnly(line);
+
 	// "2-3 EL Öl", "1 bis 2 Zehen": a range keeps its first value, like a step's
 	// timer does (→ timer-parse) — the unit after it is still the unit.
-	const rest = line.slice(amount[0].length).trim().replace(RANGE_REST, '').trim();
+	const spaced = after.trimStart();
+	const rest = spaced.slice(rangeLength(spaced)).trim();
 
 	// "2" on its own, or "400 g" with nothing to measure — the line never named
 	// a thing, so it becomes one rather than a dangling amount.
-	if (!rest) return { quantity: null, unit: null, name: line };
+	if (!rest) return nameOnly(line);
 
-	const [first, ...others] = rest.split(' ');
-	const unit = UNIT_ALIASES.get(first.toLowerCase()) ?? null;
-	const name = (unit ? others.join(' ') : rest).trim();
+	let words = rest.split(' ');
+	// "1 x Backpulver", "4 x 150g Hühnerbrust": the x only says "times".
+	const times = isTimes(words[0]) && words.length > 1;
+	if (times) words = words.slice(1);
+
+	const first = words[0].replace(/[,;:]$/, '');
+	const measure = measureOf(first);
+	const counting = measure
+		? null
+		: (countingWord(settlePlural(first, null)) ?? householdWord(first, known));
+
+	// "7up", "2in1": a word glued to the number that is no unit is part of a name.
+	// (The amount's own pattern may have taken the space, hence both checks.)
+	const glued =
+		!/\s$/.test(text.slice(0, amount.length)) && after === spaced && rangeLength(spaced) === 0;
+	if (glued && !times && !measure && !counting) return nameOnly(line);
+
+	const quantity =
+		amount.value === null ? null : clampAmount(amount.value * (measure?.factor ?? 1));
+	const unit = measure ? measure.unit : counting ? settlePlural(first, quantity) : null;
+
+	let named = measure || counting ? words.slice(1).join(' ') : words.join(' ');
+	// "2 cloves of garlic": after a measure, "of" belongs to neither side.
+	if (measure || counting) named = named.replace(/^of\s+/i, '');
+	const name = trimName(settlePlural(named, quantity));
 
 	// "400 g" again, this time with the unit eaten: keep the unit as the name.
 	if (!name) return { quantity, unit: null, name: rest };
@@ -195,46 +160,53 @@ export function parseIngredient(input: string): ParsedIngredient | null {
 }
 
 /**
- * A bare amount — "1½", "0,5", "3/4", "400" — and nothing else.
- *
- * The same spellings a line may start with (`AMOUNT` does the reading), for the
- * fields that ask for a number on its own: the step's share of an ingredient
- * [3c]. A trailing anything ("2 tsp", "two") is not a bare amount and answers
- * null rather than quietly keeping the 2.
+ * A word the household added as its own unit (→ plan 44, DECISIONS #321),
+ * `known` holding them lowercased: "Ring" reads "2 Ringe Fleischwurst" too.
  */
-export function parseQuantity(input: string): number | null {
-	const text = input.trim().replace(/\s+/g, ' ');
-	if (!text) return null;
-
-	const amount = AMOUNT.exec(text);
-	return amount && amount[0].length === text.length ? amountValue(amount) : null;
+function householdWord(word: string, known: ReadonlySet<string> | undefined): string | null {
+	return householdUnitKey(word, known);
 }
 
-/** The number a matched `AMOUNT` stands for, clamped and rounded once. */
-function amountValue(match: RegExpExecArray): number | null {
-	const [, whole, mixedNumerator, mixedDenominator, numerator, denominator, decimal, glyph, bare] =
-		match;
+/** A line with no amount in it: the whole of it is the name. */
+function nameOnly(line: string): ParsedIngredient {
+	return { quantity: null, unit: null, name: settlePlural(line, null) };
+}
 
-	const value = mixedDenominator
-		? Number(whole) + Number(mixedNumerator) / Number(mixedDenominator)
-		: denominator
-			? Number(numerator) / Number(denominator)
-			: decimal
-				? Number(decimal.replace(',', '.')) + (glyph ? FRACTIONS[glyph] : 0)
-				: bare
-					? FRACTIONS[bare]
-					: NaN;
+/**
+ * "Mehl 500g", "Milch 2 l", "Salz, 1 TL": a measured amount at the end of a
+ * line that did not start with one. Units only: a bare number at the end
+ * ("Type 405") is not an amount in a recipe, and neither is a counting word.
+ */
+function trailingAmount(line: string): ParsedIngredient | null {
+	const words = line.split(' ');
+	const last = words.length - 1;
+	if (last < 1) return null;
 
-	if (!Number.isFinite(value) || value <= 0) return null;
+	const fused = fusedOf(words[last]);
+	const fusedMeasure = fused ? measureOf(fused.word) : null;
+	const number = last >= 2 ? numberOf(words[last - 1]) : null;
+	const spacedMeasure = number ? measureOf(words[last]) : null;
 
-	// Two decimals is every real amount plus a third of a cup; the column is a
-	// REAL, so this is only about not storing 0.6666666666666666.
-	return Math.round(Math.min(value, RECIPE_QUANTITY_MAX) * 100) / 100;
+	const found =
+		fused && fusedMeasure
+			? { value: fused.value, measure: fusedMeasure, taken: 1 }
+			: number && spacedMeasure
+				? { value: number.value, measure: spacedMeasure, taken: 2 }
+				: null;
+	if (!found) return null;
+
+	const quantity = clampAmount(found.value * found.measure.factor);
+	const name = trimName(
+		settlePlural(words.slice(0, words.length - found.taken).join(' '), quantity)
+	);
+	if (quantity === null || !/\p{L}/u.test(name) || measureOf(name)) return null;
+
+	return { quantity, unit: found.measure.unit, name };
 }
 
 /**
  * The amount on its own — the right-aligned column of the recipe view [7a] and
- * the "This step uses 250 g mushrooms" line in cook mode. Empty when there is
+ * the amber column of the list under a step in cook mode. Empty when there is
  * no amount to speak of.
  */
 export function formatAmount(
@@ -244,36 +216,10 @@ export function formatAmount(
 ): string {
 	if (quantity === null || quantity <= 0) return '';
 	const amount = formatQuantityValue(quantity);
-	return unit ? `${amount} ${unitLabel(unit, labels)}` : amount;
-}
-
-/**
- * Three fields back into one typed line — the inverse of the sheet [3c] opening
- * on one.
- *
- * The line is still the only thing the form posts, so this has to compose
- * something the parser will read back the same way. It usually does; sometimes
- * it cannot. "1 Packung Nudeln" reads back as one *pack* of "Nudeln", because
- * `Packung` is a unit alias, and "7up" reads back as 7 of "up". There is no
- * spelling that escapes it while the line is the wire format, so this doesn't
- * pretend: it returns the line **and** the reading that line will actually get,
- * and the sheet shows that reading before you commit (→ DECISIONS #101).
- *
- * `unitLabelText` is the unit as it is *shown* ("EL", not "tbsp"): the parser
- * reads every label in every catalog back to the same canonical unit, so a
- * German household's line stays a German household's line (→ DECISIONS #97).
- */
-export function composeIngredientLine(
-	name: string,
-	quantity: string,
-	unitLabelText: string
-): { line: string; reading: ParsedIngredient | null } {
-	const amount = quantity.trim()
-		? [quantity.trim(), unitLabelText.trim()].filter(Boolean).join(' ')
-		: '';
-	const line = [amount, name.trim()].filter(Boolean).join(' ');
-
-	return { line, reading: parseIngredient(line) };
+	if (!unit) return amount;
+	// A counting word in the number that fits ("1 Zehe", "2 Zehen", → plan 46).
+	const word = Object.hasOwn(labels, unit) ? unitLabel(unit, labels) : countingForm(unit, quantity);
+	return `${amount} ${word}`;
 }
 
 /**
@@ -365,9 +311,9 @@ export function formatQuantityValue(quantity: number): string {
 	const whole = Math.floor(quantity);
 	const rest = quantity - whole;
 
-	// The stored value is rounded to 2dp, so ⅓ comes back as 0.33 — compare with
-	// the same tolerance rather than for equality.
-	const glyph = FRACTION_GLYPHS.find(([value]) => Math.abs(rest - value) < 0.005)?.[1];
+	// The stored value is rounded to 2dp, so ⅓ comes back as 0.33 and ⅛ as 0.13 —
+	// compare with that tolerance (a hair over half a cent) rather than for equality.
+	const glyph = FRACTION_GLYPHS.find(([value]) => Math.abs(rest - value) < 0.0051)?.[1];
 	if (glyph) return whole ? `${whole}${glyph}` : glyph;
 
 	// Number() drops the trailing zeros a REAL round-trip leaves behind (2.0 → 2).

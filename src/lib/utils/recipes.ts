@@ -9,8 +9,10 @@
  * set of rules, two thin actions (→ docs/ARCHITECTURE.md "Server patterns").
  */
 import type { Messages } from '$lib/i18n';
+import { clampAmount, parseQuantity, UNIT_WORD_MAX } from './amounts';
 import { isCalendarDate, type CalendarDate } from './dates';
 import { readMealSlot, type MealSlot } from './meals';
+import { readRecipeDiet, readRecipeTags, type RecipeDiet, type RecipeTag } from './recipe-tags';
 import { MAX_TIMER_SECONDS, MIN_TIMER_SECONDS, TIMER_LABEL_MAX } from './timer-parse';
 
 /* ── Field limits ─────────────────────────────────────────────────────────── */
@@ -32,6 +34,24 @@ export const INGREDIENTS_MAX = 60;
 export const STEPS_MAX = 40;
 /** "Cook something not saved" [3d]. */
 export const MEAL_TITLE_MAX = 80;
+/**
+ * What an ingredient's note, a part's name and a step link's words may hold
+ * (→ plan 43): "in Scheiben geschnitten", "Béchamel", "Zwiebelwürfel", "1 - 2 EL".
+ */
+export const INGREDIENT_NOTE_MAX = 120;
+export const RECIPE_SECTION_MAX = 40;
+export const LINK_PHRASE_MAX = 80;
+export const AMOUNT_PHRASE_MAX = 30;
+
+/**
+ * A short free-text field as stored: one line, trimmed, capped, and null when
+ * nothing is left. Anything that is not a string is nothing. The form reader
+ * and the service both run it, the second for callers that are not the form.
+ */
+export function cleanText(value: unknown, max: number): string | null {
+	if (typeof value !== 'string') return null;
+	return value.replace(/\s+/g, ' ').trim().slice(0, max).trim() || null;
+}
 
 /* ── Rendering ────────────────────────────────────────────────────────────── */
 
@@ -60,10 +80,31 @@ export function uploadUrl(imagePath: string): string {
  */
 export type StepInput = {
 	text: string;
-	uses: { ingredient: number; quantity: number | null }[] | null;
+	uses: StepLinkInput[] | null;
 	/** The step's own timer (→ plan 21), or null for one that reads its text. */
 	timer: StepTimer | null;
+	/** The part of the dish it belongs to (→ plan 43); absent or null for none. */
+	section?: string | null;
 };
+
+/**
+ * One ingredient a step uses (→ plan 43): which line, the step's share of it,
+ * and the words of the step text that name it and give its amount, exactly as
+ * written. The words are absent on everything that predates them.
+ */
+export type StepLinkInput = {
+	ingredient: number;
+	quantity: number | null;
+	phrase?: string | null;
+	amountPhrase?: string | null;
+};
+
+/**
+ * What an ingredient line carries besides the line itself (→ plan 43): its
+ * note and the part of the dish it belongs to. Index for index with
+ * `ingredientLines`; absent or null means neither.
+ */
+export type IngredientDetails = { note: string | null; section: string | null };
 
 /**
  * A step's own timer (→ plan 21, DECISIONS #147): whole seconds, and the name
@@ -73,27 +114,23 @@ export type StepInput = {
 export type StepTimer = { seconds: number; label: string | null };
 
 /**
- * The same pin while the form still holds it, before anything is posted
- * (→ `cooking/StepIngredientsSheet`).
- *
- * `ingredient` is the *form row's* key rather than an index or an id: rows get
- * added, reordered and removed while the form is open, and a key is the only one
- * of the three that survives all of it. The indices `StepInput` wants are worked
- * out at submit time, from where the rows ended up.
+ * One ingredient as the editor posts it (→ plan 46): the fields kept apart, as
+ * they are stored. `unit` is one of the eight, a counting word the reader
+ * knows, or one of the household's own words (→ DECISIONS #321); the service
+ * holds it to that.
  */
-export type StepUseDraft = { ingredient: string; quantity: number | null };
-
-/** One ingredient row as the sheet offers it — the form's reading of the line. */
-export type StepChoice = {
-	key: string;
+export type IngredientInput = {
 	name: string;
 	quantity: number | null;
 	unit: string | null;
+	note: string | null;
+	section: string | null;
 };
 
 /**
- * What [3c] posts: lines and text, not columns. Ingredients stay freeform all
- * the way to the service, which parses them (→ `$lib/utils/ingredients`).
+ * What a recipe is saved from. The editor [3c] posts each ingredient as its
+ * fields (`ingredients`, → plan 46); the import and the seed hand over lines,
+ * which the service parses (→ `$lib/utils/ingredients`).
  *
  * Declared here rather than beside the service so the reader below — and the
  * form itself — can name it without importing anything from `$lib/server`.
@@ -103,7 +140,22 @@ export type RecipeInput = {
 	timeMinutes: number | null;
 	servings: number | null;
 	ingredientLines: string[];
+	/** Each line's note and part (→ plan 43); absent for a caller that has none. */
+	ingredientDetails?: (IngredientDetails | null)[];
+	/**
+	 * The rows as fields (→ plan 46), what the editor posts. When present they
+	 * are the ingredients and `ingredientLines` is not read; a step's link then
+	 * names a row by its index here.
+	 */
+	ingredients?: IngredientInput[];
 	steps: StepInput[];
+	/**
+	 * Meal, kind, free-from (→ plan 40). Absent leaves a saved recipe's tags as
+	 * they are — the form always sends them; a caller with no opinion doesn't.
+	 */
+	tags?: RecipeTag[];
+	/** One diet or null for "not set"; absent leaves it be, like `tags`. */
+	diet?: RecipeDiet | null;
 };
 
 /**
@@ -126,13 +178,119 @@ export type RecipePrefill = {
 	timeMinutes: number | null;
 	servings: number | null;
 	ingredientLines: string[];
+	/** Each line's note and part, by index (→ plans 43, 44); absent: none. */
+	ingredientDetails?: (IngredientDetails | null)[];
 	steps: StepInput[];
 	photo: { path: string; preview: string } | null;
+	/**
+	 * What the import's gate wants a person to look at, and what it only says
+	 * (→ plan 44): the review screen of plan 45 shows them; until then the
+	 * editor lists them at the top. Absent: nothing to say.
+	 */
+	checks?: ImportCheck[];
+	/** Sentences of the page's method no step kept (→ plan 44), so one can be put back. */
+	leftOut?: LeftOut[];
+	/**
+	 * Tags and a diet the import suggests (→ plan 41): read off the page's own
+	 * card, picked by the AI, or both. They open ticked, marked as suggestions,
+	 * and are saved only by Save. Absent or null: nothing suggested.
+	 */
+	suggested?: TagSuggestion | null;
 };
 
-/** A step as a page's recipe card gives it: text, and nothing worked out about it. */
-export function plainStep(text: string): StepInput {
-	return { text, uses: null, timer: null };
+/**
+ * One thing the import's gate found (→ plan 44). `check` items are what the
+ * review counts ("3 things to check"); `info` items only say something.
+ * `at` names the draft's ingredient row or step by index, or the recipe.
+ */
+export type ImportCheck = {
+	kind: ImportCheckKind;
+	level: 'check' | 'info';
+	at: { ingredient: number } | { step: number } | 'recipe';
+	/** The ingredient's name, as the draft has it, for an item about a row. */
+	name?: string;
+	/** What the page said where it differs: the line, or the step's text. */
+	page?: string;
+	/** A word the page counts in that is on no list ("Ring"). */
+	word?: string;
+	/** The other half of an either/or ("veganes Hack"). */
+	alternative?: string;
+	/** For `amount-differs`: the amount the model gave, which the review offers (→ plan 45). */
+	answer?: { quantity: number | null; unit: string | null; name?: string };
+};
+
+/**
+ * A sentence of the page's method no step kept (→ plans 44, 45), and where it
+ * goes back: after the draft step at index `after` (-1: before the first).
+ */
+export type LeftOut = { text: string; after: number };
+
+/**
+ * What a draft was read from, so the review says "the page", "your text",
+ * "the photos" or "the saved recipe" and never names a page that was not
+ * there (→ plans 45, 48, DECISIONS #342).
+ */
+export type ImportSource = 'page' | 'text' | 'photo' | 'recipe';
+
+export const IMPORT_CHECK_KINDS = [
+	// A page line no row came from: added from the rule-based reading.
+	'line-added',
+	// The amount the model gave is not the page's: the page's stands.
+	'amount-differs',
+	// The page measured in cups, oz or lb; the row is metric (said, not a warning).
+	'converted',
+	// The model's name has words the page line does not: the page's reading stands.
+	'name-differs',
+	// A word the page counts in that is on no list: "New unit: Ring. Add it?"
+	'new-unit',
+	// "A oder B": the first is kept, the other offered.
+	'choice',
+	// A step whose text is not the page's, word for word.
+	'reworded',
+	// Read from photos: nothing could be checked against a page.
+	'from-photo',
+	// The steps give an ingredient more than the recipe has.
+	'shares-exceed',
+	// No step uses this ingredient ("Fett für die Form" often rightly).
+	'unused',
+	// No servings, or 1 where the page said a cake: every scaled amount hangs on it.
+	'servings',
+	// The page has no method.
+	'no-steps',
+	// Imported without AI: parts and notes by rule, links a guess.
+	'no-ai'
+] as const;
+
+export type ImportCheckKind = (typeof IMPORT_CHECK_KINDS)[number];
+
+/** Suggested tags and diet, and where they came from — the form says which. */
+export type TagSuggestion = {
+	tags: RecipeTag[];
+	diet: RecipeDiet | null;
+	from: 'page' | 'ai' | 'both';
+};
+
+/**
+ * A page's suggestion and the AI's, together: the page's word stands, group by
+ * group, and the AI's fills only the groups the page said nothing about
+ * (→ plan 41). Null when neither suggests anything.
+ */
+export function mergeSuggestions(
+	page: TagSuggestion | null | undefined,
+	ai: TagSuggestion | null | undefined
+): TagSuggestion | null {
+	if (!page) return ai ?? null;
+	if (!ai) return page;
+
+	const group = (tags: RecipeTag[], prefix: string) => tags.filter((tag) => tag.startsWith(prefix));
+	const pick = (prefix: string) =>
+		group(page.tags, prefix).length ? group(page.tags, prefix) : group(ai.tags, prefix);
+	const tags = readRecipeTags([...pick('meal:'), ...pick('kind:'), ...pick('free:')]);
+	const diet = page.diet ?? ai.diet;
+
+	const fromAi = tags.some((tag) => !page.tags.includes(tag)) || (!page.diet && diet !== null);
+	const fromPage = page.tags.length > 0 || page.diet !== null;
+	return { tags, diet, from: fromAi && fromPage ? 'both' : fromAi ? 'ai' : 'page' };
 }
 
 /**
@@ -179,26 +337,56 @@ export function readRecipeForm(
 	// for position.
 	const uses = form.getAll('stepUses').map(String);
 	const timers = form.getAll('stepTimer').map(String);
+	const stepSections = form.getAll('stepSection');
+	// Plan 43: one note and one part per ingredient row, one part per step, all
+	// hidden and lined up by position like the pins. A form that posts none
+	// (an older page still open) saves none.
+	const notes = form.getAll('ingredientNote');
+	const sections = form.getAll('ingredientSection');
+	// Plan 46: each row as its fields, lined up by position. A page from before
+	// it (still open on a phone) posts typed lines, read as they always were.
+	const names = form.getAll('ingredientName');
+	const quantities = form.getAll('ingredientQuantity');
+	const units = form.getAll('ingredientUnit');
+	const structured = names.length > 0;
 
 	return {
 		input: {
 			name,
 			timeMinutes: readOptionalNumber(form.get('timeMinutes')),
 			servings: readOptionalNumber(form.get('servings')),
-			ingredientLines: form.getAll('ingredient').map(String),
+			ingredientLines: structured ? [] : form.getAll('ingredient').map(String),
+			ingredientDetails: structured
+				? undefined
+				: form.getAll('ingredient').map((_, index) => ({
+						note: cleanText(notes[index], INGREDIENT_NOTE_MAX),
+						section: cleanText(sections[index], RECIPE_SECTION_MAX)
+					})),
+			ingredients: structured
+				? names.map((value, index) => ({
+						name: cleanText(value, INGREDIENT_LINE_MAX) ?? '',
+						quantity: readQuantity(quantities[index]),
+						unit: cleanText(units[index], UNIT_WORD_MAX),
+						note: cleanText(notes[index], INGREDIENT_NOTE_MAX),
+						section: cleanText(sections[index], RECIPE_SECTION_MAX)
+					}))
+				: undefined,
 			steps: form.getAll('step').map((text, index) => ({
 				text: String(text),
 				uses: readStepUses(uses[index]),
-				timer: readStepTimer(timers[index])
-			}))
+				timer: readStepTimer(timers[index]),
+				section: cleanText(stepSections[index], RECIPE_SECTION_MAX)
+			})),
+			tags: readRecipeTags(form.getAll('tag')),
+			diet: readRecipeDiet(form.get('diet'))
 		}
 	};
 }
 
 /**
  * A step's pinned ingredients, off the hidden field the form keeps beside it:
- * `[{"ingredient":0,"quantity":1.5}]`, an empty string for a step that reads its
- * own text.
+ * `[{"ingredient":0,"quantity":1.5,"phrase":"Zwiebelwürfel","amountPhrase":null}]`,
+ * an empty string for a step that reads its own text.
  *
  * Hand-rolled rather than trusted, because this is a POST body like any other:
  * anything unreadable becomes "read the text", and any entry that isn't a row
@@ -221,10 +409,17 @@ function readStepUses(value: string | undefined): StepInput['uses'] {
 	// caps the write anyway; this keeps a pasted-in megabyte from being walked.
 	return parsed.slice(0, INGREDIENTS_MAX).flatMap((entry) => {
 		if (typeof entry !== 'object' || entry === null) return [];
-		const { ingredient, quantity } = entry as Record<string, unknown>;
+		const { ingredient, quantity, phrase, amountPhrase } = entry as Record<string, unknown>;
 		if (typeof ingredient !== 'number' || !Number.isInteger(ingredient) || ingredient < 0)
 			return [];
-		return [{ ingredient, quantity: typeof quantity === 'number' ? quantity : null }];
+		return [
+			{
+				ingredient,
+				quantity: typeof quantity === 'number' ? quantity : null,
+				phrase: cleanText(phrase, LINK_PHRASE_MAX),
+				amountPhrase: cleanText(amountPhrase, AMOUNT_PHRASE_MAX)
+			}
+		];
 	});
 }
 
@@ -278,6 +473,16 @@ export function readServings(value: unknown): number | null {
 	return Number.isFinite(whole) && whole >= 1 && whole <= RECIPE_SERVINGS_MAX ? whole : null;
 }
 
+/**
+ * An ingredient's amount field: a bare amount ("500", "1,5", "½", "1/2"),
+ * anything else none. Clamped like every stored amount.
+ */
+function readQuantity(value: FormDataEntryValue | undefined): number | null {
+	if (typeof value !== 'string') return null;
+	const read = parseQuantity(value);
+	return read === null ? null : clampAmount(read);
+}
+
 /** Empty means "not stated", which both fields allow; nonsense means the same. */
 function readOptionalNumber(value: FormDataEntryValue | null): number | null {
 	if (typeof value !== 'string' || !value.trim()) return null;
@@ -289,14 +494,22 @@ export type ShareableRecipe = {
 	name: string;
 	timeMinutes: number | null;
 	servings: number | null;
-	ingredients: { name: string; quantity: number | null; unit: string | null }[];
-	steps: string[];
+	ingredients: {
+		name: string;
+		quantity: number | null;
+		unit: string | null;
+		note?: string | null;
+		section?: string | null;
+	}[];
+	steps: { text: string; section?: string | null }[];
 };
 
 /**
  * A recipe as plain text for the OS share sheet [7c]. v1 shares the recipe
  * itself rather than a link, because a link would have to be a public route
  * with a token and this app has no public data (→ DECISIONS "Open questions").
+ * Parts head their rows and notes follow their line (→ plan 43); the steps are
+ * numbered straight through, as on the screen.
  */
 export function recipeShareText(recipe: ShareableRecipe, m: Messages): string {
 	const meta = [
@@ -312,18 +525,49 @@ export function recipeShareText(recipe: ShareableRecipe, m: Messages): string {
 		blocks.push(
 			[
 				m.cooking.recipe.ingredients,
-				...recipe.ingredients.map((row) => `• ${m.units.ingredient(row)}`)
+				...groupByPart(recipe.ingredients).flatMap((part) => [
+					...(part.section ? [part.section] : []),
+					...part.rows.map((row) => {
+						const line = m.units.ingredient(row);
+						return `• ${row.note ? m.cooking.recipe.withNote(line, row.note) : line}`;
+					})
+				])
 			].join('\n')
 		);
 	}
 
 	if (recipe.steps.length) {
+		let number = 0;
 		blocks.push(
-			[m.cooking.recipe.steps, ...recipe.steps.map((text, i) => `${i + 1}. ${text}`)].join('\n')
+			[
+				m.cooking.recipe.steps,
+				...groupByPart(recipe.steps).flatMap((part) => [
+					...(part.section ? [part.section] : []),
+					...part.rows.map((step) => `${++number}. ${step.text}`)
+				])
+			].join('\n')
 		);
 	}
 
 	return blocks.filter(Boolean).join('\n\n');
+}
+
+/**
+ * Rows in their parts (→ plan 43, DECISIONS #312): consecutive rows with the
+ * same `section` are one part, in the order they stand. Rows without one come
+ * as a part with a null name, which the screens draw without a heading.
+ */
+export function groupByPart<T extends { section?: string | null }>(
+	rows: readonly T[]
+): { section: string | null; rows: T[] }[] {
+	const parts: { section: string | null; rows: T[] }[] = [];
+	for (const row of rows) {
+		const section = row.section ?? null;
+		const last = parts.at(-1);
+		if (last && last.section === section) last.rows.push(row);
+		else parts.push({ section, rows: [row] });
+	}
+	return parts;
 }
 
 /* ── The plan-a-meal payload ──────────────────────────────────────────────── */

@@ -87,6 +87,9 @@
 	--terracotta-tint: light-dark(#f7ede6, #2c211a);
 	--terracotta-tint-2: light-dark(#fbeee7, #30241c);
 	--terracotta-deep: light-dark(#8a4b29, #e8b592);
+	/* A favourite recipe's heart (→ plan 40): warmer than --danger, so a loved
+	   recipe never reads as an error. Lifted in dark like the brand hues. */
+	--heart: light-dark(#c95a4a, #e58370);
 
 	/* ── Danger (overdue, destructive) ────────────────────────── */
 	/* Money [9a] (→ SPEC §11): sage when you are owed, terracotta when you owe —
@@ -110,6 +113,12 @@
 	/* ── Accents ──────────────────────────────────────────────── */
 	--gold: light-dark(#e4b23c, #efc25a); /* crown / 1st place */
 	--gold-tint: light-dark(#fbf3de, #2b2415);
+	/* Text on --gold-tint, and a linked amount in the recipe editor's link sheet
+	   (→ plan 46): the sketch's mustard-deep, AA on both tints. */
+	--gold-deep: light-dark(#7a5a14, #e6c67e);
+	/* A number on a --gold disc (the import review's count, → plan 45). Deliberately
+	   theme-independent: both golds are light, so the ink is dark in both themes. */
+	--on-gold: #22201c;
 
 	/* ── The "Start cook mode" button [4d] ────────────────────── */
 	/* `Button variant="dark"` — a swatch of the screen it opens, which is why it

@@ -44,6 +44,7 @@ import type { HolidayKey } from '$lib/utils/holidays';
 import { formatAmount, formatIngredient } from '$lib/utils/ingredients';
 import { currencyAfter, currencySymbol, formatMoney } from '$lib/utils/money';
 import type { MealSlot } from '$lib/utils/meals';
+import type { ImportSource } from '$lib/utils/recipes';
 import { formatQuantity, type UnitLabels } from '$lib/utils/shopping';
 import type { RecurUnit, TaskSchedule } from '$lib/utils/tasks';
 
@@ -64,6 +65,32 @@ export type SentencePart = string | { field: 'payer' | 'amount' | 'what' };
 
 /** Bound into every date wrapper below, so a screen never passes a language. */
 const L = 'en';
+
+/** What a draft was read from, as the review's sentences name it (→ `ImportSource`). */
+const SOURCE: Record<ImportSource, string> = {
+	page: 'the page',
+	text: 'your text',
+	photo: 'the photos',
+	recipe: 'the saved recipe'
+};
+const SAYS: Record<ImportSource, string> = {
+	page: 'The page says',
+	text: 'Your text says',
+	photo: 'The photos say',
+	recipe: 'The saved recipe says'
+};
+const OFFERS: Record<ImportSource, string> = {
+	page: 'The page offers',
+	text: 'Your text offers',
+	photo: 'The photos offer',
+	recipe: 'The saved recipe offers'
+};
+const IN: Record<ImportSource, string> = {
+	page: 'on the page',
+	text: 'in your text',
+	photo: 'in the photos',
+	recipe: 'in the saved recipe'
+};
 
 const COUNTS = [
 	'zero',
@@ -1186,6 +1213,18 @@ export const en = {
 			searchRecipes: 'Search your recipes',
 			/** The radio group of recipes, named for a screen reader. */
 			recipeGroup: 'Recipe',
+			/** The quick chips under the search (→ plan 41). */
+			quick: 'Show only',
+			/** Above the recipes tagged for the chosen meal, and above the rest. */
+			forSlot: {
+				breakfast: 'For breakfast',
+				lunch: 'For lunch',
+				dinner: 'For dinner',
+				snack: 'For a snack'
+			},
+			everythingElse: 'Everything else',
+			/** The quick chips left no recipe. */
+			quickNone: 'No recipe fits these. Tap a chip to take it off.',
 			noMatch: 'No recipe by that name. Cook something not saved instead?',
 			moreMatches: (count: number) => `${count} more match. Keep typing to narrow it down.`,
 			mostRecent: (rest: number) => `Your most recent. Search to reach the other ${rest}.`,
@@ -1209,12 +1248,120 @@ export const en = {
 			title: 'Recipes',
 			saved: (count: number) => (count === 1 ? '1 saved' : `${count} saved`),
 			back: 'Back to the week',
-			search: 'Search recipes',
 			emptyTitle: 'Build your cookbook',
 			emptyCopy: 'Save the meals you cook often. Then drop them onto any day of the week in a tap.',
 			emptyCta: 'Add a recipe',
-			noMatch: (query: string) => `Nothing matches “${query}”.`,
 			newRecipe: 'New recipe'
+		},
+
+		/**
+		 * What a recipe is tagged with (→ plan 40, `utils/recipe-tags`). Meal
+		 * names are `slots` above — the same four words as the plan.
+		 */
+		tags: {
+			label: 'Tags',
+			/** The folded block's hint: what's inside. */
+			folded: 'Meal, kind, diet',
+			meal: 'Meal',
+			kind: 'Kind',
+			diet: 'Diet',
+			free: 'Free from',
+			/** Beside "Diet" in the form: it takes one. */
+			pickOne: 'pick one',
+			/** A dotted chip's name: it was suggested, nobody chose it yet (→ plan 41). */
+			suggestedMark: (name: string) => `${name}, suggested`,
+			/** Under the chips: where the dotted ones came from. */
+			suggestedFrom: {
+				page: 'The dotted ones came from the website. Tap one to change it.',
+				ai: 'The dotted ones are the AI’s suggestion. Tap one to change it.',
+				both: 'The dotted ones came from the website and the AI. Tap one to change it.',
+				guess: 'Dotted: our guess from the ingredients.'
+			},
+			kinds: {
+				main: 'Main',
+				soup: 'Soup',
+				salad: 'Salad',
+				side: 'Side',
+				dessert: 'Dessert',
+				baking: 'Baking'
+			},
+			diets: {
+				meat: 'Meat',
+				fish: 'Fish',
+				vegetarian: 'Vegetarian',
+				vegan: 'Vegan'
+			},
+			freeFrom: {
+				gluten: 'Gluten-free',
+				lactose: 'Lactose-free'
+			}
+		},
+
+		/** "Sort your recipes" — tagging the library one card at a time (→ plan 41). */
+		sort: {
+			title: 'Sort your recipes',
+			back: 'Back to recipes',
+			progress: (done: number, total: number) => `${done} of ${total} done · stop any time`,
+			progressLabel: (done: number, total: number) => `${done} of ${total} recipes sorted`,
+			/** The dashed row at the end of the library. */
+			row: (count: number) =>
+				count === 1 ? '1 recipe has no tags yet' : `${count} recipes have no tags yet`,
+			rowSub: 'Sort them in a minute',
+			rowCta: 'Sort',
+			/** The card's meta: how many ingredients, then the first few by name. */
+			ingredients: (count: number, first: string) =>
+				`${count === 1 ? '1 ingredient' : `${count} ingredients`}: ${first}`,
+			skip: 'Skip',
+			next: 'Next',
+			ai: 'Let the AI suggest tags',
+			aiSub: 'Sends the names and ingredients of the recipes still to sort. You check each one.',
+			aiBusy: 'Asking the AI…',
+			aiDone: (count: number) =>
+				count === 0
+					? 'The AI had nothing to suggest.'
+					: count === 1
+						? 'The AI suggested tags for 1 recipe. Check it as you go.'
+						: `The AI suggested tags for ${count} recipes. Check each as you go.`
+		},
+
+		/** The library's filters (→ plan 40, SPEC §4.3). */
+		filters: {
+			search: 'Search recipes or ingredients',
+			open: 'Filter',
+			/** The Filter chip's name with its count, for a screen reader. */
+			openCount: (count: number) => `Filter, ${count} on`,
+			favourites: 'Favourites',
+			under: (minutes: number) => `Under ${minutes} min`,
+			remove: (name: string) => `Remove ${name}`,
+			count: (shown: number, total: number) => `${shown} of ${total} recipes`,
+			clear: 'Clear',
+			sorts: {
+				new: 'Newest first',
+				az: 'A–Z',
+				quick: 'Quickest',
+				stale: 'Not cooked lately'
+			},
+			noneTitle: 'Nothing fits all of these',
+			noneCopy: 'Drop one filter to see more:',
+			without: (name: string) => `Without “${name}”`,
+			recipes: (count: number) => (count === 1 ? '1 recipe' : `${count} recipes`),
+			noMatch: (query: string) => `No recipe or ingredient matches “${query}”.`,
+			sheet: {
+				title: 'Filter recipes',
+				onlyFavourites: 'Only favourites',
+				hearted: (count: number) =>
+					count === 1 ? '1 recipe has a heart' : `${count} recipes have a heart`,
+				anyOf: 'any of',
+				allOf: 'all of',
+				vegetarianIncludesVegan: 'vegetarian includes vegan',
+				readyIn: 'Ready in',
+				atMost: 'minutes, at most',
+				any: 'Any',
+				sortBy: 'Sort by',
+				show: (count: number) => (count === 1 ? 'Show 1 recipe' : `Show ${count} recipes`),
+				nothingFits: 'Nothing fits',
+				clearAll: 'Clear all'
+			}
 		},
 
 		/** The "Add a recipe" chooser [plan 14] the New button opens — one door to
@@ -1255,7 +1402,14 @@ export const en = {
 			/** Split so the middle run can be the link to the edit screen. */
 			noStepsLead: 'No steps written down yet. ',
 			noStepsLink: 'Add them',
-			noStepsRest: ' and cook mode can walk you through it.'
+			noStepsRest: ' and cook mode can walk you through it.',
+			/** The heart in the photo's bar [7a] (→ plan 40). */
+			favourite: 'Favourite',
+			/** The tag pills under the meta line — each one opens the library filtered by it. */
+			tags: 'Tags',
+			showTagged: (name: string) => `Show recipes tagged ${name}`,
+			/** An ingredient line and its note in the shared text (→ plan 43). */
+			withNote: (line: string, note: string) => `${line}, ${note}`
 		},
 
 		/** The ••• menu [7c]. */
@@ -1269,10 +1423,21 @@ export const en = {
 			deleteConfirm: (name: string) => `Delete ${name}?`,
 			deleteCopy:
 				'Its ingredients and steps go with it. Days you already planned it on keep the name.',
-			keep: 'Keep it'
+			keep: 'Keep it',
+			/** Plan 48: the saved recipe through the import's check, into the review. */
+			tidy: 'Tidy with AI',
+			tidyHint: 'Clean names, notes and links. You check it before anything changes.'
 		},
 
-		/** New / edit recipe [3c]. */
+		/** Tidying a saved recipe with AI (→ plan 48, SPEC §4.5). */
+		tidy: {
+			note: 'Tidied with AI. Nothing changes until you save.',
+			empty: 'This recipe has no ingredients or steps to tidy.',
+			failed: 'The tidy did not work. The recipe is as it was.',
+			noStorage: 'This browser keeps nothing for the review. Try it outside a private window.'
+		},
+
+		/** New / edit recipe [3c], rebuilt around parts and links (→ plan 46). */
 		form: {
 			new: 'New recipe',
 			edit: 'Edit recipe',
@@ -1286,70 +1451,145 @@ export const en = {
 			time: 'Time (min)',
 			servingsLabel: 'Servings',
 			ingredients: 'Ingredients',
-			ingredientPlaceholder: '400 g pasta',
-			ingredientLabel: (index: number) => `Ingredient ${index}`,
-			addIngredient: 'Add ingredient',
-			/**
-			 * The parser still reads the line; this says so, lists what it knows,
-			 * and points at the sheet for the times it reads a line wrong.
-			 */
-			ingredientsNote: (units: string) =>
-				`Write them however you like: “400 g pasta”, “2 eggs”, “salt”. Units we know: ${units}. Tap an amount to set the number and unit yourself.`,
-			/**
-			 * The chip beside each row. No row number: the input beside it already
-			 * announces "Ingredient 3", and this is its description.
-			 */
-			amountLabel: (amount: string) => (amount ? `${amount}, edit` : 'No amount, add one'),
-			/** The row taken apart [3c], with [3a]'s unit list. */
-			ingredientNamePlaceholder: 'pasta',
-			quantity: 'Amount',
-			quantityPlaceholder: '400',
-			unit: 'Unit',
-			/**
-			 * Salt is not measured in pieces, so "none" has to be offered — [3a]
-			 * has no such option because `pcs` is its default.
-			 */
-			unitNone: 'No unit',
-			/** A unit measures a quantity (→ DECISIONS #42), so it waits for one. */
-			unitHint: 'Only saved with an amount',
-			/** What the composed line will actually be read as (→ DECISIONS #101). */
-			savedAsLead: 'Saved as ',
-			savedAsNothing: 'nothing yet',
-			/** Writes the three fields back into the row's line; nothing is saved yet. */
-			amountDone: 'Done',
+			/** A row of the list [E1]: tapping it opens the ingredient sheet. */
+			ingredientRow: (line: string) => `${line}, edit`,
+			/** The drag grip beside a row: it moves the row, also into another part. */
+			reorder: (name: string) => `Move ${name}`,
+			/** The add field at the foot of each part [E1]: a whole line, read as you'd write it. */
+			addLine: 'Add an ingredient',
+			addLineExample: 'Add, e.g. “2 tbsp olive oil”',
+			addLineTo: (part: string) => `Add an ingredient to ${part}`,
 			steps: 'Steps',
 			stepPlaceholder: 'Boil the pasta until al dente, about 9 min.',
 			stepLabel: (index: number) => `Step ${index}`,
 			addStep: 'Add step',
 
 			/**
-			 * What a step uses [3c] (→ SPEC §4.4, DECISIONS #127). The row under
-			 * each step opens the sheet; `usesAuto` is the marker on a step still
-			 * reading its own text, so "these came from the words you typed" is
-			 * visible before cook mode is the one saying it.
+			 * Parts of the dish (→ plan 43). A recipe without one never says the
+			 * word: only "Add part" at the end of each list.
 			 */
-			usesAuto: 'auto',
-			usesNone: 'Ingredients for this step',
-			usesNothing: 'nothing',
-			usesLabel: (index: number) => `Ingredients for step ${index}`,
-			usesTitle: 'What this step uses',
-			usesSubtitle: 'Cook mode shows these while you’re on the step.',
-			/** Under a ticked ingredient: the amount the whole recipe asks for. */
-			usesShare: (amount: string) => `of ${amount}`,
-			usesAmount: (name: string) => `Amount of ${name} for this step`,
-			/** The amount field left empty means the row's whole amount. */
-			usesAll: 'all',
-			usesBackToAuto: 'Read the step text instead',
-			usesEmpty: 'Add the ingredients first, then you can say which ones this step needs.',
+			part: {
+				add: 'Add part',
+				name: 'Name of the part',
+				namePlaceholder: 'Sauce',
+				confirm: 'Add',
+				rename: (name: string) => `Rename ${name}`,
+				/** Emptied, the part's rows join the part above it. */
+				renameHint: 'Leave it empty to join the part above.'
+			},
 
-			/**
-			 * A step's own timer [3c] (→ plan 21, DECISIONS #147). The chip under a
-			 * step names it; a step without one shows what cook mode will read out of
-			 * its text ("auto"), or the invitation.
-			 */
-			timerAdd: 'Add a timer',
-			timerLabel: (index: number) => `Timer for step ${index}`,
-			/** "Nudeln · 10:00" — the name, then the clock. */
+			/** One ingredient [E2]: name, a number and a unit kept apart, note, part. */
+			ingredientSheet: {
+				eyebrow: 'Ingredient',
+				name: 'Name',
+				nameHint: 'what goes on the list',
+				namePlaceholder: 'pasta',
+				amount: 'Amount',
+				number: 'Number',
+				numberPlaceholder: '500',
+				/** Numbers only: the field refuses a letter, and says so. */
+				numberOnly: 'Numbers only, like 500, 1,5 or ½.',
+				unitButton: (unit: string) => `Unit: ${unit}`,
+				note: 'Note',
+				noteHint: 'shown in the recipe',
+				notePlaceholder: 'finely chopped',
+				part: 'Part',
+				noPart: 'none',
+				done: 'Done',
+				remove: 'Remove ingredient'
+			},
+
+			/** The unit panel [E2b]: every unit visible, nothing to type but your own. */
+			units: {
+				eyebrow: (name: string, number: string) => (number ? `${name} · ${number}` : name),
+				title: 'Unit',
+				units: 'Units',
+				counted: 'Counted in',
+				none: 'No unit',
+				/** The everyday counting words the panel shows, in this language. */
+				everyday: [
+					'clove',
+					'bunch',
+					'can',
+					'pinch',
+					'slice',
+					'jar',
+					'bottle',
+					'stick',
+					'sprig',
+					'leaf',
+					'cube',
+					'handful'
+				],
+				addOwn: 'Add your own',
+				ownLabel: 'Your own unit',
+				ownPlaceholder: 'scoop',
+				ownAdd: 'Add',
+				ownMark: (word: string) => `${word}, your own`
+			},
+
+			/** A step's two rows [E3a]: each says what it holds. */
+			stepRow: {
+				ingredients: 'Ingredients',
+				ingredientsNone: 'Link the words that name them',
+				ingredientsLabel: (index: number) => `Ingredients for step ${index}`,
+				/** A suggested link, not made yet (→ plan 46): dotted, and said. */
+				suggested: (name: string) => `${name}, suggested`,
+				timer: 'Timer',
+				timerAdd: 'Add a timer',
+				timerLabel: (index: number) => `Timer for step ${index}`
+			},
+
+			/** The ⋯ menu on a step. */
+			stepMenu: {
+				label: (index: number) => `More for step ${index}`,
+				up: 'Move up',
+				down: 'Move down',
+				toPart: 'Move to part…',
+				remove: 'Delete step'
+			},
+
+			/** Move to part [E3b]: every part, the current one marked. */
+			movePart: {
+				title: 'Move to part',
+				eyebrow: (index: number) => `Step ${index}`,
+				steps: (from: number, to: number) =>
+					from === to ? `step ${from}` : `steps ${from} to ${to}`,
+				none: 'No part',
+				add: 'New part'
+			},
+
+			/** The link sheet [E3]: tap a word to link it, an amount goes with its word. */
+			links: {
+				eyebrow: (index: number) => `Step ${index} · ingredients`,
+				title: 'Tap a word to link it',
+				showFor: 'Show for',
+				people: 'people',
+				linkTo: (word: string) => `Link “${word}” to`,
+				/** The words of a link as they stand in the step, quoted the way the language quotes. */
+				linkedWords: (words: string) => `“${words}”`,
+				linked: 'Linked in this step',
+				nothing: 'Nothing linked yet. Tap a word in the text.',
+				/** A stored link whose words were edited out of the step. */
+				gone: 'no longer in the text',
+				remove: (words: string) => `Remove the link of ${words}`,
+				/** "200 g of 400 g · follows the number of people" */
+				follows: (amount: string) => `${amount} · follows the number of people`,
+				of: (amount: string, total: string) => `${amount} of ${total}`,
+				stays: (amount: string) => `${amount} stays as written`,
+				notBeside: 'Not next to its ingredient, so it stays as written.',
+				help: 'Underlined is what cook mode underlines. An amount next to a linked word follows the number of people.',
+				suggested: 'Suggested',
+				suggest: (word: string, name: string) => `Link “${word}” to ${name}?`,
+				dismiss: (word: string) => `Don’t link ${word}`,
+				unnamed: 'Used without being named',
+				addIngredient: 'Add ingredient',
+				pickIngredient: 'Which ingredient?',
+				done: 'Done',
+				back: 'Back'
+			},
+
+			/** "Nudeln · 10:00": the timer's name, then the clock. */
 			timerChip: (name: string, duration: string) => `${name} · ${duration}`,
 			timerSheet: {
 				title: 'Step timer',
@@ -1359,14 +1599,7 @@ export const en = {
 				remove: 'Remove timer'
 			},
 			save: 'Save',
-			saveRecipe: 'Save recipe',
-			/** The reorder/remove controls beside each row. */
-			moveIngredientUp: (index: number) => `Move ingredient ${index} up`,
-			moveIngredientDown: (index: number) => `Move ingredient ${index} down`,
-			removeIngredient: (index: number) => `Remove ingredient ${index}`,
-			moveStepUp: (index: number) => `Move step ${index} up`,
-			moveStepDown: (index: number) => `Move step ${index} down`,
-			removeStep: (index: number) => `Remove step ${index}`
+			saveRecipe: 'Save recipe'
 		},
 
 		/**
@@ -1387,6 +1620,11 @@ export const en = {
 			merge: (amount: string) => `On the list already, becomes ${amount}`,
 			/** Why a row opens unticked (→ `services/pantry`). */
 			staple: 'You usually have this',
+			/**
+			 * The parts of the dish one row is gathered from (→ plan 43): "Butter"
+			 * in the Bolognese and in the Béchamel is one row on the list.
+			 */
+			parts: (parts: string[]) => parts.join(' · '),
 			submit: (count: number) => (count === 1 ? 'Add 1 to the list' : `Add ${count} to the list`),
 			nothing: 'Nothing selected'
 		},
@@ -1414,13 +1652,25 @@ export const en = {
 			setTimer: 'Set a timer',
 			close: 'Close cook mode',
 			step: (index: number, total: number) => `Step ${index} of ${total}`,
+			/** The step's part beside its number: "Step 5 of 10 · Béchamel" (→ plan 43). */
+			stepPart: (part: string) => ` · ${part}`,
 			startTimer: 'Set timer',
 			startParsedTimer: (duration: string) => `Start ${duration} timer`,
 			/** A step's own timer, by its name (→ plan 21): "Start Nudeln · 10:00". */
 			startNamedTimer: (name: string, duration: string) => `Start ${name} · ${duration}`,
 			ingredients: 'Ingredients',
-			/** "This step uses **250 g mushrooms**" — the bold is the list. */
-			usesLead: 'This step uses ',
+			/** The list under a step [C2], for a screen reader (→ plan 47). */
+			stepNeeds: 'What this step needs',
+			/** The header on a step when the count is known: "Lasagne · for 8" [C2]. */
+			titleFor: (recipe: string, servings: number) => `${recipe} · for ${servings}`,
+			/** "Get ready", the screen before step 1 [C1] (→ plan 47). */
+			readyEyebrow: 'Before you start',
+			readyTitle: 'Get ready',
+			startCooking: 'Start cooking',
+			/** Get ready opened from a step's ingredients sheet goes back to that step. */
+			backToStep: (step: number) => `Back to step ${step}`,
+			/** In the ingredients sheet: the list to tick off, again. */
+			peekToReady: 'Back to Get ready',
 			previous: 'Previous step',
 			next: 'Next step',
 			finish: 'Finish',
@@ -1546,21 +1796,13 @@ export const en = {
 				note: 'Made with AI. Check it over before saving.',
 				/** The line typed for this import, quoted back on the draft it shaped. */
 				adapted: (instructions: string) => `Adapted: “${instructions}”.`,
-				/** A recipe card the model couldn't improve still opens, as the site wrote it. */
-				withoutAi: (reason: string) => `Imported as the site wrote it: ${reason}`,
-
-				/** The link screen's toggle (→ plan 22) and the line under it. */
-				improve: 'Improve with AI',
-				improveHint:
-					'Sorts out amounts, links ingredients to their steps and sets timers. It also reads pages without recipe data. Uses your AI provider.',
+				/** A recipe card the model couldn't read still opens, read by rules (→ plan 44). */
+				withoutAi: (reason: string) => `Imported without AI: ${reason}`,
 				instructionsToggle: 'Add instructions for the AI',
 				instructionsLabel: 'Instructions for the AI',
 				instructionsPlaceholder: 'e.g. with tofu instead of meat, for 2 people',
 				/** The household's standing line from Settings, shown so it's no surprise. */
 				instructionsHousehold: (instructions: string) => `Always applied: “${instructions}”`,
-				pageLead:
-					'This page has no recipe data we can read directly. Want to try reading it with AI?',
-				tryPage: 'Try AI extraction',
 				extracting: 'Extracting…',
 				/** Playful lines that cycle on the cooking loader while the model works. */
 				loading: [
@@ -1593,6 +1835,126 @@ export const en = {
 					noRecipe: 'Couldn’t find a recipe in that. Try clearer photos or more complete text.',
 					noPhotos: 'Add at least one photo of the recipe.'
 				}
+			},
+
+			/**
+			 * The import's review [R1]–[R3] (→ plan 45, SPEC §4.7): the recipe as
+			 * it will look, what the gate could not vouch for marked on the thing
+			 * itself, each with its one-tap answers. `name` is an ingredient's
+			 * name, `amount` an amount as printed ("500 g").
+			 */
+			review: {
+				title: 'Check recipe',
+				discard: 'Discard',
+				save: 'Save',
+				/** The banner: how many questions are open, and what that means. */
+				count: (count: number) =>
+					count === 0
+						? 'Nothing to check'
+						: count === 1
+							? '1 thing to check'
+							: `${count} things to check`,
+				/** Some were open and every one is answered now. */
+				allChecked: 'Nothing left to check',
+				ready: 'Ready to save.',
+				/**
+				 * The lines that name what the draft was read from take its source
+				 * (→ `ImportSource`): a paste has no page, a tidy has a saved recipe.
+				 */
+				restMatches: (from: ImportSource) => `Everything else matches ${SOURCE[from]}.`,
+				/** A clean import: nothing was ever open. */
+				allMatch: (from: ImportSource, ingredients: number, steps: number) =>
+					`All ${ingredients === 1 ? '1 ingredient' : `${ingredients} ingredients`} and ${steps === 1 ? '1 step' : `${steps} steps`} match ${SOURCE[from]}.`,
+				noAi: 'Imported without AI. Links are a guess.',
+				fromPhoto: 'Read from photos. Check it against the cookbook.',
+				/** Tapping the banner goes to the first open question. */
+				showFirst: 'Go to the first thing to check',
+				recipe: 'Recipe',
+				ingredients: 'Ingredients',
+				steps: 'Steps',
+				also: 'Also',
+				editEverything: 'Edit everything',
+				/** A row's or step's button name: tapping it edits that one thing. */
+				editIngredient: (name: string) => `Edit ${name}`,
+				editStep: (number: number) => `Edit step ${number}`,
+				editBasics: 'Edit name, time and servings',
+				/** An answered question, in its place. */
+				checked: 'Checked',
+
+				choice: (from: ImportSource, name: string, alternative: string) =>
+					`${OFFERS[from]} ${name} or ${alternative}. Which do you use?`,
+				amountDiffers: (from: ImportSource, page: string, answer: string) =>
+					`${SAYS[from]} “${page}”. The AI read ${answer}.`,
+				keepAmount: (amount: string) => `Keep ${amount}`,
+				useAmount: (amount: string) => `Use ${amount}`,
+				noAmount: 'no amount',
+				nameDiffers: (from: ImportSource, page: string) => `${SAYS[from]} “${page}”.`,
+				lineAdded: (from: ImportSource, page: string) =>
+					`Also ${IN[from]}: “${page}”. The AI had left it out.`,
+				reworded: (from: ImportSource, page: string) => `${SAYS[from]}: “${page}”`,
+				rewordedUnknown: (from: ImportSource) => `This step is not word for word ${IN[from]}.`,
+				usePageText: (from: ImportSource) =>
+					({
+						page: 'Use the page’s text',
+						text: 'Use your text',
+						photo: 'Use the text from the photos',
+						recipe: 'Use the saved text'
+					})[from],
+				newUnit: (word: string) => `New unit: ${word}. Add it?`,
+				addUnit: 'Add it',
+				keepInNote: 'Keep it in the note',
+				servingsQuestion: 'For how many people?',
+				servingsPage: (from: ImportSource, page: string) =>
+					`${SAYS[from]} “${page}”. Every amount scales from this number.`,
+				servingsWhy: 'Every amount scales from this number.',
+				servingsKeep: (count: number) => `Keep ${count}`,
+				noSteps: (from: ImportSource) =>
+					({
+						page: 'This page has no method.',
+						text: 'Your text has no method.',
+						photo: 'The photos show no method.',
+						recipe: 'This recipe has no steps.'
+					})[from],
+				addSteps: 'Add steps',
+				saveWithout: 'Save without',
+				sharesExceed: (name: string) => `The steps use more ${name} than the recipe lists.`,
+				keep: 'Keep',
+				edit: 'Edit',
+				remove: 'Remove',
+
+				/** The folded lists at the bottom. */
+				leftOut: 'Left out of the steps',
+				leftOutCount: (count: number) => (count === 1 ? '1 sentence' : `${count} sentences`),
+				putBack: 'Put back',
+				/** A tidy's left-out sentence (→ plan 48): the household's own, asked about. */
+				leftOutLine: 'The AI left this out. It is removed when you save.',
+				leaveOut: 'Leave it out',
+				leftOutRemoved: 'Removed when you save.',
+				notes: 'Notes from the import',
+				noteCount: (count: number) => (count === 1 ? '1 note' : `${count} notes`),
+				converted: (name: string) => `${name}: converted to metric.`,
+				unused: (name: string) => `${name}: no step uses it.`,
+
+				/** The step sheet: one step's text, its links one tap further. */
+				stepSheet: (number: number) => `Step ${number}`,
+				stepText: 'Text',
+				stepLinks: 'Link ingredients',
+				removeStep: 'Remove step',
+				done: 'Done',
+				/** The basics sheet: name, time and servings. */
+				basics: 'Recipe',
+				name: 'Name',
+				time: 'Time in minutes',
+				servings: 'Servings',
+
+				/** `?draft=` names an import this tab no longer holds. */
+				gone: 'This import is no longer here.',
+				goneHint: 'It was saved, discarded or opened in another tab. Import it again.',
+				again: 'Import again',
+				/** The same, for a saved recipe's tidy (→ plan 48). */
+				tidyGone: 'This tidy is no longer here.',
+				tidyGoneHint: 'It was saved, discarded or opened in another tab. The recipe is as it was.',
+				backToRecipe: 'Back to the recipe'
 			}
 		}
 	},
@@ -2254,6 +2616,19 @@ export const en = {
 			note: 'Everyone in the house sees this name.'
 		},
 
+		/**
+		 * The household's own unit words (→ plan 46): added from a recipe's unit
+		 * panel, listed here where one can be removed.
+		 */
+		units: {
+			row: 'Units',
+			title: 'Your own units',
+			subtitle:
+				'Words your household added to the unit list. Removing one leaves the recipes that use it as they are.',
+			empty: 'None yet. Add one from the unit list of an ingredient.',
+			remove: (word: string) => `Remove ${word}`
+		},
+
 		/** AI features [6a] — the household's own provider keys (→ plan 20, SPEC §6).
 		 *  The keys stay server-side; this screen only ever sees a masked hint. */
 		ai: {
@@ -2317,18 +2692,6 @@ export const en = {
 				save: 'Save instructions',
 				saved: 'Saved.'
 			}
-		},
-
-		/** Recipe wording [6a] (→ plan 24): imported German recipes as written, or Austrian. */
-		wording: {
-			row: 'Recipe wording',
-			title: 'Recipe wording',
-			asWritten: 'As written',
-			asWrittenDetail: 'Imported recipes keep the words the site used.',
-			austrian: 'Austrian German',
-			austrianDetail:
-				'Sahne becomes Obers, Quark Topfen, Kartoffeln Erdäpfel, in imported German recipes.',
-			note: 'Applies to recipes you import from now on; saved recipes stay as they are. With AI it rewrites the whole recipe; without, the ingredient names.'
 		},
 
 		/**
@@ -2792,6 +3155,12 @@ export const en = {
 		shopping: {
 			itemName: 'Give the item a name.',
 			storeName: 'Give the list a name.'
+		},
+
+		/** "Add your own" in the unit panel (→ plan 46, `services/units.ts`). */
+		units: {
+			invalid: (max: number) => `One word of letters, up to ${max} characters.`,
+			known: () => 'That one is on the list already.'
 		},
 
 		recipes: {

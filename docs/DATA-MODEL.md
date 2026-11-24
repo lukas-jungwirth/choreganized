@@ -9,7 +9,7 @@ user ─┬─ session / account / verification        (Better Auth)
       ├─ push_subscriptions                      (per device)
       └─ members ─┬─→ households
                   │      ├─ stores ──→ shopping_items
-                  │      ├─ recipes ──→ recipe_ingredients / recipe_steps
+                  │      ├─ recipes ──→ recipe_ingredients / recipe_steps / recipe_tags
                   │      │                     └─ recipe_step_ingredients ─┘
                   │      ├─ meals (→ recipes, one per date × slot)
                   │      ├─ tasks ──→ task_completions (snapshots)
@@ -55,9 +55,8 @@ user ─┬─ session / account / verification        (Better Auth)
 - `aiInstructions` (migration 0015, → plan 22): the household's standing instructions for every
   AI import, ≤ 300 chars, whitespace collapsed and control/bidi characters stripped on write
   (`$lib/ai.ts` `cleanInstructions`); `NULL` = none. Owner-only, like the connections.
-- `recipeWording` (migration 0016, → plan 24): `'austrian'` or `NULL` (as written) — how
-  imported German recipes are worded, from the fixed list in `utils/wording.ts`. Applied at
-  import only; nothing saved is ever rewritten. Owner-only.
+- ~~`recipeWording`~~ (migration 0016, → plan 24) was **dropped by migration 0030** (plan 44,
+  DECISIONS #317). Recipes imported with it keep their names.
 
 ### `ai_connections` (→ plan 20, SPEC §6)
 
@@ -171,11 +170,29 @@ user ─┬─ session / account / verification        (Better Auth)
   (→ [DECISIONS #97](DECISIONS.md)). A unit somebody typed that isn't in the table is kept and
   shown exactly as typed.
 
-### `recipes` / `recipe_ingredients` / `recipe_steps` / `recipe_step_ingredients`
+### `recipes` / `recipe_ingredients` / `recipe_steps` / `recipe_step_ingredients` / `recipe_tags`
 
-- Ingredients are structured (name, quantity?, unit?) but _entered_ freeform ("400 g pasta")
-  and parsed leniently (`src/lib/utils/ingredients.ts`, plan 07): `/^([\d.,½¼¾\/]+)?\s*([a-zA-Z]+)?\s+(.+)$/`-ish
-  with a known-units whitelist; on no match, everything is the name.
+- Ingredients are structured (name, quantity?, unit?). The editor posts them **as fields**
+  (plan 46: a number field and a unit picked from one list); the import, the seed and the
+  editor's add field still read a typed line ("400 g pasta") with the shared reader
+  (`src/lib/utils/ingredients.ts` on `src/lib/utils/amounts.ts`, plans 07 and 42); on no
+  match, everything is the name. `unit` holds one of the eight canonical units (`g`, `kg`,
+  `ml`, `L`, `pcs`, `pack`, `tbsp`, `tsp`), **a counting word the reader knows**, or **one of
+  the household's own words** (→ [DECISIONS #313, #321, #324](DECISIONS.md)). A save from the
+  editor stores a counting word in its one form, the singular ("Zehe"); rows written before
+  keep the form their line had ("Zehen"). Either is _shown_ in the number that fits the amount
+  ("1 Zehe", "2 Zehen", `countingForm`), never translated, and compared by its key
+  (`measureKey`). A household word is stored as the household added it; a word since removed
+  from the household's list stays on the rows that use it.
+- **`name` is what you buy; `note` is the rest** (migration 0029, → plan 43, DECISIONS #314):
+  `recipe_ingredients.note` (nullable, ≤ 120 characters) holds "in Scheiben geschnitten",
+  "zum Würzen", "oder veganes Hack". The shopping list, the cupboard, the diet guess and the
+  tag pre-fill read `name` only.
+- **Parts** (migration 0029, → DECISIONS #312): `recipe_ingredients.section` and
+  `recipe_steps.section` (nullable, ≤ 40 characters) hold the part's name as written
+  ("Bolognese", "Béchamel"). Consecutive rows with the same value form one part; NULL rows have
+  no heading. No table of their own: a part has no data besides its name and its place, and
+  the two lists may name the same part differently ("Ragu Bolognese:" / "Ragu:").
 - Steps are plain text, ordered by `sortOrder`. A step **may carry its own timer**
   (`timer_seconds` + an optional `timer_label`, migration 0014, → plan 21, DECISIONS #147) —
   one per step, set in the form or by an import. `NULL` (every step written before it, and the
@@ -188,8 +205,16 @@ user ─┬─ session / account / verification        (Better Auth)
   (`src/lib/utils/step-highlight.ts`) to the rows in `recipe_step_ingredients`. The flag is what
   makes "this step uses nothing" sayable: an empty list on its own is indistinguishable from a
   step nobody has looked at.
-- `recipe_step_ingredients` is `(stepId, ingredientId, quantity?, sortOrder)` with
-  `UNIQUE(step_id, ingredient_id)` — a step names an ingredient once. `quantity` is a **share of
+- `recipe_step_ingredients` is `(stepId, ingredientId, quantity?, phrase?, amountPhrase?,
+sortOrder)` with `UNIQUE(step_id, ingredient_id, phrase)` (migration 0029, → plan 43; it was
+  `(step_id, ingredient_id)` before): a step may name one ingredient by two phrases ("Karotte
+  schälen … zu den Möhren"). SQLite lets two NULL phrases past the index, so `writeChildren`
+  dedupes on (ingredient, phrase) itself. `phrase` is the words of the step text that name the
+  ingredient, exactly as written ("Zwiebelwürfel"; NULL: used without being named, nothing is
+  underlined); `amount_phrase` is the amount the text gives it ("1 - 2 EL"; the run a different
+  count rewrites, → `src/lib/utils/step-links.ts`). Pins written before 0029 carry neither, and
+  a step whose pins carry no words is drawn exactly as before, by the matcher (→ DECISIONS
+  #320). `quantity` is a **share of
   the ingredient row**, in that row's own unit (1 of the 3 tbsp of olive oil here, 2 at the end);
   NULL means all of it, which is what a plain tick stores. Written in recipe-as-written terms, so
   `?serves=` scales a share with exactly the same arithmetic as the ingredient above it
@@ -200,11 +225,37 @@ user ─┬─ session / account / verification        (Better Auth)
   posts a step's pins as **indices into the posted ingredient lines**, not ids: the ids it was
   opened on no longer exist by the time the save writes. Blank lines drop out and shift those
   indices, which is why `writeChildren` keeps a posted-index → new-id map.
+- **Tags, diet, heart** (migration 0028, → plan 40, DECISIONS #302–#303). `recipe_tags` is
+  `(recipe_id, tag)`, the pair the primary key, cascading with the recipe; `tag` is a key from
+  the fixed list in `src/lib/utils/recipe-tags.ts` (`meal:dinner`, `kind:soup`,
+  `free:gluten`), and the service drops a key that isn't on it rather than refusing the save.
+  Tags are **replaced with the other children** on every save that sends them
+  (`RecipeInput.tags`; a caller that sends none — an older importer — leaves them be).
+  `recipes.diet` is one of `meat | fish | vegetarian | vegan` or NULL for "not set", a column
+  rather than a tag because a recipe has one and "vegetarian includes vegan" is a rule on that
+  value. `recipes.favourite` (boolean, default false) is the heart, one per household.
+  Duplicate copies tags and diet, not the heart.
+- **"Last planned"** (the library's "Not cooked lately") isn't stored: `listRecipes` with a
+  `today` reads `max(meals.date)` per recipe over this household's days up to and including
+  today. Meals are never pruned, so that history is whole.
 - `imagePath` is relative to `UPLOADS_DIR` and is a UUID filename, not a derivable one:
   replacing a photo writes a new file and deletes the old, so a stored URL never changes
   content and can be cached immutably (→ DECISIONS #63). Files are served through
   `/api/uploads/[...path]`, which only answers when the path is a recipe's `imagePath` **in
   the caller's household** — the lookup is the authorisation (→ #64).
+
+### `household_units` (→ plan 44, DECISIONS #321)
+
+- The words a household counts in besides the eight units and the counting words the shared
+  reader knows (`utils/amounts.ts`): "Ring", "Kugel". Added on purpose, never by a guess (the
+  import's "New unit: Ring. Add it?" of plan 45, the editor's unit panel of plan 46);
+  `services/units.ts` lists, adds and removes them, `householdId` first.
+- `word` as the person wrote it; `wordKey` its lowercase, `UNIQUE(householdId, wordKey)`, so
+  "Ring" and "RING" are one word. A word that is already a unit or a counting word is refused.
+- `addedBy` (member, `SET NULL` when they leave) and `addedAt`.
+- Read as the reader's `known` set (`parseIngredient(line, known)`): every recipe save of that
+  household reads "2 Ringe Fleischwurst" as 2 · Ringe · Fleischwurst; another household's save
+  reads it as before. The AI import lists the words in its prompt and its gate accepts them.
 
 ### `meals`
 

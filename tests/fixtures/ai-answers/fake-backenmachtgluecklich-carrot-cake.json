@@ -1,0 +1,308 @@
+{
+	"name": "Carrot Cake Cheesecake",
+	"servings": 1,
+	"timeMinutes": 75,
+	"ingredients": [
+		{
+			"source": 0,
+			"quantity": 130,
+			"unit": "g",
+			"countingWord": null,
+			"newUnit": null,
+			"name": "Weizenmehl",
+			"note": null,
+			"alternative": null,
+			"section": "Streusel"
+		},
+		{
+			"source": 1,
+			"quantity": 70,
+			"unit": "g",
+			"countingWord": null,
+			"newUnit": null,
+			"name": "brauner Zucker",
+			"note": null,
+			"alternative": null,
+			"section": "Streusel"
+		},
+		{
+			"source": 2,
+			"quantity": 80,
+			"unit": "g",
+			"countingWord": null,
+			"newUnit": null,
+			"name": "Butter (kalt)",
+			"note": null,
+			"alternative": null,
+			"section": "Streusel"
+		},
+		{
+			"source": 3,
+			"quantity": null,
+			"unit": null,
+			"countingWord": null,
+			"newUnit": null,
+			"name": "1/2 Teelöffel Zimt",
+			"note": null,
+			"alternative": null,
+			"section": "Streusel"
+		},
+		{
+			"source": 4,
+			"quantity": 220,
+			"unit": "g",
+			"countingWord": null,
+			"newUnit": null,
+			"name": "Karotten (vor Schälen gewogen)",
+			"note": null,
+			"alternative": null,
+			"section": "Carrot Cake Boden"
+		},
+		{
+			"source": 5,
+			"quantity": 3,
+			"unit": null,
+			"countingWord": null,
+			"newUnit": null,
+			"name": "mittelgroße Eier",
+			"note": null,
+			"alternative": null,
+			"section": "Carrot Cake Boden"
+		},
+		{
+			"source": 6,
+			"quantity": 110,
+			"unit": "g",
+			"countingWord": null,
+			"newUnit": null,
+			"name": "brauner Zucker",
+			"note": null,
+			"alternative": null,
+			"section": "Carrot Cake Boden"
+		},
+		{
+			"source": 7,
+			"quantity": 40,
+			"unit": "g",
+			"countingWord": null,
+			"newUnit": null,
+			"name": "Zucker",
+			"note": null,
+			"alternative": null,
+			"section": "Carrot Cake Boden"
+		},
+		{
+			"source": 8,
+			"quantity": 120,
+			"unit": "g",
+			"countingWord": null,
+			"newUnit": null,
+			"name": "Rapsöl (oder andere neutrale Sorte)",
+			"note": null,
+			"alternative": null,
+			"section": "Carrot Cake Boden"
+		},
+		{
+			"source": 9,
+			"quantity": 220,
+			"unit": "g",
+			"countingWord": null,
+			"newUnit": null,
+			"name": "Weizenmehl",
+			"note": null,
+			"alternative": null,
+			"section": "Carrot Cake Boden"
+		},
+		{
+			"source": 10,
+			"quantity": 1,
+			"unit": null,
+			"countingWord": null,
+			"newUnit": null,
+			"name": "1/2 Teelöffel Backpulver (leicht gehäuft)",
+			"note": null,
+			"alternative": null,
+			"section": "Carrot Cake Boden"
+		},
+		{
+			"source": 11,
+			"quantity": 1,
+			"unit": null,
+			"countingWord": null,
+			"newUnit": null,
+			"name": "Teelöffel Zimt",
+			"note": null,
+			"alternative": null,
+			"section": "Carrot Cake Boden"
+		},
+		{
+			"source": 12,
+			"quantity": 1,
+			"unit": null,
+			"countingWord": null,
+			"newUnit": null,
+			"name": "Prise Salz",
+			"note": null,
+			"alternative": null,
+			"section": "Carrot Cake Boden"
+		},
+		{
+			"source": 13,
+			"quantity": 500,
+			"unit": "g",
+			"countingWord": null,
+			"newUnit": null,
+			"name": "Frischkäse (Doppelrahmstufe)",
+			"note": null,
+			"alternative": null,
+			"section": "Cheesecake-Creme"
+		},
+		{
+			"source": 14,
+			"quantity": 80,
+			"unit": "g",
+			"countingWord": null,
+			"newUnit": null,
+			"name": "Zucker",
+			"note": null,
+			"alternative": null,
+			"section": "Cheesecake-Creme"
+		},
+		{
+			"source": 15,
+			"quantity": 1,
+			"unit": null,
+			"countingWord": null,
+			"newUnit": null,
+			"name": "Teelöffel Vanillepaste",
+			"note": null,
+			"alternative": null,
+			"section": "Cheesecake-Creme"
+		},
+		{
+			"source": 16,
+			"quantity": 2,
+			"unit": null,
+			"countingWord": null,
+			"newUnit": null,
+			"name": "mittelgroße Eier",
+			"note": null,
+			"alternative": null,
+			"section": "Cheesecake-Creme"
+		},
+		{
+			"source": 17,
+			"quantity": 25,
+			"unit": "g",
+			"countingWord": null,
+			"newUnit": null,
+			"name": "Speisestärke (oder Mehl)",
+			"note": null,
+			"alternative": null,
+			"section": "Cheesecake-Creme"
+		}
+	],
+	"steps": [
+		{
+			"text": "Als erstes die Streusel vorbereiten. Dafür Mehl, braunen Zucker und Zimt mischen. Kalte Butter in Stückchen dazugeben und zunächst mit den Knethaken oder in der Küchenmaschine krümelig verreiben. Anschließend mit den Fingern zu Streuseln verkneten. Bis zur Verwendung kalt stellen.",
+			"section": null,
+			"timer": null,
+			"uses": [
+				{
+					"ingredient": 2,
+					"phrase": "Butter",
+					"amountPhrase": null,
+					"quantity": null
+				},
+				{
+					"ingredient": 7,
+					"phrase": "Zucker",
+					"amountPhrase": null,
+					"quantity": null
+				},
+				{
+					"ingredient": 14,
+					"phrase": "Zucker",
+					"amountPhrase": null,
+					"quantity": null
+				}
+			]
+		},
+		{
+			"text": "Backofen auf 175 Grad Ober- und Unterhitze vorheizen. Eine eckige Form von etwa 20 * 25 cm einfetten und zusätzlich mit Backpapier auslegen.",
+			"section": null,
+			"timer": null,
+			"uses": []
+		},
+		{
+			"text": "Für den Carrot-Cake-Teig die Karotten putzen, schälen und fein reiben. Eier, braunen Zucker und Zucker etwa 2-3 Minuten cremig schlagen. Das Öl unterrühren.",
+			"section": null,
+			"timer": null,
+			"uses": [
+				{
+					"ingredient": 4,
+					"phrase": "Karotten",
+					"amountPhrase": null,
+					"quantity": null
+				},
+				{
+					"ingredient": 7,
+					"phrase": "Zucker",
+					"amountPhrase": null,
+					"quantity": null
+				},
+				{
+					"ingredient": 14,
+					"phrase": "Zucker",
+					"amountPhrase": null,
+					"quantity": null
+				}
+			]
+		},
+		{
+			"text": "Mehl, Backpulver, Zimt und Salz mischen und nur kurz unterrühren. Zuletzt die Möhren kurz mit einem Teigschaber oder Löffel unterheben. Den Teig in der vorbereiteten Form glatt streichen.",
+			"section": null,
+			"timer": null,
+			"uses": []
+		},
+		{
+			"text": "Für die Cheesecake-Schicht Frischkäse mit Zucker und Vanille möglichst kurz und vorsichtig glatt rühren, nicht kräftig aufschlagen. Eier und Stärke ebenfalls kurz auf niedriger Stufe unterrühren, bis eine glatte Masse entsteht. Die Cheesecake-Masse vorsichtig auf dem Teig verteilen.",
+			"section": null,
+			"timer": null,
+			"uses": [
+				{
+					"ingredient": 7,
+					"phrase": "Zucker",
+					"amountPhrase": null,
+					"quantity": null
+				},
+				{
+					"ingredient": 13,
+					"phrase": "Frischkäse",
+					"amountPhrase": null,
+					"quantity": null
+				},
+				{
+					"ingredient": 14,
+					"phrase": "Zucker",
+					"amountPhrase": null,
+					"quantity": null
+				}
+			]
+		},
+		{
+			"text": "Die vorbereiteten Streusel gleichmäßig über die Cheesecake-Schicht streuen. Den Kuchen etwa 40-50 Minuten backen.",
+			"section": null,
+			"timer": null,
+			"uses": []
+		},
+		{
+			"text": "Den Kuchen vollständig in der Form auskühlen lassen. Danach mindestens 3 Stunden im Kühlschrank kühlen, damit alles fest wird. Mit einem großen scharfen Messer in kleine Stücke schneiden.",
+			"section": null,
+			"timer": null,
+			"uses": []
+		}
+	],
+	"tags": [],
+	"diet": null
+}

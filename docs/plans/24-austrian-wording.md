@@ -1,5 +1,8 @@
 # 24 · Austrian wording (fixed word list)
 
+**Status: removed by plan 44** (2026-11-23, DECISIONS #317; migration 0030 drops the column). The
+plan below is kept as history.
+
 **Goal:** an Austrian household imports German recipes that say Sahne, Quark and Hackfleisch. It
 cooks with Obers, Topfen and Faschiertes, and shops for them too. A household setting, **Recipe
 wording: as written / Austrian German**, adapts imported German recipes to Austrian terms. The

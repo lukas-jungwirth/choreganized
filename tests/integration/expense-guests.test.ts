@@ -411,13 +411,18 @@ describe('the guest’s link and page (→ plan 38 step 2)', () => {
 		);
 		const page = guestPage(guestShareToken(householdId, jonas));
 		assert.deepEqual(page?.payments, []);
-		assert.deepEqual(page?.items[0], {
-			kind: 'payment',
-			date: TODAY,
-			from: null,
-			to: 'Owner',
-			amountMinor: 4981
-		});
+		// Found by its kind, not its place: the dinner and the payment share a day,
+		// and rows made in the same millisecond have no order to rely on.
+		assert.deepEqual(
+			page?.items.find((item) => item.kind === 'payment'),
+			{
+				kind: 'payment',
+				date: TODAY,
+				from: null,
+				to: 'Owner',
+				amountMinor: 4981
+			}
+		);
 	});
 
 	it('a replaced token no longer resolves, nor a removed guest’s, nor one never made', () => {

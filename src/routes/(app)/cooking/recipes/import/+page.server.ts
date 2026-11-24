@@ -1,30 +1,31 @@
 /**
- * Recipe import [3c as the preview] (→ SPEC §4.7, plans 12, 13, 20, 22).
+ * Recipe import [3c as the preview] (→ SPEC §4.7, plans 12, 13, 20, 22, 44).
  *
  * Every way in lands in the *same* editor — the AI never saves on its own:
- *   - `fetch`        — a link. The page's own recipe card (JSON-LD, else
- *                      Microdata) opens as written; with **Improve with AI** on,
- *                      the model structures it (amounts, which step uses what,
- *                      timers), and a page with no card is read by the model
- *                      from its text. If the model can't, the card still opens,
- *                      with a note saying why it wasn't improved.
- *   - `extractPage`  — "Try with AI" on a page with no card: the same link
- *                      path with AI on, for the one tap after a plain fetch.
+ *   - `fetch`        — a link. With an AI provider set up, the model reads the
+ *                      page's recipe card and its text in one call and the gate
+ *                      checks the answer (→ `services/ai-import.ts`); without
+ *                      one, or when both providers fail, the card is read by
+ *                      rules (→ `utils/rule-draft.ts`). No switch: setting up a
+ *                      provider is the go-ahead (DECISIONS #315). A page with
+ *                      no card needs the model.
  *   - `extractText`  — recipe text pasted by hand (the answer for 403 sites).
  *   - `extractPhotos`— 1–3 photos of a cookbook / magazine page.
  * The AI paths need the household's own AI connection (→ services/ai.ts) and
- * take its standing instructions plus a line typed for this import.
+ * take its standing instructions plus a line typed for this import. Every
+ * draft carries the gate's check items, which the review screen (plan 45,
+ * `?draft=`) marks on the recipe; the page keeps the draft in the browser.
  *
  * `save` is the recipe editor's usual create, plus attaching whatever photo the
  * import produced. Nothing is persisted before Save but the temp photo file; an
  * abandoned import's photo is collected by the nightly sweep (→ cron.ts, uploads.ts).
  */
-import { fail, redirect, type RequestEvent } from '@sveltejs/kit';
+import { fail, redirect } from '@sveltejs/kit';
 import { cleanInstructions } from '$lib/ai';
 import { catalog, type Messages } from '$lib/i18n';
 import { requireMember } from '$lib/server/guards';
 import {
-	draftFromCard,
+	cardSuggestion,
 	importErrorMessage,
 	importPagePhoto,
 	readRecipePage,
@@ -32,11 +33,10 @@ import {
 	type RecipePage
 } from '$lib/server/recipe-import';
 import { getAiConnections, getAiInstructions, isAiEnabled } from '$lib/server/services/ai';
-import { getRecipeWording } from '$lib/server/services/household';
 import {
 	aiImportErrorMessage,
-	extractRecipe,
-	improveRecipe,
+	importPage,
+	importRecipe,
 	type Extracted,
 	type ImportContext
 } from '$lib/server/services/ai-import';
@@ -45,14 +45,15 @@ import {
 	createRecipe,
 	discardImportedPhoto
 } from '$lib/server/services/recipes';
+import { listUnits } from '$lib/server/services/units';
 import {
 	reencodeUpload,
 	storePhotoFromForm,
 	storeRecipePhoto,
 	uploadErrorMessage
 } from '$lib/server/uploads';
-import { readRecipeForm, type RecipePrefill } from '$lib/utils/recipes';
-import { applyWording, type RecipeWording } from '$lib/utils/wording';
+import { readDraftId } from '$lib/utils/recipe-review';
+import { mergeSuggestions, readRecipeForm, type RecipePrefill } from '$lib/utils/recipes';
 import type { Actions, PageServerLoad } from './$types';
 
 /** A cookbook spread is a page or two — more than three photos is a different job. */
@@ -69,7 +70,15 @@ export const load: PageServerLoad = (event) => {
 		// Only whether AI import is available — never the key itself (→ SPEC §4.7).
 		aiEnabled: isAiEnabled(householdId),
 		// Shown beside the instructions field, so nobody is surprised by them.
-		aiInstructions: getAiInstructions(householdId)
+		aiInstructions: getAiInstructions(householdId),
+		// The household's own unit words: the draft's lines are read with them,
+		// and the unit panel offers them (→ plan 46).
+		units: listUnits(householdId).map((unit) => unit.word),
+		// An import under review (→ plan 45): its id names the draft this tab keeps
+		// in `sessionStorage`, so the address survives a reload; `edit` opens it in
+		// the full editor.
+		draft: readDraftId(event.url.searchParams),
+		edit: event.url.searchParams.get('edit') === '1'
 	};
 };
 
@@ -92,7 +101,10 @@ function sharedUrl(params: URLSearchParams): string {
 	return '';
 }
 
-/** What every AI call here is asked with: both instruction lines, and the reader's units. */
+/**
+ * What every import here is read with: both instruction lines, the reader's
+ * units, and the household's own unit words (→ plan 44, DECISIONS #321).
+ */
 function contextFor(householdId: string, form: FormData, m: Messages): ImportContext {
 	return {
 		instructions: {
@@ -100,23 +112,8 @@ function contextFor(householdId: string, form: FormData, m: Messages): ImportCon
 			now: cleanInstructions(form.get('instructions'))
 		},
 		labels: m.units.labels,
-		wording: getRecipeWording(householdId)
+		units: listUnits(householdId).map((unit) => unit.word)
 	};
-}
-
-/**
- * A page's card as written — in the household's wording, when it chose one
- * and the card is German: the ingredient names only, since without a model a
- * word swap inside a sentence would break its grammar (→ plan 24).
- */
-function cardDraft(
-	card: NonNullable<RecipePage['card']>,
-	photo: RecipePrefill['photo'],
-	wording: RecipeWording | null
-): RecipePrefill {
-	const draft = draftFromCard(card, photo);
-	const steps = draft.steps.map((step) => step.text);
-	return { ...draft, ingredientLines: applyWording(draft.ingredientLines, steps, wording) };
 }
 
 /**
@@ -140,95 +137,66 @@ function aiNotice(result: Extracted, context: ImportContext, m: Messages): strin
 		.join(' ');
 }
 
-/**
- * A link, read with or without AI (→ `fetch` and `extractPage`). A fetch
- * problem keeps the link on screen with its message; a page with no card offers
- * AI (or Settings); and a card the model couldn't improve still opens, as the
- * site wrote it, with the reason.
- *
- * `ai` is what was asked: `'ask'` for the "Try with AI" button, which only
- * means anything with a connection; `'if-set-up'` for the toggle, which a
- * remembered "on" may still send after AI was removed in Settings — that
- * import simply runs without it.
- */
-async function importLink(event: RequestEvent, ai: 'off' | 'if-set-up' | 'ask') {
-	const { householdId } = requireMember(event);
-	const form = await event.request.formData();
-	const m = catalog(event.locals.locale);
-	const url = String(form.get('url') ?? '').trim();
+export const actions: Actions = {
+	/**
+	 * A link → its draft. A fetch problem keeps the link on screen with its
+	 * message; a page with no card and no provider says so (and points at
+	 * Settings); a card the model could not read still opens, by rules, with the
+	 * reason.
+	 */
+	fetch: async (event) => {
+		const { householdId } = requireMember(event);
+		const form = await event.request.formData();
+		const m = catalog(event.locals.locale);
+		const url = String(form.get('url') ?? '').trim();
 
-	if (!url) return fail(400, { fetchError: m.cooking.import.error.invalidUrl, url });
+		if (!url) return fail(400, { fetchError: m.cooking.import.error.invalidUrl, url });
 
-	const connections = ai === 'off' ? [] : getAiConnections(householdId);
-	if (ai === 'ask' && !connections.length) {
-		return fail(400, { aiError: m.ai.error.noKey, url, noRecipe: true });
-	}
-	const withAi = connections.length > 0;
+		let page: RecipePage;
+		try {
+			page = await readRecipePage(url);
+		} catch (cause) {
+			// A site that turns the server away still opens in the browser: the screen
+			// points at the ways to bring the recipe over from there.
+			const refused = cause instanceof RecipeImportError && cause.code === 'refused';
+			return fail(422, { fetchError: importErrorMessage(cause, m), url, refused });
+		}
 
-	let page: RecipePage;
-	try {
-		page = await readRecipePage(url);
-	} catch (cause) {
-		// A site that turns the server away still opens in the browser: the screen
-		// points at the ways to bring the recipe over from there.
-		const refused = cause instanceof RecipeImportError && cause.code === 'refused';
-		return fail(422, { fetchError: importErrorMessage(cause, m), url, refused });
-	}
+		const connections = getAiConnections(householdId);
+		// Fetched fine, but no card and nobody to read the text: the screen says so.
+		if (!page.card && !connections.length) {
+			return fail(422, { fetchError: m.cooking.import.error.noRecipe, url, noRecipe: true });
+		}
 
-	const context = contextFor(householdId, form, m);
-
-	if (page.card) {
-		// The photo downloads while the model works; the card opens with it either way.
+		const context = contextFor(householdId, form, m);
+		// The photo downloads while the model works.
 		const photo = importPagePhoto(page);
-		if (!withAi) return { draft: cardDraft(page.card, await photo, context.wording ?? null) };
+		const fromPage = page.card ? cardSuggestion(page.card) : null;
 
 		try {
-			const result = await improveRecipe(connections, page.card, context);
+			const imported = await importPage(connections, page, context);
+			if (imported.by === 'ai') {
+				return {
+					draft: {
+						...imported.result.value,
+						photo: await photo,
+						// The page's own word first; the model's fills what it left out (→ plan 41).
+						suggested: mergeSuggestions(fromPage, imported.result.value.suggested)
+					},
+					notice: aiNotice(imported.result, context, m)
+				};
+			}
 			return {
-				draft: { ...result.value, photo: await photo },
-				notice: aiNotice(result, context, m)
+				draft: { ...imported.draft, photo: await photo, suggested: fromPage },
+				notice: imported.cause
+					? m.cooking.import.ai.withoutAi(aiImportErrorMessage(imported.cause, m))
+					: undefined
 			};
 		} catch (cause) {
-			return {
-				draft: cardDraft(page.card, await photo, context.wording ?? null),
-				notice: m.cooking.import.ai.withoutAi(aiImportErrorMessage(cause, m))
-			};
+			await photo.then((taken) => taken && discardImportedPhoto(taken.path)).catch(() => {});
+			return fail(422, { aiError: aiImportErrorMessage(cause, m), url, noRecipe: true });
 		}
-	}
-
-	// Fetched fine, but no recipe card: the model reads the page text — or, with
-	// AI off, `noRecipe` tells the screen to offer it (the button when a
-	// connection is set up, the Settings hint when it isn't).
-	if (!withAi) {
-		return fail(422, { fetchError: m.cooking.import.error.noRecipe, url, noRecipe: true });
-	}
-
-	try {
-		const result = await extractRecipe(connections, { text: page.text }, context);
-		const photo = await importPagePhoto(page);
-		return { draft: { ...result.value, photo }, notice: aiNotice(result, context, m) };
-	} catch (cause) {
-		const message =
-			cause instanceof RecipeImportError
-				? importErrorMessage(cause, m)
-				: aiImportErrorMessage(cause, m);
-		return fail(422, { aiError: message, url, noRecipe: true });
-	}
-}
-
-export const actions: Actions = {
-	/** A link → its draft, improved by AI when the screen's toggle says so. */
-	fetch: async (event) => {
-		const form = await event.request.clone().formData();
-		return importLink(event, form.get('ai') === '1' ? 'if-set-up' : 'off');
 	},
-
-	/**
-	 * "Try with AI" on a page with no recipe card. Re-fetches the URL the screen
-	 * still shows (a fresh, explicit tap — cheaper than shipping the stripped page
-	 * back and forth, → DECISIONS #112) and reads it with the model.
-	 */
-	extractPage: (event) => importLink(event, 'ask'),
 
 	/** Extract from pasted text — the answer for bot-blocked (Cloudflare 403) sites. */
 	extractText: async (event) => {
@@ -244,7 +212,7 @@ export const actions: Actions = {
 
 		const context = contextFor(householdId, form, m);
 		try {
-			const result = await extractRecipe(connections, { text }, context);
+			const result = await importRecipe(connections, { card: null, text }, context);
 			const draft: RecipePrefill = { ...result.value, photo: null };
 			return { draft, notice: aiNotice(result, context, m) };
 		} catch (cause) {
@@ -283,7 +251,7 @@ export const actions: Actions = {
 		const context = contextFor(householdId, form, m);
 		let result: Extracted;
 		try {
-			result = await extractRecipe(connections, { images: webps }, context);
+			result = await importRecipe(connections, { images: webps }, context);
 		} catch (cause) {
 			return fail(422, { aiError: aiImportErrorMessage(cause, m) });
 		}

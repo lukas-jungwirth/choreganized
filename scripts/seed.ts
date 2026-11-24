@@ -5,6 +5,10 @@
  *   npm run db:seed -- you@example.com --full-house
  *   npm run db:seed -- you@example.com --history
  *   npm run db:seed -- you@example.com --guests
+ *   npm run db:seed -- you@example.com --long-step
+ *
+ * `--long-step` adds a risotto whose second step is a 400-character paragraph,
+ * the longest step cook mode is built to fit on one screen (→ plan 47).
  *
  * `--full-house` fills the household to as many members as the app allows —
  * one per colour in the member palette, since two members can't share one —
@@ -55,6 +59,7 @@ import {
 	recipeIngredients,
 	recipeStepIngredients,
 	recipeSteps,
+	recipeTags,
 	recipes,
 	shoppingItems,
 	shoppingSuggestions,
@@ -66,6 +71,7 @@ import {
 // Relative and extensioned for the same reason the schema import is, and worth
 // importing rather than retyping: it is the key the unique index is built on.
 import { suggestionKey } from '../src/lib/utils/shopping.ts';
+import { readRecipeTags } from '../src/lib/utils/recipe-tags.ts';
 import { addRepeat } from '../src/lib/utils/dates.ts';
 import { MEMBER_COLORS } from '../src/lib/member-colors.ts';
 import {
@@ -73,7 +79,11 @@ import {
 	SEED_HOUSEHOLD_NAME,
 	SEED_GUEST_TOKEN,
 	SEED_HOUSEMATE_NAME,
+	SEED_COOKBOOK,
+	SEED_LASAGNE,
+	SEED_LONG_STEP,
 	SEED_RECIPE_NAMES,
+	SEED_UNTAGGED,
 	SEED_CHECKLIST_ITEMS,
 	SEED_CHECKLIST_NAME,
 	SEED_STORE_NAMES,
@@ -122,10 +132,14 @@ const args = process.argv.slice(2);
 const fullHouse = args.includes('--full-house');
 const history = args.includes('--history');
 const guests = args.includes('--guests');
+const cookbook = args.includes('--cookbook');
+const longStep = args.includes('--long-step');
 const email = args.find((arg) => !arg.startsWith('--'));
 
 if (!email) {
-	console.error('Usage: npm run db:seed -- you@example.com [--full-house] [--history] [--guests]');
+	console.error(
+		'Usage: npm run db:seed -- you@example.com [--full-house] [--history] [--guests] [--cookbook] [--long-step]'
+	);
 	process.exit(1);
 }
 
@@ -590,6 +604,7 @@ const seeded = db.transaction((tx) => {
 				name: SEED_RECIPE_NAMES.pasta,
 				timeMinutes: 30,
 				servings: 4,
+				diet: 'vegetarian',
 				createdByMemberId: housemateMemberId,
 				createdAt: daysAgo(12, 19)
 			},
@@ -599,12 +614,131 @@ const seeded = db.transaction((tx) => {
 				name: SEED_RECIPE_NAMES.curry,
 				timeMinutes: 40,
 				servings: 4,
+				diet: 'vegan',
+				favourite: true,
 				createdByMemberId: ownerMemberId,
 				createdAt: daysAgo(20, 18)
 			}
 		])
 		.onConflictDoNothing()
 		.run();
+
+	// Tagged (→ plan 40), so a fresh dev database shows the library's filters.
+	tx.insert(recipeTags)
+		.values([
+			{ recipeId: pastaId, tag: 'meal:dinner' },
+			{ recipeId: pastaId, tag: 'kind:main' },
+			{ recipeId: curryId, tag: 'meal:dinner' },
+			{ recipeId: curryId, tag: 'kind:main' },
+			{ recipeId: curryId, tag: 'free:gluten' },
+			{ recipeId: curryId, tag: 'free:lactose' }
+		])
+		.onConflictDoNothing()
+		.run();
+
+	// --cookbook: the recipe-filters sketch's library (→ plan 40, seed-data.ts).
+	if (cookbook) {
+		for (const entry of SEED_COOKBOOK) {
+			const recipeId = sid('recipe', `cookbook-${entry.key}`);
+
+			tx.insert(recipes)
+				.values({
+					id: recipeId,
+					householdId,
+					name: entry.name,
+					timeMinutes: entry.time,
+					servings: 2,
+					diet: entry.diet,
+					favourite: entry.favourite,
+					createdByMemberId: ownerMemberId,
+					createdAt: daysAgo(entry.added, 18)
+				})
+				.onConflictDoNothing()
+				.run();
+
+			tx.insert(recipeTags)
+				.values(readRecipeTags(entry.tags).map((tag) => ({ recipeId, tag })))
+				.onConflictDoNothing()
+				.run();
+
+			tx.insert(recipeIngredients)
+				.values(
+					entry.ingredients.map((name, sortOrder) => ({
+						id: sid('ing', `cookbook-${entry.key}-${sortOrder}`),
+						recipeId,
+						name,
+						sortOrder
+					}))
+				)
+				.onConflictDoNothing()
+				.run();
+
+			tx.insert(recipeSteps)
+				.values({
+					id: sid('step', `cookbook-${entry.key}`),
+					recipeId,
+					text: entry.step,
+					sortOrder: 0
+				})
+				.onConflictDoNothing()
+				.run();
+
+			if (entry.cooked !== null) {
+				const date = addDays(today, -entry.cooked);
+				tx.insert(meals)
+					.values({
+						id: sid('meal', `${date}:lunch`),
+						householdId,
+						date,
+						slot: 'lunch',
+						recipeId,
+						createdByMemberId: ownerMemberId
+					})
+					.onConflictDoNothing()
+					.run();
+			}
+		}
+
+		// …and three nobody has tagged yet, for the sorting pass (→ plan 41).
+		for (const entry of SEED_UNTAGGED) {
+			const recipeId = sid('recipe', `cookbook-${entry.key}`);
+
+			tx.insert(recipes)
+				.values({
+					id: recipeId,
+					householdId,
+					name: entry.name,
+					timeMinutes: entry.time,
+					servings: 4,
+					createdByMemberId: ownerMemberId,
+					createdAt: daysAgo(entry.added, 18)
+				})
+				.onConflictDoNothing()
+				.run();
+
+			tx.insert(recipeIngredients)
+				.values(
+					entry.ingredients.map((name, sortOrder) => ({
+						id: sid('ing', `cookbook-${entry.key}-${sortOrder}`),
+						recipeId,
+						name,
+						sortOrder
+					}))
+				)
+				.onConflictDoNothing()
+				.run();
+
+			tx.insert(recipeSteps)
+				.values({
+					id: sid('step', `cookbook-${entry.key}`),
+					recipeId,
+					text: entry.step,
+					sortOrder: 0
+				})
+				.onConflictDoNothing()
+				.run();
+		}
+	}
 
 	tx.insert(recipeIngredients)
 		.values([
@@ -693,6 +827,140 @@ const seeded = db.transaction((tx) => {
 		.set({ ingredientsSet: true })
 		.where(inArray(recipeSteps.id, [sid('step', 'pasta-2'), sid('step', 'pasta-3')]))
 		.run();
+
+	// The two-part recipe (→ plan 43, seed-data.ts): parts, notes and links
+	// stored with the words that name them. Older than the other two, so "Recently
+	// added" [04] still shows those.
+	const lasagneId = sid('recipe', 'lasagne');
+
+	tx.insert(recipes)
+		.values({
+			id: lasagneId,
+			householdId,
+			name: SEED_RECIPE_NAMES.lasagne,
+			timeMinutes: SEED_LASAGNE.time,
+			servings: SEED_LASAGNE.servings,
+			diet: 'meat',
+			createdByMemberId: ownerMemberId,
+			createdAt: daysAgo(40, 18)
+		})
+		.onConflictDoNothing()
+		.run();
+
+	tx.insert(recipeTags)
+		.values([
+			{ recipeId: lasagneId, tag: 'meal:dinner' },
+			{ recipeId: lasagneId, tag: 'kind:main' }
+		])
+		.onConflictDoNothing()
+		.run();
+
+	tx.insert(recipeIngredients)
+		.values(
+			SEED_LASAGNE.ingredients.map((ingredient, sortOrder) => ({
+				id: sid('ing', `lasagne-${ingredient.key}`),
+				recipeId: lasagneId,
+				name: ingredient.name,
+				quantity: ingredient.quantity,
+				unit: ingredient.unit,
+				note: ingredient.note,
+				section: ingredient.section,
+				sortOrder
+			}))
+		)
+		.onConflictDoNothing()
+		.run();
+
+	tx.insert(recipeSteps)
+		.values(
+			SEED_LASAGNE.steps.map((step, sortOrder) => ({
+				id: sid('step', `lasagne-${sortOrder}`),
+				recipeId: lasagneId,
+				text: step.text,
+				section: step.section,
+				ingredientsSet: true,
+				sortOrder
+			}))
+		)
+		.onConflictDoNothing()
+		.run();
+
+	const lasagneLinks = SEED_LASAGNE.steps.flatMap((step, at) =>
+		step.links.map((link, sortOrder) => ({
+			id: sid('uses', `lasagne-${at}:${link.ingredient}:${link.phrase ?? ''}`),
+			stepId: sid('step', `lasagne-${at}`),
+			ingredientId: sid('ing', `lasagne-${link.ingredient}`),
+			quantity: null,
+			phrase: link.phrase,
+			amountPhrase: link.amountPhrase ?? null,
+			sortOrder
+		}))
+	);
+	tx.insert(recipeStepIngredients).values(lasagneLinks).onConflictDoNothing().run();
+
+	// --long-step: a risotto with one long imported step (→ plan 47, seed-data.ts).
+	if (longStep) {
+		const risottoId = sid('recipe', 'risotto');
+
+		tx.insert(recipes)
+			.values({
+				id: risottoId,
+				householdId,
+				name: SEED_LONG_STEP.name,
+				timeMinutes: 35,
+				servings: SEED_LONG_STEP.servings,
+				diet: 'vegetarian',
+				createdByMemberId: ownerMemberId,
+				createdAt: daysAgo(50, 18)
+			})
+			.onConflictDoNothing()
+			.run();
+
+		tx.insert(recipeIngredients)
+			.values(
+				SEED_LONG_STEP.ingredients.map((ingredient, sortOrder) => ({
+					id: sid('ing', `risotto-${ingredient.key}`),
+					recipeId: risottoId,
+					name: ingredient.name,
+					quantity: ingredient.quantity,
+					unit: ingredient.unit,
+					note: ingredient.note,
+					sortOrder
+				}))
+			)
+			.onConflictDoNothing()
+			.run();
+
+		tx.insert(recipeSteps)
+			.values(
+				SEED_LONG_STEP.steps.map((step, sortOrder) => ({
+					id: sid('step', `risotto-${sortOrder}`),
+					recipeId: risottoId,
+					text: step.text,
+					ingredientsSet: true,
+					sortOrder
+				}))
+			)
+			.onConflictDoNothing()
+			.run();
+
+		tx.insert(recipeStepIngredients)
+			.values(
+				SEED_LONG_STEP.steps.flatMap((step, at) =>
+					step.links.map((link, sortOrder) => ({
+						id: sid('uses', `risotto-${at}:${link.ingredient}:${link.phrase}`),
+						stepId: sid('step', `risotto-${at}`),
+						ingredientId: sid('ing', `risotto-${link.ingredient}`),
+						quantity: link.quantity ?? null,
+						phrase: link.phrase,
+						amountPhrase: null,
+						sortOrder
+					}))
+				)
+			)
+			.onConflictDoNothing()
+			.run();
+	}
 
 	// Keyed by date and slot, not by "today": re-running next week plans that
 	// week's meals instead of skipping every insert and leaving the plan in the
@@ -1170,7 +1438,13 @@ const seeded = db.transaction((tx) => {
 console.log(`Seeded ${databasePath} for ${email}`);
 console.log(`  household  ${seeded.householdName} — ${seeded.members}`);
 console.log('  shopping   3 stores · 10 items (2 already checked off)');
-console.log('  cooking    2 recipes · meals planned for today, tomorrow and the day after');
+console.log(
+	'  cooking    3 recipes (one in parts) · meals planned for today, tomorrow and the day after'
+);
+if (cookbook)
+	console.log(
+		'  cookbook   13 more tagged recipes (5 with a heart, 10 planned before) · 3 untagged'
+	);
 console.log('  tasks      7 tasks (overdue · today · upcoming · undated) · 8 history entries');
 console.log(
 	guests

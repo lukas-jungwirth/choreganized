@@ -8,7 +8,7 @@
  */
 import assert from 'node:assert/strict';
 import { describe, it } from 'vitest';
-import { readStepTimer } from './recipes';
+import { mergeSuggestions, readStepTimer, type TagSuggestion } from './recipes';
 import { MAX_TIMER_SECONDS, MIN_TIMER_SECONDS, TIMER_LABEL_MAX } from './timer-parse';
 
 describe('readStepTimer', () => {
@@ -61,5 +61,35 @@ describe('readStepTimer', () => {
 		for (const value of ['not json', '[600]', 'null', '600', '{"label":"Reis"}', '{']) {
 			assert.equal(readStepTimer(value), null, value);
 		}
+	});
+});
+
+describe('mergeSuggestions (→ plan 41)', () => {
+	const page: TagSuggestion = { tags: ['kind:soup'], diet: 'vegan', from: 'page' };
+	const ai: TagSuggestion = {
+		tags: ['meal:lunch', 'meal:dinner', 'kind:main', 'free:gluten'],
+		diet: 'vegetarian',
+		from: 'ai'
+	};
+
+	it('keeps the page’s word per group and lets the AI fill the rest', () => {
+		assert.deepEqual(mergeSuggestions(page, ai), {
+			tags: ['meal:lunch', 'meal:dinner', 'kind:soup', 'free:gluten'],
+			diet: 'vegan',
+			from: 'both'
+		});
+	});
+
+	it('is the page’s alone when the AI adds nothing new', () => {
+		assert.deepEqual(
+			mergeSuggestions(page, { tags: ['kind:main'], diet: 'meat', from: 'ai' }),
+			page
+		);
+	});
+
+	it('is either side alone when the other has nothing', () => {
+		assert.equal(mergeSuggestions(null, ai), ai);
+		assert.equal(mergeSuggestions(page, null), page);
+		assert.equal(mergeSuggestions(null, null), null);
 	});
 });

@@ -8,7 +8,12 @@
 import assert from 'node:assert/strict';
 import { describe, it } from 'vitest';
 import { INGREDIENTS_MAX, STEP_TEXT_MAX, STEPS_MAX } from './recipes';
-import { cleanText, validateRecipeDraft, type SourceRecipe } from './recipe-draft';
+import {
+	cleanText,
+	validateRecipeDraft,
+	validateTagSuggestions,
+	type SourceRecipe
+} from './recipe-draft';
 
 const good = {
 	name: 'Palatschinken',
@@ -123,14 +128,16 @@ describe('validateRecipeDraft — shape', () => {
 		assert.equal(draft.steps.length, 1);
 		// Eier (answered #2) is now #0, Zucker (#3) now #1; the pin to the dropped #0 is gone.
 		assert.deepEqual(draft.steps[0].uses, [
-			{ ingredient: 0, quantity: null },
-			{ ingredient: 1, quantity: 50 }
+			{ ingredient: 0, quantity: null, phrase: null, amountPhrase: null },
+			{ ingredient: 1, quantity: 50, phrase: null, amountPhrase: null }
 		]);
 	});
 
 	it('takes a step written as a bare string, without pins or timer', () => {
 		const draft = draftOf({ name: 'X', ingredients: [], steps: ['Alles verrühren.'] });
-		assert.deepEqual(draft.steps, [{ text: 'Alles verrühren.', uses: null, timer: null }]);
+		assert.deepEqual(draft.steps, [
+			{ text: 'Alles verrühren.', uses: [], timer: null, section: null }
+		]);
 	});
 });
 
@@ -176,7 +183,7 @@ describe('validateRecipeDraft — pins', () => {
 				{ ingredient: 1, quantity: null },
 				{ ingredient: 1, quantity: 2 }
 			]),
-			[{ ingredient: 1, quantity: null }]
+			[{ ingredient: 1, quantity: null, phrase: null, amountPhrase: null }]
 		);
 	});
 
@@ -189,18 +196,18 @@ describe('validateRecipeDraft — pins', () => {
 				{ ingredient: 3, quantity: 20 } // Butter has no amount to take a share of
 			]),
 			[
-				{ ingredient: 0, quantity: 100 },
-				{ ingredient: 1, quantity: null },
-				{ ingredient: 2, quantity: null },
-				{ ingredient: 3, quantity: null }
+				{ ingredient: 0, quantity: 100, phrase: null, amountPhrase: null },
+				{ ingredient: 1, quantity: null, phrase: null, amountPhrase: null },
+				{ ingredient: 2, quantity: null, phrase: null, amountPhrase: null },
+				{ ingredient: 3, quantity: null, phrase: null, amountPhrase: null }
 			]
 		);
 	});
 
-	it('reads an empty or unreadable list as "read the text", never as "uses nothing"', () => {
-		assert.equal(pinned([]), null);
-		assert.equal(pinned('all of them'), null);
-		assert.equal(pinned([{ ingredient: 99 }]), null);
+	it('keeps an empty or unreadable list as no links: the import’s links are its answer (→ plan 44)', () => {
+		assert.deepEqual(pinned([]), []);
+		assert.deepEqual(pinned('all of them'), []);
+		assert.deepEqual(pinned([{ ingredient: 99 }]), []);
 	});
 });
 
@@ -282,33 +289,29 @@ describe('validateRecipeDraft — strings', () => {
 	});
 });
 
-describe('validateRecipeDraft — fidelity', () => {
+describe('validateRecipeDraft — against the card (→ plan 44)', () => {
 	const source: SourceRecipe = {
 		name: 'Palatschinken (Grundrezept)',
 		timeMinutes: 25,
 		servings: 6,
 		ingredientLines: ['250 g Mehl', '3 Eier', '500 ml Milch', 'Butter'],
-		steps: ['Teig rühren, 15 Minuten rasten lassen.', 'Herausbacken.']
+		steps: [
+			'Mehl, Eier und Milch glatt rühren und 15 Minuten rasten lassen.',
+			'In Butter dünn herausbacken.'
+		]
+	};
+	const sourced = {
+		...good,
+		ingredients: good.ingredients.map((row, at) => ({ ...row, source: at }))
 	};
 
-	it('keeps the card’s own name, servings and time when improving it', () => {
-		const draft = draftOf(good, { source, instructed: false });
-		assert.equal(draft.name, 'Palatschinken (Grundrezept)');
+	it('keeps the card’s own servings and time, and its name unless the model shortened it', () => {
+		const draft = draftOf(sourced, { source, instructed: false });
+		assert.equal(draft.name, 'Palatschinken');
 		assert.equal(draft.servings, 6);
 		assert.equal(draft.timeMinutes, 25);
-	});
-
-	it('refuses an improvement that added, dropped, merged or split rows', () => {
-		const fewer = { ...good, ingredients: good.ingredients.slice(0, 3) };
-		const more = {
-			...good,
-			steps: [...good.steps, { text: 'Servieren.', timer: null, uses: null }]
-		};
-		assert.deepEqual(check(fewer, { source, instructed: false }), {
-			ok: false,
-			reason: 'fidelity'
-		});
-		assert.deepEqual(check(more, { source, instructed: false }), { ok: false, reason: 'fidelity' });
+		const renamed = draftOf({ ...sourced, name: 'Crêpes' }, { source, instructed: false });
+		assert.equal(renamed.name, 'Palatschinken (Grundrezept)');
 	});
 
 	it('lets an instructed adaptation change the rows — that is what was asked for', () => {
@@ -320,5 +323,58 @@ describe('validateRecipeDraft — fidelity', () => {
 		const draft = draftOf(adapted, { source, instructed: true });
 		assert.equal(draft.name, 'Vegane Palatschinken');
 		assert.equal(draft.ingredientLines.length, 2);
+	});
+});
+
+describe('validateRecipeDraft — tags (→ plan 41)', () => {
+	it('keeps the tags and diet the app knows, as a suggestion from the AI', () => {
+		const draft = draftOf({
+			...good,
+			tags: ['meal:breakfast', 'kind:dessert', 'cuisine:austrian', 'kind:dessert', 7],
+			diet: 'vegetarian'
+		});
+		assert.deepEqual(draft.suggested, {
+			tags: ['meal:breakfast', 'kind:dessert'],
+			diet: 'vegetarian',
+			from: 'ai'
+		});
+	});
+
+	it('suggests nothing when nothing it said is on the list', () => {
+		assert.equal(draftOf({ ...good, tags: ['dish:pancake'], diet: 'pescatarian' }).suggested, null);
+		assert.equal(draftOf(good).suggested, null);
+	});
+});
+
+describe('validateTagSuggestions (→ plan 41)', () => {
+	it('keeps one known suggestion per recipe asked about', () => {
+		const map = validateTagSuggestions(
+			{
+				recipes: [
+					{ index: 0, tags: ['meal:dinner', 'kind:main'], diet: 'meat' },
+					{ index: 0, tags: ['kind:soup'], diet: null },
+					{ index: 1, tags: ['spicy'], diet: 'vegan' },
+					{ index: 2, tags: [], diet: null },
+					{ index: 7, tags: ['kind:soup'], diet: null },
+					{ index: -1, tags: ['kind:soup'], diet: null },
+					{ index: 1.5, tags: ['kind:soup'], diet: null },
+					'nonsense'
+				]
+			},
+			3
+		);
+		assert.deepEqual(
+			[...map!],
+			[
+				[0, { tags: ['meal:dinner', 'kind:main'], diet: 'meat' }],
+				[1, { tags: [], diet: 'vegan' }]
+			]
+		);
+	});
+
+	it('is null for an answer that is not the shape asked for', () => {
+		assert.equal(validateTagSuggestions(null, 2), null);
+		assert.equal(validateTagSuggestions({ recipes: 'all of them' }, 2), null);
+		assert.deepEqual([...validateTagSuggestions({ recipes: [] }, 2)!], []);
 	});
 });

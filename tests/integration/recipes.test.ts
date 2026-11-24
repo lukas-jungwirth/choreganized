@@ -16,6 +16,8 @@ import {
 	getRecipe,
 	updateRecipe
 } from '$lib/server/services/recipes';
+import { addRecipeIngredients, buildIngredientPick } from '$lib/server/services/recipe-shopping';
+import { listOpenItems } from '$lib/server/services/shopping';
 import { storeRecipePhoto, uploadExists } from '$lib/server/uploads';
 import type { RecipeInput } from '$lib/utils/recipes';
 import { MAX_TIMER_SECONDS } from '$lib/utils/timer-parse';
@@ -30,6 +32,70 @@ function input(steps: RecipeInput['steps']): RecipeInput {
 		steps
 	};
 }
+
+/**
+ * A counting word belongs to the amount (→ plan 42, DECISIONS #313): "2 Zehen
+ * Knoblauch" is stored as 2 · Zehen · Knoblauch, so the name that reaches the
+ * shopping list, the cupboard and the step matcher is the thing itself.
+ */
+describe('an ingredient counted in a counting word', () => {
+	const lines = [
+		'2 Zehen Knoblauch',
+		'1 Bund Petersilie (oder TK)',
+		'20 dag Extrawurst',
+		'Mehl 500g'
+	];
+
+	it('is stored as amount, word and a clean name, and survives an edit', () => {
+		const { householdId, owner } = makeHousehold();
+		const id = createRecipe(householdId, owner.id, { ...input([]), ingredientLines: lines });
+
+		const stored = () =>
+			getRecipe(householdId, id)!.ingredients.map((row) => [row.quantity, row.unit, row.name]);
+		const expected = [
+			[2, 'Zehen', 'Knoblauch'],
+			[1, 'Bund', 'Petersilie (oder TK)'],
+			[200, 'g', 'Extrawurst'],
+			[500, 'g', 'Mehl']
+		];
+		assert.deepEqual(stored(), expected);
+
+		// The editor posts each row back as the line it shows: nothing may drift.
+		const shown = [
+			'2 Zehen Knoblauch',
+			'1 Bund Petersilie (oder TK)',
+			'200 g Extrawurst',
+			'500 g Mehl'
+		];
+		updateRecipe(householdId, id, { ...input([]), ingredientLines: shown });
+		assert.deepEqual(stored(), expected);
+	});
+
+	it('puts the name on the shopping list, not the word', () => {
+		const { householdId, owner } = makeHousehold();
+		const id = createRecipe(householdId, owner.id, { ...input([]), ingredientLines: lines });
+
+		const pick = buildIngredientPick(householdId, id)!;
+		assert.deepEqual(
+			pick.rows.map((row) => row.name),
+			['Knoblauch', 'Petersilie (oder TK)', 'Extrawurst', 'Mehl']
+		);
+
+		const ids = pick.rows.map((row) => row.id);
+		addRecipeIngredients(householdId, owner.id, {
+			recipeId: id,
+			chosen: ids,
+			offered: ids,
+			cookingFor: null
+		});
+
+		const garlic = listOpenItems(householdId).find((item) => item.name === 'Knoblauch');
+		assert.ok(garlic, 'the list has "Knoblauch", not "Zehen Knoblauch"');
+		// Plan 43 (DECISIONS #313): nobody buys two cloves, so the name goes alone.
+		assert.equal(garlic.quantity, null);
+		assert.equal(garlic.unit, null);
+	});
+});
 
 describe('step timers', () => {
 	it('are stored as given, and a step without one reads its text', () => {

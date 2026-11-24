@@ -35,7 +35,7 @@ plus your session date). Note deviations in the plan file and in DECISIONS.md.
 | 21  | [Named step timers & German durations](21-step-timers.md)                                        | done (2026-10-18)         | 08                       |
 | 22  | [Smarter import: link + AI, Microdata, enriched drafts](22-smarter-import.md)                    | done (2026-10-18)         | 20, 21                   |
 | 23  | [Amounts in step text follow servings](23-step-amounts.md)                                       | done (2026-10-18)         | 07                       |
-| 24  | [Austrian wording (fixed word list)](24-austrian-wording.md)                                     | done (2026-10-18)         | 22                       |
+| 24  | [Austrian wording (fixed word list)](24-austrian-wording.md)                                     | removed by 44             | 22                       |
 | 25  | [Agent lane: no silent refusals, runs you can check](25-agent-evidence.md)                       | done (2026-10-26)         | 18                       |
 | 26  | [Agent lane: reproduce first, review second](26-agent-reproduce-review.md)                       | done (2026-10-26)         | 25                       |
 | 27  | [Agent lane: ideas as proposals, a hardened lane](27-agent-ideas-safety.md)                      | todo                      | 26                       |
@@ -51,6 +51,20 @@ plus your session date). Note deviations in the plan file and in DECISIONS.md.
 | 37  | [Quick add reads the amount wherever it is typed](37-quick-add-amounts.md)                       | done (2026-11-20)         | 36                       |
 | 38  | [Guests in Expenses: share a cost with someone outside the household](38-expense-guests.md)      | done (2026-11-21, v0.6.0) | 29, 30                   |
 | 39  | [Keep to the schedule: recurring tasks on a fixed day](39-task-schedule.md)                      | done (2026-11-22, v0.7.0) | 04, 10                   |
+| 40  | [Recipe tags and library filters](40-recipe-filters.md)                                          | done (2026-11-22, v0.8.0) | 07, 12, 14               |
+| 41  | [Recipe tags fill themselves in](41-recipe-tags-fill-in.md)                                      | done (2026-11-23, v0.8.0) | 40, 13, 22               |
+| 42  | [One amount reader for lists, recipes and steps](42-one-amount-reader.md)                        | done (2026-11-23, v0.8.0) | 37                       |
+| 43  | [Recipes with parts, clean ingredients and stored links](43-recipe-parts-notes-links.md)         | done (2026-11-23, v0.8.0) | 42                       |
+| 44  | [A checked import: the model structures, the app verifies](44-checked-import.md)                 | done (2026-11-23, v0.8.0) | 42, 43                   |
+| 45  | [Import review: the recipe as it will look, with what to check](45-import-review.md)             | done (2026-11-23, v0.8.0) | 43, 44                   |
+| 46  | [The recipe editor, rebuilt around parts and links](46-recipe-editor.md)                         | done (2026-11-23, v0.8.0) | 43                       |
+| 47  | [Cook mode: what this step needs, at reading size](47-cook-mode-step-ingredients.md)             | done (2026-11-24, v0.8.0) | 43                       |
+| 48  | [Tidy a saved recipe](48-tidy-saved-recipes.md)                                                  | done (2026-11-24, v0.8.0) | 44, 45                   |
+
+**Plans 42–48 are the recipe rebuild** (agreed with Lukas on 2026-11-23, DECISIONS #311–#318):
+the model structures a recipe, plain code checks it against the page, and the screens render
+what was stored. Build them in number order; 45–47 wait for
+`design/sketches/recipe-rebuild.html` to be agreed.
 
 Work done after the twelve plans, tracked here so the queue stays the whole story:
 

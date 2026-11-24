@@ -20,6 +20,7 @@
 	import { messages } from '$lib/i18n';
 	import type { IngredientPick, IngredientPickRow } from '$lib/server/services/recipe-shopping';
 	import { scaleIngredients, servingsFactor } from '$lib/utils/ingredients';
+	import { shoppingLines } from '$lib/utils/recipe-shopping';
 	import { planAdds, type PlannedAdd } from '$lib/utils/shopping';
 	import { untrack } from 'svelte';
 
@@ -61,11 +62,18 @@
 	const factor = $derived(servingsFactor(pick.writtenFor, serves ?? 0));
 
 	/**
-	 * The rows as the list will receive them — the amounts written out for the
-	 * number of people on the stepper, which is what the server scales to as
-	 * well. Ticks are by id, so they survive a change of mind about the count.
+	 * The rows as the list will receive them — the recipe's rows scaled for the
+	 * number of people on the stepper and gathered into one line per name, by
+	 * the same `shoppingLines` the server runs on submit (→ plan 43). Ticks are
+	 * by id, so they survive a change of mind about the count.
 	 */
-	const rows = $derived(scaleIngredients(pick.rows, factor));
+	const flags = $derived(new Map(pick.rows.map((row) => [row.id, row])));
+	const rows = $derived(
+		shoppingLines(scaleIngredients(pick.ingredients, factor)).flatMap((line) => {
+			const row = flags.get(line.id);
+			return row ? [{ ...row, quantity: line.quantity, unit: line.unit }] : [];
+		})
+	);
 	const chosen = $derived(rows.filter((row) => ticked[row.id]));
 	const allOn = $derived(chosen.length === rows.length);
 
@@ -109,6 +117,8 @@
 		const amount = m.units.amount(effect.result.quantity, effect.result.unit);
 
 		return [
+			// "Butter" from the Bolognese and the Béchamel, said once (→ plan 43).
+			row.parts.length > 1 ? m.cooking.pick.parts(row.parts) : null,
 			row.staple && effect.effect !== 'have' ? m.cooking.pick.staple : null,
 			effect.effect === 'have'
 				? m.cooking.pick.have(amount)

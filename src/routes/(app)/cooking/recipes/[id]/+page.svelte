@@ -6,6 +6,7 @@
 	this screen. Everything else is the app's usual furniture.
 -->
 <script lang="ts">
+	import { enhance } from '$app/forms';
 	import { replaceState } from '$app/navigation';
 	import { page } from '$app/state';
 	import DayPickerSheet from '$lib/components/cooking/DayPickerSheet.svelte';
@@ -13,7 +14,10 @@
 	import MealPlanSheet from '$lib/components/cooking/MealPlanSheet.svelte';
 	import ServingsField from '$lib/components/cooking/ServingsField.svelte';
 	import RecipeImage from '$lib/components/cooking/RecipeImage.svelte';
+	import RecipeIngredientRow from '$lib/components/cooking/RecipeIngredientRow.svelte';
 	import RecipeMenuSheet from '$lib/components/cooking/RecipeMenuSheet.svelte';
+	import RecipeStepRow from '$lib/components/cooking/RecipeStepRow.svelte';
+	import { dietName, tagName } from '$lib/components/cooking/tag-names';
 	import ShoppingResultBanner from '$lib/components/cooking/ShoppingResultBanner.svelte';
 	import BasketIcon from '$lib/components/icons/BasketIcon.svelte';
 	import Button from '$lib/components/ui/Button.svelte';
@@ -23,16 +27,18 @@
 	import type { CalendarDate } from '$lib/utils/dates';
 	import type { MealSlot } from '$lib/utils/meals';
 	import { scaleIngredients, servingsFactor } from '$lib/utils/ingredients';
-	import { readServings } from '$lib/utils/recipes';
-	import { scaleStepAmounts } from '$lib/utils/step-amounts';
-	import { readStep, scaleStepUses } from '$lib/utils/step-highlight';
+	import { emptyFilter, recipeFilterHref, type RecipeFilter } from '$lib/utils/recipe-filter';
+	import { isMeatFree, splitTag, type RecipeTag } from '$lib/utils/recipe-tags';
+	import { groupByPart, readServings } from '$lib/utils/recipes';
+	import { viewRuns } from '$lib/utils/step-links';
 	import { formatDuration } from '$lib/utils/timer-parse';
 	import CalendarDays from '@lucide/svelte/icons/calendar-days';
 	import ChefHat from '@lucide/svelte/icons/chef-hat';
 	import ChevronLeft from '@lucide/svelte/icons/chevron-left';
 	import Clock from '@lucide/svelte/icons/clock';
+	import Heart from '@lucide/svelte/icons/heart';
+	import Leaf from '@lucide/svelte/icons/leaf';
 	import MoreHorizontal from '@lucide/svelte/icons/more-horizontal';
-	import Timer from '@lucide/svelte/icons/timer';
 	import Users from '@lucide/svelte/icons/users';
 	import { untrack } from 'svelte';
 	import type { PageProps } from './$types';
@@ -115,19 +121,11 @@
 	/** The amounts as this reader needs them — the whole point of the stepper. */
 	const ingredients = $derived(scaleIngredients(recipe.ingredients, factor));
 
-	/**
-	 * A step's text as runs, its ingredient amounts rewritten for the count being
-	 * read for (→ `$lib/utils/step-amounts`, plan 23). No underlines here — that
-	 * is cook mode's job; only the numbers change. As written, it's one run.
-	 */
-	function stepRuns(step: (typeof recipe.steps)[number]): { text: string; scaledFrom?: string }[] {
-		if (factor === 1) return [{ text: step.text }];
-		const read = readStep({ text: step.text, uses: scaleStepUses(step.uses, factor) }, ingredients);
-		return scaleStepAmounts(read.segments, factor, ingredients, step.uses !== null).map((run) => ({
-			text: run.text,
-			scaledFrom: run.scaledFrom
-		}));
-	}
+	/** The ingredients and the steps under their parts (→ plan 43), numbered straight through. */
+	const ingredientParts = $derived(groupByPart(ingredients));
+	const stepParts = $derived(
+		groupByPart(recipe.steps.map((step, index) => ({ ...step, number: index + 1 })))
+	);
 
 	/** Cook mode inherits the count rather than asking again with wet hands. */
 	const cookHref = $derived(
@@ -153,6 +151,25 @@
 			null
 	);
 	const shopping = $derived(form && 'shopping' in form ? form.shopping : null);
+
+	/**
+	 * The heart, shown as the last tap left it while any of its posts is still
+	 * in flight — the load after the last one then says the same thing
+	 * (→ plan 40). Counted, so a second tap's answer isn't undone by the first.
+	 */
+	let favouring = $state<boolean | null>(null);
+	let favourPosts = 0;
+	const favourite = $derived(favouring ?? recipe.favourite);
+
+	/** Each tag pill is the library filtered by that tag. */
+	function tagHref(tag: RecipeTag): string {
+		const [group, value] = splitTag(tag);
+		const filter: RecipeFilter = emptyFilter();
+		if (group === 'meal') filter.meals = [value as RecipeFilter['meals'][number]];
+		if (group === 'kind') filter.kinds = [value as RecipeFilter['kinds'][number]];
+		if (group === 'free') filter.free = [value as RecipeFilter['free'][number]];
+		return recipeFilterHref(filter);
+	}
 
 	/** The icon travels with its line, so a recipe missing one still reads right. */
 	const meta = $derived(
@@ -183,14 +200,45 @@
 		<a class="round" href="/cooking/recipes" aria-label={m.cooking.recipe.back}>
 			<ChevronLeft size={18} strokeWidth={2.4} />
 		</a>
-		<button
-			type="button"
-			class="round"
-			onclick={() => (menu = true)}
-			aria-label={m.cooking.recipe.options}
-		>
-			<MoreHorizontal size={18} strokeWidth={2.4} />
-		</button>
+		<div class="bar-end">
+			<form
+				method="POST"
+				action="?/favourite"
+				use:enhance={() => {
+					favouring = !favourite;
+					favourPosts += 1;
+					return async ({ update }) => {
+						await update({ reset: false });
+						favourPosts -= 1;
+						if (favourPosts === 0) favouring = null;
+					};
+				}}
+			>
+				<input type="hidden" name="favourite" value={favourite ? '0' : '1'} />
+				<button
+					type="submit"
+					class="round heart"
+					class:on={favourite}
+					aria-pressed={favourite}
+					aria-label={m.cooking.recipe.favourite}
+				>
+					<Heart
+						size={18}
+						strokeWidth={favourite ? 0 : 2.2}
+						fill={favourite ? 'currentColor' : 'none'}
+						aria-hidden="true"
+					/>
+				</button>
+			</form>
+			<button
+				type="button"
+				class="round"
+				onclick={() => (menu = true)}
+				aria-label={m.cooking.recipe.options}
+			>
+				<MoreHorizontal size={18} strokeWidth={2.4} />
+			</button>
+		</div>
 	</div>
 </div>
 
@@ -204,6 +252,41 @@
 				<span><Icon size={16} strokeWidth={1.9} aria-hidden="true" />{entry.text}</span>
 			{/each}
 		</p>
+	{/if}
+
+	{#if recipe.tags.length > 0 || recipe.diet}
+		<ul class="tags" aria-label={m.cooking.recipe.tags}>
+			{#each recipe.tags.filter((tag) => tag.startsWith('meal:') || tag.startsWith('kind:')) as tag (tag)}
+				<li>
+					<a href={tagHref(tag)} aria-label={m.cooking.recipe.showTagged(tagName(tag, m))}>
+						{tagName(tag, m)}
+					</a>
+				</li>
+			{/each}
+			{#if recipe.diet}
+				<li>
+					<a
+						class:leaf={isMeatFree(recipe.diet)}
+						href={recipeFilterHref({ ...emptyFilter(), diets: [recipe.diet] })}
+						aria-label={m.cooking.recipe.showTagged(dietName(recipe.diet, m))}
+					>
+						{#if isMeatFree(recipe.diet)}<Leaf
+								size={13}
+								strokeWidth={2.4}
+								aria-hidden="true"
+							/>{/if}
+						{dietName(recipe.diet, m)}
+					</a>
+				</li>
+			{/if}
+			{#each recipe.tags.filter((tag) => tag.startsWith('free:')) as tag (tag)}
+				<li>
+					<a href={tagHref(tag)} aria-label={m.cooking.recipe.showTagged(tagName(tag, m))}>
+						{tagName(tag, m)}
+					</a>
+				</li>
+			{/each}
+		</ul>
 	{/if}
 
 	<div class="actions">
@@ -239,48 +322,41 @@
 			<ServingsField bind:value={serves} writtenFor={recipe.servings} />
 		{/if}
 
-		<Card radius="md">
-			<ul class="ingredients">
-				{#each ingredients as ingredient (ingredient.id)}
-					{@const amount = m.units.amount(ingredient.quantity, ingredient.unit)}
-					<li>
-						<span class="dot" aria-hidden="true"></span>
-						<span class="ingredient-name">{ingredient.name}</span>
-						{#if amount}<span class="amount">{amount}</span>{/if}
-					</li>
-				{/each}
-			</ul>
-		</Card>
+		{#each ingredientParts as part, at (at)}
+			{#if part.section}<h3 class="part">{part.section}</h3>{/if}
+			<Card radius="md">
+				<ul class="ingredients">
+					{#each part.rows as ingredient (ingredient.id)}
+						<RecipeIngredientRow
+							name={ingredient.name}
+							note={ingredient.note}
+							amount={m.units.amount(ingredient.quantity, ingredient.unit)}
+						/>
+					{/each}
+				</ul>
+			</Card>
+		{/each}
 	{/if}
 
 	{#if recipe.steps.length > 0}
 		<h2 class="steps-head">{m.cooking.recipe.steps}</h2>
-		<ol class="steps">
-			{#each recipe.steps as step, index (step.id)}
-				<li>
-					<span class="number" aria-hidden="true">{index + 1}</span>
-					<div class="step-body">
-						<!-- No line breaks inside: whitespace here would be text (→ CookStepText). -->
-						<span class="step-text"
-							>{#each stepRuns(step) as run, at (at)}{#if run.scaledFrom}<span class="scaled"
-										>{run.text}<span class="said">{m.cooking.cook.scaledFrom(run.scaledFrom)}</span
-										></span
-									>{:else}{run.text}{/if}{/each}</span
-						>
-						<!-- The step's own timer (→ plan 21), so it is no surprise in cook mode. -->
-						{#if step.timer}
-							<span class="step-timer">
-								<Timer size={13} strokeWidth={2.2} aria-hidden="true" />
-								{m.cooking.form.timerChip(
-									step.timer.label ?? m.cooking.cook.timerForStep(index + 1),
+		{#each stepParts as part, at (at)}
+			{#if part.section}<h3 class="part">{part.section}</h3>{/if}
+			<ol class="steps" start={part.rows[0].number}>
+				{#each part.rows as step (step.id)}
+					<RecipeStepRow
+						number={step.number}
+						runs={viewRuns(step, ingredients, factor)}
+						timer={step.timer
+							? m.cooking.form.timerChip(
+									step.timer.label ?? m.cooking.cook.timerForStep(step.number),
 									formatDuration(step.timer.seconds)
-								)}
-							</span>
-						{/if}
-					</div>
-				</li>
-			{/each}
-		</ol>
+								)
+							: null}
+					/>
+				{/each}
+			</ol>
+		{/each}
 
 		<Button variant="dark" href={cookHref}>
 			<ChefHat size={18} strokeWidth={2} />{m.cooking.recipe.startCookMode}
@@ -330,7 +406,7 @@
 {/if}
 
 {#if menu}
-	<RecipeMenuSheet {recipe} onclose={() => (menu = false)} />
+	<RecipeMenuSheet {recipe} aiEnabled={data.aiEnabled} onclose={() => (menu = false)} />
 {/if}
 
 <style>
@@ -364,6 +440,47 @@
 		background: var(--tabbar-bg);
 		backdrop-filter: blur(6px);
 		color: var(--ink);
+	}
+
+	.bar-end {
+		display: flex;
+		gap: 8px;
+	}
+
+	.heart {
+		color: var(--ink);
+	}
+
+	.heart.on {
+		color: var(--heart);
+	}
+
+	/* Between the meta line and the actions, one quiet row of pills. */
+	.tags {
+		display: flex;
+		flex-wrap: wrap;
+		gap: 6px;
+		margin: -10px 0 22px;
+		padding: 0;
+		list-style: none;
+	}
+
+	.tags a {
+		display: inline-flex;
+		align-items: center;
+		gap: 4px;
+		padding: 5px 11px;
+		border-radius: var(--r-chip);
+		background: var(--sunken);
+		font-size: var(--fs-14);
+		font-weight: 600;
+		color: var(--text-2);
+		text-decoration: none;
+	}
+
+	.tags a.leaf {
+		background: var(--sage-tint);
+		color: var(--sage-deep);
 	}
 
 	.panel {
@@ -457,41 +574,17 @@
 		list-style: none;
 	}
 
-	.ingredients li {
-		display: flex;
-		align-items: center;
-		gap: 11px;
-		padding: 13px 16px;
+	/* A part of the dish over its ingredients and its steps [V1] [V2]. */
+	.part {
+		margin: 18px 4px 8px;
+		font-family: var(--font-display);
+		font-size: var(--fs-18);
+		font-weight: 600;
 	}
 
-	.ingredients li + li {
-		border-top: 1px solid var(--divider);
-	}
-
-	.dot {
-		flex: none;
-		width: 6px;
-		height: 6px;
-		border-radius: 50%;
-		background: var(--border-dashed);
-	}
-
-	.ingredient-name {
-		flex: 1;
-		min-width: 0;
-		font-size: var(--fs-16);
-		overflow-wrap: anywhere;
-	}
-
-	/* Typed as "400 g pasta", read back as "Pasta · 400 g" [7a]. */
-	.ingredient-name::first-letter {
-		text-transform: uppercase;
-	}
-
-	.amount {
-		flex: none;
-		font-size: var(--fs-15);
-		color: var(--text-4);
+	.steps-head + .part,
+	.steps + .part {
+		margin-top: 0;
 	}
 
 	.steps-head {
@@ -502,71 +595,6 @@
 		margin: 0 0 24px;
 		padding: 0;
 		list-style: none;
-	}
-
-	.steps li {
-		display: flex;
-		gap: 13px;
-		margin-bottom: 16px;
-	}
-
-	.number {
-		display: flex;
-		align-items: center;
-		justify-content: center;
-		flex: none;
-		width: 26px;
-		height: 26px;
-		border-radius: 50%;
-		background: var(--sage);
-		font-size: var(--fs-15);
-		font-weight: 700;
-		color: var(--on-sage);
-	}
-
-	.step-body {
-		flex: 1;
-		min-width: 0;
-		padding-top: 2px;
-	}
-
-	.step-timer {
-		display: inline-flex;
-		align-items: center;
-		gap: 5px;
-		margin-top: 6px;
-		padding: 3px 10px;
-		border-radius: var(--r-chip);
-		background: var(--sage-tint);
-		font-size: var(--fs-14);
-		font-weight: 600;
-		color: var(--sage-deep);
-		font-variant-numeric: tabular-nums;
-	}
-
-	/* An amount rewritten for the count being read for (→ plan 23). */
-	.scaled {
-		font-weight: 600;
-		color: var(--sage-deep);
-	}
-
-	/* What the recipe itself says there, for a screen reader. */
-	.said {
-		position: absolute;
-		width: 1px;
-		height: 1px;
-		overflow: hidden;
-		clip-path: inset(50%);
-		white-space: nowrap;
-	}
-
-	.step-text {
-		display: block;
-		font-size: var(--fs-16);
-		line-height: 1.5;
-		color: var(--ink);
-		white-space: pre-wrap;
-		overflow-wrap: anywhere;
 	}
 
 	.no-steps {

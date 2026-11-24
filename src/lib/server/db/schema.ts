@@ -39,7 +39,7 @@ import {
 	REPEAT_UNITS,
 	SPLIT_MODES
 } from '../../utils/expenses.ts';
-import { RECIPE_WORDINGS } from '../../utils/wording.ts';
+import { RECIPE_DIETS, RECIPE_TAGS } from '../../utils/recipe-tags.ts';
 
 const id = () =>
 	text('id')
@@ -144,12 +144,7 @@ export const households = sqliteTable('households', {
 	 * NULL = none. At most `AI_INSTRUCTIONS_MAX` characters.
 	 */
 	aiInstructions: text('ai_instructions'),
-	/**
-	 * How imported German recipes are worded (→ plan 24, SPEC §6): NULL = as the
-	 * site wrote them; `'austrian'` = Austrian German (Obers, Topfen, Erdäpfel),
-	 * from the fixed list in `utils/wording.ts`. Owner sets it.
-	 */
-	recipeWording: text('recipe_wording', { enum: RECIPE_WORDINGS }),
+	// `recipe_wording` (plan 24) was dropped by plan 44 (migration 0030, DECISIONS #317).
 	/**
 	 * The one currency every expense amount is in (→ plan 29, SPEC §11.10). The
 	 * amounts carry none of their own, so the owner can change this only while
@@ -418,6 +413,32 @@ export const pantryStaples = sqliteTable(
 	(t) => [uniqueIndex('pantry_staples_key_unique').on(t.householdId, t.nameKey)]
 );
 
+/**
+ * The words this household counts in besides the eight units and the counting
+ * words the reader knows (→ plan 44, DECISIONS #321): "Ring", "Kugel". Added on
+ * purpose (the import's "New unit: Ring. Add it?", the editor's unit panel of
+ * plan 46), never by a guess. `wordKey` is the word lowercased: one per
+ * household however it is capitalised.
+ */
+export const householdUnits = sqliteTable(
+	'household_units',
+	{
+		id: id(),
+		householdId: text('household_id')
+			.notNull()
+			.references(() => households.id, { onDelete: 'cascade' }),
+		/** As the person wrote it: "Ring". */
+		word: text('word').notNull(),
+		wordKey: text('word_key').notNull(),
+		/** Who added it; NULL once they have left. */
+		addedBy: text('added_by').references(() => members.id, { onDelete: 'set null' }),
+		addedAt: integer('added_at', { mode: 'timestamp_ms' })
+			.notNull()
+			.$defaultFn(() => new Date())
+	},
+	(t) => [uniqueIndex('household_units_word_unique').on(t.householdId, t.wordKey)]
+);
+
 /* ────────────────────────────────────────────────────────────────────────────
  * Recipes & meal plan
  * ──────────────────────────────────────────────────────────────────────────── */
@@ -434,6 +455,14 @@ export const recipes = sqliteTable(
 		imagePath: text('image_path'),
 		timeMinutes: integer('time_minutes'),
 		servings: integer('servings'),
+		/**
+		 * One diet or none yet (→ plan 40, `utils/recipe-tags`). A column rather
+		 * than a tag: it is one value, and "vegetarian includes vegan" is a rule
+		 * on that value. NULL = nobody said, which matches no diet filter.
+		 */
+		diet: text('diet', { enum: RECIPE_DIETS }),
+		/** The heart [7a]. One per household, not per member (→ plan 40). */
+		favourite: integer('favourite', { mode: 'boolean' }).notNull().default(false),
 		createdByMemberId: text('created_by_member_id').references(() => members.id, {
 			onDelete: 'set null'
 		}),
@@ -445,6 +474,24 @@ export const recipes = sqliteTable(
 	(t) => [index('recipes_household_idx').on(t.householdId)]
 );
 
+/**
+ * What a recipe is for — meal, kind, free-from — from the fixed list in
+ * `utils/recipe-tags` (→ plan 40). Replaced wholesale with the recipe's other
+ * children on every save, and gone with it. The pair is the key, so a tag is
+ * there once or not at all, and the key's first column indexes "this recipe's
+ * tags".
+ */
+export const recipeTags = sqliteTable(
+	'recipe_tags',
+	{
+		recipeId: text('recipe_id')
+			.notNull()
+			.references(() => recipes.id, { onDelete: 'cascade' }),
+		tag: text('tag', { enum: RECIPE_TAGS }).notNull()
+	},
+	(t) => [primaryKey({ columns: [t.recipeId, t.tag] })]
+);
+
 export const recipeIngredients = sqliteTable(
 	'recipe_ingredients',
 	{
@@ -452,9 +499,23 @@ export const recipeIngredients = sqliteTable(
 		recipeId: text('recipe_id')
 			.notNull()
 			.references(() => recipes.id, { onDelete: 'cascade' }),
+		/** What you buy: "Karotte", not "Karotte, in Scheiben geschnitten" (→ DECISIONS #314). */
 		name: text('name').notNull(),
 		quantity: real('quantity'),
 		unit: text('unit'),
+		/**
+		 * Everything else the line said: "in Scheiben geschnitten", "zum Würzen",
+		 * "oder veganes Hack" (→ plan 43, DECISIONS #314). Shown under the name in
+		 * the recipe and in cook mode; never reaches the shopping list, the
+		 * cupboard or the diet guess, which read `name` only. NULL = no note.
+		 */
+		note: text('note'),
+		/**
+		 * The part of the dish this row belongs to, as written ("Bolognese",
+		 * "Béchamel"; → plan 43, DECISIONS #312). Consecutive rows with the same
+		 * value form one part; NULL rows come first and have no heading.
+		 */
+		section: text('section'),
 		sortOrder: integer('sort_order').notNull()
 	},
 	(t) => [index('recipe_ingredients_recipe_idx').on(t.recipeId)]
@@ -489,6 +550,12 @@ export const recipeSteps = sqliteTable(
 		 * on its own is indistinguishable from a step nobody has looked at.
 		 */
 		ingredientsSet: integer('ingredients_set', { mode: 'boolean' }).notNull().default(false),
+		/**
+		 * The part of the dish this step belongs to (→ plan 43, DECISIONS #312),
+		 * named independently of the ingredients' parts: sites write "Ragu
+		 * Bolognese:" over the list and "Ragu:" over the method. NULL = no part.
+		 */
+		section: text('section'),
 		sortOrder: integer('sort_order').notNull()
 	},
 	(t) => [index('recipe_steps_recipe_idx').on(t.recipeId)]
@@ -521,12 +588,26 @@ export const recipeStepIngredients = sqliteTable(
 			.references(() => recipeIngredients.id, { onDelete: 'cascade' }),
 		/** In the ingredient's unit; NULL = all of it. */
 		quantity: real('quantity'),
+		/**
+		 * The words of the step text that name the ingredient, exactly as they
+		 * stand there: "Zwiebelwürfel" for the Zwiebel (→ plan 43). Cook mode
+		 * underlines every whole-word occurrence in this step. NULL = the step uses
+		 * the ingredient without naming it; nothing is underlined.
+		 */
+		phrase: text('phrase'),
+		/**
+		 * The amount the step text gives it, exactly as written ("1 - 2 EL",
+		 * "200 g"). Cooking for a different number rewrites this run and nothing
+		 * else (→ `utils/step-links.ts`). NULL = the text gives no amount.
+		 */
+		amountPhrase: text('amount_phrase'),
 		sortOrder: integer('sort_order').notNull()
 	},
 	(t) => [
 		index('recipe_step_ingredients_step_idx').on(t.stepId),
-		// A step names an ingredient once — twice would render two identical chips.
-		uniqueIndex('recipe_step_ingredients_pair_unique').on(t.stepId, t.ingredientId)
+		// A step may name one ingredient by two phrases ("Karotte schälen … zu den
+		// Möhren"), never by the same one twice (→ plan 43).
+		uniqueIndex('recipe_step_ingredients_link_unique').on(t.stepId, t.ingredientId, t.phrase)
 	]
 );
 
@@ -1107,6 +1188,7 @@ export type ShoppingSuggestion = typeof shoppingSuggestions.$inferSelect;
 export type PantryStaple = typeof pantryStaples.$inferSelect;
 export type Recipe = typeof recipes.$inferSelect;
 export type RecipeIngredient = typeof recipeIngredients.$inferSelect;
+export type RecipeTagRow = typeof recipeTags.$inferSelect;
 export type RecipeStep = typeof recipeSteps.$inferSelect;
 export type RecipeStepIngredient = typeof recipeStepIngredients.$inferSelect;
 export type Meal = typeof meals.$inferSelect;

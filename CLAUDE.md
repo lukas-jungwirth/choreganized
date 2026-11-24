@@ -84,9 +84,12 @@ npm run check:version  # version raised since the last release tag? (in verify a
 npm run db:generate    # new migration after editing schema.ts
 npm run db:seed -- you@example.com   # demo data for a signed-in user (idempotent)
 npm run db:seed -- you@example.com --full-house   # …plus stub members up to the max (8)
+npm run db:seed -- you@example.com --cookbook     # …plus 13 tagged + 3 untagged recipes (filters, sorting)
 npm run db:seed -- you@example.com --history      # …plus ~14 months of older expenses
+npm run db:seed -- you@example.com --long-step    # …plus a risotto with a 400-character step (cook mode)
 npm run db:studio      # inspect the DB
-npm run import:probe -- <url> [--save <name>]  # what the recipe importer reads on a page
+npm run import:probe -- <url> [--save <name> [--trim]]  # what the recipe importer reads on a page
+npm run import:eval -- [--fake] [--record]  # the import scored on the fixture pages (key in .env)
 npm run icons          # app icons + raccoon AVIFs from artwork/raccoon/ (+ mascots.json)
 npm run raccoons -- <folder>  # check + cut a batch of new raccoon art (`/raccoons` wraps it)
 npm run format         # prettier

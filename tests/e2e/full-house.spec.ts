@@ -61,3 +61,29 @@ test('a ninth person is told the household is full', async ({ page }) => {
 	);
 	await expect(page.getByRole('button', { name: 'Join household' })).toHaveCount(0);
 });
+
+test('a taken colour shows its wearer’s initial and stays unpickable', async ({ page }) => {
+	// → DECISIONS #301: not a faded dot, which read as broken.
+	await page.goto('/settings');
+	await page.getByRole('button', { name: 'Edit' }).first().click();
+	const picker = page.getByRole('radiogroup', { name: 'Your colour' });
+	await expect(picker.getByRole('radio', { disabled: true })).toHaveCount(7);
+	const taken = picker.locator('.unavailable');
+	await expect(taken).toHaveCount(7);
+	const looks = await taken.evaluateAll((labels) =>
+		labels.map((label) => {
+			const disc = label.querySelector('.avatar')!;
+			const style = getComputedStyle(disc);
+			return {
+				letter: disc.textContent!.trim(),
+				opacity: style.opacity
+			};
+		})
+	);
+	for (const look of looks) {
+		expect(look.letter).toMatch(/^\p{Lu}$/u);
+		expect(look.opacity).toBe('1');
+	}
+	await taken.first().click({ force: true });
+	await expect(picker.getByRole('radio', { checked: true })).not.toBeDisabled();
+});

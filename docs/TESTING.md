@@ -124,8 +124,17 @@ Bash command, and every `npm run verify` with its exit code — no message text.
 a refusal is a line on that page, not a silent guess. For a report that links a recipe page,
 `npm run import:probe -- <url>` is the app's own importer on the real page. It prints the reader
 that matched, the steps and the ingredients, and `--save <name>` keeps the page as a fixture in
-`src/lib/utils/fixtures/` for the test. Triage's `probe` job runs it for triage, since the agent
-has no web; the build agent runs it itself.
+`src/lib/utils/fixtures/` for the test (`--trim` drops what no reader reads, and refuses a trim
+that reads differently). Triage's `probe` job runs it for triage, since the agent has no web;
+the build agent runs it itself.
+
+**How good the import is** (→ plan 44, DECISIONS #318): `npm run import:eval` runs every fixture
+page through the real pipeline with `EVAL_AI_PROVIDER`, `EVAL_AI_MODEL` and `EVAL_AI_KEY` from
+`.env` (never committed, never in CI, never on a deploy) and prints one row per page: lines
+covered, rows invented, amounts agreeing, names clean, parts found, steps word for word,
+ingredients linked, check items. `--fake` runs it against the fake provider's answers instead
+(only the plumbing is measured then), `--record` keeps each answer in `tests/fixtures/ai-answers/`
+for the gate tests. `tests/fixtures/import-expected.json` holds what a person expects per page.
 
 **Branch protection makes the gate real.** It was applied on 2026-09-14 with the command below
 (once, as the repository owner — re-run it to change the required checks). Both branches are
@@ -200,7 +209,14 @@ account, `guests`, is seeded with `--guests` (the weekend with Jonas, a guest, �
 DECISIONS #287) and screenshotted, unmutated, for the screens a `visual/screens.ts` row marks
 `account: 'guests'`. A fourth, `fullhouse`, is seeded with `--full-house` (a member per
 colour, eight, → DECISIONS #296) for the screens marked `account: 'fullhouse'`; only
-`e2e/full-house.spec.ts` touches it, and it undoes what it does. Tests are
+`e2e/full-house.spec.ts` touches it, and it undoes what it does. A fifth, `cookbook`, is
+seeded with `--cookbook` (the recipe-filters sketch's tagged library and three untagged recipes
+for the sorting pass, → plans 40, 41) for the screens
+marked `account: 'cookbook'`; `e2e/recipe-filters.spec.ts` only reads it — a filter is a URL —
+and does its writing on `owner`. A sixth, `cook`, is seeded with `--long-step` (a risotto
+with a 400-character step, → plan 47, DECISIONS #339) for the cook-mode screens marked
+`account: 'cook'` (the long step), and read by `e2e/cooking.spec.ts`. No screenshot has a
+running timer: `settle` waits for an idle network and timed out with a ring running. Tests are
 serial (`workers: 1`) because they share a server and, within `e2e`, a household.
 
 Find things the way a user does — `getByRole`, `getByLabel`, `getByPlaceholder` — with the
@@ -239,6 +255,19 @@ hand: start the `fake-ai` launch entry (port 5199) next to `verify`, which alrea
 provider at it. Below the e2e layer, each adapter is unit-tested against canned answers with an
 injected `fetch` (`src/lib/server/ai/providers/providers.test.ts`), and the backup logic against
 fake adapters (`run.test.ts`).
+
+**Import review drafts** (→ plan 45, DECISIONS #334). A link import cannot reach a page the
+test run serves: the fetch guard refuses local addresses, and is never loosened for tests. So
+the review's journeys and screenshots open drafts the real gate made of the Chefkoch fixture
+page and a hand-written answer, saved in `tests/fixtures/review-drafts/` and put where the
+import page puts a fresh draft (the tab's `sessionStorage`, then `?draft=<id>`).
+`tests/integration/review-drafts.test.ts` holds the files to the gate; after a gate change,
+write them again with `UPDATE_REVIEW_DRAFTS=1 npx vitest run
+tests/integration/review-drafts.test.ts`. The pasted-text journeys go through the fake AI end to
+end. `tidy.json` is a saved recipe's tidy (plan 48), made by `savedCard` and `keepSaved`; the
+visual shot `recipe-tidy` opens it under the seeded curry, whose id it takes then. The tidy's
+own journey (`tests/e2e/tidy.spec.ts`) goes through the fake AI end to end: the fake reads a
+saved recipe's card by its lead and moves what follows a comma into the note.
 
 **A live provider is never in the loop**, in CI or in a session's own checks. One live call per
 provider needs a real key in the running app, and only Lukas has those. A handoff says plainly

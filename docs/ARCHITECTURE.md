@@ -64,10 +64,15 @@ src/
       services/                # domain logic: household.ts, home.ts, shopping.ts, tasks.ts,
                                # history.ts, reminders.ts, holidays.ts, recipes.ts, meals.ts,
                                # timers.ts, feedback.ts, ai.ts (connections), ai-import.ts,
-                               # expenses.ts, expense-recurrences.ts, expense-notify.ts
+                               # units.ts (household unit words), expenses.ts,
+                               # expense-recurrences.ts, expense-notify.ts
     utils/                     # dates.ts (household-local helpers), holidays.ts (Austrian
                                # shop closures), ingredients.ts, invite-code.ts, timer-parse.ts,
-                               # recipe-jsonld.ts (the import's page reader)
+                               # recipe-jsonld.ts + recipe-microdata.ts (the import's page
+                               # readers), recipe-plugins.ts (parts from plugin markup),
+                               # recipe-draft.ts (the import's gate), rule-draft.ts (the
+                               # import without a model), recipe-review.ts (the import's
+                               # review: answers to the gate's items, the stored draft)
   routes/                      # see routing map below
 static/                        # icons/ (placeholders [05]), manifest.webmanifest [plan 11]
 design/Hearth.dc.html          # the design mockups (open in a browser)
@@ -94,7 +99,7 @@ docs/                          # this documentation + plans/
   cooking                       [04]   sheet: plan meal [3d]
   cooking/recipes               (browse all)
   cooking/recipes/new           [3c]
-  cooking/recipes/import        [3c as preview] link · photo · text import  [plans 12–14]
+  cooking/recipes/import        link · photo · text import [plans 12–14]; ?draft=<id> the review [R1–R3], &edit=1 the editor [plan 45]
   cooking/recipes/[id]          [7a]   sheet: ••• [7c]
   cooking/recipes/[id]/edit     [3c]
   cooking/recipes/[id]/cook     [7b/7h] cook mode (hides tab bar)

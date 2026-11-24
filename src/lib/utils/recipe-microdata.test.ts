@@ -43,9 +43,13 @@ describe('parseRecipeMicrodata', () => {
 			name: 'Kaiserschmarrn',
 			timeMinutes: 35,
 			servings: 4,
+			servingsText: '4 Portionen',
 			ingredientLines: ['250 g Mehl', '4 & ein halbes Ei', '500 ml Milch'],
+			ingredientSections: [null, null, null],
 			steps: ['Teig rühren und 10 Minuten rasten lassen.', 'In Butter herausbacken und zerreißen.'],
-			image: '/img/schmarrn.jpg'
+			stepSections: [null, null],
+			image: '/img/schmarrn.jpg',
+			labels: []
 		});
 	});
 
@@ -184,5 +188,22 @@ describe('parseRecipeMicrodata — a method outside the card', () => {
 			),
 			null
 		);
+	});
+});
+
+describe('parseRecipeMicrodata — what the page says the dish is (→ plan 41)', () => {
+	it('reads category, keywords and diet from their itemprops', () => {
+		const recipe = parseRecipeMicrodata(
+			page(`
+			<div itemscope itemtype="https://schema.org/Recipe">
+				<h1 itemprop="name">Linsensuppe</h1>
+				<span itemprop="recipeCategory">Suppe</span>
+				<meta itemprop="keywords" content="vegan, Winter">
+				<link itemprop="suitableForDiet" href="https://schema.org/VeganDiet">
+				<ul><li itemprop="recipeIngredient">200 g Linsen</li></ul>
+				<p itemprop="recipeInstructions">Kochen.</p>
+			</div>`)
+		);
+		assert.deepEqual(recipe?.labels, ['Suppe', 'vegan, Winter', 'https://schema.org/VeganDiet']);
 	});
 });
