@@ -36,7 +36,7 @@ import {
 	type EditorState,
 	type EditorStep
 } from './recipe-editor.ts';
-import type { ImportCheckKind, LeftOut, RecipePrefill } from './recipes.ts';
+import type { ImportCheckKind, ImportSource, LeftOut, RecipePrefill } from './recipes.ts';
 import { occurrences, type EditorLink } from './step-links.ts';
 
 /** What an import hands the review: the gate's draft, the line above it, the page's site. */
@@ -46,7 +46,27 @@ export type ImportDraft = {
 	notice?: string | null;
 	/** The page's host ("chefkoch.de"), for the line under the name; none for a paste or photos. */
 	site?: string | null;
+	/** What it was read from, for the review's words (→ `sourceOf`). */
+	source?: ImportSource;
+	/**
+	 * A saved recipe being tidied (→ plan 48): its id. The review opens only
+	 * under that recipe's own address, and the server checks the address's id
+	 * against the household at Save; this one only keeps two tidies apart.
+	 */
+	recipeId?: string;
 };
+
+/**
+ * What a draft was read from. A draft kept before drafts said so (an open tab
+ * across a deploy) is a page when it names a site, photos when the gate said
+ * so, and a paste otherwise.
+ */
+export function sourceOf(draft: ImportDraft): ImportSource {
+	if (draft.source) return draft.source;
+	if (draft.recipeId) return 'recipe';
+	if (draft.site) return 'page';
+	return draft.prefill.checks?.some((check) => check.kind === 'from-photo') ? 'photo' : 'text';
+}
 
 /** One check item of the gate, on the row or step it is about (by the editor's key). */
 export type ReviewItem = {
@@ -101,6 +121,12 @@ export function draftKey(id: string): string {
 /** An import's id: unguessable enough that two imports in two tabs never meet. */
 export function newDraftId(): string {
 	return `${Date.now().toString(36)}${Math.random().toString(36).slice(2, 8)}`;
+}
+
+/** `?draft=` as the import and the tidy write it (`newDraftId`); anything else is no draft. */
+export function readDraftId(params: URLSearchParams): string | null {
+	const id = params.get('draft');
+	return id && /^[a-z0-9]{4,40}$/.test(id) ? id : null;
 }
 
 /**

@@ -1,16 +1,25 @@
 /**
  * One recipe [7a] and everything the ••• menu [7c] does to it.
  *
+ * `tidy` (→ plan 48) runs the saved recipe through the import's model call and
+ * gate and hands the draft back to the menu, which keeps it in the tab and
+ * opens the review under `tidy/`. Nothing is stored here: the review's Save
+ * does that, through `updateRecipe`.
+ *
  * `plan` and `remove` are literally the week's — the plan sheet is raised from
  * both screens and posts to whichever page it's mounted on, so both spread the
  * same pair (→ `lib/server/meal-actions`).
  */
-import { error, redirect } from '@sveltejs/kit';
+import { error, fail, redirect } from '@sveltejs/kit';
 import { catalog } from '$lib/i18n';
 import { requireMember } from '$lib/server/guards';
 import { mealPlanActions } from '$lib/server/meal-actions';
 import { getPlan } from '$lib/server/services/meals';
 import { pickFor } from '$lib/server/services/recipe-shopping';
+import { getAiConnections, isAiEnabled } from '$lib/server/services/ai';
+import { aiImportErrorMessage, tidyRecipe } from '$lib/server/services/ai-import';
+import { listUnits } from '$lib/server/services/units';
+import type { RecipePrefill } from '$lib/utils/recipes';
 import {
 	deleteRecipe,
 	duplicateRecipe,
@@ -46,7 +55,9 @@ export const load: PageServerLoad = async (event) => {
 		 * What it previews is re-read on submit, so a housemate adding cucumbers
 		 * meanwhile changes the outcome, not the truth of the outcome.
 		 */
-		pick: pickFor(householdId, recipe)
+		pick: pickFor(householdId, recipe),
+		/** "Tidy with AI" is offered only with a provider set up (→ plan 48); never the key. */
+		aiEnabled: isAiEnabled(householdId)
 	};
 };
 
@@ -76,6 +87,53 @@ export const actions: Actions = {
 		}
 
 		return { favourite: true };
+	},
+
+	/**
+	 * "Tidy with AI" [7c] (→ plan 48): the saved recipe through the import's
+	 * call and gate, as a draft for the review. The recipe is this household's
+	 * or a 404; nothing is written.
+	 */
+	tidy: async (event) => {
+		const { householdId } = requireMember(event);
+		const m = catalog(event.locals.locale);
+
+		const recipe = getRecipe(householdId, event.params.id);
+		if (!recipe) error(404, m.errors.recipes.gone);
+
+		const connections = getAiConnections(householdId);
+		if (!connections.length) return fail(400, { tidyError: m.ai.error.noKey });
+		if (!recipe.ingredients.length && !recipe.steps.length) {
+			return fail(400, { tidyError: m.cooking.tidy.empty });
+		}
+
+		try {
+			const result = await tidyRecipe(connections, recipe, {
+				labels: m.units.labels,
+				units: listUnits(householdId).map((unit) => unit.word)
+			});
+			const { fellBackFrom, used } = result;
+			const draft: RecipePrefill = { ...result.value, photo: null, suggested: null };
+			return {
+				tidy: {
+					recipeId: recipe.id,
+					draft,
+					notice: [
+						m.cooking.tidy.note,
+						fellBackFrom
+							? m.cooking.import.ai.usedBackup(
+									m.ai.providers[used.provider].short,
+									m.ai.providers[fellBackFrom.provider].short
+								)
+							: ''
+					]
+						.filter(Boolean)
+						.join(' ')
+				}
+			};
+		} catch (cause) {
+			return fail(422, { tidyError: aiImportErrorMessage(cause, m) });
+		}
 	},
 
 	delete: async (event) => {

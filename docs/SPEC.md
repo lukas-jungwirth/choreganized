@@ -893,8 +893,27 @@ item sheet [3a]; what differs is what a tick does and what counts as shopping.
     "4 EL", a decimal comma stays a comma, a fraction stays a fraction. The editor always shows
     the text as written.
 - **Start cook mode** (dark button) → cook mode.
-- ••• menu [7c]: Edit recipe, Duplicate, Share (v1: share plain-text recipe via Web Share API),
-  Delete (confirm; meal-plan entries keep the name via snapshot).
+- ••• menu [7c]: Edit recipe, **Tidy with AI** (only with a provider set up, below), Duplicate,
+  Share (v1: share plain-text recipe via Web Share API), Delete (confirm; meal-plan entries keep
+  the name via snapshot).
+- **Tidy with AI** (→ plan 48, DECISIONS #340): a recipe imported before the rebuild (notes in
+  its names, "Hackfleisch, gemischtes"; no parts; the matcher's links) goes through the import's
+  one model call and **the same gate** as a page's card (`tidyRecipe`, `utils/tidy-draft.ts`):
+  each saved row is sent as the line it reads as ("500 g Hackfleisch, gemischtes", a note after a
+  comma), with its part, and the steps as stored. So no row is invented or lost (a dropped row
+  comes back as `line-added`), no amount changed, no step reworded. The household's standing
+  instructions are not sent (they would let rows and steps change). The loader shows while the
+  model reads; a failure is said under the menu row and the recipe stays as it was (no
+  rule-based fallback: the saved recipe already is what rules made). The answer opens in the
+  import's review (§4.7) at `/cooking/recipes/<id>/tidy?draft=<id>`, the draft in the tab's
+  `sessionStorage` with the recipe's id; the review speaks of "the saved recipe", shows the
+  recipe's own photo, and opens only under that recipe's address. **Save** updates the recipe
+  **in place** (`updateRecipe`, the id from the address, checked against the household): id,
+  photo, tags, diet, heart, plan entries stay. A step with links of its own (`ingredients_set`)
+  keeps them exactly, carried to the rows its lines became; only steps that read their text get
+  the model's links. A step's saved timer stays on the piece of it that states the duration.
+  **Discard** goes back to the recipe and changes nothing; nothing is stored before Save. One
+  recipe per tap, no batch: every tidy is looked at by a person.
 
 ### 4.6 Cook mode [7b, 7h] (dark, hands-free)
 
@@ -1125,7 +1144,9 @@ item sheet [3a]; what differs is what a tick does and what counts as shopping.
     unit word left in the note); a draft without a name asks for one first. A clean import is one
     tap.
   - **The banner** counts the check items still open ("2 things to check · Everything else
-    matches the page"), gold; a tap goes to the first. None open: sage, "Nothing to check · All
+    matches the page"), gold. Every line that names the source says what the draft was read
+    from (DECISIONS #342): "the page", "your text" for a paste, "the photos", "the saved recipe"
+    for a tidy (§4.5); the table below shows the page's wording. a tap goes to the first. None open: sage, "Nothing to check · All
     22 ingredients and 10 steps match the page", or "Nothing left to check · Ready to save." An
     import without AI says "Links are a guess"; one from photos "Check it against the cookbook".
   - **Each check item stands under the row or step it is about**, in a gold box, with its

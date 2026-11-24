@@ -52,6 +52,7 @@ import {
 	storeRecipePhoto,
 	uploadErrorMessage
 } from '$lib/server/uploads';
+import { readDraftId } from '$lib/utils/recipe-review';
 import { mergeSuggestions, readRecipeForm, type RecipePrefill } from '$lib/utils/recipes';
 import type { Actions, PageServerLoad } from './$types';
 
@@ -80,12 +81,6 @@ export const load: PageServerLoad = (event) => {
 		edit: event.url.searchParams.get('edit') === '1'
 	};
 };
-
-/** `?draft=` as the import page writes it (`newDraftId`); anything else is no draft. */
-function readDraftId(params: URLSearchParams): string | null {
-	const id = params.get('draft');
-	return id && /^[a-z0-9]{4,40}$/.test(id) ? id : null;
-}
 
 /** The chooser lands here with `?mode=`; anything else (incl. the share target) is a link. */
 function readMode(params: URLSearchParams): 'link' | 'photo' | 'text' {

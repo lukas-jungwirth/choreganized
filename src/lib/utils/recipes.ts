@@ -225,6 +225,13 @@ export type ImportCheck = {
  */
 export type LeftOut = { text: string; after: number };
 
+/**
+ * What a draft was read from, so the review says "the page", "your text",
+ * "the photos" or "the saved recipe" and never names a page that was not
+ * there (→ plans 45, 48, DECISIONS #342).
+ */
+export type ImportSource = 'page' | 'text' | 'photo' | 'recipe';
+
 export const IMPORT_CHECK_KINDS = [
 	// A page line no row came from: added from the rule-based reading.
 	'line-added',

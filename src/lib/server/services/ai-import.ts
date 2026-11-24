@@ -32,6 +32,7 @@ import { RECIPE_DIETS, RECIPE_TAGS } from '$lib/utils/recipe-tags';
 import { INGREDIENTS_MAX, STEPS_MAX, type RecipePrefill } from '$lib/utils/recipes';
 import { draftInCelsius } from '$lib/utils/fahrenheit';
 import { ruleDraft } from '$lib/utils/rule-draft';
+import { keepSaved, savedCard, type SavedRecipe } from '$lib/utils/tidy-draft';
 import type { UnitLabels } from '$lib/utils/shopping';
 import { generateWithFallback, type Answered, type Connection, type RunOptions } from '../ai/run';
 import { array, integer, nullable, number, object, string } from '../ai/schema';
@@ -348,6 +349,78 @@ function capped(card: SourceRecipe): SourceRecipe {
 		steps: card.steps.slice(0, STEPS_MAX),
 		stepSections: card.stepSections?.slice(0, STEPS_MAX)
 	};
+}
+
+/* ── A saved recipe, tidied (→ plan 48) ───────────────────────────────────── */
+
+/** How the saved recipe is introduced to the model; `scripts/fake-ai.ts` answers on it. */
+export const SAVED_RECIPE_LEAD =
+	'A recipe the household saved earlier, as its recipe card. Treat it exactly like a website’s card:\n\n';
+
+/**
+ * A saved recipe through the import's one call and its gate (→ plan 48): the
+ * recipe goes in as a card (`savedCard`: each row as the line it reads as,
+ * its part, the steps as stored), and the same gate holds the answer to it,
+ * so no row is invented or lost, no amount changed, no step reworded. What
+ * the household made by hand stays (`keepSaved`): a step's own links, its
+ * timer. Nothing is stored here; the review's Save does that.
+ *
+ * The household's standing instructions are **not** sent (DECISIONS #340):
+ * instructions let an answer change rows and steps, which is what a tidy must
+ * never do. No rule-based fallback either: the saved recipe already is what
+ * rules made of it, so a failure is said, and the recipe stays as it is.
+ */
+export async function tidyRecipe(
+	connections: Connection[],
+	recipe: SavedRecipe,
+	context: Pick<ImportContext, 'labels' | 'units' | 'run'>
+): Promise<Extracted> {
+	if (!connections.length) throw new AiImportError('no-key');
+	const card = capped(savedCard(recipe, context.labels));
+	if (!card.ingredientLines.length && !card.steps.length) throw new AiImportError('no-recipe');
+
+	const known = new Set((context.units ?? []).map((word) => word.toLowerCase()));
+	const instructions = { household: null, now: null };
+
+	return generateWithFallback(
+		connections,
+		{
+			system: buildRecipePrompt(instructions, context.units),
+			parts: [
+				{
+					type: 'text',
+					text: `${SAVED_RECIPE_LEAD}${JSON.stringify({
+						name: card.name,
+						servings: card.servings,
+						timeMinutes: card.timeMinutes,
+						ingredients: card.ingredientLines.map((line, at) => ({
+							source: at,
+							line,
+							section: card.ingredientSections?.[at] ?? null
+						})),
+						steps: card.steps
+					})}`
+				}
+			],
+			schema: RECIPE_DRAFT_SCHEMA,
+			schemaName: 'recipe',
+			maxOutputTokens: MAX_OUTPUT_TOKENS
+		},
+		(data: unknown, provider: AiProvider) => {
+			const check = validateRecipeDraft(data, {
+				source: card,
+				text: null,
+				photos: false,
+				instructed: false,
+				labels: context.labels,
+				known
+			});
+			// The saved recipe's words stand as they are: no Fahrenheit pass on them.
+			if (check.ok) return keepSaved(check.draft, check.rows, recipe, known);
+			throw new AiError('bad-output', provider);
+		},
+		context.run
+	);
 }
 
 /* ── Tags for recipes already saved (→ plan 41) ───────────────────────────── */

@@ -30,7 +30,7 @@
 	import { AI_INSTRUCTIONS_MAX } from '$lib/ai';
 	import { messages } from '$lib/i18n';
 	import { draftKey, newDraftId, type StoredImport } from '$lib/utils/recipe-review';
-	import type { RecipePrefill } from '$lib/utils/recipes';
+	import type { ImportSource, RecipePrefill } from '$lib/utils/recipes';
 	import type { ActionResult } from '@sveltejs/kit';
 	import Camera from '@lucide/svelte/icons/camera';
 	import CircleAlert from '@lucide/svelte/icons/circle-alert';
@@ -100,7 +100,11 @@
 	 * there is no draft, or nowhere to keep it: the form's own update then shows
 	 * what came back (the editor, for a draft).
 	 */
-	async function openReview(result: ActionResult, site: string | null): Promise<boolean> {
+	async function openReview(
+		result: ActionResult,
+		source: ImportSource,
+		site: string | null
+	): Promise<boolean> {
 		if (result.type !== 'success' || !result.data?.draft) return false;
 		const id = newDraftId();
 		const value: StoredImport = {
@@ -108,7 +112,8 @@
 			draft: {
 				prefill: result.data.draft as RecipePrefill,
 				notice: typeof result.data.notice === 'string' ? result.data.notice : null,
-				site
+				site,
+				source
 			}
 		};
 		try {
@@ -130,7 +135,7 @@
 	}
 
 	/** The shared pending flag for the AI forms — only one submits at a time. */
-	function aiEnhance() {
+	function aiEnhance(source: ImportSource) {
 		extracting = true;
 		return async ({
 			result,
@@ -139,7 +144,7 @@
 			result: ActionResult;
 			update: (opts?: { reset?: boolean }) => Promise<void>;
 		}) => {
-			if (!(await openReview(result, null))) await update({ reset: false });
+			if (!(await openReview(result, source, null))) await update({ reset: false });
 			extracting = false;
 		};
 	}
@@ -203,7 +208,7 @@
 			method="POST"
 			action="?/extractPhotos"
 			enctype="multipart/form-data"
-			use:enhance={aiEnhance}
+			use:enhance={() => aiEnhance('photo')}
 		>
 			<MultiPhotoField bind:files={photos} max={3} />
 			<p class="hint">{t.photoHint}</p>
@@ -227,7 +232,7 @@
 	/>
 	{#if data.aiEnabled}
 		{#if aiError}{@render banner(aiError)}{/if}
-		<form method="POST" action="?/extractText" use:enhance={aiEnhance}>
+		<form method="POST" action="?/extractText" use:enhance={() => aiEnhance('text')}>
 			<textarea
 				name="text"
 				bind:value={pasteValue}
@@ -267,7 +272,7 @@
 			// With AI it's a model call, not a page load: the cooking loader says so.
 			if (data.aiEnabled) extracting = true;
 			return async ({ result, update }) => {
-				if (!(await openReview(result, siteOf(url)))) await update({ reset: false });
+				if (!(await openReview(result, 'page', siteOf(url)))) await update({ reset: false });
 				fetching = false;
 				extracting = false;
 			};

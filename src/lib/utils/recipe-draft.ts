@@ -84,8 +84,22 @@ export type DraftContext = {
 	known?: ReadonlySet<string>;
 };
 
+/** One draft row as the gate left it: the card line it came from, and its amount. */
+export type DraftRow = {
+	source: number | null;
+	name: string;
+	quantity: number | null;
+	unit: string | null;
+};
+
 export type DraftCheck =
-	| { ok: true; draft: Omit<RecipePrefill, 'photo'>; dropped: number }
+	| {
+			ok: true;
+			draft: Omit<RecipePrefill, 'photo'>;
+			dropped: number;
+			/** The draft's rows, index for index: what a saved recipe's tidy maps its links by (→ plan 48). */
+			rows: DraftRow[];
+	  }
 	| {
 			ok: false;
 			/**
@@ -238,6 +252,7 @@ export function validateRecipeDraft(raw: unknown, context: DraftContext): DraftC
 			row.section = card.ingredientSections?.[row.source] ?? null;
 		}
 	}
+	if (card) joinModelParts(rows, card);
 	if (card) {
 		// A step takes the part of the card step it was found in.
 		steps.forEach((step, at) => {
@@ -264,6 +279,7 @@ export function validateRecipeDraft(raw: unknown, context: DraftContext): DraftC
 	return {
 		ok: true,
 		dropped,
+		rows: rows.map(({ source, name, quantity, unit }) => ({ source, name, quantity, unit })),
 		draft: {
 			name,
 			timeMinutes,
@@ -392,6 +408,33 @@ function addMissingLines(rows: Row[], card: SourceRecipe, known: ReadonlySet<str
 			checks: [{ kind: 'line-added', level: 'check', page: line }]
 		});
 	});
+}
+
+/**
+ * A line the gate added back joins the part the model put its neighbours in
+ * (DECISIONS #341): the card calls the part "Sauce (Bolognesesoße)", the model
+ * "Bolognesesoße", and one part must not show under two headings. The rows
+ * that came from the same card part decide, by majority (the first one seen
+ * on a tie); with none, or no card part at all, the card's name stays.
+ */
+function joinModelParts(rows: Row[], card: SourceRecipe): void {
+	const cardPart = (row: Row) =>
+		row.source === null ? null : (card.ingredientSections?.[row.source] ?? null);
+	for (const row of rows) {
+		if (row.answered !== null) continue;
+		const part = cardPart(row);
+		if (part === null) continue;
+		const votes = new Map<string | null, number>();
+		for (const peer of rows) {
+			if (peer.answered === null || cardPart(peer) !== part) continue;
+			votes.set(peer.section, (votes.get(peer.section) ?? 0) + 1);
+		}
+		let best: { section: string | null; count: number } | null = null;
+		for (const [section, count] of votes) {
+			if (!best || count > best.count) best = { section, count };
+		}
+		if (best) row.section = best.section;
+	}
 }
 
 /**
@@ -553,7 +596,7 @@ function pieceOf(use: unknown, pieces: readonly string[]): number {
 }
 
 /** Where `needle` stands as one contiguous run in `hay`, at or after `from`; -1 when it does not. */
-function runAt(hay: readonly string[], needle: readonly string[], from: number): number {
+export function runAt(hay: readonly string[], needle: readonly string[], from: number): number {
 	outer: for (let at = from; at + needle.length <= hay.length; at++) {
 		for (let k = 0; k < needle.length; k++) if (hay[at + k] !== needle[k]) continue outer;
 		return at;
@@ -718,7 +761,11 @@ export function readAmount(
  * The link-level items: an ingredient the steps give more of than the recipe
  * has (`shares-exceed`), and one no step uses (`unused`, quiet).
  */
-function linkChecks(rows: Row[], steps: StepInput[], known: ReadonlySet<string>): ImportCheck[] {
+export function linkChecks(
+	rows: readonly Pick<Row, 'name' | 'quantity' | 'unit'>[],
+	steps: readonly StepInput[],
+	known: ReadonlySet<string>
+): ImportCheck[] {
 	const checks: ImportCheck[] = [];
 	rows.forEach((row, at) => {
 		const links = steps.flatMap((step) => (step.uses ?? []).filter((use) => use.ingredient === at));

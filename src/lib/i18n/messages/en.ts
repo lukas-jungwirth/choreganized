@@ -44,6 +44,7 @@ import type { HolidayKey } from '$lib/utils/holidays';
 import { formatAmount, formatIngredient } from '$lib/utils/ingredients';
 import { currencyAfter, currencySymbol, formatMoney } from '$lib/utils/money';
 import type { MealSlot } from '$lib/utils/meals';
+import type { ImportSource } from '$lib/utils/recipes';
 import { formatQuantity, type UnitLabels } from '$lib/utils/shopping';
 import type { RecurUnit, TaskSchedule } from '$lib/utils/tasks';
 
@@ -64,6 +65,32 @@ export type SentencePart = string | { field: 'payer' | 'amount' | 'what' };
 
 /** Bound into every date wrapper below, so a screen never passes a language. */
 const L = 'en';
+
+/** What a draft was read from, as the review's sentences name it (→ `ImportSource`). */
+const SOURCE: Record<ImportSource, string> = {
+	page: 'the page',
+	text: 'your text',
+	photo: 'the photos',
+	recipe: 'the saved recipe'
+};
+const SAYS: Record<ImportSource, string> = {
+	page: 'The page says',
+	text: 'Your text says',
+	photo: 'The photos say',
+	recipe: 'The saved recipe says'
+};
+const OFFERS: Record<ImportSource, string> = {
+	page: 'The page offers',
+	text: 'Your text offers',
+	photo: 'The photos offer',
+	recipe: 'The saved recipe offers'
+};
+const IN: Record<ImportSource, string> = {
+	page: 'on the page',
+	text: 'in your text',
+	photo: 'in the photos',
+	recipe: 'in the saved recipe'
+};
 
 const COUNTS = [
 	'zero',
@@ -1396,7 +1423,18 @@ export const en = {
 			deleteConfirm: (name: string) => `Delete ${name}?`,
 			deleteCopy:
 				'Its ingredients and steps go with it. Days you already planned it on keep the name.',
-			keep: 'Keep it'
+			keep: 'Keep it',
+			/** Plan 48: the saved recipe through the import's check, into the review. */
+			tidy: 'Tidy with AI',
+			tidyHint: 'Clean names, notes and links. You check it before anything changes.'
+		},
+
+		/** Tidying a saved recipe with AI (→ plan 48, SPEC §4.5). */
+		tidy: {
+			note: 'Tidied with AI. Nothing changes until you save.',
+			empty: 'This recipe has no ingredients or steps to tidy.',
+			failed: 'The tidy did not work. The recipe is as it was.',
+			noStorage: 'This browser keeps nothing for the review. Try it outside a private window.'
 		},
 
 		/** New / edit recipe [3c], rebuilt around parts and links (→ plan 46). */
@@ -1817,10 +1855,14 @@ export const en = {
 				/** Some were open and every one is answered now. */
 				allChecked: 'Nothing left to check',
 				ready: 'Ready to save.',
-				restMatches: 'Everything else matches the page.',
+				/**
+				 * The lines that name what the draft was read from take its source
+				 * (→ `ImportSource`): a paste has no page, a tidy has a saved recipe.
+				 */
+				restMatches: (from: ImportSource) => `Everything else matches ${SOURCE[from]}.`,
 				/** A clean import: nothing was ever open. */
-				allMatch: (ingredients: number, steps: number) =>
-					`All ${ingredients === 1 ? '1 ingredient' : `${ingredients} ingredients`} and ${steps === 1 ? '1 step' : `${steps} steps`} match the page.`,
+				allMatch: (from: ImportSource, ingredients: number, steps: number) =>
+					`All ${ingredients === 1 ? '1 ingredient' : `${ingredients} ingredients`} and ${steps === 1 ? '1 step' : `${steps} steps`} match ${SOURCE[from]}.`,
 				noAi: 'Imported without AI. Links are a guess.',
 				fromPhoto: 'Read from photos. Check it against the cookbook.',
 				/** Tapping the banner goes to the first open question. */
@@ -1837,27 +1879,40 @@ export const en = {
 				/** An answered question, in its place. */
 				checked: 'Checked',
 
-				choice: (name: string, alternative: string) =>
-					`The page offers ${name} or ${alternative}. Which do you use?`,
-				amountDiffers: (page: string, answer: string) =>
-					`The page says “${page}”. The AI read ${answer}.`,
+				choice: (from: ImportSource, name: string, alternative: string) =>
+					`${OFFERS[from]} ${name} or ${alternative}. Which do you use?`,
+				amountDiffers: (from: ImportSource, page: string, answer: string) =>
+					`${SAYS[from]} “${page}”. The AI read ${answer}.`,
 				keepAmount: (amount: string) => `Keep ${amount}`,
 				useAmount: (amount: string) => `Use ${amount}`,
 				noAmount: 'no amount',
-				nameDiffers: (page: string) => `The page says “${page}”.`,
-				lineAdded: (page: string) => `Also on the page: “${page}”. The AI had left it out.`,
-				reworded: (page: string) => `The page says: “${page}”`,
-				rewordedUnknown: 'This step is not the page’s own words.',
-				usePageText: 'Use the page’s text',
+				nameDiffers: (from: ImportSource, page: string) => `${SAYS[from]} “${page}”.`,
+				lineAdded: (from: ImportSource, page: string) =>
+					`Also ${IN[from]}: “${page}”. The AI had left it out.`,
+				reworded: (from: ImportSource, page: string) => `${SAYS[from]}: “${page}”`,
+				rewordedUnknown: (from: ImportSource) => `This step is not word for word ${IN[from]}.`,
+				usePageText: (from: ImportSource) =>
+					({
+						page: 'Use the page’s text',
+						text: 'Use your text',
+						photo: 'Use the text from the photos',
+						recipe: 'Use the saved text'
+					})[from],
 				newUnit: (word: string) => `New unit: ${word}. Add it?`,
 				addUnit: 'Add it',
 				keepInNote: 'Keep it in the note',
 				servingsQuestion: 'For how many people?',
-				servingsPage: (page: string) =>
-					`The page says “${page}”. Every amount scales from this number.`,
+				servingsPage: (from: ImportSource, page: string) =>
+					`${SAYS[from]} “${page}”. Every amount scales from this number.`,
 				servingsWhy: 'Every amount scales from this number.',
 				servingsKeep: (count: number) => `Keep ${count}`,
-				noSteps: 'This page has no method.',
+				noSteps: (from: ImportSource) =>
+					({
+						page: 'This page has no method.',
+						text: 'Your text has no method.',
+						photo: 'The photos show no method.',
+						recipe: 'This recipe has no steps.'
+					})[from],
 				addSteps: 'Add steps',
 				saveWithout: 'Save without',
 				sharesExceed: (name: string) => `The steps use more ${name} than the recipe lists.`,
@@ -1889,7 +1944,11 @@ export const en = {
 				/** `?draft=` names an import this tab no longer holds. */
 				gone: 'This import is no longer here.',
 				goneHint: 'It was saved, discarded or opened in another tab. Import it again.',
-				again: 'Import again'
+				again: 'Import again',
+				/** The same, for a saved recipe's tidy (→ plan 48). */
+				tidyGone: 'This tidy is no longer here.',
+				tidyGoneHint: 'It was saved, discarded or opened in another tab. The recipe is as it was.',
+				backToRecipe: 'Back to the recipe'
 			}
 		}
 	},

@@ -1,0 +1,99 @@
+{
+	"prefill": {
+		"name": "Lentil curry",
+		"timeMinutes": 30,
+		"servings": 4,
+		"ingredientLines": [
+			"300 g Red lentils",
+			"400 ml Coconut milk",
+			"2 EL Curry paste",
+			"100 g Baby spinach"
+		],
+		"ingredientDetails": [
+			{
+				"note": "rinsed",
+				"section": null
+			},
+			{
+				"note": null,
+				"section": null
+			},
+			{
+				"note": null,
+				"section": null
+			},
+			{
+				"note": null,
+				"section": null
+			}
+		],
+		"steps": [
+			{
+				"text": "Fry the curry paste for 2 min until fragrant.",
+				"uses": [
+					{
+						"ingredient": 2,
+						"quantity": null,
+						"phrase": "curry paste",
+						"amountPhrase": null
+					}
+				],
+				"timer": null,
+				"section": null
+			},
+			{
+				"text": "Add the lentils and coconut milk, simmer 20 minutes until soft.",
+				"uses": [
+					{
+						"ingredient": 0,
+						"quantity": null,
+						"phrase": "lentils",
+						"amountPhrase": null
+					},
+					{
+						"ingredient": 1,
+						"quantity": null,
+						"phrase": "coconut milk",
+						"amountPhrase": null
+					}
+				],
+				"timer": {
+					"seconds": 1200,
+					"label": "Simmer"
+				},
+				"section": null
+			},
+			{
+				"text": "Stir the baby spinach through and season to taste.",
+				"uses": [
+					{
+						"ingredient": 3,
+						"quantity": null,
+						"phrase": "baby spinach",
+						"amountPhrase": null
+					}
+				],
+				"timer": null,
+				"section": null
+			}
+		],
+		"suggested": null,
+		"checks": [
+			{
+				"kind": "line-added",
+				"level": "check",
+				"page": "100 g Baby spinach",
+				"name": "Baby spinach",
+				"at": {
+					"ingredient": 3
+				}
+			}
+		],
+		"leftOut": [],
+		"photo": null
+	},
+	"notice": "Tidied with AI. Nothing changes until you save.",
+	"site": null,
+	"source": "recipe",
+	"recipeId": "visual"
+}
