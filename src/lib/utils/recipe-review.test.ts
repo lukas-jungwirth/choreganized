@@ -18,9 +18,13 @@ import {
 	editStepText,
 	findIngredient,
 	findStep,
+	askedAny,
 	keep,
+	leaveOut,
 	notes,
 	openChecks,
+	openCount,
+	openLeftOut,
 	putBack,
 	readStored,
 	removeAdded,
@@ -414,5 +418,31 @@ describe('the stored draft', () => {
 		assert.equal(readStored('not json'), null);
 		assert.equal(readStored(JSON.stringify({ v: 2, draft })), null);
 		assert.equal(readStored(JSON.stringify({ v: 1, draft: { prefill: {} } })), null);
+	});
+});
+
+describe('a sentence left out, counted per source (plan 48)', () => {
+	const sources = ['page', 'text', 'photo', 'recipe'] as const;
+
+	it('is a thing to check only in a saved recipe’s tidy', () => {
+		const review = open('clean');
+		const left = stillLeftOut(review).length;
+		assert.ok(left > 0, 'the clean draft has sentences left out');
+		assert.equal(openChecks(review).length, 0);
+		for (const from of sources) {
+			assert.equal(openCount(review, from), from === 'recipe' ? left : 0, from);
+			assert.equal(askedAny(review, from), from === 'recipe', from);
+		}
+	});
+
+	it('is answered by Put back or by Leave it out, and Save then keeps what was put back', () => {
+		let review = open('clean');
+		const [first, second] = openLeftOut(review, 'recipe');
+		review = putBack(review, first.id, keyMaker('p'));
+		review = leaveOut(review, second.id);
+		const rest = stillLeftOut(review).filter((one) => !one.dropped).length;
+		assert.equal(openCount(review, 'recipe'), rest);
+		assert.ok(posted(review, 'step').includes(first.text));
+		assert.ok(!posted(review, 'step').includes(second.text));
 	});
 });

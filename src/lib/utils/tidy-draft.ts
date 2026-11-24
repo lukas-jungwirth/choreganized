@@ -74,25 +74,32 @@ export function savedCard(recipe: SavedRecipe, labels?: UnitLabels): SourceRecip
 }
 
 /**
- * Which saved step each draft step was found in, word for word and in order,
- * as the gate finds them; -1 for one that is not the saved text (the gate has
- * flagged it `reworded`).
+ * Which saved steps each draft step was found in, word for word and in order,
+ * as the gate finds them: usually one, two or more for a step that holds the
+ * words of several (the model merged them); none for one that is not the
+ * saved text (the gate has flagged it `reworded`).
  */
-export function stepOrigins(draft: readonly StepInput[], saved: readonly string[]): number[] {
+export function stepCovers(draft: readonly StepInput[], saved: readonly string[]): number[][] {
 	const starts: number[] = [];
 	const hay: string[] = [];
 	for (const text of saved) {
 		starts.push(hay.length);
 		hay.push(...tokens(text).map((token) => token.word));
 	}
+	const ends = starts.map((start, at) => starts[at + 1] ?? hay.length);
 	let cursor = 0;
 	return draft.map((step) => {
 		const words = tokens(step.text).map((token) => token.word);
 		const found = words.length ? runAt(hay, words, cursor) : -1;
-		if (found < 0) return -1;
+		if (found < 0) return [];
 		cursor = found + words.length;
-		return starts.findLastIndex((start) => start <= found);
+		return starts.flatMap((start, at) => (start < cursor && ends[at] > found ? [at] : []));
 	});
+}
+
+/** The first saved step each draft step was found in, or -1 (→ `stepCovers`). */
+export function stepOrigins(draft: readonly StepInput[], saved: readonly string[]): number[] {
+	return stepCovers(draft, saved).map((covers) => covers[0] ?? -1);
 }
 
 /**
@@ -134,55 +141,77 @@ export function keepSaved(
 	recipe: SavedRecipe,
 	known: ReadonlySet<string> = new Set()
 ): Omit<RecipePrefill, 'photo'> {
-	const origins = closestOrigins(
+	const texts = recipe.steps.map((step) => step.text);
+	const found = stepCovers(draft.steps, texts);
+	const closest = closestOrigins(
 		draft.steps,
-		recipe.steps.map((step) => step.text),
-		stepOrigins(
-			draft.steps,
-			recipe.steps.map((step) => step.text)
-		)
+		texts,
+		found.map((covers) => covers[0] ?? -1)
 	);
+	/** The saved steps each draft step holds: found, or the closest one for a reworded step. */
+	const covers = found.map((one, at) => (one.length ? one : closest[at] >= 0 ? [closest[at]] : []));
 	const savedIndex = new Map(recipe.ingredients.map((row, at) => [row.id, at]));
 	/** The draft rows each saved row became ("Salz und Pfeffer" may be two). */
 	const became = (saved: number) => rows.flatMap((row, at) => (row.source === saved ? [at] : []));
 
 	const steps = draft.steps.map((step, at) => {
-		const origin = origins[at];
-		if (origin < 0) return step;
-		const saved = recipe.steps[origin];
-		const pieces = origins.flatMap((one, index) => (one === origin ? [index] : []));
-		const mine = (piece: (index: number) => boolean) => pieces.find(piece) ?? pieces[0];
+		if (!covers[at].length) return step;
+		let savedTimer: StepTimer | null = null;
+		let timed = false;
+		let kept: StepLinkInput[] | null = null;
+		let reads = false;
 
-		let timer = step.timer;
-		if (saved.timer) {
-			const holder = mine((index) =>
-				stepDurations(draft.steps[index].text).includes(saved.timer!.seconds)
-			);
-			timer = holder === at ? saved.timer : null;
-		}
+		for (const origin of covers[at]) {
+			const saved = recipe.steps[origin];
+			/** The draft steps that hold this saved step: its pieces, or one merged step. */
+			const pieces = covers.flatMap((one, index) => (one.includes(origin) ? [index] : []));
+			const mine = (piece: (index: number) => boolean) => pieces.find(piece) ?? pieces[0];
 
-		let uses = step.uses;
-		if (saved.uses !== null) {
-			uses = saved.uses.flatMap((use): StepLinkInput[] => {
+			if (saved.timer) {
+				const holder = mine((index) =>
+					stepDurations(draft.steps[index].text).includes(saved.timer!.seconds)
+				);
+				// One timer per step: the first saved one this step holds wins, and a
+				// step holding saved timers takes none of the model's.
+				if (!savedTimer && holder === at) savedTimer = saved.timer;
+				timed = true;
+			}
+
+			if (saved.uses === null) {
+				reads = true;
+				continue;
+			}
+			kept ??= [];
+			for (const use of saved.uses) {
 				const from = savedIndex.get(use.ingredientId);
-				if (from === undefined) return [];
+				if (from === undefined) continue;
 				const phrase = use.phrase ?? null;
 				const holder = phrase
 					? mine((index) => occurrences(draft.steps[index].text, phrase).length > 0)
 					: pieces[0];
-				if (holder !== at) return [];
+				if (holder !== at) continue;
 				// The first row the line became keeps the amount; a row split off it
 				// ("Pfeffer" from "Salz und Pfeffer") is linked by the same words.
-				return became(from).map((ingredient, nth) => ({
-					ingredient,
-					quantity: nth === 0 ? use.quantity : null,
-					phrase,
-					amountPhrase: nth === 0 ? (use.amountPhrase ?? null) : null
-				}));
-			});
+				became(from).forEach((ingredient, nth) =>
+					kept!.push({
+						ingredient,
+						quantity: nth === 0 ? use.quantity : null,
+						phrase,
+						amountPhrase: nth === 0 ? (use.amountPhrase ?? null) : null
+					})
+				);
+			}
 		}
 
-		return { ...step, timer, uses };
+		// Hand links stand; a merged step that also held a step reading its text adds
+		// the model's links for rows no hand link names.
+		let uses = step.uses;
+		if (kept) {
+			const named = new Set(kept.map((link) => link.ingredient));
+			const model = reads ? (step.uses ?? []).filter((link) => !named.has(link.ingredient)) : [];
+			uses = [...kept, ...model];
+		}
+		return { ...step, timer: timed ? savedTimer : step.timer, uses };
 	});
 
 	// The link items were counted on the model's links: count them again on the kept ones.

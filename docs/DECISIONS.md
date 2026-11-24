@@ -5049,9 +5049,17 @@ recipe-importer)` (`IMPORT_UA`): the `Mozilla/5.0 (compatible; …)` form crawle
      text get the model's links; a saved timer goes to the piece of a split step that states
      its duration (else the first piece), and the other pieces get no timer of the model's; a
      step the gate kept as reworded is matched to the saved step it shares the most words with,
-     so its links and timer stay too (both from the code review). The link items (`unused`, `shares-exceed`) are counted
-     again on the kept links. Sentences the model left out are offered under "Left out", as an
-     import's are; saving without putting them back drops them, as the review shows.
+     so its links and timer stay too (both from the code review); a step that holds the words of
+     two saved steps (the model merged them, `stepCovers`) carries both steps' hand links. The
+     link items (`unused`, `shares-exceed`) are counted
+     again on the kept links. **A sentence the model left out of a saved recipe is a thing to
+     check** (coordinator's call, 2026-11-24; Lukas may change it): an import's page is still
+     there, but a saved step is the household's own with no other copy. So for a tidy only, each
+     one counts in the banner (`openLeftOut`, `openCount`), and the list stands open at the end
+     of the steps, not folded: "The AI left this out. It is removed when you save." with **Put
+     back** (it goes back at its place) and **Leave it out** (answered, it goes on Save; Put back
+     stays). The second answer is ours: without it a tidy that rightly drops a teaser could never
+     read "Nothing left to check". Imports keep their folded list, unchanged.
 341. **An added line joins the part the model gave its neighbours** (2026-11-24; → plan 44's
      gate, fix). A page line no row came from took the card's part name ("Sauce
      (Bolognesesoße)") while the model named the same part "Bolognesesoße", so one part showed

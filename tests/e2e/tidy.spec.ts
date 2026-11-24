@@ -35,16 +35,15 @@ async function setAi(page: Page, baseURL: string, on: boolean) {
 }
 
 /** The old recipe: "Hackfleisch, gemischtes" in one name, a heart, two tags, on the plan. */
-async function oldRecipe(page: Page, baseURL: string): Promise<string> {
+const STEPS = ['Das Hackfleisch anbraten.', 'Die Bohnen dazugeben und 20 Minuten köcheln.'];
+
+async function oldRecipe(page: Page, baseURL: string, steps = STEPS): Promise<string> {
 	const form = new URLSearchParams();
 	form.set('name', NAME);
 	form.set('servings', '4');
 	for (const line of ['500 g Hackfleisch, gemischtes', '400 g Bohnen'])
 		form.append('ingredient', line);
-	for (const text of [
-		'Das Hackfleisch anbraten.',
-		'Die Bohnen dazugeben und 20 Minuten köcheln.'
-	]) {
+	for (const text of steps) {
 		form.append('step', text);
 		form.append('stepUses', '');
 		form.append('stepTimer', '');
@@ -156,6 +155,34 @@ test.describe('with a provider set up', () => {
 		);
 		await expect(page.getByRole('link', { name: 'Show recipes tagged Dinner' })).toBeVisible();
 		expect(plannedRecipe(id)).toBe(id);
+	});
+
+	test('a step the AI left out is asked about, put back in its place, and kept', async ({
+		page,
+		baseURL
+	}) => {
+		// A recipe with a tip as a step of its own: the fake leaves "Tipp:" sentences out.
+		const tip = 'Tipp: Mit Chili wird es schärfer.';
+		const other = await oldRecipe(page, baseURL!, [STEPS[0], tip, STEPS[1]]);
+		try {
+			await tidy(page, other);
+			// The household's own step is a question, never quietly gone.
+			await expect(page.getByRole('button', { name: '1 thing to check' })).toBeVisible();
+			const left = page.locator('[data-open-check]').filter({ hasText: tip });
+			await expect(left).toContainText('The AI left this out. It is removed when you save.');
+			await expect(page.locator('ol.steps li')).toHaveCount(2);
+
+			await left.getByRole('button', { name: 'Put back' }).click();
+			await expect(page.getByText('Nothing left to check')).toBeVisible();
+			await expect(page.locator('ol.steps li').nth(1)).toContainText(tip);
+
+			await page.getByRole('button', { name: 'Save', exact: true }).click();
+			await expect(page).toHaveURL(new RegExp(`/cooking/recipes/${other}$`));
+			await expect(page.locator('.step-text')).toHaveCount(3);
+			await expect(page.locator('.step-text').nth(1)).toContainText(tip);
+		} finally {
+			await cleanUp(page, baseURL!, other);
+		}
 	});
 
 	test('Discard changes nothing', async ({ page }) => {

@@ -50,8 +50,11 @@
 		findStep,
 		freshKeys,
 		itemsOn,
+		askedAny,
 		keep,
+		leaveOut,
 		notes,
+		openCount,
 		openChecks,
 		putBack,
 		readStored,
@@ -83,6 +86,7 @@
 	import CheckBanner from './CheckBanner.svelte';
 	import CheckRow from './CheckRow.svelte';
 	import FoldList from './FoldList.svelte';
+	import LeftOutChecks from './LeftOutChecks.svelte';
 	import StepSheet from './StepSheet.svelte';
 
 	type Props = {
@@ -168,7 +172,9 @@
 			: (prefill?.photo?.preview ?? null)
 	);
 	const open = $derived(review ? openChecks(review) : []);
-	const asked = $derived(review?.items.some((item) => item.level === 'check') ?? false);
+	/** What the banner counts: for a tidy, a sentence left out too (→ `openLeftOut`). */
+	const count = $derived(review ? openCount(review, from) : 0);
+	const asked = $derived(review ? askedAny(review, from) : false);
 	const withParts = $derived(review ? hasParts(review.editor) : false);
 	const targets = $derived(review ? linkTargets(review.editor.ingredients) : []);
 	/** The rows as the recipe view's step renderer reads them. */
@@ -202,7 +208,7 @@
 		if (!review) return '';
 		if (flags.has('no-ai')) return t.noAi;
 		if (flags.has('from-photo')) return t.fromPhoto;
-		if (open.length) return t.restMatches(from);
+		if (count) return t.restMatches(from);
 		if (asked) return t.ready;
 		const { ingredients, steps } = counts(review);
 		return t.allMatch(from, ingredients, steps);
@@ -376,7 +382,7 @@
 		<p class="notice">{stored.draft.notice}</p>
 	{/if}
 
-	<CheckBanner open={open.length} {asked} {line} onshow={showFirst} />
+	<CheckBanner open={count} {asked} {line} onshow={showFirst} />
 
 	{#if recipeItems.some((item) => item.kind === 'servings')}
 		<h2 class="label">{t.recipe}</h2>
@@ -442,9 +448,18 @@
 
 	{@const left = stillLeftOut(review)}
 	{@const quiet = notes(review)}
-	{#if left.length || quiet.length}
+	<!-- A tidy's left-out sentences are the household's own: open, and asked about. -->
+	{#if from === 'recipe' && left.length}
+		<h2 class="label">{t.leftOut}</h2>
+		<LeftOutChecks
+			entries={left}
+			onback={(one) => answer((r) => putBack(r, one, key))}
+			onleave={(one) => answer((r) => leaveOut(r, one))}
+		/>
+	{/if}
+	{#if (from !== 'recipe' && left.length) || quiet.length}
 		<h2 class="label">{t.also}</h2>
-		{#if left.length}
+		{#if from !== 'recipe' && left.length}
 			<FoldList
 				title={t.leftOut}
 				count={t.leftOutCount(left.length)}

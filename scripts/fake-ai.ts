@@ -182,7 +182,9 @@ function echoCard(card: Card, saved = false) {
 		return rest.length ? { ...echoed, note: rest.join(',').trim() } : echoed;
 	});
 
-	const steps = card.steps.map((text) => ({
+	// A tidy leaves tips out, as a model may (→ plan 48: the review asks about them).
+	const method = saved ? card.steps.filter((text) => !text.startsWith('Tipp:')) : card.steps;
+	const steps = method.map((text) => ({
 		text,
 		section: null,
 		timer: null,

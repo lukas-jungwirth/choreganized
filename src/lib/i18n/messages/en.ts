@@ -1924,6 +1924,10 @@ export const en = {
 				leftOut: 'Left out of the steps',
 				leftOutCount: (count: number) => (count === 1 ? '1 sentence' : `${count} sentences`),
 				putBack: 'Put back',
+				/** A tidy's left-out sentence (→ plan 48): the household's own, asked about. */
+				leftOutLine: 'The AI left this out. It is removed when you save.',
+				leaveOut: 'Leave it out',
+				leftOutRemoved: 'Removed when you save.',
 				notes: 'Notes from the import',
 				noteCount: (count: number) => (count === 1 ? '1 note' : `${count} notes`),
 				converted: (name: string) => `${name}: converted to metric.`,

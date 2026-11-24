@@ -912,6 +912,9 @@ item sheet [3a]; what differs is what a tick does and what counts as shopping.
   photo, tags, diet, heart, plan entries stay. A step with links of its own (`ingredients_set`)
   keeps them exactly, carried to the rows its lines became; only steps that read their text get
   the model's links. A step's saved timer stays on the piece of it that states the duration.
+  **A sentence the model left out is a thing to check** in a tidy (not in an import): each one
+  counts in the banner, and they stand open at the end of the steps, "The AI left this out. It
+  is removed when you save.", with **Put back** (at its place) and **Leave it out**.
   **Discard** goes back to the recipe and changes nothing; nothing is stored before Save. One
   recipe per tap, no batch: every tidy is looked at by a person.
 

@@ -6,7 +6,7 @@
 import assert from 'node:assert/strict';
 import { describe, it } from 'vitest';
 import { validateRecipeDraft } from './recipe-draft';
-import { keepSaved, savedCard, stepOrigins, type SavedRecipe } from './tidy-draft';
+import { keepSaved, savedCard, stepCovers, stepOrigins, type SavedRecipe } from './tidy-draft';
 
 const LABELS = { tbsp: 'EL', tsp: 'TL', pcs: 'Stk.', pack: 'Pkg.' };
 
@@ -271,6 +271,64 @@ describe('code-review fixes', () => {
 		assert.ok(draft.checks?.some((check) => check.kind === 'reworded'));
 		assert.deepEqual(draft.steps[0].uses, [
 			{ ingredient: 0, quantity: 250, phrase: 'Fleisch', amountPhrase: null }
+		]);
+	});
+});
+
+describe('a step the model merged from two saved steps', () => {
+	const two: SavedRecipe = {
+		...saved,
+		steps: [
+			{
+				text: 'Das Fleisch anbraten.',
+				section: null,
+				uses: [{ ingredientId: 'i0', quantity: null, phrase: 'Fleisch', amountPhrase: null }],
+				timer: null
+			},
+			{
+				text: 'Mit Salz würzen.',
+				section: null,
+				uses: [{ ingredientId: 'i1', quantity: null, phrase: 'Salz', amountPhrase: null }],
+				timer: null
+			},
+			saved.steps[1]
+		]
+	};
+
+	it('is found in both', () => {
+		assert.deepEqual(
+			stepCovers(
+				[
+					{ text: 'Das Fleisch anbraten. Mit Salz würzen.', uses: null, timer: null },
+					{ text: 'Die Bohnen dazugeben und 20 Minuten köcheln.', uses: null, timer: null }
+				],
+				two.steps.map((step) => step.text)
+			),
+			[[0, 1], [2]]
+		);
+	});
+
+	it('carries both steps’ hand-made links', () => {
+		const raw = answer();
+		raw.steps.splice(0, 2, {
+			text: 'Das Fleisch anbraten. Mit Salz würzen.',
+			section: null,
+			timer: null,
+			uses: []
+		});
+		const card = savedCard(two, LABELS);
+		const check = validateRecipeDraft(raw, {
+			source: card,
+			text: null,
+			instructed: false,
+			labels: LABELS
+		});
+		assert.ok(check.ok, JSON.stringify(check));
+		const draft = keepSaved(check.draft, check.rows, two);
+		assert.deepEqual(draft.steps[0].uses, [
+			{ ingredient: 0, quantity: null, phrase: 'Fleisch', amountPhrase: null },
+			{ ingredient: 1, quantity: null, phrase: 'Salz', amountPhrase: null },
+			{ ingredient: 2, quantity: null, phrase: 'Salz', amountPhrase: null }
 		]);
 	});
 });

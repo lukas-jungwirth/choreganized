@@ -99,6 +99,8 @@ export type ReviewLeftOut = {
 	after: string | null;
 	/** The step it became once put back; null while it is left out. */
 	back: string | null;
+	/** A tidy's "Leave it out": answered, it goes on Save (→ `openLeftOut`). */
+	dropped?: boolean;
 };
 
 export type Review = {
@@ -258,6 +260,38 @@ function stands(review: Review, item: ReviewItem): boolean {
 	if (item.ingredient) return findIngredient(review, item.ingredient) !== null;
 	if (item.step) return findStep(review, item.step) !== null;
 	return true;
+}
+
+/**
+ * The sentences a person is asked about: for a saved recipe's tidy only
+ * (→ plan 48, DECISIONS #340). A page is still there after an import, so what
+ * the model left out of it is a quiet note; a saved recipe's step is the
+ * household's own and Save would drop it for good, so each one left out is a
+ * question until it is put back or left out on purpose.
+ */
+export function openLeftOut(review: Review, from: ImportSource): ReviewLeftOut[] {
+	return from === 'recipe' ? stillLeftOut(review).filter((one) => !one.dropped) : [];
+}
+
+/** What the banner counts: the open check items, and for a tidy the sentences left out. */
+export function openCount(review: Review, from: ImportSource): number {
+	return openChecks(review).length + openLeftOut(review, from).length;
+}
+
+/** Whether the draft asked anything at all: "Nothing left to check" rather than "Nothing to check". */
+export function askedAny(review: Review, from: ImportSource): boolean {
+	return (
+		review.items.some((item) => item.level === 'check') ||
+		(from === 'recipe' && review.leftOut.length > 0)
+	);
+}
+
+/** A tidy's "Leave it out": the sentence stays out, and the question is answered. */
+export function leaveOut(review: Review, leftOutId: string): Review {
+	return {
+		...review,
+		leftOut: review.leftOut.map((one) => (one.id === leftOutId ? { ...one, dropped: true } : one))
+	};
 }
 
 /**
@@ -549,7 +583,9 @@ export function putBack(review: Review, leftOutId: string, key: () => string): R
 	return {
 		...review,
 		editor: { ...review.editor, steps },
-		leftOut: review.leftOut.map((one) => (one.id === leftOutId ? { ...one, back: step.id } : one))
+		leftOut: review.leftOut.map((one) =>
+			one.id === leftOutId ? { ...one, back: step.id, dropped: false } : one
+		)
 	};
 }
 
