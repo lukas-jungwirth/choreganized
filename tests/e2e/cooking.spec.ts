@@ -386,6 +386,54 @@ test('a recipe built in the editor: parts, a tapped link, an amount that follows
 	await expect(page.locator('.bubble')).toContainText('Zwiebel');
 });
 
+test('an ingredient dragged by its grip lands in another part, and is saved there (plan 46)', async ({
+	page
+}) => {
+	await page.goto('/cooking/recipes/new');
+	await page.getByLabel('Recipe name').fill('E2E Zwei Teile');
+	const add = page.getByRole('textbox', { name: 'Add an ingredient' });
+	await add.fill('1 Zwiebel');
+	await add.press('Enter');
+	await add.fill('1 Prise Muskat');
+	await add.press('Enter');
+	await page.getByRole('button', { name: '+ Add part' }).first().click();
+	await page.getByLabel('Name of the part').fill('Béchamel');
+	await page.getByRole('button', { name: 'Add', exact: true }).click();
+	const bechamel = page.getByRole('textbox', { name: 'Add an ingredient to Béchamel' });
+	await bechamel.fill('30 g Butter');
+	await bechamel.press('Enter');
+
+	const part = page.getByRole('list', { name: 'Béchamel' });
+	await expect(part.getByRole('listitem')).toHaveCount(1);
+
+	// Both lists clear of the tab bar, so the row is dropped on the list and not behind the bar.
+	await part.evaluate((list) => list.scrollIntoView({ block: 'center' }));
+
+	// The grip, held and carried onto the Butter row: slowly, as a finger would,
+	// because the drag library looks where the row is every few frames.
+	const from = (await page.getByRole('button', { name: 'Move Muskat' }).boundingBox())!;
+	const to = (await part.getByRole('button', { name: '30 g Butter, edit' }).boundingBox())!;
+	await page.mouse.move(from.x + from.width / 2, from.y + from.height / 2);
+	await page.mouse.down();
+	await page.mouse.move(to.x + to.width / 2, to.y + to.height / 2, { steps: 12 });
+	// The list has made room (the gap is a hidden row, so it is counted in the DOM, not by role).
+	await expect(part.locator('li')).toHaveCount(2);
+	await page.mouse.up();
+
+	await expect(part.getByRole('button', { name: '1 Prise Muskat, edit' })).toBeVisible();
+	await expect(page.getByRole('list', { name: 'Ingredients' }).getByRole('listitem')).toHaveCount(
+		1
+	);
+
+	// Saved where it was dropped: under the Béchamel heading on the recipe.
+	await page.getByRole('button', { name: 'Save recipe' }).click();
+	await expect(page.getByRole('heading', { name: 'E2E Zwei Teile', level: 1 })).toBeVisible();
+	const text = await page.locator('article').innerText();
+	expect(text.indexOf('Béchamel')).toBeGreaterThan(-1);
+	expect(text.indexOf('Muskat')).toBeGreaterThan(text.indexOf('Béchamel'));
+	expect(text.indexOf('Zwiebel')).toBeLessThan(text.indexOf('Béchamel'));
+});
+
 test('the amount is a number and a unit; your own unit is the household’s (plan 46)', async ({
 	page
 }) => {

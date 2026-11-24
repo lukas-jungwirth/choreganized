@@ -1226,6 +1226,7 @@ export const de: Messages = {
 				showFor: 'Zeigen für',
 				people: 'Personen',
 				linkTo: (word: string) => `„${word}“ verknüpfen mit`,
+				linkedWords: (words: string) => `„${words}“`,
 				linked: 'In diesem Schritt verknüpft',
 				nothing: 'Noch nichts verknüpft. Tipp auf ein Wort im Text.',
 				gone: 'steht nicht mehr im Text',
