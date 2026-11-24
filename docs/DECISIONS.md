@@ -5082,3 +5082,17 @@ recipe-importer)` (`IMPORT_UA`): the `Mozilla/5.0 (compatible; …)` form crawle
      over another recipe of the household. The review posts the recipe's own tags and diet and no
      photo (the photo stays); "Edit everything" opens the editor with the recipe, so its photo,
      tags and diet are the recipe's and can be changed there as in Edit.
+344. **The recipe rebuild's check-up** (2026-11-24, after plans 42 to 48). Three small things
+     the walk through the running app and the repeated test runs turned up. **A test that
+     failed about one run in six** (`tests/integration/expense-guests.test.ts`, "tells the
+     guest's own payment from their side") expected the payment at the top of the guest's page.
+     The dinner and the payment share a day, the ledger then orders by the millisecond a row was
+     made and last by its random id, and the test makes both in the same millisecond, so the
+     order was a coin toss. The test now finds the payment by its kind; the ledger's order is
+     unchanged (two rows made in one millisecond do not happen by hand). **The link sheet's
+     quote marks** were written in the component, so a German link row read “Zwiebelwürfel”
+     under a heading that said „Topf“ verknüpfen mit: they are the catalog's now
+     (`cooking.form.links.linkedWords`). **Dragging an ingredient into another part** (plan 46)
+     had no test; `tests/e2e/cooking.spec.ts` now carries a row by its grip from one part into
+     the other and checks it is saved there. While a row is carried, the gap the list opens is
+     a hidden row, so a test counts it in the DOM, not by role.

@@ -1566,6 +1566,8 @@ export const en = {
 				showFor: 'Show for',
 				people: 'people',
 				linkTo: (word: string) => `Link “${word}” to`,
+				/** The words of a link as they stand in the step, quoted the way the language quotes. */
+				linkedWords: (words: string) => `“${words}”`,
 				linked: 'Linked in this step',
 				nothing: 'Nothing linked yet. Tap a word in the text.',
 				/** A stored link whose words were edited out of the step. */

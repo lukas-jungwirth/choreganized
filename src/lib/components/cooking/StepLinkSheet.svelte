@@ -384,7 +384,9 @@
 				<div class="lrow">
 					<div class="main">
 						<div>
-							<span class="phrase">“{amount ? `${amount} ` : ''}{link.phrase}”</span>
+							<span class="phrase"
+								>{t.linkedWords(`${amount ? `${amount} ` : ''}${link.phrase ?? ''}`)}</span
+							>
 							→ <b>{row?.name ?? ''}</b>
 						</div>
 						{#if !there}
