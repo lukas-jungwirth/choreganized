@@ -42,12 +42,39 @@ import type { HolidayKey } from '$lib/utils/holidays';
 import { formatAmount, formatIngredient } from '$lib/utils/ingredients';
 import { currencyAfter, currencySymbol, formatMoney } from '$lib/utils/money';
 import type { MealSlot } from '$lib/utils/meals';
+import type { ImportSource } from '$lib/utils/recipes';
 import { formatQuantity, type UnitLabels } from '$lib/utils/shopping';
 import type { RecurUnit, TaskSchedule } from '$lib/utils/tasks';
 import type { DaySlot, Weekday } from '$lib/assets/mascot/everyday';
 import type { Messages, RichText, SentencePart } from './en';
 
 const L = 'de';
+
+/** Woraus ein Entwurf gelesen wurde, wie die Prüfung es nennt (→ `ImportSource`). */
+const WITH: Record<ImportSource, string> = {
+	page: 'mit der Seite',
+	text: 'mit deinem Text',
+	photo: 'mit den Fotos',
+	recipe: 'mit dem gespeicherten Rezept'
+};
+const SAYS: Record<ImportSource, string> = {
+	page: 'Auf der Seite steht',
+	text: 'In deinem Text steht',
+	photo: 'Auf den Fotos steht',
+	recipe: 'Im gespeicherten Rezept steht'
+};
+const NAMES: Record<ImportSource, string> = {
+	page: 'Die Seite nennt',
+	text: 'Dein Text nennt',
+	photo: 'Die Fotos nennen',
+	recipe: 'Das gespeicherte Rezept nennt'
+};
+const IN: Record<ImportSource, string> = {
+	page: 'auf der Seite',
+	text: 'in deinem Text',
+	photo: 'auf den Fotos',
+	recipe: 'im gespeicherten Rezept'
+};
 
 const COUNTS = [
 	'null',
@@ -1075,7 +1102,17 @@ export const de: Messages = {
 			deleteConfirm: (name: string) => `${name} löschen?`,
 			deleteCopy:
 				'Zutaten und Schritte gehen mit. Tage, an denen es schon eingeplant ist, behalten den Namen.',
-			keep: 'Doch behalten'
+			keep: 'Doch behalten',
+			tidy: 'Mit KI aufräumen',
+			tidyHint: 'Saubere Namen, Notizen und Verknüpfungen. Du prüfst es, bevor sich etwas ändert.'
+		},
+
+		tidy: {
+			note: 'Mit KI aufgeräumt. Es ändert sich nichts, bis du speicherst.',
+			empty: 'Dieses Rezept hat keine Zutaten oder Schritte zum Aufräumen.',
+			failed: 'Das Aufräumen hat nicht geklappt. Das Rezept ist unverändert.',
+			noStorage:
+				'Dieser Browser hebt nichts für die Prüfung auf. Versuch es außerhalb eines privaten Fensters.'
 		},
 
 		form: {
@@ -1398,9 +1435,9 @@ export const de: Messages = {
 							: `${count} Sachen zu prüfen`,
 				allChecked: 'Alles geprüft',
 				ready: 'Bereit zum Speichern.',
-				restMatches: 'Alles andere stimmt mit der Seite überein.',
-				allMatch: (ingredients: number, steps: number) =>
-					`${ingredients === 1 ? '1 Zutat' : `Alle ${ingredients} Zutaten`} und ${steps === 1 ? '1 Schritt' : `${steps} Schritte`} stimmen mit der Seite überein.`,
+				restMatches: (from: ImportSource) => `Alles andere stimmt ${WITH[from]} überein.`,
+				allMatch: (from: ImportSource, ingredients: number, steps: number) =>
+					`${ingredients === 1 ? '1 Zutat' : `Alle ${ingredients} Zutaten`} und ${steps === 1 ? '1 Schritt' : `${steps} Schritte`} stimmen ${WITH[from]} überein.`,
 				noAi: 'Ohne KI importiert. Die Verknüpfungen sind geraten.',
 				fromPhoto: 'Aus Fotos gelesen. Vergleich es mit dem Kochbuch.',
 				showFirst: 'Zur ersten offenen Frage',
@@ -1414,28 +1451,40 @@ export const de: Messages = {
 				editBasics: 'Name, Zeit und Portionen bearbeiten',
 				checked: 'Geprüft',
 
-				choice: (name: string, alternative: string) =>
-					`Die Seite nennt ${name} oder ${alternative}. Was nimmst du?`,
-				amountDiffers: (page: string, answer: string) =>
-					`Auf der Seite steht „${page}“. Die KI hat ${answer} gelesen.`,
+				choice: (from: ImportSource, name: string, alternative: string) =>
+					`${NAMES[from]} ${name} oder ${alternative}. Was nimmst du?`,
+				amountDiffers: (from: ImportSource, page: string, answer: string) =>
+					`${SAYS[from]} „${page}“. Die KI hat ${answer} gelesen.`,
 				keepAmount: (amount: string) => `${amount} lassen`,
 				useAmount: (amount: string) => `${amount} nehmen`,
 				noAmount: 'keine Menge',
-				nameDiffers: (page: string) => `Auf der Seite steht „${page}“.`,
-				lineAdded: (page: string) =>
-					`Steht auch auf der Seite: „${page}“. Die KI hatte es ausgelassen.`,
-				reworded: (page: string) => `Auf der Seite steht: „${page}“`,
-				rewordedUnknown: 'Dieser Schritt steht so nicht auf der Seite.',
-				usePageText: 'Text der Seite nehmen',
+				nameDiffers: (from: ImportSource, page: string) => `${SAYS[from]} „${page}“.`,
+				lineAdded: (from: ImportSource, page: string) =>
+					`Steht auch ${IN[from]}: „${page}“. Die KI hatte es ausgelassen.`,
+				reworded: (from: ImportSource, page: string) => `${SAYS[from]}: „${page}“`,
+				rewordedUnknown: (from: ImportSource) => `Dieser Schritt steht so nicht ${IN[from]}.`,
+				usePageText: (from: ImportSource) =>
+					({
+						page: 'Text der Seite nehmen',
+						text: 'Deinen Text nehmen',
+						photo: 'Text von den Fotos nehmen',
+						recipe: 'Gespeicherten Text nehmen'
+					})[from],
 				newUnit: (word: string) => `Neue Einheit: ${word}. Hinzufügen?`,
 				addUnit: 'Hinzufügen',
 				keepInNote: 'In der Notiz lassen',
 				servingsQuestion: 'Für wie viele Personen?',
-				servingsPage: (page: string) =>
-					`Auf der Seite steht „${page}“. Alle Mengen rechnen mit dieser Zahl.`,
+				servingsPage: (from: ImportSource, page: string) =>
+					`${SAYS[from]} „${page}“. Alle Mengen rechnen mit dieser Zahl.`,
 				servingsWhy: 'Alle Mengen rechnen mit dieser Zahl.',
 				servingsKeep: (count: number) => `${count} lassen`,
-				noSteps: 'Die Seite hat keine Zubereitung.',
+				noSteps: (from: ImportSource) =>
+					({
+						page: 'Die Seite hat keine Zubereitung.',
+						text: 'Dein Text hat keine Zubereitung.',
+						photo: 'Auf den Fotos ist keine Zubereitung.',
+						recipe: 'Das Rezept hat keine Schritte.'
+					})[from],
 				addSteps: 'Schritte dazuschreiben',
 				saveWithout: 'Ohne speichern',
 				sharesExceed: (name: string) =>
@@ -1447,6 +1496,9 @@ export const de: Messages = {
 				leftOut: 'Aus den Schritten ausgelassen',
 				leftOutCount: (count: number) => (count === 1 ? '1 Satz' : `${count} Sätze`),
 				putBack: 'Zurückholen',
+				leftOutLine: 'Die KI hat das weggelassen. Beim Speichern fällt es weg.',
+				leaveOut: 'Weglassen',
+				leftOutRemoved: 'Fällt beim Speichern weg.',
 				notes: 'Hinweise vom Import',
 				noteCount: (count: number) => (count === 1 ? '1 Hinweis' : `${count} Hinweise`),
 				converted: (name: string) => `${name}: in metrische Einheiten umgerechnet.`,
@@ -1465,7 +1517,11 @@ export const de: Messages = {
 				gone: 'Dieser Import ist nicht mehr da.',
 				goneHint:
 					'Er wurde gespeichert, verworfen oder in einem anderen Tab geöffnet. Importier ihn noch einmal.',
-				again: 'Noch einmal importieren'
+				again: 'Noch einmal importieren',
+				tidyGone: 'Dieses Aufräumen ist nicht mehr da.',
+				tidyGoneHint:
+					'Es wurde gespeichert, verworfen oder in einem anderen Tab geöffnet. Das Rezept ist unverändert.',
+				backToRecipe: 'Zurück zum Rezept'
 			}
 		}
 	},

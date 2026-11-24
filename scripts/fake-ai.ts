@@ -19,7 +19,10 @@
  * the fake echoes it the way a careful model would: one row per card line
  * (amount and unit read off the line's start, the rest as the name), the
  * card's steps word for word, a link wherever a row's first word stands in a
- * step. Given text or photos, it answers `FAKE_PANCAKES`: two parts, a note,
+ * step. A saved recipe sent to be tidied (→ plan 48) is a card too, and the
+ * fake also does what a tidy is for: what follows a comma in a line is the
+ * note ("Hackfleisch, gemischtes" → Hackfleisch, note "gemischtes"). Given
+ * text or photos, it answers `FAKE_PANCAKES`: two parts, a note,
  * an either/or and links with their words, for the paste the journeys type in
  * (`FAKE_PANCAKE_TEXT`).
  *
@@ -170,25 +173,18 @@ const UNITS: Record<string, string> = {
 };
 
 /** A card echoed the way a careful model reads it: rows by line, steps word for word. */
-function echoCard(card: Card) {
+function echoCard(card: Card, saved = false) {
 	const ingredients = card.ingredients.map(({ source, line, section }) => {
-		const match = /^(\d+(?:[.,]\d+)?)\s+(\S+)\s+(.+)$/.exec(line);
-		const unit = match ? UNITS[match[2].toLowerCase()] : undefined;
-		if (match && unit) {
-			return row(source, Number(match[1].replace(',', '.')), unit, match[3], {
-				section: section ?? undefined
-			});
-		}
-		const bare = /^(\d+(?:[.,]\d+)?)\s+(.+)$/.exec(line);
-		if (bare) {
-			return row(source, Number(bare[1].replace(',', '.')), null, bare[2], {
-				section: section ?? undefined
-			});
-		}
-		return row(source, null, null, line, { section: section ?? undefined });
+		if (!saved) return echoLine(source, line, section);
+		// A tidy (→ plan 48): what follows the first comma is the note.
+		const [head, ...rest] = line.split(',');
+		const echoed = echoLine(source, head.trim(), section);
+		return rest.length ? { ...echoed, note: rest.join(',').trim() } : echoed;
 	});
 
-	const steps = card.steps.map((text) => ({
+	// A tidy leaves tips out, as a model may (→ plan 48: the review asks about them).
+	const method = saved ? card.steps.filter((text) => !text.startsWith('Tipp:')) : card.steps;
+	const steps = method.map((text) => ({
 		text,
 		section: null,
 		timer: null,
@@ -211,9 +207,30 @@ function echoCard(card: Card) {
 	};
 }
 
+/** One card line as a row: amount and unit off its start, the rest as the name. */
+function echoLine(source: number, line: string, section: string | null) {
+	const match = /^(\d+(?:[.,]\d+)?)\s+(\S+)\s+(.+)$/.exec(line);
+	const unit = match ? UNITS[match[2].toLowerCase()] : undefined;
+	if (match && unit) {
+		return row(source, Number(match[1].replace(',', '.')), unit, match[3], {
+			section: section ?? undefined
+		});
+	}
+	const bare = /^(\d+(?:[.,]\d+)?)\s+(.+)$/.exec(line);
+	if (bare) {
+		return row(source, Number(bare[1].replace(',', '.')), null, bare[2], {
+			section: section ?? undefined
+		});
+	}
+	return row(source, null, null, line, { section: section ?? undefined });
+}
+
+/** The lead a website's card is sent after, and the one a saved recipe's tidy is (→ plan 48). */
+const CARD_LEAD = 'The recipe card the website published:\n\n';
+const SAVED_LEAD = 'A recipe the household saved earlier, as its recipe card.';
+
 /** The card a request carried, if any: the import sends it as compact JSON after a fixed lead. */
-function cardOf(body: unknown): Card | null {
-	const lead = 'The recipe card the website published:\n\n';
+function cardOf(body: unknown): { card: Card; saved: boolean } | null {
 	const strings: string[] = [];
 	const walk = (value: unknown) => {
 		if (typeof value === 'string') strings.push(value);
@@ -221,10 +238,12 @@ function cardOf(body: unknown): Card | null {
 		else if (value && typeof value === 'object') Object.values(value).forEach(walk);
 	};
 	walk(body);
-	const text = strings.find((one) => one.startsWith(lead));
+	const text = strings.find((one) => one.startsWith(CARD_LEAD) || one.startsWith(SAVED_LEAD));
 	if (!text) return null;
 	try {
-		return JSON.parse(text.slice(lead.length)) as Card;
+		const saved = text.startsWith(SAVED_LEAD);
+		const json = saved ? text.slice(text.indexOf('{')) : text.slice(CARD_LEAD.length);
+		return { card: JSON.parse(json) as Card, saved };
 	} catch {
 		return null;
 	}
@@ -267,7 +286,7 @@ export function answerFor(
 	if ('source' in ((rowItems.properties ?? {}) as Record<string, unknown>)) {
 		const card = cardOf(body);
 		const tags = { tags: ['meal:breakfast', 'kind:dessert'], diet: 'vegetarian' };
-		return card ? echoCard(card) : { ...tags, ...fakePancakes(name) };
+		return card ? echoCard(card.card, card.saved) : { ...tags, ...fakePancakes(name) };
 	}
 
 	// Plan 41's schema asks what the dish is as well.

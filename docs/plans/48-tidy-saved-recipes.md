@@ -1,6 +1,6 @@
 # 48 · Tidy a saved recipe
 
-**Status: todo.** Proposed on 2026-11-23 with the recipe rebuild; small, last. Depends on: 44, 45. SPEC: §4.5 (the ••• menu), §4.7. Design: reuses plan 45's review screen.
+**Status: done (2026-11-24, DECISIONS #340–#343).** Proposed on 2026-11-23 with the recipe rebuild; small, last. Depends on: 44, 45. SPEC: §4.5 (the ••• menu), §4.7. Design: reuses plan 45's review screen.
 
 **Goal:** the household's cookbook was imported before plans 42–45. Its recipes keep working
 (plan 43 changes nothing for them), but their names still carry notes ("Hackfleisch,
@@ -35,7 +35,14 @@ again from its link would lose the photo, the tags, the favourite and the plan h
 
 ## Acceptance
 
-- [ ] A recipe imported before the rebuild can be tidied in two taps (menu, Save) when the
+- [x] A recipe imported before the rebuild can be tidied in two taps (menu, Save) when the
       review is clean.
-- [ ] Nothing changes unless Save is tapped.
-- [ ] `npm run verify` clean.
+- [x] Nothing changes unless Save is tapped.
+- [x] `npm run verify` clean.
+
+As built: DECISIONS #340–#343. The review is plan 45's under the recipe,
+`/cooking/recipes/<id>/tidy?draft=<id>`. The e2e (`tests/e2e/tidy.spec.ts`) makes its own
+"Hackfleisch, gemischtes" recipe in the e2e household (no seeded recipe has one) and checks the
+note "gemischtes" (the fake provider moves what follows the comma as written; the plan's
+"gemischt" was a model's rewording). The plan entry is checked by its `recipe_id` in the database.
+Walked against the fake provider only; untested against a real model (no key).

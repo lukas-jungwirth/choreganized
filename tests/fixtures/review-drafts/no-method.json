@@ -320,5 +320,6 @@
 		"photo": null
 	},
 	"notice": "Made with AI. Check it over before saving.",
-	"site": "chefkoch.de"
+	"site": "chefkoch.de",
+	"source": "page"
 }

@@ -15,12 +15,18 @@
 	reload, or the app going to the background while a message comes in, loses
 	nothing; Save and Discard drop it. Nothing reaches the server before Save
 	but the temp photo, and a unit word the household adds on purpose.
+
+	A saved recipe's tidy (→ plan 48) is the same review under the recipe's own
+	address, given the `recipe`: Save posts to that route, which updates the
+	recipe in place; the photo, tags and diet shown and posted are the
+	recipe's own, and Discard goes back to it.
 -->
 <script lang="ts">
 	import { enhance } from '$app/forms';
 	import { goto } from '$app/navigation';
 	import Card from '$lib/components/ui/Card.svelte';
 	import { messages } from '$lib/i18n';
+	import type { RecipeDetail } from '$lib/server/services/recipes';
 	import { unitWordKey } from '$lib/utils/amounts';
 	import {
 		flatten,
@@ -44,8 +50,11 @@
 		findStep,
 		freshKeys,
 		itemsOn,
+		askedAny,
 		keep,
+		leaveOut,
 		notes,
+		openCount,
 		openChecks,
 		putBack,
 		readStored,
@@ -54,6 +63,7 @@
 		removeStep,
 		setServings,
 		setStepLinks,
+		sourceOf,
 		startReview,
 		stillLeftOut,
 		useAnswer,
@@ -63,7 +73,7 @@
 		type ReviewItem,
 		type StoredImport
 	} from '$lib/utils/recipe-review';
-	import type { RecipeFormField } from '$lib/utils/recipes';
+	import { uploadUrl, type RecipeFormField } from '$lib/utils/recipes';
 	import { viewRuns } from '$lib/utils/step-links';
 	import { formatDuration } from '$lib/utils/timer-parse';
 	import { onMount } from 'svelte';
@@ -76,6 +86,7 @@
 	import CheckBanner from './CheckBanner.svelte';
 	import CheckRow from './CheckRow.svelte';
 	import FoldList from './FoldList.svelte';
+	import LeftOutChecks from './LeftOutChecks.svelte';
 	import StepSheet from './StepSheet.svelte';
 
 	type Props = {
@@ -88,9 +99,11 @@
 		/** A rejected save, and which field it is about. */
 		error?: string;
 		field?: RecipeFormField;
+		/** The saved recipe this draft tidies (→ plan 48); absent for an import. */
+		recipe?: RecipeDetail | null;
 	};
 
-	let { id, edit, units, error, field }: Props = $props();
+	let { id, edit, units, error, field, recipe = null }: Props = $props();
 
 	const m = messages();
 	const t = m.cooking.import.review;
@@ -112,9 +125,11 @@
 		} catch {
 			// Storage refused (a private window): nothing to open.
 		}
+		// A tidy opens only under its own recipe's address (→ plan 48).
 		const found = readStored(raw);
-		stored = found;
-		if (found) review = found.review ?? startReview(found.draft, key, known);
+		const mine = found && (found.draft.recipeId ?? null) === (recipe?.id ?? null);
+		stored = mine ? found : null;
+		if (found && mine) review = found.review ?? startReview(found.draft, key, known);
 	});
 
 	// Every change is written back at once: a reload or a trip to another app keeps it.
@@ -139,14 +154,27 @@
 	function discard() {
 		drop();
 		stored = null;
-		void goto('/cooking/recipes', { replaceState: true });
+		void goto(home, { replaceState: true });
 	}
 
 	/* ── What the screen shows ── */
 
 	const prefill = $derived(stored?.draft.prefill ?? null);
+	/** What the draft was read from: the banner and the questions name it. */
+	const from = $derived(stored ? sourceOf(stored.draft) : 'page');
+	/** Where Discard goes: the recipe a tidy came from, or the library. */
+	const home = $derived(recipe ? `/cooking/recipes/${recipe.id}` : '/cooking/recipes');
+	const hero = $derived(
+		recipe
+			? recipe.imagePath
+				? uploadUrl(recipe.imagePath)
+				: null
+			: (prefill?.photo?.preview ?? null)
+	);
 	const open = $derived(review ? openChecks(review) : []);
-	const asked = $derived(review?.items.some((item) => item.level === 'check') ?? false);
+	/** What the banner counts: for a tidy, a sentence left out too (→ `openLeftOut`). */
+	const count = $derived(review ? openCount(review, from) : 0);
+	const asked = $derived(review ? askedAny(review, from) : false);
 	const withParts = $derived(review ? hasParts(review.editor) : false);
 	const targets = $derived(review ? linkTargets(review.editor.ingredients) : []);
 	/** The rows as the recipe view's step renderer reads them. */
@@ -180,10 +208,10 @@
 		if (!review) return '';
 		if (flags.has('no-ai')) return t.noAi;
 		if (flags.has('from-photo')) return t.fromPhoto;
-		if (open.length) return t.restMatches;
+		if (count) return t.restMatches(from);
 		if (asked) return t.ready;
 		const { ingredients, steps } = counts(review);
-		return t.allMatch(ingredients, steps);
+		return t.allMatch(from, ingredients, steps);
 	});
 
 	const meta = $derived(
@@ -272,7 +300,7 @@
 
 {#if edit && review && prefill}
 	<RecipeForm
-		recipe={null}
+		{recipe}
 		{prefill}
 		units={own}
 		back="?draft={encodeURIComponent(id)}"
@@ -317,11 +345,16 @@
 		{#each fields as [fieldName, value], at (at)}
 			<input type="hidden" name={fieldName} {value} />
 		{/each}
-		{#each prefill.suggested?.tags ?? [] as tag (tag)}
+		<!-- A tidy keeps the recipe's own tags and diet; an import saves what it suggested. -->
+		{#each (recipe ? recipe.tags : prefill.suggested?.tags) ?? [] as tag (tag)}
 			<input type="hidden" name="tag" value={tag} />
 		{/each}
-		<input type="hidden" name="diet" value={prefill.suggested?.diet ?? ''} />
-		{#if prefill.photo}
+		<input
+			type="hidden"
+			name="diet"
+			value={(recipe ? recipe.diet : prefill.suggested?.diet) ?? ''}
+		/>
+		{#if prefill.photo && !recipe}
 			<input type="hidden" name="importedPhoto" value={prefill.photo.path} />
 		{/if}
 	</form>
@@ -336,8 +369,8 @@
 		<p class="error" role="alert">{error}</p>
 	{/if}
 
-	{#if prefill.photo}
-		<img class="hero" src={prefill.photo.preview} alt="" />
+	{#if hero}
+		<img class="hero" src={hero} alt="" />
 	{/if}
 
 	<button type="button" class="basics" aria-label={t.editBasics} onclick={() => (basics = true)}>
@@ -349,14 +382,14 @@
 		<p class="notice">{stored.draft.notice}</p>
 	{/if}
 
-	<CheckBanner open={open.length} {asked} {line} onshow={showFirst} />
+	<CheckBanner open={count} {asked} {line} onshow={showFirst} />
 
 	{#if recipeItems.some((item) => item.kind === 'servings')}
 		<h2 class="label">{t.recipe}</h2>
 		<Card radius="md">
 			<div class="recipe-items">
 				{#each recipeItems.filter((item) => item.kind === 'servings') as item (item.id)}
-					<CheckRow {item} servings={review.servings} {...handlers(item)} />
+					<CheckRow {item} {from} servings={review.servings} {...handlers(item)} />
 				{/each}
 			</div>
 		</Card>
@@ -377,7 +410,7 @@
 							onclick={() => (editing = row.id)}
 						>
 							{#each itemsOn( review, { ingredient: row.id } ).filter((item) => item.level === 'check') as item (item.id)}
-								<CheckRow {item} {row} {...handlers(item)} />
+								<CheckRow {item} {from} {row} {...handlers(item)} />
 							{/each}
 						</RecipeIngredientRow>
 					{/each}
@@ -390,7 +423,7 @@
 		<h2 class="label">{t.steps}</h2>
 		{#each recipeItems.filter((item) => item.kind === 'no-steps') as item (item.id)}
 			<Card radius="md">
-				<div class="recipe-items"><CheckRow {item} {...handlers(item)} /></div>
+				<div class="recipe-items"><CheckRow {item} {from} {...handlers(item)} /></div>
 			</Card>
 		{/each}
 		{#each stepParts as part (part.id)}
@@ -405,7 +438,7 @@
 						onclick={() => (stepping = step.id)}
 					>
 						{#each itemsOn( review, { step: step.id } ).filter((item) => item.level === 'check') as item (item.id)}
-							<CheckRow {item} {...handlers(item)} />
+							<CheckRow {item} {from} {...handlers(item)} />
 						{/each}
 					</RecipeStepRow>
 				{/each}
@@ -415,9 +448,18 @@
 
 	{@const left = stillLeftOut(review)}
 	{@const quiet = notes(review)}
-	{#if left.length || quiet.length}
+	<!-- A tidy's left-out sentences are the household's own: open, and asked about. -->
+	{#if from === 'recipe' && left.length}
+		<h2 class="label">{t.leftOut}</h2>
+		<LeftOutChecks
+			entries={left}
+			onback={(one) => answer((r) => putBack(r, one, key))}
+			onleave={(one) => answer((r) => leaveOut(r, one))}
+		/>
+	{/if}
+	{#if (from !== 'recipe' && left.length) || quiet.length}
 		<h2 class="label">{t.also}</h2>
-		{#if left.length}
+		{#if from !== 'recipe' && left.length}
 			<FoldList
 				title={t.leftOut}
 				count={t.leftOutCount(left.length)}
@@ -444,9 +486,15 @@
 	<button type="button" class="everything" onclick={editEverything}>{t.editEverything}</button>
 {:else if stored === null}
 	<div class="gone">
-		<p class="gone-title">{t.gone}</p>
-		<p>{t.goneHint}</p>
-		<a class="again" href="/cooking/recipes/import">{t.again}</a>
+		{#if recipe}
+			<p class="gone-title">{t.tidyGone}</p>
+			<p>{t.tidyGoneHint}</p>
+			<a class="again" href={home}>{t.backToRecipe}</a>
+		{:else}
+			<p class="gone-title">{t.gone}</p>
+			<p>{t.goneHint}</p>
+			<a class="again" href="/cooking/recipes/import">{t.again}</a>
+		{/if}
 	</div>
 {/if}
 

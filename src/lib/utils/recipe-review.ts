@@ -36,7 +36,7 @@ import {
 	type EditorState,
 	type EditorStep
 } from './recipe-editor.ts';
-import type { ImportCheckKind, LeftOut, RecipePrefill } from './recipes.ts';
+import type { ImportCheckKind, ImportSource, LeftOut, RecipePrefill } from './recipes.ts';
 import { occurrences, type EditorLink } from './step-links.ts';
 
 /** What an import hands the review: the gate's draft, the line above it, the page's site. */
@@ -46,7 +46,27 @@ export type ImportDraft = {
 	notice?: string | null;
 	/** The page's host ("chefkoch.de"), for the line under the name; none for a paste or photos. */
 	site?: string | null;
+	/** What it was read from, for the review's words (→ `sourceOf`). */
+	source?: ImportSource;
+	/**
+	 * A saved recipe being tidied (→ plan 48): its id. The review opens only
+	 * under that recipe's own address, and the server checks the address's id
+	 * against the household at Save; this one only keeps two tidies apart.
+	 */
+	recipeId?: string;
 };
+
+/**
+ * What a draft was read from. A draft kept before drafts said so (an open tab
+ * across a deploy) is a page when it names a site, photos when the gate said
+ * so, and a paste otherwise.
+ */
+export function sourceOf(draft: ImportDraft): ImportSource {
+	if (draft.source) return draft.source;
+	if (draft.recipeId) return 'recipe';
+	if (draft.site) return 'page';
+	return draft.prefill.checks?.some((check) => check.kind === 'from-photo') ? 'photo' : 'text';
+}
 
 /** One check item of the gate, on the row or step it is about (by the editor's key). */
 export type ReviewItem = {
@@ -79,6 +99,8 @@ export type ReviewLeftOut = {
 	after: string | null;
 	/** The step it became once put back; null while it is left out. */
 	back: string | null;
+	/** A tidy's "Leave it out": answered, it goes on Save (→ `openLeftOut`). */
+	dropped?: boolean;
 };
 
 export type Review = {
@@ -101,6 +123,12 @@ export function draftKey(id: string): string {
 /** An import's id: unguessable enough that two imports in two tabs never meet. */
 export function newDraftId(): string {
 	return `${Date.now().toString(36)}${Math.random().toString(36).slice(2, 8)}`;
+}
+
+/** `?draft=` as the import and the tidy write it (`newDraftId`); anything else is no draft. */
+export function readDraftId(params: URLSearchParams): string | null {
+	const id = params.get('draft');
+	return id && /^[a-z0-9]{4,40}$/.test(id) ? id : null;
 }
 
 /**
@@ -232,6 +260,38 @@ function stands(review: Review, item: ReviewItem): boolean {
 	if (item.ingredient) return findIngredient(review, item.ingredient) !== null;
 	if (item.step) return findStep(review, item.step) !== null;
 	return true;
+}
+
+/**
+ * The sentences a person is asked about: for a saved recipe's tidy only
+ * (→ plan 48, DECISIONS #340). A page is still there after an import, so what
+ * the model left out of it is a quiet note; a saved recipe's step is the
+ * household's own and Save would drop it for good, so each one left out is a
+ * question until it is put back or left out on purpose.
+ */
+export function openLeftOut(review: Review, from: ImportSource): ReviewLeftOut[] {
+	return from === 'recipe' ? stillLeftOut(review).filter((one) => !one.dropped) : [];
+}
+
+/** What the banner counts: the open check items, and for a tidy the sentences left out. */
+export function openCount(review: Review, from: ImportSource): number {
+	return openChecks(review).length + openLeftOut(review, from).length;
+}
+
+/** Whether the draft asked anything at all: "Nothing left to check" rather than "Nothing to check". */
+export function askedAny(review: Review, from: ImportSource): boolean {
+	return (
+		review.items.some((item) => item.level === 'check') ||
+		(from === 'recipe' && review.leftOut.length > 0)
+	);
+}
+
+/** A tidy's "Leave it out": the sentence stays out, and the question is answered. */
+export function leaveOut(review: Review, leftOutId: string): Review {
+	return {
+		...review,
+		leftOut: review.leftOut.map((one) => (one.id === leftOutId ? { ...one, dropped: true } : one))
+	};
 }
 
 /**
@@ -523,7 +583,9 @@ export function putBack(review: Review, leftOutId: string, key: () => string): R
 	return {
 		...review,
 		editor: { ...review.editor, steps },
-		leftOut: review.leftOut.map((one) => (one.id === leftOutId ? { ...one, back: step.id } : one))
+		leftOut: review.leftOut.map((one) =>
+			one.id === leftOutId ? { ...one, back: step.id, dropped: false } : one
+		)
 	};
 }
 

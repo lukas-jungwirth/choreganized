@@ -406,7 +406,7 @@
 {/if}
 
 {#if menu}
-	<RecipeMenuSheet {recipe} onclose={() => (menu = false)} />
+	<RecipeMenuSheet {recipe} aiEnabled={data.aiEnabled} onclose={() => (menu = false)} />
 {/if}
 
 <style>

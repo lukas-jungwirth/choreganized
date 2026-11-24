@@ -228,6 +228,23 @@ export async function openReviewDraft(page: Page, name: string, title: string): 
 	await page.getByRole('heading', { name: title, level: 1 }).waitFor();
 }
 
+/**
+ * A saved recipe's tidy (→ plan 48): the saved `tidy` draft opened under the
+ * seeded curry, as the menu opens a fresh one. Nothing is saved.
+ */
+export async function openTidyDraft(page: Page, title: string): Promise<void> {
+	const draft = JSON.parse(readFileSync('tests/fixtures/review-drafts/tidy.json', 'utf8'));
+	await openRecipe(page);
+	const path = new URL(page.url()).pathname;
+	draft.recipeId = path.split('/').at(-1);
+	await page.evaluate(({ key, value }) => sessionStorage.setItem(key, value), {
+		key: 'recipe-import:visualtidy',
+		value: JSON.stringify({ v: 1, draft })
+	});
+	await page.goto(`${path}/tidy?draft=visualtidy`);
+	await page.getByRole('heading', { name: title, level: 1 }).waitFor();
+}
+
 /** The words the review's shots find things by, in each language the walk uses. */
 export const REVIEW_WORDS = {
 	en: { title: 'Check recipe', leftOut: /^Left out of the steps/ },
@@ -261,6 +278,12 @@ export function reviewShots(words: (typeof REVIEW_WORDS)['en']): Screen[] {
 				await page.evaluate(() => window.scrollTo(0, document.documentElement.scrollHeight));
 				await page.waitForTimeout(250);
 			}
+		},
+		{
+			name: 'recipe-tidy',
+			route: '/(app)/cooking/recipes/[id]/tidy',
+			path: '',
+			navigate: (page) => openTidyDraft(page, words.title)
 		}
 	];
 }

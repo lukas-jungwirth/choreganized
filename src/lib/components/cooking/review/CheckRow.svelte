@@ -17,10 +17,12 @@
 	import Check from '@lucide/svelte/icons/check';
 	import Minus from '@lucide/svelte/icons/minus';
 	import Plus from '@lucide/svelte/icons/plus';
-	import { RECIPE_SERVINGS_MAX } from '$lib/utils/recipes';
+	import { RECIPE_SERVINGS_MAX, type ImportSource } from '$lib/utils/recipes';
 
 	type Props = {
 		item: ReviewItem;
+		/** What the draft was read from: the questions name it ("the page", "the saved recipe"). */
+		from: ImportSource;
 		/** The row it is about, as it is now. */
 		row?: EditorIngredient | null;
 		/** The recipe's servings, for the `servings` question. */
@@ -46,6 +48,7 @@
 
 	let {
 		item,
+		from,
 		row = null,
 		servings = null,
 		onkeep,
@@ -104,7 +107,7 @@
 		{#if item.settled}
 			<p class="done"><Check size={15} strokeWidth={2.4} aria-hidden="true" />{t.checked}</p>
 		{:else}
-			<p>{item.page ? t.servingsPage(item.page) : t.servingsWhy}</p>
+			<p>{item.page ? t.servingsPage(from, item.page) : t.servingsWhy}</p>
 			{#if servings}
 				<div class="opts">
 					<button type="button" class="opt" onclick={onkeep}>{t.servingsKeep(servings)}</button>
@@ -119,13 +122,13 @@
 {:else}
 	<div class="check" data-open-check>
 		{#if item.kind === 'choice'}
-			<p>{t.choice(name, item.alternative ?? '')}</p>
+			<p>{t.choice(from, name, item.alternative ?? '')}</p>
 			<div class="opts">
 				<button type="button" class="opt" onclick={onkeep}>{name}</button>
 				<button type="button" class="opt" onclick={onother}>{item.alternative}</button>
 			</div>
 		{:else if item.kind === 'amount-differs'}
-			<p>{t.amountDiffers(item.page ?? '', answer)}</p>
+			<p>{t.amountDiffers(from, item.page ?? '', answer)}</p>
 			<div class="opts">
 				<button type="button" class="opt" onclick={onkeep}
 					>{t.keepAmount(amount || t.noAmount)}</button
@@ -133,22 +136,22 @@
 				<button type="button" class="opt" onclick={onanswer}>{t.useAmount(answer)}</button>
 			</div>
 		{:else if item.kind === 'name-differs'}
-			<p>{t.nameDiffers(item.page ?? '')}</p>
+			<p>{t.nameDiffers(from, item.page ?? '')}</p>
 			<div class="opts">
 				<button type="button" class="opt" onclick={onkeep}>{t.keep}</button>
 				<button type="button" class="opt" onclick={onedit}>{t.edit}</button>
 			</div>
 		{:else if item.kind === 'line-added'}
-			<p>{t.lineAdded(item.page ?? name)}</p>
+			<p>{t.lineAdded(from, item.page ?? name)}</p>
 			<div class="opts">
 				<button type="button" class="opt" onclick={onkeep}>{t.keep}</button>
 				<button type="button" class="opt" onclick={onremove}>{t.remove}</button>
 			</div>
 		{:else if item.kind === 'reworded'}
-			<p>{item.page ? t.reworded(item.page) : t.rewordedUnknown}</p>
+			<p>{item.page ? t.reworded(from, item.page) : t.rewordedUnknown(from)}</p>
 			<div class="opts">
 				{#if item.page}
-					<button type="button" class="opt" onclick={onpage}>{t.usePageText}</button>
+					<button type="button" class="opt" onclick={onpage}>{t.usePageText(from)}</button>
 				{/if}
 				<button type="button" class="opt" onclick={onkeep}>{t.keep}</button>
 			</div>
@@ -182,7 +185,7 @@
 			</form>
 			{#if unitError}<p role="alert">{unitError}</p>{/if}
 		{:else if item.kind === 'no-steps'}
-			<p>{t.noSteps}</p>
+			<p>{t.noSteps(from)}</p>
 			<div class="opts">
 				<button type="button" class="opt" onclick={onsteps}>{t.addSteps}</button>
 				<button type="button" class="opt" onclick={onkeep}>{t.saveWithout}</button>

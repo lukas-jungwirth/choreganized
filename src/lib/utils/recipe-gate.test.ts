@@ -256,6 +256,48 @@ describe('the gate on hostile answers', () => {
 		assert.ok(draft.steps[3].uses?.some((use) => use.ingredient === 10));
 	});
 
+	it('puts an added line in the part the model named for its neighbours, not the card’s', () => {
+		const raw = copy();
+		raw.ingredients.splice(10, 1); // Tomatenmark, from the card's "Sauce (Bolognesesoße)"
+		for (const step of raw.steps) {
+			step.uses = step.uses.filter((use: { ingredient: number }) => use.ingredient < 10);
+		}
+		assert.equal(chefkoch.card.ingredientSections?.[10], 'Sauce (Bolognesesoße)');
+		const draft = draftOf(raw);
+		assert.equal(draft.ingredientLines[10], '5 EL Tomatenmark');
+		assert.equal(draft.ingredientDetails?.[10]?.section, 'Bolognesesoße');
+		// One part, one heading: no row is left under the card's own name.
+		const parts = new Set(draft.ingredientDetails?.map((one) => one?.section));
+		assert.deepEqual([...parts], ['Bolognesesoße', 'Béchamelsoße']);
+	});
+
+	it('keeps the card’s part for an added line when no row came from that part', () => {
+		const card: SourceRecipe = {
+			name: 'Pancakes',
+			servings: 2,
+			timeMinutes: null,
+			ingredientLines: ['200 g Mehl', '2 Eier', '1 EL Zucker'],
+			ingredientSections: ['Teig', 'Teig', 'Topping'],
+			steps: ['Mehl und Eier verrühren.', 'Mit Zucker bestreuen.']
+		};
+		const raw = {
+			name: 'Pancakes',
+			servings: 2,
+			timeMinutes: null,
+			ingredients: [
+				{ source: 0, quantity: 200, unit: 'g', name: 'Mehl', section: 'Teig' },
+				{ source: 1, quantity: 2, unit: null, name: 'Eier', section: 'Teig' }
+			],
+			steps: card.steps.map((text) => ({ text, section: null, timer: null, uses: [] })),
+			tags: [],
+			diet: null
+		};
+		const draft = draftOf(raw, { source: card, text: null });
+		assert.equal(draft.ingredientLines[2], '1 EL Zucker');
+		assert.equal(draft.ingredientDetails?.[2]?.section, 'Topping');
+		assert.ok(kinds(draft.checks).includes('line-added'));
+	});
+
 	it('turns a word on no list into a question and keeps it in the note', () => {
 		const card: SourceRecipe = {
 			name: 'Wurstsalat',

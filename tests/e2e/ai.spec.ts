@@ -236,7 +236,7 @@ test('a pasted recipe opens with parts, a note, links and what to check, and sav
 	// The review (→ plan 45): one thing to check, the choice, on its row.
 	await expect(page.getByRole('button', { name: '1 thing to check' })).toBeVisible();
 	await expect(page.locator('[data-open-check]')).toContainText(
-		'The page offers berries or cherries. Which do you use?'
+		'Your text offers berries or cherries. Which do you use?'
 	);
 
 	// Step 1 arrives linked to what it names, in the editor too.

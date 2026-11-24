@@ -5033,3 +5033,52 @@ recipe-importer)` (`IMPORT_UA`): the `Mozilla/5.0 (compatible; …)` form crawle
      shot that ran after it. The e2e journey covers it instead (a running timer on step 5: the
      list keeps its three rows and stays in view), and so did the hand walk's screenshot. The
      e2e journey also checks that the 400-character step's body does not scroll.
+340. **Plan 48: a saved recipe is tidied as a page's card, with the household's hand work kept**
+     (2026-11-24; → SPEC §4.5). `tidyRecipe` sends each saved row as the line it reads as
+     (`savedCard`: "500 g Hackfleisch, gemischtes", a stored note after a comma), its part and
+     the steps as stored, after its own lead ("A recipe the household saved earlier …"), and
+     holds the answer with the import's gate unchanged, so a dropped row comes back as
+     `line-added` and a reworded method is refused. Three judgment calls: **the household's
+     standing instructions are not sent**, because instructions switch the gate's page checks
+     off and a tidy must never change rows or steps; **no rule-based fallback**, because the
+     saved recipe already is what rules made of it, so a failure is said under the menu row
+     and nothing changes; **no Fahrenheit pass**, the saved words stand. What the household made
+     by hand stays (`keepSaved`): a step saved with its own links (`ingredients_set`) keeps them,
+     carried to the rows its saved line became (a line split into two rows, "Salz und Pfeffer",
+     links both by the same word; the first keeps the share); only steps that read their own
+     text get the model's links; a saved timer goes to the piece of a split step that states
+     its duration (else the first piece), and the other pieces get no timer of the model's; a
+     step the gate kept as reworded is matched to the saved step it shares the most words with,
+     so its links and timer stay too (both from the code review); a step that holds the words of
+     two saved steps (the model merged them, `stepCovers`) carries both steps' hand links. The
+     link items (`unused`, `shares-exceed`) are counted
+     again on the kept links. **A sentence the model left out of a saved recipe is a thing to
+     check** (coordinator's call, 2026-11-24; Lukas may change it): an import's page is still
+     there, but a saved step is the household's own with no other copy. So for a tidy only, each
+     one counts in the banner (`openLeftOut`, `openCount`), and the list stands open at the end
+     of the steps, not folded: "The AI left this out. It is removed when you save." with **Put
+     back** (it goes back at its place) and **Leave it out** (answered, it goes on Save; Put back
+     stays). The second answer is ours: without it a tidy that rightly drops a teaser could never
+     read "Nothing left to check". Imports keep their folded list, unchanged.
+341. **An added line joins the part the model gave its neighbours** (2026-11-24; → plan 44's
+     gate, fix). A page line no row came from took the card's part name ("Sauce
+     (Bolognesesoße)") while the model named the same part "Bolognesesoße", so one part showed
+     under two headings in the review. Now the rows that came from the same card part vote: the
+     added line takes the part most of them are in (the first seen on a tie); with none, or no
+     card part at all, it keeps the card's (or none). `tests/fixtures/review-drafts/kinds.json`
+     changed with it (its Thymian line), and with it the review's "kinds" journey's picture.
+342. **The review names what the draft was read from** (2026-11-24; → plan 45, fix). Every
+     line that said "the page" (the banner's "Everything else matches the page", the check items'
+     "The page says …", "Use the page's text", "This page has no method") now takes the draft's
+     source: page, pasted text ("your text"), photos, or a saved recipe ("the saved recipe").
+     The import page writes `source` on each draft it stores; a draft kept before that is read by
+     `sourceOf` (a site → page, a `from-photo` item → photos, a recipe id → recipe, else text).
+343. **The tidy's review lives under the recipe, `/cooking/recipes/<id>/tidy?draft=<id>`**
+     (2026-11-24; → plan 48). The draft is kept like an import's, in the tab's `sessionStorage`,
+     with `recipeId` and `source: 'recipe'`, so the address survives a reload. The route loads
+     the recipe by the address's id through `getRecipe` (another household's is a 404), and Save
+     posts to that route, which calls `updateRecipe` with the address's id, never one from the
+     draft. The review opens a draft only under the recipe it names, so a tidy cannot be saved
+     over another recipe of the household. The review posts the recipe's own tags and diet and no
+     photo (the photo stays); "Edit everything" opens the editor with the recipe, so its photo,
+     tags and diet are the recipe's and can be changed there as in Edit.

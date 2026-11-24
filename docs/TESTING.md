@@ -264,7 +264,10 @@ import page puts a fresh draft (the tab's `sessionStorage`, then `?draft=<id>`).
 `tests/integration/review-drafts.test.ts` holds the files to the gate; after a gate change,
 write them again with `UPDATE_REVIEW_DRAFTS=1 npx vitest run
 tests/integration/review-drafts.test.ts`. The pasted-text journeys go through the fake AI end to
-end.
+end. `tidy.json` is a saved recipe's tidy (plan 48), made by `savedCard` and `keepSaved`; the
+visual shot `recipe-tidy` opens it under the seeded curry, whose id it takes then. The tidy's
+own journey (`tests/e2e/tidy.spec.ts`) goes through the fake AI end to end: the fake reads a
+saved recipe's card by its lead and moves what follows a comma into the note.
 
 **A live provider is never in the loop**, in CI or in a session's own checks. One live call per
 provider needs a real key in the running app, and only Lukas has those. A handoff says plainly

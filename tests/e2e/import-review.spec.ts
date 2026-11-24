@@ -95,6 +95,8 @@ test.describe('a pasted recipe, through the fake AI', () => {
 		await expect(page.getByRole('button', { name: '1 thing to check' })).toBeVisible();
 		await expect(page.locator('.linked', { hasText: 'flour' })).toHaveCount(1);
 		await expect(page.getByText('Made with AI. Check it over before saving.')).toBeVisible();
+		// A paste has no page: the banner names the text (DECISIONS #342).
+		await expect(page.getByText('Everything else matches your text.')).toBeVisible();
 
 		await check(page, 'Which do you use?').getByRole('button', { name: 'cherries' }).click();
 		await expect(page.getByText('Nothing left to check')).toBeVisible();

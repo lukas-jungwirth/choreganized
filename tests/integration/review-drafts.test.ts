@@ -18,6 +18,7 @@ import { describe, it } from 'vitest';
 import { readFetchedPage } from '$lib/server/recipe-import';
 import { validateRecipeDraft, type SourceRecipe } from '$lib/utils/recipe-draft';
 import type { ImportDraft } from '$lib/utils/recipe-review';
+import { keepSaved, savedCard, type SavedRecipe } from '$lib/utils/tidy-draft';
 
 const DIR = 'tests/fixtures/review-drafts';
 const LABELS = { tbsp: 'EL', tsp: 'TL', pcs: 'Stk.', pack: 'Pkg.' };
@@ -41,11 +42,112 @@ function draft(card: SourceRecipe, raw: Answer): ImportDraft {
 	return {
 		prefill: { ...result.draft, photo: null, suggested: null },
 		notice: 'Made with AI. Check it over before saving.',
-		site: 'chefkoch.de'
+		site: 'chefkoch.de',
+		source: 'page'
 	};
 }
 
 const card = page.card as SourceRecipe;
+
+/**
+ * A saved recipe imported before the rebuild (→ plan 48): a note in a name.
+ * The visual tidy shot opens it over the seeded curry, whose id it takes then.
+ */
+const SAVED_CURRY: SavedRecipe = {
+	name: 'Lentil curry',
+	timeMinutes: 30,
+	servings: 4,
+	ingredients: [
+		{ id: 'c1', name: 'Red lentils, rinsed', quantity: 300, unit: 'g', note: null, section: null },
+		{ id: 'c2', name: 'Coconut milk', quantity: 400, unit: 'ml', note: null, section: null },
+		{ id: 'c3', name: 'Curry paste', quantity: 2, unit: 'tbsp', note: null, section: null },
+		{ id: 'c4', name: 'Baby spinach', quantity: 100, unit: 'g', note: null, section: null }
+	],
+	steps: [
+		{
+			text: 'Fry the curry paste for 2 min until fragrant.',
+			section: null,
+			uses: null,
+			timer: null
+		},
+		{
+			text: 'Add the lentils and coconut milk, simmer 20 minutes until soft.',
+			section: null,
+			uses: null,
+			timer: null
+		},
+		{
+			text: 'Stir the baby spinach through and season to taste.',
+			section: null,
+			uses: null,
+			timer: null
+		}
+	]
+};
+
+/** The tidy of `SAVED_CURRY`: the note out of the name, and a row the answer left out. */
+function tidyDraft(): ImportDraft {
+	const saved = savedCard(SAVED_CURRY, LABELS);
+	const row = (
+		source: number,
+		quantity: number,
+		unit: string,
+		name: string,
+		note: string | null = null
+	) => ({
+		source,
+		quantity,
+		unit,
+		countingWord: null,
+		newUnit: null,
+		name,
+		note,
+		alternative: null,
+		section: null
+	});
+	const use = (ingredient: number, phrase: string) => ({
+		ingredient,
+		phrase,
+		amountPhrase: null,
+		quantity: null
+	});
+	const raw = {
+		name: 'Lentil curry',
+		servings: 4,
+		timeMinutes: 30,
+		ingredients: [
+			row(0, 300, 'g', 'Red lentils', 'rinsed'),
+			row(1, 400, 'ml', 'Coconut milk'),
+			row(2, 2, 'tbsp', 'Curry paste')
+		],
+		steps: [
+			{ text: saved.steps[0], section: null, timer: null, uses: [use(2, 'curry paste')] },
+			{
+				text: saved.steps[1],
+				section: null,
+				timer: { seconds: 1200, label: 'Simmer' },
+				uses: [use(0, 'lentils'), use(1, 'coconut milk')]
+			},
+			{ text: saved.steps[2], section: null, timer: null, uses: [] }
+		],
+		tags: [],
+		diet: null
+	};
+	const result = validateRecipeDraft(raw, {
+		source: saved,
+		text: null,
+		instructed: false,
+		labels: LABELS
+	});
+	assert.ok(result.ok, JSON.stringify(result));
+	return {
+		prefill: { ...keepSaved(result.draft, result.rows, SAVED_CURRY), photo: null, suggested: null },
+		notice: 'Tidied with AI. Nothing changes until you save.',
+		site: null,
+		source: 'recipe',
+		recipeId: 'visual'
+	};
+}
 
 /** Each saved draft, and how it is made from the page and the answer. */
 const DRAFTS: Record<string, () => ImportDraft> = {
@@ -107,14 +209,18 @@ const DRAFTS: Record<string, () => ImportDraft> = {
 		};
 		const raw = { ...structuredClone(answer), steps: [], servings: null };
 		return draft(bare, raw);
-	}
+	},
+
+	/** Plan 48: a saved recipe's tidy, one row the answer left out. */
+	tidy: tidyDraft
 };
 
 const KINDS: Record<string, string[]> = {
 	lasagne: ['choice', 'amount-differs'],
 	clean: [],
 	kinds: ['line-added', 'amount-differs', 'name-differs', 'new-unit', 'choice', 'reworded'],
-	'no-method': ['servings', 'no-steps', 'choice']
+	'no-method': ['servings', 'no-steps', 'choice'],
+	tidy: ['line-added']
 };
 
 describe('the review’s saved drafts', () => {
